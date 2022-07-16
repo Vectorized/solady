@@ -36,6 +36,12 @@ To install with [**Foundry**](https://github.com/gakonst/foundry):
 forge install vectorized/solady
 ```
 
+To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffle**](https://github.com/trufflesuite/truffle):
+
+```sh
+npm install solady
+```
+
 ## Acknowledgements
 
 These contracts were inspired by or directly modified from many sources, primarily:
