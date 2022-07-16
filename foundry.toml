@@ -1,0 +1,19 @@
+# Foundry Configuration File
+# Default definitions: https://github.com/gakonst/foundry/blob/b7917fa8491aedda4dd6db53fbb206ea233cd531/config/src/lib.rs#L782
+# See more config options at: https://github.com/gakonst/foundry/tree/master/config
+
+# The Default Profile
+[default]
+solc_version = '0.8.15'
+auto_detect_solc = false
+optimizer = true
+optimizer_runs = 1_000
+fuzz_runs = 1_000
+remappings = [
+  "forge-std=lib/forge-std/src/",
+  "solmate=lib/solmate/src/",
+]
+
+# Extreme Fuzzing CI Profile :P
+[ci]
+fuzz_runs = 100_000

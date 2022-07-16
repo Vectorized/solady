@@ -1,0 +1,51 @@
+name: ci
+
+on: [push]
+
+jobs:
+  tests:
+    name: Forge Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Run Tests
+        run: FOUNDRY_PROFILE=ci forge test
+
+  scripts:
+    strategy:
+      fail-fast: true
+    name: Run Unix Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+        continue-on-error: true
+
+      - name: Run scripts
+        run: |
+          ls -lsa
+          ls script/
+          for file in script/*; do
+            forge script $file
+          done
