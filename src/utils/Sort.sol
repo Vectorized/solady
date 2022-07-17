@@ -18,11 +18,6 @@ library Sort {
     uint256 private constant LCG_SEED = 0xbeef;
 
     function sort(uint256[] memory a) internal pure {
-        // This function could save some gas compared to passing in a calldata
-        // array and verifying sortedness. For an array of 100 elements,
-        // we are looking at less than 1k gas for each element on average.
-        // A calldata address costs `68*20 + 4*12 = 1408` gas.
-        // Compared to regular Solidity quick sort, it can save more than 50% gas.
         assembly {
             let n := mload(a) // Length of `a`.
             mstore(a, 0) // For insertion sort's inner loop to terminate.
