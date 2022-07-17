@@ -223,33 +223,24 @@ library LibString {
             let subjectEnd := add(subject, subjectLength)
             if iszero(gt(searchLength, subjectLength)) {
                 let subjectSearchEnd := add(sub(subjectEnd, searchLength), 1)
-                for {
-
-                } lt(subject, subjectSearchEnd) {
-
-                } {
+                // prettier-ignore
+                for {} lt(subject, subjectSearchEnd) {} {
                     let o := and(searchLength, 31)
                     // Whether the first `searchLength % 32` bytes of
                     // `subject` and `search` matches.
                     let l := iszero(and(xor(mload(subject), mload(search)), mload(sub(0x20, o))))
                     // Iterate through the rest of `search` and check if any word mismatch.
                     // If any mismatch is detected, `l` is set to 0.
-                    for {
-
-                    } and(lt(o, searchLength), l) {
-
-                    } {
+                    // prettier-ignore
+                    for {} and(lt(o, searchLength), l) {} {
                         l := eq(mload(add(subject, o)), mload(add(search, o)))
                         o := add(o, 0x20)
                     }
                     // If `l` is true, we have a match.
                     if l {
                         // Copy the `replacement` one word at a time.
-                        for {
-                            o := 0
-                        } lt(o, replacementLength) {
-                            o := add(o, 0x20)
-                        } {
+                        // prettier-ignore
+                        for { o := 0 } lt(o, replacementLength) { o := add(o, 0x20) } {
                             mstore(add(result, add(k, o)), mload(add(replacement, o)))
                         }
                         k := add(k, replacementLength)
@@ -267,11 +258,8 @@ library LibString {
             let resultRemainder := add(result, k)
             k := add(k, sub(subjectEnd, subject))
             // Copy the rest of the string one word at a time.
-            for {
-
-            } lt(subject, subjectEnd) {
-
-            } {
+            // prettier-ignore
+            for {} lt(subject, subjectEnd) {} {
                 mstore(resultRemainder, mload(subject))
                 resultRemainder := add(resultRemainder, 0x20)
                 subject := add(subject, 0x20)
