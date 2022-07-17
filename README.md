@@ -13,6 +13,7 @@ utils
 ├─ Sort — "Optimized intro sort"
 ├─ Base64 — "Library for Base64 encoding"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
+├─ LibBitmap — "Library for mapping integers to single bit booleans"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
 ```
 
@@ -48,6 +49,6 @@ This repository is inspired by or directly modified from many sources, primarily
 
 - [Solmate](https://github.com/rari-capital/solmate)
 - [OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-contracts)
-- [Zolidity](https://github.com/z0r0z/zolidity)
 - [ERC721A](https://github.com/chiru-labs/ERC721A)
+- [Zolidity](https://github.com/z0r0z/zolidity)
 - [Femplate](https://github.com/abigger87/femplate)
