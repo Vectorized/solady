@@ -24,7 +24,7 @@ library Sort {
 
             // Let the stack be the start of the free memory.
             let stackBottom := mload(0x40)
-            let stack := add(stackBottom, 0x40) 
+            let stack := add(stackBottom, 0x40)
 
             {
                 // Push `l` and `h` to the stack.
@@ -44,7 +44,7 @@ library Sort {
                 }
                 // If the array is sorted, or reverse sorted,
                 // subtract `0x40` from `stack` to make it equal to `stackBottom`,
-                // which skips the sort. 
+                // which skips the sort.
                 // `shl` 6 is equivalent to multiplying by `0x40`.
                 stack := sub(stack, shl(6, or(iszero(s), eq(add(s, 1), n))))
 
