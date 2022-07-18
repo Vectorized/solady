@@ -114,12 +114,14 @@ library Sort {
                             // prettier-ignore
                             if iszero(lt(mload(i), x)) { break }
                         }
+                        let j := p
                         // prettier-ignore
                         for {} 1 {} { 
-                            p := sub(p, 0x20)
+                            j := sub(j, 0x20)
                             // prettier-ignore
-                            if iszero(gt(mload(p), x)) { break }
+                            if iszero(gt(mload(j), x)) { break }
                         }
+                        p := j
                         // prettier-ignore
                         if iszero(lt(i, p)) { break }
                         // Swap slots `i` and `p`.
@@ -140,7 +142,7 @@ library Sort {
                     mstore(stack, add(p, 0x20))
                     mstore(add(stack, 0x20), h)
                     // `shl` 6 is equivalent to multiplying by `0x40`.
-                    stack := add(stack, shl(6, lt(add(p, 0x20), h)))    
+                    stack := add(stack, shl(6, lt(add(p, 0x20), h)))
                 }
             }
             mstore(a, n) // Restore the length of `a`.
