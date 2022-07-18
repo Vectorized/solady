@@ -81,11 +81,15 @@ library Sort {
                         let b := sub(j, 0x20) // The slot before the current slot.
                         let v := mload(b) // The value of `b`.
                         // prettier-ignore
-                        for {} gt(v, k) {} {
+                        if iszero(gt(v, k)) { continue }
+                        // prettier-ignore
+                        for {} 1 {} {
                             mstore(j, v)
                             j := b
                             b := sub(b, 0x20)
                             v := mload(b)
+                            // prettier-ignore
+                            if iszero(gt(v, k)) { break }
                         }
                         mstore(j, k)
                     }
