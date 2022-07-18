@@ -96,38 +96,42 @@ library Sort {
                     lcg := mulmod(lcg, LCG_MULTIPLIER, LCG_MODULO) // Step the LCG.
                     let p := and(sub(h, mod(lcg, sub(h, l))), LCG_MASK) // Pivot slot.
                     let x := mload(p) // The value of the pivot slot.
-                    // Swap the values of `p` and `h`.
-                    mstore(p, mload(h))
-                    mstore(h, x)
-
-                    p := l // Set the pivot slot to the left of the slice.
-                    let e := sub(h, 0x20) // End of the partition.
-
-                    // prettier-ignore
-                    for { let j := l } iszero(gt(j, e)) { j := add(j, 0x20) } {
-                        // Whenever a value less than the pivot value is 
-                        // detected, move it to the left of the slice, 
-                        // and advance the pivot slot.
-                        if iszero(gt(mload(j), x)) {
-                            let t := mload(p)
-                            mstore(p, mload(j))
-                            mstore(j, t)
-                            p := add(p, 0x20)
-                        }
-                    }
-                    // Swap back the values of `p` and `h`.
+                    // Swap slots `l` and `p`.
                     {
-                        let t := mload(p)
-                        mstore(p, x) // Restore the pivot value at the pivot slot.
-                        mstore(h, t) // Store whatever was the replaced value at the end.
+                        mstore(p, mload(l))
+                        mstore(l, x)
+                    }
+                    // Hoare's partition.
+                    {
+                        p := add(h, 0x20)
+                        // prettier-ignore
+                        for { let i := sub(l, 0x20) } 1 {} {
+                            // prettier-ignore
+                            for {} 1 {} { 
+                                i := add(i, 0x20)
+                                // prettier-ignore
+                                if iszero(lt(mload(i), x)) { break }
+                            }
+                            // prettier-ignore
+                            for {} 1 {} { 
+                                p := sub(p, 0x20)
+                                // prettier-ignore
+                                if iszero(gt(mload(p), x)) { break }
+                            }
+                            // prettier-ignore
+                            if iszero(lt(i, p)) { break }
+                            // Swap slots `i` and `p`.
+                            let t := mload(i)
+                            mstore(i, mload(p))
+                            mstore(p, t)
+                        }
                     }
                     // If slice on left of pivot is non-empty, push onto stack.
                     {
-                        let t := sub(p, 0x20)
                         // We can skip `mstore(stack, l)`.
-                        mstore(add(stack, 0x20), t)
+                        mstore(add(stack, 0x20), p)
                         // `shl` 6 is equivalent to multiplying by `0x40`.
-                        stack := add(stack, shl(6, gt(t, l)))
+                        stack := add(stack, shl(6, gt(p, l)))
                     }
                     // If slice on right of pivot is non-empty, push onto stack.
                     {
