@@ -77,21 +77,19 @@ library Sort {
                     // prettier-ignore
                     for { let i := add(l, 0x20) } iszero(gt(i, h)) { i := add(i, 0x20) } {
                         let k := mload(i) // Key.
-                        let j := i // The current slot.
-                        let b := sub(j, 0x20) // The slot before the current slot.
-                        let v := mload(b) // The value of `b`.
+                        let j := sub(i, 0x20) // The slot before the current slot.
+                        let v := mload(j) // The value of `j`.
                         // prettier-ignore
                         if iszero(gt(v, k)) { continue }
                         // prettier-ignore
                         for {} 1 {} {
-                            mstore(j, v)
-                            j := b
-                            b := sub(b, 0x20)
-                            v := mload(b)
+                            mstore(add(j, 0x20), v)
+                            j := sub(j, 0x20)
+                            v := mload(j)
                             // prettier-ignore
                             if iszero(gt(v, k)) { break }
                         }
-                        mstore(j, k)
+                        mstore(add(j, 0x20), k)
                     }
                     continue
                 }
