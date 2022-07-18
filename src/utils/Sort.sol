@@ -135,11 +135,10 @@ library Sort {
                 }
                 // If slice on right of pivot is non-empty, push onto stack.
                 {
-                    let t := add(p, 0x20)
-                    mstore(stack, t)
+                    mstore(stack, add(p, 0x20))
                     mstore(add(stack, 0x20), h)
                     // `shl` 6 is equivalent to multiplying by `0x40`.
-                    stack := add(stack, shl(6, lt(t, h)))    
+                    stack := add(stack, shl(6, lt(add(p, 0x20), h)))    
                 }
             }
             mstore(a, n) // Restore the length of `a`.
