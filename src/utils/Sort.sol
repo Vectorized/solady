@@ -52,12 +52,14 @@ library Sort {
                 // reverse the array.
                 if iszero(lt(shl(1, s), n)) {
                     // prettier-ignore
-                    for {} lt(l, h) {} {
+                    for {} 1 {} {
                         let t := mload(l)
                         mstore(l, mload(h))
                         mstore(h, t)
                         h := sub(h, 0x20)
                         l := add(l, 0x20)
+                        // prettier-ignore
+                        if iszero(lt(l, h)) { break }
                     }
                 }
             }
