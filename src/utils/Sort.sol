@@ -5,17 +5,17 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library Sort {
     // For efficient rounding down to a multiple of `0x20`.
-    uint256 private constant LCG_MASK = 0xffffffffffffffe0;
+    uint256 private constant _LCG_MASK = 0xffffffffffffffe0;
 
     // From MINSTD.
     // See: https://en.wikipedia.org/wiki/Lehmer_random_number_generator#Parameters_in_common_use
-    uint256 private constant LCG_MULTIPLIER = 48271;
+    uint256 private constant _LCG_MULTIPLIER = 48271;
 
     // For the linear congruential generator.
-    uint256 private constant LCG_MODULO = 0x7fffffff;
+    uint256 private constant _LCG_MODULO = 0x7fffffff;
 
-    // This must be co-prime to `LCG_MODULO`.
-    uint256 private constant LCG_SEED = 0xbeef;
+    // This must be co-prime to `_LCG_MODULO`.
+    uint256 private constant _LCG_SEED = 0xbeef;
 
     function sort(uint256[] memory a) internal pure {
         assembly {
@@ -64,7 +64,7 @@ library Sort {
 
             // Linear congruential generator (LCG) for psuedo-random partitioning
             // to prevent idiosyncratic worse case behaviour.
-            let lcg := LCG_SEED
+            let lcg := _LCG_SEED
             // prettier-ignore
             for {} iszero(eq(stack, stackBottom)) {} {
                 // Pop `l` and `h` from the stack.
@@ -72,75 +72,77 @@ library Sort {
                 let l := mload(stack)
                 let h := mload(add(stack, 0x20))
 
-                switch shr(9, sub(h, l))
-                case 0 {
-                    // Do insertion sort if `h - l < 0x20 * 16`.
+                // Do insertion sort if `h - l < 0x20 * 16`.
+                if iszero(shr(9, sub(h, l))) {
                     // prettier-ignore
                     for { let i := add(l, 0x20) } iszero(gt(i, h)) { i := add(i, 0x20) } {
                         let k := mload(i) // Key.
-                        let j := i // The current slot.
-                        let b := sub(j, 0x20) // The slot before the current slot.
-                        let v := mload(b) // The value of `b`.
+                        let j := sub(i, 0x20) // The slot before the current slot.
+                        let v := mload(j) // The value of `j`.
                         // prettier-ignore
-                        for {} gt(v, k) {} {
-                            mstore(j, v)
-                            j := b
-                            b := sub(b, 0x20)
-                            v := mload(b)
+                        if iszero(gt(v, k)) { continue }
+                        // prettier-ignore
+                        for {} 1 {} {
+                            mstore(add(j, 0x20), v)
+                            j := sub(j, 0x20)
+                            v := mload(j)
+                            // prettier-ignore
+                            if iszero(gt(v, k)) { break }
                         }
-                        mstore(j, k)
+                        mstore(add(j, 0x20), k)
+                    }
+                    continue
+                }
+
+                // Psuedo-random partition pivot.
+                lcg := mulmod(lcg, _LCG_MULTIPLIER, _LCG_MODULO) // Step the LCG.
+                let p := and(sub(h, mod(lcg, sub(h, l))), _LCG_MASK) // Pivot slot.
+                let x := mload(p) // The value of the pivot slot.
+                // Swap slots `l` and `p`.
+                {
+                    mstore(p, mload(l))
+                    mstore(l, x)
+                }
+                // Hoare's partition.
+                {
+                    p := add(h, 0x20)
+                    // prettier-ignore
+                    for { let i := sub(l, 0x20) } 1 {} {
+                        // prettier-ignore
+                        for {} 1 {} { 
+                            i := add(i, 0x20)
+                            // prettier-ignore
+                            if iszero(lt(mload(i), x)) { break }
+                        }
+                        let j := p
+                        // prettier-ignore
+                        for {} 1 {} { 
+                            j := sub(j, 0x20)
+                            // prettier-ignore
+                            if iszero(gt(mload(j), x)) { break }
+                        }
+                        p := j
+                        // prettier-ignore
+                        if iszero(lt(i, p)) { break }
+                        // Swap slots `i` and `p`.
+                        let t := mload(i)
+                        mstore(i, mload(p))
+                        mstore(p, t)
                     }
                 }
-                default {
-                    // Psuedo-random partition pivot.
-                    lcg := mulmod(lcg, LCG_MULTIPLIER, LCG_MODULO) // Step the LCG.
-                    let p := and(sub(h, mod(lcg, sub(h, l))), LCG_MASK) // Pivot slot.
-                    let x := mload(p) // The value of the pivot slot.
-                    // Swap slots `l` and `p`.
-                    {
-                        mstore(p, mload(l))
-                        mstore(l, x)
-                    }
-                    // Hoare's partition.
-                    {
-                        p := add(h, 0x20)
-                        // prettier-ignore
-                        for { let i := sub(l, 0x20) } 1 {} {
-                            // prettier-ignore
-                            for {} 1 {} { 
-                                i := add(i, 0x20)
-                                // prettier-ignore
-                                if iszero(lt(mload(i), x)) { break }
-                            }
-                            // prettier-ignore
-                            for {} 1 {} { 
-                                p := sub(p, 0x20)
-                                // prettier-ignore
-                                if iszero(gt(mload(p), x)) { break }
-                            }
-                            // prettier-ignore
-                            if iszero(lt(i, p)) { break }
-                            // Swap slots `i` and `p`.
-                            let t := mload(i)
-                            mstore(i, mload(p))
-                            mstore(p, t)
-                        }
-                    }
-                    // If slice on left of pivot is non-empty, push onto stack.
-                    {
-                        // We can skip `mstore(stack, l)`.
-                        mstore(add(stack, 0x20), p)
-                        // `shl` 6 is equivalent to multiplying by `0x40`.
-                        stack := add(stack, shl(6, gt(p, l)))
-                    }
-                    // If slice on right of pivot is non-empty, push onto stack.
-                    {
-                        let t := add(p, 0x20)
-                        mstore(stack, t)
-                        mstore(add(stack, 0x20), h)
-                        // `shl` 6 is equivalent to multiplying by `0x40`.
-                        stack := add(stack, shl(6, lt(t, h)))    
-                    }
+                // If slice on left of pivot is non-empty, push onto stack.
+                {
+                    // We can skip `mstore(stack, l)`.
+                    mstore(add(stack, 0x20), p)
+                    // `shl` 6 is equivalent to multiplying by `0x40`.
+                    stack := add(stack, shl(6, gt(p, l)))
+                }
+                // If slice on right of pivot is non-empty, push onto stack.
+                {
+                    mstore(stack, add(p, 0x20))
+                    mstore(add(stack, 0x20), h)
+                    // `shl` 6 is equivalent to multiplying by `0x40`.
+                    stack := add(stack, shl(6, lt(add(p, 0x20), h)))
                 }
             }
             mstore(a, n) // Restore the length of `a`.
