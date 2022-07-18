@@ -72,8 +72,9 @@ library Sort {
                 let l := mload(stack)
                 let h := mload(add(stack, 0x20))
 
-                // Do insertion sort if `h - l < 0x20 * 16`.
-                if iszero(shr(9, sub(h, l))) {
+                // Do insertion sort if `h - l <= 0x20 * 12`.
+                // Threshold is fine-tuned via trial and error.
+                if iszero(gt(sub(h, l), 0x180)) {
                     // prettier-ignore
                     for { let i := add(l, 0x20) } iszero(gt(i, h)) { i := add(i, 0x20) } {
                         let k := mload(i) // Key.
