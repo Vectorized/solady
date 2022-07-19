@@ -31,7 +31,7 @@ library Sort {
                 // The `shl` by 5 is equivalent to multiplying by `0x20`.
                 let l := add(a, 0x20)
                 let h := add(l, shl(5, n))
-                
+
                 let u := mload(l) // Previous slot value, `u`.
                 let j := add(l, 0x20)
                 let s := 0 // Number of out of order elements.
