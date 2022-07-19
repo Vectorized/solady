@@ -14,7 +14,7 @@ library Sort {
     // For the linear congruential generator.
     uint256 private constant _LCG_MODULO = 0x7fffffff;
 
-    // This must be co-prime to `_LCG_MODULO`.
+    // Any integer from `[1 .. _LCG_MODULO - 1]` will do, since `_LCG_MODULO` is prime.
     uint256 private constant _LCG_SEED = 0xbeef;
 
     function sort(uint256[] memory a) internal pure {
@@ -23,43 +23,58 @@ library Sort {
             mstore(a, 0) // For insertion sort's inner loop to terminate.
 
             // Let the stack be the start of the free memory.
-            let stackBottom := mload(0x40)
-            let stack := add(stackBottom, 0x40)
+            let stack := mload(0x40)
+            let stackBottom := stack
 
-            {
+            for {
+
+            } iszero(lt(n, 2)) {
+
+            } {
                 // Push `l` and `h` to the stack.
                 // The `shl` by 5 is equivalent to multiplying by `0x20`.
                 let l := add(a, 0x20)
-                let h := add(a, shl(5, n))
-                mstore(stackBottom, l)
-                mstore(add(stackBottom, 0x20), h)
+                let h := add(l, shl(5, n))
 
-                let s := 0 // Number of out of order elements.
                 let u := mload(l) // Previous slot value, `u`.
+                let j := add(l, 0x20)
+                let s := 0 // Number of out of order elements.
+
                 // prettier-ignore
-                for { let j := add(l, 0x20) } iszero(gt(j, h)) { j := add(j, 0x20) } {
+                for {} 1 {} {
                     let v := mload(j) // Current slot value, `v`.
                     s := add(s, gt(u, v)) // Increment `s` by 1 if out of order.
                     u := v // Set previous slot value to current slot value.
-                }
-                // If the array is sorted, or reverse sorted,
-                // subtract `0x40` from `stack` to make it equal to `stackBottom`,
-                // which skips the sort.
-                // `shl` 6 is equivalent to multiplying by `0x40`.
-                stack := sub(stack, shl(6, or(iszero(s), eq(add(s, 1), n))))
-
-                // If 50% or more of the elements are out of order,
-                // reverse the array.
-                if iszero(lt(shl(1, s), n)) {
+                    j := add(j, 0x20)
                     // prettier-ignore
-                    for {} lt(l, h) {} {
+                    if iszero(lt(j, h)) { break }
+                }
+
+                // If the array is already sorted.
+                // prettier-ignore
+                if iszero(s) { break }
+
+                // If the array is reversed sorted.
+                if eq(add(s, 1), n) {
+                    h := sub(h, 0x20)
+                    // prettier-ignore
+                    for {} 1 {} {
                         let t := mload(l)
                         mstore(l, mload(h))
                         mstore(h, t)
                         h := sub(h, 0x20)
                         l := add(l, 0x20)
+                        // prettier-ignore
+                        if iszero(lt(l, h)) { break }
                     }
+                    break
                 }
+
+                // Push `l` and `h` onto the stack.
+                mstore(stack, l)
+                mstore(add(stack, 0x20), sub(h, 0x20))
+                stack := add(stack, 0x40)
+                break
             }
 
             // Linear congruential generator (LCG) for psuedo-random partitioning
@@ -72,10 +87,17 @@ library Sort {
                 let l := mload(stack)
                 let h := mload(add(stack, 0x20))
 
-                // Do insertion sort if `h - l < 0x20 * 16`.
-                if iszero(shr(9, sub(h, l))) {
+                // Do insertion sort if `h - l <= 0x20 * 12`.
+                // Threshold is fine-tuned via trial and error.
+                if iszero(gt(sub(h, l), 0x180)) {
+                    // Hardcode sort the first 2 elements.
+                    let t := mload(add(l, 0x20))
+                    if iszero(lt(mload(l), t)) {
+                        mstore(add(l, 0x20), mload(l))
+                        mstore(l, t)
+                    }
                     // prettier-ignore
-                    for { let i := add(l, 0x20) } iszero(gt(i, h)) { i := add(i, 0x20) } {
+                    for { let i := add(l, 0x40) } iszero(gt(i, h)) { i := add(i, 0x20) } {
                         let k := mload(i) // Key.
                         let j := sub(i, 0x20) // The slot before the current slot.
                         let v := mload(j) // The value of `j`.
@@ -112,14 +134,14 @@ library Sort {
                         for {} 1 {} { 
                             i := add(i, 0x20)
                             // prettier-ignore
-                            if iszero(lt(mload(i), x)) { break }
+                            if iszero(gt(x, mload(i))) { break }
                         }
                         let j := p
                         // prettier-ignore
                         for {} 1 {} { 
                             j := sub(j, 0x20)
                             // prettier-ignore
-                            if iszero(gt(mload(j), x)) { break }
+                            if iszero(lt(x, mload(j))) { break }
                         }
                         p := j
                         // prettier-ignore
@@ -134,15 +156,13 @@ library Sort {
                 {
                     // We can skip `mstore(stack, l)`.
                     mstore(add(stack, 0x20), p)
-                    // `shl` 6 is equivalent to multiplying by `0x40`.
-                    stack := add(stack, shl(6, gt(p, l)))
+                    stack := add(stack, mul(0x40, gt(p, l)))
                 }
                 // If slice on right of pivot is non-empty, push onto stack.
                 {
                     mstore(stack, add(p, 0x20))
                     mstore(add(stack, 0x20), h)
-                    // `shl` 6 is equivalent to multiplying by `0x40`.
-                    stack := add(stack, shl(6, lt(add(p, 0x20), h)))
+                    stack := add(stack, mul(0x40, lt(add(p, 0x20), h)))
                 }
             }
             mstore(a, n) // Restore the length of `a`.
