@@ -19,7 +19,8 @@ async function main() {
     return source
       .replace(/pragma solidity ([>=^0-9\.]+);/g, 'pragma solidity ^0.8.4;')
       .replace('// SPDX-License-Identifier: AGPL-3.0-only', '// SPDX-License-Identifier: MIT')
-      .replace('/// @author Solmate', '/// @author Modified from Solmate');
+      .replace('/// @author Solmate', '/// @author Modified from Solmate')
+      .replace(/\/rari-capital\//i, '/transmissions11/');
   };
 
   const walkAndReplace = dirPath => {

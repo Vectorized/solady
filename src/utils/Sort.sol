@@ -14,7 +14,7 @@ library Sort {
     // For the linear congruential generator.
     uint256 private constant _LCG_MODULO = 0x7fffffff;
 
-    // This must be co-prime to `_LCG_MODULO`.
+    // Any integer from `[1 .. _LCG_MODULO - 1]` will do, since `_LCG_MODULO` is prime.
     uint256 private constant _LCG_SEED = 0xbeef;
 
     function sort(uint256[] memory a) internal pure {
@@ -26,7 +26,8 @@ library Sort {
             let stack := mload(0x40)
             let stackBottom := stack
 
-            if iszero(lt(n, 2)) {
+            // prettier-ignore
+            for {} iszero(lt(n, 2)) {} {
                 // Push `l` and `h` to the stack.
                 // The `shl` by 5 is equivalent to multiplying by `0x20`.
                 let l := add(a, 0x20)
@@ -46,17 +47,12 @@ library Sort {
                     if iszero(lt(j, h)) { break }
                 }
 
-                // If the array is not sorted or reverse sorted,
-                // push `l` and `h` onto the `stack`.
-                if iszero(or(iszero(s), eq(add(s, 1), n))) {
-                    mstore(stack, l)
-                    mstore(add(stack, 0x20), sub(h, 0x20))
-                    stack := add(stack, 0x40)
-                }
+                // If the array is already sorted.
+                // prettier-ignore
+                if iszero(s) { break }
 
-                // If 50% or more of the elements are out of order,
-                // reverse the array.
-                if iszero(lt(shl(1, s), n)) {
+                // If the array is reversed sorted.
+                if eq(add(s, 1), n) {
                     h := sub(h, 0x20)
                     // prettier-ignore
                     for {} 1 {} {
@@ -68,7 +64,14 @@ library Sort {
                         // prettier-ignore
                         if iszero(lt(l, h)) { break }
                     }
+                    break
                 }
+
+                // Push `l` and `h` onto the stack.
+                mstore(stack, l)
+                mstore(add(stack, 0x20), sub(h, 0x20))
+                stack := add(stack, 0x40)
+                break
             }
 
             // Linear congruential generator (LCG) for psuedo-random partitioning
@@ -128,14 +131,14 @@ library Sort {
                         for {} 1 {} { 
                             i := add(i, 0x20)
                             // prettier-ignore
-                            if iszero(lt(mload(i), x)) { break }
+                            if iszero(gt(x, mload(i))) { break }
                         }
                         let j := p
                         // prettier-ignore
                         for {} 1 {} { 
                             j := sub(j, 0x20)
                             // prettier-ignore
-                            if iszero(gt(mload(j), x)) { break }
+                            if iszero(lt(x, mload(j))) { break }
                         }
                         p := j
                         // prettier-ignore

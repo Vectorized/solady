@@ -116,6 +116,19 @@ contract SortTest is Test {
         }
     }
 
+    function testSortMostlySame() public {
+        unchecked {
+            uint256[] memory a = new uint256[](100);
+            for (uint256 i; i < a.length; ++i) {
+                a[i] = i % 8 == 0 ? i : 0;
+            }
+            Sort.sort(a);
+            for (uint256 i = 1; i < a.length; ++i) {
+                assertTrue(a[i - 1] <= a[i]);
+            }
+        }
+    }
+
     function testSortTestOverhead() public {
         unchecked {
             uint256[] memory a = new uint256[](100);
@@ -203,7 +216,7 @@ contract SortTest is Test {
                 lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
                 a[i] = lcg;
             }
-            sortOriginal(a, 0, int256(a.length - 1));
+            sortOriginal(a);
             for (uint256 i = 1; i < a.length; ++i) {
                 assertTrue(a[i - 1] <= a[i]);
             }
@@ -220,7 +233,7 @@ contract SortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = i;
             }
-            sortOriginal(a, 0, int256(a.length - 1));
+            sortOriginal(a);
             for (uint256 i = 1; i < a.length; ++i) {
                 assertTrue(a[i - 1] <= a[i]);
             }
@@ -233,11 +246,28 @@ contract SortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = 999 - i;
             }
-            sortOriginal(a, 0, int256(a.length - 1));
+            sortOriginal(a);
             for (uint256 i = 1; i < a.length; ++i) {
                 assertTrue(a[i - 1] <= a[i]);
             }
         }
+    }
+
+    function testSortOriginalMostlySame() public {
+        unchecked {
+            uint256[] memory a = new uint256[](100);
+            for (uint256 i; i < a.length; ++i) {
+                a[i] = i % 8 == 0 ? i : 0;
+            }
+            sortOriginal(a);
+            for (uint256 i = 1; i < a.length; ++i) {
+                assertTrue(a[i - 1] <= a[i]);
+            }
+        }
+    }
+
+    function sortOriginal(uint256[] memory a) internal pure {
+        sortOriginal(a, 0, int256(a.length - 1));
     }
 
     function sortOriginal(

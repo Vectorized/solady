@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Gas optimized ECDSA wrapper.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ECDSA.sol)
-/// @author Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/utils/ECDSA.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/ECDSA.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol)
 library ECDSA {
     function recover(bytes32 hash, bytes calldata signature) internal view returns (address result) {

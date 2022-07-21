@@ -3,4 +3,4 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/solmate"]
 	path = lib/solmate
-	url = https://github.com/rari-capital/solmate
+	url = https://github.com/transmissions11/solmate
