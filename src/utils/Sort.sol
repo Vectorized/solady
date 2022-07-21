@@ -26,11 +26,8 @@ library Sort {
             let stack := mload(0x40)
             let stackBottom := stack
 
-            for {
-
-            } iszero(lt(n, 2)) {
-
-            } {
+            // prettier-ignore
+            for {} iszero(lt(n, 2)) {} {
                 // Push `l` and `h` to the stack.
                 // The `shl` by 5 is equivalent to multiplying by `0x20`.
                 let l := add(a, 0x20)
