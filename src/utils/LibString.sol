@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for converting numbers into strings and other string operations.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibString.sol)
-/// @author Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/utils/LibString.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibString.sol)
 library LibString {
     /*//////////////////////////////////////////////////////////////
                               CUSTOM ERRORS
