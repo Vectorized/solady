@@ -3,7 +3,7 @@
 # See more config options at: https://github.com/gakonst/foundry/tree/master/config
 
 # The Default Profile
-[default]
+[profile.default]
 solc_version = '0.8.15'
 auto_detect_solc = false
 optimizer = true
