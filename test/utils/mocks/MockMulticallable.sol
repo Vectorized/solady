@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.4;
 
-import '../../../src/utils/Multicallable.sol';
+import "../../../src/utils/Multicallable.sol";
 
 contract MockMulticallable is Multicallable {
     function functionThatRevertsWithError(string memory error) external pure {

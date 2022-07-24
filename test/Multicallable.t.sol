@@ -18,7 +18,12 @@ contract MulticallableTest is Test {
         multicallable.multicall(data);
     }
 
-    function testMulticallableReturnDataIsProperlyEncoded(uint256 a0, uint256 b0, uint256 a1, uint256 b1) public {
+    function testMulticallableReturnDataIsProperlyEncoded(
+        uint256 a0,
+        uint256 b0,
+        uint256 a1,
+        uint256 b1
+    ) public {
         bytes[] memory data = new bytes[](2);
         data[0] = abi.encodeWithSelector(MockMulticallable.functionThatReturnsTuple.selector, a0, b0);
         data[1] = abi.encodeWithSelector(MockMulticallable.functionThatReturnsTuple.selector, a1, b1);
@@ -50,7 +55,7 @@ contract MulticallableTest is Test {
     function testMulticallablePreservesMsgValue() public {
         bytes[] memory data = new bytes[](1);
         data[0] = abi.encodeWithSelector(MockMulticallable.pays.selector);
-        multicallable.multicall{ value: 3 }(data);
+        multicallable.multicall{value: 3}(data);
         assertEq(multicallable.paid(), 3);
     }
 
@@ -58,7 +63,7 @@ contract MulticallableTest is Test {
         bytes[] memory data = new bytes[](2);
         data[0] = abi.encodeWithSelector(MockMulticallable.pays.selector);
         data[1] = abi.encodeWithSelector(MockMulticallable.pays.selector);
-        multicallable.multicall{ value: 3 }(data);
+        multicallable.multicall{value: 3}(data);
         assertEq(multicallable.paid(), 6);
     }
 
@@ -70,5 +75,4 @@ contract MulticallableTest is Test {
         address returnedAddress = abi.decode(multicallable.multicall(data)[0], (address));
         assertEq(caller, returnedAddress);
     }
-
 }
