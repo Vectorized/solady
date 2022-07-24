@@ -37,7 +37,7 @@ library LibBitmap {
         assembly {
             // get the storage pointer for bitmap.map[index >> 8]
             // storage pointer == keccak256(index >> 8 . bitmap.slot)
-            mstore(0x00, shr(8, index)) 
+            mstore(0x00, shr(8, index))
             mstore(0x20, bitmap.slot)
             let storagePointer := keccak256(0x00, 0x40)
 
