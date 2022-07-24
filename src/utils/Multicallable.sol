@@ -9,11 +9,11 @@ abstract contract Multicallable {
             results := mload(0x40)
             mstore(results, data.length)
             
-            let resultsOffsets := add(results, 0x20)
-
-            let memPtr := add(resultsOffsets, shl(5, data.length))
-            
             let dataLengthsEnd := add(data.offset, shl(5, data.length))
+            
+            let resultsOffsets := add(results, 0x20)
+            
+            let memPtr := add(resultsOffsets, shl(5, data.length))
 
             for { let i := data.offset } iszero(eq(i, dataLengthsEnd)) { i := add(i, 0x20) } {
                 // The offset of the current bytes in the calldata.

@@ -14,7 +14,11 @@ contract MockMulticallable is Multicallable {
     }
 
     function functionThatReturnsTuple(uint256 a, uint256 b) external pure returns (Tuple memory tuple) {
-        tuple = Tuple({b: a, a: b});
+        tuple = Tuple({a: a, b: b});
+    }
+
+    function functionThatReturnsString(string calldata s) external pure returns (string memory) {
+        return s;
     }
 
     uint256 public paid;
