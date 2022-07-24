@@ -44,12 +44,16 @@ library Sort {
                     u := v // Set previous slot value to current slot value.
                     j := add(j, 0x20)
                     // prettier-ignore
-                    if iszero(lt(j, h)) { break }
+                    if iszero(lt(j, h)) {
+                        break
+                    }
                 }
 
                 // If the array is already sorted.
                 // prettier-ignore
-                if iszero(s) { break }
+                if iszero(s) {
+                    break
+                }
 
                 // If the array is reversed sorted.
                 if eq(add(s, 1), n) {
@@ -62,7 +66,9 @@ library Sort {
                         h := sub(h, 0x20)
                         l := add(l, 0x20)
                         // prettier-ignore
-                        if iszero(lt(l, h)) { break }
+                        if iszero(lt(l, h)) {
+                            break
+                        }
                     }
                     break
                 }
@@ -94,19 +100,25 @@ library Sort {
                         mstore(l, t)
                     }
                     // prettier-ignore
-                    for { let i := add(l, 0x40) } iszero(gt(i, h)) { i := add(i, 0x20) } {
+                    for { let i := add(l, 0x40) } iszero(gt(i, h)) {
+                        i := add(i, 0x20)
+                    } {
                         let k := mload(i) // Key.
                         let j := sub(i, 0x20) // The slot before the current slot.
                         let v := mload(j) // The value of `j`.
                         // prettier-ignore
-                        if iszero(gt(v, k)) { continue }
+                        if iszero(gt(v, k)) {
+                            continue
+                        }
                         // prettier-ignore
                         for {} 1 {} {
                             mstore(add(j, 0x20), v)
                             j := sub(j, 0x20)
                             v := mload(j)
                             // prettier-ignore
-                            if iszero(gt(v, k)) { break }
+                            if iszero(gt(v, k)) {
+                                break
+                            }
                         }
                         mstore(add(j, 0x20), k)
                     }
@@ -128,21 +140,27 @@ library Sort {
                     // prettier-ignore
                     for { let i := sub(l, 0x20) } 1 {} {
                         // prettier-ignore
-                        for {} 1 {} { 
+                        for {} 1 {} {
                             i := add(i, 0x20)
                             // prettier-ignore
-                            if iszero(gt(x, mload(i))) { break }
+                            if iszero(gt(x, mload(i))) {
+                                break
+                            }
                         }
                         let j := p
                         // prettier-ignore
-                        for {} 1 {} { 
+                        for {} 1 {} {
                             j := sub(j, 0x20)
                             // prettier-ignore
-                            if iszero(lt(x, mload(j))) { break }
+                            if iszero(lt(x, mload(j))) {
+                                break
+                            }
                         }
                         p := j
                         // prettier-ignore
-                        if iszero(lt(i, p)) { break }
+                        if iszero(lt(i, p)) {
+                            break
+                        }
                         // Swap slots `i` and `p`.
                         let t := mload(i)
                         mstore(i, mload(p))
