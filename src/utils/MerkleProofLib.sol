@@ -2,10 +2,10 @@
 pragma solidity ^0.8.4;
 
 /// @notice Gas optimized verification of proof of inclusion for a leaf in a Merkle tree.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MerkleProof.sol)
-/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/MerkleProof.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MerkleProofLib.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/MerkleProofLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/MerkleProof.sol)
-library MerkleProof {
+library MerkleProofLib {
     function verify(
         bytes32[] calldata proof,
         bytes32 root,
