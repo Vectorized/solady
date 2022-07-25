@@ -8,8 +8,7 @@ import {ReturnsFalseToken} from "./utils/weird-tokens/ReturnsFalseToken.sol";
 import {MissingReturnToken} from "./utils/weird-tokens/MissingReturnToken.sol";
 import {ReturnsTooMuchToken} from "./utils/weird-tokens/ReturnsTooMuchToken.sol";
 import {ReturnsGarbageToken} from "./utils/weird-tokens/ReturnsGarbageToken.sol";
-import {ReturnsTooLittleToken} from
-    "./utils/weird-tokens/ReturnsTooLittleToken.sol";
+import {ReturnsTooLittleToken} from "./utils/weird-tokens/ReturnsTooLittleToken.sol";
 
 import "forge-std/Test.sol";
 
@@ -57,27 +56,19 @@ contract SafeTransferLibTest is Test {
     }
 
     function testTransferFromWithMissingReturn() public {
-        verifySafeTransferFrom(
-            address(missingReturn), address(0xFEED), address(0xBEEF), 1e18
-        );
+        verifySafeTransferFrom(address(missingReturn), address(0xFEED), address(0xBEEF), 1e18);
     }
 
     function testTransferFromWithStandardERC20() public {
-        verifySafeTransferFrom(
-            address(erc20), address(0xFEED), address(0xBEEF), 1e18
-        );
+        verifySafeTransferFrom(address(erc20), address(0xFEED), address(0xBEEF), 1e18);
     }
 
     function testTransferFromWithReturnsTooMuch() public {
-        verifySafeTransferFrom(
-            address(returnsTooMuch), address(0xFEED), address(0xBEEF), 1e18
-        );
+        verifySafeTransferFrom(address(returnsTooMuch), address(0xFEED), address(0xBEEF), 1e18);
     }
 
     function testTransferFromWithNonContract() public {
-        SafeTransferLib.safeTransferFrom(
-            address(0xBADBEEF), address(0xFEED), address(0xBEEF), 1e18
-        );
+        SafeTransferLib.safeTransferFrom(address(0xBADBEEF), address(0xFEED), address(0xBEEF), 1e18);
     }
 
     function testApproveWithMissingReturn() public {
@@ -113,21 +104,15 @@ contract SafeTransferLibTest is Test {
     }
 
     function testFailTransferFromWithReturnsFalse() public {
-        verifySafeTransferFrom(
-            address(returnsFalse), address(0xFEED), address(0xBEEF), 1e18
-        );
+        verifySafeTransferFrom(address(returnsFalse), address(0xFEED), address(0xBEEF), 1e18);
     }
 
     function testFailTransferFromWithReverting() public {
-        verifySafeTransferFrom(
-            address(reverting), address(0xFEED), address(0xBEEF), 1e18
-        );
+        verifySafeTransferFrom(address(reverting), address(0xFEED), address(0xBEEF), 1e18);
     }
 
     function testFailTransferFromWithReturnsTooLittle() public {
-        verifySafeTransferFrom(
-            address(returnsTooLittle), address(0xFEED), address(0xBEEF), 1e18
-        );
+        verifySafeTransferFrom(address(returnsTooLittle), address(0xFEED), address(0xBEEF), 1e18);
     }
 
     function testFailApproveWithReturnsFalse() public {
@@ -146,10 +131,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransfer(address(missingReturn), to, amount);
     }
 
@@ -157,10 +139,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransfer(address(erc20), to, amount);
     }
 
@@ -168,10 +147,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransfer(address(returnsTooMuch), to, amount);
     }
 
@@ -180,84 +156,41 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes memory garbage,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         if (
-            (
-                garbage.length
-                        < 32
-                        ||
-                        (
-                            garbage[0]
-                                != 0
-                                || garbage[1]
-                                != 0
-                                || garbage[2]
-                                != 0
-                                || garbage[3]
-                                != 0
-                                || garbage[4]
-                                != 0
-                                || garbage[5]
-                                != 0
-                                || garbage[6]
-                                != 0
-                                || garbage[7]
-                                != 0
-                                || garbage[8]
-                                != 0
-                                || garbage[9]
-                                != 0
-                                || garbage[10]
-                                != 0
-                                || garbage[11]
-                                != 0
-                                || garbage[12]
-                                != 0
-                                || garbage[13]
-                                != 0
-                                || garbage[14]
-                                != 0
-                                || garbage[15]
-                                != 0
-                                || garbage[16]
-                                != 0
-                                || garbage[17]
-                                != 0
-                                || garbage[18]
-                                != 0
-                                || garbage[19]
-                                != 0
-                                || garbage[20]
-                                != 0
-                                || garbage[21]
-                                != 0
-                                || garbage[22]
-                                != 0
-                                || garbage[23]
-                                != 0
-                                || garbage[24]
-                                != 0
-                                || garbage[25]
-                                != 0
-                                || garbage[26]
-                                != 0
-                                || garbage[27]
-                                != 0
-                                || garbage[28]
-                                != 0
-                                || garbage[29]
-                                != 0
-                                || garbage[30]
-                                != 0
-                                || garbage[31]
-                                != bytes1(0x01)
-                        )
-                )
-                && garbage.length
-                != 0
+            (garbage.length < 32 ||
+                (garbage[0] != 0 ||
+                    garbage[1] != 0 ||
+                    garbage[2] != 0 ||
+                    garbage[3] != 0 ||
+                    garbage[4] != 0 ||
+                    garbage[5] != 0 ||
+                    garbage[6] != 0 ||
+                    garbage[7] != 0 ||
+                    garbage[8] != 0 ||
+                    garbage[9] != 0 ||
+                    garbage[10] != 0 ||
+                    garbage[11] != 0 ||
+                    garbage[12] != 0 ||
+                    garbage[13] != 0 ||
+                    garbage[14] != 0 ||
+                    garbage[15] != 0 ||
+                    garbage[16] != 0 ||
+                    garbage[17] != 0 ||
+                    garbage[18] != 0 ||
+                    garbage[19] != 0 ||
+                    garbage[20] != 0 ||
+                    garbage[21] != 0 ||
+                    garbage[22] != 0 ||
+                    garbage[23] != 0 ||
+                    garbage[24] != 0 ||
+                    garbage[25] != 0 ||
+                    garbage[26] != 0 ||
+                    garbage[27] != 0 ||
+                    garbage[28] != 0 ||
+                    garbage[29] != 0 ||
+                    garbage[30] != 0 ||
+                    garbage[31] != bytes1(0x01))) && garbage.length != 0
         ) return;
 
         returnsGarbage.setGarbage(garbage);
@@ -270,12 +203,8 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0)
-        return;
+    ) public brutalizeMemory(brutalizeWith) {
+        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
 
         SafeTransferLib.safeTransfer(nonContract, to, amount);
     }
@@ -289,10 +218,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransferFrom(address(missingReturn), from, to, amount);
     }
 
@@ -301,10 +227,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransferFrom(address(erc20), from, to, amount);
     }
 
@@ -313,10 +236,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransferFrom(address(returnsTooMuch), from, to, amount);
     }
 
@@ -326,84 +246,41 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes memory garbage,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         if (
-            (
-                garbage.length
-                        < 32
-                        ||
-                        (
-                            garbage[0]
-                                != 0
-                                || garbage[1]
-                                != 0
-                                || garbage[2]
-                                != 0
-                                || garbage[3]
-                                != 0
-                                || garbage[4]
-                                != 0
-                                || garbage[5]
-                                != 0
-                                || garbage[6]
-                                != 0
-                                || garbage[7]
-                                != 0
-                                || garbage[8]
-                                != 0
-                                || garbage[9]
-                                != 0
-                                || garbage[10]
-                                != 0
-                                || garbage[11]
-                                != 0
-                                || garbage[12]
-                                != 0
-                                || garbage[13]
-                                != 0
-                                || garbage[14]
-                                != 0
-                                || garbage[15]
-                                != 0
-                                || garbage[16]
-                                != 0
-                                || garbage[17]
-                                != 0
-                                || garbage[18]
-                                != 0
-                                || garbage[19]
-                                != 0
-                                || garbage[20]
-                                != 0
-                                || garbage[21]
-                                != 0
-                                || garbage[22]
-                                != 0
-                                || garbage[23]
-                                != 0
-                                || garbage[24]
-                                != 0
-                                || garbage[25]
-                                != 0
-                                || garbage[26]
-                                != 0
-                                || garbage[27]
-                                != 0
-                                || garbage[28]
-                                != 0
-                                || garbage[29]
-                                != 0
-                                || garbage[30]
-                                != 0
-                                || garbage[31]
-                                != bytes1(0x01)
-                        )
-                )
-                && garbage.length
-                != 0
+            (garbage.length < 32 ||
+                (garbage[0] != 0 ||
+                    garbage[1] != 0 ||
+                    garbage[2] != 0 ||
+                    garbage[3] != 0 ||
+                    garbage[4] != 0 ||
+                    garbage[5] != 0 ||
+                    garbage[6] != 0 ||
+                    garbage[7] != 0 ||
+                    garbage[8] != 0 ||
+                    garbage[9] != 0 ||
+                    garbage[10] != 0 ||
+                    garbage[11] != 0 ||
+                    garbage[12] != 0 ||
+                    garbage[13] != 0 ||
+                    garbage[14] != 0 ||
+                    garbage[15] != 0 ||
+                    garbage[16] != 0 ||
+                    garbage[17] != 0 ||
+                    garbage[18] != 0 ||
+                    garbage[19] != 0 ||
+                    garbage[20] != 0 ||
+                    garbage[21] != 0 ||
+                    garbage[22] != 0 ||
+                    garbage[23] != 0 ||
+                    garbage[24] != 0 ||
+                    garbage[25] != 0 ||
+                    garbage[26] != 0 ||
+                    garbage[27] != 0 ||
+                    garbage[28] != 0 ||
+                    garbage[29] != 0 ||
+                    garbage[30] != 0 ||
+                    garbage[31] != bytes1(0x01))) && garbage.length != 0
         ) return;
 
         returnsGarbage.setGarbage(garbage);
@@ -417,12 +294,8 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0)
-        return;
+    ) public brutalizeMemory(brutalizeWith) {
+        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
 
         SafeTransferLib.safeTransferFrom(nonContract, from, to, amount);
     }
@@ -431,10 +304,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeApprove(address(missingReturn), to, amount);
     }
 
@@ -442,10 +312,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeApprove(address(erc20), to, amount);
     }
 
@@ -453,10 +320,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeApprove(address(returnsTooMuch), to, amount);
     }
 
@@ -465,84 +329,41 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes memory garbage,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         if (
-            (
-                garbage.length
-                        < 32
-                        ||
-                        (
-                            garbage[0]
-                                != 0
-                                || garbage[1]
-                                != 0
-                                || garbage[2]
-                                != 0
-                                || garbage[3]
-                                != 0
-                                || garbage[4]
-                                != 0
-                                || garbage[5]
-                                != 0
-                                || garbage[6]
-                                != 0
-                                || garbage[7]
-                                != 0
-                                || garbage[8]
-                                != 0
-                                || garbage[9]
-                                != 0
-                                || garbage[10]
-                                != 0
-                                || garbage[11]
-                                != 0
-                                || garbage[12]
-                                != 0
-                                || garbage[13]
-                                != 0
-                                || garbage[14]
-                                != 0
-                                || garbage[15]
-                                != 0
-                                || garbage[16]
-                                != 0
-                                || garbage[17]
-                                != 0
-                                || garbage[18]
-                                != 0
-                                || garbage[19]
-                                != 0
-                                || garbage[20]
-                                != 0
-                                || garbage[21]
-                                != 0
-                                || garbage[22]
-                                != 0
-                                || garbage[23]
-                                != 0
-                                || garbage[24]
-                                != 0
-                                || garbage[25]
-                                != 0
-                                || garbage[26]
-                                != 0
-                                || garbage[27]
-                                != 0
-                                || garbage[28]
-                                != 0
-                                || garbage[29]
-                                != 0
-                                || garbage[30]
-                                != 0
-                                || garbage[31]
-                                != bytes1(0x01)
-                        )
-                )
-                && garbage.length
-                != 0
+            (garbage.length < 32 ||
+                (garbage[0] != 0 ||
+                    garbage[1] != 0 ||
+                    garbage[2] != 0 ||
+                    garbage[3] != 0 ||
+                    garbage[4] != 0 ||
+                    garbage[5] != 0 ||
+                    garbage[6] != 0 ||
+                    garbage[7] != 0 ||
+                    garbage[8] != 0 ||
+                    garbage[9] != 0 ||
+                    garbage[10] != 0 ||
+                    garbage[11] != 0 ||
+                    garbage[12] != 0 ||
+                    garbage[13] != 0 ||
+                    garbage[14] != 0 ||
+                    garbage[15] != 0 ||
+                    garbage[16] != 0 ||
+                    garbage[17] != 0 ||
+                    garbage[18] != 0 ||
+                    garbage[19] != 0 ||
+                    garbage[20] != 0 ||
+                    garbage[21] != 0 ||
+                    garbage[22] != 0 ||
+                    garbage[23] != 0 ||
+                    garbage[24] != 0 ||
+                    garbage[25] != 0 ||
+                    garbage[26] != 0 ||
+                    garbage[27] != 0 ||
+                    garbage[28] != 0 ||
+                    garbage[29] != 0 ||
+                    garbage[30] != 0 ||
+                    garbage[31] != bytes1(0x01))) && garbage.length != 0
         ) return;
 
         returnsGarbage.setGarbage(garbage);
@@ -555,12 +376,8 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0)
-        return;
+    ) public brutalizeMemory(brutalizeWith) {
+        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
 
         SafeTransferLib.safeApprove(nonContract, to, amount);
     }
@@ -569,19 +386,9 @@ contract SafeTransferLibTest is Test {
         address recipient,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
-        if (
-            recipient.code.length
-                > 0
-                || uint256(uint160(recipient))
-                <= 18
-                || recipient
-                == msg.sender
-        ) return;
+        if (recipient.code.length > 0 || uint256(uint160(recipient)) <= 18 || recipient == msg.sender) return;
 
         amount = bound(amount, 0, address(this).balance);
 
@@ -592,10 +399,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransfer(address(returnsFalse), to, amount);
     }
 
@@ -603,10 +407,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransfer(address(reverting), to, amount);
     }
 
@@ -614,10 +415,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransfer(address(returnsTooLittle), to, amount);
     }
 
@@ -625,10 +423,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransfer(address(returnsTwo), to, amount);
     }
 
@@ -637,15 +432,8 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes memory garbage,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
-        require(
-            garbage.length
-                != 0
-                && (garbage.length < 32 || garbage[31] != bytes1(0x01))
-        );
+    ) public brutalizeMemory(brutalizeWith) {
+        require(garbage.length != 0 && (garbage.length < 32 || garbage[31] != bytes1(0x01)));
 
         returnsGarbage.setGarbage(garbage);
 
@@ -657,10 +445,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransferFrom(address(returnsFalse), from, to, amount);
     }
 
@@ -669,10 +454,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransferFrom(address(reverting), from, to, amount);
     }
 
@@ -681,10 +463,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransferFrom(address(returnsTooLittle), from, to, amount);
     }
 
@@ -693,10 +472,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeTransferFrom(address(returnsTwo), from, to, amount);
     }
 
@@ -706,15 +482,8 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes memory garbage,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
-        require(
-            garbage.length
-                != 0
-                && (garbage.length < 32 || garbage[31] != bytes1(0x01))
-        );
+    ) public brutalizeMemory(brutalizeWith) {
+        require(garbage.length != 0 && (garbage.length < 32 || garbage[31] != bytes1(0x01)));
 
         returnsGarbage.setGarbage(garbage);
 
@@ -725,10 +494,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeApprove(address(returnsFalse), to, amount);
     }
 
@@ -736,10 +502,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeApprove(address(reverting), to, amount);
     }
 
@@ -747,10 +510,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeApprove(address(returnsTooLittle), to, amount);
     }
 
@@ -758,10 +518,7 @@ contract SafeTransferLibTest is Test {
         address to,
         uint256 amount,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    ) public brutalizeMemory(brutalizeWith) {
         verifySafeApprove(address(returnsTwo), to, amount);
     }
 
@@ -770,34 +527,26 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes memory garbage,
         bytes calldata brutalizeWith
-    )
-        public
-        brutalizeMemory(brutalizeWith)
-    {
-        require(
-            garbage.length
-                != 0
-                && (garbage.length < 32 || garbage[31] != bytes1(0x01))
-        );
+    ) public brutalizeMemory(brutalizeWith) {
+        require(garbage.length != 0 && (garbage.length < 32 || garbage[31] != bytes1(0x01)));
 
         returnsGarbage.setGarbage(garbage);
 
         verifySafeApprove(address(returnsGarbage), to, amount);
     }
 
-    function testFailFuzzTransferETHToContractWithoutFallback(
-        uint256 amount,
-        bytes calldata brutalizeWith
-    )
+    function testFailFuzzTransferETHToContractWithoutFallback(uint256 amount, bytes calldata brutalizeWith)
         public
         brutalizeMemory(brutalizeWith)
     {
         SafeTransferLib.safeTransferETH(address(this), amount);
     }
 
-    function verifySafeTransfer(address token, address to, uint256 amount)
-        internal
-    {
+    function verifySafeTransfer(
+        address token,
+        address to,
+        uint256 amount
+    ) internal {
         uint256 preBal = ERC20(token).balanceOf(to);
         SafeTransferLib.safeTransfer(address(token), to, amount);
         uint256 postBal = ERC20(token).balanceOf(to);
@@ -814,9 +563,7 @@ contract SafeTransferLibTest is Test {
         address from,
         address to,
         uint256 amount
-    )
-        internal
-    {
+    ) internal {
         forceApprove(token, from, address(this), amount);
 
         // We cast to MissingReturnToken here because it won't check
@@ -834,9 +581,11 @@ contract SafeTransferLibTest is Test {
         }
     }
 
-    function verifySafeApprove(address token, address to, uint256 amount)
-        internal
-    {
+    function verifySafeApprove(
+        address token,
+        address to,
+        uint256 amount
+    ) internal {
         SafeTransferLib.safeApprove(address(token), to, amount);
 
         assertEq(ERC20(token).allowance(address(this), to), amount);
@@ -847,9 +596,7 @@ contract SafeTransferLibTest is Test {
         address from,
         address to,
         uint256 amount
-    )
-        internal
-    {
+    ) internal {
         uint256 slot = token == address(erc20) ? 4 : 2; // Standard ERC20 name and symbol aren't constant.
 
         vm.store(
