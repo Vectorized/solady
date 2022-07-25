@@ -17,7 +17,6 @@ abstract contract Multicallable {
                 // Copy the offsets from calldata into memory.
                 calldatacopy(results, data.offset, end)
                 // Pointer to the top of the memory (i.e. start of the free memory).
-                // `shl` 5 is equivalent to multiplying by 0x20.
                 let memPtr := add(results, end)
                 end := add(results, end)
 
