@@ -24,6 +24,8 @@ This repository serves as a laboratory for cutting edge snippets that may be mer
 
 Feel free to make a pull request.
 
+Do refer to the [contribution guidelines](https://github.com/Vectorized/solady/issues/19) for more details.
+
 ## Safety
 
 This is **experimental software** and is provided on an "as is" and "as available" basis.
