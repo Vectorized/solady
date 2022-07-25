@@ -8,7 +8,7 @@ I'm sooooooOooooooooOoooOoooooooooooooooo...
 
 ```ml
 utils
-├─ MerkleProof — "Library for verification of Merkle proofs"
+├─ MerkleProofLib — "Library for verification of Merkle proofs"
 ├─ ECDSA — "Library for verification of ECDSA signatures"
 ├─ Sort — "Optimized intro sort"
 ├─ Base64 — "Library for Base64 encoding"
