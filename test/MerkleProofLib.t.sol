@@ -2,9 +2,9 @@
 pragma solidity ^0.8.4;
 
 import "forge-std/Test.sol";
-import {MerkleProof} from "../src/utils/MerkleProof.sol";
+import {MerkleProofLib} from "../src/utils/MerkleProofLib.sol";
 
-contract MerkleProofTest is Test {
+contract MerkleProofLibTest is Test {
     function testVerifyProofForHeightOneTree(
         bool hasProof,
         bool nonEmptyProof,
@@ -230,7 +230,7 @@ contract MerkleProofTest is Test {
         bytes32 root,
         bytes32 leaf
     ) external pure returns (bool) {
-        return MerkleProof.verify(proof, root, leaf);
+        return MerkleProofLib.verify(proof, root, leaf);
     }
 
     function verifyMultiProof(
@@ -239,6 +239,6 @@ contract MerkleProofTest is Test {
         bytes32[] calldata leafs,
         bool[] calldata flags
     ) external pure returns (bool) {
-        return MerkleProof.verifyMultiProof(proof, root, leafs, flags);
+        return MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
     }
 }
