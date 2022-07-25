@@ -47,7 +47,7 @@ abstract contract Multicallable {
                     // prettier-ignore
                     if iszero(lt(results, end)) { break }
                 }
-                // Restore and allocate memory for `results`.
+                // Restore `results` and allocate memory for it.
                 results := mload(0x40)
                 mstore(0x40, memPtr)
             }
