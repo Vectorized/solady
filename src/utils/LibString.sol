@@ -28,25 +28,16 @@ library LibString {
             // Cache the end of the memory to calculate the length later.
             let end := str
 
-            // We write the string from the rightmost digit to the leftmost digit.
+            // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            // Costs a bit more than early returning for the zero case,
-            // but cheaper in terms of deployment and overall runtime costs.
-            for {
-                // Initialize and perform the first pass without check.
-                let temp := value
-                // Move the pointer 1 byte leftwards to point to an empty character slot.
+            // prettier-ignore
+            for { let temp := value } 1 {} {
                 str := sub(str, 1)
-                // Write the character to the pointer. 48 is the ASCII index of '0'.
                 mstore8(str, add(48, mod(temp, 10)))
-                temp := div(temp, 10)
-            } temp {
                 // Keep dividing `temp` until zero.
                 temp := div(temp, 10)
-            } {
-                // Body of the for loop.
-                str := sub(str, 1)
-                mstore8(str, add(48, mod(temp, 10)))
+                // prettier-ignore
+                if iszero(temp) { break }
             }
 
             let length := sub(end, str)
@@ -78,20 +69,15 @@ library LibString {
             let temp := value
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            for {
-                // Initialize and perform the first pass without check.
+            // prettier-ignore
+            for {} 1 {} {
                 str := sub(str, 2)
                 mstore8(add(str, 1), byte(and(temp, 15), "0123456789abcdef"))
                 mstore8(str, byte(and(shr(4, temp), 15), "0123456789abcdef"))
                 temp := shr(8, temp)
                 length := sub(length, 1)
-            } length {
-                length := sub(length, 1)
-            } {
-                str := sub(str, 2)
-                mstore8(add(str, 1), byte(and(temp, 15), "0123456789abcdef"))
-                mstore8(str, byte(and(shr(4, temp), 15), "0123456789abcdef"))
-                temp := shr(8, temp)
+                // prettier-ignore
+                if iszero(length) { break }
             }
 
             if temp {
@@ -126,22 +112,17 @@ library LibString {
             // Allocate the memory.
             mstore(0x40, str)
 
+            let temp := value
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            for {
-                // Initialize and perform the first pass without check.
-                let temp := value
+            // prettier-ignore
+            for {} 1 {} {
                 str := sub(str, 2)
                 mstore8(add(str, 1), byte(and(temp, 15), "0123456789abcdef"))
                 mstore8(str, byte(and(shr(4, temp), 15), "0123456789abcdef"))
                 temp := shr(8, temp)
-            } temp {
                 // prettier-ignore
-            } {
-                str := sub(str, 2)
-                mstore8(add(str, 1), byte(and(temp, 15), "0123456789abcdef"))
-                mstore8(str, byte(and(shr(4, temp), 15), "0123456789abcdef"))
-                temp := shr(8, temp)
+                if iszero(temp) { break }
             }
 
             // Compute the string's length.
@@ -166,24 +147,19 @@ library LibString {
             // Allocate the memory.
             mstore(0x40, str)
 
+            let length := 20
+            let temp := value
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            for {
-                // Initialize and perform the first pass without check.
-                let length := 20
-                let temp := value
+            // prettier-ignore
+            for {} 1 {} {
                 str := sub(str, 2)
                 mstore8(add(str, 1), byte(and(temp, 15), "0123456789abcdef"))
                 mstore8(str, byte(and(shr(4, temp), 15), "0123456789abcdef"))
                 temp := shr(8, temp)
                 length := sub(length, 1)
-            } length {
-                length := sub(length, 1)
-            } {
-                str := sub(str, 2)
-                mstore8(add(str, 1), byte(and(temp, 15), "0123456789abcdef"))
-                mstore8(str, byte(and(shr(4, temp), 15), "0123456789abcdef"))
-                temp := shr(8, temp)
+                // prettier-ignore
+                if iszero(length) { break }
             }
 
             // Move the pointer and write the "0x" prefix.
@@ -224,34 +200,45 @@ library LibString {
             if iszero(gt(searchLength, subjectLength)) {
                 let subjectSearchEnd := add(sub(subjectEnd, searchLength), 1)
                 // prettier-ignore
-                for {} lt(subject, subjectSearchEnd) {} {
+                for {} 1 {} {
                     let o := and(searchLength, 31)
+                    
                     // Whether the first `searchLength % 32` bytes of
                     // `subject` and `search` matches.
-                    let l := iszero(and(xor(mload(subject), mload(search)), mload(sub(0x20, o))))
-                    // Iterate through the rest of `search` and check if any word mismatch.
-                    // If any mismatch is detected, `l` is set to 0.
-                    // prettier-ignore
-                    for {} and(lt(o, searchLength), l) {} {
-                        l := eq(mload(add(subject, o)), mload(add(search, o)))
-                        o := add(o, 0x20)
-                    }
-                    // If `l` is true, we have a match.
-                    if l {
-                        // Copy the `replacement` one word at a time.
-                        // prettier-ignore
-                        for { o := 0 } lt(o, replacementLength) { o := add(o, 0x20) } {
-                            mstore(add(result, add(k, o)), mload(add(replacement, o)))
-                        }
-                        k := add(k, replacementLength)
-                        subject := add(subject, searchLength)
-                    }
-                    // If `l` or `searchLength` is zero.
-                    if iszero(mul(l, searchLength)) {
+                    switch iszero(and(xor(mload(subject), mload(search)), mload(sub(0x20, o))))
+                    case 0 {
                         mstore(add(result, k), mload(subject))
                         k := add(k, 1)
                         subject := add(subject, 1)
                     }
+                    default {
+                        // Iterate through the rest of `search` and check if any word mismatch.
+                        // If any mismatch is detected, `o` is set to the max value of uint256.
+                        // prettier-ignore
+                        for {} lt(o, searchLength) {} {
+                            o := or(add(o, 0x20), sub(eq(mload(add(subject, o)), mload(add(search, o))), 1))
+                        }
+                        // If `o` is not the max value of uint256, we have a match.
+                        if not(o) {
+                            // Copy the `replacement` one word at a time.
+                            // prettier-ignore
+                            for { o := 0 } 1 {} {
+                                mstore(add(result, add(k, o)), mload(add(replacement, o)))
+                                o := add(o, 0x20)
+                                // prettier-ignore
+                                if iszero(lt(o, replacementLength)) { break }
+                            }
+                            k := add(k, replacementLength)
+                            subject := add(subject, searchLength)    
+                        }
+                        if iszero(searchLength) {
+                            mstore(add(result, k), mload(subject))
+                            k := add(k, 1)
+                            subject := add(subject, 1)
+                        }
+                    }
+                    // prettier-ignore
+                    if iszero(lt(subject, subjectSearchEnd)) { break }
                 }
             }
 
