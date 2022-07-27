@@ -197,14 +197,14 @@ library LibString {
                 if iszero(lt(searchLength, 32)) {
                     h := keccak256(search, searchLength)
                 }
-                let m := not(shr(shl(3, and(searchLength, 31)), not(0)))
+                let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(search)
                 // prettier-ignore
                 for {} 1 {} {
                     let t := mload(subject)
                     // Whether the first `searchLength % 32` bytes of 
                     // `subject` and `search` matches.
-                    if iszero(and(xor(t, s), m)) {
+                    if iszero(shr(m, xor(t, s))) {
                         if h {
                             if iszero(eq(keccak256(subject, searchLength), h)) {
                                 mstore(result, t)
@@ -226,7 +226,7 @@ library LibString {
                         result := add(result, replacementLength)
                         subject := add(subject, searchLength)    
                         if iszero(searchLength) {
-                            mstore(result, mload(subject))
+                            mstore(result, t)
                             result := add(result, 1)
                             subject := add(subject, 1)
                         }
