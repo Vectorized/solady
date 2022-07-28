@@ -12,26 +12,27 @@ library MerkleProofLib {
         bytes32 leaf
     ) internal pure returns (bool isValid) {
         assembly {
-            // Left shift by 5 is equivalent to multiplying by 0x20.
-            let end := add(proof.offset, shl(5, proof.length))
-
-            // Iterate over proof elements to compute root hash.
-            for {
+            if proof.length {
+                // Left shift by 5 is equivalent to multiplying by 0x20.
+                let end := add(proof.offset, shl(5, proof.length))
                 // Initialize `offset` to the offset of `proof` in the calldata.
                 let offset := proof.offset
-            } iszero(eq(offset, end)) {
-                offset := add(offset, 0x20)
-            } {
-                // Slot of `leaf` in scratch space.
-                // If the condition is true: 0x20, otherwise: 0x00.
-                let scratch := shl(5, gt(leaf, calldataload(offset)))
-
-                // Store elements to hash contiguously in scratch space.
-                // Scratch space is 64 bytes (0x00 - 0x3f) and both elements are 32 bytes.
-                mstore(scratch, leaf)
-                mstore(xor(scratch, 0x20), calldataload(offset))
-                // Reuse `leaf` to store the hash to reduce stack operations.
-                leaf := keccak256(0x00, 0x40)
+                // Iterate over proof elements to compute root hash.
+                // prettier-ignore
+                for {} 1 {} {
+                    // Slot of `leaf` in scratch space.
+                    // If the condition is true: 0x20, otherwise: 0x00.
+                    let scratch := shl(5, gt(leaf, calldataload(offset)))
+                    // Store elements to hash contiguously in scratch space.
+                    // Scratch space is 64 bytes (0x00 - 0x3f) and both elements are 32 bytes.
+                    mstore(scratch, leaf)
+                    mstore(xor(scratch, 0x20), calldataload(offset))
+                    // Reuse `leaf` to store the hash to reduce stack operations.
+                    leaf := keccak256(0x00, 0x40)
+                    offset := add(offset, 0x20)
+                    // prettier-ignore
+                    if iszero(lt(offset, end)) { break }
+                }
             }
             isValid := eq(leaf, root)
         }
@@ -88,9 +89,8 @@ library MerkleProofLib {
                 }
 
                 // prettier-ignore
-                for {} iszero(eq(hashesBack, end)) {} {
+                for {} 1 {} {
                     let a := 0
-
                     // Pops a value from the queue into `a`.
                     switch lt(leafsOffset, leafsEnd)
                     case 0 {
@@ -138,6 +138,8 @@ library MerkleProofLib {
                     mstore(xor(scratch, 0x20), b)
                     mstore(hashesBack, keccak256(0x00, 0x40))
                     hashesBack := add(hashesBack, 0x20)
+                    // prettier-ignore
+                    if iszero(lt(hashesBack, end)) { break }
                 }
                 // Checks if the last value in the queue is same as the root.
                 isValid := eq(mload(sub(hashesBack, 0x20)), root)
