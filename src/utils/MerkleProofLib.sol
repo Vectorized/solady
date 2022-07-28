@@ -89,7 +89,7 @@ library MerkleProofLib {
                 }
 
                 // prettier-ignore
-                for {} 1 {} {
+                for {} iszero(eq(hashesBack, end)) {} {
                     let a := 0
                     // Pops a value from the queue into `a`.
                     switch lt(leafsOffset, leafsEnd)
@@ -138,8 +138,6 @@ library MerkleProofLib {
                     mstore(xor(scratch, 0x20), b)
                     mstore(hashesBack, keccak256(0x00, 0x40))
                     hashesBack := add(hashesBack, 0x20)
-                    // prettier-ignore
-                    if iszero(lt(hashesBack, end)) { break }
                 }
                 // Checks if the last value in the queue is same as the root.
                 isValid := eq(mload(sub(hashesBack, 0x20)), root)
