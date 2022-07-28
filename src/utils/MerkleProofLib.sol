@@ -54,7 +54,8 @@ library MerkleProofLib {
         // should be popped from the `proof` (`flag == false`).
         assembly {
             // If the number of flags is correct.
-            if eq(add(leafs.length, proof.length), add(flags.length, 1)) {
+            // prettier-ignore
+            for {} eq(add(leafs.length, proof.length), add(flags.length, 1)) {} {
                 // Left shift by 5 is equivalent to multiplying by 0x20.
                 // Compute the end calldata offset of `leafs`.
                 let leafsEnd := add(leafs.offset, shl(5, leafs.length))
@@ -74,22 +75,18 @@ library MerkleProofLib {
                 if iszero(flags.length) {
                     // If `proof.length` is zero, `leafs.length` is 1.
                     if iszero(proof.length) {
-                        // Push the only leaf onto the queue.
-                        mstore(hashesBack, calldataload(leafsOffset))
+                        isValid := eq(calldataload(leafsOffset), root)
+                        break
                     }
                     // If `leafs.length` is zero, `proof.length` is 1.
                     if iszero(leafs.length) {
-                        // Push the only proof onto the queue.
-                        mstore(hashesBack, calldataload(proofOffset))
+                        isValid := eq(calldataload(proofOffset), root)
+                        break
                     }
-                    // Advance `hashesBack` to push onto the queue.
-                    hashesBack := add(hashesBack, 0x20)
-                    // Advance `end` too so that we can skip the iteration.
-                    end := add(end, 0x20)
                 }
 
                 // prettier-ignore
-                for {} iszero(eq(hashesBack, end)) {} {
+                for {} 1 {} {
                     let a := 0
                     // Pops a value from the queue into `a`.
                     switch lt(leafsOffset, leafsEnd)
@@ -138,9 +135,12 @@ library MerkleProofLib {
                     mstore(xor(scratch, 0x20), b)
                     mstore(hashesBack, keccak256(0x00, 0x40))
                     hashesBack := add(hashesBack, 0x20)
+                    // prettier-ignore
+                    if iszero(lt(hashesBack, end)) { break }
                 }
                 // Checks if the last value in the queue is same as the root.
                 isValid := eq(mload(sub(hashesBack, 0x20)), root)
+                break
             }
         }
     }
