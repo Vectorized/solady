@@ -66,8 +66,8 @@ library ECDSA {
         assembly {
             // We need at most 128 bytes for Ethereum signed message header.
             // The max length of the ASCII reprenstation of a uint256 is 78 bytes.
-            // The length of "\x19Ethereum Signed Message:\n" is 26 bytes.
-            // The next multiple of 32 above 78 + 26 is 128.
+            // The length of "\x19Ethereum Signed Message:\n" is 26 bytes (i.e. 0x1a).
+            // The next multiple of 32 above 78 + 26 is 128 (i.e. 0x80).
 
             // Instead of allocating, we temporarily copy the 128 bytes before the
             // start of `s` data to some variables.
@@ -84,27 +84,19 @@ library ECDSA {
 
             // Convert the length of the bytes to ASCII decimal representation
             // and store it into the memory.
-            for {
-                let temp := sLength
+            // prettier-ignore
+            for { let temp := sLength } 1 {} {
                 ptr := sub(ptr, 1)
                 mstore8(ptr, add(48, mod(temp, 10)))
                 temp := div(temp, 10)
-            } temp {
-                temp := div(temp, 10)
-            } {
-                ptr := sub(ptr, 1)
-                mstore8(ptr, add(48, mod(temp, 10)))
+                // prettier-ignore
+                if iszero(temp) { break }
             }
 
-            // Move the pointer 32 bytes lower to make room for the string.
-            // `start` marks the start of the memory which we will compute the keccak256 of.
-            let start := sub(ptr, 32)
             // Copy the header over to the memory.
-            mstore(start, "\x00\x00\x00\x00\x00\x00\x19Ethereum Signed Message:\n")
-            start := add(start, 6)
-
+            mstore(sub(ptr, 0x20), "\x00\x00\x00\x00\x00\x00\x19Ethereum Signed Message:\n")
             // Compute the keccak256 of the memory.
-            result := keccak256(start, sub(end, start))
+            result := keccak256(sub(ptr, 0x1a), sub(end, sub(ptr, 0x1a)))
 
             // Restore the previous memory.
             mstore(s, sLength)
