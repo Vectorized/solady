@@ -88,13 +88,17 @@ library Sort {
                 // Threshold is fine-tuned via trial and error.
                 if iszero(gt(sub(h, l), 0x180)) {
                     // Hardcode sort the first 2 elements.
-                    let t := mload(add(l, 0x20))
+                    let i := add(l, 0x20)
+                    let t := mload(i)
                     if iszero(lt(mload(l), t)) {
-                        mstore(add(l, 0x20), mload(l))
+                        mstore(i, mload(l))
                         mstore(l, t)
                     }
                     // prettier-ignore
-                    for { let i := add(l, 0x40) } iszero(gt(i, h)) { i := add(i, 0x20) } {
+                    for {} 1 {} {
+                        i := add(i, 0x20)
+                        // prettier-ignore
+                        if gt(i, h) { break }
                         let k := mload(i) // Key.
                         let j := sub(i, 0x20) // The slot before the current slot.
                         let v := mload(j) // The value of `j`.
