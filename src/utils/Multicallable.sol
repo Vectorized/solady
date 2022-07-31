@@ -4,6 +4,8 @@ pragma solidity ^0.8.4;
 /// @notice Contract that enables a single call to call multiple methods on itself.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Multicallable.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
+/// @dev Note that combining Multicallable with msg.value can cause double-spend issues
+/// (https://www.paradigm.xyz/2021/08/two-rights-might-make-a-wrong/)
 abstract contract Multicallable {
     function multicall(bytes[] calldata data) public payable returns (bytes[] memory results) {
         assembly {
