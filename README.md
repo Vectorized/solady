@@ -37,7 +37,11 @@ We **do not give any warranties** and **will not be liable for any loss** incurr
 To install with [**Foundry**](https://github.com/gakonst/foundry):
 
 ```sh
-forge install vectorized/solady
+git clone git@github.com:Vectorized/solady.git
+
+cd solady
+
+forge install
 ```
 
 To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffle**](https://github.com/trufflesuite/truffle):
