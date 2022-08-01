@@ -17,29 +17,24 @@ library Sort {
                 // Push `l` and `h` to the stack.
                 // The `shl` by 5 is equivalent to multiplying by `0x20`.
                 let l := add(a, 0x20)
-                let h := add(l, shl(5, n))
-
-                let u := mload(l) // Previous slot value, `u`.
-                let j := add(l, 0x20)
-                let s := 0 // Number of out of order elements.
-
+                let h := add(a, shl(5, n))
+                
+                let j := l
                 // prettier-ignore
-                for {} 1 {} {
-                    let v := mload(j) // Current slot value, `v`.
-                    s := add(s, gt(u, v)) // Increment `s` by 1 if out of order.
-                    u := v // Set previous slot value to current slot value.
+                for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, 0x20))))) {} {
                     j := add(j, 0x20)
-                    // prettier-ignore
-                    if iszero(lt(j, h)) { break }
                 }
-
                 // If the array is already sorted.
                 // prettier-ignore
-                if iszero(s) { break }
+                if eq(j, h) { break }
 
+                j := h
+                // prettier-ignore
+                for {} iszero(or(eq(j, l), gt(mload(j), mload(sub(j, 0x20))))) {} {
+                    j := sub(j, 0x20)
+                }
                 // If the array is reversed sorted.
-                if eq(add(s, 1), n) {
-                    h := sub(h, 0x20)
+                if eq(j, l) { 
                     // prettier-ignore
                     for {} 1 {} {
                         let t := mload(l)
@@ -55,7 +50,7 @@ library Sort {
 
                 // Push `l` and `h` onto the stack.
                 mstore(stack, l)
-                mstore(add(stack, 0x20), sub(h, 0x20))
+                mstore(add(stack, 0x20), h)
                 stack := add(stack, 0x40)
                 break
             }
