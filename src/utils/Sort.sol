@@ -72,8 +72,8 @@ library Sort {
                 if iszero(gt(sub(h, l), 0x180)) {
                     // Hardcode sort the first 2 elements.
                     let i := add(l, 0x20)
-                    let t := mload(i)
-                    if iszero(lt(mload(l), t)) {
+                    if iszero(lt(mload(l), mload(i))) {
+                        let t := mload(i)
                         mstore(i, mload(l))
                         mstore(l, t)
                     }
@@ -99,29 +99,37 @@ library Sort {
                     }
                     continue
                 }
-                // Median of 3 with sorting.
-                if iszero(lt(mload(l), mload(h))) {
-                    let t := mload(h)
-                    mstore(h, mload(l))
-                    mstore(l, t)
-                }
                 // Pivot slot is the average of `l` and `h`,
                 // rounded down to nearest multiple of 0x20.
-                let p := shl(5, shr(6, add(l, h))) 
-                // The value of the pivot slot.
-                let x := mload(p) 
-                if iszero(lt(x, mload(h))) {
-                    mstore(p, mload(h))
-                    mstore(h, x)
-                    x := mload(p)
-                }
-                if iszero(lt(mload(l), x)) {
-                    mstore(p, mload(l))
-                    mstore(l, x)
-                    x := mload(p)
+                let p := shl(5, shr(6, add(l, h)))
+                // Median of 3 with sorting.
+                {
+                    let e0 := mload(l)
+                    let e2 := mload(h)
+                    let e1 := mload(p)
+                    if iszero(lt(e0, e1)) {
+                        let t := e0
+                        e0 := e1
+                        e1 := t
+                    }
+                    if iszero(lt(e0, e2)) {
+                        let t := e0
+                        e0 := e2
+                        e2 := t
+                    }
+                    if iszero(lt(e1, e2)) {
+                        let t := e1
+                        e1 := e2
+                        e2 := t
+                    }
+                    mstore(p, e1)
+                    mstore(h, e2)
+                    mstore(l, e0)
                 }
                 // Hoare's partition.
                 {
+                    // The value of the pivot slot.
+                    let x := mload(p)
                     p := h
                     // prettier-ignore
                     for { let i := l } 1 {} {
