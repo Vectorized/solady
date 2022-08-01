@@ -147,17 +147,17 @@ library Sort {
                         mstore(p, t)
                     }
                 }
-                // If slice on left of pivot is non-empty, push onto stack.
-                {
-                    // We can skip `mstore(stack, l)`.
-                    mstore(add(stack, 0x20), p)
-                    stack := add(stack, mul(0x40, gt(p, l)))
-                }
                 // If slice on right of pivot is non-empty, push onto stack.
                 {
                     mstore(stack, add(p, 0x20))
-                    mstore(add(stack, 0x20), h)
-                    stack := add(stack, mul(0x40, lt(add(p, 0x20), h)))
+                    // Skip `mstore(add(stack, 0x20), h)`, as it is already on the stack.
+                    stack := add(stack, shl(6, lt(add(p, 0x20), h)))
+                }
+                // If slice on left of pivot is non-empty, push onto stack.
+                {
+                    mstore(stack, l)
+                    mstore(add(stack, 0x20), p)
+                    stack := add(stack, shl(6, gt(p, l)))
                 }
             }
             mstore(a, n) // Restore the length of `a`.
