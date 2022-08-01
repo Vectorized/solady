@@ -18,9 +18,7 @@ contract SortTest is Test {
                 checksumAfterSort += a[i];
             }
             assertEq(checksum, checksumAfterSort);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -42,10 +40,7 @@ contract SortTest is Test {
                 aCopy[j] = key;
             }
             Sort.sort(a);
-            // Compare the results.
-            for (uint256 i = 0; i < a.length; ++i) {
-                assertEq(a[i], aCopy[i]);
-            }
+            assertEq(a, aCopy);
         }
     }
 
@@ -53,9 +48,7 @@ contract SortTest is Test {
         unchecked {
             vm.assume(a.length < 2048);
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -65,9 +58,7 @@ contract SortTest is Test {
             a[0] = 3;
             a[1] = 0;
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -76,13 +67,11 @@ contract SortTest is Test {
             uint256[] memory a = new uint256[](100);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
-                lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
+                lcg = stepLCG(lcg);
                 a[i] = lcg;
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -95,13 +84,11 @@ contract SortTest is Test {
             uint256[] memory a = new uint256[](100);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
-                lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
+                lcg = stepLCG(lcg);
                 a[i] = lcg << (i & 8 == 0 ? 128 : 0);
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -116,9 +103,7 @@ contract SortTest is Test {
                 a[i] = i;
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -129,9 +114,7 @@ contract SortTest is Test {
                 a[i] = 999 - i;
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -142,9 +125,7 @@ contract SortTest is Test {
                 a[i] = i % 8 == 0 ? i : 0;
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -154,11 +135,9 @@ contract SortTest is Test {
             uint256 lcg = 123456789;
             for (uint256 i; i < a.length; ++i) {
                 a[i] = (i << 128) | lcg;
-                lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
+                lcg = stepLCG(lcg);
             }
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -168,17 +147,15 @@ contract SortTest is Test {
             uint256 lcg = 123456789;
             for (uint256 i; i < a.length; ++i) {
                 address addr = address(uint160(lcg));
-                lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
+                lcg = stepLCG(lcg);
                 assembly {
                     addr := or(addr, shl(160, lcg))
                 }
                 a[i] = addr;
-                lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
+                lcg = stepLCG(lcg);
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -187,13 +164,11 @@ contract SortTest is Test {
             address[] memory a = new address[](100);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
-                lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
+                lcg = stepLCG(lcg);
                 a[i] = address(uint160(lcg));
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -208,9 +183,7 @@ contract SortTest is Test {
                 a[i] = address(uint160(i));
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -221,9 +194,7 @@ contract SortTest is Test {
                 a[i] = address(uint160(999 - i));
             }
             Sort.sort(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -232,13 +203,11 @@ contract SortTest is Test {
             uint256[] memory a = new uint256[](100);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
-                lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
+                lcg = stepLCG(lcg);
                 a[i] = lcg;
             }
             sortOriginal(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -253,9 +222,7 @@ contract SortTest is Test {
                 a[i] = i;
             }
             sortOriginal(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -266,9 +233,7 @@ contract SortTest is Test {
                 a[i] = 999 - i;
             }
             sortOriginal(a);
-            for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
-            }
+            assertTrue(isSorted(a));
         }
     }
 
@@ -279,9 +244,31 @@ contract SortTest is Test {
                 a[i] = i % 8 == 0 ? i : 0;
             }
             sortOriginal(a);
+            assertTrue(isSorted(a));
+        }
+    }
+
+    function stepLCG(uint256 input) private pure returns (uint256 output) {
+        unchecked {
+            output = (input * 1664525 + 1013904223) & 0xFFFFFFFF;
+        }
+    }
+
+    function isSorted(address[] memory a) private pure returns (bool) {
+        unchecked {
             for (uint256 i = 1; i < a.length; ++i) {
-                assertTrue(a[i - 1] <= a[i]);
+                if (a[i - 1] > a[i]) return false;
             }
+            return true;
+        }
+    }
+
+    function isSorted(uint256[] memory a) private pure returns (bool) {
+        unchecked {
+            for (uint256 i = 1; i < a.length; ++i) {
+                if (a[i - 1] > a[i]) return false;
+            }
+            return true;
         }
     }
 
