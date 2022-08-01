@@ -4,19 +4,6 @@ pragma solidity ^0.8.4;
 /// @notice Optimized intro sort.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library Sort {
-    // For efficient rounding down to a multiple of `0x20`.
-    uint256 private constant _LCG_MASK = 0xffffffffffffffe0;
-
-    // From MINSTD.
-    // See: https://en.wikipedia.org/wiki/Lehmer_random_number_generator#Parameters_in_common_use
-    uint256 private constant _LCG_MULTIPLIER = 48271;
-
-    // For the linear congruential generator.
-    uint256 private constant _LCG_MODULO = 0x7fffffff;
-
-    // Any integer from `[1 .. _LCG_MODULO - 1]` will do, since `_LCG_MODULO` is prime.
-    uint256 private constant _LCG_SEED = 0xbeef;
-
     function sort(uint256[] memory a) internal pure {
         assembly {
             let n := mload(a) // Length of `a`.
@@ -43,12 +30,16 @@ library Sort {
                     u := v // Set previous slot value to current slot value.
                     j := add(j, 0x20)
                     // prettier-ignore
-                    if iszero(lt(j, h)) { break }
+                    if iszero(lt(j, h)) {
+                        break
+                    }
                 }
 
                 // If the array is already sorted.
                 // prettier-ignore
-                if iszero(s) { break }
+                if iszero(s) {
+                    break
+                }
 
                 // If the array is reversed sorted.
                 if eq(add(s, 1), n) {
@@ -61,7 +52,9 @@ library Sort {
                         h := sub(h, 0x20)
                         l := add(l, 0x20)
                         // prettier-ignore
-                        if iszero(lt(l, h)) { break }
+                        if iszero(lt(l, h)) {
+                            break
+                        }
                     }
                     break
                 }
@@ -73,11 +66,10 @@ library Sort {
                 break
             }
 
-            // Linear congruential generator (LCG) for psuedo-random partitioning
-            // to prevent idiosyncratic worse case behaviour.
-            let lcg := _LCG_SEED
             // prettier-ignore
-            for { let stackBottom := mload(0x40) } iszero(eq(stack, stackBottom)) {} {
+            for { let stackBottom := mload(0x40) } iszero(
+                eq(stack, stackBottom)
+            ) {} {
                 // Pop `l` and `h` from the stack.
                 stack := sub(stack, 0x40)
                 let l := mload(stack)
@@ -97,55 +89,75 @@ library Sort {
                     for {} 1 {} {
                         i := add(i, 0x20)
                         // prettier-ignore
-                        if gt(i, h) { break }
+                        if gt(i, h) {
+                            break
+                        }
                         let k := mload(i) // Key.
                         let j := sub(i, 0x20) // The slot before the current slot.
                         let v := mload(j) // The value of `j`.
                         // prettier-ignore
-                        if iszero(gt(v, k)) { continue }
+                        if iszero(gt(v, k)) {
+                            continue
+                        }
                         // prettier-ignore
                         for {} 1 {} {
                             mstore(add(j, 0x20), v)
                             j := sub(j, 0x20)
                             v := mload(j)
                             // prettier-ignore
-                            if iszero(gt(v, k)) { break }
+                            if iszero(gt(v, k)) {
+                                break
+                            }
                         }
                         mstore(add(j, 0x20), k)
                     }
                     continue
                 }
-
-                // Psuedo-random partition pivot.
-                lcg := mulmod(lcg, _LCG_MULTIPLIER, _LCG_MODULO) // Step the LCG.
-                let p := and(sub(h, mod(lcg, sub(h, l))), _LCG_MASK) // Pivot slot.
+                // Median of 3 with sorting.
+                if iszero(lt(mload(l), mload(h))) {
+                    let t := mload(h)
+                    mstore(h, mload(l))
+                    mstore(l, t)
+                }
+                let p := shl(5, shr(6, add(l, h))) // Pivot.
+                if iszero(lt(mload(p), mload(h))) {
+                    let t := mload(h)
+                    mstore(h, mload(p))
+                    mstore(p, t)
+                }
                 let x := mload(p) // The value of the pivot slot.
-                // Swap slots `l` and `p`.
-                {
+                if iszero(lt(mload(l), x)) {
                     mstore(p, mload(l))
                     mstore(l, x)
+                    x := mload(p)
                 }
                 // Hoare's partition.
                 {
-                    p := add(h, 0x20)
+                    p := h
                     // prettier-ignore
-                    for { let i := sub(l, 0x20) } 1 {} {
+                    for { let i := l } 1 {} {
                         // prettier-ignore
-                        for {} 1 {} { 
+                        for {} 1 {} {
                             i := add(i, 0x20)
                             // prettier-ignore
-                            if iszero(gt(x, mload(i))) { break }
+                            if iszero(gt(x, mload(i))) {
+                                break
+                            }
                         }
                         let j := p
                         // prettier-ignore
-                        for {} 1 {} { 
+                        for {} 1 {} {
                             j := sub(j, 0x20)
                             // prettier-ignore
-                            if iszero(lt(x, mload(j))) { break }
+                            if iszero(lt(x, mload(j))) {
+                                break
+                            }
                         }
                         p := j
                         // prettier-ignore
-                        if iszero(lt(i, p)) { break }
+                        if iszero(lt(i, p)) {
+                            break
+                        }
                         // Swap slots `i` and `p`.
                         let t := mload(i)
                         mstore(i, mload(p))
