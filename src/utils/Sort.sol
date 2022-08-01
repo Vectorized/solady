@@ -24,7 +24,6 @@ library Sort {
 
             // Let the stack be the start of the free memory.
             let stack := mload(0x40)
-            let stackBottom := stack
 
             // prettier-ignore
             for {} iszero(lt(n, 2)) {} {
@@ -78,7 +77,7 @@ library Sort {
             // to prevent idiosyncratic worse case behaviour.
             let lcg := _LCG_SEED
             // prettier-ignore
-            for {} iszero(eq(stack, stackBottom)) {} {
+            for { let stackBottom := mload(0x40) } iszero(eq(stack, stackBottom)) {} {
                 // Pop `l` and `h` from the stack.
                 stack := sub(stack, 0x40)
                 let l := mload(stack)

@@ -90,6 +90,25 @@ contract SortTest is Test {
         testSortPsuedorandom(123456789);
     }
 
+    function testSortPsuedorandomNonuniform(uint256 lcg) public {
+        unchecked {
+            uint256[] memory a = new uint256[](100);
+            lcg ^= 1;
+            for (uint256 i; i < a.length; ++i) {
+                lcg = (lcg * 1664525 + 1013904223) & 0xFFFFFFFF;
+                a[i] = lcg << (i & 8 == 0 ? 128 : 0);
+            }
+            Sort.sort(a);
+            for (uint256 i = 1; i < a.length; ++i) {
+                assertTrue(a[i - 1] <= a[i]);
+            }
+        }
+    }
+
+    function testSortPsuedorandomNonuniform() public {
+        testSortPsuedorandomNonuniform(123456789);
+    }
+
     function testSortSorted() public {
         unchecked {
             uint256[] memory a = new uint256[](100);
