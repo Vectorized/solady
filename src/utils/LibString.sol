@@ -24,6 +24,8 @@ library LibString {
             str := add(mload(0x40), 0x80)
             // Update the free memory pointer to allocate.
             mstore(0x40, str)
+            // Store "0123456789" in scratch space.
+            mstore(0x09, 0x30313233343536373839)
 
             // Cache the end of the memory to calculate the length later.
             let end := str
@@ -34,8 +36,7 @@ library LibString {
             for { let temp := value } 1 {} {
                 str := sub(str, 1)
                 // Write the character to the pointer.
-                // The ASCII index of the '0' character is 48.
-                mstore8(str, add(48, mod(temp, 10)))
+                mstore8(str, mload(mod(temp, 10)))
                 // Keep dividing `temp` until zero.
                 temp := div(temp, 10)
                 // prettier-ignore
