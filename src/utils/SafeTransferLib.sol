@@ -6,9 +6,9 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SafeTransferLib.sol)
 /// @dev Caution! This library won't check that a token has code, responsibility is delegated to the caller.
 library SafeTransferLib {
-    /*´:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:*/
-    /*                        CUSTOM ERRORS                        */
-    /*.•°:°.´•˚.*°.˚:*.´•*.•°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´•*.•*/
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error ETHTransferFailed();
 
@@ -18,9 +18,9 @@ library SafeTransferLib {
 
     error ApproveFailed();
 
-    /*´:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:*/
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ETH OPERATIONS                       */
-    /*.•°:°.´•˚.*°.˚:*.´•*.•°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´•*.•*/
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function safeTransferETH(address to, uint256 amount) internal {
         assembly {
@@ -34,9 +34,9 @@ library SafeTransferLib {
         }
     }
 
-    /*´:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:*/
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      ERC20 OPERATIONS                      */
-    /*.•°:°.´•˚.*°.˚:*.´•*.•°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´•*.•*/
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function safeTransferFrom(
         address token,
