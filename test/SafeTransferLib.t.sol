@@ -91,6 +91,26 @@ contract SafeTransferLibTest is Test {
         SafeTransferLib.safeTransferETH(address(0xBEEF), 1e18);
     }
 
+    function testTransferRevertSelector() public {
+        vm.expectRevert(SafeTransferLib.TransferFailed.selector);
+        this.testFailTransferWithReturnsFalse();
+    }
+
+    function testTransferFromRevertSelector() public {
+        vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
+        this.testFailTransferFromWithReturnsFalse();
+    }
+
+    function testApproveRevertSelector() public {
+        vm.expectRevert(SafeTransferLib.ApproveFailed.selector);
+        this.testFailApproveWithReturnsFalse();
+    }
+
+    function testTransferETHRevertSelector() public {
+        vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+        this.testFailTransferETHToContractWithoutFallback();
+    }
+
     function testFailTransferWithReturnsFalse() public {
         verifySafeTransfer(address(returnsFalse), address(0xBEEF), 1e18);
     }
@@ -157,41 +177,7 @@ contract SafeTransferLibTest is Test {
         bytes memory garbage,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        if (
-            (garbage.length < 32 ||
-                (garbage[0] != 0 ||
-                    garbage[1] != 0 ||
-                    garbage[2] != 0 ||
-                    garbage[3] != 0 ||
-                    garbage[4] != 0 ||
-                    garbage[5] != 0 ||
-                    garbage[6] != 0 ||
-                    garbage[7] != 0 ||
-                    garbage[8] != 0 ||
-                    garbage[9] != 0 ||
-                    garbage[10] != 0 ||
-                    garbage[11] != 0 ||
-                    garbage[12] != 0 ||
-                    garbage[13] != 0 ||
-                    garbage[14] != 0 ||
-                    garbage[15] != 0 ||
-                    garbage[16] != 0 ||
-                    garbage[17] != 0 ||
-                    garbage[18] != 0 ||
-                    garbage[19] != 0 ||
-                    garbage[20] != 0 ||
-                    garbage[21] != 0 ||
-                    garbage[22] != 0 ||
-                    garbage[23] != 0 ||
-                    garbage[24] != 0 ||
-                    garbage[25] != 0 ||
-                    garbage[26] != 0 ||
-                    garbage[27] != 0 ||
-                    garbage[28] != 0 ||
-                    garbage[29] != 0 ||
-                    garbage[30] != 0 ||
-                    garbage[31] != bytes1(0x01))) && garbage.length != 0
-        ) return;
+        if (garbageIsGarbage(garbage)) return;
 
         returnsGarbage.setGarbage(garbage);
 
@@ -247,41 +233,7 @@ contract SafeTransferLibTest is Test {
         bytes memory garbage,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        if (
-            (garbage.length < 32 ||
-                (garbage[0] != 0 ||
-                    garbage[1] != 0 ||
-                    garbage[2] != 0 ||
-                    garbage[3] != 0 ||
-                    garbage[4] != 0 ||
-                    garbage[5] != 0 ||
-                    garbage[6] != 0 ||
-                    garbage[7] != 0 ||
-                    garbage[8] != 0 ||
-                    garbage[9] != 0 ||
-                    garbage[10] != 0 ||
-                    garbage[11] != 0 ||
-                    garbage[12] != 0 ||
-                    garbage[13] != 0 ||
-                    garbage[14] != 0 ||
-                    garbage[15] != 0 ||
-                    garbage[16] != 0 ||
-                    garbage[17] != 0 ||
-                    garbage[18] != 0 ||
-                    garbage[19] != 0 ||
-                    garbage[20] != 0 ||
-                    garbage[21] != 0 ||
-                    garbage[22] != 0 ||
-                    garbage[23] != 0 ||
-                    garbage[24] != 0 ||
-                    garbage[25] != 0 ||
-                    garbage[26] != 0 ||
-                    garbage[27] != 0 ||
-                    garbage[28] != 0 ||
-                    garbage[29] != 0 ||
-                    garbage[30] != 0 ||
-                    garbage[31] != bytes1(0x01))) && garbage.length != 0
-        ) return;
+        if (garbageIsGarbage(garbage)) return;
 
         returnsGarbage.setGarbage(garbage);
 
@@ -330,41 +282,7 @@ contract SafeTransferLibTest is Test {
         bytes memory garbage,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        if (
-            (garbage.length < 32 ||
-                (garbage[0] != 0 ||
-                    garbage[1] != 0 ||
-                    garbage[2] != 0 ||
-                    garbage[3] != 0 ||
-                    garbage[4] != 0 ||
-                    garbage[5] != 0 ||
-                    garbage[6] != 0 ||
-                    garbage[7] != 0 ||
-                    garbage[8] != 0 ||
-                    garbage[9] != 0 ||
-                    garbage[10] != 0 ||
-                    garbage[11] != 0 ||
-                    garbage[12] != 0 ||
-                    garbage[13] != 0 ||
-                    garbage[14] != 0 ||
-                    garbage[15] != 0 ||
-                    garbage[16] != 0 ||
-                    garbage[17] != 0 ||
-                    garbage[18] != 0 ||
-                    garbage[19] != 0 ||
-                    garbage[20] != 0 ||
-                    garbage[21] != 0 ||
-                    garbage[22] != 0 ||
-                    garbage[23] != 0 ||
-                    garbage[24] != 0 ||
-                    garbage[25] != 0 ||
-                    garbage[26] != 0 ||
-                    garbage[27] != 0 ||
-                    garbage[28] != 0 ||
-                    garbage[29] != 0 ||
-                    garbage[30] != 0 ||
-                    garbage[31] != bytes1(0x01))) && garbage.length != 0
-        ) return;
+        if (garbageIsGarbage(garbage)) return;
 
         returnsGarbage.setGarbage(garbage);
 
@@ -433,7 +351,7 @@ contract SafeTransferLibTest is Test {
         bytes memory garbage,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        require(garbage.length != 0 && (garbage.length < 32 || garbage[31] != bytes1(0x01)));
+        require(garbageIsGarbage(garbage));
 
         returnsGarbage.setGarbage(garbage);
 
@@ -483,7 +401,7 @@ contract SafeTransferLibTest is Test {
         bytes memory garbage,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        require(garbage.length != 0 && (garbage.length < 32 || garbage[31] != bytes1(0x01)));
+        require(garbageIsGarbage(garbage));
 
         returnsGarbage.setGarbage(garbage);
 
@@ -528,7 +446,7 @@ contract SafeTransferLibTest is Test {
         bytes memory garbage,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        require(garbage.length != 0 && (garbage.length < 32 || garbage[31] != bytes1(0x01)));
+        require(garbageIsGarbage(garbage));
 
         returnsGarbage.setGarbage(garbage);
 
@@ -546,7 +464,7 @@ contract SafeTransferLibTest is Test {
         address token,
         address to,
         uint256 amount
-    ) internal {
+    ) public {
         uint256 preBal = ERC20(token).balanceOf(to);
         SafeTransferLib.safeTransfer(address(token), to, amount);
         uint256 postBal = ERC20(token).balanceOf(to);
@@ -563,7 +481,7 @@ contract SafeTransferLibTest is Test {
         address from,
         address to,
         uint256 amount
-    ) internal {
+    ) public {
         forceApprove(token, from, address(this), amount);
 
         // We cast to MissingReturnToken here because it won't check
@@ -585,7 +503,7 @@ contract SafeTransferLibTest is Test {
         address token,
         address to,
         uint256 amount
-    ) internal {
+    ) public {
         SafeTransferLib.safeApprove(address(token), to, amount);
 
         assertEq(ERC20(token).allowance(address(this), to), amount);
@@ -596,7 +514,7 @@ contract SafeTransferLibTest is Test {
         address from,
         address to,
         uint256 amount
-    ) internal {
+    ) public {
         uint256 slot = token == address(erc20) ? 4 : 2; // Standard ERC20 name and symbol aren't constant.
 
         vm.store(
@@ -606,6 +524,12 @@ contract SafeTransferLibTest is Test {
         );
 
         assertEq(ERC20(token).allowance(from, to), amount, "wrong allowance");
+    }
+
+    function garbageIsGarbage(bytes memory garbage) public pure returns (bool result) {
+        assembly {
+            result := and(or(lt(mload(garbage), 32), iszero(eq(mload(add(garbage, 0x20)), 1))), gt(mload(garbage), 0))
+        }
     }
 
     modifier brutalizeMemory(bytes memory brutalizeWith) {
