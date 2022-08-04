@@ -83,7 +83,11 @@ contract LibBitmapTest is Test {
         testBitmapSetTo(123, false, 0);
     }
 
-    function testBitmapSetTo(uint256 index, bool shouldSet, uint256 brutalizer) public {
+    function testBitmapSetTo(
+        uint256 index,
+        bool shouldSet,
+        uint256 brutalizer
+    ) public {
         bool shouldSetBrutalized;
         assembly {
             shouldSetBrutalized := shl(and(brutalizer, 0xff), shouldSet)

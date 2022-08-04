@@ -39,10 +39,10 @@ library LibBitmap {
             let storageSlot := keccak256(0x00, 0x40)
             let storageValue := sload(storageSlot)
             let shift := and(index, 0xff)
-            
+
             storageValue := xor(storageValue, shl(shift, 1))
             // It makes sense to return the `newIsSet`,
-            // as it allow us to skip an additional warm `sload`, 
+            // as it allow us to skip an additional warm `sload`,
             // and it costs minimal gas (about 15),
             // which may be optimized away if the returned value is unused.
             newIsSet := and(shr(shift, storageValue), 1)
