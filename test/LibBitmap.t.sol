@@ -110,9 +110,22 @@ contract LibBitmapTest is Test {
         assertEq(get(index), shouldSet);
     }
 
+    function testBitmapSetTo(uint256 index, uint256 randomness) public {
+        randomness = uint256(keccak256(abi.encode(randomness)));
+        unchecked {
+            for (uint256 i; i < 10; ++i) {
+                bool shouldSet;
+                assembly {
+                    shouldSet := and(shr(i, randomness), 1)
+                }
+                testBitmapSetTo(index, shouldSet, randomness);
+            }
+        }
+    }
+
     function testBitmapToggle() public {
         testBitmapToggle(123, true);
-        testBitmapToggle(321, false);
+        testBitmapToggle(123, false);
     }
 
     function testBitmapToggle(uint256 index, bool initialValue) public {
