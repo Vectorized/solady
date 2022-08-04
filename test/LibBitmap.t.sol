@@ -9,36 +9,29 @@ contract LibBitmapTest is Test {
 
     error AlreadyClaimed();
 
-    mapping(uint256 => LibBitmap.Bitmap) bitmaps;
-
-    uint256 currentBitmapIndex;
-
-    function setUp() public {
-        ++currentBitmapIndex;
-    }
+    LibBitmap.Bitmap bitmap;
 
     function get(uint256 index) public view returns (bool result) {
-        result = bitmaps[currentBitmapIndex].get(index);
+        result = bitmap.get(index);
     }
 
     function set(uint256 index) public {
-        bitmaps[currentBitmapIndex].set(index);
+        bitmap.set(index);
     }
 
     function unset(uint256 index) public {
-        bitmaps[currentBitmapIndex].unset(index);
+        bitmap.unset(index);
     }
 
     function toggle(uint256 index) public {
-        bitmaps[currentBitmapIndex].toggle(index);
+        bitmap.toggle(index);
     }
 
     function setTo(uint256 index, bool shouldSet) public {
-        bitmaps[currentBitmapIndex].setTo(index, shouldSet);
+        bitmap.setTo(index, shouldSet);
     }
 
     function claimWithGetSet(uint256 index) public {
-        LibBitmap.Bitmap storage bitmap = bitmaps[currentBitmapIndex];
         if (bitmap.get(index)) {
             revert AlreadyClaimed();
         }
@@ -46,13 +39,13 @@ contract LibBitmapTest is Test {
     }
 
     function claimWithToggle(uint256 index) public {
-        if (bitmaps[currentBitmapIndex].toggle(index) == false) {
+        if (bitmap.toggle(index) == false) {
             revert AlreadyClaimed();
         }
     }
 
     function testBitmapGet() public {
-        testBitmapGet(123);
+        testBitmapGet(111111);
     }
 
     function testBitmapGet(uint256 index) public {
@@ -71,7 +64,7 @@ contract LibBitmapTest is Test {
     }
 
     function testBitmapSet() public {
-        testBitmapSet(123);
+        testBitmapSet(222222);
     }
 
     function testBitmapSet(uint256 index) public {
@@ -80,7 +73,7 @@ contract LibBitmapTest is Test {
     }
 
     function testBitmapUnset() public {
-        testBitmapSet(123);
+        testBitmapSet(333333);
     }
 
     function testBitmapUnset(uint256 index) public {
@@ -91,8 +84,8 @@ contract LibBitmapTest is Test {
     }
 
     function testBitmapSetTo() public {
-        testBitmapSetTo(123, true, 0);
-        testBitmapSetTo(123, false, 0);
+        testBitmapSetTo(555555, true, 0);
+        testBitmapSetTo(555555, false, 0);
     }
 
     function testBitmapSetTo(
@@ -113,7 +106,7 @@ contract LibBitmapTest is Test {
     function testBitmapSetTo(uint256 index, uint256 randomness) public {
         randomness = uint256(keccak256(abi.encode(randomness)));
         unchecked {
-            for (uint256 i; i < 10; ++i) {
+            for (uint256 i; i < 5; ++i) {
                 bool shouldSet;
                 assembly {
                     shouldSet := and(shr(i, randomness), 1)
@@ -124,8 +117,8 @@ contract LibBitmapTest is Test {
     }
 
     function testBitmapToggle() public {
-        testBitmapToggle(123, true);
-        testBitmapToggle(123, false);
+        testBitmapToggle(777777, true);
+        testBitmapToggle(777777, false);
     }
 
     function testBitmapToggle(uint256 index, bool initialValue) public {
@@ -136,14 +129,14 @@ contract LibBitmapTest is Test {
     }
 
     function testBitmapClaimWithGetSet() public {
-        uint256 index = 123;
+        uint256 index = 888888;
         this.claimWithGetSet(index);
         vm.expectRevert(AlreadyClaimed.selector);
         this.claimWithGetSet(index);
     }
 
     function testBitmapClaimWithToggle() public {
-        uint256 index = 123;
+        uint256 index = 999999;
         this.claimWithToggle(index);
         vm.expectRevert(AlreadyClaimed.selector);
         this.claimWithToggle(index);

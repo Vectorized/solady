@@ -159,6 +159,37 @@ contract SortTest is Test {
         }
     }
 
+    function testSortAddressesDifferential(uint256[] memory aRaw) public {
+        unchecked {
+            vm.assume(aRaw.length < 128);
+            address[] memory a = new address[](aRaw.length);
+            for (uint256 i; i < a.length; ++i) {
+                address addr;
+                uint256 addrRaw = aRaw[i];
+                assembly {
+                    addr := addrRaw
+                }
+                a[i] = addr;
+            }
+            // Make a copy of the `a` and perform insertion sort on it.
+            address[] memory aCopy = new address[](a.length);
+            for (uint256 i = 0; i < a.length; ++i) {
+                aCopy[i] = a[i];
+            }
+            for (uint256 i = 1; i < aCopy.length; ++i) {
+                address key = aCopy[i];
+                uint256 j = i;
+                while (j != 0 && aCopy[j - 1] > key) {
+                    aCopy[j] = aCopy[j - 1];
+                    --j;
+                }
+                aCopy[j] = key;
+            }
+            Sort.sort(a);
+            assertEq(a, aCopy);
+        }
+    }
+
     function testSortAddressesPsuedorandom(uint256 lcg) public {
         unchecked {
             address[] memory a = new address[](100);
