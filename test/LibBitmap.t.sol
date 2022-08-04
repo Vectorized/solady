@@ -38,10 +38,11 @@ contract LibBitmapTest is Test {
     }
 
     function claimWithGetSet(uint256 index) public {
-        if (bitmaps[currentBitmapIndex].get(index)) {
+        LibBitmap.Bitmap storage bitmap = bitmaps[currentBitmapIndex];
+        if (bitmap.get(index)) {
             revert AlreadyClaimed();
         }
-        bitmaps[currentBitmapIndex].set(index);
+        bitmap.set(index);
     }
 
     function claimWithToggle(uint256 index) public {
@@ -56,6 +57,17 @@ contract LibBitmapTest is Test {
 
     function testBitmapGet(uint256 index) public {
         assertFalse(get(index));
+    }
+
+    function testBitmapSetAndGet(uint256 index) public {
+        set(index);
+        bool result = get(index);
+        bool resultIsOne;
+        assembly {
+            resultIsOne := eq(result, 1)
+        }
+        assertTrue(result);
+        assertTrue(resultIsOne);
     }
 
     function testBitmapSet() public {
@@ -86,11 +98,13 @@ contract LibBitmapTest is Test {
     function testBitmapSetTo(
         uint256 index,
         bool shouldSet,
-        uint256 brutalizer
+        uint256 randomness
     ) public {
         bool shouldSetBrutalized;
         assembly {
-            shouldSetBrutalized := shl(and(brutalizer, 0xff), shouldSet)
+            if shouldSet {
+                shouldSetBrutalized := or(iszero(randomness), randomness)
+            }
         }
         setTo(index, shouldSetBrutalized);
         assertEq(get(index), shouldSet);
