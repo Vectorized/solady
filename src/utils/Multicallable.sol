@@ -12,20 +12,20 @@ abstract contract Multicallable {
             if data.length {
                 results := mload(0x40) // Point `results` to start of free memory.
                 mstore(results, data.length) // Store `data.length` into `results`.
-                let result := add(results, 0x20)
+                let resultPtr := add(results, 0x20) // Pointer to current result.
 
                 // `shl` 5 is equivalent to multiplying by 0x20.
                 let end := shl(5, data.length)
                 // Copy the offsets from calldata into memory.
-                calldatacopy(result, data.offset, end)
+                calldatacopy(resultPtr, data.offset, end)
                 // Pointer to the top of the memory (i.e. start of the free memory).
-                let memPtr := add(result, end)
-                end := add(result, end)
+                let memPtr := add(resultPtr, end)
+                end := memPtr
 
                 // prettier-ignore
                 for {} 1 {} {
                     // The offset of the current bytes in the calldata.
-                    let o := add(data.offset, mload(result))
+                    let o := add(data.offset, mload(resultPtr))
                     // Copy the current bytes from calldata to the memory.
                     calldatacopy(
                         memPtr,
@@ -37,9 +37,9 @@ abstract contract Multicallable {
                         returndatacopy(0x00, 0x00, returndatasize())
                         revert(0x00, returndatasize())
                     }
-                    // Append the current `memPtr` into `result`.
-                    mstore(result, memPtr)
-                    result := add(result, 0x20)
+                    // Append the current `memPtr` into `results`.
+                    mstore(resultPtr, memPtr)
+                    resultPtr := add(resultPtr, 0x20)
                     // Append the `returndatasize()`, and the return data.
                     mstore(memPtr, returndatasize())
                     returndatacopy(add(memPtr, 0x20), 0x00, returndatasize())
@@ -47,7 +47,7 @@ abstract contract Multicallable {
                     // rounded up to the next multiple of 32.
                     memPtr := and(add(add(memPtr, returndatasize()), 0x3f), 0xffffffffffffffe0)
                     // prettier-ignore
-                    if iszero(lt(result, end)) { break }
+                    if eq(resultPtr, end) { break }
                 }
                 // Allocate memory for `results`.
                 mstore(0x40, memPtr)
