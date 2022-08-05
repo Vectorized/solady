@@ -7,9 +7,6 @@
 solc_version = '0.8.15'
 auto_detect_solc = false
 optimizer = true
-optimizer_runs = 1_000
+optimizer_runs = 100_000
 fuzz_runs = 256
-remappings = [
-  "forge-std=lib/forge-std/src/",
-  "solmate=lib/solmate/src/",
-]
+remappings = ["forge-std=lib/forge-std/src/", "solmate=lib/solmate/src/"]
