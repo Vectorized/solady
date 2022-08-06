@@ -9,6 +9,15 @@ contract Base64Test is Test {
         testBase64("", "");
     }
 
+    function testBase64EncodeShortStrings() public {
+        testBase64("M", "TQ==");
+        testBase64("Mi", "TWk=");
+        testBase64("Mil", "TWls");
+        testBase64("Mila", "TWlsYQ==");
+        testBase64("Milad", "TWlsYWQ=");
+        testBase64("Milady", "TWlsYWR5");
+    }
+
     function testBase64EncodeToStringWithDoublePadding() public {
         testBase64("test", "dGVzdA==");
     }
