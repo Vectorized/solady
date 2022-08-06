@@ -34,7 +34,7 @@ library Base64 {
 
                 // Run over the input, 3 bytes at a time.
                 // prettier-ignore
-                for {} iszero(eq(ptr, end)) {} {
+                for {} 1 {} {
                     data := add(data, 3) // Advance 3 bytes.
                     let input := mload(data)
 
@@ -45,11 +45,14 @@ library Base64 {
                     mstore8(add(ptr, 3), mload(and(        input , 0x3F)))
                     
                     ptr := add(ptr, 4) // Advance 4 bytes.
+                    // prettier-ignore
+                    if iszero(lt(ptr, end)) { break }
                 }
 
                 // Offset `ptr` and pad with '='. We can simply write over the end.
-                // The `byte(...)` part is equivalent to `[0, 2, 1][dataLength % 3]`.
-                mstore(sub(ptr, byte(mod(dataLength, 3), "\x00\x02\x01")), "==")
+                let r := mod(dataLength, 3)
+                mstore8(sub(ptr, iszero(iszero(r))), 0x3d) // Pad at `ptr - 1` if `r > 0`.
+                mstore8(sub(ptr, shl(1, eq(r, 1))), 0x3d) // Pad at `ptr - 2` if `r == 1`.
 
                 // Allocate the memory for the string.
                 // Add 31 and mask with `not(0x1f)` to round the
