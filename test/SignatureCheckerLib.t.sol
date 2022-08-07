@@ -22,6 +22,9 @@ contract SignatureCheckerLibTest is Test {
     bytes constant SIGNATURE =
         hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
 
+    bytes constant INVALID_SIGNATURE =
+        hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b01";
+
     MockERC1271Wallet mockERC1271Wallet;
 
     MockERC1271Malicious mockERC1271Malicious;
@@ -39,8 +42,12 @@ contract SignatureCheckerLibTest is Test {
         assertFalse(this.isValidSignatureNow(OTHER, TEST_SIGNED_MESSAGE_HASH, SIGNATURE));
     }
 
-    function testSignatureCheckerOnEOAWithInvalidSignature() public {
+    function testSignatureCheckerOnEOAWithWrongSignedMessageHash() public {
         assertFalse(this.isValidSignatureNow(SIGNER, WRONG_SIGNED_MESSAGE_HASH, SIGNATURE));
+    }
+
+    function testSignatureCheckerOnEOAWithInvalidSignature() public {
+        assertFalse(this.isValidSignatureNow(SIGNER, TEST_SIGNED_MESSAGE_HASH, INVALID_SIGNATURE));
     }
 
     function testSignatureCheckerOnWalletWithMatchingSignerAndSignature() public {
@@ -55,8 +62,12 @@ contract SignatureCheckerLibTest is Test {
         assertFalse(this.isValidSignatureNow(address(0), TEST_SIGNED_MESSAGE_HASH, SIGNATURE));
     }
 
-    function testSignatureCheckerOnWalletWithInvalidSignature() public {
+    function testSignatureCheckerOnWalletWithWrongSignedMessageHash() public {
         assertFalse(this.isValidSignatureNow(address(mockERC1271Wallet), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE));
+    }
+
+    function testSignatureCheckerOnWalletWithInvalidSignature() public {
+        assertFalse(this.isValidSignatureNow(address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, INVALID_SIGNATURE));
     }
 
     function testSignatureCheckerOnMaliciousWallet() public {
@@ -68,6 +79,10 @@ contract SignatureCheckerLibTest is Test {
         bytes32 hash,
         bytes calldata signature
     ) external view returns (bool) {
+        assembly {
+            // Cotaminate the upper 96 bits.
+            signer := or(shl(160, 1), signer)
+        }
         return SignatureCheckerLib.isValidSignatureNow(signer, hash, signature);
     }
 }

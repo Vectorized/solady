@@ -13,12 +13,22 @@ library SignatureCheckerLib {
         bytes32 hash,
         bytes calldata signature
     ) internal view returns (bool isValid) {
-        address recovered = ECDSA.recover(hash, signature);
-        assembly {
-            isValid := iszero(iszero(signer))
+        bool signerIsZero;
 
-            // If `recovered != signer && signer != address(0)`.
-            if iszero(or(eq(recovered, signer), iszero(signer))) {
+        assembly {
+            // Clear the upper bits of `signer`, in-case they are not zero.
+            signer := shr(96, shl(96, signer))
+            signerIsZero := iszero(signer)
+        }
+
+        if (signerIsZero) return false;
+
+        address recovered = ECDSA.recover(hash, signature);
+
+        assembly {
+            isValid := 1
+
+            if iszero(eq(recovered, signer)) {
                 // Load the free memory pointer.
                 // We won't clobber the reserved slots here, as the high number of slots needed
                 // makes clobbering more expensive (usually).
