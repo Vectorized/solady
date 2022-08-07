@@ -13,54 +13,42 @@ library SignatureCheckerLib {
         bytes32 hash,
         bytes calldata signature
     ) internal view returns (bool isValid) {
-        bool signerIsZero;
+        if (signer == address(0)) return false;
+
+        if (ECDSA.recover(hash, signature) == signer) return true;
 
         assembly {
-            // Clear the upper bits of `signer`, in-case they are not zero.
-            signer := shr(96, shl(96, signer))
-            signerIsZero := iszero(signer)
-        }
+            // Load the free memory pointer.
+            // We won't clobber the reserved slots here, as the high number of slots needed
+            // makes clobbering more expensive (usually).
+            let m := mload(0x40)
 
-        if (signerIsZero) return false;
+            // Write the abi-encoded calldata into memory, beginning with the function selector.
+            mstore(m, 0x1626ba7e) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            mstore(add(m, 0x20), hash)
+            mstore(add(m, 0x40), 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x60), signature.length)
+            calldatacopy(add(m, 0x80), signature.offset, 0x60) // Copy the `signature` over.
 
-        address recovered = ECDSA.recover(hash, signature);
-
-        assembly {
-            isValid := 1
-
-            if iszero(eq(recovered, signer)) {
-                // Load the free memory pointer.
-                // We won't clobber the reserved slots here, as the high number of slots needed
-                // makes clobbering more expensive (usually).
-                let m := mload(0x40)
-
-                // Write the abi-encoded calldata into memory, beginning with the function selector.
-                mstore(m, 0x1626ba7e) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-                mstore(add(m, 0x20), hash)
-                mstore(add(m, 0x40), 0x40) // The offset of the `signature` in the calldata.
-                mstore(add(m, 0x60), signature.length)
-                calldatacopy(add(m, 0x80), signature.offset, 0x60) // Copy the `signature` over.
-
-                isValid := and(
-                    and(
-                        // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                        eq(mload(add(m, 0x40)), shl(224, mload(m))),
-                        // Whether the returndata is exactly 0x20 bytes (1 word) long .
-                        eq(returndatasize(), 0x20)
-                    ),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer, // The `signer` address.
-                        add(m, 0x1c), // Offset of calldata in memory.
-                        0xc4, // Length of calldata in memory.
-                        add(m, 0x40), // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
+            isValid := and(
+                and(
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(add(m, 0x40)), shl(224, mload(m))),
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long .
+                    eq(returndatasize(), 0x20)
+                ),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    signer, // The `signer` address.
+                    add(m, 0x1c), // Offset of calldata in memory.
+                    0xc4, // Length of calldata in memory.
+                    add(m, 0x40), // Offset of returndata.
+                    0x20 // Length of returndata to write.
                 )
-            }
+            )
         }
     }
 }
