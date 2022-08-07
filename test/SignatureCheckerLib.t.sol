@@ -80,7 +80,7 @@ contract SignatureCheckerLibTest is Test {
         bytes calldata signature
     ) external view returns (bool) {
         assembly {
-            // Cotaminate the upper 96 bits.
+            // Contaminate the upper 96 bits.
             signer := or(shl(160, 1), signer)
         }
         return SignatureCheckerLib.isValidSignatureNow(signer, hash, signature);
