@@ -9,12 +9,22 @@ contract LibBytemapTest is Test {
 
     LibBytemap.Bytemap bytemap;
 
+    uint8[0xffffffffffffffff] bigArrayBytemap;
+
     function get(uint256 index) public view returns (uint8 result) {
         result = bytemap.get(index);
     }
 
     function set(uint256 index, uint8 value) public {
         bytemap.set(index, value);
+    }
+
+    function getBigArray(uint256 index) public view returns (uint8 result) {
+        result = bigArrayBytemap[index];
+    }
+
+    function setBigArray(uint256 index, uint8 value) public {
+        bigArrayBytemap[index] = value;
     }
 
     function testBytemapSetAndGet(
@@ -39,10 +49,18 @@ contract LibBytemapTest is Test {
     }
 
     function testBytemapSet() public {
-        set(111111, 123);
+        this.set(111111, 123);
     }
 
     function testBytemapGet() public {
-        assertEq(get(111111), uint8(0));
+        assertEq(this.get(222222), uint8(0));
+    }
+
+    function testBytemapSetBigArray() public {
+        this.setBigArray(111111, 123);
+    }
+
+    function testBytemapGetBigArray() public {
+        assertEq(this.getBigArray(222222), uint8(0));
     }
 }

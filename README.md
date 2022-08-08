@@ -14,6 +14,7 @@ utils
 ├─ Base64 — "Library for Base64 encoding"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
 ├─ LibBitmap — "Library for mapping integers to single bit booleans"
+├─ LibBytemap — "Library for mapping integers to 8 bit unsigned integers"
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
 ```
