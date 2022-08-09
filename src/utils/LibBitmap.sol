@@ -52,8 +52,8 @@ library LibBitmap {
         bool shouldSet
     ) internal {
         assembly {
-            mstore(0x00, shr(8, index))
             mstore(0x20, bitmap.slot)
+            mstore(0x00, shr(8, index))
             let storageSlot := keccak256(0x00, 0x40)
             let storageValue := sload(storageSlot)
             let shift := and(index, 0xff)
