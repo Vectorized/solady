@@ -7,8 +7,6 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol)
 library ECDSA {
     function recover(bytes32 hash, bytes calldata signature) internal view returns (address result) {
-        // @dev Caution! This function returns the zero address for invalid signatures.
-        // Please ensure that any address the result is compared against is NOT the zero address.
         assembly {
             // Copy the free memory pointer so that we can restore it later.
             let m := mload(0x40)
