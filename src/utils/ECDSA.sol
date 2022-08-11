@@ -11,17 +11,15 @@ library ECDSA {
             if eq(signature.length, 65) {
                 // Copy the free memory pointer so that we can restore it later.
                 let m := mload(0x40)
-                // Directly load `s` from the calldata.
-                let s := calldataload(add(signature.offset, 0x20))
+                // Directly copy `r` and `s` from the calldata.
+                calldatacopy(0x40, signature.offset, 0x40)
 
                 // If `s` in lower half order, such that the signature is not malleable.
                 // prettier-ignore
-                if iszero(gt(s, 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0)) {
+                if iszero(gt(mload(0x60), 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0)) {
                     mstore(0x00, hash)
                     // Compute `v` and store it in the scratch space.
                     mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40))))
-                    calldatacopy(0x40, signature.offset, 0x20) // Directly copy `r` over.
-                    mstore(0x60, s)
                     pop(
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
