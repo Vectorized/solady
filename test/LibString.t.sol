@@ -31,14 +31,8 @@ contract LibStringTest is Test {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
-        assertEq(
-            keccak256(bytes(s0)),
-            keccak256(bytes("0"))
-        );
-        assertEq(
-            keccak256(bytes(s1)),
-            keccak256(bytes("0"))
-        );
+        assertEq(keccak256(bytes(s0)), keccak256(bytes("0")));
+        assertEq(keccak256(bytes(s1)), keccak256(bytes("0")));
     }
 
     function testToStringPositiveNumberBrutalized() public {
@@ -52,14 +46,8 @@ contract LibStringTest is Test {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
-        assertEq(
-            keccak256(bytes(s0)),
-            keccak256(bytes("4132"))
-        );
-        assertEq(
-            keccak256(bytes(s1)),
-            keccak256(bytes("4132"))
-        );
+        assertEq(keccak256(bytes(s0)), keccak256(bytes("4132")));
+        assertEq(keccak256(bytes(s1)), keccak256(bytes("4132")));
     }
 
     function testToStringUint256MaxBrutalized() public {
