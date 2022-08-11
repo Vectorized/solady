@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.4;
 
 /// @notice Library for computing contract addresses from their deployer and nonce.
-/// @author Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/utils/LibRLP.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibRLP.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibRLP.sol)
 library LibRLP {
     // prettier-ignore
     function computeAddress(address deployer, uint256 nonce) internal pure returns (address deployed) {
