@@ -9,6 +9,7 @@ I'm sooooooOooooooooOoooOoooooooooooooooo...
 ```ml
 utils
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
+├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
 ├─ ECDSA — "Library for verification of ECDSA signatures"
 ├─ Sort — "Optimized intro sort"
 ├─ Base64 — "Library for Base64 encoding"
