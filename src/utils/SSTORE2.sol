@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity >=0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
 
 /// @notice Read and write to persistent storage at a fraction of the cost.
-/// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SSTORE2.sol)
-/// @author Saw-mon-and-Natalie (https://github.com/Saw-mon-and-Natalie)
 /// @author Solady (https://github.com/vectorized/solmady/blob/main/src/utils/SSTORE2.sol)
+/// @author Saw-mon-and-Natalie (https://github.com/Saw-mon-and-Natalie)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SSTORE2.sol)
 /// @author Modified from 0xSequence (https://github.com/0xSequence/sstore2/blob/master/contracts/SSTORE2.sol)
 library SSTORE2 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

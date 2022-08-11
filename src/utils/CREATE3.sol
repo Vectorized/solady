@@ -2,8 +2,8 @@
 pragma solidity ^0.8.4;
 
 /// @notice Deploy to deterministic addresses without an initcode factor.
-/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/CREATE3.sol)
 /// @author Solady (https://github.com/vectorized/solmady/blob/main/src/utils/CREATE3.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/CREATE3.sol)
 /// @author Modified from 0xSequence (https://github.com/0xSequence/create3/blob/master/contracts/Create3.sol)
 library CREATE3 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
