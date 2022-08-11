@@ -20,6 +20,69 @@ contract LibStringTest is Test {
         );
     }
 
+    function testToStringZeroBrutalized() public {
+        string memory s0 = LibString.toString(0);
+        assembly {
+            mstore(mload(0x40), not(0))
+            mstore(0x40, add(mload(0x40), 0x20))
+        }
+        string memory s1 = LibString.toString(0);
+        assembly {
+            mstore(mload(0x40), not(0))
+            mstore(0x40, add(mload(0x40), 0x20))
+        }
+        assertEq(
+            keccak256(bytes(s0)),
+            keccak256(bytes("0"))
+        );
+        assertEq(
+            keccak256(bytes(s1)),
+            keccak256(bytes("0"))
+        );
+    }
+
+    function testToStringPositiveNumberBrutalized() public {
+        string memory s0 = LibString.toString(4132);
+        assembly {
+            mstore(mload(0x40), not(0))
+            mstore(0x40, add(mload(0x40), 0x20))
+        }
+        string memory s1 = LibString.toString(4132);
+        assembly {
+            mstore(mload(0x40), not(0))
+            mstore(0x40, add(mload(0x40), 0x20))
+        }
+        assertEq(
+            keccak256(bytes(s0)),
+            keccak256(bytes("4132"))
+        );
+        assertEq(
+            keccak256(bytes(s1)),
+            keccak256(bytes("4132"))
+        );
+    }
+
+    function testToStringUint256MaxBrutalized() public {
+        string memory s0 = LibString.toString(type(uint256).max);
+        assembly {
+            mstore(mload(0x40), not(0))
+            mstore(0x40, add(mload(0x40), 0x20))
+        }
+        string memory s1 = LibString.toString(type(uint256).max);
+        assembly {
+            mstore(mload(0x40), not(0))
+            mstore(0x40, add(mload(0x40), 0x20))
+        }
+        assertEq(
+            keccak256(bytes(s0)),
+            keccak256(bytes("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+        );
+        assertEq(
+            keccak256(bytes(s1)),
+            keccak256(bytes("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+        );
+    }
+
     function testToHexStringZero() public {
         assertEq(keccak256(bytes(LibString.toHexString(0))), keccak256(bytes("0x00")));
     }
