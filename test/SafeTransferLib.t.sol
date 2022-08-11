@@ -10,12 +10,12 @@ import {ReturnsTooMuchToken} from "./utils/weird-tokens/ReturnsTooMuchToken.sol"
 import {ReturnsGarbageToken} from "./utils/weird-tokens/ReturnsGarbageToken.sol";
 import {ReturnsTooLittleToken} from "./utils/weird-tokens/ReturnsTooLittleToken.sol";
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 
-contract SafeTransferLibTest is Test {
+contract SafeTransferLibTest is TestPlus {
     RevertingToken reverting;
     ReturnsTwoToken returnsTwo;
     ReturnsFalseToken returnsFalse;
@@ -530,38 +530,5 @@ contract SafeTransferLibTest is Test {
         assembly {
             result := and(or(lt(mload(garbage), 32), iszero(eq(mload(add(garbage, 0x20)), 1))), gt(mload(garbage), 0))
         }
-    }
-
-    modifier brutalizeMemory(bytes memory brutalizeWith) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Fill the 64 bytes of scratch space with the data.
-            pop(
-                staticcall(
-                    gas(), // Pass along all the gas in the call.
-                    0x04, // Call the identity precompile address.
-                    brutalizeWith, // Offset is the bytes' pointer.
-                    64, // Copy enough to only fill the scratch space.
-                    0, // Store the return value in the scratch space.
-                    64 // Scratch space is only 64 bytes in size, we don't want to write further.
-                )
-            )
-
-            let size := add(mload(brutalizeWith), 32) // Add 32 to include the 32 byte length slot.
-
-            // Fill the free memory pointer's destination with the data.
-            pop(
-                staticcall(
-                    gas(), // Pass along all the gas in the call.
-                    0x04, // Call the identity precompile address.
-                    brutalizeWith, // Offset is the bytes' pointer.
-                    size, // We want to pass the length of the bytes.
-                    mload(0x40), // Store the return value at the free memory pointer.
-                    size // Since the precompile just returns its input, we reuse size.
-                )
-            )
-        }
-
-        _;
     }
 }
