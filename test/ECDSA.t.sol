@@ -18,12 +18,12 @@ contract ECDSATest is Test {
 
     address constant V1_SIGNER = 0x1E318623aB09Fe6de3C9b8672098464Aeda9100E;
 
-    function testRecoverWithInvalidShortSignature() public {
+    function testRecoverWithInvalidShortSignatureReturnsZero() public {
         bytes memory signature = hex"1234";
         assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
     }
 
-    function testRecoverWithInvalidLongSignature() public {
+    function testRecoverWithInvalidLongSignatureReturnsZero() public {
         // prettier-ignore
         bytes memory signature = hex"01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
         assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
@@ -47,7 +47,7 @@ contract ECDSATest is Test {
         assertTrue(this.recover(TEST_MESSAGE.toEthSignedMessageHash(), signature) != SIGNER);
     }
 
-    function testRecoverWithV0SignatureWithVersion00() public {
+    function testRecoverWithV0SignatureWithVersion00ReturnsZero() public {
         // prettier-ignore
         bytes memory signature = hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be89200";
         assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
@@ -59,7 +59,7 @@ contract ECDSATest is Test {
         assertTrue(this.recover(TEST_MESSAGE, signature) == V0_SIGNER);
     }
 
-    function testRecoverWithV0SignatureWithWrongVersion() public {
+    function testRecoverWithV0SignatureWithWrongVersionReturnsZero() public {
         // prettier-ignore
         bytes memory signature = hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be89202";
         assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
@@ -67,11 +67,18 @@ contract ECDSATest is Test {
 
     function testRecoverWithV0SignatureWithShortEIP2098Format() public {
         // prettier-ignore
-        bytes memory signature = hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be892";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == V0_SIGNER);
+        bytes32 r = 0x5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f;
+        bytes32 vs = 0x3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be892;
+        assertTrue(this.recover(TEST_MESSAGE, r, vs) == V0_SIGNER);
     }
 
-    function testRecoverWithV1SignatureWithVersion01() public {
+    function testRecoverWithV0SignatureWithShortEIP2098FormatAsCalldataReturnsZero() public {
+        // prettier-ignore
+        bytes memory signature = hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be892";
+        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+    }
+
+    function testRecoverWithV1SignatureWithVersion01ReturnsZero() public {
         // prettier-ignore
         bytes memory signature = hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e001";
         assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
@@ -83,7 +90,7 @@ contract ECDSATest is Test {
         assertTrue(this.recover(TEST_MESSAGE, signature) == V1_SIGNER);
     }
 
-    function testRecoverWithV1SignatureWithWrongVersion() public {
+    function testRecoverWithV1SignatureWithWrongVersionReturnsZero() public {
         // prettier-ignore
         bytes memory signature = hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e002";
         assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
@@ -91,8 +98,15 @@ contract ECDSATest is Test {
 
     function testRecoverWithV1SignatureWithShortEIP2098Format() public {
         // prettier-ignore
+        bytes32 r = 0x331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff;
+        bytes32 vs = 0xc8e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e0;
+        assertTrue(this.recover(TEST_MESSAGE, r, vs) == V1_SIGNER);
+    }
+
+    function testRecoverWithV1SignatureWithShortEIP2098FormatAsCalldataReturnsZero() public {
+        // prettier-ignore
         bytes memory signature = hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feffc8e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e0";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == V1_SIGNER);
+        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
     }
 
     function testBytes32ToEthSignedMessageHash() public {
@@ -121,5 +135,13 @@ contract ECDSATest is Test {
 
     function recover(bytes32 hash, bytes calldata signature) external view returns (address) {
         return ECDSA.recover(hash, signature);
+    }
+
+    function recover(
+        bytes32 hash,
+        bytes32 r,
+        bytes32 vs
+    ) external view returns (address) {
+        return ECDSA.recover(hash, r, vs);
     }
 }
