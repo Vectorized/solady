@@ -280,7 +280,7 @@ abstract contract OwnableRoles {
             // Compute the role slot.
             mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
             // Whether the stored value is contains all the set bits in `roles`.
-            result := eq(sload(keccak256(0x00, 0x20)), roles)
+            result := eq(and(sload(keccak256(0x00, 0x20)), roles), roles)
         }
     }
 
