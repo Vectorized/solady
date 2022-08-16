@@ -7,6 +7,8 @@ I'm sooooooOooooooooOoooOoooooooooooooooo...
 ## Contracts
 
 ```ml
+auth
+├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
 utils
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
