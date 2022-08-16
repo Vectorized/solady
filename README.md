@@ -61,4 +61,5 @@ This repository is inspired by or directly modified from many sources, primarily
 - [OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-contracts)
 - [ERC721A](https://github.com/chiru-labs/ERC721A)
 - [Zolidity](https://github.com/z0r0z/zolidity)
+- [🐍 Snekmate](https://github.com/pcaversaccio/snekmate)
 - [Femplate](https://github.com/abigger87/femplate)
