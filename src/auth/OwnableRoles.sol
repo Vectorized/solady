@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Simple single owner and multiroles authorization mixin.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/OwnableRoles.sol)
 abstract contract OwnableRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -24,8 +25,9 @@ abstract contract OwnableRoles {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The ownership is transferred from `oldOwner` to `newOwner`.
-    /// This event is intentionally kept the same as OpenZeppelin's Ownable
-    /// for wider compatibility with indexers, despite it decreasing performance.
+    /// This event is intentionally kept the same as OpenZeppelin's Ownable for
+    /// wider compatibility with indexers, despite it not being as lightweight as
+    /// a single arg event. See EIP-173: https://eips.ethereum.org/EIPS/eip-173
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
     /// @dev An ownership handover to `newOwner` is proposed.
