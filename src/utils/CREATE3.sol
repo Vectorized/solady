@@ -67,15 +67,14 @@ library CREATE3 {
             }
 
             // Store the proxy's address.
-            mstore(0x00, proxy)
+            mstore(0x14, proxy)
             // 0xd6 = 0xc0 (short RLP prefix) + 0x16 (length of: 0x94 ++ proxy ++ 0x01).
-            mstore8(0x0a, 0xd6)
             // 0x94 = 0x80 + 0x14 (0x14 = the length of an address, 20 bytes, in hex).
-            mstore8(0x0b, 0x94)
+            mstore(0x00, 0xd694)
             // Nonce of the proxy contract (1).
-            mstore8(0x20, 0x01)
-            // Shift left and back to clear the upper 96 bits.
-            deployed := shr(96, shl(96, keccak256(0x0a, 0x17)))
+            mstore8(0x34, 0x01)
+
+            deployed := keccak256(0x1e, 0x17)
 
             // If the `call` fails, revert.
             if iszero(
@@ -119,17 +118,16 @@ library CREATE3 {
             mstore(0x40, PROXY_BYTECODE_HASH)
 
             // Store the proxy's address.
-            mstore(0x00, keccak256(0x0b, 0x55))
+            mstore(0x14, keccak256(0x0b, 0x55))
             // Restore the free memory pointer.
             mstore(0x40, m)
             // 0xd6 = 0xc0 (short RLP prefix) + 0x16 (length of: 0x94 ++ proxy ++ 0x01).
-            mstore8(0x0a, 0xd6)
             // 0x94 = 0x80 + 0x14 (0x14 = the length of an address, 20 bytes, in hex).
-            mstore8(0x0b, 0x94)
+            mstore(0x00, 0xd694)
             // Nonce of the proxy contract (1).
-            mstore8(0x20, 0x01)
-            // Shift left and back to clear the upper 96 bits.
-            deployed := shr(96, shl(96, keccak256(0x0a, 0x17)))
+            mstore8(0x34, 0x01)
+
+            deployed := keccak256(0x1e, 0x17)
         }
     }
 }
