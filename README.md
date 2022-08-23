@@ -18,6 +18,7 @@ utils
 ├─ SSTORE2 — "Library for cheaper reads and writes to persistent storage"
 ├─ CREATE3 — "Deploy to deterministic addresses without an initcode factor"
 ├─ LibRLP — "Library for computing contract addresses from their deployer and nonce"
+├─ LibClone — "Minimal proxy library using the 0age pattern"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
 ├─ LibBitmap — "Library for mapping integers to single bit booleans"
 ├─ LibBytemap — "Library for mapping integers to 8 bit unsigned integers"
