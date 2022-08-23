@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Minimal proxy library using the sw0nt pattern.
+/// @notice Minimal proxy library using the 0age pattern.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibClone.sol)
 /// @author 0age (https://github.com/0age)
+/// @dev Although the sw0nt pattern saves 5 gas over the erc-1167 pattern during runtime,
+/// it is not supported out-of-the-box on Etherscan. Hence, we choose to use the 0age pattern,
+/// which saves 4 gas over the erc-1167 pattern during runtime, and has the smallest bytecode.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
