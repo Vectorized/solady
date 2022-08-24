@@ -22,3 +22,6 @@ out/
 flattened.txt
 
 broadcast
+
+# Coverage
+lcov.info
