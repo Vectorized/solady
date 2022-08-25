@@ -8,50 +8,57 @@ library FixedPointMathLib {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    error ExpOverflow();
+    error ExpOverflow(); // `0xa37bfec9`
 
-    error RPowOverflow();
+    error RPowOverflow(); // `0x49f7642b`
 
-    error MulDivFailed();
+    error MulDivFailed(); // `0xad251c27`
 
-    error DivFailed();
+    error DivFailed(); // `0x65244e4e`
 
-    error LnWadUndefined();
+    error LnWadUndefined(); // `0x1615e638`
 
-    error Log2Undefined();
+    error Log2Undefined(); // `0x5be3aa5c`
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The scalar of ETH and most ERC20s.
-    uint256 internal constant WAD = 1e18; 
+    uint256 internal constant WAD = 1e18;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*              SIMPLIFIED FIXED POINT OPERATIONS             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Equivalent to `(x * y) / WAD` rounded down.
     function mulWadDown(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulDivDown(x, y, WAD); // Equivalent to (x * y) / WAD rounded down.
+        return mulDivDown(x, y, WAD);
     }
 
+    /// @dev Equivalent to `(x * y) / WAD` rounded up.
     function mulWadUp(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulDivUp(x, y, WAD); // Equivalent to (x * y) / WAD rounded up.
+        return mulDivUp(x, y, WAD);
     }
 
+    /// @dev Equivalent to `(x * WAD) / y` rounded down.
     function divWadDown(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulDivDown(x, WAD, y); // Equivalent to (x * WAD) / y rounded down.
+        return mulDivDown(x, WAD, y);
     }
 
+    /// @dev Equivalent to `(x * WAD) / y` rounded up.
     function divWadUp(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulDivUp(x, WAD, y); // Equivalent to (x * WAD) / y rounded up.
+        return mulDivUp(x, WAD, y);
     }
 
+    /// @dev Equivalent to `x` to the power of `y`.
+    /// because `x ** y = (e ** ln(x)) ** y = e ** (ln(x) * y)`.
     function powWad(int256 x, int256 y) internal pure returns (int256) {
-        // Equivalent to x to the power of y because x ** y = (e ** ln(x)) ** y = e ** (ln(x) * y)
-        return expWad((lnWad(x) * y) / int256(WAD)); // Using ln(x) means x must be greater than 0.
+        // Using `ln(x)` means `x` must be greater than 0.
+        return expWad((lnWad(x) * y) / int256(WAD));
     }
 
+    /// @dev Returns `exp(x)`, denominated in `WAD`.
     function expWad(int256 x) internal pure returns (int256 r) {
         unchecked {
             // When the result is < 0.5 we return zero. This happens when
@@ -110,6 +117,7 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns `ln(x)`, denominated in `WAD`.
     function lnWad(int256 x) internal pure returns (int256 r) {
         unchecked {
             if (x <= 0) revert LnWadUndefined();
@@ -174,6 +182,8 @@ library FixedPointMathLib {
     /*              LOW LEVEL FIXED POINT OPERATIONS              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns `floor(x * y / denominator)`.
+    /// Reverts if `x * y` overflows, or `denominator` is zero.
     function mulDivDown(
         uint256 x,
         uint256 y,
@@ -182,12 +192,17 @@ library FixedPointMathLib {
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
             if iszero(mul(denominator, iszero(mul(y, gt(x, div(not(0), y)))))) {
-                revert(0, 0)
+                // Store the function selector of `MulDivFailed()`.
+                mstore(0x00, 0xad251c27)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
             }
             z := div(mul(x, y), denominator)
         }
     }
 
+    /// @dev Returns `ceil(x * y / denominator)`.
+    /// Reverts if `x * y` overflows, or `denominator` is zero.
     function mulDivUp(
         uint256 x,
         uint256 y,
@@ -196,28 +211,38 @@ library FixedPointMathLib {
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
             if iszero(mul(denominator, iszero(mul(y, gt(x, div(not(0), y)))))) {
-                revert(0, 0)
+                // Store the function selector of `MulDivFailed()`.
+                mstore(0x00, 0xad251c27)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
             }
             z := add(iszero(iszero(mod(mul(x, y), denominator))), div(mul(x, y), denominator))
         }
     }
 
+    /// @dev Returns `ceil(x / denominator)`.
+    /// Reverts if `denominator` is zero.
+    function divUp(uint256 x, uint256 denominator) internal pure returns (uint256 z) {
+        assembly {
+            if iszero(denominator) {
+                // Store the function selector of `DivFailed()`.
+                mstore(0x00, 0x65244e4e)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            z := add(iszero(iszero(mod(x, denominator))), div(x, denominator))
+        }
+    }
+
+    /// @dev Returns `max(0, x - y)`.
     function zeroFloorSub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         assembly {
             z := mul(gt(x, y), sub(x, y))
         }
     }
 
-    function divUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        assembly {
-            if iszero(y) {
-                revert(0, 0)
-            }
-            z := add(iszero(iszero(mod(x, y))), div(x, y))
-        }
-    }
-
     /// @dev Exponentiate `x` to `n` by squaring, denominated in `scalar`.
+    /// Reverts if the computation overflows.
     function rpow(
         uint256 x,
         uint256 n,
@@ -241,7 +266,10 @@ library FixedPointMathLib {
                     // Revert if `xx + half` overflowed,
                     // or if `x ** 2` overflows.
                     if or(lt(xxRound, xx), shr(128, x)) {
-                        revert(0, 0)
+                        // Store the function selector of `RPowOverflow()`.
+                        mstore(0x00, 0x49f7642b)
+                        // Revert with (offset, size).
+                        revert(0x1c, 0x04)
                     }
                     // Set `x` to scaled `xxRound`.
                     x := div(xxRound, scalar)
@@ -255,7 +283,10 @@ library FixedPointMathLib {
                         if or(xor(div(zx, x), z), lt(zxRound, zx)) {
                             // Revert if `x` is non-zero.
                             if iszero(iszero(x)) {
-                                revert(0, 0)
+                                // Store the function selector of `RPowOverflow()`.
+                                mstore(0x00, 0x49f7642b)
+                                // Revert with (offset, size).
+                                revert(0x1c, 0x04)
                             }
                         }
                         // Return properly scaled `zxRound`.
@@ -270,6 +301,7 @@ library FixedPointMathLib {
     /*                  GENERAL NUMBER UTILITIES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns the square root of `x`.
     function sqrt(uint256 x) internal pure returns (uint256 z) {
         assembly {
             let y := x // We start y at x, which will help us make our initial estimate.
@@ -334,6 +366,8 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns the log2 of `x`.
+    /// Equivalent to computing the index of the most significant bit (MSB) of `x`.
     function log2(uint256 x) internal pure returns (uint256 r) {
         assembly {
             if iszero(x) {
@@ -353,22 +387,26 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns the minimum of `x` and `y`.
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         assembly {
             z := xor(x, mul(xor(x, y), lt(y, x)))
         }
     }
 
+    /// @dev Returns the maximum of `x` and `y`.
     function max(uint256 x, uint256 y) internal pure returns (uint256 z) {
         assembly {
-            z := xor(x, mul(xor(x, y), lt(x, y)))
+            z := xor(x, mul(xor(x, y), gt(y, x)))
         }
     }
 
-    function clamp(uint256 x, uint256 minValue, uint256 maxValue) internal pure returns (uint256 z) {
-        assembly {
-            let t := xor(x, mul(xor(x, minValue), lt(minValue, x)))
-            z := xor(t, mul(xor(t, maxValue), lt(maxValue, t)))
-        }
+    /// @dev Returns `x`, bounded to `minValue` and `maxValue`.
+    function clamp(
+        uint256 x,
+        uint256 minValue,
+        uint256 maxValue
+    ) internal pure returns (uint256 z) {
+        return max(min(x, maxValue), minValue);
     }
 }
