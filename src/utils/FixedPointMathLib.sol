@@ -12,6 +12,10 @@ library FixedPointMathLib {
 
     error RPowOverflow(); // `0x49f7642b`
 
+    error MulWadFailed(); // `0xbac65e5b`
+
+    error DivWadFailed(); // `0x7c5f487d`
+
     error MulDivFailed(); // `0xad251c27`
 
     error DivFailed(); // `0x65244e4e`
@@ -19,6 +23,8 @@ library FixedPointMathLib {
     error LnWadUndefined(); // `0x1615e638`
 
     error Log2Undefined(); // `0x5be3aa5c`
+
+    error LSBUndefined(); // `0x6d4bda2c`
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -32,30 +38,72 @@ library FixedPointMathLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Equivalent to `(x * y) / WAD` rounded down.
-    function mulWadDown(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulDivDown(x, y, WAD);
+    function mulWadDown(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assembly {
+            // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
+            if mul(y, gt(x, div(not(0), y))) {
+                // Store the function selector of `MulWadFailed()`.
+                mstore(0x00, 0xbac65e5b)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            z := div(mul(x, y), WAD)
+        }
     }
 
     /// @dev Equivalent to `(x * y) / WAD` rounded up.
-    function mulWadUp(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulDivUp(x, y, WAD);
+    function mulWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assembly {
+            // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
+            if mul(y, gt(x, div(not(0), y))) {
+                // Store the function selector of `MulWadFailed()`.
+                mstore(0x00, 0xbac65e5b)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
+        }
     }
 
     /// @dev Equivalent to `(x * WAD) / y` rounded down.
-    function divWadDown(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulDivDown(x, WAD, y);
+    function divWadDown(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assembly {
+            // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
+            if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
+                // Store the function selector of `DivWadFailed()`.
+                mstore(0x00, 0x7c5f487d)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            z := div(mul(x, WAD), y)
+        }
     }
 
     /// @dev Equivalent to `(x * WAD) / y` rounded up.
-    function divWadUp(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulDivUp(x, WAD, y);
+    function divWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assembly {
+            // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
+            if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
+                // Store the function selector of `DivWadFailed()`.
+                mstore(0x00, 0x7c5f487d)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            z := add(iszero(iszero(mod(mul(x, WAD), y))), div(mul(x, WAD), y))
+        }
     }
 
     /// @dev Equivalent to `x` to the power of `y`.
     /// because `x ** y = (e ** ln(x)) ** y = e ** (ln(x) * y)`.
     function powWad(int256 x, int256 y) internal pure returns (int256) {
         // Using `ln(x)` means `x` must be greater than 0.
-        return expWad((lnWad(x) * y) / int256(WAD));
+        unchecked {
+            int256 t = lnWad(x) * y;
+            assembly {
+                t := sdiv(t, WAD)
+            }
+            return expWad(t);
+        }
     }
 
     /// @dev Returns `exp(x)`, denominated in `WAD`.
@@ -376,14 +424,43 @@ library FixedPointMathLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+
             r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
             r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
-            r := or(r, shl(4, lt(0xffff, shr(r, x))))
-            r := or(r, shl(3, lt(0xff, shr(r, x))))
-            r := or(r, shl(2, lt(0xf, shr(r, x))))
-            r := or(r, shl(1, lt(0x3, shr(r, x))))
-            r := or(r, lt(0x1, shr(r, x)))
+
+            x := shr(r, x)
+            x := or(x, shr(1, x))
+            x := or(x, shr(2, x))
+            x := or(x, shr(4, x))
+            x := or(x, shr(8, x))
+            x := or(x, shr(16, x))
+
+            // prettier-ignore
+            r := or(r, byte(and(31, shr(27, mul(x, 0x07c4acdd))), 
+                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f))
+        }
+    }
+
+    /// @dev Returns the least significant bit of `x`.
+    function lsb(uint256 x) internal pure returns (uint256 r) {
+        assembly {
+            if iszero(x) {
+                // Store the function selector of `LSBUndefined()`.
+                mstore(0x00, 0x6d4bda2c)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            // Isolate the least significant bit.
+            x := and(x, add(not(x), 1))
+
+            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+
+            // prettier-ignore
+            r := or(r, byte(and(31, shr(27, mul(shr(r, x), 0x077cb531))), 
+                0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09))
         }
     }
 
@@ -407,6 +484,6 @@ library FixedPointMathLib {
         uint256 minValue,
         uint256 maxValue
     ) internal pure returns (uint256 z) {
-        return max(min(x, maxValue), minValue);
+        return min(max(x, minValue), maxValue);
     }
 }
