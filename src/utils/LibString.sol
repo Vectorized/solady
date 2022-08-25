@@ -17,13 +17,17 @@ library LibString {
 
     function toString(uint256 value) internal pure returns (string memory str) {
         assembly {
-            // The maximum value of a uint256 contains 78 digits (1 byte per digit),
-            // but we allocate 0x80 bytes to keep the free memory pointer 32-byte word aligned.
-            // We will need 1 32-byte word to store the length,
-            // and 3 32-byte words to store a maximum of 78 digits. Total: 0x20 + 3 * 0x20 = 0x80.
-            str := add(mload(0x40), 0x80)
+            // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
+            // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.
+            // We will need 1 word for the trailing zeros padding, 1 word for the length,
+            // and 3 words for a maximum of 78 digits. Total: 5 * 0x20 = 0xa0.
+            let m := add(mload(0x40), 0xa0)
             // Update the free memory pointer to allocate.
-            mstore(0x40, str)
+            mstore(0x40, m)
+            // Assign the `str` to the end.
+            str := sub(m, 0x20)
+            // Zeroize the slot after the string.
+            mstore(str, 0)
 
             // Cache the end of the memory to calculate the length later.
             let end := str
@@ -57,16 +61,20 @@ library LibString {
     function toHexString(uint256 value, uint256 length) internal pure returns (string memory str) {
         assembly {
             let start := mload(0x40)
-            // We need length * 2 bytes for the digits, 2 bytes for the prefix,
-            // and 32 bytes for the length. We add 32 to the total and round down
-            // to a multiple of 32. (32 + 2 + 32) = 66.
-            str := add(start, and(add(shl(1, length), 66), not(31)))
+            // We need 0x20 bytes for the trailing zeros padding, `length * 2` bytes
+            // for the digits, 0x02 bytes for the prefix, and 0x20 bytes for the length.
+            // We add 0x20 to the total and round down to a multiple of 0x20.
+            // (0x20 + 0x20 + 0x02 + 0x20) = 0x62.
+            let m := add(start, and(add(shl(1, length), 0x62), not(0x1f)))
+            // Allocate the memory.
+            mstore(0x40, m)
+            // Assign the `str` to the end.
+            str := sub(m, 0x20)
+            // Zeroize the slot after the string.
+            mstore(str, 0)
 
             // Cache the end to calculate the length later.
             let end := str
-
-            // Allocate the memory.
-            mstore(0x40, str)
             // Store "0123456789abcdef" in scratch space.
             mstore(0x0f, 0x30313233343536373839616263646566)
 
@@ -105,16 +113,19 @@ library LibString {
     function toHexString(uint256 value) internal pure returns (string memory str) {
         assembly {
             let start := mload(0x40)
-            // We need 0x20 bytes for the length, 0x02 bytes for the prefix,
-            // and 0x40 bytes for the digits.
-            // The next multiple of 0x20 above (0x20 + 2 + 0x40) is 0x80.
-            str := add(start, 0x80)
+            // We need 0x20 bytes for the trailing zeros padding, 0x20 bytes for the length,
+            // 0x02 bytes for the prefix, and 0x40 bytes for the digits.
+            // The next multiple of 0x20 above (0x20 + 0x20 + 0x02 + 0x40) is 0xa0.
+            let m := add(start, 0xa0)
+            // Allocate the memory.
+            mstore(0x40, m)
+            // Assign the `str` to the end.
+            str := sub(m, 0x20)
+            // Zeroize the slot after the string.
+            mstore(str, 0)
 
             // Cache the end to calculate the length later.
             let end := str
-
-            // Allocate the memory.
-            mstore(0x40, str)
             // Store "0123456789abcdef" in scratch space.
             mstore(0x0f, 0x30313233343536373839616263646566)
 
@@ -144,10 +155,10 @@ library LibString {
     function toHexString(address value) internal pure returns (string memory str) {
         assembly {
             let start := mload(0x40)
-            // We need 32 bytes for the length, 2 bytes for the prefix,
-            // and 40 bytes for the digits.
-            // The next multiple of 32 above (32 + 2 + 40) is 96.
-            str := add(start, 96)
+            // We need 0x20 bytes for the length, 0x02 bytes for the prefix,
+            // and 0x28 bytes for the digits.
+            // The next multiple of 0x20 above (0x20 + 0x02 + 0x28) is 0x60.
+            str := add(start, 0x60)
 
             // Allocate the memory.
             mstore(0x40, str)
