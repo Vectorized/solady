@@ -66,4 +66,8 @@ contract MockOwnableRoles is OwnableRoles {
     function updateFlagWithOnlyOwnerOrRoles(uint256 roles) public onlyOwnerOrRoles(roles) {
         flag = true;
     }
+
+    function updateFlagWithOnlyRolesOrOwner(uint256 roles) public onlyRolesOrOwner(roles) {
+        flag = true;
+    }
 }
