@@ -272,6 +272,25 @@ contract OwnableRolesTest is Test {
         mockOwnableRoles.updateFlagWithOnlyOwnerOrRoles(rolesToCheck);
     }
 
+    function testOnlyRolesOrOwnerModifier(
+        address user,
+        bool callerIsOwner,
+        uint256 rolesToGrant,
+        uint256 rolesToCheck
+    ) public {
+        vm.assume(user != address(this));
+
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
+
+        if ((rolesToGrant & rolesToCheck == 0) && !callerIsOwner) {
+            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        }
+        if (!callerIsOwner) {
+            vm.prank(user);
+        }
+        mockOwnableRoles.updateFlagWithOnlyRolesOrOwner(rolesToCheck);
+    }
+
     function testOnlyOwnerOrRolesModifier() public {
         testOnlyOwnerOrRolesModifier(address(1), false, 1, 2);
     }
