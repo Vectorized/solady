@@ -232,6 +232,31 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.log2(1073741824), 30);
     }
 
+    function testAvg() public {
+        assertEq(FixedPointMathLib.avg(5, 6), 5);
+        assertEq(FixedPointMathLib.avg(0, 1), 0);
+        assertEq(FixedPointMathLib.avg(45645465, 4846513), 25245989);
+    }
+
+    function testAvgEdgeCase() public {
+        assertEq(FixedPointMathLib.avg(2**256 - 1, 1), 2**255);
+        assertEq(FixedPointMathLib.avg(2**256 - 1, 10), 2**255 + 4);
+        assertEq(FixedPointMathLib.avg(2**256 - 1, 2**256 - 1), 2**256 - 1);
+    }
+
+    function testAbs() public {
+        assertEq(FixedPointMathLib.abs(0), 0);
+        assertEq(FixedPointMathLib.abs(-5), 5);
+        assertEq(FixedPointMathLib.abs(5), 5);
+        assertEq(FixedPointMathLib.abs(-1155656654), 1155656654);
+        assertEq(FixedPointMathLib.abs(621356166516546561651), 621356166516546561651);
+    }
+
+    function testAbsEdgeCase() public {
+        assertEq(FixedPointMathLib.abs(-(2**255 - 1)), (2**255 - 1));
+        assertEq(FixedPointMathLib.abs((2**255 - 1)), (2**255 - 1));
+    }
+
     function testFuzzMulWadDown(uint256 x, uint256 y) public {
         // Ignore cases where x * y overflows.
         unchecked {
@@ -413,6 +438,16 @@ contract FixedPointMathLibTest is Test {
     function testFuzzMax(uint256 x, uint256 y) public {
         uint256 z = x > y ? x : y;
         assertEq(FixedPointMathLib.max(x, y), z);
+    }
+
+    function testFuzzAbs(int256 x) public {
+        assertEq(FixedPointMathLib.abs(x), getAbs(x));
+    }
+
+    function getAbs(int256 a) internal pure returns (uint256) {
+        if (a < 0) return a == type(int256).min ? uint256(type(int256).max) + 1 : uint256(-a);
+
+        return uint256(a);
     }
 
     function testFuzzClamp(

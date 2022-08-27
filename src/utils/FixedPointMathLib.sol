@@ -471,6 +471,21 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns the avarege of `x` and `y`.
+    function avg(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assembly {
+            z := add(and(x, y), shr(1, xor(x, y)))
+        }
+    }
+
+    /// @dev Returns the absolute vaule of `x`.
+    function abs(int256 x) internal pure returns (uint256 z) {
+        assembly {
+            let mask := mul(shr(255, x), not(0))
+            z := xor(mask, add(mask, x))
+        }
+    }
+
     /// @dev Returns the maximum of `x` and `y`.
     function max(uint256 x, uint256 y) internal pure returns (uint256 z) {
         assembly {
