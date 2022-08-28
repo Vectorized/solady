@@ -253,10 +253,10 @@ contract FixedPointMathLibTest is Test {
     }
 
     function testDelta() public {
-        assertEq(FixedPointMathLib.delta(0,0), 0);
-        assertEq(FixedPointMathLib.delta(-5,-4), 1);
-        assertEq(FixedPointMathLib.delta(5,46), 41);
-        assertEq(FixedPointMathLib.delta(46,5), 41);
+        assertEq(FixedPointMathLib.delta(0, 0), 0);
+        assertEq(FixedPointMathLib.delta(-5, -4), 1);
+        assertEq(FixedPointMathLib.delta(5, 46), 41);
+        assertEq(FixedPointMathLib.delta(46, 5), 41);
         assertEq(FixedPointMathLib.delta(-1155656654, 6544844), 1162201498);
         assertEq(FixedPointMathLib.delta(-848877, -8447631456), 8446782579);
     }
@@ -264,11 +264,20 @@ contract FixedPointMathLibTest is Test {
     function testDeltaEgdeCase() public {
         int256 min = type(int256).min;
         int256 max = type(int256).max;
-        uint256 umax  = type(uint256).max;
-        assertEq(FixedPointMathLib.delta(min,max), umax);
-        assertEq(FixedPointMathLib.delta(min,0), 57896044618658097711785492504343953926634992332820282019728792003956564819968);
-        assertEq(FixedPointMathLib.delta(max,5), 57896044618658097711785492504343953926634992332820282019728792003956564819962);
-        assertEq(FixedPointMathLib.delta(min,-5), 57896044618658097711785492504343953926634992332820282019728792003956564819963);
+        uint256 umax = type(uint256).max;
+        assertEq(FixedPointMathLib.delta(min, max), umax);
+        assertEq(
+            FixedPointMathLib.delta(min, 0),
+            57896044618658097711785492504343953926634992332820282019728792003956564819968
+        );
+        assertEq(
+            FixedPointMathLib.delta(max, 5),
+            57896044618658097711785492504343953926634992332820282019728792003956564819962
+        );
+        assertEq(
+            FixedPointMathLib.delta(min, -5),
+            57896044618658097711785492504343953926634992332820282019728792003956564819963
+        );
     }
 
     function testAbsEdgeCase() public {
@@ -459,16 +468,16 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.max(x, y), z);
     }
 
-    function testFuzzDelta(int256 x,int256 y) public {
+    function testFuzzDelta(int256 x, int256 y) public {
         uint256 z;
-        unchecked{
-            if (x > y){
-                z = uint256(x-y);
-            }else{
-                z = uint256(y-x);
+        unchecked {
+            if (x > y) {
+                z = uint256(x - y);
+            } else {
+                z = uint256(y - x);
             }
         }
-        assertEq(FixedPointMathLib.delta(x,y), z);
+        assertEq(FixedPointMathLib.delta(x, y), z);
     }
 
     function testFuzzAbs(int256 x) public {
