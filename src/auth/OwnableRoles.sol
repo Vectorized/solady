@@ -119,17 +119,15 @@ abstract contract OwnableRoles {
     /// Each bit of `roles` represents the role to turn on.
     function _grantRoles(address user, uint256 roles) internal virtual {
         assembly {
-            // Clean the upper 96 bits, but don't shift it back yet.
-            user := shl(96, user)
             // Compute the role slot.
-            mstore(0x00, or(user, _OWNER_SLOT_NOT))
+            mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
             let roleSlot := keccak256(0x00, 0x20)
             // Load the current value and `or` it with `roles`.
             let newRoles := or(sload(roleSlot), roles)
             // Store the new value.
             sstore(roleSlot, newRoles)
             // Emit the {RolesUpdated} event.
-            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, user), newRoles)
+            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, shl(96, user)), newRoles)
         }
     }
 
@@ -137,10 +135,8 @@ abstract contract OwnableRoles {
     /// Each bit of `roles` represents the role to turn off.
     function _removeRoles(address user, uint256 roles) internal virtual {
         assembly {
-            // Clean the upper 96 bits, but don't shift it back yet.
-            user := shl(96, user)
             // Compute the role slot.
-            mstore(0x00, or(user, _OWNER_SLOT_NOT))
+            mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
             let roleSlot := keccak256(0x00, 0x20)
             // Load the current value.
             let currentRoles := sload(roleSlot)
@@ -150,7 +146,7 @@ abstract contract OwnableRoles {
             // Then, store the new value.
             sstore(roleSlot, newRoles)
             // Emit the {RolesUpdated} event.
-            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, user), newRoles)
+            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, shl(96, user)), newRoles)
         }
     }
 
