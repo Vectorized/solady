@@ -486,8 +486,8 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the absolute different between of `x` and `y`.
-    function delta(int256 x, int256 y) internal pure returns (uint256 z) {
+    /// @dev Returns the distance between of `x` and `y`.
+    function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         assembly {
             z := add(mul(sgt(x, y), sub(x, y)), mul(sgt(y, x), sub(y, x)))
         }
