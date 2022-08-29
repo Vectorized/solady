@@ -252,6 +252,34 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.abs(621356166516546561651), 621356166516546561651);
     }
 
+    function testDist() public {
+        assertEq(FixedPointMathLib.dist(0, 0), 0);
+        assertEq(FixedPointMathLib.dist(-5, -4), 1);
+        assertEq(FixedPointMathLib.dist(5, 46), 41);
+        assertEq(FixedPointMathLib.dist(46, 5), 41);
+        assertEq(FixedPointMathLib.dist(-1155656654, 6544844), 1162201498);
+        assertEq(FixedPointMathLib.dist(-848877, -8447631456), 8446782579);
+    }
+
+    function testDistEgdeCase() public {
+        int256 min = type(int256).min;
+        int256 max = type(int256).max;
+        uint256 umax = type(uint256).max;
+        assertEq(FixedPointMathLib.dist(min, max), umax);
+        assertEq(
+            FixedPointMathLib.dist(min, 0),
+            57896044618658097711785492504343953926634992332820282019728792003956564819968
+        );
+        assertEq(
+            FixedPointMathLib.dist(max, 5),
+            57896044618658097711785492504343953926634992332820282019728792003956564819962
+        );
+        assertEq(
+            FixedPointMathLib.dist(min, -5),
+            57896044618658097711785492504343953926634992332820282019728792003956564819963
+        );
+    }
+
     function testAbsEdgeCase() public {
         assertEq(FixedPointMathLib.abs(-(2**255 - 1)), (2**255 - 1));
         assertEq(FixedPointMathLib.abs((2**255 - 1)), (2**255 - 1));
@@ -438,6 +466,18 @@ contract FixedPointMathLibTest is Test {
     function testFuzzMax(uint256 x, uint256 y) public {
         uint256 z = x > y ? x : y;
         assertEq(FixedPointMathLib.max(x, y), z);
+    }
+
+    function testFuzzDist(int256 x, int256 y) public {
+        uint256 z;
+        unchecked {
+            if (x > y) {
+                z = uint256(x - y);
+            } else {
+                z = uint256(y - x);
+            }
+        }
+        assertEq(FixedPointMathLib.dist(x, y), z);
     }
 
     function testFuzzAbs(int256 x) public {
