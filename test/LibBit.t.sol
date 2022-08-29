@@ -14,6 +14,10 @@ contract LibBitTest is Test {
         assertEq(LibBit.msb(0), 256);
     }
 
+    function testMSB() public {
+        assertEq(LibBit.msb(0xff << 3), 10);
+    }
+
     function testFuzzLSB() public {
         uint256 brutalizer = uint256(keccak256(abi.encode(address(this), block.timestamp)));
         for (uint256 i = 0; i < 256; i++) {
@@ -22,6 +26,10 @@ contract LibBitTest is Test {
             assertEq(LibBit.lsb((brutalizer | 1) << i), i);
         }
         assertEq(LibBit.lsb(0), 256);
+    }
+
+    function testLSB() public {
+        assertEq(LibBit.lsb(0xff << 3), 3);
     }
 
     function testFuzzPopCount(uint256 x) public {
