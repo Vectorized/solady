@@ -24,8 +24,6 @@ library FixedPointMathLib {
 
     error Log2Undefined(); // `0x5be3aa5c`
 
-    error LSBUndefined(); // `0x6d4bda2c`
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -442,43 +440,14 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the least significant bit of `x`.
-    function lsb(uint256 x) internal pure returns (uint256 r) {
-        assembly {
-            if iszero(x) {
-                // Store the function selector of `LSBUndefined()`.
-                mstore(0x00, 0x6d4bda2c)
-                // Revert with (offset, size).
-                revert(0x1c, 0x04)
-            }
-            // Isolate the least significant bit.
-            x := and(x, add(not(x), 1))
-
-            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
-            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
-            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
-
-            // prettier-ignore
-            r := or(r, byte(and(31, shr(27, mul(shr(r, x), 0x077cb531))), 
-                0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09))
-        }
-    }
-
-    /// @dev Returns the minimum of `x` and `y`.
-    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        assembly {
-            z := xor(x, mul(xor(x, y), lt(y, x)))
-        }
-    }
-
-    /// @dev Returns the avarege of `x` and `y`.
+    /// @dev Returns the averege of `x` and `y`.
     function avg(uint256 x, uint256 y) internal pure returns (uint256 z) {
         assembly {
             z := add(and(x, y), shr(1, xor(x, y)))
         }
     }
 
-    /// @dev Returns the absolute vaule of `x`.
+    /// @dev Returns the absolute value of `x`.
     function abs(int256 x) internal pure returns (uint256 z) {
         assembly {
             let mask := mul(shr(255, x), not(0))
@@ -486,10 +455,17 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the distance between of `x` and `y`.
+    /// @dev Returns the absolute distance between `x` and `y`.
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         assembly {
             z := add(mul(sgt(x, y), sub(x, y)), mul(sgt(y, x), sub(y, x)))
+        }
+    }
+
+    /// @dev Returns the minimum of `x` and `y`.
+    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assembly {
+            z := xor(x, mul(xor(x, y), lt(y, x)))
         }
     }
 

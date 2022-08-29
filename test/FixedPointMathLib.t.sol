@@ -449,15 +449,6 @@ contract FixedPointMathLibTest is Test {
         }
     }
 
-    function testFuzzLSB() public {
-        uint256 brutalizer = uint256(keccak256(abi.encode(address(this), block.timestamp)));
-        for (uint256 i = 0; i < 256; i++) {
-            assertEq(FixedPointMathLib.lsb(1 << i), i);
-            assertEq(FixedPointMathLib.lsb(type(uint256).max << i), i);
-            assertEq(FixedPointMathLib.lsb((brutalizer | 1) << i), i);
-        }
-    }
-
     function testFuzzMin(uint256 x, uint256 y) public {
         uint256 z = x < y ? x : y;
         assertEq(FixedPointMathLib.min(x, y), z);
