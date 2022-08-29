@@ -472,14 +472,18 @@ contract FixedPointMathLibTest is Test {
     }
 
     function testFuzzAbs(int256 x) public {
-        assertEq(FixedPointMathLib.abs(x), getAbs(x));
+        uint256 absValue = uint256(x);
+        if (x < 0) {
+            if (x == type(int256).min) {
+                absValue = uint256(type(int256).max) + 1;
+            } else {
+                absValue = uint256(-a);
+            }
+        } 
+        assertEq(FixedPointMathLib.abs(x), absValue);
     }
 
-    function getAbs(int256 a) internal pure returns (uint256) {
-        if (a < 0) return a == type(int256).min ? uint256(type(int256).max) + 1 : uint256(-a);
-
-        return uint256(a);
-    }
+    
 
     function testFuzzClamp(
         uint256 x,
