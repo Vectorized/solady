@@ -261,26 +261,23 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.dist(-848877, -8447631456), 8446782579);
     }
 
-    function testDistEgdeCase() public {
-        int256 min = type(int256).min;
-        int256 max = type(int256).max;
-        uint256 umax = type(uint256).max;
-        assertEq(FixedPointMathLib.dist(min, max), umax);
+    function testDistEdgeCases() public {
+        assertEq(FixedPointMathLib.dist(type(int256).min, type(int256).max), type(uint256).max);
         assertEq(
-            FixedPointMathLib.dist(min, 0),
-            57896044618658097711785492504343953926634992332820282019728792003956564819968
+            FixedPointMathLib.dist(type(int256).min, 0),
+            0x8000000000000000000000000000000000000000000000000000000000000000
         );
         assertEq(
-            FixedPointMathLib.dist(max, 5),
-            57896044618658097711785492504343953926634992332820282019728792003956564819962
+            FixedPointMathLib.dist(type(int256).max, 5),
+            0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa
         );
         assertEq(
-            FixedPointMathLib.dist(min, -5),
-            57896044618658097711785492504343953926634992332820282019728792003956564819963
+            FixedPointMathLib.dist(type(int256).min, -5),
+            0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffb
         );
     }
 
-    function testAbsEdgeCase() public {
+    function testAbsEdgeCases() public {
         assertEq(FixedPointMathLib.abs(-(2**255 - 1)), (2**255 - 1));
         assertEq(FixedPointMathLib.abs((2**255 - 1)), (2**255 - 1));
     }
@@ -472,18 +469,16 @@ contract FixedPointMathLibTest is Test {
     }
 
     function testFuzzAbs(int256 x) public {
-        uint256 absValue = uint256(x);
+        uint256 z = uint256(x);
         if (x < 0) {
             if (x == type(int256).min) {
-                absValue = uint256(type(int256).max) + 1;
+                z = uint256(type(int256).max) + 1;
             } else {
-                absValue = uint256(-a);
+                z = uint256(-x);
             }
-        } 
-        assertEq(FixedPointMathLib.abs(x), absValue);
+        }
+        assertEq(FixedPointMathLib.abs(x), z);
     }
-
-    
 
     function testFuzzClamp(
         uint256 x,

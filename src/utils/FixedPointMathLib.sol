@@ -8,21 +8,33 @@ library FixedPointMathLib {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    error ExpOverflow(); // `0xa37bfec9`
+    // Different errors for different types of operations for easier debugging.
 
-    error RPowOverflow(); // `0x49f7642b`
+    /// @dev The operation failed, as the output exceeds the maximum value of uint256.
+    error ExpOverflow();
 
-    error MulWadFailed(); // `0xbac65e5b`
+    /// @dev The operation failed, due to an overflow.
+    error RPowOverflow();
 
-    error DivWadFailed(); // `0x7c5f487d`
+    /// @dev The operation failed, due to an multiplication overflow.
+    error MulWadFailed();
 
-    error MulDivFailed(); // `0xad251c27`
+    /// @dev The operation failed, either due to a
+    /// multiplication overflow, or a division by a zero.
+    error DivWadFailed();
 
-    error DivFailed(); // `0x65244e4e`
+    /// @dev The multiply-divide operation failed, either due to a
+    /// multiplication overflow, or a division by a zero.
+    error MulDivFailed();
 
-    error LnWadUndefined(); // `0x1615e638`
+    /// @dev The division failed, as the denominator is zero.
+    error DivFailed();
 
-    error Log2Undefined(); // `0x5be3aa5c`
+    /// @dev The output is undefined, as the input is less-than-or-equal to zero.
+    error LnWadUndefined();
+
+    /// @dev The output is undefined, as the input is zero.
+    error Log2Undefined();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -427,6 +439,8 @@ library FixedPointMathLib {
             r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
 
+            // For the remaining 32 bits, use a De Bruijn lookup.
+            // See: https://graphics.stanford.edu/~seander/bithacks.html
             x := shr(r, x)
             x := or(x, shr(1, x))
             x := or(x, shr(2, x))
@@ -458,7 +472,7 @@ library FixedPointMathLib {
     /// @dev Returns the absolute distance between `x` and `y`.
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         assembly {
-            z := add(mul(sgt(x, y), sub(x, y)), mul(sgt(y, x), sub(y, x)))
+            z := xor(sub(y, x), mul(xor(sub(y, x), sub(x, y)), sgt(x, y)))
         }
     }
 
