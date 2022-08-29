@@ -184,9 +184,30 @@ library FixedPointMathLib {
             // ln(x * C) = ln(x) + ln(C), we can simply do nothing here
             // and add ln(2**96 / 10**18) at the end.
 
+            // Compute k = log2(x) - 96.
+            int256 k;
+            assembly {
+                let v := x
+                k := shl(7, lt(0xffffffffffffffffffffffffffffffff, v))
+                k := or(k, shl(6, lt(0xffffffffffffffff, shr(k, v))))
+                k := or(k, shl(5, lt(0xffffffff, shr(k, v))))
+
+                // For the remaining 32 bits, use a De Bruijn lookup.
+                // See: https://graphics.stanford.edu/~seander/bithacks.html
+                v := shr(k, v)
+                v := or(v, shr(1, v))
+                v := or(v, shr(2, v))
+                v := or(v, shr(4, v))
+                v := or(v, shr(8, v))
+                v := or(v, shr(16, v))
+
+                // prettier-ignore
+                k := sub(or(k, byte(and(31, shr(27, mul(v, 0x07c4acdd))), 
+                    0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f)), 96)
+            }
+
             // Reduce range of x to (1, 2) * 2**96
             // ln(2^k * x) = k * ln(2) + ln(x)
-            int256 k = int256(log2(uint256(x))) - 96;
             x <<= uint256(159 - k);
             x = int256(uint256(x) >> 159);
 
