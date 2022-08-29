@@ -18,12 +18,14 @@ utils
 ├─ SSTORE2 — "Library for cheaper reads and writes to persistent storage"
 ├─ CREATE3 — "Deploy to deterministic addresses without an initcode factor"
 ├─ LibRLP — "Library for computing contract addresses from their deployer and nonce"
+├─ LibBit — "Library for bit twiddling operations"
 ├─ LibClone — "Minimal proxy library using the 0age pattern"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
 ├─ LibBitmap — "Library for mapping integers to single bit booleans"
 ├─ LibBytemap — "Library for mapping integers to 8 bit unsigned integers"
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
+├─ FixedPointMathLib — "Arithmetic library with operations for fixed-point numbers"
 ```
 
 ## Contributing
