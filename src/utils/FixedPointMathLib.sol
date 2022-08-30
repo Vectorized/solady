@@ -12,9 +12,6 @@ library FixedPointMathLib {
     /// @dev The operation failed, as the output exceeds the maximum value of uint256.
     error ExpOverflow();
 
-    /// @dev The operation failed, due to an overflow.
-    error RPowOverflow();
-
     /// @dev The operation failed, due to an multiplication overflow.
     error MulWadFailed();
 
@@ -106,13 +103,7 @@ library FixedPointMathLib {
     /// because `x ** y = (e ** ln(x)) ** y = e ** (ln(x) * y)`.
     function powWad(int256 x, int256 y) internal pure returns (int256) {
         // Using `ln(x)` means `x` must be greater than 0.
-        unchecked {
-            int256 t = lnWad(x) * y;
-            assembly {
-                t := sdiv(t, WAD)
-            }
-            return expWad(t);
-        }
+        return expWad((lnWad(x) * y) / int256(WAD));
     }
 
     /// @dev Returns `exp(x)`, denominated in `WAD`.
@@ -257,7 +248,7 @@ library FixedPointMathLib {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*              LOW LEVEL FIXED POINT OPERATIONS              */
+    /*                  GENERAL NUMBER UTILITIES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns `floor(x * y / denominator)`.
@@ -318,66 +309,6 @@ library FixedPointMathLib {
             z := mul(gt(x, y), sub(x, y))
         }
     }
-
-    /// @dev Exponentiate `x` to `n` by squaring, denominated in `scalar`.
-    /// Reverts if the computation overflows.
-    function rpow(
-        uint256 x,
-        uint256 n,
-        uint256 scalar
-    ) internal pure returns (uint256 z) {
-        assembly {
-            // `0 ** 0 = 1`. Otherwise, `0 ** n = 0`.
-            z := mul(scalar, iszero(n))
-            if x {
-                // `z = isEven(n) ? scale : x`
-                z := xor(scalar, mul(xor(scalar, x), and(n, 1)))
-                // Divide `scalar` by 2.
-                let half := shr(1, scalar)
-                // Divide `n` by 2 every iteration.
-                // prettier-ignore
-                for { n := shr(1, n) } n { n := shr(1, n) } {
-                    // Store x squared.
-                    let xx := mul(x, x)
-                    // Round to the nearest number.
-                    let xxRound := add(xx, half)
-                    // Revert if `xx + half` overflowed,
-                    // or if `x ** 2` overflows.
-                    if or(lt(xxRound, xx), shr(128, x)) {
-                        // Store the function selector of `RPowOverflow()`.
-                        mstore(0x00, 0x49f7642b)
-                        // Revert with (offset, size).
-                        revert(0x1c, 0x04)
-                    }
-                    // Set `x` to scaled `xxRound`.
-                    x := div(xxRound, scalar)
-                    // If `n` is odd:
-                    if and(n, 1) {
-                        // Compute `z * x`.
-                        let zx := mul(z, x)
-                        // Round to the nearest number.
-                        let zxRound := add(zx, half)
-                        // If `z * x` overflowed or `zx + half` overflowed:
-                        if or(xor(div(zx, x), z), lt(zxRound, zx)) {
-                            // Revert if `x` is non-zero.
-                            if iszero(iszero(x)) {
-                                // Store the function selector of `RPowOverflow()`.
-                                mstore(0x00, 0x49f7642b)
-                                // Revert with (offset, size).
-                                revert(0x1c, 0x04)
-                            }
-                        }
-                        // Return properly scaled `zxRound`.
-                        z := div(zxRound, scalar)
-                    }
-                }
-            }
-        }
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                  GENERAL NUMBER UTILITIES                  */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the square root of `x`.
     function sqrt(uint256 x) internal pure returns (uint256 z) {

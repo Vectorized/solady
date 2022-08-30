@@ -209,13 +209,6 @@ contract FixedPointMathLibTest is Test {
         FixedPointMathLib.lnWad(0);
     }
 
-    function testRPow() public {
-        assertEq(FixedPointMathLib.rpow(2e27, 2, 1e27), 4e27);
-        assertEq(FixedPointMathLib.rpow(2e18, 2, 1e18), 4e18);
-        assertEq(FixedPointMathLib.rpow(2e8, 2, 1e8), 4e8);
-        assertEq(FixedPointMathLib.rpow(8, 3, 1), 512);
-    }
-
     function testSqrt() public {
         assertEq(FixedPointMathLib.sqrt(0), 0);
         assertEq(FixedPointMathLib.sqrt(1), 1);
