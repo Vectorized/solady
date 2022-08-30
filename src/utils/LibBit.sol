@@ -24,7 +24,7 @@ library LibBit {
             x := or(x, shr(16, x))
 
             // prettier-ignore
-            r := or(r, byte(and(31, shr(27, mul(x, 0x07c4acdd))), 
+            r := or(r, byte(shr(251, mul(x, shl(224, 0x07c4acdd))),
                 0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f))
         }
     }
@@ -44,7 +44,7 @@ library LibBit {
 
             // For the remaining 32 bits, use a De Bruijn lookup.
             // prettier-ignore
-            r := or(r, byte(and(31, shr(27, mul(shr(r, x), 0x077cb531))), 
+            r := or(r, byte(shr(251, mul(shr(r, x), shl(224, 0x077cb531))), 
                 0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09))
         }
     }

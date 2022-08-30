@@ -202,7 +202,7 @@ library FixedPointMathLib {
                 v := or(v, shr(16, v))
 
                 // prettier-ignore
-                k := sub(or(k, byte(and(31, shr(27, mul(v, 0x07c4acdd))), 
+                k := sub(or(k, byte(shr(251, mul(v, shl(224, 0x07c4acdd))),
                     0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f)), 96)
             }
 
@@ -469,7 +469,7 @@ library FixedPointMathLib {
             x := or(x, shr(16, x))
 
             // prettier-ignore
-            r := or(r, byte(and(31, shr(27, mul(x, 0x07c4acdd))), 
+            r := or(r, byte(shr(251, mul(x, shl(224, 0x07c4acdd))),
                 0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f))
         }
     }
