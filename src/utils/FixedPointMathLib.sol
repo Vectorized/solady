@@ -492,7 +492,8 @@ library FixedPointMathLib {
     /// @dev Returns the absolute distance between `x` and `y`.
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         assembly {
-            z := xor(sub(y, x), mul(xor(sub(y, x), sub(x, y)), sgt(x, y)))
+            let a := sub(y, x)
+            z := xor(a, mul(xor(a, sub(x, y)), sgt(x, y)))
         }
     }
 
