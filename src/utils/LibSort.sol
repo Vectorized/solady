@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Optimized intro sort.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
-library Sort {
+library LibSort {
     function sort(uint256[] memory a) internal pure {
         assembly {
             let n := mload(a) // Length of `a`.
@@ -176,5 +176,37 @@ library Sort {
             aCasted := a
         }
         sort(aCasted);
+    }
+
+    /// @dev Removes duplicate elements from a ascendingly sorted list.
+    function uniquifySorted(uint256[] memory a) internal pure {
+        assembly {
+            let len := add(mload(a), 1)
+            let x := 0x20
+            let y := 0x02
+            //prettier-ignore
+            for {} lt(y, len) {y := add(y, 1)} {
+                let a_x := mload(add(a, x))
+                let a_y := mload(add(a, shl(5, y)))
+
+                if iszero(eq(a_x, a_y)) {
+                    x := add(x, 0x20)
+                    mstore(add(a, x), a_y)
+                }
+            }
+            mstore(mul(a, iszero(eq(mload(a), 0))), shr(5, x))
+        }
+    }
+
+    /// @dev Removes duplicate elements from a ascendingly sorted list.
+    function uniquifySorted(address[] memory a) internal pure {
+        // As any address written to memory will have the upper 96 bits of the
+        // word zeroized (as per Solidity spec), we can directly compare
+        // these addresses as if they are whole uint256 words.
+        uint256[] memory aCasted;
+        assembly {
+            aCasted := a
+        }
+        uniquifySorted(aCasted);
     }
 }
