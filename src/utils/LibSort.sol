@@ -182,19 +182,24 @@ library LibSort {
     function uniquifySorted(uint256[] memory a) internal pure {
         assembly {
             let len := add(mload(a), 1)
-            let x := 0x20
-            let y := 0x02
-            //prettier-ignore
-            for {} lt(y, len) {y := add(y, 1)} {
-                let a_x := mload(add(a, x))
-                let a_y := mload(add(a, shl(5, y)))
+            if iszero(eq(len, 1)) {
+                let x := 0x20
+                let y := 0x02
+                //prettier-ignore
+                for {} 1 {y := add(y, 1)} {
+                    if eq(y,len){
+                        break
+                    }
+                    let a_x := mload(add(a, x))
+                    let a_y := mload(add(a, shl(5, y)))
 
-                if iszero(eq(a_x, a_y)) {
-                    x := add(x, 0x20)
-                    mstore(add(a, x), a_y)
+                    if iszero(eq(a_x, a_y)) {
+                        x := add(x, 0x20)
+                        mstore(add(a, x), a_y)
+                    }
                 }
+                mstore(a, shr(5, x))
             }
-            mstore(mul(a, iszero(eq(mload(a), 0))), shr(5, x))
         }
     }
 
