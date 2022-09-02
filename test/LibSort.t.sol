@@ -330,7 +330,9 @@ contract LibSortTest is Test {
     function testFuzzUniquifySortedDifferential(uint256[] memory a) public {
         LibSort.sort(a);
         uint256[] memory aCopy = new uint256[](a.length);
-        aCopy = a;
+        for (uint256 i = 0; i < a.length; ++i) {
+            aCopy[i] = a[i];
+        }
         LibSort.uniquifySorted(a);
         removeDuplicate(aCopy);
         assertEq(a, aCopy);

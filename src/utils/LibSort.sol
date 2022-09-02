@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Optimized intro sort.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library LibSort {
+    // @dev Sorts the array in-place.
     function sort(uint256[] memory a) internal pure {
         assembly {
             let n := mload(a) // Length of `a`.
@@ -167,6 +168,7 @@ library LibSort {
         }
     }
 
+    // @dev Sorts the array in-place.
     function sort(address[] memory a) internal pure {
         // As any address written to memory will have the upper 96 bits of the
         // word zeroized (as per Solidity spec), we can directly compare
@@ -178,32 +180,34 @@ library LibSort {
         sort(aCasted);
     }
 
-    /// @dev Removes duplicate elements from a ascendingly sorted list.
+    /// @dev Removes duplicate elements from a ascendingly sorted memory array.
+    /// For performance, it will not revert if the array is not sorted --
+    /// it will be simply remove consecutive duplicate elements.
     function uniquifySorted(uint256[] memory a) internal pure {
         assembly {
-            let len := add(mload(a), 1)
-            if iszero(eq(len, 1)) {
-                let x := 0x20
-                let y := 0x02
-                //prettier-ignore
-                for {} 1 {y := add(y, 1)} {
-                    if eq(y,len){
-                        break
-                    }
-                    let a_x := mload(add(a, x))
-                    let a_y := mload(add(a, shl(5, y)))
-
-                    if iszero(eq(a_x, a_y)) {
+            // If the length of `a` is greater than 1.
+            if iszero(lt(mload(a), 2)) {
+                let x := add(a, 0x20)
+                let y := add(a, 0x40)
+                let end := add(a, shl(5, add(mload(a), 1)))
+                // prettier-ignore
+                for {} 1 {} {
+                    if iszero(eq(mload(x), mload(y))) {
                         x := add(x, 0x20)
-                        mstore(add(a, x), a_y)
+                        mstore(x, mload(y))
                     }
+                    y := add(y, 0x20)
+                    // prettier-ignore
+                    if eq(y, end) { break }
                 }
-                mstore(a, shr(5, x))
+                mstore(a, shr(5, sub(x, a)))
             }
         }
     }
 
-    /// @dev Removes duplicate elements from a ascendingly sorted list.
+    /// @dev Removes duplicate elements from a ascendingly sorted memory array.
+    /// For performance, it will not revert if the array is not sorted --
+    /// it will be simply remove consecutive duplicate elements.
     function uniquifySorted(address[] memory a) internal pure {
         // As any address written to memory will have the upper 96 bits of the
         // word zeroized (as per Solidity spec), we can directly compare
