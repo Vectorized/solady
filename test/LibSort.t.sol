@@ -2,9 +2,9 @@
 pragma solidity ^0.8.4;
 
 import "forge-std/Test.sol";
-import {Sort} from "../src/utils/Sort.sol";
+import "src/utils/LibSort.sol";
 
-contract SortTest is Test {
+contract LibSortTest is Test {
     function testSortChecksumed(uint256[] memory a) public {
         unchecked {
             vm.assume(a.length < 2048);
@@ -12,7 +12,7 @@ contract SortTest is Test {
             for (uint256 i = 0; i < a.length; ++i) {
                 checksum += a[i];
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             uint256 checksumAfterSort;
             for (uint256 i = 0; i < a.length; ++i) {
                 checksumAfterSort += a[i];
@@ -39,7 +39,7 @@ contract SortTest is Test {
                 }
                 aCopy[j] = key;
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertEq(a, aCopy);
         }
     }
@@ -47,7 +47,7 @@ contract SortTest is Test {
     function testSort(uint256[] memory a) public {
         unchecked {
             vm.assume(a.length < 2048);
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -57,7 +57,7 @@ contract SortTest is Test {
             uint256[] memory a = new uint256[](2);
             a[0] = 3;
             a[1] = 0;
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -70,7 +70,7 @@ contract SortTest is Test {
                 lcg = stepLCG(lcg);
                 a[i] = lcg;
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -87,7 +87,7 @@ contract SortTest is Test {
                 lcg = stepLCG(lcg);
                 a[i] = lcg << (i & 8 == 0 ? 128 : 0);
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -102,7 +102,7 @@ contract SortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = i;
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -113,7 +113,7 @@ contract SortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = 999 - i;
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -124,7 +124,7 @@ contract SortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = i % 8 == 0 ? i : 0;
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -154,7 +154,7 @@ contract SortTest is Test {
                 a[i] = addr;
                 lcg = stepLCG(lcg);
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -185,7 +185,7 @@ contract SortTest is Test {
                 }
                 aCopy[j] = key;
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertEq(a, aCopy);
         }
     }
@@ -198,7 +198,7 @@ contract SortTest is Test {
                 lcg = stepLCG(lcg);
                 a[i] = address(uint160(lcg));
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -213,7 +213,7 @@ contract SortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = address(uint160(i));
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -224,7 +224,7 @@ contract SortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = address(uint160(999 - i));
             }
-            Sort.sort(a);
+            LibSort.sort(a);
             assertTrue(isSorted(a));
         }
     }
@@ -279,6 +279,63 @@ contract SortTest is Test {
         }
     }
 
+    function testUniquifySorted() public {
+        uint256[] memory a = new uint256[](5);
+        a[0] = 1;
+        a[1] = 1;
+        a[2] = 3;
+        a[3] = 3;
+        a[4] = 5;
+        LibSort.uniquifySorted(a);
+        assertTrue(isUniqueArray(a));
+        assertEq(a.length, 3);
+    }
+
+    function testUniquifySortedWithEmptyArray() public {
+        uint256[] memory a = new uint256[](0);
+        LibSort.uniquifySorted(a);
+        assertTrue(isUniqueArray(a));
+        assertEq(a.length, 0);
+    }
+
+    function testUniquifySortedAddress() public {
+        address[] memory a = new address[](10);
+        a[0] = address(0x1efF47bc3a10a45D4B230B5d10E37751FE6AA718);
+        a[1] = address(0x1efF47bc3a10a45D4B230B5d10E37751FE6AA718);
+        a[2] = address(0x1efF47bC3A10a45d4b630B5D10E37751FE6aA718);
+        a[3] = address(0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF);
+        a[4] = address(0x6813Eb9362372EEF6200f3b1dbC3f819671cBA69);
+        a[5] = address(0x6813eb9362372Eef6200f3B1dbC3f819671cbA70);
+        a[6] = address(0xe1AB8145F7E55DC933d51a18c793F901A3A0b276);
+        a[7] = address(0xe1AB8145F7E55DC933d51a18c793F901A3A0b276);
+        a[8] = address(0xE1Ab8145F7e55Dc933D61a18c793f901A3a0B276);
+        a[9] = address(0xe1ab8145f7E55Dc933D61A18c793f901A3A0B288);
+        LibSort.uniquifySorted(a);
+        assertTrue(isUniqueArray(a));
+        assertEq(a.length, 8);
+    }
+
+    function testFuzzUniquifySorted(uint256[] memory a) public {
+        LibSort.sort(a);
+        LibSort.uniquifySorted(a);
+        assertTrue(isUniqueArray(a));
+    }
+
+    function testFuzzUniquifySortedAddress(address[] memory a) public {
+        LibSort.sort(a);
+        LibSort.uniquifySorted(a);
+        assertTrue(isUniqueArray(a));
+    }
+
+    function testFuzzUniquifySortedDifferential(uint256[] memory a) public {
+        LibSort.sort(a);
+        uint256[] memory aCopy = new uint256[](a.length);
+        aCopy = a;
+        LibSort.uniquifySorted(a);
+        removeDuplicate(aCopy);
+        assertEq(a, aCopy);
+    }
+
     function stepLCG(uint256 input) private pure returns (uint256 output) {
         unchecked {
             output = (input * 1664525 + 1013904223) & 0xFFFFFFFF;
@@ -298,6 +355,36 @@ contract SortTest is Test {
         unchecked {
             for (uint256 i = 1; i < a.length; ++i) {
                 if (a[i - 1] > a[i]) return false;
+            }
+            return true;
+        }
+    }
+
+    function isUniqueArray(uint256[] memory a) private pure returns (bool) {
+        if (a.length == 0) {
+            return true;
+        }
+        unchecked {
+            uint256 len = a.length;
+            for (uint256 i = 0; i < len - 1; i++) {
+                if (a[i] >= a[i + 1]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    function isUniqueArray(address[] memory a) private pure returns (bool) {
+        if (a.length == 0) {
+            return true;
+        }
+        unchecked {
+            uint256 len = a.length;
+            for (uint256 i = 0; i < len - 1; i++) {
+                if (a[i] >= a[i + 1]) {
+                    return false;
+                }
             }
             return true;
         }
@@ -337,5 +424,24 @@ contract SortTest is Test {
         }
         if (left < j) sortOriginal(arr, left, j);
         if (i < right) sortOriginal(arr, i, right);
+    }
+
+    function removeDuplicate(uint256[] memory a) private pure {
+        if (a.length != 0) {
+            unchecked {
+                uint256 n = a.length;
+                uint256 i = 0;
+
+                for (uint256 j = 1; j < n; j++) {
+                    if (a[i] != a[j]) {
+                        i++;
+                        a[i] = a[j];
+                    }
+                }
+                assembly {
+                    mstore(a, add(i, 1))
+                }
+            }
+        }
     }
 }
