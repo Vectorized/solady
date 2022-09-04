@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Minimal proxy library using the 0age pattern.
+/// @notice Minimal proxy library.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibClone.sol)
-/// @author 0age (https://github.com/0age)
+/// @author Minimal proxy by 0age (https://github.com/0age)
+/// @author Clones with immutable args by wighawag, zefram.eth, Saw-mon & Natalie 
+/// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
 /// @dev Although the sw0nt pattern saves 5 gas over the erc-1167 pattern during runtime,
 /// it is not supported out-of-the-box on Etherscan. Hence, we choose to use the 0age pattern,
 /// which saves 4 gas over the erc-1167 pattern during runtime, and has the smallest bytecode.
@@ -12,12 +14,14 @@ library LibClone {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Unable to deploy the clone.
     error DeploymentFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Deploys a clone of `implementation` using the 0age pattern.
     function clone(address implementation) internal returns (address instance) {
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
@@ -36,6 +40,7 @@ library LibClone {
         }
     }
 
+    /// @dev Deploys a deterministic clone of `implementation` with `salt` using the 0age pattern.
     function cloneDeterministic(address implementation, bytes32 salt) internal returns (address instance) {
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
@@ -54,6 +59,8 @@ library LibClone {
         }
     }
 
+    /// @dev Returns the address of the deterministic clone of 
+    /// `implementation` with `salt` by `deployer`, using the 0age pattern.
     function predictDeterministicAddress(
         address implementation,
         bytes32 salt,
@@ -71,6 +78,125 @@ library LibClone {
             predicted := keccak256(0x00, 0x55)
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x35, 0)
+        }
+    }
+
+    /// @dev Deploys a minimal proxy with `implementation`,
+    /// using immutable arguments encoded in `data`.
+    function cloneWithImmutableArgs(address implementation, bytes memory data)
+        internal
+        returns (address instance)
+    {
+        assembly {
+            // Compute the boundaries of the data and cache the memory slots around it.
+            let mBefore2 := mload(sub(data, 0x40))
+            let mBefore1 := mload(sub(data, 0x20))
+            let dataLength := mload(data)
+            let dataEnd := add(add(data, 0x20), dataLength)
+            let mAfter1 := mload(dataEnd)
+
+            let extraLength := add(dataLength, 2) // +2 bytes for telling how much data there is appended to the call
+            let creationSize := add(extraLength, 0x3f)
+            let runSize := sub(creationSize, 0x0a)
+
+            /**
+             * -------------------------------------------------------------------------------------------------------+
+             * CREATION (10 bytes)                                                                                    |
+             * -------------------------------------------------------------------------------------------------------| 
+             * Opcode     | Opcode + Args     | Stack     | Memory                                                    |
+             * -------------------------------------------------------------------------------------------------------|
+             * 61 runtime | PUSH2 runtime (r) | r         | –                                                         |
+             * 3d         | RETURNDATASIZE    | 0 r       | –                                                         |
+             * 81         | DUP2              | r 0 r     | –                                                         |
+             * 60 offset  | PUSH1 offset (o)  | o r 0 r   | –                                                         |
+             * 3d         | RETURNDATASIZE    | 0 o r 0 r | –                                                         |
+             * 39         | CODECOPY          | 0 r       | [0 - runSize): runtime code                               |
+             * f3         | RETURN            |           | [0 - runSize): runtime code                               |
+             * -------------------------------------------------------------------------------------------------------|
+             * RUNTIME (53 bytes + extraLength)                                                                       |
+             * -------------------------------------------------------------------------------------------------------| 
+             * Opcode   | Opcode + Args  | Stack                    | Memory                                          |
+             * -------------------------------------------------------------------------------------------------------|
+             *                                                                                                        |
+             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::|
+             * 36       | CALLDATASIZE   | cds                      | –                                               |
+             * 3d       | RETURNDATASIZE | 0 cds                    | –                                               |
+             * 3d       | RETURNDATASIZE | 0 0 cds                  | –                                               |
+             * 37       | CALLDATACOPY   |                          | [0 - cds): calldata                             |
+             *                                                                                                        |
+             * ::: keep some values in stack :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::|
+             * 3d       | RETURNDATASIZE | 0                        | [0 - cds): calldata                             |
+             * 3d       | RETURNDATASIZE | 0 0                      | [0 - cds): calldata                             |
+             * 3d       | RETURNDATASIZE | 0 0 0                    | [0 - cds): calldata                             |
+             * 3d       | RETURNDATASIZE | 0 0 0 0                  | [0 - cds): calldata                             |
+             * 61 extra | PUSH2 extra (e)| e 0 0 0 0                | [0 - cds): calldata                             |
+             *                                                                                                        |
+             * ::: copy extra data to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::|
+             * 80       | DUP1           | e e 0 0 0 0              | [0 - cds): calldata                             |
+             * 60 0x35  | PUSH1 0x35     | 0x35 e e 0 0 0 0         | [0 - cds): calldata                             |
+             * 36       | CALLDATASIZE   | cds 0x35 e e 0 0 0 0     | [0 - cds): calldata                             |
+             * 39       | CODECOPY       | e 0 0 0 0                | [0 - cds): calldata, [cds - cds + e): extraData |
+             *                                                                                                        |
+             * ::: delegate call to the implementation contract ::::::::::::::::::::::::::::::::::::::::::::::::::::::|
+             * 36       | CALLDATASIZE   | cds e 0 0 0 0            | [0 - cds): calldata, [cds - cds + e): extraData |
+             * 01       | ADD            | cds+e 0 0 0 0            | [0 - cds): calldata, [cds - cds + e): extraData |
+             * 3d       | RETURNDATASIZE | 0 cds+e 0 0 0 0          | [0 - cds): calldata, [cds - cds + e): extraData |
+             * 73 addr  | PUSH20 addr    | addr 0 cds+e 0 0 0 0     | [0 - cds): calldata, [cds - cds + e): extraData |
+             * 5a       | GAS            | gas addr 0 cds+e 0 0 0 0 | [0 - cds): calldata, [cds - cds + e): extraData |
+             * f4       | DELEGATECALL   | success 0 0              | [0 - cds): calldata, [cds - cds + e): extraData |
+             *                                                                                                        |
+             * ::: copy return data to memory ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::|
+             * 3d       | RETURNDATASIZE | rds success 0 0          | [0 - cds): calldata, [cds - cds + e): extraData |
+             * 3d       | RETURNDATASIZE | rds rds success 0 0      | [0 - cds): calldata, [cds - cds + e): extraData |
+             * 93       | SWAP4          | 0 rds success 0 rds      | [0 - cds): calldata, [cds - cds + e): extraData |
+             * 80       | DUP1           | 0 0 rds success 0 rds    | [0 - cds): calldata, [cds - cds + e): extraData |
+             * 3e       | RETURNDATACOPY | success 0 rds            | [0 - rds): returndata, ... rest may be dirty    |
+             *                                                                                                        |
+             * 60 0x33  | PUSH1 0x33     | 0x33 success             | [0 - rds): returndata, ... rest may be dirty    |
+             * 57       | JUMPI          |                          | [0 - rds): returndata, ... rest may be dirty    |
+             *                                                                                                        |
+             * ::: revert ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::|
+             * fd       | REVERT         |                          | [0 - rds): returndata, ... rest may be dirty    |
+             *                                                                                                        |
+             * ::: return ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::|
+             * 5b       | JUMPDEST       |                          | [0 - rds): returndata, ... rest may be dirty    |
+             * f3       | RETURN         |                          | [0 - rds): returndata, ... rest may be dirty    |
+             * -------------------------------------------------------------------------------------------------------+
+             */
+
+            // Write the bytecode before the data.
+            mstore(data, 0x5af43d3d93803e603357fd5bf3)
+            // Write the address of the implementation.
+            mstore(sub(data, 0x0d), implementation)
+            // Write the rest of the bytecode.
+            mstore(
+                sub(data, 0x21),
+                or(
+                    0x6100003d81600a3d39f3363d3d373d3d3d3d610000806035363936013d73,
+                    or(
+                        shl(0xd8, runSize),
+                        shl(0x48, extraLength)
+                    )
+                )
+            )
+            mstore(dataEnd, shl(0xf0, extraLength))
+
+            // Create the instance.
+            instance := create(0, sub(data, 0x1f), creationSize)
+
+            // If `instance` is zero, revert.
+            if iszero(instance) {
+                // Store the function selector of `DeploymentFailed()`.
+                mstore(0x00, 0x30116425)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+
+            // Restore the overwritten memory surrounding `data`.
+            mstore(data, dataLength)
+            mstore(sub(data, 0x20), mBefore1)
+            mstore(sub(data, 0x40), mBefore2)
+            mstore(dataEnd, mAfter1)
         }
     }
 }
