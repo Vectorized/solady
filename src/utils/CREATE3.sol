@@ -42,7 +42,7 @@ library CREATE3 {
      * -------------------------------------------------------------------+
      */
 
-    uint256 internal constant PROXY_BYTECODE = 0x67_36_3d_3d_37_36_3d_34_f0_3d_52_60_08_60_18_f3;
+    uint256 internal constant PROXY_BYTECODE = 0x67363d3d37363d34f03d5260086018f3;
 
     bytes32 internal constant PROXY_BYTECODE_HASH = 0x21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f;
 
