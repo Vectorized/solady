@@ -5,7 +5,7 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Clone.sol)
 /// @author Adapted from clones with immutable args by zefram.eth, Saw-mon & Natalie
 /// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
-contract Clone {
+abstract contract Clone {
     /// @dev Reads an immutable arg with type address.
     function _getArgAddress(uint256 argOffset) internal pure returns (address arg) {
         uint256 offset = _getImmutableArgsOffset();
