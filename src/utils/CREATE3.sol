@@ -20,7 +20,7 @@ library CREATE3 {
 
     /**
      * -------------------------------------------------------------------+
-     * Opcode      | Opcode + Args    | Stack        | Memory             |
+     * Opcode      | Mnemonic         | Stack        | Memory             |
      * -------------------------------------------------------------------|
      * 36          | CALLDATASIZE     | cds          |                    |
      * 3d          | RETURNDATASIZE   | 0 cds        |                    |
@@ -31,7 +31,7 @@ library CREATE3 {
      * 34          | CALLVALUE        | value 0 cds  | [0..cds): calldata |
      * f0          | CREATE           | newContract  | [0..cds): calldata |
      * -------------------------------------------------------------------|
-     * Opcode      | Opcode + Args    | Stack        | Memory             |
+     * Opcode      | Mnemonic         | Stack        | Memory             |
      * -------------------------------------------------------------------|
      * 67 bytecode | PUSH8 bytecode   | bytecode     |                    |
      * 3d          | RETURNDATASIZE   | 0 bytecode   |                    |
