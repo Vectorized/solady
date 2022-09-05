@@ -223,9 +223,8 @@ library LibSort {
     /// and the index of the nearest element less than or equal to `needle`.
     function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found, uint256 index) {
         assembly {
-            // Load the length of `a`.
-            let n := mload(a)
-            let s := add(a, 0x20)
+            let n := mload(a) // Length of `a`.
+            let s := add(a, 0x20) // Start of the elements of `a`.
             switch gt(n, 1)
             case 0 {
                 found := eq(mload(s), needle)
@@ -236,9 +235,10 @@ library LibSort {
                 let m := 0 // Middle slot.
                 // prettier-ignore
                 for {} 1 {} {
+                    // Average of `l` and `h`, rounded down to the nearest multiple of 0x20.
                     m := shl(5, shr(6, add(l, h)))
                     found := eq(mload(m), needle)
-                    
+                    // prettier-ignore
                     if or(gt(l, h), found) { break }
 
                     if iszero(gt(needle, mload(m))) {
