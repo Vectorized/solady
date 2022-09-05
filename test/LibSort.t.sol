@@ -338,6 +338,88 @@ contract LibSortTest is Test {
         assertEq(a, aCopy);
     }
 
+    function testSearchSortedBestCase() public {
+        uint256[] memory a = new uint256[](6);
+        a[0] = 0;
+        a[1] = 1;
+        a[2] = 2;
+        a[3] = 3;
+        a[4] = 4;
+        a[5] = 5;
+        (bool found, uint256 index) = LibSort.searchSorted(a, 2);
+        assertTrue(found);
+        assertEq(index, 2);
+    }
+
+    function testSearchSortedWorstCase() public {
+        uint256[] memory a = new uint256[](6);
+        a[0] = 0;
+        a[1] = 1;
+        a[2] = 2;
+        a[3] = 3;
+        a[4] = 4;
+        a[5] = 5;
+        (bool found, uint256 index) = LibSort.searchSorted(a, 5);
+        assertTrue(found);
+        assertEq(index, 5);
+    }
+
+    function testSearchSortedElementNotInLargeArray() public {
+        uint256[] memory a = new uint256[](2**10);
+        (bool found, uint256 index) = LibSort.searchSorted(a, 1);
+        assertFalse(found);
+        assertEq(index, 1023);
+    }
+
+    function testSearchSortedWithEmptyArray() public {
+        uint256[] memory a = new uint256[](0);
+        (bool found, uint256 index) = LibSort.searchSorted(a, 1);
+        assertFalse(found);
+        assertEq(index, 0);
+    }
+
+    function testSearchSortedElementNotInArray() public {
+        uint256[] memory a = new uint256[](5);
+        a[0] = 1;
+        a[1] = 2;
+        a[2] = 3;
+        a[3] = 4;
+        a[4] = 5;
+        (bool found, uint256 index) = LibSort.searchSorted(a, 0);
+        assertFalse(found);
+        assertEq(index, 0);
+    }
+
+    function testFuzzSearchSorted() public {
+        uint256[] memory a = new uint256[](1024);
+        for (uint256 i = 0; i < 1024; i++) {
+            a[i] = i;
+        }
+        for (uint256 i = 0; i < 1024; i++) {
+            (bool found, uint256 index) = LibSort.searchSorted(a, i);
+            assertTrue(found);
+            assertEq(index, i);
+        }
+    }
+
+    function testFuzzSearchSortedElementArrayMixedCase() public {
+        uint256[] memory a = new uint256[](50);
+        uint256 i;
+        for (uint256 j = 0; j < 100; j++) {
+            if (j % 2 == 0) a[i++] = j;
+        }
+        for (uint256 k = 0; k < 100; k++) {
+            (bool found, uint256 index) = LibSort.searchSorted(a, k);
+            if (k % 2 == 0) {
+                assertTrue(found);
+                assertEq(index, k / 2);
+            } else {
+                assertFalse(found);
+                assertEq(index, k / 2);
+            }
+        }
+    }
+
     function stepLCG(uint256 input) private pure returns (uint256 output) {
         unchecked {
             output = (input * 1664525 + 1013904223) & 0xFFFFFFFF;

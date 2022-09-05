@@ -218,4 +218,38 @@ library LibSort {
         }
         uniquifySorted(aCasted);
     }
+
+    /// @dev Returns whether `a` contains `needle`,
+    /// and the index of the nearest element less than or equal to `needle`.
+    /// For performance, it will give wrong if the array is not sorted.
+    function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found,uint256 index) {
+        assembly {
+            let low
+            let high := mload(a)
+            let start := add(a,0x20)
+            // prettier-ignore
+            for {} iszero(eq(low, high)) {} {
+                let mid := shr(1, add(low, high))
+                let data := mload(add(start, shl(5, mid)))
+
+                if eq(data, needle){
+                    found := true
+                    index := mid
+                    break
+                }
+
+                if iszero(lt(data, needle)){
+                    high := mid
+                }
+
+                if iszero(lt(needle, data)){
+                    low := add(mid, 1)
+                }
+            }
+            
+            if and(iszero(found), iszero(iszero(high))){
+                index := sub(high, 1)
+            }
+        }
+    }
 }
