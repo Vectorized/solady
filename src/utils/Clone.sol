@@ -1,84 +1,51 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @title Clone
-/// @author zefram.eth, Saw-mon & Natalie
-/// @notice Provides helper functions for reading immutable args from calldata
+/// @notice Clone class with helper functions for reading immutable args from calldata.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Clone.sol)
+/// @author Adapted from clones with immutable args by zefram.eth, Saw-mon & Natalie
+/// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
 contract Clone {
-
-    uint256 private constant 0x20 = 0x20;
-
-    /// @notice Reads an immutable arg with type address.
-    /// @param argOffset The offset of the arg in the packed data
-    /// @return arg The arg value
-    function _getArgAddress(uint256 argOffset)
-        internal
-        pure
-        returns (address arg)
-    {
+    /// @dev Reads an immutable arg with type address.
+    function _getArgAddress(uint256 argOffset) internal pure returns (address arg) {
         uint256 offset = _getImmutableArgsOffset();
         assembly {
             arg := shr(0x60, calldataload(add(offset, argOffset)))
         }
     }
 
-    /// @notice Reads an immutable arg with type uint256
-    /// @param argOffset The offset of the arg in the packed data
-    /// @return arg The arg value
-    function _getArgUint256(uint256 argOffset)
-        internal
-        pure
-        returns (uint256 arg)
-    {
+    /// @dev Reads an immutable arg with type uint256
+    function _getArgUint256(uint256 argOffset) internal pure returns (uint256 arg) {
         uint256 offset = _getImmutableArgsOffset();
         assembly {
             arg := calldataload(add(offset, argOffset))
         }
     }
 
-    /// @notice Reads a uint256 array stored in the immutable args.
-    /// @param argOffset The offset of the arg in the packed data
-    /// @param arrLen Number of elements in the array
-    /// @return arr The array
-    function _getArgUint256Array(uint256 argOffset, uint64 arrLen)
-        internal
-        pure
-      returns (uint256[] memory arr)
-    {
-        uint256 offset = _getImmutableArgsOffset() + argOffset;
-        arr = new uint256[](arrLen);
-
+    /// @dev Reads a uint256 array stored in the immutable args.
+    function _getArgUint256Array(uint256 argOffset, uint256 length) internal pure returns (uint256[] memory arr) {
+        uint256 offset = _getImmutableArgsOffset();
         assembly {
-            let i
-            arrLen := mul(arrLen, 0x20)
-            for {} lt(i, arrLen) {} {
-                let j := add(i, 0x20)
-                mstore(
-                    add(arr, j), 
-                    calldataload(add(offset, i))
-                )
-                i := j
-            }
+            // Grab the free memory pointer.
+            arr := mload(0x40)
+            // Store the array length.
+            mstore(arr, length)
+            // Copy the array.
+            calldatacopy(add(arr, 0x20), add(offset, argOffset), shl(5, length))
+            // Allocate the memory
+            mstore(0x40, add(add(arr, 0x20), shl(5, length)))
         }
     }
 
-    /// @notice Reads an immutable arg with type uint64
-    /// @param argOffset The offset of the arg in the packed data
-    /// @return arg The arg value
-    function _getArgUint64(uint256 argOffset)
-        internal
-        pure
-        returns (uint64 arg)
-    {
+    /// @dev Reads an immutable arg with type uint64.
+    function _getArgUint64(uint256 argOffset) internal pure returns (uint64 arg) {
         uint256 offset = _getImmutableArgsOffset();
         assembly {
             arg := shr(0xc0, calldataload(add(offset, argOffset)))
         }
     }
 
-    /// @notice Reads an immutable arg with type uint8
-    /// @param argOffset The offset of the arg in the packed data
-    /// @return arg The arg value
+    /// @dev Reads an immutable arg with type uint8.
     function _getArgUint8(uint256 argOffset) internal pure returns (uint8 arg) {
         uint256 offset = _getImmutableArgsOffset();
         assembly {
@@ -86,13 +53,10 @@ contract Clone {
         }
     }
 
-    /// @return offset The offset of the packed immutable args in calldata
+    /// @return offset The offset of the packed immutable args in calldata.
     function _getImmutableArgsOffset() internal pure returns (uint256 offset) {
         assembly {
-            offset := sub(
-                calldatasize(),
-                shr(0xf0, calldataload(sub(calldatasize(), 2)))
-            )
+            offset := sub(calldatasize(), shr(0xf0, calldataload(sub(calldatasize(), 2))))
         }
     }
 }

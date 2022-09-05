@@ -3,8 +3,9 @@ pragma solidity ^0.8.4;
 
 import "forge-std/Test.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
+import {Clone} from "../src/utils/Clone.sol";
 
-contract LibCloneTest is Test {
+contract LibCloneTest is Test, Clone {
     error CustomError(uint256 currentValue);
 
     uint256 public value;
@@ -65,5 +66,55 @@ contract LibCloneTest is Test {
 
     function testCloneDeterministic() public {
         testCloneDeterministic(1, keccak256("b"));
+    }
+
+    function getArgAddress(uint256 argOffset) public pure returns (address) {
+        return _getArgAddress(argOffset);
+    }
+
+    function getArgUint256(uint256 argOffset) public pure returns (uint256) {
+        return _getArgUint256(argOffset);
+    }
+
+    function getArgUint256Array(uint256 argOffset, uint256 length) public pure returns (uint256[] memory) {
+        return _getArgUint256Array(argOffset, length);
+    }
+
+    function getArgUint64(uint256 argOffset) public pure returns (uint64) {
+        return _getArgUint64(argOffset);
+    }
+
+    function getArgUint8(uint256 argOffset) public pure returns (uint8) {
+        return _getArgUint8(argOffset);
+    }
+
+    function testCloneWithImmutableArgs(
+        uint256 value_,
+        address argAddress,
+        uint256 argUint256,
+        uint256[] memory argUint256Array,
+        uint64 argUint64,
+        uint8 argUint8
+    ) public {
+        bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
+        LibCloneTest clone = LibCloneTest(LibClone.cloneWithImmutableArgs(address(this), data));
+        _shouldBehaveLikeClone(address(clone), value_);
+        uint256 argOffset;
+        assertEq(clone.getArgAddress(argOffset), argAddress);
+        argOffset += 20;
+        assertEq(clone.getArgUint256(argOffset), argUint256);
+        argOffset += 32;
+        assertEq(clone.getArgUint256Array(argOffset, argUint256Array.length), argUint256Array);
+        argOffset += 32 * argUint256Array.length;
+        assertEq(clone.getArgUint64(argOffset), argUint64);
+        argOffset += 8;
+        assertEq(clone.getArgUint8(argOffset), argUint8);
+    }
+
+    function testCloneWithImmutableArgs() public {
+        uint256[] memory argUint256Array = new uint256[](2);
+        argUint256Array[0] = 111;
+        argUint256Array[1] = 222;
+        testCloneWithImmutableArgs(1, address(uint160(0xB00Ba5)), 8, argUint256Array, 7, 6);
     }
 }

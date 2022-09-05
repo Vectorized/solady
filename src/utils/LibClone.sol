@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Minimal proxy library.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibClone.sol)
 /// @author Minimal proxy by 0age (https://github.com/0age)
-/// @author Clones with immutable args by wighawag, zefram.eth, Saw-mon & Natalie 
+/// @author Clones with immutable args by wighawag, zefram.eth, Saw-mon & Natalie
 /// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
 /// @dev Although the sw0nt pattern saves 5 gas over the erc-1167 pattern during runtime,
 /// it is not supported out-of-the-box on Etherscan. Hence, we choose to use the 0age pattern,
@@ -59,7 +59,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic clone of 
+    /// @dev Returns the address of the deterministic clone of
     /// `implementation` with `salt` by `deployer`, using the 0age pattern.
     function predictDeterministicAddress(
         address implementation,
@@ -83,10 +83,7 @@ library LibClone {
 
     /// @dev Deploys a minimal proxy with `implementation`,
     /// using immutable arguments encoded in `data`.
-    function cloneWithImmutableArgs(address implementation, bytes memory data)
-        internal
-        returns (address instance)
-    {
+    function cloneWithImmutableArgs(address implementation, bytes memory data) internal returns (address instance) {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore2 := mload(sub(data, 0x40))
@@ -102,7 +99,7 @@ library LibClone {
             /**
              * -------------------------------------------------------------------------------------------------------+
              * CREATION (10 bytes)                                                                                    |
-             * -------------------------------------------------------------------------------------------------------| 
+             * -------------------------------------------------------------------------------------------------------|
              * Opcode     | Opcode + Args     | Stack     | Memory                                                    |
              * -------------------------------------------------------------------------------------------------------|
              * 61 runtime | PUSH2 runtime (r) | r         | –                                                         |
@@ -114,7 +111,7 @@ library LibClone {
              * f3         | RETURN            |           | [0 - runSize): runtime code                               |
              * -------------------------------------------------------------------------------------------------------|
              * RUNTIME (53 bytes + extraLength)                                                                       |
-             * -------------------------------------------------------------------------------------------------------| 
+             * -------------------------------------------------------------------------------------------------------|
              * Opcode   | Opcode + Args  | Stack                    | Memory                                          |
              * -------------------------------------------------------------------------------------------------------|
              *                                                                                                        |
@@ -173,10 +170,7 @@ library LibClone {
                 sub(data, 0x21),
                 or(
                     0x6100003d81600a3d39f3363d3d373d3d3d3d610000806035363936013d73,
-                    or(
-                        shl(0xd8, runSize),
-                        shl(0x48, extraLength)
-                    )
+                    or(shl(0xd8, runSize), shl(0x48, extraLength))
                 )
             )
             mstore(dataEnd, shl(0xf0, extraLength))
