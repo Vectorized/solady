@@ -3,7 +3,8 @@ pragma solidity ^0.8.4;
 
 /// @notice Optimized intro sort.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
-library Sort {
+library LibSort {
+    // @dev Sorts the array in-place.
     function sort(uint256[] memory a) internal pure {
         assembly {
             let n := mload(a) // Length of `a`.
@@ -167,6 +168,7 @@ library Sort {
         }
     }
 
+    // @dev Sorts the array in-place.
     function sort(address[] memory a) internal pure {
         // As any address written to memory will have the upper 96 bits of the
         // word zeroized (as per Solidity spec), we can directly compare
@@ -176,5 +178,78 @@ library Sort {
             aCasted := a
         }
         sort(aCasted);
+    }
+
+    /// @dev Removes duplicate elements from a ascendingly sorted memory array.
+    /// For performance, it will not revert if the array is not sorted --
+    /// it will be simply remove consecutive duplicate elements.
+    function uniquifySorted(uint256[] memory a) internal pure {
+        assembly {
+            // If the length of `a` is greater than 1.
+            if iszero(lt(mload(a), 2)) {
+                let x := add(a, 0x20)
+                let y := add(a, 0x40)
+                let end := add(a, shl(5, add(mload(a), 1)))
+                // prettier-ignore
+                for {} 1 {} {
+                    if iszero(eq(mload(x), mload(y))) {
+                        x := add(x, 0x20)
+                        mstore(x, mload(y))
+                    }
+                    y := add(y, 0x20)
+                    // prettier-ignore
+                    if eq(y, end) { break }
+                }
+                mstore(a, shr(5, sub(x, a)))
+            }
+        }
+    }
+
+    /// @dev Removes duplicate elements from a ascendingly sorted memory array.
+    /// For performance, it will not revert if the array is not sorted --
+    /// it will be simply remove consecutive duplicate elements.
+    function uniquifySorted(address[] memory a) internal pure {
+        // As any address written to memory will have the upper 96 bits of the
+        // word zeroized (as per Solidity spec), we can directly compare
+        // these addresses as if they are whole uint256 words.
+        uint256[] memory aCasted;
+        assembly {
+            aCasted := a
+        }
+        uniquifySorted(aCasted);
+    }
+
+    /// @dev Returns whether `a` contains `needle`,
+    /// and the index of the nearest element less than or equal to `needle`.
+    function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found, uint256 index) {
+        assembly {
+            let n := mload(a) // Length of `a`.
+            let s := add(a, 0x20) // Start of the elements of `a`.
+
+            switch gt(n, 1)
+            case 0 {
+                found := eq(mload(s), needle)
+            }
+            default {
+                let l := s // Slot of the start of search.
+                let h := add(a, shl(5, n)) // Slot of the end of search.
+                let m := 0 // Middle slot.
+                // prettier-ignore
+                for {} 1 {} {
+                    // Average of `l` and `h`, rounded down to the nearest multiple of 0x20.
+                    m := shl(5, shr(6, add(l, h)))
+                    found := eq(mload(m), needle)
+                    // prettier-ignore
+                    if or(gt(l, h), found) { break }
+                    // Decide whether to search the left or right half.
+                    if iszero(gt(needle, mload(m))) {
+                        h := sub(m, 0x20)
+                        continue
+                    }
+                    l := add(m, 0x20)   
+                }
+                index := shr(5, mul(sub(m, s), gt(m, s)))
+            }
+        }
     }
 }
