@@ -30,18 +30,18 @@ library SSTORE2 {
             let dataSize := add(originalDataLength, 1)
 
             /**
-             * ----------------------------------------------------------------------------+
-             * Opcode | Opcode + Args     | Stack                   | Memory               |
-             * ----------------------------------------------------------------------------|
-             * 61     | PUSH2 codeSize    | codeSize                |                      |
-             * 80     | DUP1              | codeSize codeSize       |                      |
-             * 60     | PUSH1 0xa         | 0xa codeSize codeSize   |                      |
-             * 3D     | RETURNDATASIZE    | 0 0xa codeSize codeSize |                      |
-             * 39     | CODECOPY          | codeSize                | [0..codeSize): code  |
-             * 3D     | RETURNDATASZIE    | 0 codeSize              | [0..codeSize): code  |
-             * F3     | RETURN            |                         | [0..codeSize): code  |
-             * 00     | STOP              |                         |                      |
-             * ----------------------------------------------------------------------------+
+             * --------------------------------------------------------------------------------+
+             * Opcode      | Opcode + Args     | Stack                   | Memory              |
+             * --------------------------------------------------------------------------------|
+             * 61 codeSize | PUSH2 codeSize    | codeSize                |                     |
+             * 80          | DUP1              | codeSize codeSize       |                     |
+             * 60 0xa      | PUSH1 0xa         | 0xa codeSize codeSize   |                     |
+             * 3D          | RETURNDATASIZE    | 0 0xa codeSize codeSize |                     |
+             * 39          | CODECOPY          | codeSize                | [0..codeSize): code |
+             * 3D          | RETURNDATASZIE    | 0 codeSize              | [0..codeSize): code |
+             * F3          | RETURN            |                         | [0..codeSize): code |
+             * 00          | STOP              |                         |                     |
+             * --------------------------------------------------------------------------------+
              * @dev Prefix the bytecode with a STOP opcode to ensure it cannot be called.
              * Also PUSH2 is used since max contract size cap is 24,576 bytes which is less than 2 ** 16.
              */
