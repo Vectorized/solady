@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Clone class with helper functions for reading immutable args from calldata.
+/// @notice Class with helper read functions for clone with immutable args.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Clone.sol)
 /// @author Adapted from clones with immutable args by zefram.eth, Saw-mon & Natalie
 /// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
