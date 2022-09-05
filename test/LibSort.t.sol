@@ -417,32 +417,67 @@ contract LibSortTest is Test {
         assertEq(index, 4);
     }
 
-    function testSearchSorted() public {
-        uint256[] memory a = new uint256[](1024);
-        for (uint256 i = 0; i < 1024; i++) {
-            a[i] = i;
-        }
-        for (uint256 i = 0; i < 1024; i++) {
-            (bool found, uint256 index) = LibSort.searchSorted(a, i);
+    function testSearchSortedElementInUniquifiedArray(uint256[] memory a, uint256 lcg) public {
+        unchecked {
+            vm.assume(a.length != 0);
+            LibSort.sort(a);
+            LibSort.uniquifySorted(a);
+            uint256 expectedIndex = _stepLCG(lcg) % (a.length);
+            uint256 value = a[expectedIndex];
+            (bool found, uint256 index) = LibSort.searchSorted(a, value);
             assertTrue(found);
-            assertEq(index, i);
+            assertEq(index, expectedIndex);
+        }
+    }
+
+    function testSearchSortedElementNotInUniquifiedArray(uint256[] memory a, uint256 lcg) public {
+        unchecked {
+            vm.assume(a.length != 0);
+            LibSort.sort(a);
+            LibSort.uniquifySorted(a);
+            uint256 expectedIndex = _stepLCG(lcg) % (a.length);
+            uint256 value = a[expectedIndex];
+            if (value == type(uint256).max) return;
+            value = value + 1;
+            if (expectedIndex + 1 < a.length) {
+                if (a[expectedIndex + 1] == value) return;
+            }
+            (bool found, uint256 index) = LibSort.searchSorted(a, value);
+            assertFalse(found);
+            assertEq(index, expectedIndex);
+        }
+    }
+
+    function testSearchSorted() public {
+        unchecked {
+            uint256[] memory a = new uint256[](100);
+            for (uint256 i = 0; i < 100; i++) {
+                a[i] = i;
+            }
+            for (uint256 i = 0; i < 100; i++) {
+                (bool found, uint256 index) = LibSort.searchSorted(a, i);
+                assertTrue(found);
+                assertEq(index, i);
+            }
         }
     }
 
     function testSearchSortedElementArrayMixedCase() public {
-        uint256[] memory a = new uint256[](50);
-        uint256 i;
-        for (uint256 j = 0; j < 100; j++) {
-            if (j % 2 == 0) a[i++] = j;
-        }
-        for (uint256 k = 0; k < 100; k++) {
-            (bool found, uint256 index) = LibSort.searchSorted(a, k);
-            if (k % 2 == 0) {
-                assertTrue(found);
-                assertEq(index, k / 2);
-            } else {
-                assertFalse(found);
-                assertEq(index, k / 2);
+        unchecked {
+            uint256[] memory a = new uint256[](50);
+            uint256 i;
+            for (uint256 j = 0; j < 100; j++) {
+                if (j % 2 == 0) a[i++] = j;
+            }
+            for (uint256 k = 0; k < 100; k++) {
+                (bool found, uint256 index) = LibSort.searchSorted(a, k);
+                if (k % 2 == 0) {
+                    assertTrue(found);
+                    assertEq(index, k / 2);
+                } else {
+                    assertFalse(found);
+                    assertEq(index, k / 2);
+                }
             }
         }
     }
