@@ -30,13 +30,13 @@ library LibClone {
              * --------------------------------------------------------------------------|
              * Opcode     | Opcode + Args     | Stack     | Memory                       |
              * --------------------------------------------------------------------------|
-             * 60 runSize | PUSH1 runSize     | r         | –                            |
-             * 3d         | RETURNDATASIZE    | 0 r       | –                            |
-             * 81         | DUP2              | r 0 r     | –                            |
-             * 60 offset  | PUSH1 offset      | o r 0 r   | –                            |
-             * 3d         | RETURNDATASIZE    | 0 o r 0 r | –                            |
-             * 39         | CODECOPY          | 0 r       | [0 - runSize): runtime code  |
-             * f3         | RETURN            |           | [0 - runSize): runtime code  |
+             * 60 runSize | PUSH1 runSize     | r         |                              |
+             * 3d         | RETURNDATASIZE    | 0 r       |                              |
+             * 81         | DUP2              | r 0 r     |                              |
+             * 60 offset  | PUSH1 offset      | o r 0 r   |                              |
+             * 3d         | RETURNDATASIZE    | 0 o r 0 r |                              |
+             * 39         | CODECOPY          | 0 r       | [0..runSize): runtime code   |
+             * f3         | RETURN            |           | [0..runSize): runtime code   |
              * --------------------------------------------------------------------------|
              * RUNTIME (44 bytes)                                                        |
              * --------------------------------------------------------------------------|
@@ -50,34 +50,34 @@ library LibClone {
              * 3d      | RETURNDATASIZE | 0 0 0 0                |                       |
              *                                                                           |
              * ::: copy calldata to memory ::::::::::::::::::::::::::::::::::::::::::::: |
-             * 36      | CALLDATASIZE   | cds 0 0 0 0            | –                     |
-             * 3d      | RETURNDATASIZE | 0 cds 0 0 0 0          | –                     |
-             * 3d      | RETURNDATASIZE | 0 0 cds 0 0 0 0        | –                     |
-             * 37      | CALLDATACOPY   | 0 0 0 0                | [0 - cds): calldata   |
+             * 36      | CALLDATASIZE   | cds 0 0 0 0            |                       |
+             * 3d      | RETURNDATASIZE | 0 cds 0 0 0 0          |                       |
+             * 3d      | RETURNDATASIZE | 0 0 cds 0 0 0 0        |                       |
+             * 37      | CALLDATACOPY   | 0 0 0 0                | [0..cds): calldata    |
              *                                                                           |
              * ::: delegate call to the implementation contract :::::::::::::::::::::::: |
-             * 36      | CALLDATASIZE   | cds 0 0 0 0            | [0 - cds): calldata   |
-             * 3d      | RETURNDATASIZE | 0 cds 0 0 0 0          | [0 - cds): calldata   |
-             * 73 addr | PUSH20 addr    | addr 0 cds 0 0 0 0     | [0 - cds): calldata   |
-             * 5a      | GAS            | gas addr 0 cds 0 0 0 0 | [0 - cds): calldata   |
-             * f4      | DELEGATECALL   | success 0 0            | [0 - cds): calldata   |
+             * 36      | CALLDATASIZE   | cds 0 0 0 0            | [0..cds): calldata    |
+             * 3d      | RETURNDATASIZE | 0 cds 0 0 0 0          | [0..cds): calldata    |
+             * 73 addr | PUSH20 addr    | addr 0 cds 0 0 0 0     | [0..cds): calldata    |
+             * 5a      | GAS            | gas addr 0 cds 0 0 0 0 | [0..cds): calldata    |
+             * f4      | DELEGATECALL   | success 0 0            | [0..cds): calldata    |
              *                                                                           |
              * ::: copy return data to memory :::::::::::::::::::::::::::::::::::::::::: |
-             * 3d      | RETURNDATASIZE | rds success 0 0        | [0 - cds): calldata   |
-             * 3d      | RETURNDATASIZE | rds rds success 0 0    | [0 - cds): calldata   |
-             * 93      | SWAP4          | 0 rds success 0 rds    | [0 - cds): calldata   |
-             * 80      | DUP1           | 0 0 rds success 0 rds  | [0 - cds): calldata   |
-             * 3e      | RETURNDATACOPY | success 0 rds          | [0 - rds): returndata |
+             * 3d      | RETURNDATASIZE | rds success 0 0        | [0..cds): calldata    |
+             * 3d      | RETURNDATASIZE | rds rds success 0 0    | [0..cds): calldata    |
+             * 93      | SWAP4          | 0 rds success 0 rds    | [0..cds): calldata    |
+             * 80      | DUP1           | 0 0 rds success 0 rds  | [0..cds): calldata    |
+             * 3e      | RETURNDATACOPY | success 0 rds          | [0..rds): returndata  |
              *                                                                           |
-             * 60 0x2a | PUSH1 0x2a     | 0x2a success 0 rds     | [0 - rds): returndata |
-             * 57      | JUMPI          | 0 rds                  | [0 - rds): returndata |
+             * 60 0x2a | PUSH1 0x2a     | 0x2a success 0 rds     | [0..rds): returndata  |
+             * 57      | JUMPI          | 0 rds                  | [0..rds): returndata  |
              *                                                                           |
              * ::: revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * fd      | REVERT         |                        | [0 - rds): returndata |
+             * fd      | REVERT         |                        | [0..rds): returndata  |
              *                                                                           |
              * ::: return :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 5b      | JUMPDEST       | 0 rds                  | [0 - rds): returndata |
-             * f3      | RETURN         |                        | [0 - rds): returndata |
+             * 5b      | JUMPDEST       | 0 rds                  | [0..rds): returndata  |
+             * f3      | RETURN         |                        | [0..rds): returndata  |
              * --------------------------------------------------------------------------+
              */
 
@@ -164,13 +164,13 @@ library LibClone {
              * ---------------------------------------------------------------------------------------------------|
              * Opcode     | Opcode + Args     | Stack     | Memory                                                |
              * ---------------------------------------------------------------------------------------------------|
-             * 61 runSize | PUSH2 runSize     | r         | –                                                     |
-             * 3d         | RETURNDATASIZE    | 0 r       | –                                                     |
-             * 81         | DUP2              | r 0 r     | –                                                     |
-             * 60 offset  | PUSH1 offset      | o r 0 r   | –                                                     |
-             * 3d         | RETURNDATASIZE    | 0 o r 0 r | –                                                     |
-             * 39         | CODECOPY          | 0 r       | [0 - runSize): runtime code                           |
-             * f3         | RETURN            |           | [0 - runSize): runtime code                           |
+             * 61 runSize | PUSH2 runSize     | r         |                                                       |
+             * 3d         | RETURNDATASIZE    | 0 r       |                                                       |
+             * 81         | DUP2              | r 0 r     |                                                       |
+             * 60 offset  | PUSH1 offset      | o r 0 r   |                                                       |
+             * 3d         | RETURNDATASIZE    | 0 o r 0 r |                                                       |
+             * 39         | CODECOPY          | 0 r       | [0..runSize): runtime code                            |
+             * f3         | RETURN            |           | [0..runSize): runtime code                            |
              * ---------------------------------------------------------------------------------------------------|
              * RUNTIME (53 bytes + extraLength)                                                                   |
              * ---------------------------------------------------------------------------------------------------|
@@ -178,9 +178,9 @@ library LibClone {
              * ---------------------------------------------------------------------------------------------------|
              *                                                                                                    |
              * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 36       | CALLDATASIZE   | cds                      | –                                           |
-             * 3d       | RETURNDATASIZE | 0 cds                    | –                                           |
-             * 3d       | RETURNDATASIZE | 0 0 cds                  | –                                           |
+             * 36       | CALLDATASIZE   | cds                      |                                             |
+             * 3d       | RETURNDATASIZE | 0 cds                    |                                             |
+             * 3d       | RETURNDATASIZE | 0 0 cds                  |                                             |
              * 37       | CALLDATACOPY   |                          | [0..cds): calldata                          |
              *                                                                                                    |
              * ::: keep some values in stack :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -188,7 +188,7 @@ library LibClone {
              * 3d       | RETURNDATASIZE | 0 0                      | [0..cds): calldata                          |
              * 3d       | RETURNDATASIZE | 0 0 0                    | [0..cds): calldata                          |
              * 3d       | RETURNDATASIZE | 0 0 0 0                  | [0..cds): calldata                          |
-             * 61 extra | PUSH2 extra (e)| e 0 0 0 0                | [0..cds): calldata                          |
+             * 61 extra | PUSH2 extra    | e 0 0 0 0                | [0..cds): calldata                          |
              *                                                                                                    |
              * ::: copy extra data to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
              * 80       | DUP1           | e e 0 0 0 0              | [0..cds): calldata                          |
