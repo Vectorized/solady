@@ -391,9 +391,33 @@ contract LibSortTest is Test {
         (bool found, uint256 index) = LibSort.searchSorted(a, 0);
         assertFalse(found);
         assertEq(index, 0);
+
+        a[0] = 15;
+        a[1] = 25;
+        a[2] = 35;
+        a[3] = 45;
+        a[4] = 55;
+        (found, index) = LibSort.searchSorted(a, 10);
+        assertFalse(found);
+        assertEq(index, 0);
+        (found, index) = LibSort.searchSorted(a, 20);
+        assertFalse(found);
+        assertEq(index, 0);
+        (found, index) = LibSort.searchSorted(a, 30);
+        assertFalse(found);
+        assertEq(index, 1);
+        (found, index) = LibSort.searchSorted(a, 40);
+        assertFalse(found);
+        assertEq(index, 2);
+        (found, index) = LibSort.searchSorted(a, 50);
+        assertFalse(found);
+        assertEq(index, 3);
+        (found, index) = LibSort.searchSorted(a, 60);
+        assertFalse(found);
+        assertEq(index, 4);
     }
 
-    function testFuzzSearchSorted() public {
+    function testSearchSorted() public {
         uint256[] memory a = new uint256[](1024);
         for (uint256 i = 0; i < 1024; i++) {
             a[i] = i;
@@ -405,7 +429,7 @@ contract LibSortTest is Test {
         }
     }
 
-    function testFuzzSearchSortedElementArrayMixedCase() public {
+    function testSearchSortedElementArrayMixedCase() public {
         uint256[] memory a = new uint256[](50);
         uint256 i;
         for (uint256 j = 0; j < 100; j++) {
