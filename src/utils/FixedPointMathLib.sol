@@ -12,6 +12,9 @@ library FixedPointMathLib {
     /// @dev The operation failed, as the output exceeds the maximum value of uint256.
     error ExpOverflow();
 
+    /// @dev The operation failed, as the output exceeds the maximum value of uint256.
+    error FactorialOverflow();
+
     /// @dev The operation failed, due to an multiplication overflow.
     error MulWadFailed();
 
@@ -372,6 +375,31 @@ library FixedPointMathLib {
             // Since the ceil is rare, we save gas on the assignment and repeat division in the rare case.
             // If you don't care whether the floor or ceil square root is returned, you can remove this statement.
             z := sub(z, lt(div(x, z), z))
+        }
+    }
+
+    /// @dev Returns the factorial of `x`.
+    function factorial(uint256 x) public pure returns (uint256 result) {
+        unchecked {
+            if (x < 11) {
+                // prettier-ignore
+                result = (0x375f0016260009d80004ec0002d00001e0000180000180000200000400001 >> (x * 22)) & 0x3fffff;
+            } else if (x < 32) {
+                result = 3628800;
+                do {
+                    result = result * x;
+                    x = x - 1;
+                } while (x != 10);
+            } else if (x < 58) {
+                // Just cheat lol.
+                result = 8222838654177922817725562880000000;
+                do {
+                    result = result * x;
+                    x = x - 1;
+                } while (x != 31);
+            } else {
+                revert FactorialOverflow();
+            }
         }
     }
 

@@ -487,4 +487,37 @@ contract FixedPointMathLibTest is Test {
         }
         assertEq(FixedPointMathLib.clamp(x, minValue, maxValue), clamped);
     }
+
+    function testFuzzFactorial() public {
+        uint256 result = 1;
+        assertEq(FixedPointMathLib.factorial(0), result);
+        unchecked {
+            for (uint256 i = 1; i != 58; ++i) {
+                result = result * i;
+                assertEq(FixedPointMathLib.factorial(i), result);
+            }
+        }
+    }
+
+    function testFuzzFactorialYul() public {
+        uint256 result = 1;
+        assertEq(_factorialYul(0), result);
+        unchecked {
+            for (uint256 i = 1; i != 58; ++i) {
+                result = result * i;
+                assertEq(_factorialYul(i), result);
+            }
+        }
+    }
+
+    function _factorialYul(uint256 x) internal pure returns (uint256 result) {
+        assembly {
+            result := 1
+            // prettier-ignore
+            for {} x {} {
+                result := mul(result, x) 
+                x := sub(x, 1) 
+            }
+        }
+    }
 }
