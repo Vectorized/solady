@@ -97,7 +97,7 @@ contract LibCloneTest is Test, Clone {
         uint8 argUint8
     ) public {
         bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
-        LibCloneTest clone = LibCloneTest(LibClone.cloneWithImmutableArgs(address(this), data));
+        LibCloneTest clone = LibCloneTest(LibClone.clone(address(this), data));
         _shouldBehaveLikeClone(address(clone), value_);
         uint256 argOffset;
         assertEq(clone.getArgAddress(argOffset), argAddress);

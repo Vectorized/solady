@@ -140,7 +140,7 @@ library LibClone {
 
     /// @dev Deploys a minimal proxy with `implementation`,
     /// using immutable arguments encoded in `data`.
-    function cloneWithImmutableArgs(address implementation, bytes memory data) internal returns (address instance) {
+    function clone(address implementation, bytes memory data) internal returns (address instance) {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore2 := mload(sub(data, 0x40))
@@ -149,7 +149,8 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            let extraLength := add(dataLength, 2) // +2 bytes for telling how much data there is appended to the call
+            // +2 bytes for telling how much data there is appended to the call.
+            let extraLength := add(dataLength, 2)
             let creationSize := add(extraLength, 0x3f)
             let runSize := sub(creationSize, 0x0a)
 
@@ -250,4 +251,26 @@ library LibClone {
             mstore(dataEnd, mAfter1)
         }
     }
+
+    // /// @dev Returns the address of the deterministic clone of
+    // /// `implementation` with `salt` by `deployer`, using the 0age pattern.
+    // function predictDeterministicAddress(
+    //     address implementation,
+    //     bytes32 salt,
+    //     address deployer
+    // ) internal pure returns (address predicted) {
+    //     assembly {
+    //         mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
+    //         mstore(0x14, implementation)
+    //         // prettier-ignore
+    //         mstore(0x00, 0xff0000000000000000000000602c3d8160093d39f33d3d3d3d363d3d37363d73)
+    //         // Compute and Store the bytecode hash.
+    //         mstore(0x35, keccak256(0x0c, 0x35))
+    //         mstore(0x01, shl(96, deployer))
+    //         mstore(0x15, salt)
+    //         predicted := keccak256(0x00, 0x55)
+    //         // Restore the part of the free memory pointer that has been overwritten.
+    //         mstore(0x35, 0)
+    //     }
+    // }
 }
