@@ -116,8 +116,8 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic clone of
-    /// `implementation` with `salt` by `deployer`, using the 0age pattern.
+    /// @dev Returns the address of the deterministic clone of `implementation`,
+    /// with `salt` by `deployer`, using the 0age pattern.
     function predictDeterministicAddress(
         address implementation,
         bytes32 salt,
@@ -128,7 +128,7 @@ library LibClone {
             mstore(0x14, implementation)
             // prettier-ignore
             mstore(0x00, 0xff0000000000000000000000602c3d8160093d39f33d3d3d3d363d3d37363d73)
-            // Compute and Store the bytecode hash.
+            // Compute and store the bytecode hash.
             mstore(0x35, keccak256(0x0c, 0x35))
             mstore(0x01, shl(96, deployer))
             mstore(0x15, salt)
@@ -252,25 +252,108 @@ library LibClone {
         }
     }
 
-    // /// @dev Returns the address of the deterministic clone of
-    // /// `implementation` with `salt` by `deployer`, using the 0age pattern.
-    // function predictDeterministicAddress(
-    //     address implementation,
-    //     bytes32 salt,
-    //     address deployer
-    // ) internal pure returns (address predicted) {
-    //     assembly {
-    //         mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
-    //         mstore(0x14, implementation)
-    //         // prettier-ignore
-    //         mstore(0x00, 0xff0000000000000000000000602c3d8160093d39f33d3d3d3d363d3d37363d73)
-    //         // Compute and Store the bytecode hash.
-    //         mstore(0x35, keccak256(0x0c, 0x35))
-    //         mstore(0x01, shl(96, deployer))
-    //         mstore(0x15, salt)
-    //         predicted := keccak256(0x00, 0x55)
-    //         // Restore the part of the free memory pointer that has been overwritten.
-    //         mstore(0x35, 0)
-    //     }
-    // }
+    /// @dev Deploys a deterministic clone of `implementation`,
+    /// using immutable arguments encoded in `data`, with `salt`.
+    function cloneDeterministic(
+        address implementation,
+        bytes memory data,
+        bytes32 salt
+    ) internal returns (address instance) {
+        assembly {
+            // Compute the boundaries of the data and cache the memory slots around it.
+            let mBefore2 := mload(sub(data, 0x40))
+            let mBefore1 := mload(sub(data, 0x20))
+            let dataLength := mload(data)
+            let dataEnd := add(add(data, 0x20), dataLength)
+            let mAfter1 := mload(dataEnd)
+
+            // +2 bytes for telling how much data there is appended to the call.
+            let extraLength := add(dataLength, 2)
+            let creationSize := add(extraLength, 0x3f)
+            let runSize := sub(creationSize, 0x0a)
+
+            // Write the bytecode before the data.
+            mstore(data, 0x5af43d3d93803e603357fd5bf3)
+            // Write the address of the implementation.
+            mstore(sub(data, 0x0d), implementation)
+            // Write the rest of the bytecode.
+            mstore(
+                sub(data, 0x21),
+                or(
+                    0x6100003d81600a3d39f3363d3d373d3d3d3d610000806035363936013d73,
+                    or(shl(0xd8, runSize), shl(0x48, extraLength))
+                )
+            )
+            mstore(dataEnd, shl(0xf0, extraLength))
+
+            // Create the instance.
+            instance := create2(0, sub(data, 0x1f), creationSize, salt)
+
+            // If `instance` is zero, revert.
+            if iszero(instance) {
+                // Store the function selector of `DeploymentFailed()`.
+                mstore(0x00, 0x30116425)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+
+            // Restore the overwritten memory surrounding `data`.
+            mstore(data, dataLength)
+            mstore(sub(data, 0x20), mBefore1)
+            mstore(sub(data, 0x40), mBefore2)
+            mstore(dataEnd, mAfter1)
+        }
+    }
+
+    /// @dev Returns the address of the deterministic clone of
+    /// `implementation` using immutable arguments encoded in `data`, with `salt`, by `deployer`.
+    function predictDeterministicAddress(
+        address implementation,
+        bytes memory data,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        assembly {
+            // Compute the boundaries of the data and cache the memory slots around it.
+            let mBefore2 := mload(sub(data, 0x40))
+            let mBefore1 := mload(sub(data, 0x20))
+            let dataLength := mload(data)
+            let dataEnd := add(add(data, 0x20), dataLength)
+            let mAfter1 := mload(dataEnd)
+
+            // +2 bytes for telling how much data there is appended to the call.
+            let extraLength := add(dataLength, 2)
+            let creationSize := add(extraLength, 0x3f)
+            let runSize := sub(creationSize, 0x0a)
+
+            // Write the bytecode before the data.
+            mstore(data, 0x5af43d3d93803e603357fd5bf3)
+            // Write the address of the implementation.
+            mstore(sub(data, 0x0d), implementation)
+            // Write the rest of the bytecode.
+            mstore(
+                sub(data, 0x21),
+                or(
+                    0x6100003d81600a3d39f3363d3d373d3d3d3d610000806035363936013d73,
+                    or(shl(0xd8, runSize), shl(0x48, extraLength))
+                )
+            )
+            mstore(dataEnd, shl(0xf0, extraLength))
+
+            // Compute and store the bytecode hash.
+            mstore(0x35, keccak256(sub(data, 0x1f), creationSize))
+            mstore8(0x00, 0xff) // Write the prefix.
+            mstore(0x01, shl(96, deployer))
+            mstore(0x15, salt)
+            predicted := keccak256(0x00, 0x55)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x35, 0)
+
+            // Restore the overwritten memory surrounding `data`.
+            mstore(data, dataLength)
+            mstore(sub(data, 0x20), mBefore1)
+            mstore(sub(data, 0x40), mBefore2)
+            mstore(dataEnd, mAfter1)
+        }
+    }
 }

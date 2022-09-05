@@ -25,6 +25,8 @@ contract LibCloneTest is Test, Clone {
     }
 
     function _shouldBehaveLikeClone(address clone, uint256 value_) internal {
+        assertTrue(clone != address(0));
+
         uint256 thisValue = this.value();
         if (thisValue == value_) {
             value_ ^= 1;
@@ -48,12 +50,14 @@ contract LibCloneTest is Test, Clone {
     function testCloneDeterministic(uint256 value_, bytes32 salt) public {
         if (saltIsUsed[salt]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
+            LibClone.cloneDeterministic(address(this), salt);
+            return;
         }
+
         address clone = LibClone.cloneDeterministic(address(this), salt);
         saltIsUsed[salt] = true;
 
         _shouldBehaveLikeClone(clone, value_);
-        assertTrue(clone != address(0));
 
         address predicted = LibClone.predictDeterministicAddress(address(this), salt, address(this));
         assertEq(clone, predicted);
@@ -116,5 +120,43 @@ contract LibCloneTest is Test, Clone {
         argUint256Array[0] = 111;
         argUint256Array[1] = 222;
         testCloneWithImmutableArgs(1, address(uint160(0xB00Ba5)), 8, argUint256Array, 7, 6);
+    }
+
+    function testCloneDeteministicWithImmutableArgs(
+        uint256 value_,
+        bytes32 salt,
+        address argAddress,
+        uint256 argUint256,
+        uint256[] memory argUint256Array,
+        uint64 argUint64,
+        uint8 argUint8
+    ) public {
+        bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
+
+        if (saltIsUsed[keccak256(abi.encode(data, salt))]) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
+            return;
+        }
+
+        LibCloneTest clone = LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
+
+        saltIsUsed[keccak256(abi.encode(data, salt))] = true;
+
+        _shouldBehaveLikeClone(address(clone), value_);
+
+        uint256 argOffset;
+        assertEq(clone.getArgAddress(argOffset), argAddress);
+        argOffset += 20;
+        assertEq(clone.getArgUint256(argOffset), argUint256);
+        argOffset += 32;
+        assertEq(clone.getArgUint256Array(argOffset, argUint256Array.length), argUint256Array);
+        argOffset += 32 * argUint256Array.length;
+        assertEq(clone.getArgUint64(argOffset), argUint64);
+        argOffset += 8;
+        assertEq(clone.getArgUint8(argOffset), argUint8);
+
+        // address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
+        // assertEq(address(clone), predicted);
     }
 }
