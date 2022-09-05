@@ -149,14 +149,14 @@ library LibClone {
              * 80       | DUP1           | 0 0 rds success 0 rds    | [0 - cds): calldata, [cds - cds + e): extraData |
              * 3e       | RETURNDATACOPY | success 0 rds            | [0 - rds): returndata, ... rest may be dirty    |
              *                                                                                                        |
-             * 60 0x33  | PUSH1 0x33     | 0x33 success             | [0 - rds): returndata, ... rest may be dirty    |
-             * 57       | JUMPI          |                          | [0 - rds): returndata, ... rest may be dirty    |
+             * 60 0x33  | PUSH1 0x33     | 0x33 success 0 rds       | [0 - rds): returndata, ... rest may be dirty    |
+             * 57       | JUMPI          | 0 rds                    | [0 - rds): returndata, ... rest may be dirty    |
              *                                                                                                        |
              * ::: revert ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::|
              * fd       | REVERT         |                          | [0 - rds): returndata, ... rest may be dirty    |
              *                                                                                                        |
              * ::: return ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::|
-             * 5b       | JUMPDEST       |                          | [0 - rds): returndata, ... rest may be dirty    |
+             * 5b       | JUMPDEST       | 0 rds                    | [0 - rds): returndata, ... rest may be dirty    |
              * f3       | RETURN         |                          | [0 - rds): returndata, ... rest may be dirty    |
              * -------------------------------------------------------------------------------------------------------+
              */
