@@ -225,6 +225,7 @@ library LibSort {
         assembly {
             let n := mload(a) // Length of `a`.
             let s := add(a, 0x20) // Start of the elements of `a`.
+
             switch gt(n, 1)
             case 0 {
                 found := eq(mload(s), needle)
@@ -240,7 +241,7 @@ library LibSort {
                     found := eq(mload(m), needle)
                     // prettier-ignore
                     if or(gt(l, h), found) { break }
-
+                    // Decide whether to search the left or right half.
                     if iszero(gt(needle, mload(m))) {
                         h := sub(m, 0x20)
                         continue
