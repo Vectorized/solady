@@ -18,30 +18,33 @@ library CREATE3 {
     /*                      BYTECODE CONSTANTS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    //--------------------------------------------------------------------------------//
-    // Opcode     | Opcode + Arguments    | Description      | Stack View             //
-    //--------------------------------------------------------------------------------//
-    // 0x36       |  0x36                 | CALLDATASIZE     | size                   //
-    // 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 size                 //
-    // 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 0 size               //
-    // 0x37       |  0x37                 | CALLDATACOPY     |                        //
-    // 0x36       |  0x36                 | CALLDATASIZE     | size                   //
-    // 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 size                 //
-    // 0x34       |  0x34                 | CALLVALUE        | value 0 size           //
-    // 0xf0       |  0xf0                 | CREATE           | newContract            //
-    //--------------------------------------------------------------------------------//
-    // Opcode     | Opcode + Arguments    | Description      | Stack View             //
-    //--------------------------------------------------------------------------------//
-    // 0x67       |  0x67XXXXXXXXXXXXXXXX | PUSH8 bytecode   | bytecode               //
-    // 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 bytecode             //
-    // 0x52       |  0x52                 | MSTORE           |                        //
-    // 0x60       |  0x6008               | PUSH1 08         | 8                      //
-    // 0x60       |  0x6018               | PUSH1 18         | 24 8                   //
-    // 0xf3       |  0xf3                 | RETURN           |                        //
-    //--------------------------------------------------------------------------------//
-    uint256 internal constant PROXY_BYTECODE = 0x67_36_3d_3d_37_36_3d_34_f0_3d_52_60_08_60_18_f3;
+    /**
+     * -------------------------------------------------------------------+
+     * Opcode      | Mnemonic         | Stack        | Memory             |
+     * -------------------------------------------------------------------|
+     * 36          | CALLDATASIZE     | cds          |                    |
+     * 3d          | RETURNDATASIZE   | 0 cds        |                    |
+     * 3d          | RETURNDATASIZE   | 0 0          |                    |
+     * 37          | CALLDATACOPY     |              | [0..cds): calldata |
+     * 36          | CALLDATASIZE     | cds          | [0..cds): calldata |
+     * 3d          | RETURNDATASIZE   | 0 cds        | [0..cds): calldata |
+     * 34          | CALLVALUE        | value 0 cds  | [0..cds): calldata |
+     * f0          | CREATE           | newContract  | [0..cds): calldata |
+     * -------------------------------------------------------------------|
+     * Opcode      | Mnemonic         | Stack        | Memory             |
+     * -------------------------------------------------------------------|
+     * 67 bytecode | PUSH8 bytecode   | bytecode     |                    |
+     * 3d          | RETURNDATASIZE   | 0 bytecode   |                    |
+     * 52          | MSTORE           |              | [0..8): bytecode   |
+     * 60 0x08     | PUSH1 0x08       | 0x08         | [0..8): bytecode   |
+     * 60 0x18     | PUSH1 0x18       | 0x18 0x08    | [0..8): bytecode   |
+     * f3          | RETURN           |              | [0..8): bytecode   |
+     * -------------------------------------------------------------------+
+     */
 
-    bytes32 internal constant PROXY_BYTECODE_HASH = 0x21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f;
+    uint256 private constant _PROXY_BYTECODE = 0x67363d3d37363d34f03d5260086018f3;
+
+    bytes32 private constant _PROXY_BYTECODE_HASH = 0x21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      CREATE3 OPERATIONS                    */
@@ -53,8 +56,8 @@ library CREATE3 {
         uint256 value
     ) internal returns (address deployed) {
         assembly {
-            // Store the `PROXY_BYTECODE` into scratch space.
-            mstore(0x00, PROXY_BYTECODE)
+            // Store the `_PROXY_BYTECODE` into scratch space.
+            mstore(0x00, _PROXY_BYTECODE)
             // Deploy a new contract with our pre-made bytecode via CREATE2.
             let proxy := create2(0, 0x10, 0x10, salt)
 
@@ -115,7 +118,7 @@ library CREATE3 {
             // Store the salt.
             mstore(0x20, salt)
             // Store the bytecode hash.
-            mstore(0x40, PROXY_BYTECODE_HASH)
+            mstore(0x40, _PROXY_BYTECODE_HASH)
 
             // Store the proxy's address.
             mstore(0x14, keccak256(0x0b, 0x55))

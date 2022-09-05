@@ -30,32 +30,32 @@ library SSTORE2 {
             let dataSize := add(originalDataLength, 1)
 
             /**
-             * ------------------------------------------------------------------------------------+
-             *   Opcode  | Opcode + Arguments  | Description       | Stack View                    |
-             * ------------------------------------------------------------------------------------|
-             *   0x61    | 0x61XXXX            | PUSH2 codeSize    | codeSize                      |
-             *   0x80    | 0x80                | DUP1              | codeSize codeSize             |
-             *   0x60    | 0x600A              | PUSH1 10          | 10 codeSize codeSize          |
-             *   0x3D    | 0x3D                | RETURNDATASIZE    | 0 10 codeSize codeSize        |
-             *   0x39    | 0x39                | CODECOPY          | codeSize                      |
-             *   0x3D    | 0x3D                | RETURNDATASZIE    | 0 codeSize                    |
-             *   0xF3    | 0xF3                | RETURN            |                               |
-             *   0x00    | 0x00                | STOP              |                               |
-             * ------------------------------------------------------------------------------------+
-             * @dev Prefix the bytecode with a STOP opcode to ensure it cannot be called. Also PUSH2 is
-             * used since max contract size cap is 24,576 bytes which is less than 2 ** 16.
+             * ------------------------------------------------------------------------------+
+             * Opcode      | Mnemonic        | Stack                   | Memory              |
+             * ------------------------------------------------------------------------------|
+             * 61 codeSize | PUSH2 codeSize  | codeSize                |                     |
+             * 80          | DUP1            | codeSize codeSize       |                     |
+             * 60 0xa      | PUSH1 0xa       | 0xa codeSize codeSize   |                     |
+             * 3D          | RETURNDATASIZE  | 0 0xa codeSize codeSize |                     |
+             * 39          | CODECOPY        | codeSize                | [0..codeSize): code |
+             * 3D          | RETURNDATASZIE  | 0 codeSize              | [0..codeSize): code |
+             * F3          | RETURN          |                         | [0..codeSize): code |
+             * 00          | STOP            |                         |                     |
+             * ------------------------------------------------------------------------------+
+             * @dev Prefix the bytecode with a STOP opcode to ensure it cannot be called.
+             * Also PUSH2 is used since max contract size cap is 24,576 bytes which is less than 2 ** 16.
              */
             mstore(
                 data,
                 or(
                     0x61000080600a3d393df300,
                     // Left shift `dataSize` by 64 so that it lines up with the 0000 after PUSH2.
-                    shl(64, dataSize)
+                    shl(0x40, dataSize)
                 )
             )
 
             // Deploy a new contract with the generated creation code.
-            pointer := create(0, add(data, 21), add(dataSize, 10))
+            pointer := create(0, add(data, 0x15), add(dataSize, 0xa))
 
             // If `pointer` is zero, revert.
             if iszero(pointer) {
