@@ -42,9 +42,9 @@ library CREATE3 {
      * -------------------------------------------------------------------+
      */
 
-    uint256 internal constant PROXY_BYTECODE = 0x67363d3d37363d34f03d5260086018f3;
+    uint256 private constant _PROXY_BYTECODE = 0x67363d3d37363d34f03d5260086018f3;
 
-    bytes32 internal constant PROXY_BYTECODE_HASH = 0x21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f;
+    bytes32 private constant _PROXY_BYTECODE_HASH = 0x21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      CREATE3 OPERATIONS                    */
@@ -56,8 +56,8 @@ library CREATE3 {
         uint256 value
     ) internal returns (address deployed) {
         assembly {
-            // Store the `PROXY_BYTECODE` into scratch space.
-            mstore(0x00, PROXY_BYTECODE)
+            // Store the `_PROXY_BYTECODE` into scratch space.
+            mstore(0x00, _PROXY_BYTECODE)
             // Deploy a new contract with our pre-made bytecode via CREATE2.
             let proxy := create2(0, 0x10, 0x10, salt)
 
@@ -118,7 +118,7 @@ library CREATE3 {
             // Store the salt.
             mstore(0x20, salt)
             // Store the bytecode hash.
-            mstore(0x40, PROXY_BYTECODE_HASH)
+            mstore(0x40, _PROXY_BYTECODE_HASH)
 
             // Store the proxy's address.
             mstore(0x14, keccak256(0x0b, 0x55))
