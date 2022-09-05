@@ -1,0 +1,255 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "CONTRACT",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WEBSITE",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x61016261003a600b82828239805160001a60731461002d57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600436106100405760003560e01c8063283dc96f14610045578063fc833ac614610097575b600080fd5b6100816040518060400160405280601781526020017f68747470733a2f2f6d696c6164796d616b65722e6e657400000000000000000081525081565b60405161008e91906100d7565b60405180910390f35b6100b2735af0d9827e0c53e4799bb226655a1de152a425a581565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200161008e565b600060208083528351808285015260005b81811015610104578581018301518582016040015282016100e8565b81811115610116576000604083870101525b50601f01601f191692909201604001939250505056fea26469706673582212205cc6903d93b20990e5c440d3048d2030555e0d504da2dfc0a530d38f20f6ef8b64736f6c634300080f0033",
+    "sourceMap": "9266:170:10:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;9266:170:10;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x73000000000000000000000000000000000000000030146080604052600436106100405760003560e01c8063283dc96f14610045578063fc833ac614610097575b600080fd5b6100816040518060400160405280601781526020017f68747470733a2f2f6d696c6164796d616b65722e6e657400000000000000000081525081565b60405161008e91906100d7565b60405180910390f35b6100b2735af0d9827e0c53e4799bb226655a1de152a425a581565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200161008e565b600060208083528351808285015260005b81811015610104578581018301518582016040015282016100e8565b81811115610116576000604083870101525b50601f01601f191692909201604001939250505056fea26469706673582212205cc6903d93b20990e5c440d3048d2030555e0d504da2dfc0a530d38f20f6ef8b64736f6c634300080f0033",
+    "sourceMap": "9266:170:10:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;9288:58;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;9355:77;;9390:42;9355:77;;;;;808:42:60;796:55;;;778:74;;766:2;751:18;9355:77:10;624:234:60;14:605;134:4;163:2;192;181:9;174:21;224:6;218:13;267:6;262:2;251:9;247:18;240:34;292:1;302:140;316:6;313:1;310:13;302:140;;;411:14;;;407:23;;401:30;377:17;;;396:2;373:26;366:66;331:10;;302:140;;;460:6;457:1;454:13;451:91;;;530:1;525:2;516:6;505:9;501:22;497:31;490:42;451:91;-1:-1:-1;603:2:60;582:15;-1:-1:-1;;578:29:60;563:45;;;;610:2;559:54;;14:605;-1:-1:-1;;;14:605:60:o",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "CONTRACT()": "fc833ac6",
+    "WEBSITE()": "283dc96f"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"CONTRACT\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"WEBSITE\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/Milady.sol\":\"Milady\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":1000},\"remappings\":[\":ds-test/=lib/solmate/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":solmate/=lib/solmate/src/\"]},\"sources\":{\"src/Milady.sol\":{\"keccak256\":\"0x6b3fa0f7de5280e41ee7b195b1cbea4d7d7b0d52eaee2fd9b1946c291f564b42\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d2e3b35c543580e5a44f8b5ec4f275a625f32891fdf252f45b2e0f31c8a7f3cd\",\"dweb:/ipfs/QmPFFSiXhWqC7QkVmfqT3capkm1E3s9KscRc5vSUgxUdKz\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.15+commit.e14f2714"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "CONTRACT",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "WEBSITE",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":ds-test/=lib/solmate/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":solmate/=lib/solmate/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 1000
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/Milady.sol": "Milady"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/Milady.sol": {
+        "keccak256": "0x6b3fa0f7de5280e41ee7b195b1cbea4d7d7b0d52eaee2fd9b1946c291f564b42",
+        "urls": [
+          "bzz-raw://d2e3b35c543580e5a44f8b5ec4f275a625f32891fdf252f45b2e0f31c8a7f3cd",
+          "dweb:/ipfs/QmPFFSiXhWqC7QkVmfqT3capkm1E3s9KscRc5vSUgxUdKz"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/Milady.sol",
+    "id": 22189,
+    "exportedSymbols": {
+      "Milady": [
+        22188
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "33:9405:10",
+    "nodes": [
+      {
+        "id": 22181,
+        "nodeType": "PragmaDirective",
+        "src": "33:23:10",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".4"
+        ]
+      },
+      {
+        "id": 22188,
+        "nodeType": "ContractDefinition",
+        "src": "9266:170:10",
+        "nodes": [
+          {
+            "id": 22184,
+            "nodeType": "VariableDeclaration",
+            "src": "9288:58:10",
+            "constant": true,
+            "functionSelector": "283dc96f",
+            "mutability": "constant",
+            "name": "WEBSITE",
+            "nameLocation": "9311:7:10",
+            "scope": 22188,
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_string_memory_ptr",
+              "typeString": "string"
+            },
+            "typeName": {
+              "id": 22182,
+              "name": "string",
+              "nodeType": "ElementaryTypeName",
+              "src": "9288:6:10",
+              "typeDescriptions": {
+                "typeIdentifier": "t_string_storage_ptr",
+                "typeString": "string"
+              }
+            },
+            "value": {
+              "hexValue": "68747470733a2f2f6d696c6164796d616b65722e6e6574",
+              "id": 22183,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "string",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "9321:25:10",
+              "typeDescriptions": {
+                "typeIdentifier": "t_stringliteral_f885528ea717c3d362b4a26e74c27e5538d9dfb9ae2e0b760b13e61ccc5d470f",
+                "typeString": "literal_string \"https://miladymaker.net\""
+              },
+              "value": "https://miladymaker.net"
+            },
+            "visibility": "public"
+          },
+          {
+            "id": 22187,
+            "nodeType": "VariableDeclaration",
+            "src": "9355:77:10",
+            "constant": true,
+            "functionSelector": "fc833ac6",
+            "mutability": "constant",
+            "name": "CONTRACT",
+            "nameLocation": "9379:8:10",
+            "scope": 22188,
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 22185,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "9355:7:10",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "value": {
+              "hexValue": "307835416630443938323745306335334534373939424232323636353541316465313532413432356135",
+              "id": 22186,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "9390:42:10",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              },
+              "value": "0x5Af0D9827E0c53E4799BB226655A1de152A425a5"
+            },
+            "visibility": "public"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "Milady",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          22188
+        ],
+        "name": "Milady",
+        "nameLocation": "9274:6:10",
+        "scope": 22189,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 10
+}

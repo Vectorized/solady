@@ -1,0 +1,349 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "name": "isValidSignature",
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x608060405234801561001057600080fd5b5061012b806100206000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c80631626ba7e14602d575b600080fd5b603c6038366004607e565b6071565b6040517fffffffff00000000000000000000000000000000000000000000000000000000909116815260200160405180910390f35b6000801960005260206000f35b600080600060408486031215609257600080fd5b83359250602084013567ffffffffffffffff8082111560b057600080fd5b818601915086601f83011260c357600080fd5b81358181111560d157600080fd5b87602082850101111560e257600080fd5b602083019450809350505050925092509256fea264697066735822122060b5b16a22ccd2de2f539ba9d150b5653589ab5d85425b73ab7205ceb43b374164736f6c634300080f0033",
+    "sourceMap": "60:279:48:-:0;;;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c80631626ba7e14602d575b600080fd5b603c6038366004607e565b6071565b6040517fffffffff00000000000000000000000000000000000000000000000000000000909116815260200160405180910390f35b6000801960005260206000f35b600080600060408486031215609257600080fd5b83359250602084013567ffffffffffffffff8082111560b057600080fd5b818601915086601f83011260c357600080fd5b81358181111560d157600080fd5b87602082850101111560e257600080fd5b602083019450809350505050925092509256fea264697066735822122060b5b16a22ccd2de2f539ba9d150b5653589ab5d85425b73ab7205ceb43b374164736f6c634300080f0033",
+    "sourceMap": "60:279:48:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;97:239;;;;;;:::i;:::-;;:::i;:::-;;;852:66:60;840:79;;;822:98;;810:2;795:18;97:239:48;;;;;;;;171:6;224:66;;221:1;214:77;315:2;221:1;305:13;14:659:60;93:6;101;109;162:2;150:9;141:7;137:23;133:32;130:52;;;178:1;175;168:12;130:52;214:9;201:23;191:33;;275:2;264:9;260:18;247:32;298:18;339:2;331:6;328:14;325:34;;;355:1;352;345:12;325:34;393:6;382:9;378:22;368:32;;438:7;431:4;427:2;423:13;419:27;409:55;;460:1;457;450:12;409:55;500:2;487:16;526:2;518:6;515:14;512:34;;;542:1;539;532:12;512:34;587:7;582:2;573:6;569:2;565:15;561:24;558:37;555:57;;;608:1;605;598:12;555:57;639:2;635;631:11;621:21;;661:6;651:16;;;;;14:659;;;;;:::o",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "isValidSignature(bytes32,bytes)": "1626ba7e"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"isValidSignature\",\"outputs\":[{\"internalType\":\"bytes4\",\"name\":\"\",\"type\":\"bytes4\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"test/utils/mocks/MockERC1271Malicious.sol\":\"MockERC1271Malicious\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":1000},\"remappings\":[\":ds-test/=lib/solmate/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":solmate/=lib/solmate/src/\"]},\"sources\":{\"test/utils/mocks/MockERC1271Malicious.sol\":{\"keccak256\":\"0xb1cac8c375d88d9b74a8bfa0ac7decd018bdf681eaeb9b102a09e33ecb49cefa\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://17ae3a69f73e76245f74aeb0621d03408005582d85819a29fb81be0dfaa72fce\",\"dweb:/ipfs/QmcvcH55upneVCKUNXvMcRG61rbeB15poKbYUckQZG1Rgi\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.15+commit.e14f2714"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function",
+          "name": "isValidSignature",
+          "outputs": [
+            {
+              "internalType": "bytes4",
+              "name": "",
+              "type": "bytes4"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":ds-test/=lib/solmate/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":solmate/=lib/solmate/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 1000
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "test/utils/mocks/MockERC1271Malicious.sol": "MockERC1271Malicious"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "test/utils/mocks/MockERC1271Malicious.sol": {
+        "keccak256": "0xb1cac8c375d88d9b74a8bfa0ac7decd018bdf681eaeb9b102a09e33ecb49cefa",
+        "urls": [
+          "bzz-raw://17ae3a69f73e76245f74aeb0621d03408005582d85819a29fb81be0dfaa72fce",
+          "dweb:/ipfs/QmcvcH55upneVCKUNXvMcRG61rbeB15poKbYUckQZG1Rgi"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "test/utils/mocks/MockERC1271Malicious.sol",
+    "id": 39048,
+    "exportedSymbols": {
+      "MockERC1271Malicious": [
+        39047
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "33:308:48",
+    "nodes": [
+      {
+        "id": 39035,
+        "nodeType": "PragmaDirective",
+        "src": "33:23:48",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".4"
+        ]
+      },
+      {
+        "id": 39047,
+        "nodeType": "ContractDefinition",
+        "src": "60:279:48",
+        "nodes": [
+          {
+            "id": 39046,
+            "nodeType": "FunctionDefinition",
+            "src": "97:239:48",
+            "body": {
+              "id": 39045,
+              "nodeType": "Block",
+              "src": "179:157:48",
+              "statements": [
+                {
+                  "AST": {
+                    "nodeType": "YulBlock",
+                    "src": "199:130:48",
+                    "statements": [
+                      {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "kind": "number",
+                              "nodeType": "YulLiteral",
+                              "src": "221:1:48",
+                              "type": "",
+                              "value": "0"
+                            },
+                            {
+                              "kind": "number",
+                              "nodeType": "YulLiteral",
+                              "src": "224:66:48",
+                              "type": "",
+                              "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                            }
+                          ],
+                          "functionName": {
+                            "name": "mstore",
+                            "nodeType": "YulIdentifier",
+                            "src": "214:6:48"
+                          },
+                          "nodeType": "YulFunctionCall",
+                          "src": "214:77:48"
+                        },
+                        "nodeType": "YulExpressionStatement",
+                        "src": "214:77:48"
+                      },
+                      {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "kind": "number",
+                              "nodeType": "YulLiteral",
+                              "src": "312:1:48",
+                              "type": "",
+                              "value": "0"
+                            },
+                            {
+                              "kind": "number",
+                              "nodeType": "YulLiteral",
+                              "src": "315:2:48",
+                              "type": "",
+                              "value": "32"
+                            }
+                          ],
+                          "functionName": {
+                            "name": "return",
+                            "nodeType": "YulIdentifier",
+                            "src": "305:6:48"
+                          },
+                          "nodeType": "YulFunctionCall",
+                          "src": "305:13:48"
+                        },
+                        "nodeType": "YulExpressionStatement",
+                        "src": "305:13:48"
+                      }
+                    ]
+                  },
+                  "evmVersion": "london",
+                  "externalReferences": [],
+                  "id": 39044,
+                  "nodeType": "InlineAssembly",
+                  "src": "190:139:48"
+                }
+              ]
+            },
+            "functionSelector": "1626ba7e",
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isValidSignature",
+            "nameLocation": "106:16:48",
+            "parameters": {
+              "id": 39040,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 39037,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 39046,
+                  "src": "123:7:48",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 39036,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "123:7:48",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 39039,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 39046,
+                  "src": "132:14:48",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_calldata_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 39038,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "132:5:48",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "122:25:48"
+            },
+            "returnParameters": {
+              "id": 39043,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 39042,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 39046,
+                  "src": "171:6:48",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes4",
+                    "typeString": "bytes4"
+                  },
+                  "typeName": {
+                    "id": 39041,
+                    "name": "bytes4",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "171:6:48",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "170:8:48"
+            },
+            "scope": 39047,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "MockERC1271Malicious",
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          39047
+        ],
+        "name": "MockERC1271Malicious",
+        "nameLocation": "69:20:48",
+        "scope": 39048,
+        "usedErrors": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 48
+}
