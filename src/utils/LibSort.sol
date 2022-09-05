@@ -223,33 +223,25 @@ library LibSort {
     /// and the index of the nearest element less than or equal to `needle`.
     function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found, uint256 index) {
         assembly {
-            let n := mload(a) // Length of `a`.
-            let s := add(a, 0x20) // Start of the elements of `a`.
-
-            switch gt(n, 1)
-            case 0 {
-                found := eq(mload(s), needle)
-            }
-            default {
-                let l := s // Slot of the start of search.
-                let h := add(a, shl(5, n)) // Slot of the end of search.
-                let m := 0 // Middle slot.
+            let m := 0 // Middle slot.
+            let l := add(a, 0x20) // Slot of the start of search.
+            let h := add(a, shl(5, mload(a))) // Slot of the end of search.
+            // prettier-ignore
+            for {} 1 {} {
+                // Average of `l` and `h`, rounded down to the nearest multiple of 0x20.
+                m := shl(5, shr(6, add(l, h)))
+                found := eq(mload(m), needle)
                 // prettier-ignore
-                for {} 1 {} {
-                    // Average of `l` and `h`, rounded down to the nearest multiple of 0x20.
-                    m := shl(5, shr(6, add(l, h)))
-                    found := eq(mload(m), needle)
-                    // prettier-ignore
-                    if or(gt(l, h), found) { break }
-                    // Decide whether to search the left or right half.
-                    if iszero(gt(needle, mload(m))) {
-                        h := sub(m, 0x20)
-                        continue
-                    }
-                    l := add(m, 0x20)   
+                if or(gt(l, h), found) { break }
+                // Decide whether to search the left or right half.
+                if iszero(gt(needle, mload(m))) {
+                    h := sub(m, 0x20)
+                    continue
                 }
-                index := shr(5, mul(sub(m, s), gt(m, s)))
+                l := add(m, 0x20)   
             }
+            index := shr(5, mul(sub(m, add(a, 0x20)), gt(m, add(a, 0x20))))
+            found := and(found, iszero(iszero(mload(a))))
         }
     }
 }
