@@ -18,7 +18,7 @@ contract LibSortTest is Test {
                 checksumAfterSort += a[i];
             }
             assertEq(checksum, checksumAfterSort);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -48,7 +48,7 @@ contract LibSortTest is Test {
         unchecked {
             vm.assume(a.length < 2048);
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -58,7 +58,7 @@ contract LibSortTest is Test {
             a[0] = 3;
             a[1] = 0;
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -67,11 +67,11 @@ contract LibSortTest is Test {
             uint256[] memory a = new uint256[](100);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
-                lcg = stepLCG(lcg);
+                lcg = _stepLCG(lcg);
                 a[i] = lcg;
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -84,11 +84,11 @@ contract LibSortTest is Test {
             uint256[] memory a = new uint256[](100);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
-                lcg = stepLCG(lcg);
+                lcg = _stepLCG(lcg);
                 a[i] = lcg << (i & 8 == 0 ? 128 : 0);
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -103,7 +103,7 @@ contract LibSortTest is Test {
                 a[i] = i;
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -114,7 +114,7 @@ contract LibSortTest is Test {
                 a[i] = 999 - i;
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -125,7 +125,7 @@ contract LibSortTest is Test {
                 a[i] = i % 8 == 0 ? i : 0;
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -135,9 +135,9 @@ contract LibSortTest is Test {
             uint256 lcg = 123456789;
             for (uint256 i; i < a.length; ++i) {
                 a[i] = (i << 128) | lcg;
-                lcg = stepLCG(lcg);
+                lcg = _stepLCG(lcg);
             }
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -147,15 +147,15 @@ contract LibSortTest is Test {
             uint256 lcg = 123456789;
             for (uint256 i; i < a.length; ++i) {
                 address addr = address(uint160(lcg));
-                lcg = stepLCG(lcg);
+                lcg = _stepLCG(lcg);
                 assembly {
                     addr := or(addr, shl(160, lcg))
                 }
                 a[i] = addr;
-                lcg = stepLCG(lcg);
+                lcg = _stepLCG(lcg);
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -195,11 +195,11 @@ contract LibSortTest is Test {
             address[] memory a = new address[](100);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
-                lcg = stepLCG(lcg);
+                lcg = _stepLCG(lcg);
                 a[i] = address(uint160(lcg));
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -214,7 +214,7 @@ contract LibSortTest is Test {
                 a[i] = address(uint160(i));
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -225,7 +225,7 @@ contract LibSortTest is Test {
                 a[i] = address(uint160(999 - i));
             }
             LibSort.sort(a);
-            assertTrue(isSorted(a));
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -234,11 +234,11 @@ contract LibSortTest is Test {
             uint256[] memory a = new uint256[](100);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
-                lcg = stepLCG(lcg);
+                lcg = _stepLCG(lcg);
                 a[i] = lcg;
             }
-            sortOriginal(a);
-            assertTrue(isSorted(a));
+            _sortOriginal(a);
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -252,8 +252,8 @@ contract LibSortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = i;
             }
-            sortOriginal(a);
-            assertTrue(isSorted(a));
+            _sortOriginal(a);
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -263,8 +263,8 @@ contract LibSortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = 999 - i;
             }
-            sortOriginal(a);
-            assertTrue(isSorted(a));
+            _sortOriginal(a);
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -274,8 +274,8 @@ contract LibSortTest is Test {
             for (uint256 i; i < a.length; ++i) {
                 a[i] = i % 8 == 0 ? i : 0;
             }
-            sortOriginal(a);
-            assertTrue(isSorted(a));
+            _sortOriginal(a);
+            assertTrue(_isSorted(a));
         }
     }
 
@@ -287,14 +287,14 @@ contract LibSortTest is Test {
         a[3] = 3;
         a[4] = 5;
         LibSort.uniquifySorted(a);
-        assertTrue(isUniqueArray(a));
+        assertTrue(_isSortedAndUniquified(a));
         assertEq(a.length, 3);
     }
 
     function testUniquifySortedWithEmptyArray() public {
         uint256[] memory a = new uint256[](0);
         LibSort.uniquifySorted(a);
-        assertTrue(isUniqueArray(a));
+        assertTrue(_isSortedAndUniquified(a));
         assertEq(a.length, 0);
     }
 
@@ -311,30 +311,33 @@ contract LibSortTest is Test {
         a[8] = address(0xE1Ab8145F7e55Dc933D61a18c793f901A3a0B276);
         a[9] = address(0xe1ab8145f7E55Dc933D61A18c793f901A3A0B288);
         LibSort.uniquifySorted(a);
-        assertTrue(isUniqueArray(a));
+        assertTrue(_isSortedAndUniquified(a));
         assertEq(a.length, 8);
     }
 
-    function testFuzzUniquifySorted(uint256[] memory a) public {
+    function testUniquifySorted(uint256[] memory a) public {
+        vm.assume(a.length < 256);
         LibSort.sort(a);
         LibSort.uniquifySorted(a);
-        assertTrue(isUniqueArray(a));
+        assertTrue(_isSortedAndUniquified(a));
     }
 
-    function testFuzzUniquifySortedAddress(address[] memory a) public {
+    function testUniquifySortedAddress(address[] memory a) public {
+        vm.assume(a.length < 256);
         LibSort.sort(a);
         LibSort.uniquifySorted(a);
-        assertTrue(isUniqueArray(a));
+        assertTrue(_isSortedAndUniquified(a));
     }
 
-    function testFuzzUniquifySortedDifferential(uint256[] memory a) public {
+    function testUniquifySortedDifferential(uint256[] memory a) public {
+        vm.assume(a.length < 256);
         LibSort.sort(a);
         uint256[] memory aCopy = new uint256[](a.length);
         for (uint256 i = 0; i < a.length; ++i) {
             aCopy[i] = a[i];
         }
         LibSort.uniquifySorted(a);
-        removeDuplicate(aCopy);
+        _uniquifyOriginal(aCopy);
         assertEq(a, aCopy);
     }
 
@@ -420,13 +423,13 @@ contract LibSortTest is Test {
         }
     }
 
-    function stepLCG(uint256 input) private pure returns (uint256 output) {
+    function _stepLCG(uint256 input) private pure returns (uint256 output) {
         unchecked {
             output = (input * 1664525 + 1013904223) & 0xFFFFFFFF;
         }
     }
 
-    function isSorted(address[] memory a) private pure returns (bool) {
+    function _isSorted(address[] memory a) private pure returns (bool) {
         unchecked {
             for (uint256 i = 1; i < a.length; ++i) {
                 if (a[i - 1] > a[i]) return false;
@@ -435,7 +438,7 @@ contract LibSortTest is Test {
         }
     }
 
-    function isSorted(uint256[] memory a) private pure returns (bool) {
+    function _isSorted(uint256[] memory a) private pure returns (bool) {
         unchecked {
             for (uint256 i = 1; i < a.length; ++i) {
                 if (a[i - 1] > a[i]) return false;
@@ -444,13 +447,13 @@ contract LibSortTest is Test {
         }
     }
 
-    function isUniqueArray(uint256[] memory a) private pure returns (bool) {
+    function _isSortedAndUniquified(uint256[] memory a) private pure returns (bool) {
         if (a.length == 0) {
             return true;
         }
         unchecked {
-            uint256 len = a.length;
-            for (uint256 i = 0; i < len - 1; i++) {
+            uint256 end = a.length - 1;
+            for (uint256 i = 0; i != end; ++i) {
                 if (a[i] >= a[i + 1]) {
                     return false;
                 }
@@ -459,13 +462,13 @@ contract LibSortTest is Test {
         }
     }
 
-    function isUniqueArray(address[] memory a) private pure returns (bool) {
+    function _isSortedAndUniquified(address[] memory a) private pure returns (bool) {
         if (a.length == 0) {
             return true;
         }
         unchecked {
-            uint256 len = a.length;
-            for (uint256 i = 0; i < len - 1; i++) {
+            uint256 end = a.length - 1;
+            for (uint256 i = 0; i != end; ++i) {
                 if (a[i] >= a[i + 1]) {
                     return false;
                 }
@@ -474,11 +477,11 @@ contract LibSortTest is Test {
         }
     }
 
-    function sortOriginal(uint256[] memory a) internal pure {
-        sortOriginal(a, 0, int256(a.length - 1));
+    function _sortOriginal(uint256[] memory a) internal pure {
+        _sortOriginal(a, 0, int256(a.length - 1));
     }
 
-    function sortOriginal(
+    function _sortOriginal(
         uint256[] memory arr,
         int256 left,
         int256 right
@@ -506,16 +509,15 @@ contract LibSortTest is Test {
                 }
             }
         }
-        if (left < j) sortOriginal(arr, left, j);
-        if (i < right) sortOriginal(arr, i, right);
+        if (left < j) _sortOriginal(arr, left, j);
+        if (i < right) _sortOriginal(arr, i, right);
     }
 
-    function removeDuplicate(uint256[] memory a) private pure {
+    function _uniquifyOriginal(uint256[] memory a) private pure {
         if (a.length != 0) {
             unchecked {
                 uint256 n = a.length;
                 uint256 i = 0;
-
                 for (uint256 j = 1; j < n; j++) {
                     if (a[i] != a[j]) {
                         i++;
