@@ -132,8 +132,9 @@ contract LibCloneTest is Test, Clone {
         uint8 argUint8
     ) public {
         bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
+        bytes32 saltKey = keccak256(abi.encode(data, salt));
 
-        if (saltIsUsed[keccak256(abi.encode(data, salt))]) {
+        if (saltIsUsed[saltKey]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
             LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
             return;
@@ -141,7 +142,7 @@ contract LibCloneTest is Test, Clone {
 
         LibCloneTest clone = LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
 
-        saltIsUsed[keccak256(abi.encode(data, salt))] = true;
+        saltIsUsed[saltKey] = true;
 
         _shouldBehaveLikeClone(address(clone), value_);
 
@@ -156,7 +157,7 @@ contract LibCloneTest is Test, Clone {
         argOffset += 8;
         assertEq(clone.getArgUint8(argOffset), argUint8);
 
-        // address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
-        // assertEq(address(clone), predicted);
+        address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
+        assertEq(address(clone), predicted);
     }
 }

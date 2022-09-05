@@ -18,10 +18,10 @@ library LibClone {
     error DeploymentFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         OPERATIONS                         */
+    /*                  MINIMAL PROXY OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Deploys a clone of `implementation` using the 0age pattern.
+    /// @dev Deploys a clone of `implementation`.
     function clone(address implementation) internal returns (address instance) {
         assembly {
             /**
@@ -97,7 +97,7 @@ library LibClone {
         }
     }
 
-    /// @dev Deploys a deterministic clone of `implementation` with `salt` using the 0age pattern.
+    /// @dev Deploys a deterministic clone of `implementation` with `salt`.
     function cloneDeterministic(address implementation, bytes32 salt) internal returns (address instance) {
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
@@ -117,7 +117,7 @@ library LibClone {
     }
 
     /// @dev Returns the address of the deterministic clone of `implementation`,
-    /// with `salt` by `deployer`, using the 0age pattern.
+    /// with `salt` by `deployer`.
     function predictDeterministicAddress(
         address implementation,
         bytes32 salt,
@@ -137,6 +137,10 @@ library LibClone {
             mstore(0x35, 0)
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*           CLONES WITH IMMUTABLE ARGS OPERATIONS            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Deploys a minimal proxy with `implementation`,
     /// using immutable arguments encoded in `data`.
