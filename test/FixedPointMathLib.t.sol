@@ -513,13 +513,10 @@ contract FixedPointMathLibTest is Test {
     function _factorialYul(uint256 x) internal pure returns (uint256 result) {
         assembly {
             result := 1
-            for {
-
-            } x {
-
-            } {
-                result := mul(result, x)
-                x := sub(x, 1)
+            // prettier-ignore
+            for {} x {} {
+                result := mul(result, x) 
+                x := sub(x, 1) 
             }
         }
     }
