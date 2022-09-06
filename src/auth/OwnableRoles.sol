@@ -210,12 +210,12 @@ abstract contract OwnableRoles {
         }
     }
 
-    /// @dev Receive a two step ownership transfer.
+    /// @dev Accepts a two step ownership transfer.
     /// It will close the handover upon success.
-    function receiveOwnershipHandover() public virtual {
+    function acceptOwnershipHandover() public virtual {
         assembly {
             let ownerSlot := not(_OWNER_SLOT_NOT)
-            // If the caller is not the handover receipient.
+            // If the caller is not the handover receiver.
             if iszero(eq(caller(), sload(add(ownerSlot, 1)))) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                 revert(0x1c, 0x04)

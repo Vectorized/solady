@@ -112,7 +112,7 @@ contract OwnableRolesTest is Test {
             } else {
                 vm.expectRevert(OwnableRoles.Unauthorized.selector);
             }
-            mockOwnableRoles.receiveOwnershipHandover();
+            mockOwnableRoles.acceptOwnershipHandover();
         }
     }
 
