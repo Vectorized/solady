@@ -69,7 +69,7 @@ abstract contract OwnableRoles {
     /// The choice of manual storage layout is to enable compatibility
     /// with both regular and upgradeable contracts.
     ///
-    /// The handover receipient slot is given by: `add(not(_OWNER_SLOT_NOT), 1)`.
+    /// The handover receiver slot is given by: `add(not(_OWNER_SLOT_NOT), 1)`.
     ///
     /// The role slot of `user` is given by:
     /// ```
