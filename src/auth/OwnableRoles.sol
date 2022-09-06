@@ -203,7 +203,7 @@ abstract contract OwnableRoles {
 
     /// @dev Cancels a two step ownership transfer.
     /// The caller must be the owner.
-    /// Cancel the pending ownership handover, if any.
+    /// Cancels the pending ownership handover, if any.
     function cancelOwnershipHandover() public virtual onlyOwner {
         assembly {
             sstore(add(not(_OWNER_SLOT_NOT), 1), 0)
