@@ -182,6 +182,7 @@ abstract contract OwnableRoles {
     }
 
     /// @dev Initiates a two step ownership transfer.
+    /// The caller must be the owner.
     /// Only one proposal can be active at once.
     /// If there is an existing active ownership handover, it will be overwritten.
     function proposeOwnershipHandover(address newOwner) public virtual onlyOwner {
@@ -201,7 +202,8 @@ abstract contract OwnableRoles {
     }
 
     /// @dev Cancels a two step ownership transfer.
-    /// Cancel the pending ownership handover, if any.
+    /// The caller must be the owner.
+    /// Cancels the pending ownership handover, if any.
     function cancelOwnershipHandover() public virtual onlyOwner {
         assembly {
             sstore(add(not(_OWNER_SLOT_NOT), 1), 0)
@@ -210,12 +212,14 @@ abstract contract OwnableRoles {
         }
     }
 
-    /// @dev Receive a two step ownership transfer.
-    /// It will close the handover upon success.
-    function receiveOwnershipHandover() public virtual {
+    /// @dev Accepts a two step ownership transfer.
+    /// The caller must be the receiver.
+    /// Upon acceptance, the ownership will be transferred to the caller.
+    /// and the ownership handover will be closed.
+    function acceptOwnershipHandover() public virtual {
         assembly {
             let ownerSlot := not(_OWNER_SLOT_NOT)
-            // If the caller is not the handover receipient.
+            // If the caller is not the handover receiver.
             if iszero(eq(caller(), sload(add(ownerSlot, 1)))) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
