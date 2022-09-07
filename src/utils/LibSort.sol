@@ -240,8 +240,9 @@ library LibSort {
                 }
                 l := add(m, 0x20)   
             }
-            index := shr(5, mul(sub(m, add(a, 0x20)), gt(m, add(a, 0x20))))
-            found := and(found, iszero(iszero(mload(a))))
+            let t := add(a, 0x20)
+            index := shr(5, mul(sub(m, t), gt(m, t)))
+            found := and(found, iszero(lt(m, t)))
         }
     }
 }
