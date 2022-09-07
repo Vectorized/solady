@@ -275,6 +275,18 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.abs((2**255 - 1)), (2**255 - 1));
     }
 
+    function testGcd() public {
+        assertEq(FixedPointMathLib.gcd(0, 0), 0);
+        assertEq(FixedPointMathLib.gcd(85, 0), 85);
+        assertEq(FixedPointMathLib.gcd(0, 2), 2);
+        assertEq(FixedPointMathLib.gcd(56, 45), 1);
+        assertEq(FixedPointMathLib.gcd(12, 28), 4);
+        assertEq(FixedPointMathLib.gcd(12, 1), 1);
+        assertEq(FixedPointMathLib.gcd(486516589451122, 48656), 2);
+        assertEq(FixedPointMathLib.gcd(2**254 - 4, 2**128 - 1), 15);
+        assertEq(FixedPointMathLib.gcd(3, 26017198113384995722614372765093167890), 1);
+    }
+
     function testFuzzMulWadDown(uint256 x, uint256 y) public {
         // Ignore cases where x * y overflows.
         unchecked {
@@ -473,6 +485,10 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.abs(x), z);
     }
 
+    function testFuzzGcd(uint256 x, uint256 y) public {
+        assertEq(FixedPointMathLib.gcd(x, y), _gcd(x, y));
+    }
+
     function testFuzzClamp(
         uint256 x,
         uint256 minValue,
@@ -518,6 +534,14 @@ contract FixedPointMathLibTest is Test {
                 result := mul(result, x) 
                 x := sub(x, 1) 
             }
+        }
+    }
+
+    function _gcd(uint256 x, uint256 y) internal pure returns (uint256 result) {
+        if (y == 0) {
+            return x;
+        } else {
+            return _gcd(y, x % y);
         }
     }
 }

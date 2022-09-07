@@ -470,6 +470,19 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns gcd of `x` and `y`.
+    function gcd(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assembly {
+            // prettier-ignore
+            for {} y {} {
+                let c := mod(x, y)
+                x := y
+                y := c
+            }
+            z := x
+        }
+    }
+
     /// @dev Returns `x`, bounded to `minValue` and `maxValue`.
     function clamp(
         uint256 x,
