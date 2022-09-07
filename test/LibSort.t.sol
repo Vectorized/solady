@@ -364,6 +364,19 @@ contract LibSortTest is Test {
         assertEq(index, 5);
     }
 
+    function testSearchSortedEdgeCases() public {
+        uint256[] memory a = new uint256[](1);
+        a[0] = 2;
+        (bool found, uint256 index) = LibSort.searchSorted(a, 1);
+        assertFalse(found);
+
+        a = new uint256[](2);
+        a[0] = 45;
+        a[1] = 46;
+        (found, index) = LibSort.searchSorted(a, 2);
+        assertFalse(found);
+    }
+
     function testSearchSortedWithEmptyArray() public {
         uint256[] memory a = new uint256[](0);
         (bool found, uint256 index) = LibSort.searchSorted(a, 1);
