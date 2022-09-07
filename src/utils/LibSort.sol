@@ -240,9 +240,11 @@ library LibSort {
                 }
                 l := add(m, 0x20)   
             }
-            let t := add(a, 0x20)
-            index := shr(5, mul(sub(m, t), gt(m, t)))
-            found := and(found, iszero(lt(m, t)))
+            // `m` will be less than `add(a, 0x20)` in the case of an empty array,
+            // or when the value is less than the smallest value in the array.
+            let t := iszero(lt(m, add(a, 0x20)))
+            index := shr(5, mul(sub(m, add(a, 0x20)), t))
+            found := and(found, t)
         }
     }
 }
