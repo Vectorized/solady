@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./ECDSA.sol";
 
-/// @notice Signature verification helper that supports both ECDSA signatures from EOAs
+/// @notice Signature verification helper that supports both ECDSA signatures from EOAs.
 /// and ERC1271 signatures from smart contract wallets like Argent and Gnosis safe.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
