@@ -468,6 +468,15 @@ contract LibSortTest is Test {
         }
     }
 
+    function testSearchSortedElementNotInArrayNarrow(uint256[] memory a, uint256 randomness) public {
+        unchecked {
+            for (uint256 i; i != a.length; ++i) {
+                a[i] = a[i] % 32;
+            }
+            testSearchSortedElementNotInArray(a, randomness);
+        }
+    }
+
     function testSearchSortedElementNotInUniquifiedArray(uint256[] memory a, uint256 randomness) public {
         unchecked {
             vm.assume(a.length != 0);
@@ -483,6 +492,15 @@ contract LibSortTest is Test {
             (bool found, uint256 index) = LibSort.searchSorted(a, value);
             assertFalse(found);
             assertEq(index, expectedIndex);
+        }
+    }
+
+    function testSearchSortedElementNotInUniquifiedArrayNarrow(uint256[] memory a, uint256 randomness) public {
+        unchecked {
+            for (uint256 i; i != a.length; ++i) {
+                a[i] = a[i] % 32;
+            }
+            testSearchSortedElementNotInUniquifiedArray(a, randomness);
         }
     }
 
