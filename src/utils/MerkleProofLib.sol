@@ -76,6 +76,7 @@ library MerkleProofLib {
                 let hashesFront := mload(0x40)
                 // Copy the leafs into the hashes.
                 // Sometimes, a little memory expansion costs less than branching.
+                // Should cost less, even with a high free memory offset of 0x7d00.
                 // Left shift by 5 is equivalent to multiplying by 0x20.
                 calldatacopy(hashesFront, leafs.offset, shl(5, leafs.length))
                 // Compute the back of the hashes.
