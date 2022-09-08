@@ -56,74 +56,54 @@ library MerkleProofLib {
             // If the number of flags is correct.
             // prettier-ignore
             for {} eq(add(leafs.length, proof.length), add(flags.length, 1)) {} {
-                // Left shift by 5 is equivalent to multiplying by 0x20.
-                // Compute the end calldata offset of `leafs`.
-                let leafsEnd := add(leafs.offset, shl(5, leafs.length))
-                // These are the calldata offsets.
-                let leafsOffset := leafs.offset
-                let flagsOffset := flags.offset
-                let proofOffset := proof.offset
-
-                // We can use the free memory space for the queue.
-                // We don't need to allocate, since the queue is temporary.
-                let hashesFront := mload(0x40)
-                let hashesBack := hashesFront
-                // This is the end of the memory for the queue.
-                let end := add(hashesBack, shl(5, flags.length))
 
                 // For the case where `proof.length + leafs.length == 1`.
                 if iszero(flags.length) {
                     // If `proof.length` is zero, `leafs.length` is 1.
                     if iszero(proof.length) {
-                        isValid := eq(calldataload(leafsOffset), root)
+                        isValid := eq(calldataload(leafs.offset), root)
                         break
                     }
                     // If `leafs.length` is zero, `proof.length` is 1.
                     if iszero(leafs.length) {
-                        isValid := eq(calldataload(proofOffset), root)
+                        isValid := eq(calldataload(proof.offset), root)
                         break
                     }
                 }
 
+                // We can use the free memory space for the queue.
+                // We don't need to allocate, since the queue is temporary.
+                let hashesFront := mload(0x40)
+                // Copy the leafs into the hashes.
+                // Sometimes, a little memory expansion costs less than branching.
+                // Left shift by 5 is equivalent to multiplying by 0x20.
+                calldatacopy(hashesFront, leafs.offset, shl(5, leafs.length))
+                // Compute the back of the hashes.
+                let hashesBack := add(hashesFront, shl(5, leafs.length))
+                // This is the end of the memory for the queue.
+                let end := add(hashesBack, shl(5, flags.length))
+
+                let flagsOffset := flags.offset
+                let proofOffset := proof.offset
+
                 // prettier-ignore
                 for {} 1 {} {
-                    let a := 0
-                    // Pops a value from the queue into `a`.
-                    switch lt(leafsOffset, leafsEnd)
-                    case 0 {
-                        // Pop from `hashes` if there are no more leafs.
-                        a := mload(hashesFront)
-                        hashesFront := add(hashesFront, 0x20)
-                    }
-                    default {
-                        // Otherwise, pop from `leafs`.
-                        a := calldataload(leafsOffset)
-                        leafsOffset := add(leafsOffset, 0x20)
-                    }
+                    // Pop from `hashes`.
+                    let a := mload(hashesFront)
+                    // Pop from `hashes`.
+                    let b := mload(add(hashesFront, 0x20))
+                    hashesFront := add(hashesFront, 0x40)
 
-                    let b := 0
                     // If the flag is false, load the next proof,
                     // else, pops from the queue.
-                    switch calldataload(flagsOffset)
-                    case 0 {
+                    if iszero(calldataload(flagsOffset)) {
                         // Loads the next proof.
                         b := calldataload(proofOffset)
                         proofOffset := add(proofOffset, 0x20)
+                        // Unpop from `hashes`.
+                        hashesFront := sub(hashesFront, 0x20)
                     }
-                    default {
-                        // Pops a value from the queue into `a`.
-                        switch lt(leafsOffset, leafsEnd)
-                        case 0 {
-                            // Pop from `hashes` if there are no more leafs.
-                            b := mload(hashesFront)
-                            hashesFront := add(hashesFront, 0x20)
-                        }
-                        default {
-                            // Otherwise, pop from `leafs`.
-                            b := calldataload(leafsOffset)
-                            leafsOffset := add(leafsOffset, 0x20)
-                        }
-                    }
+                    
                     // Advance to the next flag offset.
                     flagsOffset := add(flagsOffset, 0x20)
 
