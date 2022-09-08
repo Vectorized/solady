@@ -59,16 +59,14 @@ library MerkleProofLib {
 
                 // For the case where `proof.length + leafs.length == 1`.
                 if iszero(flags.length) {
-                    // If `proof.length` is zero, `leafs.length` is 1.
-                    if iszero(proof.length) {
-                        isValid := eq(calldataload(leafs.offset), root)
-                        break
-                    }
-                    // If `leafs.length` is zero, `proof.length` is 1.
-                    if iszero(leafs.length) {
-                        isValid := eq(calldataload(proof.offset), root)
-                        break
-                    }
+                    // `isValid = (proof.length == 1 ? proof[0] : leafs[0]) == root
+                    isValid := eq(
+                        calldataload(
+                            xor(leafs.offset, mul(xor(proof.offset, leafs.offset), proof.length))
+                        ),
+                        root
+                    )
+                    break
                 }
 
                 // We can use the free memory space for the queue.
