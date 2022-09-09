@@ -443,6 +443,24 @@ contract FixedPointMathLibTest is Test {
         assertTrue(root * root <= x && next * next > x);
     }
 
+    function testFuzzSqrtBack(uint256 x) public {
+        unchecked {
+            x >>= 128;
+            while (x != 0) {
+                assertEq(FixedPointMathLib.sqrt(x * x), x);
+                x >>= 1;
+            }
+        }
+    }
+
+    function testFuzzSqrtHashed(uint256 x) public {
+        testFuzzSqrtBack(uint256(keccak256(abi.encode(x))));
+    }
+
+    function testFuzzSqrtHashedSingle() public {
+        testFuzzSqrtHashed(123);
+    }
+
     function testFuzzLog2() public {
         for (uint256 i = 1; i < 255; i++) {
             assertEq(FixedPointMathLib.log2((1 << i) - 1), i - 1);
