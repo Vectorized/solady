@@ -316,12 +316,13 @@ library FixedPointMathLib {
     /// @dev Returns the square root of `x`.
     function sqrt(uint256 x) internal pure returns (uint256 z) {
         assembly {
+            // `floor(sqrt(2**15)) = 181`. `sqrt(2**15) - 181 = 2.84`.
             z := 181 // The "correct" value is 1, but this saves a multiplication later.
 
             // This segment is to get a reasonable initial estimate for the Babylonian method. With a bad
             // start, the correct # of bits increases ~linearly each iteration instead of ~quadratically.
 
-            // We will refer to `x >> r` as `y`.
+            // Let `y = x / 2**r`.
             // We check `y >= 2**(k + 8)` but shift right by `k` bits
             // each branch to ensure that if `x >= 256`, then `y >= 256`.
             let r := shl(7, gt(x, 0xffffffffffffffffffffffffffffffffff))
@@ -343,7 +344,7 @@ library FixedPointMathLib {
             // is in the range `(1/2.84 * sqrt(s), 2.84 * sqrt(s))`,
             // with largest error when `s = 1` and when `s = 256` or `1/256`.
 
-            // Since `y` is in `[256, 256*2^16)`, let `a = y/65536`, so that `a` is in `[1/256, 256)`.
+            // Since `y` is in `[256, 256*(2**16))`, let `a = y/65536`, so that `a` is in `[1/256, 256)`.
             // Then we can estimate `sqrt(y)` using
             // `sqrt(65536) * 181/1024 * (a + 1) = 181/4 * (y + 65536)/65536 = 181 * (y + 65536)/2**18`.
 
