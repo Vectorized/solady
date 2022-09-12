@@ -74,22 +74,22 @@ abstract contract OwnableRoles {
     /// to avoid collision with lower slots.
     /// The choice of manual storage layout is to enable compatibility
     /// with both regular and upgradeable contracts.
-    /// ------------------------------------------------------------
-    /// The role slot of `user` is given by:
+    ///
+    /// - The role slot of `user` is given by:
     /// ```
     ///     mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
     ///     let roleSlot := keccak256(0x00, 0x20)
     /// ```
-    /// This automatically ignores the upper bits of the `user` in case
-    /// they are not clean, as well as keep the `keccak256` under 32-bytes.
-    /// -----------------------------------------------------------
-    /// The ownership handover slot of `newOwner` is given by:
+    ///   This automatically ignores the upper bits of the `user` in case
+    ///   they are not clean, as well as keep the `keccak256` under 32-bytes.
+    ///
+    /// - The ownership handover slot of `newOwner` is given by:
     /// ```
     ///     mstore(0x00, or(shl(96, user), add(_OWNER_SLOT_NOT, 1)))
     ///     let handoverSlot := keccak256(0x00, 0x20)
     /// ```
-    /// A stored value of 1 denotes the presence of a two-step ownership handover.
-    /// Otherwise, a stored value of 0 denotes the absence of which.
+    ///   A stored value of 1 denotes the presence of a two-step ownership handover.
+    ///   Otherwise, a stored value of 0 denotes the absence of which.
     uint256 private constant _OWNER_SLOT_NOT = 0x8b78c6d8;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
