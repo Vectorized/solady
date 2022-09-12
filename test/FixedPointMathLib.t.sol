@@ -479,6 +479,43 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.max(x, y), z);
     }
 
+    function testFuzzMaxCasted(
+        uint32 x,
+        uint32 y,
+        uint256 brutalizer
+    ) public {
+        uint32 z = x > y ? x : y;
+        assembly {
+            mstore(0x00, brutalizer)
+            mstore(0x20, 1)
+            x := or(shl(32, keccak256(0x00, 0x40)), x)
+            mstore(0x20, 2)
+            y := or(shl(32, keccak256(0x00, 0x40)), y)
+        }
+        assertTrue(FixedPointMathLib.max(x, y) == z);
+    }
+
+    function testFuzzZeroFloorSub(uint256 x, uint256 y) public {
+        uint256 z = x > y ? x - y : 0;
+        assertEq(FixedPointMathLib.zeroFloorSub(x, y), z);
+    }
+
+    function testFuzzZeroFloorSubCasted(
+        uint32 x,
+        uint32 y,
+        uint256 brutalizer
+    ) public {
+        uint256 z = x > y ? x - y : 0;
+        assembly {
+            mstore(0x00, brutalizer)
+            mstore(0x20, 1)
+            x := or(shl(32, keccak256(0x00, 0x40)), x)
+            mstore(0x20, 2)
+            y := or(shl(32, keccak256(0x00, 0x40)), y)
+        }
+        assertTrue(FixedPointMathLib.zeroFloorSub(x, y) == z);
+    }
+
     function testFuzzDist(int256 x, int256 y) public {
         uint256 z;
         unchecked {
