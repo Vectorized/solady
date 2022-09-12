@@ -28,15 +28,35 @@ contract MerkleProofLibTest is Test {
         assertEq(this.verify(proof, root, leaf), isValid);
     }
 
-    function testVerifyProofIsValid() public {
-        testVerifyProof(false, false, false, 0x00);
+    function testVerifyProof(bytes32[] memory data, uint256 randomness) public {
+        vm.assume(data.length > 1);
+        uint256 nodeIndex = randomness % data.length;
+        bytes32 root = _getRoot(data);
+        bytes32[] memory proof = _getProof(data, nodeIndex);
+        bytes32 leaf = data[nodeIndex];
+
+        assertTrue(this.verify(proof, root, leaf));
+
+        // Checks verify with corrupted root returns false.
+        assertFalse(this.verify(proof, bytes32(uint256(root) ^ 1), leaf));
+
+        // Checks verify with corrupted proof returns false.
+        proof[0] = bytes32(uint256(proof[0]) ^ 1);
+        assertFalse(this.verify(proof, root, leaf));
+
+        // Checks verify with corrupted root and proof returns false.
+        assertFalse(this.verify(proof, bytes32(uint256(root) ^ 1), leaf));
     }
 
-    function testVerifyProofIsInvalid() public {
-        testVerifyProof(false, false, true, 0x00);
+    function testVerifyProofBasicCaseIsValid() public {
+        testVerifyProofBasicCase(false, false, false, 0x00);
     }
 
-    function testVerifyProof(
+    function testVerifyProofBasicCaseIsInvalid() public {
+        testVerifyProofBasicCase(false, false, true, 0x00);
+    }
+
+    function testVerifyProofBasicCase(
         bool damageProof,
         bool damageRoot,
         bool damageLeaf,
@@ -240,5 +260,77 @@ contract MerkleProofLibTest is Test {
         bool[] calldata flags
     ) external pure returns (bool) {
         return MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
+    }
+
+    // Following code is adapted from https://github.com/dmfxyz/murky/blob/main/src/common/MurkyBase.sol.
+
+    function _getRoot(bytes32[] memory data) private pure returns (bytes32) {
+        require(data.length > 1);
+        while (data.length > 1) {
+            data = _hashLevel(data);
+        }
+        return data[0];
+    }
+
+    function _getProof(bytes32[] memory data, uint256 nodeIndex) private pure returns (bytes32[] memory) {
+        require(data.length > 1);
+
+        bytes32[] memory result = new bytes32[](64);
+        uint256 pos;
+
+        while (data.length > 1) {
+            unchecked {
+                if (nodeIndex & 0x1 == 1) {
+                    result[pos] = data[nodeIndex - 1];
+                } else if (nodeIndex + 1 == data.length) {
+                    result[pos] = bytes32(0);
+                } else {
+                    result[pos] = data[nodeIndex + 1];
+                }
+                ++pos;
+                nodeIndex /= 2;
+            }
+            data = _hashLevel(data);
+        }
+        // Resize the length of the array to fit.
+        assembly {
+            mstore(result, pos)
+        }
+
+        return result;
+    }
+
+    function _hashLevel(bytes32[] memory data) private pure returns (bytes32[] memory) {
+        bytes32[] memory result;
+        unchecked {
+            uint256 length = data.length;
+            if (length & 0x1 == 1) {
+                result = new bytes32[](length / 2 + 1);
+                result[result.length - 1] = _hashPair(data[length - 1], bytes32(0));
+            } else {
+                result = new bytes32[](length / 2);
+            }
+            uint256 pos = 0;
+            for (uint256 i = 0; i < length - 1; i += 2) {
+                result[pos] = _hashPair(data[i], data[i + 1]);
+                ++pos;
+            }
+        }
+        return result;
+    }
+
+    function _hashPair(bytes32 left, bytes32 right) private pure returns (bytes32 result) {
+        assembly {
+            switch lt(left, right)
+            case 0 {
+                mstore(0x0, right)
+                mstore(0x20, left)
+            }
+            default {
+                mstore(0x0, left)
+                mstore(0x20, right)
+            }
+            result := keccak256(0x0, 0x40)
+        }
     }
 }
