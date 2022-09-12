@@ -4,8 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Simple single owner and multiroles authorization mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/OwnableRoles.sol)
 /// @dev While the ownable portion follows [EIP-173](https://eips.ethereum.org/EIPS/eip-173)
-/// for compatibility, the nomenclature for the 2-step ownership handover and roles
-/// may be unique to this codebase.
+/// for compatibility, the nomenclature for the roles may be unique to this codebase.
 abstract contract OwnableRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -54,8 +53,6 @@ abstract contract OwnableRoles {
     /// to avoid collision with lower slots.
     /// The choice of manual storage layout is to enable compatibility
     /// with both regular and upgradeable contracts.
-    ///
-    /// The handover receiver slot is given by: `add(not(_OWNER_SLOT_NOT), 1)`.
     ///
     /// The role slot of `user` is given by:
     /// ```
@@ -193,13 +190,6 @@ abstract contract OwnableRoles {
     function owner() public view virtual returns (address result) {
         assembly {
             result := sload(not(_OWNER_SLOT_NOT))
-        }
-    }
-
-    /// @dev Returns the receiver of the current ownership handover, if any.
-    function ownershipHandoverReceiver() public view virtual returns (address result) {
-        assembly {
-            result := sload(add(not(_OWNER_SLOT_NOT), 1))
         }
     }
 
