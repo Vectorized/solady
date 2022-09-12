@@ -74,52 +74,6 @@ contract OwnableRolesTest is Test {
         testTransferOwnership(address(1), false, true);
     }
 
-    function testHandoverOwnership(
-        address newOwner,
-        bool proposerIsOwner,
-        bool cancelHandover,
-        bool receiverIsNewOwner
-    ) public {
-        vm.assume(newOwner != address(this));
-
-        if (newOwner == address(0)) {
-            vm.expectRevert(OwnableRoles.NewOwnerIsZeroAddress.selector);
-            mockOwnableRoles.proposeOwnershipHandover(newOwner);
-            return;
-        } else if (proposerIsOwner) {
-            vm.expectEmit(true, true, true, true);
-            emit OwnershipHandoverProposed(newOwner);
-            mockOwnableRoles.proposeOwnershipHandover(newOwner);
-            assertEq(mockOwnableRoles.ownershipHandoverReceiver(), newOwner);
-        } else {
-            vm.prank(newOwner);
-            vm.expectRevert(OwnableRoles.Unauthorized.selector);
-            mockOwnableRoles.proposeOwnershipHandover(newOwner);
-            return;
-        }
-
-        if (proposerIsOwner) {
-            if (cancelHandover) {
-                vm.expectEmit(true, true, true, true);
-                emit OwnershipHandoverCanceled();
-                mockOwnableRoles.cancelOwnershipHandover();
-                assertEq(mockOwnableRoles.ownershipHandoverReceiver(), address(0));
-                vm.expectRevert(OwnableRoles.Unauthorized.selector);
-            } else if (receiverIsNewOwner) {
-                vm.prank(newOwner);
-                vm.expectEmit(true, true, true, true);
-                emit OwnershipTransferred(address(this), newOwner);
-            } else {
-                vm.expectRevert(OwnableRoles.Unauthorized.selector);
-            }
-            mockOwnableRoles.acceptOwnershipHandover();
-        }
-    }
-
-    function testHandoverOwnership() public {
-        testHandoverOwnership(address(1), true, false, true);
-    }
-
     function testGrantRoles() public {
         vm.expectEmit(true, true, true, true);
         emit RolesUpdated(address(1), 111111);
