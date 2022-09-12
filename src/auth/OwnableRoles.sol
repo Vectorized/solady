@@ -4,8 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Simple single owner and multiroles authorization mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/OwnableRoles.sol)
 /// @dev While the ownable portion follows [EIP-173](https://eips.ethereum.org/EIPS/eip-173)
-/// for compatibility, the nomenclature for the 2-step ownership handover and roles
-/// may be unique to this codebase.
+/// for compatibility, the nomenclature for the roles may be unique to this codebase.
 abstract contract OwnableRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -33,12 +32,6 @@ abstract contract OwnableRoles {
     /// despite it not being as lightweight as a single argument event.
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    /// @dev An ownership handover to `newOwner` is proposed.
-    event OwnershipHandoverProposed(address indexed newOwner);
-
-    /// @dev The ownership handover is cancelled.
-    event OwnershipHandoverCanceled();
-
     /// @dev The `user`'s roles is updated to `roles`.
     /// Each bit of `roles` represents whether the role is set.
     event RolesUpdated(address indexed user, uint256 indexed roles);
@@ -46,14 +39,6 @@ abstract contract OwnableRoles {
     /// @dev `keccak256(bytes("OwnershipTransferred(address,address)"))`.
     uint256 private constant _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE =
         0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0;
-
-    /// @dev `keccak256(bytes("OwnershipHandoverProposed(address)"))`.
-    uint256 private constant _OWNERSHIP_HANDOVER_PROPOSED_EVENT_SIGNATURE =
-        0xbddead5759d93d1c80803f9e8dcce528b941a7cdbf365abc5ad97e8743460d17;
-
-    /// @dev `keccak256(bytes("OwnershipHandoverCanceled()"))`.
-    uint256 private constant _OWNERSHIP_HANDOVER_CANCELED_EVENT_SIGNATURE =
-        0x8422bba0a447c9e0309f7f8ab02fe9cc65654c78bb03841856db33a0536c524c;
 
     /// @dev `keccak256(bytes("RolesUpdated(address,uint256)"))`.
     uint256 private constant _ROLES_UPDATED_EVENT_SIGNATURE =
@@ -68,8 +53,6 @@ abstract contract OwnableRoles {
     /// to avoid collision with lower slots.
     /// The choice of manual storage layout is to enable compatibility
     /// with both regular and upgradeable contracts.
-    ///
-    /// The handover receiver slot is given by: `add(not(_OWNER_SLOT_NOT), 1)`.
     ///
     /// The role slot of `user` is given by:
     /// ```
@@ -181,57 +164,6 @@ abstract contract OwnableRoles {
         }
     }
 
-    /// @dev Initiates a two step ownership transfer.
-    /// The caller must be the owner.
-    /// Only one proposal can be active at once.
-    /// If there is an existing active ownership handover, it will be overwritten.
-    function proposeOwnershipHandover(address newOwner) public virtual onlyOwner {
-        assembly {
-            // Clean the upper 96 bits.
-            newOwner := shr(96, shl(96, newOwner))
-            // Reverts if the `newOwner` is the zero address.
-            if iszero(newOwner) {
-                mstore(0x00, _NEW_OWNER_IS_ZERO_ADDRESS_ERROR_SELECTOR)
-                revert(0x1c, 0x04)
-            }
-            // Store the `newOwner` in the proposal slot.
-            sstore(add(not(_OWNER_SLOT_NOT), 1), newOwner)
-            // Emit the {OwnershipHandoverProposed} event.
-            log2(0, 0, _OWNERSHIP_HANDOVER_PROPOSED_EVENT_SIGNATURE, newOwner)
-        }
-    }
-
-    /// @dev Cancels a two step ownership transfer.
-    /// The caller must be the owner.
-    /// Cancels the pending ownership handover, if any.
-    function cancelOwnershipHandover() public virtual onlyOwner {
-        assembly {
-            sstore(add(not(_OWNER_SLOT_NOT), 1), 0)
-            // Emit the {OwnershipHandoverCanceled} event.
-            log1(0, 0, _OWNERSHIP_HANDOVER_CANCELED_EVENT_SIGNATURE)
-        }
-    }
-
-    /// @dev Accepts a two step ownership transfer.
-    /// The caller must be the receiver.
-    /// Upon acceptance, the ownership will be transferred to the caller.
-    /// and the ownership handover will be closed.
-    function acceptOwnershipHandover() public virtual {
-        assembly {
-            let ownerSlot := not(_OWNER_SLOT_NOT)
-            // If the caller is not the handover receiver.
-            if iszero(eq(caller(), sload(add(ownerSlot, 1)))) {
-                mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
-                revert(0x1c, 0x04)
-            }
-            sstore(add(ownerSlot, 1), 0)
-            // Emit the {OwnershipTransferred} event.
-            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, sload(ownerSlot), caller())
-            // Store the caller as the new owner.
-            sstore(ownerSlot, caller())
-        }
-    }
-
     /// @dev Allows the owner to grant `user` `roles`.
     /// If the `user` already has a role, then it will be an no-op for the role.
     function grantRoles(address user, uint256 roles) public virtual onlyOwner {
@@ -258,13 +190,6 @@ abstract contract OwnableRoles {
     function owner() public view virtual returns (address result) {
         assembly {
             result := sload(not(_OWNER_SLOT_NOT))
-        }
-    }
-
-    /// @dev Returns the receiver of the current ownership handover, if any.
-    function ownershipHandoverReceiver() public view virtual returns (address result) {
-        assembly {
-            result := sload(add(not(_OWNER_SLOT_NOT), 1))
         }
     }
 
