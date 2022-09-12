@@ -28,48 +28,35 @@ contract MerkleProofLibTest is Test {
         assertEq(this.verify(proof, root, leaf), isValid);
     }
 
-    function testVerifyProofIsValid() public {
-        testVerifyProof(false, false, false, 0x00);
-    }
-
-    function testVerifyProofIsInvalid() public {
-        testVerifyProof(false, false, true, 0x00);
-    }
-
-    function testVerifyProofReturnsTrue(bytes32[] memory data, uint256 randomness) public {
+    function testVerifyProof(bytes32[] memory data, uint256 randomness) public {
         vm.assume(data.length > 1);
         uint256 nodeIndex = randomness % data.length;
         bytes32 root = _getRoot(data);
         bytes32[] memory proof = _getProof(data, nodeIndex);
         bytes32 leaf = data[nodeIndex];
+
         assertTrue(this.verify(proof, root, leaf));
-    }
 
-    function testVerifyProofReturnsFalseWithCorruptedProof(bytes32[] memory data, uint256 randomness) public {
-        vm.assume(data.length > 1);
-        uint256 nodeIndex = randomness % data.length;
-        bytes32 root = _getRoot(data);
-        bytes32[] memory proof = _getProof(data, nodeIndex);
-        bytes32 leaf = data[nodeIndex];
+        // Checks verify with corrupted root returns false.
+        assertFalse(this.verify(proof, bytes32(uint256(root) ^ 1), leaf));
 
+        // Checks verify with corrupted proof returns false.
         proof[0] = bytes32(uint256(proof[0]) ^ 1);
-
         assertFalse(this.verify(proof, root, leaf));
+
+        // Checks verify with corrupted root and proof returns false.
+        assertFalse(this.verify(proof, bytes32(uint256(root) ^ 1), leaf));
     }
 
-    function testVerifyProofReturnsFalseWithCorruptedRoot(bytes32[] memory data, uint256 randomness) public {
-        vm.assume(data.length > 1);
-        uint256 nodeIndex = randomness % data.length;
-        bytes32 root = _getRoot(data);
-        bytes32[] memory proof = _getProof(data, nodeIndex);
-        bytes32 leaf = data[nodeIndex];
-
-        root = bytes32(uint256(root) ^ 1);
-
-        assertFalse(this.verify(proof, root, leaf));
+    function testVerifyProofBasicCaseIsValid() public {
+        testVerifyProofBasicCase(false, false, false, 0x00);
     }
 
-    function testVerifyProof(
+    function testVerifyProofBasicCaseIsInvalid() public {
+        testVerifyProofBasicCase(false, false, true, 0x00);
+    }
+
+    function testVerifyProofBasicCase(
         bool damageProof,
         bool damageRoot,
         bool damageLeaf,
