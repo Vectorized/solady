@@ -84,11 +84,13 @@ abstract contract OwnableRoles {
     /// they are not clean, as well as keep the `keccak256` under 32-bytes.
     uint256 private constant _OWNER_SLOT_NOT = 0x8b78c6d8;
 
-    /// The ownership handover request slot of `newOwner` is given by
+    /// The ownership handover slot of `newOwner` is given by:
     /// ```
     ///     mstore(0x00, or(shl(96, user), _HANDOVER_SLOT_NOT))
     ///     let handoverSlot := keccak256(0x00, 0x20)
     /// ```
+    /// A stored value of 1 denotes the presence of a two-step ownership handover.
+    /// Otherwise, a stored value of 0 denotes the absence of which.
     uint256 private constant _HANDOVER_SLOT_NOT = 0xaccfdaaf;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -267,7 +269,9 @@ abstract contract OwnableRoles {
     /// @dev Returns whether `newOwner` has an active request for an ownership handover.
     function requestedOwnershipHandover(address newOwner) public view virtual returns (bool result) {
         assembly {
+            // Compute the handover slot.
             mstore(0x00, or(shl(96, newOwner), _HANDOVER_SLOT_NOT))
+            // Load the handover slot.
             result := sload(keccak256(0x00, 0x20))
         }
     }
