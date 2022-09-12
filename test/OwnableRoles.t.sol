@@ -7,9 +7,9 @@ import "./utils/mocks/MockOwnableRoles.sol";
 contract OwnableRolesTest is Test {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    event OwnershipHandoverProposed(address indexed newOwner);
+    event OwnershipHandoverRequested(address indexed newOwner);
 
-    event OwnershipHandoverCanceled();
+    event OwnershipHandoverCanceled(address indexed newOwner);
 
     event RolesUpdated(address indexed user, uint256 indexed roles);
 
@@ -247,5 +247,29 @@ contract OwnableRolesTest is Test {
 
     function testOnlyOwnerOrRolesModifier() public {
         testOnlyOwnerOrRolesModifier(address(1), false, 1, 2);
+    }
+
+    function testHandoverOwnership(address newOwner, bool cancelHandover) public {
+        vm.assume(newOwner != address(this));
+
+        vm.prank(newOwner);
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipHandoverRequested(newOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+        assertTrue(mockOwnableRoles.requestedOwnershipHandover(newOwner));
+
+        if (cancelHandover) {
+            vm.expectEmit(true, true, true, true);
+            emit OwnershipHandoverCanceled(newOwner);
+            vm.prank(newOwner);
+            mockOwnableRoles.cancelOwnershipHandover();
+            assertFalse(mockOwnableRoles.requestedOwnershipHandover(newOwner));
+            vm.expectRevert(OwnableRoles.HandoverRequestNotFound.selector);
+        } else {
+            vm.expectEmit(true, true, true, true);
+            emit OwnershipTransferred(address(this), newOwner);
+        }
+
+        mockOwnableRoles.completeOwnershipHandover(newOwner);
     }
 }
