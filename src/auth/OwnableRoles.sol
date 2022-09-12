@@ -192,33 +192,30 @@ abstract contract OwnableRoles {
         }
     }
 
-    /// @dev Initiates a two step ownership transfer to the caller.
+    /// @dev Initiates a two-step ownership handover to the caller.
     function requestOwnershipHandover() public virtual {
         assembly {
             // Compute and set the handover slot to 1.
             mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_NOT))
-            let handoverSlot := keccak256(0x00, 0x20)
-            sstore(handoverSlot, 1)
+            sstore(keccak256(0x00, 0x20), 1)
             // Emit the {OwnershipHandoverRequested} event.
             log2(0, 0, _OWNERSHIP_HANDOVER_REQUESTED_EVENT_SIGNATURE, caller())
         }
     }
 
-    /// @dev Cancels a two step ownership transfer to the caller.
-    /// Cancels the pending ownership handover to the caller, if any.
+    /// @dev Cancels the two-step ownership handover to the caller, if any.
     function cancelOwnershipHandover() public virtual {
         assembly {
             // Compute and set the handover slot to 0.
             mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_NOT))
-            let handoverSlot := keccak256(0x00, 0x20)
-            sstore(handoverSlot, 0)
+            sstore(keccak256(0x00, 0x20), 0)
             // Emit the {OwnershipHandoverCanceled} event.
             log2(0, 0, _OWNERSHIP_HANDOVER_CANCELED_EVENT_SIGNATURE, caller())
         }
     }
 
-    /// @dev Allows the owner to complete the handover the ownership to `newOwner`.
-    /// If there is no existing handover requested by `newOwner`, reverts.
+    /// @dev Allows the owner to complete the two-step ownership handover to `newOwner`.
+    /// Reverts if there is no existing ownership handover requested by `newOwner`.
     function completeOwnershipHandover(address newOwner) public virtual onlyOwner {
         assembly {
             // Compute and set the handover slot to 0.
