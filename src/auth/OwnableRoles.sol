@@ -194,12 +194,13 @@ abstract contract OwnableRoles {
     }
 
     /// @dev Request a two-step ownership handover to the caller.
-    /// The request will be automatically expire in 48 hours (172800 seconds).
+    /// The request will be automatically expire in 48 hours (172800 seconds) by default.
     function requestOwnershipHandover() public virtual {
+        uint256 validFor = ownershipHandoverValidFor();
         assembly {
             // Compute and set the handover slot to 1.
             mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
-            sstore(keccak256(0x00, 0x20), add(timestamp(), 172800))
+            sstore(keccak256(0x00, 0x20), add(timestamp(), validFor))
             // Emit the {OwnershipHandoverRequested} event.
             log2(0, 0, _OWNERSHIP_HANDOVER_REQUESTED_EVENT_SIGNATURE, caller())
         }
@@ -274,6 +275,11 @@ abstract contract OwnableRoles {
             // Load the handover slot.
             result := sload(keccak256(0x00, 0x20))
         }
+    }
+
+    /// @dev Returns how long a two-step ownership handover is valid for.
+    function ownershipHandoverValidFor() public pure virtual returns (uint64) {
+        return 172800;
     }
 
     /// @dev Returns whether `user` has any of `roles`.

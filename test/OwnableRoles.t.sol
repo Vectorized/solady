@@ -256,7 +256,7 @@ contract OwnableRolesTest is Test {
         vm.expectEmit(true, true, true, true);
         emit OwnershipHandoverRequested(newOwner);
         mockOwnableRoles.requestOwnershipHandover();
-        assertTrue(mockOwnableRoles.ownershipHandoverExpires(newOwner) == block.timestamp + 172800);
+        assertTrue(mockOwnableRoles.ownershipHandoverExpires(newOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(this), newOwner);
@@ -297,7 +297,7 @@ contract OwnableRolesTest is Test {
         vm.prank(newOwner);
         mockOwnableRoles.requestOwnershipHandover();
 
-        vm.warp(block.timestamp + 172800);
+        vm.warp(block.timestamp + mockOwnableRoles.ownershipHandoverValidFor());
 
         mockOwnableRoles.completeOwnershipHandover(newOwner);
     }
@@ -308,7 +308,7 @@ contract OwnableRolesTest is Test {
         vm.prank(newOwner);
         mockOwnableRoles.requestOwnershipHandover();
 
-        vm.warp(block.timestamp + 172800 + 1);
+        vm.warp(block.timestamp + mockOwnableRoles.ownershipHandoverValidFor() + 1);
 
         vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
 
