@@ -17,7 +17,7 @@ abstract contract OwnableRoles {
     /// @dev The `newOwner` cannot be the zero address.
     error NewOwnerIsZeroAddress();
 
-    /// @dev The `newOwner` does not have an active handover request.
+    /// @dev The `newOwner` does not have a valid handover request.
     error NoHandoverRequest();
 
     /// @dev `bytes4(keccak256(bytes("Unauthorized()")))`.
