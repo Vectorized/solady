@@ -18,7 +18,7 @@ abstract contract OwnableRoles {
     error NewOwnerIsZeroAddress();
 
     /// @dev The `newOwner` does not have an active handover request.
-    error HandoverRequestNotFound();
+    error NoHandoverRequest();
 
     /// @dev `bytes4(keccak256(bytes("Unauthorized()")))`.
     uint256 private constant _UNAUTHORIZED_ERROR_SELECTOR = 0x82b42900;
@@ -26,8 +26,8 @@ abstract contract OwnableRoles {
     /// @dev `bytes4(keccak256(bytes("NewOwnerIsZeroAddress()")))`.
     uint256 private constant _NEW_OWNER_IS_ZERO_ADDRESS_ERROR_SELECTOR = 0x7448fbae;
 
-    /// @dev `bytes4(keccak256(bytes("HandoverRequestNotFound()")))`.
-    uint256 private constant _HANDOVER_REQUEST_NOT_FOUND_ERROR_SELECTOR = 0xceb8d90e;
+    /// @dev `bytes4(keccak256(bytes("NoHandoverRequest()")))`.
+    uint256 private constant _NO_HANDOVER_REQUEST_ERROR_SELECTOR = 0x6f5e8818;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -75,22 +75,22 @@ abstract contract OwnableRoles {
     /// The choice of manual storage layout is to enable compatibility
     /// with both regular and upgradeable contracts.
     ///
-    /// - The role slot of `user` is given by:
+    /// The role slot of `user` is given by:
     /// ```
     ///     mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
     ///     let roleSlot := keccak256(0x00, 0x20)
     /// ```
-    ///   This automatically ignores the upper bits of the `user` in case
-    ///   they are not clean, as well as keep the `keccak256` under 32-bytes.
-    ///
-    /// - The ownership handover slot of `newOwner` is given by:
+    /// This automatically ignores the upper bits of the `user` in case
+    /// they are not clean, as well as keep the `keccak256` under 32-bytes.
+    uint256 private constant _OWNER_SLOT_NOT = 0x8b78c6d8;
+
+    /// The ownership handover slot of `newOwner` is given by:
     /// ```
-    ///     mstore(0x00, or(shl(96, user), add(_OWNER_SLOT_NOT, 1)))
+    ///     mstore(0x00, or(shl(96, user), _HANDOVER_SLOT_SEED))
     ///     let handoverSlot := keccak256(0x00, 0x20)
     /// ```
-    ///   A stored value of 1 denotes the presence of a two-step ownership handover.
-    ///   Otherwise, a stored value of 0 denotes the absence of which.
-    uint256 private constant _OWNER_SLOT_NOT = 0x8b78c6d8;
+    /// It stores the expiry timestamp of the two-step ownership handover.
+    uint256 private constant _HANDOVER_SLOT_SEED = 0x389a75e1;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     INTERNAL FUNCTIONS                     */
@@ -193,12 +193,13 @@ abstract contract OwnableRoles {
         }
     }
 
-    /// @dev Initiates a two-step ownership handover to the caller.
+    /// @dev Request a two-step ownership handover to the caller.
+    /// The request will be automatically expire in 48 hours (172800 seconds).
     function requestOwnershipHandover() public virtual {
         assembly {
             // Compute and set the handover slot to 1.
-            mstore(0x00, or(shl(96, caller()), add(_OWNER_SLOT_NOT, 1)))
-            sstore(keccak256(0x00, 0x20), 1)
+            mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
+            sstore(keccak256(0x00, 0x20), add(timestamp(), 172800))
             // Emit the {OwnershipHandoverRequested} event.
             log2(0, 0, _OWNERSHIP_HANDOVER_REQUESTED_EVENT_SIGNATURE, caller())
         }
@@ -208,7 +209,7 @@ abstract contract OwnableRoles {
     function cancelOwnershipHandover() public virtual {
         assembly {
             // Compute and set the handover slot to 0.
-            mstore(0x00, or(shl(96, caller()), add(_OWNER_SLOT_NOT, 1)))
+            mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
             sstore(keccak256(0x00, 0x20), 0)
             // Emit the {OwnershipHandoverCanceled} event.
             log2(0, 0, _OWNERSHIP_HANDOVER_CANCELED_EVENT_SIGNATURE, caller())
@@ -220,11 +221,11 @@ abstract contract OwnableRoles {
     function completeOwnershipHandover(address newOwner) public virtual onlyOwner {
         assembly {
             // Compute and set the handover slot to 0.
-            mstore(0x00, or(shl(96, newOwner), add(_OWNER_SLOT_NOT, 1)))
+            mstore(0x00, or(shl(96, newOwner), _HANDOVER_SLOT_SEED))
             let handoverSlot := keccak256(0x00, 0x20)
-            // If the handover does not exist.
-            if iszero(sload(handoverSlot)) {
-                mstore(0x00, _HANDOVER_REQUEST_NOT_FOUND_ERROR_SELECTOR)
+            // If the handover does not exist, or has expired.
+            if gt(timestamp(), sload(handoverSlot)) {
+                mstore(0x00, _NO_HANDOVER_REQUEST_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
             // Set the handover slot to 0.
@@ -265,11 +266,11 @@ abstract contract OwnableRoles {
         }
     }
 
-    /// @dev Returns whether `newOwner` has an active request for an ownership handover.
-    function requestedOwnershipHandover(address newOwner) public view virtual returns (bool result) {
+    /// @dev Returns the expiry timestamp for the two-step ownership handover to `newOwner`.
+    function ownershipHandoverExpires(address newOwner) public view virtual returns (uint256 result) {
         assembly {
             // Compute the handover slot.
-            mstore(0x00, or(shl(96, newOwner), add(_OWNER_SLOT_NOT, 1)))
+            mstore(0x00, or(shl(96, newOwner), _HANDOVER_SLOT_SEED))
             // Load the handover slot.
             result := sload(keccak256(0x00, 0x20))
         }

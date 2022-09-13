@@ -249,26 +249,68 @@ contract OwnableRolesTest is Test {
         testOnlyOwnerOrRolesModifier(address(1), false, 1, 2);
     }
 
-    function testHandoverOwnership(address newOwner, bool cancelHandover) public {
+    function testHandoverOwnership(address newOwner) public {
         vm.assume(newOwner != address(this));
 
         vm.prank(newOwner);
         vm.expectEmit(true, true, true, true);
         emit OwnershipHandoverRequested(newOwner);
         mockOwnableRoles.requestOwnershipHandover();
-        assertTrue(mockOwnableRoles.requestedOwnershipHandover(newOwner));
+        assertTrue(mockOwnableRoles.ownershipHandoverExpires(newOwner) == block.timestamp + 172800);
 
-        if (cancelHandover) {
-            vm.expectEmit(true, true, true, true);
-            emit OwnershipHandoverCanceled(newOwner);
-            vm.prank(newOwner);
-            mockOwnableRoles.cancelOwnershipHandover();
-            assertFalse(mockOwnableRoles.requestedOwnershipHandover(newOwner));
-            vm.expectRevert(OwnableRoles.HandoverRequestNotFound.selector);
-        } else {
-            vm.expectEmit(true, true, true, true);
-            emit OwnershipTransferred(address(this), newOwner);
-        }
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipTransferred(address(this), newOwner);
+
+        mockOwnableRoles.completeOwnershipHandover(newOwner);
+    }
+
+    function testHandoverOwnership() public {
+        testHandoverOwnership(address(uint160(111111)));
+    }
+
+    function testHandoverOwnershipWithCancellation(address newOwner) public {
+        vm.assume(newOwner != address(this));
+
+        vm.prank(newOwner);
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipHandoverRequested(newOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+        assertTrue(mockOwnableRoles.ownershipHandoverExpires(newOwner) > block.timestamp);
+
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipHandoverCanceled(newOwner);
+        vm.prank(newOwner);
+        mockOwnableRoles.cancelOwnershipHandover();
+        assertEq(mockOwnableRoles.ownershipHandoverExpires(newOwner), 0);
+        vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
+
+        mockOwnableRoles.completeOwnershipHandover(newOwner);
+    }
+
+    function testHandoverOwnershipWithCancellation() public {
+        testHandoverOwnershipWithCancellation(address(uint160(111111)));
+    }
+
+    function testHandoverOwnershipBeforeExpires(address newOwner) public {
+        vm.assume(newOwner != address(this));
+
+        vm.prank(newOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+
+        vm.warp(block.timestamp + 172800);
+
+        mockOwnableRoles.completeOwnershipHandover(newOwner);
+    }
+
+    function testHandoverOwnershipAfterExpires(address newOwner) public {
+        vm.assume(newOwner != address(this));
+
+        vm.prank(newOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+
+        vm.warp(block.timestamp + 172800 + 1);
+
+        vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
 
         mockOwnableRoles.completeOwnershipHandover(newOwner);
     }
