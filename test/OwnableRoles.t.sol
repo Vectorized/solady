@@ -22,18 +22,18 @@ contract OwnableRolesTest is Test {
     function testInitializeOwnerDirect() public {
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), address(1));
-        mockOwnableRoles.initializeOwnerDirect(address(1), 1);
+        mockOwnableRoles.initializeOwnerDirect(address(1));
     }
 
-    function testSetOwnerDirect(address newOwner, uint256 brutalizer) public {
+    function testSetOwnerDirect(address newOwner) public {
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(this), newOwner);
-        mockOwnableRoles.setOwnerDirect(newOwner, brutalizer);
+        mockOwnableRoles.setOwnerDirect(newOwner);
         assertEq(mockOwnableRoles.owner(), newOwner);
     }
 
     function testSetOwnerDirect() public {
-        testSetOwnerDirect(address(1), 0);
+        testSetOwnerDirect(address(1));
     }
 
     function testRenounceOwnership() public {
@@ -82,7 +82,6 @@ contract OwnableRolesTest is Test {
 
     function testGrantAndRevokeOrRenounceRoles(
         address user,
-        uint256 userBrutalizer,
         bool granterIsOwner,
         bool useRenounce,
         bool revokerIsOwner,
@@ -103,8 +102,7 @@ contract OwnableRolesTest is Test {
             vm.prank(user);
             vm.expectRevert(OwnableRoles.Unauthorized.selector);
         }
-        mockOwnableRoles.grantRoles(user, userBrutalizer, rolesToGrant);
-        userBrutalizer = ~userBrutalizer;
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
 
         if (!granterIsOwner) return;
 
@@ -118,11 +116,11 @@ contract OwnableRolesTest is Test {
         } else if (revokerIsOwner) {
             vm.expectEmit(true, true, true, true);
             emit RolesUpdated(user, rolesAfterRevoke);
-            mockOwnableRoles.revokeRoles(user, userBrutalizer, rolesToRevoke);
+            mockOwnableRoles.revokeRoles(user, rolesToRevoke);
         } else {
             vm.prank(user);
             vm.expectRevert(OwnableRoles.Unauthorized.selector);
-            mockOwnableRoles.revokeRoles(user, userBrutalizer, rolesToRevoke);
+            mockOwnableRoles.revokeRoles(user, rolesToRevoke);
             return;
         }
 
@@ -131,7 +129,6 @@ contract OwnableRolesTest is Test {
 
     function testHasAllRoles(
         address user,
-        uint256 userBrutalizer,
         uint256 rolesToGrant,
         uint256 rolesToGrantBrutalizer,
         uint256 rolesToCheck,
@@ -141,7 +138,7 @@ contract OwnableRolesTest is Test {
             rolesToGrant = rolesToCheck;
         }
         rolesToGrant |= rolesToGrantBrutalizer;
-        mockOwnableRoles.grantRoles(user, userBrutalizer, rolesToGrant);
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
 
         bool hasAllRoles = (rolesToGrant & rolesToCheck) == rolesToCheck;
         assertEq(mockOwnableRoles.hasAllRoles(user, rolesToCheck), hasAllRoles);
@@ -153,7 +150,7 @@ contract OwnableRolesTest is Test {
         uint256 rolesToCheck
     ) public {
         mockOwnableRoles.grantRoles(user, rolesToGrant);
-        assertEq(mockOwnableRoles.hasAnyRoleWithCheck(user, rolesToCheck), rolesToGrant & rolesToCheck != 0);
+        assertEq(mockOwnableRoles.hasAnyRole(user, rolesToCheck), rolesToGrant & rolesToCheck != 0);
     }
 
     function testRolesFromOrdinals(uint8[] memory ordinals) public {
@@ -265,11 +262,21 @@ contract OwnableRolesTest is Test {
     }
 
     function testHandoverOwnership() public {
-        testHandoverOwnership(address(uint160(111111)));
+        testHandoverOwnership(address(1));
     }
 
-    function testHandoverOwnershipWithCancellation(address newOwner) public {
-        vm.assume(newOwner != address(this));
+    function testHandoverOwnershipRevertsIfCompleteIsNotOwner() public {
+        address newOwner = address(1);
+        vm.prank(newOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+
+        vm.prank(newOwner);
+        vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        mockOwnableRoles.completeOwnershipHandover(newOwner);
+    }
+
+    function testHandoverOwnershipWithCancellation() public {
+        address newOwner = address(1);
 
         vm.prank(newOwner);
         vm.expectEmit(true, true, true, true);
@@ -287,11 +294,8 @@ contract OwnableRolesTest is Test {
         mockOwnableRoles.completeOwnershipHandover(newOwner);
     }
 
-    function testHandoverOwnershipWithCancellation() public {
-        testHandoverOwnershipWithCancellation(address(uint160(111111)));
-    }
-
-    function testHandoverOwnershipBeforeExpires(address newOwner) public {
+    function testHandoverOwnershipBeforeExpires() public {
+        address newOwner = address(1);
         vm.prank(newOwner);
         mockOwnableRoles.requestOwnershipHandover();
 
@@ -300,7 +304,8 @@ contract OwnableRolesTest is Test {
         mockOwnableRoles.completeOwnershipHandover(newOwner);
     }
 
-    function testHandoverOwnershipAfterExpires(address newOwner) public {
+    function testHandoverOwnershipAfterExpires() public {
+        address newOwner = address(1);
         vm.prank(newOwner);
         mockOwnableRoles.requestOwnershipHandover();
 
