@@ -328,4 +328,8 @@ contract OwnableRolesTest is Test {
 
         mockOwnableRoles.completeOwnershipHandover(newOwner);
     }
+
+    function testOwnershipHandoverValidForDefaultValue() public {
+        assertEq(mockOwnableRoles.ownershipHandoverValidFor(), 48 * 3600);
+    }
 }
