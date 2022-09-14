@@ -7,9 +7,9 @@ import "./utils/mocks/MockOwnableRoles.sol";
 contract OwnableRolesTest is Test {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    event OwnershipHandoverRequested(address indexed newOwner);
+    event OwnershipHandoverRequested(address indexed pendingOwner);
 
-    event OwnershipHandoverCanceled(address indexed newOwner);
+    event OwnershipHandoverCanceled(address indexed pendingOwner);
 
     event RolesUpdated(address indexed user, uint256 indexed roles);
 
