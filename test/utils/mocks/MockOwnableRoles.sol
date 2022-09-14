@@ -57,8 +57,8 @@ contract MockOwnableRoles is OwnableRoles {
         OwnableRoles.revokeRoles(_brutalizedAddress(user), roles);
     }
 
-    function completeOwnershipHandover(address newOwner) public virtual override(OwnableRoles) {
-        OwnableRoles.completeOwnershipHandover(_brutalizedAddress(newOwner));
+    function completeOwnershipHandover(address pendingOwner) public virtual override(OwnableRoles) {
+        OwnableRoles.completeOwnershipHandover(_brutalizedAddress(pendingOwner));
     }
 
     function hasAnyRole(address user, uint256 roles) public view virtual override(OwnableRoles) returns (bool result) {

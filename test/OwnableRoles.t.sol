@@ -259,19 +259,19 @@ contract OwnableRolesTest is Test {
         testOnlyOwnerOrRolesModifier(address(1), false, 1, 2);
     }
 
-    function testHandoverOwnership(address newOwner) public {
-        vm.prank(newOwner);
+    function testHandoverOwnership(address pendingOwner) public {
+        vm.prank(pendingOwner);
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverRequested(newOwner);
+        emit OwnershipHandoverRequested(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();
-        assertTrue(mockOwnableRoles.ownershipHandoverExpires(newOwner) > block.timestamp);
+        assertTrue(mockOwnableRoles.ownershipHandoverExpires(pendingOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
-        emit OwnershipTransferred(address(this), newOwner);
+        emit OwnershipTransferred(address(this), pendingOwner);
 
-        mockOwnableRoles.completeOwnershipHandover(newOwner);
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
 
-        assertEq(mockOwnableRoles.owner(), newOwner);
+        assertEq(mockOwnableRoles.owner(), pendingOwner);
     }
 
     function testHandoverOwnership() public {
@@ -279,54 +279,54 @@ contract OwnableRolesTest is Test {
     }
 
     function testHandoverOwnershipRevertsIfCompleteIsNotOwner() public {
-        address newOwner = address(1);
-        vm.prank(newOwner);
+        address pendingOwner = address(1);
+        vm.prank(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();
 
-        vm.prank(newOwner);
+        vm.prank(pendingOwner);
         vm.expectRevert(OwnableRoles.Unauthorized.selector);
-        mockOwnableRoles.completeOwnershipHandover(newOwner);
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
 
     function testHandoverOwnershipWithCancellation() public {
-        address newOwner = address(1);
+        address pendingOwner = address(1);
 
-        vm.prank(newOwner);
+        vm.prank(pendingOwner);
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverRequested(newOwner);
+        emit OwnershipHandoverRequested(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();
-        assertTrue(mockOwnableRoles.ownershipHandoverExpires(newOwner) > block.timestamp);
+        assertTrue(mockOwnableRoles.ownershipHandoverExpires(pendingOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverCanceled(newOwner);
-        vm.prank(newOwner);
+        emit OwnershipHandoverCanceled(pendingOwner);
+        vm.prank(pendingOwner);
         mockOwnableRoles.cancelOwnershipHandover();
-        assertEq(mockOwnableRoles.ownershipHandoverExpires(newOwner), 0);
+        assertEq(mockOwnableRoles.ownershipHandoverExpires(pendingOwner), 0);
         vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
 
-        mockOwnableRoles.completeOwnershipHandover(newOwner);
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
 
     function testHandoverOwnershipBeforeExpires() public {
-        address newOwner = address(1);
-        vm.prank(newOwner);
+        address pendingOwner = address(1);
+        vm.prank(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();
 
         vm.warp(block.timestamp + mockOwnableRoles.ownershipHandoverValidFor());
 
-        mockOwnableRoles.completeOwnershipHandover(newOwner);
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
 
     function testHandoverOwnershipAfterExpires() public {
-        address newOwner = address(1);
-        vm.prank(newOwner);
+        address pendingOwner = address(1);
+        vm.prank(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();
 
         vm.warp(block.timestamp + mockOwnableRoles.ownershipHandoverValidFor() + 1);
 
         vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
 
-        mockOwnableRoles.completeOwnershipHandover(newOwner);
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
 
     function testOwnershipHandoverValidForDefaultValue() public {
