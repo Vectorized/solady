@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "forge-std/Test.sol";
 import {Base64} from "../src/utils/Base64.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract Base64Test is Test {
     function testBase64EncodeEmptyString() public {
@@ -49,23 +50,16 @@ contract Base64Test is Test {
 
     function _testBase64(string memory input, string memory output) private {
         string memory encoded = Base64.encode(bytes(input));
-        bool freeMemoryPointerIs32ByteAligned;
-        assembly {
-            let freeMemoryPointer := mload(0x40)
-            // This ensures that the memory allocated is 32-byte aligned.
-            freeMemoryPointerIs32ByteAligned := iszero(and(freeMemoryPointer, 31))
-            // Write a non Base64 character to the free memory pointer.
-            // If the allocated memory is insufficient, this will change the
-            // encoded string and cause the subsequent asserts to fail.
-            mstore(freeMemoryPointer, "#")
-        }
-        assertTrue(freeMemoryPointerIs32ByteAligned);
+        _checkFreeMemoryPointer();
         assertEq(keccak256(bytes(encoded)), keccak256(bytes(output)));
     }
 
     function testBase64EncodeDecode(bytes memory input) public {
         string memory encoded = Base64.encode(input);
         bytes memory decoded = Base64.decode(encoded);
+        
+        _checkFreeMemoryPointer();
+
         assertEq(input, decoded);
     }
 
@@ -82,16 +76,52 @@ contract Base64Test is Test {
         );
     }
 
-    function testBase64EncodeDecodeNoPadding(bytes memory input) public {
+    function testBase64EncodeDecodeAltModes(bytes memory input, bool stripPadding, bool rfc3501, bool urlSafe) public {
         string memory encoded = Base64.encode(input);
-        assembly {
-            let lastBytes := mload(add(encoded, mload(encoded)))
-            mstore(
-                encoded,
-                sub(mload(encoded), add(eq(and(lastBytes, 0xFF), 0x3d), eq(and(lastBytes, 0xFFFF), 0x3d3d)))
-            )
+        
+        if (stripPadding || rfc3501) {
+            assembly {
+                let lastBytes := mload(add(encoded, mload(encoded)))
+                mstore(
+                    encoded,
+                    sub(mload(encoded), add(eq(and(lastBytes, 0xFF), 0x3d), eq(and(lastBytes, 0xFFFF), 0x3d3d)))
+                )
+            }    
         }
+
+        if (rfc3501) {
+            encoded = LibString.replace(encoded, "/", ",");
+        } else if (urlSafe) {
+            encoded = LibString.replace(encoded, "/", "_");
+            encoded = LibString.replace(encoded, "+", "-");
+        }
+
         bytes memory decoded = Base64.decode(encoded);
+
+        _checkFreeMemoryPointer();
+
         assertEq(input, decoded);
+    }
+
+    function testBase64DecodeAnyLengthDoesNotRevert(string memory input) public {
+        assertTrue(Base64.decode(input).length <= bytes(input).length);
+    }
+
+    function testBase64DecodeInvalidLengthDoesNotRevert() public {
+        testBase64DecodeAnyLengthDoesNotRevert("TWlsY");
+    }
+
+    function _checkFreeMemoryPointer() private {
+        bool freeMemoryPointerIs32ByteAligned;
+        assembly {
+            let freeMemoryPointer := mload(0x40)
+            // This ensures that the memory allocated is 32-byte aligned.
+            freeMemoryPointerIs32ByteAligned := iszero(and(freeMemoryPointer, 31))
+            // Write some garbage to the free memory.
+            // If the allocated memory is insufficient, this will change the
+            // decoded string and cause the subsequent asserts to fail.
+            mstore(freeMemoryPointer, keccak256(0x00, 0x60))
+        }
+        assertTrue(freeMemoryPointerIs32ByteAligned);
     }
 }
