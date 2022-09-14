@@ -67,7 +67,7 @@ contract Base64Test is Test {
     function testBase64EncodeDecode(bytes memory input) public {
         string memory encoded = Base64.encode(input);
         bytes memory decoded = Base64.decode(encoded);
-        
+
         bool freeMemoryPointerIs32ByteAligned;
         assembly {
             let freeMemoryPointer := mload(0x40)
@@ -96,9 +96,14 @@ contract Base64Test is Test {
         );
     }
 
-    function testBase64EncodeDecodeAltModes(bytes memory input, bool stripPadding, bool rfc3501, bool urlSafe) public {
+    function testBase64EncodeDecodeAltModes(
+        bytes memory input,
+        bool stripPadding,
+        bool rfc3501,
+        bool urlSafe
+    ) public {
         string memory encoded = Base64.encode(input);
-        
+
         if (stripPadding || rfc3501) {
             assembly {
                 let lastBytes := mload(add(encoded, mload(encoded)))
@@ -106,7 +111,7 @@ contract Base64Test is Test {
                     encoded,
                     sub(mload(encoded), add(eq(and(lastBytes, 0xFF), 0x3d), eq(and(lastBytes, 0xFFFF), 0x3d3d)))
                 )
-            }    
+            }
         }
 
         if (rfc3501) {
