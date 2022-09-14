@@ -32,6 +32,19 @@ contract OwnableRolesTest is Test {
         assertEq(mockOwnableRoles.owner(), newOwner);
     }
 
+    function testGrantAndRemoveRolesDirect(
+        address user,
+        uint256 rolesToGrant,
+        uint256 rolesToRemove
+    ) public {
+        mockOwnableRoles.removeRolesDirect(user, mockOwnableRoles.rolesOf(user));
+        assertEq(mockOwnableRoles.rolesOf(user), 0);
+        mockOwnableRoles.grantRolesDirect(user, rolesToGrant);
+        assertEq(mockOwnableRoles.rolesOf(user), rolesToGrant);
+        mockOwnableRoles.removeRolesDirect(user, rolesToRemove);
+        assertEq(mockOwnableRoles.rolesOf(user), rolesToGrant ^ (rolesToGrant & rolesToRemove));
+    }
+
     function testSetOwnerDirect() public {
         testSetOwnerDirect(address(1));
     }
