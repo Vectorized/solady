@@ -55,9 +55,9 @@ library Base64 {
                 mstore8(sub(ptr, shl(1, eq(r, 1))), 0x3d) // Pad at `ptr - 2` if `r == 1`.
 
                 // Allocate the memory for the string.
-                // Add 31 and mask with `not(0x1f)` to round the
+                // Add 31 and mask with `not(31)` to round the
                 // free memory pointer up the next multiple of 32.
-                mstore(0x40, and(add(end, 31), not(0x1f)))
+                mstore(0x40, and(add(end, 31), not(31)))
             }
         }
     }
@@ -124,9 +124,9 @@ library Base64 {
                 }
 
                 // Allocate the memory for the string.
-                // Add 32 + 31 and mask with `not(0x1f)` to round the
+                // Add 32 + 31 and mask with `not(31)` to round the
                 // free memory pointer up the next multiple of 32.
-                mstore(0x40, and(add(add(result, decodedLength), 63), not(0x1f)))
+                mstore(0x40, and(add(add(result, decodedLength), 63), not(31)))
 
                 // Restore the slots.
                 mstore(0x60, 0)
