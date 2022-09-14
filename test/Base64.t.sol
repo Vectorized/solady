@@ -6,32 +6,32 @@ import {Base64} from "../src/utils/Base64.sol";
 
 contract Base64Test is Test {
     function testBase64EncodeEmptyString() public {
-        testBase64("", "");
+        _testBase64("", "");
     }
 
     function testBase64EncodeShortStrings() public {
-        testBase64("M", "TQ==");
-        testBase64("Mi", "TWk=");
-        testBase64("Mil", "TWls");
-        testBase64("Mila", "TWlsYQ==");
-        testBase64("Milad", "TWlsYWQ=");
-        testBase64("Milady", "TWlsYWR5");
+        _testBase64("M", "TQ==");
+        _testBase64("Mi", "TWk=");
+        _testBase64("Mil", "TWls");
+        _testBase64("Mila", "TWlsYQ==");
+        _testBase64("Milad", "TWlsYWQ=");
+        _testBase64("Milady", "TWlsYWR5");
     }
 
     function testBase64EncodeToStringWithDoublePadding() public {
-        testBase64("test", "dGVzdA==");
+        _testBase64("test", "dGVzdA==");
     }
 
     function testBase64EncodeToStringWithSinglePadding() public {
-        testBase64("test1", "dGVzdDE=");
+        _testBase64("test1", "dGVzdDE=");
     }
 
     function testBase64EncodeToStringWithNoPadding() public {
-        testBase64("test12", "dGVzdDEy");
+        _testBase64("test12", "dGVzdDEy");
     }
 
     function testBase64EncodeSentence() public {
-        testBase64(
+        _testBase64(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
             "TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQsIGNvbnNlY3RldHVyIGFkaXBpc2NpbmcgZWxpdC4="
         );
@@ -40,14 +40,14 @@ contract Base64Test is Test {
     function testBase64WordBoundary() public {
         // Base64.encode allocates memory in multiples of 32 bytes.
         // This checks if the amount of memory allocated is enough.
-        testBase64("012345678901234567890", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkw");
-        testBase64("0123456789012345678901", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMQ==");
-        testBase64("01234567890123456789012", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=");
-        testBase64("012345678901234567890123", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIz");
-        testBase64("0123456789012345678901234", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNA==");
+        _testBase64("012345678901234567890", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkw");
+        _testBase64("0123456789012345678901", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMQ==");
+        _testBase64("01234567890123456789012", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=");
+        _testBase64("012345678901234567890123", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIz");
+        _testBase64("0123456789012345678901234", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNA==");
     }
 
-    function testBase64(string memory input, string memory output) private {
+    function _testBase64(string memory input, string memory output) private {
         string memory encoded = Base64.encode(bytes(input));
         bool freeMemoryPointerIs32ByteAligned;
         assembly {
@@ -61,5 +61,37 @@ contract Base64Test is Test {
         }
         assertTrue(freeMemoryPointerIs32ByteAligned);
         assertEq(keccak256(bytes(encoded)), keccak256(bytes(output)));
+    }
+
+    function testBase64EncodeDecode(bytes memory input) public {
+        string memory encoded = Base64.encode(input);
+        bytes memory decoded = Base64.decode(encoded);
+        assertEq(input, decoded);
+    }
+
+    function testBase64DecodeShortString() public {
+        // Mainly for testing gas.
+        assertEq(Base64.decode("TWlsYWR5").length, 6);
+    }
+
+    function testBase64DecodeSentence() public {
+        // Mainly for testing gas.
+        assertEq(
+            Base64.decode("TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQsIGNvbnNlY3RldHVyIGFkaXBpc2NpbmcgZWxpdC4=").length,
+            56
+        );
+    }
+
+    function testBase64EncodeDecodeNoPadding(bytes memory input) public {
+        string memory encoded = Base64.encode(input);
+        assembly {
+            let lastBytes := mload(add(encoded, mload(encoded)))
+            mstore(
+                encoded,
+                sub(mload(encoded), add(eq(and(lastBytes, 0xFF), 0x3d), eq(and(lastBytes, 0xFFFF), 0x3d3d)))
+            )
+        }
+        bytes memory decoded = Base64.decode(encoded);
+        assertEq(input, decoded);
     }
 }
