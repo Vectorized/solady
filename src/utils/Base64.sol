@@ -6,6 +6,11 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Base64.sol)
 /// @author Modified from (https://github.com/Brechtpd/base64/blob/main/base64.sol) by Brecht Devos - <brecht@loopring.org>.
 library Base64 {
+    /// @dev Encodes `data` using the base64 encoding described in RFC 4648.
+    /// See: https://datatracker.ietf.org/doc/html/rfc4648
+    /// - No line breaks.
+    /// - 62nd: '+', 63rd: '/'.
+    /// - Padded with '=' to a length which is a multiple of 4.
     function encode(bytes memory data) internal pure returns (string memory result) {
         assembly {
             let dataLength := mload(data)
@@ -62,6 +67,19 @@ library Base64 {
         }
     }
 
+    /// @dev Encodes base64 encoded `data`.
+    ///
+    /// Supports:
+    /// - RFC 4648 (both standard and filesafe mode).
+    /// - RFC 3501 (63: ',').
+    ///
+    /// Does not support:
+    /// - Line breaks.
+    ///
+    /// Note: For performance reasons,
+    /// this function will not revert on invalid `data` inputs.
+    /// It is the user's responsibility to ensure that the `data`
+    /// is a valid base64 encoded string.
     function decode(string memory data) internal pure returns (bytes memory result) {
         assembly {
             let dataLength := mload(data)

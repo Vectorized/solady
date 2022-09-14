@@ -96,7 +96,7 @@ contract Base64Test is Test {
         );
     }
 
-    function testBase64EncodeDecodeAltModes(bytes memory input, bool stripPadding, bool rfc3501, bool rfc4648) public {
+    function testBase64EncodeDecodeAltModes(bytes memory input, bool stripPadding, bool rfc3501, bool urlSafe) public {
         string memory encoded = Base64.encode(input);
         
         if (stripPadding || rfc3501) {
@@ -119,7 +119,7 @@ contract Base64Test is Test {
                     }
                 }
             }
-        } else if (rfc4648) {
+        } else if (urlSafe) {
             assembly {
                 let end := add(add(encoded, 0x20), mload(encoded))
                 // prettier-ignore
@@ -150,5 +150,9 @@ contract Base64Test is Test {
         assertTrue(freeMemoryPointerIs32ByteAligned);
 
         assertEq(input, decoded);
+    }
+
+    function testBase64DecodeAnyLengthDoesNotRevert(string memory input) public {
+        assertTrue(Base64.decode(input).length <= bytes(input).length);
     }
 }
