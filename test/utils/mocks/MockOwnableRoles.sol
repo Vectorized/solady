@@ -90,6 +90,7 @@ contract MockOwnableRoles is OwnableRoles {
     function ownershipHandoverValidFor() public pure virtual override(OwnableRoles) returns (uint64 result) {
         result = OwnableRoles.ownershipHandoverValidFor();
         assembly {
+            // Just brutalize the upper unused bits of the result to see if it causes any issue.
             result := or(shl(64, xor(not(0), 21987361281)), result)
         }
     }
@@ -112,6 +113,8 @@ contract MockOwnableRoles is OwnableRoles {
 
     function _brutalizedAddress(address value) private view returns (address result) {
         assembly {
+            // Some acrobatics to make the brutalized bits psuedorandomly
+            // different with every call.
             mstore(0x00, or(calldataload(0), mload(0x40)))
             mstore(0x20, or(timestamp(), mload(0x00)))
             result := or(shl(160, keccak256(0x00, 0x40)), value)
@@ -124,6 +127,8 @@ contract MockOwnableRoles is OwnableRoles {
         result = value;
         bool resultIsOneOrZero;
         assembly {
+            // We wanna check if the result is either 1 or 0,
+            // to make sure we practice good assembly politeness.
             resultIsOneOrZero := lt(result, 2)
         }
         if (!resultIsOneOrZero) result = !result;
