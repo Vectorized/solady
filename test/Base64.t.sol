@@ -112,6 +112,7 @@ contract Base64Test is Test {
         if (rfc3501) {
             assembly {
                 let end := add(add(encoded, 0x20), mload(encoded))
+                // prettier-ignore
                 for { let i := add(encoded, 0x20) } lt(i, end) { i := add(i, 1) } {
                     if eq(byte(0, mload(i)), 47) { // `if (encoded[i] == "/")`.
                         mstore8(i, 44) // Replace with ",".
@@ -121,6 +122,7 @@ contract Base64Test is Test {
         } else if (rfc4648) {
             assembly {
                 let end := add(add(encoded, 0x20), mload(encoded))
+                // prettier-ignore
                 for { let i := add(encoded, 0x20) } lt(i, end) { i := add(i, 1) } {
                     switch byte(0, mload(i))
                     case 47 { // `if (encoded[i] == "/")`.
