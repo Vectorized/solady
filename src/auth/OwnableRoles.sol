@@ -272,7 +272,7 @@ abstract contract OwnableRoles {
     }
 
     /// @dev Returns the expiry timestamp for the two-step ownership handover to `pendingOwner`.
-    function ownershipHandoverExpires(address pendingOwner) public view virtual returns (uint256 result) {
+    function ownershipHandoverExpiresAt(address pendingOwner) public view virtual returns (uint256 result) {
         assembly {
             // Compute the handover slot.
             mstore(0x00, or(shl(96, pendingOwner), _HANDOVER_SLOT_SEED))

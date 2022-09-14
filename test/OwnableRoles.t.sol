@@ -264,7 +264,7 @@ contract OwnableRolesTest is Test {
         vm.expectEmit(true, true, true, true);
         emit OwnershipHandoverRequested(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();
-        assertTrue(mockOwnableRoles.ownershipHandoverExpires(pendingOwner) > block.timestamp);
+        assertTrue(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(this), pendingOwner);
@@ -295,19 +295,19 @@ contract OwnableRolesTest is Test {
         vm.expectEmit(true, true, true, true);
         emit OwnershipHandoverRequested(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();
-        assertTrue(mockOwnableRoles.ownershipHandoverExpires(pendingOwner) > block.timestamp);
+        assertTrue(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
         emit OwnershipHandoverCanceled(pendingOwner);
         vm.prank(pendingOwner);
         mockOwnableRoles.cancelOwnershipHandover();
-        assertEq(mockOwnableRoles.ownershipHandoverExpires(pendingOwner), 0);
+        assertEq(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner), 0);
         vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
 
         mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
 
-    function testHandoverOwnershipBeforeExpires() public {
+    function testHandoverOwnershipBeforeExpiration() public {
         address pendingOwner = address(1);
         vm.prank(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();
@@ -317,7 +317,7 @@ contract OwnableRolesTest is Test {
         mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
 
-    function testHandoverOwnershipAfterExpires() public {
+    function testHandoverOwnershipAfterExpiration() public {
         address pendingOwner = address(1);
         vm.prank(pendingOwner);
         mockOwnableRoles.requestOwnershipHandover();

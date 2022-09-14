@@ -77,14 +77,14 @@ contract MockOwnableRoles is OwnableRoles {
         result = OwnableRoles.rolesOf(_brutalizedAddress(user));
     }
 
-    function ownershipHandoverExpires(address pendingOwner)
+    function ownershipHandoverExpiresAt(address pendingOwner)
         public
         view
         virtual
         override(OwnableRoles)
         returns (uint256 result)
     {
-        result = OwnableRoles.ownershipHandoverExpires(_brutalizedAddress(pendingOwner));
+        result = OwnableRoles.ownershipHandoverExpiresAt(_brutalizedAddress(pendingOwner));
     }
 
     function ownershipHandoverValidFor() public pure virtual override(OwnableRoles) returns (uint64 result) {
