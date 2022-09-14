@@ -6,8 +6,9 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Base64.sol)
 /// @author Modified from (https://github.com/Brechtpd/base64/blob/main/base64.sol) by Brecht Devos - <brecht@loopring.org>.
 library Base64 {
-    /// @dev Encodes `data` using the base64 encoding described in RFC 4648.
-    /// See: https://datatracker.ietf.org/doc/html/rfc4648
+    /// @dev Encodes `data` using the base64 encoding described in RFC 4648 (section 4).
+    /// See: https://datatracker.ietf.org/doc/html/rfc4648#section-4
+    ///
     /// - No line breaks.
     /// - 62nd: '+', 63rd: '/'.
     /// - Padded with '=' to a length which is a multiple of 4.
