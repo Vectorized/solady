@@ -54,7 +54,7 @@ contract Base64Test is Test {
             let freeMemoryPointer := mload(0x40)
             // This ensures that the memory allocated is 32-byte aligned.
             freeMemoryPointerIs32ByteAligned := iszero(and(freeMemoryPointer, 31))
-            // Write a non Base64 character to the free memory pointer.
+            // Write a non Base64 character to the free memory.
             // If the allocated memory is insufficient, this will change the
             // encoded string and cause the subsequent asserts to fail.
             mstore(freeMemoryPointer, "#")
@@ -66,6 +66,19 @@ contract Base64Test is Test {
     function testBase64EncodeDecode(bytes memory input) public {
         string memory encoded = Base64.encode(input);
         bytes memory decoded = Base64.decode(encoded);
+
+        bool freeMemoryPointerIs32ByteAligned;
+        assembly {
+            let freeMemoryPointer := mload(0x40)
+            // This ensures that the memory allocated is 32-byte aligned.
+            freeMemoryPointerIs32ByteAligned := iszero(and(freeMemoryPointer, 31))
+            // Write some garbage to the free memory.
+            // If the allocated memory is insufficient, this will change the
+            // decoded string and cause the subsequent asserts to fail.
+            mstore(freeMemoryPointer, keccak256(0x00, 0x60))
+        }
+        assertTrue(freeMemoryPointerIs32ByteAligned);
+
         assertEq(input, decoded);
     }
 
@@ -92,6 +105,19 @@ contract Base64Test is Test {
             )
         }
         bytes memory decoded = Base64.decode(encoded);
+
+        bool freeMemoryPointerIs32ByteAligned;
+        assembly {
+            let freeMemoryPointer := mload(0x40)
+            // This ensures that the memory allocated is 32-byte aligned.
+            freeMemoryPointerIs32ByteAligned := iszero(and(freeMemoryPointer, 31))
+            // Write some garbage to the free memory.
+            // If the allocated memory is insufficient, this will change the
+            // decoded string and cause the subsequent asserts to fail.
+            mstore(freeMemoryPointer, keccak256(0x00, 0x60))
+        }
+        assertTrue(freeMemoryPointerIs32ByteAligned);
+
         assertEq(input, decoded);
     }
 }
