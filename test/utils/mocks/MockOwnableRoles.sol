@@ -9,6 +9,8 @@ contract MockOwnableRoles is OwnableRoles {
     constructor() {
         _initializeOwner(msg.sender);
 
+        // Perform the tests on the helper functions.
+
         address brutalizedAddress = _brutalizedAddress(address(0));
         bool brutalizedAddressIsBrutalized;
         assembly {
@@ -24,9 +26,9 @@ contract MockOwnableRoles is OwnableRoles {
             badBool := 2
         }
 
-        bool checkedBool = _checkedBool(badBool);
+        bool checkedBadBool = _checkedBool(badBool);
 
-        if (checkedBool) {
+        if (checkedBadBool) {
             revert("Setup failed");
         }
     }
@@ -83,6 +85,13 @@ contract MockOwnableRoles is OwnableRoles {
         returns (uint256 result)
     {
         result = OwnableRoles.ownershipHandoverExpires(_brutalizedAddress(pendingOwner));
+    }
+
+    function ownershipHandoverValidFor() public pure virtual override(OwnableRoles) returns (uint64 result) {
+        result = OwnableRoles.ownershipHandoverValidFor();
+        assembly {
+            result := or(shl(64, xor(not(0), 21987361281)), result)
+        }
     }
 
     function updateFlagWithOnlyOwner() public onlyOwner {
