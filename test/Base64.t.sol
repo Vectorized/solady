@@ -108,6 +108,23 @@ contract Base64Test is Test {
         assertEq(input, decoded);
     }
 
+    function testBase64EncodeFileSafeAndNoPadding(
+        bytes memory input,
+        bool fileSafe,
+        bool noPadding
+    ) public {
+        string memory expectedEncoded = Base64.encode(input);
+
+        if (fileSafe) {
+            expectedEncoded = LibString.replace(expectedEncoded, "+", "-");
+            expectedEncoded = LibString.replace(expectedEncoded, "/", "_");
+        }
+        if (noPadding) {
+            expectedEncoded = LibString.replace(expectedEncoded, "=", "");
+        }
+        assertEq(Base64.encode(input, fileSafe, noPadding), expectedEncoded);
+    }
+
     function testBase64DecodeAnyLengthDoesNotRevert(string memory input) public {
         assertTrue(Base64.decode(input).length <= bytes(input).length);
     }
