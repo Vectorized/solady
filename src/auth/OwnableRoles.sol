@@ -283,7 +283,7 @@ abstract contract OwnableRoles {
 
     /// @dev Returns how long a two-step ownership handover is valid for in seconds.
     function ownershipHandoverValidFor() public pure virtual returns (uint64) {
-        return 172800;
+        return 48 * 3600;
     }
 
     /// @dev Returns whether `user` has any of `roles`.
