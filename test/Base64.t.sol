@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "forge-std/Test.sol";
 import {Base64} from "../src/utils/Base64.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract Base64Test is Test {
     function testBase64EncodeEmptyString() public {
@@ -66,7 +67,7 @@ contract Base64Test is Test {
     function testBase64EncodeDecode(bytes memory input) public {
         string memory encoded = Base64.encode(input);
         bytes memory decoded = Base64.decode(encoded);
-
+        
         bool freeMemoryPointerIs32ByteAligned;
         assembly {
             let freeMemoryPointer := mload(0x40)
@@ -95,15 +96,43 @@ contract Base64Test is Test {
         );
     }
 
-    function testBase64EncodeDecodeNoPadding(bytes memory input) public {
+    function testBase64EncodeDecodeAltModes(bytes memory input, bool stripPadding, bool rfc3501, bool rfc4648) public {
         string memory encoded = Base64.encode(input);
-        assembly {
-            let lastBytes := mload(add(encoded, mload(encoded)))
-            mstore(
-                encoded,
-                sub(mload(encoded), add(eq(and(lastBytes, 0xFF), 0x3d), eq(and(lastBytes, 0xFFFF), 0x3d3d)))
-            )
+        
+        if (stripPadding || rfc3501) {
+            assembly {
+                let lastBytes := mload(add(encoded, mload(encoded)))
+                mstore(
+                    encoded,
+                    sub(mload(encoded), add(eq(and(lastBytes, 0xFF), 0x3d), eq(and(lastBytes, 0xFFFF), 0x3d3d)))
+                )
+            }    
         }
+
+        if (rfc3501) {
+            assembly {
+                let end := add(add(encoded, 0x20), mload(encoded))
+                for { let i := add(encoded, 0x20) } lt(i, end) { i := add(i, 1) } {
+                    if eq(byte(0, mload(i)), 47) { // `if (encoded[i] == "/")`.
+                        mstore8(i, 44) // Replace with ",".
+                    }
+                }
+            }
+        } else if (rfc4648) {
+            assembly {
+                let end := add(add(encoded, 0x20), mload(encoded))
+                for { let i := add(encoded, 0x20) } lt(i, end) { i := add(i, 1) } {
+                    switch byte(0, mload(i))
+                    case 47 { // `if (encoded[i] == "/")`.
+                        mstore8(i, 95) // Replace with "_".
+                    }
+                    case 43 { // `if (encoded[i] == "+")`.
+                        mstore8(i, 45) // Replace with "-".
+                    }
+                }
+            }
+        }
+
         bytes memory decoded = Base64.decode(encoded);
 
         bool freeMemoryPointerIs32ByteAligned;
