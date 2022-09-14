@@ -87,11 +87,17 @@ contract MockOwnableRoles is OwnableRoles {
         result = OwnableRoles.ownershipHandoverExpiresAt(_brutalizedAddress(pendingOwner));
     }
 
-    function ownershipHandoverValidFor() public pure virtual override(OwnableRoles) returns (uint64 result) {
+    function ownershipHandoverValidFor() public view virtual override(OwnableRoles) returns (uint64 result) {
         result = OwnableRoles.ownershipHandoverValidFor();
         assembly {
+            // Some acrobatics to make the brutalized bits psuedorandomly
+            // different with every call.
+            mstore(0x00, or(calldataload(0), mload(0x40)))
+            mstore(0x20, or(timestamp(), mload(0x00)))
             // Just brutalize the upper unused bits of the result to see if it causes any issue.
-            result := or(shl(64, xor(not(0), 21987361281)), result)
+            result := or(shl(64, keccak256(0x00, 0x40)), result)
+            mstore(0x40, add(0x20, mload(0x40)))
+            mstore(0x00, result)
         }
     }
 
