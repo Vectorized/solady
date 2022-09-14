@@ -6,13 +6,15 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Base64.sol)
 /// @author Modified from (https://github.com/Brechtpd/base64/blob/main/base64.sol) by Brecht Devos - <brecht@loopring.org>.
 library Base64 {
-    /// @dev Encodes `data` using the base64 encoding described in RFC 4648 (section 4).
-    /// See: https://datatracker.ietf.org/doc/html/rfc4648#section-4
-    ///
-    /// - No line breaks.
-    /// - 62nd: '+', 63rd: '/'.
-    /// - Padded with '=' to a length which is a multiple of 4.
-    function encode(bytes memory data) internal pure returns (string memory result) {
+    /// @dev Encodes `data` using the base64 encoding described in RFC 4648.
+    /// See: https://datatracker.ietf.org/doc/html/rfc4648
+    /// @param fileSafe  Whether to replace '+' with '-' and '/' with '_'.
+    /// @param noPadding Whether to strip away the padding.
+    function encode(
+        bytes memory data,
+        bool fileSafe,
+        bool noPadding
+    ) internal pure returns (string memory result) {
         assembly {
             let dataLength := mload(data)
 
@@ -24,15 +26,13 @@ library Base64 {
                 // Set `result` to point to the start of the free memory.
                 result := mload(0x40)
 
-                // Write the length of the string.
-                mstore(result, encodedLength)
-
                 // Store the table into the scratch space.
                 // Offsetted by -1 byte so that the `mload` will load the character.
                 // We will rewrite the free memory pointer at `0x40` later with
                 // the allocated size.
+                // The magic constant 0x0230 will translate "-_" + "+/".
                 mstore(0x1f, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef")
-                mstore(0x3f, "ghijklmnopqrstuvwxyz0123456789+/")
+                mstore(0x3f, sub("ghijklmnopqrstuvwxyz0123456789-_", mul(iszero(fileSafe), 0x0230)))
 
                 // Skip the first slot, which stores the length.
                 let ptr := add(result, 0x20)
@@ -55,10 +55,20 @@ library Base64 {
                     if iszero(lt(ptr, end)) { break }
                 }
 
-                // Offset `ptr` and pad with '='. We can simply write over the end.
                 let r := mod(dataLength, 3)
-                mstore8(sub(ptr, iszero(iszero(r))), 0x3d) // Pad at `ptr - 1` if `r > 0`.
-                mstore8(sub(ptr, shl(1, eq(r, 1))), 0x3d) // Pad at `ptr - 2` if `r == 1`.
+
+                switch noPadding
+                case 0 {
+                    // Offset `ptr` and pad with '='. We can simply write over the end.
+                    mstore8(sub(ptr, iszero(iszero(r))), 0x3d) // Pad at `ptr - 1` if `r > 0`.
+                    mstore8(sub(ptr, shl(1, eq(r, 1))), 0x3d) // Pad at `ptr - 2` if `r == 1`.
+                    // Write the length of the string.
+                    mstore(result, encodedLength)
+                }
+                default {
+                    // Write the length of the string.
+                    mstore(result, sub(encodedLength, add(iszero(iszero(r)), eq(r, 1))))
+                }
 
                 // Allocate the memory for the string.
                 // Add 31 and mask with `not(31)` to round the
@@ -68,10 +78,22 @@ library Base64 {
         }
     }
 
+    /// @dev Encodes `data` using the base64 encoding described in RFC 4648.
+    /// Equivalent to `encode(data, false, false)`.
+    function encode(bytes memory data) internal pure returns (string memory result) {
+        result = encode(data, false, false);
+    }
+
+    /// @dev Encodes `data` using the base64 encoding described in RFC 4648.
+    /// Equivalent to `encode(data, fileSafe, false)`.
+    function encode(bytes memory data, bool fileSafe) internal pure returns (string memory result) {
+        result = encode(data, fileSafe, false);
+    }
+
     /// @dev Encodes base64 encoded `data`.
     ///
     /// Supports:
-    /// - RFC 4648 (both standard and filesafe mode).
+    /// - RFC 4648 (both standard and file-safe mode).
     /// - RFC 3501 (63: ',').
     ///
     /// Does not support:
