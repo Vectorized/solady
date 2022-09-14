@@ -162,6 +162,6 @@ contract Base64Test is Test {
     }
 
     function testBase64DecodeInvalidLengthDoesNotRevert() public {
-        testBase64DecodeAnyLengthDoesNotRevert("TWlsYQ");
+        testBase64DecodeAnyLengthDoesNotRevert("TWlsY");
     }
 }

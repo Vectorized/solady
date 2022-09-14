@@ -1,4 +1,4 @@
-Base64Test:testBase64DecodeAnyLengthDoesNotRevert(string) (runs: 256, μ: 2848, ~: 2479)
+Base64Test:testBase64DecodeAnyLengthDoesNotRevert(string) (runs: 256, μ: 2854, ~: 2479)
 Base64Test:testBase64DecodeInvalidLengthDoesNotRevert() (gas: 1000)
 Base64Test:testBase64DecodeSentence() (gas: 3859)
 Base64Test:testBase64DecodeShortString() (gas: 955)
