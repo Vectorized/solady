@@ -38,7 +38,7 @@ library Base64 {
                     data := add(data, 3) // Advance 3 bytes.
                     let input := mload(data)
 
-                    // Write 4 characters. Optimized for fewer stack operations.
+                    // Write 4 bytes. Optimized for fewer stack operations.
                     mstore8(    ptr    , mload(and(shr(18, input), 0x3F)))
                     mstore8(add(ptr, 1), mload(and(shr(12, input), 0x3F)))
                     mstore8(add(ptr, 2), mload(and(shr( 6, input), 0x3F)))
@@ -55,9 +55,82 @@ library Base64 {
                 mstore8(sub(ptr, shl(1, eq(r, 1))), 0x3d) // Pad at `ptr - 2` if `r == 1`.
 
                 // Allocate the memory for the string.
-                // Add 31 and mask with `not(0x1f)` to round the
+                // Add 31 and mask with `not(31)` to round the
                 // free memory pointer up the next multiple of 32.
-                mstore(0x40, and(add(end, 31), not(0x1f)))
+                mstore(0x40, and(add(end, 31), not(31)))
+            }
+        }
+    }
+
+    function decode(string memory data) internal pure returns (bytes memory result) {
+        assembly {
+            let dataLength := mload(data)
+
+            if dataLength {
+                let decodedLength := mul(shr(2, dataLength), 3)
+
+                switch and(dataLength, 3)
+                case 0 {
+                    // If padded.
+                    let lastBytes := mload(add(data, mload(data)))
+                    decodedLength := sub(
+                        decodedLength,
+                        add(eq(and(lastBytes, 0xFF), 0x3d), eq(and(lastBytes, 0xFFFF), 0x3d3d))
+                    )
+                }
+                default {
+                    // If non-padded.
+                    decodedLength := add(decodedLength, sub(and(dataLength, 3), 1))
+                }
+
+                result := mload(0x40)
+
+                // Write the length of the string.
+                mstore(result, decodedLength)
+
+                // Skip the first slot, which stores the length.
+                let ptr := add(result, 0x20)
+
+                // Cache the slot.
+                let m0x80 := mload(0x80)
+
+                // Load the table into the scratch space.
+                mstore(0x40, 0x000000000000000000003e0000003f3435363738393a3b3c3d00000000000000)
+                mstore(0x60, 0x000102030405060708090a0b0c0d0e0f10111213141516171819000000000000)
+                mstore(0x80, 0x1a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233000000000000)
+
+                let end := add(data, dataLength)
+                // prettier-ignore
+                for {} 1 {} {
+                    // Read 4 bytes.
+                    data := add(data, 4)
+                    let input := mload(data)
+
+                    // Write 3 bytes.
+                    mstore(ptr, shl(232, or(
+                        or(
+                            shl(18, and(mload(byte(28, input)), 0xFF)),
+                            shl(12, and(mload(byte(29, input)), 0xFF))),
+                        or(
+                            shl( 6, and(mload(byte(30, input)), 0xFF)),
+                                    and(mload(byte(31, input)), 0xFF)
+                        )
+                    )))
+
+                    ptr := add(ptr, 3)
+                    
+                    // prettier-ignore
+                    if iszero(lt(data, end)) { break }
+                }
+
+                // Allocate the memory for the string.
+                // Add 32 + 31 and mask with `not(31)` to round the
+                // free memory pointer up the next multiple of 32.
+                mstore(0x40, and(add(add(result, decodedLength), 63), not(31)))
+
+                // Restore the slots.
+                mstore(0x60, 0)
+                mstore(0x80, m0x80)
             }
         }
     }
