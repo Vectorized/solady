@@ -250,8 +250,6 @@ contract OwnableRolesTest is Test {
     }
 
     function testHandoverOwnership(address newOwner) public {
-        vm.assume(newOwner != address(this));
-
         vm.prank(newOwner);
         vm.expectEmit(true, true, true, true);
         emit OwnershipHandoverRequested(newOwner);
@@ -262,6 +260,8 @@ contract OwnableRolesTest is Test {
         emit OwnershipTransferred(address(this), newOwner);
 
         mockOwnableRoles.completeOwnershipHandover(newOwner);
+
+        assertEq(mockOwnableRoles.owner(), newOwner);
     }
 
     function testHandoverOwnership() public {
@@ -292,8 +292,6 @@ contract OwnableRolesTest is Test {
     }
 
     function testHandoverOwnershipBeforeExpires(address newOwner) public {
-        vm.assume(newOwner != address(this));
-
         vm.prank(newOwner);
         mockOwnableRoles.requestOwnershipHandover();
 
@@ -303,8 +301,6 @@ contract OwnableRolesTest is Test {
     }
 
     function testHandoverOwnershipAfterExpires(address newOwner) public {
-        vm.assume(newOwner != address(this));
-
         vm.prank(newOwner);
         mockOwnableRoles.requestOwnershipHandover();
 

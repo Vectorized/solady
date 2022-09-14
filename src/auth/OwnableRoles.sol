@@ -196,13 +196,15 @@ abstract contract OwnableRoles {
     /// @dev Request a two-step ownership handover to the caller.
     /// The request will be automatically expire in 48 hours (172800 seconds) by default.
     function requestOwnershipHandover() public virtual {
-        uint256 validFor = ownershipHandoverValidFor();
-        assembly {
-            // Compute and set the handover slot to 1.
-            mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
-            sstore(keccak256(0x00, 0x20), add(timestamp(), validFor))
-            // Emit the {OwnershipHandoverRequested} event.
-            log2(0, 0, _OWNERSHIP_HANDOVER_REQUESTED_EVENT_SIGNATURE, caller())
+        unchecked {
+            uint256 expires = block.timestamp + ownershipHandoverValidFor();
+            assembly {
+                // Compute and set the handover slot to 1.
+                mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
+                sstore(keccak256(0x00, 0x20), expires)
+                // Emit the {OwnershipHandoverRequested} event.
+                log2(0, 0, _OWNERSHIP_HANDOVER_REQUESTED_EVENT_SIGNATURE, caller())
+            }
         }
     }
 
@@ -221,6 +223,8 @@ abstract contract OwnableRoles {
     /// Reverts if there is no existing ownership handover requested by `newOwner`.
     function completeOwnershipHandover(address newOwner) public virtual onlyOwner {
         assembly {
+            // Clean the upper 96 bits.
+            newOwner := shr(96, shl(96, newOwner))
             // Compute and set the handover slot to 0.
             mstore(0x00, or(shl(96, newOwner), _HANDOVER_SLOT_SEED))
             let handoverSlot := keccak256(0x00, 0x20)
@@ -232,7 +236,7 @@ abstract contract OwnableRoles {
             // Set the handover slot to 0.
             sstore(handoverSlot, 0)
             // Emit the {OwnershipTransferred} event.
-            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), shr(96, shl(96, newOwner)))
+            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), newOwner)
             // Store the new value.
             sstore(not(_OWNER_SLOT_NOT), newOwner)
         }
@@ -277,7 +281,7 @@ abstract contract OwnableRoles {
         }
     }
 
-    /// @dev Returns how long a two-step ownership handover is valid for.
+    /// @dev Returns how long a two-step ownership handover is valid for in seconds.
     function ownershipHandoverValidFor() public pure virtual returns (uint64) {
         return 172800;
     }
