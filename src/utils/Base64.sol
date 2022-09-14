@@ -71,6 +71,7 @@ library Base64 {
 
                 switch and(dataLength, 3)
                 case 0 {
+                    // If padded.
                     let lastBytes := mload(add(data, mload(data)))
                     decodedLength := sub(
                         decodedLength,
@@ -78,6 +79,7 @@ library Base64 {
                     )
                 }
                 default {
+                    // If non-padded.
                     decodedLength := add(decodedLength, sub(and(dataLength, 3), 1))
                 }
 
