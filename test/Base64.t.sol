@@ -3,7 +3,6 @@ pragma solidity ^0.8.4;
 
 import "forge-std/Test.sol";
 import {Base64} from "../src/utils/Base64.sol";
-import {LibString} from "../src/utils/LibString.sol";
 
 contract Base64Test is Test {
     function testBase64EncodeEmptyString() public {
