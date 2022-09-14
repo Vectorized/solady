@@ -155,4 +155,8 @@ contract Base64Test is Test {
     function testBase64DecodeAnyLengthDoesNotRevert(string memory input) public {
         assertTrue(Base64.decode(input).length <= bytes(input).length);
     }
+
+    function testBase64DecodeInvalidLengthDoesNotRevert() public {
+        testBase64DecodeAnyLengthDoesNotRevert("TWlsYQ");
+    }
 }
