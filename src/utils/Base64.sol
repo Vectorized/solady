@@ -139,7 +139,7 @@ library Base64 {
                 mstore(0x20, 0x0000000000000000000000f8fcf800fcd0d4d8dce0e4e8ecf0f4000000000000)
                 mstore(0x40, 0x000004080c1014181c2024282c3034383c4044484c5054585c606400000000fc)
                 mstore(0x60, 0x00686c7074787c8084888c9094989ca0a4a8acb0b4b8bcc0c4c8cc0000000000)
-                
+
                 let end := add(data, dataLength)
                 let m := shl(248, 0xfc)
 
