@@ -84,22 +84,19 @@ contract Base64Test is Test {
         );
     }
 
-    function testBase64EncodeDecodeAltModes(
-        bytes memory input,
-        bool stripPadding,
-        bool rfc3501,
-        bool urlSafe
-    ) public {
+    function testBase64EncodeDecodeAltModes(bytes memory input, bool[4] memory randomness) public {
         string memory encoded = Base64.encode(input);
 
-        if (stripPadding || rfc3501) {
+        if (randomness[0]) {
             encoded = LibString.replace(encoded, "=", "");
         }
-
-        if (rfc3501) {
+        if (randomness[1]) {
             encoded = LibString.replace(encoded, "/", ",");
-        } else if (urlSafe) {
+        }
+        if (randomness[2]) {
             encoded = LibString.replace(encoded, "/", "_");
+        }
+        if (randomness[3]) {
             encoded = LibString.replace(encoded, "+", "-");
         }
 
