@@ -109,8 +109,8 @@ library Base64 {
             let dataLength := mload(data)
 
             if dataLength {
-                let decodedLength := mul(shr(2, dataLength), 3)
                 let end := add(data, dataLength)
+                let decodedLength := mul(shr(2, dataLength), 3)
 
                 switch and(dataLength, 3)
                 case 0 {
@@ -134,11 +134,12 @@ library Base64 {
                 let ptr := add(result, 0x20)
 
                 // Load the table into the scratch space.
-                mstore(0x20, 0x0000000000000000000000f8fcf800fcd0d4d8dce0e4e8ecf0f4000000000000)
-                mstore(0x40, 0x000004080c1014181c2024282c3034383c4044484c5054585c606400000000fc)
-                mstore(0x60, 0x00686c7074787c8084888c9094989ca0a4a8acb0b4b8bcc0c4c8cc0000000000)
-
-                let m := shl(248, 0xfc) // Mask for the upper 6 bits.
+                // Constants are optimized for smaller bytecode with zero gas overhead.
+                // `m` also doubles as the mask of the upper 6 bits.
+                let m := 0xfc000000fc00686c7074787c8084888c9094989ca0a4a8acb0b4b8bcc0c4c8cc
+                mstore(0x5b, m)
+                mstore(0x3b, 0x04080c1014181c2024282c3034383c4044484c5054585c6064)
+                mstore(0x1a, 0xf8fcf800fcd0d4d8dce0e4e8ecf0f4)
 
                 // prettier-ignore
                 for {} 1 {} {
