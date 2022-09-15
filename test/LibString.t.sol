@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
-contract LibStringTest is Test {
+contract LibStringTest is TestPlus {
     function testToStringZero() public {
         assertEq(keccak256(bytes(LibString.toString(0))), keccak256(bytes("0")));
     }
@@ -154,5 +154,60 @@ contract LibStringTest is Test {
         // prettier-ignore
         string memory expectedResult = "01234567890123456789012345678901_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_23456789012345678901234567890123456789_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT";
         assertEq(LibString.replace(source, search, replacement), expectedResult);
+    }
+
+    function testStringReplace(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
+        string memory replacement = _generateString(randomness, "0123456790_-+/=|{}<>!");
+        if (bytes(search).length != 0) {
+            string memory source = string(
+                bytes.concat(bytes(filler), bytes(search), bytes(filler), bytes(search), bytes(filler))
+            );
+            string memory expectedResult = string(
+                bytes.concat(bytes(filler), bytes(replacement), bytes(filler), bytes(replacement), bytes(filler))
+            );
+            assertEq(LibString.replace(source, search, replacement), expectedResult);
+        } else {
+            string memory expectedResult = string(
+                bytes.concat(
+                    bytes(replacement),
+                    bytes(" "),
+                    bytes(replacement),
+                    bytes(" "),
+                    bytes(replacement),
+                    bytes(" "),
+                    bytes(replacement)
+                )
+            );
+            assertEq(LibString.replace("   ", search, replacement), expectedResult);
+        }
+    }
+
+    function _generateString(uint256 randomness, string memory byteChoices)
+        internal
+        view
+        returns (string memory result)
+    {
+        assembly {
+            if mload(byteChoices) {
+                mstore(0x00, randomness)
+                mstore(0x20, gas())
+
+                result := mload(0x40)
+                let resultLength := and(keccak256(0x00, 0x40), 0x7f)
+                mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
+                mstore(result, resultLength)
+
+                // prettier-ignore
+                for { let i := 0 } lt(i, resultLength) { i := add(i, 1) } {
+                    mstore(0x20, gas())
+                    mstore8(
+                        add(add(result, 0x20), i), 
+                        mload(add(add(byteChoices, 1), mod(keccak256(0x00, 0x40), mload(byteChoices))))
+                    )
+                }
+            }
+        }
     }
 }
