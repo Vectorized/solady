@@ -108,11 +108,7 @@ contract Base64Test is Test {
         assertEq(input, decoded);
     }
 
-    function testBase64EncodeFileSafeAndNoPadding(
-        bytes memory input,
-        bool fileSafe,
-        bool noPadding
-    ) public {
+    function testBase64EncodeFileSafeAndNoPadding(bytes memory input, bool fileSafe, bool noPadding) public {
         string memory expectedEncoded = Base64.encode(input);
 
         if (fileSafe) {
@@ -122,6 +118,9 @@ contract Base64Test is Test {
         if (noPadding) {
             expectedEncoded = LibString.replace(expectedEncoded, "=", "");
         }
+        
+        _checkFreeMemoryPointer();
+
         assertEq(Base64.encode(input, fileSafe, noPadding), expectedEncoded);
     }
 

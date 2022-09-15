@@ -133,14 +133,16 @@ library Base64 {
                 let ptr := add(result, 0x20)
 
                 // Cache the slot.
-                let m0x80 := mload(0x80)
+                // let m0x80 := mload(0x80)
 
                 // Load the table into the scratch space.
-                mstore(0x40, 0x000000000000000000003e3f3e003f3435363738393a3b3c3d00000000000000)
-                mstore(0x60, 0x000102030405060708090a0b0c0d0e0f10111213141516171819000000003f00)
-                mstore(0x80, 0x1a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233000000000000)
-
+                mstore(0x20, 0x0000000000000000000000f8fcf800fcd0d4d8dce0e4e8ecf0f4000000000000)
+                mstore(0x40, 0x000004080c1014181c2024282c3034383c4044484c5054585c606400000000fc)
+                mstore(0x60, 0x00686c7074787c8084888c9094989ca0a4a8acb0b4b8bcc0c4c8cc0000000000)
+                
                 let end := add(data, dataLength)
+                let m := shl(248, 0xfc)
+
                 // prettier-ignore
                 for {} 1 {} {
                     // Read 4 bytes.
@@ -148,15 +150,16 @@ library Base64 {
                     let input := mload(data)
 
                     // Write 3 bytes.
-                    mstore(ptr, shl(232, or(
-                        or(
-                            shl(18, and(mload(byte(28, input)), 0xFF)),
-                            shl(12, and(mload(byte(29, input)), 0xFF))),
-                        or(
-                            shl( 6, and(mload(byte(30, input)), 0xFF)),
-                                    and(mload(byte(31, input)), 0xFF)
-                        )
-                    )))
+                    mstore(ptr, or(
+                        and(m, mload(byte(28, input))),
+                        shr(6, or(
+                            and(m, mload(byte(29, input))),
+                            shr(6, or(
+                                and(m, mload(byte(30, input))),
+                                shr(6, mload(byte(31, input)))
+                            ))
+                        ))
+                    ))
 
                     ptr := add(ptr, 3)
                     
@@ -171,7 +174,6 @@ library Base64 {
 
                 // Restore the slots.
                 mstore(0x60, 0)
-                mstore(0x80, m0x80)
             }
         }
     }
