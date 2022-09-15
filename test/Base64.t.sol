@@ -89,24 +89,28 @@ contract Base64Test is TestPlus {
         bool[4] memory randomness,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        string memory encoded = Base64.encode(input);
+        for (uint256 i; i < 2; ++i) {
+            string memory encoded = Base64.encode(input);
 
-        if (randomness[0]) {
-            encoded = LibString.replace(encoded, "=", "");
-        }
-        if (randomness[1]) {
-            encoded = LibString.replace(encoded, "/", ",");
-        }
-        if (randomness[2]) {
-            encoded = LibString.replace(encoded, "/", "_");
-        }
-        if (randomness[3]) {
-            encoded = LibString.replace(encoded, "+", "-");
-        }
+            if (randomness[0]) {
+                encoded = LibString.replace(encoded, "=", "");
+            }
+            if (randomness[1]) {
+                encoded = LibString.replace(encoded, "/", ",");
+            }
+            if (randomness[2]) {
+                encoded = LibString.replace(encoded, "/", "_");
+            }
+            if (randomness[3]) {
+                encoded = LibString.replace(encoded, "+", "-");
+            }
 
-        bytes memory decoded = Base64.decode(encoded);
+            bytes memory decoded = Base64.decode(encoded);
 
-        assertEq(input, decoded);
+            assertEq(input, decoded);
+
+            input = abi.encode(encoded);
+        }
     }
 
     function testBase64EncodeFileSafeAndNoPadding(
