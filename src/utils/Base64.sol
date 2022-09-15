@@ -100,7 +100,8 @@ library Base64 {
     /// - Line breaks.
     ///
     /// Note: For performance reasons,
-    /// this function will not revert on invalid `data` inputs.
+    /// this function will NOT revert on invalid `data` inputs.
+    /// Outputs for invalid inputs will simply be undefined behaviour.
     /// It is the user's responsibility to ensure that the `data`
     /// is a valid base64 encoded string.
     function decode(string memory data) internal pure returns (bytes memory result) {
@@ -108,15 +109,15 @@ library Base64 {
             let dataLength := mload(data)
 
             if dataLength {
+                let end := add(data, dataLength)
                 let decodedLength := mul(shr(2, dataLength), 3)
 
                 switch and(dataLength, 3)
                 case 0 {
                     // If padded.
-                    let lastBytes := mload(add(data, mload(data)))
                     decodedLength := sub(
                         decodedLength,
-                        add(eq(and(lastBytes, 0xFF), 0x3d), eq(and(lastBytes, 0xFFFF), 0x3d3d))
+                        add(eq(and(mload(end), 0xFF), 0x3d), eq(and(mload(end), 0xFFFF), 0x3d3d))
                     )
                 }
                 default {
@@ -133,12 +134,12 @@ library Base64 {
                 let ptr := add(result, 0x20)
 
                 // Load the table into the scratch space.
-                mstore(0x20, 0x0000000000000000000000f8fcf800fcd0d4d8dce0e4e8ecf0f4000000000000)
-                mstore(0x40, 0x000004080c1014181c2024282c3034383c4044484c5054585c606400000000fc)
-                mstore(0x60, 0x00686c7074787c8084888c9094989ca0a4a8acb0b4b8bcc0c4c8cc0000000000)
-
-                let end := add(data, dataLength)
-                let m := shl(248, 0xfc)
+                // Constants are optimized for smaller bytecode with zero gas overhead.
+                // `m` also doubles as the mask of the upper 6 bits.
+                let m := 0xfc000000fc00686c7074787c8084888c9094989ca0a4a8acb0b4b8bcc0c4c8cc
+                mstore(0x5b, m)
+                mstore(0x3b, 0x04080c1014181c2024282c3034383c4044484c5054585c6064)
+                mstore(0x1a, 0xf8fcf800fcd0d4d8dce0e4e8ecf0f4)
 
                 // prettier-ignore
                 for {} 1 {} {
@@ -169,7 +170,7 @@ library Base64 {
                 // free memory pointer up the next multiple of 32.
                 mstore(0x40, and(add(add(result, decodedLength), 63), not(31)))
 
-                // Restore the slots.
+                // Restore the zero slot.
                 mstore(0x60, 0)
             }
         }
