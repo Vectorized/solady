@@ -122,6 +122,9 @@ contract Base64Test is Test {
         if (noPadding) {
             expectedEncoded = LibString.replace(expectedEncoded, "=", "");
         }
+
+        _checkFreeMemoryPointer();
+
         assertEq(Base64.encode(input, fileSafe, noPadding), expectedEncoded);
     }
 
