@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import {Base64} from "../src/utils/Base64.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
-contract Base64Test is Test {
+contract Base64Test is TestPlus {
     function testBase64EncodeEmptyString() public {
         _testBase64Encode("", "");
     }
@@ -84,7 +84,11 @@ contract Base64Test is Test {
         );
     }
 
-    function testBase64EncodeDecodeAltModes(bytes memory input, bool[4] memory randomness) public {
+    function testBase64EncodeDecodeAltModes(
+        bytes memory input,
+        bool[4] memory randomness,
+        bytes calldata brutalizeWith
+    ) public brutalizeMemory(brutalizeWith) {
         string memory encoded = Base64.encode(input);
 
         if (randomness[0]) {
@@ -123,7 +127,10 @@ contract Base64Test is Test {
         assertEq(Base64.encode(input, fileSafe, noPadding), expectedEncoded);
     }
 
-    function testBase64DecodeMemorySafety(bytes memory input) public {
+    function testBase64DecodeMemorySafety(bytes memory input, bytes calldata brutalizeWith)
+        public
+        brutalizeMemory(brutalizeWith)
+    {
         bytes memory decoded = bytes(Base64.decode(string(input)));
         bytes32 hashBefore = keccak256(decoded);
 
