@@ -12,6 +12,12 @@ library LibString {
     error HexLengthInsufficient();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    uint256 internal constant NOT_FOUND = 2**256 - 1;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     DECIMAL OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -274,6 +280,59 @@ library LibString {
             mstore(0x40, add(result, and(add(k, 0x40), not(0x1f))))
             result := sub(result, 0x20)
             mstore(result, k)
+        }
+    }
+
+    function indexOf(
+        string memory subject,
+        string memory search,
+        uint256 from
+    ) internal pure returns (uint256 result) {
+        assembly {
+            // prettier-ignore
+            for { let subjectLength := mload(subject) } 1 {} {
+                if iszero(mload(search)) {
+                    result := xor(from, mul(xor(from, subjectLength), lt(subjectLength, from)))
+                    break
+                }
+                let searchLength := mload(search)
+
+                subject := add(subject, 0x20)    
+                result := not(0)
+
+                let subjectPtr := add(subject, from)
+                let subjectSearchEnd := add(sub(add(subject, subjectLength), searchLength), 1)
+
+                let m := shl(3, sub(32, and(searchLength, 31)))
+                let s := mload(add(search, 0x20))
+
+                if iszero(lt(searchLength, 32)) {
+                    // prettier-ignore
+                    for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
+                        if iszero(shr(m, xor(mload(subjectPtr), s))) {
+                            if eq(keccak256(subjectPtr, searchLength), h) {
+                                result := sub(subjectPtr, subject)
+                                break
+                            }
+                        }
+                        subjectPtr := add(subjectPtr, 1)
+                        // prettier-ignore
+                        if iszero(lt(subjectPtr, subjectSearchEnd)) { break }
+                    }
+                    break
+                }
+                // prettier-ignore
+                for {} 1 {} {
+                    if iszero(shr(m, xor(mload(subjectPtr), s))) {
+                        result := sub(subjectPtr, subject)
+                        break
+                    }
+                    subjectPtr := add(subjectPtr, 1)
+                    // prettier-ignore
+                    if iszero(lt(subjectPtr, subjectSearchEnd)) { break }
+                }
+                break
+            }
         }
     }
 }

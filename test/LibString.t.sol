@@ -138,22 +138,22 @@ contract LibStringTest is TestPlus {
 
     function testStringReplaceMedium() public {
         // prettier-ignore
-        string memory source = "70708741044725766535585242414884609539555049888764130733849700923779599488691391677696419266840";
+        string memory subject = "70708741044725766535585242414884609539555049888764130733849700923779599488691391677696419266840";
         string memory search = "46095395550498887641307338497009";
         string memory replacement = "320807383223517906783031356692334377159141";
         // prettier-ignore
         string memory expectedResult = "707087410447257665355852424148832080738322351790678303135669233437715914123779599488691391677696419266840";
-        assertEq(LibString.replace(source, search, replacement), expectedResult);
+        assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
 
     function testStringReplaceLong() public {
         // prettier-ignore
-        string memory source = "01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search";
+        string memory subject = "01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search";
         string memory search = "search_search_search_search_search_search";
         string memory replacement = "REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT";
         // prettier-ignore
         string memory expectedResult = "01234567890123456789012345678901_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_23456789012345678901234567890123456789_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT";
-        assertEq(LibString.replace(source, search, replacement), expectedResult);
+        assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
 
     function testStringReplace(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
@@ -161,13 +161,13 @@ contract LibStringTest is TestPlus {
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
         string memory replacement = _generateString(randomness, "0123456790_-+/=|{}<>!");
         if (bytes(search).length != 0) {
-            string memory source = string(
+            string memory subject = string(
                 bytes.concat(bytes(filler), bytes(search), bytes(filler), bytes(search), bytes(filler))
             );
             string memory expectedResult = string(
                 bytes.concat(bytes(filler), bytes(replacement), bytes(filler), bytes(replacement), bytes(filler))
             );
-            assertEq(LibString.replace(source, search, replacement), expectedResult);
+            assertEq(LibString.replace(subject, search, replacement), expectedResult);
         } else {
             string memory expectedResult = string(
                 bytes.concat(
@@ -182,6 +182,38 @@ contract LibStringTest is TestPlus {
             );
             assertEq(LibString.replace("   ", search, replacement), expectedResult);
         }
+    }
+
+    function testIndexOf(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
+
+        string memory subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
+
+        if (bytes(search).length == 0) {
+            assertEq(LibString.indexOf(subject, search, 0), 0);
+        } else {
+            assertEq(LibString.indexOf(subject, search, 0), bytes(filler0).length);
+        }
+    }
+
+    function testIndexOf() public {
+        string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        assertEq(LibString.indexOf(subject, "", 0), 0);
+        assertEq(LibString.indexOf(subject, "", 16), 16);
+        assertEq(LibString.indexOf(subject, "", 17), 17);
+        assertEq(LibString.indexOf(subject, "", 52), 52);
+        assertEq(LibString.indexOf(subject, "", 53), 52);
+        assertEq(LibString.indexOf(subject, "", 555), 52);
+        assertEq(LibString.indexOf(subject, "abc", 0), 0);
+        assertEq(LibString.indexOf(subject, "abc", 1), LibString.NOT_FOUND);
+        assertEq(LibString.indexOf(subject, "bcd", 0), 1);
+        assertEq(LibString.indexOf(subject, "XYZ", 0), 49);
+        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW", 0), 16);
+        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 0), 16);
+        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 16), 16);
+        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 17), LibString.NOT_FOUND);
     }
 
     function _generateString(uint256 randomness, string memory byteChoices)
