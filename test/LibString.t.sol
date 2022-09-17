@@ -191,10 +191,24 @@ contract LibStringTest is TestPlus {
 
         string memory subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
 
+        uint256 from;
+        assembly {
+            mstore(0x00, xor(randomness, gas()))
+            from := mod(keccak256(0x00, 0x20), add(mload(subject), 10))
+        }
+
         if (bytes(search).length == 0) {
-            assertEq(LibString.indexOf(subject, search, 0), 0);
+            if (from > bytes(subject).length) {
+                assertEq(LibString.indexOf(subject, search, from), bytes(subject).length);
+            } else {
+                assertEq(LibString.indexOf(subject, search, from), from);
+            }
         } else {
-            assertEq(LibString.indexOf(subject, search, 0), bytes(filler0).length);
+            if (from > bytes(filler0).length) {
+                assertEq(LibString.indexOf(subject, search, from), LibString.NOT_FOUND);
+            } else {
+                assertEq(LibString.indexOf(subject, search, from), bytes(filler0).length);
+            }
         }
     }
 

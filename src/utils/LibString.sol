@@ -247,15 +247,12 @@ library LibString {
                             if iszero(lt(o, replacementLength)) { break }
                         }
                         result := add(result, replacementLength)
-                        subject := add(subject, searchLength)    
-                        if iszero(searchLength) {
-                            mstore(result, t)
-                            result := add(result, 1)
-                            subject := add(subject, 1)
+                        subject := add(subject, searchLength)
+                        if searchLength {
+                            // prettier-ignore
+                            if iszero(lt(subject, subjectSearchEnd)) { break }
+                            continue
                         }
-                        // prettier-ignore
-                        if iszero(lt(subject, subjectSearchEnd)) { break }
-                        continue
                     }
                     mstore(result, t)
                     result := add(result, 1)
@@ -334,5 +331,9 @@ library LibString {
                 break
             }
         }
+    }
+
+    function indexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
+        result = indexOf(subject, search, 0);
     }
 }
