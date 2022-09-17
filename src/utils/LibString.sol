@@ -294,11 +294,11 @@ library LibString {
                 }
                 let searchLength := mload(search)
 
-                subject := add(subject, 0x20)    
+                let subjectStart := add(subject, 0x20)    
                 result := not(0)
 
-                let subjectPtr := add(subject, from)
-                let subjectSearchEnd := add(sub(add(subject, subjectLength), searchLength), 1)
+                subject := add(subjectStart, from)
+                let subjectSearchEnd := add(sub(add(subjectStart, subjectLength), searchLength), 1)
 
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(add(search, 0x20))
@@ -306,27 +306,27 @@ library LibString {
                 if iszero(lt(searchLength, 32)) {
                     // prettier-ignore
                     for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
-                        if iszero(shr(m, xor(mload(subjectPtr), s))) {
-                            if eq(keccak256(subjectPtr, searchLength), h) {
-                                result := sub(subjectPtr, subject)
+                        if iszero(shr(m, xor(mload(subject), s))) {
+                            if eq(keccak256(subject, searchLength), h) {
+                                result := sub(subject, subjectStart)
                                 break
                             }
                         }
-                        subjectPtr := add(subjectPtr, 1)
+                        subject := add(subject, 1)
                         // prettier-ignore
-                        if iszero(lt(subjectPtr, subjectSearchEnd)) { break }
+                        if iszero(lt(subject, subjectSearchEnd)) { break }
                     }
                     break
                 }
                 // prettier-ignore
                 for {} 1 {} {
-                    if iszero(shr(m, xor(mload(subjectPtr), s))) {
-                        result := sub(subjectPtr, subject)
+                    if iszero(shr(m, xor(mload(subject), s))) {
+                        result := sub(subject, subjectStart)
                         break
                     }
-                    subjectPtr := add(subjectPtr, 1)
+                    subject := add(subject, 1)
                     // prettier-ignore
-                    if iszero(lt(subjectPtr, subjectSearchEnd)) { break }
+                    if iszero(lt(subject, subjectSearchEnd)) { break }
                 }
                 break
             }
