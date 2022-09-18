@@ -191,21 +191,7 @@ contract LibStringTest is TestPlus {
 
         string memory subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
 
-        uint256 from;
-        assembly {
-            mstore(0x00, xor(randomness, gas()))
-            let r := keccak256(0x00, 0x20)
-            switch and(r, 7)
-            case 0 {
-                // Ensure that the function tested does not revert for
-                // all ranges of `from`.
-                mstore(0x00, r)
-                from := shl(and(r, 255), keccak256(0x00, 0x20))
-            }
-            default {
-                from := mod(r, add(mload(subject), 10))
-            }
-        }
+        uint256 from = _generateFrom(randomness, subject);
 
         if (bytes(search).length == 0) {
             if (from > bytes(subject).length) {
@@ -252,21 +238,7 @@ contract LibStringTest is TestPlus {
 
         string memory subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
 
-        uint256 from;
-        assembly {
-            mstore(0x00, xor(randomness, gas()))
-            let r := keccak256(0x00, 0x20)
-            switch and(r, 7)
-            case 0 {
-                // Ensure that the function tested does not revert for
-                // all ranges of `from`.
-                mstore(0x00, r)
-                from := shl(and(r, 255), keccak256(0x00, 0x20))
-            }
-            default {
-                from := mod(r, add(mload(subject), 10))
-            }
-        }
+        uint256 from = _generateFrom(randomness, subject);
 
         if (bytes(search).length == 0) {
             if (from > bytes(subject).length) {
@@ -310,6 +282,23 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.lastIndexOf("a", "bcd", 0), LibString.NOT_FOUND);
         assertEq(LibString.lastIndexOf("accd", "bcd"), LibString.NOT_FOUND);
         assertEq(LibString.lastIndexOf("", "bcd"), LibString.NOT_FOUND);
+    }
+
+    function _generateFrom(uint256 randomness, string memory subject) internal view returns (uint256 from) {
+        assembly {
+            mstore(0x00, xor(randomness, gas()))
+            let r := keccak256(0x00, 0x20)
+            switch and(r, 7)
+            case 0 {
+                // Ensure that the function tested does not revert for
+                // all ranges of `from`.
+                mstore(0x00, r)
+                from := shl(and(r, 255), keccak256(0x00, 0x20))
+            }
+            default {
+                from := mod(r, add(mload(subject), 10))
+            }
+        }
     }
 
     function _generateString(uint256 randomness, string memory byteChoices)
