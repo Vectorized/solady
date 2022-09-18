@@ -225,6 +225,9 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 16), 16);
         assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 17), LibString.NOT_FOUND);
 
+        assertEq(LibString.indexOf("abcabcabc", "abc"), 0);
+        assertEq(LibString.indexOf("abcabcabc", "abc", 1), 3);
+
         assertEq(LibString.indexOf("a", "bcd"), LibString.NOT_FOUND);
         assertEq(LibString.indexOf("a", "bcd", 0), LibString.NOT_FOUND);
         assertEq(LibString.indexOf("accd", "bcd"), LibString.NOT_FOUND);
@@ -277,6 +280,9 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 51), 16);
         assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 16), 16);
         assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 15), LibString.NOT_FOUND);
+
+        assertEq(LibString.lastIndexOf("abcabcabc", "abc"), 6);
+        assertEq(LibString.lastIndexOf("abcabcabc", "abc", 5), 3);
 
         assertEq(LibString.lastIndexOf("a", "bcd"), LibString.NOT_FOUND);
         assertEq(LibString.lastIndexOf("a", "bcd", 0), LibString.NOT_FOUND);
