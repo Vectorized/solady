@@ -272,9 +272,11 @@ library LibString {
                 resultRemainder := add(resultRemainder, 0x20)
                 subject := add(subject, 0x20)
             }
+            // Zeroize the slot after the string.
+            mstore(resultRemainder, 0)
             // Allocate memory for the length and the bytes,
             // rounded up to a multiple of 32.
-            mstore(0x40, add(result, and(add(k, 0x40), not(0x1f))))
+            mstore(0x40, add(result, and(add(k, 63), not(31))))
             result := sub(result, 0x20)
             mstore(result, k)
         }
@@ -410,6 +412,40 @@ library LibString {
                     keccak256(add(search, 0x20), searchLength)
                 )
             )
+        }
+    }
+
+    function repeat(string memory subject, uint256 times) internal pure returns (string memory result) {
+        assembly {
+            let subjectLength := mload(subject)
+            if iszero(or(iszero(times), iszero(subjectLength))) {
+                subject := add(subject, 0x20)
+                result := mload(0x40)
+                let output := add(result, 0x20)
+                // prettier-ignore
+                for {} 1 {} {
+                    // Copy the `subject` one word at a time.
+                    // prettier-ignore
+                    for { let o := 0 } 1 {} {
+                        mstore(add(output, o), mload(add(subject, o)))
+                        o := add(o, 0x20)
+                        // prettier-ignore
+                        if iszero(lt(o, subjectLength)) { break }
+                    }
+                    output := add(output, subjectLength)
+                    times := sub(times, 1)
+                    // prettier-ignore
+                    if iszero(times) { break }
+                }
+                // Zeroize the slot after the string.
+                mstore(output, 0)
+                // Store the length.
+                let resultLength := sub(output, add(result, 0x20))
+                mstore(result, resultLength)
+                // Allocate memory for the length and the bytes,
+                // rounded up to a multiple of 32.
+                mstore(0x40, add(result, and(add(resultLength, 63), not(31))))
+            }
         }
     }
 }

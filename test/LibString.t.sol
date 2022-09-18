@@ -164,10 +164,23 @@ contract LibStringTest is TestPlus {
             string memory subject = string(
                 bytes.concat(bytes(filler), bytes(search), bytes(filler), bytes(search), bytes(filler))
             );
+            assembly {
+                // Brutalize start of free memory.
+                mstore(mload(0x40), keccak256(0x00, 0x60))
+            }
             string memory expectedResult = string(
                 bytes.concat(bytes(filler), bytes(replacement), bytes(filler), bytes(replacement), bytes(filler))
             );
-            assertEq(LibString.replace(subject, search, replacement), expectedResult);
+            assembly {
+                // Brutalize start of free memory.
+                mstore(mload(0x40), keccak256(0x00, 0x60))
+            }
+            string memory replaced = LibString.replace(subject, search, replacement);
+            assembly {
+                // Brutalize start of free memory.
+                mstore(mload(0x40), keccak256(0x00, 0x60))
+            }
+            assertEq(replaced, expectedResult);
         } else {
             string memory expectedResult = string(
                 bytes.concat(
@@ -184,7 +197,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testIndexOf(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+    function testStringIndexOf(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
@@ -208,7 +221,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testIndexOf() public {
+    function testStringIndexOf() public {
         string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         assertEq(LibString.indexOf(subject, ""), 0);
         assertEq(LibString.indexOf(subject, "", 16), 16);
@@ -234,7 +247,10 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.indexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
-    function testLastIndexOf(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+    function testStringLastIndexOf(uint256 randomness, bytes calldata brutalizeWith)
+        public
+        brutalizeMemory(brutalizeWith)
+    {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
@@ -258,7 +274,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testLastIndexOf() public {
+    function testStringLastIndexOf() public {
         string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         assertEq(LibString.lastIndexOf(subject, "", 0), 0);
         assertEq(LibString.lastIndexOf(subject, "", 16), 16);
@@ -290,7 +306,10 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.lastIndexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
-    function testStartsWith(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+    function testStringStartsWith(uint256 randomness, bytes calldata brutalizeWith)
+        public
+        brutalizeMemory(brutalizeWith)
+    {
         string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
 
@@ -310,7 +329,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStartsWith() public {
+    function testStringStartsWith() public {
         string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         assertEq(LibString.startsWith(subject, "abc"), true);
         assertEq(LibString.startsWith(subject, "abcdefghijklmnopqrstuvwxyzABCDEFG"), true);
@@ -324,7 +343,10 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.startsWith("", "abc"), false);
     }
 
-    function testEndsWith(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+    function testStringEndsWith(uint256 randomness, bytes calldata brutalizeWith)
+        public
+        brutalizeMemory(brutalizeWith)
+    {
         string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
 
@@ -344,7 +366,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testEndsWith() public {
+    function testStringEndsWith() public {
         string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         assertEq(LibString.endsWith(subject, "XYZ"), true);
         assertEq(LibString.endsWith(subject, "pqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), true);
@@ -356,6 +378,49 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.endsWith("bc", "bc"), true);
         assertEq(LibString.endsWith("bc", "abc"), false);
         assertEq(LibString.endsWith("", "abc"), false);
+    }
+
+    function testStringRepeat(
+        string memory subject,
+        uint256 times,
+        bytes calldata brutalizeWith
+    ) public brutalizeMemory(brutalizeWith) {
+        times = times % 8;
+        string memory repeated = LibString.repeat(subject, times);
+        assembly {
+            // Brutalize start of free memory.
+            mstore(mload(0x40), keccak256(0x00, 0x60))
+        }
+        string memory expectedResult = _repeatOriginal(subject, times);
+        assembly {
+            // Brutalize start of free memory.
+            mstore(mload(0x40), keccak256(0x00, 0x60))
+        }
+        assertEq(repeated, expectedResult);
+    }
+
+    function testStringRepeat() public {
+        assertEq(LibString.repeat("", 0), "");
+        assertEq(LibString.repeat("", 100), "");
+        assertEq(LibString.repeat("a", 0), "");
+        assertEq(LibString.repeat("a", 1), "a");
+        assertEq(LibString.repeat("a", 3), "aaa");
+        assertEq(LibString.repeat("abc", 0), "");
+        assertEq(LibString.repeat("abc", 1), "abc");
+        assertEq(LibString.repeat("abc", 3), "abcabcabc");
+        assertEq(LibString.repeat("efghi", 3), "efghiefghiefghi");
+    }
+
+    function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
+        unchecked {
+            string memory result;
+            if (times == 0 || bytes(subject).length == 0) return result;
+
+            for (uint256 i; i < times; ++i) {
+                result = string(bytes.concat(bytes(result), bytes(subject)));
+            }
+            return result;
+        }
     }
 
     function _generateFrom(uint256 randomness, string memory subject) internal view returns (uint256 from) {
