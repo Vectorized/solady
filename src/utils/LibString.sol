@@ -15,7 +15,7 @@ library LibString {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    uint256 internal constant NOT_FOUND = 2**256 - 1;
+    uint256 internal constant NOT_FOUND = uint256(int256(-1));
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     DECIMAL OPERATIONS                     */
@@ -303,6 +303,9 @@ library LibString {
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(add(search, 0x20))
 
+                // prettier-ignore
+                if iszero(lt(subject, subjectSearchEnd)) { break }
+
                 if iszero(lt(searchLength, 32)) {
                     // prettier-ignore
                     for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
@@ -335,5 +338,48 @@ library LibString {
 
     function indexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
         result = indexOf(subject, search, 0);
+    }
+
+    function lastIndexOf(
+        string memory subject,
+        string memory search,
+        uint256 from
+    ) internal pure returns (uint256 result) {
+        assembly {
+            // prettier-ignore
+            for {} 1 {} {
+                let searchLength := mload(search)
+                let fromMax := sub(mload(subject), searchLength)
+                from := xor(from, mul(xor(from, fromMax), lt(fromMax, from)))
+                if iszero(mload(search)) {
+                    result := from
+                    break
+                }
+                result := not(0)
+                let subjectStart := add(subject, 0x20)    
+                let subjectSearchEnd := sub(subjectStart, 1)
+
+                subject := add(subjectStart, from)
+                // prettier-ignore
+                if iszero(gt(subject, subjectSearchEnd)) { break }
+                // As this function is not too often used,
+                // we shall simply use keccak256 for smaller bytecode size.
+                // prettier-ignore
+                for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
+                    if eq(keccak256(subject, searchLength), h) {
+                        result := sub(subject, subjectStart)
+                        break
+                    }
+                    subject := sub(subject, 1)
+                    // prettier-ignore
+                    if iszero(gt(subject, subjectSearchEnd)) { break }
+                }
+                break
+            }
+        }
+    }
+
+    function lastIndexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
+        result = lastIndexOf(subject, search, uint256(int256(-1)));
     }
 }

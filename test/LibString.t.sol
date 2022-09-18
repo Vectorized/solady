@@ -214,7 +214,7 @@ contract LibStringTest is TestPlus {
 
     function testIndexOf() public {
         string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        assertEq(LibString.indexOf(subject, "", 0), 0);
+        assertEq(LibString.indexOf(subject, ""), 0);
         assertEq(LibString.indexOf(subject, "", 16), 16);
         assertEq(LibString.indexOf(subject, "", 17), 17);
         assertEq(LibString.indexOf(subject, "", 52), 52);
@@ -222,12 +222,74 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.indexOf(subject, "", 555), 52);
         assertEq(LibString.indexOf(subject, "abc", 0), 0);
         assertEq(LibString.indexOf(subject, "abc", 1), LibString.NOT_FOUND);
-        assertEq(LibString.indexOf(subject, "bcd", 0), 1);
-        assertEq(LibString.indexOf(subject, "XYZ", 0), 49);
-        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW", 0), 16);
-        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 0), 16);
+        assertEq(LibString.indexOf(subject, "bcd"), 1);
+        assertEq(LibString.indexOf(subject, "XYZ"), 49);
+        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW"), 16);
+        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 16);
         assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 16), 16);
         assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 17), LibString.NOT_FOUND);
+
+        assertEq(LibString.indexOf("a", "bcd"), LibString.NOT_FOUND);
+        assertEq(LibString.indexOf("a", "bcd", 0), LibString.NOT_FOUND);
+        assertEq(LibString.indexOf("accd", "bcd"), LibString.NOT_FOUND);
+        assertEq(LibString.indexOf("", "bcd"), LibString.NOT_FOUND);
+    }
+
+    function testLastIndexOf(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
+
+        string memory subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
+
+        uint256 from;
+        assembly {
+            mstore(0x00, xor(randomness, gas()))
+            from := mod(keccak256(0x00, 0x20), add(mload(subject), 10))
+        }
+
+        if (bytes(search).length == 0) {
+            if (from > bytes(subject).length) {
+                assertEq(LibString.lastIndexOf(subject, search, from), bytes(subject).length);
+            } else {
+                assertEq(LibString.lastIndexOf(subject, search, from), from);
+            }
+        } else {
+            if (from < bytes(filler0).length) {
+                assertEq(LibString.lastIndexOf(subject, search, from), LibString.NOT_FOUND);
+            } else {
+                assertEq(LibString.lastIndexOf(subject, search, from), bytes(filler0).length);
+            }
+        }
+    }
+
+    function testLastIndexOf() public {
+        string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        assertEq(LibString.lastIndexOf(subject, "", 0), 0);
+        assertEq(LibString.lastIndexOf(subject, "", 16), 16);
+        assertEq(LibString.lastIndexOf(subject, "", 17), 17);
+        assertEq(LibString.lastIndexOf(subject, "", 52), 52);
+        assertEq(LibString.lastIndexOf(subject, "", 53), 52);
+        assertEq(LibString.lastIndexOf(subject, "", 555), 52);
+        assertEq(LibString.lastIndexOf(subject, "abc"), 0);
+        assertEq(LibString.lastIndexOf(subject, "abc", 0), 0);
+        assertEq(LibString.lastIndexOf(subject, "abc", 1), 0);
+        assertEq(LibString.lastIndexOf(subject, "abc", 3), 0);
+        assertEq(LibString.lastIndexOf(subject, "bcd"), 1);
+        assertEq(LibString.lastIndexOf(subject, "bcd", 1), 1);
+        assertEq(LibString.lastIndexOf(subject, "bcd", 0), LibString.NOT_FOUND);
+        assertEq(LibString.lastIndexOf(subject, "XYZ"), 49);
+        assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW"), 16);
+        assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 16);
+        assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 52), 16);
+        assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 51), 16);
+        assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 16), 16);
+        assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 15), LibString.NOT_FOUND);
+
+        assertEq(LibString.lastIndexOf("a", "bcd"), LibString.NOT_FOUND);
+        assertEq(LibString.lastIndexOf("a", "bcd", 0), LibString.NOT_FOUND);
+        assertEq(LibString.lastIndexOf("accd", "bcd"), LibString.NOT_FOUND);
+        assertEq(LibString.lastIndexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
     function _generateString(uint256 randomness, string memory byteChoices)
