@@ -9,18 +9,21 @@ library LibString {
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev The `length` of the output is too small to contain all the hex digits.
     error HexLengthInsufficient();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev The constant returned when the `search` is not found in the string.
     uint256 internal constant NOT_FOUND = uint256(int256(-1));
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     DECIMAL OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns the base 10 decimal representation of `value`.
     function toString(uint256 value) internal pure returns (string memory str) {
         assembly {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
@@ -64,6 +67,11 @@ library LibString {
     /*                   HEXADECIMAL OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns the hexadecimal representation of `value`,
+    /// left-padded to an input length of `length` bytes.
+    /// The output is prefixed with "0x" encoded using 2 hexadecimal digits per byte,
+    /// giving a total length of `length * 2 + 2` bytes.
+    /// Reverts if `length` is too small for the output to contain all the digits.
     function toHexString(uint256 value, uint256 length) internal pure returns (string memory str) {
         assembly {
             let start := mload(0x40)
@@ -116,6 +124,10 @@ library LibString {
         }
     }
 
+    /// @dev Returns the hexadecimal representation of `value`.
+    /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
+    /// As address are 20 bytes long, the output will left-padded to have
+    /// a length of `20 * 2 + 2` bytes.
     function toHexString(uint256 value) internal pure returns (string memory str) {
         assembly {
             let start := mload(0x40)
@@ -158,6 +170,8 @@ library LibString {
         }
     }
 
+    /// @dev Returns the hexadecimal representation of `value`.
+    /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
     function toHexString(address value) internal pure returns (string memory str) {
         assembly {
             let start := mload(0x40)
@@ -198,6 +212,7 @@ library LibString {
     /*                   OTHER STRING OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns `subject` all occurances of `search` replaced with `replacement`.
     function replace(
         string memory subject,
         string memory search,
@@ -282,6 +297,9 @@ library LibString {
         }
     }
 
+    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// searching from left to right, starting from `from`.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function indexOf(
         string memory subject,
         string memory search,
@@ -338,10 +356,16 @@ library LibString {
         }
     }
 
+    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// searching from left to right.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function indexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
         result = indexOf(subject, search, 0);
     }
 
+    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// searching from right to left, starting from `from`.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function lastIndexOf(
         string memory subject,
         string memory search,
@@ -381,10 +405,14 @@ library LibString {
         }
     }
 
+    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// searching from right to left.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function lastIndexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
         result = lastIndexOf(subject, search, uint256(int256(-1)));
     }
 
+    /// @dev Returns whether `subject` starts with `search`.
     function startsWith(string memory subject, string memory search) internal pure returns (bool result) {
         assembly {
             let searchLength := mload(search)
@@ -396,6 +424,7 @@ library LibString {
         }
     }
 
+    /// @dev Returns whether `subject` ends with `search`.
     function endsWith(string memory subject, string memory search) internal pure returns (bool result) {
         assembly {
             let searchLength := mload(search)
@@ -415,6 +444,7 @@ library LibString {
         }
     }
 
+    /// @dev Returns `subject` repeated `times`.
     function repeat(string memory subject, uint256 times) internal pure returns (string memory result) {
         assembly {
             let subjectLength := mload(subject)
@@ -447,5 +477,43 @@ library LibString {
                 mstore(0x40, add(result, and(add(resultLength, 63), not(31))))
             }
         }
+    }
+
+    /// @dev Returns a copy of `subject` sliced from `start` to `end` (exclusive).
+    function slice(
+        string memory subject,
+        uint256 start,
+        uint256 end
+    ) internal pure returns (string memory result) {
+        assembly {
+            let subjectLength := mload(subject)
+            end := xor(end, mul(xor(end, subjectLength), lt(subjectLength, end)))
+            start := xor(start, mul(xor(start, subjectLength), lt(subjectLength, start)))
+            if lt(start, end) {
+                result := mload(0x40)
+                let resultLength := sub(end, start)
+                mstore(result, resultLength)
+                let output := add(result, 0x20)
+                subject := add(add(subject, 0x20), start)
+                // Copy the `subject` one word at a time.
+                // prettier-ignore
+                for { let o := 0 } 1 {} {
+                    mstore(add(output, o), mload(add(subject, o)))
+                    o := add(o, 0x20)
+                    // prettier-ignore
+                    if iszero(lt(o, resultLength)) { break }
+                }
+                // Zeroize the slot after the string.
+                mstore(add(output, resultLength), 0)
+                // Allocate memory for the length and the bytes,
+                // rounded up to a multiple of 32.
+                mstore(0x40, add(result, and(add(resultLength, 63), not(31))))
+            }
+        }
+    }
+
+    /// @dev Returns a copy of `subject` sliced from `start` to the end of the string.
+    function slice(string memory subject, uint256 start) internal pure returns (string memory result) {
+        result = slice(subject, start, uint256(int256(-1)));
     }
 }

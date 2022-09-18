@@ -411,6 +411,55 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.repeat("efghi", 3), "efghiefghiefghi");
     }
 
+    function testStringRepeatOriginal() public {
+        assertEq(_repeatOriginal("", 0), "");
+        assertEq(_repeatOriginal("", 100), "");
+        assertEq(_repeatOriginal("a", 0), "");
+        assertEq(_repeatOriginal("a", 1), "a");
+        assertEq(_repeatOriginal("a", 3), "aaa");
+        assertEq(_repeatOriginal("abc", 0), "");
+        assertEq(_repeatOriginal("abc", 1), "abc");
+        assertEq(_repeatOriginal("abc", 3), "abcabcabc");
+        assertEq(_repeatOriginal("efghi", 3), "efghiefghiefghi");
+    }
+
+    function testStringSlice(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory slice = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
+        string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+        string memory subject = string(bytes.concat(bytes(filler0), bytes(slice), bytes(filler1)));
+
+        uint256 start = bytes(filler0).length;
+        uint256 end = start + bytes(slice).length;
+        assertEq(LibString.slice(subject, start, end), slice);
+    }
+
+    function testStringSlice() public {
+        assertEq(LibString.slice("", 0, 1), "");
+        assertEq(LibString.slice("", 1, 0), "");
+        assertEq(LibString.slice("", 0, 0), "");
+        assertEq(LibString.slice("", 0), "");
+        assertEq(LibString.slice("", 1), "");
+
+        assertEq(LibString.slice("a", 0), "a");
+        assertEq(LibString.slice("a", 1), "");
+        assertEq(LibString.slice("a", 3), "");
+
+        assertEq(LibString.slice("abc", 0), "abc");
+        assertEq(LibString.slice("abc", 1), "bc");
+        assertEq(LibString.slice("abc", 1, 2), "b");
+        assertEq(LibString.slice("abc", 3), "");
+
+        string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        assertEq(LibString.slice(subject, 0), subject);
+        assertEq(LibString.slice(subject, 1), "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        assertEq(LibString.slice(subject, 1, 51), "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY");
+        assertEq(LibString.slice(subject, 11, 41), "lmnopqrstuvwxyzABCDEFGHIJKLMNO");
+        assertEq(LibString.slice(subject, 21, 31), "vwxyzABCDE");
+        assertEq(LibString.slice(subject, 31, 21), "");
+    }
+
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
         unchecked {
             string memory result;
