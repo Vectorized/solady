@@ -194,7 +194,17 @@ contract LibStringTest is TestPlus {
         uint256 from;
         assembly {
             mstore(0x00, xor(randomness, gas()))
-            from := mod(keccak256(0x00, 0x20), add(mload(subject), 10))
+            let r := keccak256(0x00, 0x20)
+            switch and(r, 7)
+            case 0 {
+                // Ensure that the function tested does not revert for
+                // all ranges of `from`.
+                mstore(0x00, r)
+                from := shl(and(r, 255), keccak256(0x00, 0x20))
+            }
+            default {
+                from := mod(r, add(mload(subject), 10))
+            }
         }
 
         if (bytes(search).length == 0) {
@@ -245,7 +255,17 @@ contract LibStringTest is TestPlus {
         uint256 from;
         assembly {
             mstore(0x00, xor(randomness, gas()))
-            from := mod(keccak256(0x00, 0x20), add(mload(subject), 10))
+            let r := keccak256(0x00, 0x20)
+            switch and(r, 7)
+            case 0 {
+                // Ensure that the function tested does not revert for
+                // all ranges of `from`.
+                mstore(0x00, r)
+                from := shl(and(r, 255), keccak256(0x00, 0x20))
+            }
+            default {
+                from := mod(r, add(mload(subject), 10))
+            }
         }
 
         if (bytes(search).length == 0) {
