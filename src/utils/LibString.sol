@@ -356,10 +356,10 @@ library LibString {
                     break
                 }
                 result := not(0)
-                let subjectStart := add(subject, 0x20)    
-                let subjectSearchEnd := sub(subjectStart, 1)
 
-                subject := add(subjectStart, from)
+                let subjectSearchEnd := sub(add(subject, 0x20), 1)
+
+                subject := add(add(subject, 0x20), from)
                 // prettier-ignore
                 if iszero(gt(subject, subjectSearchEnd)) { break }
                 // As this function is not too often used,
@@ -367,7 +367,7 @@ library LibString {
                 // prettier-ignore
                 for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
                     if eq(keccak256(subject, searchLength), h) {
-                        result := sub(subject, subjectStart)
+                        result := sub(subject, add(subjectSearchEnd, 1))
                         break
                     }
                     subject := sub(subject, 1)
