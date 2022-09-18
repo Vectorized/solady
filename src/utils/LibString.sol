@@ -385,10 +385,30 @@ library LibString {
 
     function startsWith(string memory subject, string memory search) internal pure returns (bool result) {
         assembly {
-            // Just using `keccak256` directly is actually cheaper than the mask trick.
+            let searchLength := mload(search)
+            // Just using keccak256 directly is actually cheaper.
             result := and(
-                iszero(gt(mload(search), mload(subject))),
-                eq(keccak256(add(subject, 0x20), mload(search)), keccak256(add(search, 0x20), mload(search)))
+                iszero(gt(searchLength, mload(subject))),
+                eq(keccak256(add(subject, 0x20), searchLength), keccak256(add(search, 0x20), searchLength))
+            )
+        }
+    }
+
+    function endsWith(string memory subject, string memory search) internal pure returns (bool result) {
+        assembly {
+            let searchLength := mload(search)
+            let subjectLength := mload(subject)
+            let withinRange := iszero(gt(searchLength, subjectLength))
+            // Just using keccak256 directly is actually cheaper.
+            result := and(
+                withinRange,
+                eq(
+                    keccak256(
+                        add(add(subject, 0x20), mul(withinRange, sub(subjectLength, searchLength))),
+                        searchLength
+                    ),
+                    keccak256(add(search, 0x20), searchLength)
+                )
             )
         }
     }

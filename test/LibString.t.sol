@@ -317,8 +317,45 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.startsWith(subject, "bcd"), false);
         assertEq(LibString.startsWith(subject, "bcdefghijklmnopqrstuvwxyzABCDEFGH"), false);
 
+        assertEq(LibString.startsWith("", ""), true);
+        assertEq(LibString.startsWith("bc", ""), true);
+        assertEq(LibString.startsWith("bc", "bc"), true);
         assertEq(LibString.startsWith("bc", "abc"), false);
         assertEq(LibString.startsWith("", "abc"), false);
+    }
+
+    function testEndsWith(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
+
+        if (bytes(search).length == 0) {
+            string memory subject = string(bytes.concat(bytes(search), bytes(filler)));
+            assertEq(LibString.endsWith(subject, search), true);
+        }
+
+        if (randomness & 1 == 1) {
+            string memory subject = string(bytes.concat(bytes(filler), bytes(search)));
+            assertEq(LibString.endsWith(subject, search), true);
+        }
+
+        if (bytes(filler).length != 0 && bytes(search).length != 0) {
+            string memory subject = string(bytes.concat(bytes(search), bytes(filler)));
+            assertEq(LibString.endsWith(subject, search), false);
+        }
+    }
+
+    function testEndsWith() public {
+        string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        assertEq(LibString.endsWith(subject, "XYZ"), true);
+        assertEq(LibString.endsWith(subject, "pqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), true);
+        assertEq(LibString.endsWith(subject, "WXY"), false);
+        assertEq(LibString.endsWith(subject, "opqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY"), false);
+
+        assertEq(LibString.endsWith("", ""), true);
+        assertEq(LibString.endsWith("bc", ""), true);
+        assertEq(LibString.endsWith("bc", "bc"), true);
+        assertEq(LibString.endsWith("bc", "abc"), false);
+        assertEq(LibString.endsWith("", "abc"), false);
     }
 
     function _generateFrom(uint256 randomness, string memory subject) internal view returns (uint256 from) {
