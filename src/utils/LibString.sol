@@ -382,4 +382,14 @@ library LibString {
     function lastIndexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
         result = lastIndexOf(subject, search, uint256(int256(-1)));
     }
+
+    function startsWith(string memory subject, string memory search) internal pure returns (bool result) {
+        assembly {
+            // Just using `keccak256` directly is actually cheaper than the mask trick.
+            result := and(
+                iszero(gt(mload(search), mload(subject))),
+                eq(keccak256(add(subject, 0x20), mload(search)), keccak256(add(search, 0x20), mload(search)))
+            )
+        }
+    }
 }

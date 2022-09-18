@@ -290,6 +290,37 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.lastIndexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
+    function testStartsWith(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
+
+        if (bytes(search).length == 0) {
+            string memory subject = string(bytes.concat(bytes(filler), bytes(search)));
+            assertEq(LibString.startsWith(subject, search), true);
+        }
+
+        if (randomness & 1 == 1) {
+            string memory subject = string(bytes.concat(bytes(search), bytes(filler)));
+            assertEq(LibString.startsWith(subject, search), true);
+        }
+
+        if (bytes(filler).length != 0 && bytes(search).length != 0) {
+            string memory subject = string(bytes.concat(bytes(filler), bytes(search)));
+            assertEq(LibString.startsWith(subject, search), false);
+        }
+    }
+
+    function testStartsWith() public {
+        string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        assertEq(LibString.startsWith(subject, "abc"), true);
+        assertEq(LibString.startsWith(subject, "abcdefghijklmnopqrstuvwxyzABCDEFG"), true);
+        assertEq(LibString.startsWith(subject, "bcd"), false);
+        assertEq(LibString.startsWith(subject, "bcdefghijklmnopqrstuvwxyzABCDEFGH"), false);
+
+        assertEq(LibString.startsWith("bc", "abc"), false);
+        assertEq(LibString.startsWith("", "abc"), false);
+    }
+
     function _generateFrom(uint256 randomness, string memory subject) internal view returns (uint256 from) {
         assembly {
             mstore(0x00, xor(randomness, gas()))
