@@ -164,22 +164,15 @@ contract LibStringTest is TestPlus {
             string memory subject = string(
                 bytes.concat(bytes(filler), bytes(search), bytes(filler), bytes(search), bytes(filler))
             );
-            assembly {
-                // Brutalize start of free memory.
-                mstore(mload(0x40), keccak256(0x00, 0x60))
-            }
+            _roundUpFreeMemoryPointer();
+            _brutalizeFreeMemoryStart();
             string memory expectedResult = string(
                 bytes.concat(bytes(filler), bytes(replacement), bytes(filler), bytes(replacement), bytes(filler))
             );
-            assembly {
-                // Brutalize start of free memory.
-                mstore(mload(0x40), keccak256(0x00, 0x60))
-            }
+            _roundUpFreeMemoryPointer();
+            _brutalizeFreeMemoryStart();
             string memory replaced = LibString.replace(subject, search, replacement);
-            assembly {
-                // Brutalize start of free memory.
-                mstore(mload(0x40), keccak256(0x00, 0x60))
-            }
+            _brutalizeFreeMemoryStart();
             assertEq(replaced, expectedResult);
         } else {
             string memory expectedResult = string(
@@ -193,7 +186,8 @@ contract LibStringTest is TestPlus {
                     bytes(replacement)
                 )
             );
-            assertEq(LibString.replace("   ", search, replacement), expectedResult);
+            string memory replaced = LibString.replace("   ", search, replacement);
+            assertEq(replaced, expectedResult);
         }
     }
 
@@ -387,15 +381,9 @@ contract LibStringTest is TestPlus {
     ) public brutalizeMemory(brutalizeWith) {
         times = times % 8;
         string memory repeated = LibString.repeat(subject, times);
-        assembly {
-            // Brutalize start of free memory.
-            mstore(mload(0x40), keccak256(0x00, 0x60))
-        }
+        _brutalizeFreeMemoryStart();
         string memory expectedResult = _repeatOriginal(subject, times);
-        assembly {
-            // Brutalize start of free memory.
-            mstore(mload(0x40), keccak256(0x00, 0x60))
-        }
+        _brutalizeFreeMemoryStart();
         assertEq(repeated, expectedResult);
     }
 
@@ -463,11 +451,12 @@ contract LibStringTest is TestPlus {
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
         unchecked {
             string memory result;
-            if (times == 0 || bytes(subject).length == 0) return result;
-
-            for (uint256 i; i < times; ++i) {
-                result = string(bytes.concat(bytes(result), bytes(subject)));
+            if (!(times == 0 || bytes(subject).length == 0)) {
+                for (uint256 i; i < times; ++i) {
+                    result = string(bytes.concat(bytes(result), bytes(subject)));
+                }
             }
+            _roundUpFreeMemoryPointer();
             return result;
         }
     }
@@ -513,6 +502,26 @@ contract LibStringTest is TestPlus {
                     )
                 }
             }
+        }
+    }
+
+    function _roundUpFreeMemoryPointer() internal pure {
+        assembly {
+            mstore(0x40, and(add(mload(0x40), 31), not(31)))
+        }
+    }
+
+    function _brutalizeFreeMemoryStart() internal pure {
+        assembly {
+            let freeMemoryPointer := mload(0x40)
+            // This ensures that the memory allocated is 32-byte aligned.
+            if and(freeMemoryPointer, 31) {
+                revert(0, 0)
+            }
+            // Write some garbage to the free memory.
+            // If the allocated memory is insufficient, this will change the
+            // decoded string and cause the subsequent asserts to fail.
+            mstore(freeMemoryPointer, keccak256(0x00, 0x60))
         }
     }
 }
