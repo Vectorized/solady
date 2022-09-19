@@ -71,6 +71,10 @@ contract LibStringTest is TestPlus {
         );
     }
 
+    function testToStringZeroRightPadded(uint256 x) public pure {
+        _checkStringIsZeroRightPadded(LibString.toString(x));
+    }
+
     function testToHexStringZero() public {
         assertEq(keccak256(bytes(LibString.toHexString(0))), keccak256(bytes("0x00")));
     }
@@ -384,6 +388,7 @@ contract LibStringTest is TestPlus {
         _brutalizeFreeMemoryStart();
         string memory expectedResult = _repeatOriginal(subject, times);
         _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(repeated);
         assertEq(repeated, expectedResult);
     }
 
@@ -413,14 +418,17 @@ contract LibStringTest is TestPlus {
 
     function testStringSlice(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        string memory slice = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
+        string memory expectedResult = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-        string memory subject = string(bytes.concat(bytes(filler0), bytes(slice), bytes(filler1)));
+        string memory subject = string(bytes.concat(bytes(filler0), bytes(expectedResult), bytes(filler1)));
 
         uint256 start = bytes(filler0).length;
-        uint256 end = start + bytes(slice).length;
-        assertEq(LibString.slice(subject, start, end), slice);
+        uint256 end = start + bytes(expectedResult).length;
+
+        string memory slice = LibString.slice(subject, start, end);
+        _checkStringIsZeroRightPadded(slice);
+        assertEq(slice, expectedResult);
     }
 
     function testStringSlice() public {
@@ -505,6 +513,20 @@ contract LibStringTest is TestPlus {
         }
     }
 
+    function _checkStringIsZeroRightPadded(string memory s) internal pure {
+        bool failed;
+        assembly {
+            let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
+            let remainder := and(mload(s), 31)
+            if remainder {
+                if shl(mul(8, remainder), lastWord) {
+                    failed := 1
+                }
+            }
+        }
+        if (failed) revert("String is not zero right padded!");
+    }
+
     function _roundUpFreeMemoryPointer() internal pure {
         assembly {
             mstore(0x40, and(add(mload(0x40), 31), not(31)))
@@ -512,16 +534,18 @@ contract LibStringTest is TestPlus {
     }
 
     function _brutalizeFreeMemoryStart() internal pure {
+        bool failed;
         assembly {
             let freeMemoryPointer := mload(0x40)
             // This ensures that the memory allocated is 32-byte aligned.
             if and(freeMemoryPointer, 31) {
-                revert(0, 0)
+                failed := 1
             }
             // Write some garbage to the free memory.
             // If the allocated memory is insufficient, this will change the
             // decoded string and cause the subsequent asserts to fail.
             mstore(freeMemoryPointer, keccak256(0x00, 0x60))
         }
+        if (failed) revert("Free memory pointer `0x40` is not 32-byte word aligned!");
     }
 }

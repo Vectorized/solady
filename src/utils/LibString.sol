@@ -493,18 +493,17 @@ library LibString {
                 result := mload(0x40)
                 let resultLength := sub(end, start)
                 mstore(result, resultLength)
-                let output := add(result, 0x20)
-                subject := add(add(subject, 0x20), start)
+                subject := add(subject, start)
                 // Copy the `subject` one word at a time.
                 // prettier-ignore
-                for { let o := 0 } 1 {} {
-                    mstore(add(output, o), mload(add(subject, o)))
-                    o := add(o, 0x20)
+                for { let o := and(add(resultLength, 31), not(31)) } 1 {} {
+                    mstore(add(result, o), mload(add(subject, o)))
+                    o := sub(o, 0x20)
                     // prettier-ignore
-                    if iszero(lt(o, resultLength)) { break }
+                    if iszero(o) { break }
                 }
                 // Zeroize the slot after the string.
-                mstore(add(output, resultLength), 0)
+                mstore(add(add(result, 0x20), resultLength), 0)
                 // Allocate memory for the length and the bytes,
                 // rounded up to a multiple of 32.
                 mstore(0x40, add(result, and(add(resultLength, 63), not(31))))
