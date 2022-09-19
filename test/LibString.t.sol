@@ -101,6 +101,10 @@ contract LibStringTest is TestPlus {
         assertEq(keccak256(bytes(LibString.toHexString(0x4132, 2))), keccak256(bytes("0x4132")));
     }
 
+    function testToHexStringZeroRightPadded(uint256 x) public pure {
+        _checkStringIsZeroRightPadded(LibString.toHexString(x));
+    }
+
     function testToHexStringFixedLengthInsufficientLength() public {
         vm.expectRevert(LibString.HexLengthInsufficient.selector);
         LibString.toHexString(0x4132, 1);
@@ -113,11 +117,21 @@ contract LibStringTest is TestPlus {
         );
     }
 
+    function testToHexStringFixedLengthZeroRightPadded(uint256 x, uint256 randomness) public pure {
+        uint256 minLength = (bytes(LibString.toHexString(x)).length - 2) * 2;
+        uint256 length = (randomness % 32) + minLength;
+        _checkStringIsZeroRightPadded(LibString.toHexString(x, length));
+    }
+
     function testFromAddressToHexString() public {
         assertEq(
             keccak256(bytes(LibString.toHexString(address(0xA9036907dCcae6a1E0033479B12E837e5cF5a02f)))),
             keccak256(bytes("0xa9036907dccae6a1e0033479b12e837e5cf5a02f"))
         );
+    }
+
+    function testAddressToHexStringZeroRightPadded(address x) public pure {
+        _checkStringIsZeroRightPadded(LibString.toHexString(x));
     }
 
     function testFromAddressToHexStringWithLeadingZeros() public {
@@ -177,6 +191,7 @@ contract LibStringTest is TestPlus {
             _brutalizeFreeMemoryStart();
             string memory replaced = LibString.replace(subject, search, replacement);
             _brutalizeFreeMemoryStart();
+            _checkStringIsZeroRightPadded(replaced);
             assertEq(replaced, expectedResult);
         } else {
             string memory expectedResult = string(
