@@ -309,13 +309,14 @@ library LibString {
             // prettier-ignore
             for { let subjectLength := mload(subject) } 1 {} {
                 if iszero(mload(search)) {
+                    // `result = min(from, subjectLength)`.
                     result := xor(from, mul(xor(from, subjectLength), lt(subjectLength, from)))
                     break
                 }
                 let searchLength := mload(search)
-
                 let subjectStart := add(subject, 0x20)    
-                result := not(0)
+                
+                result := not(0) // Initialize to `NOT_FOUND`.
 
                 subject := add(subjectStart, from)
                 let subjectSearchEnd := add(sub(add(subjectStart, subjectLength), searchLength), 1)
@@ -376,12 +377,13 @@ library LibString {
             for {} 1 {} {
                 let searchLength := mload(search)
                 let fromMax := sub(mload(subject), searchLength)
+                // `from = min(from, fromMax)`.
                 from := xor(from, mul(xor(from, fromMax), lt(fromMax, from)))
                 if iszero(mload(search)) {
                     result := from
                     break
                 }
-                result := not(0)
+                result := not(0) // Initialize to `NOT_FOUND`.
 
                 let subjectSearchEnd := sub(add(subject, 0x20), 1)
 
