@@ -429,12 +429,14 @@ library LibString {
         assembly {
             let searchLength := mload(search)
             let subjectLength := mload(subject)
+            // Whether `search` is not longer than `subject`.
             let withinRange := iszero(gt(searchLength, subjectLength))
             // Just using keccak256 directly is actually cheaper.
             result := and(
                 withinRange,
                 eq(
                     keccak256(
+                        // `subject + 0x20 + max(subjectLength - searchLength, 0)`.
                         add(add(subject, 0x20), mul(withinRange, sub(subjectLength, searchLength))),
                         searchLength
                     ),
@@ -487,14 +489,16 @@ library LibString {
     ) internal pure returns (string memory result) {
         assembly {
             let subjectLength := mload(subject)
+            // `end = min(end, subjectLength)`.
             end := xor(end, mul(xor(end, subjectLength), lt(subjectLength, end)))
+            // `start = min(start, subjectLength)`.
             start := xor(start, mul(xor(start, subjectLength), lt(subjectLength, start)))
             if lt(start, end) {
                 result := mload(0x40)
                 let resultLength := sub(end, start)
                 mstore(result, resultLength)
                 subject := add(subject, start)
-                // Copy the `subject` one word at a time.
+                // Copy the `subject` one word at a time, backwards.
                 // prettier-ignore
                 for { let o := and(add(resultLength, 31), not(31)) } 1 {} {
                     mstore(add(result, o), mload(add(subject, o)))
