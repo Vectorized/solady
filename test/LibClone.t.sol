@@ -124,16 +124,18 @@ contract LibCloneTest is TestPlus, Clone {
         bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
         LibCloneTest clone = LibCloneTest(LibClone.clone(address(this), data));
         _shouldBehaveLikeClone(address(clone), value_);
-        uint256 argOffset;
-        assertEq(clone.getArgAddress(argOffset), argAddress);
-        argOffset += 20;
-        assertEq(clone.getArgUint256(argOffset), argUint256);
-        argOffset += 32;
-        assertEq(clone.getArgUint256Array(argOffset, argUint256Array.length), argUint256Array);
-        argOffset += 32 * argUint256Array.length;
-        assertEq(clone.getArgUint64(argOffset), argUint64);
-        argOffset += 8;
-        assertEq(clone.getArgUint8(argOffset), argUint8);
+        unchecked {
+            uint256 argOffset;
+            assertEq(clone.getArgAddress(argOffset), argAddress);
+            argOffset += 20;
+            assertEq(clone.getArgUint256(argOffset), argUint256);
+            argOffset += 32;
+            assertEq(clone.getArgUint256Array(argOffset, argUint256Array.length), argUint256Array);
+            argOffset += 32 * argUint256Array.length;
+            assertEq(clone.getArgUint64(argOffset), argUint64);
+            argOffset += 8;
+            assertEq(clone.getArgUint8(argOffset), argUint8);    
+        }
     }
 
     function testCloneWithImmutableArgs() public {
