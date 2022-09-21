@@ -151,7 +151,15 @@ contract LibCloneTest is Test, Clone {
         uint8 argUint8,
         uint256 deposit
     ) public {
-        bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
+        bytes memory data = abi.encodePacked(
+            argUint256,
+            argAddress,
+            argUint256,
+            argUint256Array,
+            argUint64,
+            argUint8,
+            argUint256
+        );
         bytes32 saltKey = keccak256(abi.encode(data, salt));
 
         if (saltIsUsed[saltKey]) {
@@ -167,16 +175,22 @@ contract LibCloneTest is Test, Clone {
         _shouldBehaveLikeClone(address(clone), value_);
         _canReceiveETHCorectly(address(clone), deposit);
 
-        uint256 argOffset;
-        assertEq(clone.getArgAddress(argOffset), argAddress);
-        argOffset += 20;
-        assertEq(clone.getArgUint256(argOffset), argUint256);
-        argOffset += 32;
-        assertEq(clone.getArgUint256Array(argOffset, argUint256Array.length), argUint256Array);
-        argOffset += 32 * argUint256Array.length;
-        assertEq(clone.getArgUint64(argOffset), argUint64);
-        argOffset += 8;
-        assertEq(clone.getArgUint8(argOffset), argUint8);
+        unchecked {
+            uint256 argOffset;
+            assertEq(clone.getArgUint256(argOffset), argUint256);
+            argOffset += (256 / 8);
+            assertEq(clone.getArgAddress(argOffset), argAddress);
+            argOffset += (160 / 8);
+            assertEq(clone.getArgUint256(argOffset), argUint256);
+            argOffset += (256 / 8);
+            assertEq(clone.getArgUint256Array(argOffset, argUint256Array.length), argUint256Array);
+            argOffset += (256 / 8) * argUint256Array.length;
+            assertEq(clone.getArgUint64(argOffset), argUint64);
+            argOffset += (64 / 8);
+            assertEq(clone.getArgUint8(argOffset), argUint8);
+            argOffset += (8 / 8);
+            assertEq(clone.getArgUint256(argOffset), argUint256);
+        }
 
         address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
         assertEq(address(clone), predicted);
