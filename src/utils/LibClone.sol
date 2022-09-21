@@ -164,7 +164,7 @@ library LibClone {
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
-            let creationSize := add(extraLength, 0x6e)
+            let creationSize := add(extraLength, 0x6c)
             let runSize := sub(creationSize, 0x0a)
 
             /**
@@ -181,14 +181,14 @@ library LibClone {
              * 39         | CODECOPY          | 0 r       | [0..runSize): runtime code                             |
              * f3         | RETURN            |           | [0..runSize): runtime code                             |
              * ----------------------------------------------------------------------------------------------------|
-             * RUNTIME (100 bytes + extraLength)                                                                   |
+             * RUNTIME (98 bytes + extraLength)                                                                    |
              * ----------------------------------------------------------------------------------------------------|
              * Opcode   | Mnemonic        | Stack                    | Memory                                      |
              * ----------------------------------------------------------------------------------------------------|
              *                                                                                                     |
              * ::: if no calldata, emit event & return w/o `DELEGATECALL` :::::::::::::::::::::::::::::::::::::::: |
              * 36       | CALLDATASIZE    | cds                      |                                             |
-             * 60 0x2e  | PUSH1 0x2e      | 0x2e cds                 |                                             |
+             * 60 0x2f  | PUSH1 0x2c      | 0x2c cds                 |                                             |
              * 57       | JUMPI           |                          |                                             |
              * 34       | CALLVALUE       | cv                       |                                             |
              * 3d       | RETURNDATASIZE  | 0 cv                     |                                             |
@@ -197,9 +197,7 @@ library LibClone {
              * 59       | MSIZE           | 0x20 sig                 | [0..0x20): callvalue                        |
              * 3d       | RETURNDATASIZE  | 0 0x20 sig               | [0..0x20): callvalue                        |
              * a1       | LOG1            |                          | [0..0x20): callvalue                        |
-             * 3d       | RETURNDATASIZE  | 0                        | [0..0x20): callvalue                        |
-             * 3d       | RETURNDATASIZE  | 0 0                      | [0..0x20): callvalue                        |
-             * f3       | RETURN          |                          | [0..0x20): callvalue                        |
+             * 00       | STOP            |                          | [0..0x20): callvalue                        |
              * 5b       | JUMPDEST        |                          |                                             |
              *                                                                                                     |
              * ::: copy calldata to memory ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -236,7 +234,7 @@ library LibClone {
              * 80       | DUP1           | 0 0 rds success 0 rds     | [0..cds): calldata, [cds..cds+e): extraData |
              * 3e       | RETURNDATACOPY | success 0 rds             | [0..rds): returndata                        |
              *                                                                                                     |
-             * 60 0x62  | PUSH1 0x62     | 0x62 success 0 rds        | [0..rds): returndata                        |
+             * 60 0x60  | PUSH1 0x60     | 0x62 success 0 rds        | [0..rds): returndata                        |
              * 57       | JUMPI          | 0 rds                     | [0..rds): returndata                        |
              *                                                                                                     |
              * ::: revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -248,20 +246,17 @@ library LibClone {
              * ----------------------------------------------------------------------------------------------------+
              */
             // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606257fd5bf3)
+            mstore(data, 0x5af43d3d93803e606057fd5bf3)
             // Write the address of the implementation.
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
-            mstore(
-                sub(data, 0x21),
-                or(shl(0x48, extraLength), 0x593da13d3df35b363d3d373d3d3d3d610000806064363936013d73)
-            )
-            mstore(sub(data, 0x3c), _RECEIVE_EVENT_SIG)
-            mstore(sub(data, 0x5c), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602e57343d527f))
+            mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
+            mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
+            mstore(sub(data, 0x5a), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Create the instance.
-            instance := create(0, sub(data, 0x4e), creationSize)
+            instance := create(0, sub(data, 0x4c), creationSize)
 
             // If `instance` is zero, revert.
             if iszero(instance) {
@@ -300,24 +295,21 @@ library LibClone {
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
-            let creationSize := add(extraLength, 0x6e)
+            let creationSize := add(extraLength, 0x6c)
             let runSize := sub(creationSize, 0x0a)
 
             // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606257fd5bf3)
+            mstore(data, 0x5af43d3d93803e606057fd5bf3)
             // Write the address of the implementation.
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
-            mstore(
-                sub(data, 0x21),
-                or(shl(0x48, extraLength), 0x593da13d3df35b363d3d373d3d3d3d610000806064363936013d73)
-            )
-            mstore(sub(data, 0x3c), _RECEIVE_EVENT_SIG)
-            mstore(sub(data, 0x5c), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602e57343d527f))
+            mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
+            mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
+            mstore(sub(data, 0x5a), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Create the instance.
-            instance := create2(0, sub(data, 0x4e), creationSize, salt)
+            instance := create2(0, sub(data, 0x4c), creationSize, salt)
 
             // If `instance` is zero, revert.
             if iszero(instance) {
@@ -357,24 +349,21 @@ library LibClone {
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
-            let creationSize := add(extraLength, 0x6e)
+            let creationSize := add(extraLength, 0x6c)
             let runSize := sub(creationSize, 0x0a)
 
             // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606257fd5bf3)
+            mstore(data, 0x5af43d3d93803e606057fd5bf3)
             // Write the address of the implementation.
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
-            mstore(
-                sub(data, 0x21),
-                or(shl(0x48, extraLength), 0x593da13d3df35b363d3d373d3d3d3d610000806064363936013d73)
-            )
-            mstore(sub(data, 0x3c), _RECEIVE_EVENT_SIG)
-            mstore(sub(data, 0x5c), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602e57343d527f))
+            mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
+            mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
+            mstore(sub(data, 0x5a), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Compute the bytecode hash.
-            let h := keccak256(sub(data, 0x4e), creationSize)
+            let h := keccak256(sub(data, 0x4c), creationSize)
             // Restore the slots cached in the scratch space.
             mstore(sub(data, 0x60), mload(0x00))
             mstore(sub(data, 0x80), mload(0x20))
