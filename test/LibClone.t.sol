@@ -148,7 +148,7 @@ contract LibCloneTest is TestPlus, Clone {
             argOffset += 32 * argUint256Array.length;
             assertEq(clone.getArgUint64(argOffset), argUint64);
             argOffset += 8;
-            assertEq(clone.getArgUint8(argOffset), argUint8);    
+            assertEq(clone.getArgUint8(argOffset), argUint8);
         }
     }
 
@@ -169,7 +169,15 @@ contract LibCloneTest is TestPlus, Clone {
         uint8 argUint8,
         uint256 deposit
     ) public brutalizeMemoryWithSeed(value_) {
-        bytes memory data = abi.encodePacked(argUint256, argAddress, argUint256, argUint256Array, argUint64, argUint8, argUint256);
+        bytes memory data = abi.encodePacked(
+            argUint256,
+            argAddress,
+            argUint256,
+            argUint256Array,
+            argUint64,
+            argUint8,
+            argUint256
+        );
         bytes32 dataHashBefore = keccak256(data);
         bytes32 saltKey = keccak256(abi.encode(data, salt));
 
@@ -205,9 +213,9 @@ contract LibCloneTest is TestPlus, Clone {
             argOffset += (64 / 8);
             assertEq(clone.getArgUint8(argOffset), argUint8);
             argOffset += (8 / 8);
-            assertEq(clone.getArgUint256(argOffset), argUint256);    
+            assertEq(clone.getArgUint256(argOffset), argUint256);
         }
-        
+
         address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
         assertEq(address(clone), predicted);
         // Check that memory management is done properly.

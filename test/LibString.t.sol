@@ -471,6 +471,290 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.slice(subject, 31, 21), "");
     }
 
+    function testConcatenate(
+        string memory subject,
+        string memory concat,
+        bytes calldata brutalizeWith
+    ) public brutalizeMemory(brutalizeWith) {
+        string memory concatenated = LibString.concatenate(subject, concat);
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+        string memory expectedResult = string(bytes.concat(bytes(subject), bytes(concat)));
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(concatenated);
+        assertEq(concatenated, expectedResult);
+    }
+
+    function testConcatenate(string memory subject, string memory concat) public {
+        string memory concatenated = LibString.concatenate(subject, concat);
+        string memory expectedResult = string.concat(subject, concat);
+        assertEq(concatenated, expectedResult);
+    }
+
+    function testConcatenate() public {
+        assertEq(LibString.concatenate("", ""), "");
+        assertEq(LibString.concatenate("a", "b"), "ab");
+        assertEq(LibString.concatenate("a", "bc"), "abc");
+        assertEq(LibString.concatenate("ab", "bc"), "abbc");
+        assertEq(LibString.concatenate("abcdef", "ghijkl"), "abcdefghijkl");
+        assertEq(LibString.concatenate("abcdefghijkl", "mnopqrstuv"), "abcdefghijklmnopqrstuv");
+        assertEq(LibString.concatenate("aBc DeFg", "HiJ kLm"), "aBc DeFgHiJ kLm");
+        string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        assertEq(
+            LibString.concatenate(subject, subject),
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        );
+    }
+
+    function testJoin() public {
+        string[] memory str = new string[](2);
+        str[0] = "abcdefghijklmnopqrstuvwxyz";
+        str[1] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        string memory _str = "----";
+        string memory strjoin = LibString.join(str, _str);
+
+        assertEq(strjoin, "abcdefghijklmnopqrstuvwxyz----ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    }
+
+    function testJoinLong(bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string[] memory str = new string[](2);
+        str[1] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        str[0] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+        string memory _str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+        string memory strjoin = LibString.join(str, _str);
+        _checkStringIsZeroRightPadded(strjoin);
+        assertEq(
+            strjoin,
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        );
+    }
+
+    function testJoin(
+        uint256 randomness,
+        string memory join,
+        bytes calldata brutalizeWith
+    ) public brutalizeMemory(brutalizeWith) {
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+        string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+        string[] memory str = new string[](2);
+        str[1] = filler0;
+        str[0] = filler1;
+        string memory assertString = string.concat(str[0], join, str[1]);
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+        string memory strjoin = LibString.join(str, join);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(strjoin);
+        assertEq(strjoin, assertString);
+    }
+
+    function testSplit() public {
+        string[] memory str = new string[](2);
+        str[0] = "a";
+        str[1] = "cdefg";
+
+        string[] memory strSplit = LibString.split("abcdefg", "b");
+        assertEq(str[0], strSplit[0]);
+        assertEq(str[1], strSplit[1]);
+        assertEq(str.length, strSplit.length);
+    }
+
+    function testBrutalizeSplit(bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string[] memory str = new string[](2);
+        str[0] = "a";
+        str[1] = "cdefg";
+
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+
+        string[] memory strSplit = LibString.split("abcdefg", "b");
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+        assertEq(str[0], strSplit[0]);
+        assertEq(str[1], strSplit[1]);
+        assertEq(str.length, strSplit.length);
+    }
+
+    function testSplitMed() public {
+        string[] memory str = new string[](2);
+        str[0] = "ABCDEFGHI";
+        str[1] = "OPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+        string[] memory strSplit = LibString.split("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", "JKLMN");
+
+        assertEq(str[0], strSplit[0]);
+        assertEq(str[1], strSplit[1]);
+        assertEq(str.length, strSplit.length);
+    }
+
+    function testSplitLong() public {
+        string[] memory str = new string[](3);
+        str[0] = "A";
+        str[1] = "STUVWXYZabcdefghijklmnopqrstuvwxyzA";
+        str[2] = "STUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+        string[] memory strSplit = LibString.split(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+            "BCDEFGHIJKLMNOPQR"
+        );
+
+        assertEq(str[0], strSplit[0]);
+        assertEq(str[1], strSplit[1]);
+        assertEq(str[2], strSplit[2]);
+        assertEq(str.length, strSplit.length);
+    }
+
+    function testSplitLonggg() public {
+        string[] memory str = new string[](11);
+        str[0] = "REALY_";
+        str[1] = "_WORD_REALY_";
+        str[2] = "_WORD_REALY_";
+        str[3] = "_WORD_REALY_";
+        str[4] = "_WORD_REALY_";
+        str[5] = "_WORD_REALY_";
+        str[6] = "_WORD_REALY_";
+        str[7] = "_WORD_REALY_";
+        str[8] = "_WORD_REALY_";
+        str[9] = "_WORD_REALY_";
+        str[10] = "_WORD";
+
+        string[] memory strSplit = LibString.split(
+            "REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD",
+            "LONG"
+        );
+
+        assertEq(str[0], strSplit[0]);
+        assertEq(str[1], strSplit[1]);
+        assertEq(str[2], strSplit[2]);
+        assertEq(str[3], strSplit[3]);
+        assertEq(str[4], strSplit[4]);
+        assertEq(str[5], strSplit[5]);
+        assertEq(str[6], strSplit[6]);
+        assertEq(str[7], strSplit[7]);
+        assertEq(str[8], strSplit[8]);
+        assertEq(str[9], strSplit[9]);
+        assertEq(str[10], strSplit[10]);
+        assertEq(str.length, strSplit.length);
+    }
+
+    function testBrutalizeSplitLonggg(bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string[] memory str = new string[](11);
+        str[0] = "REALY_";
+        str[1] = "_WORD_REALY_";
+        str[2] = "_WORD_REALY_";
+        str[3] = "_WORD_REALY_";
+        str[4] = "_WORD_REALY_";
+        str[5] = "_WORD_REALY_";
+        str[6] = "_WORD_REALY_";
+        str[7] = "_WORD_REALY_";
+        str[8] = "_WORD_REALY_";
+        str[9] = "_WORD_REALY_";
+        str[10] = "_WORD";
+
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+
+        string[] memory strSplit = LibString.split(
+            "REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD",
+            "LONG"
+        );
+
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+
+        assertEq(str[0], strSplit[0]);
+        assertEq(str[1], strSplit[1]);
+        assertEq(str[2], strSplit[2]);
+        assertEq(str[3], strSplit[3]);
+        assertEq(str[4], strSplit[4]);
+        assertEq(str[5], strSplit[5]);
+        assertEq(str[6], strSplit[6]);
+        assertEq(str[7], strSplit[7]);
+        assertEq(str[8], strSplit[8]);
+        assertEq(str[9], strSplit[9]);
+        assertEq(str[10], strSplit[10]);
+        assertEq(str.length, strSplit.length);
+    }
+
+    function testSplitLongggDelimiter() public {
+        string[] memory str = new string[](3);
+        str[0] = "";
+        str[1] = "_LONG_WORD_";
+        str[2] = "_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD";
+
+        string[] memory strSplit = LibString.split(
+            "REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD",
+            "REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY"
+        );
+
+        assertEq(str[0], strSplit[0]);
+        assertEq(str[1], strSplit[1]);
+        assertEq(str.length, strSplit.length);
+    }
+
+    function testSplitLongggDelimiter32Plus() public {
+        string[] memory str = new string[](2);
+        str[0] = "searchsearchsearchsearchsearchsearch";
+        str[1] = "this";
+
+        string[] memory strSplit = LibString.split(
+            "searchsearchsearchsearchsearchsearchREALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALYthis",
+            "REALY_LONG_WORD_REALY_LONG_WORD_REALY_LONG_WORD_REALY"
+        );
+
+        assertEq(str[0], strSplit[0]);
+        assertEq(str[1], strSplit[1]);
+        assertEq(str.length, strSplit.length);
+    }
+
+    function testSplit(
+        uint256 randomness,
+        string memory delimiter,
+        bytes calldata brutalizeWith
+    ) public brutalizeMemory(brutalizeWith) {
+        _roundUpFreeMemoryPointer();
+        _brutalizeFreeMemoryStart();
+        string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+        if (bytes(delimiter).length > 0) {
+            _roundUpFreeMemoryPointer();
+            _brutalizeFreeMemoryStart();
+            string[] memory str = new string[](2);
+            str[0] = filler0;
+            str[1] = filler1;
+            string memory assertString = string.concat(str[0], delimiter, str[1]);
+            _roundUpFreeMemoryPointer();
+            _brutalizeFreeMemoryStart();
+            string[] memory strSplit = LibString.split(assertString, delimiter);
+            _brutalizeFreeMemoryStart();
+            assertEq(str[0], strSplit[0]);
+            assertEq(str[1], strSplit[1]);
+            assertEq(str.length, strSplit.length);
+        } else {
+            _roundUpFreeMemoryPointer();
+            _brutalizeFreeMemoryStart();
+            string memory assertString = string.concat(filler0, delimiter, filler1);
+            string[] memory str = new string[](1);
+            str[0] = assertString;
+            _roundUpFreeMemoryPointer();
+            _brutalizeFreeMemoryStart();
+            string[] memory strSplit = LibString.split(assertString, delimiter);
+            _brutalizeFreeMemoryStart();
+            assertEq(str[0], strSplit[0]);
+            assertEq(str.length, strSplit.length);
+        }
+    }
+
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
         unchecked {
             string memory result;
