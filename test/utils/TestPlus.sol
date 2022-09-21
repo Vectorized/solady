@@ -45,13 +45,17 @@ contract TestPlus is Test {
             mstore(0x20, xor(caller(), seed))
             mstore(0x00, keccak256(0x00, 0x40))
             mstore(0x20, keccak256(0x00, 0x40))
-            
+
             let offset := mload(0x40) // Start the offset at the free memory pointer.
             let size := 0x40 // Start with 2 slots.
             mstore(offset, mload(0x00))
             mstore(add(offset, 0x20), mload(0x20))
 
-            for { let i := 0 } lt(i, 10) { i := add(i, 1) } {
+            for {
+                let i := 0
+            } lt(i, 10) {
+                i := add(i, 1)
+            } {
                 let nextOffset := add(offset, size)
                 // Duplicate the data.
                 pop(

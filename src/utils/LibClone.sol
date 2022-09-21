@@ -18,13 +18,6 @@ library LibClone {
     error DeploymentFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev `keccak256("ReceiveETH(uint256)")`. For clones with immutable args.
-    uint256 private constant _RECEIVE_EVENT_SIG = 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  MINIMAL PROXY OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -233,7 +226,7 @@ library LibClone {
              * 80       | DUP1           | 0 0 rds success 0 rds     | [0..cds): calldata, [cds..cds+e): extraData |
              * 3e       | RETURNDATACOPY | success 0 rds             | [0..rds): returndata                        |
              *                                                                                                     |
-             * 60 0x60  | PUSH1 0x60     | 0x62 success 0 rds        | [0..rds): returndata                        |
+             * 60 0x60  | PUSH1 0x60     | 0x60 success 0 rds        | [0..rds): returndata                        |
              * 57       | JUMPI          | 0 rds                     | [0..rds): returndata                        |
              *                                                                                                     |
              * ::: revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -250,7 +243,8 @@ library LibClone {
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
             mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
-            mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
+            // `keccak256("ReceiveETH(uint256)")`
+            mstore(sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff)
             mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
@@ -266,11 +260,11 @@ library LibClone {
             }
 
             // Restore the overwritten memory surrounding `data`.
+            mstore(dataEnd, mAfter1)
             mstore(data, dataLength)
             mstore(sub(data, 0x20), mBefore1)
             mstore(sub(data, 0x40), mBefore2)
             mstore(sub(data, 0x60), mBefore3)
-            mstore(dataEnd, mAfter1)
         }
     }
 
@@ -299,7 +293,8 @@ library LibClone {
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
             mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
-            mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
+            // `keccak256("ReceiveETH(uint256)")`
+            mstore(sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff)
             mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
@@ -315,11 +310,11 @@ library LibClone {
             }
 
             // Restore the overwritten memory surrounding `data`.
+            mstore(dataEnd, mAfter1)
             mstore(data, dataLength)
             mstore(sub(data, 0x20), mBefore1)
             mstore(sub(data, 0x40), mBefore2)
             mstore(sub(data, 0x60), mBefore3)
-            mstore(dataEnd, mAfter1)
         }
     }
 
@@ -349,7 +344,8 @@ library LibClone {
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
             mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
-            mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
+            // `keccak256("ReceiveETH(uint256)")`
+            mstore(sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff)
             mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
@@ -363,11 +359,11 @@ library LibClone {
             mstore(0x35, 0)
 
             // Restore the overwritten memory surrounding `data`.
+            mstore(dataEnd, mAfter1)
             mstore(data, dataLength)
             mstore(sub(data, 0x20), mBefore1)
             mstore(sub(data, 0x40), mBefore2)
             mstore(sub(data, 0x60), mBefore3)
-            mstore(dataEnd, mAfter1)
         }
     }
 }
