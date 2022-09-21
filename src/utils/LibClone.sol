@@ -160,82 +160,82 @@ library LibClone {
             // The `runSize` is `creationSize - 10`.
 
             /**
-             * ----------------------------------------------------------------------------------------------------+
-             * CREATION (10 bytes)                                                                                 |
-             * ----------------------------------------------------------------------------------------------------|
-             * Opcode     | Mnemonic          | Stack     | Memory                                                 |
-             * ----------------------------------------------------------------------------------------------------|
-             * 61 runSize | PUSH2 runSize     | r         |                                                        |
-             * 3d         | RETURNDATASIZE    | 0 r       |                                                        |
-             * 81         | DUP2              | r 0 r     |                                                        |
-             * 60 offset  | PUSH1 offset      | o r 0 r   |                                                        |
-             * 3d         | RETURNDATASIZE    | 0 o r 0 r |                                                        |
-             * 39         | CODECOPY          | 0 r       | [0..runSize): runtime code                             |
-             * f3         | RETURN            |           | [0..runSize): runtime code                             |
-             * ----------------------------------------------------------------------------------------------------|
-             * RUNTIME (98 bytes + extraLength)                                                                    |
-             * ----------------------------------------------------------------------------------------------------|
-             * Opcode   | Mnemonic        | Stack                    | Memory                                      |
-             * ----------------------------------------------------------------------------------------------------|
-             *                                                                                                     |
-             * ::: if no calldata, emit event & return w/o `DELEGATECALL` :::::::::::::::::::::::::::::::::::::::: |
-             * 36       | CALLDATASIZE    | cds                      |                                             |
-             * 60 0x2f  | PUSH1 0x2c      | 0x2c cds                 |                                             |
-             * 57       | JUMPI           |                          |                                             |
-             * 34       | CALLVALUE       | cv                       |                                             |
-             * 3d       | RETURNDATASIZE  | 0 cv                     |                                             |
-             * 52       | MSTORE          |                          | [0..0x20): callvalue                        |
-             * 7f sig   | PUSH32 0x9e4a.. | sig                      | [0..0x20): callvalue                        |
-             * 59       | MSIZE           | 0x20 sig                 | [0..0x20): callvalue                        |
-             * 3d       | RETURNDATASIZE  | 0 0x20 sig               | [0..0x20): callvalue                        |
-             * a1       | LOG1            |                          | [0..0x20): callvalue                        |
-             * 00       | STOP            |                          | [0..0x20): callvalue                        |
-             * 5b       | JUMPDEST        |                          |                                             |
-             *                                                                                                     |
-             * ::: copy calldata to memory ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 36       | CALLDATASIZE   | cds                       |                                             |
-             * 3d       | RETURNDATASIZE | 0 cds                     |                                             |
-             * 3d       | RETURNDATASIZE | 0 0 cds                   |                                             |
-             * 37       | CALLDATACOPY   |                           | [0..cds): calldata                          |
-             *                                                                                                     |
-             * ::: keep some values in stack ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d       | RETURNDATASIZE | 0                         | [0..cds): calldata                          |
-             * 3d       | RETURNDATASIZE | 0 0                       | [0..cds): calldata                          |
-             * 3d       | RETURNDATASIZE | 0 0 0                     | [0..cds): calldata                          |
-             * 3d       | RETURNDATASIZE | 0 0 0 0                   | [0..cds): calldata                          |
-             * 61 extra | PUSH2 extra    | e 0 0 0 0                 | [0..cds): calldata                          |
-             *                                                                                                     |
-             * ::: copy extra data to memory ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 80       | DUP1           | e e 0 0 0 0               | [0..cds): calldata                          |
-             * 60 rb    | PUSH1 rb       | rb e e 0 0 0 0            | [0..cds): calldata                          |
-             * 36       | CALLDATASIZE   | cds rb e e 0 0 0 0        | [0..cds): calldata                          |
-             * 39       | CODECOPY       | e 0 0 0 0                 | [0..cds): calldata, [cds..cds+e): extraData |
-             *                                                                                                     |
-             * ::: delegate call to the implementation contract :::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 36       | CALLDATASIZE   | cds e 0 0 0 0             | [0..cds): calldata, [cds..cds+e): extraData |
-             * 01       | ADD            | cds+e 0 0 0 0             | [0..cds): calldata, [cds..cds+e): extraData |
-             * 3d       | RETURNDATASIZE | 0 cds+e 0 0 0 0           | [0..cds): calldata, [cds..cds+e): extraData |
-             * 73 addr  | PUSH20 addr    | addr 0 cds+e 0 0 0 0      | [0..cds): calldata, [cds..cds+e): extraData |
-             * 5a       | GAS            | gas addr 0 cds+e 0 0 0 0  | [0..cds): calldata, [cds..cds+e): extraData |
-             * f4       | DELEGATECALL   | success 0 0               | [0..cds): calldata, [cds..cds+e): extraData |
-             *                                                                                                     |
-             * ::: copy return data to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d       | RETURNDATASIZE | rds success 0 0           | [0..cds): calldata, [cds..cds+e): extraData |
-             * 3d       | RETURNDATASIZE | rds rds success 0 0       | [0..cds): calldata, [cds..cds+e): extraData |
-             * 93       | SWAP4          | 0 rds success 0 rds       | [0..cds): calldata, [cds..cds+e): extraData |
-             * 80       | DUP1           | 0 0 rds success 0 rds     | [0..cds): calldata, [cds..cds+e): extraData |
-             * 3e       | RETURNDATACOPY | success 0 rds             | [0..rds): returndata                        |
-             *                                                                                                     |
-             * 60 0x60  | PUSH1 0x60     | 0x60 success 0 rds        | [0..rds): returndata                        |
-             * 57       | JUMPI          | 0 rds                     | [0..rds): returndata                        |
-             *                                                                                                     |
-             * ::: revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * fd       | REVERT         |                           | [0..rds): returndata                        |
-             *                                                                                                     |
-             * ::: return :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 5b       | JUMPDEST       | 0 rds                     | [0..rds): returndata                        |
-             * f3       | RETURN         |                           | [0..rds): returndata                        |
-             * ----------------------------------------------------------------------------------------------------+
+             * ---------------------------------------------------------------------------------------------------+
+             * CREATION (10 bytes)                                                                                |
+             * ---------------------------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic          | Stack     | Memory                                                |
+             * ---------------------------------------------------------------------------------------------------|
+             * 61 runSize | PUSH2 runSize     | r         |                                                       |
+             * 3d         | RETURNDATASIZE    | 0 r       |                                                       |
+             * 81         | DUP2              | r 0 r     |                                                       |
+             * 60 offset  | PUSH1 offset      | o r 0 r   |                                                       |
+             * 3d         | RETURNDATASIZE    | 0 o r 0 r |                                                       |
+             * 39         | CODECOPY          | 0 r       | [0..runSize): runtime code                            |
+             * f3         | RETURN            |           | [0..runSize): runtime code                            |
+             * ---------------------------------------------------------------------------------------------------|
+             * RUNTIME (98 bytes + extraLength)                                                                   |
+             * ---------------------------------------------------------------------------------------------------|
+             * Opcode   | Mnemonic       | Stack                    | Memory                                      |
+             * ---------------------------------------------------------------------------------------------------|
+             *                                                                                                    |
+             * ::: if no calldata, emit event & return w/o `DELEGATECALL` ::::::::::::::::::::::::::::::::::::::: |
+             * 36       | CALLDATASIZE   | cds                      |                                             |
+             * 60 0x2c  | PUSH1 0x2c     | 0x2c cds                 |                                             |
+             * 57       | JUMPI          |                          |                                             |
+             * 34       | CALLVALUE      | cv                       |                                             |
+             * 3d       | RETURNDATASIZE | 0 cv                     |                                             |
+             * 52       | MSTORE         |                          | [0..0x20): callvalue                        |
+             * 7f sig   | PUSH32 0x9e..  | sig                      | [0..0x20): callvalue                        |
+             * 59       | MSIZE          | 0x20 sig                 | [0..0x20): callvalue                        |
+             * 3d       | RETURNDATASIZE | 0 0x20 sig               | [0..0x20): callvalue                        |
+             * a1       | LOG1           |                          | [0..0x20): callvalue                        |
+             * 00       | STOP           |                          | [0..0x20): callvalue                        |
+             * 5b       | JUMPDEST       |                          |                                             |
+             *                                                                                                    |
+             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36       | CALLDATASIZE   | cds                      |                                             |
+             * 3d       | RETURNDATASIZE | 0 cds                    |                                             |
+             * 3d       | RETURNDATASIZE | 0 0 cds                  |                                             |
+             * 37       | CALLDATACOPY   |                          | [0..cds): calldata                          |
+             *                                                                                                    |
+             * ::: keep some values in stack :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d       | RETURNDATASIZE | 0                        | [0..cds): calldata                          |
+             * 3d       | RETURNDATASIZE | 0 0                      | [0..cds): calldata                          |
+             * 3d       | RETURNDATASIZE | 0 0 0                    | [0..cds): calldata                          |
+             * 3d       | RETURNDATASIZE | 0 0 0 0                  | [0..cds): calldata                          |
+             * 61 extra | PUSH2 extra    | e 0 0 0 0                | [0..cds): calldata                          |
+             *                                                                                                    |
+             * ::: copy extra data to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 80       | DUP1           | e e 0 0 0 0              | [0..cds): calldata                          |
+             * 60 0x62  | PUSH1 0x62     | 0x62 e e 0 0 0 0         | [0..cds): calldata                          |
+             * 36       | CALLDATASIZE   | cds 0x62 e e 0 0 0 0     | [0..cds): calldata                          |
+             * 39       | CODECOPY       | e 0 0 0 0                | [0..cds): calldata, [cds..cds+e): extraData |
+             *                                                                                                    |
+             * ::: delegate call to the implementation contract ::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36       | CALLDATASIZE   | cds e 0 0 0 0            | [0..cds): calldata, [cds..cds+e): extraData |
+             * 01       | ADD            | cds+e 0 0 0 0            | [0..cds): calldata, [cds..cds+e): extraData |
+             * 3d       | RETURNDATASIZE | 0 cds+e 0 0 0 0          | [0..cds): calldata, [cds..cds+e): extraData |
+             * 73 addr  | PUSH20 addr    | addr 0 cds+e 0 0 0 0     | [0..cds): calldata, [cds..cds+e): extraData |
+             * 5a       | GAS            | gas addr 0 cds+e 0 0 0 0 | [0..cds): calldata, [cds..cds+e): extraData |
+             * f4       | DELEGATECALL   | success 0 0              | [0..cds): calldata, [cds..cds+e): extraData |
+             *                                                                                                    |
+             * ::: copy return data to memory ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d       | RETURNDATASIZE | rds success 0 0          | [0..cds): calldata, [cds..cds+e): extraData |
+             * 3d       | RETURNDATASIZE | rds rds success 0 0      | [0..cds): calldata, [cds..cds+e): extraData |
+             * 93       | SWAP4          | 0 rds success 0 rds      | [0..cds): calldata, [cds..cds+e): extraData |
+             * 80       | DUP1           | 0 0 rds success 0 rds    | [0..cds): calldata, [cds..cds+e): extraData |
+             * 3e       | RETURNDATACOPY | success 0 rds            | [0..rds): returndata                        |
+             *                                                                                                    |
+             * 60 0x60  | PUSH1 0x60     | 0x60 success 0 rds       | [0..rds): returndata                        |
+             * 57       | JUMPI          | 0 rds                    | [0..rds): returndata                        |
+             *                                                                                                    |
+             * ::: revert ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * fd       | REVERT         |                          | [0..rds): returndata                        |
+             *                                                                                                    |
+             * ::: return ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b       | JUMPDEST       | 0 rds                    | [0..rds): returndata                        |
+             * f3       | RETURN         |                          | [0..rds): returndata                        |
+             * ---------------------------------------------------------------------------------------------------+
              */
             // Write the bytecode before the data.
             mstore(data, 0x5af43d3d93803e606057fd5bf3)
