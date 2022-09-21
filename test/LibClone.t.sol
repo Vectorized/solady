@@ -136,6 +136,8 @@ contract LibCloneTest is TestPlus, Clone {
         bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
         LibCloneTest clone = LibCloneTest(LibClone.clone(address(this), data));
         _shouldBehaveLikeClone(address(clone), value_);
+
+        // For avoiding stack too deep. Also, no risk of overflow.
         unchecked {
             uint256 argOffset;
             assertEq(clone.getArgAddress(argOffset), argAddress);
@@ -146,7 +148,7 @@ contract LibCloneTest is TestPlus, Clone {
             argOffset += 32 * argUint256Array.length;
             assertEq(clone.getArgUint64(argOffset), argUint64);
             argOffset += 8;
-            assertEq(clone.getArgUint8(argOffset), argUint8);
+            assertEq(clone.getArgUint8(argOffset), argUint8);    
         }
     }
 
@@ -167,15 +169,7 @@ contract LibCloneTest is TestPlus, Clone {
         uint8 argUint8,
         uint256 deposit
     ) public brutalizeMemoryWithSeed(value_) {
-        bytes memory data = abi.encodePacked(
-            argUint256,
-            argAddress,
-            argUint256,
-            argUint256Array,
-            argUint64,
-            argUint8,
-            argUint256
-        );
+        bytes memory data = abi.encodePacked(argUint256, argAddress, argUint256, argUint256Array, argUint64, argUint8, argUint256);
         bytes32 dataHashBefore = keccak256(data);
         bytes32 saltKey = keccak256(abi.encode(data, salt));
 
@@ -196,6 +190,7 @@ contract LibCloneTest is TestPlus, Clone {
         _shouldBehaveLikeClone(address(clone), value_);
         _canReceiveETHCorectly(address(clone), deposit);
 
+        // For avoiding stack too deep. Also, no risk of overflow.
         unchecked {
             uint256 argOffset;
             assertEq(clone.getArgUint256(argOffset), argUint256);
@@ -210,9 +205,9 @@ contract LibCloneTest is TestPlus, Clone {
             argOffset += (64 / 8);
             assertEq(clone.getArgUint8(argOffset), argUint8);
             argOffset += (8 / 8);
-            assertEq(clone.getArgUint256(argOffset), argUint256);
+            assertEq(clone.getArgUint256(argOffset), argUint256);    
         }
-
+        
         address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
         assertEq(address(clone), predicted);
         // Check that memory management is done properly.
@@ -222,23 +217,19 @@ contract LibCloneTest is TestPlus, Clone {
     }
 
     function testCloneDeteministicWithImmutableArgs() public {
-        uint256 value_;
-        bytes32 salt;
-        address argAddress;
-        uint256 argUint256;
-        uint256[] memory argUint256Array;
-        uint64 argUint64;
-        uint8 argUint8;
-        uint256 deposit = 123;
+        uint256[] memory argUint256Array = new uint256[](2);
+        argUint256Array[0] = uint256(keccak256("zero"));
+        argUint256Array[1] = uint256(keccak256("one"));
+
         testCloneDeteministicWithImmutableArgs(
-            value_,
-            salt,
-            argAddress,
-            argUint256,
+            uint256(keccak256("value")),
+            keccak256("salt"),
+            address(uint160(uint256(keccak256("argAddress")))),
+            uint256(keccak256("argUint256")),
             argUint256Array,
-            argUint64,
-            argUint8,
-            deposit
+            uint64(uint256(keccak256("argUint64"))),
+            uint8(uint256(keccak256("argUint8"))),
+            uint256(keccak256("deposit"))
         );
     }
 }
