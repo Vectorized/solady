@@ -195,4 +195,25 @@ contract LibCloneTest is Test, Clone {
         address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
         assertEq(address(clone), predicted);
     }
+
+    function testCloneDeteministicWithImmutableArgs() public {
+        uint256 value_;
+        bytes32 salt;
+        address argAddress;
+        uint256 argUint256;
+        uint256[] memory argUint256Array;
+        uint64 argUint64;
+        uint8 argUint8;
+        uint256 deposit = 123;
+        testCloneDeteministicWithImmutableArgs(
+            value_,
+            salt,
+            argAddress,
+            argUint256,
+            argUint256Array,
+            argUint64,
+            argUint8,
+            deposit
+        );
+    }
 }

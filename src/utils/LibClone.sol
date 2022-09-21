@@ -154,8 +154,7 @@ library LibClone {
     function clone(address implementation, bytes memory data) internal returns (address instance) {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
-            mstore(0x20, mload(sub(data, 0x80)))
-            mstore(0x00, mload(sub(data, 0x60)))
+            let mBefore3 := mload(sub(data, 0x60))
             let mBefore2 := mload(sub(data, 0x40))
             let mBefore1 := mload(sub(data, 0x20))
             let dataLength := mload(data)
@@ -164,8 +163,8 @@ library LibClone {
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
-            let creationSize := add(extraLength, 0x6c)
-            let runSize := sub(creationSize, 0x0a)
+            // The `creationSize` is `extraLength + 108`
+            // The `runSize` is `creationSize - 10`.
 
             /**
              * ----------------------------------------------------------------------------------------------------+
@@ -252,11 +251,11 @@ library LibClone {
             // Write the rest of the bytecode.
             mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
             mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
-            mstore(sub(data, 0x5a), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602c57343d527f))
+            mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Create the instance.
-            instance := create(0, sub(data, 0x4c), creationSize)
+            instance := create(0, sub(data, 0x4c), add(extraLength, 0x6c))
 
             // If `instance` is zero, revert.
             if iszero(instance) {
@@ -270,8 +269,7 @@ library LibClone {
             mstore(data, dataLength)
             mstore(sub(data, 0x20), mBefore1)
             mstore(sub(data, 0x40), mBefore2)
-            mstore(sub(data, 0x60), mload(0x00))
-            mstore(sub(data, 0x80), mload(0x20))
+            mstore(sub(data, 0x60), mBefore3)
             mstore(dataEnd, mAfter1)
         }
     }
@@ -285,8 +283,7 @@ library LibClone {
     ) internal returns (address instance) {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
-            mstore(0x20, mload(sub(data, 0x80)))
-            mstore(0x00, mload(sub(data, 0x60)))
+            let mBefore3 := mload(sub(data, 0x60))
             let mBefore2 := mload(sub(data, 0x40))
             let mBefore1 := mload(sub(data, 0x20))
             let dataLength := mload(data)
@@ -295,8 +292,6 @@ library LibClone {
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
-            let creationSize := add(extraLength, 0x6c)
-            let runSize := sub(creationSize, 0x0a)
 
             // Write the bytecode before the data.
             mstore(data, 0x5af43d3d93803e606057fd5bf3)
@@ -305,11 +300,11 @@ library LibClone {
             // Write the rest of the bytecode.
             mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
             mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
-            mstore(sub(data, 0x5a), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602c57343d527f))
+            mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Create the instance.
-            instance := create2(0, sub(data, 0x4c), creationSize, salt)
+            instance := create2(0, sub(data, 0x4c), add(extraLength, 0x6c), salt)
 
             // If `instance` is zero, revert.
             if iszero(instance) {
@@ -323,8 +318,7 @@ library LibClone {
             mstore(data, dataLength)
             mstore(sub(data, 0x20), mBefore1)
             mstore(sub(data, 0x40), mBefore2)
-            mstore(sub(data, 0x60), mload(0x00))
-            mstore(sub(data, 0x80), mload(0x20))
+            mstore(sub(data, 0x60), mBefore3)
             mstore(dataEnd, mAfter1)
         }
     }
@@ -339,8 +333,7 @@ library LibClone {
     ) internal pure returns (address predicted) {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
-            mstore(0x20, mload(sub(data, 0x80)))
-            mstore(0x00, mload(sub(data, 0x60)))
+            let mBefore3 := mload(sub(data, 0x60))
             let mBefore2 := mload(sub(data, 0x40))
             let mBefore1 := mload(sub(data, 0x20))
             let dataLength := mload(data)
@@ -349,8 +342,6 @@ library LibClone {
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
-            let creationSize := add(extraLength, 0x6c)
-            let runSize := sub(creationSize, 0x0a)
 
             // Write the bytecode before the data.
             mstore(data, 0x5af43d3d93803e606057fd5bf3)
@@ -359,16 +350,11 @@ library LibClone {
             // Write the rest of the bytecode.
             mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
             mstore(sub(data, 0x3a), _RECEIVE_EVENT_SIG)
-            mstore(sub(data, 0x5a), or(shl(0x78, runSize), 0x6100003d81600a3d39f336602c57343d527f))
+            mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
             mstore(dataEnd, shl(0xf0, extraLength))
 
-            // Compute the bytecode hash.
-            let h := keccak256(sub(data, 0x4c), creationSize)
-            // Restore the slots cached in the scratch space.
-            mstore(sub(data, 0x60), mload(0x00))
-            mstore(sub(data, 0x80), mload(0x20))
-            // Store the bytecode hash.
-            mstore(0x35, h)
+            // Compute and store the bytecode hash.
+            mstore(0x35, keccak256(sub(data, 0x4c), add(extraLength, 0x6c)))
             mstore8(0x00, 0xff) // Write the prefix.
             mstore(0x01, shl(96, deployer))
             mstore(0x15, salt)
@@ -380,6 +366,7 @@ library LibClone {
             mstore(data, dataLength)
             mstore(sub(data, 0x20), mBefore1)
             mstore(sub(data, 0x40), mBefore2)
+            mstore(sub(data, 0x60), mBefore3)
             mstore(dataEnd, mAfter1)
         }
     }
