@@ -1,5 +1,9 @@
 # solady
 
+[![NPM][npm-shield]][npm-url]
+[![CI][ci-shield]][ci-url]
+[![MIT License][license-shield]][license-url]
+
 Gas optimized Solidity snippets.
 
 I'm sooooooOooooooooOoooOoooooooooooooooo...
@@ -67,3 +71,12 @@ This repository is inspired by or directly modified from many sources, primarily
 - [Zolidity](https://github.com/z0r0z/zolidity)
 - [🐍 Snekmate](https://github.com/pcaversaccio/snekmate)
 - [Femplate](https://github.com/abigger87/femplate)
+
+[npm-shield]: https://img.shields.io/npm/v/solady.svg
+[npm-url]: https://www.npmjs.com/package/solady
+
+[ci-shield]: https://img.shields.io/github/workflow/status/vectorized/solady/ci?label=build
+[ci-url]: https://github.com/vectorized/solady/actions/workflows/ci.yml
+
+[license-shield]: https://img.shields.io/badge/License-MIT-green.svg
+[license-url]: https://github.com/vectorized/solady/blob/main/LICENSE.txt
