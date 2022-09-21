@@ -187,7 +187,7 @@ library LibClone {
              *                                                                                                     |
              * ::: if no calldata, emit event & return w/o `DELEGATECALL` :::::::::::::::::::::::::::::::::::::::: |
              * 36       | CALLDATASIZE    | cds                      |                                             |
-             * 60 0x2f  | PUSH1 0x2c      | 0x2c cds                 |                                             |
+             * 60 0x2c  | PUSH1 0x2c      | 0x2c cds                 |                                             |
              * 57       | JUMPI           |                          |                                             |
              * 34       | CALLVALUE       | cv                       |                                             |
              * 3d       | RETURNDATASIZE  | 0 cv                     |                                             |
