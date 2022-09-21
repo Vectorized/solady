@@ -4,9 +4,12 @@ pragma solidity ^0.8.4;
 import "forge-std/Test.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {Clone} from "../src/utils/Clone.sol";
+import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 
 contract LibCloneTest is Test, Clone {
     error CustomError(uint256 currentValue);
+
+    event ReceiveETH(uint256 amount);
 
     uint256 public value;
 
@@ -22,6 +25,22 @@ contract LibCloneTest is Test, Clone {
 
     function revertWithError() public view {
         revert CustomError(value);
+    }
+
+    function _canReceiveETHCorectly(address clone, uint256 deposit) internal {
+        deposit = deposit % 1 ether;
+
+        vm.deal(address(this), deposit * 2);
+
+        vm.expectEmit(true, true, true, true);
+        emit ReceiveETH(deposit);
+        SafeTransferLib.safeTransferETH(clone, deposit);
+        assertEq(clone.balance, deposit);
+
+        vm.expectEmit(true, true, true, true);
+        emit ReceiveETH(deposit);
+        payable(clone).transfer(deposit);
+        assertEq(clone.balance, deposit * 2);
     }
 
     function _shouldBehaveLikeClone(address clone, uint256 value_) internal {
@@ -129,7 +148,8 @@ contract LibCloneTest is Test, Clone {
         uint256 argUint256,
         uint256[] memory argUint256Array,
         uint64 argUint64,
-        uint8 argUint8
+        uint8 argUint8,
+        uint256 deposit
     ) public {
         bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
         bytes32 saltKey = keccak256(abi.encode(data, salt));
@@ -145,6 +165,7 @@ contract LibCloneTest is Test, Clone {
         saltIsUsed[saltKey] = true;
 
         _shouldBehaveLikeClone(address(clone), value_);
+        _canReceiveETHCorectly(address(clone), deposit);
 
         uint256 argOffset;
         assertEq(clone.getArgAddress(argOffset), argAddress);
