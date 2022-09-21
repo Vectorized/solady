@@ -29,6 +29,18 @@ contract LibCloneTest is TestPlus, Clone {
         revert CustomError(value);
     }
 
+    function getCalldataHash() public pure returns (bytes32 result) {
+        assembly {
+            let extraLength := shr(0xf0, calldataload(sub(calldatasize(), 2)))
+            if iszero(lt(extraLength, 2)) {
+                let offset := sub(calldatasize(), extraLength)
+                let m := mload(0x40)
+                calldatacopy(m, offset, sub(extraLength, 2))
+                result := keccak256(m, sub(extraLength, 2))
+            }
+        }
+    }
+
     function _canReceiveETHCorectly(address clone, uint256 deposit) internal {
         deposit = deposit % 1 ether;
 
@@ -205,6 +217,8 @@ contract LibCloneTest is TestPlus, Clone {
         assertEq(address(clone), predicted);
         // Check that memory management is done properly.
         assertEq(keccak256(data), dataHashBefore);
+
+        assertEq(clone.getCalldataHash(), dataHashBefore);
     }
 
     function testCloneDeteministicWithImmutableArgs() public {
