@@ -217,8 +217,8 @@ library LibClone {
              *                                                                                                     |
              * ::: copy extra data to memory ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
              * 80       | DUP1           | e e 0 0 0 0               | [0..cds): calldata                          |
-             * 60 0x35  | PUSH1 0x35     | 0x35 e e 0 0 0 0          | [0..cds): calldata                          |
-             * 36       | CALLDATASIZE   | cds 0x35 e e 0 0 0 0      | [0..cds): calldata                          |
+             * 60 rb    | PUSH1 rb       | rb e e 0 0 0 0            | [0..cds): calldata                          |
+             * 36       | CALLDATASIZE   | cds rb e e 0 0 0 0        | [0..cds): calldata                          |
              * 39       | CODECOPY       | e 0 0 0 0                 | [0..cds): calldata, [cds..cds+e): extraData |
              *                                                                                                     |
              * ::: delegate call to the implementation contract :::::::::::::::::::::::::::::::::::::::::::::::::: |
