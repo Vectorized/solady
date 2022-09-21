@@ -6,7 +6,9 @@ import {LibClone} from "../src/utils/LibClone.sol";
 import {Clone} from "../src/utils/Clone.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 
-contract LibCloneTest is Test, Clone {
+import "./utils/TestPlus.sol";
+
+contract LibCloneTest is TestPlus, Clone {
     error CustomError(uint256 currentValue);
 
     event ReceiveETH(uint256 amount);
@@ -118,7 +120,7 @@ contract LibCloneTest is Test, Clone {
         uint256[] memory argUint256Array,
         uint64 argUint64,
         uint8 argUint8
-    ) public {
+    ) public brutalizeMemoryWithSeed(value_) {
         bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
         LibCloneTest clone = LibCloneTest(LibClone.clone(address(this), data));
         _shouldBehaveLikeClone(address(clone), value_);
@@ -150,25 +152,22 @@ contract LibCloneTest is Test, Clone {
         uint64 argUint64,
         uint8 argUint8,
         uint256 deposit
-    ) public {
-        bytes memory data = abi.encodePacked(
-            argUint256,
-            argAddress,
-            argUint256,
-            argUint256Array,
-            argUint64,
-            argUint8,
-            argUint256
-        );
+    ) public brutalizeMemoryWithSeed(value_) {
+        bytes memory data = abi.encodePacked(argUint256, argAddress, argUint256, argUint256Array, argUint64, argUint8, argUint256);
+        bytes32 dataHashBefore = keccak256(data);
         bytes32 saltKey = keccak256(abi.encode(data, salt));
 
         if (saltIsUsed[saltKey]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
             LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
+            // Check that memory management is done properly.
+            assertEq(keccak256(data), dataHashBefore);
             return;
         }
 
         LibCloneTest clone = LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
+        // Check that memory management is done properly.
+        assertEq(keccak256(data), dataHashBefore);
 
         saltIsUsed[saltKey] = true;
 
@@ -189,11 +188,13 @@ contract LibCloneTest is Test, Clone {
             argOffset += (64 / 8);
             assertEq(clone.getArgUint8(argOffset), argUint8);
             argOffset += (8 / 8);
-            assertEq(clone.getArgUint256(argOffset), argUint256);
+            assertEq(clone.getArgUint256(argOffset), argUint256);    
         }
-
+        
         address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
         assertEq(address(clone), predicted);
+        // Check that memory management is done properly.
+        assertEq(keccak256(data), dataHashBefore);
     }
 
     function testCloneDeteministicWithImmutableArgs() public {
