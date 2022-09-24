@@ -583,6 +583,15 @@ contract LibStringTest is TestPlus {
         }
     }
 
+    function testStringPackTwoOverflowLength() public {
+        string memory a = "some data";
+        string memory b = "stuff";
+        assembly {
+            mstore(b, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
+        }
+        assertEq(LibString.packTwo(a, b), bytes32(0));
+    }
+
     function testStringUnpackTwo(bytes32 packed, bytes memory brutalizedWith) public brutalizeMemory(brutalizedWith) {
         uint256 length1 = uint256(packed) & 0xff;
         uint256 length2 = (uint256(packed) >> 8) & 0xff;
