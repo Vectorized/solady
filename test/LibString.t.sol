@@ -471,7 +471,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.slice(subject, 31, 21), "");
     }
 
-    function testStringSafePackOne() public {
+    function testStringPackOne() public {
         _brutalizeFreeMemoryStart();
         assertEq(LibString.packOne("abc"), bytes32(abi.encodePacked(bytes31("abc"), uint8(3))));
 
@@ -485,7 +485,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.packOne("abcdefghijklmnopqrstuvwxyz123456"), bytes32(0));
     }
 
-    function testStringSafePackOne(string memory a, bytes memory brutalizeWith) public brutalizeMemory(brutalizeWith) {
+    function testStringPackOne(string memory a, bytes memory brutalizeWith) public brutalizeMemory(brutalizeWith) {
         if (bytes(a).length > 31) {
             assertEq(LibString.packOne(a), bytes32(0));
         } else {
@@ -493,7 +493,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStringSafePackOneBrutalizedPadding(string memory a, bytes32 junk) public {
+    function testStringPackOneBrutalizedPadding(string memory a, bytes32 junk) public {
         vm.assume(bytes(a).length < 32);
         // `a` is copied to ensure writing junk does not corrupt something else
         string memory brutalizedA;
