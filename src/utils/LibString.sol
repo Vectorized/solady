@@ -522,55 +522,55 @@ library LibString {
         result = slice(subject, start, uint256(int256(-1)));
     }
 
-    /// @dev packs `a` with length into a single word, returns 0 if length > 31
+    /// @dev packs `a` with length into a single word, returns 0 if length > 31.
     function packOne(string memory a) internal pure returns (bytes32 result) {
         assembly {
             let len := mload(a)
-            // mask to clear any data incase string is not zero padded in memory
+            // mask to clear any data incase string is not zero padded in memory.
             let mask := shl(shl(3, sub(32, len)), not(0))
-            // packed string assuming length is correct
+            // packed string assuming length is correct.
             result := or(len, and(mload(add(a, 0x20)), mask))
-            // makes result zero if length is too long
+            // makes result zero if length is too long.
             result := mul(result, lt(len, 0x20))
         }
     }
 
-    /// @dev unpacks `a` into a string, returns an empty string if implied length invalid
+    /// @dev unpacks `a` into a string, returns an empty string if implied length invalid.
     function unpackOne(bytes32 a) internal pure returns (string memory result) {
         assembly {
             result := mload(0x40)
             let len := and(a, 0xff)
             len := mul(len, lt(len, 0x20))
             mstore(result, len)
-            // mask to clear any data incase packed string is not zero padded
+            // mask to clear any data incase packed string is not zero padded.
             let mask := shl(shl(3, sub(32, len)), not(0))
-            // store data in memory
+            // store data in memory.
             mstore(add(result, 0x20), and(a, mask))
-            // update free memory pointer
+            // update free memory pointer.
             mstore(0x40, add(result, shr(iszero(len), 0x40)))
         }
     }
 
-    /// @dev packs two strings into a single word, returns 0 if combined length over 30
+    /// @dev packs two strings into a single word, returns 0 if combined length over 30.
     function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
         assembly {
-            // insert `a` into packed result, assuming the length is safe
+            // insert `a` into packed result, assuming the length is safe.
             let lenA := mload(a)
             let maskA := shl(shl(3, sub(32, lenA)), not(0))
             result := or(and(mload(add(a, 0x20)), maskA), lenA)
 
-            // insert `b` into packed result, assuming the length is safe
+            // insert `b` into packed result, assuming the length is safe.
             let lenB := mload(b)
             let maskB := shl(shl(3, sub(32, lenB)), not(0))
             result := or(shr(shl(3, lenA), and(mload(add(b, 0x20)), maskB)), or(shl(8, lenB), result))
 
-            // branchless total length and overflow check
+            // branchless total length and overflow check.
             let totalLen := add(lenA, lenB)
             result := mul(result, and(lt(totalLen, 0x1f), iszero(lt(totalLen, lenA))))
         }
     }
 
-    /// @dev unpacks strings packed using `packTwo`, returns empty strings if implied combined length invalid
+    /// @dev unpacks strings packed using `packTwo`, returns empty strings if implied combined length invalid.
     function unpackTwo(bytes32 a) internal pure returns (string memory resultA, string memory resultB) {
         assembly {
             let lenA := and(a, 0xff)
@@ -579,23 +579,24 @@ library LibString {
             lenA := mul(lenA, lenValid)
             lenB := mul(lenB, lenValid)
 
-            // allocate memory
+            // Allocate memory.
             resultA := mload(0x40)
             resultB := add(resultA, shr(iszero(lenA), 0x40))
             mstore(0x40, add(resultB, shr(iszero(lenB), 0x40)))
 
-            // mask and store data as string A
+            // mask and store data as string A.
             let maskA := shl(shl(3, sub(32, lenA)), not(0))
             mstore(resultA, lenA)
             mstore(add(resultA, 0x20), and(maskA, a))
 
-            // mask and store data as string B
+            // mask and store data as string B.
             let maskB := shl(shl(3, sub(32, lenB)), not(0))
             mstore(resultB, lenB)
             mstore(add(resultB, 0x20), and(maskB, shl(shl(3, lenA), a)))
         }
     }
 
+    /// @dev directly returns `a` without copying, assumes that the offset of `a` is at least 0x20
     function directReturn(string memory a) internal pure {
         assembly {
             let returnOffest := sub(a, 0x20)
