@@ -509,6 +509,34 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.packOne(brutalizedA), bytes32(abi.encodePacked(bytes31(bytes(a)), uint8(bytes(a).length))));
     }
 
+    function testStringUnpackOne(string memory a, bytes memory brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        vm.assume(bytes(a).length < 32);
+        string memory unpackedA = LibString.unpackOne(LibString.packOne(a));
+        _checkStringIsZeroRightPadded(unpackedA);
+        _brutalizeFreeMemoryStart();
+        assertEq(unpackedA, a);
+    }
+
+    function testStringUnpackOneBrutalizedPadding(bytes32 a, bytes memory brutalizedWith)
+        public
+        brutalizeMemory(brutalizedWith)
+    {
+        uint256 length = uint256(a) & 0xff;
+        vm.assume(length < 32);
+        string memory unpackedA = LibString.unpackOne(a);
+        _checkStringIsZeroRightPadded(unpackedA);
+        string memory expectedResult = new string(length);
+        for (uint256 i = 0; i < length; i++) {
+            uint8 char = uint8(a[i]);
+            emit log_named_uint("char", uint8(char));
+            assembly {
+                mstore8(add(add(expectedResult, 0x20), i), char)
+            }
+        }
+        _brutalizeFreeMemoryStart();
+        assertEq(unpackedA, expectedResult);
+    }
+
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
         unchecked {
             string memory result;

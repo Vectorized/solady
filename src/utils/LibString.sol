@@ -11,6 +11,8 @@ library LibString {
 
     /// @dev The `length` of the output is too small to contain all the hex digits.
     error HexLengthInsufficient();
+    /// @dev The implied length of the packed string is too large (>31)
+    error InvalidPackedLength();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -522,8 +524,7 @@ library LibString {
         result = slice(subject, start, uint256(int256(-1)));
     }
 
-    /// @dev packs `a` with length into a bytes32 value, returns 0 if longer
-    /// than 31 bytes
+    /// @dev packs `a` with length into a single word, returns 0 if length > 31
     function packOne(string memory a) internal pure returns (bytes32 result) {
         assembly {
             let len := mload(a)
@@ -533,6 +534,26 @@ library LibString {
             result := or(len, and(mload(add(a, 0x20)), mask))
             // makes result zero if length is too long
             result := mul(result, lt(len, 0x20))
+        }
+    }
+
+    /// @dev unpacks `a` into a string, reverts if implied length is too long
+    function unpackOne(bytes32 a) internal pure returns (string memory result) {
+        assembly {
+            result := mload(0x40)
+            let len := and(a, 0xff)
+            if gt(len, 0x1f) {
+                // Store the function selector of `InvalidPackedLength()`.
+                mstore(0x00, 0x0bdf8038)
+                revert(0x1c, 0x04)
+            }
+            mstore(result, len)
+            // mask to clear any data incase packed string is not zero padded
+            let mask := shl(shl(3, sub(32, len)), not(0))
+            // remove length from packed data, store in memory
+            mstore(add(result, 0x20), and(a, mask))
+            // update free memory pointer
+            mstore(0x40, add(result, 0x40))
         }
     }
 }
