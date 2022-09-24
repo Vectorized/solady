@@ -4,6 +4,12 @@ pragma solidity ^0.8.4;
 import "./utils/TestPlus.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
+contract StringReturner {
+    function returnString(string memory a) external pure returns (string memory) {
+        LibString.directReturn(a);
+    }
+}
+
 contract LibStringTest is TestPlus {
     function testToStringZero() public {
         assertEq(keccak256(bytes(LibString.toString(0))), keccak256(bytes("0")));
@@ -645,6 +651,12 @@ contract LibStringTest is TestPlus {
         LibString.unpackTwo(packed);
         freeMemoryAfter = freeMemory.length;
         assertEq(freeMemoryAfter, freeMemoryBefore + 0x40, "invalid");
+    }
+
+    function testStringDirectReturn(string memory a) public {
+        StringReturner returner = new StringReturner();
+        string memory returned = returner.returnString(a);
+        assertEq(returned, a);
     }
 
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {

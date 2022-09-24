@@ -595,4 +595,12 @@ library LibString {
             mstore(add(resultB, 0x20), and(maskB, shl(shl(3, lenA), a)))
         }
     }
+
+    function directReturn(string memory a) internal pure {
+        assembly {
+            let returnOffest := sub(a, 0x20)
+            mstore(returnOffest, 0x20)
+            return(returnOffest, add(mload(a), 0x40))
+        }
+    }
 }
