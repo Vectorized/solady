@@ -537,6 +537,26 @@ contract LibStringTest is TestPlus {
         assertEq(unpackedA, expectedResult);
     }
 
+    function testStringUnpackOneInvalidLength(bytes32 randomPacked, bytes memory brutalizedWith)
+        public
+        brutalizeMemory(brutalizedWith)
+    {
+        vm.assume(uint256(randomPacked) & 0xff >= 32);
+        uint256 freeMemoryBefore;
+        assembly {
+            freeMemoryBefore := mload(0x40)
+        }
+        string memory unpacked = LibString.unpackOne(randomPacked);
+        uint256 freeMemoryAfter;
+        assembly {
+            freeMemoryAfter := mload(0x40)
+        }
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(unpacked);
+        assertEq(unpacked, "");
+        assertEq(freeMemoryAfter, freeMemoryBefore + 0x20);
+    }
+
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
         unchecked {
             string memory result;

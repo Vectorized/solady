@@ -11,8 +11,6 @@ library LibString {
 
     /// @dev The `length` of the output is too small to contain all the hex digits.
     error HexLengthInsufficient();
-    /// @dev The implied length of the packed string is too large (>31)
-    error InvalidPackedLength();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -542,18 +540,14 @@ library LibString {
         assembly {
             result := mload(0x40)
             let len := and(a, 0xff)
-            if gt(len, 0x1f) {
-                // Store the function selector of `InvalidPackedLength()`.
-                mstore(0x00, 0x0bdf8038)
-                revert(0x1c, 0x04)
-            }
+            len := mul(len, lt(len, 0x20))
             mstore(result, len)
             // mask to clear any data incase packed string is not zero padded
             let mask := shl(shl(3, sub(32, len)), not(0))
             // remove length from packed data, store in memory
             mstore(add(result, 0x20), and(a, mask))
             // update free memory pointer
-            mstore(0x40, add(result, 0x40))
+            mstore(0x40, add(result, shl(iszero(iszero(len)), 0x20)))
         }
     }
 }
