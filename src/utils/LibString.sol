@@ -550,4 +550,46 @@ library LibString {
             mstore(0x40, add(result, shl(iszero(iszero(len)), 0x20)))
         }
     }
+
+    // @dev
+    function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
+        assembly {
+            // insert `a` into packed result, assuming the length is safe
+            let lenA := mload(a)
+            let maskA := shl(shl(3, sub(32, lenA)), not(0))
+            result := or(and(mload(add(a, 0x20)), maskA), lenA)
+
+            // insert `b` into packed result, assuming the length is safe
+            let lenB := mload(b)
+            let maskB := shl(shl(3, sub(32, lenB)), not(0))
+            result := or(shr(shl(3, lenA), and(mload(add(b, 0x20)), maskB)), or(shl(8, lenB), result))
+
+            // branchless total length and overflow check
+            let totalLen := add(lenA, lenB)
+            result := mul(result, and(lt(totalLen, 0x1f), iszero(lt(totalLen, lenA))))
+        }
+    }
+
+    function unpackTwo(bytes32 a) internal pure returns (string memory resultA, string memory resultB) {
+        assembly {
+            let lenA := and(a, 0xff)
+            let lenB := and(shr(8, a), 0xff)
+            let lenValid := lt(add(lenA, lenB), 0x1f)
+            lenA := mul(lenA, lenValid)
+            lenB := mul(lenB, lenValid)
+
+            // allocate memory
+            resultA := mload(0x40)
+            resultB := add(resultA, shl(iszero(iszero(lenA)), 0x20))
+            mstore(0x40, add(resultB, shl(iszero(iszero(lenB)), 0x20)))
+
+            let maskA := shl(shl(3, sub(32, lenA)), not(0))
+            mstore(resultA, lenA)
+            mstore(add(resultA, 0x20), and(maskA, a))
+
+            let maskB := shl(shl(3, sub(32, lenB)), not(0))
+            mstore(resultB, lenB)
+            mstore(add(resultB, 0x20), and(maskB, shl(shl(3, lenA), a)))
+        }
+    }
 }

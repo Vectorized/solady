@@ -528,7 +528,6 @@ contract LibStringTest is TestPlus {
         string memory expectedResult = new string(length);
         for (uint256 i = 0; i < length; i++) {
             uint8 char = uint8(a[i]);
-            emit log_named_uint("char", uint8(char));
             assembly {
                 mstore8(add(add(expectedResult, 0x20), i), char)
             }
@@ -555,6 +554,97 @@ contract LibStringTest is TestPlus {
         _checkStringIsZeroRightPadded(unpacked);
         assertEq(unpacked, "");
         assertEq(freeMemoryAfter, freeMemoryBefore + 0x20);
+    }
+
+    function testStringPackTwo(
+        string memory a,
+        string memory b,
+        bytes memory brutalizedWith
+    ) public brutalizeMemory(brutalizedWith) {
+        if (bytes(a).length + bytes(b).length <= 30) {
+            assertEq(
+                LibString.packTwo(a, b),
+                bytes32(
+                    abi.encodePacked(
+                        bytes30(bytes.concat(bytes(a), bytes(b))),
+                        uint8(bytes(b).length),
+                        uint8(bytes(a).length)
+                    )
+                )
+            );
+        } else {
+            assertEq(LibString.packTwo(a, b), bytes32(0));
+        }
+    }
+
+    function testStringUnpackTwo(bytes32 packed, bytes memory brutalizedWith) public brutalizeMemory(brutalizedWith) {
+        uint256 length1 = uint256(packed) & 0xff;
+        uint256 length2 = (uint256(packed) >> 8) & 0xff;
+        (string memory a, string memory b) = LibString.unpackTwo(packed);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(a);
+        _checkStringIsZeroRightPadded(b);
+        if (length1 + length2 <= 30) {
+            string memory expectedA = new string(length1);
+            for (uint256 i; i < length1; i++) {
+                uint8 char = uint8(packed[i]);
+                assembly {
+                    mstore8(add(expectedA, add(0x20, i)), char)
+                }
+            }
+            assertEq(a, expectedA);
+            string memory expectedB = new string(length2);
+            for (uint256 i; i < length2; i++) {
+                uint8 char = uint8(packed[length1 + i]);
+                assembly {
+                    mstore8(add(expectedB, add(0x20, i)), char)
+                }
+            }
+            assertEq(b, expectedB);
+        } else {
+            assertEq(a, "");
+            assertEq(b, "");
+        }
+    }
+
+    function testStringUnpackTwoMemoryAllocation() public {
+        // allow for direct retrieval of free memory pointer in solidity
+        bytes memory freeMemory;
+        assembly {
+            freeMemory := 0x40
+        }
+
+        bytes32 packed = LibString.packTwo("", "abc");
+        uint256 freeMemoryBefore = freeMemory.length;
+        LibString.unpackTwo(packed);
+        uint256 freeMemoryAfter = freeMemory.length;
+        assertEq(freeMemoryAfter, freeMemoryBefore + 0x60, "empty, smth");
+
+        packed = LibString.packTwo("abc", "");
+        freeMemoryBefore = freeMemory.length;
+        LibString.unpackTwo(packed);
+        freeMemoryAfter = freeMemory.length;
+        assertEq(freeMemoryAfter, freeMemoryBefore + 0x60, "smth, empty");
+
+        packed = LibString.packTwo("", "");
+        freeMemoryBefore = freeMemory.length;
+        LibString.unpackTwo(packed);
+        freeMemoryAfter = freeMemory.length;
+        assertEq(freeMemoryAfter, freeMemoryBefore + 0x40, "empty, empty");
+
+        packed = LibString.packTwo("yo", "mama");
+        freeMemoryBefore = freeMemory.length;
+        LibString.unpackTwo(packed);
+        freeMemoryAfter = freeMemory.length;
+        assertEq(freeMemoryAfter, freeMemoryBefore + 0x80, "smth, smth");
+
+        packed = bytes32(
+            bytes.concat(bytes30(keccak256("random seed testStringUnpackTwoMemoryAllocation")), bytes2(0xffff))
+        );
+        freeMemoryBefore = freeMemory.length;
+        LibString.unpackTwo(packed);
+        freeMemoryAfter = freeMemory.length;
+        assertEq(freeMemoryAfter, freeMemoryBefore + 0x40, "invalid");
     }
 
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
