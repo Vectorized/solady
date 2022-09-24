@@ -547,7 +547,7 @@ library LibString {
             // store data in memory
             mstore(add(result, 0x20), and(a, mask))
             // update free memory pointer
-            mstore(0x40, add(result, shl(iszero(iszero(len)), 0x20)))
+            mstore(0x40, add(result, shr(iszero(len), 0x40)))
         }
     }
 
@@ -581,8 +581,8 @@ library LibString {
 
             // allocate memory
             resultA := mload(0x40)
-            resultB := add(resultA, shl(iszero(iszero(lenA)), 0x20))
-            mstore(0x40, add(resultB, shl(iszero(iszero(lenB)), 0x20)))
+            resultB := add(resultA, shr(iszero(lenA), 0x40))
+            mstore(0x40, add(resultB, shr(iszero(lenB), 0x40)))
 
             // mask and store data as string A
             let maskA := shl(shl(3, sub(32, lenA)), not(0))
