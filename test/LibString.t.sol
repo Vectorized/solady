@@ -471,6 +471,44 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.slice(subject, 31, 21), "");
     }
 
+    function testStringSafePackOne() public {
+        _brutalizeFreeMemoryStart();
+        assertEq(LibString.packOne("abc"), bytes32(abi.encodePacked(bytes31("abc"), uint8(3))));
+
+        _brutalizeFreeMemoryStart();
+        assertEq(
+            LibString.packOne("abcdefghijklmnopqrstuvwxyz12345"),
+            bytes32(abi.encodePacked(bytes31("abcdefghijklmnopqrstuvwxyz12345"), uint8(31)))
+        );
+
+        _brutalizeFreeMemoryStart();
+        assertEq(LibString.packOne("abcdefghijklmnopqrstuvwxyz123456"), bytes32(0));
+    }
+
+    function testStringSafePackOne(string memory a, bytes memory brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        if (bytes(a).length > 31) {
+            assertEq(LibString.packOne(a), bytes32(0));
+        } else {
+            assertEq(LibString.packOne(a), bytes32(abi.encodePacked(bytes31(bytes(a)), uint8(bytes(a).length))));
+        }
+    }
+
+    function testStringSafePackOneBrutalizedPadding(string memory a, bytes32 junk) public {
+        vm.assume(bytes(a).length < 32);
+        // `a` is copied to ensure writing junk does not corrupt something else
+        string memory brutalizedA;
+        assembly {
+            brutalizedA := mload(0x40)
+            mstore(brutalizedA, mload(a))
+            mstore(add(brutalizedA, 0x20), mload(add(a, 0x20)))
+            // write junk
+            mstore(add(brutalizedA, add(0x20, mload(brutalizedA))), junk)
+            // update free memory pointer
+            mstore(0x40, add(brutalizedA, 0x60))
+        }
+        assertEq(LibString.packOne(brutalizedA), bytes32(abi.encodePacked(bytes31(bytes(a)), uint8(bytes(a).length))));
+    }
+
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
         unchecked {
             string memory result;

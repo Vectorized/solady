@@ -521,4 +521,18 @@ library LibString {
     function slice(string memory subject, uint256 start) internal pure returns (string memory result) {
         result = slice(subject, start, uint256(int256(-1)));
     }
+
+    /// @dev packs `a` with length into a bytes32 value, returns 0 if longer
+    /// than 31 bytes
+    function packOne(string memory a) internal pure returns (bytes32 result) {
+        assembly {
+            let len := mload(a)
+            // mask to clear any data incase string is not zero padded in memory
+            let mask := shl(shl(3, sub(32, len)), not(0))
+            // packed string assuming length is correct
+            result := or(len, and(mload(add(a, 0x20)), mask))
+            // makes result zero if length is too long
+            result := mul(result, lt(len, 0x20))
+        }
+    }
 }
