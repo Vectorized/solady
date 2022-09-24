@@ -535,7 +535,7 @@ library LibString {
         }
     }
 
-    /// @dev unpacks `a` into a string, reverts if implied length is too long
+    /// @dev unpacks `a` into a string, returns an empty string if implied length invalid
     function unpackOne(bytes32 a) internal pure returns (string memory result) {
         assembly {
             result := mload(0x40)
@@ -551,7 +551,7 @@ library LibString {
         }
     }
 
-    // @dev
+    /// @dev packs two strings into a single word, returns 0 if combined length over 30
     function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
         assembly {
             // insert `a` into packed result, assuming the length is safe
@@ -570,6 +570,7 @@ library LibString {
         }
     }
 
+    /// @dev unpacks strings packed using `packTwo`, returns empty strings if implied combined length invalid
     function unpackTwo(bytes32 a) internal pure returns (string memory resultA, string memory resultB) {
         assembly {
             let lenA := and(a, 0xff)
@@ -583,10 +584,12 @@ library LibString {
             resultB := add(resultA, shl(iszero(iszero(lenA)), 0x20))
             mstore(0x40, add(resultB, shl(iszero(iszero(lenB)), 0x20)))
 
+            // mask and store string A
             let maskA := shl(shl(3, sub(32, lenA)), not(0))
             mstore(resultA, lenA)
             mstore(add(resultA, 0x20), and(maskA, a))
 
+            // mask and store string B
             let maskB := shl(shl(3, sub(32, lenB)), not(0))
             mstore(resultB, lenB)
             mstore(add(resultB, 0x20), and(maskB, shl(shl(3, lenA), a)))
