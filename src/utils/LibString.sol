@@ -544,7 +544,7 @@ library LibString {
             mstore(result, len)
             // mask to clear any data incase packed string is not zero padded
             let mask := shl(shl(3, sub(32, len)), not(0))
-            // remove length from packed data, store in memory
+            // store data in memory
             mstore(add(result, 0x20), and(a, mask))
             // update free memory pointer
             mstore(0x40, add(result, shl(iszero(iszero(len)), 0x20)))
@@ -584,12 +584,12 @@ library LibString {
             resultB := add(resultA, shl(iszero(iszero(lenA)), 0x20))
             mstore(0x40, add(resultB, shl(iszero(iszero(lenB)), 0x20)))
 
-            // mask and store string A
+            // mask and store data as string A
             let maskA := shl(shl(3, sub(32, lenA)), not(0))
             mstore(resultA, lenA)
             mstore(add(resultA, 0x20), and(maskA, a))
 
-            // mask and store string B
+            // mask and store data as string B
             let maskB := shl(shl(3, sub(32, lenB)), not(0))
             mstore(resultB, lenB)
             mstore(add(resultB, 0x20), and(maskB, shl(shl(3, lenA), a)))
