@@ -501,7 +501,7 @@ contract LibStringTest is TestPlus {
 
     function testStringPackOneBrutalizedPadding(string memory a, bytes32 junk) public {
         vm.assume(bytes(a).length < 32);
-        // `a` is copied to ensure writing junk does not corrupt something else
+        // `a` is copied to ensure writing junk does not corrupt something else.
         string memory brutalizedA;
         assembly {
             brutalizedA := mload(0x40)
@@ -623,7 +623,7 @@ contract LibStringTest is TestPlus {
     }
 
     function testStringUnpackTwoMemoryAllocation() public {
-        // allow for direct retrieval of free memory pointer in solidity
+        // allow for direct retrieval of free memory pointer in solidity.
         bytes memory freeMemory;
         assembly {
             freeMemory := 0x40
