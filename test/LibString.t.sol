@@ -475,6 +475,8 @@ contract LibStringTest is TestPlus {
         public
         brutalizeMemoryWithSeed(randomness)
     {
+        // Ensure the input strings are zero-right padded, so that the comparison is clean.
+        a = LibString.slice(a, 0);
         bytes32 packed = LibString.packOne(a);
         unchecked {
             if (bytes(a).length < 32) {
@@ -506,6 +508,7 @@ contract LibStringTest is TestPlus {
     function testStringPackAndUnpackOne() public {
         unchecked {
             uint256 randomness;
+            testStringPackAndUnpackOne("", 0);
             testStringPackAndUnpackOne("", ++randomness);
             testStringPackAndUnpackOne("Hehe", ++randomness);
             testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCD", ++randomness);
@@ -518,6 +521,9 @@ contract LibStringTest is TestPlus {
         string memory b,
         uint256 randomness
     ) public brutalizeMemoryWithSeed(randomness) {
+        // Ensure the input strings are zero-right padded, so that the comparison is clean.
+        a = LibString.slice(a, 0);
+        b = LibString.slice(b, 0);
         bytes32 packed = LibString.packTwo(a, b);
         unchecked {
             if (bytes(a).length + bytes(b).length < 31) {
@@ -555,6 +561,7 @@ contract LibStringTest is TestPlus {
     function testStringPackAndUnpackTwo() public {
         unchecked {
             uint256 randomness;
+            testStringPackAndUnpackTwo("", "", 0);
             testStringPackAndUnpackTwo("", "", ++randomness);
             testStringPackAndUnpackTwo("a", "", ++randomness);
             testStringPackAndUnpackTwo("", "b", ++randomness);
