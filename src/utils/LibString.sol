@@ -523,7 +523,7 @@ library LibString {
     }
 
     /// @dev Packs a single string with its length into a single word.
-    /// Returns 0 if the length is zero or greater than 31.
+    /// Returns `bytes32(0)` if the length is zero or greater than 31.
     function packOne(string memory a) internal pure returns (bytes32 result) {
         assembly {
             // We don't need to zero right pad the string,
@@ -539,7 +539,7 @@ library LibString {
     }
 
     /// @dev Unpacks a string packed using {packOne}.
-    /// Returns the empty string if `packed` is zero.
+    /// Returns the empty string if `packed` is `bytes32(0)`.
     /// If `packed` is not an output of {packOne}, the output behaviour is undefined.
     function unpackOne(bytes32 packed) internal pure returns (string memory result) {
         assembly {
@@ -557,7 +557,7 @@ library LibString {
     }
 
     /// @dev Packs two strings with their lengths into a single word.
-    /// Returns 0 if combined length is zero or over 30.
+    /// Returns `bytes32(0)` if combined length is zero or greater than 30.
     function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
         assembly {
             let aLength := mload(a)
@@ -585,7 +585,7 @@ library LibString {
     }
 
     /// @dev Unpacks strings packed using {packTwo}.
-    /// Returns the empty strings if `packed` is zero.
+    /// Returns the empty strings if `packed` is `bytes32(0)`.
     /// If `packed` is not an output of {packTwo}, the output behaviour is undefined.
     function unpackTwo(bytes32 packed) internal pure returns (string memory resultA, string memory resultB) {
         assembly {
