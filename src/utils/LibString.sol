@@ -521,4 +521,91 @@ library LibString {
     function slice(string memory subject, uint256 start) internal pure returns (string memory result) {
         result = slice(subject, start, uint256(int256(-1)));
     }
+
+    /// @dev Packs a single string with its length into a single word.
+    /// Returns `bytes32(0)` if the length is zero or greater than 31.
+    function packOne(string memory a) internal pure returns (bytes32 result) {
+        assembly {
+            // We don't need to zero right pad the string,
+            // since this is our own custom non-standard packing scheme.
+            result := mul(
+                // Load the length and the bytes.
+                mload(add(a, 0x1f)),
+                // `length != 0 && length < 32`. Abuses underflow.
+                // Assumes that the length is valid and within the block gas limit.
+                lt(sub(mload(a), 1), 0x1f)
+            )
+        }
+    }
+
+    /// @dev Unpacks a string packed using {packOne}.
+    /// Returns the empty string if `packed` is `bytes32(0)`.
+    /// If `packed` is not an output of {packOne}, the output behaviour is undefined.
+    function unpackOne(bytes32 packed) internal pure returns (string memory result) {
+        assembly {
+            // Grab the free memory pointer.
+            result := mload(0x40)
+            // Allocate 2 words (1 for the length, 1 for the bytes).
+            mstore(0x40, add(result, 0x40))
+            // Zeroize the length slot.
+            mstore(result, 0)
+            // Store the length and bytes.
+            mstore(add(result, 0x1f), packed)
+            // Right pad with zeroes.
+            mstore(add(add(result, 0x20), mload(result)), 0)
+        }
+    }
+
+    /// @dev Packs two strings with their lengths into a single word.
+    /// Returns `bytes32(0)` if combined length is zero or greater than 30.
+    function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
+        assembly {
+            let aLength := mload(a)
+            // We don't need to zero right pad the strings,
+            // since this is our own custom non-standard packing scheme.
+            result := mul(
+                // Load the length and the bytes of `a` and `b`.
+                or(shl(shl(3, sub(0x1f, aLength)), mload(add(a, aLength))), mload(sub(add(b, 0x1e), aLength))),
+                // `totalLength != 0 && totalLength < 31`. Abuses underflow.
+                // Assumes that the lengths are valid and within the block gas limit.
+                lt(sub(add(aLength, mload(b)), 1), 0x1e)
+            )
+        }
+    }
+
+    /// @dev Unpacks strings packed using {packTwo}.
+    /// Returns the empty strings if `packed` is `bytes32(0)`.
+    /// If `packed` is not an output of {packTwo}, the output behaviour is undefined.
+    function unpackTwo(bytes32 packed) internal pure returns (string memory resultA, string memory resultB) {
+        assembly {
+            // Grab the free memory pointer.
+            resultA := mload(0x40)
+            resultB := add(resultA, 0x40)
+            // Allocate 2 words for each string (1 for the length, 1 for the byte). Total 4 words.
+            mstore(0x40, add(resultB, 0x40))
+            // Zeroize the length slots.
+            mstore(resultA, 0)
+            mstore(resultB, 0)
+            // Store the lengths and bytes.
+            mstore(add(resultA, 0x1f), packed)
+            mstore(add(resultB, 0x1f), mload(add(add(resultA, 0x20), mload(resultA))))
+            // Right pad with zeroes.
+            mstore(add(add(resultA, 0x20), mload(resultA)), 0)
+            mstore(add(add(resultB, 0x20), mload(resultB)), 0)
+        }
+    }
+
+    /// @dev Directly returns `a` without copying.
+    function directReturn(string memory a) internal pure {
+        assembly {
+            // Right pad with zeroes. Just in case the string is produced
+            // by a method that doesn't zero right pad.
+            mstore(add(add(a, 0x20), mload(a)), 0)
+            // Store the return offset.
+            // Assumes that the string does not start from the scratch space.
+            mstore(sub(a, 0x20), 0x20)
+            // End the transaction, returning the string.
+            return(sub(a, 0x20), add(mload(a), 0x40))
+        }
+    }
 }

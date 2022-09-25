@@ -471,6 +471,115 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.slice(subject, 31, 21), "");
     }
 
+    function testStringPackAndUnpackOneDifferential(string memory a, uint256 randomness)
+        public
+        brutalizeMemoryWithSeed(randomness)
+    {
+        // Ensure the input strings are zero-right padded, so that the comparison is clean.
+        a = LibString.slice(a, 0);
+        bytes32 packed = LibString.packOne(a);
+        unchecked {
+            if (bytes(a).length < 32) {
+                assertEq(packed, bytes32(abi.encodePacked(uint8(bytes(a).length), a)));
+            } else {
+                assertEq(packed, bytes32(0));
+            }
+        }
+    }
+
+    function testStringPackAndUnpackOne(string memory a, uint256 randomness)
+        public
+        brutalizeMemoryWithSeed(randomness)
+    {
+        _roundUpFreeMemoryPointer();
+        bytes32 packed = LibString.packOne(a);
+        string memory unpacked = LibString.unpackOne(packed);
+        _checkStringIsZeroRightPadded(unpacked);
+        _brutalizeFreeMemoryStart();
+
+        if (bytes(a).length < 32) {
+            assertEq(unpacked, a);
+        } else {
+            assertEq(packed, bytes32(0));
+            assertEq(unpacked, "");
+        }
+    }
+
+    function testStringPackAndUnpackOne() public {
+        unchecked {
+            uint256 randomness;
+            testStringPackAndUnpackOne("", 0);
+            testStringPackAndUnpackOne("", ++randomness);
+            testStringPackAndUnpackOne("Hehe", ++randomness);
+            testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCD", ++randomness);
+            testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ++randomness);
+        }
+    }
+
+    function testStringPackAndUnpackTwoDifferential(
+        string memory a,
+        string memory b,
+        uint256 randomness
+    ) public brutalizeMemoryWithSeed(randomness) {
+        // Ensure the input strings are zero-right padded, so that the comparison is clean.
+        a = LibString.slice(a, 0);
+        b = LibString.slice(b, 0);
+        bytes32 packed = LibString.packTwo(a, b);
+        unchecked {
+            if (bytes(a).length + bytes(b).length < 31) {
+                assertEq(packed, bytes32(abi.encodePacked(uint8(bytes(a).length), a, uint8(bytes(b).length), b)));
+            } else {
+                assertEq(packed, bytes32(0));
+            }
+        }
+    }
+
+    function testStringPackAndUnpackTwo(
+        string memory a,
+        string memory b,
+        uint256 randomness
+    ) public brutalizeMemoryWithSeed(randomness) {
+        bytes32 packed = LibString.packTwo(a, b);
+        _roundUpFreeMemoryPointer();
+        (string memory unpackedA, string memory unpackedB) = LibString.unpackTwo(packed);
+        _checkStringIsZeroRightPadded(unpackedA);
+        _checkStringIsZeroRightPadded(unpackedB);
+        _brutalizeFreeMemoryStart();
+
+        unchecked {
+            if (bytes(a).length + bytes(b).length < 31) {
+                assertEq(unpackedA, a);
+                assertEq(unpackedB, b);
+            } else {
+                assertEq(packed, bytes32(0));
+                assertEq(unpackedA, "");
+                assertEq(unpackedB, "");
+            }
+        }
+    }
+
+    function testStringPackAndUnpackTwo() public {
+        unchecked {
+            uint256 randomness;
+            testStringPackAndUnpackTwo("", "", 0);
+            testStringPackAndUnpackTwo("", "", ++randomness);
+            testStringPackAndUnpackTwo("a", "", ++randomness);
+            testStringPackAndUnpackTwo("", "b", ++randomness);
+            testStringPackAndUnpackTwo("abcdefghijklmnopqrstuvwxyzABCD", "", ++randomness);
+            testStringPackAndUnpackTwo("The strongest community I've ever seen", "NGL", ++randomness);
+            testStringPackAndUnpackTwo("", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ++randomness);
+        }
+    }
+
+    function testStringDirectReturn(string memory a) public {
+        assertEq(this.returnString(a), a);
+        // Unfortunately, we can't actually test if {directReturn} will actually zero right pad here.
+    }
+
+    function returnString(string memory a) external pure returns (string memory) {
+        LibString.directReturn(a);
+    }
+
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
         unchecked {
             string memory result;
