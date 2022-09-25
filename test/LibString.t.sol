@@ -4,12 +4,6 @@ pragma solidity ^0.8.4;
 import "./utils/TestPlus.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
-contract StringReturner {
-    function returnString(string memory a) external pure returns (string memory) {
-        LibString.directReturn(a);
-    }
-}
-
 contract LibStringTest is TestPlus {
     function testToStringZero() public {
         assertEq(keccak256(bytes(LibString.toString(0))), keccak256(bytes("0")));
@@ -477,195 +471,75 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.slice(subject, 31, 21), "");
     }
 
-    function testStringPackOne() public {
-        _brutalizeFreeMemoryStart();
-        assertEq(LibString.packOne("abc"), bytes32(abi.encodePacked(bytes31("abc"), uint8(3))));
-
-        _brutalizeFreeMemoryStart();
-        assertEq(
-            LibString.packOne("abcdefghijklmnopqrstuvwxyz12345"),
-            bytes32(abi.encodePacked(bytes31("abcdefghijklmnopqrstuvwxyz12345"), uint8(31)))
-        );
-
-        _brutalizeFreeMemoryStart();
-        assertEq(LibString.packOne("abcdefghijklmnopqrstuvwxyz123456"), bytes32(0));
-    }
-
-    function testStringPackOne(string memory a, bytes memory brutalizeWith) public brutalizeMemory(brutalizeWith) {
-        if (bytes(a).length > 31) {
-            assertEq(LibString.packOne(a), bytes32(0));
-        } else {
-            assertEq(LibString.packOne(a), bytes32(abi.encodePacked(bytes31(bytes(a)), uint8(bytes(a).length))));
-        }
-    }
-
-    function testStringPackOneBrutalizedPadding(string memory a, bytes32 junk) public {
-        vm.assume(bytes(a).length < 32);
-        // `a` is copied to ensure writing junk does not corrupt something else.
-        string memory brutalizedA;
-        assembly {
-            brutalizedA := mload(0x40)
-            mstore(brutalizedA, mload(a))
-            mstore(add(brutalizedA, 0x20), mload(add(a, 0x20)))
-            // write junk
-            mstore(add(brutalizedA, add(0x20, mload(brutalizedA))), junk)
-            // update free memory pointer
-            mstore(0x40, add(brutalizedA, 0x60))
-        }
-        assertEq(LibString.packOne(brutalizedA), bytes32(abi.encodePacked(bytes31(bytes(a)), uint8(bytes(a).length))));
-    }
-
-    function testStringUnpackOne(string memory a, bytes memory brutalizeWith) public brutalizeMemory(brutalizeWith) {
-        vm.assume(bytes(a).length < 32);
-        string memory unpackedA = LibString.unpackOne(LibString.packOne(a));
-        _checkStringIsZeroRightPadded(unpackedA);
-        _brutalizeFreeMemoryStart();
-        assertEq(unpackedA, a);
-    }
-
-    function testStringUnpackOneBrutalizedPadding(bytes32 a, bytes memory brutalizedWith)
+    function testStringPackAndUnpackOne(string memory a, uint256 randomness)
         public
-        brutalizeMemory(brutalizedWith)
+        brutalizeMemoryWithSeed(randomness)
     {
-        uint256 length = uint256(a) & 0xff;
-        vm.assume(length < 32);
-        string memory unpackedA = LibString.unpackOne(a);
-        _checkStringIsZeroRightPadded(unpackedA);
-        string memory expectedResult = new string(length);
-        for (uint256 i = 0; i < length; i++) {
-            uint8 char = uint8(a[i]);
-            assembly {
-                mstore8(add(add(expectedResult, 0x20), i), char)
-            }
-        }
-        _brutalizeFreeMemoryStart();
-        assertEq(unpackedA, expectedResult);
-    }
-
-    function testStringUnpackOneInvalidLength(bytes32 randomPacked, bytes memory brutalizedWith)
-        public
-        brutalizeMemory(brutalizedWith)
-    {
-        vm.assume(uint256(randomPacked) & 0xff >= 32);
-        uint256 freeMemoryBefore;
-        assembly {
-            freeMemoryBefore := mload(0x40)
-        }
-        string memory unpacked = LibString.unpackOne(randomPacked);
-        uint256 freeMemoryAfter;
-        assembly {
-            freeMemoryAfter := mload(0x40)
-        }
-        _brutalizeFreeMemoryStart();
+        _roundUpFreeMemoryPointer();
+        bytes32 packed = LibString.packOne(a);
+        string memory unpacked = LibString.unpackOne(packed);
         _checkStringIsZeroRightPadded(unpacked);
-        assertEq(unpacked, "");
-        assertEq(freeMemoryAfter, freeMemoryBefore + 0x20);
+        _brutalizeFreeMemoryStart();
+
+        if (bytes(a).length < 32) {
+            assertEq(unpacked, a);
+        } else {
+            assertEq(packed, bytes32(0));
+            assertEq(unpacked, "");
+        }
     }
 
-    function testStringPackTwo(
+    function testStringPackAndUnpackOne() public {
+        unchecked {
+            uint256 randomness;
+            testStringPackAndUnpackOne("", ++randomness);
+            testStringPackAndUnpackOne("Hehe", ++randomness);
+            testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCD", ++randomness);
+            testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ++randomness);
+        }
+    }
+
+    function testStringPackAndUnpackTwo(
         string memory a,
         string memory b,
-        bytes memory brutalizedWith
-    ) public brutalizeMemory(brutalizedWith) {
-        if (bytes(a).length + bytes(b).length <= 30) {
-            assertEq(
-                LibString.packTwo(a, b),
-                bytes32(
-                    abi.encodePacked(
-                        bytes30(bytes.concat(bytes(a), bytes(b))),
-                        uint8(bytes(b).length),
-                        uint8(bytes(a).length)
-                    )
-                )
-            );
-        } else {
-            assertEq(LibString.packTwo(a, b), bytes32(0));
-        }
-    }
-
-    function testStringPackTwoOverflowLength() public {
-        string memory a = "some data";
-        string memory b = "stuff";
-        assembly {
-            mstore(b, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
-        }
-        assertEq(LibString.packTwo(a, b), bytes32(0));
-    }
-
-    function testStringUnpackTwo(bytes32 packed, bytes memory brutalizedWith) public brutalizeMemory(brutalizedWith) {
-        uint256 length1 = uint256(packed) & 0xff;
-        uint256 length2 = (uint256(packed) >> 8) & 0xff;
-        (string memory a, string memory b) = LibString.unpackTwo(packed);
+        uint256 randomness
+    ) public brutalizeMemoryWithSeed(randomness) {
+        bytes32 packed = LibString.packTwo(a, b);
+        _roundUpFreeMemoryPointer();
+        (string memory unpackedA, string memory unpackedB) = LibString.unpackTwo(packed);
+        _checkStringIsZeroRightPadded(unpackedA);
+        _checkStringIsZeroRightPadded(unpackedB);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(a);
-        _checkStringIsZeroRightPadded(b);
-        if (length1 + length2 <= 30) {
-            string memory expectedA = new string(length1);
-            for (uint256 i; i < length1; i++) {
-                uint8 char = uint8(packed[i]);
-                assembly {
-                    mstore8(add(expectedA, add(0x20, i)), char)
-                }
+
+        unchecked {
+            if (bytes(a).length + bytes(b).length < 31) {
+                assertEq(unpackedA, a);
+                assertEq(unpackedB, b);
+            } else {
+                assertEq(packed, bytes32(0));
+                assertEq(unpackedA, "");
+                assertEq(unpackedB, "");
             }
-            assertEq(a, expectedA);
-            string memory expectedB = new string(length2);
-            for (uint256 i; i < length2; i++) {
-                uint8 char = uint8(packed[length1 + i]);
-                assembly {
-                    mstore8(add(expectedB, add(0x20, i)), char)
-                }
-            }
-            assertEq(b, expectedB);
-        } else {
-            assertEq(a, "");
-            assertEq(b, "");
         }
     }
 
-    function testStringUnpackTwoMemoryAllocation() public {
-        // allow for direct retrieval of free memory pointer in solidity.
-        bytes memory freeMemory;
-        assembly {
-            freeMemory := 0x40
+    function testStringPackAndUnpackTwo() public {
+        unchecked {
+            uint256 randomness;
+            testStringPackAndUnpackTwo("", "", ++randomness);
+            testStringPackAndUnpackTwo("Hehe", "NGL", ++randomness);
+            testStringPackAndUnpackTwo("abcdefghijklmnopqrstuvwxyzABCD", "", ++randomness);
+            testStringPackAndUnpackTwo("", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ++randomness);
         }
-
-        bytes32 packed = LibString.packTwo("", "abc");
-        uint256 freeMemoryBefore = freeMemory.length;
-        LibString.unpackTwo(packed);
-        uint256 freeMemoryAfter = freeMemory.length;
-        assertEq(freeMemoryAfter, freeMemoryBefore + 0x60, "empty, smth");
-
-        packed = LibString.packTwo("abc", "");
-        freeMemoryBefore = freeMemory.length;
-        LibString.unpackTwo(packed);
-        freeMemoryAfter = freeMemory.length;
-        assertEq(freeMemoryAfter, freeMemoryBefore + 0x60, "smth, empty");
-
-        packed = LibString.packTwo("", "");
-        freeMemoryBefore = freeMemory.length;
-        LibString.unpackTwo(packed);
-        freeMemoryAfter = freeMemory.length;
-        assertEq(freeMemoryAfter, freeMemoryBefore + 0x40, "empty, empty");
-
-        packed = LibString.packTwo("yo", "mama");
-        freeMemoryBefore = freeMemory.length;
-        LibString.unpackTwo(packed);
-        freeMemoryAfter = freeMemory.length;
-        assertEq(freeMemoryAfter, freeMemoryBefore + 0x80, "smth, smth");
-
-        packed = bytes32(
-            bytes.concat(bytes30(keccak256("random seed testStringUnpackTwoMemoryAllocation")), bytes2(0xffff))
-        );
-        freeMemoryBefore = freeMemory.length;
-        LibString.unpackTwo(packed);
-        freeMemoryAfter = freeMemory.length;
-        assertEq(freeMemoryAfter, freeMemoryBefore + 0x40, "invalid");
     }
 
     function testStringDirectReturn(string memory a) public {
-        StringReturner returner = new StringReturner();
-        string memory returned = returner.returnString(a);
-        assertEq(returned, a);
+        assertEq(this.returnString(a), a);
+        // Unfortunately, we can't actually test if {directReturn} will actually zero right pad here.
+    }
+
+    function returnString(string memory a) external pure returns (string memory) {
+        LibString.directReturn(a);
     }
 
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {

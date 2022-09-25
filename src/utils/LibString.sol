@@ -522,86 +522,101 @@ library LibString {
         result = slice(subject, start, uint256(int256(-1)));
     }
 
-    /// @dev packs `a` with length into a single word, returns 0 if length > 31.
+    /// @dev Packs a single string with its length into a single word.
+    /// Returns 0 if the length is zero or greater than 31.
     function packOne(string memory a) internal pure returns (bytes32 result) {
         assembly {
-            let len := mload(a)
-            // mask to clear any data incase string is not zero padded in memory.
-            let mask := shl(shl(3, sub(32, len)), not(0))
-            // packed string assuming length is correct.
-            result := or(len, and(mload(add(a, 0x20)), mask))
-            // makes result zero if length is too long.
-            result := mul(result, lt(len, 0x20))
+            // We don't need to zero right pad the string,
+            // since this is our own custom non-standard packing scheme.
+            result := mul(
+                // Load the length and the bytes.
+                mload(add(a, 0x1f)),
+                // `length != 0 && length < 32`. Abuses underflow.
+                // Assumes that the length is valid and within the block gas limit.
+                lt(sub(mload(a), 1), 0x1f)
+            )
         }
     }
 
-    /// @dev unpacks `a` into a string, returns an empty string if implied length invalid.
-    function unpackOne(bytes32 a) internal pure returns (string memory result) {
+    /// @dev Unpacks a string packed using {packOne}.
+    /// Returns the empty string if `packed` is zero.
+    /// If `packed` is not an output of {packOne}, the output behaviour is undefined.
+    function unpackOne(bytes32 packed) internal pure returns (string memory result) {
         assembly {
+            // Grab the free memory pointer.
             result := mload(0x40)
-            let len := and(a, 0xff)
-            len := mul(len, lt(len, 0x20))
-            mstore(result, len)
-            // mask to clear any data incase packed string is not zero padded.
-            let mask := shl(shl(3, sub(32, len)), not(0))
-            // store data in memory.
-            mstore(add(result, 0x20), and(a, mask))
-            // update free memory pointer.
-            mstore(0x40, add(result, shr(iszero(len), 0x40)))
+            // Allocate 2 words (1 for the length, 1 for the bytes).
+            mstore(0x40, add(result, 0x40))
+            // Zeroize the length slot.
+            mstore(result, 0)
+            // Store the length and bytes.
+            mstore(add(result, 0x1f), packed)
+            // Right pad with zeroes.
+            mstore(add(add(result, 0x20), mload(result)), 0)
         }
     }
 
-    /// @dev packs two strings into a single word, returns 0 if combined length over 30.
+    /// @dev Packs two strings with their lengths into a single word.
+    /// Returns 0 if combined length is zero or over 30.
     function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
         assembly {
-            // insert `a` into packed result, assuming the length is safe.
-            let lenA := mload(a)
-            let maskA := shl(shl(3, sub(32, lenA)), not(0))
-            result := or(and(mload(add(a, 0x20)), maskA), lenA)
-
-            // insert `b` into packed result, assuming the length is safe.
-            let lenB := mload(b)
-            let maskB := shl(shl(3, sub(32, lenB)), not(0))
-            result := or(shr(shl(3, lenA), and(mload(add(b, 0x20)), maskB)), or(shl(8, lenB), result))
-
-            // branchless total length and overflow check.
-            let totalLen := add(lenA, lenB)
-            result := mul(result, and(lt(totalLen, 0x1f), iszero(lt(totalLen, lenA))))
+            let aLength := mload(a)
+            // We don't need to zero right pad the strings,
+            // since this is our own custom non-standard packing scheme.
+            result := mul(
+                // Uses xor to replace the lower bits with the length and bytes of `b`.
+                xor(
+                    // Load the length and the bytes of `a`.
+                    mload(add(a, 0x1f)),
+                    shr(
+                        shl(3, add(aLength, 1)),
+                        xor(
+                            // Load the length and the bytes of `b`.
+                            mload(add(b, 0x1f)),
+                            mload(add(add(a, 0x20), aLength))
+                        )
+                    )
+                ),
+                // `totalLength != 0 && totalLength < 31`. Abuses underflow.
+                // Assumes that the lengths are valid and within the block gas limit.
+                lt(sub(add(aLength, mload(b)), 1), 0x1e)
+            )
         }
     }
 
-    /// @dev unpacks strings packed using `packTwo`, returns empty strings if implied combined length invalid.
-    function unpackTwo(bytes32 a) internal pure returns (string memory resultA, string memory resultB) {
+    /// @dev Unpacks strings packed using {packTwo}.
+    /// Returns the empty strings if `packed` is zero.
+    /// If `packed` is not an output of {packTwo}, the output behaviour is undefined.
+    function unpackTwo(bytes32 packed) internal pure returns (string memory resultA, string memory resultB) {
         assembly {
-            let lenA := and(a, 0xff)
-            let lenB := and(shr(8, a), 0xff)
-            let lenValid := lt(add(lenA, lenB), 0x1f)
-            lenA := mul(lenA, lenValid)
-            lenB := mul(lenB, lenValid)
-
-            // Allocate memory.
+            // Grab the free memory pointer.
             resultA := mload(0x40)
-            resultB := add(resultA, shr(iszero(lenA), 0x40))
-            mstore(0x40, add(resultB, shr(iszero(lenB), 0x40)))
-
-            // mask and store data as string A.
-            let maskA := shl(shl(3, sub(32, lenA)), not(0))
-            mstore(resultA, lenA)
-            mstore(add(resultA, 0x20), and(maskA, a))
-
-            // mask and store data as string B.
-            let maskB := shl(shl(3, sub(32, lenB)), not(0))
-            mstore(resultB, lenB)
-            mstore(add(resultB, 0x20), and(maskB, shl(shl(3, lenA), a)))
+            resultB := add(resultA, 0x40)
+            // Allocate 2 words for each string (1 for the length, 1 for the byte). Total 4 words.
+            mstore(0x40, add(resultB, 0x40))
+            // Zeroize the length slots.
+            mstore(resultA, 0)
+            mstore(resultB, 0)
+            // Store the lengths and bytes.
+            mstore(add(resultA, 0x1f), packed)
+            mstore(add(resultB, 0x1f), mload(add(add(resultA, 0x20), mload(resultA))))
+            // Right pad with zeroes.
+            mstore(add(add(resultA, 0x20), mload(resultA)), 0)
+            mstore(add(add(resultB, 0x20), mload(resultB)), 0)
         }
     }
 
-    /// @dev directly returns `a` without copying, assumes that the offset of `a` is at least 0x20
+    /// @dev Directly returns `a` without copying.
     function directReturn(string memory a) internal pure {
         assembly {
-            let returnOffest := sub(a, 0x20)
-            mstore(returnOffest, 0x20)
-            return(returnOffest, add(mload(a), 0x40))
+            // Right pad with zeroes. Just in case the string is produced
+            // by a method that doesn't zero right pad.
+            mstore(add(add(a, 0x20), mload(a)), 0)
+            // Store the return offset.
+            // Assumes that the string does not start from the scratch space.
+            mstore(sub(a, 0x20), 0x20)
+            // End the transaction, returning the string.
+            return(sub(a, 0x20), add(mload(a), 0x40))
         }
     }
 }
