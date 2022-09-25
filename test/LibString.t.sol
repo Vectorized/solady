@@ -499,6 +499,21 @@ contract LibStringTest is TestPlus {
         }
     }
 
+    function testStringPackAndUnpackTwoDifferential(
+        string memory a,
+        string memory b,
+        uint256 randomness
+    ) public brutalizeMemoryWithSeed(randomness) {
+        bytes32 packed = LibString.packTwo(a, b);
+        unchecked {
+            if (bytes(a).length + bytes(b).length < 31) {
+                assertEq(packed, bytes32(abi.encodePacked(uint8(bytes(a).length), a, uint8(bytes(b).length), b)));
+            } else {
+                assertEq(packed, bytes32(0));
+            }
+        }
+    }
+
     function testStringPackAndUnpackTwo(
         string memory a,
         string memory b,
