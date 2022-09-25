@@ -560,22 +560,16 @@ library LibString {
     /// Returns `bytes32(0)` if combined length is zero or greater than 30.
     function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
         assembly {
-            let totalLength := add(mload(a), mload(b))
-            let o := add(add(a, 0x20), mload(a))
-            let t := mload(o)
-            // Load the length and the bytes of `b`, and store it at the end of `a`.
-            mstore(o, mload(add(b, 0x1f)))
+            let aLength := mload(a)
             // We don't need to zero right pad the strings,
             // since this is our own custom non-standard packing scheme.
             result := mul(
                 // Load the length and the bytes of `a` and `b`.
-                mload(add(a, 0x1f)),
+                or(shl(shl(3, sub(0x1f, aLength)), mload(add(a, aLength))), mload(sub(add(b, 0x1e), aLength))),
                 // `totalLength != 0 && totalLength < 31`. Abuses underflow.
                 // Assumes that the lengths are valid and within the block gas limit.
-                lt(sub(totalLength, 1), 0x1e)
+                lt(sub(add(aLength, mload(b)), 1), 0x1e)
             )
-            // Restore the word after `a`.
-            mstore(o, t)
         }
     }
 

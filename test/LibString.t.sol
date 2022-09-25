@@ -527,8 +527,10 @@ contract LibStringTest is TestPlus {
         unchecked {
             uint256 randomness;
             testStringPackAndUnpackTwo("", "", ++randomness);
-            testStringPackAndUnpackTwo("Hehe", "NGL", ++randomness);
+            testStringPackAndUnpackTwo("a", "", ++randomness);
+            testStringPackAndUnpackTwo("", "b", ++randomness);
             testStringPackAndUnpackTwo("abcdefghijklmnopqrstuvwxyzABCD", "", ++randomness);
+            testStringPackAndUnpackTwo("The strongest community I've ever seen", "NGL", ++randomness);
             testStringPackAndUnpackTwo("", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ++randomness);
         }
     }
