@@ -471,6 +471,20 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.slice(subject, 31, 21), "");
     }
 
+    function testStringPackAndUnpackOneDifferential(string memory a, uint256 randomness)
+        public
+        brutalizeMemoryWithSeed(randomness)
+    {
+        bytes32 packed = LibString.packOne(a);
+        unchecked {
+            if (bytes(a).length < 32) {
+                assertEq(packed, bytes32(abi.encodePacked(uint8(bytes(a).length), a)));
+            } else {
+                assertEq(packed, bytes32(0));
+            }
+        }
+    }
+
     function testStringPackAndUnpackOne(string memory a, uint256 randomness)
         public
         brutalizeMemoryWithSeed(randomness)
