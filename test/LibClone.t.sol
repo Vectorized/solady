@@ -171,6 +171,18 @@ contract LibCloneTest is TestPlus, Clone {
         uint64 argUint64,
         uint8 argUint8,
         uint256 deposit
+    ) public brutalizeMemoryWithSeed(value_) {
+        bytes memory data = abi.encodePacked(
+            argUint256,
+            argAddress,
+            argUint256,
+            argUint256Array,
+            argUint64,
+            argUint8,
+            argUint256
+        );
+        bytes32 dataHashBefore = keccak256(data);
+        bytes32 saltKey = keccak256(abi.encode(data, salt));
     ) public brutalizeMemoryWithSeed(argUint256) {
         bytes memory data;
         bytes32 salt;
@@ -229,6 +241,8 @@ contract LibCloneTest is TestPlus, Clone {
             assertEq(clone.getArgUint256(argOffset), argUint256);
         }
 
+        address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
+        assertEq(address(clone), predicted);
         {
             address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
             assertEq(address(clone), predicted);
