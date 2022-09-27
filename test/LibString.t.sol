@@ -554,6 +554,66 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.indicesOf("ababab", "abababa"), indices);
     }
 
+    function testStringSplit(uint256 randomness, bytes calldata brutalizeWith) public brutalizeMemory(brutalizeWith) {
+        string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory delimiter = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
+
+        string memory subject = string(bytes.concat(bytes(filler0), bytes(delimiter), bytes(filler1)));
+
+        unchecked {
+            string[] memory elements;
+            if (bytes(delimiter).length == 0) {
+                elements = new string[](bytes(subject).length);
+                for (uint256 i; i < elements.length; ++i) {
+                    elements[i] = LibString.slice(subject, i, i + 1);
+                }
+            } else {
+                elements = new string[](2);
+                elements[0] = filler0;
+                elements[1] = filler1;
+            }
+            assertTrue(_stringArraysAreSame(LibString.split(subject, delimiter), elements));
+        }
+    }
+
+    function testStringSplit() public {
+        string[] memory elements;
+
+        elements = new string[](4);
+        elements[0] = "";
+        elements[1] = "b";
+        elements[2] = "b";
+        elements[3] = "";
+        assertTrue(_stringArraysAreSame(LibString.split("ababa", "a"), elements));
+
+        elements = new string[](3);
+        elements[0] = "a";
+        elements[1] = "a";
+        elements[2] = "a";
+        assertTrue(_stringArraysAreSame(LibString.split("ababa", "b"), elements));
+
+        elements = new string[](5);
+        elements[0] = "a";
+        elements[1] = "b";
+        elements[2] = "a";
+        elements[3] = "b";
+        elements[4] = "a";
+        assertTrue(_stringArraysAreSame(LibString.split("ababa", ""), elements));
+
+        elements = new string[](2);
+        elements[0] = "a";
+        elements[1] = "b";
+        assertTrue(_stringArraysAreSame(LibString.split("ab", ""), elements));
+
+        elements = new string[](1);
+        elements[0] = "a";
+        assertTrue(_stringArraysAreSame(LibString.split("a", ""), elements));
+
+        elements = new string[](0);
+        assertTrue(_stringArraysAreSame(LibString.split("", ""), elements));
+    }
+
     // function testConcatenate(
     //     string memory subject,
     //     string memory concat,
@@ -1036,5 +1096,19 @@ contract LibStringTest is TestPlus {
             mstore(freeMemoryPointer, keccak256(0x00, 0x60))
         }
         if (failed) revert("Free memory pointer `0x40` is not 32-byte word aligned!");
+    }
+
+    function _stringArraysAreSame(string[] memory a, string[] memory b) internal pure returns (bool) {
+        unchecked {
+            if (a.length != b.length) {
+                return false;
+            }
+            for (uint256 i; i < a.length; ++i) {
+                if (keccak256(bytes(a[i])) != keccak256(bytes(b[i]))) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }
