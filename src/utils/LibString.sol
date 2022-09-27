@@ -212,6 +212,9 @@ library LibString {
     /*                   OTHER STRING OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // For performance and bytecode compactness, all indices of the following operations
+    // are byte (ASCII) offsets, not UTF character offsets.
+
     /// @dev Returns `subject` all occurances of `search` replaced with `replacement`.
     function replace(
         string memory subject,
@@ -287,17 +290,19 @@ library LibString {
                 resultRemainder := add(resultRemainder, 0x20)
                 subject := add(subject, 0x20)
             }
+            result := sub(result, 0x20)
             // Zeroize the slot after the string.
-            mstore(resultRemainder, 0)
+            let last := add(add(result, 0x20), k)
+            mstore(last, 0)
             // Allocate memory for the length and the bytes,
             // rounded up to a multiple of 32.
-            mstore(0x40, add(result, and(add(k, 63), not(31))))
-            result := sub(result, 0x20)
+            mstore(0x40, and(add(last, 31), not(31)))
+            // Store the length of the result.
             mstore(result, k)
         }
     }
 
-    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from left to right, starting from `from`.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function indexOf(
@@ -357,14 +362,14 @@ library LibString {
         }
     }
 
-    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from left to right.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function indexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
         result = indexOf(subject, search, 0);
     }
 
-    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from right to left, starting from `from`.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function lastIndexOf(
@@ -484,6 +489,7 @@ library LibString {
     }
 
     /// @dev Returns a copy of `subject` sliced from `start` to `end` (exclusive).
+    /// `start` and `end` are byte offsets.
     function slice(
         string memory subject,
         uint256 start,
@@ -518,8 +524,154 @@ library LibString {
     }
 
     /// @dev Returns a copy of `subject` sliced from `start` to the end of the string.
+    /// `start` is a byte offset.
     function slice(string memory subject, uint256 start) internal pure returns (string memory result) {
         result = slice(subject, start, uint256(int256(-1)));
+    }
+
+    /// @dev Returns all the indices of `search` in `subject`.
+    /// The indices are byte offsets.
+    function indicesOf(string memory subject, string memory search) internal pure returns (uint256[] memory result) {
+        assembly {
+            let subjectLength := mload(subject)
+            let searchLength := mload(search)
+
+            if iszero(gt(searchLength, subjectLength)) {
+                subject := add(subject, 0x20)
+                search := add(search, 0x20)
+                result := add(mload(0x40), 0x20)
+
+                let subjectStart := subject
+                let subjectSearchEnd := add(sub(add(subject, subjectLength), searchLength), 1)
+                let h := 0
+                if iszero(lt(searchLength, 32)) {
+                    h := keccak256(search, searchLength)
+                }
+                let m := shl(3, sub(32, and(searchLength, 31)))
+                let s := mload(search)
+                // prettier-ignore
+                for {} 1 {} {
+                    let t := mload(subject)
+                    // Whether the first `searchLength % 32` bytes of 
+                    // `subject` and `search` matches.
+                    if iszero(shr(m, xor(t, s))) {
+                        if h {
+                            if iszero(eq(keccak256(subject, searchLength), h)) {
+                                subject := add(subject, 1)
+                                // prettier-ignore
+                                if iszero(lt(subject, subjectSearchEnd)) { break }
+                                continue
+                            }
+                        }
+                        // Append to `result`.
+                        mstore(result, sub(subject, subjectStart))
+                        result := add(result, 0x20)
+                        // Advance `subject` by `searchLength`.
+                        subject := add(subject, searchLength)
+                        if searchLength {
+                            // prettier-ignore
+                            if iszero(lt(subject, subjectSearchEnd)) { break }
+                            continue
+                        }
+                    }
+                    subject := add(subject, 1)
+                    // prettier-ignore
+                    if iszero(lt(subject, subjectSearchEnd)) { break }
+                }
+                let resultEnd := result
+                // Assign `result` to the free memory pointer.
+                result := mload(0x40)
+                // Store the length of `result`.
+                mstore(result, shr(5, sub(resultEnd, add(result, 0x20))))
+                // Allocate memory for result.
+                // We allocate one more word, so this array can be recycled for {split}.
+                mstore(0x40, add(resultEnd, 0x20))
+            }
+        }
+    }
+
+    /// @dev Returns a arrays of strings based on the `delimiter` inside of the `subject` string.
+    function split(string memory subject, string memory delimiter) internal pure returns (string[] memory result) {
+        uint256[] memory indices = indicesOf(subject, delimiter);
+        assembly {
+            if mload(indices) {
+                let indexPtr := add(indices, 0x20)
+                let indicesEnd := add(indexPtr, shl(5, add(mload(indices), 1)))
+                mstore(sub(indicesEnd, 0x20), mload(subject))
+                mstore(indices, add(mload(indices), 1))
+                let prevIndex := 0
+                // prettier-ignore
+                for {} 1 {} {
+                    let index := mload(indexPtr)
+                    mstore(indexPtr, 0x60)                        
+                    if iszero(eq(index, prevIndex)) {
+                        let element := mload(0x40)
+                        let elementLength := sub(index, prevIndex)
+                        mstore(element, elementLength)
+                        // Copy the `subject` one word at a time, backwards.
+                        // prettier-ignore
+                        for { let o := and(add(elementLength, 31), not(31)) } 1 {} {
+                            mstore(add(element, o), mload(add(add(subject, prevIndex), o)))
+                            o := sub(o, 0x20)
+                            // prettier-ignore
+                            if iszero(o) { break }
+                        }
+                        // Zeroize the slot after the string.
+                        mstore(add(add(element, 0x20), elementLength), 0)
+                        // Allocate memory for the length and the bytes,
+                        // rounded up to a multiple of 32.
+                        mstore(0x40, add(element, and(add(elementLength, 63), not(31))))
+                        // Store the `element` into the array.
+                        mstore(indexPtr, element)                        
+                    }
+                    prevIndex := add(index, mload(delimiter))
+                    indexPtr := add(indexPtr, 0x20)
+                    // prettier-ignore
+                    if iszero(lt(indexPtr, indicesEnd)) { break }
+                }
+                result := indices
+                if iszero(mload(delimiter)) {
+                    result := add(indices, 0x20)
+                    mstore(result, sub(mload(indices), 2))
+                }
+            }
+        }
+    }
+
+    /// @dev Returns a concatenated string of `a` and `b`.
+    /// Cheaper than `string.concat()` and does not de-align the free memory pointer.
+    function concat(string memory a, string memory b) internal pure returns (string memory result) {
+        assembly {
+            result := mload(0x40)
+            let aLength := mload(a)
+            // Copy `a` one word at a time, backwards.
+            // prettier-ignore
+            for { let o := and(add(mload(a), 32), not(31)) } 1 {} {
+                mstore(add(result, o), mload(add(a, o)))
+                o := sub(o, 0x20)
+                // prettier-ignore
+                if iszero(o) { break }
+            }
+            let bLength := mload(b)
+            let output := add(result, mload(a))
+            // Copy `b` one word at a time, backwards.
+            // prettier-ignore
+            for { let o := and(add(bLength, 32), not(31)) } 1 {} {
+                mstore(add(output, o), mload(add(b, o)))
+                o := sub(o, 0x20)
+                // prettier-ignore
+                if iszero(o) { break }
+            }
+            let totalLength := add(aLength, bLength)
+            let last := add(add(result, 0x20), totalLength)
+            // Zeroize the slot after the string.
+            mstore(last, 0)
+            // Stores the length.
+            mstore(result, totalLength)
+            // Allocate memory for the length and the bytes,
+            // rounded up to a multiple of 32.
+            mstore(0x40, and(add(last, 31), not(31)))
+        }
     }
 
     /// @dev Packs a single string with its length into a single word.
