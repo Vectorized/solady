@@ -88,16 +88,16 @@ contract Base64Test is TestPlus {
         for (uint256 i; i < 2; ++i) {
             string memory encoded = Base64.encode(input);
 
-            if (randomness & (1 << 0) == 1) {
+            if (randomness & (1 << 0) != 0) {
                 encoded = LibString.replace(encoded, "=", "");
             }
-            if (randomness & (1 << 1) == 1) {
+            if (randomness & (1 << 1) != 0) {
                 encoded = LibString.replace(encoded, "/", ",");
             }
-            if (randomness & (1 << 2) == 1) {
+            if (randomness & (1 << 2) != 0) {
                 encoded = LibString.replace(encoded, "/", "_");
             }
-            if (randomness & (1 << 3) == 1) {
+            if (randomness & (1 << 3) != 0) {
                 encoded = LibString.replace(encoded, "+", "-");
             }
 
