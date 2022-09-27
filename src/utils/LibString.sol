@@ -382,8 +382,9 @@ library LibString {
             for {} 1 {} {
                 let searchLength := mload(search)
                 let fromMax := sub(mload(subject), searchLength)
-                // `from = min(from, fromMax)`.
-                from := xor(from, mul(xor(from, fromMax), lt(fromMax, from)))
+                if iszero(gt(fromMax, from)) {
+                    from := fromMax
+                }
                 if iszero(mload(search)) {
                     result := from
                     break
@@ -497,10 +498,12 @@ library LibString {
     ) internal pure returns (string memory result) {
         assembly {
             let subjectLength := mload(subject)
-            // `end = min(end, subjectLength)`.
-            end := xor(end, mul(xor(end, subjectLength), lt(subjectLength, end)))
-            // `start = min(start, subjectLength)`.
-            start := xor(start, mul(xor(start, subjectLength), lt(subjectLength, start)))
+            if iszero(gt(subjectLength, end)) {
+                end := subjectLength
+            }
+            if iszero(gt(subjectLength, start)) {
+                start := subjectLength
+            }
             if lt(start, end) {
                 result := mload(0x40)
                 let resultLength := sub(end, start)
