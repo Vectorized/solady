@@ -522,292 +522,263 @@ library LibString {
         result = slice(subject, start, uint256(int256(-1)));
     }
 
-    /// @dev Returns a concated string of `subject` and `concat`.
-    /// @dev This function is cheaper than string.concat() and doesn't desalign the free memory pointer.
-    function concatenate(string memory subject, string memory concat) internal pure returns (string memory result) {
+    /// @dev Returns all the indices of `search` in `subject`.
+    function indicesOf(string memory subject, string memory search) internal pure returns (uint256[] memory result) {
         assembly {
-            //Load length.
             let subjectLength := mload(subject)
-            let concatenateLength := mload(concat)
-            //Load Free memory pointer.
-            result := mload(0x40)
-            let output := add(result, 0x20)
-            //Calculates the result length.
-            let totalLength := add(subjectLength, concatenateLength)
-            //Moves pointer.
-            subject := add(subject, 0x20)
-            concat := add(concat, 0x20)
-            //Loops one word at a time.
-            for {
-                let w := 0
-            } 1 {
-
-            } {
-                //Stores 32 bytes
-                mstore(add(output, w), mload(add(subject, w)))
-                w := add(w, 0x20)
-                if iszero(lt(w, subjectLength)) {
-                    break
-                }
-            }
-
-            output := add(output, subjectLength)
-            //Loops one word at a time.
-            for {
-                let o := 0
-            } 1 {
-
-            } {
-                //Stores 32 bytes at the result pointer + subjectLength.
-                mstore(add(output, o), mload(add(concat, o)))
-                o := add(o, 0x20)
-                // prettier-ignore
-                if iszero(lt(o, concatenateLength)) { break }
-            }
-
-            output := add(output, concatenateLength)
-            // Zeroize the slot after the string.
-            mstore(output, 0)
-            //Stores result length.
-            mstore(result, totalLength)
-            // Allocate memory for the length and the bytes,
-            // rounded up to a multiple of 32.
-            mstore(0x40, add(result, and(add(totalLength, 63), not(31))))
-        }
-    }
-
-    /// @dev Returns a string from on a array of `subjects` based on the `search` string.
-    function join(string[] memory subjects, string memory search) internal pure returns (string memory result) {
-        assembly {
-            //Loads string from array and join string.
             let searchLength := mload(search)
-            let arrLength := mload(subjects)
-            //Builds the total string length to use later.
-            let stringLength := 0
-            //Set start of pointer for string.
-            search := add(search, 0x20)
-            //Loads free memory pointer.
-            result := mload(0x40)
-            let output := add(result, 0x20)
-            //Loops all array members.
-            for {
-                let i := 1
-            } lt(i, arrLength) {
-                i := add(i, 1)
-            } {
-                //Set start of pointer for string inside the array by 0x20 each loop,
-                //In a array of string the array it self stores the pointers for the location of the string inside of memory,
-                //So here we just need to go 32 bits at a time.
-                subjects := add(subjects, 0x20)
-                //Load the actual string.
-                let currentString := mload(subjects)
-                //Gets the length of the string in the loop.
-                let currentStringLength := mload(currentString)
-                //Sets the pointer to the start of the string.
-                currentString := add(currentString, 0x20)
-                //Loops one word at a time to store it in the result.
-                for {
-                    let w := 0
-                } 1 {
 
-                } {
-                    mstore(add(add(output, stringLength), w), mload(add(currentString, w)))
-                    w := add(w, 0x20)
-                    if iszero(lt(w, currentStringLength)) {
-                        break
+            if iszero(gt(searchLength, subjectLength)) {
+                subject := add(subject, 0x20)
+                search := add(search, 0x20)
+                result := add(mload(0x40), 0x20)
+
+                let subjectStart := subject
+                let subjectEnd := add(subject, subjectLength)
+                let subjectSearchEnd := add(sub(subjectEnd, searchLength), 1)
+                let h := 0
+                if iszero(lt(searchLength, 32)) {
+                    h := keccak256(search, searchLength)
+                }
+                let m := shl(3, sub(32, and(searchLength, 31)))
+                let s := mload(search)
+                // prettier-ignore
+                for {} 1 {} {
+                    let t := mload(subject)
+                    // Whether the first `searchLength % 32` bytes of 
+                    // `subject` and `search` matches.
+                    if iszero(shr(m, xor(t, s))) {
+                        if h {
+                            if iszero(eq(keccak256(subject, searchLength), h)) {
+                                subject := add(subject, 1)
+                                // prettier-ignore
+                                if iszero(lt(subject, subjectSearchEnd)) { break }
+                                continue
+                            }
+                        }
+                        // Append to `result`.
+                        mstore(result, sub(subject, subjectStart))
+                        result := add(result, 0x20)
+                        // Advance `subject` by `searchLength`.
+                        subject := add(subject, searchLength)
+                        if searchLength {
+                            // prettier-ignore
+                            if iszero(lt(subject, subjectSearchEnd)) { break }
+                            continue
+                        }
                     }
+                    subject := add(subject, 1)
+                    // prettier-ignore
+                    if iszero(lt(subject, subjectSearchEnd)) { break }
                 }
-                //Builds the total string length to use later.
-                stringLength := add(currentStringLength, stringLength)
-                //Loops one word at a time for the string to join.
-                for {
-                    let s := 0
-                } 1 {
-
-                } {
-                    mstore(add(add(output, stringLength), s), mload(add(search, s)))
-                    s := add(s, 0x20)
-                    if iszero(lt(s, searchLength)) {
-                        break
-                    }
-                }
-                //Adds the length to the total.
-                stringLength := add(searchLength, stringLength)
+                let resultEnd := result
+                // Assign `result` to the free memory pointer.
+                result := mload(0x40)
+                // Store the length of `result`.
+                mstore(result, shr(5, sub(resultEnd, add(result, 0x20))))
+                // Allocate memory for result.
+                // We allocate one more word, so this array can be recycled for {split}.
+                mstore(0x40, add(resultEnd, 0x20))
             }
-            //Do this one more time but without the string to join so it doesn't get added at the end.
-            subjects := add(subjects, 0x20)
-            //Load the actual string.
-            let currentString := mload(subjects)
-            //Gets the length of the string in the loop.
-            let currentStringLength := mload(currentString)
-            //Sets the pointer to the start of the string.
-            currentString := add(currentString, 0x20)
-            //Loops one word at a time to store it in the result.
-            for {
-                let w := 0
-            } 1 {
-
-            } {
-                mstore(add(add(output, stringLength), w), mload(add(currentString, w)))
-                w := add(w, 0x20)
-                if iszero(lt(w, currentStringLength)) {
-                    break
-                }
-            }
-            stringLength := add(currentStringLength, stringLength)
-            // Zeroize the slot after the string.
-            output := add(output, stringLength)
-            mstore(output, 0)
-            //Stores the total string length in the resulting string.
-            mstore(result, stringLength)
-            // Allocate memory for the length and the bytes,
-            // rounded up to a multiple of 32.
-            mstore(0x40, add(result, and(add(stringLength, 63), not(31))))
         }
     }
 
-    /// @dev Returns a arrays of strings based on the `delim` inside of the `subject` string.
-    function split(string memory subject, string memory delim) internal pure returns (string[] memory result) {
-        //Concatenates both subject and delim same as string.concat(subject, delim).
-        string memory val = concatenate(subject, delim);
-        assembly {
-            let delimLength := mload(delim)
-            let length := mload(val)
-            //Create new pointer for substrings.
-            let ptr := add(mload(0x40), 0x20)
-            //Copies pointer to the stack so it can be used to calculate the pointer location of the strings.
-            let copyPtr := ptr
-            //Sets helper counter used to calculate string length and array length.
-            //Counter for array length.
-            let counter := 0
-            //Counter for string length.
-            let lengthCounter := 0
-            //Grabs hex value of the `delim`.
-            let pattern := shl(3, sub(32, and(delimLength, 31)))
-            //Moves pointer to start of the string value.
-            val := add(val, 0x20)
-            delim := add(delim, 0x20)
-            //Checks if the `delim` is bigger than 32 bits.
-            let hash := 0
-            if iszero(lt(delimLength, 32)) {
-                hash := keccak256(delim, delimLength)
-            }
-            //If the `delim` is a empty string return the `subject` string as a array.
-            if iszero(delimLength) {
-                //Loops one word at a time.
-                for {
-                    let w := 0
-                } 1 {
+    // /// @dev Returns a concated string of `subject` and `concat`.
+    // /// @dev This function is cheaper than string.concat() and doesn't desalign the free memory pointer.
+    // function concatenate(string memory subject, string memory concat) internal pure returns (string memory result) {
+    //     assembly {
+    //         //Load length.
+    //         let subjectLength := mload(subject)
+    //         let concatenateLength := mload(concat)
+    //         //Load Free memory pointer.
+    //         result := mload(0x40)
+    //         let output := add(result, 0x20)
+    //         //Calculates the result length.
+    //         let totalLength := add(subjectLength, concatenateLength)
+    //         //Moves pointer.
+    //         subject := add(subject, 0x20)
+    //         concat := add(concat, 0x20)
+    //         //Loops one word at a time.
+    //         for {
+    //             let w := 0
+    //         } 1 {
 
-                } {
-                    mstore(add(add(ptr, 0x20), w), mload(add(val, w)))
-                    w := add(w, 0x20)
-                    if iszero(lt(w, length)) {
-                        break
-                    }
-                }
-                //Stores length and allocates memory for length and bytes.
-                mstore(ptr, length)
-                ptr := add(ptr, and(add(length, 0x40), not(0x1f)))
-                //Set the `result` to the pointer location
-                result := ptr
-                //It will always be one.
-                mstore(result, 1)
-                //Stores the initial pointer location on the `result` array.
-                mstore(add(result, 0x20), copyPtr)
-                // Allocate memory for the length and the bytes.
-                mstore(0x40, add(add(result, 0x20), 0x20))
-            }
+    //         } {
+    //             //Stores 32 bytes
+    //             mstore(add(output, w), mload(add(subject, w)))
+    //             w := add(w, 0x20)
+    //             if iszero(lt(w, subjectLength)) {
+    //                 break
+    //             }
+    //         }
 
-            if delimLength {
-                //Loops one char at a time.
-                for {
-                    let i := 0
-                } or(eq(i, length), lt(i, length)) {
+    //         output := add(output, subjectLength)
+    //         //Loops one word at a time.
+    //         for {
+    //             let o := 0
+    //         } 1 {
 
-                } {
-                    //Moves pointer by i value.
-                    let start := add(val, i)
-                    //If the hash is not 0 then we perform the string calcs from here.
-                    if hash {
-                        if iszero(eq(keccak256(start, delimLength), hash)) {
-                            mstore(add(ptr, add(0x20, lengthCounter)), mload(start))
-                            //Adds one to the word length.
-                            lengthCounter := add(lengthCounter, 1)
-                            //Skips to next char.
-                            i := add(i, 1)
-                            continue
-                        }
+    //         } {
+    //             //Stores 32 bytes at the result pointer + subjectLength.
+    //             mstore(add(output, o), mload(add(concat, o)))
+    //             o := add(o, 0x20)
+    //             // prettier-ignore
+    //             if iszero(lt(o, concatenateLength)) { break }
+    //         }
 
-                        if eq(keccak256(start, delimLength), hash) {
-                            if iszero(eq(lengthCounter, 0)) {
-                                //Stores 0s based on the pointer location with the length counter added so we can clean the bits that we don't care about.
-                                mstore(add(ptr, add(0x20, lengthCounter)), 0)
-                                //Stores length at the ptr current location.
-                                mstore(ptr, lengthCounter)
-                            }
-                            //Calculates the new pointer to store the new word.
-                            ptr := add(ptr, and(add(lengthCounter, 0x40), not(0x1f)))
-                            //Reset the str length.
-                            lengthCounter := 0
-                            // counter++.
-                            counter := add(counter, 1)
-                            //skips the delim word in subject.
-                            i := add(i, delimLength)
-                            continue
-                        }
-                    }
-                    //Grabs chars based on pattern.
-                    let compare := shr(pattern, xor(mload(start), mload(delim)))
-                    //If compare != 0 then store it to pointer current location.
-                    if iszero(eq(compare, 0)) {
-                        //Store the whole in the pointer at the current location.
-                        mstore(add(ptr, add(0x20, lengthCounter)), mload(start))
-                        //Adds one to word length.
-                        lengthCounter := add(lengthCounter, 1)
-                        //Skips to next char.
-                        i := add(i, 1)
-                        continue
-                    }
-                    //If compare == 0 the check if the length is not empty.
-                    if iszero(compare) {
-                        //if length != 0.
-                        if iszero(eq(lengthCounter, 0)) {
-                            //Stores 0s based on the pointer location with the length counter added so we can clean the bits that we don't care about.
-                            mstore(add(ptr, add(0x20, lengthCounter)), 0)
-                            //Stores length at the ptr current location.
-                            mstore(ptr, lengthCounter)
-                        }
-                        //Calculates the new pointer to store the new word.
-                        ptr := add(ptr, and(add(lengthCounter, 0x40), not(0x1f)))
-                        //Reset the str length.
-                        lengthCounter := 0
-                        // counter++.
-                        counter := add(counter, 1)
-                        //skips the delim word in subject.
-                        i := add(i, delimLength)
-                    }
-                }
-                result := ptr
-                //Stores the array length.
-                mstore(result, counter)
-                // Allocate memory for the length and the bytes of all strings.
-                mstore(0x40, add(add(result, 0x20), mul(0x20, counter)))
-                //Loop to fill the result array with the pointer location for the strings.
-                for {
-                    let i := 0
-                } lt(i, counter) {
-                    i := add(i, 1)
-                } {
-                    let lenPointer := mload(copyPtr)
-                    //Calculates the pointer with the string location.
-                    mstore(add(result, add(0x20, mul(0x20, i))), copyPtr)
-                    //Calculates the pointer with the string location based on the len stored at the first pointer location.
-                    copyPtr := add(copyPtr, and(add(lenPointer, 0x40), not(0x1f)))
-                }
-            }
-        }    
-    }
+    //         output := add(output, concatenateLength)
+    //         // Zeroize the slot after the string.
+    //         mstore(output, 0)
+    //         //Stores result length.
+    //         mstore(result, totalLength)
+    //         // Allocate memory for the length and the bytes,
+    //         // rounded up to a multiple of 32.
+    //         mstore(0x40, add(result, and(add(totalLength, 63), not(31))))
+    //     }
+    // }
+
+    // /// @dev Returns a arrays of strings based on the `delim` inside of the `subject` string.
+    // function split(string memory subject, string memory delim) internal pure returns (string[] memory result) {
+    //     //Concatenates both subject and delim same as string.concat(subject, delim).
+    //     string memory val = concatenate(subject, delim);
+    //     assembly {
+    //         let delimLength := mload(delim)
+    //         let length := mload(val)
+    //         //Create new pointer for substrings.
+    //         let ptr := add(mload(0x40), 0x20)
+    //         //Copies pointer to the stack so it can be used to calculate the pointer location of the strings.
+    //         let copyPtr := ptr
+    //         //Sets helper counter used to calculate string length and array length.
+    //         //Counter for array length.
+    //         let counter := 0
+    //         //Counter for string length.
+    //         let lengthCounter := 0
+    //         //Grabs hex value of the `delim`.
+    //         let pattern := shl(3, sub(32, and(delimLength, 31)))
+    //         //Moves pointer to start of the string value.
+    //         val := add(val, 0x20)
+    //         delim := add(delim, 0x20)
+    //         //Checks if the `delim` is bigger than 32 bits.
+    //         let hash := 0
+    //         if iszero(lt(delimLength, 32)) {
+    //             hash := keccak256(delim, delimLength)
+    //         }
+    //         //If the `delim` is a empty string return the `subject` string as a array.
+    //         if iszero(delimLength) {
+    //             //Loops one word at a time.
+    //             for {
+    //                 let w := 0
+    //             } 1 {
+
+    //             } {
+    //                 mstore(add(add(ptr, 0x20), w), mload(add(val, w)))
+    //                 w := add(w, 0x20)
+    //                 if iszero(lt(w, length)) {
+    //                     break
+    //                 }
+    //             }
+    //             //Stores length and allocates memory for length and bytes.
+    //             mstore(ptr, length)
+    //             ptr := add(ptr, and(add(length, 0x40), not(0x1f)))
+    //             //Set the `result` to the pointer location
+    //             result := ptr
+    //             //It will always be one.
+    //             mstore(result, 1)
+    //             //Stores the initial pointer location on the `result` array.
+    //             mstore(add(result, 0x20), copyPtr)
+    //             // Allocate memory for the length and the bytes.
+    //             mstore(0x40, add(add(result, 0x20), 0x20))
+    //         }
+
+    //         if delimLength {
+    //             //Loops one char at a time.
+    //             for {
+    //                 let i := 0
+    //             } or(eq(i, length), lt(i, length)) {
+
+    //             } {
+    //                 //Moves pointer by i value.
+    //                 let start := add(val, i)
+    //                 //If the hash is not 0 then we perform the string calcs from here.
+    //                 if hash {
+    //                     if iszero(eq(keccak256(start, delimLength), hash)) {
+    //                         mstore(add(ptr, add(0x20, lengthCounter)), mload(start))
+    //                         //Adds one to the word length.
+    //                         lengthCounter := add(lengthCounter, 1)
+    //                         //Skips to next char.
+    //                         i := add(i, 1)
+    //                         continue
+    //                     }
+
+    //                     if eq(keccak256(start, delimLength), hash) {
+    //                         if iszero(eq(lengthCounter, 0)) {
+    //                             //Stores 0s based on the pointer location with the length counter added so we can clean the bits that we don't care about.
+    //                             mstore(add(ptr, add(0x20, lengthCounter)), 0)
+    //                             //Stores length at the ptr current location.
+    //                             mstore(ptr, lengthCounter)
+    //                         }
+    //                         //Calculates the new pointer to store the new word.
+    //                         ptr := add(ptr, and(add(lengthCounter, 0x40), not(0x1f)))
+    //                         //Reset the str length.
+    //                         lengthCounter := 0
+    //                         // counter++.
+    //                         counter := add(counter, 1)
+    //                         //skips the delim word in subject.
+    //                         i := add(i, delimLength)
+    //                         continue
+    //                     }
+    //                 }
+    //                 //Grabs chars based on pattern.
+    //                 let compare := shr(pattern, xor(mload(start), mload(delim)))
+    //                 //If compare != 0 then store it to pointer current location.
+    //                 if iszero(eq(compare, 0)) {
+    //                     //Store the whole in the pointer at the current location.
+    //                     mstore(add(ptr, add(0x20, lengthCounter)), mload(start))
+    //                     //Adds one to word length.
+    //                     lengthCounter := add(lengthCounter, 1)
+    //                     //Skips to next char.
+    //                     i := add(i, 1)
+    //                     continue
+    //                 }
+    //                 //If compare == 0 the check if the length is not empty.
+    //                 if iszero(compare) {
+    //                     //if length != 0.
+    //                     if iszero(eq(lengthCounter, 0)) {
+    //                         //Stores 0s based on the pointer location with the length counter added so we can clean the bits that we don't care about.
+    //                         mstore(add(ptr, add(0x20, lengthCounter)), 0)
+    //                         //Stores length at the ptr current location.
+    //                         mstore(ptr, lengthCounter)
+    //                     }
+    //                     //Calculates the new pointer to store the new word.
+    //                     ptr := add(ptr, and(add(lengthCounter, 0x40), not(0x1f)))
+    //                     //Reset the str length.
+    //                     lengthCounter := 0
+    //                     // counter++.
+    //                     counter := add(counter, 1)
+    //                     //skips the delim word in subject.
+    //                     i := add(i, delimLength)
+    //                 }
+    //             }
+    //             result := ptr
+    //             //Stores the array length.
+    //             mstore(result, counter)
+    //             // Allocate memory for the length and the bytes of all strings.
+    //             mstore(0x40, add(add(result, 0x20), mul(0x20, counter)))
+    //             //Loop to fill the result array with the pointer location for the strings.
+    //             for {
+    //                 let i := 0
+    //             } lt(i, counter) {
+    //                 i := add(i, 1)
+    //             } {
+    //                 let lenPointer := mload(copyPtr)
+    //                 //Calculates the pointer with the string location.
+    //                 mstore(add(result, add(0x20, mul(0x20, i))), copyPtr)
+    //                 //Calculates the pointer with the string location based on the len stored at the first pointer location.
+    //                 copyPtr := add(copyPtr, and(add(lenPointer, 0x40), not(0x1f)))
+    //             }
+    //         }
+    //     }
+    // }
 
     /// @dev Packs a single string with its length into a single word.
     /// Returns `bytes32(0)` if the length is zero or greater than 31.
