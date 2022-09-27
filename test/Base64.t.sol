@@ -84,28 +84,26 @@ contract Base64Test is TestPlus {
         );
     }
 
-    function testBase64EncodeDecodeAltModes(
-        bytes memory input,
-        bool[4] memory randomness,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+    function testBase64EncodeDecodeAltModes(bytes memory input, uint256 randomness) public brutalizeMemory {
         for (uint256 i; i < 2; ++i) {
             string memory encoded = Base64.encode(input);
 
-            if (randomness[0]) {
+            if (randomness & (1 << 0) != 0) {
                 encoded = LibString.replace(encoded, "=", "");
             }
-            if (randomness[1]) {
+            if (randomness & (1 << 1) != 0) {
                 encoded = LibString.replace(encoded, "/", ",");
             }
-            if (randomness[2]) {
+            if (randomness & (1 << 2) != 0) {
                 encoded = LibString.replace(encoded, "/", "_");
             }
-            if (randomness[3]) {
+            if (randomness & (1 << 3) != 0) {
                 encoded = LibString.replace(encoded, "+", "-");
             }
 
+            _roundUpFreeMemoryPointer();
             bytes memory decoded = Base64.decode(encoded);
+            _brutalizeFreeMemoryStart();
 
             assertEq(input, decoded);
 
@@ -131,11 +129,11 @@ contract Base64Test is TestPlus {
         assertEq(Base64.encode(input, fileSafe, noPadding), expectedEncoded);
     }
 
-    function testBase64DecodeMemorySafety(bytes memory input, bytes calldata brutalizeWith)
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    function testBase64DecodeMemorySafety(bytes memory input) public brutalizeMemory {
+        _roundUpFreeMemoryPointer();
         bytes memory decoded = bytes(Base64.decode(string(input)));
+        _brutalizeFreeMemoryStart();
+
         bytes32 hashBefore = keccak256(decoded);
 
         assembly {

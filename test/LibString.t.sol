@@ -174,7 +174,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
 
-    function testStringReplace(uint256 randomness) public brutalizeMemoryWithSeed(randomness) {
+    function testStringReplace(uint256 randomness) public brutalizeMemory {
         string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
         string memory replacement = _generateString(randomness, "0123456790_-+/=|{}<>!");
@@ -210,7 +210,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStringIndexOf(uint256 randomness) public brutalizeMemoryWithSeed(randomness) {
+    function testStringIndexOf(uint256 randomness) public brutalizeMemory {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
@@ -260,7 +260,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.indexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
-    function testStringLastIndexOf(uint256 randomness) public brutalizeMemoryWithSeed(randomness) {
+    function testStringLastIndexOf(uint256 randomness) public brutalizeMemory {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
@@ -316,7 +316,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.lastIndexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
-    function testStringStartsWith(uint256 randomness) public brutalizeMemoryWithSeed(randomness) {
+    function testStringStartsWith(uint256 randomness) public brutalizeMemory {
         string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
 
@@ -350,7 +350,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.startsWith("", "abc"), false);
     }
 
-    function testStringEndsWith(uint256 randomness) public brutalizeMemoryWithSeed(randomness) {
+    function testStringEndsWith(uint256 randomness) public brutalizeMemory {
         string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
 
@@ -384,11 +384,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.endsWith("", "abc"), false);
     }
 
-    function testStringRepeat(
-        string memory subject,
-        uint256 times,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+    function testStringRepeat(string memory subject, uint256 times) public brutalizeMemory {
         times = times % 8;
         string memory repeated = LibString.repeat(subject, times);
         _brutalizeFreeMemoryStart();
@@ -422,7 +418,7 @@ contract LibStringTest is TestPlus {
         assertEq(_repeatOriginal("efghi", 3), "efghiefghiefghi");
     }
 
-    function testStringSlice(uint256 randomness) public brutalizeMemoryWithSeed(randomness) {
+    function testStringSlice(uint256 randomness) public brutalizeMemory {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory expectedResult = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -462,7 +458,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.slice(subject, 31, 21), "");
     }
 
-    function testStringIndicesOf(uint256 randomness) public brutalizeMemoryWithSeed(randomness) {
+    function testStringIndicesOf(uint256 randomness) public brutalizeMemory {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
@@ -542,7 +538,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.indicesOf("ababab", "abababa"), indices);
     }
 
-    function testStringSplit(uint256 randomness) public brutalizeMemoryWithSeed(randomness) {
+    function testStringSplit(uint256 randomness) public brutalizeMemory {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory delimiter = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
@@ -608,11 +604,7 @@ contract LibStringTest is TestPlus {
         assertTrue(_stringArraysAreSame(LibString.split("", ""), elements));
     }
 
-    function testStringConcat(
-        string memory a,
-        string memory b,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+    function testStringConcat(string memory a, string memory b) public brutalizeMemory {
         string memory concatenated = LibString.concat(a, b);
         _roundUpFreeMemoryPointer();
         _brutalizeFreeMemoryStart();
@@ -655,10 +647,7 @@ contract LibStringTest is TestPlus {
         assertEq(string(bytes.concat(bytes(""), bytes(""))), "");
     }
 
-    function testStringPackAndUnpackOneDifferential(string memory a, uint256 randomness)
-        public
-        brutalizeMemoryWithSeed(randomness)
-    {
+    function testStringPackAndUnpackOneDifferential(string memory a) public brutalizeMemory {
         // Ensure the input strings are zero-right padded, so that the comparison is clean.
         a = LibString.slice(a, 0);
         bytes32 packed = LibString.packOne(a);
@@ -671,10 +660,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStringPackAndUnpackOne(string memory a, uint256 randomness)
-        public
-        brutalizeMemoryWithSeed(randomness)
-    {
+    function testStringPackAndUnpackOne(string memory a) public brutalizeMemory {
         _roundUpFreeMemoryPointer();
         bytes32 packed = LibString.packOne(a);
         string memory unpacked = LibString.unpackOne(packed);
@@ -691,20 +677,14 @@ contract LibStringTest is TestPlus {
 
     function testStringPackAndUnpackOne() public {
         unchecked {
-            uint256 randomness;
-            testStringPackAndUnpackOne("", 0);
-            testStringPackAndUnpackOne("", ++randomness);
-            testStringPackAndUnpackOne("Hehe", ++randomness);
-            testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCD", ++randomness);
-            testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ++randomness);
+            testStringPackAndUnpackOne("");
+            testStringPackAndUnpackOne("Hehe");
+            testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCD");
+            testStringPackAndUnpackOne("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
         }
     }
 
-    function testStringPackAndUnpackTwoDifferential(
-        string memory a,
-        string memory b,
-        uint256 randomness
-    ) public brutalizeMemoryWithSeed(randomness) {
+    function testStringPackAndUnpackTwoDifferential(string memory a, string memory b) public brutalizeMemory {
         // Ensure the input strings are zero-right padded, so that the comparison is clean.
         a = LibString.slice(a, 0);
         b = LibString.slice(b, 0);
@@ -718,11 +698,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStringPackAndUnpackTwo(
-        string memory a,
-        string memory b,
-        uint256 randomness
-    ) public brutalizeMemoryWithSeed(randomness) {
+    function testStringPackAndUnpackTwo(string memory a, string memory b) public brutalizeMemory {
         bytes32 packed = LibString.packTwo(a, b);
         _roundUpFreeMemoryPointer();
         (string memory unpackedA, string memory unpackedB) = LibString.unpackTwo(packed);
@@ -744,14 +720,13 @@ contract LibStringTest is TestPlus {
 
     function testStringPackAndUnpackTwo() public {
         unchecked {
-            uint256 randomness;
-            testStringPackAndUnpackTwo("", "", 0);
-            testStringPackAndUnpackTwo("", "", ++randomness);
-            testStringPackAndUnpackTwo("a", "", ++randomness);
-            testStringPackAndUnpackTwo("", "b", ++randomness);
-            testStringPackAndUnpackTwo("abcdefghijklmnopqrstuvwxyzABCD", "", ++randomness);
-            testStringPackAndUnpackTwo("The strongest community I've ever seen", "NGL", ++randomness);
-            testStringPackAndUnpackTwo("", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ++randomness);
+            testStringPackAndUnpackTwo("", "");
+            testStringPackAndUnpackTwo("", "");
+            testStringPackAndUnpackTwo("a", "");
+            testStringPackAndUnpackTwo("", "b");
+            testStringPackAndUnpackTwo("abcdefghijklmnopqrstuvwxyzABCD", "");
+            testStringPackAndUnpackTwo("The strongest community I've ever seen", "NGL");
+            testStringPackAndUnpackTwo("", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
         }
     }
 
@@ -833,28 +808,6 @@ contract LibStringTest is TestPlus {
             }
         }
         if (failed) revert("String is not zero right padded!");
-    }
-
-    function _roundUpFreeMemoryPointer() internal pure {
-        assembly {
-            mstore(0x40, and(add(mload(0x40), 31), not(31)))
-        }
-    }
-
-    function _brutalizeFreeMemoryStart() internal pure {
-        bool failed;
-        assembly {
-            let freeMemoryPointer := mload(0x40)
-            // This ensures that the memory allocated is 32-byte aligned.
-            if and(freeMemoryPointer, 31) {
-                failed := 1
-            }
-            // Write some garbage to the free memory.
-            // If the allocated memory is insufficient, this will change the
-            // decoded string and cause the subsequent asserts to fail.
-            mstore(freeMemoryPointer, keccak256(0x00, 0x60))
-        }
-        if (failed) revert("Free memory pointer `0x40` is not 32-byte word aligned!");
     }
 
     function _stringArraysAreSame(string[] memory a, string[] memory b) internal pure returns (bool) {

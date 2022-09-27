@@ -68,18 +68,11 @@ contract SSTORE2Test is TestPlus {
         SSTORE2.read(pointer, 41000, 42000);
     }
 
-    function testFuzzWriteRead(bytes calldata testBytes, bytes calldata brutalizeWith)
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    function testFuzzWriteRead(bytes calldata testBytes) public brutalizeMemory {
         assertEq(SSTORE2.read(SSTORE2.write(testBytes)), testBytes);
     }
 
-    function testFuzzWriteReadCustomStartBound(
-        bytes calldata testBytes,
-        uint256 startIndex,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+    function testFuzzWriteReadCustomStartBound(bytes calldata testBytes, uint256 startIndex) public brutalizeMemory {
         if (testBytes.length == 0) return;
 
         startIndex = bound(startIndex, 0, testBytes.length);
@@ -90,9 +83,8 @@ contract SSTORE2Test is TestPlus {
     function testFuzzWriteReadCustomBounds(
         bytes calldata testBytes,
         uint256 startIndex,
-        uint256 endIndex,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 endIndex
+    ) public brutalizeMemory {
         if (testBytes.length == 0) return;
 
         endIndex = bound(endIndex, 0, testBytes.length);
@@ -103,20 +95,16 @@ contract SSTORE2Test is TestPlus {
         assertEq(SSTORE2.read(SSTORE2.write(testBytes), startIndex, endIndex), bytes(testBytes[startIndex:endIndex]));
     }
 
-    function testFuzzReadInvalidPointerRevert(address pointer, bytes calldata brutalizeWith)
-        public
-        brutalizeMemory(brutalizeWith)
-    {
+    function testFuzzReadInvalidPointerRevert(address pointer) public brutalizeMemory {
         if (pointer.code.length > 0) return;
         vm.expectRevert(SSTORE2.InvalidPointer.selector);
         SSTORE2.read(pointer);
     }
 
-    function testFuzzReadInvalidPointerCustomStartBoundReverts(
-        address pointer,
-        uint256 startIndex,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+    function testFuzzReadInvalidPointerCustomStartBoundReverts(address pointer, uint256 startIndex)
+        public
+        brutalizeMemory
+    {
         if (pointer.code.length > 0) return;
         vm.expectRevert(SSTORE2.InvalidPointer.selector);
         SSTORE2.read(pointer, startIndex);
@@ -125,19 +113,17 @@ contract SSTORE2Test is TestPlus {
     function testFuzzReadInvalidPointerCustomBoundsReverts(
         address pointer,
         uint256 startIndex,
-        uint256 endIndex,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 endIndex
+    ) public brutalizeMemory {
         if (pointer.code.length > 0) return;
         vm.expectRevert(SSTORE2.InvalidPointer.selector);
         SSTORE2.read(pointer, startIndex, endIndex);
     }
 
-    function testFuzzWriteReadCustomStartBoundOutOfRangeReverts(
-        bytes calldata testBytes,
-        uint256 startIndex,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+    function testFuzzWriteReadCustomStartBoundOutOfRangeReverts(bytes calldata testBytes, uint256 startIndex)
+        public
+        brutalizeMemory
+    {
         startIndex = bound(startIndex, testBytes.length + 1, type(uint256).max);
         address pointer = SSTORE2.write(testBytes);
         vm.expectRevert(SSTORE2.ReadOutOfBounds.selector);
@@ -147,9 +133,8 @@ contract SSTORE2Test is TestPlus {
     function testFuzzWriteReadCustomBoundsOutOfRangeReverts(
         bytes calldata testBytes,
         uint256 startIndex,
-        uint256 endIndex,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 endIndex
+    ) public brutalizeMemory {
         endIndex = bound(endIndex, testBytes.length + 1, type(uint256).max);
         address pointer = SSTORE2.write(testBytes);
         vm.expectRevert(SSTORE2.ReadOutOfBounds.selector);
