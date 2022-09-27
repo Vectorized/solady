@@ -213,7 +213,7 @@ library LibString {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // For performance and bytecode compactness, all indices of the following operations
-    // are byte offsets (ASCII characters), not UTF character offsets.
+    // are byte (ASCII) offsets, not UTF character offsets.
 
     /// @dev Returns `subject` all occurances of `search` replaced with `replacement`.
     function replace(
@@ -540,8 +540,7 @@ library LibString {
                 result := add(mload(0x40), 0x20)
 
                 let subjectStart := subject
-                let subjectEnd := add(subject, subjectLength)
-                let subjectSearchEnd := add(sub(subjectEnd, searchLength), 1)
+                let subjectSearchEnd := add(sub(add(subject, subjectLength), searchLength), 1)
                 let h := 0
                 if iszero(lt(searchLength, 32)) {
                     h := keccak256(search, searchLength)
@@ -645,14 +644,14 @@ library LibString {
             let aLength := mload(a)
             // Copy `a` one word at a time, backwards.
             // prettier-ignore
-            for { let o := and(add(aLength, 32), not(31)) } 1 {} {
+            for { let o := and(add(mload(a), 32), not(31)) } 1 {} {
                 mstore(add(result, o), mload(add(a, o)))
                 o := sub(o, 0x20)
                 // prettier-ignore
                 if iszero(o) { break }
             }
             let bLength := mload(b)
-            let output := add(result, aLength)
+            let output := add(result, mload(a))
             // Copy `b` one word at a time, backwards.
             // prettier-ignore
             for { let o := and(add(bLength, 32), not(31)) } 1 {} {
@@ -662,13 +661,14 @@ library LibString {
                 if iszero(o) { break }
             }
             let totalLength := add(aLength, bLength)
+            let last := add(add(result, 0x20), totalLength)
             // Zeroize the slot after the string.
-            mstore(add(add(result, 0x20), totalLength), 0)
+            mstore(last, 0)
             // Stores the length.
             mstore(result, totalLength)
             // Allocate memory for the length and the bytes,
             // rounded up to a multiple of 32.
-            mstore(0x40, add(result, and(add(totalLength, 63), not(31))))
+            mstore(0x40, and(add(last, 31), not(31)))
         }
     }
 
