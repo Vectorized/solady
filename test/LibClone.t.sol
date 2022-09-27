@@ -136,7 +136,7 @@ contract LibCloneTest is TestPlus, Clone {
         uint256[] memory argUint256Array,
         uint64 argUint64,
         uint8 argUint8
-    ) public brutalizeMemoryWithSeed(value_) {
+    ) public brutalizeMemory {
         bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
         LibCloneTest clone = LibCloneTest(LibClone.clone(address(this), data));
         _shouldBehaveLikeClone(address(clone), value_);
@@ -171,7 +171,7 @@ contract LibCloneTest is TestPlus, Clone {
         uint64 argUint64,
         uint8 argUint8,
         uint256 deposit
-    ) public brutalizeMemoryWithSeed(argUint256) {
+    ) public brutalizeMemory {
         bytes memory data;
         bytes32 salt;
 

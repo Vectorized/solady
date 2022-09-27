@@ -149,34 +149,30 @@ contract SafeTransferLibTest is TestPlus {
 
     function testFuzzTransferWithMissingReturn(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransfer(address(missingReturn), to, amount);
     }
 
     function testFuzzTransferWithStandardERC20(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransfer(address(erc20), to, amount);
     }
 
     function testFuzzTransferWithReturnsTooMuch(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransfer(address(returnsTooMuch), to, amount);
     }
 
     function testFuzzTransferWithGarbage(
         address to,
         uint256 amount,
-        bytes memory garbage,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        bytes memory garbage
+    ) public brutalizeMemory {
         if (garbageIsGarbage(garbage)) return;
 
         returnsGarbage.setGarbage(garbage);
@@ -187,9 +183,8 @@ contract SafeTransferLibTest is TestPlus {
     function testFuzzTransferWithNonContract(
         address nonContract,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
 
         SafeTransferLib.safeTransfer(nonContract, to, amount);
@@ -202,27 +197,24 @@ contract SafeTransferLibTest is TestPlus {
     function testFuzzTransferFromWithMissingReturn(
         address from,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransferFrom(address(missingReturn), from, to, amount);
     }
 
     function testFuzzTransferFromWithStandardERC20(
         address from,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransferFrom(address(erc20), from, to, amount);
     }
 
     function testFuzzTransferFromWithReturnsTooMuch(
         address from,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransferFrom(address(returnsTooMuch), from, to, amount);
     }
 
@@ -230,9 +222,8 @@ contract SafeTransferLibTest is TestPlus {
         address from,
         address to,
         uint256 amount,
-        bytes memory garbage,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        bytes memory garbage
+    ) public brutalizeMemory {
         if (garbageIsGarbage(garbage)) return;
 
         returnsGarbage.setGarbage(garbage);
@@ -244,9 +235,8 @@ contract SafeTransferLibTest is TestPlus {
         address nonContract,
         address from,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
 
         SafeTransferLib.safeTransferFrom(nonContract, from, to, amount);
@@ -254,34 +244,30 @@ contract SafeTransferLibTest is TestPlus {
 
     function testFuzzApproveWithMissingReturn(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeApprove(address(missingReturn), to, amount);
     }
 
     function testFuzzApproveWithStandardERC20(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeApprove(address(erc20), to, amount);
     }
 
     function testFuzzApproveWithReturnsTooMuch(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeApprove(address(returnsTooMuch), to, amount);
     }
 
     function testFuzzApproveWithGarbage(
         address to,
         uint256 amount,
-        bytes memory garbage,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        bytes memory garbage
+    ) public brutalizeMemory {
         if (garbageIsGarbage(garbage)) return;
 
         returnsGarbage.setGarbage(garbage);
@@ -292,9 +278,8 @@ contract SafeTransferLibTest is TestPlus {
     function testFuzzApproveWithNonContract(
         address nonContract,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
 
         SafeTransferLib.safeApprove(nonContract, to, amount);
@@ -302,9 +287,8 @@ contract SafeTransferLibTest is TestPlus {
 
     function testFuzzTransferETH(
         address recipient,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
         if (recipient.code.length > 0 || uint256(uint160(recipient)) <= 18 || recipient == msg.sender) return;
 
@@ -315,42 +299,37 @@ contract SafeTransferLibTest is TestPlus {
 
     function testFailFuzzTransferWithReturnsFalse(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransfer(address(returnsFalse), to, amount);
     }
 
     function testFailFuzzTransferWithReverting(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransfer(address(reverting), to, amount);
     }
 
     function testFailFuzzTransferWithReturnsTooLittle(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransfer(address(returnsTooLittle), to, amount);
     }
 
     function testFailFuzzTransferWithReturnsTwo(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransfer(address(returnsTwo), to, amount);
     }
 
     function testFailFuzzTransferWithGarbage(
         address to,
         uint256 amount,
-        bytes memory garbage,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        bytes memory garbage
+    ) public brutalizeMemory {
         require(garbageIsGarbage(garbage));
 
         returnsGarbage.setGarbage(garbage);
@@ -361,36 +340,32 @@ contract SafeTransferLibTest is TestPlus {
     function testFailFuzzTransferFromWithReturnsFalse(
         address from,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransferFrom(address(returnsFalse), from, to, amount);
     }
 
     function testFailFuzzTransferFromWithReverting(
         address from,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransferFrom(address(reverting), from, to, amount);
     }
 
     function testFailFuzzTransferFromWithReturnsTooLittle(
         address from,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransferFrom(address(returnsTooLittle), from, to, amount);
     }
 
     function testFailFuzzTransferFromWithReturnsTwo(
         address from,
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeTransferFrom(address(returnsTwo), from, to, amount);
     }
 
@@ -398,9 +373,8 @@ contract SafeTransferLibTest is TestPlus {
         address from,
         address to,
         uint256 amount,
-        bytes memory garbage,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        bytes memory garbage
+    ) public brutalizeMemory {
         require(garbageIsGarbage(garbage));
 
         returnsGarbage.setGarbage(garbage);
@@ -410,42 +384,37 @@ contract SafeTransferLibTest is TestPlus {
 
     function testFailFuzzApproveWithReturnsFalse(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeApprove(address(returnsFalse), to, amount);
     }
 
     function testFailFuzzApproveWithReverting(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeApprove(address(reverting), to, amount);
     }
 
     function testFailFuzzApproveWithReturnsTooLittle(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeApprove(address(returnsTooLittle), to, amount);
     }
 
     function testFailFuzzApproveWithReturnsTwo(
         address to,
-        uint256 amount,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        uint256 amount
+    ) public brutalizeMemory {
         verifySafeApprove(address(returnsTwo), to, amount);
     }
 
     function testFailFuzzApproveWithGarbage(
         address to,
         uint256 amount,
-        bytes memory garbage,
-        bytes calldata brutalizeWith
-    ) public brutalizeMemory(brutalizeWith) {
+        bytes memory garbage
+    ) public brutalizeMemory {
         require(garbageIsGarbage(garbage));
 
         returnsGarbage.setGarbage(garbage);
@@ -453,9 +422,9 @@ contract SafeTransferLibTest is TestPlus {
         verifySafeApprove(address(returnsGarbage), to, amount);
     }
 
-    function testFailFuzzTransferETHToContractWithoutFallback(uint256 amount, bytes calldata brutalizeWith)
+    function testFailFuzzTransferETHToContractWithoutFallback(uint256 amount)
         public
-        brutalizeMemory(brutalizeWith)
+        brutalizeMemory
     {
         SafeTransferLib.safeTransferETH(address(this), amount);
     }
