@@ -212,6 +212,9 @@ library LibString {
     /*                   OTHER STRING OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // For performance and bytecode compactness, all indices of the following operations
+    // are byte offsets (ASCII characters), not UTF character offsets.
+
     /// @dev Returns `subject` all occurances of `search` replaced with `replacement`.
     function replace(
         string memory subject,
@@ -297,7 +300,7 @@ library LibString {
         }
     }
 
-    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from left to right, starting from `from`.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function indexOf(
@@ -357,14 +360,14 @@ library LibString {
         }
     }
 
-    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from left to right.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function indexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
         result = indexOf(subject, search, 0);
     }
 
-    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from right to left, starting from `from`.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function lastIndexOf(
@@ -484,6 +487,7 @@ library LibString {
     }
 
     /// @dev Returns a copy of `subject` sliced from `start` to `end` (exclusive).
+    /// `start` and `end` are byte offsets.
     function slice(
         string memory subject,
         uint256 start,
@@ -518,11 +522,13 @@ library LibString {
     }
 
     /// @dev Returns a copy of `subject` sliced from `start` to the end of the string.
+    /// `start` is a byte offset.
     function slice(string memory subject, uint256 start) internal pure returns (string memory result) {
         result = slice(subject, start, uint256(int256(-1)));
     }
 
     /// @dev Returns all the indices of `search` in `subject`.
+    /// The indices are byte offsets.
     function indicesOf(string memory subject, string memory search) internal pure returns (uint256[] memory result) {
         assembly {
             let subjectLength := mload(subject)
@@ -632,32 +638,30 @@ library LibString {
     }
 
     /// @dev Returns a concatenated string of `a` and `b`.
-    /// This function is cheaper than string.concat() and doesn't desalign the free memory pointer.
+    /// Cheaper than `string.concat()` and does not de-align the free memory pointer.
     function concat(string memory a, string memory b) internal pure returns (string memory result) {
         assembly {
             result := mload(0x40)
-            if mload(a) {
-                // Copy `a` one word at a time, backwards.
+            let aLength := mload(a)
+            // Copy `a` one word at a time, backwards.
+            // prettier-ignore
+            for { let o := and(add(aLength, 32), not(31)) } 1 {} {
+                mstore(add(result, o), mload(add(a, o)))
+                o := sub(o, 0x20)
                 // prettier-ignore
-                for { let o := and(add(mload(a), 31), not(31)) } 1 {} {
-                    mstore(add(result, o), mload(add(a, o)))
-                    o := sub(o, 0x20)
-                    // prettier-ignore
-                    if iszero(o) { break }
-                }
+                if iszero(o) { break }
             }
-            if mload(b) {
-                let output := add(result, mload(a))
-                // Copy `b` one word at a time, backwards.
+            let bLength := mload(b)
+            let output := add(result, aLength)
+            // Copy `b` one word at a time, backwards.
+            // prettier-ignore
+            for { let o := and(add(bLength, 32), not(31)) } 1 {} {
+                mstore(add(output, o), mload(add(b, o)))
+                o := sub(o, 0x20)
                 // prettier-ignore
-                for { let o := and(add(mload(b), 31), not(31)) } 1 {} {
-                    mstore(add(output, o), mload(add(b, o)))
-                    o := sub(o, 0x20)
-                    // prettier-ignore
-                    if iszero(o) { break }
-                }
+                if iszero(o) { break }
             }
-            let totalLength := add(mload(a), mload(b))
+            let totalLength := add(aLength, bLength)
             // Zeroize the slot after the string.
             mstore(add(add(result, 0x20), totalLength), 0)
             // Stores the length.

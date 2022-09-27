@@ -5,6 +5,8 @@ import "./utils/TestPlus.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
 contract LibStringTest is TestPlus {
+    using LibString for *;
+
     function testToStringZero() public {
         assertEq(keccak256(bytes(LibString.toString(0))), keccak256(bytes("0")));
     }
@@ -637,6 +639,16 @@ contract LibStringTest is TestPlus {
             ),
             "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY12345678901234567890123456789012345678901234567890"
         );
+        assertEq(
+            "1234567890"
+                .concat("1234567890")
+                .concat("1234567890")
+                .concat("1234567890")
+                .concat("1234567890")
+                .concat("1234567890")
+                .concat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+            "123456789012345678901234567890123456789012345678901234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        );
         assertEq(LibString.concat("", "b"), "b");
         assertEq(LibString.concat("", "b"), "b");
         assertEq(LibString.concat("a", "b"), "ab");
@@ -653,6 +665,20 @@ contract LibStringTest is TestPlus {
                 )
             ),
             "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY12345678901234567890123456789012345678901234567890"
+        );
+        assertEq(
+            string(
+                bytes.concat(
+                    bytes("1234567890"),
+                    bytes("1234567890"),
+                    bytes("1234567890"),
+                    bytes("1234567890"),
+                    bytes("1234567890"),
+                    bytes("1234567890"),
+                    bytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                )
+            ),
+            "123456789012345678901234567890123456789012345678901234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         );
         assertEq(string(bytes.concat(bytes(""), bytes("b"))), "b");
         assertEq(string(bytes.concat(bytes(""), bytes("b"))), "b");
