@@ -290,12 +290,14 @@ library LibString {
                 resultRemainder := add(resultRemainder, 0x20)
                 subject := add(subject, 0x20)
             }
+            result := sub(result, 0x20)
             // Zeroize the slot after the string.
-            mstore(resultRemainder, 0)
+            let last := add(add(result, 0x20), k)
+            mstore(last, 0)
             // Allocate memory for the length and the bytes,
             // rounded up to a multiple of 32.
-            mstore(0x40, add(result, and(add(k, 63), not(31))))
-            result := sub(result, 0x20)
+            mstore(0x40, and(add(last, 31), not(31)))
+            // Store the length of the result.
             mstore(result, k)
         }
     }
