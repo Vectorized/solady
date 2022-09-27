@@ -631,59 +631,45 @@ library LibString {
         }
     }
 
-    // /// @dev Returns a concated string of `subject` and `concat`.
-    // /// @dev This function is cheaper than string.concat() and doesn't desalign the free memory pointer.
-    // function concatenate(string memory subject, string memory concat) internal pure returns (string memory result) {
-    //     assembly {
-    //         //Load length.
-    //         let subjectLength := mload(subject)
-    //         let concatenateLength := mload(concat)
-    //         //Load Free memory pointer.
-    //         result := mload(0x40)
-    //         let output := add(result, 0x20)
-    //         //Calculates the result length.
-    //         let totalLength := add(subjectLength, concatenateLength)
-    //         //Moves pointer.
-    //         subject := add(subject, 0x20)
-    //         concat := add(concat, 0x20)
-    //         //Loops one word at a time.
-    //         for {
-    //             let w := 0
-    //         } 1 {
+    /// @dev Returns a concatenated string of `a` and `b`.
+    /// This function is cheaper than string.concat() and doesn't desalign the free memory pointer.
+    function concat(string memory a, string memory b) internal pure returns (string memory result) {
+        assembly {
+            let aLength := mload(a)
+            let bLength := mload(b)
 
-    //         } {
-    //             //Stores 32 bytes
-    //             mstore(add(output, w), mload(add(subject, w)))
-    //             w := add(w, 0x20)
-    //             if iszero(lt(w, subjectLength)) {
-    //                 break
-    //             }
-    //         }
+            result := mload(0x40)
 
-    //         output := add(output, subjectLength)
-    //         //Loops one word at a time.
-    //         for {
-    //             let o := 0
-    //         } 1 {
+            let output := add(result, 0x20)
+            let totalLength := add(aLength, bLength)
 
-    //         } {
-    //             //Stores 32 bytes at the result pointer + subjectLength.
-    //             mstore(add(output, o), mload(add(concat, o)))
-    //             o := add(o, 0x20)
-    //             // prettier-ignore
-    //             if iszero(lt(o, concatenateLength)) { break }
-    //         }
-
-    //         output := add(output, concatenateLength)
-    //         // Zeroize the slot after the string.
-    //         mstore(output, 0)
-    //         //Stores result length.
-    //         mstore(result, totalLength)
-    //         // Allocate memory for the length and the bytes,
-    //         // rounded up to a multiple of 32.
-    //         mstore(0x40, add(result, and(add(totalLength, 63), not(31))))
-    //     }
-    // }
+            a := add(a, 0x20)
+            b := add(b, 0x20)
+            // prettier-ignore
+            for { let o := 0 } 1 {} {
+                mstore(add(output, o), mload(add(a, o)))
+                o := add(o, 0x20)
+                // prettier-ignore
+                if iszero(lt(o, aLength)) { break }
+            }
+            output := add(output, aLength)
+            // prettier-ignore
+            for { let o := 0 } 1 {} {
+                mstore(add(output, o), mload(add(b, o)))
+                o := add(o, 0x20)
+                // prettier-ignore
+                if iszero(lt(o, bLength)) { break }
+            }
+            output := add(output, bLength)
+            // Zeroize the slot after the string.
+            mstore(output, 0)
+            // Stores the length.
+            mstore(result, totalLength)
+            // Allocate memory for the length and the bytes,
+            // rounded up to a multiple of 32.
+            mstore(0x40, add(result, and(add(totalLength, 63), not(31))))
+        }
+    }
 
     /// @dev Packs a single string with its length into a single word.
     /// Returns `bytes32(0)` if the length is zero or greater than 31.
