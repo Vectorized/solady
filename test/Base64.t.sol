@@ -84,10 +84,7 @@ contract Base64Test is TestPlus {
         );
     }
 
-    function testBase64EncodeDecodeAltModes(
-        bytes memory input,
-        uint256 randomness
-    ) public brutalizeMemory {
+    function testBase64EncodeDecodeAltModes(bytes memory input, uint256 randomness) public brutalizeMemory {
         for (uint256 i; i < 2; ++i) {
             string memory encoded = Base64.encode(input);
 
@@ -132,9 +129,7 @@ contract Base64Test is TestPlus {
         assertEq(Base64.encode(input, fileSafe, noPadding), expectedEncoded);
     }
 
-    function testBase64DecodeMemorySafety(bytes memory input)
-        public brutalizeMemory
-    {
+    function testBase64DecodeMemorySafety(bytes memory input) public brutalizeMemory {
         _roundUpFreeMemoryPointer();
         bytes memory decoded = bytes(Base64.decode(string(input)));
         _brutalizeFreeMemoryStart();

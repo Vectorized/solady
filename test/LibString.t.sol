@@ -260,9 +260,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.indexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
-    function testStringLastIndexOf(uint256 randomness)
-        public brutalizeMemory
-    {
+    function testStringLastIndexOf(uint256 randomness) public brutalizeMemory {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
@@ -318,8 +316,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.lastIndexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
-    function testStringStartsWith(uint256 randomness) public brutalizeMemory
-    {
+    function testStringStartsWith(uint256 randomness) public brutalizeMemory {
         string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
 
@@ -353,8 +350,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.startsWith("", "abc"), false);
     }
 
-    function testStringEndsWith(uint256 randomness) public brutalizeMemory
-    {
+    function testStringEndsWith(uint256 randomness) public brutalizeMemory {
         string memory filler = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
 
@@ -388,10 +384,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.endsWith("", "abc"), false);
     }
 
-    function testStringRepeat(
-        string memory subject,
-        uint256 times
-    ) public brutalizeMemory {
+    function testStringRepeat(string memory subject, uint256 times) public brutalizeMemory {
         times = times % 8;
         string memory repeated = LibString.repeat(subject, times);
         _brutalizeFreeMemoryStart();
@@ -611,10 +604,7 @@ contract LibStringTest is TestPlus {
         assertTrue(_stringArraysAreSame(LibString.split("", ""), elements));
     }
 
-    function testStringConcat(
-        string memory a,
-        string memory b
-    ) public brutalizeMemory {
+    function testStringConcat(string memory a, string memory b) public brutalizeMemory {
         string memory concatenated = LibString.concat(a, b);
         _roundUpFreeMemoryPointer();
         _brutalizeFreeMemoryStart();
@@ -657,10 +647,7 @@ contract LibStringTest is TestPlus {
         assertEq(string(bytes.concat(bytes(""), bytes(""))), "");
     }
 
-    function testStringPackAndUnpackOneDifferential(string memory a)
-        public
-        brutalizeMemory
-    {
+    function testStringPackAndUnpackOneDifferential(string memory a) public brutalizeMemory {
         // Ensure the input strings are zero-right padded, so that the comparison is clean.
         a = LibString.slice(a, 0);
         bytes32 packed = LibString.packOne(a);
@@ -673,10 +660,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStringPackAndUnpackOne(string memory a)
-        public
-        brutalizeMemory
-    {
+    function testStringPackAndUnpackOne(string memory a) public brutalizeMemory {
         _roundUpFreeMemoryPointer();
         bytes32 packed = LibString.packOne(a);
         string memory unpacked = LibString.unpackOne(packed);
@@ -700,10 +684,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStringPackAndUnpackTwoDifferential(
-        string memory a,
-        string memory b
-    ) public brutalizeMemory {
+    function testStringPackAndUnpackTwoDifferential(string memory a, string memory b) public brutalizeMemory {
         // Ensure the input strings are zero-right padded, so that the comparison is clean.
         a = LibString.slice(a, 0);
         b = LibString.slice(b, 0);
@@ -717,10 +698,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStringPackAndUnpackTwo(
-        string memory a,
-        string memory b
-    ) public brutalizeMemory {
+    function testStringPackAndUnpackTwo(string memory a, string memory b) public brutalizeMemory {
         bytes32 packed = LibString.packTwo(a, b);
         _roundUpFreeMemoryPointer();
         (string memory unpackedA, string memory unpackedB) = LibString.unpackTwo(packed);
