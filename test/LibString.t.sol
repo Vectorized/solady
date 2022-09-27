@@ -629,10 +629,36 @@ contract LibStringTest is TestPlus {
         assertEq(concatenated, expectedResult);
     }
 
-    function testStringConcat(string memory a, string memory b) public {
-        string memory concatenated = LibString.concat(a, b);
-        string memory expectedResult = string(bytes.concat(bytes(a), bytes(b)));
-        assertEq(concatenated, expectedResult);
+    function testStringConcat() public {
+        assertEq(
+            LibString.concat(
+                "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY",
+                "12345678901234567890123456789012345678901234567890"
+            ),
+            "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY12345678901234567890123456789012345678901234567890"
+        );
+        assertEq(LibString.concat("", "b"), "b");
+        assertEq(LibString.concat("", "b"), "b");
+        assertEq(LibString.concat("a", "b"), "ab");
+        assertEq(LibString.concat("a", ""), "a");
+        assertEq(LibString.concat("", ""), "");
+    }
+
+    function testStringConcatOriginal() public {
+        assertEq(
+            string(
+                bytes.concat(
+                    bytes("bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY"),
+                    bytes("12345678901234567890123456789012345678901234567890")
+                )
+            ),
+            "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY12345678901234567890123456789012345678901234567890"
+        );
+        assertEq(string(bytes.concat(bytes(""), bytes("b"))), "b");
+        assertEq(string(bytes.concat(bytes(""), bytes("b"))), "b");
+        assertEq(string(bytes.concat(bytes("a"), bytes("b"))), "ab");
+        assertEq(string(bytes.concat(bytes("a"), bytes(""))), "a");
+        assertEq(string(bytes.concat(bytes(""), bytes(""))), "");
     }
 
     function testStringPackAndUnpackOneDifferential(string memory a, uint256 randomness)

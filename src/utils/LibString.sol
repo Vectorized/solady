@@ -635,34 +635,31 @@ library LibString {
     /// This function is cheaper than string.concat() and doesn't desalign the free memory pointer.
     function concat(string memory a, string memory b) internal pure returns (string memory result) {
         assembly {
-            let aLength := mload(a)
-            let bLength := mload(b)
-
             result := mload(0x40)
-
-            let output := add(result, 0x20)
-            let totalLength := add(aLength, bLength)
-
-            a := add(a, 0x20)
-            b := add(b, 0x20)
-            // prettier-ignore
-            for { let o := 0 } 1 {} {
-                mstore(add(output, o), mload(add(a, o)))
-                o := add(o, 0x20)
+            if mload(a) {
+                // Copy `a` one word at a time, backwards.
                 // prettier-ignore
-                if iszero(lt(o, aLength)) { break }
+                for { let o := and(add(mload(a), 31), not(31)) } 1 {} {
+                    mstore(add(result, o), mload(add(a, o)))
+                    o := sub(o, 0x20)
+                    // prettier-ignore
+                    if iszero(o) { break }
+                }
             }
-            output := add(output, aLength)
-            // prettier-ignore
-            for { let o := 0 } 1 {} {
-                mstore(add(output, o), mload(add(b, o)))
-                o := add(o, 0x20)
+            if mload(b) {
+                let output := add(result, mload(a))
+                // Copy `b` one word at a time, backwards.
                 // prettier-ignore
-                if iszero(lt(o, bLength)) { break }
+                for { let o := and(add(mload(b), 31), not(31)) } 1 {} {
+                    mstore(add(output, o), mload(add(b, o)))
+                    o := sub(o, 0x20)
+                    // prettier-ignore
+                    if iszero(o) { break }
+                }
             }
-            output := add(output, bLength)
+            let totalLength := add(mload(a), mload(b))
             // Zeroize the slot after the string.
-            mstore(output, 0)
+            mstore(add(add(result, 0x20), totalLength), 0)
             // Stores the length.
             mstore(result, totalLength)
             // Allocate memory for the length and the bytes,
