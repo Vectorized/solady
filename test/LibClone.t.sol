@@ -105,6 +105,10 @@ contract LibCloneTest is TestPlus, Clone {
         testCloneDeterministic(1, keccak256("b"));
     }
 
+    function getArgBytes(uint256 argOffset, uint256 length) public pure returns (bytes memory) {
+        return _getArgBytes(argOffset, length);
+    }
+
     function getArgAddress(uint256 argOffset) public pure returns (address) {
         return _getArgAddress(argOffset);
     }
@@ -160,11 +164,10 @@ contract LibCloneTest is TestPlus, Clone {
     }
 
     function testCloneDeteministicWithImmutableArgs(
-        uint256 value_,
-        bytes32 salt,
         address argAddress,
         uint256 argUint256,
         uint256[] memory argUint256Array,
+        bytes memory argBytes,
         uint64 argUint64,
         uint8 argUint8,
         uint256 deposit
@@ -180,22 +183,42 @@ contract LibCloneTest is TestPlus, Clone {
         );
         bytes32 dataHashBefore = keccak256(data);
         bytes32 saltKey = keccak256(abi.encode(data, salt));
+    ) public brutalizeMemoryWithSeed(argUint256) {
+        bytes memory data;
+        bytes32 salt;
 
-        if (saltIsUsed[saltKey]) {
-            vm.expectRevert(LibClone.DeploymentFailed.selector);
-            LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
-            // Check that memory management is done properly.
-            assertEq(keccak256(data), dataHashBefore);
-            return;
+        // For avoiding stack too deep.
+        unchecked {
+            // Recycle for the salt.
+            salt = bytes32(argUint256 + 123);
+
+            data = abi.encodePacked(
+                argUint256,
+                argAddress,
+                argUint256,
+                argUint256Array,
+                argBytes,
+                argUint64,
+                argUint8,
+                argUint256
+            );
+
+            bytes32 saltKey = keccak256(abi.encode(data, salt));
+            if (saltIsUsed[saltKey]) {
+                vm.expectRevert(LibClone.DeploymentFailed.selector);
+                LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
+                return;
+            }
+            saltIsUsed[saltKey] = true;
         }
+
+        bytes32 dataHashBefore = keccak256(data);
 
         LibCloneTest clone = LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
         // Check that memory management is done properly.
         assertEq(keccak256(data), dataHashBefore);
 
-        saltIsUsed[saltKey] = true;
-
-        _shouldBehaveLikeClone(address(clone), value_);
+        _shouldBehaveLikeClone(address(clone), argUint256);
         _canReceiveETHCorectly(address(clone), deposit);
 
         // For avoiding stack too deep. Also, no risk of overflow.
@@ -209,6 +232,8 @@ contract LibCloneTest is TestPlus, Clone {
             argOffset += (256 / 8);
             assertEq(clone.getArgUint256Array(argOffset, argUint256Array.length), argUint256Array);
             argOffset += (256 / 8) * argUint256Array.length;
+            assertEq(clone.getArgBytes(argOffset, argBytes.length), argBytes);
+            argOffset += (8 / 8) * argBytes.length;
             assertEq(clone.getArgUint64(argOffset), argUint64);
             argOffset += (64 / 8);
             assertEq(clone.getArgUint8(argOffset), argUint8);
@@ -218,6 +243,11 @@ contract LibCloneTest is TestPlus, Clone {
 
         address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
         assertEq(address(clone), predicted);
+        {
+            address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
+            assertEq(address(clone), predicted);
+        }
+
         // Check that memory management is done properly.
         assertEq(keccak256(data), dataHashBefore);
 
@@ -228,13 +258,12 @@ contract LibCloneTest is TestPlus, Clone {
         uint256[] memory argUint256Array = new uint256[](2);
         argUint256Array[0] = uint256(keccak256("zero"));
         argUint256Array[1] = uint256(keccak256("one"));
-
+        bytes memory argBytes = bytes("Teehee");
         testCloneDeteministicWithImmutableArgs(
-            uint256(keccak256("value")),
-            keccak256("salt"),
             address(uint160(uint256(keccak256("argAddress")))),
             uint256(keccak256("argUint256")),
             argUint256Array,
+            argBytes,
             uint64(uint256(keccak256("argUint64"))),
             uint8(uint256(keccak256("argUint8"))),
             uint256(keccak256("deposit"))

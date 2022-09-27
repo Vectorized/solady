@@ -6,9 +6,17 @@ pragma solidity ^0.8.4;
 /// @author Minimal proxy by 0age (https://github.com/0age)
 /// @author Clones with immutable args by wighawag, zefram.eth, Saw-mon & Natalie
 /// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
-/// @dev Although the sw0nt pattern saves 5 gas over the erc-1167 pattern during runtime,
+///
+/// @dev Minimal proxy:
+/// Although the sw0nt pattern saves 5 gas over the erc-1167 pattern during runtime,
 /// it is not supported out-of-the-box on Etherscan. Hence, we choose to use the 0age pattern,
 /// which saves 4 gas over the erc-1167 pattern during runtime, and has the smallest bytecode.
+///
+/// @dev Clones with immutable args (CWIA):
+/// The implementation of CWIA here implements a `receive()` method that emits the
+/// `ReceiveETH(uint256)` event. This skips the `DELEGATECALL` when there is no calldata,
+/// enabling us to accept hard gas-capped `sends` & `transfers` for maximum backwards
+/// composability. The minimal proxy implementation does not offer this feature.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
