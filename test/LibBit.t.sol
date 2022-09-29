@@ -61,8 +61,19 @@ contract LibBitTest is Test {
         }
     }
 
+    function testFuzzIsPo2(uint256 x) public {
+        uint256 c;
+        unchecked {
+            for (uint256 t = x; t != 0; c++) {
+                t &= t - 1;
+            }
+        }
+        assertEq(LibBit.isPo2(x), c == 1);
+    }
+
     function testIsPo2() public {
         assertFalse(LibBit.isPo2(0));
+        assertFalse(LibBit.isPo2(type(uint256).max));
         unchecked {
             for (uint256 i; i < 256; ++i) {
                 uint256 x = 1 << i;
