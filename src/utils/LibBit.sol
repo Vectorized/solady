@@ -53,11 +53,11 @@ library LibBit {
     function popCount(uint256 x) internal pure returns (uint256 c) {
         assembly {
             let max := not(0)
-            let isNotMax := lt(x, max)
+            let isMax := eq(x, max)
             x := sub(x, and(shr(1, x), div(max, 3)))
             x := add(and(x, div(max, 5)), and(shr(2, x), div(max, 5)))
             x := and(add(x, shr(4, x)), div(max, 17))
-            c := xor(256, mul(isNotMax, xor(256, shr(248, mul(x, div(max, 255))))))
+            c := or(shl(8, isMax), shr(248, mul(x, div(max, 255))))
         }
     }
 
