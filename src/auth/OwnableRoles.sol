@@ -42,7 +42,7 @@ abstract contract OwnableRoles {
     /// @dev An ownership handover to `pendingOwner` has been requested.
     event OwnershipHandoverRequested(address indexed pendingOwner);
 
-    /// @dev The ownership handover to `pendingOwner` has been cancelled.
+    /// @dev The ownership handover to `pendingOwner` has been canceled.
     event OwnershipHandoverCanceled(address indexed pendingOwner);
 
     /// @dev The `user`'s roles is updated to `roles`.
