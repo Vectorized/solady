@@ -50,7 +50,7 @@ library LibBit {
     }
 
     /// @dev Returns the number of set bits in `x`.
-    function popCount(uint256 x) public pure returns (uint256 c) {
+    function popCount(uint256 x) internal pure returns (uint256 c) {
         assembly {
             let max := not(0)
             let isNotMax := lt(x, max)
@@ -62,7 +62,7 @@ library LibBit {
     }
 
     /// @dev Returns whether `x` is a power of 2.
-    function isPo2(uint256 x) public pure returns (bool result) {
+    function isPo2(uint256 x) internal pure returns (bool result) {
         assembly {
             // Equivalent to `x && !(x & (x - 1))`.
             result := iszero(add(and(x, sub(x, 1)), iszero(x)))
