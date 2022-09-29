@@ -60,4 +60,12 @@ library LibBit {
             c := xor(256, mul(isNotMax, xor(256, shr(248, mul(x, div(max, 255))))))
         }
     }
+
+    /// @dev Returns whether `x` is a power of 2.
+    function isPo2(uint256 x) public pure returns (bool result) {
+        assembly {
+            // Equivalent to `x && !(x & (x - 1))`.
+            result := iszero(add(and(x, sub(x, 1)), iszero(x)))
+        }
+    }
 }

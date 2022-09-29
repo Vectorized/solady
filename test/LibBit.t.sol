@@ -43,6 +43,32 @@ contract LibBitTest is Test {
     }
 
     function testPopCount() public {
-        assertEq(LibBit.popCount((1 << 255) | 1), 2);
+        unchecked {
+            for (uint256 i = 1; i < 256; ++i) {
+                assertEq(LibBit.popCount((1 << i) | 1), 2);
+            }
+        }
+    }
+
+    function testFuzzIsPo2(uint8 a, uint8 b) public {
+        unchecked {
+            uint256 x = (1 << uint256(a)) | (1 << uint256(b));
+            if (a == b) {
+                assertTrue(LibBit.isPo2(x));
+            } else {
+                assertFalse(LibBit.isPo2(x));
+            }
+        }
+    }
+
+    function testIsPo2() public {
+        assertFalse(LibBit.isPo2(0));
+        unchecked {
+            for (uint256 i; i < 256; ++i) {
+                uint256 x = 1 << i;
+                assertTrue(LibBit.isPo2(x));
+                assertFalse(LibBit.isPo2(~x));
+            }
+        }
     }
 }
