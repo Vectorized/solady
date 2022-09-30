@@ -5,31 +5,40 @@ import "forge-std/Test.sol";
 import {LibBit} from "../src/utils/LibBit.sol";
 
 contract LibBitTest is Test {
-    function testFuzzMSB() public {
+    function testFuzzFLS() public {
         for (uint256 i = 1; i < 255; i++) {
-            assertEq(LibBit.msb((1 << i) - 1), i - 1);
-            assertEq(LibBit.msb((1 << i)), i);
-            assertEq(LibBit.msb((1 << i) + 1), i);
+            assertEq(LibBit.fls((1 << i) - 1), i - 1);
+            assertEq(LibBit.fls((1 << i)), i);
+            assertEq(LibBit.fls((1 << i) + 1), i);
         }
-        assertEq(LibBit.msb(0), 256);
+        assertEq(LibBit.fls(0), 256);
     }
 
-    function testMSB() public {
-        assertEq(LibBit.msb(0xff << 3), 10);
+    function testFLS() public {
+        assertEq(LibBit.fls(0xff << 3), 10);
     }
 
-    function testFuzzLSB() public {
+    function testFuzzCLZ() public {
+        for (uint256 i = 1; i < 255; i++) {
+            assertEq(LibBit.clz((1 << i) - 1), 255 - (i - 1));
+            assertEq(LibBit.clz((1 << i)), 255 - i);
+            assertEq(LibBit.clz((1 << i) + 1), 255 - i);
+        }
+        assertEq(LibBit.clz(0), 256);
+    }
+
+    function testFuzzFFS() public {
         uint256 brutalizer = uint256(keccak256(abi.encode(address(this), block.timestamp)));
         for (uint256 i = 0; i < 256; i++) {
-            assertEq(LibBit.lsb(1 << i), i);
-            assertEq(LibBit.lsb(type(uint256).max << i), i);
-            assertEq(LibBit.lsb((brutalizer | 1) << i), i);
+            assertEq(LibBit.ffs(1 << i), i);
+            assertEq(LibBit.ffs(type(uint256).max << i), i);
+            assertEq(LibBit.ffs((brutalizer | 1) << i), i);
         }
-        assertEq(LibBit.lsb(0), 256);
+        assertEq(LibBit.ffs(0), 256);
     }
 
-    function testLSB() public {
-        assertEq(LibBit.lsb(0xff << 3), 3);
+    function testFFS() public {
+        assertEq(LibBit.ffs(0xff << 3), 3);
     }
 
     function testFuzzPopCount(uint256 x) public {

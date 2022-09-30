@@ -5,9 +5,12 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibBit.sol)
 /// @author Inspired by (https://graphics.stanford.edu/~seander/bithacks.html)
 library LibBit {
-    /// @dev Returns the index of the most significant bit of `x`.
+    /// @dev Find last set.
+    /// Returns the index of the most significant bit of `x`,
+    /// counting from the least significant bit position.
     /// If `x` is zero, returns 256.
-    function msb(uint256 x) internal pure returns (uint256 r) {
+    /// Equivalent to `log2(x)`, but without reverting for the zero case.
+    function fls(uint256 x) internal pure returns (uint256 r) {
         assembly {
             r := shl(8, iszero(x))
 
@@ -29,9 +32,23 @@ library LibBit {
         }
     }
 
-    /// @dev Returns the index of the least significant bit of `x`.
+    /// @dev Count leading zeros.
+    /// Returns the number of zeros preceding the most significant one bit.
     /// If `x` is zero, returns 256.
-    function lsb(uint256 x) internal pure returns (uint256 r) {
+    function clz(uint256 x) internal pure returns (uint256 r) {
+        r = fls(x);
+        assembly {
+            r := or(and(r, 256), mul(sub(255, r), lt(r, 256)))
+        }
+    }
+
+    /// @dev Find first set.
+    /// Returns the index of the least significant bit of `x`,
+    /// counting from the least significant bit position.
+    /// If `x` is zero, returns 256.
+    /// Equivalent to `ctz` (count trailing zeros), which gives
+    /// the number of zeros following the least significant one bit.
+    function ffs(uint256 x) internal pure returns (uint256 r) {
         assembly {
             r := shl(8, iszero(x))
 
