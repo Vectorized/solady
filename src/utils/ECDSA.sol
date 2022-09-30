@@ -6,6 +6,30 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/ECDSA.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol)
 library ECDSA {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The number which `s` must not exceed in order for
+    /// the signature to be non-malleable.
+    bytes32 private constant _MALLEABILITY_THRESHOLD =
+        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    RECOVERY OPERATIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Recovers the signer's address from a message digest `hash`,
+    /// and the `signature`.
+    ///
+    /// This function does NOT accept EIP-2098 short form signatures.
+    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
+    /// short form signatures instead.
+    ///
+    /// WARNING!
+    /// The `result` will be the zero address upon recovery failure,
+    /// as such, it is extremely important to ensure that the address
+    /// result is compared against is never zero.
     function recover(bytes32 hash, bytes calldata signature) internal view returns (address result) {
         assembly {
             if eq(signature.length, 65) {
@@ -15,8 +39,7 @@ library ECDSA {
                 calldatacopy(0x40, signature.offset, 0x40)
 
                 // If `s` in lower half order, such that the signature is not malleable.
-                // prettier-ignore
-                if iszero(gt(mload(0x60), 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0)) {
+                if iszero(gt(mload(0x60), _MALLEABILITY_THRESHOLD)) {
                     mstore(0x00, hash)
                     // Compute `v` and store it in the scratch space.
                     mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40))))
@@ -41,22 +64,57 @@ library ECDSA {
         }
     }
 
+    /// @dev Recovers the signer's address from a message digest `hash`,
+    /// and the EIP-2098 short form signature defined by `r` and `vs`.
+    ///
+    /// This function only accepts EIP-2098 short form signatures.
+    /// See: https://eips.ethereum.org/EIPS/eip-2098
+    ///
+    /// To be honest, I do not recommend using EIP-2098 signatures
+    /// for simplicity, performance, and security reasons. Most if not
+    /// all clients support traditional non EIP-2098 signatures by default.
+    /// As such, this method is intentionally not fully inlined.
+    /// It is merely included for completeness.
+    ///
+    /// WARNING!
+    /// The `result` will be the zero address upon recovery failure,
+    /// as such, it is extremely important to ensure that the address
+    /// result is compared against is never zero.
     function recover(
         bytes32 hash,
         bytes32 r,
         bytes32 vs
     ) internal view returns (address result) {
+        uint8 v;
+        bytes32 s;
+        assembly {
+            s := shr(1, shl(1, vs))
+            v := add(shr(255, vs), 27)
+        }
+        result = recover(hash, v, r, s);
+    }
+
+    /// @dev Recovers the signer's address from a message digest `hash`,
+    /// and the signature defined by `v`, `r`, `s`.
+    ///
+    /// WARNING!
+    /// The `result` will be the zero address upon recovery failure,
+    /// as such, it is extremely important to ensure that the address
+    /// result is compared against is never zero.
+    function recover(
+        bytes32 hash,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal view returns (address result) {
         assembly {
             // Copy the free memory pointer so that we can restore it later.
             let m := mload(0x40)
-            // prettier-ignore
-            let s := and(vs, 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
 
             // If `s` in lower half order, such that the signature is not malleable.
-            // prettier-ignore
-            if iszero(gt(s, 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0)) {
+            if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
                 mstore(0x00, hash)
-                mstore(0x20, add(shr(255, vs), 27))
+                mstore(0x20, v)
                 mstore(0x40, r)
                 mstore(0x60, s)
                 pop(
@@ -79,6 +137,14 @@ library ECDSA {
         }
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     HASHING OPERATIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns an Ethereum Signed Message, created from a `hash`.
+    /// This produces a hash corresponding to the one signed with the
+    /// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
+    /// JSON-RPC method as part of EIP-191.
     function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32 result) {
         assembly {
             // Store into scratch space for keccak256.
@@ -89,6 +155,10 @@ library ECDSA {
         }
     }
 
+    /// @dev Returns an Ethereum Signed Message, created from `s`.
+    /// This produces a hash corresponding to the one signed with the
+    /// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
+    /// JSON-RPC method as part of EIP-191.
     function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32 result) {
         assembly {
             // We need at most 128 bytes for Ethereum signed message header.
