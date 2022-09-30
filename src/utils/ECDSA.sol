@@ -27,9 +27,9 @@ library ECDSA {
     /// short form signatures instead.
     ///
     /// WARNING!
-    /// The `result` will be the zero address upon recovery failure,
-    /// as such, it is extremely important to ensure that the address
-    /// result is compared against is never zero.
+    /// The `result` will be the zero address upon recovery failure.
+    /// As such, it is extremely important to ensure that the address which
+    /// the `result` is compared against is never zero.
     function recover(bytes32 hash, bytes calldata signature) internal view returns (address result) {
         assembly {
             if eq(signature.length, 65) {
@@ -77,9 +77,9 @@ library ECDSA {
     /// It is merely included for completeness.
     ///
     /// WARNING!
-    /// The `result` will be the zero address upon recovery failure,
-    /// as such, it is extremely important to ensure that the address
-    /// result is compared against is never zero.
+    /// The `result` will be the zero address upon recovery failure.
+    /// As such, it is extremely important to ensure that the address which
+    /// the `result` is compared against is never zero.
     function recover(
         bytes32 hash,
         bytes32 r,
@@ -98,9 +98,9 @@ library ECDSA {
     /// and the signature defined by `v`, `r`, `s`.
     ///
     /// WARNING!
-    /// The `result` will be the zero address upon recovery failure,
-    /// as such, it is extremely important to ensure that the address
-    /// result is compared against is never zero.
+    /// The `result` will be the zero address upon recovery failure.
+    /// As such, it is extremely important to ensure that the address which
+    /// the `result` is compared against is never zero.
     function recover(
         bytes32 hash,
         uint8 v,
