@@ -78,18 +78,26 @@ library SafeTransferLib {
     ///
     /// If sending via the normal procedure fails, force sends the ETH by
     /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
+    ///
+    /// Note: Does NOT revert upon failure.
+    /// Returns whether the transfer of ETH is successful instead.
     function forceSafeTransferETH(
         address to,
         uint256 amount,
         uint256 gasStipend
-    ) internal {
+    ) internal returns (bool success) {
         assembly {
+            success := 1
             // Transfer the ETH and check if it succeeded or not.
             if iszero(call(gasStipend, to, amount, 0, 0, 0, 0)) {
+                success := 0
                 mstore(0x00, to)
                 mstore8(0xb, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
-                pop(call(gas(), create(amount, 0xb, 0x16), 0, 0, 0, 0, 0))
+                let tempContract := create(amount, 0xb, 0x16)
+                if tempContract {
+                    success := call(gas(), tempContract, 0, 0, 0, 0, 0)
+                }
             }
         }
     }

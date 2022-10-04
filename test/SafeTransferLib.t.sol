@@ -137,19 +137,33 @@ contract SafeTransferLibTest is TestPlus {
 
         uint256 amount = 1e18;
         uint256 balanceBefore = address(recipient).balance;
-        SafeTransferLib.forceSafeTransferETH(
+        // Try to send to a griever with a gas stipend,
+        // and ensures that the sending succeeds.
+        bool success = SafeTransferLib.forceSafeTransferETH(
             address(recipient),
             amount,
             SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
         );
         uint256 balanceAfter = address(recipient).balance;
+        assertTrue(success);
         assertEq(balanceAfter - balanceBefore, amount);
         // We use the `SELFDESTRUCT` to send, and thus the `garbage` should NOT be updated.
         assertTrue(recipient.garbage() == 0);
 
+        // Try to send more than what the current account owns,
+        // and ensure that the sending fails.
         balanceBefore = balanceAfter;
-        SafeTransferLib.forceSafeTransferETH(address(recipient), amount, gasleft());
+        success = SafeTransferLib.forceSafeTransferETH(address(recipient), address(this).balance + 1, gasleft());
         balanceAfter = address(recipient).balance;
+        assertFalse(success);
+        assertEq(balanceAfter - balanceBefore, 0);
+
+        // Try to send all the remaining balance, and ensure that the ending succeeds.
+        balanceBefore = balanceAfter;
+        amount = address(this).balance;
+        success = SafeTransferLib.forceSafeTransferETH(address(recipient), amount, gasleft());
+        balanceAfter = address(recipient).balance;
+        assertTrue(success);
         assertEq(balanceAfter - balanceBefore, amount);
         // We use the normal `CALL` to send, and thus the `garbage` should be updated.
         assertTrue(recipient.garbage() != 0);
