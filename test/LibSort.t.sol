@@ -5,6 +5,54 @@ import "forge-std/Test.sol";
 import "src/utils/LibSort.sol";
 
 contract LibSortTest is Test {
+    function testInsertionSortAddressesDifferential(uint256[] memory aRaw) public {
+        unchecked {
+            vm.assume(aRaw.length < 32);
+            address[] memory a = new address[](aRaw.length);
+            for (uint256 i; i < a.length; ++i) {
+                address addr;
+                uint256 addrRaw = aRaw[i];
+                assembly {
+                    addr := addrRaw
+                }
+                a[i] = addr;
+            }
+            // Make a copy of the `a` and perform insertion sort on it.
+            address[] memory aCopy = new address[](a.length);
+            for (uint256 i = 0; i < a.length; ++i) {
+                aCopy[i] = a[i];
+            }
+            for (uint256 i = 1; i < aCopy.length; ++i) {
+                address key = aCopy[i];
+                uint256 j = i;
+                while (j != 0 && aCopy[j - 1] > key) {
+                    aCopy[j] = aCopy[j - 1];
+                    --j;
+                }
+                aCopy[j] = key;
+            }
+            LibSort.insertionSort(a);
+            assertEq(a, aCopy);
+        }
+    }
+
+    function testInsertionSortPsuedorandom(uint256 lcg) public {
+        unchecked {
+            uint256[] memory a = new uint256[](32);
+            lcg ^= 1;
+            for (uint256 i; i < a.length; ++i) {
+                lcg = _stepLCG(lcg);
+                a[i] = lcg;
+            }
+            LibSort.insertionSort(a);
+            assertTrue(_isSorted(a));
+        }
+    }
+
+    function testInsertionSortPsuedorandom() public {
+        testInsertionSortPsuedorandom(123456789);
+    }
+
     function testSortChecksumed(uint256[] memory a) public {
         unchecked {
             vm.assume(a.length < 2048);

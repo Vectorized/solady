@@ -4,7 +4,57 @@ pragma solidity ^0.8.4;
 /// @notice Optimized intro sort.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library LibSort {
-    // @dev Sorts the array in-place.
+    /// @dev Sorts the array in-place with insertion sort.
+    /// Useful for stable sorting of small arrays (32 or lesser elements),
+    /// or where smaller bytecode is prefered over runtime gas performance
+    /// (e.g. in view functions intended for off-chain querying).
+    function insertionSort(uint256[] memory a) internal pure {
+        assembly {
+            let n := mload(a) // Length of `a`.
+
+            mstore(a, 0) // For insertion sort's inner loop to terminate.
+
+            let h := add(a, shl(5, n)) // High slot.
+
+            // prettier-ignore
+            for { let i := add(a, 0x20) } 1 {} {
+                i := add(i, 0x20)
+                // prettier-ignore
+                if gt(i, h) { break }
+                let k := mload(i) // Key.
+                let j := sub(i, 0x20) // The slot before the current slot.
+                let v := mload(j) // The value of `j`.
+                // prettier-ignore
+                if iszero(gt(v, k)) { continue }
+                // prettier-ignore
+                for {} 1 {} {
+                    mstore(add(j, 0x20), v)
+                    j := sub(j, 0x20)
+                    v := mload(j)
+                    // prettier-ignore
+                    if iszero(gt(v, k)) { break }
+                }
+                mstore(add(j, 0x20), k)
+            }
+            mstore(a, n) // Restore the length of `a`.
+        }
+    }
+
+    /// @dev Sorts the array in-place with insertion sort.
+    /// This uses a variant of intro-quicksort, which is NOT stable.
+    function insertionSort(address[] memory a) internal pure {
+        // As any address written to memory will have the upper 96 bits of the
+        // word zeroized (as per Solidity spec), we can directly compare
+        // these addresses as if they are whole uint256 words.
+        uint256[] memory aCasted;
+        assembly {
+            aCasted := a
+        }
+        insertionSort(aCasted);
+    }
+
+    /// @dev Sorts the array in-place.
+    /// This uses a variant of intro-quicksort, which is NOT stable.
     function sort(uint256[] memory a) internal pure {
         assembly {
             let n := mload(a) // Length of `a`.
@@ -168,7 +218,8 @@ library LibSort {
         }
     }
 
-    // @dev Sorts the array in-place.
+    /// @dev Sorts the array in-place.
+    /// This uses a variant of intro-quicksort, which is NOT stable.
     function sort(address[] memory a) internal pure {
         // As any address written to memory will have the upper 96 bits of the
         // word zeroized (as per Solidity spec), we can directly compare
