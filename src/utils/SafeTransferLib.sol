@@ -77,7 +77,7 @@ library SafeTransferLib {
     /// storage writes or gas griefing.
     ///
     /// If sending via the normal procedure fails, force sends the ETH by
-    /// creating a temporary contract which use `SELFDESTRUCT` to force send the ETH.
+    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
     function forceSafeTransferETH(
         address to,
         uint256 amount,
