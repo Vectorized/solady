@@ -144,12 +144,14 @@ contract SafeTransferLibTest is TestPlus {
         );
         uint256 balanceAfter = address(recipient).balance;
         assertEq(balanceAfter - balanceBefore, amount);
-        assertEq(recipient.garbage(), 0);
+        // We use the `SELFDESTRUCT` to send, and thus the `garbage` should NOT be updated.
+        assertTrue(recipient.garbage() == 0);
 
         balanceBefore = balanceAfter;
         SafeTransferLib.forceSafeTransferETH(address(recipient), amount, gasleft());
         balanceAfter = address(recipient).balance;
         assertEq(balanceAfter - balanceBefore, amount);
+        // We use the normal `CALL` to send, and thus the `garbage` should be updated.
         assertTrue(recipient.garbage() != 0);
     }
 
