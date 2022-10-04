@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {MockERC20} from "./utils/mocks/MockERC20.sol";
+import {MockETHRecipient} from "./utils/mocks/MockETHRecipient.sol";
 import {RevertingToken} from "./utils/weird-tokens/RevertingToken.sol";
 import {ReturnsTwoToken} from "./utils/weird-tokens/ReturnsTwoToken.sol";
 import {ReturnsFalseToken} from "./utils/weird-tokens/ReturnsFalseToken.sol";
@@ -89,6 +90,46 @@ contract SafeTransferLibTest is TestPlus {
 
     function testTransferETH() public {
         SafeTransferLib.safeTransferETH(address(0xBEEF), 1e18);
+    }
+
+    function testTryTransferETH() public {
+        MockETHRecipient recipient = new MockETHRecipient(false, false);
+        bool success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
+        assertTrue(success);
+    }
+
+    function testTryTransferETHWithNoStorageWrites() public {
+        MockETHRecipient recipient = new MockETHRecipient(true, false);
+
+        bool success = SafeTransferLib.trySafeTransferETH(
+            address(recipient),
+            1e18,
+            SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+        );
+        assertFalse(success);
+
+        success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, SafeTransferLib._GAS_STIPEND_NO_GRIEF);
+        assertTrue(success);
+
+        success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
+        assertTrue(success);
+    }
+
+    function testTryTransferETHWithNoGrief() public {
+        MockETHRecipient recipient = new MockETHRecipient(false, true);
+
+        bool success = SafeTransferLib.trySafeTransferETH(
+            address(recipient),
+            1e18,
+            SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+        );
+        assertFalse(success);
+
+        success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, SafeTransferLib._GAS_STIPEND_NO_GRIEF);
+        assertFalse(success);
+
+        success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
+        assertTrue(success);
     }
 
     function testTransferRevertSelector() public {
