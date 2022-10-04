@@ -134,6 +134,7 @@ contract SafeTransferLibTest is TestPlus {
 
     function testForceTransferETHToGriever(uint256 amount) public {
         amount = amount % 1000 ether;
+        uint256 originalBalance = address(this).balance;
         vm.deal(address(this), amount * 2);
 
         MockETHRecipient recipient = new MockETHRecipient(false, true);
@@ -143,10 +144,8 @@ contract SafeTransferLibTest is TestPlus {
             uint256 senderBalanceBefore = address(this).balance;
             // Send to a griever with a gas stipend. Should not revert.
             this.forceSafeTransferETH(address(recipient), amount, SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES);
-            uint256 receipientBalanceAfter = address(recipient).balance;
-            uint256 senderBalanceAfter = address(this).balance;
-            assertEq(receipientBalanceAfter - receipientBalanceBefore, amount);
-            assertEq(senderBalanceBefore - senderBalanceAfter, amount);
+            assertEq(address(recipient).balance - receipientBalanceBefore, amount);
+            assertEq(senderBalanceBefore - address(this).balance, amount);
             // We use the `SELFDESTRUCT` to send, and thus the `garbage` should NOT be updated.
             assertTrue(recipient.garbage() == 0);
         }
@@ -157,10 +156,8 @@ contract SafeTransferLibTest is TestPlus {
             // Send more than remaining balance without gas stipend. Should revert.
             vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
             this.forceSafeTransferETH(address(recipient), address(this).balance + 1, gasleft());
-            uint256 receipientBalanceAfter = address(recipient).balance;
-            uint256 senderBalanceAfter = address(this).balance;
-            assertEq(receipientBalanceAfter - receipientBalanceBefore, 0);
-            assertEq(senderBalanceBefore - senderBalanceAfter, 0);
+            assertEq(address(recipient).balance - receipientBalanceBefore, 0);
+            assertEq(senderBalanceBefore - address(this).balance, 0);
             // We did not send anything, and thus the `garbage` should NOT be updated.
             assertTrue(recipient.garbage() == 0);
         }
@@ -171,13 +168,13 @@ contract SafeTransferLibTest is TestPlus {
             // Send all the remaining balance without gas stipend. Should not revert.
             amount = address(this).balance;
             this.forceSafeTransferETH(address(recipient), amount, gasleft());
-            uint256 receipientBalanceAfter = address(recipient).balance;
-            uint256 senderBalanceAfter = address(this).balance;
-            assertEq(receipientBalanceAfter - receipientBalanceBefore, amount);
-            assertEq(senderBalanceBefore - senderBalanceAfter, amount);
+            assertEq(address(recipient).balance - receipientBalanceBefore, amount);
+            assertEq(senderBalanceBefore - address(this).balance, amount);
             // We use the normal `CALL` to send, and thus the `garbage` should be updated.
             assertTrue(recipient.garbage() != 0);
         }
+
+        vm.deal(address(this), originalBalance);
     }
 
     function testForceTransferETHToGriever() public {
