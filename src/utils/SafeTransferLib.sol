@@ -93,7 +93,7 @@ library SafeTransferLib {
                 mstore(0x00, to)
                 mstore8(0xb, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
-                success := iszero(iszero(create2(amount, 0xb, 0x16, to)))
+                success := iszero(iszero(create(amount, 0xb, 0x16)))
             }
         }
     }

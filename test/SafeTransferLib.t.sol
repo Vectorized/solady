@@ -139,11 +139,14 @@ contract SafeTransferLibTest is TestPlus {
         uint256 balanceBefore = address(recipient).balance;
         // Try to send to a griever with a gas stipend,
         // and ensures that the sending succeeds.
+        uint256 gasBefore = gasleft();
         bool success = SafeTransferLib.forceSafeTransferETH(
             address(recipient),
             amount,
             SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
         );
+        uint256 gasAfter = gasleft();
+        console.log(gasBefore - gasAfter);
         uint256 balanceAfter = address(recipient).balance;
         assertTrue(success);
         assertEq(balanceAfter - balanceBefore, amount);
