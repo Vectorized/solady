@@ -101,35 +101,62 @@ contract SafeTransferLibTest is TestPlus {
     function testTryTransferETHWithNoStorageWrites() public {
         MockETHRecipient recipient = new MockETHRecipient(true, false);
 
-        bool success = SafeTransferLib.trySafeTransferETH(
-            address(recipient),
-            1e18,
-            SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
-        );
-        assertFalse(success);
+        {
+            bool success = SafeTransferLib.trySafeTransferETH(
+                address(recipient),
+                1e18,
+                SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+            );
+            assertFalse(success);
+        }
 
-        success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, SafeTransferLib._GAS_STIPEND_NO_GRIEF);
-        assertTrue(success);
+        {
+            uint256 counterBefore = recipient.counter();
+            bool success = SafeTransferLib.trySafeTransferETH(
+                address(recipient),
+                1e18,
+                SafeTransferLib._GAS_STIPEND_NO_GRIEF
+            );
+            assertTrue(success);
+            assertEq(recipient.counter(), counterBefore + 1);
+        }
 
-        success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
-        assertTrue(success);
+        {
+            uint256 counterBefore = recipient.counter();
+            bool success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
+            assertTrue(success);
+            assertEq(recipient.counter(), counterBefore + 1);
+        }
     }
 
     function testTryTransferETHWithNoGrief() public {
         MockETHRecipient recipient = new MockETHRecipient(false, true);
 
-        bool success = SafeTransferLib.trySafeTransferETH(
-            address(recipient),
-            1e18,
-            SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
-        );
-        assertFalse(success);
+        {
+            bool success = SafeTransferLib.trySafeTransferETH(
+                address(recipient),
+                1e18,
+                SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+            );
+            assertFalse(success);
+            assertTrue(recipient.garbage() == 0);
+        }
 
-        success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, SafeTransferLib._GAS_STIPEND_NO_GRIEF);
-        assertFalse(success);
+        {
+            bool success = SafeTransferLib.trySafeTransferETH(
+                address(recipient),
+                1e18,
+                SafeTransferLib._GAS_STIPEND_NO_GRIEF
+            );
+            assertFalse(success);
+            assertTrue(recipient.garbage() == 0);
+        }
 
-        success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
-        assertTrue(success);
+        {
+            bool success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
+            assertTrue(success);
+            assertTrue(recipient.garbage() != 0);
+        }
     }
 
     function testForceTransferETHToGriever(uint256 amount) public {
