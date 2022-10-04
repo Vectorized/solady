@@ -132,6 +132,21 @@ contract SafeTransferLibTest is TestPlus {
         assertTrue(success);
     }
 
+    function testForceTransferETHToGriever() public {
+        MockETHRecipient recipient = new MockETHRecipient(false, true);
+
+        uint256 amount = 1e18;
+        uint256 balanceBefore = address(recipient).balance;
+        bool success = SafeTransferLib.forceSafeTransferETH(
+            address(recipient),
+            amount,
+            SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+        );
+        uint256 balanceAfter = address(recipient).balance;
+        assertEq(balanceAfter - balanceBefore, amount);
+        assertEq(recipient.garbage(), 0);
+    }
+
     function testTransferRevertSelector() public {
         vm.expectRevert(SafeTransferLib.TransferFailed.selector);
         this.testFailTransferWithReturnsFalse();

@@ -72,6 +72,28 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Force sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
+    /// The `gasStipend` can be set to a low enough value to prevent
+    /// storage writes or gas griefing.
+    ///
+    /// If sending via the normal procedure fails, force sends the ETH by
+    /// creating a temporary contract which use `SELFDESTRUCT` to force send the ETH.
+    function forceSafeTransferETH(
+        address to,
+        uint256 amount,
+        uint256 gasStipend
+    ) internal {
+        assembly {
+            // Transfer the ETH and check if it succeeded or not.
+            if iszero(call(gasStipend, to, amount, 0, 0, 0, 0)) {
+                mstore(0x00, to)
+                mstore8(0xb, 0x73) // Opcode `PUSH20`.
+                mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
+                pop(call(gas(), create(amount, 0xb, 0x16), 0, 0, 0, 0, 0))
+            }
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      ERC20 OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
