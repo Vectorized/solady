@@ -41,7 +41,9 @@ library LibSort {
     }
 
     /// @dev Sorts the array in-place with insertion sort.
-    /// This uses a variant of intro-quicksort, which is NOT stable.
+    /// Useful for stable sorting of small arrays (32 or lesser elements),
+    /// or where smaller bytecode is prefered over runtime gas performance
+    /// (e.g. in view functions intended for off-chain querying).
     function insertionSort(address[] memory a) internal pure {
         // As any address written to memory will have the upper 96 bits of the
         // word zeroized (as per Solidity spec), we can directly compare
