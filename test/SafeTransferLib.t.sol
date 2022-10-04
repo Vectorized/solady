@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {MockERC20} from "./utils/mocks/MockERC20.sol";
+import {MockETHRecipient} from "./utils/mocks/MockETHRecipient.sol";
 import {RevertingToken} from "./utils/weird-tokens/RevertingToken.sol";
 import {ReturnsTwoToken} from "./utils/weird-tokens/ReturnsTwoToken.sol";
 import {ReturnsFalseToken} from "./utils/weird-tokens/ReturnsFalseToken.sol";
@@ -89,6 +90,122 @@ contract SafeTransferLibTest is TestPlus {
 
     function testTransferETH() public {
         SafeTransferLib.safeTransferETH(address(0xBEEF), 1e18);
+    }
+
+    function testTryTransferETH() public {
+        MockETHRecipient recipient = new MockETHRecipient(false, false);
+        bool success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
+        assertTrue(success);
+    }
+
+    function testTryTransferETHWithNoStorageWrites() public {
+        MockETHRecipient recipient = new MockETHRecipient(true, false);
+
+        {
+            bool success = SafeTransferLib.trySafeTransferETH(
+                address(recipient),
+                1e18,
+                SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+            );
+            assertFalse(success);
+        }
+
+        {
+            uint256 counterBefore = recipient.counter();
+            bool success = SafeTransferLib.trySafeTransferETH(
+                address(recipient),
+                1e18,
+                SafeTransferLib._GAS_STIPEND_NO_GRIEF
+            );
+            assertTrue(success);
+            assertEq(recipient.counter(), counterBefore + 1);
+        }
+
+        {
+            uint256 counterBefore = recipient.counter();
+            bool success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
+            assertTrue(success);
+            assertEq(recipient.counter(), counterBefore + 1);
+        }
+    }
+
+    function testTryTransferETHWithNoGrief() public {
+        MockETHRecipient recipient = new MockETHRecipient(false, true);
+
+        {
+            bool success = SafeTransferLib.trySafeTransferETH(
+                address(recipient),
+                1e18,
+                SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+            );
+            assertFalse(success);
+            assertTrue(recipient.garbage() == 0);
+        }
+
+        {
+            bool success = SafeTransferLib.trySafeTransferETH(
+                address(recipient),
+                1e18,
+                SafeTransferLib._GAS_STIPEND_NO_GRIEF
+            );
+            assertFalse(success);
+            assertTrue(recipient.garbage() == 0);
+        }
+
+        {
+            bool success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
+            assertTrue(success);
+            assertTrue(recipient.garbage() != 0);
+        }
+    }
+
+    function testForceTransferETHToGriever(uint256 amount) public {
+        amount = amount % 1000 ether;
+        uint256 originalBalance = address(this).balance;
+        vm.deal(address(this), amount * 2);
+
+        MockETHRecipient recipient = new MockETHRecipient(false, true);
+
+        {
+            uint256 receipientBalanceBefore = address(recipient).balance;
+            uint256 senderBalanceBefore = address(this).balance;
+            // Send to a griever with a gas stipend. Should not revert.
+            this.forceSafeTransferETH(address(recipient), amount, SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES);
+            assertEq(address(recipient).balance - receipientBalanceBefore, amount);
+            assertEq(senderBalanceBefore - address(this).balance, amount);
+            // We use the `SELFDESTRUCT` to send, and thus the `garbage` should NOT be updated.
+            assertTrue(recipient.garbage() == 0);
+        }
+
+        {
+            uint256 receipientBalanceBefore = address(recipient).balance;
+            uint256 senderBalanceBefore = address(this).balance;
+            // Send more than remaining balance without gas stipend. Should revert.
+            vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+            this.forceSafeTransferETH(address(recipient), address(this).balance + 1, gasleft());
+            assertEq(address(recipient).balance - receipientBalanceBefore, 0);
+            assertEq(senderBalanceBefore - address(this).balance, 0);
+            // We did not send anything, and thus the `garbage` should NOT be updated.
+            assertTrue(recipient.garbage() == 0);
+        }
+
+        {
+            uint256 receipientBalanceBefore = address(recipient).balance;
+            uint256 senderBalanceBefore = address(this).balance;
+            // Send all the remaining balance without gas stipend. Should not revert.
+            amount = address(this).balance;
+            this.forceSafeTransferETH(address(recipient), amount, gasleft());
+            assertEq(address(recipient).balance - receipientBalanceBefore, amount);
+            assertEq(senderBalanceBefore - address(this).balance, amount);
+            // We use the normal `CALL` to send, and thus the `garbage` should be updated.
+            assertTrue(recipient.garbage() != 0);
+        }
+
+        vm.deal(address(this), originalBalance);
+    }
+
+    function testForceTransferETHToGriever() public {
+        testForceTransferETHToGriever(1 ether);
     }
 
     function testTransferRevertSelector() public {
@@ -445,6 +562,14 @@ contract SafeTransferLibTest is TestPlus {
         );
 
         assertEq(ERC20(token).allowance(from, to), amount, "wrong allowance");
+    }
+
+    function forceSafeTransferETH(
+        address to,
+        uint256 amount,
+        uint256 gasStipend
+    ) public {
+        SafeTransferLib.forceSafeTransferETH(to, amount, gasStipend);
     }
 
     function garbageIsGarbage(bytes memory garbage) public pure returns (bool result) {

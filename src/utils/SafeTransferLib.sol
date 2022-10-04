@@ -10,18 +10,37 @@ library SafeTransferLib {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev The ETH transfer has failed.
     error ETHTransferFailed();
 
+    /// @dev The ERC20 `transferFrom` has failed.
     error TransferFromFailed();
 
+    /// @dev The ERC20 `transfer` has failed.
     error TransferFailed();
 
+    /// @dev The ERC20 `approve` has failed.
     error ApproveFailed();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Suggested gas stipend for contract receiving ETH
+    /// that disallows any storage writes.
+    uint256 internal constant _GAS_STIPEND_NO_STORAGE_WRITES = 2300;
+
+    /// @dev Suggested gas stipend for contract receiving ETH to perform a few
+    /// storage reads and writes, but low enough to prevent griefing.
+    /// Multiply by a small constant (e.g. 2), if needed.
+    uint256 internal constant _GAS_STIPEND_NO_GRIEF = 100000;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ETH OPERATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Sends `amount` (in wei) ETH to `to`.
+    /// Reverts upon failure.
     function safeTransferETH(address to, uint256 amount) internal {
         assembly {
             // Transfer the ETH and check if it succeeded or not.
@@ -34,10 +53,66 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Force sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
+    /// The `gasStipend` can be set to a low enough value to prevent
+    /// storage writes or gas griefing.
+    ///
+    /// If sending via the normal procedure fails, force sends the ETH by
+    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
+    ///
+    /// Reverts if the current contract has insufficient balance.
+    function forceSafeTransferETH(
+        address to,
+        uint256 amount,
+        uint256 gasStipend
+    ) internal {
+        assembly {
+            // If insufficient balance, revert.
+            if lt(selfbalance(), amount) {
+                // Store the function selector of `ETHTransferFailed()`.
+                mstore(0x00, 0xb12d13eb)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            // Transfer the ETH and check if it succeeded or not.
+            if iszero(call(gasStipend, to, amount, 0, 0, 0, 0)) {
+                mstore(0x00, to) // Store the address in scratch space.
+                mstore8(0x0b, 0x73) // Opcode `PUSH20`.
+                mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
+                // We can directly use `SELFDESTRUCT` in the contract creation.
+                // We don't check and revert upon failure here, just in case
+                // `SELFDESTRUCT`'s behavior is changed some day in the future.
+                // (If that ever happens, we will riot, and port the code to use WETH).
+                pop(create(amount, 0x0b, 0x16))
+            }
+        }
+    }
+
+    /// @dev Sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
+    /// The `gasStipend` can be set to a low enough value to prevent
+    /// storage writes or gas griefing.
+    ///
+    /// Simply use `gasleft()` for `gasStipend` if you don't need a gas stipend.
+    ///
+    /// Note: Does NOT revert upon failure.
+    /// Returns whether the transfer of ETH is successful instead.
+    function trySafeTransferETH(
+        address to,
+        uint256 amount,
+        uint256 gasStipend
+    ) internal returns (bool success) {
+        assembly {
+            // Transfer the ETH and check if it succeeded or not.
+            success := call(gasStipend, to, amount, 0, 0, 0, 0)
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      ERC20 OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Sends `amount` (in wei) of ERC20 `token` ETH from `from` to `to`.
+    /// Reverts upon failure.
     function safeTransferFrom(
         address token,
         address from,
@@ -76,6 +151,8 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Sends `amount` (in wei) of ERC20 `token` ETH from the current contract to `to`.
+    /// Reverts upon failure.
     function safeTransfer(
         address token,
         address to,
@@ -111,6 +188,8 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Approves `amount` (in wei) of ERC20 `token` ETH from the current contract to `to`.
+    /// Reverts upon failure.
     function safeApprove(
         address token,
         address to,
