@@ -137,7 +137,7 @@ contract SafeTransferLibTest is TestPlus {
 
         uint256 amount = 1e18;
         uint256 balanceBefore = address(recipient).balance;
-        bool success = SafeTransferLib.forceSafeTransferETH(
+        SafeTransferLib.forceSafeTransferETH(
             address(recipient),
             amount,
             SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
@@ -145,6 +145,12 @@ contract SafeTransferLibTest is TestPlus {
         uint256 balanceAfter = address(recipient).balance;
         assertEq(balanceAfter - balanceBefore, amount);
         assertEq(recipient.garbage(), 0);
+
+        balanceBefore = balanceAfter;
+        SafeTransferLib.forceSafeTransferETH(address(recipient), amount, gasleft());
+        balanceAfter = address(recipient).balance;
+        assertEq(balanceAfter - balanceBefore, amount);
+        assertTrue(recipient.garbage() != 0);
     }
 
     function testTransferRevertSelector() public {
