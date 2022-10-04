@@ -7,7 +7,7 @@ import "src/utils/LibSort.sol";
 contract LibSortTest is Test {
     function testInsertionSortAddressesDifferential(uint256[] memory aRaw) public {
         unchecked {
-            vm.assume(aRaw.length < 128);
+            vm.assume(aRaw.length < 32);
             address[] memory a = new address[](aRaw.length);
             for (uint256 i; i < a.length; ++i) {
                 address addr;
@@ -38,7 +38,7 @@ contract LibSortTest is Test {
 
     function testInsertionSortPsuedorandom(uint256 lcg) public {
         unchecked {
-            uint256[] memory a = new uint256[](100);
+            uint256[] memory a = new uint256[](32);
             lcg ^= 1;
             for (uint256 i; i < a.length; ++i) {
                 lcg = _stepLCG(lcg);
