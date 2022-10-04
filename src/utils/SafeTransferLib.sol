@@ -30,10 +30,10 @@ library SafeTransferLib {
     /// that disallows any storage writes.
     uint256 internal constant _GAS_STIPEND_NO_STORAGE_WRITES = 2300;
 
-    /// @dev Suggested gas stipend for contract receiving ETH to perform
-    /// a storage read and a storage write, but low enough to prevent griefing.
+    /// @dev Suggested gas stipend for contract receiving ETH to perform a few
+    /// storage reads and writes, but low enough to prevent griefing.
     /// Multiply by a small constant (e.g. 2), if needed.
-    uint256 internal constant _GAS_STIPEND_NO_GRIEF = 30000;
+    uint256 internal constant _GAS_STIPEND_NO_GRIEF = 100000;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ETH OPERATIONS                       */
