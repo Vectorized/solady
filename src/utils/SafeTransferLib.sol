@@ -57,6 +57,8 @@ library SafeTransferLib {
     /// The `gasStipend` can be set to a low enough value to prevent
     /// storage writes or gas griefing.
     ///
+    /// Simply use `gasleft()` for `gasStipend` if you don't need a gas stipend.
+    ///
     /// Note: Does NOT revert upon failure.
     /// Returns whether the transfer of ETH is successful instead.
     function trySafeTransferETH(
