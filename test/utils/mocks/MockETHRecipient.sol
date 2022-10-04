@@ -23,11 +23,8 @@ contract MockETHRecipient {
             assembly {
                 let m := mload(0x40)
                 let n := 3000
-                for {
-                    let i := 0
-                } lt(i, n) {
-                    i := add(i, 1)
-                } {
+                // prettier-ignore
+                for { let i := 0 } lt(i, n) { i := add(i, 1) } {
                     mstore(add(m, mul(0x20, i)), i)
                 }
                 mstore(m, timestamp())
