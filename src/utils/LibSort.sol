@@ -11,35 +11,32 @@ library LibSort {
     function insertionSort(uint256[] memory a) internal pure {
         assembly {
             let n := mload(a) // Length of `a`.
-            // If `a` has more than 1 elements.
-            if iszero(lt(n, 2)) {
-                mstore(a, 0) // For insertion sort's inner loop to terminate.
 
-                let l := add(a, 0x20) // Low slot.
-                let h := add(a, shl(5, n)) // High slot.
+            mstore(a, 0) // For insertion sort's inner loop to terminate.
 
+            let h := add(a, shl(5, n)) // High slot.
+
+            // prettier-ignore
+            for { let i := add(a, 0x20) } 1 {} {
+                i := add(i, 0x20)
                 // prettier-ignore
-                for { let i := l } 1 {} {
-                    i := add(i, 0x20)
+                if gt(i, h) { break }
+                let k := mload(i) // Key.
+                let j := sub(i, 0x20) // The slot before the current slot.
+                let v := mload(j) // The value of `j`.
+                // prettier-ignore
+                if iszero(gt(v, k)) { continue }
+                // prettier-ignore
+                for {} 1 {} {
+                    mstore(add(j, 0x20), v)
+                    j := sub(j, 0x20)
+                    v := mload(j)
                     // prettier-ignore
-                    if gt(i, h) { break }
-                    let k := mload(i) // Key.
-                    let j := sub(i, 0x20) // The slot before the current slot.
-                    let v := mload(j) // The value of `j`.
-                    // prettier-ignore
-                    if iszero(gt(v, k)) { continue }
-                    // prettier-ignore
-                    for {} 1 {} {
-                        mstore(add(j, 0x20), v)
-                        j := sub(j, 0x20)
-                        v := mload(j)
-                        // prettier-ignore
-                        if iszero(gt(v, k)) { break }
-                    }
-                    mstore(add(j, 0x20), k)
+                    if iszero(gt(v, k)) { break }
                 }
-                mstore(a, n) // Restore the length of `a`.
+                mstore(add(j, 0x20), k)
             }
+            mstore(a, n) // Restore the length of `a`.
         }
     }
 
