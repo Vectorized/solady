@@ -10,8 +10,10 @@ library CREATE3 {
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Unable to deploy the contract.
     error DeploymentFailed();
 
+    /// @dev Unable to initialize the contract.
     error InitializationFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -42,14 +44,21 @@ library CREATE3 {
      * -------------------------------------------------------------------+
      */
 
+    /// @dev The proxy bytecode.
     uint256 private constant _PROXY_BYTECODE = 0x67363d3d37363d34f03d5260086018f3;
 
+    /// @dev Hash of the `_PROXY_BYTECODE`.
+    /// Equivalent to `keccak256(abi.encodePacked(hex"67363d3d37363d34f03d5260086018f3"))`.
     bytes32 private constant _PROXY_BYTECODE_HASH = 0x21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      CREATE3 OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Deploys `creationCode` deterministically with a `salt`.
+    /// The deployed contract is funded with `value` (in wei) ETH.
+    /// Returns the deterministic address of the deployed contract,
+    /// which solely depends on `salt`.
     function deploy(
         bytes32 salt,
         bytes memory creationCode,
@@ -107,6 +116,7 @@ library CREATE3 {
         }
     }
 
+    /// @dev Returns the deterministic address for `salt`.
     function getDeployed(bytes32 salt) internal view returns (address deployed) {
         assembly {
             // Cache the free memory pointer.
