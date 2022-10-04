@@ -53,6 +53,35 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Force sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
+    /// The `gasStipend` can be set to a low enough value to prevent
+    /// storage writes or gas griefing.
+    ///
+    /// If sending via the normal procedure fails, force sends the ETH by
+    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
+    ///
+    /// Reverts upon complete failure (i.e. when the current contract has insufficient balance).
+    function forceSafeTransferETH(
+        address to,
+        uint256 amount,
+        uint256 gasStipend
+    ) internal {
+        assembly {
+            // Transfer the ETH and check if it succeeded or not.
+            if iszero(call(gasStipend, to, amount, 0, 0, 0, 0)) {
+                mstore(0x00, to)
+                mstore8(0xb, 0x73) // Opcode `PUSH20`.
+                mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
+                if iszero(create(amount, 0xb, 0x16)) {
+                    // Store the function selector of `ETHTransferFailed()`.
+                    mstore(0x00, 0xb12d13eb)
+                    // Revert with (offset, size).
+                    revert(0x1c, 0x04)
+                }
+            }
+        }
+    }
+
     /// @dev Sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
     /// The `gasStipend` can be set to a low enough value to prevent
     /// storage writes or gas griefing.
@@ -69,32 +98,6 @@ library SafeTransferLib {
         assembly {
             // Transfer the ETH and check if it succeeded or not.
             success := call(gasStipend, to, amount, 0, 0, 0, 0)
-        }
-    }
-
-    /// @dev Force sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
-    /// The `gasStipend` can be set to a low enough value to prevent
-    /// storage writes or gas griefing.
-    ///
-    /// If sending via the normal procedure fails, force sends the ETH by
-    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
-    ///
-    /// Note: Does NOT revert upon failure.
-    /// Returns whether the transfer of ETH is successful instead.
-    function forceSafeTransferETH(
-        address to,
-        uint256 amount,
-        uint256 gasStipend
-    ) internal returns (bool success) {
-        assembly {
-            success := 1
-            // Transfer the ETH and check if it succeeded or not.
-            if iszero(call(gasStipend, to, amount, 0, 0, 0, 0)) {
-                mstore(0x00, to)
-                mstore8(0xb, 0x73) // Opcode `PUSH20`.
-                mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
-                success := iszero(iszero(create(amount, 0xb, 0x16)))
-            }
         }
     }
 
