@@ -21,14 +21,16 @@ contract MockETHRecipient {
         }
         if (gasGriefUponReceiveETH) {
             assembly {
-                let m := mload(0x40)
-                let n := 3000
+                mstore(0x00, timestamp())
+                mstore(0x20, 0)
                 // prettier-ignore
-                for { let i := 0 } lt(i, n) { i := add(i, 1) } {
-                    mstore(add(m, mul(0x20, i)), i)
+                for { let i := 0 } lt(i, 10) { i := add(i, 1) } {
+                    let h := keccak256(0x00, 0x40)
+                    mstore(0x00, sload(h))
+                    mstore(0x20, i)
+                    sstore(add(h, 1), h)
                 }
-                mstore(m, timestamp())
-                sstore(garbage.slot, keccak256(m, mul(0x20, n)))
+                sstore(garbage.slot, keccak256(0x00, 0x40))
             }
         }
     }
