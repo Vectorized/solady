@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Optimized intro sort.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library LibSort {
-    /// @dev Sorts the array in-place.
+    /// @dev Sorts the array in-place with insertion sort.
     /// Useful for stable sorting of small arrays (32 or lesser elements),
     /// or where smaller bytecode is prefered over runtime gas performance
     /// (e.g. in view functions intended for off-chain querying).
