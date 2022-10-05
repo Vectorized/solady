@@ -111,8 +111,11 @@ library SafeTransferLib {
     /*                      ERC20 OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Sends `amount` (in wei) of ERC20 `token` ETH from `from` to `to`.
+    /// @dev Sends `amount` of ERC20 `token` from `from` to `to`.
     /// Reverts upon failure.
+    ///
+    /// The `from` account must have at least `amount` approved for
+    /// the current contract to manage.
     function safeTransferFrom(
         address token,
         address from,
@@ -151,7 +154,7 @@ library SafeTransferLib {
         }
     }
 
-    /// @dev Sends `amount` (in wei) of ERC20 `token` ETH from the current contract to `to`.
+    /// @dev Sends `amount` of ERC20 `token` from the current contract to `to`.
     /// Reverts upon failure.
     function safeTransfer(
         address token,
@@ -188,7 +191,7 @@ library SafeTransferLib {
         }
     }
 
-    /// @dev Approves `amount` (in wei) of ERC20 `token` ETH from the current contract to `to`.
+    /// @dev Sets `amount` of ERC20 `token` for `to` to manage on behalf of the current contract.
     /// Reverts upon failure.
     function safeApprove(
         address token,
