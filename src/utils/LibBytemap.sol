@@ -4,10 +4,20 @@ pragma solidity ^0.8.4;
 /// @notice Efficient bytemap library for mapping integers to bytes.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibBytemap.sol)
 library LibBytemap {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          STRUCTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev A bytemap in storage.
     struct Bytemap {
         mapping(uint256 => uint256) map;
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         OPERATIONS                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the uint8 value of the byte at `index` in `bytemap`.
     function get(Bytemap storage bytemap, uint256 index) internal view returns (uint8 result) {
         assembly {
             mstore(0x20, bytemap.slot)
@@ -16,6 +26,7 @@ library LibBytemap {
         }
     }
 
+    /// @dev Updates the uint8 value of the byte at `index` in `bytemap`.
     function set(
         Bytemap storage bytemap,
         uint256 index,
