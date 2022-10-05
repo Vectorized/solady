@@ -10,6 +10,10 @@ pragma solidity ^0.8.4;
 /// It WILL open up your contract to double-spend vulnerabilities / exploits.
 /// See: (https://www.paradigm.xyz/2021/08/two-rights-might-make-a-wrong/)
 abstract contract Multicallable {
+    /// @dev Apply `DELEGATECALL` with the current contract to each calldata in `data`,
+    /// and store the `abi.encode` formatted results of each `DELEGATECALL` into `results`.
+    /// If any of the `DELEGATECALL`s reverts, the entire transaction is reverted,
+    /// and the error is bubbled up.
     function multicall(bytes[] calldata data) public payable returns (bytes[] memory results) {
         assembly {
             if data.length {

@@ -11,16 +11,20 @@ library SSTORE2 {
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Unable to deploy the storage contract.
     error DeploymentFailed();
 
+    /// @dev The storage contract address is invalid.
     error InvalidPointer();
 
+    /// @dev Attempt to read outside of the storage contract's bytecode bounds.
     error ReadOutOfBounds();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         WRITE LOGIC                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Writes `data` into the bytecode of a storage contract and returns its address.
     function write(bytes memory data) internal returns (address pointer) {
         // Note: The assembly block below does not expand the memory.
         assembly {
@@ -74,6 +78,7 @@ library SSTORE2 {
     /*                         READ LOGIC                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns all the `data` from the bytecode of the storage contract at `pointer`.
     function read(address pointer) internal view returns (bytes memory data) {
         assembly {
             let pointerCodesize := extcodesize(pointer)
@@ -97,6 +102,8 @@ library SSTORE2 {
         }
     }
 
+    /// @dev Returns the `data` from the bytecode of the storage contract at `pointer`,
+    /// from the byte at `start`, to the end of the data stored.
     function read(address pointer, uint256 start) internal view returns (bytes memory data) {
         assembly {
             let pointerCodesize := extcodesize(pointer)
@@ -128,6 +135,8 @@ library SSTORE2 {
         }
     }
 
+    /// @dev Returns the `data` from the bytecode of the storage contract at `pointer`,
+    /// from the byte at `start`, to the byte at `end` (exclusive) of the data stored.
     function read(
         address pointer,
         uint256 start,

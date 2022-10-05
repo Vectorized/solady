@@ -8,6 +8,11 @@ import "./ECDSA.sol";
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SignatureCheckerLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
 library SignatureCheckerLib {
+    /// @dev Returns whether `signature` is valid for `signer` and `hash`.
+    /// If `signer` is a smart contract, the signature is validated with ERC1271.
+    /// Otherwise, the signature is validated with `ECDSA.recover`.
+    ///
+    /// Note: unlike ECDSA signatures, contract signatures are revocable.
     function isValidSignatureNow(
         address signer,
         bytes32 hash,
