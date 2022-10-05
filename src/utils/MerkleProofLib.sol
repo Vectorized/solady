@@ -6,6 +6,7 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/MerkleProofLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/MerkleProof.sol)
 library MerkleProofLib {
+    /// @dev Returns whether `leaf` exists in the Merkle tree with `root`, given `proof`.
     function verify(
         bytes32[] calldata proof,
         bytes32 root,
@@ -38,6 +39,8 @@ library MerkleProofLib {
         }
     }
 
+    /// @dev Returns whether all `leafs` exist in the Merkle tree with `root`,
+    /// given `proof` and `flags`.
     function verifyMultiProof(
         bytes32[] calldata proof,
         bytes32 root,
