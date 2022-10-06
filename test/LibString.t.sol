@@ -661,13 +661,8 @@ contract LibStringTest is TestPlus {
             for (uint256 i; i <= 0x1f; ++i) {
                 if (i != 0x8 && i != 0x9 && i != 0x0a && i != 0x0c && i != 0x0d) {
                     string memory input = string(bytes.concat(bytes("abc"), bytes1(uint8(i)), bytes("_123")));
-                    string memory expectedOutput = string(
-                        bytes.concat(
-                            bytes("abc\\u"),
-                            bytes(LibString.replace(LibString.toHexString(i), "0x", "00")),
-                            bytes("_123")
-                        )
-                    );
+                    string memory hexCode = LibString.replace(LibString.toHexString(i), "0x", "00");
+                    string memory expectedOutput = string(bytes.concat(bytes("abc\\u"), bytes(hexCode), bytes("_123")));
                     string memory escaped = LibString.escapeJSON(input);
                     _checkStringIsZeroRightPadded(escaped);
                     assertEq(escaped, expectedOutput);
