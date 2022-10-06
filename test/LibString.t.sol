@@ -647,8 +647,34 @@ contract LibStringTest is TestPlus {
         assertEq(string(bytes.concat(bytes(""), bytes(""))), "");
     }
 
+    function testStringEscapeJSON() public {
+        assertEq(LibString.escapeJSON(""), "");
+        assertEq(LibString.escapeJSON("abc"), "abc");
+        assertEq(LibString.escapeJSON('abc"_123'), 'abc\\"_123');
+        assertEq(LibString.escapeJSON("abc\\_123"), "abc\\\\_123");
+        assertEq(LibString.escapeJSON("abc\x08_123"), "abc\\b_123");
+        assertEq(LibString.escapeJSON("abc\x0c_123"), "abc\\f_123");
+        assertEq(LibString.escapeJSON("abc\n_123"), "abc\\n_123");
+        assertEq(LibString.escapeJSON("abc\r_123"), "abc\\r_123");
+        assertEq(LibString.escapeJSON("abc\t_123"), "abc\\t_123");
+    }
+
+    function testStringEscapeJSONHexEncode() public brutalizeMemory {
+        unchecked {
+            for (uint256 i; i <= 0x1f; ++i) {
+                if (i != 0x8 && i != 0x9 && i != 0x0a && i != 0x0c && i != 0x0d) {
+                    string memory input = string(bytes.concat(bytes("abc"), bytes1(uint8(i)), bytes("_123")));
+                    string memory hexCode = LibString.replace(LibString.toHexString(i), "0x", "00");
+                    string memory expectedOutput = string(bytes.concat(bytes("abc\\u"), bytes(hexCode), bytes("_123")));
+                    string memory escaped = LibString.escapeJSON(input);
+                    _checkStringIsZeroRightPadded(escaped);
+                    assertEq(escaped, expectedOutput);
+                }
+            }
+        }
+    }
+
     function testStringPackAndUnpackOneDifferential(string memory a) public brutalizeMemory {
-        // Ensure the input strings are zero-right padded, so that the comparison is clean.
         a = LibString.slice(a, 0);
         bytes32 packed = LibString.packOne(a);
         unchecked {
@@ -685,7 +711,6 @@ contract LibStringTest is TestPlus {
     }
 
     function testStringPackAndUnpackTwoDifferential(string memory a, string memory b) public brutalizeMemory {
-        // Ensure the input strings are zero-right padded, so that the comparison is clean.
         a = LibString.slice(a, 0);
         b = LibString.slice(b, 0);
         bytes32 packed = LibString.packTwo(a, b);
@@ -732,7 +757,6 @@ contract LibStringTest is TestPlus {
 
     function testStringDirectReturn(string memory a) public {
         assertEq(this.returnString(a), a);
-        // Unfortunately, we can't actually test if {directReturn} will actually zero right pad here.
     }
 
     function returnString(string memory a) external pure returns (string memory) {
