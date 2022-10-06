@@ -677,6 +677,53 @@ library LibString {
         }
     }
 
+    /// @dev Escapes the string to be used within double-quotes in a JSON.
+    function escapeJSON(string memory s) internal pure returns (string memory result) {
+        assembly {
+            result := mload(0x40)
+            let sLength := mload(s)
+            let input := add(s, 1)
+            let output := add(result, 0x20)
+            // Store "\\u0" in scratch space.
+            // Store "0123456789abcdef" in scratch space.
+            // Also, store `{0x08: "b", 0x09: "t", 0x0a: "n", 0x0c:"f", 0x0d: "r"}`
+            // into the scratch space.
+            mstore(0x15, 0x5c75303031323334353637383961626364656662746e006672)
+            // prettier-ignore
+            for { let i := 0 } iszero(eq(i, sLength)) { i := add(i, 1) } {
+                let c := and(mload(add(input, i)), 0xff)
+                if or(eq(c, 0x22), eq(c, 0x5c)) { // In `["\"", "\\"]`.
+                    mstore8(output, 0x5c) // "\\".
+                    mstore8(add(output, 1), c) 
+                    output := add(output, 2)
+                    continue
+                }
+                if and(shl(c, 1), 0x3700) { // In `["\b", "\t", "\n", "\f", "d"]`.
+                    mstore8(output, 0x5c) // "\\".
+                    mstore8(add(output, 1), mload(add(c, 8)))
+                    output := add(output, 2)
+                    continue
+                }
+                if lt(c, 0x20) {
+                    mstore(output, mload(0x1c)) // "\\u00".
+                    mstore8(add(output, 4), mload(and(shr(4, c), 15))) // Hex value.
+                    mstore8(add(output, 5), mload(and(c, 15))) // Hex value.
+                    output := add(output, 6)
+                    continue
+                }
+                mstore8(output, c)
+                output := add(output, 1)
+            }
+            // Zeroize the slot after the output.
+            mstore(output, 0)
+            // Store the length of the output.
+            mstore(result, sub(output, add(result, 0x20)))
+            // Allocate memory for the length and the bytes,
+            // rounded up to a multiple of 32.
+            mstore(0x40, and(add(output, 31), not(31)))
+        }
+    }
+
     /// @dev Packs a single string with its length into a single word.
     /// Returns `bytes32(0)` if the length is zero or greater than 31.
     function packOne(string memory a) internal pure returns (bytes32 result) {
