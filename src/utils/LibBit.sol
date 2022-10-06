@@ -12,7 +12,7 @@ library LibBit {
     /// Equivalent to `log2(x)`, but without reverting for the zero case.
     function fls(uint256 x) internal pure returns (uint256 r) {
         assembly {
-            r := shl(8, iszero(x))
+            r := mul(256, iszero(x))
 
             r := or(r, shl(7, lt(0xffffffffffffffffffffffffffffffff, x)))
             r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
@@ -50,19 +50,17 @@ library LibBit {
     /// the number of zeros following the least significant one bit.
     function ffs(uint256 x) internal pure returns (uint256 r) {
         assembly {
-            r := shl(8, iszero(x))
-
             // Isolate the least significant bit.
-            x := and(x, add(not(x), 1))
+            let v := and(x, add(not(x), 1))
 
-            r := or(r, shl(7, lt(0xffffffffffffffffffffffffffffffff, x)))
-            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
-            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, v))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, v))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, v))))
 
             // For the remaining 32 bits, use a De Bruijn lookup.
             // prettier-ignore
-            r := or(r, byte(shr(251, mul(shr(r, x), shl(224, 0x077cb531))), 
-                0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09))
+            r := xor(mul(287, iszero(x)), or(r, byte(and(31, div(0x4653adf0, shr(r, v))), 
+                0x1f1e1d191c14180f1b11130a17080e05001a1510120b090601160c07020d0304)))
         }
     }
 
@@ -74,7 +72,7 @@ library LibBit {
             x := sub(x, and(shr(1, x), div(max, 3)))
             x := add(and(x, div(max, 5)), and(shr(2, x), div(max, 5)))
             x := and(add(x, shr(4, x)), div(max, 17))
-            c := or(shl(8, isMax), shr(248, mul(x, div(max, 255))))
+            c := or(shl(8, isMax), byte(0, mul(x, div(max, 255))))
         }
     }
 
