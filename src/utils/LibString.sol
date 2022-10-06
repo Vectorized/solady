@@ -687,11 +687,13 @@ library LibString {
             // Also, store `{0x08: "b", 0x09: "t", 0x0a: "n", 0x0c:"f", 0x0d: "r"}`
             // into the scratch space.
             mstore(0x15, 0x5c75303031323334353637383961626364656662746e006672)
+            // Bitmask for detecting `["\"", "\\"]`.
+            let e := or(shl(0x22, 1), shl(0x5c, 1))
             // prettier-ignore
             for {} iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
-                if or(eq(c, 0x22), eq(c, 0x5c)) { // In `["\"", "\\"]`.
+                if and(shl(c, 1), e) { // In `["\"", "\\"]`.
                     mstore8(result, 0x5c) // "\\".
                     mstore8(add(result, 1), c) 
                     result := add(result, 2)
