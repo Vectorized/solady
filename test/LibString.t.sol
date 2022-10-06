@@ -657,6 +657,9 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.escapeJSON("abc\n_123"), "abc\\n_123");
         assertEq(LibString.escapeJSON("abc\r_123"), "abc\\r_123");
         assertEq(LibString.escapeJSON("abc\t_123"), "abc\\t_123");
+    }
+
+    function testStringEscapeJSONHexEncode() public brutalizeMemory {
         unchecked {
             for (uint256 i; i <= 0x1f; ++i) {
                 if (i != 0x8 && i != 0x9 && i != 0x0a && i != 0x0c && i != 0x0d) {
