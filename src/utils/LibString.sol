@@ -680,17 +680,18 @@ library LibString {
     /// @dev Escapes the string to be used within double-quotes in a JSON.
     function escapeJSON(string memory s) internal pure returns (string memory result) {
         assembly {
-            let end := add(s, mload(s))
-            result := add(mload(0x40), 0x20)
-            // Store "\\u0" in scratch space.
-            // Store "0123456789abcdef" in scratch space.
-            // Also, store `{0x08: "b", 0x09: "t", 0x0a: "n", 0x0c:"f", 0x0d: "r"}`
-            // into the scratch space.
-            mstore(0x15, 0x5c75303031323334353637383961626364656662746e006672)
-            // Bitmask for detecting `["\"", "\\"]`.
-            let e := or(shl(0x22, 1), shl(0x5c, 1))
             // prettier-ignore
-            for {} iszero(eq(s, end)) {} {
+            for {
+                let end := add(s, mload(s))
+                result := add(mload(0x40), 0x20)
+                // Store "\\u0000" in scratch space.
+                // Store "0123456789abcdef" in scratch space.
+                // Also, store `{0x08: "b", 0x09: "t", 0x0a: "n", 0x0c:"f", 0x0d: "r"}`
+                // into the scratch space.
+                mstore(0x15, 0x5c75303030303031323334353637383961626364656662746e006672)
+                // Bitmask for detecting `["\"", "\\"]`.
+                let e := or(shl(0x22, 1), shl(0x5c, 1))
+            } iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 if and(shl(c, 1), e) { // In `["\"", "\\"]`.
@@ -710,9 +711,9 @@ library LibString {
                     result := add(result, 2)
                     continue
                 }
-                mstore(result, mload(0x1c)) // "\\u00".
-                mstore8(add(result, 4), mload(and(shr(4, c), 15))) // Hex value.
-                mstore8(add(result, 5), mload(and(c, 15))) // Hex value.
+                mstore8(0x1d, mload(and(shr(4, c), 15))) // Hex value.
+                mstore8(0x1e, mload(and(c, 15))) // Hex value.
+                mstore(result, mload(0x19)) // "\\u00".
                 result := add(result, 6)
             }
             let last := result
