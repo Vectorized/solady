@@ -697,21 +697,21 @@ library LibString {
                     result := add(result, 2)
                     continue
                 }
+                if iszero(lt(c, 0x20)) {
+                    mstore8(result, c)
+                    result := add(result, 1)
+                    continue
+                }
                 if and(shl(c, 1), 0x3700) { // In `["\b", "\t", "\n", "\f", "d"]`.
                     mstore8(result, 0x5c) // "\\".
                     mstore8(add(result, 1), mload(add(c, 8)))
                     result := add(result, 2)
                     continue
                 }
-                if lt(c, 0x20) {
-                    mstore(result, mload(0x1c)) // "\\u00".
-                    mstore8(add(result, 4), mload(and(shr(4, c), 15))) // Hex value.
-                    mstore8(add(result, 5), mload(and(c, 15))) // Hex value.
-                    result := add(result, 6)
-                    continue
-                }
-                mstore8(result, c)
-                result := add(result, 1)
+                mstore(result, mload(0x1c)) // "\\u00".
+                mstore8(add(result, 4), mload(and(shr(4, c), 15))) // Hex value.
+                mstore8(add(result, 5), mload(and(c, 15))) // Hex value.
+                result := add(result, 6)
             }
             let last := result
             // Zeroize the slot after the string.
