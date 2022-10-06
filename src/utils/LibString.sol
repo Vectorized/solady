@@ -691,7 +691,7 @@ library LibString {
             for {} iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
-                if iszero(and(xor(c, 0x22), xor(c, 0x5c))) { // In `["\"", "\\"]`.
+                if or(eq(c, 0x22), eq(c, 0x5c)) { // In `["\"", "\\"]`.
                     mstore8(result, 0x5c) // "\\".
                     mstore8(add(result, 1), c) 
                     result := add(result, 2)
