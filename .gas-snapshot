@@ -2,7 +2,7 @@ Base64Test:testBase64DecodeMemorySafety(bytes) (runs: 256, μ: 397127, ~: 188255
 Base64Test:testBase64DecodeSentenceGas() (gas: 3633)
 Base64Test:testBase64DecodeShortStringGas() (gas: 933)
 Base64Test:testBase64EncodeDecode(bytes) (runs: 256, μ: 16937, ~: 12921)
-Base64Test:testBase64EncodeDecodeAltModes(bytes,uint256) (runs: 256, μ: 496849, ~: 358179)
+Base64Test:testBase64EncodeDecodeAltModes(bytes,uint256) (runs: 256, μ: 496930, ~: 358179)
 Base64Test:testBase64EncodeEmptyString() (gas: 666)
 Base64Test:testBase64EncodeFileSafeAndNoPadding(bytes,bool,bool) (runs: 256, μ: 12331, ~: 6402)
 Base64Test:testBase64EncodeSentence() (gas: 4201)
