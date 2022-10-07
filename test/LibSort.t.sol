@@ -78,15 +78,7 @@ contract LibSortTest is Test {
             for (uint256 i = 0; i < a.length; ++i) {
                 aCopy[i] = a[i];
             }
-            for (uint256 i = 1; i < aCopy.length; ++i) {
-                uint256 key = aCopy[i];
-                uint256 j = i;
-                while (j != 0 && aCopy[j - 1] > key) {
-                    aCopy[j] = aCopy[j - 1];
-                    --j;
-                }
-                aCopy[j] = key;
-            }
+            LibSort.insertionSort(aCopy);
             LibSort.sort(a);
             assertEq(a, aCopy);
         }
@@ -224,15 +216,7 @@ contract LibSortTest is Test {
             for (uint256 i = 0; i < a.length; ++i) {
                 aCopy[i] = a[i];
             }
-            for (uint256 i = 1; i < aCopy.length; ++i) {
-                address key = aCopy[i];
-                uint256 j = i;
-                while (j != 0 && aCopy[j - 1] > key) {
-                    aCopy[j] = aCopy[j - 1];
-                    --j;
-                }
-                aCopy[j] = key;
-            }
+            LibSort.insertionSort(aCopy);
             LibSort.sort(a);
             assertEq(a, aCopy);
         }
