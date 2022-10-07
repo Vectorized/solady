@@ -694,16 +694,17 @@ library LibString {
             } iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
-                if and(shl(c, 1), e) { // In `["\"", "\\"]`.
+                if iszero(lt(c, 0x20)) {
+                    if iszero(and(shl(c, 1), e)) { // Not in `["\"", "\\"]`.
+                        mstore8(result, c)
+                        result := add(result, 1)
+                        continue    
+                    }
                     mstore8(result, 0x5c) // "\\".
                     mstore8(add(result, 1), c) 
                     result := add(result, 2)
                     continue
-                }
-                if iszero(lt(c, 0x20)) {
-                    mstore8(result, c)
-                    result := add(result, 1)
-                    continue
+                    
                 }
                 if and(shl(c, 1), 0x3700) { // In `["\b", "\t", "\n", "\f", "d"]`.
                     mstore8(result, 0x5c) // "\\".
@@ -711,9 +712,9 @@ library LibString {
                     result := add(result, 2)
                     continue
                 }
-                mstore8(0x1d, mload(and(shr(4, c), 15))) // Hex value.
+                mstore8(0x1d, mload(shr(4, c))) // Hex value.
                 mstore8(0x1e, mload(and(c, 15))) // Hex value.
-                mstore(result, mload(0x19)) // "\\u00".
+                mstore(result, mload(0x19)) // "\\u00XX".
                 result := add(result, 6)
             }
             let last := result
