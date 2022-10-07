@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Optimized intro sort.
+/// @notice Optimized sorts and operations for sorted arrays.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library LibSort {
     /// @dev Sorts the array in-place with insertion sort.
