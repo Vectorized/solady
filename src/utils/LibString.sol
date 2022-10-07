@@ -705,7 +705,7 @@ library LibString {
                     result := add(result, 2)
                     continue
                 }
-                if iszero(and(shl(c, 1), 0x3700)) { // Not in `["\b","\t","\n","\f","d"]`.
+                if iszero(and(shl(c, 1), 0x3700)) { // Not in `["\b","\t","\n","\f","\d"]`.
                     mstore8(0x1d, mload(shr(4, c))) // Hex value.
                     mstore8(0x1e, mload(and(c, 15))) // Hex value.
                     mstore(result, mload(0x19)) // "\\u00XX".
