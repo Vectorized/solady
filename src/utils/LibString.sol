@@ -686,7 +686,7 @@ library LibString {
                 result := add(mload(0x40), 0x20)
                 // Store "\\u0000" in scratch space.
                 // Store "0123456789abcdef" in scratch space.
-                // Also, store `{0x08: "b", 0x09: "t", 0x0a: "n", 0x0c:"f", 0x0d: "r"}`
+                // Also, store `{0x08:"b", 0x09:"t", 0x0a:"n", 0x0c:"f", 0x0d:"r"}`.
                 // into the scratch space.
                 mstore(0x15, 0x5c75303030303031323334353637383961626364656662746e006672)
                 // Bitmask for detecting `["\"", "\\"]`.
@@ -694,27 +694,27 @@ library LibString {
             } iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
-                if and(shl(c, 1), e) { // In `["\"", "\\"]`.
+                if iszero(lt(c, 0x20)) {
+                    if iszero(and(shl(c, 1), e)) { // Not in `["\"","\\"]`.
+                        mstore8(result, c)
+                        result := add(result, 1)
+                        continue    
+                    }
                     mstore8(result, 0x5c) // "\\".
                     mstore8(add(result, 1), c) 
                     result := add(result, 2)
                     continue
                 }
-                if iszero(lt(c, 0x20)) {
-                    mstore8(result, c)
-                    result := add(result, 1)
+                if iszero(and(shl(c, 1), 0x3700)) { // Not in `["\b","\t","\n","\f","d"]`.
+                    mstore8(0x1d, mload(shr(4, c))) // Hex value.
+                    mstore8(0x1e, mload(and(c, 15))) // Hex value.
+                    mstore(result, mload(0x19)) // "\\u00XX".
+                    result := add(result, 6)    
                     continue
                 }
-                if and(shl(c, 1), 0x3700) { // In `["\b", "\t", "\n", "\f", "d"]`.
-                    mstore8(result, 0x5c) // "\\".
-                    mstore8(add(result, 1), mload(add(c, 8)))
-                    result := add(result, 2)
-                    continue
-                }
-                mstore8(0x1d, mload(and(shr(4, c), 15))) // Hex value.
-                mstore8(0x1e, mload(and(c, 15))) // Hex value.
-                mstore(result, mload(0x19)) // "\\u00".
-                result := add(result, 6)
+                mstore8(result, 0x5c) // "\\".
+                mstore8(add(result, 1), mload(add(c, 8)))
+                result := add(result, 2)
             }
             let last := result
             // Zeroize the slot after the string.
