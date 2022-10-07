@@ -413,7 +413,7 @@ library LibString {
         }
     }
 
-    /// @dev Returns the index of the first location of `search` in `subject`,
+    /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from right to left.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
     function lastIndexOf(string memory subject, string memory search) internal pure returns (uint256 result) {
