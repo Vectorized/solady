@@ -23,7 +23,7 @@ contract SignatureCheckerLibTest is Test {
         hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
 
     bytes constant INVALID_SIGNATURE =
-        hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b01";
+        hex"7688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
 
     MockERC1271Wallet mockERC1271Wallet;
 
@@ -35,43 +35,70 @@ contract SignatureCheckerLibTest is Test {
     }
 
     function testSignatureCheckerOnEOAWithMatchingSignerAndSignature() public {
-        assertTrue(this.isValidSignatureNow(SIGNER, TEST_SIGNED_MESSAGE_HASH, SIGNATURE));
+        _checkSignature(SIGNER, TEST_SIGNED_MESSAGE_HASH, SIGNATURE, true);
     }
 
     function testSignatureCheckerOnEOAWithInvalidSigner() public {
-        assertFalse(this.isValidSignatureNow(OTHER, TEST_SIGNED_MESSAGE_HASH, SIGNATURE));
+        _checkSignature(OTHER, TEST_SIGNED_MESSAGE_HASH, SIGNATURE, false);
     }
 
     function testSignatureCheckerOnEOAWithWrongSignedMessageHash() public {
-        assertFalse(this.isValidSignatureNow(SIGNER, WRONG_SIGNED_MESSAGE_HASH, SIGNATURE));
+        _checkSignature(SIGNER, WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false);
     }
 
     function testSignatureCheckerOnEOAWithInvalidSignature() public {
-        assertFalse(this.isValidSignatureNow(SIGNER, TEST_SIGNED_MESSAGE_HASH, INVALID_SIGNATURE));
+        _checkSignature(SIGNER, TEST_SIGNED_MESSAGE_HASH, INVALID_SIGNATURE, false);
     }
 
     function testSignatureCheckerOnWalletWithMatchingSignerAndSignature() public {
-        assertTrue(this.isValidSignatureNow(address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, SIGNATURE));
+        _checkSignature(address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, true);
     }
 
     function testSignatureCheckerOnWalletWithInvalidSigner() public {
-        assertFalse(this.isValidSignatureNow(address(this), TEST_SIGNED_MESSAGE_HASH, SIGNATURE));
+        _checkSignature(address(this), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, false);
     }
 
     function testSignatureCheckerOnWalletWithZeroAddressSigner() public {
-        assertFalse(this.isValidSignatureNow(address(0), TEST_SIGNED_MESSAGE_HASH, SIGNATURE));
+        _checkSignature(address(0), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, false);
     }
 
     function testSignatureCheckerOnWalletWithWrongSignedMessageHash() public {
-        assertFalse(this.isValidSignatureNow(address(mockERC1271Wallet), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE));
+        _checkSignature(address(mockERC1271Wallet), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false);
     }
 
     function testSignatureCheckerOnWalletWithInvalidSignature() public {
-        assertFalse(this.isValidSignatureNow(address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, INVALID_SIGNATURE));
+        _checkSignature(address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, INVALID_SIGNATURE, false);
     }
 
     function testSignatureCheckerOnMaliciousWallet() public {
-        assertFalse(this.isValidSignatureNow(address(mockERC1271Malicious), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE));
+        _checkSignature(address(mockERC1271Malicious), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false);
+    }
+
+    function _checkSignature(
+        address signer,
+        bytes32 hash,
+        bytes memory signature,
+        bool expectedResult
+    ) internal {
+        assertEq(this.isValidSignatureNow(signer, hash, signature), expectedResult);
+
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+        bytes32 vs;
+        assembly {
+            // Contaminate the upper 96 bits.
+            signer := or(shl(160, 1), signer)
+            // Extract `r`, `s`, `v`.
+            r := mload(add(signature, 0x20))
+            s := mload(add(signature, 0x40))
+            v := byte(0, mload(add(signature, 0x60)))
+            // Pack `vs`.
+            vs := or(shl(255, sub(v, 27)), s)
+        }
+
+        assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, r, vs), expectedResult);
+        assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, v, r, s), expectedResult);
     }
 
     function isValidSignatureNow(

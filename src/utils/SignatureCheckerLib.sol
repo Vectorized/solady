@@ -55,4 +55,107 @@ library SignatureCheckerLib {
             )
         }
     }
+
+    /// @dev Returns whether the signature (`r`, `vs`) is valid for `signer` and `hash`.
+    /// If `signer` is a smart contract, the signature is validated with ERC1271.
+    /// Otherwise, the signature is validated with `ECDSA.recover`.
+    ///
+    /// Note: unlike ECDSA signatures, contract signatures are revocable.
+    function isValidSignatureNow(
+        address signer,
+        bytes32 hash,
+        bytes32 r,
+        bytes32 vs
+    ) internal view returns (bool isValid) {
+        if (signer == address(0)) return false;
+
+        if (ECDSA.recover(hash, r, vs) == signer) return true;
+
+        assembly {
+            // Load the free memory pointer.
+            // Simply using the free memory usually costs less if many slots are needed.
+            let m := mload(0x40)
+
+            // Write the abi-encoded calldata into memory, beginning with the function selector.
+            mstore(m, 0x1626ba7e) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            mstore(add(m, 0x20), hash)
+            mstore(add(m, 0x40), 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x60), 65) // Store the length of the signature.
+            mstore(add(m, 0x80), r) // Store `r` of the signature.
+            mstore(add(m, 0xa0), shr(1, shl(1, vs))) // Store `s` of the signature.
+            mstore8(add(m, 0xc0), add(shr(255, vs), 27)) // Store `v` of the signature.
+
+            isValid := and(
+                and(
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(0x00), shl(224, mload(m))),
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long .
+                    eq(returndatasize(), 0x20)
+                ),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    signer, // The `signer` address.
+                    add(m, 0x1c), // Offset of calldata in memory.
+                    0xc4, // Length of calldata in memory.
+                    0x00, // Offset of returndata.
+                    0x20 // Length of returndata to write.
+                )
+            )
+        }
+    }
+
+    /// @dev Returns whether the signature (`v`, `r`, `s`) is valid for `signer` and `hash`.
+    /// If `signer` is a smart contract, the signature is validated with ERC1271.
+    /// Otherwise, the signature is validated with `ECDSA.recover`.
+    ///
+    /// Note: unlike ECDSA signatures, contract signatures are revocable.
+    function isValidSignatureNow(
+        address signer,
+        bytes32 hash,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal view returns (bool isValid) {
+        if (signer == address(0)) return false;
+
+        if (ECDSA.recover(hash, v, r, s) == signer) return true;
+
+        assembly {
+            // Load the free memory pointer.
+            // Simply using the free memory usually costs less if many slots are needed.
+            let m := mload(0x40)
+
+            // Write the abi-encoded calldata into memory, beginning with the function selector.
+            mstore(m, 0x1626ba7e) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            mstore(add(m, 0x20), hash)
+            mstore(add(m, 0x40), 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x60), 65) // Store the length of the signature.
+            mstore(add(m, 0x80), r) // Store `r` of the signature.
+            mstore(add(m, 0xa0), s) // Store `s` of the signature.
+            mstore8(add(m, 0xc0), v) // Store `v` of the signature.
+
+            isValid := and(
+                and(
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(0x00), shl(224, mload(m))),
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long .
+                    eq(returndatasize(), 0x20)
+                ),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    signer, // The `signer` address.
+                    add(m, 0x1c), // Offset of calldata in memory.
+                    0xc4, // Length of calldata in memory.
+                    0x00, // Offset of returndata.
+                    0x20 // Length of returndata to write.
+                )
+            )
+        }
+    }
 }
