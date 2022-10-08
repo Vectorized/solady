@@ -64,7 +64,7 @@ library SignatureCheckerLib {
     function isValidSignatureNow(
         address signer,
         bytes32 hash,
-        bytes32 r, 
+        bytes32 r,
         bytes32 vs
     ) internal view returns (bool isValid) {
         if (signer == address(0)) return false;
@@ -84,7 +84,7 @@ library SignatureCheckerLib {
             mstore(add(m, 0x80), r) // Store `r` of the signature.
             mstore(add(m, 0xa0), shr(1, shl(1, vs))) // Store `s` of the signature.
             mstore8(add(m, 0xc0), add(shr(255, vs), 27)) // Store `v` of the signature.
-            
+
             isValid := and(
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
@@ -116,7 +116,7 @@ library SignatureCheckerLib {
         address signer,
         bytes32 hash,
         uint8 v,
-        bytes32 r, 
+        bytes32 r,
         bytes32 s
     ) internal view returns (bool isValid) {
         if (signer == address(0)) return false;
@@ -136,7 +136,7 @@ library SignatureCheckerLib {
             mstore(add(m, 0x80), r) // Store `r` of the signature.
             mstore(add(m, 0xa0), s) // Store `s` of the signature.
             mstore8(add(m, 0xc0), v) // Store `v` of the signature.
-            
+
             isValid := and(
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
@@ -158,5 +158,4 @@ library SignatureCheckerLib {
             )
         }
     }
-
 }
