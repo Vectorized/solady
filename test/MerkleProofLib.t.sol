@@ -258,8 +258,31 @@ contract MerkleProofLibTest is Test {
         bytes32 root,
         bytes32[] calldata leafs,
         bool[] calldata flags
-    ) external pure returns (bool) {
-        return MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
+    ) external returns (bool result) {
+        uint256[] memory offsetsAndLengths = new uint256[](12);
+        assembly {
+            mstore(add(offsetsAndLengths, shl(5, add(1, 0))), proof.offset)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 1))), leafs.offset)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 2))), flags.offset)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 3))), proof.length)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 4))), leafs.length)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 5))), flags.length)
+        }
+        result = MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
+        assembly {
+            mstore(add(offsetsAndLengths, shl(5, add(1, 6))), proof.offset)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 7))), leafs.offset)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 8))), flags.offset)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 9))), proof.length)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 10))), leafs.length)
+            mstore(add(offsetsAndLengths, shl(5, add(1, 11))), flags.length)
+        }
+        assertEq(offsetsAndLengths[0], offsetsAndLengths[6]);
+        assertEq(offsetsAndLengths[1], offsetsAndLengths[7]);
+        assertEq(offsetsAndLengths[2], offsetsAndLengths[8]);
+        assertEq(offsetsAndLengths[3], offsetsAndLengths[9]);
+        assertEq(offsetsAndLengths[4], offsetsAndLengths[10]);
+        assertEq(offsetsAndLengths[5], offsetsAndLengths[11]);
     }
 
     // Following code is adapted from https://github.com/dmfxyz/murky/blob/main/src/common/MurkyBase.sol.

@@ -83,10 +83,12 @@ library MerkleProofLib {
                 // Compute the back of the hashes.
                 let hashesBack := add(hashesFront, shl(5, leafs.length))
                 // This is the end of the memory for the queue.
-                let end := add(hashesBack, shl(5, flags.length))
+                // We recycle `flags.length` to save on stack variables
+                // (this trick may not always save gas).
+                flags.length := add(hashesBack, shl(5, flags.length))
 
-                let flagsOffset := flags.offset
-                let proofOffset := proof.offset
+                // We don't need to make a copy of `proof.offset` or `flags.offset`,
+                // as they are pass-by-value (this trick may not always save gas).
 
                 // prettier-ignore
                 for {} 1 {} {
@@ -98,16 +100,16 @@ library MerkleProofLib {
 
                     // If the flag is false, load the next proof,
                     // else, pops from the queue.
-                    if iszero(calldataload(flagsOffset)) {
+                    if iszero(calldataload(flags.offset)) {
                         // Loads the next proof.
-                        b := calldataload(proofOffset)
-                        proofOffset := add(proofOffset, 0x20)
+                        b := calldataload(proof.offset)
+                        proof.offset := add(proof.offset, 0x20)
                         // Unpop from `hashes`.
                         hashesFront := sub(hashesFront, 0x20)
                     }
                     
                     // Advance to the next flag offset.
-                    flagsOffset := add(flagsOffset, 0x20)
+                    flags.offset := add(flags.offset, 0x20)
 
                     // Slot of `a` in scratch space.
                     // If the condition is true: 0x20, otherwise: 0x00.
@@ -118,7 +120,7 @@ library MerkleProofLib {
                     mstore(hashesBack, keccak256(0x00, 0x40))
                     hashesBack := add(hashesBack, 0x20)
                     // prettier-ignore
-                    if iszero(lt(hashesBack, end)) { break }
+                    if iszero(lt(hashesBack, flags.length)) { break }
                 }
                 // Checks if the last value in the queue is same as the root.
                 isValid := eq(mload(sub(hashesBack, 0x20)), root)
