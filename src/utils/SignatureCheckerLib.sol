@@ -27,17 +27,19 @@ library SignatureCheckerLib {
             // Simply using the free memory usually costs less if many slots are needed.
             let m := mload(0x40)
 
+            // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            let f := shl(224, 0x1626ba7e)
             // Write the abi-encoded calldata into memory, beginning with the function selector.
-            mstore(m, 0x1626ba7e) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-            mstore(add(m, 0x20), hash)
-            mstore(add(m, 0x40), 0x40) // The offset of the `signature` in the calldata.
+            mstore(m, f)
+            mstore(add(m, 0x04), hash)
+            mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
             // Copy the `signature` and its length over.
-            calldatacopy(add(m, 0x60), sub(signature.offset, 0x20), 0x80)
+            calldatacopy(add(m, 0x44), sub(signature.offset, 0x20), 0x61)
 
             isValid := and(
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x00), shl(224, mload(m))),
+                    eq(mload(0x00), f),
                     // Whether the returndata is exactly 0x20 bytes (1 word) long .
                     eq(returndatasize(), 0x20)
                 ),
@@ -47,8 +49,8 @@ library SignatureCheckerLib {
                 staticcall(
                     gas(), // Remaining gas.
                     signer, // The `signer` address.
-                    add(m, 0x1c), // Offset of calldata in memory.
-                    0xc4, // Length of calldata in memory.
+                    m, // Offset of calldata in memory.
+                    0xa5, // Length of calldata in memory.
                     0x00, // Offset of returndata.
                     0x20 // Length of returndata to write.
                 )
@@ -76,19 +78,21 @@ library SignatureCheckerLib {
             // Simply using the free memory usually costs less if many slots are needed.
             let m := mload(0x40)
 
+            // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            let f := shl(224, 0x1626ba7e)
             // Write the abi-encoded calldata into memory, beginning with the function selector.
-            mstore(m, 0x1626ba7e) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-            mstore(add(m, 0x20), hash)
-            mstore(add(m, 0x40), 0x40) // The offset of the `signature` in the calldata.
-            mstore(add(m, 0x60), 65) // Store the length of the signature.
-            mstore(add(m, 0x80), r) // Store `r` of the signature.
-            mstore(add(m, 0xa0), shr(1, shl(1, vs))) // Store `s` of the signature.
-            mstore8(add(m, 0xc0), add(shr(255, vs), 27)) // Store `v` of the signature.
+            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            mstore(add(m, 0x04), hash)
+            mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x44), 65) // Store the length of the signature.
+            mstore(add(m, 0x64), r) // Store `r` of the signature.
+            mstore(add(m, 0x84), shr(1, shl(1, vs))) // Store `s` of the signature.
+            mstore8(add(m, 0xa4), add(shr(255, vs), 27)) // Store `v` of the signature.
 
             isValid := and(
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x00), shl(224, mload(m))),
+                    eq(mload(0x00), f),
                     // Whether the returndata is exactly 0x20 bytes (1 word) long .
                     eq(returndatasize(), 0x20)
                 ),
@@ -98,8 +102,8 @@ library SignatureCheckerLib {
                 staticcall(
                     gas(), // Remaining gas.
                     signer, // The `signer` address.
-                    add(m, 0x1c), // Offset of calldata in memory.
-                    0xc4, // Length of calldata in memory.
+                    m, // Offset of calldata in memory.
+                    0xa5, // Length of calldata in memory.
                     0x00, // Offset of returndata.
                     0x20 // Length of returndata to write.
                 )
@@ -128,19 +132,21 @@ library SignatureCheckerLib {
             // Simply using the free memory usually costs less if many slots are needed.
             let m := mload(0x40)
 
+            // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            let f := shl(224, 0x1626ba7e)
             // Write the abi-encoded calldata into memory, beginning with the function selector.
-            mstore(m, 0x1626ba7e) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-            mstore(add(m, 0x20), hash)
-            mstore(add(m, 0x40), 0x40) // The offset of the `signature` in the calldata.
-            mstore(add(m, 0x60), 65) // Store the length of the signature.
-            mstore(add(m, 0x80), r) // Store `r` of the signature.
-            mstore(add(m, 0xa0), s) // Store `s` of the signature.
-            mstore8(add(m, 0xc0), v) // Store `v` of the signature.
+            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            mstore(add(m, 0x04), hash)
+            mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x44), 65) // Store the length of the signature.
+            mstore(add(m, 0x64), r) // Store `r` of the signature.
+            mstore(add(m, 0x84), s) // Store `s` of the signature.
+            mstore8(add(m, 0xa4), v) // Store `v` of the signature.
 
             isValid := and(
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x00), shl(224, mload(m))),
+                    eq(mload(0x00), f),
                     // Whether the returndata is exactly 0x20 bytes (1 word) long .
                     eq(returndatasize(), 0x20)
                 ),
@@ -150,8 +156,8 @@ library SignatureCheckerLib {
                 staticcall(
                     gas(), // Remaining gas.
                     signer, // The `signer` address.
-                    add(m, 0x1c), // Offset of calldata in memory.
-                    0xc4, // Length of calldata in memory.
+                    m, // Offset of calldata in memory.
+                    0xa5, // Length of calldata in memory.
                     0x00, // Offset of returndata.
                     0x20 // Length of returndata to write.
                 )
