@@ -679,7 +679,12 @@ contract LibStringTest is TestPlus {
         bytes32 packed = LibString.packOne(a);
         unchecked {
             if (bytes(a).length < 32) {
-                assertEq(abi.encodePacked(packed), abi.encodePacked(uint8(bytes(a).length), a));
+                bytes memory expectedResultBytes = abi.encodePacked(uint8(bytes(a).length), a);
+                bytes32 expectedResult;
+                assembly {
+                    expectedResult := mload(add(expectedResultBytes, 0x20))
+                }
+                assertEq(packed, expectedResult);
             } else {
                 assertEq(packed, bytes32(0));
             }
@@ -716,10 +721,17 @@ contract LibStringTest is TestPlus {
         bytes32 packed = LibString.packTwo(a, b);
         unchecked {
             if (bytes(a).length + bytes(b).length < 31) {
-                assertEq(
-                    abi.encodePacked(packed),
-                    abi.encodePacked(uint8(bytes(a).length), a, uint8(bytes(b).length), b)
+                bytes memory expectedResultBytes = abi.encodePacked(
+                    uint8(bytes(a).length),
+                    a,
+                    uint8(bytes(b).length),
+                    b
                 );
+                bytes32 expectedResult;
+                assembly {
+                    expectedResult := mload(add(expectedResultBytes, 0x20))
+                }
+                assertEq(packed, expectedResult);
             } else {
                 assertEq(packed, bytes32(0));
             }
