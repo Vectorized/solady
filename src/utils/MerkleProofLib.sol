@@ -83,10 +83,12 @@ library MerkleProofLib {
                 // Compute the back of the hashes.
                 let hashesBack := add(hashesFront, shl(5, leafs.length))
                 // This is the end of the memory for the queue.
-                let end := add(hashesBack, shl(5, flags.length))
+                // We recycle `flags.length` to save on stack variables
+                // (this trick may not always save gas).
+                flags.length := add(hashesBack, shl(5, flags.length))
 
                 // We don't need to make a copy of `proof.offset` or `flags.offset`,
-                // as they are pass-by-value.
+                // as they are pass-by-value (this trick may not always save gas).
 
                 // prettier-ignore
                 for {} 1 {} {
@@ -118,7 +120,7 @@ library MerkleProofLib {
                     mstore(hashesBack, keccak256(0x00, 0x40))
                     hashesBack := add(hashesBack, 0x20)
                     // prettier-ignore
-                    if iszero(lt(hashesBack, end)) { break }
+                    if iszero(lt(hashesBack, flags.length)) { break }
                 }
                 // Checks if the last value in the queue is same as the root.
                 isValid := eq(mload(sub(hashesBack, 0x20)), root)
