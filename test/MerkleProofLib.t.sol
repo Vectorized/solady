@@ -258,8 +258,27 @@ contract MerkleProofLibTest is Test {
         bytes32 root,
         bytes32[] calldata leafs,
         bool[] calldata flags
-    ) external pure returns (bool) {
-        return MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
+    ) external returns (bool result) {
+        uint256 proofOffsetBefore;
+        uint256 proofOffsetAfter;
+        uint256 leafsOffsetBefore;
+        uint256 leafsOffsetAfter;
+        uint256 flagsOffsetBefore;
+        uint256 flagsOffsetAfter;
+        assembly {
+            proofOffsetBefore := proof.offset
+            leafsOffsetBefore := leafs.offset
+            flagsOffsetBefore := flags.offset
+        }
+        result = MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
+        assembly {
+            proofOffsetAfter := proof.offset
+            leafsOffsetAfter := leafs.offset
+            flagsOffsetAfter := flags.offset
+        }
+        assertEq(proofOffsetBefore, proofOffsetAfter);
+        assertEq(leafsOffsetBefore, leafsOffsetAfter);
+        assertEq(flagsOffsetBefore, flagsOffsetAfter);
     }
 
     // Following code is adapted from https://github.com/dmfxyz/murky/blob/main/src/common/MurkyBase.sol.
