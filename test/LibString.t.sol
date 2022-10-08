@@ -679,7 +679,7 @@ contract LibStringTest is TestPlus {
         bytes32 packed = LibString.packOne(a);
         unchecked {
             if (bytes(a).length < 32) {
-                assertEq(packed, bytes32(abi.encodePacked(uint8(bytes(a).length), a)));
+                assertEq(abi.encodePacked(packed), abi.encodePacked(uint8(bytes(a).length), a));
             } else {
                 assertEq(packed, bytes32(0));
             }
@@ -716,7 +716,10 @@ contract LibStringTest is TestPlus {
         bytes32 packed = LibString.packTwo(a, b);
         unchecked {
             if (bytes(a).length + bytes(b).length < 31) {
-                assertEq(packed, bytes32(abi.encodePacked(uint8(bytes(a).length), a, uint8(bytes(b).length), b)));
+                assertEq(
+                    abi.encodePacked(packed),
+                    abi.encodePacked(uint8(bytes(a).length), a, uint8(bytes(b).length), b)
+                );
             } else {
                 assertEq(packed, bytes32(0));
             }
@@ -761,6 +764,7 @@ contract LibStringTest is TestPlus {
 
     function returnString(string memory a) external pure returns (string memory) {
         LibString.directReturn(a);
+        return ""; // Silence compiler warning.
     }
 
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
