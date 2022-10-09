@@ -645,35 +645,24 @@ library LibString {
     /// Cheaper than `string.concat()` and does not de-align the free memory pointer.
     function concat(string memory a, string memory b) internal pure returns (string memory result) {
         assembly {
-            result := mload(0x40)
             let aLength := mload(a)
-            // Copy `a` one word at a time, backwards.
-            // prettier-ignore
-            for { let o := and(add(mload(a), 32), not(31)) } 1 {} {
-                mstore(add(result, o), mload(add(a, o)))
-                o := sub(o, 0x20)
-                // prettier-ignore
-                if iszero(o) { break }
-            }
             let bLength := mload(b)
-            let output := add(result, mload(a))
-            // Copy `b` one word at a time, backwards.
+            result := a
+            a := add(a, aLength)
+            // Copy `b` one word at a time, Store it into a.
             // prettier-ignore
-            for { let o := and(add(bLength, 32), not(31)) } 1 {} {
-                mstore(add(output, o), mload(add(b, o)))
-                o := sub(o, 0x20)
+            for { let o := 0x20 } 1 {} {
+                mstore(add(a, o), mload(add(b, o)))
                 // prettier-ignore
-                if iszero(o) { break }
+                if iszero(lt(o, bLength)) { break }
+                o := add(o, 0x20)
             }
             let totalLength := add(aLength, bLength)
-            let last := add(add(result, 0x20), totalLength)
+            let last := add(add(a, 0x20), bLength)
             // Zeroize the slot after the string.
             mstore(last, 0)
             // Stores the length.
             mstore(result, totalLength)
-            // Allocate memory for the length and the bytes,
-            // rounded up to a multiple of 32.
-            mstore(0x40, and(add(last, 31), not(31)))
         }
     }
 

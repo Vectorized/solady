@@ -605,10 +605,10 @@ contract LibStringTest is TestPlus {
     }
 
     function testStringConcat(string memory a, string memory b) public brutalizeMemory {
-        string memory concatenated = LibString.concat(a, b);
+        string memory expectedResult = string(bytes.concat(bytes(a), bytes(b)));
         _roundUpFreeMemoryPointer();
         _brutalizeFreeMemoryStart();
-        string memory expectedResult = string(bytes.concat(bytes(a), bytes(b)));
+        string memory concatenated = LibString.concat(a, b);
         _roundUpFreeMemoryPointer();
         _brutalizeFreeMemoryStart();
         _checkStringIsZeroRightPadded(concatenated);
