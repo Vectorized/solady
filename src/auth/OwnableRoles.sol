@@ -167,7 +167,7 @@ abstract contract OwnableRoles {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Allows the owner to transfer the ownership to `newOwner`.
-    function transferOwnership(address newOwner) public virtual onlyOwner {
+    function transferOwnership(address newOwner) public payable virtual onlyOwner {
         assembly {
             // Clean the upper 96 bits.
             newOwner := shr(96, shl(96, newOwner))
@@ -184,7 +184,7 @@ abstract contract OwnableRoles {
     }
 
     /// @dev Allows the owner to renounce their ownership.
-    function renounceOwnership() public virtual onlyOwner {
+    function renounceOwnership() public payable virtual onlyOwner {
         assembly {
             // Emit the {OwnershipTransferred} event.
             log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), 0)
@@ -195,7 +195,7 @@ abstract contract OwnableRoles {
 
     /// @dev Request a two-step ownership handover to the caller.
     /// The request will be automatically expire in 48 hours (172800 seconds) by default.
-    function requestOwnershipHandover() public virtual {
+    function requestOwnershipHandover() public payable virtual {
         unchecked {
             uint256 expires = block.timestamp + ownershipHandoverValidFor();
             assembly {
@@ -209,7 +209,7 @@ abstract contract OwnableRoles {
     }
 
     /// @dev Cancels the two-step ownership handover to the caller, if any.
-    function cancelOwnershipHandover() public virtual {
+    function cancelOwnershipHandover() public payable virtual {
         assembly {
             // Compute and set the handover slot to 0.
             mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
@@ -221,7 +221,7 @@ abstract contract OwnableRoles {
 
     /// @dev Allows the owner to complete the two-step ownership handover to `pendingOwner`.
     /// Reverts if there is no existing ownership handover requested by `pendingOwner`.
-    function completeOwnershipHandover(address pendingOwner) public virtual onlyOwner {
+    function completeOwnershipHandover(address pendingOwner) public payable virtual onlyOwner {
         assembly {
             // Clean the upper 96 bits.
             pendingOwner := shr(96, shl(96, pendingOwner))
@@ -244,19 +244,19 @@ abstract contract OwnableRoles {
 
     /// @dev Allows the owner to grant `user` `roles`.
     /// If the `user` already has a role, then it will be an no-op for the role.
-    function grantRoles(address user, uint256 roles) public virtual onlyOwner {
+    function grantRoles(address user, uint256 roles) public payable virtual onlyOwner {
         _grantRoles(user, roles);
     }
 
     /// @dev Allows the owner to remove `user` `roles`.
     /// If the `user` does not have a role, then it will be an no-op for the role.
-    function revokeRoles(address user, uint256 roles) public virtual onlyOwner {
+    function revokeRoles(address user, uint256 roles) public payable virtual onlyOwner {
         _removeRoles(user, roles);
     }
 
     /// @dev Allow the caller to remove their own roles.
     /// If the caller does not have a role, then it will be an no-op for the role.
-    function renounceRoles(uint256 roles) public virtual {
+    function renounceRoles(uint256 roles) public payable virtual {
         _removeRoles(msg.sender, roles);
     }
 

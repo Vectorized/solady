@@ -6,7 +6,7 @@ import {OwnableRoles} from "../../../src/auth/OwnableRoles.sol";
 contract MockOwnableRoles is OwnableRoles {
     bool public flag;
 
-    constructor() {
+    constructor() payable {
         _initializeOwner(msg.sender);
 
         // Perform the tests on the helper functions.
@@ -33,31 +33,31 @@ contract MockOwnableRoles is OwnableRoles {
         }
     }
 
-    function initializeOwnerDirect(address newOwner) public {
+    function initializeOwnerDirect(address newOwner) public payable {
         _initializeOwner(_brutalizedAddress(newOwner));
     }
 
-    function setOwnerDirect(address newOwner) public {
+    function setOwnerDirect(address newOwner) public payable {
         _setOwner(_brutalizedAddress(newOwner));
     }
 
-    function grantRolesDirect(address user, uint256 roles) public {
+    function grantRolesDirect(address user, uint256 roles) public payable {
         _grantRoles(_brutalizedAddress(user), roles);
     }
 
-    function removeRolesDirect(address user, uint256 roles) public {
+    function removeRolesDirect(address user, uint256 roles) public payable {
         _removeRoles(_brutalizedAddress(user), roles);
     }
 
-    function grantRoles(address user, uint256 roles) public virtual override(OwnableRoles) {
+    function grantRoles(address user, uint256 roles) public payable virtual override(OwnableRoles) {
         OwnableRoles.grantRoles(_brutalizedAddress(user), roles);
     }
 
-    function revokeRoles(address user, uint256 roles) public virtual override(OwnableRoles) {
+    function revokeRoles(address user, uint256 roles) public payable virtual override(OwnableRoles) {
         OwnableRoles.revokeRoles(_brutalizedAddress(user), roles);
     }
 
-    function completeOwnershipHandover(address pendingOwner) public virtual override(OwnableRoles) {
+    function completeOwnershipHandover(address pendingOwner) public payable virtual override(OwnableRoles) {
         OwnableRoles.completeOwnershipHandover(_brutalizedAddress(pendingOwner));
     }
 
@@ -69,7 +69,7 @@ contract MockOwnableRoles is OwnableRoles {
         result = _checkedBool(OwnableRoles.hasAllRoles(_brutalizedAddress(user), roles));
     }
 
-    function transferOwnership(address newOwner) public virtual override(OwnableRoles) {
+    function transferOwnership(address newOwner) public payable virtual override(OwnableRoles) {
         OwnableRoles.transferOwnership(_brutalizedAddress(newOwner));
     }
 
@@ -101,19 +101,19 @@ contract MockOwnableRoles is OwnableRoles {
         }
     }
 
-    function updateFlagWithOnlyOwner() public onlyOwner {
+    function updateFlagWithOnlyOwner() public payable onlyOwner {
         flag = true;
     }
 
-    function updateFlagWithOnlyRoles(uint256 roles) public onlyRoles(roles) {
+    function updateFlagWithOnlyRoles(uint256 roles) public payable onlyRoles(roles) {
         flag = true;
     }
 
-    function updateFlagWithOnlyOwnerOrRoles(uint256 roles) public onlyOwnerOrRoles(roles) {
+    function updateFlagWithOnlyOwnerOrRoles(uint256 roles) public payable onlyOwnerOrRoles(roles) {
         flag = true;
     }
 
-    function updateFlagWithOnlyRolesOrOwner(uint256 roles) public onlyRolesOrOwner(roles) {
+    function updateFlagWithOnlyRolesOrOwner(uint256 roles) public payable onlyRolesOrOwner(roles) {
         flag = true;
     }
 
