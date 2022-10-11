@@ -215,7 +215,7 @@ library LibString {
     // For performance and bytecode compactness, all indices of the following operations
     // are byte (ASCII) offsets, not UTF character offsets.
 
-    /// @dev Returns `subject` all occurances of `search` replaced with `replacement`.
+    /// @dev Returns `subject` all occurrences of `search` replaced with `replacement`.
     function replace(
         string memory subject,
         string memory search,
