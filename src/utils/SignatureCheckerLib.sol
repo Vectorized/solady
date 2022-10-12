@@ -40,7 +40,7 @@ library SignatureCheckerLib {
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
                     eq(mload(0x00), f),
-                    // Whether the returndata is exactly 0x20 bytes (1 word) long .
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
                     eq(returndatasize(), 0x20)
                 ),
                 // Whether the staticcall does not revert.
@@ -93,7 +93,7 @@ library SignatureCheckerLib {
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
                     eq(mload(0x00), f),
-                    // Whether the returndata is exactly 0x20 bytes (1 word) long .
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
                     eq(returndatasize(), 0x20)
                 ),
                 // Whether the staticcall does not revert.
@@ -147,7 +147,7 @@ library SignatureCheckerLib {
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
                     eq(mload(0x00), f),
-                    // Whether the returndata is exactly 0x20 bytes (1 word) long .
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
                     eq(returndatasize(), 0x20)
                 ),
                 // Whether the staticcall does not revert.
