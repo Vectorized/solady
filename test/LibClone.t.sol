@@ -18,6 +18,13 @@ contract LibCloneTest is TestPlus, Clone {
     mapping(bytes32 => bool) saltIsUsed;
 
     function setUp() public {
+        // Mini test to check if `_this()` returns a word with brutalized upper 96 bits.
+        address t = _this();
+        assembly {
+            if iszero(shr(160, t)) {
+                revert(0, 0)
+            }
+        }
         value += 1;
     }
 
@@ -72,7 +79,7 @@ contract LibCloneTest is TestPlus, Clone {
     }
 
     function testClone(uint256 value_) public {
-        address clone = LibClone.clone(address(this));
+        address clone = LibClone.clone(_this());
         _shouldBehaveLikeClone(clone, value_);
     }
 
@@ -83,16 +90,16 @@ contract LibCloneTest is TestPlus, Clone {
     function testCloneDeterministic(uint256 value_, bytes32 salt) public {
         if (saltIsUsed[salt]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
-            LibClone.cloneDeterministic(address(this), salt);
+            LibClone.cloneDeterministic(_this(), salt);
             return;
         }
 
-        address clone = LibClone.cloneDeterministic(address(this), salt);
+        address clone = LibClone.cloneDeterministic(_this(), salt);
         saltIsUsed[salt] = true;
 
         _shouldBehaveLikeClone(clone, value_);
 
-        address predicted = LibClone.predictDeterministicAddress(address(this), salt, address(this));
+        address predicted = LibClone.predictDeterministicAddress(_this(), salt, _this());
         assertEq(clone, predicted);
     }
 
@@ -138,7 +145,7 @@ contract LibCloneTest is TestPlus, Clone {
         uint8 argUint8
     ) public brutalizeMemory {
         bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
-        LibCloneTest clone = LibCloneTest(LibClone.clone(address(this), data));
+        LibCloneTest clone = LibCloneTest(LibClone.clone(_this(), data));
         _shouldBehaveLikeClone(address(clone), value_);
 
         // For avoiding stack too deep. Also, no risk of overflow.
@@ -194,7 +201,7 @@ contract LibCloneTest is TestPlus, Clone {
             bytes32 saltKey = keccak256(abi.encode(data, salt));
             if (saltIsUsed[saltKey]) {
                 vm.expectRevert(LibClone.DeploymentFailed.selector);
-                LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
+                LibCloneTest(LibClone.cloneDeterministic(_this(), data, salt));
                 return;
             }
             saltIsUsed[saltKey] = true;
@@ -202,7 +209,7 @@ contract LibCloneTest is TestPlus, Clone {
 
         bytes32 dataHashBefore = keccak256(data);
 
-        LibCloneTest clone = LibCloneTest(LibClone.cloneDeterministic(address(this), data, salt));
+        LibCloneTest clone = LibCloneTest(LibClone.cloneDeterministic(_this(), data, salt));
         // Check that memory management is done properly.
         assertEq(keccak256(data), dataHashBefore);
 
@@ -230,7 +237,7 @@ contract LibCloneTest is TestPlus, Clone {
         }
 
         {
-            address predicted = LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
+            address predicted = LibClone.predictDeterministicAddress(_this(), data, salt, _this());
             assertEq(address(clone), predicted);
         }
 
@@ -254,5 +261,11 @@ contract LibCloneTest is TestPlus, Clone {
             uint8(uint256(keccak256("argUint8"))),
             uint256(keccak256("deposit"))
         );
+    }
+
+    function _this() internal view returns (address result) {
+        assembly {
+            result := or(shl(160, add(timestamp(), 123456789)), address())
+        }
     }
 }
