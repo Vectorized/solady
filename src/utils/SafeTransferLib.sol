@@ -87,6 +87,19 @@ library SafeTransferLib {
             }
         }
     }
+    
+    /// @dev Force sends `amount` (in wei) ETH to `to`, with a gas stipend
+    /// equal to _GAS_STIPEND_NO_GRIEF. This gas stipend is a reasonable default
+    /// for 99% of cases and can be overriden with the three-argument version of this
+    /// function if necessary.
+    ///
+    /// If sending via the normal procedure fails, force sends the ETH by
+    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
+    ///
+    /// Reverts if the current contract has insufficient balance.
+    function forceSafeTransferETH(address to, uint256 amount) internal {
+        forceSafeTransferETH(to, amount, _GAS_STIPEND_NO_GRIEF);
+    }
 
     /// @dev Sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
     /// The `gasStipend` can be set to a low enough value to prevent
