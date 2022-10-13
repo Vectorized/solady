@@ -87,7 +87,7 @@ library SafeTransferLib {
             }
         }
     }
-    
+
     /// @dev Force sends `amount` (in wei) ETH to `to`, with a gas stipend
     /// equal to `_GAS_STIPEND_NO_GRIEF`. This gas stipend is a reasonable default
     /// for 99% of cases and can be overriden with the three-argument version of this
