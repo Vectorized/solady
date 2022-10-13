@@ -159,7 +159,7 @@ contract SafeTransferLibTest is TestPlus {
         }
     }
 
-    function testForceTransferETHToGriever(uint256 amount) public {
+    function testForceTransferETHToGriever(uint256 amount, uint256 randomness) public {
         amount = amount % 1000 ether;
         uint256 originalBalance = address(this).balance;
         vm.deal(address(this), amount * 2);
@@ -169,8 +169,15 @@ contract SafeTransferLibTest is TestPlus {
         {
             uint256 receipientBalanceBefore = address(recipient).balance;
             uint256 senderBalanceBefore = address(this).balance;
+            uint256 r = uint256(keccak256(abi.encode(randomness))) % 3;
             // Send to a griever with a gas stipend. Should not revert.
-            this.forceSafeTransferETH(address(recipient), amount, SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES);
+            if (r == 0) {
+                this.forceSafeTransferETH(address(recipient), amount, SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES);
+            } else if (r == 1) {
+                this.forceSafeTransferETH(address(recipient), amount, SafeTransferLib._GAS_STIPEND_NO_GRIEF);
+            } else {
+                this.forceSafeTransferETH(address(recipient), amount);
+            }
             assertEq(address(recipient).balance - receipientBalanceBefore, amount);
             assertEq(senderBalanceBefore - address(this).balance, amount);
             // We use the `SELFDESTRUCT` to send, and thus the `garbage` should NOT be updated.
@@ -205,7 +212,9 @@ contract SafeTransferLibTest is TestPlus {
     }
 
     function testForceTransferETHToGriever() public {
-        testForceTransferETHToGriever(1 ether);
+        testForceTransferETHToGriever(1 ether, 0);
+        testForceTransferETHToGriever(1 ether, 1);
+        testForceTransferETHToGriever(1 ether, 2);
     }
 
     function testTransferRevertSelector() public {
@@ -570,6 +579,10 @@ contract SafeTransferLibTest is TestPlus {
         uint256 gasStipend
     ) public {
         SafeTransferLib.forceSafeTransferETH(to, amount, gasStipend);
+    }
+
+    function forceSafeTransferETH(address to, uint256 amount) public {
+        SafeTransferLib.forceSafeTransferETH(to, amount);
     }
 
     function garbageIsGarbage(bytes memory garbage) public pure returns (bool result) {
