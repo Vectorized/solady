@@ -89,7 +89,7 @@ library SafeTransferLib {
     }
     
     /// @dev Force sends `amount` (in wei) ETH to `to`, with a gas stipend
-    /// equal to _GAS_STIPEND_NO_GRIEF. This gas stipend is a reasonable default
+    /// equal to `_GAS_STIPEND_NO_GRIEF`. This gas stipend is a reasonable default
     /// for 99% of cases and can be overriden with the three-argument version of this
     /// function if necessary.
     ///
@@ -98,7 +98,27 @@ library SafeTransferLib {
     ///
     /// Reverts if the current contract has insufficient balance.
     function forceSafeTransferETH(address to, uint256 amount) internal {
-        forceSafeTransferETH(to, amount, _GAS_STIPEND_NO_GRIEF);
+        // Manually inlined because the compiler doesn't inline functions with branches.
+        assembly {
+            // If insufficient balance, revert.
+            if lt(selfbalance(), amount) {
+                // Store the function selector of `ETHTransferFailed()`.
+                mstore(0x00, 0xb12d13eb)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            // Transfer the ETH and check if it succeeded or not.
+            if iszero(call(_GAS_STIPEND_NO_GRIEF, to, amount, 0, 0, 0, 0)) {
+                mstore(0x00, to) // Store the address in scratch space.
+                mstore8(0x0b, 0x73) // Opcode `PUSH20`.
+                mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
+                // We can directly use `SELFDESTRUCT` in the contract creation.
+                // We don't check and revert upon failure here, just in case
+                // `SELFDESTRUCT`'s behavior is changed some day in the future.
+                // (If that ever happens, we will riot, and port the code to use WETH).
+                pop(create(amount, 0x0b, 0x16))
+            }
+        }
     }
 
     /// @dev Sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
