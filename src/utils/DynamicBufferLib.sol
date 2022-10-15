@@ -17,14 +17,6 @@ library DynamicBufferLib {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev For demarcating the `capacity` slot so that we know
-    /// that we are using a valid dynamic buffer.
-    uint256 private constant _DYNAMIC_BUFFER_MARK = 0x87d3fa72;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -35,12 +27,15 @@ library DynamicBufferLib {
                 let bufferData := mload(buffer)
                 let bufferDataLength := mload(bufferData)
                 let newBufferDataLength := add(mload(data), bufferDataLength)
-
+                // Some random prime number to multiply `capacity`, so that
+                // we know that the `capacity` is for a dynamic buffer.
+                // Selected to be larger than any memory pointer realistically.
+                let prime := 1621250193422201
                 let capacity := mload(sub(bufferData, 0x20))
 
                 // Extract `capacity`, and set it to 0
-                // if it is not demarcated by `_DYNAMIC_BUFFER_MARK`.
-                capacity := mul(shr(32, shl(32, capacity)), eq(shr(224, capacity), _DYNAMIC_BUFFER_MARK))
+                // if it is not a multiple of `prime`.
+                capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
 
                 // Reallocate if the `newBufferDataLength` exceeds `capacity`.
                 if gt(newBufferDataLength, capacity) {
@@ -48,9 +43,8 @@ library DynamicBufferLib {
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
                     capacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), not(31))
-                    // Store the `capacity` in the slot before the `length`,
-                    // demarcating it with `_DYNAMIC_BUFFER_MARK`.
-                    mstore(mload(0x40), or(shl(224, _DYNAMIC_BUFFER_MARK), capacity))
+                    // Store the `capacity` multiplied by `prime` in the slot before the `length`,
+                    mstore(mload(0x40), mul(prime, capacity))
                     // Set the `newBufferData` to point to the slot after capacity.
                     let newBufferData := add(mload(0x40), 0x20)
                     // Allocate the memory for the `newBufferData`.
