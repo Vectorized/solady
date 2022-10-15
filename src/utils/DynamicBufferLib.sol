@@ -35,25 +35,19 @@ library DynamicBufferLib {
                 let bufferData := mload(buffer)
                 let bufferDataLength := mload(bufferData)
                 let newBufferDataLength := add(mload(data), bufferDataLength)
-                
+
                 let capacity := mload(sub(bufferData, 0x20))
 
-                // Extract `capacity`, and set it to 0 
+                // Extract `capacity`, and set it to 0
                 // if it is not demarcated by `_DYNAMIC_BUFFER_MARK`.
-                capacity := mul(
-                    shr(32, shl(32, capacity)),
-                    eq(shr(224, capacity), _DYNAMIC_BUFFER_MARK)
-                )
+                capacity := mul(shr(32, shl(32, capacity)), eq(shr(224, capacity), _DYNAMIC_BUFFER_MARK))
 
                 // Reallocate if the `newBufferDataLength` exceeds `capacity`.
                 if gt(newBufferDataLength, capacity) {
                     // Approximately double the memory with a heuristic,
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
-                    capacity := and(
-                        add(capacity, add(or(capacity, newBufferDataLength), 32)), 
-                        not(31)
-                    )
+                    capacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), not(31))
                     // Store the `capacity` in the slot before the `length`,
                     // demarcating it with `_DYNAMIC_BUFFER_MARK`.
                     mstore(mload(0x40), or(shl(224, _DYNAMIC_BUFFER_MARK), capacity))
@@ -87,7 +81,7 @@ library DynamicBufferLib {
                 // Zeroize the slot after the buffer.
                 mstore(add(add(bufferData, 0x20), newBufferDataLength), 0)
                 // Store the `newBufferDataLength`.
-                mstore(bufferData, newBufferDataLength)    
+                mstore(bufferData, newBufferDataLength)
             }
         }
     }

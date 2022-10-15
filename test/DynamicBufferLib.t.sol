@@ -36,7 +36,7 @@ contract DynamicBufferLibTest is TestPlus {
                 expectedResult = bytes.concat(expectedResult, inputs[i]);
             }
         }
-        
+
         assertEq(keccak256(buffer.data), keccak256(expectedResult));
     }
 
