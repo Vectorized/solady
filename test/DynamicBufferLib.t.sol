@@ -10,57 +10,59 @@ contract DynamicBufferLibTest is TestPlus {
     function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {
         _boundInputs(inputs);
 
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        unchecked {
+            if (randomness % 2 == 0) {
+                if (inputs.length > 0) {
+                    buffer.data = inputs[0];
+                    for (uint256 i = 1; i < inputs.length; ++i) {
+                        buffer.append(inputs[i]);
+                        _brutalizeFreeMemoryStart();
+                        _checkBytesIsZeroRightPadded(buffer.data);
+                    }
+                }
+            } else {
+                for (uint256 i; i < inputs.length; ++i) {
+                    buffer.append(inputs[i]);
+                    _brutalizeFreeMemoryStart();
+                    _checkBytesIsZeroRightPadded(buffer.data);
+                }
+            }
+        }
+
         bytes memory expectedResult;
         unchecked {
             for (uint256 i; i < inputs.length; ++i) {
                 expectedResult = bytes.concat(expectedResult, inputs[i]);
             }
         }
-        _roundUpFreeMemoryPointer();
-
-        DynamicBufferLib.DynamicBuffer memory dynamicBuffer;
-        unchecked {
-            if (randomness % 2 == 0) {
-                if (inputs.length > 0) {
-                    dynamicBuffer.data = inputs[0];
-                    for (uint256 i = 1; i < inputs.length; ++i) {
-                        dynamicBuffer.append(inputs[i]);
-                        _brutalizeFreeMemoryStart();
-                        _checkBytesIsZeroRightPadded(dynamicBuffer.data);
-                    }
-                }
-            } else {
-                for (uint256 i; i < inputs.length; ++i) {
-                    dynamicBuffer.append(inputs[i]);
-                    _brutalizeFreeMemoryStart();
-                    _checkBytesIsZeroRightPadded(dynamicBuffer.data);
-                }
-            }
-        }
-        assertEq(keccak256(dynamicBuffer.data), keccak256(expectedResult));
+        
+        assertEq(keccak256(buffer.data), keccak256(expectedResult));
     }
 
-    function testJoinWithConcat() public pure {
+    function testJoinWithConcat() public {
         bytes memory expectedResult;
-        bytes[] memory chunks = _getChunks();
+        (bytes[] memory chunks, bytes32 joinedHash) = _getChunks();
         unchecked {
             for (uint256 i; i < chunks.length; ++i) {
                 expectedResult = bytes.concat(expectedResult, chunks[i]);
             }
         }
+        assertEq(keccak256(expectedResult), joinedHash);
     }
 
-    function testJoinWithDynamicBuffer() public pure {
-        DynamicBufferLib.DynamicBuffer memory dynamicBuffer;
-        bytes[] memory chunks = _getChunks();
+    function testJoinWithDynamicBuffer() public {
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        (bytes[] memory chunks, bytes32 joinedHash) = _getChunks();
         unchecked {
             for (uint256 i; i < chunks.length; ++i) {
-                dynamicBuffer.append(chunks[i]);
+                buffer.append(chunks[i]);
             }
         }
+        assertEq(keccak256(buffer.data), joinedHash);
     }
 
-    function _getChunks() internal pure returns (bytes[] memory chunks) {
+    function _getChunks() internal pure returns (bytes[] memory chunks, bytes32 joinedHash) {
         chunks = new bytes[](20);
         chunks[0] = bytes(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
@@ -76,6 +78,8 @@ contract DynamicBufferLibTest is TestPlus {
         chunks[9] = bytes("Convallis posuere morbi leo urna.");
 
         chunks[15] = bytes("Hehe");
+
+        joinedHash = 0x166b0e99fea53034ed188896344996efc141b922127f90922905e478cb26b312;
     }
 
     function _checkBytesIsZeroRightPadded(bytes memory s) internal pure {
