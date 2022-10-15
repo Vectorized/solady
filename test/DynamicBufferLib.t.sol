@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/TestPlus.sol";
 import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
 
-contract LibStringTest is TestPlus {
+contract DynamicBufferLibTest is TestPlus {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
     function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {
