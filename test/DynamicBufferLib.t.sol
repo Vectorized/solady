@@ -25,20 +25,22 @@ contract LibStringTest is TestPlus {
                     dynamicBuffer.data = inputs[0];
                     for (uint256 i = 1; i < inputs.length; ++i) {
                         dynamicBuffer.append(inputs[i]);
+                        _brutalizeFreeMemoryStart();
+                        _checkBytesIsZeroRightPadded(dynamicBuffer.data);
                     }
                 }
             } else {
                 for (uint256 i; i < inputs.length; ++i) {
                     dynamicBuffer.append(inputs[i]);
+                    _brutalizeFreeMemoryStart();
+                    _checkBytesIsZeroRightPadded(dynamicBuffer.data);
                 }
             }
         }
-        _brutalizeFreeMemoryStart();
-        _checkBytesIsZeroRightPadded(dynamicBuffer.data);
         assertEq(keccak256(dynamicBuffer.data), keccak256(expectedResult));
     }
 
-    function testDynamicBufferConcat() public {
+    function testJoinWithConcat() public pure {
         bytes memory expectedResult;
         bytes[] memory chunks = _getChunks();
         unchecked {
@@ -48,7 +50,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testDynamicBuffer() public {
+    function testJoinWithDynamicBuffer() public pure {
         DynamicBufferLib.DynamicBuffer memory dynamicBuffer;
         bytes[] memory chunks = _getChunks();
         unchecked {
@@ -59,7 +61,7 @@ contract LibStringTest is TestPlus {
     }
 
     function _getChunks() internal pure returns (bytes[] memory chunks) {
-        chunks = new bytes[](10);
+        chunks = new bytes[](20);
         chunks[0] = bytes(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
         );
@@ -72,6 +74,8 @@ contract LibStringTest is TestPlus {
         chunks[7] = bytes("Eu augue ut lectus arcu.");
         chunks[8] = bytes("Natoque penatibus et magnis dis parturient montes nascetur.");
         chunks[9] = bytes("Convallis posuere morbi leo urna.");
+
+        chunks[15] = bytes("Hehe");
     }
 
     function _checkBytesIsZeroRightPadded(bytes memory s) internal pure {

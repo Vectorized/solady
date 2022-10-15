@@ -31,11 +31,10 @@ library DynamicBufferLib {
     /// @dev Appends `data` to `buffer`.
     function append(DynamicBuffer memory buffer, bytes memory data) internal pure {
         assembly {
-            let dataLength := mload(data)
-            if dataLength {
+            if mload(data) {
                 let bufferData := mload(buffer)
                 let bufferDataLength := mload(bufferData)
-                let newBufferDataLength := add(dataLength, bufferDataLength)
+                let newBufferDataLength := add(mload(data), bufferDataLength)
 
                 let capacity := mload(sub(bufferData, 0x20))
 
@@ -45,15 +44,10 @@ library DynamicBufferLib {
 
                 // Reallocate if the `newBufferDataLength` exceeds `capacity`.
                 if gt(newBufferDataLength, capacity) {
-                    // Add 1 to `capacity`, and round it up to the next multiple of 32.
-                    capacity := and(add(capacity, 32), not(31))
-                    // prettier-ignore
-                    for {} 1 {} {
-                        // Multiply `capacity` by 2.
-                        capacity := shl(1, capacity)
-                        // prettier-ignore
-                        if iszero(gt(newBufferDataLength, capacity)) { break }
-                    }
+                    // Approximately double the memory with a heuristic,
+                    // ensuring more than enough space for the combined data,
+                    // rounding up to the next multiple of 32.
+                    capacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), not(31))
                     // Store the `capacity` in the slot before the `length`,
                     // demarcating it with `_DYNAMIC_BUFFER_MARK`.
                     mstore(mload(0x40), or(shl(224, _DYNAMIC_BUFFER_MARK), capacity))
@@ -78,7 +72,7 @@ library DynamicBufferLib {
                 let output := add(bufferData, bufferDataLength)
                 // Copy `data` one word at a time, backwards.
                 // prettier-ignore
-                for { let o := and(add(dataLength, 32), not(31)) } 1 {} {
+                for { let o := and(add(mload(data), 32), not(31)) } 1 {} {
                     mstore(add(output, o), mload(add(data, o)))
                     o := sub(o, 0x20)
                     // prettier-ignore
