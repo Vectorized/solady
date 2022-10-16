@@ -677,6 +677,45 @@ library LibString {
         }
     }
 
+    /// @dev Escapes the string to be used within HTML tags.
+    function escapeHTML(string memory s) internal pure returns (string memory result) {
+        assembly {
+            // prettier-ignore
+            for {
+                let end := add(s, mload(s))
+                result := add(mload(0x40), 0x20)
+                // Store the bytes of the packed offsets and strides into the scratch space.
+                // `packed = (stride << 5) | offset`. Max offset is 20. Max stride is 6.
+                mstore(0x1f, 0x900094)
+                mstore(0x08, 0xc0000000a6ab)
+                // Store "&quot;&amp;&#39;&lt;&gt;" into the scratch space.
+                mstore(0x00, shl(64, 0x2671756f743b26616d703b262333393b266c743b2667743b))
+            } iszero(eq(s, end)) {} {
+                s := add(s, 1)
+                let c := and(mload(s), 0xff)
+                // Not in `["\"","'","&","<",">"]`.
+                if iszero(and(shl(c, 1), 0x500000c400000000)) { 
+                    mstore8(result, c)
+                    result := add(result, 1)
+                    continue    
+                }
+                let t := shr(248, mload(c))
+                mstore(result, mload(and(t, 31)))
+                result := add(result, shr(5, t))
+            }
+            let last := result
+            // Zeroize the slot after the string.
+            mstore(last, 0)
+            // Restore the result to the start of the free memory.
+            result := mload(0x40)
+            // Store the length of the result.
+            mstore(result, sub(last, add(result, 0x20)))
+            // Allocate memory for the length and the bytes,
+            // rounded up to a multiple of 32.
+            mstore(0x40, and(add(last, 31), not(31)))
+        }
+    }
+
     /// @dev Escapes the string to be used within double-quotes in a JSON.
     function escapeJSON(string memory s) internal pure returns (string memory result) {
         assembly {
@@ -689,7 +728,7 @@ library LibString {
                 // Also, store `{0x08:"b", 0x09:"t", 0x0a:"n", 0x0c:"f", 0x0d:"r"}`.
                 // into the scratch space.
                 mstore(0x15, 0x5c75303030303031323334353637383961626364656662746e006672)
-                // Bitmask for detecting `["\"", "\\"]`.
+                // Bitmask for detecting `["\"","\\"]`.
                 let e := or(shl(0x22, 1), shl(0x5c, 1))
             } iszero(eq(s, end)) {} {
                 s := add(s, 1)

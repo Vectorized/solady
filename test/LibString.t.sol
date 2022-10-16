@@ -647,6 +647,48 @@ contract LibStringTest is TestPlus {
         assertEq(string(bytes.concat(bytes(""), bytes(""))), "");
     }
 
+    function testStringEscapeHTML() public {
+        assertEq(LibString.escapeHTML(""), "");
+        assertEq(LibString.escapeHTML("abc"), "abc");
+        assertEq(LibString.escapeHTML('abc"_123'), "abc&quot;_123");
+        assertEq(LibString.escapeHTML("abc&_123"), "abc&amp;_123");
+        assertEq(LibString.escapeHTML("abc'_123"), "abc&#39;_123");
+        assertEq(LibString.escapeHTML("abc<_123"), "abc&lt;_123");
+        assertEq(LibString.escapeHTML("abc>_123"), "abc&gt;_123");
+    }
+
+    function testStringEscapeHTML(uint256 randomness) public brutalizeMemory {
+        string[] memory originalChars = new string[](5);
+        originalChars[0] = '"';
+        originalChars[1] = "&";
+        originalChars[2] = "'";
+        originalChars[3] = "<";
+        originalChars[4] = ">";
+
+        string[] memory escapedChars = new string[](5);
+        escapedChars[0] = "&quot;";
+        escapedChars[1] = "&amp;";
+        escapedChars[2] = "&#39;";
+        escapedChars[3] = "&lt;";
+        escapedChars[4] = "&gt;";
+
+        string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+        uint256 r = uint256(keccak256(abi.encode(randomness))) % 5;
+
+        string memory expectedResult = string(bytes.concat(bytes(filler0), bytes(escapedChars[r]), bytes(filler1)));
+
+        string memory input = string(bytes.concat(bytes(filler0), bytes(originalChars[r]), bytes(filler1)));
+
+        _roundUpFreeMemoryPointer();
+        string memory escaped = LibString.escapeHTML(input);
+        _checkStringIsZeroRightPadded(escaped);
+        _brutalizeFreeMemoryStart();
+
+        assertEq(expectedResult, escaped);
+    }
+
     function testStringEscapeJSON() public {
         assertEq(LibString.escapeJSON(""), "");
         assertEq(LibString.escapeJSON("abc"), "abc");
