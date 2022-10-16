@@ -647,6 +647,16 @@ contract LibStringTest is TestPlus {
         assertEq(string(bytes.concat(bytes(""), bytes(""))), "");
     }
 
+    function testStringEscapeHTML() public {
+        assertEq(LibString.escapeHTML(""), "");
+        assertEq(LibString.escapeHTML("abc"), "abc");
+        assertEq(LibString.escapeHTML('abc"_123'), "abc&quot;_123");
+        assertEq(LibString.escapeHTML("abc&_123"), "abc&amp;_123");
+        assertEq(LibString.escapeHTML("abc'_123"), "abc&#39;_123");
+        assertEq(LibString.escapeHTML("abc<_123"), "abc&lt;_123");
+        assertEq(LibString.escapeHTML("abc>_123"), "abc&gt;_123");
+    }
+
     function testStringEscapeJSON() public {
         assertEq(LibString.escapeJSON(""), "");
         assertEq(LibString.escapeJSON("abc"), "abc");
