@@ -87,9 +87,7 @@ library LibBitmap {
     }
 
 
-    /**
-     * @dev Consecutively sets `amount` of bits starting from the bit at `startIndex`.
-     */    
+    /// @dev Consecutively sets `amount` of bits starting from the bit at `startIndex`.   
     function setBatch(Bitmap storage bitmap, uint256 startIndex, uint256 amount) internal {
         uint256 bucket = startIndex >> 8;
 
@@ -115,9 +113,7 @@ library LibBitmap {
     }
 
 
-    /**
-     * @dev Consecutively unsets `amount` of bits starting from the bit at `startIndex`.
-     */    
+    /// @dev Consecutively unsets `amount` of bits starting from the bit at `startIndex`.    
     function unsetBatch(Bitmap storage bitmap, uint256 startIndex, uint256 amount) internal {
         uint256 bucket = startIndex >> 8;
 
@@ -143,9 +139,7 @@ library LibBitmap {
     }
 
 
-    /**
-     * @dev Returns number of set bits within a range.
-     */
+    /// @dev Returns number of set bits within a range.
     function popCount(Bitmap storage bitmap, uint256 startIndex, uint256 amount) internal view returns(uint256 count) {
         uint256 bucket = startIndex >> 8;
 
@@ -171,6 +165,43 @@ library LibBitmap {
                 count += LibBit.popCount(
                     bitmap.map[bucket] << (256 - amount)
                 );
+            }
+        }
+    }
+
+
+    /// @dev Find the closest index of the set bit before `index`.
+    function scanForward(Bitmap storage bitmap, uint256 index) internal view returns (uint256 setBitIndex) {
+        uint256 bucket = index >> 8;
+
+        // index within the bucket
+        uint256 bucketIndex = (index & 0xff);
+
+        // load a bitboard from the bitmap.
+        uint256 bb = bitmap.map[bucket];
+
+        // offset the bitboard to scan from `bucketIndex`.
+        bb = bb << (0xff ^ bucketIndex);
+        
+        if(bb > 0) {
+            unchecked {
+                setBitIndex = (bucket << 8) | (bucketIndex - LibBit.clz(bb));    
+            }
+        } else {
+            while(true) {
+                require(bucket > 0, "BitMaps: The set bit before the index doesn't exist.");
+                unchecked {
+                    bucket--;
+                }
+                // No offset. Always scan from the least significiant bit now.
+                bb = bitmap.map[bucket];
+                
+                if(bb > 0) {
+                    unchecked {
+                        setBitIndex = (bucket << 8) | (255 -  LibBit.clz(bb));
+                        break;
+                    }
+                } 
             }
         }
     }
