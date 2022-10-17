@@ -8,7 +8,6 @@ import "./LibBit.sol";
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibBitmap.sol)
 /// @author Modified from Solidity-Bits (https://github.com/estarriolvetch/solidity-bits/blob/main/contracts/BitMaps.sol)
 library LibBitmap {
-
     uint256 private constant MASK_FULL = type(uint256).max;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -87,22 +86,25 @@ library LibBitmap {
         }
     }
 
-
-    /// @dev Consecutively sets `amount` of bits starting from the bit at `startIndex`.   
-    function setBatch(Bitmap storage bitmap, uint256 startIndex, uint256 amount) internal {
+    /// @dev Consecutively sets `amount` of bits starting from the bit at `startIndex`.
+    function setBatch(
+        Bitmap storage bitmap,
+        uint256 startIndex,
+        uint256 amount
+    ) internal {
         uint256 bucket = startIndex >> 8;
 
         uint256 bucketStartIndex = (startIndex & 0xff);
 
         unchecked {
-            if(bucketStartIndex + amount <= 256) {
-                bitmap.map[bucket] |= MASK_FULL >> (256 - amount) << bucketStartIndex;
+            if (bucketStartIndex + amount <= 256) {
+                bitmap.map[bucket] |= (MASK_FULL >> (256 - amount)) << bucketStartIndex;
             } else {
                 bitmap.map[bucket] |= MASK_FULL << bucketStartIndex;
                 amount -= (256 - bucketStartIndex);
                 bucket++;
 
-                while(amount > 256) {
+                while (amount > 256) {
                     bitmap.map[bucket] = MASK_FULL;
                     amount -= 256;
                     bucket++;
@@ -113,22 +115,25 @@ library LibBitmap {
         }
     }
 
-
-    /// @dev Consecutively unsets `amount` of bits starting from the bit at `startIndex`.    
-    function unsetBatch(Bitmap storage bitmap, uint256 startIndex, uint256 amount) internal {
+    /// @dev Consecutively unsets `amount` of bits starting from the bit at `startIndex`.
+    function unsetBatch(
+        Bitmap storage bitmap,
+        uint256 startIndex,
+        uint256 amount
+    ) internal {
         uint256 bucket = startIndex >> 8;
 
         uint256 bucketStartIndex = (startIndex & 0xff);
 
         unchecked {
-            if(bucketStartIndex + amount <= 256) {
-                bitmap.map[bucket] &= ~(MASK_FULL >> (256 - amount) << bucketStartIndex);
+            if (bucketStartIndex + amount <= 256) {
+                bitmap.map[bucket] &= ~((MASK_FULL >> (256 - amount)) << bucketStartIndex);
             } else {
                 bitmap.map[bucket] &= ~(MASK_FULL << bucketStartIndex);
                 amount -= (256 - bucketStartIndex);
                 bucket++;
 
-                while(amount > 256) {
+                while (amount > 256) {
                     bitmap.map[bucket] = 0;
                     amount -= 256;
                     bucket++;
@@ -139,37 +144,33 @@ library LibBitmap {
         }
     }
 
-
     /// @dev Returns number of set bits within a range.
-    function popCount(Bitmap storage bitmap, uint256 startIndex, uint256 amount) internal view returns(uint256 count) {
+    function popCount(
+        Bitmap storage bitmap,
+        uint256 startIndex,
+        uint256 amount
+    ) internal view returns (uint256 count) {
         uint256 bucket = startIndex >> 8;
 
         uint256 bucketStartIndex = (startIndex & 0xff);
 
         unchecked {
-            if(bucketStartIndex + amount <= 256) {
-                count +=  LibBit.popCount(
-                        bitmap.map[bucket] >> bucketStartIndex << (256 - amount)
-                );
+            if (bucketStartIndex + amount <= 256) {
+                count += LibBit.popCount((bitmap.map[bucket] >> bucketStartIndex) << (256 - amount));
             } else {
-                count += LibBit.popCount(
-                    bitmap.map[bucket] >> bucketStartIndex
-                );
+                count += LibBit.popCount(bitmap.map[bucket] >> bucketStartIndex);
                 amount -= (256 - bucketStartIndex);
                 bucket++;
 
-                while(amount > 256) {
+                while (amount > 256) {
                     count += LibBit.popCount(bitmap.map[bucket]);
                     amount -= 256;
                     bucket++;
                 }
-                count += LibBit.popCount(
-                    bitmap.map[bucket] << (256 - amount)
-                );
+                count += LibBit.popCount(bitmap.map[bucket] << (256 - amount));
             }
         }
     }
-
 
     /// @dev Find the closest index of the set bit before `index`.
     function scanForward(Bitmap storage bitmap, uint256 index) internal view returns (uint256 setBitIndex) {
@@ -183,26 +184,26 @@ library LibBitmap {
 
         // offset the bitboard to scan from `bucketIndex`.
         bb = bb << (0xff ^ bucketIndex);
-        
-        if(bb > 0) {
+
+        if (bb > 0) {
             unchecked {
-                setBitIndex = (bucket << 8) | (bucketIndex - LibBit.clz(bb));    
+                setBitIndex = (bucket << 8) | (bucketIndex - LibBit.clz(bb));
             }
         } else {
-            while(true) {
+            while (true) {
                 require(bucket > 0, "BitMaps: The set bit before the index doesn't exist.");
                 unchecked {
                     bucket--;
                 }
                 // No offset. Always scan from the least significiant bit now.
                 bb = bitmap.map[bucket];
-                
-                if(bb > 0) {
+
+                if (bb > 0) {
                     unchecked {
-                        setBitIndex = (bucket << 8) | (255 -  LibBit.clz(bb));
+                        setBitIndex = (bucket << 8) | (255 - LibBit.clz(bb));
                         break;
                     }
-                } 
+                }
             }
         }
     }
