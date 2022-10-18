@@ -37,30 +37,39 @@ library DynamicBufferLib {
                 // if it is not a multiple of `prime`.
                 capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
 
-                // Reallocate if the `newBufferDataLength` exceeds `capacity`.
+                // Expand / Reallocate if the `newBufferDataLength` exceeds `capacity`.
                 if gt(newBufferDataLength, capacity) {
                     // Approximately double the memory with a heuristic,
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
-                    capacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), not(31))
-                    // Store the `capacity` multiplied by `prime` in the slot before the `length`,
-                    mstore(mload(0x40), mul(prime, capacity))
-                    // Set the `newBufferData` to point to the slot after capacity.
-                    let newBufferData := add(mload(0x40), 0x20)
-                    // Allocate the memory for the `newBufferData`.
-                    mstore(0x40, add(newBufferData, add(0x20, capacity)))
-                    // Store the `newBufferData`.
-                    mstore(buffer, newBufferData)
-                    // Copy `bufferData` one word at a time, backwards.
-                    // prettier-ignore
-                    for { let o := and(add(bufferDataLength, 32), not(31)) } 1 {} {
-                        mstore(add(newBufferData, o), mload(add(bufferData, o)))
-                        o := sub(o, 0x20)
-                        // prettier-ignore
-                        if iszero(o) { break }
+                    let newCapacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), not(31))
+                    
+                    // checks if next slot after current buffer is eligible for use
+                    switch eq(mload(0x40),add(bufferData,add(0x20,capacity)))
+                    case 1{
+                        // expanding buffer capacity
+                        mstore(0x40, add(bufferData, add(0x20, newCapacity)))
                     }
-                    // Assign `newBufferData` to `bufferData`.
-                    bufferData := newBufferData
+                    default{
+                        // Set the `newBufferData` to point to the slot after capacity.
+                        let newBufferData := add(mload(0x40), 0x20)
+                        // Allocate the free-memory-pointer
+                        mstore(0x40, add(newBufferData, add(0x20, newCapacity)))
+                        // Store the `newBufferData`.
+                        mstore(buffer, newBufferData)
+                        // Copy `bufferData` one word at a time, backwards.
+                        // prettier-ignore
+                        for { let o := and(add(bufferDataLength, 32), not(31)) } 1 {} {
+                            mstore(add(newBufferData, o), mload(add(bufferData, o)))
+                            o := sub(o, 0x20)
+                            // prettier-ignore
+                            if iszero(o) { break }
+                        }
+                        // Assign `newBufferData` to `bufferData`.
+                        bufferData := newBufferData
+                    }
+                    // Store the `capacity` multiplied by `prime` in the slot before the `length`,
+                    mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
                 }
                 // Initalize `output` to the next empty position in `bufferData`.
                 let output := add(bufferData, bufferDataLength)
