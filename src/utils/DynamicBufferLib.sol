@@ -38,19 +38,18 @@ library DynamicBufferLib {
                 capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
 
                 // Expand / Reallocate if the `newBufferDataLength` exceeds `capacity`.
-                if gt(newBufferDataLength, capacity) {
+                for {
+
+                } gt(newBufferDataLength, capacity) {
+
+                } {
                     // Approximately double the memory with a heuristic,
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
                     let newCapacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), not(31))
-                    
-                    // checks if next slot after current buffer is eligible for use
-                    switch eq(mload(0x40),add(bufferData,add(0x20,capacity)))
-                    case 1{
-                        // expanding buffer capacity
-                        mstore(0x40, add(bufferData, add(0x20, newCapacity)))
-                    }
-                    default{
+
+                    // If next slot after current buffer is not eligible for use.
+                    if iszero(eq(mload(0x40), add(bufferData, add(0x20, capacity)))) {
                         // Set the `newBufferData` to point to the slot after capacity.
                         let newBufferData := add(mload(0x40), 0x20)
                         // Allocate the free-memory-pointer
@@ -67,9 +66,16 @@ library DynamicBufferLib {
                         }
                         // Assign `newBufferData` to `bufferData`.
                         bufferData := newBufferData
+                        // Expand buffer capacity.
+                        mstore(0x40, add(bufferData, add(0x40, newCapacity)))
+                        // Store the `capacity` multiplied by `prime` in the slot before the `length`,
+                        mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
+                        break
                     }
+
                     // Store the `capacity` multiplied by `prime` in the slot before the `length`,
                     mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
+                    break
                 }
                 // Initalize `output` to the next empty position in `bufferData`.
                 let output := add(bufferData, bufferDataLength)
