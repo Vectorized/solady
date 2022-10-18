@@ -597,6 +597,10 @@ contract LibStringTest is TestPlus {
         assertTrue(_stringArraysAreSame(LibString.split("ab", ""), elements));
 
         elements = new string[](1);
+        elements[0] = "ab";
+        assertTrue(_stringArraysAreSame(LibString.split("ab", " "), elements));
+
+        elements = new string[](1);
         elements[0] = "a";
         assertTrue(_stringArraysAreSame(LibString.split("a", ""), elements));
 
