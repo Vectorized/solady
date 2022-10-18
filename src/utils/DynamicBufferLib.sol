@@ -38,7 +38,11 @@ library DynamicBufferLib {
                 capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
 
                 // Expand / Reallocate if the `newBufferDataLength` exceeds `capacity`.
-                for {} gt(newBufferDataLength, capacity) {} {
+                for {
+
+                } gt(newBufferDataLength, capacity) {
+
+                } {
                     // Approximately double the memory with a heuristic,
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
@@ -65,10 +69,10 @@ library DynamicBufferLib {
                         // Expand buffer capacity.
                         mstore(0x40, add(bufferData, add(0x40, newCapacity)))
                         // Store the `capacity` multiplied by `prime` in the slot before the `length`,
-                        mstore(sub(bufferData, 0x20), mul(prime, newCapacity))    
+                        mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
                         break
                     }
-                    
+
                     // Store the `capacity` multiplied by `prime` in the slot before the `length`,
                     mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
                     break
