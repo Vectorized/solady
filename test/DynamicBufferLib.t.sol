@@ -12,7 +12,7 @@ contract DynamicBufferLibTest is TestPlus {
 
         DynamicBufferLib.DynamicBuffer memory buffer;
         unchecked {
-            if (randomness % 2 == 0) {
+            if (randomness & 1 == 0) {
                 if (inputs.length > 0) {
                     uint256 expectedLength = inputs[0].length;
                     buffer.data = inputs[0];
