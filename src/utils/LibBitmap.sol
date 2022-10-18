@@ -183,11 +183,12 @@ library LibBitmap {
         uint256 bb = bitmap.map[bucket];
 
         // offset the bitboard to scan from `bucketIndex`.
-        bb = bb << (0xff ^ bucketIndex);
+        uint256 offset = (0xff ^ bucketIndex);
+        bb = bb << offset;
 
         if (bb > 0) {
             unchecked {
-                setBitIndex = (bucket << 8) | (bucketIndex - LibBit.clz(bb));
+                setBitIndex = (bucket << 8) | (LibBit.fls(bb) - offset);
             }
         } else {
             while (true) {
@@ -200,7 +201,7 @@ library LibBitmap {
 
                 if (bb > 0) {
                     unchecked {
-                        setBitIndex = (bucket << 8) | (255 - LibBit.clz(bb));
+                        setBitIndex = (bucket << 8) | LibBit.fls(bb);
                         break;
                     }
                 }
