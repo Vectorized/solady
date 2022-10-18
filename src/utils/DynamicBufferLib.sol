@@ -37,9 +37,9 @@ library DynamicBufferLib {
                 // if it is not a multiple of `prime`.
                 capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
 
-                // Expand / Reallocate if the `newBufferDataLength` exceeds `capacity`.
+                // Expand / Reallocate memory if required.
                 // prettier-ignore
-                for {} gt(newBufferDataLength, capacity) {} {
+                for {} iszero(lt(newBufferDataLength, capacity)) {} {
                     // Approximately double the memory with a heuristic,
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
@@ -49,7 +49,7 @@ library DynamicBufferLib {
                     if iszero(eq(mload(0x40), add(bufferData, add(0x40, capacity)))) {
                         // Set the `newBufferData` to point to the slot after capacity.
                         let newBufferData := add(mload(0x40), 0x20)
-                        // Re-allocate memory.
+                        // Reallocate the memory.
                         mstore(0x40, add(newBufferData, add(0x40, newCapacity)))
                         // Store the `newBufferData`.
                         mstore(buffer, newBufferData)
