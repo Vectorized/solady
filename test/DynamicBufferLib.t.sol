@@ -18,20 +18,26 @@ contract DynamicBufferLibTest is TestPlus {
                     buffer.data = inputs[0];
                     for (uint256 i = 1; i < inputs.length; ++i) {
                         expectedLength += inputs[i].length;
+                        bytes memory t = new bytes(32);
+                        _roundUpFreeMemoryPointer();
                         buffer.append(inputs[i]);
                         assertEq(buffer.data.length, expectedLength);
                         _brutalizeFreeMemoryStart();
                         _checkBytesIsZeroRightPadded(buffer.data);
+                        assertEq(t.length, 32);
                     }
                 }
             } else {
                 uint256 expectedLength;
                 for (uint256 i; i < inputs.length; ++i) {
                     expectedLength += inputs[i].length;
+                    bytes memory t = new bytes(32);
+                    _roundUpFreeMemoryPointer();
                     buffer.append(inputs[i]);
                     assertEq(buffer.data.length, expectedLength);
                     _brutalizeFreeMemoryStart();
                     _checkBytesIsZeroRightPadded(buffer.data);
+                    assertEq(t.length, 32);
                 }
             }
         }
