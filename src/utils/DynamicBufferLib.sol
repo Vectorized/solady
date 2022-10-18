@@ -49,7 +49,7 @@ library DynamicBufferLib {
                     if iszero(eq(mload(0x40), add(bufferData, add(0x40, capacity)))) {
                         // Set the `newBufferData` to point to the slot after capacity.
                         let newBufferData := add(mload(0x40), 0x20)
-                        // Allocate memory.
+                        // Re-allocate memory.
                         mstore(0x40, add(newBufferData, add(0x40, newCapacity)))
                         // Store the `newBufferData`.
                         mstore(buffer, newBufferData)
@@ -67,7 +67,8 @@ library DynamicBufferLib {
                         bufferData := newBufferData
                         break
                     }
-
+                    // Expand the memory.
+                    mstore(0x40, add(bufferData, add(0x40, newCapacity)))
                     // Store the `capacity` multiplied by `prime` in the slot before the `length`,
                     mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
                     break
