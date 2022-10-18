@@ -597,46 +597,44 @@ library LibString {
     function split(string memory subject, string memory delimiter) internal pure returns (string[] memory result) {
         uint256[] memory indices = indicesOf(subject, delimiter);
         assembly {
-            if mload(indices) {
-                let indexPtr := add(indices, 0x20)
-                let indicesEnd := add(indexPtr, shl(5, add(mload(indices), 1)))
-                mstore(sub(indicesEnd, 0x20), mload(subject))
-                mstore(indices, add(mload(indices), 1))
-                let prevIndex := 0
-                // prettier-ignore
-                for {} 1 {} {
-                    let index := mload(indexPtr)
-                    mstore(indexPtr, 0x60)                        
-                    if iszero(eq(index, prevIndex)) {
-                        let element := mload(0x40)
-                        let elementLength := sub(index, prevIndex)
-                        mstore(element, elementLength)
-                        // Copy the `subject` one word at a time, backwards.
-                        // prettier-ignore
-                        for { let o := and(add(elementLength, 31), not(31)) } 1 {} {
-                            mstore(add(element, o), mload(add(add(subject, prevIndex), o)))
-                            o := sub(o, 0x20)
-                            // prettier-ignore
-                            if iszero(o) { break }
-                        }
-                        // Zeroize the slot after the string.
-                        mstore(add(add(element, 0x20), elementLength), 0)
-                        // Allocate memory for the length and the bytes,
-                        // rounded up to a multiple of 32.
-                        mstore(0x40, add(element, and(add(elementLength, 63), not(31))))
-                        // Store the `element` into the array.
-                        mstore(indexPtr, element)                        
-                    }
-                    prevIndex := add(index, mload(delimiter))
-                    indexPtr := add(indexPtr, 0x20)
+            let indexPtr := add(indices, 0x20)
+            let indicesEnd := add(indexPtr, shl(5, add(mload(indices), 1)))
+            mstore(sub(indicesEnd, 0x20), mload(subject))
+            mstore(indices, add(mload(indices), 1))
+            let prevIndex := 0
+            // prettier-ignore
+            for {} 1 {} {
+                let index := mload(indexPtr)
+                mstore(indexPtr, 0x60)                        
+                if iszero(eq(index, prevIndex)) {
+                    let element := mload(0x40)
+                    let elementLength := sub(index, prevIndex)
+                    mstore(element, elementLength)
+                    // Copy the `subject` one word at a time, backwards.
                     // prettier-ignore
-                    if iszero(lt(indexPtr, indicesEnd)) { break }
+                    for { let o := and(add(elementLength, 31), not(31)) } 1 {} {
+                        mstore(add(element, o), mload(add(add(subject, prevIndex), o)))
+                        o := sub(o, 0x20)
+                        // prettier-ignore
+                        if iszero(o) { break }
+                    }
+                    // Zeroize the slot after the string.
+                    mstore(add(add(element, 0x20), elementLength), 0)
+                    // Allocate memory for the length and the bytes,
+                    // rounded up to a multiple of 32.
+                    mstore(0x40, add(element, and(add(elementLength, 63), not(31))))
+                    // Store the `element` into the array.
+                    mstore(indexPtr, element)                        
                 }
-                result := indices
-                if iszero(mload(delimiter)) {
-                    result := add(indices, 0x20)
-                    mstore(result, sub(mload(indices), 2))
-                }
+                prevIndex := add(index, mload(delimiter))
+                indexPtr := add(indexPtr, 0x20)
+                // prettier-ignore
+                if iszero(lt(indexPtr, indicesEnd)) { break }
+            }
+            result := indices
+            if iszero(mload(delimiter)) {
+                result := add(indices, 0x20)
+                mstore(result, sub(mload(indices), 2))
             }
         }
     }

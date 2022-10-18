@@ -14,16 +14,22 @@ contract DynamicBufferLibTest is TestPlus {
         unchecked {
             if (randomness % 2 == 0) {
                 if (inputs.length > 0) {
+                    uint256 expectedLength = inputs[0].length;
                     buffer.data = inputs[0];
                     for (uint256 i = 1; i < inputs.length; ++i) {
+                        expectedLength += inputs[i].length;
                         buffer.append(inputs[i]);
+                        assertEq(buffer.data.length, expectedLength);
                         _brutalizeFreeMemoryStart();
                         _checkBytesIsZeroRightPadded(buffer.data);
                     }
                 }
             } else {
+                uint256 expectedLength;
                 for (uint256 i; i < inputs.length; ++i) {
+                    expectedLength += inputs[i].length;
                     buffer.append(inputs[i]);
+                    assertEq(buffer.data.length, expectedLength);
                     _brutalizeFreeMemoryStart();
                     _checkBytesIsZeroRightPadded(buffer.data);
                 }
