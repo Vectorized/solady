@@ -10,35 +10,35 @@ contract DynamicBufferLibTest is TestPlus {
     function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {
         _boundInputs(inputs);
 
+        _roundUpFreeMemoryPointer();
         DynamicBufferLib.DynamicBuffer memory buffer;
         unchecked {
+            uint256 expectedLength;
+            uint256 start;
             if (randomness & 1 == 0) {
                 if (inputs.length > 0) {
-                    uint256 expectedLength = inputs[0].length;
+                    expectedLength = inputs[0].length;
                     buffer.data = inputs[0];
-                    for (uint256 i = 1; i < inputs.length; ++i) {
-                        expectedLength += inputs[i].length;
-                        bytes memory t = new bytes(32);
-                        _roundUpFreeMemoryPointer();
-                        buffer.append(inputs[i]);
-                        assertEq(buffer.data.length, expectedLength);
-                        _brutalizeFreeMemoryStart();
-                        _checkBytesIsZeroRightPadded(buffer.data);
-                        assertEq(t.length, 32);
-                    }
+                    start = 1;
                 }
-            } else {
-                uint256 expectedLength;
-                for (uint256 i; i < inputs.length; ++i) {
-                    expectedLength += inputs[i].length;
-                    bytes memory t = new bytes(32);
-                    _roundUpFreeMemoryPointer();
-                    buffer.append(inputs[i]);
-                    assertEq(buffer.data.length, expectedLength);
-                    _brutalizeFreeMemoryStart();
-                    _checkBytesIsZeroRightPadded(buffer.data);
-                    assertEq(t.length, 32);
+            }
+            for (uint256 i = start; i < inputs.length; ++i) {
+                expectedLength += inputs[i].length;
+                uint256 corruptCheck;
+                assembly {
+                    corruptCheck := mload(0x40)
+                    mstore(corruptCheck, randomness)
+                    mstore(0x40, add(corruptCheck, 0x20))
                 }
+                buffer.append(inputs[i]);
+                assertEq(buffer.data.length, expectedLength);
+                _brutalizeFreeMemoryStart();
+                // _checkBytesIsZeroRightPadded(buffer.data);
+                bool corrupted;
+                assembly {
+                    corrupted := iszero(eq(randomness, mload(corruptCheck)))
+                }
+                assertFalse(corrupted);
             }
         }
 
