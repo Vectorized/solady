@@ -24,6 +24,9 @@ contract DynamicBufferLibTest is TestPlus {
             }
             for (uint256 i = start; i < inputs.length; ++i) {
                 expectedLength += inputs[i].length;
+                // Manually store the randomness in the next free memory word,
+                // and then check if append will corrupt it
+                // (in the case of insufficient memory allocation).
                 uint256 corruptCheck;
                 assembly {
                     corruptCheck := mload(0x40)
@@ -33,12 +36,12 @@ contract DynamicBufferLibTest is TestPlus {
                 buffer.append(inputs[i]);
                 assertEq(buffer.data.length, expectedLength);
                 _brutalizeFreeMemoryStart();
-                // _checkBytesIsZeroRightPadded(buffer.data);
-                bool corrupted;
+                _checkBytesIsZeroRightPadded(buffer.data);
+                bool isCorrupted;
                 assembly {
-                    corrupted := iszero(eq(randomness, mload(corruptCheck)))
+                    isCorrupted := iszero(eq(randomness, mload(corruptCheck)))
                 }
-                assertFalse(corrupted);
+                assertFalse(isCorrupted);
             }
         }
 
@@ -120,8 +123,8 @@ contract DynamicBufferLibTest is TestPlus {
             for (uint256 i; i < inputs.length; ++i) {
                 bytes memory x = inputs[i];
                 assembly {
-                    if gt(mload(x), 256) {
-                        mstore(x, 256)
+                    if gt(mload(x), 300) {
+                        mstore(x, 300)
                     }
                 }
             }
