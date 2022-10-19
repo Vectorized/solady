@@ -37,7 +37,7 @@ library DynamicBufferLib {
                 capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
 
                 // Expand / Reallocate memory if required.
-                // Note that we need to allocate an exta word for the length, and 
+                // Note that we need to allocate an exta word for the length, and
                 // and another extra word as a safety word (giving a total of 0x40 bytes).
                 // Without the safety word, the data at the next free memory word can be overwritten,
                 // because the backwards copying can exceed the buffer space used for storage.
