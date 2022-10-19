@@ -61,7 +61,7 @@ library DynamicBufferLib {
                             // prettier-ignore
                             if iszero(o) { break }
                         }
-                        // Store the `capacity` multiplied by `prime` in the slot before the `length`,
+                        // Store the `capacity` multiplied by `prime` in the slot before the `length`.
                         mstore(sub(newBufferData, 0x20), mul(prime, newCapacity))
                         // Assign `newBufferData` to `bufferData`.
                         bufferData := newBufferData
@@ -69,7 +69,7 @@ library DynamicBufferLib {
                     }
                     // Expand the memory.
                     mstore(0x40, add(bufferData, add(0x40, newCapacity)))
-                    // Store the `capacity` multiplied by `prime` in the slot before the `length`,
+                    // Store the `capacity` multiplied by `prime` in the slot before the `length`.
                     mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
                     break
                 }
