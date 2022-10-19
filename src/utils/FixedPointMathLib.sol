@@ -293,10 +293,7 @@ library FixedPointMathLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-
-            // If x * y modulo the denominator is strictly greater than 0,
-            // 1 is added to round up the division of x * y by the denominator.
-            z := add(gt(mod(mul(x, y), denominator), 0), div(mul(x, y), denominator))
+            z := add(iszero(iszero(mod(mul(x, y), denominator))), div(mul(x, y), denominator))
         }
     }
 
