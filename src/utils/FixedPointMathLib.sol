@@ -39,6 +39,9 @@ library FixedPointMathLib {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev The maximum possible integer.
+    uint256 internal constant MAX_UINT256 = 2**256 - 1;
+
     /// @dev The scalar of ETH and most ERC20s.
     uint256 internal constant WAD = 1e18;
 
@@ -263,12 +266,14 @@ library FixedPointMathLib {
     ) internal pure returns (uint256 z) {
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
-            if iszero(mul(denominator, iszero(mul(y, gt(x, div(not(0), y)))))) {
+            if iszero(mul(denominator, iszero(mul(y, gt(x, div(MAX_UINT256, y)))))) {
                 // Store the function selector of `MulDivFailed()`.
                 mstore(0x00, 0xad251c27)
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+
+            // Divide x * y by the denominator.
             z := div(mul(x, y), denominator)
         }
     }
@@ -282,13 +287,16 @@ library FixedPointMathLib {
     ) internal pure returns (uint256 z) {
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
-            if iszero(mul(denominator, iszero(mul(y, gt(x, div(not(0), y)))))) {
+            if iszero(mul(denominator, iszero(mul(y, gt(x, div(MAX_UINT256, y)))))) {
                 // Store the function selector of `MulDivFailed()`.
                 mstore(0x00, 0xad251c27)
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            z := add(iszero(iszero(mod(mul(x, y), denominator))), div(mul(x, y), denominator))
+
+            // If x * y modulo the denominator is strictly greater than 0,
+            // 1 is added to round up the division of x * y by the denominator.
+            z := add(gt(mod(mul(x, y), denominator), 0), div(mul(x, y), denominator))
         }
     }
 
