@@ -46,11 +46,11 @@ library DynamicBufferLib {
                     let newCapacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), not(31))
 
                     // If next slot after current buffer is not eligible for use.
-                    if iszero(eq(mload(0x40), add(bufferData, add(0x20, capacity)))) {
+                    if iszero(eq(mload(0x40), add(bufferData, add(0x40, capacity)))) {
                         // Set the `newBufferData` to point to the slot after capacity.
                         let newBufferData := add(mload(0x40), 0x20)
                         // Reallocate the memory.
-                        mstore(0x40, add(newBufferData, add(0x20, newCapacity)))
+                        mstore(0x40, add(newBufferData, add(0x40, newCapacity)))
                         // Store the `newBufferData`.
                         mstore(buffer, newBufferData)
                         // Copy `bufferData` one word at a time, backwards.
@@ -61,15 +61,15 @@ library DynamicBufferLib {
                             // prettier-ignore
                             if iszero(o) { break }
                         }
-                        // Store the `capacity` multiplied by `prime` in the slot before the `length`,
+                        // Store the `capacity` multiplied by `prime` in the slot before the `length`.
                         mstore(sub(newBufferData, 0x20), mul(prime, newCapacity))
                         // Assign `newBufferData` to `bufferData`.
                         bufferData := newBufferData
                         break
                     }
                     // Expand the memory.
-                    mstore(0x40, add(bufferData, add(0x20, newCapacity)))
-                    // Store the `capacity` multiplied by `prime` in the slot before the `length`,
+                    mstore(0x40, add(bufferData, add(0x40, newCapacity)))
+                    // Store the `capacity` multiplied by `prime` in the slot before the `length`.
                     mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
                     break
                 }
