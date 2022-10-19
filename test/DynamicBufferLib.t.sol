@@ -33,12 +33,12 @@ contract DynamicBufferLibTest is TestPlus {
                 buffer.append(inputs[i]);
                 assertEq(buffer.data.length, expectedLength);
                 _brutalizeFreeMemoryStart();
-                // _checkBytesIsZeroRightPadded(buffer.data);
-                bool corrupted;
+                _checkBytesIsZeroRightPadded(buffer.data);
+                bool isCorrupted;
                 assembly {
-                    corrupted := iszero(eq(randomness, mload(corruptCheck)))
+                    isCorrupted := iszero(eq(randomness, mload(corruptCheck)))
                 }
-                assertFalse(corrupted);
+                assertFalse(isCorrupted);
             }
         }
 
