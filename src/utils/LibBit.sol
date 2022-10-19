@@ -36,9 +36,24 @@ library LibBit {
     /// Returns the number of zeros preceding the most significant one bit.
     /// If `x` is zero, returns 256.
     function clz(uint256 x) internal pure returns (uint256 r) {
-        r = fls(x);
         assembly {
-            r := or(and(r, 256), mul(sub(255, r), lt(r, 256)))
+            let t := add(iszero(x), 255)
+
+            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+
+            // For the remaining 32 bits, use a De Bruijn lookup.
+            x := shr(r, x)
+            x := or(x, shr(1, x))
+            x := or(x, shr(2, x))
+            x := or(x, shr(4, x))
+            x := or(x, shr(8, x))
+            x := or(x, shr(16, x))
+
+            // prettier-ignore
+            r := sub(t, or(r, byte(shr(251, mul(x, shl(224, 0x07c4acdd))),
+                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f)))
         }
     }
 
