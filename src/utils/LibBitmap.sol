@@ -150,7 +150,7 @@ library LibBitmap {
             sstore(storageSlot, and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0))))))
         }
     }
-
+    
     /// @dev Returns number of set bits within a range.
     function popCount(
         Bitmap storage bitmap,
@@ -160,7 +160,7 @@ library LibBitmap {
         unchecked {
             uint256 bucket = start >> 8;
             uint256 shift = start & 0xff;
-            if (!(shift + amount < 257)) {
+            if (!(amount + shift < 257)) {
                 count = LibBit.popCount(bitmap.map[bucket] >> shift);
                 amount = amount + shift - 256;
                 ++bucket;
