@@ -13,7 +13,7 @@ library LibBitmap {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The constant returned when a bitmap scan does not find a result.
-    uint256 internal constant NOT_FOUND = uint256(int256(-1));
+    uint256 internal constant NOT_FOUND = type(uint256).max;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
