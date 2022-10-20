@@ -192,6 +192,7 @@ library LibBitmap {
                     bucket := sub(bucket, 1)
                     mstore(0x00, bucket)
                     bb := sload(keccak256(0x00, 0x40))
+                    // prettier-ignore
                     if bb { break }
                 }
             }
