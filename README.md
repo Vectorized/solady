@@ -30,6 +30,7 @@ utils
 ├─ LibBytemap — "Library for mapping integers to 8 bit unsigned integers"
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
+├─ DynamicBufferLib — "Library for buffers with automatic capacity resizing"
 ├─ FixedPointMathLib — "Arithmetic library with operations for fixed-point numbers"
 ```
 
