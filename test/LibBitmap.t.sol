@@ -267,9 +267,7 @@ contract LibBitmapTest is Test {
     function testBitmapFindLastSet(uint256 before, uint256 lcg) public {
         uint256 n = 1000;
         unchecked {
-            for (uint256 i; i < n / 256 + 1; ++i) {
-                bitmap.map[i] = 0;
-            }
+            _resetBitmap(bitmap, 0, n / 256 + 1);
             before = before % n;
             lcg = lcg % n;
         }
@@ -301,9 +299,7 @@ contract LibBitmapTest is Test {
         amount = end - start;
 
         unchecked {
-            for (uint256 i; i < n / 256 + 1; ++i) {
-                bitmap.map[i] = 0;
-            }
+            _resetBitmap(bitmap, 0, n / 256 + 1);
             bitmap.setBatch(start, amount);
             for (uint256 i; i < n; ++i) {
                 if (i < start) {
@@ -325,9 +321,7 @@ contract LibBitmapTest is Test {
         amount = end - start;
 
         unchecked {
-            for (uint256 i; i < n / 256 + 1; ++i) {
-                bitmap.map[i] = type(uint256).max;
-            }
+            _resetBitmap(bitmap, type(uint256).max, n / 256 + 1);
             bitmap.unsetBatch(start, amount);
             for (uint256 i; i < n; ++i) {
                 if (i < start) {
@@ -349,9 +343,7 @@ contract LibBitmapTest is Test {
         amount = end - start;
 
         unchecked {
-            for (uint256 i; i < n / 256 + 1; ++i) {
-                bitmap.map[i] = 0;
-            }
+            _resetBitmap(bitmap, 0, n / 256 + 1);
             bitmap.setBatch(start, amount);
             assertEq(bitmap.popCount(0, n), amount);
             if (start > 0) {
@@ -360,6 +352,14 @@ contract LibBitmapTest is Test {
             if (start + amount < n) {
                 assertEq(bitmap.popCount(start + amount, n - (start + amount)), 0);
             }
+        }
+    }
+
+    function _resetBitmap(LibBitmap.Bitmap storage bitmap, uint256 bucketValue, uint256 bucketEnd) private {
+        unchecked {
+            for (uint256 i; i < bucketEnd; ++i) {
+                bitmap.map[i] = bucketValue;
+            }    
         }
     }
 
