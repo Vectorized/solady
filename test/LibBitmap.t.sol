@@ -151,12 +151,38 @@ contract LibBitmapTest is Test {
         _testBitmapSetBatch(10, 512);
     }
 
+    function testBitmapSetBatch() public {
+        unchecked {
+            uint256 lcg = 123;
+            for (uint256 i; i < 8; ++i) {
+                lcg = _stepLCG(lcg);
+                uint256 start = lcg;
+                lcg = _stepLCG(lcg);
+                uint256 amount = lcg;
+                _testBitmapSetBatch(start, amount);
+            }
+        }
+    }
+
     function testBitmapUnsetBatchWithinSingleBucket() public {
         _testBitmapUnsetBatch(257, 30);
     }
 
     function testBitmapUnsetBatchAcrossMultipleBuckets() public {
         _testBitmapUnsetBatch(10, 512);
+    }
+
+    function testBitmapUnsetBatch() public {
+        unchecked {
+            uint256 lcg = 123;
+            for (uint256 i; i < 8; ++i) {
+                lcg = _stepLCG(lcg);
+                uint256 start = lcg;
+                lcg = _stepLCG(lcg);
+                uint256 amount = lcg;
+                _testBitmapUnsetBatch(start, amount);
+            }
+        }
     }
 
     function testBitmapPopCountWithinSingleBucket() public {
@@ -196,6 +222,19 @@ contract LibBitmapTest is Test {
         }
     }
 
+    function testBitmapPopCount() public {
+        unchecked {
+            uint256 lcg = 123;
+            for (uint256 i; i < 8; ++i) {
+                lcg = _stepLCG(lcg);
+                uint256 start = lcg;
+                lcg = _stepLCG(lcg);
+                uint256 amount = lcg;
+                lcg = _stepLCG(lcg);
+                testBitmapPopCount(start, amount, lcg);
+            }
+        }
+    }
 
     function testBitmapFindLastSet() public {
         unchecked {
@@ -225,20 +264,32 @@ contract LibBitmapTest is Test {
         }
     }
 
-    function testBitmapFindLastSet(uint256 before, uint256 randomness) public {
+    function testBitmapFindLastSet(uint256 before, uint256 lcg) public {
         uint256 n = 1000;
         unchecked {
             for (uint256 i; i < n / 256 + 1; ++i) {
                 bitmap.map[i] = 0;
             }
             before = before % n;
-            randomness = randomness % n;
+            lcg = lcg % n;
         }
-        bitmap.set(randomness);
-        if (randomness <= before) {
-            assertEq(bitmap.findLastSet(before), randomness);
+        bitmap.set(lcg);
+        if (lcg <= before) {
+            assertEq(bitmap.findLastSet(before), lcg);
+            uint256 nextLcg = _stepLCG(lcg);
+            bitmap.set(nextLcg);
+            if (nextLcg <= before) {
+                assertEq(bitmap.findLastSet(before), (lcg < nextLcg ? nextLcg : lcg));
+            }
         } else {
             assertEq(bitmap.findLastSet(before), LibBitmap.NOT_FOUND);
+            uint256 nextLcg = _stepLCG(lcg);
+            bitmap.set(nextLcg);
+            if (nextLcg <= before) {
+                assertEq(bitmap.findLastSet(before), nextLcg);
+            } else {
+                assertEq(bitmap.findLastSet(before), LibBitmap.NOT_FOUND);
+            }
         }
     }
 

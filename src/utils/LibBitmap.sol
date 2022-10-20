@@ -101,22 +101,21 @@ library LibBitmap {
             let shift := and(start, 0xff)
             mstore(0x20, bitmap.slot)
             mstore(0x00, shr(8, start))
-            let storageSlot := keccak256(0x00, 0x40)
             if iszero(lt(add(shift, amount), 257)) {
+                let storageSlot := keccak256(0x00, 0x40)
                 sstore(storageSlot, or(sload(storageSlot), shl(shift, not(0))))
-                amount := sub(add(amount, shift), 256)
-                let bucket := add(shr(8, start), 1)
+                let bucket := add(mload(0x00), 1)
+                let bucketEnd := add(mload(0x00), shr(8, add(amount, shift)))
+                amount := and(add(amount, shift), 0xff)
+                shift := 0
                 // prettier-ignore
-                for {} iszero(lt(amount, 257)) {} {
+                for {} iszero(eq(bucket, bucketEnd)) { bucket := add(bucket, 1) } {
                     mstore(0x00, bucket)
                     sstore(keccak256(0x00, 0x40), not(0))
-                    amount := sub(amount, 256)
-                    bucket := add(bucket, 1)
                 }
                 mstore(0x00, bucket)
-                storageSlot := keccak256(0x00, 0x40)
-                shift := 0
             }
+            let storageSlot := keccak256(0x00, 0x40)
             sstore(storageSlot, or(sload(storageSlot), shl(shift, shr(sub(256, amount), not(0)))))
         }
     }
@@ -131,22 +130,21 @@ library LibBitmap {
             let shift := and(start, 0xff)
             mstore(0x20, bitmap.slot)
             mstore(0x00, shr(8, start))
-            let storageSlot := keccak256(0x00, 0x40)
             if iszero(lt(add(shift, amount), 257)) {
+                let storageSlot := keccak256(0x00, 0x40)
                 sstore(storageSlot, and(sload(storageSlot), not(shl(shift, not(0)))))
-                amount := sub(add(amount, shift), 256)
-                let bucket := add(shr(8, start), 1)
+                let bucket := add(mload(0x00), 1)
+                let bucketEnd := add(mload(0x00), shr(8, add(amount, shift)))
+                amount := and(add(amount, shift), 0xff)
+                shift := 0
                 // prettier-ignore
-                for {} iszero(lt(amount, 257)) {} {
+                for {} iszero(eq(bucket, bucketEnd)) { bucket := add(bucket, 1) } {
                     mstore(0x00, bucket)
                     sstore(keccak256(0x00, 0x40), 0)
-                    amount := sub(amount, 256)
-                    bucket := add(bucket, 1)
                 }
                 mstore(0x00, bucket)
-                storageSlot := keccak256(0x00, 0x40)
-                shift := 0
             }
+            let storageSlot := keccak256(0x00, 0x40)
             sstore(storageSlot, and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0))))))
         }
     }
@@ -162,14 +160,12 @@ library LibBitmap {
             uint256 shift = start & 0xff;
             if (!(amount + shift < 257)) {
                 count = LibBit.popCount(bitmap.map[bucket] >> shift);
-                amount = amount + shift - 256;
-                ++bucket;
-                while (!(amount < 257)) {
-                    count += LibBit.popCount(bitmap.map[bucket]);
-                    amount -= 256;
-                    ++bucket;
-                }
+                uint256 bucketEnd = bucket + ((amount + shift) >> 8);
+                amount = (amount + shift) & 0xff;
                 shift = 0;
+                while (++bucket != bucketEnd) {
+                    count += LibBit.popCount(bitmap.map[bucket]);
+                }
             }
             count += LibBit.popCount((bitmap.map[bucket] >> shift) << (256 - amount));
         }
