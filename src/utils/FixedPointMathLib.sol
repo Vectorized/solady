@@ -370,7 +370,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the factorial of `x`.
-    function factorial(uint256 x) public pure returns (uint256 result) {
+    function factorial(uint256 x) internal pure returns (uint256 result) {
         unchecked {
             if (x < 11) {
                 // prettier-ignore
