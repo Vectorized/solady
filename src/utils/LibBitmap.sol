@@ -150,7 +150,8 @@ library LibBitmap {
         }
     }
 
-    /// @dev Returns number of set bits within a range.
+    /// @dev Returns number of set bits within a range by
+    /// scanning `amount` of bits starting from the bit at `start`.
     function popCount(
         Bitmap storage bitmap,
         uint256 start,
@@ -172,7 +173,7 @@ library LibBitmap {
         }
     }
 
-    /// @dev Returns the index of the most significant set bit smaller than `before`.
+    /// @dev Returns the index of the most significant set bit before the bit at `before`.
     /// If no set bit is found, returns `NOT_FOUND`.
     function findLastSet(Bitmap storage bitmap, uint256 before) internal view returns (uint256 setBitIndex) {
         uint256 bucket;
