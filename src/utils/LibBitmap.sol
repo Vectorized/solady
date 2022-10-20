@@ -164,7 +164,7 @@ library LibBitmap {
                 count = LibBit.popCount(bitmap.map[bucket] >> shift);
                 amount = amount + shift - 256;
                 ++bucket;
-                while (amount > 256) {
+                while (!(amount < 257)) {
                     count += LibBit.popCount(bitmap.map[bucket]);
                     amount -= 256;
                     ++bucket;
