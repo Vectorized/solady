@@ -193,27 +193,26 @@ contract LibBitmapTest is Test {
         _testBitmapPopCount(10, 512);
     }
 
-    function testBitmapPopCount(uint256 start, uint256 amount, uint256 lcg) public {
+    function testBitmapPopCount(
+        uint256 start,
+        uint256 amount,
+        uint256 lcg
+    ) public {
         unchecked {
             uint256 n = 1000;
             uint256 expectedCount;
-            for (uint256 i; i < n / 256 + 1; ++i) {
-                bitmap.map[i] = 0;
-            }
-            
-            start = start % n;
-            uint256 end = start + (amount % n);
-            if (end > n) end = n;
-            amount = end - start;
+            _resetBitmap(0, n / 256 + 1);
+
+            (start, amount) = _boundStartAndAmount(start, amount, n);
 
             uint256 jPrev = 0xff + 1;
             uint256 j = lcg & 0xff;
             while (true) {
                 bitmap.set(j);
-                if (j != jPrev && start <= j && j < end) {
+                if (j != jPrev && start <= j && j < start + amount) {
                     expectedCount += 1;
                 }
-                if (end <= j && lcg & 7 == 0) break;
+                if (start + amount <= j && lcg & 7 == 0) break;
                 lcg = _stepLCG(lcg);
                 jPrev = j;
                 j += lcg & 0xff;
@@ -267,7 +266,7 @@ contract LibBitmapTest is Test {
     function testBitmapFindLastSet(uint256 before, uint256 lcg) public {
         uint256 n = 1000;
         unchecked {
-            _resetBitmap(bitmap, 0, n / 256 + 1);
+            _resetBitmap(0, n / 256 + 1);
             before = before % n;
             lcg = lcg % n;
         }
@@ -293,13 +292,10 @@ contract LibBitmapTest is Test {
 
     function _testBitmapSetBatch(uint256 start, uint256 amount) internal {
         uint256 n = 1000;
-        start = start % n;
-        uint256 end = start + (amount % n);
-        if (end > n) end = n;
-        amount = end - start;
+        (start, amount) = _boundStartAndAmount(start, amount, n);
 
         unchecked {
-            _resetBitmap(bitmap, 0, n / 256 + 1);
+            _resetBitmap(0, n / 256 + 1);
             bitmap.setBatch(start, amount);
             for (uint256 i; i < n; ++i) {
                 if (i < start) {
@@ -315,13 +311,10 @@ contract LibBitmapTest is Test {
 
     function _testBitmapUnsetBatch(uint256 start, uint256 amount) internal {
         uint256 n = 1000;
-        start = start % n;
-        uint256 end = start + (amount % n);
-        if (end > n) end = n;
-        amount = end - start;
+        (start, amount) = _boundStartAndAmount(start, amount, n);
 
         unchecked {
-            _resetBitmap(bitmap, type(uint256).max, n / 256 + 1);
+            _resetBitmap(type(uint256).max, n / 256 + 1);
             bitmap.unsetBatch(start, amount);
             for (uint256 i; i < n; ++i) {
                 if (i < start) {
@@ -337,13 +330,10 @@ contract LibBitmapTest is Test {
 
     function _testBitmapPopCount(uint256 start, uint256 amount) internal {
         uint256 n = 1000;
-        start = start % n;
-        uint256 end = start + (amount % n);
-        if (end > n) end = n;
-        amount = end - start;
+        (start, amount) = _boundStartAndAmount(start, amount, n);
 
         unchecked {
-            _resetBitmap(bitmap, 0, n / 256 + 1);
+            _resetBitmap(0, n / 256 + 1);
             bitmap.setBatch(start, amount);
             assertEq(bitmap.popCount(0, n), amount);
             if (start > 0) {
@@ -355,11 +345,24 @@ contract LibBitmapTest is Test {
         }
     }
 
-    function _resetBitmap(LibBitmap.Bitmap storage bitmap, uint256 bucketValue, uint256 bucketEnd) private {
+    function _boundStartAndAmount(
+        uint256 start,
+        uint256 amount,
+        uint256 n
+    ) private pure returns (uint256 boundedStart, uint256 boundedAmount) {
+        unchecked {
+            boundedStart = start % n;
+            uint256 end = boundedStart + (amount % n);
+            if (end > n) end = n;
+            boundedAmount = end - boundedStart;
+        }
+    }
+
+    function _resetBitmap(uint256 bucketValue, uint256 bucketEnd) private {
         unchecked {
             for (uint256 i; i < bucketEnd; ++i) {
                 bitmap.map[i] = bucketValue;
-            }    
+            }
         }
     }
 
