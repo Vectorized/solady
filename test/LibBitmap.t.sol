@@ -141,4 +141,126 @@ contract LibBitmapTest is Test {
         vm.expectRevert(AlreadyClaimed.selector);
         this.claimWithToggle(index);
     }
+
+    function testBitmapSetBatchWithinSingleBucket() public {
+        _testBitmapSetBatch(257, 30);
+    }
+
+    function testBitmapSetBatchAcrossMultipleBuckets() public {
+        _testBitmapSetBatch(10, 512);
+    }
+
+    function testBitmapUnsetBatchWithinSingleBucket() public {
+        _testBitmapUnsetBatch(257, 30);
+    }
+
+    function testBitmapUnsetBatchAcrossMultipleBuckets() public {
+        _testBitmapUnsetBatch(10, 512);
+    }
+
+    function testBitmapPopCountWithinSingleBucket() public {
+        _testBitmapPopCount(1, 150);
+    }
+
+    function testBitmapPopCountAcrossMultipleBuckets() public {
+        _testBitmapPopCount(10, 512);
+    }
+
+    function testBitmapFindLastSet() public {
+        unchecked {
+            bitmap.unsetBatch(0, 2000);
+            bitmap.set(1000);
+            for (uint256 i = 0; i < 1000; ++i) {
+                assertEq(bitmap.findLastSet(i), LibBitmap.NOT_FOUND);
+            }
+            bitmap.set(100);
+            bitmap.set(10);
+            for (uint256 i = 0; i < 10; ++i) {
+                assertEq(bitmap.findLastSet(i), LibBitmap.NOT_FOUND);
+            }
+            for (uint256 i = 10; i < 100; ++i) {
+                assertEq(bitmap.findLastSet(i), 10);
+            }
+            for (uint256 i = 100; i < 600; ++i) {
+                assertEq(bitmap.findLastSet(i), 100);
+            }
+            for (uint256 i = 1000; i < 1100; ++i) {
+                assertEq(bitmap.findLastSet(i), 1000);
+            }
+            bitmap.set(0);
+            for (uint256 i = 0; i < 10; ++i) {
+                assertEq(bitmap.findLastSet(i), 0);
+            }
+        }
+    }
+
+    function _testBitmapSetBatch(uint256 start, uint256 amount) internal {
+        uint256 n = 1000;
+        start = start % n;
+        uint256 end = start + (amount % n);
+        if (end > n) end = n;
+        amount = end - start;
+
+        unchecked {
+            for (uint256 i; i < n; ++i) {
+                bitmap.unset(i);
+            }
+            bitmap.setBatch(start, amount);
+            for (uint256 i; i < n; ++i) {
+                if (i < start) {
+                    assertFalse(bitmap.get(i));
+                } else if (i < start + amount) {
+                    assertTrue(bitmap.get(i));
+                } else {
+                    assertFalse(bitmap.get(i));
+                }
+            }
+        }
+    }
+
+    function _testBitmapUnsetBatch(uint256 start, uint256 amount) internal {
+        uint256 n = 1000;
+        start = start % n;
+        uint256 end = start + (amount % n);
+        if (end > n) end = n;
+        amount = end - start;
+
+        unchecked {
+            for (uint256 i; i < n; ++i) {
+                bitmap.set(i);
+            }
+            bitmap.unsetBatch(start, amount);
+            for (uint256 i; i < n; ++i) {
+                if (i < start) {
+                    assertTrue(bitmap.get(i));
+                } else if (i < start + amount) {
+                    assertFalse(bitmap.get(i));
+                } else {
+                    assertTrue(bitmap.get(i));
+                }
+            }
+        }
+    }
+
+    function _testBitmapPopCount(uint256 start, uint256 amount) internal {
+        uint256 n = 1000;
+        start = start % n;
+        uint256 end = start + (amount % n);
+        if (end > n) end = n;
+        amount = end - start;
+
+        unchecked {
+            for (uint256 i; i < n; ++i) {
+                bitmap.unset(i);
+            }
+            bitmap.setBatch(start, amount);
+            assertEq(bitmap.popCount(0, n), amount);
+            if (start > 0) {
+                assertEq(bitmap.popCount(0, start - 1), 0);
+            }
+            if (start + amount < n) {
+                assertEq(bitmap.popCount(start + amount, n - (start + amount)), 0);
+            }
+        }
+    }
 }

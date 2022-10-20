@@ -8,7 +8,12 @@ import "./LibBit.sol";
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibBitmap.sol)
 /// @author Modified from Solidity-Bits (https://github.com/estarriolvetch/solidity-bits/blob/main/contracts/BitMaps.sol)
 library LibBitmap {
-    uint256 private constant MASK_FULL = type(uint256).max;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The constant returned when a bitmap scan does not find a result.
+    uint256 internal constant NOT_FOUND = uint256(int256(-1));
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -86,125 +91,115 @@ library LibBitmap {
         }
     }
 
-    /// @dev Consecutively sets `amount` of bits starting from the bit at `startIndex`.
+    /// @dev Consecutively sets `amount` of bits starting from the bit at `start`.
     function setBatch(
         Bitmap storage bitmap,
-        uint256 startIndex,
+        uint256 start,
         uint256 amount
     ) internal {
-        uint256 bucket = startIndex >> 8;
-
-        uint256 bucketStartIndex = (startIndex & 0xff);
-
-        unchecked {
-            if (bucketStartIndex + amount <= 256) {
-                bitmap.map[bucket] |= (MASK_FULL >> (256 - amount)) << bucketStartIndex;
-            } else {
-                bitmap.map[bucket] |= MASK_FULL << bucketStartIndex;
-                amount -= (256 - bucketStartIndex);
-                bucket++;
-
-                while (amount > 256) {
-                    bitmap.map[bucket] = MASK_FULL;
-                    amount -= 256;
-                    bucket++;
+        assembly {
+            let shift := and(start, 0xff)
+            mstore(0x20, bitmap.slot)
+            mstore(0x00, shr(8, start))
+            let storageSlot := keccak256(0x00, 0x40)
+            if iszero(lt(add(shift, amount), 257)) {
+                sstore(storageSlot, or(sload(storageSlot), shl(shift, not(0))))
+                amount := sub(add(amount, shift), 256)
+                let bucket := add(shr(8, start), 1)
+                // prettier-ignore
+                for {} iszero(lt(amount, 257)) {} {
+                    mstore(0x00, bucket)
+                    sstore(keccak256(0x00, 0x40), not(0))
+                    amount := sub(amount, 256)
+                    bucket := add(bucket, 1)
                 }
-
-                bitmap.map[bucket] |= MASK_FULL >> (256 - amount);
+                mstore(0x00, bucket)
+                storageSlot := keccak256(0x00, 0x40)
+                shift := 0
             }
+            sstore(storageSlot, or(sload(storageSlot), shl(shift, shr(sub(256, amount), not(0)))))
         }
     }
 
-    /// @dev Consecutively unsets `amount` of bits starting from the bit at `startIndex`.
+    /// @dev Consecutively unsets `amount` of bits starting from the bit at `start`.
     function unsetBatch(
         Bitmap storage bitmap,
-        uint256 startIndex,
+        uint256 start,
         uint256 amount
     ) internal {
-        uint256 bucket = startIndex >> 8;
-
-        uint256 bucketStartIndex = (startIndex & 0xff);
-
-        unchecked {
-            if (bucketStartIndex + amount <= 256) {
-                bitmap.map[bucket] &= ~((MASK_FULL >> (256 - amount)) << bucketStartIndex);
-            } else {
-                bitmap.map[bucket] &= ~(MASK_FULL << bucketStartIndex);
-                amount -= (256 - bucketStartIndex);
-                bucket++;
-
-                while (amount > 256) {
-                    bitmap.map[bucket] = 0;
-                    amount -= 256;
-                    bucket++;
+        assembly {
+            let shift := and(start, 0xff)
+            mstore(0x20, bitmap.slot)
+            mstore(0x00, shr(8, start))
+            let storageSlot := keccak256(0x00, 0x40)
+            if iszero(lt(add(shift, amount), 257)) {
+                sstore(storageSlot, and(sload(storageSlot), not(shl(shift, not(0)))))
+                amount := sub(add(amount, shift), 256)
+                let bucket := add(shr(8, start), 1)
+                // prettier-ignore
+                for {} iszero(lt(amount, 257)) {} {
+                    mstore(0x00, bucket)
+                    sstore(keccak256(0x00, 0x40), 0)
+                    amount := sub(amount, 256)
+                    bucket := add(bucket, 1)
                 }
-
-                bitmap.map[bucket] &= ~(MASK_FULL >> (256 - amount));
+                mstore(0x00, bucket)
+                storageSlot := keccak256(0x00, 0x40)
+                shift := 0
             }
+            sstore(storageSlot, and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0))))))
         }
     }
 
     /// @dev Returns number of set bits within a range.
     function popCount(
         Bitmap storage bitmap,
-        uint256 startIndex,
+        uint256 start,
         uint256 amount
     ) internal view returns (uint256 count) {
-        uint256 bucket = startIndex >> 8;
-
-        uint256 bucketStartIndex = (startIndex & 0xff);
-
         unchecked {
-            if (bucketStartIndex + amount <= 256) {
-                count += LibBit.popCount((bitmap.map[bucket] >> bucketStartIndex) << (256 - amount));
-            } else {
-                count += LibBit.popCount(bitmap.map[bucket] >> bucketStartIndex);
-                amount -= (256 - bucketStartIndex);
-                bucket++;
-
+            uint256 bucket = start >> 8;
+            uint256 shift = start & 0xff;
+            if (!(shift + amount < 257)) {
+                count = LibBit.popCount(bitmap.map[bucket] >> shift);
+                amount = amount + shift - 256;
+                ++bucket;
                 while (amount > 256) {
                     count += LibBit.popCount(bitmap.map[bucket]);
                     amount -= 256;
-                    bucket++;
+                    ++bucket;
                 }
-                count += LibBit.popCount(bitmap.map[bucket] << (256 - amount));
+                shift = 0;
             }
+            count += LibBit.popCount((bitmap.map[bucket] >> shift) << (256 - amount));
         }
     }
 
-    /// @dev Find the closest index of the set bit before `index`.
-    function scanForward(Bitmap storage bitmap, uint256 index) internal view returns (uint256 setBitIndex) {
-        uint256 bucket = index >> 8;
-
-        // index within the bucket
-        uint256 bucketIndex = (index & 0xff);
-
-        // load a bitboard from the bitmap.
-        uint256 bb = bitmap.map[bucket];
-
-        // offset the bitboard to scan from `bucketIndex`.
-        uint256 offset = (0xff ^ bucketIndex);
-        bb = bb << offset;
-
-        if (bb > 0) {
-            unchecked {
-                setBitIndex = (bucket << 8) | (LibBit.fls(bb) - offset);
+    /// @dev Returns the index of the most significant set bit smaller than `before`.
+    /// If no set bit is found, returns `NOT_FOUND`.
+    function findLastSet(Bitmap storage bitmap, uint256 before) internal view returns (uint256 setBitIndex) {
+        uint256 bucket = before >> 8;
+        uint256 bb;
+        assembly {
+            setBitIndex := not(0)
+            mstore(0x20, bitmap.slot)
+            mstore(0x00, bucket)
+            let offset := xor(0xff, and(0xff, before))
+            bb := shr(offset, shl(offset, sload(keccak256(0x00, 0x40))))
+            if iszero(bb) {
+                // prettier-ignore
+                for {} bucket {} {
+                    bucket := sub(bucket, 1)
+                    mstore(0x00, bucket)
+                    bb := sload(keccak256(0x00, 0x40))
+                    if bb { break }
+                }
             }
-        } else {
-            while (true) {
-                require(bucket > 0, "BitMaps: The set bit before the index doesn't exist.");
-                unchecked {
-                    bucket--;
-                }
-                // No offset. Always scan from the least significiant bit now.
-                bb = bitmap.map[bucket];
-
-                if (bb > 0) {
-                    unchecked {
-                        setBitIndex = (bucket << 8) | LibBit.fls(bb);
-                        break;
-                    }
-                }
+        }
+        if (bb != 0) {
+            setBitIndex = (bucket << 8) | LibBit.fls(bb);
+            assembly {
+                setBitIndex := or(setBitIndex, mul(not(0), gt(setBitIndex, before)))
             }
         }
     }
