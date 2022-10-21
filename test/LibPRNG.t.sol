@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/TestPlus.sol";
 import {LibPRNG} from "../src/utils/LibPRNG.sol";
 
-contract LibLCGTest is TestPlus {
+contract LibPRNGTest is TestPlus {
     function testLCGGas() public {
         unchecked {
             uint256 randomness;
