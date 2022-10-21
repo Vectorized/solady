@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import {LibBitmap} from "../src/utils/LibBitmap.sol";
 import {LibBit} from "../src/utils/LibBit.sol";
 
-contract LibBitmapTest is Test {
+contract LibBitmapTest is TestPlus {
     using LibBitmap for LibBitmap.Bitmap;
 
     error AlreadyClaimed();
@@ -105,7 +105,7 @@ contract LibBitmapTest is Test {
     }
 
     function testBitmapSetTo(uint256 index, uint256 randomness) public {
-        randomness = uint256(keccak256(abi.encode(randomness)));
+        randomness = _stepRandomness(randomness);
         unchecked {
             for (uint256 i; i < 5; ++i) {
                 bool shouldSet;
@@ -153,12 +153,12 @@ contract LibBitmapTest is Test {
 
     function testBitmapSetBatch() public {
         unchecked {
-            uint256 lcg = 123;
+            uint256 randomness = 123;
             for (uint256 i; i < 8; ++i) {
-                lcg = _stepLCG(lcg);
-                uint256 start = lcg;
-                lcg = _stepLCG(lcg);
-                uint256 amount = lcg;
+                randomness = _stepRandomness(randomness);
+                uint256 start = randomness;
+                randomness = _stepRandomness(randomness);
+                uint256 amount = randomness;
                 _testBitmapSetBatch(start, amount);
             }
         }
@@ -174,12 +174,12 @@ contract LibBitmapTest is Test {
 
     function testBitmapUnsetBatch() public {
         unchecked {
-            uint256 lcg = 123;
+            uint256 randomness = 123;
             for (uint256 i; i < 8; ++i) {
-                lcg = _stepLCG(lcg);
-                uint256 start = lcg;
-                lcg = _stepLCG(lcg);
-                uint256 amount = lcg;
+                randomness = _stepRandomness(randomness);
+                uint256 start = randomness;
+                randomness = _stepRandomness(randomness);
+                uint256 amount = randomness;
                 _testBitmapUnsetBatch(start, amount);
             }
         }
@@ -196,7 +196,7 @@ contract LibBitmapTest is Test {
     function testBitmapPopCount(
         uint256 start,
         uint256 amount,
-        uint256 lcg
+        uint256 randomness
     ) public {
         unchecked {
             uint256 n = 1000;
@@ -206,16 +206,16 @@ contract LibBitmapTest is Test {
             (start, amount) = _boundStartAndAmount(start, amount, n);
 
             uint256 jPrev = 0xff + 1;
-            uint256 j = lcg & 0xff;
+            uint256 j = randomness & 0xff;
             while (true) {
                 bitmap.set(j);
                 if (j != jPrev && start <= j && j < start + amount) {
                     expectedCount += 1;
                 }
-                if (start + amount <= j && lcg & 7 == 0) break;
-                lcg = _stepLCG(lcg);
+                if (start + amount <= j && randomness & 7 == 0) break;
+                randomness = _stepRandomness(randomness);
                 jPrev = j;
-                j += lcg & 0xff;
+                j += randomness & 0xff;
             }
             assertEq(bitmap.popCount(start, amount), expectedCount);
         }
@@ -223,14 +223,14 @@ contract LibBitmapTest is Test {
 
     function testBitmapPopCount() public {
         unchecked {
-            uint256 lcg = 123;
+            uint256 randomness = 123;
             for (uint256 i; i < 8; ++i) {
-                lcg = _stepLCG(lcg);
-                uint256 start = lcg;
-                lcg = _stepLCG(lcg);
-                uint256 amount = lcg;
-                lcg = _stepLCG(lcg);
-                testBitmapPopCount(start, amount, lcg);
+                randomness = _stepRandomness(randomness);
+                uint256 start = randomness;
+                randomness = _stepRandomness(randomness);
+                uint256 amount = randomness;
+                randomness = _stepRandomness(randomness);
+                testBitmapPopCount(start, amount, randomness);
             }
         }
     }
@@ -263,24 +263,24 @@ contract LibBitmapTest is Test {
         }
     }
 
-    function testBitmapFindLastSet(uint256 before, uint256 lcg) public {
+    function testBitmapFindLastSet(uint256 before, uint256 randomness) public {
         uint256 n = 1000;
         unchecked {
             _resetBitmap(0, n / 256 + 1);
             before = before % n;
-            lcg = lcg % n;
+            randomness = randomness % n;
         }
-        bitmap.set(lcg);
-        if (lcg <= before) {
-            assertEq(bitmap.findLastSet(before), lcg);
-            uint256 nextLcg = _stepLCG(lcg);
+        bitmap.set(randomness);
+        if (randomness <= before) {
+            assertEq(bitmap.findLastSet(before), randomness);
+            uint256 nextLcg = _stepRandomness(randomness);
             bitmap.set(nextLcg);
             if (nextLcg <= before) {
-                assertEq(bitmap.findLastSet(before), (lcg < nextLcg ? nextLcg : lcg));
+                assertEq(bitmap.findLastSet(before), (randomness < nextLcg ? nextLcg : randomness));
             }
         } else {
             assertEq(bitmap.findLastSet(before), LibBitmap.NOT_FOUND);
-            uint256 nextLcg = _stepLCG(lcg);
+            uint256 nextLcg = _stepRandomness(randomness);
             bitmap.set(nextLcg);
             if (nextLcg <= before) {
                 assertEq(bitmap.findLastSet(before), nextLcg);
@@ -363,12 +363,6 @@ contract LibBitmapTest is Test {
             for (uint256 i; i < bucketEnd; ++i) {
                 bitmap.map[i] = bucketValue;
             }
-        }
-    }
-
-    function _stepLCG(uint256 input) private pure returns (uint256 output) {
-        unchecked {
-            output = (input * 1664525 + 1013904223) & 0xFFFFFFFF;
         }
     }
 }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import "src/utils/LibSort.sol";
 
-contract LibSortTest is Test {
+contract LibSortTest is TestPlus {
     function testInsertionSortAddressesDifferential(uint256[] memory aRaw) public {
         unchecked {
             vm.assume(aRaw.length < 32);
@@ -36,13 +36,13 @@ contract LibSortTest is Test {
         }
     }
 
-    function testInsertionSortPsuedorandom(uint256 lcg) public {
+    function testInsertionSortPsuedorandom(uint256 randomness) public {
         unchecked {
             uint256[] memory a = new uint256[](32);
-            lcg ^= 1;
+            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                lcg = _stepLCG(lcg);
-                a[i] = lcg;
+                randomness = _stepRandomness(randomness);
+                a[i] = randomness;
             }
             LibSort.insertionSort(a);
             assertTrue(_isSorted(a));
@@ -102,13 +102,13 @@ contract LibSortTest is Test {
         }
     }
 
-    function testSortPsuedorandom(uint256 lcg) public {
+    function testSortPsuedorandom(uint256 randomness) public {
         unchecked {
             uint256[] memory a = new uint256[](100);
-            lcg ^= 1;
+            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                lcg = _stepLCG(lcg);
-                a[i] = lcg;
+                randomness = _stepRandomness(randomness);
+                a[i] = randomness;
             }
             LibSort.sort(a);
             assertTrue(_isSorted(a));
@@ -119,13 +119,13 @@ contract LibSortTest is Test {
         testSortPsuedorandom(123456789);
     }
 
-    function testSortPsuedorandomNonuniform(uint256 lcg) public {
+    function testSortPsuedorandomNonuniform(uint256 randomness) public {
         unchecked {
             uint256[] memory a = new uint256[](100);
-            lcg ^= 1;
+            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                lcg = _stepLCG(lcg);
-                a[i] = lcg << (i & 8 == 0 ? 128 : 0);
+                randomness = _stepRandomness(randomness);
+                a[i] = randomness << (i & 8 == 0 ? 128 : 0);
             }
             LibSort.sort(a);
             assertTrue(_isSorted(a));
@@ -172,10 +172,11 @@ contract LibSortTest is Test {
     function testSortTestOverhead() public {
         unchecked {
             uint256[] memory a = new uint256[](100);
-            uint256 lcg = 123456789;
+            uint256 randomness = 123456789;
+            uint256 mask = (1 << 128) - 1;
             for (uint256 i; i < a.length; ++i) {
-                a[i] = (i << 128) | lcg;
-                lcg = _stepLCG(lcg);
+                a[i] = (i << 128) | (randomness & mask);
+                randomness = _stepRandomness(randomness);
             }
             assertTrue(_isSorted(a));
         }
@@ -184,15 +185,15 @@ contract LibSortTest is Test {
     function testSortAddressesPsuedorandomBrutalizeUpperBits() public {
         unchecked {
             address[] memory a = new address[](100);
-            uint256 lcg = 123456789;
+            uint256 randomness = 123456789;
             for (uint256 i; i < a.length; ++i) {
-                address addr = address(uint160(lcg));
-                lcg = _stepLCG(lcg);
+                address addr = address(uint160(randomness));
+                randomness = _stepRandomness(randomness);
                 assembly {
-                    addr := or(addr, shl(160, lcg))
+                    addr := or(addr, shl(160, randomness))
                 }
                 a[i] = addr;
-                lcg = _stepLCG(lcg);
+                randomness = _stepRandomness(randomness);
             }
             LibSort.sort(a);
             assertTrue(_isSorted(a));
@@ -222,13 +223,13 @@ contract LibSortTest is Test {
         }
     }
 
-    function testSortAddressesPsuedorandom(uint256 lcg) public {
+    function testSortAddressesPsuedorandom(uint256 randomness) public {
         unchecked {
             address[] memory a = new address[](100);
-            lcg ^= 1;
+            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                lcg = _stepLCG(lcg);
-                a[i] = address(uint160(lcg));
+                randomness = _stepRandomness(randomness);
+                a[i] = address(uint160(randomness));
             }
             LibSort.sort(a);
             assertTrue(_isSorted(a));
@@ -261,13 +262,13 @@ contract LibSortTest is Test {
         }
     }
 
-    function testSortOriginalPsuedorandom(uint256 lcg) public {
+    function testSortOriginalPsuedorandom(uint256 randomness) public {
         unchecked {
             uint256[] memory a = new uint256[](100);
-            lcg ^= 1;
+            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                lcg = _stepLCG(lcg);
-                a[i] = lcg;
+                randomness = _stepRandomness(randomness);
+                a[i] = randomness;
             }
             _sortOriginal(a);
             assertTrue(_isSorted(a));
@@ -554,12 +555,6 @@ contract LibSortTest is Test {
         (bool found, uint256 index) = LibSort.searchSorted(a, needle);
         if (found) {
             assertEq(a[index], needle);
-        }
-    }
-
-    function _stepLCG(uint256 input) private pure returns (uint256 output) {
-        unchecked {
-            output = (input * 1664525 + 1013904223) & 0xFFFFFFFF;
         }
     }
 

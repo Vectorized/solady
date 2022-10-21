@@ -679,7 +679,7 @@ contract LibStringTest is TestPlus {
         string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-        uint256 r = uint256(keccak256(abi.encode(randomness))) % 5;
+        uint256 r = _stepRandomness(randomness) % 5;
 
         string memory expectedResult = string(bytes.concat(bytes(filler0), bytes(escapedChars[r]), bytes(filler1)));
 
