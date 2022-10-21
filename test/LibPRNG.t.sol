@@ -31,6 +31,7 @@ contract LibLCGTest is TestPlus {
     // statistical test results.
     //
     // See: https://github.com/stevenang/randomness_testsuite
+    // See: https://www.pcg-random.org/posts/does-it-beat-the-minimal-standard.html
     //
     // The xorshift is required because the raw 128 lower bits
     // of the LCG alone will not pass the tests.
