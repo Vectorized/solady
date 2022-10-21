@@ -69,4 +69,11 @@ contract TestPlus is Test {
         }
         if (failed) revert("Free memory pointer `0x40` is not 32-byte word aligned!");
     }
+
+    function _stepRandomness(uint256 randomness) internal pure returns (uint256 nextRandomness) {
+        assembly {
+            mstore(0x00, randomness)
+            nextRandomness := keccak256(0x00, 0x20)
+        }
+    }
 }
