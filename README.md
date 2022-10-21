@@ -18,6 +18,7 @@ utils
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
 ├─ ECDSA — "Library for verification of ECDSA signatures"
 ├─ LibSort — "Library for efficient sorting of memory arrays"
+├─ LibPRNG — "Library for generating psuedorandom numbers"
 ├─ Base64 — "Library for Base64 encoding and decoding"
 ├─ SSTORE2 — "Library for cheaper reads and writes to persistent storage"
 ├─ CREATE3 — "Deploy to deterministic addresses without an initcode factor"
