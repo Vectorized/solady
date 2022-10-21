@@ -153,6 +153,8 @@ LibCloneTest:testCloneDeterministic(uint256,bytes32) (runs: 256, μ: 94334, ~: 9
 LibCloneTest:testCloneDeterministicRevertsIfAddressAlreadyUsed() (gas: 98418504)
 LibCloneTest:testCloneWithImmutableArgs() (gas: 281114)
 LibCloneTest:testCloneWithImmutableArgs(uint256,address,uint256,uint256[],uint64,uint8) (runs: 256, μ: 1426564, ~: 1397737)
+LibLCGTest:testLCGGas() (gas: 20758)
+LibLCGTest:testPRNGGas() (gas: 26346)
 LibRLPTest:testComputeAddressDifferential(address,uint256) (runs: 256, μ: 1875, ~: 1676)
 LibRLPTest:testComputeAddressForLargeNonces() (gas: 1727)
 LibRLPTest:testComputeAddressForSmallNonces() (gas: 989)
