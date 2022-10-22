@@ -82,6 +82,7 @@ contract LibPRNGTest is TestPlus {
                 }
                 assertTrue(numDifferent > 1);
             }
+            // Checking that we won't crash.
             for (uint256 n = 0; n < 2; ++n) {
                 uint256[] memory a = new uint256[](n);
                 prng.shuffle(a);
