@@ -43,20 +43,46 @@ library LibPRNG {
         }
     }
 
-    /// @dev Returns a psuedorandom uint256,
-    /// uniformly distributed between 0 (inclusive) and `upper` (exclusive).
+    /// @dev Returns a psuedorandom uint256, uniformly distributed
+    /// between 0 (inclusive) and `upper` (exclusive).
     /// This method is recommended for uniform sampling to avoid modulo bias.
-    /// If you need to uniformly sample across all uint256 values, use `next` instead.
+    /// For uniform sampling across all uint256 values, use `next` instead.
     function uniform(PRNG memory prng, uint256 upper) internal pure returns (uint256 result) {
         assembly {
             // prettier-ignore
             for { let min := mod(sub(0, upper), upper) } 1 {} {
                 result := keccak256(prng, 0x20)
-                mstore(prng, result)
+                mstore(prng, result) 
                 // prettier-ignore
-                if iszero(lt(result, min)) { break}
+                if iszero(lt(result, min)) { break }
             }
             result := mod(result, upper)
+        }
+    }
+
+    /// @dev Shuffles the array in-place with Fisher-Yates shuffle.
+    function shuffle(PRNG memory prng, uint256[] memory a) internal pure {
+        assembly {
+            let n := mload(a)
+            let o := add(a, 0x20)
+            // prettier-ignore
+            for { let j := 0 } iszero(lt(n, 2)) {} {
+                // prettier-ignore
+                for {} 1 {} {
+                    // We can just directly use `keccak256`, cuz
+                    // the other approaches don't save much.
+                    j := keccak256(prng, 0x20)
+                    mstore(prng, j)
+                    // prettier-ignore
+                    if iszero(lt(j, mod(sub(0, n), n))) { break }
+                }
+                j := add(o, shl(5, mod(j, n)))
+                n := sub(n, 1)
+                let i := add(o, shl(5, n))
+                let t := mload(i)
+                mstore(i, mload(j))
+                mstore(j, t)
+            }
         }
     }
 }

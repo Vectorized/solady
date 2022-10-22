@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/TestPlus.sol";
 import {LibPRNG} from "../src/utils/LibPRNG.sol";
+import {LibSort} from "../src/utils/LibSort.sol";
 
 contract LibPRNGTest is TestPlus {
     using LibPRNG for *;
@@ -46,6 +47,40 @@ contract LibPRNGTest is TestPlus {
                     assertTrue(r != previous);
                     previous = r;
                 }
+            }
+        }
+    }
+
+    function testPRNGShuffleGas() public pure {
+        unchecked {
+            uint256[] memory a = new uint256[](10000);
+            LibPRNG.PRNG memory prng;
+            prng.shuffle(a);
+        }
+    }
+
+    function testPRNGShuffle() public {
+        unchecked {
+            for (uint256 s = 1; s < 9; ++s) {
+                uint256 n = 1 << s; // 2, 4, 8, 16, ...
+                uint256[] memory a = new uint256[](n);
+                for (uint256 i; i < n; ++i) {
+                    a[i] = i;
+                }
+                bytes32 hashBefore = keccak256(abi.encode(a));
+                uint256 numDifferent;
+                LibPRNG.PRNG memory prng;
+                for (uint256 i; i < 30; ++i) {
+                    prng.shuffle(a);
+                    bytes32 hashAfterShuffle = keccak256(abi.encode(a));
+                    if (hashBefore != hashAfterShuffle) {
+                        numDifferent++;
+                    }
+                    LibSort.sort(a);
+                    bytes32 hashAfterSort = keccak256(abi.encode(a));
+                    assertTrue(hashBefore == hashAfterSort);
+                }
+                assertTrue(numDifferent > 1);
             }
         }
     }
