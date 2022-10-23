@@ -71,6 +71,8 @@ library LibPRNG {
                     // the other approaches don't save much.
                     let j := keccak256(prng, 0x20)
                     mstore(prng, j)
+                    // We have to do rejection sampling
+                    // to avoid modulo bias.
                     // prettier-ignore
                     if iszero(lt(j, mod(sub(0, n), n))) { 
                         j := add(a, shl(5, mod(j, n)))
