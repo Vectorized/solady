@@ -72,17 +72,17 @@ library LibPRNG {
                     let j := keccak256(prng, 0x20)
                     mstore(prng, j)
                     // prettier-ignore
-                    if lt(j, mod(sub(0, n), n)) { continue }
+                    if iszero(lt(j, mod(sub(0, n), n))) { 
+                        j := add(a, shl(5, mod(j, n)))
+                        n := sub(n, 1)
+                        // prettier-ignore
+                        if iszero(n) { break }
 
-                    j := add(a, shl(5, mod(j, n)))
-                    n := sub(n, 1)
-                    // prettier-ignore
-                    if iszero(n) { break }
-
-                    let i := add(a, shl(5, n))
-                    let t := mload(i)
-                    mstore(i, mload(j))
-                    mstore(j, t)
+                        let i := add(a, shl(5, n))
+                        let t := mload(i)
+                        mstore(i, mload(j))
+                        mstore(j, t)
+                    }
                 }
             }
         }
