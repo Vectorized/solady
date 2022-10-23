@@ -64,24 +64,28 @@ library LibPRNG {
     function shuffle(PRNG memory prng, uint256[] memory a) internal pure {
         assembly {
             let n := mload(a)
-            let o := add(a, 0x20)
-            // prettier-ignore
-            for { let j := 0 } iszero(lt(n, 2)) {} {
+            if n {
                 // prettier-ignore
-                for {} 1 {} {
+                for { a := add(a, 0x20) } 1 {} {
                     // We can just directly use `keccak256`, cuz
                     // the other approaches don't save much.
-                    j := keccak256(prng, 0x20)
+                    let j := keccak256(prng, 0x20)
                     mstore(prng, j)
+                    // We have to do rejection sampling
+                    // to avoid modulo bias.
                     // prettier-ignore
-                    if iszero(lt(j, mod(sub(0, n), n))) { break }
+                    if iszero(lt(j, mod(sub(0, n), n))) { 
+                        j := add(a, shl(5, mod(j, n)))
+                        n := sub(n, 1)
+                        // prettier-ignore
+                        if iszero(n) { break }
+
+                        let i := add(a, shl(5, n))
+                        let t := mload(i)
+                        mstore(i, mload(j))
+                        mstore(j, t)
+                    }
                 }
-                j := add(o, shl(5, mod(j, n)))
-                n := sub(n, 1)
-                let i := add(o, shl(5, n))
-                let t := mload(i)
-                mstore(i, mload(j))
-                mstore(j, t)
             }
         }
     }

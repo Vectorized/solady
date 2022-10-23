@@ -61,6 +61,7 @@ contract LibPRNGTest is TestPlus {
 
     function testPRNGShuffle() public {
         unchecked {
+            LibPRNG.PRNG memory prng;
             for (uint256 s = 1; s < 9; ++s) {
                 uint256 n = 1 << s; // 2, 4, 8, 16, ...
                 uint256[] memory a = new uint256[](n);
@@ -69,7 +70,6 @@ contract LibPRNGTest is TestPlus {
                 }
                 bytes32 hashBefore = keccak256(abi.encode(a));
                 uint256 numDifferent;
-                LibPRNG.PRNG memory prng;
                 for (uint256 i; i < 30; ++i) {
                     prng.shuffle(a);
                     bytes32 hashAfterShuffle = keccak256(abi.encode(a));
@@ -81,6 +81,11 @@ contract LibPRNGTest is TestPlus {
                     assertTrue(hashBefore == hashAfterSort);
                 }
                 assertTrue(numDifferent > 1);
+            }
+            // Checking that we won't crash.
+            for (uint256 n = 0; n < 2; ++n) {
+                uint256[] memory a = new uint256[](n);
+                prng.shuffle(a);
             }
         }
     }
