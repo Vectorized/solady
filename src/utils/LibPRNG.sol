@@ -89,7 +89,7 @@ library LibPRNG {
                         let i := add(a, shl(5, n))
                         let t := mload(i)
                         mstore(i, mload(j))
-                        mstore(j, t)    
+                        mstore(j, t)
                     }
                     
                     {
@@ -101,7 +101,7 @@ library LibPRNG {
                         let i := add(a, shl(5, n))
                         let t := mload(i)
                         mstore(i, mload(j))
-                        mstore(j, t)    
+                        mstore(j, t)
                     }
                 }
             }
