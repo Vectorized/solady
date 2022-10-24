@@ -45,8 +45,11 @@ library LibPRNG {
 
     /// @dev Returns a psuedorandom uint256, uniformly distributed
     /// between 0 (inclusive) and `upper` (exclusive).
-    /// This method is recommended for uniform sampling to avoid modulo bias.
-    /// For uniform sampling across all uint256 values, use `next` instead.
+    /// If your modulus is big, this method is recommended
+    /// for uniform sampling to avoid modulo bias.
+    /// For uniform sampling across all uint256 values,
+    /// or for small enough moduli such that the bias is neligible,
+    /// use {next} instead.
     function uniform(PRNG memory prng, uint256 upper) internal pure returns (uint256 result) {
         assembly {
             // prettier-ignore
@@ -64,18 +67,33 @@ library LibPRNG {
     function shuffle(PRNG memory prng, uint256[] memory a) internal pure {
         assembly {
             let n := mload(a)
+            let mask := sub(shl(1, 128), 1)
             if n {
                 // prettier-ignore
                 for { a := add(a, 0x20) } 1 {} {
                     // We can just directly use `keccak256`, cuz
                     // the other approaches don't save much.
-                    let j := keccak256(prng, 0x20)
-                    mstore(prng, j)
-                    // We have to do rejection sampling
-                    // to avoid modulo bias.
-                    // prettier-ignore
-                    if iszero(lt(j, mod(sub(0, n), n))) { 
-                        j := add(a, shl(5, mod(j, n)))
+                    let r := keccak256(prng, 0x20)
+                    mstore(prng, r)
+
+                    // Note that there will be a very tiny modulo bias
+                    // if the length of the array is not a power of 2.
+                    // For all practical purposes, it is negligible
+                    // and will not be a fairness or security concern.
+                    {
+                        let j := add(a, shl(5, mod(shr(128, r), n)))
+                        n := sub(n, 1)
+                        // prettier-ignore
+                        if iszero(n) { break }
+
+                        let i := add(a, shl(5, n))
+                        let t := mload(i)
+                        mstore(i, mload(j))
+                        mstore(j, t)
+                    }
+                    
+                    {
+                        let j := add(a, shl(5, mod(and(r, mask), n)))
                         n := sub(n, 1)
                         // prettier-ignore
                         if iszero(n) { break }
