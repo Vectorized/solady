@@ -53,11 +53,11 @@ library LibPRNG {
     function uniform(PRNG memory prng, uint256 upper) internal pure returns (uint256 result) {
         assembly {
             // prettier-ignore
-            for { let min := mod(sub(0, upper), upper) } 1 {} {
+            for {} 1 {} {
                 result := keccak256(prng, 0x20)
-                mstore(prng, result) 
+                mstore(prng, result)
                 // prettier-ignore
-                if iszero(lt(result, min)) { break }
+                if iszero(lt(result, mod(sub(0, upper), upper))) { break }
             }
             result := mod(result, upper)
         }
