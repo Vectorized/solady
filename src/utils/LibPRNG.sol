@@ -49,7 +49,7 @@ library LibPRNG {
     /// for uniform sampling to avoid modulo bias.
     /// For uniform sampling across all uint256 values,
     /// or for small enough moduli such that the bias is neligible,
-    /// use `next` instead.
+    /// use {next} instead.
     function uniform(PRNG memory prng, uint256 upper) internal pure returns (uint256 result) {
         assembly {
             // prettier-ignore
