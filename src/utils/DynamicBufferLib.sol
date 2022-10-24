@@ -24,6 +24,7 @@ library DynamicBufferLib {
     function append(DynamicBuffer memory buffer, bytes memory data) internal pure {
         assembly {
             if mload(data) {
+                let w := not(31)
                 let bufferData := mload(buffer)
                 let bufferDataLength := mload(bufferData)
                 let newBufferDataLength := add(mload(data), bufferDataLength)
@@ -31,7 +32,7 @@ library DynamicBufferLib {
                 // we know that the `capacity` is for a dynamic buffer.
                 // Selected to be larger than any memory pointer realistically.
                 let prime := 1621250193422201
-                let capacity := mload(sub(bufferData, 0x20))
+                let capacity := mload(add(bufferData, w))
 
                 // Extract `capacity`, and set it to 0, if it is not a multiple of `prime`.
                 capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
@@ -46,7 +47,7 @@ library DynamicBufferLib {
                     // Approximately double the memory with a heuristic,
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
-                    let newCapacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), not(31))
+                    let newCapacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), w)
 
                     // If next word after current buffer is not eligible for use.
                     if iszero(eq(mload(0x40), add(bufferData, add(0x40, capacity)))) {
@@ -58,14 +59,14 @@ library DynamicBufferLib {
                         mstore(buffer, newBufferData)
                         // Copy `bufferData` one word at a time, backwards.
                         // prettier-ignore
-                        for { let o := and(add(bufferDataLength, 32), not(31)) } 1 {} {
+                        for { let o := and(add(bufferDataLength, 32), w) } 1 {} {
                             mstore(add(newBufferData, o), mload(add(bufferData, o)))
-                            o := sub(o, 0x20)
+                            o := add(o, w) // `sub(o, 0x20)`.
                             // prettier-ignore
                             if iszero(o) { break }
                         }
                         // Store the `capacity` multiplied by `prime` in the word before the `length`.
-                        mstore(sub(newBufferData, 0x20), mul(prime, newCapacity))
+                        mstore(add(newBufferData, w), mul(prime, newCapacity))
                         // Assign `newBufferData` to `bufferData`.
                         bufferData := newBufferData
                         break
@@ -73,16 +74,16 @@ library DynamicBufferLib {
                     // Expand the memory.
                     mstore(0x40, add(bufferData, add(0x40, newCapacity)))
                     // Store the `capacity` multiplied by `prime` in the word before the `length`.
-                    mstore(sub(bufferData, 0x20), mul(prime, newCapacity))
+                    mstore(add(bufferData, w), mul(prime, newCapacity))
                     break
                 }
                 // Initalize `output` to the next empty position in `bufferData`.
                 let output := add(bufferData, bufferDataLength)
                 // Copy `data` one word at a time, backwards.
                 // prettier-ignore
-                for { let o := and(add(mload(data), 32), not(31)) } 1 {} {
+                for { let o := and(add(mload(data), 32), w) } 1 {} {
                     mstore(add(output, o), mload(add(data, o)))
-                    o := sub(o, 0x20)
+                    o := add(o, w)  // `sub(o, 0x20)`.
                     // prettier-ignore
                     if iszero(o) { break }
                 }
