@@ -78,7 +78,7 @@ library LibPRNG {
 
                     // Note that there will be a very tiny modulo bias
                     // if the length of the array is not a power of 2.
-                    // For all practical purposes, it is neligible
+                    // For all practical purposes, it is negligible
                     // and will not be a fairness or security concern.
                     {
                         let j := add(a, shl(5, mod(shr(128, r), n)))
