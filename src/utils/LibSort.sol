@@ -16,20 +16,22 @@ library LibSort {
 
             let h := add(a, shl(5, n)) // High slot.
 
+            let w := not(31)
+
             // prettier-ignore
             for { let i := add(a, 0x20) } 1 {} {
                 i := add(i, 0x20)
                 // prettier-ignore
                 if gt(i, h) { break }
                 let k := mload(i) // Key.
-                let j := sub(i, 0x20) // The slot before the current slot.
+                let j := add(i, w) // The slot before the current slot.
                 let v := mload(j) // The value of `j`.
                 // prettier-ignore
                 if iszero(gt(v, k)) { continue }
                 // prettier-ignore
                 for {} 1 {} {
                     mstore(add(j, 0x20), v)
-                    j := sub(j, 0x20)
+                    j := add(j, w)
                     v := mload(j)
                     // prettier-ignore
                     if iszero(gt(v, k)) { break }
@@ -59,6 +61,7 @@ library LibSort {
     /// This uses a variant of intro-quicksort, which is NOT stable.
     function sort(uint256[] memory a) internal pure {
         assembly {
+            let w := not(31)
             let n := mload(a) // Length of `a`.
             mstore(a, 0) // For insertion sort's inner loop to terminate.
 
@@ -83,8 +86,8 @@ library LibSort {
 
                 j := h
                 // prettier-ignore
-                for {} iszero(or(eq(j, l), gt(mload(j), mload(sub(j, 0x20))))) {} {
-                    j := sub(j, 0x20)
+                for {} iszero(or(eq(j, l), gt(mload(j), mload(add(j, w))))) {} {
+                    j := add(j, w)
                 }
                 // If the array is reversed sorted.
                 if eq(j, l) { 
@@ -93,7 +96,7 @@ library LibSort {
                         let t := mload(l)
                         mstore(l, mload(h))
                         mstore(h, t)
-                        h := sub(h, 0x20)
+                        h := add(h, w)
                         l := add(l, 0x20)
                         // prettier-ignore
                         if iszero(lt(l, h)) { break }
@@ -131,14 +134,14 @@ library LibSort {
                         // prettier-ignore
                         if gt(i, h) { break }
                         let k := mload(i) // Key.
-                        let j := sub(i, 0x20) // The slot before the current slot.
+                        let j := add(i, w) // The slot before the current slot.
                         let v := mload(j) // The value of `j`.
                         // prettier-ignore
                         if iszero(gt(v, k)) { continue }
                         // prettier-ignore
                         for {} 1 {} {
                             mstore(add(j, 0x20), v)
-                            j := sub(j, 0x20)
+                            j := add(j, w)
                             v := mload(j)
                             // prettier-ignore
                             if iszero(gt(v, k)) { break }
@@ -190,7 +193,7 @@ library LibSort {
                         let j := p
                         // prettier-ignore
                         for {} 1 {} {
-                            j := sub(j, 0x20)
+                            j := add(j, w)
                             // prettier-ignore
                             if iszero(lt(x, mload(j))) { break }
                         }
@@ -276,6 +279,7 @@ library LibSort {
     /// and the index of the nearest element less than or equal to `needle`.
     function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found, uint256 index) {
         assembly {
+            let w := not(31)
             let m := 0 // Middle slot.
             let l := add(a, 0x20) // Slot of the start of search.
             let h := add(a, shl(5, mload(a))) // Slot of the end of search.
@@ -288,7 +292,7 @@ library LibSort {
                 if or(gt(l, h), found) { break }
                 // Decide whether to search the left or right half.
                 if iszero(gt(needle, mload(m))) {
-                    h := sub(m, 0x20)
+                    h := add(m, w) // `sub(m, 0x20)`.
                     continue
                 }
                 l := add(m, 0x20)   
