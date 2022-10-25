@@ -17,7 +17,7 @@ library LibString {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The constant returned when the `search` is not found in the string.
-    uint256 internal constant NOT_FOUND = uint256(int256(-1));
+    uint256 internal constant NOT_FOUND = type(uint256).max;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     DECIMAL OPERATIONS                     */
