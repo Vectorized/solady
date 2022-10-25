@@ -431,6 +431,14 @@ contract FixedPointMathLibTest is Test {
         FixedPointMathLib.mulDivUp(x, y, 0);
     }
 
+    function testFuzzSqrt() public {
+        unchecked {
+            for (uint256 i = 100; i < 200; ++i) {
+                assertEq(FixedPointMathLib.sqrt(i * i), i);
+            }
+        }
+    }
+
     function testFuzzSqrt(uint256 x) public {
         uint256 root = FixedPointMathLib.sqrt(x);
         uint256 next = root + 1;
@@ -570,18 +578,18 @@ contract FixedPointMathLibTest is Test {
         }
     }
 
-    function testFuzzFactorialYul() public {
+    function testFuzzFactorialOriginal() public {
         uint256 result = 1;
-        assertEq(_factorialYul(0), result);
+        assertEq(_factorialOriginal(0), result);
         unchecked {
             for (uint256 i = 1; i != 58; ++i) {
                 result = result * i;
-                assertEq(_factorialYul(i), result);
+                assertEq(_factorialOriginal(i), result);
             }
         }
     }
 
-    function _factorialYul(uint256 x) internal pure returns (uint256 result) {
+    function _factorialOriginal(uint256 x) internal pure returns (uint256 result) {
         assembly {
             result := 1
             // prettier-ignore

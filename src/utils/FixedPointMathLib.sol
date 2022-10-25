@@ -325,10 +325,10 @@ library FixedPointMathLib {
             // Let `y = x / 2**r`.
             // We check `y >= 2**(k + 8)` but shift right by `k` bits
             // each branch to ensure that if `x >= 256`, then `y >= 256`.
-            let r := shl(7, gt(x, 0xffffffffffffffffffffffffffffffffff))
-            r := or(r, shl(6, gt(shr(r, x), 0xffffffffffffffffff)))
-            r := or(r, shl(5, gt(shr(r, x), 0xffffffffff)))
-            r := or(r, shl(4, gt(shr(r, x), 0xffffff)))
+            let r := shl(7, lt(0xffffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffffff, shr(r, x))))
+            r := or(r, shl(4, lt(0xffffff, shr(r, x))))
             z := shl(shr(1, r), z)
 
             // Goal was to get `z*z*y` within a small factor of `x`. More iterations could
@@ -371,25 +371,34 @@ library FixedPointMathLib {
 
     /// @dev Returns the factorial of `x`.
     function factorial(uint256 x) internal pure returns (uint256 result) {
-        unchecked {
-            if (x < 11) {
-                // prettier-ignore
-                result = (0x375f0016260009d80004ec0002d00001e0000180000180000200000400001 >> (x * 22)) & 0x3fffff;
-            } else if (x < 32) {
-                result = 3628800;
-                do {
-                    result = result * x;
-                    x = x - 1;
-                } while (x != 10);
-            } else if (x < 58) {
-                // Just cheat lol.
-                result = 8222838654177922817725562880000000;
-                do {
-                    result = result * x;
-                    x = x - 1;
-                } while (x != 31);
-            } else {
-                revert FactorialOverflow();
+        assembly {
+            // prettier-ignore
+            for {} 1 {} {
+                if iszero(lt(10, x)) {
+                    result := and(
+                        shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001), 
+                        0x3fffff
+                    )
+                    break
+                }
+                if iszero(lt(57, x)) {
+                    let end := 31
+                    result := 8222838654177922817725562880000000
+                    if iszero(lt(end, x)) {
+                        end := 10
+                        result := 3628800    
+                    }
+                    for { let w := not(0) } 1 {} {
+                        result := mul(result, x)
+                        x := add(x, w)
+                        if eq(x, end) { break }
+                    }
+                    break
+                }
+                // Store the function selector of `FactorialOverflow()`.
+                mstore(0x00, 0xaba0f2a2)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
             }
         }
     }
