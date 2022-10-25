@@ -510,10 +510,11 @@ library LibString {
                 mstore(result, resultLength)
                 subject := add(subject, start)
                 // Copy the `subject` one word at a time, backwards.
+                let w := not(31)
                 // prettier-ignore
-                for { let o := and(add(resultLength, 31), not(31)) } 1 {} {
+                for { let o := and(add(resultLength, 31), w) } 1 {} {
                     mstore(add(result, o), mload(add(subject, o)))
-                    o := sub(o, 0x20)
+                    o := add(o, w) // `sub(o, 0x20)`.
                     // prettier-ignore
                     if iszero(o) { break }
                 }
@@ -521,7 +522,7 @@ library LibString {
                 mstore(add(add(result, 0x20), resultLength), 0)
                 // Allocate memory for the length and the bytes,
                 // rounded up to a multiple of 32.
-                mstore(0x40, add(result, and(add(resultLength, 63), not(31))))
+                mstore(0x40, add(result, and(add(resultLength, 63), w)))
             }
         }
     }
@@ -597,9 +598,10 @@ library LibString {
     function split(string memory subject, string memory delimiter) internal pure returns (string[] memory result) {
         uint256[] memory indices = indicesOf(subject, delimiter);
         assembly {
+            let w := not(31)
             let indexPtr := add(indices, 0x20)
             let indicesEnd := add(indexPtr, shl(5, add(mload(indices), 1)))
-            mstore(sub(indicesEnd, 0x20), mload(subject))
+            mstore(add(indicesEnd, w), mload(subject))
             mstore(indices, add(mload(indices), 1))
             let prevIndex := 0
             // prettier-ignore
@@ -612,9 +614,9 @@ library LibString {
                     mstore(element, elementLength)
                     // Copy the `subject` one word at a time, backwards.
                     // prettier-ignore
-                    for { let o := and(add(elementLength, 31), not(31)) } 1 {} {
+                    for { let o := and(add(elementLength, 31), w) } 1 {} {
                         mstore(add(element, o), mload(add(add(subject, prevIndex), o)))
-                        o := sub(o, 0x20)
+                        o := add(o, w) // `sub(o, 0x20)`.
                         // prettier-ignore
                         if iszero(o) { break }
                     }
@@ -622,7 +624,7 @@ library LibString {
                     mstore(add(add(element, 0x20), elementLength), 0)
                     // Allocate memory for the length and the bytes,
                     // rounded up to a multiple of 32.
-                    mstore(0x40, add(element, and(add(elementLength, 63), not(31))))
+                    mstore(0x40, add(element, and(add(elementLength, 63), w)))
                     // Store the `element` into the array.
                     mstore(indexPtr, element)                        
                 }
@@ -643,13 +645,14 @@ library LibString {
     /// Cheaper than `string.concat()` and does not de-align the free memory pointer.
     function concat(string memory a, string memory b) internal pure returns (string memory result) {
         assembly {
+            let w := not(31)
             result := mload(0x40)
             let aLength := mload(a)
             // Copy `a` one word at a time, backwards.
             // prettier-ignore
-            for { let o := and(add(mload(a), 32), not(31)) } 1 {} {
+            for { let o := and(add(mload(a), 32), w) } 1 {} {
                 mstore(add(result, o), mload(add(a, o)))
-                o := sub(o, 0x20)
+                o := add(o, w) // `sub(o, 0x20)`.
                 // prettier-ignore
                 if iszero(o) { break }
             }
@@ -657,9 +660,9 @@ library LibString {
             let output := add(result, mload(a))
             // Copy `b` one word at a time, backwards.
             // prettier-ignore
-            for { let o := and(add(bLength, 32), not(31)) } 1 {} {
+            for { let o := and(add(bLength, 32), w) } 1 {} {
                 mstore(add(output, o), mload(add(b, o)))
-                o := sub(o, 0x20)
+                o := add(o, w) // `sub(o, 0x20)`.
                 // prettier-ignore
                 if iszero(o) { break }
             }
@@ -671,7 +674,7 @@ library LibString {
             mstore(result, totalLength)
             // Allocate memory for the length and the bytes,
             // rounded up to a multiple of 32.
-            mstore(0x40, and(add(last, 31), not(31)))
+            mstore(0x40, and(add(last, 31), w))
         }
     }
 

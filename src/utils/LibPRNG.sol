@@ -67,7 +67,8 @@ library LibPRNG {
     function shuffle(PRNG memory prng, uint256[] memory a) internal pure {
         assembly {
             let n := mload(a)
-            let mask := sub(shl(1, 128), 1)
+            let w := not(0)
+            let mask := shr(128, w)
             if n {
                 // prettier-ignore
                 for { a := add(a, 0x20) } 1 {} {
@@ -82,7 +83,7 @@ library LibPRNG {
                     // and will not be a fairness or security concern.
                     {
                         let j := add(a, shl(5, mod(shr(128, r), n)))
-                        n := sub(n, 1)
+                        n := add(n, w) // `sub(n, 1)`.
                         // prettier-ignore
                         if iszero(n) { break }
 
@@ -94,7 +95,7 @@ library LibPRNG {
                     
                     {
                         let j := add(a, shl(5, mod(and(r, mask), n)))
-                        n := sub(n, 1)
+                        n := add(n, w) // `sub(n, 1)`.
                         // prettier-ignore
                         if iszero(n) { break }
 
