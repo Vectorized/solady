@@ -215,11 +215,6 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.sqrt(2704), 52);
         assertEq(FixedPointMathLib.sqrt(110889), 333);
         assertEq(FixedPointMathLib.sqrt(32239684), 5678);
-        unchecked {
-            for (uint256 i = 100; i < 200; ++i) {
-                assertEq(FixedPointMathLib.sqrt(i * i), i);
-            }
-        }
     }
 
     function testLog2() public {
@@ -434,6 +429,14 @@ contract FixedPointMathLibTest is Test {
     function testFuzzMulDivUpZeroDenominatorReverts(uint256 x, uint256 y) public {
         vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
         FixedPointMathLib.mulDivUp(x, y, 0);
+    }
+
+    function testFuzzSqrt() public {
+        unchecked {
+            for (uint256 i = 100; i < 200; ++i) {
+                assertEq(FixedPointMathLib.sqrt(i * i), i);
+            }
+        }
     }
 
     function testFuzzSqrt(uint256 x) public {
