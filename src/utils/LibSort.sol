@@ -31,7 +31,7 @@ library LibSort {
                 // prettier-ignore
                 for {} 1 {} {
                     mstore(add(j, 0x20), v)
-                    j := add(j, w)
+                    j := add(j, w) // `sub(j, 0x20)`.
                     v := mload(j)
                     // prettier-ignore
                     if iszero(gt(v, k)) { break }
@@ -87,7 +87,7 @@ library LibSort {
                 j := h
                 // prettier-ignore
                 for {} iszero(or(eq(j, l), gt(mload(j), mload(add(j, w))))) {} {
-                    j := add(j, w)
+                    j := add(j, w) // `sub(j, 0x20)`.
                 }
                 // If the array is reversed sorted.
                 if eq(j, l) { 
@@ -96,7 +96,7 @@ library LibSort {
                         let t := mload(l)
                         mstore(l, mload(h))
                         mstore(h, t)
-                        h := add(h, w)
+                        h := add(h, w) // `sub(h, 0x20)`.
                         l := add(l, 0x20)
                         // prettier-ignore
                         if iszero(lt(l, h)) { break }

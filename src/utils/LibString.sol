@@ -509,8 +509,8 @@ library LibString {
                 let resultLength := sub(end, start)
                 mstore(result, resultLength)
                 subject := add(subject, start)
-                // Copy the `subject` one word at a time, backwards.
                 let w := not(31)
+                // Copy the `subject` one word at a time, backwards.
                 // prettier-ignore
                 for { let o := and(add(resultLength, 31), w) } 1 {} {
                     mstore(add(result, o), mload(add(subject, o)))
