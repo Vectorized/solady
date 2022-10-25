@@ -279,7 +279,6 @@ library LibSort {
     /// and the index of the nearest element less than or equal to `needle`.
     function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found, uint256 index) {
         assembly {
-            let w := not(31)
             let m := 0 // Middle slot.
             let l := add(a, 0x20) // Slot of the start of search.
             let h := add(a, shl(5, mload(a))) // Slot of the end of search.
@@ -292,7 +291,7 @@ library LibSort {
                 if or(gt(l, h), found) { break }
                 // Decide whether to search the left or right half.
                 if iszero(gt(needle, mload(m))) {
-                    h := add(m, w) // `sub(m, 0x20)`.
+                    h := sub(m, 0x20)
                     continue
                 }
                 l := add(m, 0x20)   
