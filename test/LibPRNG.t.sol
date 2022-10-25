@@ -53,7 +53,7 @@ contract LibPRNGTest is TestPlus {
 
     function testPRNGShuffleGas() public pure {
         unchecked {
-            uint256[] memory a = new uint256[](100000);
+            uint256[] memory a = new uint256[](10000);
             LibPRNG.PRNG memory prng;
             prng.shuffle(a);
         }
