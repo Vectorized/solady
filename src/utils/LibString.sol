@@ -201,19 +201,20 @@ library LibString {
         str = toHexString(value);
         assembly {
             let o := add(str, 0x22)
-            let hashed := keccak256(o, 40)
+            let w := not(0)
+            let mask := shl(6, div(w, 255)) // `0b10000000100000000 ...`
+            let hashed := and(keccak256(o, 40), shl(3, div(w, 15))) // `0b10001000 ... `
+            let t := shl(240, 136) // `(0b10001000 ...) << 240`
             // prettier-ignore
             for { let i := 0 } 1 {} {
-                let temp := byte(i, hashed)
-                let p := add(o, add(i, i))
-                let c0 := byte(0, mload(p))
-                let c1 := byte(1, mload(p))
-                mstore8(add(p, 1), sub(c1, shl(2, and(shl(3, lt(58, c1)), temp))))
-                mstore8(p,         sub(c0, shr(2, and(shl(7, lt(58, c0)), temp))))
+                mstore(add(i, i), mul(t, byte(i, hashed)))
                 i := add(i, 1)
                 // prettier-ignore
                 if eq(i, 20) { break }
             }
+            mstore(o, xor(mload(o), shr(1, and(mload(0x00), and(mload(o), mask)))))
+            o := add(o, 0x20)
+            mstore(o, xor(mload(o), shr(1, and(mload(0x20), and(mload(o), mask)))))
         }
     }
 
