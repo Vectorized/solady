@@ -214,20 +214,17 @@ library LibString {
             // The following is essentially a do-while loop that also handles the zero case.
             // prettier-ignore
             for { let i := 20 } 1 {} {
-                i := sub(i, 1)
+                let one := 1
+                i := sub(i, one)
                 let p := add(o, add(i, i))
                 let temp := byte(i, value)
-                mstore8(add(p, 1), mload(and(temp, 15)))
+                mstore8(add(p, one), mload(and(temp, 15)))
                 mstore8(p, mload(shr(4, temp)))
                 // prettier-ignore
                 if iszero(i) { break }
             }
         }
     }
-
-    // function toChecksumedHexString(address value) internal pure returns (string memory str) {
-
-    // }
 
     /// @dev Private method to prefix `str` with "0x". The string must be
     /// created with enough allocated memory before the string for the prefix.
