@@ -194,6 +194,30 @@ library LibString {
     }
 
     /// @dev Returns the hexadecimal representation of `value`.
+    /// The output is prefixed with "0x", encoded using 2 hexadecimal digits per byte,
+    /// and the alphabets are capitalized conditionally according to
+    /// https://eips.ethereum.org/EIPS/eip-55
+    function toHexStringChecksumed(address value) internal pure returns (string memory str) {
+        str = toHexString(value);
+        assembly {
+            let o := add(str, 0x22)
+            let hashed := keccak256(o, 40)
+            // prettier-ignore
+            for { let i := 0 } 1 {} {
+                let temp := byte(i, hashed)
+                let p := add(o, add(i, i))
+                let c0 := byte(0, mload(p))
+                let c1 := byte(1, mload(p))
+                mstore8(add(p, 1), sub(c1, shl(2, and(shl(3, lt(58, c1)), temp))))
+                mstore8(p,         sub(c0, shr(2, and(shl(7, lt(58, c0)), temp))))
+                i := add(i, 1)
+                // prettier-ignore
+                if eq(i, 20) { break }
+            }
+        }
+    }
+
+    /// @dev Returns the hexadecimal representation of `value`.
     /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
     function toHexString(address value) internal pure returns (string memory str) {
         str = toHexStringNoPrefix(value);
@@ -231,15 +255,14 @@ library LibString {
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             // prettier-ignore
-            for { let i := 20 } 1 {} {
-                let one := 1
-                i := sub(i, one)
+            for { let i := 0 } 1 {} {
                 let p := add(o, add(i, i))
                 let temp := byte(i, value)
-                mstore8(add(p, one), mload(and(temp, 15)))
+                mstore8(add(p, 1), mload(and(temp, 15)))
                 mstore8(p, mload(shr(4, temp)))
+                i := add(i, 1)
                 // prettier-ignore
-                if iszero(i) { break }
+                if eq(i, 20) { break }
             }
         }
     }
