@@ -141,6 +141,43 @@ contract LibStringTest is TestPlus {
         );
     }
 
+    function testHexStringNoPrefixVariants(uint256 x, uint256 randomness) public brutalizeMemory {
+        string memory noPrefix = LibString.toHexStringNoPrefix(x);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(noPrefix);
+        string memory expectedResult = LibString.concat("0x", noPrefix);
+        string memory withPrefix = LibString.toHexString(x);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(withPrefix);
+        assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
+
+        uint256 length;
+        assembly {
+            length := add(shr(1, mload(noPrefix)), and(randomness, 63))
+        }
+        noPrefix = LibString.toHexStringNoPrefix(x, length);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(noPrefix);
+        expectedResult = LibString.concat("0x", noPrefix);
+        withPrefix = LibString.toHexString(x, length);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(withPrefix);
+        assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
+
+        address xAddress;
+        assembly {
+            xAddress := x
+        }
+        noPrefix = LibString.toHexStringNoPrefix(xAddress);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(noPrefix);
+        expectedResult = LibString.concat("0x", noPrefix);
+        withPrefix = LibString.toHexString(xAddress);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(withPrefix);
+        assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
+    }
+
     function testStringReplaceShort() public {
         assertEq(LibString.replace("abc", "", "_@"), "_@a_@b_@c_@");
         assertEq(LibString.replace("abc", "a", "_"), "_bc");

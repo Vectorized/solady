@@ -73,6 +73,21 @@ library LibString {
     /// giving a total length of `length * 2 + 2` bytes.
     /// Reverts if `length` is too small for the output to contain all the digits.
     function toHexString(uint256 value, uint256 length) internal pure returns (string memory str) {
+        str = toHexStringNoPrefix(value, length);
+        assembly {
+            let strLength := add(mload(str), 2) // Compute the length.
+            mstore(str, 0x3078) // Write the "0x" prefix.
+            str := sub(str, 2) // Move the pointer.
+            mstore(str, strLength) // Write the length.
+        }
+    }
+
+    /// @dev Returns the hexadecimal representation of `value`,
+    /// left-padded to an input length of `length` bytes.
+    /// The output is prefixed with "0x" encoded using 2 hexadecimal digits per byte,
+    /// giving a total length of `length * 2` bytes.
+    /// Reverts if `length` is too small for the output to contain all the digits.
+    function toHexStringNoPrefix(uint256 value, uint256 length) internal pure returns (string memory str) {
         assembly {
             let start := mload(0x40)
             // We need 0x20 bytes for the trailing zeros padding, `length * 2` bytes
@@ -114,12 +129,9 @@ library LibString {
             }
 
             // Compute the string's length.
-            let strLength := add(sub(end, str), 2)
-            // Move the pointer and write the "0x" prefix.
-            str := sub(str, 0x20)
-            mstore(str, 0x3078)
+            let strLength := sub(end, str)
             // Move the pointer and write the length.
-            str := sub(str, 2)
+            str := sub(str, 0x20)
             mstore(str, strLength)
         }
     }
@@ -129,6 +141,20 @@ library LibString {
     /// As address are 20 bytes long, the output will left-padded to have
     /// a length of `20 * 2 + 2` bytes.
     function toHexString(uint256 value) internal pure returns (string memory str) {
+        str = toHexStringNoPrefix(value);
+        assembly {
+            let strLength := add(mload(str), 2) // Compute the length.
+            mstore(str, 0x3078) // Write the "0x" prefix.
+            str := sub(str, 2) // Move the pointer.
+            mstore(str, strLength) // Write the length.
+        }
+    }
+
+    /// @dev Returns the hexadecimal representation of `value`.
+    /// The output is encoded using 2 hexadecimal digits per byte.
+    /// As address are 20 bytes long, the output will left-padded to have
+    /// a length of `20 * 2` bytes.
+    function toHexStringNoPrefix(uint256 value) internal pure returns (string memory str) {
         assembly {
             let start := mload(0x40)
             // We need 0x20 bytes for the trailing zeros padding, 0x20 bytes for the length,
@@ -160,12 +186,9 @@ library LibString {
             }
 
             // Compute the string's length.
-            let strLength := add(sub(end, str), 2)
-            // Move the pointer and write the "0x" prefix.
-            str := sub(str, 0x20)
-            mstore(str, 0x3078)
+            let strLength := sub(end, str)
             // Move the pointer and write the length.
-            str := sub(str, 2)
+            str := sub(str, 0x20)
             mstore(str, strLength)
         }
     }
@@ -173,38 +196,51 @@ library LibString {
     /// @dev Returns the hexadecimal representation of `value`.
     /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
     function toHexString(address value) internal pure returns (string memory str) {
+        str = toHexStringNoPrefix(value);
         assembly {
-            let start := mload(0x40)
-            // We need 0x20 bytes for the length, 0x02 bytes for the prefix,
-            // and 0x28 bytes for the digits.
-            // The next multiple of 0x20 above (0x20 + 0x02 + 0x28) is 0x60.
-            str := add(start, 0x60)
+            let strLength := add(mload(str), 2) // Compute the length.
+            mstore(str, 0x3078) // Write the "0x" prefix.
+            str := sub(str, 2) // Move the pointer.
+            mstore(str, strLength) // Write the length.
+        }
+    }
+
+    /// @dev Returns the hexadecimal representation of `value`.
+    /// The output is encoded using 2 hexadecimal digits per byte.
+    function toHexStringNoPrefix(address value) internal pure returns (string memory str) {
+        assembly {
+            str := mload(0x40)
 
             // Allocate the memory.
-            mstore(0x40, str)
+            // We need 0x20 bytes for the trailing zeros padding, 0x20 bytes for the length,
+            // 0x02 bytes for the prefix, and 0x28 bytes for the digits.
+            // The next multiple of 0x20 above (0x20 + 0x20 + 0x02 + 0x28) is 0x80.
+            mstore(0x40, add(str, 0x80))
+
             // Store "0123456789abcdef" in scratch space.
             mstore(0x0f, 0x30313233343536373839616263646566)
 
-            let length := 20
+            str := add(str, 2)
+            mstore(str, 40)
+
+            let o := add(str, 0x20)
+            mstore(add(o, 40), 0)
+
+            value := shl(96, value)
+
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             // prettier-ignore
-            for { let temp := value } 1 {} {
-                str := sub(str, 2)
-                mstore8(add(str, 1), mload(and(temp, 15)))
-                mstore8(str, mload(and(shr(4, temp), 15)))
-                temp := shr(8, temp)
-                length := sub(length, 1)
+            for { let i := 20 } 1 {} {
+                let one := 1
+                i := sub(i, one)
+                let p := add(o, add(i, i))
+                let temp := byte(i, value)
+                mstore8(add(p, one), mload(and(temp, 15)))
+                mstore8(p, mload(shr(4, temp)))
                 // prettier-ignore
-                if iszero(length) { break }
+                if iszero(i) { break }
             }
-
-            // Move the pointer and write the "0x" prefix.
-            str := sub(str, 32)
-            mstore(str, 0x3078)
-            // Move the pointer and write the length.
-            str := sub(str, 2)
-            mstore(str, 42)
         }
     }
 
