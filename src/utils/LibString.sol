@@ -73,7 +73,13 @@ library LibString {
     /// giving a total length of `length * 2 + 2` bytes.
     /// Reverts if `length` is too small for the output to contain all the digits.
     function toHexString(uint256 value, uint256 length) internal pure returns (string memory str) {
-        str = _prefixHexString(toHexStringNoPrefix(value, length));
+        str = toHexStringNoPrefix(value, length);
+        assembly {
+            let strLength := add(mload(str), 2) // Compute the length.
+            mstore(str, 0x3078) // Write the "0x" prefix.
+            str := sub(str, 2) // Move the pointer.
+            mstore(str, strLength) // Write the length.
+        }
     }
 
     /// @dev Returns the hexadecimal representation of `value`,
@@ -135,7 +141,13 @@ library LibString {
     /// As address are 20 bytes long, the output will left-padded to have
     /// a length of `20 * 2 + 2` bytes.
     function toHexString(uint256 value) internal pure returns (string memory str) {
-        str = _prefixHexString(toHexStringNoPrefix(value));
+        str = toHexStringNoPrefix(value);
+        assembly {
+            let strLength := add(mload(str), 2) // Compute the length.
+            mstore(str, 0x3078) // Write the "0x" prefix.
+            str := sub(str, 2) // Move the pointer.
+            mstore(str, strLength) // Write the length.
+        }
     }
 
     /// @dev Returns the hexadecimal representation of `value`.
@@ -184,7 +196,13 @@ library LibString {
     /// @dev Returns the hexadecimal representation of `value`.
     /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
     function toHexString(address value) internal pure returns (string memory str) {
-        str = _prefixHexString(toHexStringNoPrefix(value));
+        str = toHexStringNoPrefix(value);
+        assembly {
+            let strLength := add(mload(str), 2) // Compute the length.
+            mstore(str, 0x3078) // Write the "0x" prefix.
+            str := sub(str, 2) // Move the pointer.
+            mstore(str, strLength) // Write the length.
+        }
     }
 
     /// @dev Returns the hexadecimal representation of `value`.
@@ -223,20 +241,6 @@ library LibString {
                 // prettier-ignore
                 if iszero(i) { break }
             }
-        }
-    }
-
-    /// @dev Private method to prefix `str` with "0x". The string must be
-    /// created with enough allocated memory before the string for the prefix.
-    function _prefixHexString(string memory str) private pure returns (string memory result) {
-        assembly {
-            // Compute the string's length.
-            let strLength := add(mload(str), 2)
-            // Write the "0x" prefix.
-            mstore(str, 0x3078)
-            // Move the pointer and write the length.
-            result := sub(str, 2)
-            mstore(result, strLength)
         }
     }
 
