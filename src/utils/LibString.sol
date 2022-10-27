@@ -208,14 +208,8 @@ library LibString {
                 let p := add(o, add(i, i))
                 let c0 := byte(0, mload(p))
                 let c1 := byte(1, mload(p))
-                mstore8(
-                    add(p, 1), 
-                    sub(c1, shl(2, and(shl(3, lt(58, c1)), temp)))
-                )
-                mstore8(
-                    p, 
-                    sub(c0, shr(2, and(shl(7, lt(58, c0)), temp)))
-                )
+                mstore8(add(p, 1), sub(c1, shl(2, and(shl(3, lt(58, c1)), temp))))
+                mstore8(p,         sub(c0, shr(2, and(shl(7, lt(58, c0)), temp))))
                 i := add(i, 1)
                 // prettier-ignore
                 if eq(i, 20) { break }
