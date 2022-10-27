@@ -179,6 +179,35 @@ contract LibStringTest is TestPlus {
         );
     }
 
+    function testFromAddressToHexStringChecksumedDifferential(uint256 randomness) public brutalizeMemory {
+        address r;
+        assembly {
+            r := randomness
+        }
+        string memory expectedResult = LibString.toHexString(r);
+        assembly {
+            let o := add(expectedResult, 0x22)
+            let hashed := keccak256(o, 40)
+            // prettier-ignore
+            for { let i := 0 } iszero(eq(i, 20)) { i := add(i, 1) } {
+                let temp := byte(i, hashed)
+                let p := add(o, add(i, i))
+                let c0 := byte(0, mload(p))
+                let c1 := byte(1, mload(p))
+                if and(gt(c1, 58), gt(and(temp, 15), 7)) {
+                    mstore8(add(p, 1), sub(c1, 32))    
+                }
+                if and(gt(c0, 58), gt(shr(4, temp), 7)) {
+                    mstore8(p, sub(c0, 32))    
+                }
+            }
+        }
+        string memory checksumed = LibString.toHexStringChecksumed(r);
+        _brutalizeFreeMemoryStart();
+        _checkStringIsZeroRightPadded(checksumed);
+        assertEq(keccak256(bytes(checksumed)), keccak256(bytes(expectedResult)));
+    }
+
     function testHexStringNoPrefixVariants(uint256 x, uint256 randomness) public brutalizeMemory {
         string memory noPrefix = LibString.toHexStringNoPrefix(x);
         _brutalizeFreeMemoryStart();
