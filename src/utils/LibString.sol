@@ -200,7 +200,7 @@ library LibString {
     function toHexStringChecksumed(address value) internal pure returns (string memory str) {
         str = toHexString(value);
         assembly {
-            let mask := shl(6, div(not(0), 255)) // `0b000000010000000100000000 ...`
+            let mask := shl(6, div(not(0), 255)) // `0b010000000100000000 ...`
             let o := add(str, 0x22)
             let hashed := and(keccak256(o, 40), mul(34, mask)) // `0b10001000 ... `
             let t := shl(240, 136) // `0b10001000 << 240`
