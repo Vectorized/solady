@@ -927,7 +927,6 @@ library LibString {
 
     /// @dev Directly returns `a` without copying.
     function directReturn(string memory a) internal pure {
-        /// @solidity memory-safe-assembly
         assembly {
             // Right pad with zeroes. Just in case the string is produced
             // by a method that doesn't zero right pad.
