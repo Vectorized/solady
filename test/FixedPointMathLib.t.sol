@@ -493,6 +493,7 @@ contract FixedPointMathLibTest is Test {
         uint256 brutalizer
     ) public {
         uint32 z = x > y ? x : y;
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, brutalizer)
             mstore(0x20, 1)
@@ -514,6 +515,7 @@ contract FixedPointMathLibTest is Test {
         uint256 brutalizer
     ) public {
         uint256 z = x > y ? x - y : 0;
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, brutalizer)
             mstore(0x20, 1)
@@ -590,6 +592,7 @@ contract FixedPointMathLibTest is Test {
     }
 
     function _factorialOriginal(uint256 x) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := 1
             // prettier-ignore

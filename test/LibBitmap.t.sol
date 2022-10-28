@@ -57,6 +57,7 @@ contract LibBitmapTest is TestPlus {
         set(index);
         bool result = get(index);
         bool resultIsOne;
+        /// @solidity memory-safe-assembly
         assembly {
             resultIsOne := eq(result, 1)
         }
@@ -95,6 +96,7 @@ contract LibBitmapTest is TestPlus {
         uint256 randomness
     ) public {
         bool shouldSetBrutalized;
+        /// @solidity memory-safe-assembly
         assembly {
             if shouldSet {
                 shouldSetBrutalized := or(iszero(randomness), randomness)
@@ -109,6 +111,7 @@ contract LibBitmapTest is TestPlus {
         unchecked {
             for (uint256 i; i < 5; ++i) {
                 bool shouldSet;
+                /// @solidity memory-safe-assembly
                 assembly {
                     shouldSet := and(shr(i, randomness), 1)
                 }

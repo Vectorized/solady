@@ -48,6 +48,7 @@ contract ReturnsTooMuchToken {
 
         emit Approval(msg.sender, spender, amount);
 
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0, 1)
             return(0, 4096)
@@ -65,6 +66,7 @@ contract ReturnsTooMuchToken {
 
         emit Transfer(msg.sender, to, amount);
 
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0, 1)
             return(0, 4096)
@@ -90,6 +92,7 @@ contract ReturnsTooMuchToken {
 
         emit Transfer(from, to, amount);
 
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0, 1)
             return(0, 4096)

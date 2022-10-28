@@ -18,6 +18,7 @@ contract LibCloneTest is TestPlus, Clone {
     function setUp() public {
         // Mini test to check if `_this()` returns a word with brutalized upper 96 bits.
         address t = _this();
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(shr(160, t)) {
                 revert(0, 0)
@@ -35,6 +36,7 @@ contract LibCloneTest is TestPlus, Clone {
     }
 
     function getCalldataHash() public pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let extraLength := shr(0xf0, calldataload(sub(calldatasize(), 2)))
             if iszero(lt(extraLength, 2)) {
@@ -262,6 +264,7 @@ contract LibCloneTest is TestPlus, Clone {
     }
 
     function _this() internal view returns (address result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := or(shl(160, add(timestamp(), 123456789)), address())
         }

@@ -27,6 +27,7 @@ library SSTORE2 {
     /// @dev Writes `data` into the bytecode of a storage contract and returns its address.
     function write(bytes memory data) internal returns (address pointer) {
         // Note: The assembly block below does not expand the memory.
+        /// @solidity memory-safe-assembly
         assembly {
             let originalDataLength := mload(data)
 
@@ -80,6 +81,7 @@ library SSTORE2 {
 
     /// @dev Returns all the `data` from the bytecode of the storage contract at `pointer`.
     function read(address pointer) internal view returns (bytes memory data) {
+        /// @solidity memory-safe-assembly
         assembly {
             let pointerCodesize := extcodesize(pointer)
             if iszero(pointerCodesize) {
@@ -105,6 +107,7 @@ library SSTORE2 {
     /// @dev Returns the `data` from the bytecode of the storage contract at `pointer`,
     /// from the byte at `start`, to the end of the data stored.
     function read(address pointer, uint256 start) internal view returns (bytes memory data) {
+        /// @solidity memory-safe-assembly
         assembly {
             let pointerCodesize := extcodesize(pointer)
             if iszero(pointerCodesize) {
@@ -142,6 +145,7 @@ library SSTORE2 {
         uint256 start,
         uint256 end
     ) internal view returns (bytes memory data) {
+        /// @solidity memory-safe-assembly
         assembly {
             let pointerCodesize := extcodesize(pointer)
             if iszero(pointerCodesize) {

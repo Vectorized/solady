@@ -19,6 +19,7 @@ library LibBytemap {
 
     /// @dev Returns the uint8 value of the byte at `index` in `bytemap`.
     function get(Bytemap storage bytemap, uint256 index) internal view returns (uint8 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, bytemap.slot)
             mstore(0x00, shr(5, index))
@@ -32,6 +33,7 @@ library LibBytemap {
         uint256 index,
         uint8 value
     ) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, bytemap.slot)
             mstore(0x00, shr(5, index))

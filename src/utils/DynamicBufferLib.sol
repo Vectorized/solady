@@ -22,6 +22,7 @@ library DynamicBufferLib {
 
     /// @dev Appends `data` to `buffer`.
     function append(DynamicBuffer memory buffer, bytes memory data) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             if mload(data) {
                 let w := not(31)

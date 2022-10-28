@@ -51,6 +51,7 @@ contract Base64Test is TestPlus {
     function _testBase64Encode(string memory input, string memory output) private {
         string memory encoded = Base64.encode(bytes(input));
 
+        /// @solidity memory-safe-assembly
         assembly {
             let freeMemoryPointer := mload(0x40)
             // This ensures that the memory allocated is 32-byte aligned.
@@ -136,6 +137,7 @@ contract Base64Test is TestPlus {
 
         bytes32 hashBefore = keccak256(decoded);
 
+        /// @solidity memory-safe-assembly
         assembly {
             let freeMemoryPointer := mload(0x40)
             // This ensures that the memory allocated is 32-byte aligned.

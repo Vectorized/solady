@@ -31,6 +31,7 @@ library LibClone {
 
     /// @dev Deploys a clone of `implementation`.
     function clone(address implementation) internal returns (address instance) {
+        /// @solidity memory-safe-assembly
         assembly {
             /**
              * --------------------------------------------------------------------------+
@@ -107,6 +108,7 @@ library LibClone {
 
     /// @dev Deploys a deterministic clone of `implementation` with `salt`.
     function cloneDeterministic(address implementation, bytes32 salt) internal returns (address instance) {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
             mstore(0x14, implementation)
@@ -131,6 +133,7 @@ library LibClone {
         bytes32 salt,
         address deployer
     ) internal pure returns (address predicted) {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
             mstore(0x14, implementation)
@@ -153,6 +156,7 @@ library LibClone {
     /// @dev Deploys a minimal proxy with `implementation`,
     /// using immutable arguments encoded in `data`.
     function clone(address implementation, bytes memory data) internal returns (address instance) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
@@ -283,6 +287,7 @@ library LibClone {
         bytes memory data,
         bytes32 salt
     ) internal returns (address instance) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
@@ -334,6 +339,7 @@ library LibClone {
         bytes32 salt,
         address deployer
     ) internal pure returns (address predicted) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))

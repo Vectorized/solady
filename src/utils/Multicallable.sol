@@ -15,6 +15,7 @@ abstract contract Multicallable {
     /// If any of the `DELEGATECALL`s reverts, the entire transaction is reverted,
     /// and the error is bubbled up.
     function multicall(bytes[] calldata data) public payable returns (bytes[] memory results) {
+        /// @solidity memory-safe-assembly
         assembly {
             if data.length {
                 results := mload(0x40) // Point `results` to start of free memory.
