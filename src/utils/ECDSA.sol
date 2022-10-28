@@ -164,7 +164,6 @@ library ECDSA {
     /// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
     /// JSON-RPC method as part of EIP-191.
     function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
         assembly {
             // We need at most 128 bytes for Ethereum signed message header.
             // The max length of the ASCII reprenstation of a uint256 is 78 bytes.

@@ -156,7 +156,6 @@ library LibClone {
     /// @dev Deploys a minimal proxy with `implementation`,
     /// using immutable arguments encoded in `data`.
     function clone(address implementation, bytes memory data) internal returns (address instance) {
-        /// @solidity memory-safe-assembly
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
@@ -287,7 +286,6 @@ library LibClone {
         bytes memory data,
         bytes32 salt
     ) internal returns (address instance) {
-        /// @solidity memory-safe-assembly
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
@@ -339,7 +337,6 @@ library LibClone {
         bytes32 salt,
         address deployer
     ) internal pure returns (address predicted) {
-        /// @solidity memory-safe-assembly
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
