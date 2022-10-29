@@ -936,6 +936,12 @@ contract LibStringTest is TestPlus {
         assertEq(this.returnString(a), a);
     }
 
+    function testStringDirectReturn() public {
+        testStringDirectReturn("");
+        testStringDirectReturn("aaa");
+        testStringDirectReturn("98729");
+    }
+
     function returnString(string memory a) external pure returns (string memory) {
         LibString.directReturn(a);
     }

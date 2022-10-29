@@ -928,14 +928,16 @@ library LibString {
     /// @dev Directly returns `a` without copying.
     function directReturn(string memory a) internal pure {
         assembly {
+            // Assumes that the string does not start from the scratch space.
+            let retStart := sub(a, 0x20)
+            let retSize := add(mload(a), 0x40)
             // Right pad with zeroes. Just in case the string is produced
             // by a method that doesn't zero right pad.
-            mstore(add(add(a, 0x20), mload(a)), 0)
+            mstore(add(retStart, retSize), 0)
             // Store the return offset.
-            // Assumes that the string does not start from the scratch space.
-            mstore(sub(a, 0x20), 0x20)
+            mstore(retStart, 0x20)
             // End the transaction, returning the string.
-            return(sub(a, 0x20), add(mload(a), 0x40))
+            return(retStart, retSize)
         }
     }
 }
