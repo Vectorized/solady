@@ -25,6 +25,7 @@ library LibRLP {
     /// It is the user's responsibility to ensure that the nonce is valid
     /// (e.g. no dirty bits after packing / unpacking).
     function computeAddress(address deployer, uint256 nonce) internal pure returns (address deployed) {
+        /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for {} 1 {} {

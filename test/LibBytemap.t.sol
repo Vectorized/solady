@@ -32,6 +32,7 @@ contract LibBytemapTest is Test {
         uint8 value,
         uint256 brutalizer
     ) public {
+        /// @solidity memory-safe-assembly
         assembly {
             value := or(shl(8, brutalizer), value)
         }
@@ -42,6 +43,7 @@ contract LibBytemapTest is Test {
         assertEq(result, value);
 
         bool resultEqualValue;
+        /// @solidity memory-safe-assembly
         assembly {
             resultEqualValue := eq(result, and(value, 0xff))
         }

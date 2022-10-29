@@ -13,6 +13,7 @@ contract MockOwnableRoles is OwnableRoles {
 
         address brutalizedAddress = _brutalizedAddress(address(0));
         bool brutalizedAddressIsBrutalized;
+        /// @solidity memory-safe-assembly
         assembly {
             brutalizedAddressIsBrutalized := gt(shr(160, brutalizedAddress), 0)
         }
@@ -22,6 +23,7 @@ contract MockOwnableRoles is OwnableRoles {
         }
 
         bool badBool;
+        /// @solidity memory-safe-assembly
         assembly {
             badBool := 2
         }
@@ -89,6 +91,7 @@ contract MockOwnableRoles is OwnableRoles {
 
     function ownershipHandoverValidFor() public view virtual override(OwnableRoles) returns (uint64 result) {
         result = OwnableRoles.ownershipHandoverValidFor();
+        /// @solidity memory-safe-assembly
         assembly {
             // Some acrobatics to make the brutalized bits psuedorandomly
             // different with every call.
@@ -118,6 +121,7 @@ contract MockOwnableRoles is OwnableRoles {
     }
 
     function _brutalizedAddress(address value) private view returns (address result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Some acrobatics to make the brutalized bits psuedorandomly
             // different with every call.
@@ -132,6 +136,7 @@ contract MockOwnableRoles is OwnableRoles {
     function _checkedBool(bool value) private pure returns (bool result) {
         result = value;
         bool resultIsOneOrZero;
+        /// @solidity memory-safe-assembly
         assembly {
             // We wanna check if the result is either 1 or 0,
             // to make sure we practice good assembly politeness.

@@ -19,6 +19,7 @@ library LibPRNG {
 
     /// @dev Seeds the `prng` with `state`.
     function seed(PRNG memory prng, uint256 state) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(prng, state)
         }
@@ -37,6 +38,7 @@ library LibPRNG {
         //
         // Using this method is about 2x more efficient than
         // `nextRandomness = uint256(keccak256(abi.encode(randomness)))`.
+        /// @solidity memory-safe-assembly
         assembly {
             result := keccak256(prng, 0x20)
             mstore(prng, result)
@@ -51,6 +53,7 @@ library LibPRNG {
     /// or for small enough moduli such that the bias is neligible,
     /// use {next} instead.
     function uniform(PRNG memory prng, uint256 upper) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for {} 1 {} {
@@ -65,6 +68,7 @@ library LibPRNG {
 
     /// @dev Shuffles the array in-place with Fisher-Yates shuffle.
     function shuffle(PRNG memory prng, uint256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             let n := mload(a)
             let w := not(0)

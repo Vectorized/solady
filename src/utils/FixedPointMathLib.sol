@@ -48,6 +48,7 @@ library FixedPointMathLib {
 
     /// @dev Equivalent to `(x * y) / WAD` rounded down.
     function mulWadDown(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
             if mul(y, gt(x, div(not(0), y))) {
@@ -62,6 +63,7 @@ library FixedPointMathLib {
 
     /// @dev Equivalent to `(x * y) / WAD` rounded up.
     function mulWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
             if mul(y, gt(x, div(not(0), y))) {
@@ -76,6 +78,7 @@ library FixedPointMathLib {
 
     /// @dev Equivalent to `(x * WAD) / y` rounded down.
     function divWadDown(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
             if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
@@ -90,6 +93,7 @@ library FixedPointMathLib {
 
     /// @dev Equivalent to `(x * WAD) / y` rounded up.
     function divWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
             if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
@@ -149,6 +153,7 @@ library FixedPointMathLib {
             q = ((q * x) >> 96) - 14423608567350463180887372962807573;
             q = ((q * x) >> 96) + 26449188498355588339934803723976023;
 
+            /// @solidity memory-safe-assembly
             assembly {
                 // Div in assembly because solidity adds a zero check despite the unchecked.
                 // The q polynomial won't have zeros in the domain as all its roots are complex.
@@ -180,6 +185,7 @@ library FixedPointMathLib {
 
             // Compute k = log2(x) - 96.
             int256 k;
+            /// @solidity memory-safe-assembly
             assembly {
                 let v := x
                 k := shl(7, lt(0xffffffffffffffffffffffffffffffff, v))
@@ -224,6 +230,7 @@ library FixedPointMathLib {
             q = ((q * x) >> 96) + 204048457590392012362485061816622;
             q = ((q * x) >> 96) + 31853899698501571402653359427138;
             q = ((q * x) >> 96) + 909429971244387300277376558375;
+            /// @solidity memory-safe-assembly
             assembly {
                 // Div in assembly because solidity adds a zero check despite the unchecked.
                 // The q polynomial is known not to have zeros in the domain.
@@ -261,6 +268,7 @@ library FixedPointMathLib {
         uint256 y,
         uint256 denominator
     ) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
             if iszero(mul(denominator, iszero(mul(y, gt(x, div(not(0), y)))))) {
@@ -280,6 +288,7 @@ library FixedPointMathLib {
         uint256 y,
         uint256 denominator
     ) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
             if iszero(mul(denominator, iszero(mul(y, gt(x, div(not(0), y)))))) {
@@ -295,6 +304,7 @@ library FixedPointMathLib {
     /// @dev Returns `ceil(x / denominator)`.
     /// Reverts if `denominator` is zero.
     function divUp(uint256 x, uint256 denominator) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(denominator) {
                 // Store the function selector of `DivFailed()`.
@@ -308,6 +318,7 @@ library FixedPointMathLib {
 
     /// @dev Returns `max(0, x - y)`.
     function zeroFloorSub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             z := mul(gt(x, y), sub(x, y))
         }
@@ -315,6 +326,7 @@ library FixedPointMathLib {
 
     /// @dev Returns the square root of `x`.
     function sqrt(uint256 x) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // `floor(sqrt(2**15)) = 181`. `sqrt(2**15) - 181 = 2.84`.
             z := 181 // The "correct" value is 1, but this saves a multiplication later.
@@ -371,6 +383,7 @@ library FixedPointMathLib {
 
     /// @dev Returns the factorial of `x`.
     function factorial(uint256 x) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for {} 1 {} {
@@ -406,6 +419,7 @@ library FixedPointMathLib {
     /// @dev Returns the log2 of `x`.
     /// Equivalent to computing the index of the most significant bit (MSB) of `x`.
     function log2(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(x) {
                 // Store the function selector of `Log2Undefined()`.
@@ -435,6 +449,7 @@ library FixedPointMathLib {
 
     /// @dev Returns the averege of `x` and `y`.
     function avg(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             z := add(and(x, y), shr(1, xor(x, y)))
         }
@@ -442,6 +457,7 @@ library FixedPointMathLib {
 
     /// @dev Returns the absolute value of `x`.
     function abs(int256 x) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             let mask := mul(shr(255, x), not(0))
             z := xor(mask, add(mask, x))
@@ -450,6 +466,7 @@ library FixedPointMathLib {
 
     /// @dev Returns the absolute distance between `x` and `y`.
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             let a := sub(y, x)
             z := xor(a, mul(xor(a, sub(x, y)), sgt(x, y)))
@@ -458,6 +475,7 @@ library FixedPointMathLib {
 
     /// @dev Returns the minimum of `x` and `y`.
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             z := xor(x, mul(xor(x, y), lt(y, x)))
         }
@@ -465,6 +483,7 @@ library FixedPointMathLib {
 
     /// @dev Returns the maximum of `x` and `y`.
     function max(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             z := xor(x, mul(xor(x, y), gt(y, x)))
         }
@@ -472,6 +491,7 @@ library FixedPointMathLib {
 
     /// @dev Returns gcd of `x` and `y`.
     function gcd(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for { z := x } y {} {

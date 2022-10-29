@@ -22,6 +22,7 @@ library SignatureCheckerLib {
 
         if (ECDSA.recover(hash, signature) == signer) return true;
 
+        /// @solidity memory-safe-assembly
         assembly {
             // Load the free memory pointer.
             // Simply using the free memory usually costs less if many slots are needed.
@@ -73,6 +74,7 @@ library SignatureCheckerLib {
 
         if (ECDSA.recover(hash, r, vs) == signer) return true;
 
+        /// @solidity memory-safe-assembly
         assembly {
             // Load the free memory pointer.
             // Simply using the free memory usually costs less if many slots are needed.
@@ -127,6 +129,7 @@ library SignatureCheckerLib {
 
         if (ECDSA.recover(hash, v, r, s) == signer) return true;
 
+        /// @solidity memory-safe-assembly
         assembly {
             // Load the free memory pointer.
             // Simply using the free memory usually costs less if many slots are needed.

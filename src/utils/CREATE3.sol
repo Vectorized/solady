@@ -64,6 +64,7 @@ library CREATE3 {
         bytes memory creationCode,
         uint256 value
     ) internal returns (address deployed) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Store the `_PROXY_BYTECODE` into scratch space.
             mstore(0x00, _PROXY_BYTECODE)
@@ -118,6 +119,7 @@ library CREATE3 {
 
     /// @dev Returns the deterministic address for `salt`.
     function getDeployed(bytes32 salt) internal view returns (address deployed) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Cache the free memory pointer.
             let m := mload(0x40)

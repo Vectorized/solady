@@ -11,6 +11,7 @@ library LibBit {
     /// If `x` is zero, returns 256.
     /// Equivalent to `log2(x)`, but without reverting for the zero case.
     function fls(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
         assembly {
             r := shl(8, iszero(x))
 
@@ -36,6 +37,7 @@ library LibBit {
     /// Returns the number of zeros preceding the most significant one bit.
     /// If `x` is zero, returns 256.
     function clz(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
         assembly {
             let t := add(iszero(x), 255)
 
@@ -64,6 +66,7 @@ library LibBit {
     /// Equivalent to `ctz` (count trailing zeros), which gives
     /// the number of zeros following the least significant one bit.
     function ffs(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
         assembly {
             r := shl(8, iszero(x))
 
@@ -83,6 +86,7 @@ library LibBit {
 
     /// @dev Returns the number of set bits in `x`.
     function popCount(uint256 x) internal pure returns (uint256 c) {
+        /// @solidity memory-safe-assembly
         assembly {
             let max := not(0)
             let isMax := eq(x, max)
@@ -95,6 +99,7 @@ library LibBit {
 
     /// @dev Returns whether `x` is a power of 2.
     function isPo2(uint256 x) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `x && !(x & (x - 1))`.
             result := iszero(add(and(x, sub(x, 1)), iszero(x)))

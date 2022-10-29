@@ -122,6 +122,7 @@ contract LibPRNGTest is TestPlus {
     // The xorshift is required because the raw 128 lower bits
     // of the LCG alone will not pass the tests.
     function _stepLCG(uint256 state) private pure returns (uint256 randomness) {
+        /// @solidity memory-safe-assembly
         assembly {
             let a := 0xd6aad120322a96acae4ccfaf5fcd4bbfda3f2f3001db6837c0981639faa68d8d
             state := add(mul(state, a), 83)

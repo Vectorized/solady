@@ -56,6 +56,7 @@ contract ReturnsGarbageToken {
 
         bytes memory _garbage = garbage;
 
+        /// @solidity memory-safe-assembly
         assembly {
             return(add(_garbage, 32), mload(_garbage))
         }
@@ -74,6 +75,7 @@ contract ReturnsGarbageToken {
 
         bytes memory _garbage = garbage;
 
+        /// @solidity memory-safe-assembly
         assembly {
             return(add(_garbage, 32), mload(_garbage))
         }
@@ -100,6 +102,7 @@ contract ReturnsGarbageToken {
 
         bytes memory _garbage = garbage;
 
+        /// @solidity memory-safe-assembly
         assembly {
             return(add(_garbage, 32), mload(_garbage))
         }

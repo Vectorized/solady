@@ -28,6 +28,7 @@ contract DynamicBufferLibTest is TestPlus {
                 // and then check if append will corrupt it
                 // (in the case of insufficient memory allocation).
                 uint256 corruptCheck;
+                /// @solidity memory-safe-assembly
                 assembly {
                     corruptCheck := mload(0x40)
                     mstore(corruptCheck, randomness)
@@ -38,6 +39,7 @@ contract DynamicBufferLibTest is TestPlus {
                 _brutalizeFreeMemoryStart();
                 _checkBytesIsZeroRightPadded(buffer.data);
                 bool isCorrupted;
+                /// @solidity memory-safe-assembly
                 assembly {
                     isCorrupted := iszero(eq(randomness, mload(corruptCheck)))
                 }
@@ -99,6 +101,7 @@ contract DynamicBufferLibTest is TestPlus {
 
     function _checkBytesIsZeroRightPadded(bytes memory s) internal pure {
         bool failed;
+        /// @solidity memory-safe-assembly
         assembly {
             let lastAlignedWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
             let remainder := and(mload(s), 31)
@@ -113,6 +116,7 @@ contract DynamicBufferLibTest is TestPlus {
 
     function _boundInputs(bytes[] memory inputs) internal pure {
         // Limit the total number of inputs.
+        /// @solidity memory-safe-assembly
         assembly {
             if gt(mload(inputs), 16) {
                 mstore(inputs, 16)
@@ -122,6 +126,7 @@ contract DynamicBufferLibTest is TestPlus {
             // Limit the lengths of the inputs.
             for (uint256 i; i < inputs.length; ++i) {
                 bytes memory x = inputs[i];
+                /// @solidity memory-safe-assembly
                 assembly {
                     if gt(mload(x), 300) {
                         mstore(x, 300)
