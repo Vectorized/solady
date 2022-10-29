@@ -12,6 +12,7 @@ library MerkleProofLib {
         bytes32 root,
         bytes32 leaf
     ) internal pure returns (bool isValid) {
+        /// @solidity memory-safe-assembly
         assembly {
             if proof.length {
                 // Left shift by 5 is equivalent to multiplying by 0x20.
@@ -55,6 +56,7 @@ library MerkleProofLib {
         // The `flags` array denotes whether the sibling
         // should be popped from the queue (`flag == true`), or
         // should be popped from the `proof` (`flag == false`).
+        /// @solidity memory-safe-assembly
         assembly {
             // If the number of flags is correct.
             // prettier-ignore

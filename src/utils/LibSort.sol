@@ -9,6 +9,7 @@ library LibSort {
     /// or where smaller bytecode is prefered over runtime gas performance
     /// (e.g. in view functions intended for off-chain querying).
     function insertionSort(uint256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             let n := mload(a) // Length of `a`.
 
@@ -51,6 +52,7 @@ library LibSort {
         // word zeroized (as per Solidity spec), we can directly compare
         // these addresses as if they are whole uint256 words.
         uint256[] memory aCasted;
+        /// @solidity memory-safe-assembly
         assembly {
             aCasted := a
         }
@@ -60,6 +62,7 @@ library LibSort {
     /// @dev Sorts the array in-place.
     /// This uses a variant of intro-quicksort, which is NOT stable.
     function sort(uint256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             let w := not(31)
             let n := mload(a) // Length of `a`.
@@ -230,6 +233,7 @@ library LibSort {
         // word zeroized (as per Solidity spec), we can directly compare
         // these addresses as if they are whole uint256 words.
         uint256[] memory aCasted;
+        /// @solidity memory-safe-assembly
         assembly {
             aCasted := a
         }
@@ -240,6 +244,7 @@ library LibSort {
     /// For performance, it will not revert if the array is not sorted --
     /// it will be simply remove consecutive duplicate elements.
     function uniquifySorted(uint256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             // If the length of `a` is greater than 1.
             if iszero(lt(mload(a), 2)) {
@@ -269,6 +274,7 @@ library LibSort {
         // word zeroized (as per Solidity spec), we can directly compare
         // these addresses as if they are whole uint256 words.
         uint256[] memory aCasted;
+        /// @solidity memory-safe-assembly
         assembly {
             aCasted := a
         }
@@ -278,6 +284,7 @@ library LibSort {
     /// @dev Returns whether `a` contains `needle`,
     /// and the index of the nearest element less than or equal to `needle`.
     function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found, uint256 index) {
+        /// @solidity memory-safe-assembly
         assembly {
             let m := 0 // Middle slot.
             let l := add(a, 0x20) // Slot of the start of search.

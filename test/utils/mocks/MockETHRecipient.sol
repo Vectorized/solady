@@ -20,6 +20,7 @@ contract MockETHRecipient {
             counter += 1;
         }
         if (gasGriefUponReceiveETH) {
+            /// @solidity memory-safe-assembly
             assembly {
                 mstore(0x00, timestamp())
                 mstore(0x20, 0)

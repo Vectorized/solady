@@ -22,11 +22,13 @@ contract LibStringTest is TestPlus {
 
     function testToStringZeroBrutalized() public {
         string memory s0 = LibString.toString(0);
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
         string memory s1 = LibString.toString(0);
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
@@ -37,11 +39,13 @@ contract LibStringTest is TestPlus {
 
     function testToStringPositiveNumberBrutalized() public {
         string memory s0 = LibString.toString(4132);
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
         string memory s1 = LibString.toString(4132);
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
@@ -52,11 +56,13 @@ contract LibStringTest is TestPlus {
 
     function testToStringUint256MaxBrutalized() public {
         string memory s0 = LibString.toString(type(uint256).max);
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
         string memory s1 = LibString.toString(type(uint256).max);
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
@@ -181,10 +187,12 @@ contract LibStringTest is TestPlus {
 
     function testFromAddressToHexStringChecksumedDifferential(uint256 randomness) public brutalizeMemory {
         address r;
+        /// @solidity memory-safe-assembly
         assembly {
             r := randomness
         }
         string memory expectedResult = LibString.toHexString(r);
+        /// @solidity memory-safe-assembly
         assembly {
             let o := add(expectedResult, 0x22)
             let hashed := keccak256(o, 40)
@@ -219,6 +227,7 @@ contract LibStringTest is TestPlus {
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
 
         uint256 length;
+        /// @solidity memory-safe-assembly
         assembly {
             length := add(shr(1, mload(noPrefix)), and(randomness, 63))
         }
@@ -232,6 +241,7 @@ contract LibStringTest is TestPlus {
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
 
         address xAddress;
+        /// @solidity memory-safe-assembly
         assembly {
             xAddress := x
         }
@@ -831,6 +841,7 @@ contract LibStringTest is TestPlus {
             if (bytes(a).length < 32) {
                 bytes memory expectedResultBytes = abi.encodePacked(uint8(bytes(a).length), a);
                 bytes32 expectedResult;
+                /// @solidity memory-safe-assembly
                 assembly {
                     expectedResult := mload(add(expectedResultBytes, 0x20))
                 }
@@ -878,6 +889,7 @@ contract LibStringTest is TestPlus {
                     b
                 );
                 bytes32 expectedResult;
+                /// @solidity memory-safe-assembly
                 assembly {
                     expectedResult := mload(add(expectedResultBytes, 0x20))
                 }
@@ -942,6 +954,7 @@ contract LibStringTest is TestPlus {
     }
 
     function _generateFrom(uint256 randomness, string memory subject) internal view returns (uint256 from) {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, xor(randomness, gas()))
             let r := keccak256(0x00, 0x20)
@@ -963,6 +976,7 @@ contract LibStringTest is TestPlus {
         view
         returns (string memory result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             if mload(byteChoices) {
                 mstore(0x00, randomness)
@@ -987,6 +1001,7 @@ contract LibStringTest is TestPlus {
 
     function _checkStringIsZeroRightPadded(string memory s) internal pure {
         bool failed;
+        /// @solidity memory-safe-assembly
         assembly {
             let lastAlignedWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
             let remainder := and(mload(s), 31)

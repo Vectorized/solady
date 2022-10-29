@@ -81,6 +81,7 @@ contract SignatureCheckerLibTest is Test {
         bool expectedResult
     ) internal {
         bool callResult;
+        /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
 
@@ -124,6 +125,7 @@ contract SignatureCheckerLibTest is Test {
         bytes32 r;
         bytes32 s;
         bytes32 vs;
+        /// @solidity memory-safe-assembly
         assembly {
             // Contaminate the upper 96 bits.
             signer := or(shl(160, 1), signer)
@@ -155,6 +157,7 @@ contract SignatureCheckerLibTest is Test {
         bytes calldata signature
     ) external view returns (bool) {
         bool signatureIsBrutalized;
+        /// @solidity memory-safe-assembly
         assembly {
             // Contaminate the upper 96 bits.
             signer := or(shl(160, 1), signer)

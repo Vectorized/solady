@@ -44,6 +44,7 @@ contract ReturnsTooLittleToken {
     //////////////////////////////////////////////////////////////*/
 
     function approve(address, uint256) public virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0, 0x0100000000000000000000000000000000000000000000000000000000000000)
             return(0, 8)
@@ -51,6 +52,7 @@ contract ReturnsTooLittleToken {
     }
 
     function transfer(address, uint256) public virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0, 0x0100000000000000000000000000000000000000000000000000000000000000)
             return(0, 8)
@@ -62,6 +64,7 @@ contract ReturnsTooLittleToken {
         address,
         uint256
     ) public virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0, 0x0100000000000000000000000000000000000000000000000000000000000000)
             return(0, 8)

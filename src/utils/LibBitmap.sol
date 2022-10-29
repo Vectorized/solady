@@ -34,6 +34,7 @@ library LibBitmap {
         // Both cost the same amount of gas, but the former allows the returned value
         // to be reused without cleaning the upper bits.
         uint256 b = (bitmap.map[index >> 8] >> (index & 0xff)) & 1;
+        /// @solidity memory-safe-assembly
         assembly {
             isSet := b
         }
@@ -52,6 +53,7 @@ library LibBitmap {
     /// @dev Flips the bit at `index` in `bitmap`.
     /// Returns the boolean result of the flipped bit.
     function toggle(Bitmap storage bitmap, uint256 index) internal returns (bool newIsSet) {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, shr(8, index))
             mstore(0x20, bitmap.slot)
@@ -76,6 +78,7 @@ library LibBitmap {
         uint256 index,
         bool shouldSet
     ) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, bitmap.slot)
             mstore(0x00, shr(8, index))
@@ -97,6 +100,7 @@ library LibBitmap {
         uint256 start,
         uint256 amount
     ) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             let max := not(0)
             let shift := and(start, 0xff)
@@ -127,6 +131,7 @@ library LibBitmap {
         uint256 start,
         uint256 amount
     ) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             let shift := and(start, 0xff)
             mstore(0x20, bitmap.slot)
@@ -178,6 +183,7 @@ library LibBitmap {
     function findLastSet(Bitmap storage bitmap, uint256 before) internal view returns (uint256 setBitIndex) {
         uint256 bucket;
         uint256 bucketBits;
+        /// @solidity memory-safe-assembly
         assembly {
             setBitIndex := not(0)
             bucket := shr(8, before)
@@ -198,6 +204,7 @@ library LibBitmap {
         }
         if (bucketBits != 0) {
             setBitIndex = (bucket << 8) | LibBit.fls(bucketBits);
+            /// @solidity memory-safe-assembly
             assembly {
                 setBitIndex := or(setBitIndex, sub(0, gt(setBitIndex, before)))
             }

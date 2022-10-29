@@ -12,6 +12,7 @@ contract LibSortTest is TestPlus {
             for (uint256 i; i < a.length; ++i) {
                 address addr;
                 uint256 addrRaw = aRaw[i];
+                /// @solidity memory-safe-assembly
                 assembly {
                     addr := addrRaw
                 }
@@ -189,6 +190,7 @@ contract LibSortTest is TestPlus {
             for (uint256 i; i < a.length; ++i) {
                 address addr = address(uint160(randomness));
                 randomness = _stepRandomness(randomness);
+                /// @solidity memory-safe-assembly
                 assembly {
                     addr := or(addr, shl(160, randomness))
                 }
@@ -207,6 +209,7 @@ contract LibSortTest is TestPlus {
             for (uint256 i; i < a.length; ++i) {
                 address addr;
                 uint256 addrRaw = aRaw[i];
+                /// @solidity memory-safe-assembly
                 assembly {
                     addr := addrRaw
                 }
@@ -653,6 +656,7 @@ contract LibSortTest is TestPlus {
                         a[i] = a[j];
                     }
                 }
+                /// @solidity memory-safe-assembly
                 assembly {
                     mstore(a, add(i, 1))
                 }

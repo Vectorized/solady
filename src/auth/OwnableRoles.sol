@@ -104,6 +104,7 @@ abstract contract OwnableRoles {
     /// For performance reasons, this function will not check if there
     /// is an existing owner.
     function _initializeOwner(address newOwner) internal virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // Clean the upper 96 bits.
             newOwner := shr(96, shl(96, newOwner))
@@ -116,6 +117,7 @@ abstract contract OwnableRoles {
 
     /// @dev Sets the owner directly without authorization guard.
     function _setOwner(address newOwner) internal virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             let ownerSlot := not(_OWNER_SLOT_NOT)
             // Clean the upper 96 bits.
@@ -130,6 +132,7 @@ abstract contract OwnableRoles {
     /// @dev Grants the roles directly without authorization guard.
     /// Each bit of `roles` represents the role to turn on.
     function _grantRoles(address user, uint256 roles) internal virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
             mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
@@ -146,6 +149,7 @@ abstract contract OwnableRoles {
     /// @dev Removes the roles directly without authorization guard.
     /// Each bit of `roles` represents the role to turn off.
     function _removeRoles(address user, uint256 roles) internal virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
             mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
@@ -168,6 +172,7 @@ abstract contract OwnableRoles {
 
     /// @dev Allows the owner to transfer the ownership to `newOwner`.
     function transferOwnership(address newOwner) public payable virtual onlyOwner {
+        /// @solidity memory-safe-assembly
         assembly {
             // Clean the upper 96 bits.
             newOwner := shr(96, shl(96, newOwner))
@@ -185,6 +190,7 @@ abstract contract OwnableRoles {
 
     /// @dev Allows the owner to renounce their ownership.
     function renounceOwnership() public payable virtual onlyOwner {
+        /// @solidity memory-safe-assembly
         assembly {
             // Emit the {OwnershipTransferred} event.
             log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), 0)
@@ -198,6 +204,7 @@ abstract contract OwnableRoles {
     function requestOwnershipHandover() public payable virtual {
         unchecked {
             uint256 expires = block.timestamp + ownershipHandoverValidFor();
+            /// @solidity memory-safe-assembly
             assembly {
                 // Compute and set the handover slot to 1.
                 mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
@@ -210,6 +217,7 @@ abstract contract OwnableRoles {
 
     /// @dev Cancels the two-step ownership handover to the caller, if any.
     function cancelOwnershipHandover() public payable virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute and set the handover slot to 0.
             mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
@@ -222,6 +230,7 @@ abstract contract OwnableRoles {
     /// @dev Allows the owner to complete the two-step ownership handover to `pendingOwner`.
     /// Reverts if there is no existing ownership handover requested by `pendingOwner`.
     function completeOwnershipHandover(address pendingOwner) public payable virtual onlyOwner {
+        /// @solidity memory-safe-assembly
         assembly {
             // Clean the upper 96 bits.
             pendingOwner := shr(96, shl(96, pendingOwner))
@@ -266,6 +275,7 @@ abstract contract OwnableRoles {
 
     /// @dev Returns the owner of the contract.
     function owner() public view virtual returns (address result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := sload(not(_OWNER_SLOT_NOT))
         }
@@ -273,6 +283,7 @@ abstract contract OwnableRoles {
 
     /// @dev Returns the expiry timestamp for the two-step ownership handover to `pendingOwner`.
     function ownershipHandoverExpiresAt(address pendingOwner) public view virtual returns (uint256 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the handover slot.
             mstore(0x00, or(shl(96, pendingOwner), _HANDOVER_SLOT_SEED))
@@ -288,6 +299,7 @@ abstract contract OwnableRoles {
 
     /// @dev Returns whether `user` has any of `roles`.
     function hasAnyRole(address user, uint256 roles) public view virtual returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
             mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
@@ -299,6 +311,7 @@ abstract contract OwnableRoles {
 
     /// @dev Returns whether `user` has all of `roles`.
     function hasAllRoles(address user, uint256 roles) public view virtual returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
             mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
@@ -309,6 +322,7 @@ abstract contract OwnableRoles {
 
     /// @dev Returns the roles of `user`.
     function rolesOf(address user) public view virtual returns (uint256 roles) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
             mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
@@ -321,6 +335,7 @@ abstract contract OwnableRoles {
     /// This is meant for frontends like Etherscan, and is therefore not fully optimized.
     /// Not recommended to be called on-chain.
     function rolesFromOrdinals(uint8[] memory ordinals) public pure returns (uint256 roles) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Skip the length slot.
             let o := add(ordinals, 0x20)
@@ -337,6 +352,7 @@ abstract contract OwnableRoles {
     /// This is meant for frontends like Etherscan, and is therefore not fully optimized.
     /// Not recommended to be called on-chain.
     function ordinalsFromRoles(uint256 roles) public pure returns (uint8[] memory ordinals) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Grab the pointer to the free memory.
             let ptr := add(mload(0x40), 0x20)
@@ -367,6 +383,7 @@ abstract contract OwnableRoles {
 
     /// @dev Marks a function as only callable by the owner.
     modifier onlyOwner() virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // If the caller is not the stored owner, revert.
             if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
@@ -379,6 +396,7 @@ abstract contract OwnableRoles {
 
     /// @dev Marks a function as only callable by an account with `roles`.
     modifier onlyRoles(uint256 roles) virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
             mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
@@ -395,6 +413,7 @@ abstract contract OwnableRoles {
     /// @dev Marks a function as only callable by the owner or by an account
     /// with `roles`. Checks for ownership first, then lazily checks for roles.
     modifier onlyOwnerOrRoles(uint256 roles) virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // If the caller is not the stored owner.
             if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
@@ -414,6 +433,7 @@ abstract contract OwnableRoles {
     /// @dev Marks a function as only callable by an account with `roles`
     /// or the owner. Checks for roles first, then lazily checks for ownership.
     modifier onlyRolesOrOwner(uint256 roles) virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
             mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))

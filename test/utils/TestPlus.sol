@@ -49,6 +49,7 @@ contract TestPlus is Test {
     }
 
     function _roundUpFreeMemoryPointer() internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, and(add(mload(0x40), 31), not(31)))
         }
@@ -56,6 +57,7 @@ contract TestPlus is Test {
 
     function _brutalizeFreeMemoryStart() internal pure {
         bool failed;
+        /// @solidity memory-safe-assembly
         assembly {
             let freeMemoryPointer := mload(0x40)
             // This ensures that the memory allocated is 32-byte aligned.
@@ -71,6 +73,7 @@ contract TestPlus is Test {
     }
 
     function _stepRandomness(uint256 randomness) internal pure returns (uint256 nextRandomness) {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, randomness)
             nextRandomness := keccak256(0x00, 0x20)

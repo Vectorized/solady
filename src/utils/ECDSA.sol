@@ -31,6 +31,7 @@ library ECDSA {
     /// As such, it is extremely important to ensure that the address which
     /// the `result` is compared against is never zero.
     function recover(bytes32 hash, bytes calldata signature) internal view returns (address result) {
+        /// @solidity memory-safe-assembly
         assembly {
             if eq(signature.length, 65) {
                 // Copy the free memory pointer so that we can restore it later.
@@ -87,6 +88,7 @@ library ECDSA {
     ) internal view returns (address result) {
         uint8 v;
         bytes32 s;
+        /// @solidity memory-safe-assembly
         assembly {
             s := shr(1, shl(1, vs))
             v := add(shr(255, vs), 27)
@@ -107,6 +109,7 @@ library ECDSA {
         bytes32 r,
         bytes32 s
     ) internal view returns (address result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Copy the free memory pointer so that we can restore it later.
             let m := mload(0x40)
@@ -146,6 +149,7 @@ library ECDSA {
     /// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
     /// JSON-RPC method as part of EIP-191.
     function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Store into scratch space for keccak256.
             mstore(0x20, hash)

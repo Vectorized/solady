@@ -586,6 +586,7 @@ contract SafeTransferLibTest is TestPlus {
     }
 
     function garbageIsGarbage(bytes memory garbage) public pure returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := and(or(lt(mload(garbage), 32), iszero(eq(mload(add(garbage, 0x20)), 1))), gt(mload(garbage), 0))
         }

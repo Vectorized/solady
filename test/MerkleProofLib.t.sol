@@ -260,6 +260,7 @@ contract MerkleProofLibTest is Test {
         bool[] calldata flags
     ) external returns (bool result) {
         uint256[] memory offsetsAndLengths = new uint256[](12);
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(add(offsetsAndLengths, shl(5, add(1, 0))), proof.offset)
             mstore(add(offsetsAndLengths, shl(5, add(1, 1))), leafs.offset)
@@ -269,6 +270,7 @@ contract MerkleProofLibTest is Test {
             mstore(add(offsetsAndLengths, shl(5, add(1, 5))), flags.length)
         }
         result = MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(add(offsetsAndLengths, shl(5, add(1, 6))), proof.offset)
             mstore(add(offsetsAndLengths, shl(5, add(1, 7))), leafs.offset)
@@ -316,6 +318,7 @@ contract MerkleProofLibTest is Test {
             data = _hashLevel(data);
         }
         // Resize the length of the array to fit.
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(result, pos)
         }
@@ -343,6 +346,7 @@ contract MerkleProofLibTest is Test {
     }
 
     function _hashPair(bytes32 left, bytes32 right) private pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             switch lt(left, right)
             case 0 {

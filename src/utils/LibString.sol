@@ -25,6 +25,7 @@ library LibString {
 
     /// @dev Returns the base 10 decimal representation of `value`.
     function toString(uint256 value) internal pure returns (string memory str) {
+        /// @solidity memory-safe-assembly
         assembly {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
             // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.
@@ -74,6 +75,7 @@ library LibString {
     /// Reverts if `length` is too small for the output to contain all the digits.
     function toHexString(uint256 value, uint256 length) internal pure returns (string memory str) {
         str = toHexStringNoPrefix(value, length);
+        /// @solidity memory-safe-assembly
         assembly {
             let strLength := add(mload(str), 2) // Compute the length.
             mstore(str, 0x3078) // Write the "0x" prefix.
@@ -88,6 +90,7 @@ library LibString {
     /// giving a total length of `length * 2` bytes.
     /// Reverts if `length` is too small for the output to contain all the digits.
     function toHexStringNoPrefix(uint256 value, uint256 length) internal pure returns (string memory str) {
+        /// @solidity memory-safe-assembly
         assembly {
             let start := mload(0x40)
             // We need 0x20 bytes for the trailing zeros padding, `length * 2` bytes
@@ -142,6 +145,7 @@ library LibString {
     /// a length of `20 * 2 + 2` bytes.
     function toHexString(uint256 value) internal pure returns (string memory str) {
         str = toHexStringNoPrefix(value);
+        /// @solidity memory-safe-assembly
         assembly {
             let strLength := add(mload(str), 2) // Compute the length.
             mstore(str, 0x3078) // Write the "0x" prefix.
@@ -155,6 +159,7 @@ library LibString {
     /// As address are 20 bytes long, the output will left-padded to have
     /// a length of `20 * 2` bytes.
     function toHexStringNoPrefix(uint256 value) internal pure returns (string memory str) {
+        /// @solidity memory-safe-assembly
         assembly {
             let start := mload(0x40)
             // We need 0x20 bytes for the trailing zeros padding, 0x20 bytes for the length,
@@ -199,6 +204,7 @@ library LibString {
     /// https://eips.ethereum.org/EIPS/eip-55
     function toHexStringChecksumed(address value) internal pure returns (string memory str) {
         str = toHexString(value);
+        /// @solidity memory-safe-assembly
         assembly {
             let mask := shl(6, div(not(0), 255)) // `0b010000000100000000 ...`
             let o := add(str, 0x22)
@@ -221,6 +227,7 @@ library LibString {
     /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
     function toHexString(address value) internal pure returns (string memory str) {
         str = toHexStringNoPrefix(value);
+        /// @solidity memory-safe-assembly
         assembly {
             let strLength := add(mload(str), 2) // Compute the length.
             mstore(str, 0x3078) // Write the "0x" prefix.
@@ -232,6 +239,7 @@ library LibString {
     /// @dev Returns the hexadecimal representation of `value`.
     /// The output is encoded using 2 hexadecimal digits per byte.
     function toHexStringNoPrefix(address value) internal pure returns (string memory str) {
+        /// @solidity memory-safe-assembly
         assembly {
             str := mload(0x40)
 
@@ -280,6 +288,7 @@ library LibString {
         string memory search,
         string memory replacement
     ) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let subjectLength := mload(subject)
             let searchLength := mload(search)
@@ -369,6 +378,7 @@ library LibString {
         string memory search,
         uint256 from
     ) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for { let subjectLength := mload(subject) } 1 {} {
@@ -436,6 +446,7 @@ library LibString {
         string memory search,
         uint256 from
     ) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for {} 1 {} {
@@ -481,6 +492,7 @@ library LibString {
 
     /// @dev Returns whether `subject` starts with `search`.
     function startsWith(string memory subject, string memory search) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let searchLength := mload(search)
             // Just using keccak256 directly is actually cheaper.
@@ -493,6 +505,7 @@ library LibString {
 
     /// @dev Returns whether `subject` ends with `search`.
     function endsWith(string memory subject, string memory search) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let searchLength := mload(search)
             let subjectLength := mload(subject)
@@ -515,6 +528,7 @@ library LibString {
 
     /// @dev Returns `subject` repeated `times`.
     function repeat(string memory subject, uint256 times) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let subjectLength := mload(subject)
             if iszero(or(iszero(times), iszero(subjectLength))) {
@@ -555,6 +569,7 @@ library LibString {
         uint256 start,
         uint256 end
     ) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let subjectLength := mload(subject)
             if iszero(gt(subjectLength, end)) {
@@ -595,6 +610,7 @@ library LibString {
     /// @dev Returns all the indices of `search` in `subject`.
     /// The indices are byte offsets.
     function indicesOf(string memory subject, string memory search) internal pure returns (uint256[] memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let subjectLength := mload(subject)
             let searchLength := mload(search)
@@ -656,6 +672,7 @@ library LibString {
     /// @dev Returns a arrays of strings based on the `delimiter` inside of the `subject` string.
     function split(string memory subject, string memory delimiter) internal pure returns (string[] memory result) {
         uint256[] memory indices = indicesOf(subject, delimiter);
+        /// @solidity memory-safe-assembly
         assembly {
             let w := not(31)
             let indexPtr := add(indices, 0x20)
@@ -703,6 +720,7 @@ library LibString {
     /// @dev Returns a concatenated string of `a` and `b`.
     /// Cheaper than `string.concat()` and does not de-align the free memory pointer.
     function concat(string memory a, string memory b) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let w := not(31)
             result := mload(0x40)
@@ -739,6 +757,7 @@ library LibString {
 
     /// @dev Escapes the string to be used within HTML tags.
     function escapeHTML(string memory s) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for {
@@ -778,6 +797,7 @@ library LibString {
 
     /// @dev Escapes the string to be used within double-quotes in a JSON.
     function escapeJSON(string memory s) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for {
@@ -831,6 +851,7 @@ library LibString {
     /// @dev Packs a single string with its length into a single word.
     /// Returns `bytes32(0)` if the length is zero or greater than 31.
     function packOne(string memory a) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // We don't need to zero right pad the string,
             // since this is our own custom non-standard packing scheme.
@@ -848,6 +869,7 @@ library LibString {
     /// Returns the empty string if `packed` is `bytes32(0)`.
     /// If `packed` is not an output of {packOne}, the output behaviour is undefined.
     function unpackOne(bytes32 packed) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Grab the free memory pointer.
             result := mload(0x40)
@@ -865,6 +887,7 @@ library LibString {
     /// @dev Packs two strings with their lengths into a single word.
     /// Returns `bytes32(0)` if combined length is zero or greater than 30.
     function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let aLength := mload(a)
             // We don't need to zero right pad the strings,
@@ -883,6 +906,7 @@ library LibString {
     /// Returns the empty strings if `packed` is `bytes32(0)`.
     /// If `packed` is not an output of {packTwo}, the output behaviour is undefined.
     function unpackTwo(bytes32 packed) internal pure returns (string memory resultA, string memory resultB) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Grab the free memory pointer.
             resultA := mload(0x40)

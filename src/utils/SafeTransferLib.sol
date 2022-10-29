@@ -42,6 +42,7 @@ library SafeTransferLib {
     /// @dev Sends `amount` (in wei) ETH to `to`.
     /// Reverts upon failure.
     function safeTransferETH(address to, uint256 amount) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             // Transfer the ETH and check if it succeeded or not.
             if iszero(call(gas(), to, amount, 0, 0, 0, 0)) {
@@ -66,6 +67,7 @@ library SafeTransferLib {
         uint256 amount,
         uint256 gasStipend
     ) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             // If insufficient balance, revert.
             if lt(selfbalance(), amount) {
@@ -99,6 +101,7 @@ library SafeTransferLib {
     /// Reverts if the current contract has insufficient balance.
     function forceSafeTransferETH(address to, uint256 amount) internal {
         // Manually inlined because the compiler doesn't inline functions with branches.
+        /// @solidity memory-safe-assembly
         assembly {
             // If insufficient balance, revert.
             if lt(selfbalance(), amount) {
@@ -134,6 +137,7 @@ library SafeTransferLib {
         uint256 amount,
         uint256 gasStipend
     ) internal returns (bool success) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Transfer the ETH and check if it succeeded or not.
             success := call(gasStipend, to, amount, 0, 0, 0, 0)
@@ -155,6 +159,7 @@ library SafeTransferLib {
         address to,
         uint256 amount
     ) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             // We'll write our calldata to this slot below, but restore it later.
             let memPointer := mload(0x40)
@@ -194,6 +199,7 @@ library SafeTransferLib {
         address to,
         uint256 amount
     ) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             // We'll write our calldata to this slot below, but restore it later.
             let memPointer := mload(0x40)
@@ -231,6 +237,7 @@ library SafeTransferLib {
         address to,
         uint256 amount
     ) internal {
+        /// @solidity memory-safe-assembly
         assembly {
             // We'll write our calldata to this slot below, but restore it later.
             let memPointer := mload(0x40)
