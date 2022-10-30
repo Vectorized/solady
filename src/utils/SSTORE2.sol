@@ -100,6 +100,7 @@ library SSTORE2 {
             data := mload(0x40)
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
+            mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
             extcodecopy(pointer, add(data, 0x20), 1, size)
         }
     }
@@ -134,6 +135,7 @@ library SSTORE2 {
             data := mload(0x40)
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
+            mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
             extcodecopy(pointer, add(data, 0x20), add(start, 1), size)
         }
     }
@@ -177,6 +179,7 @@ library SSTORE2 {
             data := mload(0x40)
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
+            mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
             extcodecopy(pointer, add(data, 0x20), add(start, 1), size)
         }
     }

@@ -79,4 +79,34 @@ contract TestPlus is Test {
             nextRandomness := keccak256(0x00, 0x20)
         }
     }
+
+    function _checkZeroRightPadded(string memory s) internal pure {
+        bool failed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let lastAlignedWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
+            let remainder := and(mload(s), 31)
+            if remainder {
+                if shl(mul(8, remainder), lastAlignedWord) {
+                    failed := 1
+                }
+            }
+        }
+        if (failed) revert("String is not zero right padded!");
+    }
+
+    function _checkZeroRightPadded(bytes memory s) internal pure {
+        bool failed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let lastAlignedWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
+            let remainder := and(mload(s), 31)
+            if remainder {
+                if shl(mul(8, remainder), lastAlignedWord) {
+                    failed := 1
+                }
+            }
+        }
+        if (failed) revert("Bytes is not zero right padded!");
+    }
 }

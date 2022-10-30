@@ -37,7 +37,7 @@ contract DynamicBufferLibTest is TestPlus {
                 buffer.append(inputs[i]);
                 assertEq(buffer.data.length, expectedLength);
                 _brutalizeFreeMemoryStart();
-                _checkBytesIsZeroRightPadded(buffer.data);
+                _checkZeroRightPadded(buffer.data);
                 bool isCorrupted;
                 /// @solidity memory-safe-assembly
                 assembly {
@@ -97,21 +97,6 @@ contract DynamicBufferLibTest is TestPlus {
         chunks[15] = bytes("Hehe");
 
         joinedHash = 0x166b0e99fea53034ed188896344996efc141b922127f90922905e478cb26b312;
-    }
-
-    function _checkBytesIsZeroRightPadded(bytes memory s) internal pure {
-        bool failed;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let lastAlignedWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
-            let remainder := and(mload(s), 31)
-            if remainder {
-                if shl(mul(8, remainder), lastAlignedWord) {
-                    failed := 1
-                }
-            }
-        }
-        if (failed) revert("Bytes is not zero right padded!");
     }
 
     function _boundInputs(bytes[] memory inputs) internal pure {

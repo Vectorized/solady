@@ -69,7 +69,10 @@ contract SSTORE2Test is TestPlus {
     }
 
     function testFuzzWriteRead(bytes calldata testBytes) public brutalizeMemory {
-        assertEq(SSTORE2.read(SSTORE2.write(testBytes)), testBytes);
+        bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes));
+        _brutalizeFreeMemoryStart();
+        _checkZeroRightPadded(readResult);
+        assertEq(readResult, testBytes);
     }
 
     function testFuzzWriteReadCustomStartBound(bytes calldata testBytes, uint256 startIndex) public brutalizeMemory {
@@ -77,7 +80,10 @@ contract SSTORE2Test is TestPlus {
 
         startIndex = bound(startIndex, 0, testBytes.length);
 
-        assertEq(SSTORE2.read(SSTORE2.write(testBytes), startIndex), bytes(testBytes[startIndex:]));
+        bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex);
+        _brutalizeFreeMemoryStart();
+        _checkZeroRightPadded(readResult);
+        assertEq(readResult, bytes(testBytes[startIndex:]));
     }
 
     function testFuzzWriteReadCustomBounds(
@@ -92,7 +98,10 @@ contract SSTORE2Test is TestPlus {
 
         if (startIndex > endIndex) return;
 
-        assertEq(SSTORE2.read(SSTORE2.write(testBytes), startIndex, endIndex), bytes(testBytes[startIndex:endIndex]));
+        bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex, endIndex);
+        _brutalizeFreeMemoryStart();
+        _checkZeroRightPadded(readResult);
+        assertEq(readResult, bytes(testBytes[startIndex:endIndex]));
     }
 
     function testFuzzReadInvalidPointerRevert(address pointer) public brutalizeMemory {
