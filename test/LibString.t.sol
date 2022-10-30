@@ -78,7 +78,7 @@ contract LibStringTest is TestPlus {
     }
 
     function testToStringZeroRightPadded(uint256 x) public pure {
-        _checkStringIsZeroRightPadded(LibString.toString(x));
+        _checkZeroRightPadded(LibString.toString(x));
     }
 
     function testToHexStringZero() public {
@@ -108,7 +108,7 @@ contract LibStringTest is TestPlus {
     }
 
     function testToHexStringZeroRightPadded(uint256 x) public pure {
-        _checkStringIsZeroRightPadded(LibString.toHexString(x));
+        _checkZeroRightPadded(LibString.toHexString(x));
     }
 
     function testToHexStringFixedLengthInsufficientLength() public {
@@ -126,7 +126,7 @@ contract LibStringTest is TestPlus {
     function testToHexStringFixedLengthZeroRightPadded(uint256 x, uint256 randomness) public pure {
         uint256 minLength = (bytes(LibString.toHexString(x)).length - 2) * 2;
         uint256 length = (randomness % 32) + minLength;
-        _checkStringIsZeroRightPadded(LibString.toHexString(x, length));
+        _checkZeroRightPadded(LibString.toHexString(x, length));
     }
 
     function testFromAddressToHexString() public {
@@ -137,7 +137,7 @@ contract LibStringTest is TestPlus {
     }
 
     function testAddressToHexStringZeroRightPadded(address x) public pure {
-        _checkStringIsZeroRightPadded(LibString.toHexString(x));
+        _checkZeroRightPadded(LibString.toHexString(x));
     }
 
     function testFromAddressToHexStringWithLeadingZeros() public {
@@ -212,18 +212,18 @@ contract LibStringTest is TestPlus {
         }
         string memory checksumed = LibString.toHexStringChecksumed(r);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(checksumed);
+        _checkZeroRightPadded(checksumed);
         assertEq(keccak256(bytes(checksumed)), keccak256(bytes(expectedResult)));
     }
 
     function testHexStringNoPrefixVariants(uint256 x, uint256 randomness) public brutalizeMemory {
         string memory noPrefix = LibString.toHexStringNoPrefix(x);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(noPrefix);
+        _checkZeroRightPadded(noPrefix);
         string memory expectedResult = LibString.concat("0x", noPrefix);
         string memory withPrefix = LibString.toHexString(x);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(withPrefix);
+        _checkZeroRightPadded(withPrefix);
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
 
         uint256 length;
@@ -233,11 +233,11 @@ contract LibStringTest is TestPlus {
         }
         noPrefix = LibString.toHexStringNoPrefix(x, length);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(noPrefix);
+        _checkZeroRightPadded(noPrefix);
         expectedResult = LibString.concat("0x", noPrefix);
         withPrefix = LibString.toHexString(x, length);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(withPrefix);
+        _checkZeroRightPadded(withPrefix);
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
 
         address xAddress;
@@ -247,11 +247,11 @@ contract LibStringTest is TestPlus {
         }
         noPrefix = LibString.toHexStringNoPrefix(xAddress);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(noPrefix);
+        _checkZeroRightPadded(noPrefix);
         expectedResult = LibString.concat("0x", noPrefix);
         withPrefix = LibString.toHexString(xAddress);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(withPrefix);
+        _checkZeroRightPadded(withPrefix);
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
     }
 
@@ -305,7 +305,7 @@ contract LibStringTest is TestPlus {
             _brutalizeFreeMemoryStart();
             string memory replaced = LibString.replace(subject, search, replacement);
             _brutalizeFreeMemoryStart();
-            _checkStringIsZeroRightPadded(replaced);
+            _checkZeroRightPadded(replaced);
             assertEq(replaced, expectedResult);
         } else {
             string memory expectedResult = string(
@@ -504,7 +504,7 @@ contract LibStringTest is TestPlus {
         _brutalizeFreeMemoryStart();
         string memory expectedResult = _repeatOriginal(subject, times);
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(repeated);
+        _checkZeroRightPadded(repeated);
         assertEq(repeated, expectedResult);
     }
 
@@ -543,7 +543,7 @@ contract LibStringTest is TestPlus {
         uint256 end = start + bytes(expectedResult).length;
 
         string memory slice = LibString.slice(subject, start, end);
-        _checkStringIsZeroRightPadded(slice);
+        _checkZeroRightPadded(slice);
         assertEq(slice, expectedResult);
     }
 
@@ -676,7 +676,7 @@ contract LibStringTest is TestPlus {
             _brutalizeFreeMemoryStart();
             assertTrue(_stringArraysAreSame(splitted, elements));
             for (uint256 i; i < splitted.length; ++i) {
-                _checkStringIsZeroRightPadded(splitted[i]);
+                _checkZeroRightPadded(splitted[i]);
             }
         }
     }
@@ -729,7 +729,7 @@ contract LibStringTest is TestPlus {
         string memory expectedResult = string(bytes.concat(bytes(a), bytes(b)));
         _roundUpFreeMemoryPointer();
         _brutalizeFreeMemoryStart();
-        _checkStringIsZeroRightPadded(concatenated);
+        _checkZeroRightPadded(concatenated);
         assertEq(concatenated, expectedResult);
     }
 
@@ -801,7 +801,7 @@ contract LibStringTest is TestPlus {
 
         _roundUpFreeMemoryPointer();
         string memory escaped = LibString.escapeHTML(input);
-        _checkStringIsZeroRightPadded(escaped);
+        _checkZeroRightPadded(escaped);
         _brutalizeFreeMemoryStart();
 
         assertEq(expectedResult, escaped);
@@ -827,7 +827,7 @@ contract LibStringTest is TestPlus {
                     string memory hexCode = LibString.replace(LibString.toHexString(i), "0x", "00");
                     string memory expectedOutput = string(bytes.concat(bytes("abc\\u"), bytes(hexCode), bytes("_123")));
                     string memory escaped = LibString.escapeJSON(input);
-                    _checkStringIsZeroRightPadded(escaped);
+                    _checkZeroRightPadded(escaped);
                     assertEq(escaped, expectedOutput);
                 }
             }
@@ -856,7 +856,7 @@ contract LibStringTest is TestPlus {
         _roundUpFreeMemoryPointer();
         bytes32 packed = LibString.packOne(a);
         string memory unpacked = LibString.unpackOne(packed);
-        _checkStringIsZeroRightPadded(unpacked);
+        _checkZeroRightPadded(unpacked);
         _brutalizeFreeMemoryStart();
 
         if (bytes(a).length < 32) {
@@ -904,8 +904,8 @@ contract LibStringTest is TestPlus {
         bytes32 packed = LibString.packTwo(a, b);
         _roundUpFreeMemoryPointer();
         (string memory unpackedA, string memory unpackedB) = LibString.unpackTwo(packed);
-        _checkStringIsZeroRightPadded(unpackedA);
-        _checkStringIsZeroRightPadded(unpackedB);
+        _checkZeroRightPadded(unpackedA);
+        _checkZeroRightPadded(unpackedB);
         _brutalizeFreeMemoryStart();
 
         unchecked {
@@ -1003,21 +1003,6 @@ contract LibStringTest is TestPlus {
                 }
             }
         }
-    }
-
-    function _checkStringIsZeroRightPadded(string memory s) internal pure {
-        bool failed;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let lastAlignedWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
-            let remainder := and(mload(s), 31)
-            if remainder {
-                if shl(mul(8, remainder), lastAlignedWord) {
-                    failed := 1
-                }
-            }
-        }
-        if (failed) revert("String is not zero right padded!");
     }
 
     function _stringArraysAreSame(string[] memory a, string[] memory b) internal pure returns (bool) {
