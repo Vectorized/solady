@@ -69,7 +69,7 @@ contract TestPlus is Test {
             // decoded string and cause the subsequent asserts to fail.
             mstore(freeMemoryPointer, keccak256(0x00, 0x60))
         }
-        if (failed) revert("Free memory pointer `0x40` is not 32-byte word aligned!");
+        if (failed) revert("Free memory pointer `0x40` not 32-byte word aligned!");
     }
 
     function _stepRandomness(uint256 randomness) internal pure returns (uint256 nextRandomness) {
@@ -84,29 +84,29 @@ contract TestPlus is Test {
         bool failed;
         /// @solidity memory-safe-assembly
         assembly {
-            let lastAlignedWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
+            let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
             let remainder := and(mload(s), 31)
             if remainder {
-                if shl(mul(8, remainder), lastAlignedWord) {
+                if shl(mul(8, remainder), lastWord) {
                     failed := 1
                 }
             }
         }
-        if (failed) revert("String is not zero right padded!");
+        if (failed) revert("String not zero right padded!");
     }
 
     function _checkZeroRightPadded(bytes memory s) internal pure {
         bool failed;
         /// @solidity memory-safe-assembly
         assembly {
-            let lastAlignedWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
+            let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
             let remainder := and(mload(s), 31)
             if remainder {
-                if shl(mul(8, remainder), lastAlignedWord) {
+                if shl(mul(8, remainder), lastWord) {
                     failed := 1
                 }
             }
         }
-        if (failed) revert("Bytes is not zero right padded!");
+        if (failed) revert("Bytes not zero right padded!");
     }
 }

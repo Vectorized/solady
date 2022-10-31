@@ -834,6 +834,10 @@ contract LibStringTest is TestPlus {
         }
     }
 
+    function testStringEq(string memory a, string memory b) public {
+        assertEq(LibString.eq(a, b), keccak256(bytes(a)) == keccak256(bytes(b)));
+    }
+
     function testStringPackAndUnpackOneDifferential(string memory a) public brutalizeMemory {
         a = LibString.slice(a, 0);
         bytes32 packed = LibString.packOne(a);
