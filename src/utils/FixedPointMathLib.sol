@@ -447,6 +447,17 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns the log2 of `x`, rounded up.
+    function log2Up(uint256 x) internal pure returns (uint256 r) {
+        unchecked {
+            uint256 isNotPo2;
+            assembly {
+                isNotPo2 := iszero(iszero(and(x, sub(x, 1))))
+            }
+            return log2(x) + isNotPo2;
+        }
+    }
+
     /// @dev Returns the averege of `x` and `y`.
     function avg(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly

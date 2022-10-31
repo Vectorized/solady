@@ -225,6 +225,31 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.log2(1073741824), 30);
     }
 
+    function testLog2RevertsForZero() public {
+        vm.expectRevert(FixedPointMathLib.Log2Undefined.selector);
+        FixedPointMathLib.log2(0);
+    }
+
+    function testLog2Up() public {
+        assertEq(FixedPointMathLib.log2Up(1), 0);
+        assertEq(FixedPointMathLib.log2Up(2), 1);
+        assertEq(FixedPointMathLib.log2Up(2 + 1), 2);
+        assertEq(FixedPointMathLib.log2Up(4), 2);
+        assertEq(FixedPointMathLib.log2Up(4 + 1), 3);
+        assertEq(FixedPointMathLib.log2Up(4 + 2), 3);
+        assertEq(FixedPointMathLib.log2Up(1024), 10);
+        assertEq(FixedPointMathLib.log2Up(1024 + 1), 11);
+        assertEq(FixedPointMathLib.log2Up(1048576), 20);
+        assertEq(FixedPointMathLib.log2Up(1048576 + 1), 21);
+        assertEq(FixedPointMathLib.log2Up(1073741824), 30);
+        assertEq(FixedPointMathLib.log2Up(1073741824 + 1), 31);
+    }
+
+    function testLog2UpRevertsForZero() public {
+        vm.expectRevert(FixedPointMathLib.Log2Undefined.selector);
+        FixedPointMathLib.log2Up(0);
+    }
+
     function testAvg() public {
         assertEq(FixedPointMathLib.avg(5, 6), 5);
         assertEq(FixedPointMathLib.avg(0, 1), 0);
@@ -474,6 +499,14 @@ contract FixedPointMathLibTest is Test {
             assertEq(FixedPointMathLib.log2((1 << i) - 1), i - 1);
             assertEq(FixedPointMathLib.log2((1 << i)), i);
             assertEq(FixedPointMathLib.log2((1 << i) + 1), i);
+        }
+    }
+
+    function testFuzzLog2Up() public {
+        for (uint256 i = 2; i < 255; i++) {
+            assertEq(FixedPointMathLib.log2Up((1 << i) - 1), i);
+            assertEq(FixedPointMathLib.log2Up((1 << i)), i);
+            assertEq(FixedPointMathLib.log2Up((1 << i) + 1), i + 1);
         }
     }
 
