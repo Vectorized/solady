@@ -29,7 +29,7 @@ library FixedPointMathLib {
     /// @dev The division failed, as the denominator is zero.
     error DivFailed();
 
-    /// @dev The full precision multiply-divide operation failed, either due 
+    /// @dev The full precision multiply-divide operation failed, either due
     /// to the result being larger than 256 bits, or a division by a zero.
     error FullMulDivFailed();
 
@@ -545,7 +545,7 @@ library FixedPointMathLib {
             assembly {
                 isNotPo2 := iszero(iszero(and(x, sub(x, 1))))
             }
-            return log2(x) + isNotPo2; 
+            return log2(x) + isNotPo2;
         }
     }
 
