@@ -265,7 +265,7 @@ library FixedPointMathLib {
     /*                  GENERAL NUMBER UTILITIES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Calculates floor(a × b ÷ denominator) with full precision.
+    /// @dev Calculates floor(a × b ÷ denominator) with full precision.
     /// Throws if result overflows a uint256 or when the denominator is zero.
     /// @dev Credit to Remco Bloemen under MIT license https://xn--2-umb.com/21/muldiv
     function fullMulDiv(
@@ -348,6 +348,28 @@ library FixedPointMathLib {
                 inv := mul(inv, sub(2, mul(denominator, inv))) // inverse mod 2**128
                 result := mul(prod0, mul(inv, sub(2, mul(denominator, inv)))) // inverse mod 2**256
                 break
+            }
+        }
+    }
+
+    /// @dev Calculates floor(a × b ÷ denominator) with full precision, rounded up.
+    /// Throws if result overflows a uint256 or when the denominator is zero.
+    /// Credit to Uniswap-v3-core: https://github.com/Uniswap/v3-core/blob/contracts/libraries/FullMath.sol
+    function fullMulDivUp(
+        uint256 a,
+        uint256 b,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
+        result = fullMulDiv(a, b, denominator);
+        assembly {
+            if mulmod(a, b, denominator) {
+                if iszero(add(result, 1)) {
+                    // Store the function selector of `FullMulDivFailed()`.
+                    mstore(0x00, 0xae47f702)
+                    // Revert with (offset, size).
+                    revert(0x1c, 0x04)
+                }
+                result := add(result, 1)
             }
         }
     }

@@ -318,15 +318,33 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.fullMulDiv(2**200, 2**200, 2**200), 2**200);
     }
 
+    function testFullMulDivUpRevertsIfRoundedUpResultOverflowsCase1() public {
+        vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
+        FixedPointMathLib.fullMulDivUp(
+            535006138814359,
+            432862656469423142931042426214547535783388063929571229938474969,
+            2
+        );
+    }
+
+    function testFullMulDivUpRevertsIfRoundedUpResultOverflowsCase2() public {
+        vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
+        FixedPointMathLib.fullMulDivUp(
+            115792089237316195423570985008687907853269984659341747863450311749907997002549,
+            115792089237316195423570985008687907853269984659341747863450311749907997002550,
+            115792089237316195423570985008687907853269984653042931687443039491902864365164
+        );
+    }
+
     function testFuzzFullMulDiv(
         uint256 a,
         uint256 b,
         uint256 d
-    ) public {
+    ) public returns (uint256 result) {
         if (d == 0) {
             vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
             FixedPointMathLib.fullMulDiv(a, b, d);
-            return;
+            return 0;
         }
 
         // Compute a * b in Chinese Remainder Basis
@@ -348,7 +366,7 @@ contract FixedPointMathLibTest is Test {
         if (prod1 >= d) {
             vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
             FixedPointMathLib.fullMulDiv(a, b, d);
-            return;
+            return 0;
         }
 
         uint256 q = FixedPointMathLib.fullMulDiv(a, b, d);
@@ -364,6 +382,27 @@ contract FixedPointMathLibTest is Test {
 
         assertEq(actualA, expectedA);
         assertEq(actualB, expectedB);
+        return q;
+    }
+
+    function testFuzzFullMulDivUp(
+        uint256 a,
+        uint256 b,
+        uint256 d
+    ) public {
+        uint256 fullMulDivResult = testFuzzFullMulDiv(a, b, d);
+        if (fullMulDivResult != 0) {
+            uint256 expectedResult = fullMulDivResult;
+            if (mulmod(a, b, d) > 0) {
+                if (!(fullMulDivResult < type(uint256).max)) {
+                    vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
+                    FixedPointMathLib.fullMulDivUp(a, b, d);
+                    return;
+                }
+                expectedResult++;
+            }
+            assertEq(FixedPointMathLib.fullMulDivUp(a, b, d), expectedResult);
+        }
     }
 
     function testFuzzMulWad(uint256 x, uint256 y) public {
