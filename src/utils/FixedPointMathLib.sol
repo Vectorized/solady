@@ -362,6 +362,7 @@ library FixedPointMathLib {
         uint256 denominator
     ) internal pure returns (uint256 result) {
         result = fullMulDiv(a, b, denominator);
+        /// @solidity memory-safe-assembly
         assembly {
             if mulmod(a, b, denominator) {
                 if iszero(add(result, 1)) {
