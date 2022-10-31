@@ -47,7 +47,7 @@ library FixedPointMathLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Equivalent to `(x * y) / WAD` rounded down.
-    function mulWadDown(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function mulWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
@@ -77,7 +77,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Equivalent to `(x * WAD) / y` rounded down.
-    function divWadDown(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function divWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
@@ -263,7 +263,7 @@ library FixedPointMathLib {
 
     /// @dev Returns `floor(x * y / denominator)`.
     /// Reverts if `x * y` overflows, or `denominator` is zero.
-    function mulDivDown(
+    function mulDiv(
         uint256 x,
         uint256 y,
         uint256 denominator
