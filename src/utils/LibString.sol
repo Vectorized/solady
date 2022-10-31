@@ -848,6 +848,13 @@ library LibString {
         }
     }
 
+    /// @dev Returns whether `a` equals `b`.
+    function eq(string memory a, string memory b) internal pure returns (bool result) {
+        assembly {
+            result := eq(keccak256(add(a, 0x20), mload(a)), keccak256(add(b, 0x20), mload(b)))
+        }
+    }
+
     /// @dev Packs a single string with its length into a single word.
     /// Returns `bytes32(0)` if the length is zero or greater than 31.
     function packOne(string memory a) internal pure returns (bytes32 result) {
