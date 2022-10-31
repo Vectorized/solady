@@ -267,7 +267,7 @@ library FixedPointMathLib {
 
     /// @dev Calculates floor(a × b ÷ denominator) with full precision.
     /// Throws if result overflows a uint256 or when the denominator is zero.
-    /// @dev Credit to Remco Bloemen under MIT license https://xn--2-umb.com/21/muldiv
+    /// Credit to Remco Bloemen under MIT license: https://xn--2-umb.com/21/muldiv
     function fullMulDiv(
         uint256 a,
         uint256 b,
@@ -354,7 +354,8 @@ library FixedPointMathLib {
 
     /// @dev Calculates floor(a × b ÷ denominator) with full precision, rounded up.
     /// Throws if result overflows a uint256 or when the denominator is zero.
-    /// Credit to Uniswap-v3-core: https://github.com/Uniswap/v3-core/blob/contracts/libraries/FullMath.sol
+    /// Credit to Uniswap-v3-core under MIT license:
+    /// https://github.com/Uniswap/v3-core/blob/contracts/libraries/FullMath.sol
     function fullMulDivUp(
         uint256 a,
         uint256 b,
