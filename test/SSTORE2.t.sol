@@ -69,6 +69,7 @@ contract SSTORE2Test is TestPlus {
     }
 
     function testFuzzWriteRead(bytes calldata testBytes) public brutalizeMemory {
+        _roundUpFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes));
         _brutalizeFreeMemoryStart();
         _checkZeroRightPadded(readResult);
@@ -80,6 +81,7 @@ contract SSTORE2Test is TestPlus {
 
         startIndex = bound(startIndex, 0, testBytes.length);
 
+        _roundUpFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex);
         _brutalizeFreeMemoryStart();
         _checkZeroRightPadded(readResult);
@@ -98,6 +100,7 @@ contract SSTORE2Test is TestPlus {
 
         if (startIndex > endIndex) return;
 
+        _roundUpFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex, endIndex);
         _brutalizeFreeMemoryStart();
         _checkZeroRightPadded(readResult);
