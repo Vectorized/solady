@@ -16,7 +16,7 @@ remappings = [
 ]
 
 [profile.intense]
-fuzz_runs = 100000
+fuzz_runs = 1000000
 
 [profile.via-ir]
 via_ir = true
@@ -24,4 +24,9 @@ fuzz_runs = 10000
 
 [profile.min-solc]
 solc_version = '0.8.4'
-fuzz_runs = 100000
+fuzz_runs = 10000
+
+[profile.min-solc-via-ir]
+via_ir = true
+solc_version = '0.8.4'
+fuzz_runs = 10000
