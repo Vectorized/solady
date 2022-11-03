@@ -4,7 +4,7 @@
 
 # The Default Profile
 [profile.default]
-solc_version = '0.8.15'
+solc_version = '0.8.17'
 auto_detect_solc = false
 optimizer = true
 optimizer_runs = 1_000
@@ -14,3 +14,19 @@ remappings = [
   "forge-std=lib/forge-std/src/",
   "solmate=lib/solmate/src/",
 ]
+
+[profile.intense]
+fuzz_runs = 1000000
+
+[profile.via-ir]
+via_ir = true
+fuzz_runs = 10000
+
+[profile.min-solc]
+solc_version = '0.8.4'
+fuzz_runs = 10000
+
+[profile.min-solc-via-ir]
+via_ir = true
+solc_version = '0.8.4'
+fuzz_runs = 10000

@@ -6,6 +6,11 @@ jobs:
   tests:
     name: Forge Testing
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        profile: [intense,via-ir,min-solc,min-solc-via-ir]
+
     steps:
       - uses: actions/checkout@v2
 
@@ -17,5 +22,5 @@ jobs:
       - name: Install Dependencies
         run: forge install
 
-      - name: Run Tests
-        run: FOUNDRY_PROFILE=ci forge test
+      - name: Run Tests with ${{ matrix.profile }}
+        run: FOUNDRY_PROFILE=${{ matrix.profile }} forge test
