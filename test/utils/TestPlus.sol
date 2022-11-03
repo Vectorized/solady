@@ -109,4 +109,63 @@ contract TestPlus is Test {
         }
         if (failed) revert("Bytes not zero right padded!");
     }
+
+    /// @dev Adapted from:
+    /// https://github.com/foundry-rs/forge-std/blob/ff4bf7db008d096ea5a657f2c20516182252a3ed/src/StdUtils.sol#L10
+    /// Differentially fuzzed tested against the original implementation.
+    function _bound(
+        uint256 x,
+        uint256 min,
+        uint256 max
+    ) internal pure virtual returns (uint256 result) {
+        require(min <= max, "_bound(uint256,uint256,uint256): Max is less than min.");
+
+        /// @solidity memory-safe-assembly
+        assembly {
+            // prettier-ignore
+            for {} 1 {} {
+                // If `x` is between `min` and `max`, return `x` directly.
+                // This is to ensure that dictionary values
+                // do not get shifted if the min is nonzero.
+                // More info: https://github.com/foundry-rs/forge-std/issues/188
+                if iszero(or(lt(x, min), gt(x, max))) {
+                    result := x 
+                    break
+                }
+
+                let size := add(sub(max, min), 1)
+                if and(iszero(gt(x, 3)), gt(size, x)) {
+                    result := add(min, x)
+                    break
+                }
+
+                let w := not(0)
+                if and(iszero(lt(x, sub(0, 4))), gt(size, sub(w, x))) {
+                    result := sub(max, sub(w, x))
+                    break
+                }
+
+                // Otherwise, wrap x into the range [min, max], 
+                // i.e. the range is inclusive.
+                if iszero(lt(x, max)) {
+                    let d := sub(x, max)
+                    let r := mod(d, size)
+                    if iszero(r) {
+                        result := max 
+                        break
+                    }
+                    result := add(add(min, r), w)
+                    break
+                }
+                let d := sub(min, x)
+                let r := mod(d, size)
+                if iszero(r) {
+                    result := min
+                    break
+                }
+                result := add(sub(max, r), 1)
+                break
+            }
+        }
+    }
 }

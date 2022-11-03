@@ -79,7 +79,7 @@ contract SSTORE2Test is TestPlus {
     function testFuzzWriteReadCustomStartBound(bytes calldata testBytes, uint256 startIndex) public brutalizeMemory {
         if (testBytes.length == 0) return;
 
-        startIndex = bound(startIndex, 0, testBytes.length);
+        startIndex = _bound(startIndex, 0, testBytes.length);
 
         _roundUpFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex);
@@ -95,8 +95,8 @@ contract SSTORE2Test is TestPlus {
     ) public brutalizeMemory {
         if (testBytes.length == 0) return;
 
-        endIndex = bound(endIndex, 0, testBytes.length);
-        startIndex = bound(startIndex, 0, testBytes.length);
+        endIndex = _bound(endIndex, 0, testBytes.length);
+        startIndex = _bound(startIndex, 0, testBytes.length);
 
         if (startIndex > endIndex) return;
 
@@ -136,7 +136,7 @@ contract SSTORE2Test is TestPlus {
         public
         brutalizeMemory
     {
-        startIndex = bound(startIndex, testBytes.length + 1, type(uint256).max);
+        startIndex = _bound(startIndex, testBytes.length + 1, type(uint256).max);
         address pointer = SSTORE2.write(testBytes);
         vm.expectRevert(SSTORE2.ReadOutOfBounds.selector);
         SSTORE2.read(pointer, startIndex);
@@ -147,7 +147,7 @@ contract SSTORE2Test is TestPlus {
         uint256 startIndex,
         uint256 endIndex
     ) public brutalizeMemory {
-        endIndex = bound(endIndex, testBytes.length + 1, type(uint256).max);
+        endIndex = _bound(endIndex, testBytes.length + 1, type(uint256).max);
         address pointer = SSTORE2.write(testBytes);
         vm.expectRevert(SSTORE2.ReadOutOfBounds.selector);
         SSTORE2.read(pointer, startIndex, endIndex);
