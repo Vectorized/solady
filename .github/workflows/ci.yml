@@ -9,7 +9,7 @@ jobs:
     
     strategy:
       matrix:
-        profile: [via_ir,min_solc,min_solc_via_ir]
+        profile: [via_ir,min_solc]
 
     steps:
       - uses: actions/checkout@v2
