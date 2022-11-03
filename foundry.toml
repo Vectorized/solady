@@ -20,23 +20,23 @@ runs = 256
 [profile.intense]
 
 [profile.intense.fuzz]
-runs = 10000
+runs = 10_000
 
 [profile.via-ir]
 via_ir = true
 
 [profile.via-ir.fuzz]
-runs = 1000
+runs = 1_000
 
 [profile.min-solc]
 solc_version = '0.8.4'
 
 [profile.min-solc.fuzz]
-runs = 1000
+runs = 1_000
 
 [profile.min-solc-via-ir]
 via_ir = true
 solc_version = '0.8.4'
 
 [profile.min-solc-via-ir.fuzz]
-runs = 1000
+runs = 1_000

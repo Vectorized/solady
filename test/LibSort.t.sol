@@ -7,7 +7,7 @@ import "src/utils/LibSort.sol";
 contract LibSortTest is TestPlus {
     function testInsertionSortAddressesDifferential(uint256[] memory aRaw) public {
         unchecked {
-            vm.assume(aRaw.length < 32);
+            _boundArrayLength(aRaw, 32);
             address[] memory a = new address[](aRaw.length);
             for (uint256 i; i < a.length; ++i) {
                 address addr;
@@ -56,7 +56,7 @@ contract LibSortTest is TestPlus {
 
     function testSortChecksumed(uint256[] memory a) public {
         unchecked {
-            vm.assume(a.length < 2048);
+            _boundArrayLength(a, 2048);
             uint256 checksum;
             for (uint256 i = 0; i < a.length; ++i) {
                 checksum += a[i];
@@ -73,7 +73,7 @@ contract LibSortTest is TestPlus {
 
     function testSortDifferential(uint256[] memory a) public {
         unchecked {
-            vm.assume(a.length < 128);
+            _boundArrayLength(a, 128);
             // Make a copy of the `a` and perform insertion sort on it.
             uint256[] memory aCopy = new uint256[](a.length);
             for (uint256 i = 0; i < a.length; ++i) {
@@ -87,7 +87,7 @@ contract LibSortTest is TestPlus {
 
     function testSort(uint256[] memory a) public {
         unchecked {
-            vm.assume(a.length < 2048);
+            _boundArrayLength(a, 2048);
             LibSort.sort(a);
             assertTrue(_isSorted(a));
         }
@@ -204,7 +204,7 @@ contract LibSortTest is TestPlus {
 
     function testSortAddressesDifferential(uint256[] memory aRaw) public {
         unchecked {
-            vm.assume(aRaw.length < 128);
+            _boundArrayLength(aRaw, 128);
             address[] memory a = new address[](aRaw.length);
             for (uint256 i; i < a.length; ++i) {
                 address addr;
@@ -352,21 +352,21 @@ contract LibSortTest is TestPlus {
     }
 
     function testUniquifySorted(uint256[] memory a) public {
-        vm.assume(a.length < 256);
+        _boundArrayLength(a, 256);
         LibSort.sort(a);
         LibSort.uniquifySorted(a);
         assertTrue(_isSortedAndUniquified(a));
     }
 
     function testUniquifySortedAddress(address[] memory a) public {
-        vm.assume(a.length < 256);
+        _boundArrayLength(a, 256);
         LibSort.sort(a);
         LibSort.uniquifySorted(a);
         assertTrue(_isSortedAndUniquified(a));
     }
 
     function testUniquifySortedDifferential(uint256[] memory a) public {
-        vm.assume(a.length < 256);
+        _boundArrayLength(a, 256);
         LibSort.sort(a);
         uint256[] memory aCopy = new uint256[](a.length);
         for (uint256 i = 0; i < a.length; ++i) {
@@ -660,6 +660,24 @@ contract LibSortTest is TestPlus {
                 assembly {
                     mstore(a, add(i, 1))
                 }
+            }
+        }
+    }
+
+    function _boundArrayLength(uint256[] memory a, uint256 n) private pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(mload(a), n)) {
+                mstore(a, n)
+            }
+        }
+    }
+
+    function _boundArrayLength(address[] memory a, uint256 n) private pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(mload(a), n)) {
+                mstore(a, n)
             }
         }
     }
