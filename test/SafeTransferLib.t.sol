@@ -17,6 +17,10 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 
 contract SafeTransferLibTest is TestPlus {
+    // This address is "console.log" in hexadecimal.
+    // Somehow, it can cause the fuzz tests to fail.
+    address private constant _INVALID_DATA_ADDRESS = 0x000000000000000000636F6e736F6c652e6c6f67;
+
     RevertingToken reverting;
     ReturnsTwoToken returnsTwo;
     ReturnsFalseToken returnsFalse;
@@ -303,6 +307,7 @@ contract SafeTransferLibTest is TestPlus {
         uint256 amount
     ) public brutalizeMemory {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        if (nonContract == _INVALID_DATA_ADDRESS) return;
 
         SafeTransferLib.safeTransfer(nonContract, to, amount);
     }
@@ -355,6 +360,7 @@ contract SafeTransferLibTest is TestPlus {
         uint256 amount
     ) public brutalizeMemory {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        if (nonContract == address(_INVALID_DATA_ADDRESS)) return;
 
         SafeTransferLib.safeTransferFrom(nonContract, from, to, amount);
     }
@@ -389,6 +395,7 @@ contract SafeTransferLibTest is TestPlus {
         uint256 amount
     ) public brutalizeMemory {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        if (nonContract == address(_INVALID_DATA_ADDRESS)) return;
 
         SafeTransferLib.safeApprove(nonContract, to, amount);
     }
@@ -396,6 +403,7 @@ contract SafeTransferLibTest is TestPlus {
     function testFuzzTransferETH(address recipient, uint256 amount) public brutalizeMemory {
         // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
         if (recipient.code.length > 0 || uint256(uint160(recipient)) <= 18 || recipient == msg.sender) return;
+        if (recipient == address(_INVALID_DATA_ADDRESS)) return;
 
         amount = bound(amount, 0, address(this).balance);
 
