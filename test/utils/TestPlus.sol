@@ -110,11 +110,10 @@ contract TestPlus is Test {
         if (failed) revert("Bytes not zero right padded!");
     }
 
-    function _bound(
-        uint256 x,
-        uint256 min,
-        uint256 max
-    ) internal pure virtual returns (uint256 result) {
+    /// @dev Adapted from:
+    /// https://github.com/foundry-rs/forge-std/blob/ff4bf7db008d096ea5a657f2c20516182252a3ed/src/StdUtils.sol#L10
+    /// Differentially fuzzed tested against the original implementation.
+    function _bound(uint256 x, uint256 min, uint256 max) internal pure virtual returns (uint256 result) {
         require(min <= max, "_bound(uint256,uint256,uint256): Max is less than min.");
 
         /// @solidity memory-safe-assembly
@@ -137,14 +136,14 @@ contract TestPlus is Test {
                 }
 
                 let w := not(0)
-                if and(iszero(lt(x, sub(w, 3))), gt(size, sub(w, x))) {
+                if and(iszero(lt(x, sub(0, 4))), gt(size, sub(w, x))) {
                     result := sub(max, sub(w, x))
                     break
                 }
 
                 // Otherwise, wrap x into the range [min, max], 
                 // i.e. the range is inclusive.
-                if gt(x, max) {
+                if iszero(lt(x, max)) {
                     let d := sub(x, max)
                     let r := mod(d, size)
                     if iszero(r) {
@@ -154,16 +153,13 @@ contract TestPlus is Test {
                     result := add(add(min, r), w)
                     break
                 }
-                if lt(x, max) {
-                    let d := sub(min, x)
-                    let r := mod(d, size)
-                    if iszero(r) {
-                        result := min
-                        break
-                    }
-                    result := add(sub(max, r), 1)
+                let d := sub(min, x)
+                let r := mod(d, size)
+                if iszero(r) {
+                    result := min
                     break
                 }
+                result := add(sub(max, r), 1)
                 break
             }
         }
