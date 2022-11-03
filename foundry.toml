@@ -17,10 +17,17 @@ remappings = [
 [profile.default.fuzz]
 runs = 256
 
-[profile.intense]
+[profile.intense-0.fuzz]
+runs = 2_500
 
-[profile.intense.fuzz]
-runs = 10_000
+[profile.intense-1.fuzz]
+runs = 2_500
+
+[profile.intense-2.fuzz]
+runs = 2_500
+
+[profile.intense-3.fuzz]
+runs = 2_500
 
 [profile.via-ir]
 via_ir = true
