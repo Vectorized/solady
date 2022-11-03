@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import {MerkleProofLib} from "../src/utils/MerkleProofLib.sol";
 
-contract MerkleProofLibTest is Test {
+contract MerkleProofLibTest is TestPlus {
     function testVerifyProofForHeightOneTree(
         bool hasProof,
         bool nonEmptyProof,
@@ -28,7 +28,7 @@ contract MerkleProofLibTest is Test {
         assertEq(this.verify(proof, root, leaf), isValid);
     }
 
-    function testVerifyProof(bytes32[] memory data, uint256 randomness) public {
+    function testVerifyProof(bytes32[] memory data, uint256 randomness) public brutalizeMemory {
         vm.assume(data.length > 1);
         uint256 nodeIndex = randomness % data.length;
         bytes32 root = _getRoot(data);
@@ -65,30 +65,51 @@ contract MerkleProofLibTest is Test {
         bool noDamage = true;
         uint256 ri; // Randomness index.
 
-        // Merkle tree created from leaves ['a', 'b', 'c'].
-        // Leaf is 'a'.
         bytes32[] memory proof = new bytes32[](2);
-        proof[0] = 0xb5553de315e0edf504d9150af82dafa5c4667fa618ed0a6f19c69b41166c5510;
-        proof[1] = 0x0b42b6393c1f53060fe3ddbfcd7aadcca894465a5a438f69c87d790b2299b9b2;
+        proof[0] = bytes32("b");
+        proof[1] = _hashPair(bytes32("c"), bytes32(0));
         if (damageProof) {
             noDamage = false;
             uint256 i = uint256(uint8(randomness[ri++])) % proof.length;
             proof[i] = bytes32(uint256(proof[i]) ^ 1); // Flip a bit.
         }
 
-        bytes32 root = 0x5842148bc6ebeb52af882a317c765fccd3ae80589b21a9b8cbf21abb630e46a7;
+        bytes32 root = _hashPair(_hashPair(bytes32("a"), bytes32("b")), _hashPair(bytes32("c"), bytes32(0)));
+
         if (damageRoot) {
             noDamage = false;
             root = bytes32(uint256(root) ^ 1); // Flip a bit.
         }
 
-        bytes32 leaf = 0x3ac225168df54212a25c1c01fd35bebfea408fdac2e31ddd6f80a4bbf9a5f1cb;
+        bytes32 leaf = bytes32("a");
         if (damageLeaf) {
             noDamage = false;
             leaf = bytes32(uint256(leaf) ^ 1); // Flip a bit.
         }
 
         assertEq(this.verify(proof, root, leaf), noDamage);
+    }
+
+    function testVerifyMultiProofForSingleLeaf(bytes32[] memory data, uint256 randomness) public brutalizeMemory {
+        vm.assume(data.length > 1);
+        uint256 nodeIndex = randomness % data.length;
+        bytes32 root = _getRoot(data);
+        bytes32[] memory proof = _getProof(data, nodeIndex);
+        bytes32[] memory leafs = new bytes32[](1);
+        leafs[0] = data[nodeIndex];
+        bool[] memory flags = new bool[](proof.length);
+
+        assertTrue(this.verifyMultiProof(proof, root, leafs, flags));
+
+        // Checks verify with corrupted root returns false.
+        assertFalse(this.verifyMultiProof(proof, bytes32(uint256(root) ^ 1), leafs, flags));
+
+        // Checks verify with corrupted proof returns false.
+        proof[0] = bytes32(uint256(proof[0]) ^ 1);
+        assertFalse(this.verifyMultiProof(proof, root, leafs, flags));
+
+        // Checks verify with corrupted root and proof returns false.
+        assertFalse(this.verifyMultiProof(proof, bytes32(uint256(root) ^ 1), leafs, flags));
     }
 
     function testVerifyMultiProofForHeightOneTree(
@@ -130,11 +151,7 @@ contract MerkleProofLibTest is Test {
         bool noDamage = true;
         uint256 ri; // Randomness index.
 
-        bytes32 leafA = 0x3ac225168df54212a25c1c01fd35bebfea408fdac2e31ddd6f80a4bbf9a5f1cb;
-        bytes32 leafB = 0xb5553de315e0edf504d9150af82dafa5c4667fa618ed0a6f19c69b41166c5510;
-
-        // Merkle tree created from leaves ['a', 'b'].
-        bytes32 root = 0x805b21d846b189efaeb0377d6bb0d201b3872a363e607c25088f025b0c6ae1f8;
+        bytes32 root = _hashPair(bytes32("a"), bytes32("b"));
 
         bytes32[] memory proof;
         bytes32[] memory leafs;
@@ -143,13 +160,13 @@ contract MerkleProofLibTest is Test {
 
         if (allLeafs) {
             leafs = new bytes32[](2);
-            leafs[0] = leafA;
-            leafs[1] = leafB;
+            leafs[0] = bytes32("a");
+            leafs[1] = bytes32("b");
         } else {
             leafs = new bytes32[](1);
-            leafs[0] = leafA;
+            leafs[0] = bytes32("a");
             proof = new bytes32[](1);
-            proof[0] = leafB;
+            proof[0] = bytes32("b");
         }
 
         if (damageRoot) {
@@ -193,22 +210,23 @@ contract MerkleProofLibTest is Test {
         bool damageProof,
         bool damageFlags,
         bytes32 randomness
-    ) public {
+    ) public brutalizeMemory {
         bool noDamage = true;
         uint256 ri; // Randomness index.
 
-        // Merkle tree created from ['a', 'b', 'c', 'd', 'e', 'f'].
-        // Leafs are ['b', 'f', 'd'].
-        bytes32 root = 0x1b404f199ea828ec5771fb30139c222d8417a82175fefad5cd42bc3a189bd8d5;
+        bytes32 root = _hashPair(
+            _hashPair(_hashPair(bytes32("a"), bytes32("b")), _hashPair(bytes32("c"), bytes32("d"))),
+            _hashPair(bytes32("e"), bytes32("f"))
+        );
 
         bytes32[] memory leafs = new bytes32[](3);
-        leafs[0] = 0xb5553de315e0edf504d9150af82dafa5c4667fa618ed0a6f19c69b41166c5510;
-        leafs[1] = 0xd1e8aeb79500496ef3dc2e57ba746a8315d048b7a664a2bf948db4fa91960483;
-        leafs[2] = 0xf1918e8562236eb17adc8502332f4c9c82bc14e19bfc0aa10ab674ff75b3d2f3;
+        leafs[0] = bytes32("d");
+        leafs[1] = bytes32("e");
+        leafs[2] = bytes32("f");
 
         bytes32[] memory proof = new bytes32[](2);
-        proof[0] = 0xa8982c89d80987fb9a510e25981ee9170206be21af3c8e0eb312ef1d3382e761;
-        proof[1] = 0x7dea550f679f3caab547cbbc5ee1a4c978c8c039b572ba00af1baa6481b88360;
+        proof[0] = bytes32("c");
+        proof[1] = _hashPair(bytes32("b"), bytes32("a"));
 
         bool[] memory flags = new bool[](4);
         flags[0] = false;
@@ -260,6 +278,10 @@ contract MerkleProofLibTest is Test {
         bool[] calldata flags
     ) external returns (bool result) {
         uint256[] memory offsetsAndLengths = new uint256[](12);
+
+        // Basically, we want to demonstrate that the `verifyMultiProof` does not
+        // change the offsets and lengths.
+
         /// @solidity memory-safe-assembly
         assembly {
             mstore(add(offsetsAndLengths, shl(5, add(1, 0))), proof.offset)
@@ -269,7 +291,9 @@ contract MerkleProofLibTest is Test {
             mstore(add(offsetsAndLengths, shl(5, add(1, 4))), leafs.length)
             mstore(add(offsetsAndLengths, shl(5, add(1, 5))), flags.length)
         }
+
         result = MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
+
         /// @solidity memory-safe-assembly
         assembly {
             mstore(add(offsetsAndLengths, shl(5, add(1, 6))), proof.offset)
@@ -279,6 +303,7 @@ contract MerkleProofLibTest is Test {
             mstore(add(offsetsAndLengths, shl(5, add(1, 10))), leafs.length)
             mstore(add(offsetsAndLengths, shl(5, add(1, 11))), flags.length)
         }
+
         assertEq(offsetsAndLengths[0], offsetsAndLengths[6]);
         assertEq(offsetsAndLengths[1], offsetsAndLengths[7]);
         assertEq(offsetsAndLengths[2], offsetsAndLengths[8]);
