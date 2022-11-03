@@ -113,7 +113,11 @@ contract TestPlus is Test {
     /// @dev Adapted from:
     /// https://github.com/foundry-rs/forge-std/blob/ff4bf7db008d096ea5a657f2c20516182252a3ed/src/StdUtils.sol#L10
     /// Differentially fuzzed tested against the original implementation.
-    function _bound(uint256 x, uint256 min, uint256 max) internal pure virtual returns (uint256 result) {
+    function _bound(
+        uint256 x,
+        uint256 min,
+        uint256 max
+    ) internal pure virtual returns (uint256 result) {
         require(min <= max, "_bound(uint256,uint256,uint256): Max is less than min.");
 
         /// @solidity memory-safe-assembly
