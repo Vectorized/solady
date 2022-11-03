@@ -397,7 +397,7 @@ contract SafeTransferLibTest is TestPlus {
         // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
         if (recipient.code.length > 0 || uint256(uint160(recipient)) <= 18 || recipient == msg.sender) return;
 
-        amount = bound(amount, 0, address(this).balance);
+        amount = _bound(amount, 0, address(this).balance);
 
         SafeTransferLib.safeTransferETH(recipient, amount);
     }
