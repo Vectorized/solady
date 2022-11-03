@@ -210,7 +210,7 @@ contract MerkleProofLibTest is TestPlus {
         bool damageProof,
         bool damageFlags,
         bytes32 randomness
-    ) public {
+    ) public brutalizeMemory {
         bool noDamage = true;
         uint256 ri; // Randomness index.
 
