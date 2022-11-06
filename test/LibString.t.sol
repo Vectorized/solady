@@ -255,6 +255,25 @@ contract LibStringTest is TestPlus {
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
     }
 
+    function testStringRuneCountDifferential(string memory s) public {
+        assertEq(LibString.runeCount(s), _runeCountOriginal(s));
+    }
+
+    function testStringRuneCount() public {
+        unchecked {
+            string memory runes = new string(256);
+            for (uint256 i; i < 256; ++i) {
+                assembly {
+                    mstore8(add(add(runes, 0x20), i), i)
+                }
+            }
+            for (uint256 i; i < 256; ++i) {
+                string memory s = _generateString(i, runes);
+                testStringRuneCountDifferential(s);
+            }
+        }
+    }
+
     function testStringReplaceShort() public {
         assertEq(LibString.replace("abc", "", "_@"), "_@a_@b_@c_@");
         assertEq(LibString.replace("abc", "a", "_"), "_bc");
@@ -948,6 +967,31 @@ contract LibStringTest is TestPlus {
 
     function returnString(string memory a) external pure returns (string memory) {
         LibString.directReturn(a);
+    }
+
+    function _runeCountOriginal(string memory s) internal pure returns (uint256) {
+        unchecked {
+            uint256 len;
+            uint256 i = 0;
+            uint256 bytelength = bytes(s).length;
+            for (len = 0; i < bytelength; len++) {
+                bytes1 b = bytes(s)[i];
+                if (b < 0x80) {
+                    i += 1;
+                } else if (b < 0xE0) {
+                    i += 2;
+                } else if (b < 0xF0) {
+                    i += 3;
+                } else if (b < 0xF8) {
+                    i += 4;
+                } else if (b < 0xFC) {
+                    i += 5;
+                } else {
+                    i += 6;
+                }
+            }
+            return len;
+        }
     }
 
     function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {

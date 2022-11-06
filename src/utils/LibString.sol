@@ -276,7 +276,30 @@ library LibString {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                   OTHER STRING OPERATIONS                  */
+    /*                   RUNE STRING OPERATIONS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the number of UTF characters in the string.
+    function runeCount(string memory s) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if mload(s) {
+                mstore(0x00, div(not(0), 255))
+                mstore(0x20, 0x0202020202020202020202020202020202020202020202020303030304040506)
+                let o := add(s, 0x20)
+                let end := add(o, mload(s))
+                // prettier-ignore
+                for { result := 1 } 1 { result := add(result, 1) } {
+                    o := add(o, byte(0, mload(shr(250, mload(o)))))
+                    // prettier-ignore
+                    if iszero(lt(o, end)) { break }
+                }
+            }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   BYTE STRING OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // For performance and bytecode compactness, all indices of the following operations
