@@ -6,7 +6,7 @@ library LibDateTime {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    uint256 constant PER_DAY_SECOND = 86400;
+    uint256 internal constant PER_DAY_SECOND = 86400;
 
     /// @dev Returns days from 1970-01-01 to yyyy-mm-dd using
     /// date conversion algorithm from
@@ -143,7 +143,7 @@ library LibDateTime {
             // timestamp = 86400 * ((date - 1) + d) -> optimize ( 86400 * (diff + (n-1)*7) + d)
             let date := add(mul(sub(n, 1), 7), add(mul(gt(diff, 6), 7), diff))
             // timestamp = date > getDaysInMonth(y,m) ? 0 : (date + d)*86400
-            t := mul(mul(mul(PER_DAY_SECOND, add(date, d)), lt(date, md)), iszero(iszero(n)))
+            t := mul(mul(PER_DAY_SECOND, add(date, d)), and(lt(date, md), iszero(iszero(n))))
         }
     }
 
