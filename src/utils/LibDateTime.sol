@@ -154,8 +154,7 @@ library LibDateTime {
     function getNextWeekDay(uint256 t, uint256 wd) internal pure returns (uint256 _timestamp) {
         assembly {
             // prettier-ignore
-            if iszero(iszero(
-                and(lt(t, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffff78780), lt(wd, 7)))) {
+            if iszero(or(gt(t, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6c57f), gt(wd, 6))) {
                 // days = t / 86400;
                 let day := div(t, 86400)
                 // weekday of 01-mm-yyyy w0 = (d + 3) % 7

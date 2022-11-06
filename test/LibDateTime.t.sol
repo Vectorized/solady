@@ -115,7 +115,7 @@ contract LibDateTimeTest is TestPlus {
         }
     }
 
-    function testgetDaysInMonth() public {
+    function testGetDaysInMonth() public {
         assertEq(LibDateTime.getDaysInMonth(2022, 1), 31);
         assertEq(LibDateTime.getDaysInMonth(2022, 2), 28);
         assertEq(LibDateTime.getDaysInMonth(2022, 3), 31);
@@ -146,7 +146,7 @@ contract LibDateTimeTest is TestPlus {
         }
     }
 
-    function testgetDayOfWeek() public {
+    function testGetDayOfWeek() public {
         assertEq(LibDateTime.getDayOfWeek(1), 3);
         assertEq(LibDateTime.getDayOfWeek(86400), 4);
         assertEq(LibDateTime.getDayOfWeek(86401), 4);
@@ -215,7 +215,7 @@ contract LibDateTimeTest is TestPlus {
         }
     }
 
-    function testgetNthDayOfWeekInMonthOfYear() public {
+    function testGetNthDayOfWeekInMonthOfYear() public {
         // get 1st 2nd 3rd 4th monday in Novermber 2022
         assertEq(LibDateTime.getNthDayOfWeekInMonthOfYear(2022, 11, 1, 0), 1667779200);
         assertEq(LibDateTime.getNthDayOfWeekInMonthOfYear(2022, 11, 2, 0), 1668384000);
@@ -282,7 +282,7 @@ contract LibDateTimeTest is TestPlus {
         }
     }
 
-    function getNextWeekDay() public {
+    function testGetNextWeekDay() public {
         // 6 Novermber 2022 (1667692800) to next monday,Tuesday...,sunday
         assertEq(LibDateTime.getNextWeekDay(1667692800, 0), 1667779200);
         assertEq(LibDateTime.getNextWeekDay(1667692855, 1), 1667865600);
