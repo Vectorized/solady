@@ -256,7 +256,6 @@ contract LibDateTimeTest is TestPlus {
     ) public {
         wd = _bound(wd, 0, 6);
         month = _bound(month, 1, 12);
-
         year = _bound(year, 1970, 3669305236998687180674831492239425019668248843096144521164705134005821);
         uint256 t = LibDateTime.getNthDayOfWeekInMonthOfYear(year, month, n, wd);
         uint256 day = LibDateTime.daysFromDate(year, month, 1);
@@ -314,7 +313,7 @@ contract LibDateTimeTest is TestPlus {
             assertEq(LibDateTime.getNextWeekDay(t, wd), 0);
         }
     }
-
+    
     function testGetStartOfWeek() public {
         // Thursday 01 January 1970 -> 0
         assertEq(LibDateTime.getStartOfWeek(0), 0);
