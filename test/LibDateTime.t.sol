@@ -86,8 +86,8 @@ contract LibDateTimeTest is TestPlus {
         // MAX DATE = 317027972476686572410305440929486321699336700043506886628630523577932824465 - 12 - 03
         _y = _bound(_y, 1970, 3669305236998687180674831492239425019668248843096144521164705134005821);
         _m = _bound(_m, 1, 12);
-        uint256 md = LibDateTime.getDaysInMonth(_y,_m);
-        _d = _bound(_d,1,md);
+        uint256 md = LibDateTime.getDaysInMonth(_y, _m);
+        _d = _bound(_d, 1, md);
         uint256 day = LibDateTime.daysFromDate(_y, _m, _d);
         (uint256 y, uint256 m, uint256 d) = LibDateTime.daysToDate(day);
         assertTrue(_y == y && _m == m && _d == d);
@@ -314,9 +314,9 @@ contract LibDateTimeTest is TestPlus {
             assertEq(LibDateTime.getNextWeekDay(t, wd), 0);
         }
     }
-    
+
     function testGetStartOfWeek() public {
-        // Thursday 01 January 1970 -> 0 
+        // Thursday 01 January 1970 -> 0
         assertEq(LibDateTime.getStartOfWeek(0), 0);
         // Friday 02 January 1970 -> 86400
         assertEq(LibDateTime.getStartOfWeek(86400), 0);
@@ -345,12 +345,12 @@ contract LibDateTimeTest is TestPlus {
     }
 
     function testFuzzGetStartOfWeek(uint256 t) public {
-        uint256 day = t/86400;
+        uint256 day = t / 86400;
         uint256 weekday = (day + 3) % 7;
         uint256 nt = LibDateTime.getStartOfWeek(t);
-        if ( t > 345599) {
-            assertEq(nt, (day - weekday)*86400);
-        }else {
+        if (t > 345599) {
+            assertEq(nt, (day - weekday) * 86400);
+        } else {
             assertEq(nt, 0);
         }
     }
@@ -374,20 +374,29 @@ contract LibDateTimeTest is TestPlus {
         assertEq(LibDateTime.getEndOfWeek(1667174400), 1667692800);
 
         // Sunday 17 February 3.66*10^69 -> 115792089237316195423570985008687907853269984665640564039457584007913129430400
-        assertEq(LibDateTime.getEndOfWeek(115792089237316195423570985008687907853269984665640564039457584007913129430400), 115792089237316195423570985008687907853269984665640564039457584007913129430400);
+        assertEq(
+            LibDateTime.getEndOfWeek(115792089237316195423570985008687907853269984665640564039457584007913129430400),
+            115792089237316195423570985008687907853269984665640564039457584007913129430400
+        );
         // Monday 18 February 3.66*10^69 -> 115792089237316195423570985008687907853269984665640564039457584007913129430400
-        assertEq(LibDateTime.getEndOfWeek(115792089237316195423570985008687907853269984665640564039457584007913129516800), 115792089237316195423570985008687907853269984665640564039457584007913129603200);
+        assertEq(
+            LibDateTime.getEndOfWeek(115792089237316195423570985008687907853269984665640564039457584007913129516800),
+            115792089237316195423570985008687907853269984665640564039457584007913129603200
+        );
         // Monday 19 February 3.66*10^69 -> 115792089237316195423570985008687907853269984665640564039457584007913129430400
-        assertEq(LibDateTime.getEndOfWeek(type(uint256).max), 115792089237316195423570985008687907853269984665640564039457584007913129603200);
+        assertEq(
+            LibDateTime.getEndOfWeek(type(uint256).max),
+            115792089237316195423570985008687907853269984665640564039457584007913129603200
+        );
     }
 
     function testFuzzEndOfWeek(uint256 t) public {
-        uint256 day = t/86400;
+        uint256 day = t / 86400;
         uint256 weekday = (day + 3) % 7;
         uint256 nt = LibDateTime.getEndOfWeek(t);
-        if ( t < 115792089237316195423570985008687907853269984665640564039457584007913129516799) {
-            assertEq(nt, (day + (6 - weekday))*86400);
-        }else {
+        if (t < 115792089237316195423570985008687907853269984665640564039457584007913129516799) {
+            assertEq(nt, (day + (6 - weekday)) * 86400);
+        } else {
             assertEq(nt, 115792089237316195423570985008687907853269984665640564039457584007913129603200);
         }
     }
