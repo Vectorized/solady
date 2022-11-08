@@ -53,7 +53,45 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.dateToEpochDay(1667952000, 2, 29), 609206238891);
     }
 
-    function testDaysToEpochDayDifferential(
+    function testFuzzDateToEpochDayGas() public view {
+        unchecked {
+            uint256 randomness;
+            uint256 sum;
+            for (uint256 i; i < 256; ++i) {
+                randomness = _stepRandomness(randomness);
+                uint256 year = _bound(randomness, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+                randomness = _stepRandomness(randomness);
+                uint256 month = _bound(randomness, 1, 12);
+                uint256 md = DateTimeLib.daysInMonth(year, month);
+                randomness = _stepRandomness(randomness);
+                uint256 day = _bound(randomness, 1, md);
+                uint256 epochDay = DateTimeLib.dateToEpochDay(year, month, day);
+                sum += epochDay;
+            }
+            console.log(sum);
+        }
+    }
+
+    function testFuzzDateToEpochDayGas2() public view {
+        unchecked {
+            uint256 randomness;
+            uint256 sum;
+            for (uint256 i; i < 256; ++i) {
+                randomness = _stepRandomness(randomness);
+                uint256 year = _bound(randomness, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+                randomness = _stepRandomness(randomness);
+                uint256 month = _bound(randomness, 1, 12);
+                uint256 md = DateTimeLib.daysInMonth(year, month);
+                randomness = _stepRandomness(randomness);
+                uint256 day = _bound(randomness, 1, md);
+                uint256 epochDay = _dateToEpochDayOriginal2(year, month, day);
+                sum += epochDay;
+            }
+            console.log(sum);
+        }
+    }
+
+    function testDateToEpochDayDifferential(
         uint256 year,
         uint256 month,
         uint256 day
@@ -65,7 +103,19 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.dateToEpochDay(year, month, day), expectedResult);
     }
 
-    function testDaysToEpochDayDifferential(uint256 timestamp) public {
+    function testDateToEpochDayDifferential2(
+        uint256 year,
+        uint256 month,
+        uint256 day
+    ) public {
+        year = _bound(year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+        month = _bound(month, 1, 12);
+        day = _bound(day, 1, DateTimeLib.daysInMonth(year, month));
+        uint256 expectedResult = _dateToEpochDayOriginal2(year, month, day);
+        assertEq(DateTimeLib.dateToEpochDay(year, month, day), expectedResult);
+    }
+
+    function testEpochDayToDateDifferential(uint256 timestamp) public {
         timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP);
         (uint256 y0, uint256 m0, uint256 d0) = _epochDayToDateOriginal(timestamp);
         (uint256 y1, uint256 m1, uint256 d1) = DateTimeLib.epochDayToDate(timestamp);
@@ -426,6 +476,31 @@ contract DateTimeLibTest is TestPlus {
             uint256 doy = (153 * (month > 2 ? month - 3 : month + 9) + 2) / 5 + day - 1;
             uint256 doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
             return era * 146097 + doe - 719468;
+        }
+    }
+
+    function _dateToEpochDayOriginal2(
+        uint256 year,
+        uint256 month,
+        uint256 day
+    ) internal pure returns (uint256 _days) {
+        unchecked {
+            int256 _year = int256(year);
+            int256 _month = int256(month);
+            int256 _day = int256(day);
+
+            int256 _m = (_month - 14) / 12;
+            int256 __days = _day -
+                32075 +
+                (1461 * (_year + 4800 + _m)) /
+                4 +
+                (367 * (_month - 2 - _m * 12)) /
+                12 -
+                (3 * ((_year + 4900 + _m) / 100)) /
+                4 -
+                2440588;
+
+            _days = uint256(__days);
         }
     }
 
