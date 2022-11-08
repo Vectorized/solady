@@ -22,10 +22,10 @@ library DateTimeLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The date time addition has overflowed.
-    error DateTimeOverflow();
+    error Overflow();
 
     /// @dev The date time subtraction has underflowed.
-    error DateTimeUnderflow();
+    error Underflow();
 
     /// @dev The `fromTimestamp` is greater than the `toTimestamp`.
     error InvalidDiff();
@@ -331,7 +331,7 @@ library DateTimeLib {
                 day = dm;
             }
             result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-            if (result < timestamp) revert DateTimeOverflow();
+            if (result < timestamp) revert Overflow();
         }
     }
 
@@ -351,7 +351,7 @@ library DateTimeLib {
                 day = dm;
             }
             result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-            if (result < timestamp) revert DateTimeOverflow();
+            if (result < timestamp) revert Overflow();
         }
     }
 
@@ -359,7 +359,7 @@ library DateTimeLib {
     function addDays(uint256 timestamp, uint256 numDays) internal pure returns (uint256 result) {
         unchecked {
             result = timestamp + numDays * 86400;
-            if (result < timestamp) revert DateTimeOverflow();
+            if (result < timestamp) revert Overflow();
         }
     }
 
@@ -367,7 +367,7 @@ library DateTimeLib {
     function addHours(uint256 timestamp, uint256 numHours) internal pure returns (uint256 result) {
         unchecked {
             result = timestamp + numHours * 3600;
-            if (result < timestamp) revert DateTimeOverflow();
+            if (result < timestamp) revert Overflow();
         }
     }
 
@@ -375,7 +375,7 @@ library DateTimeLib {
     function addMinutes(uint256 timestamp, uint256 numMinutes) internal pure returns (uint256 result) {
         unchecked {
             result = timestamp + numMinutes * 60;
-            if (result < timestamp) revert DateTimeOverflow();
+            if (result < timestamp) revert Overflow();
         }
     }
 
@@ -383,7 +383,7 @@ library DateTimeLib {
     function addSeconds(uint256 timestamp, uint256 numSeconds) internal pure returns (uint256 result) {
         unchecked {
             result = timestamp + numSeconds;
-            if (result < timestamp) revert DateTimeOverflow();
+            if (result < timestamp) revert Overflow();
         }
     }
 
@@ -403,7 +403,7 @@ library DateTimeLib {
                 day = dm;
             }
             result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-            if (result > timestamp) revert DateTimeUnderflow();
+            if (result > timestamp) revert Underflow();
         }
     }
 
@@ -423,7 +423,7 @@ library DateTimeLib {
                 day = dm;
             }
             result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-            if (result > timestamp) revert DateTimeUnderflow();
+            if (result > timestamp) revert Underflow();
         }
     }
 
@@ -431,7 +431,7 @@ library DateTimeLib {
     function subDays(uint256 timestamp, uint256 numDays) internal pure returns (uint256 result) {
         unchecked {
             result = timestamp - numDays * 86400;
-            if (result > timestamp) revert DateTimeUnderflow();
+            if (result > timestamp) revert Underflow();
         }
     }
 
@@ -439,7 +439,7 @@ library DateTimeLib {
     function subHours(uint256 timestamp, uint256 numHours) internal pure returns (uint256 result) {
         unchecked {
             result = timestamp - numHours * 3600;
-            if (result > timestamp) revert DateTimeUnderflow();
+            if (result > timestamp) revert Underflow();
         }
     }
 
@@ -447,7 +447,7 @@ library DateTimeLib {
     function subMinutes(uint256 timestamp, uint256 numMinutes) internal pure returns (uint256 result) {
         unchecked {
             result = timestamp - numMinutes * 60;
-            if (result > timestamp) revert DateTimeUnderflow();
+            if (result > timestamp) revert Underflow();
         }
     }
 
@@ -455,7 +455,7 @@ library DateTimeLib {
     function subSeconds(uint256 timestamp, uint256 numSeconds) internal pure returns (uint256 result) {
         unchecked {
             result = timestamp - numSeconds;
-            if (result > timestamp) revert DateTimeUnderflow();
+            if (result > timestamp) revert Underflow();
         }
     }
 

@@ -541,6 +541,50 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
+    function testDateTimeArithmeticReverts() public {
+        vm.expectRevert(DateTimeLib.Overflow.selector);
+        DateTimeLib.addYears(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.Underflow.selector);
+        DateTimeLib.subYears(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        DateTimeLib.diffYears(2**128 - 1, 2**127 - 1);
+
+        vm.expectRevert(DateTimeLib.Overflow.selector);
+        DateTimeLib.addMonths(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.Underflow.selector);
+        DateTimeLib.subMonths(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        DateTimeLib.diffMonths(2**128 - 1, 2**127 - 1);
+
+        vm.expectRevert(DateTimeLib.Overflow.selector);
+        DateTimeLib.addDays(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.Underflow.selector);
+        DateTimeLib.subDays(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        DateTimeLib.diffDays(2**128 - 1, 2**127 - 1);
+
+        vm.expectRevert(DateTimeLib.Overflow.selector);
+        DateTimeLib.addHours(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.Underflow.selector);
+        DateTimeLib.subHours(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        DateTimeLib.diffHours(2**128 - 1, 2**127 - 1);
+
+        vm.expectRevert(DateTimeLib.Overflow.selector);
+        DateTimeLib.addMinutes(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.Underflow.selector);
+        DateTimeLib.subMinutes(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        DateTimeLib.diffMinutes(2**128 - 1, 2**127 - 1);
+
+        vm.expectRevert(DateTimeLib.Overflow.selector);
+        DateTimeLib.addSeconds(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.Underflow.selector);
+        DateTimeLib.subSeconds(2**128 - 1, 2**255 - 1);
+        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        DateTimeLib.diffSeconds(2**128 - 1, 2**127 - 1);
+    }
+
     function testFuzzAddSubDiffMonths(uint256 timestamp, uint256 numMonths) public {
         uint256 maxNumMonths = 1000000;
         numMonths = _bound(numMonths, 0, maxNumMonths);
