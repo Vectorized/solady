@@ -75,7 +75,7 @@ library DateTimeLib {
             let doy := add(sub(sub(doe, mul(365, yoe)), shr(2, yoe)), div(yoe, 100))
             let mp := div(add(mul(5, doy), 2), 153)
             day := add(sub(doy, shr(11, add(mul(mp, 62719), 769))), 1)
-            month := add(sub(mp, 9), mul(lt(mp, 10), 12))
+            month := sub(add(mp, 3), mul(gt(mp, 9), 12))
             year := add(add(yoe, mul(era, 400)), lt(month, 3))
         }
     }
