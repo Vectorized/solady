@@ -169,7 +169,7 @@ library DateTimeLib {
         }
     }
 
-    /// @dev Returns the unix timestamp of the Monday of the week.
+    /// @dev Returns the unix timestamp of the most recent Monday.
     function mondayTimestamp(uint256 unixTimestamp) internal pure returns (uint256 result) {
         assembly {
             let day := div(unixTimestamp, 86400)
