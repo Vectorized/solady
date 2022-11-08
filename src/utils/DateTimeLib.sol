@@ -149,8 +149,8 @@ library DateTimeLib {
         assembly {
             let w := not(0)
             result := and(
-                and(lt(sub(year, 1970), sub(MAX_SUPPORTED_YEAR, 1969)), lt(add(month, w), 12)),
-                lt(add(day, w), md)
+                lt(sub(year, 1970), sub(MAX_SUPPORTED_YEAR, 1969)),
+                and(lt(add(month, w), 12), lt(add(day, w), md))
             )
         }
     }
