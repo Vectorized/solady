@@ -58,7 +58,7 @@ library LibDateTime {
     function isLeapYear(uint256 y) internal pure returns (bool valid) {
         /// @solidity memory-safe-assembly
         assembly {
-            valid := and(iszero(and(y, 0x03)), or(iszero(iszero(mod(y, 100))), iszero(mod(y, 400))))
+            valid := iszero(and(add(mul(iszero(mod(y, 25)), 12), 3), y))
         }
     }
 
@@ -163,6 +163,29 @@ library LibDateTime {
                 // d := gt(diff,6) || iszero(diff) ? diff + 7 : diff
                 let d := add(day, add(diff, mul(or(gt(diff, 6), iszero(diff)), 7)))
                 _timestamp := mul(d, 86400)
+            }
+        }
+    }
+
+    /// @dev Return Monday timestamp of given timestamp week
+    /// @notice For less than 1970-01-04 timestamp start of week is Thursday
+    function getStartOfWeek(uint256 t) internal pure returns (uint256 _timestamp) {
+        assembly {
+            let day := div(t, 86400)
+            let weekday := mod(add(day, 3), 7)
+            _timestamp := mul(mul(sub(day, weekday), 86400), gt(t, 345599))
+        }
+    }
+
+    /// @dev Return Sunday timestamp of given timestamp week
+    /// @notice For greater than 3.66*10^69-12-31 timestamp end of week is Tuesday
+    function getEndOfWeek(uint256 t) internal pure returns (uint256 _timestamp) {
+        assembly {
+            let day := div(t, 86400)
+            let weekday := sub(6, mod(add(day, 3), 7))
+            _timestamp := mul(add(day, weekday), 86400)
+            if gt(t, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffccd80) {
+                _timestamp := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7080
             }
         }
     }
