@@ -15,7 +15,7 @@ pragma solidity ^0.8.4;
 /// day       | 1..31                | Gregorian calendar day of month                    |
 /// weekday   | 0..6                 | Index of the day of week                           |
 /// --------------------------------------------------------------------------------------+
-/// All timestamp of days are rounded down to 00:00:00 UTC.
+/// All timestamps of days are rounded down to 00:00:00 UTC.
 library DateTimeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
