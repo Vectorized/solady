@@ -5,16 +5,16 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/DateTimeLib.sol)
 ///
 /// Conventions:
-/// --------------------------------------------------------------------------------------+
-/// Unit      | Range                | Notes                                              |
-/// --------------------------------------------------------------------------------------|
-/// timestamp | 0..0x1e18549868c76ff | Unix timestamp, number of seconds since 1970-01-01 |
-/// epochDay  | 0..0x16d3e098039     | Days since 1970-01-01                              |
-/// year      | 1970..0xffffffff     | Gregorian calendar year                            |
-/// month     | 1..12                | Gregorian calendar month                           |
-/// day       | 1..31                | Gregorian calendar day of month                    |
-/// weekday   | 0..6                 | Index of the day of week                           |
-/// --------------------------------------------------------------------------------------+
+/// --------------------------------------------------------------------+
+/// Unit      | Range                | Notes                            |
+/// --------------------------------------------------------------------|
+/// timestamp | 0..0x1e18549868c76ff | Unix timestamp.                  |
+/// epochDay  | 0..0x16d3e098039     | Days since 1970-01-01.           |
+/// year      | 1970..0xffffffff     | Gregorian calendar year.         |
+/// month     | 1..12                | Gregorian calendar month.        |
+/// day       | 1..31                | Gregorian calendar day of month. |
+/// weekday   | 0..6                 | Index of the day of week.        |
+/// --------------------------------------------------------------------+
 /// All timestamps of days are rounded down to 00:00:00 UTC.
 library DateTimeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -159,9 +159,9 @@ library DateTimeLib {
     }
 
     /// @dev Returns if (`year`,`month`,`day`) is a supported date.
-    /// - `1970 <= year <= MAX_SUPPORTED_YEAR`
-    /// - `1 <= month <= 12`
-    /// - `1 <= day <= daysInMonth(year, month)`
+    /// - `1970 <= year <= MAX_SUPPORTED_YEAR`.
+    /// - `1 <= month <= 12`.
+    /// - `1 <= day <= daysInMonth(year, month)`.
     function isSupportedDate(
         uint256 year,
         uint256 month,
@@ -193,7 +193,7 @@ library DateTimeLib {
     }
 
     /// @dev Returns the unix timestamp of the given `n`th weekday `wd`, in `month` of `year`.
-    /// Example: 3rd Friday of 2022 Feb: `nthWeekdayInMonthOfYearTimestamp(2022, 2, 3, 5))`
+    /// Example: 3rd Friday of Feb 2022 is `nthWeekdayInMonthOfYearTimestamp(2022, 2, 3, 5)`
     /// Note: Invalid weekdays (i.e. `wd > 6`) result in undefined behavior.
     function nthWeekdayInMonthOfYearTimestamp(
         uint256 year,
