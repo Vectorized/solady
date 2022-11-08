@@ -6,32 +6,41 @@ library DateTimeLib {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    uint256 internal constant PER_DAY_SECOND = 86400;
+    uint256 internal constant MAX_SUPPORTED_YEAR = 4294967295;
+    uint256 internal constant MAX_SUPPORTED_DAYS = 1568703872776;
+    uint256 internal constant MAX_SUPPORTED_TIMESTAMP = 135536014607932799;
 
-    /// @dev Returns days from 1970-01-01 to yyyy-mm-dd using
-    /// date conversion algorithm from
-    /// https://howardhinnant.github.io/date_algorithms.html
-    /// @notice doesn't validate date if date is before 1970-1-1 then this will give undefined behaviour
-    /// you can validate date by isValidDate function
-    function daysFromDate(
-        uint256 y,
-        uint256 m,
-        uint256 d
-    ) internal pure returns (uint256 day) {
+    uint256 internal constant MON = 0;
+    uint256 internal constant TUE = 1;
+    uint256 internal constant WED = 2;
+    uint256 internal constant THU = 3;
+    uint256 internal constant FRI = 4;
+    uint256 internal constant SAT = 5;
+    uint256 internal constant SUN = 6;
+
+    /// @dev Returns the number of days since 1970-01-01 from (`year`,`month`,`day`).
+    /// See: https://howardhinnant.github.io/date_algorithms.html
+    /// Note: Inputs outside the supported range result in undefined behavior.
+    /// Use {isSupportedDate} to check if the date is supported.
+    function dateToDays(
+        uint256 year,
+        uint256 month,
+        uint256 day
+    ) internal pure returns (uint256 unixDays) {
         /// @solidity memory-safe-assembly
         assembly {
-            y := sub(y, lt(m, 3))
-            // (153*mp + 2)/5 equivalent (62719*mp + 769 / 2048)
-            // mp = (m + 9) % 12
-            let doy := add(shr(11, add(mul(62719, mod(add(m, 9), 12)), 769)), d)
-            let yoe := mod(y, 400)
+            year := sub(year, lt(month, 3))
+            let doy := add(shr(11, add(mul(62719, mod(add(month, 9), 12)), 769)), day)
+            let yoe := mod(year, 400)
             let doe := sub(add(add(mul(yoe, 365), shr(2, yoe)), doy), div(yoe, 100))
-            day := sub(add(mul(div(y, 400), 146097), doe), 719469)
+            unixDays := sub(add(mul(div(year, 400), 146097), doe), 719469)
         }
     }
 
-    /// @dev Returns year-month-day from the number of days since 1970-01-01
-    function daysToDate(uint256 z)
+    /// @dev Returns (`year`,`month`,`day`) from the number of days since 1970-01-01.
+    /// Note: Inputs outside the supported range result in undefined behavior.
+    /// Use {isSupportedDays} to check if the inputs is supported.
+    function daysToDate(uint256 unixDays)
         internal
         pure
         returns (
@@ -42,9 +51,9 @@ library DateTimeLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            z := add(z, 719468)
-            let era := div(z, 146097)
-            let doe := mod(z, 146097)
+            unixDays := add(unixDays, 719468)
+            let era := div(unixDays, 146097)
+            let doe := mod(unixDays, 146097)
             let yoe := div(sub(sub(add(doe, div(doe, 36524)), div(doe, 1460)), eq(doe, 146096)), 365)
             let doy := add(sub(sub(doe, mul(365, yoe)), shr(2, yoe)), div(yoe, 100))
             let mp := div(add(mul(5, doy), 2), 153)
@@ -54,139 +63,124 @@ library DateTimeLib {
         }
     }
 
-    /// @dev Returns true if given year is leap year else false
-    function isLeapYear(uint256 y) internal pure returns (bool valid) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            valid := iszero(and(add(mul(iszero(mod(y, 25)), 12), 3), y))
+    /// @dev Returns the unix timestamp from (`year`,`month`,`day`).
+    /// Note: Inputs outside the supported range result in undefined behavior.
+    /// Use {isSupportedDate} to check if the date is supported.
+    function dateToTimestamp(
+        uint256 year,
+        uint256 month,
+        uint256 day
+    ) internal pure returns (uint256 result) {
+        unchecked {
+            result = dateToDays(year, month, day) * 86400;
         }
     }
 
-    /// @dev Returns unix timestamp from given yyyy-mm-dd
-    /// @notice doesn't validate date if date is before 1970-01-01 then this will give undefined behaviour
-    /// you can validate date by isValidDate function
-    function timestampFromDate(
-        uint256 y,
-        uint256 m,
-        uint256 d
-    ) internal pure returns (uint256 timestamp) {
-        return daysFromDate(y, m, d) * PER_DAY_SECOND;
-    }
-
-    /// @dev Returns yyyy-m-d from the given timestamp
-    function timestampToDate(uint256 timestamp)
+    /// @dev Returns (`year`,`month`,`day`) from the given unix timestamp.
+    /// Note: Inputs outside the supported range result in undefined behavior.
+    /// Use {isSupportedTimestamp} to check if the date is supported.
+    function timestampToDate(uint256 unixTimestamp)
         internal
         pure
         returns (
-            uint256 y,
-            uint256 m,
-            uint256 d
+            uint256 year,
+            uint256 month,
+            uint256 day
         )
     {
-        (y, m, d) = daysToDate(timestamp / PER_DAY_SECOND);
+        (year, month, day) = daysToDate(unixTimestamp / 86400);
     }
 
-    /// @dev Returns number of days in given month of year
-    function getDaysInMonth(uint256 y, uint256 m) internal pure returns (uint256 d) {
-        bool flag = isLeapYear(y);
+    /// @dev Returns if the `year` is leap.
+    function isLeapYear(uint256 year) internal pure returns (bool leap) {
         /// @solidity memory-safe-assembly
         assembly {
-            // months[12] = [31,28,31,30,31,30,31,31,30,31,30,31]
-            // day = month[m-1] + isLeapYear(y)
-            d := add(byte(m, shl(152, 0x1F1C1F1E1F1E1F1F1E1F1E1F)), and(eq(m, 2), flag))
+            leap := iszero(and(add(mul(iszero(mod(year, 25)), 12), 3), year))
         }
     }
 
-    /// @dev Returns Week Day of given timestamp
-    /// Monday - 0, Tuesday - 1, ....., Sunday - 6
-    function getDayOfWeek(uint256 t) internal pure returns (uint256 weekday) {
+    /// @dev Returns number of days in given `month` of `year`.
+    function daysInMonth(uint256 year, uint256 month) internal pure returns (uint256 result) {
+        bool flag = isLeapYear(year);
         /// @solidity memory-safe-assembly
         assembly {
-            weekday := mod(add(div(t, PER_DAY_SECOND), 3), 7)
+            // `daysInMonths = [31,28,31,30,31,30,31,31,30,31,30,31]`.
+            // `result = daysInMonths[month - 1] + isLeapYear(year)`.
+            result := add(byte(month, shl(152, 0x1F1C1F1E1F1E1F1F1E1F1E1F)), and(eq(month, 2), flag))
         }
     }
 
-    /// @dev Returns If given date is valid else false
-    /// valid range 1970 < year < 3.669*10^69, 0 < month < 13, 0 < day <= getDaysInMonth(y,m)
-    function isValidDate(
-        uint256 y,
-        uint256 m,
-        uint256 d
-    ) internal pure returns (bool valid) {
-        uint256 md = getDaysInMonth(y, m);
+    /// @dev Returns the day of week from the unix timestamp.
+    /// Monday: 0, Tuesday: 1, ....., Sunday: 6.
+    function dayOfWeek(uint256 unixTimestamp) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mod(add(div(unixTimestamp, 86400), 3), 7)
+        }
+    }
+
+    /// @dev Returns if (`year`,`month`,`day`) is a supported date.
+    /// - `1970 <= year <= MAX_SUPPORTED_YEAR`
+    /// - `1 <= month <= 12`
+    /// - `1 <= day <= daysInMonth(year, month)`
+    function isSupportedDate(
+        uint256 year,
+        uint256 month,
+        uint256 day
+    ) internal pure returns (bool result) {
+        uint256 md = daysInMonth(year, month);
         /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
-            valid := iszero(or(or(or(or(or(
-                    lt(y, 1970), gt(y, 3669305236998687180674831492239425019668248843096144521164705134005821)),
-                    iszero(m)),gt(m, 12)),iszero(d)),gt(d, md)))
+            result := iszero(or(or(or(or(or(lt(year, 1970), gt(year, MAX_SUPPORTED_YEAR)), 
+                iszero(month)), gt(month, 12)), iszero(day)), gt(day, md)))
         }
     }
 
-    /// @dev Returns timestamp If the given nth weekday in month of year is possible else zero
-    /// @dev wd range is must be [0,6] where 0-Monday, 1-Tuesday,...., 6-Sunday else undefined behaviours
-    /// (Example) 2022-2 3th friday (getNthDayOfWeekInMonthOfYear(2022,2,3,5))
-    /// @notice Doesn't verify year,month and weekday(wd) you can verify this via isValidDate(y,m,1)
-    function getNthDayOfWeekInMonthOfYear(
-        uint256 y,
-        uint256 m,
+    /// @dev Returns if `unixDays` is a supported.
+    function isSupportedDays(uint256 unixDays) internal pure returns (bool result) {
+        result = unixDays < MAX_SUPPORTED_DAYS + 1;
+    }
+
+    /// @dev Returns if `unixTimestamp` is a supported.
+    function isSupportedTimestamp(uint256 unixTimestamp) internal pure returns (bool result) {
+        result = unixTimestamp < MAX_SUPPORTED_TIMESTAMP + 1;
+    }
+
+    /// @dev Returns the unix timestamp of the given `n`th `weekday` in `month` of `year`.
+    /// Example: 3rd Friday of 2022 Feb: `nthWeekdayInMonthOfYearTimestamp(2022, 2, 3, 5))`
+    /// Note: Behavior is undefined if `weekday` is invalid (i.e. `weekday > 6`).
+    function nthWeekdayInMonthOfYearTimestamp(
+        uint256 year,
+        uint256 month,
         uint256 n,
-        uint256 wd
-    ) internal pure returns (uint256 t) {
-        uint256 d = daysFromDate(y, m, 1);
-        uint256 md = getDaysInMonth(y, m);
+        uint256 weekday
+    ) internal pure returns (uint256 result) {
+        uint256 d = dateToDays(year, month, 1);
+        uint256 md = daysInMonth(year, month);
         assembly {
-            // weekday of 01-mm-yyyy w0 = (d + 3) % 7
-            // weekday diffrence x = (wd - w0) , x = x <= 6 ? x : x + 7
-            let diff := sub(wd, mod(add(d, 3), 7))
-            // date = diff + (n-1)*7 + 1
-            // timestamp = 86400 * ((date - 1) + d) -> optimize ( 86400 * (diff + (n-1)*7) + d)
+            let diff := sub(weekday, mod(add(d, 3), 7))
             let date := add(mul(sub(n, 1), 7), add(mul(gt(diff, 6), 7), diff))
-            // timestamp = date > getDaysInMonth(y,m) ? 0 : (date + d)*86400
-            t := mul(mul(PER_DAY_SECOND, add(date, d)), and(lt(date, md), iszero(iszero(n))))
+            result := mul(mul(86400, add(date, d)), and(lt(date, md), iszero(iszero(n))))
         }
     }
 
-    /// @dev Returns Next Weekday timestamp
-    /// @notice wd range must be [0,6] (where 0-Monday, 1-Tuesday,...., 6-Sunday)
-    /// and timestamp range must be [0,115792089237316195423570985008687907853269984665640564039457584007913129084799]
-    /// else return 0
-    function getNextWeekDay(uint256 t, uint256 wd) internal pure returns (uint256 _timestamp) {
+    /// @dev Returns the unix timestamp of the next weekday.
+    function nextWeekdayTimestamp(uint256 unixTimestamp, uint256 nextWeekday) internal pure returns (uint256 result) {
         assembly {
-            // prettier-ignore
-            if iszero(or(gt(t, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6c57f), gt(wd, 6))) {
-                // days = t / 86400;
-                let day := div(t, 86400)
-                // weekday of 01-mm-yyyy w0 = (d + 3) % 7
-                // weekday diffrence x = (wd - w0) , x = x <= 6 ? x : x + 7
-                let diff := sub(wd, mod(add(day, 3), 7))
-                // d := gt(diff,6) || iszero(diff) ? diff + 7 : diff
-                let d := add(day, add(diff, mul(or(gt(diff, 6), iszero(diff)), 7)))
-                _timestamp := mul(d, 86400)
-            }
+            let day := div(unixTimestamp, 86400)
+            let diff := sub(nextWeekday, mod(add(day, 3), 7))
+            let d := add(day, add(diff, mul(or(gt(diff, 6), iszero(diff)), 7)))
+            result := mul(mul(d, 86400), lt(nextWeekday, 7))
         }
     }
 
-    /// @dev Return Monday timestamp of given timestamp week
-    /// @notice For less than 1970-01-04 timestamp start of week is Thursday
-    function getStartOfWeek(uint256 t) internal pure returns (uint256 _timestamp) {
+    /// @dev Returns the unix timestamp of the Monday of the week.
+    function mondayTimestamp(uint256 unixTimestamp) internal pure returns (uint256 result) {
         assembly {
-            let day := div(t, 86400)
+            let day := div(unixTimestamp, 86400)
             let weekday := mod(add(day, 3), 7)
-            _timestamp := mul(mul(sub(day, weekday), 86400), gt(t, 345599))
-        }
-    }
-
-    /// @dev Return Sunday timestamp of given timestamp week
-    /// @notice For greater than 3.66*10^69-12-31 timestamp end of week is Tuesday
-    function getEndOfWeek(uint256 t) internal pure returns (uint256 _timestamp) {
-        assembly {
-            let day := div(t, 86400)
-            let weekday := sub(6, mod(add(day, 3), 7))
-            _timestamp := mul(add(day, weekday), 86400)
-            if gt(t, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffccd80) {
-                _timestamp := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7080
-            }
+            result := mul(mul(sub(day, weekday), 86400), gt(unixTimestamp, 345599))
         }
     }
 }
