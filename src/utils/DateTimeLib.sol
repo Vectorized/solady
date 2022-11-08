@@ -157,12 +157,16 @@ library DateTimeLib {
 
     /// @dev Returns if `epochDay` is a supported unix epoch day.
     function isSupportedEpochDay(uint256 epochDay) internal pure returns (bool result) {
-        result = epochDay < MAX_SUPPORTED_EPOCH_DAY + 1;
+        unchecked {
+            result = epochDay < MAX_SUPPORTED_EPOCH_DAY + 1;
+        }
     }
 
     /// @dev Returns if `timestamp` is a supported unix timestamp.
     function isSupportedTimestamp(uint256 timestamp) internal pure returns (bool result) {
-        result = timestamp < MAX_SUPPORTED_TIMESTAMP + 1;
+        unchecked {
+            result = timestamp < MAX_SUPPORTED_TIMESTAMP + 1;
+        }
     }
 
     /// @dev Returns the unix timestamp of the given `n`th `weekday` in `month` of `year`.
@@ -176,6 +180,7 @@ library DateTimeLib {
     ) internal pure returns (uint256 result) {
         uint256 d = dateToEpochDay(year, month, 1);
         uint256 md = daysInMonth(year, month);
+        /// @solidity memory-safe-assembly
         assembly {
             let diff := sub(weekday, mod(add(d, 3), 7))
             let date := add(mul(sub(n, 1), 7), add(mul(gt(diff, 6), 7), diff))
@@ -186,6 +191,7 @@ library DateTimeLib {
     /// @dev Returns the unix timestamp of the most recent Monday.
     function mondayTimestamp(uint256 timestamp) internal pure returns (uint256 result) {
         uint256 t = timestamp;
+        /// @solidity memory-safe-assembly
         assembly {
             let day := div(t, 86400)
             result := mul(mul(sub(day, mod(add(day, 3), 7)), 86400), gt(t, 345599))

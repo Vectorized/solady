@@ -126,7 +126,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.isLeapYear(year), (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0));
     }
 
-    function testGetDaysInMonth() public {
+    function testDaysInMonth() public {
         assertEq(DateTimeLib.daysInMonth(2022, 1), 31);
         assertEq(DateTimeLib.daysInMonth(2022, 2), 28);
         assertEq(DateTimeLib.daysInMonth(2022, 3), 31);
@@ -144,7 +144,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.daysInMonth(1900, 2), 28);
     }
 
-    function testFuzzGetDaysInMonth(uint256 year, uint256 month) public {
+    function testFuzzDaysInMonth(uint256 year, uint256 month) public {
         month = _bound(month, 1, 12);
         if (DateTimeLib.isLeapYear(year) && month == 2) {
             assertEq(DateTimeLib.daysInMonth(year, month), 29);
@@ -168,7 +168,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.dayOfWeek(518400), 2);
     }
 
-    function testFuzzGetDayOfWeek() public {
+    function testFuzzDayOfWeek() public {
         uint256 timestamp = 0;
         uint256 weekday = 3;
         unchecked {
@@ -277,7 +277,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 6, 6), 0);
     }
 
-    function testFuzzGetNthDayOfWeekInMonthOfYear(
+    function testFuzzNthDayOfWeekInMonthOfYear(
         uint256 year,
         uint256 month,
         uint256 n,
