@@ -18,6 +18,10 @@ library DateTimeLib {
     uint256 internal constant SAT = 5;
     uint256 internal constant SUN = 6;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    DATE TIME OPERATIONS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @dev Returns the number of days since 1970-01-01 from (`year`,`month`,`day`).
     /// See: https://howardhinnant.github.io/date_algorithms.html
     /// Note: Inputs outside the supported range result in undefined behavior.
@@ -162,16 +166,6 @@ library DateTimeLib {
             let diff := sub(weekday, mod(add(d, 3), 7))
             let date := add(mul(sub(n, 1), 7), add(mul(gt(diff, 6), 7), diff))
             result := mul(mul(86400, add(date, d)), and(lt(date, md), iszero(iszero(n))))
-        }
-    }
-
-    /// @dev Returns the unix timestamp of the next weekday.
-    function nextWeekdayTimestamp(uint256 unixTimestamp, uint256 nextWeekday) internal pure returns (uint256 result) {
-        assembly {
-            let day := div(unixTimestamp, 86400)
-            let diff := sub(nextWeekday, mod(add(day, 3), 7))
-            let d := add(day, add(diff, mul(or(gt(diff, 6), iszero(diff)), 7)))
-            result := mul(mul(d, 86400), lt(nextWeekday, 7))
         }
     }
 
