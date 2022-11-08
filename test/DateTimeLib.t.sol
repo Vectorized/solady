@@ -198,15 +198,15 @@ contract DateTimeLibTest is TestPlus {
         }
     }
 
-    function testDayOfWeek() public {
-        assertEq(DateTimeLib.dayOfWeek(1), 3);
-        assertEq(DateTimeLib.dayOfWeek(86400), 4);
-        assertEq(DateTimeLib.dayOfWeek(86401), 4);
-        assertEq(DateTimeLib.dayOfWeek(172800), 5);
-        assertEq(DateTimeLib.dayOfWeek(259200), 6);
-        assertEq(DateTimeLib.dayOfWeek(345600), 0);
-        assertEq(DateTimeLib.dayOfWeek(432000), 1);
-        assertEq(DateTimeLib.dayOfWeek(518400), 2);
+    function testWeekday() public {
+        assertEq(DateTimeLib.weekday(1), 3);
+        assertEq(DateTimeLib.weekday(86400), 4);
+        assertEq(DateTimeLib.weekday(86401), 4);
+        assertEq(DateTimeLib.weekday(172800), 5);
+        assertEq(DateTimeLib.weekday(259200), 6);
+        assertEq(DateTimeLib.weekday(345600), 0);
+        assertEq(DateTimeLib.weekday(432000), 1);
+        assertEq(DateTimeLib.weekday(518400), 2);
     }
 
     function testFuzzDayOfWeek() public {
@@ -214,7 +214,7 @@ contract DateTimeLibTest is TestPlus {
         uint256 weekday = 3;
         unchecked {
             for (uint256 i = 0; i < 1000; ++i) {
-                assertEq(DateTimeLib.dayOfWeek(timestamp), weekday);
+                assertEq(DateTimeLib.weekday(timestamp), weekday);
                 timestamp += 86400;
                 weekday = (weekday + 1) % 7;
             }
@@ -340,7 +340,7 @@ contract DateTimeLibTest is TestPlus {
             uint256 m;
             uint256 found;
             for (uint256 i; i < md; ) {
-                if (DateTimeLib.dayOfWeek(timestamp) == weekday) {
+                if (DateTimeLib.weekday(timestamp) == weekday) {
                     if (++m == n) {
                         found = 1;
                         break;
@@ -392,4 +392,8 @@ contract DateTimeLibTest is TestPlus {
         uint256 weekday = (day + 3) % 7;
         assertEq(DateTimeLib.mondayTimestamp(timestamp), timestamp > 345599 ? (day - weekday) * 86400 : 0);
     }
+
+    // function _dateToEpochDayOriginal(uint256 year, uint256 month, uint256 day) internal pure returns (uint256) {
+
+    // }
 }

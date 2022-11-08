@@ -128,9 +128,9 @@ library DateTimeLib {
         }
     }
 
-    /// @dev Returns the day of week from the unix timestamp.
+    /// @dev Returns the weekday from the unix timestamp.
     /// Monday: 0, Tuesday: 1, ....., Sunday: 6.
-    function dayOfWeek(uint256 timestamp) internal pure returns (uint256 result) {
+    function weekday(uint256 timestamp) internal pure returns (uint256 result) {
         unchecked {
             result = (timestamp / 86400 + 3) % 7;
         }
@@ -170,20 +170,20 @@ library DateTimeLib {
         }
     }
 
-    /// @dev Returns the unix timestamp of the given `n`th `weekday` in `month` of `year`.
+    /// @dev Returns the unix timestamp of the given `n`th weekday `wd`, in `month` of `year`.
     /// Example: 3rd Friday of 2022 Feb: `nthWeekdayInMonthOfYearTimestamp(2022, 2, 3, 5))`
-    /// Note: Behavior is undefined if `weekday` is invalid (i.e. `weekday > 6`).
+    /// Note: Behavior is undefined if `wd` is invalid (i.e. `wd > 6`).
     function nthWeekdayInMonthOfYearTimestamp(
         uint256 year,
         uint256 month,
         uint256 n,
-        uint256 weekday
+        uint256 wd
     ) internal pure returns (uint256 result) {
         uint256 d = dateToEpochDay(year, month, 1);
         uint256 md = daysInMonth(year, month);
         /// @solidity memory-safe-assembly
         assembly {
-            let diff := sub(weekday, mod(add(d, 3), 7))
+            let diff := sub(wd, mod(add(d, 3), 7))
             let date := add(mul(sub(n, 1), 7), add(mul(gt(diff, 6), 7), diff))
             result := mul(mul(86400, add(date, d)), and(lt(date, md), iszero(iszero(n))))
         }
