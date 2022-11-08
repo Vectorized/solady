@@ -18,6 +18,19 @@ library DateTimeLib {
     uint256 internal constant SAT = 5;
     uint256 internal constant SUN = 6;
 
+    uint256 internal constant JAN = 1;
+    uint256 internal constant FEB = 2;
+    uint256 internal constant MAR = 3;
+    uint256 internal constant APR = 4;
+    uint256 internal constant MAY = 5;
+    uint256 internal constant JUN = 6;
+    uint256 internal constant JUL = 7;
+    uint256 internal constant AUG = 8;
+    uint256 internal constant SEP = 9;
+    uint256 internal constant OCT = 10;
+    uint256 internal constant NOV = 11;
+    uint256 internal constant DEC = 12;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    DATE TIME OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
