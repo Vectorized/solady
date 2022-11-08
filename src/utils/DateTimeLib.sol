@@ -7,7 +7,7 @@ library DateTimeLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     uint256 internal constant MAX_SUPPORTED_YEAR = 4294967295;
-    uint256 internal constant MAX_SUPPORTED_DAYS = 1568703872776;
+    uint256 internal constant MAX_SUPPORTED_EPOCH_DAY = 1568703872776;
     uint256 internal constant MAX_SUPPORTED_TIMESTAMP = 135536014607932799;
 
     uint256 internal constant MON = 0;
@@ -144,7 +144,7 @@ library DateTimeLib {
 
     /// @dev Returns if `epochDay` is a supported unix epoch day.
     function isSupportedEpochDay(uint256 epochDay) internal pure returns (bool result) {
-        result = epochDay < MAX_SUPPORTED_DAYS + 1;
+        result = epochDay < MAX_SUPPORTED_EPOCH_DAY + 1;
     }
 
     /// @dev Returns if `timestamp` is a supported unix timestamp.

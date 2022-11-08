@@ -206,6 +206,26 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.isSupportedDate(year, month, day), isSupported);
     }
 
+    function testIsSupportedEpochDayTrue() public {
+        assertTrue(DateTimeLib.isSupportedEpochDay(0));
+        assertTrue(DateTimeLib.isSupportedEpochDay(DateTimeLib.MAX_SUPPORTED_EPOCH_DAY));
+    }
+
+    function testIsSupportedEpochDayFalse() public {
+        assertFalse(DateTimeLib.isSupportedEpochDay(DateTimeLib.MAX_SUPPORTED_EPOCH_DAY + 1));
+        assertFalse(DateTimeLib.isSupportedEpochDay(DateTimeLib.MAX_SUPPORTED_EPOCH_DAY + 2));
+    }
+
+    function testIsSupportedTimestampTrue() public {
+        assertTrue(DateTimeLib.isSupportedTimestamp(0));
+        assertTrue(DateTimeLib.isSupportedTimestamp(DateTimeLib.MAX_SUPPORTED_TIMESTAMP));
+    }
+
+    function testIsSupportedTimestampFalse() public {
+        assertFalse(DateTimeLib.isSupportedTimestamp(DateTimeLib.MAX_SUPPORTED_TIMESTAMP + 1));
+        assertFalse(DateTimeLib.isSupportedTimestamp(DateTimeLib.MAX_SUPPORTED_TIMESTAMP + 2));
+    }
+
     function testNthWeekdayInMonthOfYearTimestamp() public {
         // get 1st 2nd 3rd 4th monday in Novermber 2022
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 1, 0), 1667779200);
