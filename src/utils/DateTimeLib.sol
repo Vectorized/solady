@@ -1,14 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+/// @notice Library for date time operations.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/DateTimeLib.sol)
+///
+/// Conventions:
+/// --------------------------------------------------------------------------------------+
+/// Unit      | Range                | Notes                                              |
+/// --------------------------------------------------------------------------------------|
+/// timestamp | 0..0x1e18549868c76ff | Unix timestamp, number of seconds since 1970-01-01 |
+/// epochDay  | 0..0x16d3e098039     | Days since 1970-01-01                              |
+/// year      | 1970..0xffffffff     | Gregorian calendar year                            |
+/// month     | 1..12                | Gregorian calendar month                           |
+/// day       | 1..31                | Gregorian calendar day of month                    |
+/// weekday   | 0..6                 | Index of the day of week                           |
+/// --------------------------------------------------------------------------------------+
+/// All timestamp of days are rounded down to 00:00:00 UTC.
 library DateTimeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    uint256 internal constant MAX_SUPPORTED_YEAR = 4294967295;
-    uint256 internal constant MAX_SUPPORTED_EPOCH_DAY = 1568703873081;
-    uint256 internal constant MAX_SUPPORTED_TIMESTAMP = 135536014634284799;
+    // Weekdays are 0-indexed for gas efficiency purposes.
 
     uint256 internal constant MON = 0;
     uint256 internal constant TUE = 1;
@@ -17,6 +30,8 @@ library DateTimeLib {
     uint256 internal constant FRI = 4;
     uint256 internal constant SAT = 5;
     uint256 internal constant SUN = 6;
+
+    // Months and days of months are 1-indexed for ease of use.
 
     uint256 internal constant JAN = 1;
     uint256 internal constant FEB = 2;
@@ -31,13 +46,20 @@ library DateTimeLib {
     uint256 internal constant NOV = 11;
     uint256 internal constant DEC = 12;
 
+    // The maximum supported limits are large enough for most pratical purposes.
+    // Inputs that exceed the supported limits result in undefined behavior.
+
+    uint256 internal constant MAX_SUPPORTED_YEAR = 0xffffffff;
+    uint256 internal constant MAX_SUPPORTED_EPOCH_DAY = 0x16d3e098039;
+    uint256 internal constant MAX_SUPPORTED_TIMESTAMP = 0x1e18549868c76ff;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    DATE TIME OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the number of days since 1970-01-01 from (`year`,`month`,`day`).
     /// See: https://howardhinnant.github.io/date_algorithms.html
-    /// Note: Inputs outside the supported range result in undefined behavior.
+    /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedDate} to check if the date is supported.
     function dateToEpochDay(
         uint256 year,
@@ -55,7 +77,7 @@ library DateTimeLib {
     }
 
     /// @dev Returns (`year`,`month`,`day`) from the number of days since 1970-01-01.
-    /// Note: Inputs outside the supported range result in undefined behavior.
+    /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedDays} to check if the inputs is supported.
     function epochDayToDate(uint256 epochDay)
         internal
@@ -80,7 +102,7 @@ library DateTimeLib {
     }
 
     /// @dev Returns the unix timestamp from (`year`,`month`,`day`).
-    /// Note: Inputs outside the supported range result in undefined behavior.
+    /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedDate} to check if the date is supported.
     function dateToTimestamp(
         uint256 year,
@@ -93,7 +115,7 @@ library DateTimeLib {
     }
 
     /// @dev Returns (`year`,`month`,`day`) from the given unix timestamp.
-    /// Note: Inputs outside the supported range result in undefined behavior.
+    /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedTimestamp} to check if the date is supported.
     function timestampToDate(uint256 timestamp)
         internal
@@ -172,7 +194,7 @@ library DateTimeLib {
 
     /// @dev Returns the unix timestamp of the given `n`th weekday `wd`, in `month` of `year`.
     /// Example: 3rd Friday of 2022 Feb: `nthWeekdayInMonthOfYearTimestamp(2022, 2, 3, 5))`
-    /// Note: Behavior is undefined if `wd` is invalid (i.e. `wd > 6`).
+    /// Note: Invalid weekdays (i.e. `wd > 6`) result in undefined behavior.
     function nthWeekdayInMonthOfYearTimestamp(
         uint256 year,
         uint256 month,
