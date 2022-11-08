@@ -6,89 +6,88 @@ import {DateTimeLib} from "../src/utils/DateTimeLib.sol";
 
 contract DateTimeLibTest is TestPlus {
     function testDaysFromDate() public {
-        assertEq(DateTimeLib.dateToDays(1970, 1, 1), 0);
-        assertEq(DateTimeLib.dateToDays(1970, 1, 2), 1);
-        assertEq(DateTimeLib.dateToDays(1970, 2, 1), 31);
-        assertEq(DateTimeLib.dateToDays(1970, 3, 1), 59);
-        assertEq(DateTimeLib.dateToDays(1970, 4, 1), 90);
-        assertEq(DateTimeLib.dateToDays(1970, 5, 1), 120);
-        assertEq(DateTimeLib.dateToDays(1970, 6, 1), 151);
-        assertEq(DateTimeLib.dateToDays(1970, 7, 1), 181);
-        assertEq(DateTimeLib.dateToDays(1970, 8, 1), 212);
-        assertEq(DateTimeLib.dateToDays(1970, 9, 1), 243);
-        assertEq(DateTimeLib.dateToDays(1970, 10, 1), 273);
-        assertEq(DateTimeLib.dateToDays(1970, 11, 1), 304);
-        assertEq(DateTimeLib.dateToDays(1970, 12, 1), 334);
-        assertEq(DateTimeLib.dateToDays(1970, 12, 31), 364);
-        assertEq(DateTimeLib.dateToDays(1971, 1, 1), 365);
-        assertEq(DateTimeLib.dateToDays(1980, 11, 3), 3959);
-        assertEq(DateTimeLib.dateToDays(2000, 3, 1), 11017);
-        assertEq(DateTimeLib.dateToDays(2355, 12, 31), 140982);
-        assertEq(DateTimeLib.dateToDays(99999, 12, 31), 35804721);
-        assertEq(DateTimeLib.dateToDays(100000, 12, 31), 35805087);
-        assertEq(DateTimeLib.dateToDays(604800, 2, 29), 220179195);
-        assertEq(DateTimeLib.dateToDays(1667347200, 2, 29), 608985340227);
-        assertEq(DateTimeLib.dateToDays(1667952000, 2, 29), 609206238891);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 1, 1), 0);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 1, 2), 1);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 2, 1), 31);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 3, 1), 59);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 4, 1), 90);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 5, 1), 120);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 6, 1), 151);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 7, 1), 181);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 8, 1), 212);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 9, 1), 243);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 10, 1), 273);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 11, 1), 304);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 12, 1), 334);
+        assertEq(DateTimeLib.dateToEpochDay(1970, 12, 31), 364);
+        assertEq(DateTimeLib.dateToEpochDay(1971, 1, 1), 365);
+        assertEq(DateTimeLib.dateToEpochDay(1980, 11, 3), 3959);
+        assertEq(DateTimeLib.dateToEpochDay(2000, 3, 1), 11017);
+        assertEq(DateTimeLib.dateToEpochDay(2355, 12, 31), 140982);
+        assertEq(DateTimeLib.dateToEpochDay(99999, 12, 31), 35804721);
+        assertEq(DateTimeLib.dateToEpochDay(100000, 12, 31), 35805087);
+        assertEq(DateTimeLib.dateToEpochDay(604800, 2, 29), 220179195);
+        assertEq(DateTimeLib.dateToEpochDay(1667347200, 2, 29), 608985340227);
+        assertEq(DateTimeLib.dateToEpochDay(1667952000, 2, 29), 609206238891);
     }
 
     function testDaysToDate() public {
         uint256 year;
         uint256 month;
         uint256 day;
-        (year, month, day) = DateTimeLib.daysToDate(0);
+        (year, month, day) = DateTimeLib.epochDayToDate(0);
         assertTrue(year == 1970 && month == 1 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(31);
+        (year, month, day) = DateTimeLib.epochDayToDate(31);
         assertTrue(year == 1970 && month == 2 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(59);
+        (year, month, day) = DateTimeLib.epochDayToDate(59);
         assertTrue(year == 1970 && month == 3 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(90);
+        (year, month, day) = DateTimeLib.epochDayToDate(90);
         assertTrue(year == 1970 && month == 4 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(120);
+        (year, month, day) = DateTimeLib.epochDayToDate(120);
         assertTrue(year == 1970 && month == 5 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(151);
+        (year, month, day) = DateTimeLib.epochDayToDate(151);
         assertTrue(year == 1970 && month == 6 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(181);
+        (year, month, day) = DateTimeLib.epochDayToDate(181);
         assertTrue(year == 1970 && month == 7 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(212);
+        (year, month, day) = DateTimeLib.epochDayToDate(212);
         assertTrue(year == 1970 && month == 8 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(243);
+        (year, month, day) = DateTimeLib.epochDayToDate(243);
         assertTrue(year == 1970 && month == 9 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(273);
+        (year, month, day) = DateTimeLib.epochDayToDate(273);
         assertTrue(year == 1970 && month == 10 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(304);
+        (year, month, day) = DateTimeLib.epochDayToDate(304);
         assertTrue(year == 1970 && month == 11 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(334);
+        (year, month, day) = DateTimeLib.epochDayToDate(334);
         assertTrue(year == 1970 && month == 12 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(365);
+        (year, month, day) = DateTimeLib.epochDayToDate(365);
         assertTrue(year == 1971 && month == 1 && day == 1);
-        (year, month, day) = DateTimeLib.daysToDate(10987);
+        (year, month, day) = DateTimeLib.epochDayToDate(10987);
         assertTrue(year == 2000 && month == 1 && day == 31);
-        (year, month, day) = DateTimeLib.daysToDate(18321);
+        (year, month, day) = DateTimeLib.epochDayToDate(18321);
         assertTrue(year == 2020 && month == 2 && day == 29);
-        (year, month, day) = DateTimeLib.daysToDate(156468);
+        (year, month, day) = DateTimeLib.epochDayToDate(156468);
         assertTrue(year == 2398 && month == 5 && day == 25);
-        (year, month, day) = DateTimeLib.daysToDate(35805087);
+        (year, month, day) = DateTimeLib.epochDayToDate(35805087);
         assertTrue(year == 100000 && month == 12 && day == 31);
     }
 
-    function testFuzzDaysToDate(uint256 z) public {
-        (uint256 y, uint256 m, uint256 d) = DateTimeLib.daysToDate(z);
-        uint256 day = DateTimeLib.dateToDays(y, m, d);
-        assertEq(z, day);
+    function testFuzzDaysToDate(uint256 unixDays) public {
+        (uint256 y, uint256 m, uint256 d) = DateTimeLib.epochDayToDate(unixDays);
+        assertEq(unixDays, DateTimeLib.dateToEpochDay(y, m, d));
     }
 
     function testFuzzDaysFromDate(
-        uint256 _y,
-        uint256 _m,
-        uint256 _d
+        uint256 year,
+        uint256 month,
+        uint256 day
     ) public {
-        _y = _bound(_y, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
-        _m = _bound(_m, 1, 12);
-        uint256 md = DateTimeLib.daysInMonth(_y, _m);
-        _d = _bound(_d, 1, md);
-        uint256 day = DateTimeLib.dateToDays(_y, _m, _d);
-        (uint256 y, uint256 m, uint256 d) = DateTimeLib.daysToDate(day);
-        assertTrue(_y == y && _m == m && _d == d);
+        year = _bound(year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+        month = _bound(month, 1, 12);
+        uint256 md = DateTimeLib.daysInMonth(year, month);
+        day = _bound(day, 1, md);
+        uint256 unixDays = DateTimeLib.dateToEpochDay(year, month, day);
+        (uint256 y, uint256 m, uint256 d) = DateTimeLib.epochDayToDate(unixDays);
+        assertTrue(year == y && month == m && day == d);
     }
 
     function testIsLeapYear() public {
@@ -105,12 +104,8 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(DateTimeLib.isLeapYear(10916));
     }
 
-    function testFuzzIsLeapYear(uint256 y) public {
-        if ((y % 4 == 0) && (y % 100 != 0 || y % 400 == 0)) {
-            assertTrue(DateTimeLib.isLeapYear(y));
-        } else {
-            assertFalse(DateTimeLib.isLeapYear(y));
-        }
+    function testFuzzIsLeapYear(uint256 year) public {
+        assertEq(DateTimeLib.isLeapYear(year), (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0));
     }
 
     function testGetDaysInMonth() public {
@@ -131,16 +126,16 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.daysInMonth(1900, 2), 28);
     }
 
-    function testFuzzGetDaysInMonth(uint256 y, uint256 m) public {
-        m = _bound(m, 1, 12);
-        if (DateTimeLib.isLeapYear(y) && m == 2) {
-            assertEq(DateTimeLib.daysInMonth(y, m), 29);
-        } else if (m == 1 || m == 3 || m == 5 || m == 7 || m == 8 || m == 10 || m == 12) {
-            assertEq(DateTimeLib.daysInMonth(y, m), 31);
-        } else if (m == 2) {
-            assertEq(DateTimeLib.daysInMonth(y, m), 28);
+    function testFuzzGetDaysInMonth(uint256 year, uint256 month) public {
+        month = _bound(month, 1, 12);
+        if (DateTimeLib.isLeapYear(year) && month == 2) {
+            assertEq(DateTimeLib.daysInMonth(year, month), 29);
+        } else if (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) {
+            assertEq(DateTimeLib.daysInMonth(year, month), 31);
+        } else if (month == 2) {
+            assertEq(DateTimeLib.daysInMonth(year, month), 28);
         } else {
-            assertEq(DateTimeLib.daysInMonth(y, m), 30);
+            assertEq(DateTimeLib.daysInMonth(year, month), 30);
         }
     }
 
@@ -156,13 +151,13 @@ contract DateTimeLibTest is TestPlus {
     }
 
     function testFuzzGetDayOfWeek() public {
-        uint256 t = 0;
-        uint256 wd = 3;
+        uint256 unixTimestamp = 0;
+        uint256 weekday = 3;
         unchecked {
             for (uint256 i = 0; i < 1000; ++i) {
-                assertEq(DateTimeLib.dayOfWeek(t), wd);
-                t += 86400;
-                wd = (wd + 1) % 7;
+                assertEq(DateTimeLib.dayOfWeek(unixTimestamp), weekday);
+                unixTimestamp += 86400;
+                weekday = (weekday + 1) % 7;
             }
         }
     }
@@ -176,6 +171,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(DateTimeLib.isSupportedDate(1972, 4, 30));
         assertTrue(DateTimeLib.isSupportedDate(1972, 5, 31));
         assertTrue(DateTimeLib.isSupportedDate(2000, 2, 29));
+        assertTrue(DateTimeLib.isSupportedDate(DateTimeLib.MAX_SUPPORTED_YEAR, 5, 31));
     }
 
     function testIsSupportedDateFalse() public {
@@ -194,22 +190,20 @@ contract DateTimeLibTest is TestPlus {
         assertFalse(DateTimeLib.isSupportedDate(1970, 6, 31));
         assertFalse(DateTimeLib.isSupportedDate(1970, 7, 32));
         assertFalse(DateTimeLib.isSupportedDate(2000, 2, 30));
+        assertFalse(DateTimeLib.isSupportedDate(DateTimeLib.MAX_SUPPORTED_YEAR + 1, 5, 31));
+        assertFalse(DateTimeLib.isSupportedDate(type(uint256).max, 5, 31));
     }
 
     function testFuzzIsSupportedDate(
-        uint256 y,
-        uint256 m,
-        uint256 d
+        uint256 year,
+        uint256 month,
+        uint256 day
     ) public {
-        assertEq(
-            DateTimeLib.isSupportedDate(y, m, d),
-            1970 <= y &&
-                y <= DateTimeLib.MAX_SUPPORTED_YEAR &&
-                1 <= m &&
-                m < 12 &&
-                1 <= d &&
-                d < DateTimeLib.daysInMonth(y, m)
-        );
+        bool isSupportedYear = 1970 <= year && year <= DateTimeLib.MAX_SUPPORTED_YEAR;
+        bool isSupportedMonth = 1 <= month && month < 12;
+        bool isSupportedDay = 1 <= day && day < DateTimeLib.daysInMonth(year, month);
+        bool isSupported = isSupportedYear && isSupportedMonth && isSupportedDay;
+        assertEq(DateTimeLib.isSupportedDate(year, month, day), isSupported);
     }
 
     function testNthWeekdayInMonthOfYearTimestamp() public {
@@ -249,28 +243,26 @@ contract DateTimeLibTest is TestPlus {
         uint256 year,
         uint256 month,
         uint256 n,
-        uint256 wd
+        uint256 weekday
     ) public {
-        wd = _bound(wd, 0, 6);
+        weekday = _bound(weekday, 0, 6);
         month = _bound(month, 1, 12);
-        year = _bound(year, 1970, 1 << 128);
-        uint256 t = DateTimeLib.nthWeekdayInMonthOfYearTimestamp(year, month, n, wd);
-        uint256 day = DateTimeLib.dateToDays(year, month, 1);
-        uint256 wd1 = (day + 3) % 7;
+        year = _bound(year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+        uint256 unixTimestamp = DateTimeLib.nthWeekdayInMonthOfYearTimestamp(year, month, n, weekday);
+        uint256 day = DateTimeLib.dateToEpochDay(year, month, 1);
         uint256 diff;
         unchecked {
-            diff = wd - wd1;
+            diff = weekday - ((day + 3) % 7);
             diff = diff > 6 ? diff + 7 : diff;
         }
         if (n == 0 || n > 5) {
-            assertEq(t, 0);
+            assertEq(unixTimestamp, 0);
         } else {
             uint256 date = diff + (n - 1) * 7 + 1;
-            uint256 md = DateTimeLib.daysInMonth(year, month);
-            if (date > md) {
-                assertEq(t, 0);
+            if (date > DateTimeLib.daysInMonth(year, month)) {
+                assertEq(unixTimestamp, 0);
             } else {
-                assertEq(t, DateTimeLib.dateToTimestamp(year, month, date));
+                assertEq(unixTimestamp, DateTimeLib.dateToTimestamp(year, month, date));
             }
         }
     }
@@ -304,14 +296,9 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.mondayTimestamp(1667174400), 1667174400);
     }
 
-    function testFuzzMondayTimestamp(uint256 t) public {
-        uint256 day = t / 86400;
+    function testFuzzMondayTimestamp(uint256 unixTimestamp) public {
+        uint256 day = unixTimestamp / 86400;
         uint256 weekday = (day + 3) % 7;
-        uint256 nt = DateTimeLib.mondayTimestamp(t);
-        if (t > 345599) {
-            assertEq(nt, (day - weekday) * 86400);
-        } else {
-            assertEq(nt, 0);
-        }
+        assertEq(DateTimeLib.mondayTimestamp(unixTimestamp), unixTimestamp > 345599 ? (day - weekday) * 86400 : 0);
     }
 }

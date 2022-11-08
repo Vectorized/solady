@@ -26,25 +26,25 @@ library DateTimeLib {
     /// See: https://howardhinnant.github.io/date_algorithms.html
     /// Note: Inputs outside the supported range result in undefined behavior.
     /// Use {isSupportedDate} to check if the date is supported.
-    function dateToDays(
+    function dateToEpochDay(
         uint256 year,
         uint256 month,
         uint256 day
-    ) internal pure returns (uint256 unixDays) {
+    ) internal pure returns (uint256 epochDay) {
         /// @solidity memory-safe-assembly
         assembly {
             year := sub(year, lt(month, 3))
             let doy := add(shr(11, add(mul(62719, mod(add(month, 9), 12)), 769)), day)
             let yoe := mod(year, 400)
             let doe := sub(add(add(mul(yoe, 365), shr(2, yoe)), doy), div(yoe, 100))
-            unixDays := sub(add(mul(div(year, 400), 146097), doe), 719469)
+            epochDay := sub(add(mul(div(year, 400), 146097), doe), 719469)
         }
     }
 
     /// @dev Returns (`year`,`month`,`day`) from the number of days since 1970-01-01.
     /// Note: Inputs outside the supported range result in undefined behavior.
     /// Use {isSupportedDays} to check if the inputs is supported.
-    function daysToDate(uint256 unixDays)
+    function epochDayToDate(uint256 epochDay)
         internal
         pure
         returns (
@@ -55,9 +55,9 @@ library DateTimeLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            unixDays := add(unixDays, 719468)
-            let era := div(unixDays, 146097)
-            let doe := mod(unixDays, 146097)
+            epochDay := add(epochDay, 719468)
+            let era := div(epochDay, 146097)
+            let doe := mod(epochDay, 146097)
             let yoe := div(sub(sub(add(doe, div(doe, 36524)), div(doe, 1460)), eq(doe, 146096)), 365)
             let doy := add(sub(sub(doe, mul(365, yoe)), shr(2, yoe)), div(yoe, 100))
             let mp := div(add(mul(5, doy), 2), 153)
@@ -76,14 +76,14 @@ library DateTimeLib {
         uint256 day
     ) internal pure returns (uint256 result) {
         unchecked {
-            result = dateToDays(year, month, day) * 86400;
+            result = dateToEpochDay(year, month, day) * 86400;
         }
     }
 
     /// @dev Returns (`year`,`month`,`day`) from the given unix timestamp.
     /// Note: Inputs outside the supported range result in undefined behavior.
     /// Use {isSupportedTimestamp} to check if the date is supported.
-    function timestampToDate(uint256 unixTimestamp)
+    function timestampToDate(uint256 timestamp)
         internal
         pure
         returns (
@@ -92,7 +92,7 @@ library DateTimeLib {
             uint256 day
         )
     {
-        (year, month, day) = daysToDate(unixTimestamp / 86400);
+        (year, month, day) = epochDayToDate(timestamp / 86400);
     }
 
     /// @dev Returns if the `year` is leap.
@@ -116,10 +116,9 @@ library DateTimeLib {
 
     /// @dev Returns the day of week from the unix timestamp.
     /// Monday: 0, Tuesday: 1, ....., Sunday: 6.
-    function dayOfWeek(uint256 unixTimestamp) internal pure returns (uint256 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mod(add(div(unixTimestamp, 86400), 3), 7)
+    function dayOfWeek(uint256 timestamp) internal pure returns (uint256 result) {
+        unchecked {
+            result = (timestamp / 86400 + 3) % 7;
         }
     }
 
@@ -135,20 +134,22 @@ library DateTimeLib {
         uint256 md = daysInMonth(year, month);
         /// @solidity memory-safe-assembly
         assembly {
-            // prettier-ignore
-            result := iszero(or(or(or(or(or(lt(year, 1970), gt(year, MAX_SUPPORTED_YEAR)), 
-                iszero(month)), gt(month, 12)), iszero(day)), gt(day, md)))
+            let w := not(0)
+            result := and(
+                and(lt(sub(year, 1970), sub(MAX_SUPPORTED_YEAR, 1969)), lt(add(month, w), 12)),
+                lt(add(day, w), md)
+            )
         }
     }
 
-    /// @dev Returns if `unixDays` is a supported.
-    function isSupportedDays(uint256 unixDays) internal pure returns (bool result) {
-        result = unixDays < MAX_SUPPORTED_DAYS + 1;
+    /// @dev Returns if `epochDay` is a supported unix epoch day.
+    function isSupportedEpochDay(uint256 epochDay) internal pure returns (bool result) {
+        result = epochDay < MAX_SUPPORTED_DAYS + 1;
     }
 
-    /// @dev Returns if `unixTimestamp` is a supported.
-    function isSupportedTimestamp(uint256 unixTimestamp) internal pure returns (bool result) {
-        result = unixTimestamp < MAX_SUPPORTED_TIMESTAMP + 1;
+    /// @dev Returns if `timestamp` is a supported unix timestamp.
+    function isSupportedTimestamp(uint256 timestamp) internal pure returns (bool result) {
+        result = timestamp < MAX_SUPPORTED_TIMESTAMP + 1;
     }
 
     /// @dev Returns the unix timestamp of the given `n`th `weekday` in `month` of `year`.
@@ -160,7 +161,7 @@ library DateTimeLib {
         uint256 n,
         uint256 weekday
     ) internal pure returns (uint256 result) {
-        uint256 d = dateToDays(year, month, 1);
+        uint256 d = dateToEpochDay(year, month, 1);
         uint256 md = daysInMonth(year, month);
         assembly {
             let diff := sub(weekday, mod(add(d, 3), 7))
@@ -170,11 +171,11 @@ library DateTimeLib {
     }
 
     /// @dev Returns the unix timestamp of the most recent Monday.
-    function mondayTimestamp(uint256 unixTimestamp) internal pure returns (uint256 result) {
+    function mondayTimestamp(uint256 timestamp) internal pure returns (uint256 result) {
+        uint256 t = timestamp;
         assembly {
-            let day := div(unixTimestamp, 86400)
-            let weekday := mod(add(day, 3), 7)
-            result := mul(mul(sub(day, weekday), 86400), gt(unixTimestamp, 345599))
+            let day := div(t, 86400)
+            result := mul(mul(sub(day, mod(add(day, 3), 7)), 86400), gt(t, 345599))
         }
     }
 }
