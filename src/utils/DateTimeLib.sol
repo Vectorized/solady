@@ -18,6 +18,19 @@ pragma solidity ^0.8.4;
 /// All timestamps of days are rounded down to 00:00:00 UTC.
 library DateTimeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The date time addition has overflowed.
+    error DateTimeOverflow();
+
+    /// @dev The date time subtraction has underflowed.
+    error DateTimeUnderflow();
+
+    /// @dev The `fromTimestamp` is greater than the `toTimestamp`.
+    error InvalidDiff();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -296,5 +309,167 @@ library DateTimeLib {
     /// To check whether it is a week day, just take the negation of the result.
     function isWeekEnd(uint256 timestamp) internal pure returns (bool result) {
         result = weekday(timestamp) > FRI;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              DATE TIME ARITHMETIC OPERATIONS               */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function addYears(uint256 timestamp, uint256 numYears) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
+            year += numYears;
+            uint256 dm = daysInMonth(year, month);
+            if (day > dm) {
+                day = dm;
+            }
+            newTimestamp = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
+            if (newTimestamp < timestamp) revert DateTimeOverflow();
+        }
+    }
+
+    function addMonths(uint256 timestamp, uint256 numMonths) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
+            month += numMonths;
+            year += (month - 1) / 12;
+            month = ((month - 1) % 12) + 1;
+            uint256 dm = daysInMonth(year, month);
+            if (day > dm) {
+                day = dm;
+            }
+            newTimestamp = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
+            if (newTimestamp < timestamp) revert DateTimeOverflow();
+        }
+    }
+
+    function addDays(uint256 timestamp, uint256 numDays) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            newTimestamp = timestamp + numDays * 86400;
+            if (newTimestamp < timestamp) revert DateTimeOverflow();
+        }
+    }
+
+    function addHours(uint256 timestamp, uint256 numHours) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            newTimestamp = timestamp + numHours * 3600;
+            if (newTimestamp < timestamp) revert DateTimeOverflow();
+        }
+    }
+
+    function addMinutes(uint256 timestamp, uint256 numMinutes) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            newTimestamp = timestamp + numMinutes * 60;
+            if (newTimestamp < timestamp) revert DateTimeOverflow();
+        }
+    }
+
+    function addSeconds(uint256 timestamp, uint256 numSeconds) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            newTimestamp = timestamp + numSeconds;
+            if (newTimestamp < timestamp) revert DateTimeOverflow();
+        }
+    }
+
+    function subYears(uint256 timestamp, uint256 numYears) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
+            year -= numYears;
+            uint256 dm = daysInMonth(year, month);
+            if (day > dm) {
+                day = dm;
+            }
+            newTimestamp = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
+            if (newTimestamp > timestamp) revert DateTimeUnderflow();
+        }
+    }
+
+    function subMonths(uint256 timestamp, uint256 numMonths) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
+            uint256 yearMonth = year * 12 + (month - 1) - numMonths;
+            year = yearMonth / 12;
+            month = (yearMonth % 12) + 1;
+            uint256 dm = daysInMonth(year, month);
+            if (day > dm) {
+                day = dm;
+            }
+            newTimestamp = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
+            if (newTimestamp > timestamp) revert DateTimeUnderflow();
+        }
+    }
+
+    function subDays(uint256 timestamp, uint256 numDays) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            newTimestamp = timestamp - numDays * 86400;
+            if (newTimestamp > timestamp) revert DateTimeUnderflow();
+        }
+    }
+
+    function subHours(uint256 timestamp, uint256 numHours) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            newTimestamp = timestamp - numHours * 3600;
+            if (newTimestamp > timestamp) revert DateTimeUnderflow();
+        }
+    }
+
+    function subMinutes(uint256 timestamp, uint256 numMinutes) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            newTimestamp = timestamp - numMinutes * 60;
+            if (newTimestamp > timestamp) revert DateTimeUnderflow();
+        }
+    }
+
+    function subSeconds(uint256 timestamp, uint256 numSeconds) internal pure returns (uint256 newTimestamp) {
+        unchecked {
+            newTimestamp = timestamp - numSeconds;
+            if (newTimestamp > timestamp) revert DateTimeUnderflow();
+        }
+    }
+
+    function diffYears(uint256 fromTimestamp, uint256 toTimestamp) internal pure returns (uint256 numYears) {
+        unchecked {
+            if (fromTimestamp > toTimestamp) revert InvalidDiff();
+            (uint256 fromYear, , ) = epochDayToDate(fromTimestamp / 86400);
+            (uint256 toYear, , ) = epochDayToDate(toTimestamp / 86400);
+            numYears = toYear - fromYear;
+        }
+    }
+
+    function diffMonths(uint256 fromTimestamp, uint256 toTimestamp) internal pure returns (uint256 numMonths) {
+        unchecked {
+            if (fromTimestamp > toTimestamp) revert InvalidDiff();
+            (uint256 fromYear, uint256 fromMonth, ) = epochDayToDate(fromTimestamp / 86400);
+            (uint256 toYear, uint256 toMonth, ) = epochDayToDate(toTimestamp / 86400);
+            numMonths = toYear * 12 + toMonth - fromYear * 12 - fromMonth;
+        }
+    }
+
+    function diffDays(uint256 fromTimestamp, uint256 toTimestamp) internal pure returns (uint256 numDays) {
+        unchecked {
+            if (fromTimestamp > toTimestamp) revert InvalidDiff();
+            numDays = (toTimestamp - fromTimestamp) / 86400;
+        }
+    }
+
+    function diffHours(uint256 fromTimestamp, uint256 toTimestamp) internal pure returns (uint256 numHours) {
+        unchecked {
+            if (fromTimestamp > toTimestamp) revert InvalidDiff();
+            numHours = (toTimestamp - fromTimestamp) / 3600;
+        }
+    }
+
+    function diffMinutes(uint256 fromTimestamp, uint256 toTimestamp) internal pure returns (uint256 numMinutes) {
+        unchecked {
+            if (fromTimestamp > toTimestamp) revert InvalidDiff();
+            numMinutes = (toTimestamp - fromTimestamp) / 60;
+        }
+    }
+
+    function diffSeconds(uint256 fromTimestamp, uint256 toTimestamp) internal pure returns (uint256 numSeconds) {
+        unchecked {
+            if (fromTimestamp > toTimestamp) revert InvalidDiff();
+            numSeconds = toTimestamp - fromTimestamp;
+        }
     }
 }

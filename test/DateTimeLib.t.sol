@@ -386,22 +386,18 @@ contract DateTimeLibTest is TestPlus {
         uint256 minute,
         uint256 second
     ) public {
-        bool isSupportedYear = 1970 <= year && year <= DateTimeLib.MAX_SUPPORTED_YEAR;
         month = _bound(month, 0, 20);
-        bool isSupportedMonth = 1 <= month && month <= 12;
         day = _bound(day, 0, 50);
-        bool isSupportedDay = 1 <= day && day <= DateTimeLib.daysInMonth(year, month);
         hour = _bound(hour, 0, 50);
-        bool isSupportedHour = hour < 24;
         minute = _bound(minute, 0, 100);
-        bool isSupportedMinute = minute < 60;
         second = _bound(second, 0, 100);
-        bool isSupportedSecond = second < 60;
-        assertEq(
-            DateTimeLib.isSupportedDateTime(year, month, day, hour, minute, second),
-            (isSupportedYear && isSupportedMonth && isSupportedDay) &&
-                (isSupportedHour && isSupportedMinute && isSupportedSecond)
-        );
+        bool isSupported = (1970 <= year && year <= DateTimeLib.MAX_SUPPORTED_YEAR) &&
+            (1 <= month && month <= 12) &&
+            (1 <= day && day <= DateTimeLib.daysInMonth(year, month)) &&
+            (hour < 24) &&
+            (minute < 60) &&
+            (second < 60);
+        assertEq(DateTimeLib.isSupportedDateTime(year, month, day, hour, minute, second), isSupported);
     }
 
     function testIsSupportedEpochDayTrue() public {
