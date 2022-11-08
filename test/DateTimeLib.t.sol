@@ -76,7 +76,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(epochDay, DateTimeLib.dateToEpochDay(y, m, d));
     }
 
-    function testFuzzDateToEpochDay(
+    function testFuzzDateToAndFroEpochDay(
         uint256 year,
         uint256 month,
         uint256 day
@@ -90,7 +90,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(year == y && month == m && day == d);
     }
 
-    function testFuzzDateToEpochDay() public {
+    function testFuzzDateToAndFroEpochDay() public {
         unchecked {
             uint256 randomness;
             for (uint256 i; i < 256; ++i) {
@@ -103,6 +103,25 @@ contract DateTimeLibTest is TestPlus {
                 uint256 day = _bound(randomness, 1, md);
                 uint256 epochDay = DateTimeLib.dateToEpochDay(year, month, day);
                 (uint256 y, uint256 m, uint256 d) = DateTimeLib.epochDayToDate(epochDay);
+                assertTrue(year == y && month == m && day == d);
+            }
+        }
+    }
+
+    function testFuzzDateToAndFroTimestamp() public {
+        unchecked {
+            uint256 randomness;
+            for (uint256 i; i < 256; ++i) {
+                randomness = _stepRandomness(randomness);
+                uint256 year = _bound(randomness, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+                randomness = _stepRandomness(randomness);
+                uint256 month = _bound(randomness, 1, 12);
+                uint256 md = DateTimeLib.daysInMonth(year, month);
+                randomness = _stepRandomness(randomness);
+                uint256 day = _bound(randomness, 1, md);
+                uint256 timestamp = DateTimeLib.dateToTimestamp(year, month, day);
+                assertEq(timestamp, DateTimeLib.dateToEpochDay(year, month, day) * 86400);
+                (uint256 y, uint256 m, uint256 d) = DateTimeLib.timestampToDate(timestamp);
                 assertTrue(year == y && month == m && day == d);
             }
         }

@@ -105,7 +105,9 @@ library DateTimeLib {
             uint256 day
         )
     {
-        (year, month, day) = epochDayToDate(timestamp / 86400);
+        unchecked {
+            (year, month, day) = epochDayToDate(timestamp / 86400);
+        }
     }
 
     /// @dev Returns if the `year` is leap.
