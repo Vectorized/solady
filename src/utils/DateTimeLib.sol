@@ -7,8 +7,8 @@ library DateTimeLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     uint256 internal constant MAX_SUPPORTED_YEAR = 4294967295;
-    uint256 internal constant MAX_SUPPORTED_EPOCH_DAY = 1568703872776;
-    uint256 internal constant MAX_SUPPORTED_TIMESTAMP = 135536014607932799;
+    uint256 internal constant MAX_SUPPORTED_EPOCH_DAY = 1568703873081;
+    uint256 internal constant MAX_SUPPORTED_TIMESTAMP = 135536014634284799;
 
     uint256 internal constant MON = 0;
     uint256 internal constant TUE = 1;

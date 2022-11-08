@@ -5,6 +5,28 @@ import "../test/utils/TestPlus.sol";
 import {DateTimeLib} from "../src/utils/DateTimeLib.sol";
 
 contract DateTimeLibTest is TestPlus {
+    function testDateTimeMaxSupported() public {
+        uint256 year;
+        uint256 month;
+        uint256 day;
+        assertEq(
+            DateTimeLib.dateToEpochDay(DateTimeLib.MAX_SUPPORTED_YEAR, 12, 31),
+            DateTimeLib.MAX_SUPPORTED_EPOCH_DAY
+        );
+        assertEq(
+            DateTimeLib.dateToTimestamp(DateTimeLib.MAX_SUPPORTED_YEAR, 12, 31) + 86400 - 1,
+            DateTimeLib.MAX_SUPPORTED_TIMESTAMP
+        );
+        (year, month, day) = DateTimeLib.timestampToDate(DateTimeLib.MAX_SUPPORTED_TIMESTAMP);
+        assertTrue(year == DateTimeLib.MAX_SUPPORTED_YEAR && month == 12 && day == 31);
+        (year, month, day) = DateTimeLib.epochDayToDate(DateTimeLib.MAX_SUPPORTED_EPOCH_DAY);
+        assertTrue(year == DateTimeLib.MAX_SUPPORTED_YEAR && month == 12 && day == 31);
+        (year, month, day) = DateTimeLib.timestampToDate(DateTimeLib.MAX_SUPPORTED_TIMESTAMP + 1);
+        assertFalse(year == DateTimeLib.MAX_SUPPORTED_YEAR && month == 12 && day == 31);
+        (year, month, day) = DateTimeLib.epochDayToDate(DateTimeLib.MAX_SUPPORTED_EPOCH_DAY + 1);
+        assertFalse(year == DateTimeLib.MAX_SUPPORTED_YEAR && month == 12 && day == 31);
+    }
+
     function testDateToEpochDay() public {
         assertEq(DateTimeLib.dateToEpochDay(1970, 1, 1), 0);
         assertEq(DateTimeLib.dateToEpochDay(1970, 1, 2), 1);
