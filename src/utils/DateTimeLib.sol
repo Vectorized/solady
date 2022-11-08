@@ -47,7 +47,7 @@ library DateTimeLib {
     uint256 internal constant DEC = 12;
 
     // These limits are large enough for most practical purposes.
-    // Inputs that exceed them result in undefined behavior.
+    // Inputs that exceed the limits result in undefined behavior.
 
     uint256 internal constant MAX_SUPPORTED_YEAR = 0xffffffff;
     uint256 internal constant MAX_SUPPORTED_EPOCH_DAY = 0x16d3e098039;
@@ -192,9 +192,10 @@ library DateTimeLib {
         }
     }
 
-    /// @dev Returns the unix timestamp of the given `n`th `weekday`, in `month` of `year`.
+    /// @dev Returns the unix timestamp of the given `n`th weekday `wd`, in `month` of `year`.
     /// Example: 3rd Friday of Feb 2022 is `nthWeekdayInMonthOfYearTimestamp(2022, 2, 3, 5)`
-    /// Note: Invalid weekdays (i.e. `wd > 6`) result in undefined behavior.
+    /// Note: `n` is 1-indexed for traditional consistency.
+    /// Invalid weekdays (i.e. `wd == 0 || wd > 7`) result in undefined behavior.
     function nthWeekdayInMonthOfYearTimestamp(
         uint256 year,
         uint256 month,
