@@ -654,7 +654,7 @@ contract DateTimeLibTest is TestPlus {
         (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
         if (numMinutes != 0)
             assertTrue(
-                a.year != b.year || a.month != b.month || a.day != b.day || a.hour != b.hour || a.minute != b.minute
+                (a.year != b.year || a.month != b.month || a.day != b.day) || (a.hour != b.hour || a.minute != b.minute)
             );
         assertTrue(a.second == b.second);
         uint256 diff = DateTimeLib.diffMinutes(timestamp, result);
@@ -676,12 +676,8 @@ contract DateTimeLibTest is TestPlus {
         (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
         if (numSeconds != 0)
             assertTrue(
-                a.year != b.year ||
-                    a.month != b.month ||
-                    a.day != b.day ||
-                    a.hour != b.hour ||
-                    a.minute != b.minute ||
-                    a.second != b.second
+                (a.year != b.year || a.month != b.month || a.day != b.day) ||
+                    (a.hour != b.hour || a.minute != b.minute || a.second != b.second)
             );
         uint256 diff = DateTimeLib.diffSeconds(timestamp, result);
         assertTrue(diff == numSeconds);
