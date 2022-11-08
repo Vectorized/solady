@@ -71,8 +71,10 @@ library DateTimeLib {
             year := sub(year, lt(month, 3))
             let doy := add(shr(11, add(mul(62719, mod(add(month, 9), 12)), 769)), day)
             let yoe := mod(year, 400)
-            let doe := sub(add(add(mul(yoe, 365), shr(2, yoe)), doy), div(yoe, 100))
-            epochDay := sub(add(mul(div(year, 400), 146097), doe), 719469)
+            epochDay := add(
+                mul(div(year, 400), 146097),
+                sub(add(add(mul(365, yoe), shr(2, yoe)), doy), add(div(yoe, 100), 719469))
+            )
         }
     }
 

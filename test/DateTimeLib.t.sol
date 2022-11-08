@@ -527,12 +527,9 @@ contract DateTimeLibTest is TestPlus {
             int256 _m = (_month - 14) / 12;
             int256 __days = _day -
                 32075 +
-                (1461 * (_year + 4800 + _m)) /
-                4 +
-                (367 * (_month - 2 - _m * 12)) /
-                12 -
-                (3 * ((_year + 4900 + _m) / 100)) /
-                4 -
+                ((1461 * (_year + 4800 + _m)) / 4) +
+                ((367 * (_month - 2 - _m * 12)) / 12) -
+                ((3 * ((_year + 4900 + _m) / 100)) / 4) -
                 2440588;
 
             _days = uint256(__days);
