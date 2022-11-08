@@ -53,6 +53,25 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.dateToEpochDay(1667952000, 2, 29), 609206238891);
     }
 
+    function testDaysToEpochDayDifferential(
+        uint256 year,
+        uint256 month,
+        uint256 day
+    ) public {
+        year = _bound(year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+        month = _bound(month, 1, 12);
+        day = _bound(day, 1, DateTimeLib.daysInMonth(year, month));
+        uint256 expectedResult = _dateToEpochDayOriginal(year, month, day);
+        assertEq(DateTimeLib.dateToEpochDay(year, month, day), expectedResult);
+    }
+
+    function testDaysToEpochDayDifferential(uint256 timestamp) public {
+        timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP);
+        (uint256 y0, uint256 m0, uint256 d0) = _epochDayToDateOriginal(timestamp);
+        (uint256 y1, uint256 m1, uint256 d1) = DateTimeLib.epochDayToDate(timestamp);
+        assertTrue(y0 == y1 && m0 == m1 && d0 == d1);
+    }
+
     function testDaysToDate() public {
         uint256 year;
         uint256 month;
@@ -393,7 +412,45 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.mondayTimestamp(timestamp), timestamp > 345599 ? (day - weekday) * 86400 : 0);
     }
 
-    // function _dateToEpochDayOriginal(uint256 year, uint256 month, uint256 day) internal pure returns (uint256) {
+    function _dateToEpochDayOriginal(
+        uint256 year,
+        uint256 month,
+        uint256 day
+    ) internal pure returns (uint256) {
+        unchecked {
+            if (month <= 2) {
+                year -= 1;
+            }
+            uint256 era = year / 400;
+            uint256 yoe = year - era * 400;
+            uint256 doy = (153 * (month > 2 ? month - 3 : month + 9) + 2) / 5 + day - 1;
+            uint256 doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+            return era * 146097 + doe - 719468;
+        }
+    }
 
-    // }
+    function _epochDayToDateOriginal(uint256 timestamp)
+        internal
+        pure
+        returns (
+            uint256 year,
+            uint256 month,
+            uint256 day
+        )
+    {
+        unchecked {
+            timestamp += 719468;
+            uint256 era = timestamp / 146097;
+            uint256 doe = timestamp - era * 146097;
+            uint256 yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+            year = yoe + era * 400;
+            uint256 doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+            uint256 mp = (5 * doy + 2) / 153;
+            day = doy - (153 * mp + 2) / 5 + 1;
+            month = mp < 10 ? mp + 3 : mp - 9;
+            if (month <= 2) {
+                year += 1;
+            }
+        }
+    }
 }
