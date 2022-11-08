@@ -264,63 +264,75 @@ contract DateTimeLibTest is TestPlus {
     }
 
     function testNthWeekdayInMonthOfYearTimestamp() public {
-        // get 1st 2nd 3rd 4th monday in Novermber 2022
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 1, 0), 1667779200);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 2, 0), 1668384000);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 3, 0), 1668988800);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 4, 0), 1669593600);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 5, 0), 0);
+        uint256 wd;
+        // 1st 2nd 3rd 4th monday in Novermber 2022.
+        wd = DateTimeLib.MON;
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 1, wd), 1667779200);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 2, wd), 1668384000);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 3, wd), 1668988800);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 4, wd), 1669593600);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 5, wd), 0);
 
-        // get 1st... 5th Wednesday in Novermber 2022
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 1, 2), 1667347200);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 2, 2), 1667952000);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 3, 2), 1668556800);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 4, 2), 1669161600);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 5, 2), 1669766400);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 6, 2), 0);
+        // 1st... 5th Wednesday in Novermber 2022.
+        wd = DateTimeLib.WED;
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 1, wd), 1667347200);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 2, wd), 1667952000);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 3, wd), 1668556800);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 4, wd), 1669161600);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 5, wd), 1669766400);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 6, wd), 0);
 
-        // get 1st... 5th Friday in December 2022
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 1, 4), 1669939200);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 2, 4), 1670544000);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 3, 4), 1671148800);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 4, 4), 1671753600);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 5, 4), 1672358400);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 6, 4), 0);
+        // 1st... 5th Friday in December 2022.
+        wd = DateTimeLib.FRI;
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 1, wd), 1669939200);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 2, wd), 1670544000);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 3, wd), 1671148800);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 4, wd), 1671753600);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 5, wd), 1672358400);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 12, 6, wd), 0);
 
-        // get 1st... 5th Sunday in January 2023
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 1, 6), 1672531200);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 2, 6), 1673136000);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 3, 6), 1673740800);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 4, 6), 1674345600);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 5, 6), 1674950400);
-        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 6, 6), 0);
+        // 1st... 5th Sunday in January 2023.
+        wd = DateTimeLib.SUN;
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 1, wd), 1672531200);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 2, wd), 1673136000);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 3, wd), 1673740800);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 4, wd), 1674345600);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 5, wd), 1674950400);
+        assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 6, wd), 0);
     }
 
-    function testFuzzNthDayOfWeekInMonthOfYear(
+    function testFuzzNthWeekdayInMonthOfYearTimestamp(
         uint256 year,
         uint256 month,
         uint256 n,
         uint256 weekday
     ) public {
-        weekday = _bound(weekday, 0, 6);
-        month = _bound(month, 1, 12);
-        year = _bound(year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
-        uint256 timestamp = DateTimeLib.nthWeekdayInMonthOfYearTimestamp(year, month, n, weekday);
-        uint256 day = DateTimeLib.dateToEpochDay(year, month, 1);
-        uint256 diff;
         unchecked {
-            diff = weekday - ((day + 3) % 7);
-            diff = diff > 6 ? diff + 7 : diff;
-        }
-        if (n == 0 || n > 5) {
-            assertEq(timestamp, 0);
-        } else {
-            uint256 date = diff + (n - 1) * 7 + 1;
-            if (date > DateTimeLib.daysInMonth(year, month)) {
-                assertEq(timestamp, 0);
-            } else {
-                assertEq(timestamp, DateTimeLib.dateToTimestamp(year, month, date));
+            year = _bound(year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+            month = _bound(month, 1, 12);
+            n = _bound(n, 1, 10);
+            weekday = _bound(weekday, 0, 6);
+            // Count number of weekdays for the month in the year.
+            uint256 md = DateTimeLib.daysInMonth(year, month);
+            uint256 timestamp = DateTimeLib.dateToTimestamp(year, month, 1);
+            uint256 m;
+            uint256 found;
+            for (uint256 i; i < md; ) {
+                if (DateTimeLib.dayOfWeek(timestamp) == weekday) {
+                    if (++m == n) {
+                        found = 1;
+                        break;
+                    }
+                }
+                if (m == 0) {
+                    timestamp += 86400;
+                    i += 1;
+                } else {
+                    timestamp += 86400 * 7;
+                    i += 7;
+                }
             }
+            assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(year, month, n, weekday), found * timestamp);
         }
     }
 
