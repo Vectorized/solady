@@ -69,14 +69,13 @@ library DateTimeLib {
         /// @solidity memory-safe-assembly
         assembly {
             epochDay := add(epochDay, 719468)
-            let era := div(epochDay, 146097)
             let doe := mod(epochDay, 146097)
             let yoe := div(sub(sub(add(doe, div(doe, 36524)), div(doe, 1460)), eq(doe, 146096)), 365)
             let doy := sub(doe, sub(add(mul(365, yoe), shr(2, yoe)), div(yoe, 100)))
             let mp := div(add(mul(5, doy), 2), 153)
             day := add(sub(doy, shr(11, add(mul(mp, 62719), 769))), 1)
             month := sub(add(mp, 3), mul(gt(mp, 9), 12))
-            year := add(add(yoe, mul(era, 400)), lt(month, 3))
+            year := add(add(yoe, mul(div(epochDay, 146097), 400)), lt(month, 3))
         }
     }
 
