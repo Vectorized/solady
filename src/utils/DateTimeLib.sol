@@ -13,7 +13,7 @@ pragma solidity ^0.8.4;
 /// year      | 1970..0xffffffff     | Gregorian calendar year.         |
 /// month     | 1..12                | Gregorian calendar month.        |
 /// day       | 1..31                | Gregorian calendar day of month. |
-/// weekday   | 0..6                 | Index of the day of week.        |
+/// weekday   | 1..7                 | The day of the week (1-indexed). |
 /// --------------------------------------------------------------------+
 /// All timestamps of days are rounded down to 00:00:00 UTC.
 library DateTimeLib {
@@ -21,15 +21,15 @@ library DateTimeLib {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Weekdays are 0-indexed for gas efficiency purposes.
+    // Weekdays are 1-indexed for a traditional rustic feel.
 
-    uint256 internal constant MON = 0;
-    uint256 internal constant TUE = 1;
-    uint256 internal constant WED = 2;
-    uint256 internal constant THU = 3;
-    uint256 internal constant FRI = 4;
-    uint256 internal constant SAT = 5;
-    uint256 internal constant SUN = 6;
+    uint256 internal constant MON = 1;
+    uint256 internal constant TUE = 2;
+    uint256 internal constant WED = 3;
+    uint256 internal constant THU = 4;
+    uint256 internal constant FRI = 5;
+    uint256 internal constant SAT = 6;
+    uint256 internal constant SUN = 7;
 
     // Months and days of months are 1-indexed for ease of use.
 
@@ -46,8 +46,8 @@ library DateTimeLib {
     uint256 internal constant NOV = 11;
     uint256 internal constant DEC = 12;
 
-    // The maximum supported limits are large enough for most pratical purposes.
-    // Inputs that exceed the supported limits result in undefined behavior.
+    // These limits are large enough for most practical purposes.
+    // Inputs that exceed them result in undefined behavior.
 
     uint256 internal constant MAX_SUPPORTED_YEAR = 0xffffffff;
     uint256 internal constant MAX_SUPPORTED_EPOCH_DAY = 0x16d3e098039;
@@ -151,10 +151,10 @@ library DateTimeLib {
     }
 
     /// @dev Returns the weekday from the unix timestamp.
-    /// Monday: 0, Tuesday: 1, ....., Sunday: 6.
+    /// Monday: 1, Tuesday: 2, ....., Sunday: 7.
     function weekday(uint256 timestamp) internal pure returns (uint256 result) {
         unchecked {
-            result = (timestamp / 86400 + 3) % 7;
+            result = ((timestamp / 86400 + 3) % 7) + 1;
         }
     }
 
@@ -192,7 +192,7 @@ library DateTimeLib {
         }
     }
 
-    /// @dev Returns the unix timestamp of the given `n`th weekday `wd`, in `month` of `year`.
+    /// @dev Returns the unix timestamp of the given `n`th `weekday`, in `month` of `year`.
     /// Example: 3rd Friday of Feb 2022 is `nthWeekdayInMonthOfYearTimestamp(2022, 2, 3, 5)`
     /// Note: Invalid weekdays (i.e. `wd > 6`) result in undefined behavior.
     function nthWeekdayInMonthOfYearTimestamp(
@@ -205,7 +205,7 @@ library DateTimeLib {
         uint256 md = daysInMonth(year, month);
         /// @solidity memory-safe-assembly
         assembly {
-            let diff := sub(wd, mod(add(d, 3), 7))
+            let diff := sub(wd, add(mod(add(d, 3), 7), 1))
             let date := add(mul(sub(n, 1), 7), add(mul(gt(diff, 6), 7), diff))
             result := mul(mul(86400, add(date, d)), and(lt(date, md), iszero(iszero(n))))
         }

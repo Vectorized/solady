@@ -303,14 +303,14 @@ contract DateTimeLibTest is TestPlus {
     }
 
     function testWeekday() public {
-        assertEq(DateTimeLib.weekday(1), 3);
-        assertEq(DateTimeLib.weekday(86400), 4);
-        assertEq(DateTimeLib.weekday(86401), 4);
-        assertEq(DateTimeLib.weekday(172800), 5);
-        assertEq(DateTimeLib.weekday(259200), 6);
-        assertEq(DateTimeLib.weekday(345600), 0);
-        assertEq(DateTimeLib.weekday(432000), 1);
-        assertEq(DateTimeLib.weekday(518400), 2);
+        assertEq(DateTimeLib.weekday(1), 4);
+        assertEq(DateTimeLib.weekday(86400), 5);
+        assertEq(DateTimeLib.weekday(86401), 5);
+        assertEq(DateTimeLib.weekday(172800), 6);
+        assertEq(DateTimeLib.weekday(259200), 7);
+        assertEq(DateTimeLib.weekday(345600), 1);
+        assertEq(DateTimeLib.weekday(432000), 2);
+        assertEq(DateTimeLib.weekday(518400), 3);
     }
 
     function testFuzzDayOfWeek() public {
@@ -318,7 +318,7 @@ contract DateTimeLibTest is TestPlus {
         uint256 weekday = 3;
         unchecked {
             for (uint256 i = 0; i < 1000; ++i) {
-                assertEq(DateTimeLib.weekday(timestamp), weekday);
+                assertEq(DateTimeLib.weekday(timestamp) - 1, weekday);
                 timestamp += 86400;
                 weekday = (weekday + 1) % 7;
             }
@@ -437,7 +437,7 @@ contract DateTimeLibTest is TestPlus {
             year = _bound(year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
             month = _bound(month, 1, 12);
             n = _bound(n, 1, 10);
-            weekday = _bound(weekday, 0, 6);
+            weekday = _bound(weekday, 1, 7);
             // Count number of weekdays for the month in the year.
             uint256 md = DateTimeLib.daysInMonth(year, month);
             uint256 timestamp = DateTimeLib.dateToTimestamp(year, month, 1);
