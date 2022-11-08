@@ -237,8 +237,8 @@ contract DateTimeLibTest is TestPlus {
         uint256 day
     ) public {
         bool isSupportedYear = 1970 <= year && year <= DateTimeLib.MAX_SUPPORTED_YEAR;
-        bool isSupportedMonth = 1 <= month && month < 12;
-        bool isSupportedDay = 1 <= day && day < DateTimeLib.daysInMonth(year, month);
+        bool isSupportedMonth = 1 <= month && month <= 12;
+        bool isSupportedDay = 1 <= day && day <= DateTimeLib.daysInMonth(year, month);
         bool isSupported = isSupportedYear && isSupportedMonth && isSupportedDay;
         assertEq(DateTimeLib.isSupportedDate(year, month, day), isSupported);
     }
