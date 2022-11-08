@@ -216,6 +216,27 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(year == y && month == m && day == d);
     }
 
+    function testFuzzDateTimeToAndFroTimestamp(
+        uint256 year,
+        uint256 month,
+        uint256 day,
+        uint256 hour,
+        uint256 minute,
+        uint256 second
+    ) public {
+        year = _bound(year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+        month = _bound(month, 1, 12);
+        uint256 md = DateTimeLib.daysInMonth(year, month);
+        day = _bound(day, 1, md);
+        hour = _bound(hour, 0, 23);
+        minute = _bound(minute, 0, 59);
+        second = _bound(second, 0, 59);
+        uint256 timestamp = DateTimeLib.dateTimeToTimestamp(year, month, day, hour, minute, second);
+        (uint256 y, uint256 m, uint256 d, uint256 h, uint256 i, uint256 s) = DateTimeLib.timestampToDateTime(timestamp);
+        assertTrue(year == y && month == m && day == d);
+        assertTrue(hour == h && minute == i && second == s);
+    }
+
     function testFuzzDateToAndFroEpochDay() public {
         unchecked {
             uint256 randomness;
@@ -357,16 +378,30 @@ contract DateTimeLibTest is TestPlus {
         assertFalse(DateTimeLib.isSupportedDate(type(uint256).max, 5, 31));
     }
 
-    function testFuzzIsSupportedDate(
+    function testFuzzIsSupportedDateTime(
         uint256 year,
         uint256 month,
-        uint256 day
+        uint256 day,
+        uint256 hour,
+        uint256 minute,
+        uint256 second
     ) public {
         bool isSupportedYear = 1970 <= year && year <= DateTimeLib.MAX_SUPPORTED_YEAR;
+        month = _bound(month, 0, 20);
         bool isSupportedMonth = 1 <= month && month <= 12;
+        day = _bound(day, 0, 50);
         bool isSupportedDay = 1 <= day && day <= DateTimeLib.daysInMonth(year, month);
-        bool isSupported = isSupportedYear && isSupportedMonth && isSupportedDay;
-        assertEq(DateTimeLib.isSupportedDate(year, month, day), isSupported);
+        hour = _bound(hour, 0, 50);
+        bool isSupportedHour = hour < 24;
+        minute = _bound(minute, 0, 100);
+        bool isSupportedMinute = minute < 60;
+        second = _bound(second, 0, 100);
+        bool isSupportedSecond = second < 60;
+        assertEq(
+            DateTimeLib.isSupportedDateTime(year, month, day, hour, minute, second),
+            (isSupportedYear && isSupportedMonth && isSupportedDay) &&
+                (isSupportedHour && isSupportedMinute && isSupportedSecond)
+        );
     }
 
     function testIsSupportedEpochDayTrue() public {

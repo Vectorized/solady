@@ -51,7 +51,7 @@ library DateTimeLib {
     uint256 internal constant DEC = 12;
 
     // These limits are large enough for most practical purposes.
-    // Inputs that exceed the limits result in undefined behavior.
+    // Inputs that exceed these limits result in undefined behavior.
 
     uint256 internal constant MAX_SUPPORTED_YEAR = 0xffffffff;
     uint256 internal constant MAX_SUPPORTED_EPOCH_DAY = 0x16d3e098039;
@@ -64,7 +64,7 @@ library DateTimeLib {
     /// @dev Returns the number of days since 1970-01-01 from (`year`,`month`,`day`).
     /// See: https://howardhinnant.github.io/date_algorithms.html
     /// Note: Inputs outside the supported ranges result in undefined behavior.
-    /// Use {isSupportedDate} to check if the date is supported.
+    /// Use {isSupportedDate} to check if the inputs are supported.
     function dateToEpochDay(
         uint256 year,
         uint256 month,
@@ -107,7 +107,7 @@ library DateTimeLib {
 
     /// @dev Returns the unix timestamp from (`year`,`month`,`day`).
     /// Note: Inputs outside the supported ranges result in undefined behavior.
-    /// Use {isSupportedDate} to check if the date is supported.
+    /// Use {isSupportedDate} to check if the inputs are supported.
     function dateToTimestamp(
         uint256 year,
         uint256 month,
@@ -120,7 +120,7 @@ library DateTimeLib {
 
     /// @dev Returns (`year`,`month`,`day`) from the given unix timestamp.
     /// Note: Inputs outside the supported ranges result in undefined behavior.
-    /// Use {isSupportedTimestamp} to check if the date is supported.
+    /// Use {isSupportedTimestamp} to check if the inputs are supported.
     function timestampToDate(uint256 timestamp)
         internal
         pure
@@ -132,6 +132,49 @@ library DateTimeLib {
     {
         unchecked {
             (year, month, day) = epochDayToDate(timestamp / 86400);
+        }
+    }
+
+    /// @dev Returns the unix timestamp from
+    /// (`year`,`month`,`day`,`hour`,`minute`,`second`).
+    /// Note: Inputs outside the supported ranges result in undefined behavior.
+    /// Use {isSupportedDateTime} to check if the inputs are supported.
+    function dateTimeToTimestamp(
+        uint256 year,
+        uint256 month,
+        uint256 day,
+        uint256 hour,
+        uint256 minute,
+        uint256 second
+    ) internal pure returns (uint256 result) {
+        unchecked {
+            result = dateToEpochDay(year, month, day) * 86400 + hour * 3600 + minute * 60 + second;
+        }
+    }
+
+    /// @dev Returns (`year`,`month`,`day`,`hour`,`minute`,`second`)
+    /// from the given unix timestamp.
+    /// Note: Inputs outside the supported ranges result in undefined behavior.
+    /// Use {isSupportedTimestamp} to check if the inputs are supported.
+    function timestampToDateTime(uint256 timestamp)
+        internal
+        pure
+        returns (
+            uint256 year,
+            uint256 month,
+            uint256 day,
+            uint256 hour,
+            uint256 minute,
+            uint256 second
+        )
+    {
+        unchecked {
+            (year, month, day) = epochDayToDate(timestamp / 86400);
+            uint256 secs = timestamp % 86400;
+            hour = secs / 3600;
+            secs = secs % 3600;
+            minute = secs / 60;
+            second = secs % 60;
         }
     }
 
@@ -182,6 +225,29 @@ library DateTimeLib {
         }
     }
 
+    /// @dev Returns if (`year`,`month`,`day`,`hour`,`minute`,`second`) is a supported date time.
+    /// - `1970 <= year <= MAX_SUPPORTED_YEAR`.
+    /// - `1 <= month <= 12`.
+    /// - `1 <= day <= daysInMonth(year, month)`.
+    /// - `hour < 24`.
+    /// - `minute < 60`.
+    /// - `second < 60`.
+    function isSupportedDateTime(
+        uint256 year,
+        uint256 month,
+        uint256 day,
+        uint256 hour,
+        uint256 minute,
+        uint256 second
+    ) internal pure returns (bool result) {
+        if (isSupportedDate(year, month, day)) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                result := and(lt(hour, 24), and(lt(minute, 60), lt(second, 60)))
+            }
+        }
+    }
+
     /// @dev Returns if `epochDay` is a supported unix epoch day.
     function isSupportedEpochDay(uint256 epochDay) internal pure returns (bool result) {
         unchecked {
@@ -224,5 +290,11 @@ library DateTimeLib {
             let day := div(t, 86400)
             result := mul(mul(sub(day, mod(add(day, 3), 7)), 86400), gt(t, 345599))
         }
+    }
+
+    /// @dev Returns whether the unix timestamp falls on a Saturday or Sunday.
+    /// To check whether it is a week day, just take the negation of the result.
+    function isWeekEnd(uint256 timestamp) internal pure returns (bool result) {
+        result = weekday(timestamp) > FRI;
     }
 }
