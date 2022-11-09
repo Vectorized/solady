@@ -969,6 +969,90 @@ contract LibStringTest is TestPlus {
         LibString.directReturn(a);
     }
 
+    function testStringLowerDifferential(string memory s) public {
+        string memory expectedResult = _lowerOriginal(s);
+        _roundUpFreeMemoryPointer();
+        string memory result = LibString.lower(s);
+        _brutalizeFreeMemoryStart();
+        _checkZeroRightPadded(result);
+        assertEq(result, expectedResult);
+    }
+
+    function testStringLowerDifferential() public {
+        unchecked {
+            string memory ascii = new string(128);
+            for (uint256 i; i < 128; ++i) {
+                assembly {
+                    mstore8(add(add(ascii, 0x20), i), i)
+                }
+            }
+            for (uint256 i; i < 256; ++i) {
+                string memory s = _generateString(i, ascii);
+                testStringLowerDifferential(s);
+            }
+        }
+    }
+
+    function testStringLowerOriginal() public {
+        assertEq(_lowerOriginal("@AZ["), "@az[");
+    }
+
+    function testStringUpperDifferential(string memory s) public {
+        string memory expectedResult = _upperOriginal(s);
+        _roundUpFreeMemoryPointer();
+        string memory result = LibString.upper(s);
+        _brutalizeFreeMemoryStart();
+        _checkZeroRightPadded(result);
+        assertEq(result, expectedResult);
+    }
+
+    function testStringUpperDifferential() public {
+        unchecked {
+            string memory ascii = new string(128);
+            for (uint256 i; i < 128; ++i) {
+                assembly {
+                    mstore8(add(add(ascii, 0x20), i), i)
+                }
+            }
+            for (uint256 i; i < 256; ++i) {
+                string memory s = _generateString(i, ascii);
+                testStringUpperDifferential(s);
+            }
+        }
+    }
+
+    function testStringUpperOriginal() public {
+        assertEq(_upperOriginal("`az}"), "`AZ}");
+    }
+
+    function _lowerOriginal(string memory subject) internal pure returns (string memory result) {
+        unchecked {
+            uint256 n = bytes(subject).length;
+            result = new string(n);
+            for (uint256 i; i != n; ++i) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let b := byte(0, mload(add(add(subject, 0x20), i)))
+                    mstore8(add(add(result, 0x20), i), add(b, mul(0x20, and(lt(0x40, b), lt(b, 0x5b)))))
+                }
+            }
+        }
+    }
+
+    function _upperOriginal(string memory subject) internal pure returns (string memory result) {
+        unchecked {
+            uint256 n = bytes(subject).length;
+            result = new string(n);
+            for (uint256 i; i != n; ++i) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let b := byte(0, mload(add(add(subject, 0x20), i)))
+                    mstore8(add(add(result, 0x20), i), sub(b, mul(0x20, and(lt(0x60, b), lt(b, 0x7b)))))
+                }
+            }
+        }
+    }
+
     function _runeCountOriginal(string memory s) internal pure returns (uint256) {
         unchecked {
             uint256 len;
