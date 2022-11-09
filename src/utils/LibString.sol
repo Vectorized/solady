@@ -778,6 +778,48 @@ library LibString {
         }
     }
 
+    /// @dev Returns a copy of the string in either lowercase or UPPERCASE.
+    function toCase(string memory subject, bool toUpper) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let length := mload(subject)
+            if length {
+                result := add(mload(0x40), 0x20)
+                subject := add(subject, 1)
+                let flags := shl(add(70, shl(5, toUpper)), 67108863)
+                let w := not(0)
+                // prettier-ignore
+                for { let o := length } 1 {} {
+                    o := add(o, w)
+                    let b := and(0xff, mload(add(subject, o)))
+                    mstore8(add(result, o), xor(b, and(shr(b, flags), 0x20)))
+                    // prettier-ignore
+                    if iszero(o) { break }
+                }
+                // Restore the result.
+                result := mload(0x40)
+                // Stores the string length.
+                mstore(result, length)
+                // Zeroize the slot after the string.
+                let last := add(add(result, 0x20), length)
+                mstore(last, 0)
+                // Allocate memory for the length and the bytes,
+                // rounded up to a multiple of 32.
+                mstore(0x40, and(add(last, 31), not(31)))
+            }
+        }
+    }
+
+    /// @dev Returns a lowercased copy of the string.
+    function lower(string memory subject) internal pure returns (string memory result) {
+        result = toCase(subject, false);
+    }
+
+    /// @dev Returns an UPPERCASED copy of the string.
+    function upper(string memory subject) internal pure returns (string memory result) {
+        result = toCase(subject, true);
+    }
+
     /// @dev Escapes the string to be used within HTML tags.
     function escapeHTML(string memory s) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
