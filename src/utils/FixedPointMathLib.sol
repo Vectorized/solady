@@ -76,7 +76,8 @@ library FixedPointMathLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
+            x := mul(x, y)
+            z := add(iszero(iszero(mod(x, WAD))), div(x, WAD))
         }
     }
 
@@ -106,7 +107,8 @@ library FixedPointMathLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            z := add(iszero(iszero(mod(mul(x, WAD), y))), div(mul(x, WAD), y))
+            x := mul(x, WAD)
+            z := add(iszero(iszero(mod(x, y))), div(x, y))
         }
     }
 
@@ -412,7 +414,8 @@ library FixedPointMathLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            z := add(iszero(iszero(mod(mul(x, y), denominator))), div(mul(x, y), denominator))
+            x := mul(x, y)
+            z := add(iszero(iszero(mod(x, denominator))), div(x, denominator))
         }
     }
 
@@ -620,8 +623,11 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
-            for { z := x } y {} {
-                let t := y
+            for {
+                z := x
+                let t := 0
+            } y {} {
+                t := y
                 y := mod(z, y)
                 z := t
             }
