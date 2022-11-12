@@ -240,6 +240,7 @@ abstract contract OwnableRoles {
             // If the handover does not exist, or has expired.
             if gt(timestamp(), sload(handoverSlot)) {
                 mstore(0x00, _NO_HANDOVER_REQUEST_ERROR_SELECTOR)
+                sstore(handoverSlot, 0)
                 revert(0x1c, 0x04)
             }
             // Set the handover slot to 0.
@@ -388,6 +389,7 @@ abstract contract OwnableRoles {
             // If the caller is not the stored owner, revert.
             if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                sstore(not(_OWNER_SLOT_NOT), 0)
                 revert(0x1c, 0x04)
             }
         }
@@ -423,6 +425,7 @@ abstract contract OwnableRoles {
                 // of the value and `roles` is zero, revert.
                 if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
                     mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                    sstore(not(_OWNER_SLOT_NOT), 0)
                     revert(0x1c, 0x04)
                 }
             }
@@ -443,6 +446,7 @@ abstract contract OwnableRoles {
                 // If the caller is not the stored owner.
                 if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
                     mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                    sstore(not(_OWNER_SLOT_NOT), 0)
                     revert(0x1c, 0x04)
                 }
             }
