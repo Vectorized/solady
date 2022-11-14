@@ -100,6 +100,11 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.divWadUp(1.25e18, 0.5e18), 2.5e18);
         assertEq(FixedPointMathLib.divWadUp(3e18, 1e18), 3e18);
         assertEq(FixedPointMathLib.divWadUp(2, 100000000000000e18), 1);
+        unchecked {
+            for (uint256 i; i < 10; ++i) {
+                assertEq(FixedPointMathLib.divWadUp(2, 100000000000000e18), 1);
+            }
+        }
     }
 
     function testDivWadUpEdgeCases() public {
@@ -310,6 +315,11 @@ contract FixedPointMathLibTest is Test {
         assertEq(FixedPointMathLib.gcd(486516589451122, 48656), 2);
         assertEq(FixedPointMathLib.gcd(2**254 - 4, 2**128 - 1), 15);
         assertEq(FixedPointMathLib.gcd(3, 26017198113384995722614372765093167890), 1);
+        unchecked {
+            for (uint256 i = 2; i < 10; ++i) {
+                assertEq(FixedPointMathLib.gcd(31 * (1 << i), 31), 31);
+            }
+        }
     }
 
     function testFullMulDiv() public {
