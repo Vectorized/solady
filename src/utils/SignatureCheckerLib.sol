@@ -8,6 +8,9 @@ import "./ECDSA.sol";
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SignatureCheckerLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
 library SignatureCheckerLib {
+    /// @dev `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+    bytes32 internal constant _EIP1271_IS_VALID_SIGNATURE_SELECTOR = 0x1626ba7e00000000000000000000000000000000000000000000000000000000;
+
     /// @dev Returns whether `signature` is valid for `signer` and `hash`.
     /// If `signer` is a smart contract, the signature is validated with ERC1271.
     /// Otherwise, the signature is validated with `ECDSA.recover`.
@@ -28,14 +31,16 @@ library SignatureCheckerLib {
             // Simply using the free memory usually costs less if many slots are needed.
             let m := mload(0x40)
 
-            // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-            let f := shl(224, 0x1626ba7e)
+            let f := _EIP1271_IS_VALID_SIGNATURE_SELECTOR
+            // Save signature length in the stack to save gas
+            let signatureLen := signature.length
             // Write the abi-encoded calldata into memory, beginning with the function selector.
             mstore(m, f)
             mstore(add(m, 0x04), hash)
             mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x44), signatureLen) // The signature length
             // Copy the `signature` and its length over.
-            calldatacopy(add(m, 0x44), sub(signature.offset, 0x20), 0x61)
+            calldatacopy(add(m, 0x64), signature.offset, signatureLen)
 
             isValid := and(
                 and(
@@ -51,7 +56,7 @@ library SignatureCheckerLib {
                     gas(), // Remaining gas.
                     signer, // The `signer` address.
                     m, // Offset of calldata in memory.
-                    0xa5, // Length of calldata in memory.
+                    add(signatureLen, 0x64), // Length of calldata in memory.
                     0x00, // Offset of returndata.
                     0x20 // Length of returndata to write.
                 )
