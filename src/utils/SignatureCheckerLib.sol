@@ -34,8 +34,9 @@ library SignatureCheckerLib {
             mstore(m, f)
             mstore(add(m, 0x04), hash)
             mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
-            // Copy the `signature` and its length over.
-            calldatacopy(add(m, 0x44), sub(signature.offset, 0x20), 0x61)
+            mstore(add(m, 0x44), signature.length) // The signature length
+            // Copy the `signature` over.
+            calldatacopy(add(m, 0x64), signature.offset, signature.length)
 
             isValid := and(
                 and(
@@ -51,7 +52,7 @@ library SignatureCheckerLib {
                     gas(), // Remaining gas.
                     signer, // The `signer` address.
                     m, // Offset of calldata in memory.
-                    0xa5, // Length of calldata in memory.
+                    add(signature.length, 0x64), // Length of calldata in memory.
                     0x00, // Offset of returndata.
                     0x20 // Length of returndata to write.
                 )
