@@ -32,7 +32,11 @@ contract OwnableRolesTest is Test {
         assertEq(mockOwnableRoles.owner(), newOwner);
     }
 
-    function testGrantAndRemoveRolesDirect(address user, uint256 rolesToGrant, uint256 rolesToRemove) public {
+    function testGrantAndRemoveRolesDirect(
+        address user,
+        uint256 rolesToGrant,
+        uint256 rolesToRemove
+    ) public {
         mockOwnableRoles.removeRolesDirect(user, mockOwnableRoles.rolesOf(user));
         assertEq(mockOwnableRoles.rolesOf(user), 0);
         mockOwnableRoles.grantRolesDirect(user, rolesToGrant);
@@ -52,7 +56,11 @@ contract OwnableRolesTest is Test {
         assertEq(mockOwnableRoles.owner(), address(0));
     }
 
-    function testTransferOwnership(address newOwner, bool setNewOwnerToZeroAddress, bool callerIsOwner) public {
+    function testTransferOwnership(
+        address newOwner,
+        bool setNewOwnerToZeroAddress,
+        bool callerIsOwner
+    ) public {
         assertEq(mockOwnableRoles.owner(), address(this));
 
         vm.assume(newOwner != address(this));
@@ -191,7 +199,9 @@ contract OwnableRolesTest is Test {
         mockOwnableRoles.updateFlagWithOnlyOwner();
     }
 
-    function testOnlyRolesModifier(address user, uint256 rolesToGrant, uint256 rolesToCheck) public {
+    function testOnlyRolesModifier(address user, uint256 rolesToGrant, uint256 rolesToCheck)
+        public
+    {
         mockOwnableRoles.grantRoles(user, rolesToGrant);
 
         if (rolesToGrant & rolesToCheck == 0) {
@@ -201,9 +211,12 @@ contract OwnableRolesTest is Test {
         mockOwnableRoles.updateFlagWithOnlyRoles(rolesToCheck);
     }
 
-    function testOnlyOwnerOrRolesModifier(address user, bool callerIsOwner, uint256 rolesToGrant, uint256 rolesToCheck)
-        public
-    {
+    function testOnlyOwnerOrRolesModifier(
+        address user,
+        bool callerIsOwner,
+        uint256 rolesToGrant,
+        uint256 rolesToCheck
+    ) public {
         vm.assume(user != address(this));
 
         mockOwnableRoles.grantRoles(user, rolesToGrant);
@@ -217,9 +230,12 @@ contract OwnableRolesTest is Test {
         mockOwnableRoles.updateFlagWithOnlyOwnerOrRoles(rolesToCheck);
     }
 
-    function testOnlyRolesOrOwnerModifier(address user, bool callerIsOwner, uint256 rolesToGrant, uint256 rolesToCheck)
-        public
-    {
+    function testOnlyRolesOrOwnerModifier(
+        address user,
+        bool callerIsOwner,
+        uint256 rolesToGrant,
+        uint256 rolesToCheck
+    ) public {
         vm.assume(user != address(this));
 
         mockOwnableRoles.grantRoles(user, rolesToGrant);

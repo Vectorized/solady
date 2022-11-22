@@ -13,7 +13,8 @@ contract MulticallableTest is Test {
 
     function testMulticallableRevertWithMessage(string memory revertMessage) public {
         bytes[] memory data = new bytes[](1);
-        data[0] = abi.encodeWithSelector(MockMulticallable.revertsWithString.selector, revertMessage);
+        data[0] =
+            abi.encodeWithSelector(MockMulticallable.revertsWithString.selector, revertMessage);
         vm.expectRevert(bytes(revertMessage));
         multicallable.multicall(data);
     }
@@ -36,7 +37,12 @@ contract MulticallableTest is Test {
         multicallable.multicall(data);
     }
 
-    function testMulticallableReturnDataIsProperlyEncoded(uint256 a0, uint256 b0, uint256 a1, uint256 b1) public {
+    function testMulticallableReturnDataIsProperlyEncoded(
+        uint256 a0,
+        uint256 b0,
+        uint256 a1,
+        uint256 b1
+    ) public {
         bytes[] memory data = new bytes[](2);
         data[0] = abi.encodeWithSelector(MockMulticallable.returnsTuple.selector, a0, b0);
         data[1] = abi.encodeWithSelector(MockMulticallable.returnsTuple.selector, a1, b1);

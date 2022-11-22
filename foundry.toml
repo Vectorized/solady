@@ -14,6 +14,9 @@ remappings = [
   "solmate=lib/solmate/src/",
 ]
 
+[profile.default.fmt]
+line_length = 100 # A little shorter than 120 for easier readability.
+
 [profile.default.fuzz]
 runs = 256
 

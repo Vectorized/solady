@@ -8,9 +8,11 @@ contract ECDSATest is Test {
     using ECDSA for bytes32;
     using ECDSA for bytes;
 
-    bytes32 constant TEST_MESSAGE = 0x7dbaf558b0a1a5dc7a67202117ab143c1d8605a983e4a743bc06fcc03162dc0d;
+    bytes32 constant TEST_MESSAGE =
+        0x7dbaf558b0a1a5dc7a67202117ab143c1d8605a983e4a743bc06fcc03162dc0d;
 
-    bytes32 constant WRONG_MESSAGE = 0x2d0828dd7c97cff316356da3c16c68ba2316886a0e05ebafb8291939310d51a3;
+    bytes32 constant WRONG_MESSAGE =
+        0x2d0828dd7c97cff316356da3c16c68ba2316886a0e05ebafb8291939310d51a3;
 
     address constant SIGNER = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
 

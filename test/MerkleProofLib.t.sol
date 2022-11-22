@@ -5,9 +5,12 @@ import "./utils/TestPlus.sol";
 import {MerkleProofLib} from "../src/utils/MerkleProofLib.sol";
 
 contract MerkleProofLibTest is TestPlus {
-    function testVerifyProofForHeightOneTree(bool hasProof, bool nonEmptyProof, bool nonEmptyRoot, bool nonEmptyLeaf)
-        public
-    {
+    function testVerifyProofForHeightOneTree(
+        bool hasProof,
+        bool nonEmptyProof,
+        bool nonEmptyRoot,
+        bool nonEmptyLeaf
+    ) public {
         bytes32 root;
         if (nonEmptyRoot) {
             root = bytes32("a");
@@ -53,7 +56,12 @@ contract MerkleProofLibTest is TestPlus {
         testVerifyProofBasicCase(false, false, true, 0x00);
     }
 
-    function testVerifyProofBasicCase(bool damageProof, bool damageRoot, bool damageLeaf, bytes32 randomness) public {
+    function testVerifyProofBasicCase(
+        bool damageProof,
+        bool damageRoot,
+        bool damageLeaf,
+        bytes32 randomness
+    ) public {
         bool noDamage = true;
         uint256 ri; // Randomness index.
 
@@ -66,7 +74,8 @@ contract MerkleProofLibTest is TestPlus {
             proof[i] = bytes32(uint256(proof[i]) ^ 1); // Flip a bit.
         }
 
-        bytes32 root = _hashPair(_hashPair(bytes32("a"), bytes32("b")), _hashPair(bytes32("c"), bytes32(0)));
+        bytes32 root =
+            _hashPair(_hashPair(bytes32("a"), bytes32("b")), _hashPair(bytes32("c"), bytes32(0)));
 
         if (damageRoot) {
             noDamage = false;
@@ -82,7 +91,10 @@ contract MerkleProofLibTest is TestPlus {
         assertEq(this.verify(proof, root, leaf), noDamage);
     }
 
-    function testVerifyMultiProofForSingleLeaf(bytes32[] memory data, uint256 randomness) public brutalizeMemory {
+    function testVerifyMultiProofForSingleLeaf(bytes32[] memory data, uint256 randomness)
+        public
+        brutalizeMemory
+    {
         vm.assume(data.length > 1);
         uint256 nodeIndex = randomness % data.length;
         bytes32 root = _getRoot(data);
@@ -128,7 +140,8 @@ contract MerkleProofLibTest is TestPlus {
         }
         bool leafSameAsRoot = leafs.length == 1 && leafs[0] == root;
         bool proofSameAsRoot = proof.length == 1 && proof[0] == root;
-        bool isValid = flags.length == 0 && (leafSameAsRoot || proofSameAsRoot) && (leafs.length + proof.length == 1);
+        bool isValid = flags.length == 0 && (leafSameAsRoot || proofSameAsRoot)
+            && (leafs.length + proof.length == 1);
         assertEq(this.verifyMultiProof(proof, root, leafs, flags), isValid);
     }
 
@@ -255,14 +268,20 @@ contract MerkleProofLibTest is TestPlus {
         assertEq(this.verifyMultiProof(proof, root, leafs, flags), noDamage);
     }
 
-    function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf) external pure returns (bool) {
+    function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf)
+        external
+        pure
+        returns (bool)
+    {
         return MerkleProofLib.verify(proof, root, leaf);
     }
 
-    function verifyMultiProof(bytes32[] calldata proof, bytes32 root, bytes32[] calldata leafs, bool[] calldata flags)
-        external
-        returns (bool result)
-    {
+    function verifyMultiProof(
+        bytes32[] calldata proof,
+        bytes32 root,
+        bytes32[] calldata leafs,
+        bool[] calldata flags
+    ) external returns (bool result) {
         uint256[] memory offsetsAndLengths = new uint256[](12);
 
         // Basically, we want to demonstrate that the `verifyMultiProof` does not
@@ -308,7 +327,11 @@ contract MerkleProofLibTest is TestPlus {
         return data[0];
     }
 
-    function _getProof(bytes32[] memory data, uint256 nodeIndex) private pure returns (bytes32[] memory) {
+    function _getProof(bytes32[] memory data, uint256 nodeIndex)
+        private
+        pure
+        returns (bytes32[] memory)
+    {
         require(data.length > 1);
 
         bytes32[] memory result = new bytes32[](64);

@@ -7,7 +7,11 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/MerkleProof.sol)
 library MerkleProofLib {
     /// @dev Returns whether `leaf` exists in the Merkle tree with `root`, given `proof`.
-    function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf) internal pure returns (bool isValid) {
+    function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf)
+        internal
+        pure
+        returns (bool isValid)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             if proof.length {
@@ -38,11 +42,12 @@ library MerkleProofLib {
 
     /// @dev Returns whether all `leafs` exist in the Merkle tree with `root`,
     /// given `proof` and `flags`.
-    function verifyMultiProof(bytes32[] calldata proof, bytes32 root, bytes32[] calldata leafs, bool[] calldata flags)
-        internal
-        pure
-        returns (bool isValid)
-    {
+    function verifyMultiProof(
+        bytes32[] calldata proof,
+        bytes32 root,
+        bytes32[] calldata leafs,
+        bool[] calldata flags
+    ) internal pure returns (bool isValid) {
         // Rebuilds the root by consuming and producing values on a queue.
         // The queue starts with the `leafs` array, and goes into a `hashes` array.
         // After the process, the last element on the queue is verified

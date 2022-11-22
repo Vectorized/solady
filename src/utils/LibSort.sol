@@ -283,7 +283,11 @@ library LibSort {
 
     /// @dev Returns whether `a` contains `needle`,
     /// and the index of the nearest element less than or equal to `needle`.
-    function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found, uint256 index) {
+    function searchSorted(uint256[] memory a, uint256 needle)
+        internal
+        pure
+        returns (bool found, uint256 index)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let m := 0 // Middle slot.

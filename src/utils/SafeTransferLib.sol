@@ -128,7 +128,10 @@ library SafeTransferLib {
     ///
     /// Note: Does NOT revert upon failure.
     /// Returns whether the transfer of ETH is successful instead.
-    function trySafeTransferETH(address to, uint256 amount, uint256 gasStipend) internal returns (bool success) {
+    function trySafeTransferETH(address to, uint256 amount, uint256 gasStipend)
+        internal
+        returns (bool success)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // Transfer the ETH and check if it succeeded or not.

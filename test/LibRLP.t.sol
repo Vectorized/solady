@@ -37,7 +37,11 @@ contract LibRLPTest is Test {
         assertTrue(computeAddressOriginal(deployer, 0xffffffffffffffff) != address(0));
     }
 
-    function computeAddressOriginal(address deployer, uint256 nonce) internal pure returns (address) {
+    function computeAddressOriginal(address deployer, uint256 nonce)
+        internal
+        pure
+        returns (address)
+    {
         // Although the theoretical allowed limit, based on EIP-2681,
         // for an account nonce is 2**64-2: https://eips.ethereum.org/EIPS/eip-2681,
         // we just test all the way to 2**256-1 to ensure that the computeAddress function does not revert

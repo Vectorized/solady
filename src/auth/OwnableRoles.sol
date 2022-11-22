@@ -282,7 +282,12 @@ abstract contract OwnableRoles {
     }
 
     /// @dev Returns the expiry timestamp for the two-step ownership handover to `pendingOwner`.
-    function ownershipHandoverExpiresAt(address pendingOwner) public view virtual returns (uint256 result) {
+    function ownershipHandoverExpiresAt(address pendingOwner)
+        public
+        view
+        virtual
+        returns (uint256 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the handover slot.
@@ -358,14 +363,12 @@ abstract contract OwnableRoles {
             let ptr := add(mload(0x40), 0x20)
             // The absence of lookup tables, De Bruijn, etc., here is intentional for
             // smaller bytecode, as this function is not meant to be called on-chain.
-            // forgefmt: disable-next-line
             for { let i := 0 } 1 { i := add(i, 1) } {
                 mstore(ptr, i)
                 // `shr` 5 is equivalent to multiplying by 0x20.
                 // Push back into the ordinals array if the bit is set.
                 ptr := add(ptr, shl(5, and(roles, 1)))
                 roles := shr(1, roles)
-                // forgefmt: disable-next-line
                 if iszero(roles) { break }
             }
             // Set `ordinals` to the start of the free memory.

@@ -33,7 +33,10 @@ contract FixedPointMathLibTest is Test {
         // True value: 5184705528587072464_087453322933485384827.47
         // Relative error: 1.1780031733243328e-20
 
-        assertEq(FixedPointMathLib.expWad(100e18), 268811714181613544841_34666106240937146178367581647816351662017);
+        assertEq(
+            FixedPointMathLib.expWad(100e18),
+            268811714181613544841_34666106240937146178367581647816351662017
+        );
         // True value: 268811714181613544841_26255515800135873611118773741922415191608
         // Relative error: 3.128803544297531e-22
 
@@ -504,7 +507,10 @@ contract FixedPointMathLibTest is Test {
             if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
         }
 
-        assertEq(FixedPointMathLib.mulDivUp(x, y, denominator), x * y == 0 ? 0 : (x * y - 1) / denominator + 1);
+        assertEq(
+            FixedPointMathLib.mulDivUp(x, y, denominator),
+            x * y == 0 ? 0 : (x * y - 1) / denominator + 1
+        );
     }
 
     function testFuzzMulDivUpOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {

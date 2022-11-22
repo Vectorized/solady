@@ -30,7 +30,11 @@ library ECDSA {
     /// The `result` will be the zero address upon recovery failure.
     /// As such, it is extremely important to ensure that the address which
     /// the `result` is compared against is never zero.
-    function recover(bytes32 hash, bytes calldata signature) internal view returns (address result) {
+    function recover(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        returns (address result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             if eq(signature.length, 65) {
@@ -99,7 +103,11 @@ library ECDSA {
     /// The `result` will be the zero address upon recovery failure.
     /// As such, it is extremely important to ensure that the address which
     /// the `result` is compared against is never zero.
-    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal view returns (address result) {
+    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
+        internal
+        view
+        returns (address result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // Copy the free memory pointer so that we can restore it later.

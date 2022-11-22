@@ -24,7 +24,11 @@ library LibRLP {
     /// This is for performance, as exceeding the range is extremely impractical.
     /// It is the user's responsibility to ensure that the nonce is valid
     /// (e.g. no dirty bits after packing / unpacking).
-    function computeAddress(address deployer, uint256 nonce) internal pure returns (address deployed) {
+    function computeAddress(address deployer, uint256 nonce)
+        internal
+        pure
+        returns (address deployed)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // forgefmt: disable-next-item

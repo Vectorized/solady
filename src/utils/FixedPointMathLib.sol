@@ -173,7 +173,9 @@ library FixedPointMathLib {
             // * the 1e18 / 2**96 factor for base conversion.
             // We do this all at once, with an intermediate result in 2**213
             // basis, so the final right shift is always by a positive amount.
-            r = int256((uint256(r) * 3822833074963236453042738258902158003155416615667) >> uint256(195 - k));
+            r = int256(
+                (uint256(r) * 3822833074963236453042738258902158003155416615667) >> uint256(195 - k)
+            );
         }
     }
 
@@ -277,7 +279,11 @@ library FixedPointMathLib {
     /// @dev Calculates floor(a × b ÷ denominator) with full precision.
     /// Throws if result overflows a uint256 or when the denominator is zero.
     /// Credit to Remco Bloemen under MIT license: https://xn--2-umb.com/21/muldiv
-    function fullMulDiv(uint256 a, uint256 b, uint256 denominator) internal pure returns (uint256 result) {
+    function fullMulDiv(uint256 a, uint256 b, uint256 denominator)
+        internal
+        pure
+        returns (uint256 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // forgefmt: disable-next-item
@@ -361,7 +367,11 @@ library FixedPointMathLib {
     /// Throws if result overflows a uint256 or when the denominator is zero.
     /// Credit to Uniswap-v3-core under MIT license:
     /// https://github.com/Uniswap/v3-core/blob/contracts/libraries/FullMath.sol
-    function fullMulDivUp(uint256 a, uint256 b, uint256 denominator) internal pure returns (uint256 result) {
+    function fullMulDivUp(uint256 a, uint256 b, uint256 denominator)
+        internal
+        pure
+        returns (uint256 result)
+    {
         result = fullMulDiv(a, b, denominator);
         /// @solidity memory-safe-assembly
         assembly {
@@ -395,7 +405,11 @@ library FixedPointMathLib {
 
     /// @dev Returns `ceil(x * y / denominator)`.
     /// Reverts if `x * y` overflows, or `denominator` is zero.
-    function mulDivUp(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 z) {
+    function mulDivUp(uint256 x, uint256 y, uint256 denominator)
+        internal
+        pure
+        returns (uint256 z)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
@@ -628,7 +642,11 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `x`, bounded to `minValue` and `maxValue`.
-    function clamp(uint256 x, uint256 minValue, uint256 maxValue) internal pure returns (uint256 z) {
+    function clamp(uint256 x, uint256 minValue, uint256 maxValue)
+        internal
+        pure
+        returns (uint256 z)
+    {
         return min(max(x, minValue), maxValue);
     }
 }

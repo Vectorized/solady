@@ -7,7 +7,11 @@ pragma solidity ^0.8.4;
 /// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
 abstract contract Clone {
     /// @dev Reads an immutable arg with type bytes.
-    function _getArgBytes(uint256 argOffset, uint256 length) internal pure returns (bytes memory arg) {
+    function _getArgBytes(uint256 argOffset, uint256 length)
+        internal
+        pure
+        returns (bytes memory arg)
+    {
         uint256 offset = _getImmutableArgsOffset();
         /// @solidity memory-safe-assembly
         assembly {
@@ -41,7 +45,11 @@ abstract contract Clone {
     }
 
     /// @dev Reads a uint256 array stored in the immutable args.
-    function _getArgUint256Array(uint256 argOffset, uint256 length) internal pure returns (uint256[] memory arg) {
+    function _getArgUint256Array(uint256 argOffset, uint256 length)
+        internal
+        pure
+        returns (uint256[] memory arg)
+    {
         uint256 offset = _getImmutableArgsOffset();
         /// @solidity memory-safe-assembly
         assembly {

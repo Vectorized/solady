@@ -122,7 +122,11 @@ contract LibCloneTest is TestPlus, Clone {
         return _getArgUint256(argOffset);
     }
 
-    function getArgUint256Array(uint256 argOffset, uint256 length) public pure returns (uint256[] memory) {
+    function getArgUint256Array(uint256 argOffset, uint256 length)
+        public
+        pure
+        returns (uint256[] memory)
+    {
         return _getArgUint256Array(argOffset, length);
     }
 
@@ -142,7 +146,8 @@ contract LibCloneTest is TestPlus, Clone {
         uint64 argUint64,
         uint8 argUint8
     ) public brutalizeMemory {
-        bytes memory data = abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
+        bytes memory data =
+            abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
         LibCloneTest clone = LibCloneTest(LibClone.clone(_this(), data));
         _shouldBehaveLikeClone(address(clone), value_);
 
@@ -186,7 +191,14 @@ contract LibCloneTest is TestPlus, Clone {
             salt = bytes32(argUint256 + 123);
 
             data = abi.encodePacked(
-                argUint256, argAddress, argUint256, argUint256Array, argBytes, argUint64, argUint8, argUint256
+                argUint256,
+                argAddress,
+                argUint256,
+                argUint256Array,
+                argBytes,
+                argUint64,
+                argUint8,
+                argUint256
             );
 
             bytes32 saltKey = keccak256(abi.encode(data, salt));

@@ -139,13 +139,19 @@ library LibBitmap {
                 mstore(0x00, bucket)
             }
             let storageSlot := keccak256(0x00, 0x40)
-            sstore(storageSlot, and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0))))))
+            sstore(
+                storageSlot, and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0)))))
+            )
         }
     }
 
     /// @dev Returns number of set bits within a range by
     /// scanning `amount` of bits starting from the bit at `start`.
-    function popCount(Bitmap storage bitmap, uint256 start, uint256 amount) internal view returns (uint256 count) {
+    function popCount(Bitmap storage bitmap, uint256 start, uint256 amount)
+        internal
+        view
+        returns (uint256 count)
+    {
         unchecked {
             uint256 bucket = start >> 8;
             uint256 shift = start & 0xff;
@@ -164,7 +170,11 @@ library LibBitmap {
 
     /// @dev Returns the index of the most significant set bit before the bit at `before`.
     /// If no set bit is found, returns `NOT_FOUND`.
-    function findLastSet(Bitmap storage bitmap, uint256 before) internal view returns (uint256 setBitIndex) {
+    function findLastSet(Bitmap storage bitmap, uint256 before)
+        internal
+        view
+        returns (uint256 setBitIndex)
+    {
         uint256 bucket;
         uint256 bucketBits;
         /// @solidity memory-safe-assembly

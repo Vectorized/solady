@@ -468,7 +468,9 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedElementInUniquifiedArray(uint256[] memory a, uint256 randomness) public {
+    function testSearchSortedElementInUniquifiedArray(uint256[] memory a, uint256 randomness)
+        public
+    {
         unchecked {
             vm.assume(a.length != 0);
             LibSort.sort(a);
@@ -504,7 +506,9 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedElementNotInArrayNarrow(uint256[] memory a, uint256 randomness) public {
+    function testSearchSortedElementNotInArrayNarrow(uint256[] memory a, uint256 randomness)
+        public
+    {
         unchecked {
             for (uint256 i; i != a.length; ++i) {
                 a[i] = a[i] % 32;
@@ -513,7 +517,9 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedElementNotInUniquifiedArray(uint256[] memory a, uint256 randomness) public {
+    function testSearchSortedElementNotInUniquifiedArray(uint256[] memory a, uint256 randomness)
+        public
+    {
         unchecked {
             vm.assume(a.length != 0);
             LibSort.sort(a);
@@ -531,7 +537,10 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedElementNotInUniquifiedArrayNarrow(uint256[] memory a, uint256 randomness) public {
+    function testSearchSortedElementNotInUniquifiedArrayNarrow(
+        uint256[] memory a,
+        uint256 randomness
+    ) public {
         unchecked {
             for (uint256 i; i != a.length; ++i) {
                 a[i] = a[i] % 32;

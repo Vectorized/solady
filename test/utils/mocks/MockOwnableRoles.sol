@@ -51,15 +51,30 @@ contract MockOwnableRoles is OwnableRoles {
         _removeRoles(_brutalizedAddress(user), roles);
     }
 
-    function grantRoles(address user, uint256 roles) public payable virtual override (OwnableRoles) {
+    function grantRoles(address user, uint256 roles)
+        public
+        payable
+        virtual
+        override (OwnableRoles)
+    {
         OwnableRoles.grantRoles(_brutalizedAddress(user), roles);
     }
 
-    function revokeRoles(address user, uint256 roles) public payable virtual override (OwnableRoles) {
+    function revokeRoles(address user, uint256 roles)
+        public
+        payable
+        virtual
+        override (OwnableRoles)
+    {
         OwnableRoles.revokeRoles(_brutalizedAddress(user), roles);
     }
 
-    function completeOwnershipHandover(address pendingOwner) public payable virtual override (OwnableRoles) {
+    function completeOwnershipHandover(address pendingOwner)
+        public
+        payable
+        virtual
+        override (OwnableRoles)
+    {
         OwnableRoles.completeOwnershipHandover(_brutalizedAddress(pendingOwner));
     }
 
@@ -87,7 +102,13 @@ contract MockOwnableRoles is OwnableRoles {
         OwnableRoles.transferOwnership(_brutalizedAddress(newOwner));
     }
 
-    function rolesOf(address user) public view virtual override (OwnableRoles) returns (uint256 result) {
+    function rolesOf(address user)
+        public
+        view
+        virtual
+        override (OwnableRoles)
+        returns (uint256 result)
+    {
         result = OwnableRoles.rolesOf(_brutalizedAddress(user));
     }
 
@@ -101,7 +122,13 @@ contract MockOwnableRoles is OwnableRoles {
         result = OwnableRoles.ownershipHandoverExpiresAt(_brutalizedAddress(pendingOwner));
     }
 
-    function ownershipHandoverValidFor() public view virtual override (OwnableRoles) returns (uint64 result) {
+    function ownershipHandoverValidFor()
+        public
+        view
+        virtual
+        override (OwnableRoles)
+        returns (uint64 result)
+    {
         result = OwnableRoles.ownershipHandoverValidFor();
         /// @solidity memory-safe-assembly
         assembly {
