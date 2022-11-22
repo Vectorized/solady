@@ -207,18 +207,9 @@ library FixedPointMathLib {
                 v := or(v, shr(8, v))
                 v := or(v, shr(16, v))
 
-                // forgefmt: disable-next-line
-                k :=
-                    sub(
-                        or(
-                            k,
-                            byte(
-                                shr(251, mul(v, shl(224, 0x07c4acdd))),
-                                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
-                            )
-                        ),
-                        96
-                    )
+                // forgefmt: disable-next-item
+                k := sub(or(k, byte(shr(251, mul(v, shl(224, 0x07c4acdd))),
+                    0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f)), 96)
             }
 
             // Reduce range of x to (1, 2) * 2**96
@@ -507,13 +498,16 @@ library FixedPointMathLib {
     function factorial(uint256 x) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
             for {} 1 {} {
                 if iszero(lt(10, x)) {
-                    result := and(
-                        shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001), 
-                        0x3fffff
-                    )
+                    result :=
+                        and(
+                            shr(
+                                mul(22, x),
+                                0x375f0016260009d80004ec0002d00001e0000180000180000200000400001
+                            ),
+                            0x3fffff
+                        )
                     break
                 }
                 if iszero(lt(57, x)) {
@@ -521,7 +515,7 @@ library FixedPointMathLib {
                     result := 8222838654177922817725562880000000
                     if iszero(lt(end, x)) {
                         end := 10
-                        result := 3628800    
+                        result := 3628800
                     }
                     for { let w := not(0) } 1 {} {
                         result := mul(result, x)
@@ -563,15 +557,9 @@ library FixedPointMathLib {
             x := or(x, shr(8, x))
             x := or(x, shr(16, x))
 
-            // forgefmt: disable-next-line
-            r :=
-                or(
-                    r,
-                    byte(
-                        shr(251, mul(x, shl(224, 0x07c4acdd))),
-                        0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
-                    )
-                )
+            // forgefmt: disable-next-item
+            r := or(r, byte(shr(251, mul(x, shl(224, 0x07c4acdd))),
+                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f))
         }
     }
 
