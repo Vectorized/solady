@@ -15,7 +15,7 @@ remappings = [
 ]
 
 [fmt]
-line_length = 100 # A little shorter than 120 for easier readability.
+line_length = 100 # While we allow up to 120, we lint at 100 for readability.
 
 [profile.default.fuzz]
 runs = 256
