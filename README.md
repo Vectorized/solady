@@ -33,6 +33,7 @@ utils
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
 ├─ DynamicBufferLib — "Library for buffers with automatic capacity resizing"
 ├─ FixedPointMathLib — "Arithmetic library with operations for fixed-point numbers"
+└─ DateTimeLib — "Library for date time operations"
 ```
 
 ## Contributing
