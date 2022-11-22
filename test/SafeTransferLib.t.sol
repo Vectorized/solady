@@ -299,7 +299,9 @@ contract SafeTransferLibTest is TestPlus {
         public
         brutalizeMemory
     {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
+            return;
+        }
 
         SafeTransferLib.safeTransfer(nonContract, to, amount);
     }
@@ -348,7 +350,9 @@ contract SafeTransferLibTest is TestPlus {
         address to,
         uint256 amount
     ) public brutalizeMemory {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
+            return;
+        }
 
         SafeTransferLib.safeTransferFrom(nonContract, from, to, amount);
     }
@@ -380,7 +384,9 @@ contract SafeTransferLibTest is TestPlus {
         public
         brutalizeMemory
     {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
+            return;
+        }
 
         SafeTransferLib.safeApprove(nonContract, to, amount);
     }

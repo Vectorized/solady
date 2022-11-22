@@ -502,7 +502,7 @@ library FixedPointMathLib {
                 if iszero(lt(10, x)) {
                     // forgefmt: disable-next-item
                     result := and(
-                        shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001), 
+                        shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001),
                         0x3fffff
                     )
                     break

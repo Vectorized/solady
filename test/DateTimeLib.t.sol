@@ -642,7 +642,9 @@ contract DateTimeLibTest is TestPlus {
             DateTimeLib.timestampToDateTime(timestamp);
         (b.year, b.month, b.day, b.hour, b.minute, b.second) =
             DateTimeLib.timestampToDateTime(result);
-        if (numDays != 0) assertTrue(a.year != b.year || a.month != b.month || a.day != b.day);
+        if (numDays != 0) {
+            assertTrue(a.year != b.year || a.month != b.month || a.day != b.day);
+        }
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
         uint256 diff = DateTimeLib.diffDays(timestamp, result);
         assertTrue(diff == numDays);

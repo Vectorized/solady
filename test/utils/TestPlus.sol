@@ -67,7 +67,9 @@ contract TestPlus is Test {
             // decoded string and cause the subsequent asserts to fail.
             mstore(freeMemoryPointer, keccak256(0x00, 0x60))
         }
-        if (failed) revert("Free memory pointer `0x40` not 32-byte word aligned!");
+        if (failed) {
+            revert("Free memory pointer `0x40` not 32-byte word aligned!");
+        }
     }
 
     function _stepRandomness(uint256 randomness) internal pure returns (uint256 nextRandomness) {
