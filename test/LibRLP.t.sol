@@ -42,19 +42,19 @@ contract LibRLPTest is Test {
         // for an account nonce is 2**64-2: https://eips.ethereum.org/EIPS/eip-2681,
         // we just test all the way to 2**256-1 to ensure that the computeAddress function does not revert
         // for whatever nonce we provide.
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce == 0x00) {
             return address(
                 uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, bytes1(0x80)))))
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= 0x7f) {
             return address(
                 uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, uint8(nonce)))))
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint8).max) {
             return address(
                 uint160(
@@ -64,7 +64,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint16).max) {
             return address(
                 uint160(
@@ -74,7 +74,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint24).max) {
             return address(
                 uint160(
@@ -84,7 +84,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint32).max) {
             return address(
                 uint160(
@@ -94,7 +94,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint40).max) {
             return address(
                 uint160(
@@ -104,7 +104,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint48).max) {
             return address(
                 uint160(
@@ -114,7 +114,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint56).max) {
             return address(
                 uint160(
@@ -124,7 +124,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint64).max) {
             return address(
                 uint160(
@@ -134,7 +134,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint72).max) {
             return address(
                 uint160(
@@ -144,7 +144,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint80).max) {
             return address(
                 uint160(
@@ -154,7 +154,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint88).max) {
             return address(
                 uint160(
@@ -164,7 +164,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint96).max) {
             return address(
                 uint160(
@@ -174,7 +174,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint104).max) {
             return address(
                 uint160(
@@ -184,7 +184,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint112).max) {
             return address(
                 uint160(
@@ -194,7 +194,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint120).max) {
             return address(
                 uint160(
@@ -204,7 +204,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint128).max) {
             return address(
                 uint160(
@@ -214,7 +214,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint136).max) {
             return address(
                 uint160(
@@ -224,7 +224,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint144).max) {
             return address(
                 uint160(
@@ -234,7 +234,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint152).max) {
             return address(
                 uint160(
@@ -244,7 +244,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint160).max) {
             return address(
                 uint160(
@@ -254,7 +254,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint168).max) {
             return address(
                 uint160(
@@ -264,7 +264,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint176).max) {
             return address(
                 uint160(
@@ -274,7 +274,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint184).max) {
             return address(
                 uint160(
@@ -284,7 +284,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint192).max) {
             return address(
                 uint160(
@@ -294,7 +294,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint200).max) {
             return address(
                 uint160(
@@ -304,7 +304,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint208).max) {
             return address(
                 uint160(
@@ -314,7 +314,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint216).max) {
             return address(
                 uint160(
@@ -324,7 +324,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint224).max) {
             return address(
                 uint160(
@@ -334,7 +334,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint232).max) {
             return address(
                 uint160(
@@ -344,7 +344,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint240).max) {
             return address(
                 uint160(
@@ -354,7 +354,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint248).max) {
             return address(
                 uint160(
@@ -364,7 +364,7 @@ contract LibRLPTest is Test {
                 )
             );
         }
-        // prettier-ignore
+        // forgefmt: disable-next-item
         if (nonce <= type(uint256).max) {
             return address(
                 uint160(

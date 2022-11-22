@@ -36,19 +36,19 @@ library Base64 {
                 let end := add(ptr, encodedLength)
 
                 // Run over the input, 3 bytes at a time.
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} 1 {} {
                     data := add(data, 3) // Advance 3 bytes.
                     let input := mload(data)
 
                     // Write 4 bytes. Optimized for fewer stack operations.
-                    mstore8(ptr, mload(and(shr(18, input), 0x3F)))
+                    mstore8(    ptr    , mload(and(shr(18, input), 0x3F)))
                     mstore8(add(ptr, 1), mload(and(shr(12, input), 0x3F)))
-                    mstore8(add(ptr, 2), mload(and(shr(6, input), 0x3F)))
-                    mstore8(add(ptr, 3), mload(and(input, 0x3F)))
-
+                    mstore8(add(ptr, 2), mload(and(shr( 6, input), 0x3F)))
+                    mstore8(add(ptr, 3), mload(and(        input , 0x3F)))
+                    
                     ptr := add(ptr, 4) // Advance 4 bytes.
-                    // prettier-ignore
+                    // forgefmt: disable-next-item
                     if iszero(lt(ptr, end)) { break }
                 }
 
@@ -137,30 +137,27 @@ library Base64 {
                 mstore(0x3b, 0x04080c1014181c2024282c3034383c4044484c5054585c6064)
                 mstore(0x1a, 0xf8fcf800fcd0d4d8dce0e4e8ecf0f4)
 
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} 1 {} {
                     // Read 4 bytes.
                     data := add(data, 4)
                     let input := mload(data)
 
                     // Write 3 bytes.
-                    mstore(
-                        ptr,
-                        or(
-                            and(m, mload(byte(28, input))),
-                            shr(
-                                6,
-                                or(
-                                    and(m, mload(byte(29, input))),
-                                    shr(6, or(and(m, mload(byte(30, input))), shr(6, mload(byte(31, input)))))
-                                )
-                            )
-                        )
-                    )
+                    mstore(ptr, or(
+                        and(m, mload(byte(28, input))),
+                        shr(6, or(
+                            and(m, mload(byte(29, input))),
+                            shr(6, or(
+                                and(m, mload(byte(30, input))),
+                                shr(6, mload(byte(31, input)))
+                            ))
+                        ))
+                    ))
 
                     ptr := add(ptr, 3)
-
-                    // prettier-ignore
+                    
+                    // forgefmt: disable-next-item
                     if iszero(lt(data, end)) { break }
                 }
 

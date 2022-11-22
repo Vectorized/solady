@@ -196,14 +196,18 @@ contract LibStringTest is TestPlus {
         assembly {
             let o := add(expectedResult, 0x22)
             let hashed := keccak256(o, 40)
-            // prettier-ignore
+            // forgefmt: disable-next-item
             for { let i := 0 } iszero(eq(i, 20)) { i := add(i, 1) } {
                 let temp := byte(i, hashed)
                 let p := add(o, add(i, i))
                 let c0 := byte(0, mload(p))
                 let c1 := byte(1, mload(p))
-                if and(gt(c1, 58), gt(and(temp, 15), 7)) { mstore8(add(p, 1), sub(c1, 32)) }
-                if and(gt(c0, 58), gt(shr(4, temp), 7)) { mstore8(p, sub(c0, 32)) }
+                if and(gt(c1, 58), gt(and(temp, 15), 7)) {
+                    mstore8(add(p, 1), sub(c1, 32))    
+                }
+                if and(gt(c0, 58), gt(shr(4, temp), 7)) {
+                    mstore8(p, sub(c0, 32))    
+                }
             }
         }
         string memory checksumed = LibString.toHexStringChecksumed(r);
@@ -284,26 +288,22 @@ contract LibStringTest is TestPlus {
     }
 
     function testStringReplaceMedium() public {
-        // prettier-ignore
-        string memory subject =
-            "70708741044725766535585242414884609539555049888764130733849700923779599488691391677696419266840";
+        // forgefmt: disable-next-item
+        string memory subject = "70708741044725766535585242414884609539555049888764130733849700923779599488691391677696419266840";
         string memory search = "46095395550498887641307338497009";
         string memory replacement = "320807383223517906783031356692334377159141";
-        // prettier-ignore
-        string memory expectedResult =
-            "707087410447257665355852424148832080738322351790678303135669233437715914123779599488691391677696419266840";
+        // forgefmt: disable-next-item
+        string memory expectedResult = "707087410447257665355852424148832080738322351790678303135669233437715914123779599488691391677696419266840";
         assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
 
     function testStringReplaceLong() public {
-        // prettier-ignore
-        string memory subject =
-            "01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search";
+        // forgefmt: disable-next-item
+        string memory subject = "01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search";
         string memory search = "search_search_search_search_search_search";
         string memory replacement = "REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT";
-        // prettier-ignore
-        string memory expectedResult =
-            "01234567890123456789012345678901_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_23456789012345678901234567890123456789_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT";
+        // forgefmt: disable-next-item
+        string memory expectedResult = "01234567890123456789012345678901_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_23456789012345678901234567890123456789_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT";
         assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
 
@@ -1118,11 +1118,11 @@ contract LibStringTest is TestPlus {
                 mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
                 mstore(result, resultLength)
 
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for { let i := 0 } lt(i, resultLength) { i := add(i, 1) } {
                     mstore(0x20, gas())
                     mstore8(
-                        add(add(result, 0x20), i),
+                        add(add(result, 0x20), i), 
                         mload(add(add(byteChoices, 1), mod(keccak256(0x00, 0x40), mload(byteChoices))))
                     )
                 }

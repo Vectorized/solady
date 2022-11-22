@@ -27,7 +27,7 @@ library LibBit {
             x := or(x, shr(8, x))
             x := or(x, shr(16, x))
 
-            // prettier-ignore
+            // forgefmt: disable-next-line
             r :=
                 or(
                     r,
@@ -59,7 +59,7 @@ library LibBit {
             x := or(x, shr(8, x))
             x := or(x, shr(16, x))
 
-            // prettier-ignore
+            // forgefmt: disable-next-item
             r :=
                 sub(
                     t,
@@ -93,7 +93,7 @@ library LibBit {
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
 
             // For the remaining 32 bits, use a De Bruijn lookup.
-            // prettier-ignore
+            // forgefmt: disable-next-line
             r :=
                 or(
                     r,

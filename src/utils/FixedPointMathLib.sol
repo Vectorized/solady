@@ -205,7 +205,7 @@ library FixedPointMathLib {
                 v := or(v, shr(8, v))
                 v := or(v, shr(16, v))
 
-                // prettier-ignore
+                // forgefmt: disable-next-line
                 k :=
                     sub(
                         or(
@@ -280,7 +280,7 @@ library FixedPointMathLib {
     function fullMulDiv(uint256 a, uint256 b, uint256 denominator) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // prettier-ignore
+            // forgefmt: disable-next-item
             for {} 1 {} {
                 // 512-bit multiply [prod1 prod0] = a * b
                 // Compute the product mod 2**256 and mod 2**256 - 1
@@ -303,7 +303,7 @@ library FixedPointMathLib {
                         revert(0x1c, 0x04)
                     }
                     result := div(prod0, denominator)
-                    break
+                    break       
                 }
 
                 // Make sure the result is less than 2**256.
@@ -493,11 +493,13 @@ library FixedPointMathLib {
     function factorial(uint256 x) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // prettier-ignore
+            // forgefmt: disable-next-item
             for {} 1 {} {
                 if iszero(lt(10, x)) {
-                    result :=
-                        and(shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001), 0x3fffff)
+                    result := and(
+                        shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001), 
+                        0x3fffff
+                    )
                     break
                 }
                 if iszero(lt(57, x)) {
@@ -505,7 +507,7 @@ library FixedPointMathLib {
                     result := 8222838654177922817725562880000000
                     if iszero(lt(end, x)) {
                         end := 10
-                        result := 3628800
+                        result := 3628800    
                     }
                     for { let w := not(0) } 1 {} {
                         result := mul(result, x)
@@ -547,7 +549,7 @@ library FixedPointMathLib {
             x := or(x, shr(8, x))
             x := or(x, shr(16, x))
 
-            // prettier-ignore
+            // forgefmt: disable-next-line
             r :=
                 or(
                     r,
@@ -616,7 +618,7 @@ library FixedPointMathLib {
     function gcd(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // prettier-ignore
+            // forgefmt: disable-next-item
             for { z := x } y {} {
                 let t := y
                 y := mod(z, y)

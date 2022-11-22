@@ -105,7 +105,7 @@ library LibBitmap {
                 let bucketEnd := add(mload(0x00), shr(8, add(amount, shift)))
                 amount := and(add(amount, shift), 0xff)
                 shift := 0
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} iszero(eq(bucket, bucketEnd)) { bucket := add(bucket, 1) } {
                     mstore(0x00, bucket)
                     sstore(keccak256(0x00, 0x40), max)
@@ -131,7 +131,7 @@ library LibBitmap {
                 let bucketEnd := add(mload(0x00), shr(8, add(amount, shift)))
                 amount := and(add(amount, shift), 0xff)
                 shift := 0
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} iszero(eq(bucket, bucketEnd)) { bucket := add(bucket, 1) } {
                     mstore(0x00, bucket)
                     sstore(keccak256(0x00, 0x40), 0)
@@ -176,12 +176,12 @@ library LibBitmap {
             let offset := xor(0xff, and(0xff, before)) // `256 - (255 & before) - 1`.
             bucketBits := shr(offset, shl(offset, sload(keccak256(0x00, 0x40))))
             if iszero(bucketBits) {
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} bucket {} {
                     bucket := sub(bucket, 1)
                     mstore(0x00, bucket)
                     bucketBits := sload(keccak256(0x00, 0x40))
-                    // prettier-ignore
+                    // forgefmt: disable-next-item
                     if bucketBits { break }
                 }
             }
