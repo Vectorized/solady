@@ -140,7 +140,6 @@ library LibClone {
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
             mstore(0x14, implementation)
-            // forgefmt: disable-next-item
             mstore(0x00, 0xff0000000000000000000000602c3d8160093d39f33d3d3d3d363d3d37363d73)
             // Compute and store the bytecode hash.
             mstore(0x35, keccak256(0x0c, 0x35))
