@@ -122,7 +122,7 @@ library Base64 {
                     // If padded.
                     // forgefmt: disable-next-item
                     decodedLength := sub(
-                        decodedLength, 
+                        decodedLength,
                         add(eq(and(mload(end), 0xFF), 0x3d), eq(and(mload(end), 0xFFFF), 0x3d3d))
                     )
                 }
