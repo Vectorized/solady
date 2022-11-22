@@ -306,11 +306,11 @@ library LibString {
     // are byte (ASCII) offsets, not UTF character offsets.
 
     /// @dev Returns `subject` all occurrences of `search` replaced with `replacement`.
-    function replace(
-        string memory subject,
-        string memory search,
-        string memory replacement
-    ) internal pure returns (string memory result) {
+    function replace(string memory subject, string memory search, string memory replacement)
+        internal
+        pure
+        returns (string memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let subjectLength := mload(subject)
@@ -326,15 +326,13 @@ library LibString {
             if iszero(gt(searchLength, subjectLength)) {
                 let subjectSearchEnd := add(sub(subjectEnd, searchLength), 1)
                 let h := 0
-                if iszero(lt(searchLength, 32)) {
-                    h := keccak256(search, searchLength)
-                }
+                if iszero(lt(searchLength, 32)) { h := keccak256(search, searchLength) }
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(search)
                 // prettier-ignore
                 for {} 1 {} {
                     let t := mload(subject)
-                    // Whether the first `searchLength % 32` bytes of 
+                    // Whether the first `searchLength % 32` bytes of
                     // `subject` and `search` matches.
                     if iszero(shr(m, xor(t, s))) {
                         if h {
@@ -396,11 +394,11 @@ library LibString {
     /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from left to right, starting from `from`.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
-    function indexOf(
-        string memory subject,
-        string memory search,
-        uint256 from
-    ) internal pure returns (uint256 result) {
+    function indexOf(string memory subject, string memory search, uint256 from)
+        internal
+        pure
+        returns (uint256 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
@@ -411,8 +409,8 @@ library LibString {
                     break
                 }
                 let searchLength := mload(search)
-                let subjectStart := add(subject, 0x20)    
-                
+                let subjectStart := add(subject, 0x20)
+
                 result := not(0) // Initialize to `NOT_FOUND`.
 
                 subject := add(subjectStart, from)
@@ -464,20 +462,18 @@ library LibString {
     /// @dev Returns the byte index of the first location of `search` in `subject`,
     /// searching from right to left, starting from `from`.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
-    function lastIndexOf(
-        string memory subject,
-        string memory search,
-        uint256 from
-    ) internal pure returns (uint256 result) {
+    function lastIndexOf(string memory subject, string memory search, uint256 from)
+        internal
+        pure
+        returns (uint256 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
             for {} 1 {} {
                 let searchLength := mload(search)
                 let fromMax := sub(mload(subject), searchLength)
-                if iszero(gt(fromMax, from)) {
-                    from := fromMax
-                }
+                if iszero(gt(fromMax, from)) { from := fromMax }
                 if iszero(mload(search)) {
                     result := from
                     break
@@ -519,10 +515,11 @@ library LibString {
         assembly {
             let searchLength := mload(search)
             // Just using keccak256 directly is actually cheaper.
-            result := and(
-                iszero(gt(searchLength, mload(subject))),
-                eq(keccak256(add(subject, 0x20), searchLength), keccak256(add(search, 0x20), searchLength))
-            )
+            result :=
+                and(
+                    iszero(gt(searchLength, mload(subject))),
+                    eq(keccak256(add(subject, 0x20), searchLength), keccak256(add(search, 0x20), searchLength))
+                )
         }
     }
 
@@ -535,17 +532,18 @@ library LibString {
             // Whether `search` is not longer than `subject`.
             let withinRange := iszero(gt(searchLength, subjectLength))
             // Just using keccak256 directly is actually cheaper.
-            result := and(
-                withinRange,
-                eq(
-                    keccak256(
-                        // `subject + 0x20 + max(subjectLength - searchLength, 0)`.
-                        add(add(subject, 0x20), mul(withinRange, sub(subjectLength, searchLength))),
-                        searchLength
-                    ),
-                    keccak256(add(search, 0x20), searchLength)
+            result :=
+                and(
+                    withinRange,
+                    eq(
+                        keccak256(
+                            // `subject + 0x20 + max(subjectLength - searchLength, 0)`.
+                            add(add(subject, 0x20), mul(withinRange, sub(subjectLength, searchLength))),
+                            searchLength
+                        ),
+                        keccak256(add(search, 0x20), searchLength)
+                    )
                 )
-            )
         }
     }
 
@@ -587,20 +585,12 @@ library LibString {
 
     /// @dev Returns a copy of `subject` sliced from `start` to `end` (exclusive).
     /// `start` and `end` are byte offsets.
-    function slice(
-        string memory subject,
-        uint256 start,
-        uint256 end
-    ) internal pure returns (string memory result) {
+    function slice(string memory subject, uint256 start, uint256 end) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             let subjectLength := mload(subject)
-            if iszero(gt(subjectLength, end)) {
-                end := subjectLength
-            }
-            if iszero(gt(subjectLength, start)) {
-                start := subjectLength
-            }
+            if iszero(gt(subjectLength, end)) { end := subjectLength }
+            if iszero(gt(subjectLength, start)) { start := subjectLength }
             if lt(start, end) {
                 result := mload(0x40)
                 let resultLength := sub(end, start)
@@ -646,15 +636,13 @@ library LibString {
                 let subjectStart := subject
                 let subjectSearchEnd := add(sub(add(subject, subjectLength), searchLength), 1)
                 let h := 0
-                if iszero(lt(searchLength, 32)) {
-                    h := keccak256(search, searchLength)
-                }
+                if iszero(lt(searchLength, 32)) { h := keccak256(search, searchLength) }
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(search)
                 // prettier-ignore
                 for {} 1 {} {
                     let t := mload(subject)
-                    // Whether the first `searchLength % 32` bytes of 
+                    // Whether the first `searchLength % 32` bytes of
                     // `subject` and `search` matches.
                     if iszero(shr(m, xor(t, s))) {
                         if h {
@@ -706,7 +694,7 @@ library LibString {
             // prettier-ignore
             for {} 1 {} {
                 let index := mload(indexPtr)
-                mstore(indexPtr, 0x60)                        
+                mstore(indexPtr, 0x60)
                 if iszero(eq(index, prevIndex)) {
                     let element := mload(0x40)
                     let elementLength := sub(index, prevIndex)
@@ -725,7 +713,7 @@ library LibString {
                     // rounded up to a multiple of 32.
                     mstore(0x40, add(element, and(add(elementLength, 63), w)))
                     // Store the `element` into the array.
-                    mstore(indexPtr, element)                        
+                    mstore(indexPtr, element)
                 }
                 prevIndex := add(index, mload(delimiter))
                 indexPtr := add(indexPtr, 0x20)
@@ -838,10 +826,10 @@ library LibString {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 // Not in `["\"","'","&","<",">"]`.
-                if iszero(and(shl(c, 1), 0x500000c400000000)) { 
+                if iszero(and(shl(c, 1), 0x500000c400000000)) {
                     mstore8(result, c)
                     result := add(result, 1)
-                    continue    
+                    continue
                 }
                 let t := shr(248, mload(c))
                 mstore(result, mload(and(t, 31)))
@@ -879,21 +867,23 @@ library LibString {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 if iszero(lt(c, 0x20)) {
-                    if iszero(and(shl(c, 1), e)) { // Not in `["\"","\\"]`.
+                    if iszero(and(shl(c, 1), e)) {
+                        // Not in `["\"","\\"]`.
                         mstore8(result, c)
                         result := add(result, 1)
-                        continue    
+                        continue
                     }
                     mstore8(result, 0x5c) // "\\".
-                    mstore8(add(result, 1), c) 
+                    mstore8(add(result, 1), c)
                     result := add(result, 2)
                     continue
                 }
-                if iszero(and(shl(c, 1), 0x3700)) { // Not in `["\b","\t","\n","\f","\d"]`.
+                if iszero(and(shl(c, 1), 0x3700)) {
+                    // Not in `["\b","\t","\n","\f","\d"]`.
                     mstore8(0x1d, mload(shr(4, c))) // Hex value.
                     mstore8(0x1e, mload(and(c, 15))) // Hex value.
                     mstore(result, mload(0x19)) // "\\u00XX".
-                    result := add(result, 6)    
+                    result := add(result, 6)
                     continue
                 }
                 mstore8(result, 0x5c) // "\\".
@@ -927,13 +917,14 @@ library LibString {
         assembly {
             // We don't need to zero right pad the string,
             // since this is our own custom non-standard packing scheme.
-            result := mul(
-                // Load the length and the bytes.
-                mload(add(a, 0x1f)),
-                // `length != 0 && length < 32`. Abuses underflow.
-                // Assumes that the length is valid and within the block gas limit.
-                lt(sub(mload(a), 1), 0x1f)
-            )
+            result :=
+                mul(
+                    // Load the length and the bytes.
+                    mload(add(a, 0x1f)),
+                    // `length != 0 && length < 32`. Abuses underflow.
+                    // Assumes that the length is valid and within the block gas limit.
+                    lt(sub(mload(a), 1), 0x1f)
+                )
         }
     }
 
@@ -964,13 +955,14 @@ library LibString {
             let aLength := mload(a)
             // We don't need to zero right pad the strings,
             // since this is our own custom non-standard packing scheme.
-            result := mul(
-                // Load the length and the bytes of `a` and `b`.
-                or(shl(shl(3, sub(0x1f, aLength)), mload(add(a, aLength))), mload(sub(add(b, 0x1e), aLength))),
-                // `totalLength != 0 && totalLength < 31`. Abuses underflow.
-                // Assumes that the lengths are valid and within the block gas limit.
-                lt(sub(add(aLength, mload(b)), 1), 0x1e)
-            )
+            result :=
+                mul(
+                    // Load the length and the bytes of `a` and `b`.
+                    or(shl(shl(3, sub(0x1f, aLength)), mload(add(a, aLength))), mload(sub(add(b, 0x1e), aLength))),
+                    // `totalLength != 0 && totalLength < 31`. Abuses underflow.
+                    // Assumes that the lengths are valid and within the block gas limit.
+                    lt(sub(add(aLength, mload(b)), 1), 0x1e)
+                )
         }
     }
 

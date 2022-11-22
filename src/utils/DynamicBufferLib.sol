@@ -84,7 +84,7 @@ library DynamicBufferLib {
                 // prettier-ignore
                 for { let o := and(add(mload(data), 32), w) } 1 {} {
                     mstore(add(output, o), mload(add(data, o)))
-                    o := add(o, w)  // `sub(o, 0x20)`.
+                    o := add(o, w) // `sub(o, 0x20)`.
                     // prettier-ignore
                     if iszero(o) { break }
                 }

@@ -33,7 +33,7 @@ library LibRLP {
                 // and as a result it only has a length prefix, 0x80,
                 // computed via `0x80 + 0`.
 
-                // A one-byte integer in the [0x00, 0x7f] range uses its 
+                // A one-byte integer in the [0x00, 0x7f] range uses its
                 // own value as a length prefix,
                 // there is no additional `0x80 + length` prefix that precedes it.
                 if iszero(gt(nonce, 0x7f)) {

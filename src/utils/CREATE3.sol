@@ -59,11 +59,7 @@ library CREATE3 {
     /// The deployed contract is funded with `value` (in wei) ETH.
     /// Returns the deterministic address of the deployed contract,
     /// which solely depends on `salt`.
-    function deploy(
-        bytes32 salt,
-        bytes memory creationCode,
-        uint256 value
-    ) internal returns (address deployed) {
+    function deploy(bytes32 salt, bytes memory creationCode, uint256 value) internal returns (address deployed) {
         /// @solidity memory-safe-assembly
         assembly {
             // Store the `_PROXY_BYTECODE` into scratch space.

@@ -5,12 +5,9 @@ import "./utils/TestPlus.sol";
 import {MerkleProofLib} from "../src/utils/MerkleProofLib.sol";
 
 contract MerkleProofLibTest is TestPlus {
-    function testVerifyProofForHeightOneTree(
-        bool hasProof,
-        bool nonEmptyProof,
-        bool nonEmptyRoot,
-        bool nonEmptyLeaf
-    ) public {
+    function testVerifyProofForHeightOneTree(bool hasProof, bool nonEmptyProof, bool nonEmptyRoot, bool nonEmptyLeaf)
+        public
+    {
         bytes32 root;
         if (nonEmptyRoot) {
             root = bytes32("a");
@@ -56,12 +53,7 @@ contract MerkleProofLibTest is TestPlus {
         testVerifyProofBasicCase(false, false, true, 0x00);
     }
 
-    function testVerifyProofBasicCase(
-        bool damageProof,
-        bool damageRoot,
-        bool damageLeaf,
-        bytes32 randomness
-    ) public {
+    function testVerifyProofBasicCase(bool damageProof, bool damageRoot, bool damageLeaf, bytes32 randomness) public {
         bool noDamage = true;
         uint256 ri; // Randomness index.
 
@@ -263,20 +255,14 @@ contract MerkleProofLibTest is TestPlus {
         assertEq(this.verifyMultiProof(proof, root, leafs, flags), noDamage);
     }
 
-    function verify(
-        bytes32[] calldata proof,
-        bytes32 root,
-        bytes32 leaf
-    ) external pure returns (bool) {
+    function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf) external pure returns (bool) {
         return MerkleProofLib.verify(proof, root, leaf);
     }
 
-    function verifyMultiProof(
-        bytes32[] calldata proof,
-        bytes32 root,
-        bytes32[] calldata leafs,
-        bool[] calldata flags
-    ) external returns (bool result) {
+    function verifyMultiProof(bytes32[] calldata proof, bytes32 root, bytes32[] calldata leafs, bool[] calldata flags)
+        external
+        returns (bool result)
+    {
         uint256[] memory offsetsAndLengths = new uint256[](12);
 
         // Basically, we want to demonstrate that the `verifyMultiProof` does not

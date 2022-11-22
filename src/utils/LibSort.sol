@@ -77,23 +77,19 @@ library LibSort {
                 // The `shl` by 5 is equivalent to multiplying by `0x20`.
                 let l := add(a, 0x20)
                 let h := add(a, shl(5, n))
-                
+
                 let j := l
                 // prettier-ignore
-                for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, 0x20))))) {} {
-                    j := add(j, 0x20)
-                }
+                for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, 0x20))))) {} { j := add(j, 0x20) }
                 // If the array is already sorted.
                 // prettier-ignore
                 if eq(j, h) { break }
 
                 j := h
                 // prettier-ignore
-                for {} iszero(or(eq(j, l), gt(mload(j), mload(add(j, w))))) {} {
-                    j := add(j, w) // `sub(j, 0x20)`.
-                }
+                for {} iszero(or(eq(j, l), gt(mload(j), mload(add(j, w))))) {} { j := add(j, w) } // `sub(j, 0x20)`.
                 // If the array is reversed sorted.
-                if eq(j, l) { 
+                if eq(j, l) {
                     // prettier-ignore
                     for {} 1 {} {
                         let t := mload(l)
@@ -301,7 +297,7 @@ library LibSort {
                     h := sub(m, 0x20)
                     continue
                 }
-                l := add(m, 0x20)   
+                l := add(m, 0x20)
             }
             // `m` will be less than `add(a, 0x20)` in the case of an empty array,
             // or when the value is less than the smallest value in the array.

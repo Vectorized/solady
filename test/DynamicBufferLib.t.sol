@@ -103,9 +103,7 @@ contract DynamicBufferLibTest is TestPlus {
         // Limit the total number of inputs.
         /// @solidity memory-safe-assembly
         assembly {
-            if gt(mload(inputs), 16) {
-                mstore(inputs, 16)
-            }
+            if gt(mload(inputs), 16) { mstore(inputs, 16) }
         }
         unchecked {
             // Limit the lengths of the inputs.
@@ -113,9 +111,7 @@ contract DynamicBufferLibTest is TestPlus {
                 bytes memory x = inputs[i];
                 /// @solidity memory-safe-assembly
                 assembly {
-                    if gt(mload(x), 300) {
-                        mstore(x, 300)
-                    }
+                    if gt(mload(x), 300) { mstore(x, 300) }
                 }
             }
         }

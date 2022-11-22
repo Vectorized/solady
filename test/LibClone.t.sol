@@ -20,9 +20,7 @@ contract LibCloneTest is TestPlus, Clone {
         address t = _this();
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(shr(160, t)) {
-                revert(0, 0)
-            }
+            if iszero(shr(160, t)) { revert(0, 0) }
         }
         value += 1;
     }
@@ -188,14 +186,7 @@ contract LibCloneTest is TestPlus, Clone {
             salt = bytes32(argUint256 + 123);
 
             data = abi.encodePacked(
-                argUint256,
-                argAddress,
-                argUint256,
-                argUint256Array,
-                argBytes,
-                argUint64,
-                argUint8,
-                argUint256
+                argUint256, argAddress, argUint256, argUint256Array, argBytes, argUint64, argUint8, argUint256
             );
 
             bytes32 saltKey = keccak256(abi.encode(data, salt));

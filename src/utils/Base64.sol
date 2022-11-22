@@ -10,11 +10,7 @@ library Base64 {
     /// See: https://datatracker.ietf.org/doc/html/rfc4648
     /// @param fileSafe  Whether to replace '+' with '-' and '/' with '_'.
     /// @param noPadding Whether to strip away the padding.
-    function encode(
-        bytes memory data,
-        bool fileSafe,
-        bool noPadding
-    ) internal pure returns (string memory result) {
+    function encode(bytes memory data, bool fileSafe, bool noPadding) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             let dataLength := mload(data)
@@ -46,11 +42,11 @@ library Base64 {
                     let input := mload(data)
 
                     // Write 4 bytes. Optimized for fewer stack operations.
-                    mstore8(    ptr    , mload(and(shr(18, input), 0x3F)))
+                    mstore8(ptr, mload(and(shr(18, input), 0x3F)))
                     mstore8(add(ptr, 1), mload(and(shr(12, input), 0x3F)))
-                    mstore8(add(ptr, 2), mload(and(shr( 6, input), 0x3F)))
-                    mstore8(add(ptr, 3), mload(and(        input , 0x3F)))
-                    
+                    mstore8(add(ptr, 2), mload(and(shr(6, input), 0x3F)))
+                    mstore8(add(ptr, 3), mload(and(input, 0x3F)))
+
                     ptr := add(ptr, 4) // Advance 4 bytes.
                     // prettier-ignore
                     if iszero(lt(ptr, end)) { break }
@@ -117,10 +113,8 @@ library Base64 {
                 switch and(dataLength, 3)
                 case 0 {
                     // If padded.
-                    decodedLength := sub(
-                        decodedLength,
-                        add(eq(and(mload(end), 0xFF), 0x3d), eq(and(mload(end), 0xFFFF), 0x3d3d))
-                    )
+                    decodedLength :=
+                        sub(decodedLength, add(eq(and(mload(end), 0xFF), 0x3d), eq(and(mload(end), 0xFFFF), 0x3d3d)))
                 }
                 default {
                     // If non-padded.
@@ -150,19 +144,22 @@ library Base64 {
                     let input := mload(data)
 
                     // Write 3 bytes.
-                    mstore(ptr, or(
-                        and(m, mload(byte(28, input))),
-                        shr(6, or(
-                            and(m, mload(byte(29, input))),
-                            shr(6, or(
-                                and(m, mload(byte(30, input))),
-                                shr(6, mload(byte(31, input)))
-                            ))
-                        ))
-                    ))
+                    mstore(
+                        ptr,
+                        or(
+                            and(m, mload(byte(28, input))),
+                            shr(
+                                6,
+                                or(
+                                    and(m, mload(byte(29, input))),
+                                    shr(6, or(and(m, mload(byte(30, input))), shr(6, mload(byte(31, input)))))
+                                )
+                            )
+                        )
+                    )
 
                     ptr := add(ptr, 3)
-                    
+
                     // prettier-ignore
                     if iszero(lt(data, end)) { break }
                 }

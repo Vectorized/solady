@@ -74,12 +74,7 @@ contract SignatureCheckerLibTest is Test {
         _checkSignature(address(mockERC1271Malicious), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false);
     }
 
-    function _checkSignature(
-        address signer,
-        bytes32 hash,
-        bytes memory signature,
-        bool expectedResult
-    ) internal {
+    function _checkSignature(address signer, bytes32 hash, bytes memory signature, bool expectedResult) internal {
         bool callResult;
         /// @solidity memory-safe-assembly
         assembly {
@@ -99,25 +94,26 @@ contract SignatureCheckerLibTest is Test {
 
             // We have to do the call in assembly to ensure that Solidity does not
             // clean up the brutalized bits.
-            callResult := and(
+            callResult :=
                 and(
-                    // Whether the returndata is equal to 1.
-                    eq(mload(0x00), 1),
-                    // Whether the returndata is exactly 0x20 bytes (1 word) long .
-                    eq(returndatasize(), 0x20)
-                ),
-                // Whether the staticcall does not revert.
-                // This must be placed at the end of the `and` clause,
-                // as the arguments are evaluated from right to left.
-                staticcall(
-                    gas(), // Remaining gas.
-                    address(), // The current contract's address.
-                    m, // Offset of calldata in memory.
-                    0xe4, // Length of calldata in memory.
-                    0x00, // Offset of returndata.
-                    0x20 // Length of returndata to write.
+                    and(
+                        // Whether the returndata is equal to 1.
+                        eq(mload(0x00), 1),
+                        // Whether the returndata is exactly 0x20 bytes (1 word) long .
+                        eq(returndatasize(), 0x20)
+                    ),
+                    // Whether the staticcall does not revert.
+                    // This must be placed at the end of the `and` clause,
+                    // as the arguments are evaluated from right to left.
+                    staticcall(
+                        gas(), // Remaining gas.
+                        address(), // The current contract's address.
+                        m, // Offset of calldata in memory.
+                        0xe4, // Length of calldata in memory.
+                        0x00, // Offset of returndata.
+                        0x20 // Length of returndata to write.
+                    )
                 )
-            )
         }
         assertEq(callResult, expectedResult);
 
@@ -138,24 +134,14 @@ contract SignatureCheckerLibTest is Test {
 
             // Brutalize the memory. Just all ones will do.
             let m := mload(0x40)
-            for {
-                let i := 0
-            } lt(i, 30) {
-                i := add(i, 1)
-            } {
-                mstore(add(m, shl(5, i)), not(0))
-            }
+            for { let i := 0 } lt(i, 30) { i := add(i, 1) } { mstore(add(m, shl(5, i)), not(0)) }
         }
 
         assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, r, vs), expectedResult);
         assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, v, r, s), expectedResult);
     }
 
-    function isValidSignatureNow(
-        address signer,
-        bytes32 hash,
-        bytes calldata signature
-    ) external view returns (bool) {
+    function isValidSignatureNow(address signer, bytes32 hash, bytes calldata signature) external view returns (bool) {
         bool signatureIsBrutalized;
         /// @solidity memory-safe-assembly
         assembly {

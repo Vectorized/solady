@@ -61,9 +61,7 @@ contract TestPlus is Test {
         assembly {
             let freeMemoryPointer := mload(0x40)
             // This ensures that the memory allocated is 32-byte aligned.
-            if and(freeMemoryPointer, 31) {
-                failed := 1
-            }
+            if and(freeMemoryPointer, 31) { failed := 1 }
             // Write some garbage to the free memory.
             // If the allocated memory is insufficient, this will change the
             // decoded string and cause the subsequent asserts to fail.
@@ -86,11 +84,7 @@ contract TestPlus is Test {
         assembly {
             let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
             let remainder := and(mload(s), 31)
-            if remainder {
-                if shl(mul(8, remainder), lastWord) {
-                    failed := 1
-                }
-            }
+            if remainder { if shl(mul(8, remainder), lastWord) { failed := 1 } }
         }
         if (failed) revert("String not zero right padded!");
     }
@@ -101,11 +95,7 @@ contract TestPlus is Test {
         assembly {
             let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
             let remainder := and(mload(s), 31)
-            if remainder {
-                if shl(mul(8, remainder), lastWord) {
-                    failed := 1
-                }
-            }
+            if remainder { if shl(mul(8, remainder), lastWord) { failed := 1 } }
         }
         if (failed) revert("Bytes not zero right padded!");
     }
@@ -113,11 +103,7 @@ contract TestPlus is Test {
     /// @dev Adapted from:
     /// https://github.com/foundry-rs/forge-std/blob/ff4bf7db008d096ea5a657f2c20516182252a3ed/src/StdUtils.sol#L10
     /// Differentially fuzzed tested against the original implementation.
-    function _bound(
-        uint256 x,
-        uint256 min,
-        uint256 max
-    ) internal pure virtual returns (uint256 result) {
+    function _bound(uint256 x, uint256 min, uint256 max) internal pure virtual returns (uint256 result) {
         require(min <= max, "_bound(uint256,uint256,uint256): Max is less than min.");
 
         /// @solidity memory-safe-assembly
@@ -129,7 +115,7 @@ contract TestPlus is Test {
                 // do not get shifted if the min is nonzero.
                 // More info: https://github.com/foundry-rs/forge-std/issues/188
                 if iszero(or(lt(x, min), gt(x, max))) {
-                    result := x 
+                    result := x
                     break
                 }
 
@@ -145,13 +131,13 @@ contract TestPlus is Test {
                     break
                 }
 
-                // Otherwise, wrap x into the range [min, max], 
+                // Otherwise, wrap x into the range [min, max],
                 // i.e. the range is inclusive.
                 if iszero(lt(x, max)) {
                     let d := sub(x, max)
                     let r := mod(d, size)
                     if iszero(r) {
-                        result := max 
+                        result := max
                         break
                     }
                     result := add(add(min, r), w)

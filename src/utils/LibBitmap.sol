@@ -73,11 +73,7 @@ library LibBitmap {
     }
 
     /// @dev Updates the bit at `index` in `bitmap` to `shouldSet`.
-    function setTo(
-        Bitmap storage bitmap,
-        uint256 index,
-        bool shouldSet
-    ) internal {
+    function setTo(Bitmap storage bitmap, uint256 index, bool shouldSet) internal {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, bitmap.slot)
@@ -95,11 +91,7 @@ library LibBitmap {
     }
 
     /// @dev Consecutively sets `amount` of bits starting from the bit at `start`.
-    function setBatch(
-        Bitmap storage bitmap,
-        uint256 start,
-        uint256 amount
-    ) internal {
+    function setBatch(Bitmap storage bitmap, uint256 start, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
             let max := not(0)
@@ -126,11 +118,7 @@ library LibBitmap {
     }
 
     /// @dev Consecutively unsets `amount` of bits starting from the bit at `start`.
-    function unsetBatch(
-        Bitmap storage bitmap,
-        uint256 start,
-        uint256 amount
-    ) internal {
+    function unsetBatch(Bitmap storage bitmap, uint256 start, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
             let shift := and(start, 0xff)
@@ -157,11 +145,7 @@ library LibBitmap {
 
     /// @dev Returns number of set bits within a range by
     /// scanning `amount` of bits starting from the bit at `start`.
-    function popCount(
-        Bitmap storage bitmap,
-        uint256 start,
-        uint256 amount
-    ) internal view returns (uint256 count) {
+    function popCount(Bitmap storage bitmap, uint256 start, uint256 amount) internal view returns (uint256 count) {
         unchecked {
             uint256 bucket = start >> 8;
             uint256 shift = start & 0xff;

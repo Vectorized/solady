@@ -7,11 +7,7 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/MerkleProof.sol)
 library MerkleProofLib {
     /// @dev Returns whether `leaf` exists in the Merkle tree with `root`, given `proof`.
-    function verify(
-        bytes32[] calldata proof,
-        bytes32 root,
-        bytes32 leaf
-    ) internal pure returns (bool isValid) {
+    function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf) internal pure returns (bool isValid) {
         /// @solidity memory-safe-assembly
         assembly {
             if proof.length {
@@ -42,12 +38,11 @@ library MerkleProofLib {
 
     /// @dev Returns whether all `leafs` exist in the Merkle tree with `root`,
     /// given `proof` and `flags`.
-    function verifyMultiProof(
-        bytes32[] calldata proof,
-        bytes32 root,
-        bytes32[] calldata leafs,
-        bool[] calldata flags
-    ) internal pure returns (bool isValid) {
+    function verifyMultiProof(bytes32[] calldata proof, bytes32 root, bytes32[] calldata leafs, bool[] calldata flags)
+        internal
+        pure
+        returns (bool isValid)
+    {
         // Rebuilds the root by consuming and producing values on a queue.
         // The queue starts with the `leafs` array, and goes into a `hashes` array.
         // After the process, the last element on the queue is verified
@@ -61,16 +56,11 @@ library MerkleProofLib {
             // If the number of flags is correct.
             // prettier-ignore
             for {} eq(add(leafs.length, proof.length), add(flags.length, 1)) {} {
-
                 // For the case where `proof.length + leafs.length == 1`.
                 if iszero(flags.length) {
                     // `isValid = (proof.length == 1 ? proof[0] : leafs[0]) == root`.
-                    isValid := eq(
-                        calldataload(
-                            xor(leafs.offset, mul(xor(proof.offset, leafs.offset), proof.length))
-                        ),
-                        root
-                    )
+                    isValid :=
+                        eq(calldataload(xor(leafs.offset, mul(xor(proof.offset, leafs.offset), proof.length))), root)
                     break
                 }
 
@@ -109,7 +99,7 @@ library MerkleProofLib {
                         // Unpop from `hashes`.
                         hashesFront := sub(hashesFront, 0x20)
                     }
-                    
+
                     // Advance to the next flag offset.
                     flags.offset := add(flags.offset, 0x20)
 

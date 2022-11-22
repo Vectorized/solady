@@ -96,7 +96,7 @@ library LibPRNG {
                         mstore(i, mload(j))
                         mstore(j, t)
                     }
-                    
+
                     {
                         let j := add(a, shl(5, mod(and(r, mask), n)))
                         n := add(n, w) // `sub(n, 1)`.

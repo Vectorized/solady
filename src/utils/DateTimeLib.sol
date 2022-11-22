@@ -78,11 +78,7 @@ library DateTimeLib {
     /// See: https://howardhinnant.github.io/date_algorithms.html
     /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedDate} to check if the inputs are supported.
-    function dateToEpochDay(
-        uint256 year,
-        uint256 month,
-        uint256 day
-    ) internal pure returns (uint256 epochDay) {
+    function dateToEpochDay(uint256 year, uint256 month, uint256 day) internal pure returns (uint256 epochDay) {
         /// @solidity memory-safe-assembly
         assembly {
             year := sub(year, lt(month, 3))
@@ -96,15 +92,7 @@ library DateTimeLib {
     /// @dev Returns (`year`,`month`,`day`) from the number of days since 1970-01-01.
     /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedDays} to check if the inputs is supported.
-    function epochDayToDate(uint256 epochDay)
-        internal
-        pure
-        returns (
-            uint256 year,
-            uint256 month,
-            uint256 day
-        )
-    {
+    function epochDayToDate(uint256 epochDay) internal pure returns (uint256 year, uint256 month, uint256 day) {
         /// @solidity memory-safe-assembly
         assembly {
             epochDay := add(epochDay, 719468)
@@ -121,11 +109,7 @@ library DateTimeLib {
     /// @dev Returns the unix timestamp from (`year`,`month`,`day`).
     /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedDate} to check if the inputs are supported.
-    function dateToTimestamp(
-        uint256 year,
-        uint256 month,
-        uint256 day
-    ) internal pure returns (uint256 result) {
+    function dateToTimestamp(uint256 year, uint256 month, uint256 day) internal pure returns (uint256 result) {
         unchecked {
             result = dateToEpochDay(year, month, day) * 86400;
         }
@@ -134,15 +118,7 @@ library DateTimeLib {
     /// @dev Returns (`year`,`month`,`day`) from the given unix timestamp.
     /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedTimestamp} to check if the inputs are supported.
-    function timestampToDate(uint256 timestamp)
-        internal
-        pure
-        returns (
-            uint256 year,
-            uint256 month,
-            uint256 day
-        )
-    {
+    function timestampToDate(uint256 timestamp) internal pure returns (uint256 year, uint256 month, uint256 day) {
         unchecked {
             (year, month, day) = epochDayToDate(timestamp / 86400);
         }
@@ -152,14 +128,11 @@ library DateTimeLib {
     /// (`year`,`month`,`day`,`hour`,`minute`,`second`).
     /// Note: Inputs outside the supported ranges result in undefined behavior.
     /// Use {isSupportedDateTime} to check if the inputs are supported.
-    function dateTimeToTimestamp(
-        uint256 year,
-        uint256 month,
-        uint256 day,
-        uint256 hour,
-        uint256 minute,
-        uint256 second
-    ) internal pure returns (uint256 result) {
+    function dateTimeToTimestamp(uint256 year, uint256 month, uint256 day, uint256 hour, uint256 minute, uint256 second)
+        internal
+        pure
+        returns (uint256 result)
+    {
         unchecked {
             result = dateToEpochDay(year, month, day) * 86400 + hour * 3600 + minute * 60 + second;
         }
@@ -172,14 +145,7 @@ library DateTimeLib {
     function timestampToDateTime(uint256 timestamp)
         internal
         pure
-        returns (
-            uint256 year,
-            uint256 month,
-            uint256 day,
-            uint256 hour,
-            uint256 minute,
-            uint256 second
-        )
+        returns (uint256 year, uint256 month, uint256 day, uint256 hour, uint256 minute, uint256 second)
     {
         unchecked {
             (year, month, day) = epochDayToDate(timestamp / 86400);
@@ -222,19 +188,13 @@ library DateTimeLib {
     /// - `1970 <= year <= MAX_SUPPORTED_YEAR`.
     /// - `1 <= month <= 12`.
     /// - `1 <= day <= daysInMonth(year, month)`.
-    function isSupportedDate(
-        uint256 year,
-        uint256 month,
-        uint256 day
-    ) internal pure returns (bool result) {
+    function isSupportedDate(uint256 year, uint256 month, uint256 day) internal pure returns (bool result) {
         uint256 md = daysInMonth(year, month);
         /// @solidity memory-safe-assembly
         assembly {
             let w := not(0)
-            result := and(
-                lt(sub(year, 1970), sub(MAX_SUPPORTED_YEAR, 1969)),
-                and(lt(add(month, w), 12), lt(add(day, w), md))
-            )
+            result :=
+                and(lt(sub(year, 1970), sub(MAX_SUPPORTED_YEAR, 1969)), and(lt(add(month, w), 12), lt(add(day, w), md)))
         }
     }
 
@@ -245,14 +205,11 @@ library DateTimeLib {
     /// - `hour < 24`.
     /// - `minute < 60`.
     /// - `second < 60`.
-    function isSupportedDateTime(
-        uint256 year,
-        uint256 month,
-        uint256 day,
-        uint256 hour,
-        uint256 minute,
-        uint256 second
-    ) internal pure returns (bool result) {
+    function isSupportedDateTime(uint256 year, uint256 month, uint256 day, uint256 hour, uint256 minute, uint256 second)
+        internal
+        pure
+        returns (bool result)
+    {
         if (isSupportedDate(year, month, day)) {
             /// @solidity memory-safe-assembly
             assembly {
@@ -279,12 +236,11 @@ library DateTimeLib {
     /// Example: 3rd Friday of Feb 2022 is `nthWeekdayInMonthOfYearTimestamp(2022, 2, 3, 5)`
     /// Note: `n` is 1-indexed for traditional consistency.
     /// Invalid weekdays (i.e. `wd == 0 || wd > 7`) result in undefined behavior.
-    function nthWeekdayInMonthOfYearTimestamp(
-        uint256 year,
-        uint256 month,
-        uint256 n,
-        uint256 wd
-    ) internal pure returns (uint256 result) {
+    function nthWeekdayInMonthOfYearTimestamp(uint256 year, uint256 month, uint256 n, uint256 wd)
+        internal
+        pure
+        returns (uint256 result)
+    {
         uint256 d = dateToEpochDay(year, month, 1);
         uint256 md = daysInMonth(year, month);
         /// @solidity memory-safe-assembly
@@ -467,8 +423,8 @@ library DateTimeLib {
     function diffYears(uint256 fromTimestamp, uint256 toTimestamp) internal pure returns (uint256 result) {
         unchecked {
             if (fromTimestamp > toTimestamp) revert InvalidDiff();
-            (uint256 fromYear, , ) = epochDayToDate(fromTimestamp / 86400);
-            (uint256 toYear, , ) = epochDayToDate(toTimestamp / 86400);
+            (uint256 fromYear,,) = epochDayToDate(fromTimestamp / 86400);
+            (uint256 toYear,,) = epochDayToDate(toTimestamp / 86400);
             result = toYear - fromYear;
         }
     }
@@ -481,8 +437,8 @@ library DateTimeLib {
     function diffMonths(uint256 fromTimestamp, uint256 toTimestamp) internal pure returns (uint256 result) {
         unchecked {
             if (fromTimestamp > toTimestamp) revert InvalidDiff();
-            (uint256 fromYear, uint256 fromMonth, ) = epochDayToDate(fromTimestamp / 86400);
-            (uint256 toYear, uint256 toMonth, ) = epochDayToDate(toTimestamp / 86400);
+            (uint256 fromYear, uint256 fromMonth,) = epochDayToDate(fromTimestamp / 86400);
+            (uint256 toYear, uint256 toMonth,) = epochDayToDate(toTimestamp / 86400);
             result = toYear * 12 + toMonth - fromYear * 12 - fromMonth;
         }
     }

@@ -131,12 +131,12 @@ library FixedPointMathLib {
             // x is now in the range (-42, 136) * 1e18. Convert to (-42, 136) * 2**96
             // for more intermediate precision and a binary basis. This base conversion
             // is a multiplication by 1e18 / 2**96 = 5**18 / 2**78.
-            x = (x << 78) / 5**18;
+            x = (x << 78) / 5 ** 18;
 
             // Reduce range of x to (-½ ln 2, ½ ln 2) * 2**96 by factoring out powers
             // of two such that exp(x) = exp(x') * 2**k, where k is an integer.
             // Solving this gives k = round(x / log(2)) and x' = x - k * log(2).
-            int256 k = ((x << 96) / 54916777467707473351141471128 + 2**95) >> 96;
+            int256 k = ((x << 96) / 54916777467707473351141471128 + 2 ** 95) >> 96;
             x = x - k * 54916777467707473351141471128;
 
             // k is in the range [-61, 195].
@@ -206,8 +206,17 @@ library FixedPointMathLib {
                 v := or(v, shr(16, v))
 
                 // prettier-ignore
-                k := sub(or(k, byte(shr(251, mul(v, shl(224, 0x07c4acdd))),
-                    0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f)), 96)
+                k :=
+                    sub(
+                        or(
+                            k,
+                            byte(
+                                shr(251, mul(v, shl(224, 0x07c4acdd))),
+                                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+                            )
+                        ),
+                        96
+                    )
             }
 
             // Reduce range of x to (1, 2) * 2**96
@@ -268,11 +277,7 @@ library FixedPointMathLib {
     /// @dev Calculates floor(a × b ÷ denominator) with full precision.
     /// Throws if result overflows a uint256 or when the denominator is zero.
     /// Credit to Remco Bloemen under MIT license: https://xn--2-umb.com/21/muldiv
-    function fullMulDiv(
-        uint256 a,
-        uint256 b,
-        uint256 denominator
-    ) internal pure returns (uint256 result) {
+    function fullMulDiv(uint256 a, uint256 b, uint256 denominator) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
@@ -298,7 +303,7 @@ library FixedPointMathLib {
                         revert(0x1c, 0x04)
                     }
                     result := div(prod0, denominator)
-                    break       
+                    break
                 }
 
                 // Make sure the result is less than 2**256.
@@ -356,11 +361,7 @@ library FixedPointMathLib {
     /// Throws if result overflows a uint256 or when the denominator is zero.
     /// Credit to Uniswap-v3-core under MIT license:
     /// https://github.com/Uniswap/v3-core/blob/contracts/libraries/FullMath.sol
-    function fullMulDivUp(
-        uint256 a,
-        uint256 b,
-        uint256 denominator
-    ) internal pure returns (uint256 result) {
+    function fullMulDivUp(uint256 a, uint256 b, uint256 denominator) internal pure returns (uint256 result) {
         result = fullMulDiv(a, b, denominator);
         /// @solidity memory-safe-assembly
         assembly {
@@ -378,11 +379,7 @@ library FixedPointMathLib {
 
     /// @dev Returns `floor(x * y / denominator)`.
     /// Reverts if `x * y` overflows, or `denominator` is zero.
-    function mulDiv(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) internal pure returns (uint256 z) {
+    function mulDiv(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
@@ -398,11 +395,7 @@ library FixedPointMathLib {
 
     /// @dev Returns `ceil(x * y / denominator)`.
     /// Reverts if `x * y` overflows, or `denominator` is zero.
-    function mulDivUp(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) internal pure returns (uint256 z) {
+    function mulDivUp(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
@@ -503,10 +496,8 @@ library FixedPointMathLib {
             // prettier-ignore
             for {} 1 {} {
                 if iszero(lt(10, x)) {
-                    result := and(
-                        shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001), 
-                        0x3fffff
-                    )
+                    result :=
+                        and(shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001), 0x3fffff)
                     break
                 }
                 if iszero(lt(57, x)) {
@@ -514,7 +505,7 @@ library FixedPointMathLib {
                     result := 8222838654177922817725562880000000
                     if iszero(lt(end, x)) {
                         end := 10
-                        result := 3628800    
+                        result := 3628800
                     }
                     for { let w := not(0) } 1 {} {
                         result := mul(result, x)
@@ -557,8 +548,14 @@ library FixedPointMathLib {
             x := or(x, shr(16, x))
 
             // prettier-ignore
-            r := or(r, byte(shr(251, mul(x, shl(224, 0x07c4acdd))),
-                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f))
+            r :=
+                or(
+                    r,
+                    byte(
+                        shr(251, mul(x, shl(224, 0x07c4acdd))),
+                        0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+                    )
+                )
         }
     }
 
@@ -629,11 +626,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `x`, bounded to `minValue` and `maxValue`.
-    function clamp(
-        uint256 x,
-        uint256 minValue,
-        uint256 maxValue
-    ) internal pure returns (uint256 z) {
+    function clamp(uint256 x, uint256 minValue, uint256 maxValue) internal pure returns (uint256 z) {
         return min(max(x, minValue), maxValue);
     }
 }
