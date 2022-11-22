@@ -184,12 +184,10 @@ library ECDSA {
 
             // Convert the length of the bytes to ASCII decimal representation
             // and store it into the memory.
-            // forgefmt: disable-next-item
             for { let temp := sLength } 1 {} {
                 ptr := sub(ptr, 1)
                 mstore8(ptr, add(48, mod(temp, 10)))
                 temp := div(temp, 10)
-                // forgefmt: disable-next-item
                 if iszero(temp) { break }
             }
 
