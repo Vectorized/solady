@@ -44,7 +44,6 @@ library LibString {
 
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            // forgefmt: disable-next-item
             for { let temp := value } 1 {} {
                 str := sub(str, 1)
                 // Write the character to the pointer.
@@ -52,7 +51,6 @@ library LibString {
                 mstore8(str, add(48, mod(temp, 10)))
                 // Keep dividing `temp` until zero.
                 temp := div(temp, 10)
-                // forgefmt: disable-next-item
                 if iszero(temp) { break }
             }
 
@@ -117,14 +115,12 @@ library LibString {
             let temp := value
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            // forgefmt: disable-next-item
             for {} 1 {} {
                 str := sub(str, 2)
                 mstore8(add(str, 1), mload(and(temp, 15)))
                 mstore8(str, mload(and(shr(4, temp), 15)))
                 temp := shr(8, temp)
                 length := sub(length, 1)
-                // forgefmt: disable-next-item
                 if iszero(length) { break }
             }
 
@@ -184,13 +180,11 @@ library LibString {
 
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            // forgefmt: disable-next-item
             for { let temp := value } 1 {} {
                 str := sub(str, 2)
                 mstore8(add(str, 1), mload(and(temp, 15)))
                 mstore8(str, mload(and(shr(4, temp), 15)))
                 temp := shr(8, temp)
-                // forgefmt: disable-next-item
                 if iszero(temp) { break }
             }
 
@@ -214,11 +208,9 @@ library LibString {
             let o := add(str, 0x22)
             let hashed := and(keccak256(o, 40), mul(34, mask)) // `0b10001000 ... `
             let t := shl(240, 136) // `0b10001000 << 240`
-            // forgefmt: disable-next-item
             for { let i := 0 } 1 {} {
                 mstore(add(i, i), mul(t, byte(i, hashed)))
                 i := add(i, 1)
-                // forgefmt: disable-next-item
                 if eq(i, 20) { break }
             }
             mstore(o, xor(mload(o), shr(1, and(mload(0x00), and(mload(o), mask)))))
@@ -266,14 +258,12 @@ library LibString {
 
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            // forgefmt: disable-next-item
             for { let i := 0 } 1 {} {
                 let p := add(o, add(i, i))
                 let temp := byte(i, value)
                 mstore8(add(p, 1), mload(and(temp, 15)))
                 mstore8(p, mload(shr(4, temp)))
                 i := add(i, 1)
-                // forgefmt: disable-next-item
                 if eq(i, 20) { break }
             }
         }
@@ -292,10 +282,8 @@ library LibString {
                 mstore(0x20, 0x0202020202020202020202020202020202020202020202020303030304040506)
                 let o := add(s, 0x20)
                 let end := add(o, mload(s))
-                // forgefmt: disable-next-item
                 for { result := 1 } 1 { result := add(result, 1) } {
                     o := add(o, byte(0, mload(shr(250, mload(o)))))
-                    // forgefmt: disable-next-item
                     if iszero(lt(o, end)) { break }
                 }
             }
@@ -333,10 +321,9 @@ library LibString {
                 if iszero(lt(searchLength, 32)) { h := keccak256(search, searchLength) }
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(search)
-                // forgefmt: disable-next-item
                 for {} 1 {} {
                     let t := mload(subject)
-                    // Whether the first `searchLength % 32` bytes of 
+                    // Whether the first `searchLength % 32` bytes of
                     // `subject` and `search` matches.
                     if iszero(shr(m, xor(t, s))) {
                         if h {
@@ -344,23 +331,19 @@ library LibString {
                                 mstore(result, t)
                                 result := add(result, 1)
                                 subject := add(subject, 1)
-                                // forgefmt: disable-next-item
                                 if iszero(lt(subject, subjectSearchEnd)) { break }
                                 continue
                             }
                         }
                         // Copy the `replacement` one word at a time.
-                        // forgefmt: disable-next-item
                         for { let o := 0 } 1 {} {
                             mstore(add(result, o), mload(add(replacement, o)))
                             o := add(o, 0x20)
-                            // forgefmt: disable-next-item
                             if iszero(lt(o, replacementLength)) { break }
                         }
                         result := add(result, replacementLength)
                         subject := add(subject, searchLength)
                         if searchLength {
-                            // forgefmt: disable-next-item
                             if iszero(lt(subject, subjectSearchEnd)) { break }
                             continue
                         }
@@ -368,7 +351,6 @@ library LibString {
                     mstore(result, t)
                     result := add(result, 1)
                     subject := add(subject, 1)
-                    // forgefmt: disable-next-item
                     if iszero(lt(subject, subjectSearchEnd)) { break }
                 }
             }
@@ -377,7 +359,6 @@ library LibString {
             result := add(mload(0x40), 0x20)
             let k := add(sub(resultRemainder, result), sub(subjectEnd, subject))
             // Copy the rest of the string one word at a time.
-            // forgefmt: disable-next-item
             for {} lt(subject, subjectEnd) {} {
                 mstore(resultRemainder, mload(subject))
                 resultRemainder := add(resultRemainder, 0x20)
@@ -405,7 +386,6 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
             for { let subjectLength := mload(subject) } 1 {} {
                 if iszero(mload(search)) {
                     // `result = min(from, subjectLength)`.
@@ -413,8 +393,8 @@ library LibString {
                     break
                 }
                 let searchLength := mload(search)
-                let subjectStart := add(subject, 0x20)    
-                
+                let subjectStart := add(subject, 0x20)
+
                 result := not(0) // Initialize to `NOT_FOUND`.
 
                 subject := add(subjectStart, from)
@@ -423,11 +403,9 @@ library LibString {
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(add(search, 0x20))
 
-                // forgefmt: disable-next-item
                 if iszero(lt(subject, subjectSearchEnd)) { break }
 
                 if iszero(lt(searchLength, 32)) {
-                    // forgefmt: disable-next-item
                     for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
                         if iszero(shr(m, xor(mload(subject), s))) {
                             if eq(keccak256(subject, searchLength), h) {
@@ -436,19 +414,16 @@ library LibString {
                             }
                         }
                         subject := add(subject, 1)
-                        // forgefmt: disable-next-item
                         if iszero(lt(subject, subjectSearchEnd)) { break }
                     }
                     break
                 }
-                // forgefmt: disable-next-item
                 for {} 1 {} {
                     if iszero(shr(m, xor(mload(subject), s))) {
                         result := sub(subject, subjectStart)
                         break
                     }
                     subject := add(subject, 1)
-                    // forgefmt: disable-next-item
                     if iszero(lt(subject, subjectSearchEnd)) { break }
                 }
                 break
@@ -477,13 +452,10 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
             for {} 1 {} {
                 let searchLength := mload(search)
                 let fromMax := sub(mload(subject), searchLength)
-                if iszero(gt(fromMax, from)) {
-                    from := fromMax
-                }
+                if iszero(gt(fromMax, from)) { from := fromMax }
                 if iszero(mload(search)) {
                     result := from
                     break
@@ -493,18 +465,15 @@ library LibString {
                 let subjectSearchEnd := sub(add(subject, 0x20), 1)
 
                 subject := add(add(subject, 0x20), from)
-                // forgefmt: disable-next-item
                 if iszero(gt(subject, subjectSearchEnd)) { break }
                 // As this function is not too often used,
                 // we shall simply use keccak256 for smaller bytecode size.
-                // forgefmt: disable-next-item
                 for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
                     if eq(keccak256(subject, searchLength), h) {
                         result := sub(subject, add(subjectSearchEnd, 1))
                         break
                     }
                     subject := sub(subject, 1)
-                    // forgefmt: disable-next-item
                     if iszero(gt(subject, subjectSearchEnd)) { break }
                 }
                 break
@@ -585,19 +554,15 @@ library LibString {
                 subject := add(subject, 0x20)
                 result := mload(0x40)
                 let output := add(result, 0x20)
-                // forgefmt: disable-next-item
                 for {} 1 {} {
                     // Copy the `subject` one word at a time.
-                    // forgefmt: disable-next-item
                     for { let o := 0 } 1 {} {
                         mstore(add(output, o), mload(add(subject, o)))
                         o := add(o, 0x20)
-                        // forgefmt: disable-next-item
                         if iszero(lt(o, subjectLength)) { break }
                     }
                     output := add(output, subjectLength)
                     times := sub(times, 1)
-                    // forgefmt: disable-next-item
                     if iszero(times) { break }
                 }
                 // Zeroize the slot after the string.
@@ -631,11 +596,9 @@ library LibString {
                 subject := add(subject, start)
                 let w := not(31)
                 // Copy the `subject` one word at a time, backwards.
-                // forgefmt: disable-next-item
                 for { let o := and(add(resultLength, 31), w) } 1 {} {
                     mstore(add(result, o), mload(add(subject, o)))
                     o := add(o, w) // `sub(o, 0x20)`.
-                    // forgefmt: disable-next-item
                     if iszero(o) { break }
                 }
                 // Zeroize the slot after the string.
@@ -680,16 +643,14 @@ library LibString {
                 if iszero(lt(searchLength, 32)) { h := keccak256(search, searchLength) }
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(search)
-                // forgefmt: disable-next-item
                 for {} 1 {} {
                     let t := mload(subject)
-                    // Whether the first `searchLength % 32` bytes of 
+                    // Whether the first `searchLength % 32` bytes of
                     // `subject` and `search` matches.
                     if iszero(shr(m, xor(t, s))) {
                         if h {
                             if iszero(eq(keccak256(subject, searchLength), h)) {
                                 subject := add(subject, 1)
-                                // forgefmt: disable-next-item
                                 if iszero(lt(subject, subjectSearchEnd)) { break }
                                 continue
                             }
@@ -700,13 +661,11 @@ library LibString {
                         // Advance `subject` by `searchLength`.
                         subject := add(subject, searchLength)
                         if searchLength {
-                            // forgefmt: disable-next-item
                             if iszero(lt(subject, subjectSearchEnd)) { break }
                             continue
                         }
                     }
                     subject := add(subject, 1)
-                    // forgefmt: disable-next-item
                     if iszero(lt(subject, subjectSearchEnd)) { break }
                 }
                 let resultEnd := result
@@ -736,20 +695,17 @@ library LibString {
             mstore(add(indicesEnd, w), mload(subject))
             mstore(indices, add(mload(indices), 1))
             let prevIndex := 0
-            // forgefmt: disable-next-item
             for {} 1 {} {
                 let index := mload(indexPtr)
-                mstore(indexPtr, 0x60)                        
+                mstore(indexPtr, 0x60)
                 if iszero(eq(index, prevIndex)) {
                     let element := mload(0x40)
                     let elementLength := sub(index, prevIndex)
                     mstore(element, elementLength)
                     // Copy the `subject` one word at a time, backwards.
-                    // forgefmt: disable-next-item
                     for { let o := and(add(elementLength, 31), w) } 1 {} {
                         mstore(add(element, o), mload(add(add(subject, prevIndex), o)))
                         o := add(o, w) // `sub(o, 0x20)`.
-                        // forgefmt: disable-next-item
                         if iszero(o) { break }
                     }
                     // Zeroize the slot after the string.
@@ -758,11 +714,10 @@ library LibString {
                     // rounded up to a multiple of 32.
                     mstore(0x40, add(element, and(add(elementLength, 63), w)))
                     // Store the `element` into the array.
-                    mstore(indexPtr, element)                        
+                    mstore(indexPtr, element)
                 }
                 prevIndex := add(index, mload(delimiter))
                 indexPtr := add(indexPtr, 0x20)
-                // forgefmt: disable-next-item
                 if iszero(lt(indexPtr, indicesEnd)) { break }
             }
             result := indices
@@ -786,21 +741,17 @@ library LibString {
             result := mload(0x40)
             let aLength := mload(a)
             // Copy `a` one word at a time, backwards.
-            // forgefmt: disable-next-item
             for { let o := and(add(mload(a), 32), w) } 1 {} {
                 mstore(add(result, o), mload(add(a, o)))
                 o := add(o, w) // `sub(o, 0x20)`.
-                // forgefmt: disable-next-item
                 if iszero(o) { break }
             }
             let bLength := mload(b)
             let output := add(result, mload(a))
             // Copy `b` one word at a time, backwards.
-            // forgefmt: disable-next-item
             for { let o := and(add(bLength, 32), w) } 1 {} {
                 mstore(add(output, o), mload(add(b, o)))
                 o := add(o, w) // `sub(o, 0x20)`.
-                // forgefmt: disable-next-item
                 if iszero(o) { break }
             }
             let totalLength := add(aLength, bLength)
@@ -829,12 +780,10 @@ library LibString {
                 subject := add(subject, 1)
                 let flags := shl(add(70, shl(5, toUpper)), 67108863)
                 let w := not(0)
-                // forgefmt: disable-next-item
                 for { let o := length } 1 {} {
                     o := add(o, w)
                     let b := and(0xff, mload(add(subject, o)))
                     mstore8(add(result, o), xor(b, and(shr(b, flags), 0x20)))
-                    // forgefmt: disable-next-item
                     if iszero(o) { break }
                 }
                 // Restore the result.
@@ -865,7 +814,6 @@ library LibString {
     function escapeHTML(string memory s) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
             for {
                 let end := add(s, mload(s))
                 result := add(mload(0x40), 0x20)
@@ -879,10 +827,10 @@ library LibString {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 // Not in `["\"","'","&","<",">"]`.
-                if iszero(and(shl(c, 1), 0x500000c400000000)) { 
+                if iszero(and(shl(c, 1), 0x500000c400000000)) {
                     mstore8(result, c)
                     result := add(result, 1)
-                    continue    
+                    continue
                 }
                 let t := shr(248, mload(c))
                 mstore(result, mload(and(t, 31)))
@@ -905,7 +853,6 @@ library LibString {
     function escapeJSON(string memory s) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
             for {
                 let end := add(s, mload(s))
                 result := add(mload(0x40), 0x20)
@@ -920,21 +867,23 @@ library LibString {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 if iszero(lt(c, 0x20)) {
-                    if iszero(and(shl(c, 1), e)) { // Not in `["\"","\\"]`.
+                    if iszero(and(shl(c, 1), e)) {
+                        // Not in `["\"","\\"]`.
                         mstore8(result, c)
                         result := add(result, 1)
-                        continue    
+                        continue
                     }
                     mstore8(result, 0x5c) // "\\".
-                    mstore8(add(result, 1), c) 
+                    mstore8(add(result, 1), c)
                     result := add(result, 2)
                     continue
                 }
-                if iszero(and(shl(c, 1), 0x3700)) { // Not in `["\b","\t","\n","\f","\d"]`.
+                if iszero(and(shl(c, 1), 0x3700)) {
+                    // Not in `["\b","\t","\n","\f","\d"]`.
                     mstore8(0x1d, mload(shr(4, c))) // Hex value.
                     mstore8(0x1e, mload(and(c, 15))) // Hex value.
                     mstore(result, mload(0x19)) // "\\u00XX".
-                    result := add(result, 6)    
+                    result := add(result, 6)
                     continue
                 }
                 mstore8(result, 0x5c) // "\\".

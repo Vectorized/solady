@@ -81,7 +81,10 @@ library LibSort {
                 if eq(j, h) { break }
 
                 j := h
-                for {} iszero(or(eq(j, l), gt(mload(j), mload(add(j, w))))) {} { j := add(j, w) } // `sub(j, 0x20)`.
+                // forgefmt: disable-next-item
+                for {} iszero(or(eq(j, l), gt(mload(j), mload(add(j, w))))) {} {
+                    j := add(j, w) // `sub(j, 0x20)`.
+                }
                 // If the array is reversed sorted.
                 if eq(j, l) {
                     for {} 1 {} {
