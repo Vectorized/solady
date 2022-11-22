@@ -16,6 +16,7 @@ remappings = [
 
 [fmt]
 line_length = 100 # While we allow up to 120, we lint at 100 for readability.
+func_attrs_with_params_multiline = false
 
 [profile.default.fuzz]
 runs = 256
