@@ -20,7 +20,6 @@ library MerkleProofLib {
                 // Initialize `offset` to the offset of `proof` in the calldata.
                 let offset := proof.offset
                 // Iterate over proof elements to compute root hash.
-                // forgefmt: disable-next-item
                 for {} 1 {} {
                     // Slot of `leaf` in scratch space.
                     // If the condition is true: 0x20, otherwise: 0x00.
@@ -32,7 +31,6 @@ library MerkleProofLib {
                     // Reuse `leaf` to store the hash to reduce stack operations.
                     leaf := keccak256(0x00, 0x40)
                     offset := add(offset, 0x20)
-                    // forgefmt: disable-next-item
                     if iszero(lt(offset, end)) { break }
                 }
             }
@@ -59,18 +57,17 @@ library MerkleProofLib {
         /// @solidity memory-safe-assembly
         assembly {
             // If the number of flags is correct.
-            // forgefmt: disable-next-item
             for {} eq(add(leafs.length, proof.length), add(flags.length, 1)) {} {
-
                 // For the case where `proof.length + leafs.length == 1`.
                 if iszero(flags.length) {
                     // `isValid = (proof.length == 1 ? proof[0] : leafs[0]) == root`.
-                    isValid := eq(
-                        calldataload(
-                            xor(leafs.offset, mul(xor(proof.offset, leafs.offset), proof.length))
-                        ),
-                        root
-                    )
+                    isValid :=
+                        eq(
+                            calldataload(
+                                xor(leafs.offset, mul(xor(proof.offset, leafs.offset), proof.length))
+                            ),
+                            root
+                        )
                     break
                 }
 
@@ -92,7 +89,6 @@ library MerkleProofLib {
                 // We don't need to make a copy of `proof.offset` or `flags.offset`,
                 // as they are pass-by-value (this trick may not always save gas).
 
-                // forgefmt: disable-next-item
                 for {} 1 {} {
                     // Pop from `hashes`.
                     let a := mload(hashesFront)
@@ -109,7 +105,7 @@ library MerkleProofLib {
                         // Unpop from `hashes`.
                         hashesFront := sub(hashesFront, 0x20)
                     }
-                    
+
                     // Advance to the next flag offset.
                     flags.offset := add(flags.offset, 0x20)
 
@@ -121,7 +117,6 @@ library MerkleProofLib {
                     mstore(xor(scratch, 0x20), b)
                     mstore(hashesBack, keccak256(0x00, 0x40))
                     hashesBack := add(hashesBack, 0x20)
-                    // forgefmt: disable-next-item
                     if iszero(lt(hashesBack, flags.length)) { break }
                 }
                 // Checks if the last value in the queue is same as the root.

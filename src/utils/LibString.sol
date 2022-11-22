@@ -502,14 +502,14 @@ library LibString {
         assembly {
             let searchLength := mload(search)
             // Just using keccak256 directly is actually cheaper.
-            result :=
-                and(
-                    iszero(gt(searchLength, mload(subject))),
-                    eq(
-                        keccak256(add(subject, 0x20), searchLength),
-                        keccak256(add(search, 0x20), searchLength)
-                    )
+            // forgefmt: disable-next-item
+            result := and(
+                iszero(gt(searchLength, mload(subject))),
+                eq(
+                    keccak256(add(subject, 0x20), searchLength),
+                    keccak256(add(search, 0x20), searchLength)
                 )
+            )
         }
     }
 
@@ -526,18 +526,18 @@ library LibString {
             // Whether `search` is not longer than `subject`.
             let withinRange := iszero(gt(searchLength, subjectLength))
             // Just using keccak256 directly is actually cheaper.
-            result :=
-                and(
-                    withinRange,
-                    eq(
-                        keccak256(
-                            // `subject + 0x20 + max(subjectLength - searchLength, 0)`.
-                            add(add(subject, 0x20), mul(withinRange, sub(subjectLength, searchLength))),
-                            searchLength
-                        ),
-                        keccak256(add(search, 0x20), searchLength)
-                    )
+            // forgefmt: disable-next-item
+            result := and(
+                withinRange,
+                eq(
+                    keccak256(
+                        // `subject + 0x20 + max(subjectLength - searchLength, 0)`.
+                        add(add(subject, 0x20), mul(withinRange, sub(subjectLength, searchLength))),
+                        searchLength
+                    ),
+                    keccak256(add(search, 0x20), searchLength)
                 )
+            )
         }
     }
 
