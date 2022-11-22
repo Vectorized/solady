@@ -687,10 +687,9 @@ contract FixedPointMathLibTest is Test {
         /// @solidity memory-safe-assembly
         assembly {
             result := 1
-            // forgefmt: disable-next-item
             for {} x {} {
-                result := mul(result, x) 
-                x := sub(x, 1) 
+                result := mul(result, x)
+                x := sub(x, 1)
             }
         }
     }

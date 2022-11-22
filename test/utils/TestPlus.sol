@@ -20,7 +20,6 @@ contract TestPlus is Test {
             mstore(offset, mload(0x00))
             mstore(add(offset, 0x20), mload(0x20))
 
-            // forgefmt: disable-next-item
             for { let i := add(11, and(mload(0x00), 1)) } 1 {} {
                 let nextOffset := add(offset, size)
                 // Duplicate the data.
@@ -40,7 +39,6 @@ contract TestPlus is Test {
                 size := mul(2, size)
 
                 i := sub(i, 1)
-                // forgefmt: disable-next-item
                 if iszero(i) { break }
             }
         }
@@ -115,14 +113,13 @@ contract TestPlus is Test {
 
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
             for {} 1 {} {
                 // If `x` is between `min` and `max`, return `x` directly.
                 // This is to ensure that dictionary values
                 // do not get shifted if the min is nonzero.
                 // More info: https://github.com/foundry-rs/forge-std/issues/188
                 if iszero(or(lt(x, min), gt(x, max))) {
-                    result := x 
+                    result := x
                     break
                 }
 
@@ -138,13 +135,13 @@ contract TestPlus is Test {
                     break
                 }
 
-                // Otherwise, wrap x into the range [min, max], 
+                // Otherwise, wrap x into the range [min, max],
                 // i.e. the range is inclusive.
                 if iszero(lt(x, max)) {
                     let d := sub(x, max)
                     let r := mod(d, size)
                     if iszero(r) {
-                        result := max 
+                        result := max
                         break
                     }
                     result := add(add(min, r), w)
