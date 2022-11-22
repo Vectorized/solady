@@ -16,7 +16,11 @@ contract LibStringTest is TestPlus {
     function testToStringUint256Max() public {
         assertEq(
             keccak256(bytes(LibString.toString(type(uint256).max))),
-            keccak256(bytes("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+            keccak256(
+                bytes(
+                    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+                )
+            )
         );
     }
 
@@ -69,11 +73,19 @@ contract LibStringTest is TestPlus {
         }
         assertEq(
             keccak256(bytes(s0)),
-            keccak256(bytes("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+            keccak256(
+                bytes(
+                    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+                )
+            )
         );
         assertEq(
             keccak256(bytes(s1)),
-            keccak256(bytes("115792089237316195423570985008687907853269984665640564039457584007913129639935"))
+            keccak256(
+                bytes(
+                    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+                )
+            )
         );
     }
 
@@ -131,7 +143,9 @@ contract LibStringTest is TestPlus {
 
     function testFromAddressToHexString() public {
         assertEq(
-            keccak256(bytes(LibString.toHexString(address(0xA9036907dCcae6a1E0033479B12E837e5cF5a02f)))),
+            keccak256(
+                bytes(LibString.toHexString(address(0xA9036907dCcae6a1E0033479B12E837e5cF5a02f)))
+            ),
             keccak256(bytes("0xa9036907dccae6a1e0033479b12e837e5cf5a02f"))
         );
     }
@@ -142,7 +156,9 @@ contract LibStringTest is TestPlus {
 
     function testFromAddressToHexStringWithLeadingZeros() public {
         assertEq(
-            keccak256(bytes(LibString.toHexString(address(0x0000E0Ca771e21bD00057F54A68C30D400000000)))),
+            keccak256(
+                bytes(LibString.toHexString(address(0x0000E0Ca771e21bD00057F54A68C30D400000000)))
+            ),
             keccak256(bytes("0x0000e0ca771e21bd00057f54a68c30d400000000"))
         );
     }
@@ -150,42 +166,93 @@ contract LibStringTest is TestPlus {
     function testFromAddressToHexStringChecksumed() public {
         // All caps.
         assertEq(
-            keccak256(bytes(LibString.toHexStringChecksumed(address(0x52908400098527886E0F7030069857D2E4169EE7)))),
+            keccak256(
+                bytes(
+                    LibString.toHexStringChecksumed(
+                        address(0x52908400098527886E0F7030069857D2E4169EE7)
+                    )
+                )
+            ),
             keccak256(bytes("0x52908400098527886E0F7030069857D2E4169EE7"))
         );
         assertEq(
-            keccak256(bytes(LibString.toHexStringChecksumed(address(0x8617E340B3D01FA5F11F306F4090FD50E238070D)))),
+            keccak256(
+                bytes(
+                    LibString.toHexStringChecksumed(
+                        address(0x8617E340B3D01FA5F11F306F4090FD50E238070D)
+                    )
+                )
+            ),
             keccak256(bytes("0x8617E340B3D01FA5F11F306F4090FD50E238070D"))
         );
         // All lower.
         assertEq(
-            keccak256(bytes(LibString.toHexStringChecksumed(address(0xde709f2102306220921060314715629080e2fb77)))),
+            keccak256(
+                bytes(
+                    LibString.toHexStringChecksumed(
+                        address(0xde709f2102306220921060314715629080e2fb77)
+                    )
+                )
+            ),
             keccak256(bytes("0xde709f2102306220921060314715629080e2fb77"))
         );
         assertEq(
-            keccak256(bytes(LibString.toHexStringChecksumed(address(0x27b1fdb04752bbc536007a920d24acb045561c26)))),
+            keccak256(
+                bytes(
+                    LibString.toHexStringChecksumed(
+                        address(0x27b1fdb04752bbc536007a920d24acb045561c26)
+                    )
+                )
+            ),
             keccak256(bytes("0x27b1fdb04752bbc536007a920d24acb045561c26"))
         );
         // Normal.
         assertEq(
-            keccak256(bytes(LibString.toHexStringChecksumed(address(0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed)))),
+            keccak256(
+                bytes(
+                    LibString.toHexStringChecksumed(
+                        address(0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed)
+                    )
+                )
+            ),
             keccak256(bytes("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"))
         );
         assertEq(
-            keccak256(bytes(LibString.toHexStringChecksumed(address(0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359)))),
+            keccak256(
+                bytes(
+                    LibString.toHexStringChecksumed(
+                        address(0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359)
+                    )
+                )
+            ),
             keccak256(bytes("0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359"))
         );
         assertEq(
-            keccak256(bytes(LibString.toHexStringChecksumed(address(0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB)))),
+            keccak256(
+                bytes(
+                    LibString.toHexStringChecksumed(
+                        address(0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB)
+                    )
+                )
+            ),
             keccak256(bytes("0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB"))
         );
         assertEq(
-            keccak256(bytes(LibString.toHexStringChecksumed(address(0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb)))),
+            keccak256(
+                bytes(
+                    LibString.toHexStringChecksumed(
+                        address(0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb)
+                    )
+                )
+            ),
             keccak256(bytes("0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"))
         );
     }
 
-    function testFromAddressToHexStringChecksumedDifferential(uint256 randomness) public brutalizeMemory {
+    function testFromAddressToHexStringChecksumedDifferential(uint256 randomness)
+        public
+        brutalizeMemory
+    {
         address r;
         /// @solidity memory-safe-assembly
         assembly {
@@ -196,7 +263,7 @@ contract LibStringTest is TestPlus {
         assembly {
             let o := add(expectedResult, 0x22)
             let hashed := keccak256(o, 40)
-            // prettier-ignore
+            // forgefmt: disable-next-item
             for { let i := 0 } iszero(eq(i, 20)) { i := add(i, 1) } {
                 let temp := byte(i, hashed)
                 let p := add(o, add(i, i))
@@ -288,21 +355,21 @@ contract LibStringTest is TestPlus {
     }
 
     function testStringReplaceMedium() public {
-        // prettier-ignore
+        // forgefmt: disable-next-item
         string memory subject = "70708741044725766535585242414884609539555049888764130733849700923779599488691391677696419266840";
         string memory search = "46095395550498887641307338497009";
         string memory replacement = "320807383223517906783031356692334377159141";
-        // prettier-ignore
+        // forgefmt: disable-next-item
         string memory expectedResult = "707087410447257665355852424148832080738322351790678303135669233437715914123779599488691391677696419266840";
         assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
 
     function testStringReplaceLong() public {
-        // prettier-ignore
+        // forgefmt: disable-next-item
         string memory subject = "01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search";
         string memory search = "search_search_search_search_search_search";
         string memory replacement = "REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT";
-        // prettier-ignore
+        // forgefmt: disable-next-item
         string memory expectedResult = "01234567890123456789012345678901_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_23456789012345678901234567890123456789_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT_REPLACEMENT";
         assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
@@ -313,12 +380,20 @@ contract LibStringTest is TestPlus {
         string memory replacement = _generateString(randomness, "0123456790_-+/=|{}<>!");
         if (bytes(search).length != 0) {
             string memory subject = string(
-                bytes.concat(bytes(filler), bytes(search), bytes(filler), bytes(search), bytes(filler))
+                bytes.concat(
+                    bytes(filler), bytes(search), bytes(filler), bytes(search), bytes(filler)
+                )
             );
             _roundUpFreeMemoryPointer();
             _brutalizeFreeMemoryStart();
             string memory expectedResult = string(
-                bytes.concat(bytes(filler), bytes(replacement), bytes(filler), bytes(replacement), bytes(filler))
+                bytes.concat(
+                    bytes(filler),
+                    bytes(replacement),
+                    bytes(filler),
+                    bytes(replacement),
+                    bytes(filler)
+                )
             );
             _roundUpFreeMemoryPointer();
             _brutalizeFreeMemoryStart();
@@ -382,7 +457,10 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW"), 16);
         assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 16);
         assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 16), 16);
-        assertEq(LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 17), LibString.NOT_FOUND);
+        assertEq(
+            LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 17),
+            LibString.NOT_FOUND
+        );
 
         assertEq(LibString.indexOf("abcabcabc", "abc"), 0);
         assertEq(LibString.indexOf("abcabcabc", "abc", 1), 3);
@@ -438,7 +516,10 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 52), 16);
         assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 51), 16);
         assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 16), 16);
-        assertEq(LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 15), LibString.NOT_FOUND);
+        assertEq(
+            LibString.lastIndexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 15),
+            LibString.NOT_FOUND
+        );
 
         assertEq(LibString.lastIndexOf("abcabcabc", "abc"), 6);
         assertEq(LibString.lastIndexOf("abcabcabc", "abc", 5), 3);
@@ -556,7 +637,8 @@ contract LibStringTest is TestPlus {
         string memory expectedResult = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-        string memory subject = string(bytes.concat(bytes(filler0), bytes(expectedResult), bytes(filler1)));
+        string memory subject =
+            string(bytes.concat(bytes(filler0), bytes(expectedResult), bytes(filler1)));
 
         uint256 start = bytes(filler0).length;
         uint256 end = start + bytes(expectedResult).length;
@@ -585,7 +667,9 @@ contract LibStringTest is TestPlus {
         string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         assertEq(LibString.slice(subject, 0), subject);
         assertEq(LibString.slice(subject, 1), "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        assertEq(LibString.slice(subject, 1, 51), "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY");
+        assertEq(
+            LibString.slice(subject, 1, 51), "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY"
+        );
         assertEq(LibString.slice(subject, 11, 41), "lmnopqrstuvwxyzABCDEFGHIJKLMNO");
         assertEq(LibString.slice(subject, 21, 31), "vwxyzABCDE");
         assertEq(LibString.slice(subject, 31, 21), "");
@@ -676,7 +760,8 @@ contract LibStringTest is TestPlus {
         string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory delimiter = _generateString(randomness, "abcdefghijklmnopqrstuvwxyz");
 
-        string memory subject = string(bytes.concat(bytes(filler0), bytes(delimiter), bytes(filler1)));
+        string memory subject =
+            string(bytes.concat(bytes(filler0), bytes(delimiter), bytes(filler1)));
 
         unchecked {
             string[] memory elements;
@@ -814,9 +899,11 @@ contract LibStringTest is TestPlus {
 
         uint256 r = _stepRandomness(randomness) % 5;
 
-        string memory expectedResult = string(bytes.concat(bytes(filler0), bytes(escapedChars[r]), bytes(filler1)));
+        string memory expectedResult =
+            string(bytes.concat(bytes(filler0), bytes(escapedChars[r]), bytes(filler1)));
 
-        string memory input = string(bytes.concat(bytes(filler0), bytes(originalChars[r]), bytes(filler1)));
+        string memory input =
+            string(bytes.concat(bytes(filler0), bytes(originalChars[r]), bytes(filler1)));
 
         _roundUpFreeMemoryPointer();
         string memory escaped = LibString.escapeHTML(input);
@@ -842,9 +929,11 @@ contract LibStringTest is TestPlus {
         unchecked {
             for (uint256 i; i <= 0x1f; ++i) {
                 if (i != 0x8 && i != 0x9 && i != 0x0a && i != 0x0c && i != 0x0d) {
-                    string memory input = string(bytes.concat(bytes("abc"), bytes1(uint8(i)), bytes("_123")));
+                    string memory input =
+                        string(bytes.concat(bytes("abc"), bytes1(uint8(i)), bytes("_123")));
                     string memory hexCode = LibString.replace(LibString.toHexString(i), "0x", "00");
-                    string memory expectedOutput = string(bytes.concat(bytes("abc\\u"), bytes(hexCode), bytes("_123")));
+                    string memory expectedOutput =
+                        string(bytes.concat(bytes("abc\\u"), bytes(hexCode), bytes("_123")));
                     string memory escaped = LibString.escapeJSON(input);
                     _checkZeroRightPadded(escaped);
                     assertEq(escaped, expectedOutput);
@@ -899,18 +988,17 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function testStringPackAndUnpackTwoDifferential(string memory a, string memory b) public brutalizeMemory {
+    function testStringPackAndUnpackTwoDifferential(string memory a, string memory b)
+        public
+        brutalizeMemory
+    {
         a = LibString.slice(a, 0);
         b = LibString.slice(b, 0);
         bytes32 packed = LibString.packTwo(a, b);
         unchecked {
             if (bytes(a).length + bytes(b).length < 31) {
-                bytes memory expectedResultBytes = abi.encodePacked(
-                    uint8(bytes(a).length),
-                    a,
-                    uint8(bytes(b).length),
-                    b
-                );
+                bytes memory expectedResultBytes =
+                    abi.encodePacked(uint8(bytes(a).length), a, uint8(bytes(b).length), b);
                 bytes32 expectedResult;
                 /// @solidity memory-safe-assembly
                 assembly {
@@ -1033,7 +1121,9 @@ contract LibStringTest is TestPlus {
                 /// @solidity memory-safe-assembly
                 assembly {
                     let b := byte(0, mload(add(add(subject, 0x20), i)))
-                    mstore8(add(add(result, 0x20), i), add(b, mul(0x20, and(lt(0x40, b), lt(b, 0x5b)))))
+                    mstore8(
+                        add(add(result, 0x20), i), add(b, mul(0x20, and(lt(0x40, b), lt(b, 0x5b))))
+                    )
                 }
             }
         }
@@ -1047,7 +1137,9 @@ contract LibStringTest is TestPlus {
                 /// @solidity memory-safe-assembly
                 assembly {
                     let b := byte(0, mload(add(add(subject, 0x20), i)))
-                    mstore8(add(add(result, 0x20), i), sub(b, mul(0x20, and(lt(0x60, b), lt(b, 0x7b)))))
+                    mstore8(
+                        add(add(result, 0x20), i), sub(b, mul(0x20, and(lt(0x60, b), lt(b, 0x7b))))
+                    )
                 }
             }
         }
@@ -1078,7 +1170,11 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function _repeatOriginal(string memory subject, uint256 times) internal pure returns (string memory) {
+    function _repeatOriginal(string memory subject, uint256 times)
+        internal
+        pure
+        returns (string memory)
+    {
         unchecked {
             string memory result;
             if (!(times == 0 || bytes(subject).length == 0)) {
@@ -1091,7 +1187,11 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function _generateFrom(uint256 randomness, string memory subject) internal view returns (uint256 from) {
+    function _generateFrom(uint256 randomness, string memory subject)
+        internal
+        view
+        returns (uint256 from)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, xor(randomness, gas()))
@@ -1103,9 +1203,7 @@ contract LibStringTest is TestPlus {
                 mstore(0x00, r)
                 from := shl(and(r, 255), keccak256(0x00, 0x20))
             }
-            default {
-                from := mod(r, add(mload(subject), 10))
-            }
+            default { from := mod(r, add(mload(subject), 10)) }
         }
     }
 
@@ -1125,7 +1223,7 @@ contract LibStringTest is TestPlus {
                 mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
                 mstore(result, resultLength)
 
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for { let i := 0 } lt(i, resultLength) { i := add(i, 1) } {
                     mstore(0x20, gas())
                     mstore8(
@@ -1137,7 +1235,11 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function _stringArraysAreSame(string[] memory a, string[] memory b) internal pure returns (bool) {
+    function _stringArraysAreSame(string[] memory a, string[] memory b)
+        internal
+        pure
+        returns (bool)
+    {
         unchecked {
             if (a.length != b.length) {
                 return false;

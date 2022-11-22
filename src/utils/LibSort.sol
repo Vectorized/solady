@@ -19,22 +19,17 @@ library LibSort {
 
             let w := not(31)
 
-            // prettier-ignore
             for { let i := add(a, 0x20) } 1 {} {
                 i := add(i, 0x20)
-                // prettier-ignore
                 if gt(i, h) { break }
                 let k := mload(i) // Key.
                 let j := add(i, w) // The slot before the current slot.
                 let v := mload(j) // The value of `j`.
-                // prettier-ignore
                 if iszero(gt(v, k)) { continue }
-                // prettier-ignore
                 for {} 1 {} {
                     mstore(add(j, 0x20), v)
                     j := add(j, w) // `sub(j, 0x20)`.
                     v := mload(j)
-                    // prettier-ignore
                     if iszero(gt(v, k)) { break }
                 }
                 mstore(add(j, 0x20), k)
@@ -71,37 +66,33 @@ library LibSort {
             // Let the stack be the start of the free memory.
             let stack := mload(0x40)
 
-            // prettier-ignore
             for {} iszero(lt(n, 2)) {} {
                 // Push `l` and `h` to the stack.
                 // The `shl` by 5 is equivalent to multiplying by `0x20`.
                 let l := add(a, 0x20)
                 let h := add(a, shl(5, n))
-                
+
                 let j := l
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, 0x20))))) {} {
                     j := add(j, 0x20)
                 }
                 // If the array is already sorted.
-                // prettier-ignore
                 if eq(j, h) { break }
 
                 j := h
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} iszero(or(eq(j, l), gt(mload(j), mload(add(j, w))))) {} {
                     j := add(j, w) // `sub(j, 0x20)`.
                 }
                 // If the array is reversed sorted.
-                if eq(j, l) { 
-                    // prettier-ignore
+                if eq(j, l) {
                     for {} 1 {} {
                         let t := mload(l)
                         mstore(l, mload(h))
                         mstore(h, t)
                         h := add(h, w) // `sub(h, 0x20)`.
                         l := add(l, 0x20)
-                        // prettier-ignore
                         if iszero(lt(l, h)) { break }
                     }
                     break
@@ -114,7 +105,6 @@ library LibSort {
                 break
             }
 
-            // prettier-ignore
             for { let stackBottom := mload(0x40) } iszero(eq(stack, stackBottom)) {} {
                 // Pop `l` and `h` from the stack.
                 stack := sub(stack, 0x40)
@@ -131,22 +121,17 @@ library LibSort {
                         mstore(i, mload(l))
                         mstore(l, t)
                     }
-                    // prettier-ignore
                     for {} 1 {} {
                         i := add(i, 0x20)
-                        // prettier-ignore
                         if gt(i, h) { break }
                         let k := mload(i) // Key.
                         let j := add(i, w) // The slot before the current slot.
                         let v := mload(j) // The value of `j`.
-                        // prettier-ignore
                         if iszero(gt(v, k)) { continue }
-                        // prettier-ignore
                         for {} 1 {} {
                             mstore(add(j, 0x20), v)
                             j := add(j, w)
                             v := mload(j)
-                            // prettier-ignore
                             if iszero(gt(v, k)) { break }
                         }
                         mstore(add(j, 0x20), k)
@@ -185,23 +170,17 @@ library LibSort {
                     // The value of the pivot slot.
                     let x := mload(p)
                     p := h
-                    // prettier-ignore
                     for { let i := l } 1 {} {
-                        // prettier-ignore
                         for {} 1 {} {
                             i := add(i, 0x20)
-                            // prettier-ignore
                             if iszero(gt(x, mload(i))) { break }
                         }
                         let j := p
-                        // prettier-ignore
                         for {} 1 {} {
                             j := add(j, w)
-                            // prettier-ignore
                             if iszero(lt(x, mload(j))) { break }
                         }
                         p := j
-                        // prettier-ignore
                         if iszero(lt(i, p)) { break }
                         // Swap slots `i` and `p`.
                         let t := mload(i)
@@ -251,14 +230,12 @@ library LibSort {
                 let x := add(a, 0x20)
                 let y := add(a, 0x40)
                 let end := add(a, shl(5, add(mload(a), 1)))
-                // prettier-ignore
                 for {} 1 {} {
                     if iszero(eq(mload(x), mload(y))) {
                         x := add(x, 0x20)
                         mstore(x, mload(y))
                     }
                     y := add(y, 0x20)
-                    // prettier-ignore
                     if eq(y, end) { break }
                 }
                 mstore(a, shr(5, sub(x, a)))
@@ -283,25 +260,27 @@ library LibSort {
 
     /// @dev Returns whether `a` contains `needle`,
     /// and the index of the nearest element less than or equal to `needle`.
-    function searchSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found, uint256 index) {
+    function searchSorted(uint256[] memory a, uint256 needle)
+        internal
+        pure
+        returns (bool found, uint256 index)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let m := 0 // Middle slot.
             let l := add(a, 0x20) // Slot of the start of search.
             let h := add(a, shl(5, mload(a))) // Slot of the end of search.
-            // prettier-ignore
             for {} 1 {} {
                 // Average of `l` and `h`, rounded down to the nearest multiple of 0x20.
                 m := shl(5, shr(6, add(l, h)))
                 found := eq(mload(m), needle)
-                // prettier-ignore
                 if or(gt(l, h), found) { break }
                 // Decide whether to search the left or right half.
                 if iszero(gt(needle, mload(m))) {
                     h := sub(m, 0x20)
                     continue
                 }
-                l := add(m, 0x20)   
+                l := add(m, 0x20)
             }
             // `m` will be less than `add(a, 0x20)` in the case of an empty array,
             // or when the value is less than the smallest value in the array.

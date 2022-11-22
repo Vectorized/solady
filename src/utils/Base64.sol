@@ -10,11 +10,11 @@ library Base64 {
     /// See: https://datatracker.ietf.org/doc/html/rfc4648
     /// @param fileSafe  Whether to replace '+' with '-' and '/' with '_'.
     /// @param noPadding Whether to strip away the padding.
-    function encode(
-        bytes memory data,
-        bool fileSafe,
-        bool noPadding
-    ) internal pure returns (string memory result) {
+    function encode(bytes memory data, bool fileSafe, bool noPadding)
+        internal
+        pure
+        returns (string memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let dataLength := mload(data)
@@ -40,19 +40,18 @@ library Base64 {
                 let end := add(ptr, encodedLength)
 
                 // Run over the input, 3 bytes at a time.
-                // prettier-ignore
                 for {} 1 {} {
                     data := add(data, 3) // Advance 3 bytes.
                     let input := mload(data)
 
                     // Write 4 bytes. Optimized for fewer stack operations.
-                    mstore8(    ptr    , mload(and(shr(18, input), 0x3F)))
+                    mstore8(ptr, mload(and(shr(18, input), 0x3F)))
                     mstore8(add(ptr, 1), mload(and(shr(12, input), 0x3F)))
-                    mstore8(add(ptr, 2), mload(and(shr( 6, input), 0x3F)))
-                    mstore8(add(ptr, 3), mload(and(        input , 0x3F)))
-                    
+                    mstore8(add(ptr, 2), mload(and(shr(6, input), 0x3F)))
+                    mstore8(add(ptr, 3), mload(and(input, 0x3F)))
+
                     ptr := add(ptr, 4) // Advance 4 bytes.
-                    // prettier-ignore
+
                     if iszero(lt(ptr, end)) { break }
                 }
 
@@ -87,7 +86,11 @@ library Base64 {
 
     /// @dev Encodes `data` using the base64 encoding described in RFC 4648.
     /// Equivalent to `encode(data, fileSafe, false)`.
-    function encode(bytes memory data, bool fileSafe) internal pure returns (string memory result) {
+    function encode(bytes memory data, bool fileSafe)
+        internal
+        pure
+        returns (string memory result)
+    {
         result = encode(data, fileSafe, false);
     }
 
@@ -117,6 +120,7 @@ library Base64 {
                 switch and(dataLength, 3)
                 case 0 {
                     // If padded.
+                    // forgefmt: disable-next-item
                     decodedLength := sub(
                         decodedLength,
                         add(eq(and(mload(end), 0xFF), 0x3d), eq(and(mload(end), 0xFFFF), 0x3d3d))
@@ -143,13 +147,13 @@ library Base64 {
                 mstore(0x3b, 0x04080c1014181c2024282c3034383c4044484c5054585c6064)
                 mstore(0x1a, 0xf8fcf800fcd0d4d8dce0e4e8ecf0f4)
 
-                // prettier-ignore
                 for {} 1 {} {
                     // Read 4 bytes.
                     data := add(data, 4)
                     let input := mload(data)
 
                     // Write 3 bytes.
+                    // forgefmt: disable-next-item
                     mstore(ptr, or(
                         and(m, mload(byte(28, input))),
                         shr(6, or(
@@ -162,8 +166,7 @@ library Base64 {
                     ))
 
                     ptr := add(ptr, 3)
-                    
-                    // prettier-ignore
+
                     if iszero(lt(data, end)) { break }
                 }
 

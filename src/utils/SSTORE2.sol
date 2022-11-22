@@ -142,11 +142,11 @@ library SSTORE2 {
 
     /// @dev Returns the `data` from the bytecode of the storage contract at `pointer`,
     /// from the byte at `start`, to the byte at `end` (exclusive) of the data stored.
-    function read(
-        address pointer,
-        uint256 start,
-        uint256 end
-    ) internal view returns (bytes memory data) {
+    function read(address pointer, uint256 start, uint256 end)
+        internal
+        view
+        returns (bytes memory data)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let pointerCodesize := extcodesize(pointer)

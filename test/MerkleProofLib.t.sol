@@ -74,7 +74,8 @@ contract MerkleProofLibTest is TestPlus {
             proof[i] = bytes32(uint256(proof[i]) ^ 1); // Flip a bit.
         }
 
-        bytes32 root = _hashPair(_hashPair(bytes32("a"), bytes32("b")), _hashPair(bytes32("c"), bytes32(0)));
+        bytes32 root =
+            _hashPair(_hashPair(bytes32("a"), bytes32("b")), _hashPair(bytes32("c"), bytes32(0)));
 
         if (damageRoot) {
             noDamage = false;
@@ -90,7 +91,10 @@ contract MerkleProofLibTest is TestPlus {
         assertEq(this.verify(proof, root, leaf), noDamage);
     }
 
-    function testVerifyMultiProofForSingleLeaf(bytes32[] memory data, uint256 randomness) public brutalizeMemory {
+    function testVerifyMultiProofForSingleLeaf(bytes32[] memory data, uint256 randomness)
+        public
+        brutalizeMemory
+    {
         vm.assume(data.length > 1);
         uint256 nodeIndex = randomness % data.length;
         bytes32 root = _getRoot(data);
@@ -136,7 +140,8 @@ contract MerkleProofLibTest is TestPlus {
         }
         bool leafSameAsRoot = leafs.length == 1 && leafs[0] == root;
         bool proofSameAsRoot = proof.length == 1 && proof[0] == root;
-        bool isValid = flags.length == 0 && (leafSameAsRoot || proofSameAsRoot) && (leafs.length + proof.length == 1);
+        bool isValid = flags.length == 0 && (leafSameAsRoot || proofSameAsRoot)
+            && (leafs.length + proof.length == 1);
         assertEq(this.verifyMultiProof(proof, root, leafs, flags), isValid);
     }
 
@@ -263,11 +268,11 @@ contract MerkleProofLibTest is TestPlus {
         assertEq(this.verifyMultiProof(proof, root, leafs, flags), noDamage);
     }
 
-    function verify(
-        bytes32[] calldata proof,
-        bytes32 root,
-        bytes32 leaf
-    ) external pure returns (bool) {
+    function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf)
+        external
+        pure
+        returns (bool)
+    {
         return MerkleProofLib.verify(proof, root, leaf);
     }
 
@@ -322,7 +327,11 @@ contract MerkleProofLibTest is TestPlus {
         return data[0];
     }
 
-    function _getProof(bytes32[] memory data, uint256 nodeIndex) private pure returns (bytes32[] memory) {
+    function _getProof(bytes32[] memory data, uint256 nodeIndex)
+        private
+        pure
+        returns (bytes32[] memory)
+    {
         require(data.length > 1);
 
         bytes32[] memory result = new bytes32[](64);

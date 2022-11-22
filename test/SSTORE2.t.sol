@@ -76,7 +76,10 @@ contract SSTORE2Test is TestPlus {
         assertEq(readResult, testBytes);
     }
 
-    function testFuzzWriteReadCustomStartBound(bytes calldata testBytes, uint256 startIndex) public brutalizeMemory {
+    function testFuzzWriteReadCustomStartBound(bytes calldata testBytes, uint256 startIndex)
+        public
+        brutalizeMemory
+    {
         if (testBytes.length == 0) return;
 
         startIndex = _bound(startIndex, 0, testBytes.length);
@@ -132,10 +135,10 @@ contract SSTORE2Test is TestPlus {
         SSTORE2.read(pointer, startIndex, endIndex);
     }
 
-    function testFuzzWriteReadCustomStartBoundOutOfRangeReverts(bytes calldata testBytes, uint256 startIndex)
-        public
-        brutalizeMemory
-    {
+    function testFuzzWriteReadCustomStartBoundOutOfRangeReverts(
+        bytes calldata testBytes,
+        uint256 startIndex
+    ) public brutalizeMemory {
         startIndex = _bound(startIndex, testBytes.length + 1, type(uint256).max);
         address pointer = SSTORE2.write(testBytes);
         vm.expectRevert(SSTORE2.ReadOutOfBounds.selector);

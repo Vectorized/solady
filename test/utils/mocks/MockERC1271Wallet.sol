@@ -10,7 +10,11 @@ contract MockERC1271Wallet {
         signer = signer_;
     }
 
-    function isValidSignature(bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+    function isValidSignature(bytes32 hash, bytes calldata signature)
+        external
+        view
+        returns (bytes4)
+    {
         return ECDSA.recover(hash, signature) == signer ? bytes4(0x1626ba7e) : bytes4(0);
     }
 }

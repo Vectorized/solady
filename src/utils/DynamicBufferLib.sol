@@ -43,12 +43,12 @@ library DynamicBufferLib {
                 // and another extra word as a safety word (giving a total of 0x40 bytes).
                 // Without the safety word, the data at the next free memory word can be overwritten,
                 // because the backwards copying can exceed the buffer space used for storage.
-                // prettier-ignore
                 for {} iszero(lt(newBufferDataLength, capacity)) {} {
                     // Approximately double the memory with a heuristic,
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
-                    let newCapacity := and(add(capacity, add(or(capacity, newBufferDataLength), 32)), w)
+                    let newCapacity :=
+                        and(add(capacity, add(or(capacity, newBufferDataLength), 32)), w)
 
                     // If next word after current buffer is not eligible for use.
                     if iszero(eq(mload(0x40), add(bufferData, add(0x40, capacity)))) {
@@ -59,11 +59,9 @@ library DynamicBufferLib {
                         // Store the `newBufferData`.
                         mstore(buffer, newBufferData)
                         // Copy `bufferData` one word at a time, backwards.
-                        // prettier-ignore
                         for { let o := and(add(bufferDataLength, 32), w) } 1 {} {
                             mstore(add(newBufferData, o), mload(add(bufferData, o)))
                             o := add(o, w) // `sub(o, 0x20)`.
-                            // prettier-ignore
                             if iszero(o) { break }
                         }
                         // Store the `capacity` multiplied by `prime` in the word before the `length`.
@@ -81,11 +79,9 @@ library DynamicBufferLib {
                 // Initalize `output` to the next empty position in `bufferData`.
                 let output := add(bufferData, bufferDataLength)
                 // Copy `data` one word at a time, backwards.
-                // prettier-ignore
                 for { let o := and(add(mload(data), 32), w) } 1 {} {
                     mstore(add(output, o), mload(add(data, o)))
-                    o := add(o, w)  // `sub(o, 0x20)`.
-                    // prettier-ignore
+                    o := add(o, w) // `sub(o, 0x20)`.
                     if iszero(o) { break }
                 }
                 // Zeroize the word after the buffer.

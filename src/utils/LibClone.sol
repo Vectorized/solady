@@ -107,7 +107,10 @@ library LibClone {
     }
 
     /// @dev Deploys a deterministic clone of `implementation` with `salt`.
-    function cloneDeterministic(address implementation, bytes32 salt) internal returns (address instance) {
+    function cloneDeterministic(address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
@@ -128,16 +131,15 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic clone of `implementation`,
     /// with `salt` by `deployer`.
-    function predictDeterministicAddress(
-        address implementation,
-        bytes32 salt,
-        address deployer
-    ) internal pure returns (address predicted) {
+    function predictDeterministicAddress(address implementation, bytes32 salt, address deployer)
+        internal
+        pure
+        returns (address predicted)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
             mstore(0x14, implementation)
-            // prettier-ignore
             mstore(0x00, 0xff0000000000000000000000602c3d8160093d39f33d3d3d3d363d3d37363d73)
             // Compute and store the bytecode hash.
             mstore(0x35, keccak256(0x0c, 0x35))
@@ -253,10 +255,18 @@ library LibClone {
             // Write the address of the implementation.
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
-            mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
+            mstore(
+                sub(data, 0x21),
+                or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73)
+            )
             // `keccak256("ReceiveETH(uint256)")`
-            mstore(sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff)
-            mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
+            mstore(
+                sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
+            )
+            mstore(
+                sub(data, 0x5a),
+                or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f)
+            )
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Create the instance.
@@ -281,11 +291,10 @@ library LibClone {
 
     /// @dev Deploys a deterministic clone of `implementation`,
     /// using immutable arguments encoded in `data`, with `salt`.
-    function cloneDeterministic(
-        address implementation,
-        bytes memory data,
-        bytes32 salt
-    ) internal returns (address instance) {
+    function cloneDeterministic(address implementation, bytes memory data, bytes32 salt)
+        internal
+        returns (address instance)
+    {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
@@ -303,10 +312,18 @@ library LibClone {
             // Write the address of the implementation.
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
-            mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
+            mstore(
+                sub(data, 0x21),
+                or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73)
+            )
             // `keccak256("ReceiveETH(uint256)")`
-            mstore(sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff)
-            mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
+            mstore(
+                sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
+            )
+            mstore(
+                sub(data, 0x5a),
+                or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f)
+            )
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Create the instance.
@@ -354,10 +371,18 @@ library LibClone {
             // Write the address of the implementation.
             mstore(sub(data, 0x0d), implementation)
             // Write the rest of the bytecode.
-            mstore(sub(data, 0x21), or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73))
+            mstore(
+                sub(data, 0x21),
+                or(shl(0x48, extraLength), 0x593da1005b363d3d373d3d3d3d610000806062363936013d73)
+            )
             // `keccak256("ReceiveETH(uint256)")`
-            mstore(sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff)
-            mstore(sub(data, 0x5a), or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f))
+            mstore(
+                sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
+            )
+            mstore(
+                sub(data, 0x5a),
+                or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f)
+            )
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Compute and store the bytecode hash.

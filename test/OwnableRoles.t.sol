@@ -157,11 +157,7 @@ contract OwnableRolesTest is Test {
         assertEq(mockOwnableRoles.hasAllRoles(user, rolesToCheck), hasAllRoles);
     }
 
-    function testHasAnyRole(
-        address user,
-        uint256 rolesToGrant,
-        uint256 rolesToCheck
-    ) public {
+    function testHasAnyRole(address user, uint256 rolesToGrant, uint256 rolesToCheck) public {
         mockOwnableRoles.grantRoles(user, rolesToGrant);
         assertEq(mockOwnableRoles.hasAnyRole(user, rolesToCheck), rolesToGrant & rolesToCheck != 0);
     }
@@ -203,11 +199,9 @@ contract OwnableRolesTest is Test {
         mockOwnableRoles.updateFlagWithOnlyOwner();
     }
 
-    function testOnlyRolesModifier(
-        address user,
-        uint256 rolesToGrant,
-        uint256 rolesToCheck
-    ) public {
+    function testOnlyRolesModifier(address user, uint256 rolesToGrant, uint256 rolesToCheck)
+        public
+    {
         mockOwnableRoles.grantRoles(user, rolesToGrant);
 
         if (rolesToGrant & rolesToCheck == 0) {

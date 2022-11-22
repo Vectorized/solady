@@ -55,9 +55,7 @@ contract Base64Test is TestPlus {
         assembly {
             let freeMemoryPointer := mload(0x40)
             // This ensures that the memory allocated is 32-byte aligned.
-            if and(freeMemoryPointer, 31) {
-                revert(0, 0)
-            }
+            if and(freeMemoryPointer, 31) { revert(0, 0) }
             // Write some garbage to the free memory.
             // If the allocated memory is insufficient, this will change the
             // decoded string and cause the subsequent asserts to fail.
@@ -80,12 +78,17 @@ contract Base64Test is TestPlus {
 
     function testBase64DecodeSentenceGas() public {
         assertEq(
-            Base64.decode("TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQsIGNvbnNlY3RldHVyIGFkaXBpc2NpbmcgZWxpdC4=").length,
+            Base64.decode(
+                "TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQsIGNvbnNlY3RldHVyIGFkaXBpc2NpbmcgZWxpdC4="
+            ).length,
             56
         );
     }
 
-    function testBase64EncodeDecodeAltModes(bytes memory input, uint256 randomness) public brutalizeMemory {
+    function testBase64EncodeDecodeAltModes(bytes memory input, uint256 randomness)
+        public
+        brutalizeMemory
+    {
         for (uint256 i; i < 2; ++i) {
             string memory encoded = Base64.encode(input);
 
@@ -112,11 +115,9 @@ contract Base64Test is TestPlus {
         }
     }
 
-    function testBase64EncodeFileSafeAndNoPadding(
-        bytes memory input,
-        bool fileSafe,
-        bool noPadding
-    ) public {
+    function testBase64EncodeFileSafeAndNoPadding(bytes memory input, bool fileSafe, bool noPadding)
+        public
+    {
         string memory expectedEncoded = Base64.encode(input);
 
         if (fileSafe) {
@@ -141,9 +142,7 @@ contract Base64Test is TestPlus {
         assembly {
             let freeMemoryPointer := mload(0x40)
             // This ensures that the memory allocated is 32-byte aligned.
-            if and(freeMemoryPointer, 31) {
-                revert(0, 0)
-            }
+            if and(freeMemoryPointer, 31) { revert(0, 0) }
             // Write some garbage to the free memory.
             // If the allocated memory is insufficient, this will change the
             // decoded string and cause the subsequent asserts to fail.

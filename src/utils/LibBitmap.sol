@@ -73,11 +73,7 @@ library LibBitmap {
     }
 
     /// @dev Updates the bit at `index` in `bitmap` to `shouldSet`.
-    function setTo(
-        Bitmap storage bitmap,
-        uint256 index,
-        bool shouldSet
-    ) internal {
+    function setTo(Bitmap storage bitmap, uint256 index, bool shouldSet) internal {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, bitmap.slot)
@@ -95,11 +91,7 @@ library LibBitmap {
     }
 
     /// @dev Consecutively sets `amount` of bits starting from the bit at `start`.
-    function setBatch(
-        Bitmap storage bitmap,
-        uint256 start,
-        uint256 amount
-    ) internal {
+    function setBatch(Bitmap storage bitmap, uint256 start, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
             let max := not(0)
@@ -113,7 +105,6 @@ library LibBitmap {
                 let bucketEnd := add(mload(0x00), shr(8, add(amount, shift)))
                 amount := and(add(amount, shift), 0xff)
                 shift := 0
-                // prettier-ignore
                 for {} iszero(eq(bucket, bucketEnd)) { bucket := add(bucket, 1) } {
                     mstore(0x00, bucket)
                     sstore(keccak256(0x00, 0x40), max)
@@ -126,11 +117,7 @@ library LibBitmap {
     }
 
     /// @dev Consecutively unsets `amount` of bits starting from the bit at `start`.
-    function unsetBatch(
-        Bitmap storage bitmap,
-        uint256 start,
-        uint256 amount
-    ) internal {
+    function unsetBatch(Bitmap storage bitmap, uint256 start, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
             let shift := and(start, 0xff)
@@ -143,7 +130,6 @@ library LibBitmap {
                 let bucketEnd := add(mload(0x00), shr(8, add(amount, shift)))
                 amount := and(add(amount, shift), 0xff)
                 shift := 0
-                // prettier-ignore
                 for {} iszero(eq(bucket, bucketEnd)) { bucket := add(bucket, 1) } {
                     mstore(0x00, bucket)
                     sstore(keccak256(0x00, 0x40), 0)
@@ -151,17 +137,19 @@ library LibBitmap {
                 mstore(0x00, bucket)
             }
             let storageSlot := keccak256(0x00, 0x40)
-            sstore(storageSlot, and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0))))))
+            sstore(
+                storageSlot, and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0)))))
+            )
         }
     }
 
     /// @dev Returns number of set bits within a range by
     /// scanning `amount` of bits starting from the bit at `start`.
-    function popCount(
-        Bitmap storage bitmap,
-        uint256 start,
-        uint256 amount
-    ) internal view returns (uint256 count) {
+    function popCount(Bitmap storage bitmap, uint256 start, uint256 amount)
+        internal
+        view
+        returns (uint256 count)
+    {
         unchecked {
             uint256 bucket = start >> 8;
             uint256 shift = start & 0xff;
@@ -180,7 +168,11 @@ library LibBitmap {
 
     /// @dev Returns the index of the most significant set bit before the bit at `before`.
     /// If no set bit is found, returns `NOT_FOUND`.
-    function findLastSet(Bitmap storage bitmap, uint256 before) internal view returns (uint256 setBitIndex) {
+    function findLastSet(Bitmap storage bitmap, uint256 before)
+        internal
+        view
+        returns (uint256 setBitIndex)
+    {
         uint256 bucket;
         uint256 bucketBits;
         /// @solidity memory-safe-assembly
@@ -192,12 +184,10 @@ library LibBitmap {
             let offset := xor(0xff, and(0xff, before)) // `256 - (255 & before) - 1`.
             bucketBits := shr(offset, shl(offset, sload(keccak256(0x00, 0x40))))
             if iszero(bucketBits) {
-                // prettier-ignore
                 for {} bucket {} {
                     bucket := sub(bucket, 1)
                     mstore(0x00, bucket)
                     bucketBits := sload(keccak256(0x00, 0x40))
-                    // prettier-ignore
                     if bucketBits { break }
                 }
             }

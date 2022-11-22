@@ -24,7 +24,7 @@ contract MockETHRecipient {
             assembly {
                 mstore(0x00, timestamp())
                 mstore(0x20, 0)
-                // prettier-ignore
+
                 for { let i := 0 } lt(i, 10) { i := add(i, 1) } {
                     let h := keccak256(0x00, 0x40)
                     mstore(0x00, sload(h))

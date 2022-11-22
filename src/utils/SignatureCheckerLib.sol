@@ -13,11 +13,11 @@ library SignatureCheckerLib {
     /// Otherwise, the signature is validated with `ECDSA.recover`.
     ///
     /// Note: unlike ECDSA signatures, contract signatures are revocable.
-    function isValidSignatureNow(
-        address signer,
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view returns (bool isValid) {
+    function isValidSignatureNow(address signer, bytes32 hash, bytes calldata signature)
+        internal
+        view
+        returns (bool isValid)
+    {
         if (signer == address(0)) return false;
 
         if (ECDSA.recover(hash, signature) == signer) return true;
@@ -38,6 +38,7 @@ library SignatureCheckerLib {
             // Copy the `signature` over.
             calldatacopy(add(m, 0x64), signature.offset, signature.length)
 
+            // forgefmt: disable-next-item
             isValid := and(
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
@@ -65,12 +66,11 @@ library SignatureCheckerLib {
     /// Otherwise, the signature is validated with `ECDSA.recover`.
     ///
     /// Note: unlike ECDSA signatures, contract signatures are revocable.
-    function isValidSignatureNow(
-        address signer,
-        bytes32 hash,
-        bytes32 r,
-        bytes32 vs
-    ) internal view returns (bool isValid) {
+    function isValidSignatureNow(address signer, bytes32 hash, bytes32 r, bytes32 vs)
+        internal
+        view
+        returns (bool isValid)
+    {
         if (signer == address(0)) return false;
 
         if (ECDSA.recover(hash, r, vs) == signer) return true;
@@ -92,6 +92,7 @@ library SignatureCheckerLib {
             mstore(add(m, 0x84), shr(1, shl(1, vs))) // Store `s` of the signature.
             mstore8(add(m, 0xa4), add(shr(255, vs), 27)) // Store `v` of the signature.
 
+            // forgefmt: disable-next-item
             isValid := and(
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
@@ -119,13 +120,11 @@ library SignatureCheckerLib {
     /// Otherwise, the signature is validated with `ECDSA.recover`.
     ///
     /// Note: unlike ECDSA signatures, contract signatures are revocable.
-    function isValidSignatureNow(
-        address signer,
-        bytes32 hash,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) internal view returns (bool isValid) {
+    function isValidSignatureNow(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s)
+        internal
+        view
+        returns (bool isValid)
+    {
         if (signer == address(0)) return false;
 
         if (ECDSA.recover(hash, v, r, s) == signer) return true;
@@ -147,6 +146,7 @@ library SignatureCheckerLib {
             mstore(add(m, 0x84), s) // Store `s` of the signature.
             mstore8(add(m, 0xa4), v) // Store `v` of the signature.
 
+            // forgefmt: disable-next-item
             isValid := and(
                 and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).

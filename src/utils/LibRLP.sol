@@ -24,16 +24,19 @@ library LibRLP {
     /// This is for performance, as exceeding the range is extremely impractical.
     /// It is the user's responsibility to ensure that the nonce is valid
     /// (e.g. no dirty bits after packing / unpacking).
-    function computeAddress(address deployer, uint256 nonce) internal pure returns (address deployed) {
+    function computeAddress(address deployer, uint256 nonce)
+        internal
+        pure
+        returns (address deployed)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            // prettier-ignore
             for {} 1 {} {
                 // The integer zero is treated as an empty byte string,
                 // and as a result it only has a length prefix, 0x80,
                 // computed via `0x80 + 0`.
 
-                // A one-byte integer in the [0x00, 0x7f] range uses its 
+                // A one-byte integer in the [0x00, 0x7f] range uses its
                 // own value as a length prefix,
                 // there is no additional `0x80 + length` prefix that precedes it.
                 if iszero(gt(nonce, 0x7f)) {
@@ -49,7 +52,6 @@ library LibRLP {
                 }
                 let i := 8
                 // Just use a loop to generalize all the way with minimal bytecode size.
-                // prettier-ignore
                 for {} shr(i, nonce) { i := add(i, 8) } {}
                 // `shr` 3 is equivalent to dividing by 8.
                 i := shr(3, i)

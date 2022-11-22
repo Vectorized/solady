@@ -28,9 +28,11 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(d.year == DateTimeLib.MAX_SUPPORTED_YEAR && d.month == 12 && d.day == 31);
         (d.year, d.month, d.day) = DateTimeLib.epochDayToDate(DateTimeLib.MAX_SUPPORTED_EPOCH_DAY);
         assertTrue(d.year == DateTimeLib.MAX_SUPPORTED_YEAR && d.month == 12 && d.day == 31);
-        (d.year, d.month, d.day) = DateTimeLib.timestampToDate(DateTimeLib.MAX_SUPPORTED_TIMESTAMP + 1);
+        (d.year, d.month, d.day) =
+            DateTimeLib.timestampToDate(DateTimeLib.MAX_SUPPORTED_TIMESTAMP + 1);
         assertFalse(d.year == DateTimeLib.MAX_SUPPORTED_YEAR && d.month == 12 && d.day == 31);
-        (d.year, d.month, d.day) = DateTimeLib.epochDayToDate(DateTimeLib.MAX_SUPPORTED_EPOCH_DAY + 1);
+        (d.year, d.month, d.day) =
+            DateTimeLib.epochDayToDate(DateTimeLib.MAX_SUPPORTED_EPOCH_DAY + 1);
         assertFalse(d.year == DateTimeLib.MAX_SUPPORTED_YEAR && d.month == 12 && d.day == 31);
     }
 
@@ -223,9 +225,11 @@ contract DateTimeLibTest is TestPlus {
         a.hour = _bound(a.hour, 0, 23);
         a.minute = _bound(a.minute, 0, 59);
         a.second = _bound(a.second, 0, 59);
-        uint256 timestamp = DateTimeLib.dateTimeToTimestamp(a.year, a.month, a.day, a.hour, a.minute, a.second);
+        uint256 timestamp =
+            DateTimeLib.dateTimeToTimestamp(a.year, a.month, a.day, a.hour, a.minute, a.second);
         DateTime memory b;
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(timestamp);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(timestamp);
         assertTrue(a.year == b.year && a.month == b.month && a.day == b.day);
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
@@ -282,7 +286,9 @@ contract DateTimeLibTest is TestPlus {
     }
 
     function testFuzzIsLeapYear(uint256 year) public {
-        assertEq(DateTimeLib.isLeapYear(year), (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0));
+        assertEq(
+            DateTimeLib.isLeapYear(year), (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)
+        );
     }
 
     function testDaysInMonth() public {
@@ -307,7 +313,10 @@ contract DateTimeLibTest is TestPlus {
         month = _bound(month, 1, 12);
         if (DateTimeLib.isLeapYear(year) && month == 2) {
             assertEq(DateTimeLib.daysInMonth(year, month), 29);
-        } else if (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) {
+        } else if (
+            month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10
+                || month == 12
+        ) {
             assertEq(DateTimeLib.daysInMonth(year, month), 31);
         } else if (month == 2) {
             assertEq(DateTimeLib.daysInMonth(year, month), 28);
@@ -377,13 +386,14 @@ contract DateTimeLibTest is TestPlus {
         a.hour = _bound(a.hour, 0, 50);
         a.minute = _bound(a.minute, 0, 100);
         a.second = _bound(a.second, 0, 100);
-        bool isSupported = (1970 <= a.year && a.year <= DateTimeLib.MAX_SUPPORTED_YEAR) &&
-            (1 <= a.month && a.month <= 12) &&
-            (1 <= a.day && a.day <= DateTimeLib.daysInMonth(a.year, a.month)) &&
-            (a.hour < 24) &&
-            (a.minute < 60) &&
-            (a.second < 60);
-        assertEq(DateTimeLib.isSupportedDateTime(a.year, a.month, a.day, a.hour, a.minute, a.second), isSupported);
+        bool isSupported = (1970 <= a.year && a.year <= DateTimeLib.MAX_SUPPORTED_YEAR)
+            && (1 <= a.month && a.month <= 12)
+            && (1 <= a.day && a.day <= DateTimeLib.daysInMonth(a.year, a.month)) && (a.hour < 24)
+            && (a.minute < 60) && (a.second < 60);
+        assertEq(
+            DateTimeLib.isSupportedDateTime(a.year, a.month, a.day, a.hour, a.minute, a.second),
+            isSupported
+        );
     }
 
     function testIsSupportedEpochDayTrue() public {
@@ -460,7 +470,7 @@ contract DateTimeLibTest is TestPlus {
             uint256 timestamp = DateTimeLib.dateToTimestamp(year, month, 1);
             uint256 m;
             uint256 found;
-            for (uint256 i; i < md; ) {
+            for (uint256 i; i < md;) {
                 if (DateTimeLib.weekday(timestamp) == weekday) {
                     if (++m == n) {
                         found = 1;
@@ -475,7 +485,10 @@ contract DateTimeLibTest is TestPlus {
                     i += 7;
                 }
             }
-            assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(year, month, n, weekday), found * timestamp);
+            assertEq(
+                DateTimeLib.nthWeekdayInMonthOfYearTimestamp(year, month, n, weekday),
+                found * timestamp
+            );
         }
     }
 
@@ -511,24 +524,32 @@ contract DateTimeLibTest is TestPlus {
     function testFuzzMondayTimestamp(uint256 timestamp) public {
         uint256 day = timestamp / 86400;
         uint256 weekday = (day + 3) % 7;
-        assertEq(DateTimeLib.mondayTimestamp(timestamp), timestamp > 345599 ? (day - weekday) * 86400 : 0);
+        assertEq(
+            DateTimeLib.mondayTimestamp(timestamp), timestamp > 345599 ? (day - weekday) * 86400 : 0
+        );
     }
 
     function testFuzzIsWeekEnd(uint256 timestamp) public {
         timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP);
         uint256 weekday = DateTimeLib.weekday(timestamp);
-        assertEq(DateTimeLib.isWeekEnd(timestamp), weekday == DateTimeLib.SAT || weekday == DateTimeLib.SUN);
+        assertEq(
+            DateTimeLib.isWeekEnd(timestamp),
+            weekday == DateTimeLib.SAT || weekday == DateTimeLib.SUN
+        );
     }
 
     function testFuzzAddSubDiffYears(uint256 timestamp, uint256 numYears) public {
         uint256 maxNumYears = 1000000;
         numYears = _bound(numYears, 0, maxNumYears);
-        timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP - maxNumYears * 366 * 86400);
+        timestamp =
+            _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP - maxNumYears * 366 * 86400);
         uint256 result = DateTimeLib.addYears(timestamp, numYears);
         DateTime memory a;
         DateTime memory b;
-        (a.year, a.month, a.day, a.hour, a.minute, a.second) = DateTimeLib.timestampToDateTime(timestamp);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
+        (a.year, a.month, a.day, a.hour, a.minute, a.second) =
+            DateTimeLib.timestampToDateTime(timestamp);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
         if (numYears != 0) assertTrue(a.year != b.year);
         if (a.day <= 28) assertEq(a.day, b.day);
         assertTrue(a.month == b.month);
@@ -536,71 +557,76 @@ contract DateTimeLibTest is TestPlus {
         uint256 diff = DateTimeLib.diffYears(timestamp, result);
         assertTrue(diff == numYears);
         result = DateTimeLib.subYears(result, numYears);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
         assertTrue(a.year == b.year && a.month == b.month);
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
     function testDateTimeArithmeticReverts() public {
         vm.expectRevert(DateTimeLib.Overflow.selector);
-        DateTimeLib.addYears(2**128 - 1, 2**255 - 1);
+        DateTimeLib.addYears(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.Underflow.selector);
-        DateTimeLib.subYears(2**128 - 1, 2**255 - 1);
+        DateTimeLib.subYears(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.InvalidDiff.selector);
-        DateTimeLib.diffYears(2**128 - 1, 2**127 - 1);
+        DateTimeLib.diffYears(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(DateTimeLib.Overflow.selector);
-        DateTimeLib.addMonths(2**128 - 1, 2**255 - 1);
+        DateTimeLib.addMonths(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.Underflow.selector);
-        DateTimeLib.subMonths(2**128 - 1, 2**255 - 1);
+        DateTimeLib.subMonths(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.InvalidDiff.selector);
-        DateTimeLib.diffMonths(2**128 - 1, 2**127 - 1);
+        DateTimeLib.diffMonths(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(DateTimeLib.Overflow.selector);
-        DateTimeLib.addDays(2**128 - 1, 2**255 - 1);
+        DateTimeLib.addDays(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.Underflow.selector);
-        DateTimeLib.subDays(2**128 - 1, 2**255 - 1);
+        DateTimeLib.subDays(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.InvalidDiff.selector);
-        DateTimeLib.diffDays(2**128 - 1, 2**127 - 1);
+        DateTimeLib.diffDays(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(DateTimeLib.Overflow.selector);
-        DateTimeLib.addHours(2**128 - 1, 2**255 - 1);
+        DateTimeLib.addHours(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.Underflow.selector);
-        DateTimeLib.subHours(2**128 - 1, 2**255 - 1);
+        DateTimeLib.subHours(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.InvalidDiff.selector);
-        DateTimeLib.diffHours(2**128 - 1, 2**127 - 1);
+        DateTimeLib.diffHours(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(DateTimeLib.Overflow.selector);
-        DateTimeLib.addMinutes(2**128 - 1, 2**255 - 1);
+        DateTimeLib.addMinutes(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.Underflow.selector);
-        DateTimeLib.subMinutes(2**128 - 1, 2**255 - 1);
+        DateTimeLib.subMinutes(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.InvalidDiff.selector);
-        DateTimeLib.diffMinutes(2**128 - 1, 2**127 - 1);
+        DateTimeLib.diffMinutes(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(DateTimeLib.Overflow.selector);
-        DateTimeLib.addSeconds(2**128 - 1, 2**255 - 1);
+        DateTimeLib.addSeconds(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.Underflow.selector);
-        DateTimeLib.subSeconds(2**128 - 1, 2**255 - 1);
+        DateTimeLib.subSeconds(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(DateTimeLib.InvalidDiff.selector);
-        DateTimeLib.diffSeconds(2**128 - 1, 2**127 - 1);
+        DateTimeLib.diffSeconds(2 ** 128 - 1, 2 ** 127 - 1);
     }
 
     function testFuzzAddSubDiffMonths(uint256 timestamp, uint256 numMonths) public {
         uint256 maxNumMonths = 1000000;
         numMonths = _bound(numMonths, 0, maxNumMonths);
-        timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP - maxNumMonths * 32 * 86400);
+        timestamp =
+            _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP - maxNumMonths * 32 * 86400);
         uint256 result = DateTimeLib.addMonths(timestamp, numMonths);
         DateTime memory a;
         DateTime memory b;
-        (a.year, a.month, a.day, a.hour, a.minute, a.second) = DateTimeLib.timestampToDateTime(timestamp);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
+        (a.year, a.month, a.day, a.hour, a.minute, a.second) =
+            DateTimeLib.timestampToDateTime(timestamp);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
         if (numMonths != 0) assertTrue(a.year != b.year || a.month != b.month);
         if (a.day <= 28) assertEq(a.day, b.day);
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
         uint256 diff = DateTimeLib.diffMonths(timestamp, result);
         assertTrue(diff == numMonths);
         result = DateTimeLib.subMonths(result, numMonths);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
         assertTrue(a.year == b.year && a.month == b.month);
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
@@ -612,14 +638,19 @@ contract DateTimeLibTest is TestPlus {
         uint256 result = DateTimeLib.addDays(timestamp, numDays);
         DateTime memory a;
         DateTime memory b;
-        (a.year, a.month, a.day, a.hour, a.minute, a.second) = DateTimeLib.timestampToDateTime(timestamp);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
-        if (numDays != 0) assertTrue(a.year != b.year || a.month != b.month || a.day != b.day);
+        (a.year, a.month, a.day, a.hour, a.minute, a.second) =
+            DateTimeLib.timestampToDateTime(timestamp);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
+        if (numDays != 0) {
+            assertTrue(a.year != b.year || a.month != b.month || a.day != b.day);
+        }
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
         uint256 diff = DateTimeLib.diffDays(timestamp, result);
         assertTrue(diff == numDays);
         result = DateTimeLib.subDays(result, numDays);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
         assertTrue(a.year == b.year && a.month == b.month);
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
@@ -631,14 +662,19 @@ contract DateTimeLibTest is TestPlus {
         uint256 result = DateTimeLib.addHours(timestamp, numHours);
         DateTime memory a;
         DateTime memory b;
-        (a.year, a.month, a.day, a.hour, a.minute, a.second) = DateTimeLib.timestampToDateTime(timestamp);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
-        if (numHours != 0) assertTrue(a.year != b.year || a.month != b.month || a.day != b.day || a.hour != b.hour);
+        (a.year, a.month, a.day, a.hour, a.minute, a.second) =
+            DateTimeLib.timestampToDateTime(timestamp);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
+        if (numHours != 0) {
+            assertTrue(a.year != b.year || a.month != b.month || a.day != b.day || a.hour != b.hour);
+        }
         assertTrue(a.minute == b.minute && a.second == b.second);
         uint256 diff = DateTimeLib.diffHours(timestamp, result);
         assertTrue(diff == numHours);
         result = DateTimeLib.subHours(result, numHours);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
         assertTrue(a.year == b.year && a.month == b.month);
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
@@ -650,17 +686,22 @@ contract DateTimeLibTest is TestPlus {
         uint256 result = DateTimeLib.addMinutes(timestamp, numMinutes);
         DateTime memory a;
         DateTime memory b;
-        (a.year, a.month, a.day, a.hour, a.minute, a.second) = DateTimeLib.timestampToDateTime(timestamp);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
-        if (numMinutes != 0)
+        (a.year, a.month, a.day, a.hour, a.minute, a.second) =
+            DateTimeLib.timestampToDateTime(timestamp);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
+        if (numMinutes != 0) {
             assertTrue(
-                (a.year != b.year || a.month != b.month || a.day != b.day) || (a.hour != b.hour || a.minute != b.minute)
+                (a.year != b.year || a.month != b.month || a.day != b.day)
+                    || (a.hour != b.hour || a.minute != b.minute)
             );
+        }
         assertTrue(a.second == b.second);
         uint256 diff = DateTimeLib.diffMinutes(timestamp, result);
         assertTrue(diff == numMinutes);
         result = DateTimeLib.subMinutes(result, numMinutes);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
         assertTrue(a.year == b.year && a.month == b.month);
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
@@ -672,26 +713,30 @@ contract DateTimeLibTest is TestPlus {
         uint256 result = DateTimeLib.addSeconds(timestamp, numSeconds);
         DateTime memory a;
         DateTime memory b;
-        (a.year, a.month, a.day, a.hour, a.minute, a.second) = DateTimeLib.timestampToDateTime(timestamp);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
-        if (numSeconds != 0)
+        (a.year, a.month, a.day, a.hour, a.minute, a.second) =
+            DateTimeLib.timestampToDateTime(timestamp);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
+        if (numSeconds != 0) {
             assertTrue(
-                (a.year != b.year || a.month != b.month || a.day != b.day) ||
-                    (a.hour != b.hour || a.minute != b.minute || a.second != b.second)
+                (a.year != b.year || a.month != b.month || a.day != b.day)
+                    || (a.hour != b.hour || a.minute != b.minute || a.second != b.second)
             );
+        }
         uint256 diff = DateTimeLib.diffSeconds(timestamp, result);
         assertTrue(diff == numSeconds);
         result = DateTimeLib.subSeconds(result, numSeconds);
-        (b.year, b.month, b.day, b.hour, b.minute, b.second) = DateTimeLib.timestampToDateTime(result);
+        (b.year, b.month, b.day, b.hour, b.minute, b.second) =
+            DateTimeLib.timestampToDateTime(result);
         assertTrue(a.year == b.year && a.month == b.month);
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
-    function _dateToEpochDayOriginal(
-        uint256 year,
-        uint256 month,
-        uint256 day
-    ) internal pure returns (uint256) {
+    function _dateToEpochDayOriginal(uint256 year, uint256 month, uint256 day)
+        internal
+        pure
+        returns (uint256)
+    {
         unchecked {
             if (month <= 2) {
                 year -= 1;
@@ -704,23 +749,20 @@ contract DateTimeLibTest is TestPlus {
         }
     }
 
-    function _dateToEpochDayOriginal2(
-        uint256 year,
-        uint256 month,
-        uint256 day
-    ) internal pure returns (uint256 _days) {
+    function _dateToEpochDayOriginal2(uint256 year, uint256 month, uint256 day)
+        internal
+        pure
+        returns (uint256 _days)
+    {
         unchecked {
             int256 _year = int256(year);
             int256 _month = int256(month);
             int256 _day = int256(day);
 
             int256 _m = (_month - 14) / 12;
-            int256 __days = _day -
-                32075 +
-                ((1461 * (_year + 4800 + _m)) / 4) +
-                ((367 * (_month - 2 - _m * 12)) / 12) -
-                ((3 * ((_year + 4900 + _m) / 100)) / 4) -
-                2440588;
+            int256 __days = _day - 32075 + ((1461 * (_year + 4800 + _m)) / 4)
+                + ((367 * (_month - 2 - _m * 12)) / 12) - ((3 * ((_year + 4900 + _m) / 100)) / 4)
+                - 2440588;
 
             _days = uint256(__days);
         }
@@ -729,11 +771,7 @@ contract DateTimeLibTest is TestPlus {
     function _epochDayToDateOriginal(uint256 timestamp)
         internal
         pure
-        returns (
-            uint256 year,
-            uint256 month,
-            uint256 day
-        )
+        returns (uint256 year, uint256 month, uint256 day)
     {
         unchecked {
             timestamp += 719468;
@@ -754,11 +792,7 @@ contract DateTimeLibTest is TestPlus {
     function _epochDayToDateOriginal2(uint256 _days)
         internal
         pure
-        returns (
-            uint256 year,
-            uint256 month,
-            uint256 day
-        )
+        returns (uint256 year, uint256 month, uint256 day)
     {
         unchecked {
             int256 __days = int256(_days);

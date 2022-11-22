@@ -22,5 +22,8 @@ jobs:
       - name: Install Dependencies
         run: forge install
 
+      - name: Run Lint Check
+        run: forge fmt --check
+
       - name: Run Tests with ${{ matrix.profile }}
         run: FOUNDRY_PROFILE=${{ matrix.profile }} forge test

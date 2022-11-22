@@ -58,7 +58,11 @@ contract CREATE3Test is Test {
         uint8 decimals
     ) public {
         MockERC20 deployed = MockERC20(
-            CREATE3.deploy(salt, abi.encodePacked(type(MockERC20).creationCode, abi.encode(name, symbol, decimals)), 0)
+            CREATE3.deploy(
+                salt,
+                abi.encodePacked(type(MockERC20).creationCode, abi.encode(name, symbol, decimals)),
+                0
+            )
         );
 
         assertEq(address(deployed), CREATE3.getDeployed(salt));

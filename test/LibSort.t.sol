@@ -468,7 +468,9 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedElementInUniquifiedArray(uint256[] memory a, uint256 randomness) public {
+    function testSearchSortedElementInUniquifiedArray(uint256[] memory a, uint256 randomness)
+        public
+    {
         unchecked {
             vm.assume(a.length != 0);
             LibSort.sort(a);
@@ -504,7 +506,9 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedElementNotInArrayNarrow(uint256[] memory a, uint256 randomness) public {
+    function testSearchSortedElementNotInArrayNarrow(uint256[] memory a, uint256 randomness)
+        public
+    {
         unchecked {
             for (uint256 i; i != a.length; ++i) {
                 a[i] = a[i] % 32;
@@ -513,7 +517,9 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedElementNotInUniquifiedArray(uint256[] memory a, uint256 randomness) public {
+    function testSearchSortedElementNotInUniquifiedArray(uint256[] memory a, uint256 randomness)
+        public
+    {
         unchecked {
             vm.assume(a.length != 0);
             LibSort.sort(a);
@@ -531,7 +537,10 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedElementNotInUniquifiedArrayNarrow(uint256[] memory a, uint256 randomness) public {
+    function testSearchSortedElementNotInUniquifiedArrayNarrow(
+        uint256[] memory a,
+        uint256 randomness
+    ) public {
         unchecked {
             for (uint256 i; i != a.length; ++i) {
                 a[i] = a[i] % 32;
@@ -613,11 +622,7 @@ contract LibSortTest is TestPlus {
         _sortOriginal(a, 0, int256(a.length - 1));
     }
 
-    function _sortOriginal(
-        uint256[] memory arr,
-        int256 left,
-        int256 right
-    ) internal pure {
+    function _sortOriginal(uint256[] memory arr, int256 left, int256 right) internal pure {
         int256 i = left;
         int256 j = right;
         if (i == j) return;
@@ -667,18 +672,14 @@ contract LibSortTest is TestPlus {
     function _boundArrayLength(uint256[] memory a, uint256 n) private pure {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(mload(a), n)) {
-                mstore(a, n)
-            }
+            if iszero(lt(mload(a), n)) { mstore(a, n) }
         }
     }
 
     function _boundArrayLength(address[] memory a, uint256 n) private pure {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(mload(a), n)) {
-                mstore(a, n)
-            }
+            if iszero(lt(mload(a), n)) { mstore(a, n) }
         }
     }
 }

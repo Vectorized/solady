@@ -55,11 +55,9 @@ library LibPRNG {
     function uniform(PRNG memory prng, uint256 upper) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // prettier-ignore
             for {} 1 {} {
                 result := keccak256(prng, 0x20)
                 mstore(prng, result)
-                // prettier-ignore
                 if iszero(lt(result, mod(sub(0, upper), upper))) { break }
             }
             result := mod(result, upper)
@@ -74,7 +72,6 @@ library LibPRNG {
             let w := not(0)
             let mask := shr(128, w)
             if n {
-                // prettier-ignore
                 for { a := add(a, 0x20) } 1 {} {
                     // We can just directly use `keccak256`, cuz
                     // the other approaches don't save much.
@@ -88,7 +85,6 @@ library LibPRNG {
                     {
                         let j := add(a, shl(5, mod(shr(128, r), n)))
                         n := add(n, w) // `sub(n, 1)`.
-                        // prettier-ignore
                         if iszero(n) { break }
 
                         let i := add(a, shl(5, n))
@@ -96,11 +92,10 @@ library LibPRNG {
                         mstore(i, mload(j))
                         mstore(j, t)
                     }
-                    
+
                     {
                         let j := add(a, shl(5, mod(and(r, mask), n)))
                         n := add(n, w) // `sub(n, 1)`.
-                        // prettier-ignore
                         if iszero(n) { break }
 
                         let i := add(a, shl(5, n))
