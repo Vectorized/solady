@@ -396,7 +396,9 @@ contract SafeTransferLibTest is TestPlus {
         if (
             recipient.code.length > 0 || uint256(uint160(recipient)) <= 18
                 || recipient == msg.sender
-        ) return;
+        ) {
+            return;
+        }
 
         amount = _bound(amount, 0, address(this).balance);
 

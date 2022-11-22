@@ -61,13 +61,13 @@ library MerkleProofLib {
                 // For the case where `proof.length + leafs.length == 1`.
                 if iszero(flags.length) {
                     // `isValid = (proof.length == 1 ? proof[0] : leafs[0]) == root`.
-                    isValid :=
-                        eq(
-                            calldataload(
-                                xor(leafs.offset, mul(xor(proof.offset, leafs.offset), proof.length))
-                            ),
-                            root
-                        )
+                    // forgefmt: disable-next-item
+                    isValid := eq(
+                        calldataload(
+                            xor(leafs.offset, mul(xor(proof.offset, leafs.offset), proof.length))
+                        ),
+                        root
+                    )
                     break
                 }
 

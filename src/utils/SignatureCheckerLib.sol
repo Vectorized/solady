@@ -38,26 +38,26 @@ library SignatureCheckerLib {
             // Copy the `signature` over.
             calldatacopy(add(m, 0x64), signature.offset, signature.length)
 
-            isValid :=
+            // forgefmt: disable-next-item
+            isValid := and(
                 and(
-                    and(
-                        // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                        eq(mload(0x00), f),
-                        // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                        eq(returndatasize(), 0x20)
-                    ),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer, // The `signer` address.
-                        m, // Offset of calldata in memory.
-                        add(signature.length, 0x64), // Length of calldata in memory.
-                        0x00, // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(0x00), f),
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
+                    eq(returndatasize(), 0x20)
+                ),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    signer, // The `signer` address.
+                    m, // Offset of calldata in memory.
+                    add(signature.length, 0x64), // Length of calldata in memory.
+                    0x00, // Offset of returndata.
+                    0x20 // Length of returndata to write.
                 )
+            )
         }
     }
 
@@ -92,26 +92,26 @@ library SignatureCheckerLib {
             mstore(add(m, 0x84), shr(1, shl(1, vs))) // Store `s` of the signature.
             mstore8(add(m, 0xa4), add(shr(255, vs), 27)) // Store `v` of the signature.
 
-            isValid :=
+            // forgefmt: disable-next-item
+            isValid := and(
                 and(
-                    and(
-                        // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                        eq(mload(0x00), f),
-                        // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                        eq(returndatasize(), 0x20)
-                    ),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer, // The `signer` address.
-                        m, // Offset of calldata in memory.
-                        0xa5, // Length of calldata in memory.
-                        0x00, // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(0x00), f),
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
+                    eq(returndatasize(), 0x20)
+                ),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    signer, // The `signer` address.
+                    m, // Offset of calldata in memory.
+                    0xa5, // Length of calldata in memory.
+                    0x00, // Offset of returndata.
+                    0x20 // Length of returndata to write.
                 )
+            )
         }
     }
 
@@ -146,26 +146,26 @@ library SignatureCheckerLib {
             mstore(add(m, 0x84), s) // Store `s` of the signature.
             mstore8(add(m, 0xa4), v) // Store `v` of the signature.
 
-            isValid :=
+            // forgefmt: disable-next-item
+            isValid := and(
                 and(
-                    and(
-                        // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                        eq(mload(0x00), f),
-                        // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                        eq(returndatasize(), 0x20)
-                    ),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer, // The `signer` address.
-                        m, // Offset of calldata in memory.
-                        0xa5, // Length of calldata in memory.
-                        0x00, // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(0x00), f),
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
+                    eq(returndatasize(), 0x20)
+                ),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    signer, // The `signer` address.
+                    m, // Offset of calldata in memory.
+                    0xa5, // Length of calldata in memory.
+                    0x00, // Offset of returndata.
+                    0x20 // Length of returndata to write.
                 )
+            )
         }
     }
 }
