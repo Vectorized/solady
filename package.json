@@ -9,8 +9,5 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vectorized/solady.git"
-  },
-  "scripts": {
-    "lint": "prettier --write **.sol"
   }
 }
