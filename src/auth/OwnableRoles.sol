@@ -346,7 +346,7 @@ abstract contract OwnableRoles {
             let o := add(ordinals, 0x20)
             // `shl` 5 is equivalent to multiplying by 0x20.
             let end := add(o, shl(5, mload(ordinals)))
-            // forgefmt: disable-next-item
+
             for {} iszero(eq(o, end)) { o := add(o, 0x20) } {
                 roles := or(roles, shl(and(mload(o), 0xff), 1))
             }
