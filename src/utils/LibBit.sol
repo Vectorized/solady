@@ -27,9 +27,15 @@ library LibBit {
             x := or(x, shr(8, x))
             x := or(x, shr(16, x))
 
-            // prettier-ignore
-            r := or(r, byte(shr(251, mul(x, shl(224, 0x07c4acdd))),
-                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f))
+            // forgefmt: disable-next-line
+            r :=
+                or(
+                    r,
+                    byte(
+                        shr(251, mul(x, shl(224, 0x07c4acdd))),
+                        0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+                    )
+                )
         }
     }
 
@@ -53,9 +59,18 @@ library LibBit {
             x := or(x, shr(8, x))
             x := or(x, shr(16, x))
 
-            // prettier-ignore
-            r := sub(t, or(r, byte(shr(251, mul(x, shl(224, 0x07c4acdd))),
-                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f)))
+            // forgefmt: disable-next-item
+            r :=
+                sub(
+                    t,
+                    or(
+                        r,
+                        byte(
+                            shr(251, mul(x, shl(224, 0x07c4acdd))),
+                            0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+                        )
+                    )
+                )
         }
     }
 
@@ -78,9 +93,15 @@ library LibBit {
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
 
             // For the remaining 32 bits, use a De Bruijn lookup.
-            // prettier-ignore
-            r := or(r, byte(shr(251, mul(shr(r, x), shl(224, 0x077cb531))), 
-                0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09))
+            // forgefmt: disable-next-line
+            r :=
+                or(
+                    r,
+                    byte(
+                        shr(251, mul(shr(r, x), shl(224, 0x077cb531))),
+                        0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09
+                    )
+                )
         }
     }
 

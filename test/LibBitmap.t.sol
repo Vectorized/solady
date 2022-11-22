@@ -90,17 +90,11 @@ contract LibBitmapTest is TestPlus {
         testBitmapSetTo(555555, false, 0);
     }
 
-    function testBitmapSetTo(
-        uint256 index,
-        bool shouldSet,
-        uint256 randomness
-    ) public {
+    function testBitmapSetTo(uint256 index, bool shouldSet, uint256 randomness) public {
         bool shouldSetBrutalized;
         /// @solidity memory-safe-assembly
         assembly {
-            if shouldSet {
-                shouldSetBrutalized := or(iszero(randomness), randomness)
-            }
+            if shouldSet { shouldSetBrutalized := or(iszero(randomness), randomness) }
         }
         setTo(index, shouldSetBrutalized);
         assertEq(get(index), shouldSet);
@@ -196,11 +190,7 @@ contract LibBitmapTest is TestPlus {
         _testBitmapPopCount(10, 512);
     }
 
-    function testBitmapPopCount(
-        uint256 start,
-        uint256 amount,
-        uint256 randomness
-    ) public {
+    function testBitmapPopCount(uint256 start, uint256 amount, uint256 randomness) public {
         unchecked {
             uint256 n = 1000;
             uint256 expectedCount;
@@ -348,11 +338,11 @@ contract LibBitmapTest is TestPlus {
         }
     }
 
-    function _boundStartAndAmount(
-        uint256 start,
-        uint256 amount,
-        uint256 n
-    ) private pure returns (uint256 boundedStart, uint256 boundedAmount) {
+    function _boundStartAndAmount(uint256 start, uint256 amount, uint256 n)
+        private
+        pure
+        returns (uint256 boundedStart, uint256 boundedAmount)
+    {
         unchecked {
             boundedStart = start % n;
             uint256 end = boundedStart + (amount % n);

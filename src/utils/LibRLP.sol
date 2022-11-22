@@ -27,7 +27,7 @@ library LibRLP {
     function computeAddress(address deployer, uint256 nonce) internal pure returns (address deployed) {
         /// @solidity memory-safe-assembly
         assembly {
-            // prettier-ignore
+            // forgefmt: disable-next-item
             for {} 1 {} {
                 // The integer zero is treated as an empty byte string,
                 // and as a result it only has a length prefix, 0x80,
@@ -49,7 +49,7 @@ library LibRLP {
                 }
                 let i := 8
                 // Just use a loop to generalize all the way with minimal bytecode size.
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} shr(i, nonce) { i := add(i, 8) } {}
                 // `shr` 3 is equivalent to dividing by 8.
                 i := shr(3, i)

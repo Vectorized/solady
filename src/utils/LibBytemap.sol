@@ -28,11 +28,7 @@ library LibBytemap {
     }
 
     /// @dev Updates the uint8 value of the byte at `index` in `bytemap`.
-    function set(
-        Bytemap storage bytemap,
-        uint256 index,
-        uint8 value
-    ) internal {
+    function set(Bytemap storage bytemap, uint256 index, uint8 value) internal {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, bytemap.slot)

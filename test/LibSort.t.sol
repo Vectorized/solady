@@ -613,11 +613,7 @@ contract LibSortTest is TestPlus {
         _sortOriginal(a, 0, int256(a.length - 1));
     }
 
-    function _sortOriginal(
-        uint256[] memory arr,
-        int256 left,
-        int256 right
-    ) internal pure {
+    function _sortOriginal(uint256[] memory arr, int256 left, int256 right) internal pure {
         int256 i = left;
         int256 j = right;
         if (i == j) return;
@@ -667,18 +663,14 @@ contract LibSortTest is TestPlus {
     function _boundArrayLength(uint256[] memory a, uint256 n) private pure {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(mload(a), n)) {
-                mstore(a, n)
-            }
+            if iszero(lt(mload(a), n)) { mstore(a, n) }
         }
     }
 
     function _boundArrayLength(address[] memory a, uint256 n) private pure {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(mload(a), n)) {
-                mstore(a, n)
-            }
+            if iszero(lt(mload(a), n)) { mstore(a, n) }
         }
     }
 }

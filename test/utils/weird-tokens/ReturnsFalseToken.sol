@@ -51,11 +51,7 @@ contract ReturnsFalseToken {
         return false;
     }
 
-    function transferFrom(
-        address,
-        address,
-        uint256
-    ) public virtual returns (bool) {
+    function transferFrom(address, address, uint256) public virtual returns (bool) {
         return false;
     }
 }

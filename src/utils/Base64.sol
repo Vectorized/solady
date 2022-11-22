@@ -10,11 +10,7 @@ library Base64 {
     /// See: https://datatracker.ietf.org/doc/html/rfc4648
     /// @param fileSafe  Whether to replace '+' with '-' and '/' with '_'.
     /// @param noPadding Whether to strip away the padding.
-    function encode(
-        bytes memory data,
-        bool fileSafe,
-        bool noPadding
-    ) internal pure returns (string memory result) {
+    function encode(bytes memory data, bool fileSafe, bool noPadding) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             let dataLength := mload(data)
@@ -40,7 +36,7 @@ library Base64 {
                 let end := add(ptr, encodedLength)
 
                 // Run over the input, 3 bytes at a time.
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} 1 {} {
                     data := add(data, 3) // Advance 3 bytes.
                     let input := mload(data)
@@ -52,7 +48,7 @@ library Base64 {
                     mstore8(add(ptr, 3), mload(and(        input , 0x3F)))
                     
                     ptr := add(ptr, 4) // Advance 4 bytes.
-                    // prettier-ignore
+                    // forgefmt: disable-next-item
                     if iszero(lt(ptr, end)) { break }
                 }
 
@@ -117,10 +113,8 @@ library Base64 {
                 switch and(dataLength, 3)
                 case 0 {
                     // If padded.
-                    decodedLength := sub(
-                        decodedLength,
-                        add(eq(and(mload(end), 0xFF), 0x3d), eq(and(mload(end), 0xFFFF), 0x3d3d))
-                    )
+                    decodedLength :=
+                        sub(decodedLength, add(eq(and(mload(end), 0xFF), 0x3d), eq(and(mload(end), 0xFFFF), 0x3d3d)))
                 }
                 default {
                     // If non-padded.
@@ -143,7 +137,7 @@ library Base64 {
                 mstore(0x3b, 0x04080c1014181c2024282c3034383c4044484c5054585c6064)
                 mstore(0x1a, 0xf8fcf800fcd0d4d8dce0e4e8ecf0f4)
 
-                // prettier-ignore
+                // forgefmt: disable-next-item
                 for {} 1 {} {
                     // Read 4 bytes.
                     data := add(data, 4)
@@ -163,7 +157,7 @@ library Base64 {
 
                     ptr := add(ptr, 3)
                     
-                    // prettier-ignore
+                    // forgefmt: disable-next-item
                     if iszero(lt(data, end)) { break }
                 }
 
