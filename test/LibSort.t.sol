@@ -5,22 +5,6 @@ import "./utils/TestPlus.sol";
 import "src/utils/LibSort.sol";
 
 contract LibSortTest is TestPlus {
-    function testArglessRandom() public {
-        for (uint256 i = 0; i < 1111; ++i) {
-            assembly {
-                mstore(0x00, 0)
-                mstore(0x20, 0)
-            }
-            uint256 r0 = _random();
-            assembly {
-                mstore(0x00, 0)
-                mstore(0x20, 0)
-            }
-            uint256 r1 = _random();
-            assertTrue(r0 != r1);
-        }
-    }
-
     function testInsertionSortAddressesDifferential(uint256[] memory aRaw) public {
         unchecked {
             _boundArrayLength(aRaw, 32);
