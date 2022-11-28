@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {OwnableRoles} from "../../../src/auth/OwnableRoles.sol";
+import {Ownable, OwnableRoles} from "../../../src/auth/OwnableRoles.sol";
 
 contract MockOwnableRoles is OwnableRoles {
     bool public flag;
@@ -51,85 +51,58 @@ contract MockOwnableRoles is OwnableRoles {
         _removeRoles(_brutalizedAddress(user), roles);
     }
 
-    function grantRoles(address user, uint256 roles)
-        public
-        payable
-        virtual
-        override (OwnableRoles)
-    {
-        OwnableRoles.grantRoles(_brutalizedAddress(user), roles);
+    function grantRoles(address user, uint256 roles) public payable virtual override {
+        super.grantRoles(_brutalizedAddress(user), roles);
     }
 
-    function revokeRoles(address user, uint256 roles)
-        public
-        payable
-        virtual
-        override (OwnableRoles)
-    {
-        OwnableRoles.revokeRoles(_brutalizedAddress(user), roles);
+    function revokeRoles(address user, uint256 roles) public payable virtual override {
+        super.revokeRoles(_brutalizedAddress(user), roles);
     }
 
-    function completeOwnershipHandover(address pendingOwner)
-        public
-        payable
-        virtual
-        override (OwnableRoles)
-    {
-        OwnableRoles.completeOwnershipHandover(_brutalizedAddress(pendingOwner));
+    function completeOwnershipHandover(address pendingOwner) public payable virtual override {
+        super.completeOwnershipHandover(_brutalizedAddress(pendingOwner));
     }
 
     function hasAnyRole(address user, uint256 roles)
         public
         view
         virtual
-        override (OwnableRoles)
+        override
         returns (bool result)
     {
-        result = _checkedBool(OwnableRoles.hasAnyRole(_brutalizedAddress(user), roles));
+        result = _checkedBool(super.hasAnyRole(_brutalizedAddress(user), roles));
     }
 
     function hasAllRoles(address user, uint256 roles)
         public
         view
         virtual
-        override (OwnableRoles)
+        override
         returns (bool result)
     {
-        result = _checkedBool(OwnableRoles.hasAllRoles(_brutalizedAddress(user), roles));
+        result = _checkedBool(super.hasAllRoles(_brutalizedAddress(user), roles));
     }
 
-    function transferOwnership(address newOwner) public payable virtual override (OwnableRoles) {
-        OwnableRoles.transferOwnership(_brutalizedAddress(newOwner));
+    function transferOwnership(address newOwner) public payable virtual override {
+        super.transferOwnership(_brutalizedAddress(newOwner));
     }
 
-    function rolesOf(address user)
-        public
-        view
-        virtual
-        override (OwnableRoles)
-        returns (uint256 result)
-    {
-        result = OwnableRoles.rolesOf(_brutalizedAddress(user));
+    function rolesOf(address user) public view virtual override returns (uint256 result) {
+        result = super.rolesOf(_brutalizedAddress(user));
     }
 
     function ownershipHandoverExpiresAt(address pendingOwner)
         public
         view
         virtual
-        override (OwnableRoles)
+        override
         returns (uint256 result)
     {
-        result = OwnableRoles.ownershipHandoverExpiresAt(_brutalizedAddress(pendingOwner));
+        result = super.ownershipHandoverExpiresAt(_brutalizedAddress(pendingOwner));
     }
 
-    function ownershipHandoverValidFor()
-        public
-        view
-        virtual
-        override (OwnableRoles)
-        returns (uint64 result)
-    {
-        result = OwnableRoles.ownershipHandoverValidFor();
+    function ownershipHandoverValidFor() public view virtual override returns (uint64 result) {
+        result = super.ownershipHandoverValidFor();
         /// @solidity memory-safe-assembly
         assembly {
             // Some acrobatics to make the brutalized bits psuedorandomly
