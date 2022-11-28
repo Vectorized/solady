@@ -37,13 +37,11 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testInsertionSortPsuedorandom(uint256 randomness) public {
+    function testInsertionSortPsuedorandom(uint256) public {
         unchecked {
             uint256[] memory a = new uint256[](32);
-            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                randomness = _stepRandomness(randomness);
-                a[i] = randomness;
+                a[i] = _random();
             }
             LibSort.insertionSort(a);
             assertTrue(_isSorted(a));
@@ -103,13 +101,11 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSortPsuedorandom(uint256 randomness) public {
+    function testSortPsuedorandom(uint256) public {
         unchecked {
             uint256[] memory a = new uint256[](100);
-            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                randomness = _stepRandomness(randomness);
-                a[i] = randomness;
+                a[i] = _random();
             }
             LibSort.sort(a);
             assertTrue(_isSorted(a));
@@ -120,13 +116,11 @@ contract LibSortTest is TestPlus {
         testSortPsuedorandom(123456789);
     }
 
-    function testSortPsuedorandomNonuniform(uint256 randomness) public {
+    function testSortPsuedorandomNonuniform(uint256) public {
         unchecked {
             uint256[] memory a = new uint256[](100);
-            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                randomness = _stepRandomness(randomness);
-                a[i] = randomness << (i & 8 == 0 ? 128 : 0);
+                a[i] = _random() << (i & 8 == 0 ? 128 : 0);
             }
             LibSort.sort(a);
             assertTrue(_isSorted(a));
@@ -173,11 +167,9 @@ contract LibSortTest is TestPlus {
     function testSortTestOverhead() public {
         unchecked {
             uint256[] memory a = new uint256[](100);
-            uint256 randomness = 123456789;
             uint256 mask = (1 << 128) - 1;
             for (uint256 i; i < a.length; ++i) {
-                a[i] = (i << 128) | (randomness & mask);
-                randomness = _stepRandomness(randomness);
+                a[i] = (i << 128) | (_random() & mask);
             }
             assertTrue(_isSorted(a));
         }
@@ -186,16 +178,14 @@ contract LibSortTest is TestPlus {
     function testSortAddressesPsuedorandomBrutalizeUpperBits() public {
         unchecked {
             address[] memory a = new address[](100);
-            uint256 randomness = 123456789;
             for (uint256 i; i < a.length; ++i) {
-                address addr = address(uint160(randomness));
-                randomness = _stepRandomness(randomness);
+                address addr = address(uint160(_random()));
+                uint256 randomness = _random();
                 /// @solidity memory-safe-assembly
                 assembly {
                     addr := or(addr, shl(160, randomness))
                 }
                 a[i] = addr;
-                randomness = _stepRandomness(randomness);
             }
             LibSort.sort(a);
             assertTrue(_isSorted(a));
@@ -226,13 +216,11 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSortAddressesPsuedorandom(uint256 randomness) public {
+    function testSortAddressesPsuedorandom(uint256) public {
         unchecked {
             address[] memory a = new address[](100);
-            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                randomness = _stepRandomness(randomness);
-                a[i] = address(uint160(randomness));
+                a[i] = address(uint160(_random()));
             }
             LibSort.sort(a);
             assertTrue(_isSorted(a));
@@ -265,13 +253,11 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSortOriginalPsuedorandom(uint256 randomness) public {
+    function testSortOriginalPsuedorandom(uint256) public {
         unchecked {
             uint256[] memory a = new uint256[](100);
-            randomness = _stepRandomness(randomness);
             for (uint256 i; i < a.length; ++i) {
-                randomness = _stepRandomness(randomness);
-                a[i] = randomness;
+                a[i] = _random();
             }
             _sortOriginal(a);
             assertTrue(_isSorted(a));

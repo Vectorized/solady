@@ -879,7 +879,7 @@ contract LibStringTest is TestPlus {
         assertEq(LibString.escapeHTML("abc>_123"), "abc&gt;_123");
     }
 
-    function testStringEscapeHTML(uint256 randomness) public brutalizeMemory {
+    function testStringEscapeHTML(uint256) public brutalizeMemory {
         string[] memory originalChars = new string[](5);
         originalChars[0] = '"';
         originalChars[1] = "&";
@@ -894,10 +894,10 @@ contract LibStringTest is TestPlus {
         escapedChars[3] = "&lt;";
         escapedChars[4] = "&gt;";
 
-        string memory filler0 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        string memory filler1 = _generateString(randomness, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler0 = _generateString(_random(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler1 = _generateString(_random(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-        uint256 r = _stepRandomness(randomness) % 5;
+        uint256 r = _random() % 5;
 
         string memory expectedResult =
             string(bytes.concat(bytes(filler0), bytes(escapedChars[r]), bytes(filler1)));

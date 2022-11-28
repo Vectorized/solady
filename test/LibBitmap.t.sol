@@ -101,7 +101,7 @@ contract LibBitmapTest is TestPlus {
     }
 
     function testBitmapSetTo(uint256 index, uint256 randomness) public {
-        randomness = _stepRandomness(randomness);
+        randomness = _random();
         unchecked {
             for (uint256 i; i < 5; ++i) {
                 bool shouldSet;
@@ -109,7 +109,7 @@ contract LibBitmapTest is TestPlus {
                 assembly {
                     shouldSet := and(shr(i, randomness), 1)
                 }
-                testBitmapSetTo(index, shouldSet, randomness);
+                testBitmapSetTo(index, shouldSet, _random());
             }
         }
     }
@@ -150,12 +150,9 @@ contract LibBitmapTest is TestPlus {
 
     function testBitmapSetBatch() public {
         unchecked {
-            uint256 randomness = 123;
             for (uint256 i; i < 8; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 start = randomness;
-                randomness = _stepRandomness(randomness);
-                uint256 amount = randomness;
+                uint256 start = _random();
+                uint256 amount = _random();
                 _testBitmapSetBatch(start, amount);
             }
         }
@@ -171,12 +168,9 @@ contract LibBitmapTest is TestPlus {
 
     function testBitmapUnsetBatch() public {
         unchecked {
-            uint256 randomness = 123;
             for (uint256 i; i < 8; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 start = randomness;
-                randomness = _stepRandomness(randomness);
-                uint256 amount = randomness;
+                uint256 start = _random();
+                uint256 amount = _random();
                 _testBitmapUnsetBatch(start, amount);
             }
         }
@@ -190,7 +184,7 @@ contract LibBitmapTest is TestPlus {
         _testBitmapPopCount(10, 512);
     }
 
-    function testBitmapPopCount(uint256 start, uint256 amount, uint256 randomness) public {
+    function testBitmapPopCount(uint256, uint256 start, uint256 amount) public {
         unchecked {
             uint256 n = 1000;
             uint256 expectedCount;
@@ -199,16 +193,15 @@ contract LibBitmapTest is TestPlus {
             (start, amount) = _boundStartAndAmount(start, amount, n);
 
             uint256 jPrev = 0xff + 1;
-            uint256 j = randomness & 0xff;
+            uint256 j = _random() & 0xff;
             while (true) {
                 bitmap.set(j);
                 if (j != jPrev && start <= j && j < start + amount) {
                     expectedCount += 1;
                 }
-                if (start + amount <= j && randomness & 7 == 0) break;
-                randomness = _stepRandomness(randomness);
+                if (start + amount <= j && _random() & 7 == 0) break;
                 jPrev = j;
-                j += randomness & 0xff;
+                j += _random() & 0xff;
             }
             assertEq(bitmap.popCount(start, amount), expectedCount);
         }
@@ -216,14 +209,10 @@ contract LibBitmapTest is TestPlus {
 
     function testBitmapPopCount() public {
         unchecked {
-            uint256 randomness = 123;
             for (uint256 i; i < 8; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 start = randomness;
-                randomness = _stepRandomness(randomness);
-                uint256 amount = randomness;
-                randomness = _stepRandomness(randomness);
-                testBitmapPopCount(start, amount, randomness);
+                uint256 start = _random();
+                uint256 amount = _random();
+                testBitmapPopCount(start, amount, _random());
             }
         }
     }
@@ -261,19 +250,19 @@ contract LibBitmapTest is TestPlus {
         unchecked {
             _resetBitmap(0, n / 256 + 1);
             before = before % n;
-            randomness = randomness % n;
+            randomness = _random() % n;
         }
         bitmap.set(randomness);
         if (randomness <= before) {
             assertEq(bitmap.findLastSet(before), randomness);
-            uint256 nextLcg = _stepRandomness(randomness);
+            uint256 nextLcg = _random();
             bitmap.set(nextLcg);
             if (nextLcg <= before) {
                 assertEq(bitmap.findLastSet(before), (randomness < nextLcg ? nextLcg : randomness));
             }
         } else {
             assertEq(bitmap.findLastSet(before), LibBitmap.NOT_FOUND);
-            uint256 nextLcg = _stepRandomness(randomness);
+            uint256 nextLcg = _random();
             bitmap.set(nextLcg);
             if (nextLcg <= before) {
                 assertEq(bitmap.findLastSet(before), nextLcg);
