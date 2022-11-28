@@ -109,6 +109,7 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // If the caller is not the stored owner.
+            // Note: `_ROLE_SLOT_SEED` is equal to `_OWNER_SLOT_NOT`.
             if iszero(eq(caller(), sload(not(_ROLE_SLOT_SEED)))) {
                 // Compute the role slot.
                 mstore(0x0c, _ROLE_SLOT_SEED)
@@ -136,6 +137,7 @@ abstract contract OwnableRoles is Ownable {
             // of the value and `roles` is zero, revert.
             if iszero(and(sload(keccak256(0x0c, 0x20)), roles)) {
                 // If the caller is not the stored owner.
+                // Note: `_ROLE_SLOT_SEED` is equal to `_OWNER_SLOT_NOT`.
                 if iszero(eq(caller(), sload(not(_ROLE_SLOT_SEED)))) {
                     mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                     revert(0x1c, 0x04)
