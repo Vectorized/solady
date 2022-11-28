@@ -5,6 +5,12 @@ import "./utils/TestPlus.sol";
 import "./utils/mocks/MockOwnableRoles.sol";
 
 contract OwnableRolesTest is TestPlus {
+    error Unauthorized();
+
+    error NewOwnerIsZeroAddress();
+
+    error NoHandoverRequest();
+
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
     event OwnershipHandoverRequested(address indexed pendingOwner);
@@ -67,13 +73,13 @@ contract OwnableRolesTest is TestPlus {
 
         if (newOwner == address(0) || setNewOwnerToZeroAddress) {
             newOwner = address(0);
-            vm.expectRevert(OwnableRoles.NewOwnerIsZeroAddress.selector);
+            vm.expectRevert(NewOwnerIsZeroAddress.selector);
         } else if (callerIsOwner) {
             vm.expectEmit(true, true, true, true);
             emit OwnershipTransferred(address(this), newOwner);
         } else {
             vm.prank(newOwner);
-            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+            vm.expectRevert(Unauthorized.selector);
         }
 
         mockOwnableRoles.transferOwnership(newOwner);
@@ -113,7 +119,7 @@ contract OwnableRolesTest is TestPlus {
             emit RolesUpdated(user, rolesToGrant);
         } else {
             vm.prank(user);
-            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+            vm.expectRevert(Unauthorized.selector);
         }
         mockOwnableRoles.grantRoles(user, rolesToGrant);
 
@@ -132,7 +138,7 @@ contract OwnableRolesTest is TestPlus {
             mockOwnableRoles.revokeRoles(user, rolesToRevoke);
         } else {
             vm.prank(user);
-            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+            vm.expectRevert(Unauthorized.selector);
             mockOwnableRoles.revokeRoles(user, rolesToRevoke);
             return;
         }
@@ -223,7 +229,7 @@ contract OwnableRolesTest is TestPlus {
 
         if (!callerIsOwner) {
             vm.prank(nonOwner);
-            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+            vm.expectRevert(Unauthorized.selector);
         }
         mockOwnableRoles.updateFlagWithOnlyOwner();
     }
@@ -234,7 +240,7 @@ contract OwnableRolesTest is TestPlus {
         mockOwnableRoles.grantRoles(user, rolesToGrant);
 
         if (rolesToGrant & rolesToCheck == 0) {
-            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+            vm.expectRevert(Unauthorized.selector);
         }
         vm.prank(user);
         mockOwnableRoles.updateFlagWithOnlyRoles(rolesToCheck);
@@ -251,7 +257,7 @@ contract OwnableRolesTest is TestPlus {
         mockOwnableRoles.grantRoles(user, rolesToGrant);
 
         if ((rolesToGrant & rolesToCheck == 0) && !callerIsOwner) {
-            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+            vm.expectRevert(Unauthorized.selector);
         }
         if (!callerIsOwner) {
             vm.prank(user);
@@ -270,7 +276,7 @@ contract OwnableRolesTest is TestPlus {
         mockOwnableRoles.grantRoles(user, rolesToGrant);
 
         if ((rolesToGrant & rolesToCheck == 0) && !callerIsOwner) {
-            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+            vm.expectRevert(Unauthorized.selector);
         }
         if (!callerIsOwner) {
             vm.prank(user);
@@ -307,7 +313,7 @@ contract OwnableRolesTest is TestPlus {
         mockOwnableRoles.requestOwnershipHandover();
 
         vm.prank(pendingOwner);
-        vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        vm.expectRevert(Unauthorized.selector);
         mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
 
@@ -325,7 +331,7 @@ contract OwnableRolesTest is TestPlus {
         vm.prank(pendingOwner);
         mockOwnableRoles.cancelOwnershipHandover();
         assertEq(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner), 0);
-        vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
+        vm.expectRevert(NoHandoverRequest.selector);
 
         mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
@@ -347,7 +353,7 @@ contract OwnableRolesTest is TestPlus {
 
         vm.warp(block.timestamp + mockOwnableRoles.ownershipHandoverValidFor() + 1);
 
-        vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
+        vm.expectRevert(NoHandoverRequest.selector);
 
         mockOwnableRoles.completeOwnershipHandover(pendingOwner);
     }
