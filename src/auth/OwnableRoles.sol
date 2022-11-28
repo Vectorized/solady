@@ -244,31 +244,13 @@ abstract contract OwnableRoles {
 
     /// @dev Allows the owner to transfer the ownership to `newOwner`.
     function transferOwnership(address newOwner) public payable virtual onlyOwner {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Clean the upper 96 bits.
-            newOwner := shr(96, shl(96, newOwner))
-            // Reverts if the `newOwner` is the zero address.
-            if iszero(newOwner) {
-                mstore(0x00, _NEW_OWNER_IS_ZERO_ADDRESS_ERROR_SELECTOR)
-                revert(0x1c, 0x04)
-            }
-            // Emit the {OwnershipTransferred} event.
-            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), newOwner)
-            // Store the new value.
-            sstore(not(_OWNER_SLOT_NOT), newOwner)
-        }
+        if (newOwner == address(0)) revert NewOwnerIsZeroAddress();
+        _setOwner(newOwner);
     }
 
     /// @dev Allows the owner to renounce their ownership.
     function renounceOwnership() public payable virtual onlyOwner {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Emit the {OwnershipTransferred} event.
-            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), 0)
-            // Store the new value.
-            sstore(not(_OWNER_SLOT_NOT), 0)
-        }
+        _setOwner(address(0));
     }
 
     /// @dev Request a two-step ownership handover to the caller.
@@ -279,8 +261,9 @@ abstract contract OwnableRoles {
             /// @solidity memory-safe-assembly
             assembly {
                 // Compute and set the handover slot to 1.
-                mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
-                sstore(keccak256(0x00, 0x20), expires)
+                mstore(0x0c, _HANDOVER_SLOT_SEED)
+                mstore(0x00, caller())
+                sstore(keccak256(0x0c, 0x20), expires)
                 // Emit the {OwnershipHandoverRequested} event.
                 log2(0, 0, _OWNERSHIP_HANDOVER_REQUESTED_EVENT_SIGNATURE, caller())
             }
@@ -292,8 +275,9 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute and set the handover slot to 0.
-            mstore(0x00, or(shl(96, caller()), _HANDOVER_SLOT_SEED))
-            sstore(keccak256(0x00, 0x20), 0)
+            mstore(0x0c, _HANDOVER_SLOT_SEED)
+            mstore(0x00, caller())
+            sstore(keccak256(0x0c, 0x20), 0)
             // Emit the {OwnershipHandoverCanceled} event.
             log2(0, 0, _OWNERSHIP_HANDOVER_CANCELED_EVENT_SIGNATURE, caller())
         }
@@ -304,11 +288,10 @@ abstract contract OwnableRoles {
     function completeOwnershipHandover(address pendingOwner) public payable virtual onlyOwner {
         /// @solidity memory-safe-assembly
         assembly {
-            // Clean the upper 96 bits.
-            pendingOwner := shr(96, shl(96, pendingOwner))
             // Compute and set the handover slot to 0.
-            mstore(0x00, or(shl(96, pendingOwner), _HANDOVER_SLOT_SEED))
-            let handoverSlot := keccak256(0x00, 0x20)
+            mstore(0x0c, _HANDOVER_SLOT_SEED)
+            mstore(0x00, pendingOwner)
+            let handoverSlot := keccak256(0x0c, 0x20)
             // If the handover does not exist, or has expired.
             if gt(timestamp(), sload(handoverSlot)) {
                 mstore(0x00, _NO_HANDOVER_REQUEST_ERROR_SELECTOR)
@@ -316,10 +299,12 @@ abstract contract OwnableRoles {
             }
             // Set the handover slot to 0.
             sstore(handoverSlot, 0)
+            // Clean the upper 96 bits.
+            let newOwner := shr(96, mload(0x0c))
             // Emit the {OwnershipTransferred} event.
-            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), pendingOwner)
+            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), newOwner)
             // Store the new value.
-            sstore(not(_OWNER_SLOT_NOT), pendingOwner)
+            sstore(not(_OWNER_SLOT_NOT), newOwner)
         }
     }
 
@@ -363,9 +348,10 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the handover slot.
-            mstore(0x00, or(shl(96, pendingOwner), _HANDOVER_SLOT_SEED))
+            mstore(0x0c, _HANDOVER_SLOT_SEED)
+            mstore(0x00, pendingOwner)
             // Load the handover slot.
-            result := sload(keccak256(0x00, 0x20))
+            result := sload(keccak256(0x0c, 0x20))
         }
     }
 
@@ -379,10 +365,11 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
+            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x00, user)
             // Load the stored value, and set the result to whether the
             // `and` intersection of the value and `roles` is not zero.
-            result := iszero(iszero(and(sload(keccak256(0x00, 0x20)), roles)))
+            result := iszero(iszero(and(sload(keccak256(0x0c, 0x20)), roles)))
         }
     }
 
@@ -391,9 +378,10 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
+            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x00, user)
             // Whether the stored value is contains all the set bits in `roles`.
-            result := eq(and(sload(keccak256(0x00, 0x20)), roles), roles)
+            result := eq(and(sload(keccak256(0x0c, 0x20)), roles), roles)
         }
     }
 
@@ -402,9 +390,10 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
+            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x00, user)
             // Load the stored value.
-            roles := sload(keccak256(0x00, 0x20))
+            roles := sload(keccak256(0x0c, 0x20))
         }
     }
 
@@ -433,24 +422,24 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Grab the pointer to the free memory.
-            let ptr := add(mload(0x40), 0x20)
+            ordinals := mload(0x40)
+            let ptr := add(ordinals, 0x20)
+            let o := 0
             // The absence of lookup tables, De Bruijn, etc., here is intentional for
             // smaller bytecode, as this function is not meant to be called on-chain.
-            for { ordinals := 0 } 1 {} {
-                mstore(ptr, ordinals)
-                ordinals := add(ordinals, 1)
+            for { let t := roles } 1 {} {
+                mstore(ptr, o)
                 // `shr` 5 is equivalent to multiplying by 0x20.
                 // Push back into the ordinals array if the bit is set.
-                ptr := add(ptr, shl(5, and(roles, 1)))
-                roles := shr(1, roles)
-                if iszero(roles) { break }
+                ptr := add(ptr, shl(5, and(t, 1)))
+                o := add(o, 1)
+                t := shr(o, roles)
+                if iszero(t) { break }
             }
-            // Set `ordinals` to the start of the free memory.
-            ordinals := mload(0x40)
-            // Allocate the memory.
-            mstore(0x40, ptr)
             // Store the length of `ordinals`.
             mstore(ordinals, shr(5, sub(ptr, add(ordinals, 0x20))))
+            // Allocate the memory.
+            mstore(0x40, ptr)
         }
     }
 

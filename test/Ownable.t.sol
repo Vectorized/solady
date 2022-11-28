@@ -1,0 +1,358 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
+
+import "./utils/TestPlus.sol";
+import "./utils/mocks/MockOwnableRoles.sol";
+
+contract OwnableRolesTest is TestPlus {
+    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
+
+    event OwnershipHandoverRequested(address indexed pendingOwner);
+
+    event OwnershipHandoverCanceled(address indexed pendingOwner);
+
+    event RolesUpdated(address indexed user, uint256 indexed roles);
+
+    MockOwnableRoles mockOwnableRoles;
+
+    function setUp() public {
+        mockOwnableRoles = new MockOwnableRoles();
+    }
+
+    function testInitializeOwnerDirect() public {
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipTransferred(address(0), address(1));
+        mockOwnableRoles.initializeOwnerDirect(address(1));
+    }
+
+    function testSetOwnerDirect(address newOwner) public {
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipTransferred(address(this), newOwner);
+        mockOwnableRoles.setOwnerDirect(newOwner);
+        assertEq(mockOwnableRoles.owner(), newOwner);
+    }
+
+    function testGrantAndRemoveRolesDirect(
+        address user,
+        uint256 rolesToGrant,
+        uint256 rolesToRemove
+    ) public {
+        mockOwnableRoles.removeRolesDirect(user, mockOwnableRoles.rolesOf(user));
+        assertEq(mockOwnableRoles.rolesOf(user), 0);
+        mockOwnableRoles.grantRolesDirect(user, rolesToGrant);
+        assertEq(mockOwnableRoles.rolesOf(user), rolesToGrant);
+        mockOwnableRoles.removeRolesDirect(user, rolesToRemove);
+        assertEq(mockOwnableRoles.rolesOf(user), rolesToGrant ^ (rolesToGrant & rolesToRemove));
+    }
+
+    function testSetOwnerDirect() public {
+        testSetOwnerDirect(address(1));
+    }
+
+    function testRenounceOwnership() public {
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipTransferred(address(this), address(0));
+        mockOwnableRoles.renounceOwnership();
+        assertEq(mockOwnableRoles.owner(), address(0));
+    }
+
+    function testTransferOwnership(
+        address newOwner,
+        bool setNewOwnerToZeroAddress,
+        bool callerIsOwner
+    ) public {
+        assertEq(mockOwnableRoles.owner(), address(this));
+
+        vm.assume(newOwner != address(this));
+
+        if (newOwner == address(0) || setNewOwnerToZeroAddress) {
+            newOwner = address(0);
+            vm.expectRevert(OwnableRoles.NewOwnerIsZeroAddress.selector);
+        } else if (callerIsOwner) {
+            vm.expectEmit(true, true, true, true);
+            emit OwnershipTransferred(address(this), newOwner);
+        } else {
+            vm.prank(newOwner);
+            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        }
+
+        mockOwnableRoles.transferOwnership(newOwner);
+
+        if (newOwner != address(0) && callerIsOwner) {
+            assertEq(mockOwnableRoles.owner(), newOwner);
+        }
+    }
+
+    function testTransferOwnership() public {
+        testTransferOwnership(address(1), false, true);
+    }
+
+    function testGrantRoles() public {
+        vm.expectEmit(true, true, true, true);
+        emit RolesUpdated(address(1), 111111);
+        mockOwnableRoles.grantRoles(address(1), 111111);
+    }
+
+    function testGrantAndRevokeOrRenounceRoles(
+        address user,
+        bool granterIsOwner,
+        bool useRenounce,
+        bool revokerIsOwner,
+        uint256 rolesToGrant,
+        uint256 rolesToRevoke
+    ) public {
+        vm.assume(user != address(this));
+
+        uint256 rolesAfterRevoke = rolesToGrant ^ (rolesToGrant & rolesToRevoke);
+
+        assertTrue(rolesAfterRevoke & rolesToRevoke == 0);
+        assertTrue((rolesAfterRevoke | rolesToRevoke) & rolesToGrant == rolesToGrant);
+
+        if (granterIsOwner) {
+            vm.expectEmit(true, true, true, true);
+            emit RolesUpdated(user, rolesToGrant);
+        } else {
+            vm.prank(user);
+            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        }
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
+
+        if (!granterIsOwner) return;
+
+        assertEq(mockOwnableRoles.rolesOf(user), rolesToGrant);
+
+        if (useRenounce) {
+            vm.expectEmit(true, true, true, true);
+            emit RolesUpdated(user, rolesAfterRevoke);
+            vm.prank(user);
+            mockOwnableRoles.renounceRoles(rolesToRevoke);
+        } else if (revokerIsOwner) {
+            vm.expectEmit(true, true, true, true);
+            emit RolesUpdated(user, rolesAfterRevoke);
+            mockOwnableRoles.revokeRoles(user, rolesToRevoke);
+        } else {
+            vm.prank(user);
+            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+            mockOwnableRoles.revokeRoles(user, rolesToRevoke);
+            return;
+        }
+
+        assertEq(mockOwnableRoles.rolesOf(user), rolesAfterRevoke);
+    }
+
+    function testHasAllRoles(
+        address user,
+        uint256 rolesToGrant,
+        uint256 rolesToGrantBrutalizer,
+        uint256 rolesToCheck,
+        bool useSameRoles
+    ) public {
+        if (useSameRoles) {
+            rolesToGrant = rolesToCheck;
+        }
+        rolesToGrant |= rolesToGrantBrutalizer;
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
+
+        bool hasAllRoles = (rolesToGrant & rolesToCheck) == rolesToCheck;
+        assertEq(mockOwnableRoles.hasAllRoles(user, rolesToCheck), hasAllRoles);
+    }
+
+    function testHasAnyRole(address user, uint256 rolesToGrant, uint256 rolesToCheck) public {
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
+        assertEq(mockOwnableRoles.hasAnyRole(user, rolesToCheck), rolesToGrant & rolesToCheck != 0);
+    }
+
+    function testRolesFromOrdinals(uint8[] memory ordinals) public {
+        uint256 roles;
+        unchecked {
+            for (uint256 i; i < ordinals.length; ++i) {
+                roles |= 1 << uint256(ordinals[i]);
+            }
+        }
+        assertEq(mockOwnableRoles.rolesFromOrdinals(ordinals), roles);
+    }
+
+    function testRolesFromOrdinals() public {
+        unchecked {
+            uint256 randomness;
+            for (uint256 t; t != 32; ++t) {
+                randomness = _stepRandomness(randomness);
+                uint8[] memory ordinals = new uint8[](randomness % 32);
+                for (uint256 i; i != ordinals.length; ++i) {
+                    randomness = _stepRandomness(randomness);
+                    uint8 r;
+                    assembly {
+                        r := randomness
+                    }
+                    ordinals[i] = r;
+                }
+                testRolesFromOrdinals(ordinals);
+            }
+        }
+    }
+
+    function testOrdinalsFromRoles(uint256 roles) public {
+        uint8[] memory ordinals = new uint8[](256);
+        uint256 n;
+        unchecked {
+            for (uint256 i; i < 256; ++i) {
+                if (roles & (1 << i) != 0) ordinals[n++] = uint8(i);
+            }
+        }
+        uint8[] memory results = mockOwnableRoles.ordinalsFromRoles(roles);
+        assertEq(results.length, n);
+        unchecked {
+            for (uint256 i; i < n; ++i) {
+                assertEq(results[i], ordinals[i]);
+            }
+        }
+    }
+
+    function testOrdinalsFromRoles() public {
+        unchecked {
+            uint256 randomness;
+            for (uint256 t; t != 32; ++t) {
+                randomness = _stepRandomness(randomness);
+                testOrdinalsFromRoles(randomness);
+            }
+        }
+    }
+
+    function testOnlyOwnerModifier(address nonOwner, bool callerIsOwner) public {
+        vm.assume(nonOwner != address(this));
+
+        if (!callerIsOwner) {
+            vm.prank(nonOwner);
+            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        }
+        mockOwnableRoles.updateFlagWithOnlyOwner();
+    }
+
+    function testOnlyRolesModifier(address user, uint256 rolesToGrant, uint256 rolesToCheck)
+        public
+    {
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
+
+        if (rolesToGrant & rolesToCheck == 0) {
+            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        }
+        vm.prank(user);
+        mockOwnableRoles.updateFlagWithOnlyRoles(rolesToCheck);
+    }
+
+    function testOnlyOwnerOrRolesModifier(
+        address user,
+        bool callerIsOwner,
+        uint256 rolesToGrant,
+        uint256 rolesToCheck
+    ) public {
+        vm.assume(user != address(this));
+
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
+
+        if ((rolesToGrant & rolesToCheck == 0) && !callerIsOwner) {
+            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        }
+        if (!callerIsOwner) {
+            vm.prank(user);
+        }
+        mockOwnableRoles.updateFlagWithOnlyOwnerOrRoles(rolesToCheck);
+    }
+
+    function testOnlyRolesOrOwnerModifier(
+        address user,
+        bool callerIsOwner,
+        uint256 rolesToGrant,
+        uint256 rolesToCheck
+    ) public {
+        vm.assume(user != address(this));
+
+        mockOwnableRoles.grantRoles(user, rolesToGrant);
+
+        if ((rolesToGrant & rolesToCheck == 0) && !callerIsOwner) {
+            vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        }
+        if (!callerIsOwner) {
+            vm.prank(user);
+        }
+        mockOwnableRoles.updateFlagWithOnlyRolesOrOwner(rolesToCheck);
+    }
+
+    function testOnlyOwnerOrRolesModifier() public {
+        testOnlyOwnerOrRolesModifier(address(1), false, 1, 2);
+    }
+
+    function testHandoverOwnership(address pendingOwner) public {
+        vm.prank(pendingOwner);
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipHandoverRequested(pendingOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+        assertTrue(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner) > block.timestamp);
+
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipTransferred(address(this), pendingOwner);
+
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
+
+        assertEq(mockOwnableRoles.owner(), pendingOwner);
+    }
+
+    function testHandoverOwnership() public {
+        testHandoverOwnership(address(1));
+    }
+
+    function testHandoverOwnershipRevertsIfCompleteIsNotOwner() public {
+        address pendingOwner = address(1);
+        vm.prank(pendingOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+
+        vm.prank(pendingOwner);
+        vm.expectRevert(OwnableRoles.Unauthorized.selector);
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
+    }
+
+    function testHandoverOwnershipWithCancellation() public {
+        address pendingOwner = address(1);
+
+        vm.prank(pendingOwner);
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipHandoverRequested(pendingOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+        assertTrue(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner) > block.timestamp);
+
+        vm.expectEmit(true, true, true, true);
+        emit OwnershipHandoverCanceled(pendingOwner);
+        vm.prank(pendingOwner);
+        mockOwnableRoles.cancelOwnershipHandover();
+        assertEq(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner), 0);
+        vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
+
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
+    }
+
+    function testHandoverOwnershipBeforeExpiration() public {
+        address pendingOwner = address(1);
+        vm.prank(pendingOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+
+        vm.warp(block.timestamp + mockOwnableRoles.ownershipHandoverValidFor());
+
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
+    }
+
+    function testHandoverOwnershipAfterExpiration() public {
+        address pendingOwner = address(1);
+        vm.prank(pendingOwner);
+        mockOwnableRoles.requestOwnershipHandover();
+
+        vm.warp(block.timestamp + mockOwnableRoles.ownershipHandoverValidFor() + 1);
+
+        vm.expectRevert(OwnableRoles.NoHandoverRequest.selector);
+
+        mockOwnableRoles.completeOwnershipHandover(pendingOwner);
+    }
+
+    function testOwnershipHandoverValidForDefaultValue() public {
+        assertEq(mockOwnableRoles.ownershipHandoverValidFor(), 48 * 3600);
+    }
+}
