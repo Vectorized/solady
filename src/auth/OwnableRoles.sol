@@ -166,6 +166,73 @@ abstract contract OwnableRoles {
         }
     }
 
+    /// @dev Throws if the sender is not the owner.
+    function _checkOwner() internal view virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the caller is not the stored owner, revert.
+            if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
+                mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Throws if the sender does not have any of the `roles`.
+    function _checkRoles(uint256 roles) internal view virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the role slot.
+            mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
+            // Load the stored value, and if the `and` intersection
+            // of the value and `roles` is zero, revert.
+            if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
+                mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Throws if the sender is neither the owner,
+    /// nor does not have any of the `roles`.
+    /// Checks for ownership first, then lazily checks for roles.
+    function _checkOwnerOrRoles(uint256 roles) internal view virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the caller is not the stored owner.
+            if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
+                // Compute the role slot.
+                mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
+                // Load the stored value, and if the `and` intersection
+                // of the value and `roles` is zero, revert.
+                if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
+                    mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                    revert(0x1c, 0x04)
+                }
+            }
+        }
+    }
+
+    /// @dev Throws if the sender is neither the owner,
+    /// nor does not have any of the `roles`.
+    /// Checks for roles first, then lazily checks for ownership.
+    function _checkRolesOrOwner(uint256 roles) internal view virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the role slot.
+            mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
+            // Load the stored value, and if the `and` intersection
+            // of the value and `roles` is zero, revert.
+            if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
+                // If the caller is not the stored owner.
+                if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
+                    mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                    revert(0x1c, 0x04)
+                }
+            }
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  PUBLIC UPDATE FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -388,70 +455,27 @@ abstract contract OwnableRoles {
 
     /// @dev Marks a function as only callable by the owner.
     modifier onlyOwner() virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // If the caller is not the stored owner, revert.
-            if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
-                mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
-                revert(0x1c, 0x04)
-            }
-        }
+        _checkOwner();
         _;
     }
 
     /// @dev Marks a function as only callable by an account with `roles`.
     modifier onlyRoles(uint256 roles) virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the role slot.
-            mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
-            // Load the stored value, and if the `and` intersection
-            // of the value and `roles` is zero, revert.
-            if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
-                mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
-                revert(0x1c, 0x04)
-            }
-        }
+        _checkRoles(roles);
         _;
     }
 
     /// @dev Marks a function as only callable by the owner or by an account
     /// with `roles`. Checks for ownership first, then lazily checks for roles.
     modifier onlyOwnerOrRoles(uint256 roles) virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // If the caller is not the stored owner.
-            if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
-                // Compute the role slot.
-                mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
-                // Load the stored value, and if the `and` intersection
-                // of the value and `roles` is zero, revert.
-                if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
-                    mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
-                    revert(0x1c, 0x04)
-                }
-            }
-        }
+        _checkOwnerOrRoles(roles);
         _;
     }
 
     /// @dev Marks a function as only callable by an account with `roles`
     /// or the owner. Checks for roles first, then lazily checks for ownership.
     modifier onlyRolesOrOwner(uint256 roles) virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the role slot.
-            mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
-            // Load the stored value, and if the `and` intersection
-            // of the value and `roles` is zero, revert.
-            if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
-                // If the caller is not the stored owner.
-                if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
-                    mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
-                    revert(0x1c, 0x04)
-                }
-            }
-        }
+        _checkRolesOrOwner(roles);
         _;
     }
 
