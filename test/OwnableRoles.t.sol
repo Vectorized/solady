@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import "./utils/mocks/MockOwnableRoles.sol";
 
-contract OwnableRolesTest is Test {
+contract OwnableRolesTest is TestPlus {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
     event OwnershipHandoverRequested(address indexed pendingOwner);
@@ -172,6 +172,25 @@ contract OwnableRolesTest is Test {
         assertEq(mockOwnableRoles.rolesFromOrdinals(ordinals), roles);
     }
 
+    function testRolesFromOrdinals() public {
+        unchecked {
+            uint256 randomness;
+            for (uint256 t; t != 32; ++t) {
+                randomness = _stepRandomness(randomness);
+                uint8[] memory ordinals = new uint8[](randomness % 32);
+                for (uint256 i; i != ordinals.length; ++i) {
+                    randomness = _stepRandomness(randomness);
+                    uint8 r;
+                    assembly {
+                        r := randomness
+                    }
+                    ordinals[i] = r;
+                }
+                testRolesFromOrdinals(ordinals);
+            }
+        }
+    }
+
     function testOrdinalsFromRoles(uint256 roles) public {
         uint8[] memory ordinals = new uint8[](256);
         uint256 n;
@@ -185,6 +204,16 @@ contract OwnableRolesTest is Test {
         unchecked {
             for (uint256 i; i < n; ++i) {
                 assertEq(results[i], ordinals[i]);
+            }
+        }
+    }
+
+    function testOrdinalsFromRoles() public {
+        unchecked {
+            uint256 randomness;
+            for (uint256 t; t != 32; ++t) {
+                randomness = _stepRandomness(randomness);
+                testOrdinalsFromRoles(randomness);
             }
         }
     }
