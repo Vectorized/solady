@@ -174,12 +174,10 @@ contract OwnableRolesTest is TestPlus {
 
     function testRolesFromOrdinals() public {
         unchecked {
-            uint256 randomness;
             for (uint256 t; t != 32; ++t) {
-                randomness = _stepRandomness(randomness);
-                uint8[] memory ordinals = new uint8[](randomness % 32);
+                uint8[] memory ordinals = new uint8[](_random() % 32);
                 for (uint256 i; i != ordinals.length; ++i) {
-                    randomness = _stepRandomness(randomness);
+                    uint256 randomness = _random();
                     uint8 r;
                     assembly {
                         r := randomness
@@ -210,10 +208,8 @@ contract OwnableRolesTest is TestPlus {
 
     function testOrdinalsFromRoles() public {
         unchecked {
-            uint256 randomness;
             for (uint256 t; t != 32; ++t) {
-                randomness = _stepRandomness(randomness);
-                testOrdinalsFromRoles(randomness);
+                testOrdinalsFromRoles(_random());
             }
         }
     }

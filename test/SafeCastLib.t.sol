@@ -167,10 +167,8 @@ contract SafeCastLibTest is TestPlus {
 
     function testSafeCastToUint() public {
         unchecked {
-            uint256 randomness;
             for (uint256 i; i != 256; ++i) {
-                randomness = _stepRandomness(randomness);
-                testSafeCastToUint(randomness);
+                testSafeCastToUint(_random());
             }
         }
     }
@@ -335,9 +333,8 @@ contract SafeCastLibTest is TestPlus {
 
     function testSafeCastToInt() public {
         unchecked {
-            uint256 randomness;
             for (uint256 i; i != 256; ++i) {
-                randomness = _stepRandomness(randomness);
+                uint256 randomness = _random();
                 int256 casted;
                 assembly {
                     casted := randomness

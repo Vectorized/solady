@@ -64,16 +64,12 @@ contract DateTimeLibTest is TestPlus {
 
     function testFuzzDateToEpochDayGas() public {
         unchecked {
-            uint256 randomness;
             uint256 sum;
             for (uint256 i; i < 256; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 year = _bound(randomness, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
-                randomness = _stepRandomness(randomness);
-                uint256 month = _bound(randomness, 1, 12);
+                uint256 year = _bound(_random(), 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+                uint256 month = _bound(_random(), 1, 12);
                 uint256 md = DateTimeLib.daysInMonth(year, month);
-                randomness = _stepRandomness(randomness);
-                uint256 day = _bound(randomness, 1, md);
+                uint256 day = _bound(_random(), 1, md);
                 uint256 epochDay = DateTimeLib.dateToEpochDay(year, month, day);
                 sum += epochDay;
             }
@@ -83,16 +79,12 @@ contract DateTimeLibTest is TestPlus {
 
     function testFuzzDateToEpochDayGas2() public {
         unchecked {
-            uint256 randomness;
             uint256 sum;
             for (uint256 i; i < 256; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 year = _bound(randomness, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
-                randomness = _stepRandomness(randomness);
-                uint256 month = _bound(randomness, 1, 12);
+                uint256 year = _bound(_random(), 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+                uint256 month = _bound(_random(), 1, 12);
                 uint256 md = DateTimeLib.daysInMonth(year, month);
-                randomness = _stepRandomness(randomness);
-                uint256 day = _bound(randomness, 1, md);
+                uint256 day = _bound(_random(), 1, md);
                 uint256 epochDay = _dateToEpochDayOriginal2(year, month, day);
                 sum += epochDay;
             }
@@ -102,11 +94,9 @@ contract DateTimeLibTest is TestPlus {
 
     function testFuzzEpochDayToDateGas() public {
         unchecked {
-            uint256 randomness;
             uint256 sum;
             for (uint256 i; i < 256; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 epochDay = _bound(randomness, 0, DateTimeLib.MAX_SUPPORTED_EPOCH_DAY);
+                uint256 epochDay = _bound(_random(), 0, DateTimeLib.MAX_SUPPORTED_EPOCH_DAY);
                 (uint256 year, uint256 month, uint256 day) = DateTimeLib.epochDayToDate(epochDay);
                 sum += year + month + day;
             }
@@ -116,11 +106,9 @@ contract DateTimeLibTest is TestPlus {
 
     function testFuzzEpochDayToDateGas2() public {
         unchecked {
-            uint256 randomness;
             uint256 sum;
             for (uint256 i; i < 256; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 epochDay = _bound(randomness, 0, DateTimeLib.MAX_SUPPORTED_EPOCH_DAY);
+                uint256 epochDay = _bound(_random(), 0, DateTimeLib.MAX_SUPPORTED_EPOCH_DAY);
                 (uint256 year, uint256 month, uint256 day) = _epochDayToDateOriginal2(epochDay);
                 sum += year + month + day;
             }
@@ -236,15 +224,11 @@ contract DateTimeLibTest is TestPlus {
 
     function testFuzzDateToAndFroEpochDay() public {
         unchecked {
-            uint256 randomness;
             for (uint256 i; i < 256; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 year = _bound(randomness, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
-                randomness = _stepRandomness(randomness);
-                uint256 month = _bound(randomness, 1, 12);
+                uint256 year = _bound(_random(), 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+                uint256 month = _bound(_random(), 1, 12);
                 uint256 md = DateTimeLib.daysInMonth(year, month);
-                randomness = _stepRandomness(randomness);
-                uint256 day = _bound(randomness, 1, md);
+                uint256 day = _bound(_random(), 1, md);
                 uint256 epochDay = DateTimeLib.dateToEpochDay(year, month, day);
                 (uint256 y, uint256 m, uint256 d) = DateTimeLib.epochDayToDate(epochDay);
                 assertTrue(year == y && month == m && day == d);
@@ -254,15 +238,11 @@ contract DateTimeLibTest is TestPlus {
 
     function testFuzzDateToAndFroTimestamp() public {
         unchecked {
-            uint256 randomness;
             for (uint256 i; i < 256; ++i) {
-                randomness = _stepRandomness(randomness);
-                uint256 year = _bound(randomness, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
-                randomness = _stepRandomness(randomness);
-                uint256 month = _bound(randomness, 1, 12);
+                uint256 year = _bound(_random(), 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
+                uint256 month = _bound(_random(), 1, 12);
                 uint256 md = DateTimeLib.daysInMonth(year, month);
-                randomness = _stepRandomness(randomness);
-                uint256 day = _bound(randomness, 1, md);
+                uint256 day = _bound(_random(), 1, md);
                 uint256 timestamp = DateTimeLib.dateToTimestamp(year, month, day);
                 assertEq(timestamp, DateTimeLib.dateToEpochDay(year, month, day) * 86400);
                 (uint256 y, uint256 m, uint256 d) = DateTimeLib.timestampToDate(timestamp);
