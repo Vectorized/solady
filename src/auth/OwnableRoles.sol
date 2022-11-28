@@ -39,6 +39,8 @@ abstract contract OwnableRoles is Ownable {
     /// ```
     /// This automatically ignores the upper bits of the `user` in case
     /// they are not clean, as well as keep the `keccak256` under 32-bytes.
+    ///
+    /// Note: This is equal to `_OWNER_SLOT_NOT` in for gas efficiency.
     uint256 private constant _ROLE_SLOT_SEED = 0x8b78c6d8;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
