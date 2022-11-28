@@ -34,12 +34,12 @@ abstract contract OwnableRoles is Ownable {
 
     /// @dev The role slot of `user` is given by:
     /// ```
-    ///     mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
+    ///     mstore(0x00, or(shl(96, user), _ROLE_SLOT_SEED))
     ///     let roleSlot := keccak256(0x00, 0x20)
     /// ```
     /// This automatically ignores the upper bits of the `user` in case
     /// they are not clean, as well as keep the `keccak256` under 32-bytes.
-    uint256 private constant _OWNER_SLOT_NOT = 0x8b78c6d8;
+    uint256 private constant _ROLE_SLOT_SEED = 0x8b78c6d8;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     INTERNAL FUNCTIONS                     */
@@ -51,7 +51,7 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
             let roleSlot := keccak256(0x0c, 0x20)
             // Load the current value and `or` it with `roles`.
@@ -69,7 +69,7 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
             let roleSlot := keccak256(0x0c, 0x20)
             // Load the current value.
@@ -89,7 +89,7 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, caller())
             // Load the stored value, and if the `and` intersection
             // of the value and `roles` is zero, revert.
@@ -107,9 +107,9 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // If the caller is not the stored owner.
-            if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
+            if iszero(eq(caller(), sload(not(_ROLE_SLOT_SEED)))) {
                 // Compute the role slot.
-                mstore(0x0c, _OWNER_SLOT_NOT)
+                mstore(0x0c, _ROLE_SLOT_SEED)
                 mstore(0x00, caller())
                 // Load the stored value, and if the `and` intersection
                 // of the value and `roles` is zero, revert.
@@ -128,13 +128,13 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, caller())
             // Load the stored value, and if the `and` intersection
             // of the value and `roles` is zero, revert.
             if iszero(and(sload(keccak256(0x0c, 0x20)), roles)) {
                 // If the caller is not the stored owner.
-                if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
+                if iszero(eq(caller(), sload(not(_ROLE_SLOT_SEED)))) {
                     mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                     revert(0x1c, 0x04)
                 }
@@ -173,7 +173,7 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
             // Load the stored value, and set the result to whether the
             // `and` intersection of the value and `roles` is not zero.
@@ -186,7 +186,7 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
             // Whether the stored value is contains all the set bits in `roles`.
             result := eq(and(sload(keccak256(0x0c, 0x20)), roles), roles)
@@ -198,7 +198,7 @@ abstract contract OwnableRoles is Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
             // Load the stored value.
             roles := sload(keccak256(0x0c, 0x20))
