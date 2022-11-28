@@ -12,6 +12,7 @@ I'm sooooooOooooooooOoooOoooooooooooooooo...
 
 ```ml
 auth
+├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
 utils
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
