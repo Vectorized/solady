@@ -135,14 +135,15 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
-            let roleSlot := keccak256(0x00, 0x20)
+            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x00, user)
+            let roleSlot := keccak256(0x0c, 0x20)
             // Load the current value and `or` it with `roles`.
-            let newRoles := or(sload(roleSlot), roles)
+            roles := or(sload(roleSlot), roles)
             // Store the new value.
-            sstore(roleSlot, newRoles)
+            sstore(roleSlot, roles)
             // Emit the {RolesUpdated} event.
-            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, shl(96, user)), newRoles)
+            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, mload(0x0c)), roles)
         }
     }
 
@@ -152,17 +153,18 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x00, or(shl(96, user), _OWNER_SLOT_NOT))
-            let roleSlot := keccak256(0x00, 0x20)
+            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x00, user)
+            let roleSlot := keccak256(0x0c, 0x20)
             // Load the current value.
             let currentRoles := sload(roleSlot)
             // Use `and` to compute the intersection of `currentRoles` and `roles`,
             // `xor` it with `currentRoles` to flip the bits in the intersection.
-            let newRoles := xor(currentRoles, and(currentRoles, roles))
+            roles := xor(currentRoles, and(currentRoles, roles))
             // Then, store the new value.
-            sstore(roleSlot, newRoles)
+            sstore(roleSlot, roles)
             // Emit the {RolesUpdated} event.
-            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, shl(96, user)), newRoles)
+            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, mload(0x0c)), roles)
         }
     }
 
@@ -183,18 +185,19 @@ abstract contract OwnableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
+            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x00, caller())
             // Load the stored value, and if the `and` intersection
             // of the value and `roles` is zero, revert.
-            if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
+            if iszero(and(sload(keccak256(0x0c, 0x20)), roles)) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
         }
     }
 
-    /// @dev Throws if the sender is neither the owner,
-    /// nor does not have any of the `roles`.
+    /// @dev Throws if the sender is not the owner,
+    /// and does not have any of the `roles`.
     /// Checks for ownership first, then lazily checks for roles.
     function _checkOwnerOrRoles(uint256 roles) internal view virtual {
         /// @solidity memory-safe-assembly
@@ -202,10 +205,11 @@ abstract contract OwnableRoles {
             // If the caller is not the stored owner.
             if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
                 // Compute the role slot.
-                mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
+                mstore(0x0c, _OWNER_SLOT_NOT)
+                mstore(0x00, caller())
                 // Load the stored value, and if the `and` intersection
                 // of the value and `roles` is zero, revert.
-                if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
+                if iszero(and(sload(keccak256(0x0c, 0x20)), roles)) {
                     mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                     revert(0x1c, 0x04)
                 }
@@ -213,17 +217,18 @@ abstract contract OwnableRoles {
         }
     }
 
-    /// @dev Throws if the sender is neither the owner,
-    /// nor does not have any of the `roles`.
+    /// @dev Throws if the sender does not have any of the `roles`,
+    /// and is not the owner.
     /// Checks for roles first, then lazily checks for ownership.
     function _checkRolesOrOwner(uint256 roles) internal view virtual {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the role slot.
-            mstore(0x00, or(shl(96, caller()), _OWNER_SLOT_NOT))
+            mstore(0x0c, _OWNER_SLOT_NOT)
+            mstore(0x00, caller())
             // Load the stored value, and if the `and` intersection
             // of the value and `roles` is zero, revert.
-            if iszero(and(sload(keccak256(0x00, 0x20)), roles)) {
+            if iszero(and(sload(keccak256(0x0c, 0x20)), roles)) {
                 // If the caller is not the stored owner.
                 if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
                     mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
