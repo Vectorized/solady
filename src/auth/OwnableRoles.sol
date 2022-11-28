@@ -342,13 +342,14 @@ abstract contract OwnableRoles {
     function rolesFromOrdinals(uint8[] memory ordinals) public pure returns (uint256 roles) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Skip the length slot.
-            let o := add(ordinals, 0x20)
             // `shl` 5 is equivalent to multiplying by 0x20.
-            let end := add(o, shl(5, mload(ordinals)))
+            let end := add(ordinals, shl(5, mload(ordinals)))
 
-            for {} iszero(eq(o, end)) { o := add(o, 0x20) } {
-                roles := or(roles, shl(and(mload(o), 0xff), 1))
+            for {} iszero(eq(ordinals, end)) {} {
+                ordinals := add(ordinals, 0x20)
+                // We don't need to mask the values of `ordinals`, as Solidity
+                // cleans dirty upper bits when storing variables into memory.
+                roles := or(roles, shl(mload(ordinals), 1))
             }
         }
     }
@@ -363,8 +364,9 @@ abstract contract OwnableRoles {
             let ptr := add(mload(0x40), 0x20)
             // The absence of lookup tables, De Bruijn, etc., here is intentional for
             // smaller bytecode, as this function is not meant to be called on-chain.
-            for { let i := 0 } 1 { i := add(i, 1) } {
-                mstore(ptr, i)
+            for { ordinals := 0 } 1 {} {
+                mstore(ptr, ordinals)
+                ordinals := add(ordinals, 1)
                 // `shr` 5 is equivalent to multiplying by 0x20.
                 // Push back into the ordinals array if the bit is set.
                 ptr := add(ptr, shl(5, and(roles, 1)))
