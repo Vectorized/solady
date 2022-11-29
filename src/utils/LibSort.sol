@@ -4,6 +4,10 @@ pragma solidity ^0.8.4;
 /// @notice Optimized sorts and operations for sorted arrays.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library LibSort {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     SORTING OPERATIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @dev Sorts the array in-place with insertion sort.
     /// Useful for stable sorting of small arrays (32 or lesser elements),
     /// or where smaller bytecode is prefered over runtime gas performance
@@ -40,13 +44,8 @@ library LibSort {
     /// or where smaller bytecode is prefered over runtime gas performance
     /// (e.g. in view functions intended for off-chain querying).
     function insertionSort(int256[] memory a) internal pure {
-        uint256[] memory aCasted;
-        /// @solidity memory-safe-assembly
-        assembly {
-            aCasted := a
-        }
         _convertTwosComplement(a);
-        insertionSort(aCasted);
+        insertionSort(_cast(a));
         _convertTwosComplement(a);
     }
 
@@ -55,15 +54,7 @@ library LibSort {
     /// or where smaller bytecode is prefered over runtime gas performance
     /// (e.g. in view functions intended for off-chain querying).
     function insertionSort(address[] memory a) internal pure {
-        // As any address written to memory will have the upper 96 bits of the
-        // word zeroized (as per Solidity spec), we can directly compare
-        // these addresses as if they are whole uint256 words.
-        uint256[] memory aCasted;
-        /// @solidity memory-safe-assembly
-        assembly {
-            aCasted := a
-        }
-        insertionSort(aCasted);
+        insertionSort(_cast(a));
     }
 
     /// @dev Sorts the array in-place.
@@ -220,29 +211,20 @@ library LibSort {
     /// @dev Sorts the array in-place.
     /// This uses a variant of intro-quicksort, which is NOT stable.
     function sort(int256[] memory a) internal pure {
-        uint256[] memory aCasted;
-        /// @solidity memory-safe-assembly
-        assembly {
-            aCasted := a
-        }
         _convertTwosComplement(a);
-        sort(aCasted);
+        sort(_cast(a));
         _convertTwosComplement(a);
     }
 
     /// @dev Sorts the array in-place.
     /// This uses a variant of intro-quicksort, which is NOT stable.
     function sort(address[] memory a) internal pure {
-        // As any address written to memory will have the upper 96 bits of the
-        // word zeroized (as per Solidity spec), we can directly compare
-        // these addresses as if they are whole uint256 words.
-        uint256[] memory aCasted;
-        /// @solidity memory-safe-assembly
-        assembly {
-            aCasted := a
-        }
-        sort(aCasted);
+        sort(_cast(a));
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  COMPLEMENTARY OPERATIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Removes duplicate elements from a ascendingly sorted memory array.
     /// For performance, it will not revert if the array is not sorted --
@@ -334,9 +316,32 @@ library LibSort {
         }
     }
 
-    /// @dev Used for converting an array of signed two-complement integers
-    /// to an unsigned integers suitable for sorting.
-    function _convertTwosComplement(int256[] memory a) internal pure {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Reinterpret cast to an uint256 array.
+    function _cast(int256[] memory a) private pure returns (uint256[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+    }
+
+    /// @dev Reinterpret cast to an uint256 array.
+    function _cast(address[] memory a) private pure returns (uint256[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // As any address written to memory will have the upper 96 bits
+            // of the word zeroized (as per Solidity spec), we can directly
+            // compare these addresses as if they are whole uint256 words.
+            casted := a
+        }
+    }
+
+    /// @dev Converts an array of signed two-complement integers
+    /// to unsigned integers suitable for sorting.
+    function _convertTwosComplement(int256[] memory a) private pure {
         /// @solidity memory-safe-assembly
         assembly {
             let w := shl(255, 1)
