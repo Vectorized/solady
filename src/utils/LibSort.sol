@@ -5,13 +5,16 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library LibSort {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     SORTING OPERATIONS                     */
+    /*                      INSERTION SORT                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // - Faster on small arrays (32 or lesser elements).
+    // - Faster on almost sorted arrays.
+    // - Stable (may matter if you are sorting packed numbers).
+    // - Smaller bytecode.
+    // - May be suitable for view functions intended for off-chain querying.
+
     /// @dev Sorts the array in-place with insertion sort.
-    /// Useful for stable sorting of small arrays (32 or lesser elements),
-    /// or where smaller bytecode is prefered over runtime gas performance
-    /// (e.g. in view functions intended for off-chain querying).
     function insertionSort(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
@@ -40,9 +43,6 @@ library LibSort {
     }
 
     /// @dev Sorts the array in-place with insertion sort.
-    /// Useful for stable sorting of small arrays (32 or lesser elements),
-    /// or where smaller bytecode is prefered over runtime gas performance
-    /// (e.g. in view functions intended for off-chain querying).
     function insertionSort(int256[] memory a) internal pure {
         _convertTwosComplement(a);
         insertionSort(_cast(a));
@@ -50,15 +50,20 @@ library LibSort {
     }
 
     /// @dev Sorts the array in-place with insertion sort.
-    /// Useful for stable sorting of small arrays (32 or lesser elements),
-    /// or where smaller bytecode is prefered over runtime gas performance
-    /// (e.g. in view functions intended for off-chain querying).
     function insertionSort(address[] memory a) internal pure {
         insertionSort(_cast(a));
     }
 
-    /// @dev Sorts the array in-place.
-    /// This uses a variant of intro-quicksort, which is NOT stable.
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      INTRO-QUICKSORT                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // - Faster on larger arrays (more than 32 elements).
+    // - Robust performance.
+    // - Larger bytecode.
+    // - NOT Stable (may matter if you are sorting packed numbers).
+
+    /// @dev Sorts the array in-place with intro-quicksort
     function sort(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
@@ -208,22 +213,20 @@ library LibSort {
         }
     }
 
-    /// @dev Sorts the array in-place.
-    /// This uses a variant of intro-quicksort, which is NOT stable.
+    /// @dev Sorts the array in-place with intro-quicksort
     function sort(int256[] memory a) internal pure {
         _convertTwosComplement(a);
         sort(_cast(a));
         _convertTwosComplement(a);
     }
 
-    /// @dev Sorts the array in-place.
-    /// This uses a variant of intro-quicksort, which is NOT stable.
+    /// @dev Sorts the array in-place with intro-quicksort
     function sort(address[] memory a) internal pure {
         sort(_cast(a));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                  COMPLEMENTARY OPERATIONS                  */
+    /*                  OTHER USEFUL OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Removes duplicate elements from a ascendingly sorted memory array.
