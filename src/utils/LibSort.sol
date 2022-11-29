@@ -12,11 +12,8 @@ library LibSort {
         /// @solidity memory-safe-assembly
         assembly {
             let n := mload(a) // Length of `a`.
-
             mstore(a, 0) // For insertion sort's inner loop to terminate.
-
             let h := add(a, shl(5, n)) // High slot.
-
             let w := not(31)
 
             for { let i := add(a, 0x20) } 1 {} {
@@ -36,6 +33,21 @@ library LibSort {
             }
             mstore(a, n) // Restore the length of `a`.
         }
+    }
+
+    /// @dev Sorts the array in-place with insertion sort.
+    /// Useful for stable sorting of small arrays (32 or lesser elements),
+    /// or where smaller bytecode is prefered over runtime gas performance
+    /// (e.g. in view functions intended for off-chain querying).
+    function insertionSort(int256[] memory a) internal pure {
+        uint256[] memory aCasted;
+        /// @solidity memory-safe-assembly
+        assembly {
+            aCasted := a
+        }
+        _convertTwosComplement(a);
+        insertionSort(aCasted);
+        _convertTwosComplement(a);
     }
 
     /// @dev Sorts the array in-place with insertion sort.
@@ -207,6 +219,19 @@ library LibSort {
 
     /// @dev Sorts the array in-place.
     /// This uses a variant of intro-quicksort, which is NOT stable.
+    function sort(int256[] memory a) internal pure {
+        uint256[] memory aCasted;
+        /// @solidity memory-safe-assembly
+        assembly {
+            aCasted := a
+        }
+        _convertTwosComplement(a);
+        sort(aCasted);
+        _convertTwosComplement(a);
+    }
+
+    /// @dev Sorts the array in-place.
+    /// This uses a variant of intro-quicksort, which is NOT stable.
     function sort(address[] memory a) internal pure {
         // As any address written to memory will have the upper 96 bits of the
         // word zeroized (as per Solidity spec), we can directly compare
@@ -287,6 +312,38 @@ library LibSort {
             let t := iszero(lt(m, add(a, 0x20)))
             index := shr(5, mul(sub(m, add(a, 0x20)), t))
             found := and(found, t)
+        }
+    }
+
+    /// @dev Reverses the array in-place.
+    function reverse(uint256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(mload(a), 2)) {
+                let w := not(31)
+                let h := add(a, shl(5, mload(a)))
+                for { a := add(a, 0x20) } 1 {} {
+                    let t := mload(a)
+                    mstore(a, mload(h))
+                    mstore(h, t)
+                    h := add(h, w)
+                    a := add(a, 0x20)
+                    if iszero(lt(a, h)) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Used for converting an array of signed two-complement integers
+    /// to an unsigned integers suitable for sorting.
+    function _convertTwosComplement(int256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let w := shl(255, 1)
+            for { let end := add(a, shl(5, mload(a))) } iszero(eq(a, end)) {} {
+                a := add(a, 0x20)
+                mstore(a, add(mload(a), w))
+            }
         }
     }
 }
