@@ -63,7 +63,7 @@ library LibSort {
     // - Larger bytecode.
     // - NOT Stable (may matter if you are sorting packed numbers).
 
-    /// @dev Sorts the array in-place with intro-quicksort
+    /// @dev Sorts the array in-place with intro-quicksort.
     function sort(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
@@ -213,14 +213,14 @@ library LibSort {
         }
     }
 
-    /// @dev Sorts the array in-place with intro-quicksort
+    /// @dev Sorts the array in-place with intro-quicksort.
     function sort(int256[] memory a) internal pure {
         _convertTwosComplement(a);
         sort(_cast(a));
         _convertTwosComplement(a);
     }
 
-    /// @dev Sorts the array in-place with intro-quicksort
+    /// @dev Sorts the array in-place with intro-quicksort.
     function sort(address[] memory a) internal pure {
         sort(_cast(a));
     }
@@ -229,9 +229,10 @@ library LibSort {
     /*                  OTHER USEFUL OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // For performance, the `uniquifySorted` methods will not revert if the
+    // array is not sorted -- it will simply remove consecutive duplicate elements.
+
     /// @dev Removes duplicate elements from a ascendingly sorted memory array.
-    /// For performance, it will not revert if the array is not sorted --
-    /// it will be simply remove consecutive duplicate elements.
     function uniquifySorted(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
@@ -254,18 +255,13 @@ library LibSort {
     }
 
     /// @dev Removes duplicate elements from a ascendingly sorted memory array.
-    /// For performance, it will not revert if the array is not sorted --
-    /// it will be simply remove consecutive duplicate elements.
+    function uniquifySorted(int256[] memory a) internal pure {
+        uniquifySorted(_cast(a));
+    }
+
+    /// @dev Removes duplicate elements from a ascendingly sorted memory array.
     function uniquifySorted(address[] memory a) internal pure {
-        // As any address written to memory will have the upper 96 bits of the
-        // word zeroized (as per Solidity spec), we can directly compare
-        // these addresses as if they are whole uint256 words.
-        uint256[] memory aCasted;
-        /// @solidity memory-safe-assembly
-        assembly {
-            aCasted := a
-        }
-        uniquifySorted(aCasted);
+        uniquifySorted(_cast(a));
     }
 
     /// @dev Returns whether `a` contains `needle`,
@@ -317,6 +313,16 @@ library LibSort {
                 }
             }
         }
+    }
+
+    /// @dev Reverses the array in-place.
+    function reverse(int256[] memory a) internal pure {
+        reverse(_cast(a));
+    }
+
+    /// @dev Reverses the array in-place.
+    function reverse(address[] memory a) internal pure {
+        reverse(_cast(a));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
