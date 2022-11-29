@@ -556,6 +556,61 @@ contract LibSortTest is TestPlus {
         }
     }
 
+    function testInsertionSortInts() public {
+        unchecked {
+            for (uint256 t; t != 16; ++t) {
+                int256[] memory a = _getRandomInts(_bound(_random(), 0, 8));
+                LibSort.insertionSort(a);
+                assertTrue(_isSorted(a));
+            }
+        }
+    }
+
+    function testSortInts() public {
+        unchecked {
+            for (uint256 t; t != 16; ++t) {
+                int256[] memory a = _getRandomInts(_bound(_random(), 0, 64));
+                LibSort.insertionSort(a);
+                assertTrue(_isSorted(a));
+            }
+        }
+    }
+
+    function testTwoComplementConversionSort(int256 a, int256 b) public {
+        uint256 w = 1 << 255;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let aConverted := add(a, w)
+            let bConverted := add(b, w)
+            if iszero(lt(aConverted, bConverted)) {
+                let t := aConverted
+                aConverted := bConverted
+                bConverted := t
+            }
+            a := add(aConverted, w)
+            b := add(bConverted, w)
+        }
+        assertTrue(a <= b);
+    }
+
+    function testReverse() public {
+        unchecked {
+            for (uint256 t; t != 256; ++t) {
+                uint256 n = _bound(_random(), 0, 8);
+                uint256[] memory a = new uint256[](n);
+                uint256[] memory reversed = new uint256[](n);
+                for (uint256 i; i != n; ++i) {
+                    reversed[n - 1 - i] = (a[i] = _random());
+                }
+                bytes32 originalHash = keccak256(abi.encode(a));
+                LibSort.reverse(a);
+                assertEq(a, reversed);
+                LibSort.reverse(a);
+                assertEq(originalHash, keccak256(abi.encode(a)));
+            }
+        }
+    }
+
     function _isSorted(address[] memory a) private pure returns (bool) {
         unchecked {
             for (uint256 i = 1; i < a.length; ++i) {
@@ -566,6 +621,15 @@ contract LibSortTest is TestPlus {
     }
 
     function _isSorted(uint256[] memory a) private pure returns (bool) {
+        unchecked {
+            for (uint256 i = 1; i < a.length; ++i) {
+                if (a[i - 1] > a[i]) return false;
+            }
+            return true;
+        }
+    }
+
+    function _isSorted(int256[] memory a) private pure returns (bool) {
         unchecked {
             for (uint256 i = 1; i < a.length; ++i) {
                 if (a[i - 1] > a[i]) return false;
@@ -634,6 +698,19 @@ contract LibSortTest is TestPlus {
         }
         if (left < j) _sortOriginal(arr, left, j);
         if (i < right) _sortOriginal(arr, i, right);
+    }
+
+    function _getRandomInts(uint256 n) private view returns (int256[] memory a) {
+        unchecked {
+            uint256[] memory aRaw = new uint256[](n);
+            for (uint256 i; i != n; ++i) {
+                aRaw[i] = _random();
+            }
+            /// @solidity memory-safe-assembly
+            assembly {
+                a := aRaw
+            }
+        }
     }
 
     function _uniquifyOriginal(uint256[] memory a) private pure {

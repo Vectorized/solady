@@ -4,19 +4,23 @@ pragma solidity ^0.8.4;
 /// @notice Optimized sorts and operations for sorted arrays.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
 library LibSort {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      INSERTION SORT                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // - Faster on small arrays (32 or lesser elements).
+    // - Faster on almost sorted arrays.
+    // - Stable (may matter if you are sorting packed numbers).
+    // - Smaller bytecode.
+    // - May be suitable for view functions intended for off-chain querying.
+
     /// @dev Sorts the array in-place with insertion sort.
-    /// Useful for stable sorting of small arrays (32 or lesser elements),
-    /// or where smaller bytecode is prefered over runtime gas performance
-    /// (e.g. in view functions intended for off-chain querying).
     function insertionSort(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
             let n := mload(a) // Length of `a`.
-
             mstore(a, 0) // For insertion sort's inner loop to terminate.
-
             let h := add(a, shl(5, n)) // High slot.
-
             let w := not(31)
 
             for { let i := add(a, 0x20) } 1 {} {
@@ -39,23 +43,27 @@ library LibSort {
     }
 
     /// @dev Sorts the array in-place with insertion sort.
-    /// Useful for stable sorting of small arrays (32 or lesser elements),
-    /// or where smaller bytecode is prefered over runtime gas performance
-    /// (e.g. in view functions intended for off-chain querying).
-    function insertionSort(address[] memory a) internal pure {
-        // As any address written to memory will have the upper 96 bits of the
-        // word zeroized (as per Solidity spec), we can directly compare
-        // these addresses as if they are whole uint256 words.
-        uint256[] memory aCasted;
-        /// @solidity memory-safe-assembly
-        assembly {
-            aCasted := a
-        }
-        insertionSort(aCasted);
+    function insertionSort(int256[] memory a) internal pure {
+        _convertTwosComplement(a);
+        insertionSort(_cast(a));
+        _convertTwosComplement(a);
     }
 
-    /// @dev Sorts the array in-place.
-    /// This uses a variant of intro-quicksort, which is NOT stable.
+    /// @dev Sorts the array in-place with insertion sort.
+    function insertionSort(address[] memory a) internal pure {
+        insertionSort(_cast(a));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      INTRO-QUICKSORT                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // - Faster on larger arrays (more than 32 elements).
+    // - Robust performance.
+    // - Larger bytecode.
+    // - NOT Stable (may matter if you are sorting packed numbers).
+
+    /// @dev Sorts the array in-place with intro-quicksort.
     function sort(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
@@ -205,23 +213,26 @@ library LibSort {
         }
     }
 
-    /// @dev Sorts the array in-place.
-    /// This uses a variant of intro-quicksort, which is NOT stable.
-    function sort(address[] memory a) internal pure {
-        // As any address written to memory will have the upper 96 bits of the
-        // word zeroized (as per Solidity spec), we can directly compare
-        // these addresses as if they are whole uint256 words.
-        uint256[] memory aCasted;
-        /// @solidity memory-safe-assembly
-        assembly {
-            aCasted := a
-        }
-        sort(aCasted);
+    /// @dev Sorts the array in-place with intro-quicksort.
+    function sort(int256[] memory a) internal pure {
+        _convertTwosComplement(a);
+        sort(_cast(a));
+        _convertTwosComplement(a);
     }
 
+    /// @dev Sorts the array in-place with intro-quicksort.
+    function sort(address[] memory a) internal pure {
+        sort(_cast(a));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  OTHER USEFUL OPERATIONS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // For performance, the `uniquifySorted` methods will not revert if the
+    // array is not sorted -- it will simply remove consecutive duplicate elements.
+
     /// @dev Removes duplicate elements from a ascendingly sorted memory array.
-    /// For performance, it will not revert if the array is not sorted --
-    /// it will be simply remove consecutive duplicate elements.
     function uniquifySorted(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
@@ -244,18 +255,13 @@ library LibSort {
     }
 
     /// @dev Removes duplicate elements from a ascendingly sorted memory array.
-    /// For performance, it will not revert if the array is not sorted --
-    /// it will be simply remove consecutive duplicate elements.
+    function uniquifySorted(int256[] memory a) internal pure {
+        uniquifySorted(_cast(a));
+    }
+
+    /// @dev Removes duplicate elements from a ascendingly sorted memory array.
     function uniquifySorted(address[] memory a) internal pure {
-        // As any address written to memory will have the upper 96 bits of the
-        // word zeroized (as per Solidity spec), we can directly compare
-        // these addresses as if they are whole uint256 words.
-        uint256[] memory aCasted;
-        /// @solidity memory-safe-assembly
-        assembly {
-            aCasted := a
-        }
-        uniquifySorted(aCasted);
+        uniquifySorted(_cast(a));
     }
 
     /// @dev Returns whether `a` contains `needle`,
@@ -287,6 +293,71 @@ library LibSort {
             let t := iszero(lt(m, add(a, 0x20)))
             index := shr(5, mul(sub(m, add(a, 0x20)), t))
             found := and(found, t)
+        }
+    }
+
+    /// @dev Reverses the array in-place.
+    function reverse(uint256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(mload(a), 2)) {
+                let w := not(31)
+                let h := add(a, shl(5, mload(a)))
+                for { a := add(a, 0x20) } 1 {} {
+                    let t := mload(a)
+                    mstore(a, mload(h))
+                    mstore(h, t)
+                    h := add(h, w)
+                    a := add(a, 0x20)
+                    if iszero(lt(a, h)) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Reverses the array in-place.
+    function reverse(int256[] memory a) internal pure {
+        reverse(_cast(a));
+    }
+
+    /// @dev Reverses the array in-place.
+    function reverse(address[] memory a) internal pure {
+        reverse(_cast(a));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Reinterpret cast to an uint256 array.
+    function _cast(int256[] memory a) private pure returns (uint256[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+    }
+
+    /// @dev Reinterpret cast to an uint256 array.
+    function _cast(address[] memory a) private pure returns (uint256[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // As any address written to memory will have the upper 96 bits
+            // of the word zeroized (as per Solidity spec), we can directly
+            // compare these addresses as if they are whole uint256 words.
+            casted := a
+        }
+    }
+
+    /// @dev Converts an array of signed two-complement integers
+    /// to unsigned integers suitable for sorting.
+    function _convertTwosComplement(int256[] memory a) private pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let w := shl(255, 1)
+            for { let end := add(a, shl(5, mload(a))) } iszero(eq(a, end)) {} {
+                a := add(a, 0x20)
+                mstore(a, add(mload(a), w))
+            }
         }
     }
 }
