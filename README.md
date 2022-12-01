@@ -1,4 +1,4 @@
-# solady
+# <img src="logo.svg" alt="solady" height="118"/>
 
 [![NPM][npm-shield]][npm-url]
 [![CI][ci-shield]][ci-url]
