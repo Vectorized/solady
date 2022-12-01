@@ -18,8 +18,8 @@ import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 
 contract SafeTransferLibTest is TestPlus {
     uint256 constant SUCCESS = 1;
-    uint256 constant REVERT = 2;
-    uint256 constant REVERT_ANY = 3;
+    uint256 constant REVERTS_WITH_SELECTOR = 2;
+    uint256 constant REVERTS_WITH_ANY = 3;
 
     RevertingToken reverting;
     ReturnsTwoToken returnsTwo;
@@ -222,45 +222,45 @@ contract SafeTransferLibTest is TestPlus {
     }
 
     function testTransferWithReturnsFalseReverts() public {
-        verifySafeTransfer(address(returnsFalse), address(0xBEEF), 1e18, REVERT);
+        verifySafeTransfer(address(returnsFalse), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR);
     }
 
     function testTransferWithRevertingReverts() public {
-        verifySafeTransfer(address(reverting), address(0xBEEF), 1e18, REVERT);
+        verifySafeTransfer(address(reverting), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR);
     }
 
     function testTransferWithReturnsTooLittleReverts() public {
-        verifySafeTransfer(address(returnsTooLittle), address(0xBEEF), 1e18, REVERT);
+        verifySafeTransfer(address(returnsTooLittle), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR);
     }
 
     function testTransferFromWithReturnsFalseReverts() public {
         verifySafeTransferFrom(
-            address(returnsFalse), address(0xFEED), address(0xBEEF), 1e18, REVERT
+            address(returnsFalse), address(0xFEED), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR
         );
     }
 
     function testTransferFromWithRevertingReverts() public {
         verifySafeTransferFrom(
-            address(reverting), address(0xFEED), address(0xBEEF), 1e18, REVERT_ANY
+            address(reverting), address(0xFEED), address(0xBEEF), 1e18, REVERTS_WITH_ANY
         );
     }
 
     function testTransferFromWithReturnsTooLittleReverts() public {
         verifySafeTransferFrom(
-            address(returnsTooLittle), address(0xFEED), address(0xBEEF), 1e18, REVERT
+            address(returnsTooLittle), address(0xFEED), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR
         );
     }
 
     function testApproveWithReturnsFalseReverts() public {
-        verifySafeApprove(address(returnsFalse), address(0xBEEF), 1e18, REVERT);
+        verifySafeApprove(address(returnsFalse), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR);
     }
 
     function testApproveWithRevertingReverts() public {
-        verifySafeApprove(address(reverting), address(0xBEEF), 1e18, REVERT);
+        verifySafeApprove(address(reverting), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR);
     }
 
     function testApproveWithReturnsTooLittleReverts() public {
-        verifySafeApprove(address(returnsTooLittle), address(0xBEEF), 1e18, REVERT);
+        verifySafeApprove(address(returnsTooLittle), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzTransferWithMissingReturn(address to, uint256 amount) public brutalizeMemory {
@@ -404,28 +404,28 @@ contract SafeTransferLibTest is TestPlus {
         public
         brutalizeMemory
     {
-        verifySafeTransfer(address(returnsFalse), to, amount, REVERT);
+        verifySafeTransfer(address(returnsFalse), to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzTransferWithRevertingReverts(address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeTransfer(address(reverting), to, amount, REVERT);
+        verifySafeTransfer(address(reverting), to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzTransferWithReturnsTooLittleReverts(address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeTransfer(address(returnsTooLittle), to, amount, REVERT);
+        verifySafeTransfer(address(returnsTooLittle), to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzTransferWithReturnsTwoReverts(address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeTransfer(address(returnsTwo), to, amount, REVERT);
+        verifySafeTransfer(address(returnsTwo), to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzTransferWithGarbageReverts(address to, uint256 amount, bytes memory garbage)
@@ -436,21 +436,21 @@ contract SafeTransferLibTest is TestPlus {
 
         returnsGarbage.setGarbage(garbage);
 
-        verifySafeTransfer(address(returnsGarbage), to, amount, REVERT_ANY);
+        verifySafeTransfer(address(returnsGarbage), to, amount, REVERTS_WITH_ANY);
     }
 
     function testFuzzTransferFromWithReturnsFalseReverts(address from, address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeTransferFrom(address(returnsFalse), from, to, amount, REVERT);
+        verifySafeTransferFrom(address(returnsFalse), from, to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzTransferFromWithRevertingReverts(address from, address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeTransferFrom(address(reverting), from, to, amount, REVERT_ANY);
+        verifySafeTransferFrom(address(reverting), from, to, amount, REVERTS_WITH_ANY);
     }
 
     function testFuzzTransferFromWithReturnsTooLittleReverts(
@@ -458,14 +458,14 @@ contract SafeTransferLibTest is TestPlus {
         address to,
         uint256 amount
     ) public brutalizeMemory {
-        verifySafeTransferFrom(address(returnsTooLittle), from, to, amount, REVERT);
+        verifySafeTransferFrom(address(returnsTooLittle), from, to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzTransferFromWithReturnsTwoReverts(address from, address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeTransferFrom(address(returnsTwo), from, to, amount, REVERT);
+        verifySafeTransferFrom(address(returnsTwo), from, to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzTransferFromWithGarbageReverts(
@@ -478,35 +478,35 @@ contract SafeTransferLibTest is TestPlus {
 
         returnsGarbage.setGarbage(garbage);
 
-        verifySafeTransferFrom(address(returnsGarbage), from, to, amount, REVERT_ANY);
+        verifySafeTransferFrom(address(returnsGarbage), from, to, amount, REVERTS_WITH_ANY);
     }
 
     function testFuzzApproveWithReturnsFalseReverts(address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeApprove(address(returnsFalse), to, amount, REVERT);
+        verifySafeApprove(address(returnsFalse), to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzApproveWithRevertingReverts(address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeApprove(address(reverting), to, amount, REVERT);
+        verifySafeApprove(address(reverting), to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzApproveWithReturnsTooLittleReverts(address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeApprove(address(returnsTooLittle), to, amount, REVERT);
+        verifySafeApprove(address(returnsTooLittle), to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzApproveWithReturnsTwoReverts(address to, uint256 amount)
         public
         brutalizeMemory
     {
-        verifySafeApprove(address(returnsTwo), to, amount, REVERT);
+        verifySafeApprove(address(returnsTwo), to, amount, REVERTS_WITH_SELECTOR);
     }
 
     function testFuzzApproveWithGarbageReverts(address to, uint256 amount, bytes memory garbage)
@@ -517,7 +517,7 @@ contract SafeTransferLibTest is TestPlus {
 
         returnsGarbage.setGarbage(garbage);
 
-        verifySafeApprove(address(returnsGarbage), to, amount, REVERT_ANY);
+        verifySafeApprove(address(returnsGarbage), to, amount, REVERTS_WITH_ANY);
     }
 
     function testFuzzTransferETHToContractWithoutFallbackReverts(uint256 amount)
@@ -529,9 +529,9 @@ contract SafeTransferLibTest is TestPlus {
     }
 
     function verifySafeTransfer(address token, address to, uint256 amount, uint256 mode) public {
-        if (mode == REVERT) {
+        if (mode == REVERTS_WITH_SELECTOR) {
             vm.expectRevert(SafeTransferLib.TransferFailed.selector);
-        } else if (mode == REVERT_ANY) {
+        } else if (mode == REVERTS_WITH_ANY) {
             (bool success,) = address(this).call(
                 abi.encodeWithSignature(
                     "verifySafeTransfer(address,address,uint256)", token, to, amount
@@ -562,9 +562,9 @@ contract SafeTransferLibTest is TestPlus {
         uint256 amount,
         uint256 mode
     ) public {
-        if (mode == REVERT) {
+        if (mode == REVERTS_WITH_SELECTOR) {
             vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
-        } else if (mode == REVERT_ANY) {
+        } else if (mode == REVERTS_WITH_ANY) {
             (bool success,) = address(this).call(
                 abi.encodeWithSignature(
                     "verifySafeTransferFrom(address,address,address,uint256)",
@@ -601,9 +601,9 @@ contract SafeTransferLibTest is TestPlus {
     }
 
     function verifySafeApprove(address token, address to, uint256 amount, uint256 mode) public {
-        if (mode == REVERT) {
+        if (mode == REVERTS_WITH_SELECTOR) {
             vm.expectRevert(SafeTransferLib.ApproveFailed.selector);
-        } else if (mode == REVERT_ANY) {
+        } else if (mode == REVERTS_WITH_ANY) {
             (bool success,) = address(this).call(
                 abi.encodeWithSignature(
                     "verifySafeApprove(address,address,uint256)", token, to, amount
