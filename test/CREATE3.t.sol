@@ -37,17 +37,19 @@ contract CREATE3Test is Test {
         assertEq(someNumber, someNumberUnpacked);
     }
 
-    function testFailDoubleDeploySameBytecode() public {
+    function testDoubleDeploySameBytecodeReverts() public {
         bytes32 salt = keccak256(bytes("Salty..."));
 
         CREATE3.deploy(salt, type(MockAuthChild).creationCode, 0);
+        vm.expectRevert(CREATE3.DeploymentFailed.selector);
         CREATE3.deploy(salt, type(MockAuthChild).creationCode, 0);
     }
 
-    function testFailDoubleDeployDifferentBytecode() public {
+    function testDoubleDeployDifferentBytecodeReverts() public {
         bytes32 salt = keccak256(bytes("and sweet!"));
 
         CREATE3.deploy(salt, type(WETH).creationCode, 0);
+        vm.expectRevert(CREATE3.DeploymentFailed.selector);
         CREATE3.deploy(salt, type(MockAuthChild).creationCode, 0);
     }
 
@@ -72,17 +74,43 @@ contract CREATE3Test is Test {
         assertEq(deployed.decimals(), decimals);
     }
 
-    function testFailFuzzDoubleDeploySameBytecode(bytes32 salt, bytes calldata bytecode) public {
-        CREATE3.deploy(salt, bytecode, 0);
-        CREATE3.deploy(salt, bytecode, 0);
+    function testFuzzDoubleDeploySameBytecodeReverts(bytes32 salt, bytes calldata bytecode)
+        public
+    {
+        bytes memory creationCode = _creationCode(bytecode);
+        CREATE3.deploy(salt, creationCode, 0);
+        vm.expectRevert(CREATE3.DeploymentFailed.selector);
+        CREATE3.deploy(salt, creationCode, 0);
     }
 
-    function testFailFuzzDoubleDeployDifferentBytecode(
+    function testFuzzDoubleDeployDifferentBytecodeReverts(
         bytes32 salt,
-        bytes calldata bytecode1,
-        bytes calldata bytecode2
+        bytes memory bytecode1,
+        bytes memory bytecode2
     ) public {
-        CREATE3.deploy(salt, bytecode1, 0);
-        CREATE3.deploy(salt, bytecode2, 0);
+        CREATE3.deploy(salt, _creationCode(bytecode1), 0);
+        vm.expectRevert(CREATE3.DeploymentFailed.selector);
+        CREATE3.deploy(salt, _creationCode(bytecode2), 0);
+    }
+
+    function _creationCode(bytes memory bytecode) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Trim the length if needed.
+            let length := mload(bytecode)
+            let maxLength := 24566 // `24576 - 0xa`.
+            if iszero(lt(length, maxLength)) { mstore(bytecode, maxLength) }
+            // The following snippet is from SSTORE2.
+            result := mload(0x40)
+            length := mload(bytecode)
+            let dataSize := add(length, 1)
+            mstore(0x40, and(add(add(result, dataSize), 0x60), not(31)))
+            mstore(add(result, 0x0b), or(0x61000080600a3d393df300, shl(0x40, dataSize)))
+            mstore(result, add(dataSize, 0xa)) // Store the length of result.
+            // Copy the bytes over.
+            for { let i := 0 } lt(i, length) { i := add(i, 0x20) } {
+                mstore(add(add(bytecode, 0x20), i), mload(add(add(result, 0x2b), i)))
+            }
+        }
     }
 }
