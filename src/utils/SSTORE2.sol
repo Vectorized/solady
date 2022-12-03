@@ -8,6 +8,14 @@ pragma solidity ^0.8.4;
 /// @author Modified from 0xSequence (https://github.com/0xSequence/sstore2/blob/master/contracts/SSTORE2.sol)
 library SSTORE2 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev We skip the first byte as it's a STOP opcode,
+    /// which ensures the contract can't be called.
+    uint256 internal constant DATA_OFFSET = 1;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -32,7 +40,7 @@ library SSTORE2 {
             let originalDataLength := mload(data)
 
             // Add 1 to data size since we are prefixing it with a STOP opcode.
-            let dataSize := add(originalDataLength, 1)
+            let dataSize := add(originalDataLength, DATA_OFFSET)
 
             /**
              * ------------------------------------------------------------------------------+
@@ -91,7 +99,7 @@ library SSTORE2 {
                 revert(0x1c, 0x04)
             }
             // Offset all indices by 1 to skip the STOP opcode.
-            let size := sub(pointerCodesize, 1)
+            let size := sub(pointerCodesize, DATA_OFFSET)
 
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
@@ -101,7 +109,7 @@ library SSTORE2 {
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
             mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), 1, size)
+            extcodecopy(pointer, add(data, 0x20), DATA_OFFSET, size)
         }
     }
 
@@ -119,14 +127,14 @@ library SSTORE2 {
             }
 
             // If `!(pointer.code.size > start)`, reverts.
-            // This also handles the case where `start + 1` overflows.
+            // This also handles the case where `start + DATA_OFFSET` overflows.
             if iszero(gt(pointerCodesize, start)) {
                 // Store the function selector of `ReadOutOfBounds()`.
                 mstore(0x00, 0x84eb0dd1)
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            let size := sub(pointerCodesize, add(start, 1))
+            let size := sub(pointerCodesize, add(start, DATA_OFFSET))
 
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
@@ -136,7 +144,7 @@ library SSTORE2 {
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
             mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), size)
+            extcodecopy(pointer, add(data, 0x20), add(start, DATA_OFFSET), size)
         }
     }
 
@@ -158,7 +166,8 @@ library SSTORE2 {
             }
 
             // If `!(pointer.code.size > end) || (start > end)`, revert.
-            // This also handles the cases where `end + 1` or `start + 1` overflow.
+            // This also handles the cases where
+            // `end + DATA_OFFSET` or `start + DATA_OFFSET` overflows.
             if iszero(
                 and(
                     gt(pointerCodesize, end), // Within bounds.
@@ -180,7 +189,7 @@ library SSTORE2 {
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
             mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), size)
+            extcodecopy(pointer, add(data, 0x20), add(start, DATA_OFFSET), size)
         }
     }
 }
