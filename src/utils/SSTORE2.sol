@@ -127,7 +127,7 @@ library SSTORE2 {
             }
 
             // If `!(pointer.code.size > start)`, reverts.
-            // This also handles the case where `start + 1` overflows.
+            // This also handles the case where `start + DATA_OFFSET` overflows.
             if iszero(gt(pointerCodesize, start)) {
                 // Store the function selector of `ReadOutOfBounds()`.
                 mstore(0x00, 0x84eb0dd1)
@@ -166,7 +166,8 @@ library SSTORE2 {
             }
 
             // If `!(pointer.code.size > end) || (start > end)`, revert.
-            // This also handles the cases where `end + 1` or `start + 1` overflow.
+            // This also handles the cases where
+            // `end + DATA_OFFSET` or `start + DATA_OFFSET` overflows.
             if iszero(
                 and(
                     gt(pointerCodesize, end), // Within bounds.
