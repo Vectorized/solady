@@ -7,7 +7,13 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SSTORE2.sol)
 /// @author Modified from 0xSequence (https://github.com/0xSequence/sstore2/blob/master/contracts/SSTORE2.sol)
 library SSTORE2 {
-    uint256 internal constant DATA_OFFSET = 1; // We skip the first byte as it's a STOP opcode to ensure the contract can't be called.
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev We skip the first byte as it's a STOP opcode,
+    /// which ensures the contract can't be called.
+    uint256 internal constant DATA_OFFSET = 1;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
@@ -93,7 +99,7 @@ library SSTORE2 {
                 revert(0x1c, 0x04)
             }
             // Offset all indices by 1 to skip the STOP opcode.
-            let size := sub(pointerCodesize, 1)
+            let size := sub(pointerCodesize, DATA_OFFSET)
 
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
@@ -103,7 +109,7 @@ library SSTORE2 {
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
             mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), 1, size)
+            extcodecopy(pointer, add(data, 0x20), DATA_OFFSET, size)
         }
     }
 
@@ -128,7 +134,7 @@ library SSTORE2 {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            let size := sub(pointerCodesize, add(start, 1))
+            let size := sub(pointerCodesize, add(start, DATA_OFFSET))
 
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
@@ -138,7 +144,7 @@ library SSTORE2 {
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
             mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), size)
+            extcodecopy(pointer, add(data, 0x20), add(start, DATA_OFFSET), size)
         }
     }
 
@@ -182,7 +188,7 @@ library SSTORE2 {
             mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
             mstore(data, size)
             mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), size)
+            extcodecopy(pointer, add(data, 0x20), add(start, DATA_OFFSET), size)
         }
     }
 }
