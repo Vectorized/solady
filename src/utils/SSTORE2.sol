@@ -7,6 +7,8 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SSTORE2.sol)
 /// @author Modified from 0xSequence (https://github.com/0xSequence/sstore2/blob/master/contracts/SSTORE2.sol)
 library SSTORE2 {
+    uint256 internal constant DATA_OFFSET = 1; // We skip the first byte as it's a STOP opcode to ensure the contract can't be called.
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -32,7 +34,7 @@ library SSTORE2 {
             let originalDataLength := mload(data)
 
             // Add 1 to data size since we are prefixing it with a STOP opcode.
-            let dataSize := add(originalDataLength, 1)
+            let dataSize := add(originalDataLength, DATA_OFFSET)
 
             /**
              * ------------------------------------------------------------------------------+
