@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Simple single owner authorization mixin.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/OwnableRoles.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/Ownable.sol)
 /// @dev While the ownable portion follows [EIP-173](https://eips.ethereum.org/EIPS/eip-173)
 /// for compatibility, the nomenclature for the 2-step ownership handover
 /// may be unique to this codebase.
