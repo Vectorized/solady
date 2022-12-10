@@ -129,6 +129,20 @@ library LibClone {
         }
     }
 
+    /// @dev Returns the initialization code hash of the clone of `implementation`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHash(address implementation) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
+            mstore(0x14, implementation)
+            mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
+            hash := keccak256(0x0c, 0x35)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x21, 0)
+        }
+    }
+
     /// @dev Returns the address of the deterministic clone of `implementation`,
     /// with `salt` by `deployer`.
     function predictDeterministicAddress(address implementation, bytes32 salt, address deployer)
@@ -136,19 +150,8 @@ library LibClone {
         pure
         returns (address predicted)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
-            mstore(0x14, implementation)
-            mstore(0x00, 0xff0000000000000000000000602c3d8160093d39f33d3d3d3d363d3d37363d73)
-            // Compute and store the bytecode hash.
-            mstore(0x35, keccak256(0x0c, 0x35))
-            mstore(0x01, shl(96, deployer))
-            mstore(0x15, salt)
-            predicted := keccak256(0x00, 0x55)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x35, 0)
-        }
+        bytes32 hash = initCodeHash(implementation);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -346,14 +349,14 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic clone of
-    /// `implementation` using immutable arguments encoded in `data`, with `salt`, by `deployer`.
-    function predictDeterministicAddress(
-        address implementation,
-        bytes memory data,
-        bytes32 salt,
-        address deployer
-    ) internal pure returns (address predicted) {
+    /// @dev Returns the initialization code hash of the clone of `implementation`
+    /// using immutable arguments encoded in `data`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHash(address implementation, bytes memory data)
+        internal
+        pure
+        returns (bytes32 hash)
+    {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
@@ -386,13 +389,7 @@ library LibClone {
             mstore(dataEnd, shl(0xf0, extraLength))
 
             // Compute and store the bytecode hash.
-            mstore(0x35, keccak256(sub(data, 0x4c), add(extraLength, 0x6c)))
-            mstore8(0x00, 0xff) // Write the prefix.
-            mstore(0x01, shl(96, deployer))
-            mstore(0x15, salt)
-            predicted := keccak256(0x00, 0x55)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x35, 0)
+            hash := keccak256(sub(data, 0x4c), add(extraLength, 0x6c))
 
             // Restore the overwritten memory surrounding `data`.
             mstore(dataEnd, mAfter1)
@@ -400,6 +397,42 @@ library LibClone {
             mstore(sub(data, 0x20), mBefore1)
             mstore(sub(data, 0x40), mBefore2)
             mstore(sub(data, 0x60), mBefore3)
+        }
+    }
+
+    /// @dev Returns the address of the deterministic clone of
+    /// `implementation` using immutable arguments encoded in `data`, with `salt`, by `deployer`.
+    function predictDeterministicAddress(
+        address implementation,
+        bytes memory data,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        bytes32 hash = initCodeHash(implementation, data);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      OTHER OPERATIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the address when a contract with initialization code hash,
+    /// `hash`, is deployed with `salt`, by `deployer`.
+    function predictDeterministicAddress(bytes32 hash, bytes32 salt, address deployer)
+        internal
+        pure
+        returns (address predicted)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute and store the bytecode hash.
+            mstore8(0x00, 0xff) // Write the prefix.
+            mstore(0x35, hash)
+            mstore(0x01, shl(96, deployer))
+            mstore(0x15, salt)
+            predicted := keccak256(0x00, 0x55)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x35, 0)
         }
     }
 }
