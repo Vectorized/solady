@@ -266,6 +266,23 @@ contract LibCloneTest is TestPlus, Clone {
         );
     }
 
+    function testStartsWithCaller(uint256) public {
+        uint256 noise = _random() >> 160;
+        this.checkStartsWithCaller(bytes32(noise));
+
+        vm.expectRevert(LibClone.SaltDoesNotStartWithCaller.selector);
+        uint256 r = _random();
+        address randomCaller = address(uint160(r));
+        if (randomCaller == msg.sender) return;
+        this.checkStartsWithCaller(bytes32((r << 96) | noise));
+
+        this.checkStartsWithCaller(bytes32((uint256(uint160(address(this))) << 96) | noise));
+    }
+
+    function checkStartsWithCaller(bytes32 salt) public view {
+        LibClone.checkStartsWithCaller(salt);
+    }
+
     function _this() internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {

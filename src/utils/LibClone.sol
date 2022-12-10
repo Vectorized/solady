@@ -25,6 +25,9 @@ library LibClone {
     /// @dev Unable to deploy the clone.
     error DeploymentFailed();
 
+    /// @dev The salt must start with either the zero address or the caller.
+    error SaltDoesNotStartWithCaller();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  MINIMAL PROXY OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -433,6 +436,20 @@ library LibClone {
             predicted := keccak256(0x00, 0x55)
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x35, 0)
+        }
+    }
+
+    /// @dev Reverts if `salt` does not start with either the zero address or the caller.
+    function checkStartsWithCaller(bytes32 salt) internal view {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the salt does not start with the zero address or the caller.
+            if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
+                // Store the function selector of `SaltDoesNotStartWithCaller()`.
+                mstore(0x00, 0x2f634836)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
         }
     }
 }
