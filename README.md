@@ -80,7 +80,7 @@ This repository is inspired by or directly modified from many sources, primarily
 [npm-shield]: https://img.shields.io/npm/v/solady.svg
 [npm-url]: https://www.npmjs.com/package/solady
 
-[ci-shield]: https://img.shields.io/github/workflow/status/vectorized/solady/ci?label=build
+[ci-shield]: https://img.shields.io/github/actions/workflow/status/vectorized/solady/ci.yml?branch=main&label=build
 [ci-url]: https://github.com/vectorized/solady/actions/workflows/ci.yml
 
 [license-shield]: https://img.shields.io/badge/License-MIT-green.svg
