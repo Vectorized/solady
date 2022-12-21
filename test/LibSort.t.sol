@@ -627,6 +627,7 @@ contract LibSortTest is TestPlus {
             }
         }
     }
+
     function testUnionBasicInt() public {
         int256[] memory a = new int256[](3);
         int256[] memory b = new int256[](3);
@@ -637,11 +638,11 @@ contract LibSortTest is TestPlus {
         b[1] = -1;
         b[2] = 2;
         int256[] memory c = LibSort.union(a, b);
-        unchecked{
+        unchecked {
             assertEq(c.length, 5);
             int256 f = -2;
-            for(uint256 i; i<5; ++i){
-                assertEq(c[i],f++);
+            for (uint256 i; i < 5; ++i) {
+                assertEq(c[i], f++);
             }
         }
     }
@@ -748,7 +749,7 @@ contract LibSortTest is TestPlus {
         assertEq(originalHash, hash);
     }
 
-     function testUnionOnRamdomArrayInt(int256[] memory a, int256[] memory b) public {
+    function testUnionOnRamdomArrayInt(int256[] memory a, int256[] memory b) public {
         _boundArrayLength(a, 256);
         _boundArrayLength(b, 256);
         LibSort.sort(a);
@@ -996,7 +997,7 @@ contract LibSortTest is TestPlus {
         q[4] = -2;
         int256[] memory r = LibSort.difference(p, q);
         assertEq(r.length, 1);
-        assertEq(r[0],1);
+        assertEq(r[0], 1);
         int256[] memory x = new int256[](3);
         int256[] memory y;
         x[0] = -5;
@@ -1089,7 +1090,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-     function _unionOriginal(int256[] memory a, int256[] memory b)
+    function _unionOriginal(int256[] memory a, int256[] memory b)
         private
         pure
         returns (int256[] memory)
@@ -1148,6 +1149,7 @@ contract LibSortTest is TestPlus {
             return c;
         }
     }
+
     function _intersectionOriginal(int256[] memory a, int256[] memory b)
         private
         pure
@@ -1372,7 +1374,8 @@ contract LibSortTest is TestPlus {
             if iszero(lt(mload(a), n)) { mstore(a, n) }
         }
     }
-        function _boundArrayLength(int256[] memory a, uint256 n) private pure {
+
+    function _boundArrayLength(int256[] memory a, uint256 n) private pure {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(slt(mload(a), n)) { mstore(a, n) }
