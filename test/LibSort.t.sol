@@ -683,7 +683,7 @@ contract LibSortTest is TestPlus {
 
     function testUnionOneEmptyArrayInt() public {
         unchecked {
-            for (uint256 t; t != 256; ++t) {
+            for (uint256 t; t != 128; ++t) {
                 uint256 n = _bound(_random(), 1, 256);
                 int256[] memory a = _getRandomInts(n);
                 int256[] memory b;
