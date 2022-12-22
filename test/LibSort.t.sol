@@ -1104,14 +1104,17 @@ contract LibSortTest is TestPlus {
             }
 
             uint256[] memory aUnionB = LibSort.union(a, b);
+            uint256[] memory aSubBUnionBSubA = LibSort.union(aSubB, bSubA);
             uint256[] memory emptySet;
             assertEq(emptySet, LibSort.intersection(aSubB, bSubA));
-            assertEq(emptySet, LibSort.intersection(LibSort.union(aSubB, bSubA), aIntersectionB));
+            assertEq(emptySet, LibSort.intersection(aSubBUnionBSubA, aIntersectionB));
+            assertEq(a, LibSort.union(aIntersectionB, aSubB));
+            assertEq(b, LibSort.union(aIntersectionB, bSubA));
             assertEq(aIntersectionB, LibSort.intersection(b, a));
             assertEq(aUnionB, LibSort.union(b, a));
             assertEq(LibSort.union(aSubB, b), LibSort.union(b, aSubB));
             assertEq(LibSort.union(bSubA, a), LibSort.union(a, bSubA));
-            assertEq(aUnionB, LibSort.union(LibSort.union(aSubB, bSubA), aIntersectionB));
+            assertEq(aUnionB, LibSort.union(aSubBUnionBSubA, aIntersectionB));
         }
     }
 
