@@ -753,6 +753,21 @@ contract LibSortTest is TestPlus {
         assertEq(originalHash, hash);
     }
 
+    function testSortedUnionDifferential() public {
+        unchecked {
+            for (uint256 t; t != 16; ++t) {
+                uint256 n = 8;
+                uint256[] memory a = new uint256[](n);
+                uint256[] memory b = new uint256[](n);
+                for (uint256 i; i != n; ++i) {
+                    a[i] = _random();
+                    b[i] = _random();
+                }
+                testSortedUnionDifferential(a, b);
+            }
+        }
+    }
+
     function testSortedUnionDifferentialInt(int256[] memory a, int256[] memory b) public {
         _boundArrayLength(a, 8);
         _boundArrayLength(b, 8);
@@ -907,6 +922,21 @@ contract LibSortTest is TestPlus {
         assertEq(originalHash, hash);
     }
 
+    function testSortedIntersectionDifferential() public {
+        unchecked {
+            for (uint256 t; t != 16; ++t) {
+                uint256 n = 8;
+                uint256[] memory a = new uint256[](n);
+                uint256[] memory b = new uint256[](n);
+                for (uint256 i; i != n; ++i) {
+                    a[i] = _random();
+                    b[i] = _random();
+                }
+                testSortedIntersectionDifferential(a, b);
+            }
+        }
+    }
+
     function testSortedIntersectionDifferentialInt(int256[] memory a, int256[] memory b) public {
         _boundArrayLength(a, 8);
         _boundArrayLength(b, 8);
@@ -1043,6 +1073,21 @@ contract LibSortTest is TestPlus {
         bytes32 hash = keccak256(abi.encode(c));
         bytes32 originalHash = keccak256(abi.encode(d));
         assertEq(originalHash, hash);
+    }
+
+    function testSortedDifferenceDifferential() public {
+        unchecked {
+            for (uint256 t; t != 16; ++t) {
+                uint256 n = 8;
+                uint256[] memory a = new uint256[](n);
+                uint256[] memory b = new uint256[](n);
+                for (uint256 i; i != n; ++i) {
+                    a[i] = _random();
+                    b[i] = _random();
+                }
+                testSortedDifferenceDifferential(a, b);
+            }
+        }
     }
 
     function testSortedDifferenceDifferentialInt(int256[] memory a, int256[] memory b) public {

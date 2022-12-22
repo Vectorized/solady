@@ -332,7 +332,7 @@ library LibSort {
         pure
         returns (uint256[] memory c)
     {
-        c = _difference(a, b, false);
+        c = _difference(a, b, 0);
     }
 
     /// @dev Returns the sorted set difference between `a` and `b`.
@@ -342,7 +342,7 @@ library LibSort {
         pure
         returns (int256[] memory c)
     {
-        c = _toInts(_difference(_toUints(a), _toUints(b), true));
+        c = _toInts(_difference(_toUints(a), _toUints(b), 1 << 255));
     }
 
     /// @dev Returns the sorted set difference between `a` and `b`.
@@ -352,7 +352,7 @@ library LibSort {
         pure
         returns (address[] memory c)
     {
-        c = _toAddresses(_difference(_toUints(a), _toUints(b), false));
+        c = _toAddresses(_difference(_toUints(a), _toUints(b), 0));
     }
 
     /// @dev Returns the sorted set intersection between `a` and `b`.
@@ -362,7 +362,7 @@ library LibSort {
         pure
         returns (uint256[] memory c)
     {
-        c = _intersection(a, b, false);
+        c = _intersection(a, b, 0);
     }
 
     /// @dev Returns the sorted set intersection between `a` and `b`.
@@ -372,7 +372,7 @@ library LibSort {
         pure
         returns (int256[] memory c)
     {
-        c = _toInts(_intersection(_toUints(a), _toUints(b), true));
+        c = _toInts(_intersection(_toUints(a), _toUints(b), 1 << 255));
     }
 
     /// @dev Returns the sorted set intersection between `a` and `b`.
@@ -382,7 +382,7 @@ library LibSort {
         pure
         returns (address[] memory c)
     {
-        c = _toAddresses(_intersection(_toUints(a), _toUints(b), false));
+        c = _toAddresses(_intersection(_toUints(a), _toUints(b), 0));
     }
 
     /// @dev Returns the sorted set union of `a` and `b`.
@@ -392,7 +392,7 @@ library LibSort {
         pure
         returns (uint256[] memory c)
     {
-        c = _union(a, b, false);
+        c = _union(a, b, 0);
     }
 
     /// @dev Returns the sorted set union of `a` and `b`.
@@ -402,7 +402,7 @@ library LibSort {
         pure
         returns (int256[] memory c)
     {
-        c = _toInts(_union(_toUints(a), _toUints(b), true));
+        c = _toInts(_union(_toUints(a), _toUints(b), 1 << 255));
     }
 
     /// @dev Returns the sorted set union between `a` and `b`.
@@ -412,7 +412,7 @@ library LibSort {
         pure
         returns (address[] memory c)
     {
-        c = _toAddresses(_union(_toUints(a), _toUints(b), false));
+        c = _toAddresses(_union(_toUints(a), _toUints(b), 0));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -469,134 +469,131 @@ library LibSort {
 
     /// @dev Returns the sorted set difference of `a` and `b`.
     /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
-    function _difference(uint256[] memory a, uint256[] memory b, bool signed)
+    function _difference(uint256[] memory a, uint256[] memory b, uint256 signed)
         private
         pure
         returns (uint256[] memory c)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let w := 0x20
+            let s := 0x20
             let aEnd := add(a, shl(5, mload(a)))
             let bEnd := add(b, shl(5, mload(b)))
             c := mload(0x40) // Set `c` to the free memory pointer.
-            a := add(a, w)
-            b := add(b, w)
+            a := add(a, s)
+            b := add(b, s)
             let k := c
-            let s := shl(255, signed)
             for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
                 let u := mload(a)
                 let v := mload(b)
                 if iszero(xor(u, v)) {
-                    a := add(a, w)
-                    b := add(b, w)
+                    a := add(a, s)
+                    b := add(b, s)
                     continue
                 }
-                if iszero(lt(add(u, s), add(v, s))) {
-                    b := add(b, w)
+                if iszero(lt(add(u, signed), add(v, signed))) {
+                    b := add(b, s)
                     continue
                 }
-                k := add(k, w)
+                k := add(k, s)
                 mstore(k, u)
-                a := add(a, w)
+                a := add(a, s)
             }
             for {} iszero(gt(a, aEnd)) {} {
-                k := add(k, w)
+                k := add(k, s)
                 mstore(k, mload(a))
-                a := add(a, w)
+                a := add(a, s)
             }
             mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
-            mstore(0x40, add(k, w)) // Allocate the memory for `c`.
+            mstore(0x40, add(k, s)) // Allocate the memory for `c`.
         }
     }
 
     /// @dev Returns the sorted set intersection between `a` and `b`.
     /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
-    function _intersection(uint256[] memory a, uint256[] memory b, bool signed)
+    function _intersection(uint256[] memory a, uint256[] memory b, uint256 signed)
         private
         pure
         returns (uint256[] memory c)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let w := 0x20
+            let s := 0x20
             let aEnd := add(a, shl(5, mload(a)))
             let bEnd := add(b, shl(5, mload(b)))
             c := mload(0x40) // Set `c` to the free memory pointer.
-            a := add(a, w)
-            b := add(b, w)
+            a := add(a, s)
+            b := add(b, s)
             let k := c
-            let s := shl(255, signed)
             for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
                 let u := mload(a)
                 let v := mload(b)
                 if iszero(xor(u, v)) {
-                    k := add(k, w)
+                    k := add(k, s)
                     mstore(k, u)
-                    a := add(a, w)
-                    b := add(b, w)
+                    a := add(a, s)
+                    b := add(b, s)
                     continue
                 }
-                if iszero(lt(add(u, s), add(v, s))) {
-                    b := add(b, w)
+                if iszero(lt(add(u, signed), add(v, signed))) {
+                    b := add(b, s)
                     continue
                 }
-                a := add(a, w)
+                a := add(a, s)
             }
             mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
-            mstore(0x40, add(k, w)) // Allocate the memory for `c`.
+            mstore(0x40, add(k, s)) // Allocate the memory for `c`.
         }
     }
 
     /// @dev Returns the sorted set union of `a` and `b`.
     /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
-    function _union(uint256[] memory a, uint256[] memory b, bool signed)
+    function _union(uint256[] memory a, uint256[] memory b, uint256 signed)
         private
         pure
         returns (uint256[] memory c)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let w := 0x20
+            let s := 0x20
             let aEnd := add(a, shl(5, mload(a)))
             let bEnd := add(b, shl(5, mload(b)))
             c := mload(0x40) // Set `c` to the free memory pointer.
-            a := add(a, w)
-            b := add(b, w)
+            a := add(a, s)
+            b := add(b, s)
             let k := c
-            let s := shl(255, signed)
             for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
                 let u := mload(a)
                 let v := mload(b)
                 if iszero(xor(u, v)) {
-                    k := add(k, w)
+                    k := add(k, s)
                     mstore(k, u)
-                    a := add(a, w)
-                    b := add(b, w)
+                    a := add(a, s)
+                    b := add(b, s)
                     continue
                 }
-                if iszero(lt(add(u, s), add(v, s))) {
-                    k := add(k, w)
+                if iszero(lt(add(u, signed), add(v, signed))) {
+                    k := add(k, s)
                     mstore(k, v)
-                    b := add(b, w)
+                    b := add(b, s)
                     continue
                 }
-                k := add(k, w)
+                k := add(k, s)
                 mstore(k, u)
-                a := add(a, w)
+                a := add(a, s)
             }
             for {} iszero(gt(a, aEnd)) {} {
-                k := add(k, w)
+                k := add(k, s)
                 mstore(k, mload(a))
-                a := add(a, w)
+                a := add(a, s)
             }
             for {} iszero(gt(b, bEnd)) {} {
-                k := add(k, w)
+                k := add(k, s)
                 mstore(k, mload(b))
-                b := add(b, w)
+                b := add(b, s)
             }
             mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
-            mstore(0x40, add(k, w)) // Allocate the memory for `c`.
+            mstore(0x40, add(k, s)) // Allocate the memory for `c`.
         }
     }
 }
