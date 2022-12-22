@@ -114,7 +114,6 @@ contract LibSortTest is TestPlus {
 
     function testSortPsuedorandomG() public {
         testSortPsuedorandom(123456789);
-        console.log(address(this).code.length);
     }
 
     function testSortPsuedorandomNonuniform(uint256) public {
