@@ -297,6 +297,39 @@ library LibSort {
         }
     }
 
+    /// @dev Returns whether `a` contains `needle`,
+    /// and the index of the nearest element less than or equal to `needle`.
+    function searchSorted(int256[] memory a, int256 needle)
+        internal
+        pure
+        returns (bool found, uint256 index)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := 0 // Middle slot.
+            let s := 0x20
+            let l := add(a, s) // Slot of the start of search.
+            let h := add(a, shl(5, mload(a))) // Slot of the end of search.
+            for {} 1 {} {
+                // Average of `l` and `h`, rounded down to the nearest multiple of 0x20.
+                m := shl(5, shr(6, add(l, h)))
+                found := eq(mload(m), needle)
+                if or(gt(l, h), found) { break }
+                // Decide whether to search the left or right half.
+                if iszero(sgt(needle, mload(m))) {
+                    h := sub(m, s)
+                    continue
+                }
+                l := add(m, s)
+            }
+            // `m` will be less than `add(a, 0x20)` in the case of an empty array,
+            // or when the value is less than the smallest value in the array.
+            let t := iszero(lt(m, add(a, s)))
+            index := shr(5, mul(sub(m, add(a, s)), t))
+            found := and(found, t)
+        }
+    }
+
     /// @dev Reverses the array in-place.
     function reverse(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
