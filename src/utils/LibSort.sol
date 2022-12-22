@@ -68,6 +68,7 @@ library LibSort {
         /// @solidity memory-safe-assembly
         assembly {
             let w := not(31)
+            let s := 0x20
             let n := mload(a) // Length of `a`.
             mstore(a, 0) // For insertion sort's inner loop to terminate.
 
@@ -77,13 +78,13 @@ library LibSort {
             for {} iszero(lt(n, 2)) {} {
                 // Push `l` and `h` to the stack.
                 // The `shl` by 5 is equivalent to multiplying by `0x20`.
-                let l := add(a, 0x20)
+                let l := add(a, s)
                 let h := add(a, shl(5, n))
 
                 let j := l
                 // forgefmt: disable-next-item
-                for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, 0x20))))) {} {
-                    j := add(j, 0x20)
+                for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, s))))) {} {
+                    j := add(j, s)
                 }
                 // If the array is already sorted.
                 if eq(j, h) { break }
@@ -100,7 +101,7 @@ library LibSort {
                         mstore(l, mload(h))
                         mstore(h, t)
                         h := add(h, w) // `sub(h, 0x20)`.
-                        l := add(l, 0x20)
+                        l := add(l, s)
                         if iszero(lt(l, h)) { break }
                     }
                     break
@@ -108,7 +109,7 @@ library LibSort {
 
                 // Push `l` and `h` onto the stack.
                 mstore(stack, l)
-                mstore(add(stack, 0x20), h)
+                mstore(add(stack, s), h)
                 stack := add(stack, 0x40)
                 break
             }
@@ -117,32 +118,32 @@ library LibSort {
                 // Pop `l` and `h` from the stack.
                 stack := sub(stack, 0x40)
                 let l := mload(stack)
-                let h := mload(add(stack, 0x20))
+                let h := mload(add(stack, s))
 
                 // Do insertion sort if `h - l <= 0x20 * 12`.
                 // Threshold is fine-tuned via trial and error.
                 if iszero(gt(sub(h, l), 0x180)) {
                     // Hardcode sort the first 2 elements.
-                    let i := add(l, 0x20)
+                    let i := add(l, s)
                     if iszero(lt(mload(l), mload(i))) {
                         let t := mload(i)
                         mstore(i, mload(l))
                         mstore(l, t)
                     }
                     for {} 1 {} {
-                        i := add(i, 0x20)
+                        i := add(i, s)
                         if gt(i, h) { break }
                         let k := mload(i) // Key.
                         let j := add(i, w) // The slot before the current slot.
                         let v := mload(j) // The value of `j`.
                         if iszero(gt(v, k)) { continue }
                         for {} 1 {} {
-                            mstore(add(j, 0x20), v)
+                            mstore(add(j, s), v)
                             j := add(j, w)
                             v := mload(j)
                             if iszero(gt(v, k)) { break }
                         }
-                        mstore(add(j, 0x20), k)
+                        mstore(add(j, s), k)
                     }
                     continue
                 }
@@ -180,7 +181,7 @@ library LibSort {
                     p := h
                     for { let i := l } 1 {} {
                         for {} 1 {} {
-                            i := add(i, 0x20)
+                            i := add(i, s)
                             if iszero(gt(x, mload(i))) { break }
                         }
                         let j := p
@@ -198,14 +199,14 @@ library LibSort {
                 }
                 // If slice on right of pivot is non-empty, push onto stack.
                 {
-                    mstore(stack, add(p, 0x20))
+                    mstore(stack, add(p, s))
                     // Skip `mstore(add(stack, 0x20), h)`, as it is already on the stack.
-                    stack := add(stack, shl(6, lt(add(p, 0x20), h)))
+                    stack := add(stack, shl(6, lt(add(p, s), h)))
                 }
                 // If slice on left of pivot is non-empty, push onto stack.
                 {
                     mstore(stack, l)
-                    mstore(add(stack, 0x20), p)
+                    mstore(add(stack, s), p)
                     stack := add(stack, shl(6, gt(p, l)))
                 }
             }
