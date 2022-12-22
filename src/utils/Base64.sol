@@ -17,9 +17,7 @@ library Base64 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let dataLength := mload(data)
-
-            if dataLength {
+            for { let dataLength := mload(data) } dataLength {} {
                 // Multiply by 4/3 rounded up.
                 // The `shl(2, ...)` is equivalent to multiplying by 4.
                 let encodedLength := shl(2, div(add(dataLength, 2), 3))
@@ -55,25 +53,24 @@ library Base64 {
                     if iszero(lt(ptr, end)) { break }
                 }
 
+                // Allocate the memory for the string.
+                // Add 31 and mask with `not(31)` to round the
+                // free memory pointer up the next multiple of 32.
+                mstore(0x40, and(add(end, 31), not(31)))
+
                 let r := mod(dataLength, 3)
 
-                switch noPadding
-                case 0 {
+                if iszero(noPadding) {
                     // Offset `ptr` and pad with '='. We can simply write over the end.
                     mstore8(sub(ptr, iszero(iszero(r))), 0x3d) // Pad at `ptr - 1` if `r > 0`.
                     mstore8(sub(ptr, shl(1, eq(r, 1))), 0x3d) // Pad at `ptr - 2` if `r == 1`.
                     // Write the length of the string.
                     mstore(result, encodedLength)
+                    break
                 }
-                default {
-                    // Write the length of the string.
-                    mstore(result, sub(encodedLength, add(iszero(iszero(r)), eq(r, 1))))
-                }
-
-                // Allocate the memory for the string.
-                // Add 31 and mask with `not(31)` to round the
-                // free memory pointer up the next multiple of 32.
-                mstore(0x40, and(add(end, 31), not(31)))
+                // Write the length of the string.
+                mstore(result, sub(encodedLength, add(iszero(iszero(r)), eq(r, 1))))
+                break
             }
         }
     }
@@ -117,20 +114,21 @@ library Base64 {
                 let end := add(data, dataLength)
                 let decodedLength := mul(shr(2, dataLength), 3)
 
-                switch and(dataLength, 3)
-                case 0 {
+                for {} 1 {} {
                     // If padded.
-                    // forgefmt: disable-next-item
-                    decodedLength := sub(
-                        decodedLength,
-                        add(eq(and(mload(end), 0xFF), 0x3d), eq(and(mload(end), 0xFFFF), 0x3d3d))
-                    )
-                }
-                default {
+                    if iszero(and(dataLength, 3)) {
+                        let t := xor(mload(end), 0x3d3d)
+                        // forgefmt: disable-next-item
+                        decodedLength := sub(
+                            decodedLength,
+                            add(iszero(byte(30, t)), iszero(byte(31, t)))
+                        )
+                        break
+                    }
                     // If non-padded.
                     decodedLength := add(decodedLength, sub(and(dataLength, 3), 1))
+                    break
                 }
-
                 result := mload(0x40)
 
                 // Write the length of the string.
