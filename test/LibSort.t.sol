@@ -521,7 +521,28 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSearchSortedOnRandomArrays(uint256[] memory a, uint256 needle) public {
+    function testSearchSorted(uint256[] memory a, uint256 needle) public {
+        (bool found, uint256 index) = LibSort.searchSorted(a, needle);
+        if (found) {
+            assertEq(a[index], needle);
+        }
+    }
+
+    function testSearchSortedInts() public {
+        unchecked {
+            int256[] memory a = new int256[](100);
+            for (uint256 i = 0; i < 100; i++) {
+                a[i] = int256(i) - 50;
+            }
+            for (uint256 i = 0; i < 100; i++) {
+                (bool found, uint256 index) = LibSort.searchSorted(a, int256(i) - 50);
+                assertTrue(found);
+                assertEq(index, i);
+            }
+        }
+    }
+
+    function testSearchSortedInts(int256[] memory a, int256 needle) public {
         (bool found, uint256 index) = LibSort.searchSorted(a, needle);
         if (found) {
             assertEq(a[index], needle);
@@ -1009,7 +1030,7 @@ contract LibSortTest is TestPlus {
     function _boundArrayLength(int256[] memory a, uint256 n) private pure {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(slt(mload(a), n)) { mstore(a, n) }
+            if iszero(lt(mload(a), n)) { mstore(a, n) }
         }
     }
 
