@@ -484,40 +484,37 @@ library LibSort {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // If the length of `a` is greater than 0.
-            if mload(a) {
-                let w := 0x20
-                let aEnd := add(a, shl(5, mload(a)))
-                let bEnd := add(b, shl(5, mload(b)))
-                c := mload(0x40) // Set `c` to the free memory pointer.
+            let w := 0x20
+            let aEnd := add(a, shl(5, mload(a)))
+            let bEnd := add(b, shl(5, mload(b)))
+            c := mload(0x40) // Set `c` to the free memory pointer.
+            a := add(a, w)
+            b := add(b, w)
+            let k := c
+            let s := shl(255, signed)
+            for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
+                let u := mload(a)
+                let v := mload(b)
+                if iszero(xor(u, v)) {
+                    a := add(a, w)
+                    b := add(b, w)
+                    continue
+                }
+                if iszero(lt(add(u, s), add(v, s))) {
+                    b := add(b, w)
+                    continue
+                }
+                k := add(k, w)
+                mstore(k, u)
                 a := add(a, w)
-                b := add(b, w)
-                let k := c
-                let s := shl(255, signed)
-                for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
-                    let u := mload(a)
-                    let v := mload(b)
-                    if iszero(xor(u, v)) {
-                        a := add(a, w)
-                        b := add(b, w)
-                        continue
-                    }
-                    if iszero(lt(add(u, s), add(v, s))) {
-                        b := add(b, w)
-                        continue
-                    }
-                    k := add(k, w)
-                    mstore(k, u)
-                    a := add(a, w)
-                }
-                for {} iszero(gt(a, aEnd)) {} {
-                    k := add(k, w)
-                    mstore(k, mload(a))
-                    a := add(a, w)
-                }
-                mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
-                mstore(0x40, add(k, w)) // Allocate the memory for `c`.
             }
+            for {} iszero(gt(a, aEnd)) {} {
+                k := add(k, w)
+                mstore(k, mload(a))
+                a := add(a, w)
+            }
+            mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
+            mstore(0x40, add(k, w)) // Allocate the memory for `c`.
         }
     }
 
