@@ -326,7 +326,7 @@ library LibSort {
     }
 
     /// @dev Returns the sorted set difference of `a` and `b`.
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function difference(uint256[] memory a, uint256[] memory b)
         internal
         pure
@@ -335,8 +335,8 @@ library LibSort {
         c = _difference(a, b, false);
     }
 
-    /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set difference between `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function difference(int256[] memory a, int256[] memory b)
         internal
         pure
@@ -349,8 +349,8 @@ library LibSort {
         }
     }
 
-    /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set difference between `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function difference(address[] memory a, address[] memory b)
         internal
         pure
@@ -363,8 +363,8 @@ library LibSort {
         }
     }
 
-    /// @dev Returns `r` array intersection of `a` and `b` array
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function intersection(uint256[] memory a, uint256[] memory b)
         internal
         pure
@@ -373,8 +373,8 @@ library LibSort {
         c = _intersection(a, b, false);
     }
 
-    /// @dev Returns `r` array intersection of `a` and `b` array
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function intersection(int256[] memory a, int256[] memory b)
         internal
         pure
@@ -387,8 +387,8 @@ library LibSort {
         }
     }
 
-    /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function intersection(address[] memory a, address[] memory b)
         internal
         pure
@@ -401,8 +401,8 @@ library LibSort {
         }
     }
 
-    /// @dev Returns `r` array union of `a` and `b` array
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set union of `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function union(uint256[] memory a, uint256[] memory b)
         internal
         pure
@@ -411,8 +411,8 @@ library LibSort {
         c = _union(a, b, false);
     }
 
-    /// @dev Returns `r` array union of `a` and `b` array
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set union of `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function union(int256[] memory a, int256[] memory b)
         internal
         pure
@@ -425,8 +425,8 @@ library LibSort {
         }
     }
 
-    /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set union between `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function union(address[] memory a, address[] memory b)
         internal
         pure
@@ -476,7 +476,7 @@ library LibSort {
     }
 
     /// @dev Returns the sorted set difference of `a` and `b`.
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function _difference(uint256[] memory a, uint256[] memory b, bool signed)
         private
         pure
@@ -518,8 +518,8 @@ library LibSort {
         }
     }
 
-    /// @dev Returns `r` array intersection of `a` and `b` array
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function _intersection(uint256[] memory a, uint256[] memory b, bool signed)
         private
         pure
@@ -556,8 +556,8 @@ library LibSort {
         }
     }
 
-    /// @dev Returns `r` array union of `a` and `b` array
-    /// Note: Behavior on non-sorted inputs is undefined.
+    /// @dev Returns the sorted set union of `a` and `b`.
+    /// Note: Behaviour is undefined for non-sorted-uniquified inputs.
     function _union(uint256[] memory a, uint256[] memory b, bool signed)
         private
         pure

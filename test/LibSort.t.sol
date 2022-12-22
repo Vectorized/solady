@@ -686,8 +686,11 @@ contract LibSortTest is TestPlus {
             for (uint256 t; t != 16; ++t) {
                 uint256 n = _bound(_random(), 1, 8);
                 int256[] memory a = _getRandomInts(n);
-                int256[] memory b;
                 LibSort.insertionSort(a);
+                int256[] memory b = new int256[](n);
+                for (uint256 i; i != n; ++i) {
+                    a[i] = b[i];
+                }
                 bytes32 originalHash = keccak256(abi.encode(a));
                 int256[] memory c = LibSort.union(a, b);
                 assertTrue(_isSorted(c));
@@ -698,16 +701,17 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testUnionBothSameArray() public {
+    function testUnionOnEqualInputs() public {
         unchecked {
             for (uint256 t; t != 16; ++t) {
                 uint256 n = _bound(_random(), 1, 8);
                 uint256[] memory a = new uint256[](n);
+                uint256[] memory b = new uint256[](n);
                 for (uint256 i; i != n; ++i) {
-                    a[i] = _random();
+                    a[i] = (b[i] = _random());
                 }
-                uint256[] memory b = a;
                 LibSort.insertionSort(a);
+                LibSort.insertionSort(b);
                 bytes32 originalHash = keccak256(abi.encode(a));
                 uint256[] memory c = LibSort.union(a, b);
                 assertTrue(_isSorted(c));
@@ -718,7 +722,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testUnionBothSameArrayInt() public {
+    function testUnionOnEqualInputsInt() public {
         unchecked {
             for (uint256 t; t != 16; ++t) {
                 uint256 n = _bound(_random(), 1, 8);
@@ -735,7 +739,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testUnionOnRamdomArray(uint256[] memory a, uint256[] memory b) public {
+    function testUnionDifferential(uint256[] memory a, uint256[] memory b) public {
         _boundArrayLength(a, 8);
         _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
@@ -749,7 +753,7 @@ contract LibSortTest is TestPlus {
         assertEq(originalHash, hash);
     }
 
-    function testUnionOnRamdomArrayInt(int256[] memory a, int256[] memory b) public {
+    function testUnionDifferentialInt(int256[] memory a, int256[] memory b) public {
         _boundArrayLength(a, 8);
         _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
@@ -839,7 +843,7 @@ contract LibSortTest is TestPlus {
         assertEq(r[2], 10);
     }
 
-    function testIntersectionBothSameArray() public {
+    function testIntersectionOnEqualInputs() public {
         unchecked {
             for (uint256 t; t != 16; ++t) {
                 uint256 n = _bound(_random(), 1, 8);
@@ -889,7 +893,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testIntersectionOnRandomArray(uint256[] memory a, uint256[] memory b) public {
+    function testIntersectionDifferential(uint256[] memory a, uint256[] memory b) public {
         _boundArrayLength(a, 8);
         _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
@@ -903,7 +907,7 @@ contract LibSortTest is TestPlus {
         assertEq(originalHash, hash);
     }
 
-    function testIntersectionOnRandomArrayInt(int256[] memory a, int256[] memory b) public {
+    function testIntersectionDifferentialInt(int256[] memory a, int256[] memory b) public {
         _boundArrayLength(a, 8);
         _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
@@ -1010,7 +1014,7 @@ contract LibSortTest is TestPlus {
         assertEq(z[2], 55);
     }
 
-    function testDifferenceBothSameArray() public {
+    function testDifferenceOnEqualInputs() public {
         unchecked {
             for (uint256 t; t != 16; ++t) {
                 uint256 n = _bound(_random(), 1, 8);
@@ -1027,7 +1031,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testDifferenceOnRandomArray(uint256[] memory a, uint256[] memory b) public {
+    function testDifferenceDifferential(uint256[] memory a, uint256[] memory b) public {
         _boundArrayLength(a, 8);
         _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
@@ -1041,7 +1045,7 @@ contract LibSortTest is TestPlus {
         assertEq(originalHash, hash);
     }
 
-    function testDifferenceOnRandomArrayInt(int256[] memory a, int256[] memory b) public {
+    function testDifferenceDifferentialInt(int256[] memory a, int256[] memory b) public {
         _boundArrayLength(a, 8);
         _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
@@ -1053,6 +1057,62 @@ contract LibSortTest is TestPlus {
         bytes32 hash = keccak256(abi.encode(c));
         bytes32 originalHash = keccak256(abi.encode(d));
         assertEq(originalHash, hash);
+    }
+
+    function testDifferenceUnionIntersection(uint256[] memory a, uint256[] memory b) public {
+        unchecked {
+            bool found;
+            _boundArrayLength(a, 8);
+            _boundArrayLength(b, 8);
+            LibSort.insertionSort(a);
+            LibSort.uniquifySorted(a);
+            LibSort.insertionSort(b);
+            LibSort.uniquifySorted(b);
+
+            uint256[] memory aSubB = LibSort.difference(a, b);
+            assertTrue(_isSorted(aSubB));
+            for (uint256 i; i != aSubB.length; ++i) {
+                (found,) = LibSort.searchSorted(a, aSubB[i]);
+                assertTrue(found);
+                (found,) = LibSort.searchSorted(b, aSubB[i]);
+                assertFalse(found);
+            }
+            for (uint256 i; i != b.length; ++i) {
+                (found,) = LibSort.searchSorted(aSubB, b[i]);
+                assertFalse(found);
+            }
+
+            uint256[] memory bSubA = LibSort.difference(b, a);
+            assertTrue(_isSorted(bSubA));
+            for (uint256 i; i != bSubA.length; ++i) {
+                (found,) = LibSort.searchSorted(b, bSubA[i]);
+                assertTrue(found);
+                (found,) = LibSort.searchSorted(a, bSubA[i]);
+                assertFalse(found);
+            }
+            for (uint256 i; i != a.length; ++i) {
+                (found,) = LibSort.searchSorted(bSubA, a[i]);
+                assertFalse(found);
+            }
+
+            uint256[] memory aIntersectionB = LibSort.intersection(a, b);
+            for (uint256 i; i != aIntersectionB.length; ++i) {
+                (found,) = LibSort.searchSorted(b, aIntersectionB[i]);
+                assertTrue(found);
+                (found,) = LibSort.searchSorted(a, aIntersectionB[i]);
+                assertTrue(found);
+            }
+
+            uint256[] memory aUnionB = LibSort.union(a, b);
+            uint256[] memory emptySet;
+            assertEq(emptySet, LibSort.intersection(aSubB, bSubA));
+            assertEq(emptySet, LibSort.intersection(LibSort.union(aSubB, bSubA), aIntersectionB));
+            assertEq(aIntersectionB, LibSort.intersection(b, a));
+            assertEq(aUnionB, LibSort.union(b, a));
+            assertEq(LibSort.union(aSubB, b), LibSort.union(b, aSubB));
+            assertEq(LibSort.union(bSubA, a), LibSort.union(a, bSubA));
+            assertEq(aUnionB, LibSort.union(LibSort.union(aSubB, bSubA), aIntersectionB));
+        }
     }
 
     function _unionOriginal(uint256[] memory a, uint256[] memory b)
