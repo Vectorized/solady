@@ -549,6 +549,27 @@ contract LibSortTest is TestPlus {
         }
     }
 
+    function testSearchSortedAddresses() public {
+        unchecked {
+            address[] memory a = new address[](100);
+            for (uint256 i = 0; i < 100; i++) {
+                a[i] = address(uint160(i));
+            }
+            for (uint256 i = 0; i < 100; i++) {
+                (bool found, uint256 index) = LibSort.searchSorted(a, address(uint160(i)));
+                assertTrue(found);
+                assertEq(index, i);
+            }
+        }
+    }
+
+    function testSearchSortedAddresses(address[] memory a, address needle) public {
+        (bool found, uint256 index) = LibSort.searchSorted(a, needle);
+        if (found) {
+            assertEq(a[index], needle);
+        }
+    }
+
     function testInsertionSortInts() public {
         unchecked {
             for (uint256 t; t != 16; ++t) {
