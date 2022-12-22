@@ -45,13 +45,13 @@ library LibSort {
     /// @dev Sorts the array in-place with insertion sort.
     function insertionSort(int256[] memory a) internal pure {
         _convertTwosComplement(a);
-        insertionSort(_cast(a));
+        insertionSort(_toUints(a));
         _convertTwosComplement(a);
     }
 
     /// @dev Sorts the array in-place with insertion sort.
     function insertionSort(address[] memory a) internal pure {
-        insertionSort(_cast(a));
+        insertionSort(_toUints(a));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -216,13 +216,13 @@ library LibSort {
     /// @dev Sorts the array in-place with intro-quicksort.
     function sort(int256[] memory a) internal pure {
         _convertTwosComplement(a);
-        sort(_cast(a));
+        sort(_toUints(a));
         _convertTwosComplement(a);
     }
 
     /// @dev Sorts the array in-place with intro-quicksort.
     function sort(address[] memory a) internal pure {
-        sort(_cast(a));
+        sort(_toUints(a));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -256,12 +256,12 @@ library LibSort {
 
     /// @dev Removes duplicate elements from a ascendingly sorted memory array.
     function uniquifySorted(int256[] memory a) internal pure {
-        uniquifySorted(_cast(a));
+        uniquifySorted(_toUints(a));
     }
 
     /// @dev Removes duplicate elements from a ascendingly sorted memory array.
     function uniquifySorted(address[] memory a) internal pure {
-        uniquifySorted(_cast(a));
+        uniquifySorted(_toUints(a));
     }
 
     /// @dev Returns whether `a` contains `needle`,
@@ -317,12 +317,102 @@ library LibSort {
 
     /// @dev Reverses the array in-place.
     function reverse(int256[] memory a) internal pure {
-        reverse(_cast(a));
+        reverse(_toUints(a));
     }
 
     /// @dev Reverses the array in-place.
     function reverse(address[] memory a) internal pure {
-        reverse(_cast(a));
+        reverse(_toUints(a));
+    }
+
+    /// @dev Returns the sorted set difference of `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function difference(uint256[] memory a, uint256[] memory b)
+        internal
+        pure
+        returns (uint256[] memory c)
+    {
+        c = _difference(a, b, 0);
+    }
+
+    /// @dev Returns the sorted set difference between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function difference(int256[] memory a, int256[] memory b)
+        internal
+        pure
+        returns (int256[] memory c)
+    {
+        c = _toInts(_difference(_toUints(a), _toUints(b), 1 << 255));
+    }
+
+    /// @dev Returns the sorted set difference between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function difference(address[] memory a, address[] memory b)
+        internal
+        pure
+        returns (address[] memory c)
+    {
+        c = _toAddresses(_difference(_toUints(a), _toUints(b), 0));
+    }
+
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function intersection(uint256[] memory a, uint256[] memory b)
+        internal
+        pure
+        returns (uint256[] memory c)
+    {
+        c = _intersection(a, b, 0);
+    }
+
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function intersection(int256[] memory a, int256[] memory b)
+        internal
+        pure
+        returns (int256[] memory c)
+    {
+        c = _toInts(_intersection(_toUints(a), _toUints(b), 1 << 255));
+    }
+
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function intersection(address[] memory a, address[] memory b)
+        internal
+        pure
+        returns (address[] memory c)
+    {
+        c = _toAddresses(_intersection(_toUints(a), _toUints(b), 0));
+    }
+
+    /// @dev Returns the sorted set union of `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function union(uint256[] memory a, uint256[] memory b)
+        internal
+        pure
+        returns (uint256[] memory c)
+    {
+        c = _union(a, b, 0);
+    }
+
+    /// @dev Returns the sorted set union of `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function union(int256[] memory a, int256[] memory b)
+        internal
+        pure
+        returns (int256[] memory c)
+    {
+        c = _toInts(_union(_toUints(a), _toUints(b), 1 << 255));
+    }
+
+    /// @dev Returns the sorted set union between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function union(address[] memory a, address[] memory b)
+        internal
+        pure
+        returns (address[] memory c)
+    {
+        c = _toAddresses(_union(_toUints(a), _toUints(b), 0));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -330,7 +420,7 @@ library LibSort {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Reinterpret cast to an uint256 array.
-    function _cast(int256[] memory a) private pure returns (uint256[] memory casted) {
+    function _toUints(int256[] memory a) private pure returns (uint256[] memory casted) {
         /// @solidity memory-safe-assembly
         assembly {
             casted := a
@@ -338,12 +428,28 @@ library LibSort {
     }
 
     /// @dev Reinterpret cast to an uint256 array.
-    function _cast(address[] memory a) private pure returns (uint256[] memory casted) {
+    function _toUints(address[] memory a) private pure returns (uint256[] memory casted) {
         /// @solidity memory-safe-assembly
         assembly {
             // As any address written to memory will have the upper 96 bits
             // of the word zeroized (as per Solidity spec), we can directly
             // compare these addresses as if they are whole uint256 words.
+            casted := a
+        }
+    }
+
+    /// @dev Reinterpret cast to an int array.
+    function _toInts(uint256[] memory a) private pure returns (int256[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+    }
+
+    /// @dev Reinterpret cast to an address array.
+    function _toAddresses(uint256[] memory a) private pure returns (address[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
             casted := a
         }
     }
@@ -358,6 +464,136 @@ library LibSort {
                 a := add(a, 0x20)
                 mstore(a, add(mload(a), w))
             }
+        }
+    }
+
+    /// @dev Returns the sorted set difference of `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function _difference(uint256[] memory a, uint256[] memory b, uint256 signed)
+        private
+        pure
+        returns (uint256[] memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := 0x20
+            let aEnd := add(a, shl(5, mload(a)))
+            let bEnd := add(b, shl(5, mload(b)))
+            c := mload(0x40) // Set `c` to the free memory pointer.
+            a := add(a, s)
+            b := add(b, s)
+            let k := c
+            for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
+                let u := mload(a)
+                let v := mload(b)
+                if iszero(xor(u, v)) {
+                    a := add(a, s)
+                    b := add(b, s)
+                    continue
+                }
+                if iszero(lt(add(u, signed), add(v, signed))) {
+                    b := add(b, s)
+                    continue
+                }
+                k := add(k, s)
+                mstore(k, u)
+                a := add(a, s)
+            }
+            for {} iszero(gt(a, aEnd)) {} {
+                k := add(k, s)
+                mstore(k, mload(a))
+                a := add(a, s)
+            }
+            mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
+            mstore(0x40, add(k, s)) // Allocate the memory for `c`.
+        }
+    }
+
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function _intersection(uint256[] memory a, uint256[] memory b, uint256 signed)
+        private
+        pure
+        returns (uint256[] memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := 0x20
+            let aEnd := add(a, shl(5, mload(a)))
+            let bEnd := add(b, shl(5, mload(b)))
+            c := mload(0x40) // Set `c` to the free memory pointer.
+            a := add(a, s)
+            b := add(b, s)
+            let k := c
+            for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
+                let u := mload(a)
+                let v := mload(b)
+                if iszero(xor(u, v)) {
+                    k := add(k, s)
+                    mstore(k, u)
+                    a := add(a, s)
+                    b := add(b, s)
+                    continue
+                }
+                if iszero(lt(add(u, signed), add(v, signed))) {
+                    b := add(b, s)
+                    continue
+                }
+                a := add(a, s)
+            }
+            mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
+            mstore(0x40, add(k, s)) // Allocate the memory for `c`.
+        }
+    }
+
+    /// @dev Returns the sorted set union of `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function _union(uint256[] memory a, uint256[] memory b, uint256 signed)
+        private
+        pure
+        returns (uint256[] memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := 0x20
+            let aEnd := add(a, shl(5, mload(a)))
+            let bEnd := add(b, shl(5, mload(b)))
+            c := mload(0x40) // Set `c` to the free memory pointer.
+            a := add(a, s)
+            b := add(b, s)
+            let k := c
+            for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
+                let u := mload(a)
+                let v := mload(b)
+                if iszero(xor(u, v)) {
+                    k := add(k, s)
+                    mstore(k, u)
+                    a := add(a, s)
+                    b := add(b, s)
+                    continue
+                }
+                if iszero(lt(add(u, signed), add(v, signed))) {
+                    k := add(k, s)
+                    mstore(k, v)
+                    b := add(b, s)
+                    continue
+                }
+                k := add(k, s)
+                mstore(k, u)
+                a := add(a, s)
+            }
+            for {} iszero(gt(a, aEnd)) {} {
+                k := add(k, s)
+                mstore(k, mload(a))
+                a := add(a, s)
+            }
+            for {} iszero(gt(b, bEnd)) {} {
+                k := add(k, s)
+                mstore(k, mload(b))
+                b := add(b, s)
+            }
+            mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
+            mstore(0x40, add(k, s)) // Allocate the memory for `c`.
         }
     }
 }
