@@ -21,22 +21,21 @@ library LibSort {
             let n := mload(a) // Length of `a`.
             mstore(a, 0) // For insertion sort's inner loop to terminate.
             let h := add(a, shl(5, n)) // High slot.
-            let w := not(31)
-
-            for { let i := add(a, 0x20) } 1 {} {
-                i := add(i, 0x20)
+            let s := 0x20
+            for { let i := add(a, s) } 1 {} {
+                i := add(i, s)
                 if gt(i, h) { break }
                 let k := mload(i) // Key.
-                let j := add(i, w) // The slot before the current slot.
+                let j := sub(i, s) // The slot before the current slot.
                 let v := mload(j) // The value of `j`.
                 if iszero(gt(v, k)) { continue }
                 for {} 1 {} {
-                    mstore(add(j, 0x20), v)
-                    j := add(j, w) // `sub(j, 0x20)`.
+                    mstore(add(j, s), v)
+                    j := sub(j, s)
                     v := mload(j)
                     if iszero(gt(v, k)) { break }
                 }
-                mstore(add(j, 0x20), k)
+                mstore(add(j, s), k)
             }
             mstore(a, n) // Restore the length of `a`.
         }
@@ -275,7 +274,8 @@ library LibSort {
         /// @solidity memory-safe-assembly
         assembly {
             let m := 0 // Middle slot.
-            let l := add(a, 0x20) // Slot of the start of search.
+            let s := 0x20
+            let l := add(a, s) // Slot of the start of search.
             let h := add(a, shl(5, mload(a))) // Slot of the end of search.
             for {} 1 {} {
                 // Average of `l` and `h`, rounded down to the nearest multiple of 0x20.
@@ -284,15 +284,15 @@ library LibSort {
                 if or(gt(l, h), found) { break }
                 // Decide whether to search the left or right half.
                 if iszero(gt(needle, mload(m))) {
-                    h := sub(m, 0x20)
+                    h := sub(m, s)
                     continue
                 }
-                l := add(m, 0x20)
+                l := add(m, s)
             }
             // `m` will be less than `add(a, 0x20)` in the case of an empty array,
             // or when the value is less than the smallest value in the array.
-            let t := iszero(lt(m, add(a, 0x20)))
-            index := shr(5, mul(sub(m, add(a, 0x20)), t))
+            let t := iszero(lt(m, add(a, s)))
+            index := shr(5, mul(sub(m, add(a, s)), t))
             found := and(found, t)
         }
     }
@@ -302,14 +302,14 @@ library LibSort {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(mload(a), 2)) {
-                let w := not(31)
+                let s := 0x20
                 let h := add(a, shl(5, mload(a)))
-                for { a := add(a, 0x20) } 1 {} {
+                for { a := add(a, s) } 1 {} {
                     let t := mload(a)
                     mstore(a, mload(h))
                     mstore(h, t)
-                    h := add(h, w)
-                    a := add(a, 0x20)
+                    h := sub(h, s)
+                    a := add(a, s)
                     if iszero(lt(a, h)) { break }
                 }
             }
