@@ -736,8 +736,8 @@ contract LibSortTest is TestPlus {
     }
 
     function testUnionOnRamdomArray(uint256[] memory a, uint256[] memory b) public {
-        _boundArrayLength(a, 16);
-        _boundArrayLength(b, 16);
+        _boundArrayLength(a, 8);
+        _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
         LibSort.insertionSort(b);
         uint256[] memory c = LibSort.union(a, b);
@@ -750,8 +750,8 @@ contract LibSortTest is TestPlus {
     }
 
     function testUnionOnRamdomArrayInt(int256[] memory a, int256[] memory b) public {
-        _boundArrayLength(a, 16);
-        _boundArrayLength(b, 16);
+        _boundArrayLength(a, 8);
+        _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
         LibSort.insertionSort(b);
         int256[] memory c = LibSort.union(a, b);
@@ -802,8 +802,8 @@ contract LibSortTest is TestPlus {
     }
 
     function testIntersectionBasicInt() public {
-        int256[] memory a = new int256[](5); // [-8,-1,0,10,15]
-        int256[] memory b = new int256[](5); // [-10,-6,-5,0,10]
+        int256[] memory a = new int256[](5); // [-8, -1, 0, 10, 15]
+        int256[] memory b = new int256[](5); // [-10, -6, -5, 0, 10]
         a[0] = -8;
         b[0] = -10;
         a[1] = -1;
@@ -890,8 +890,8 @@ contract LibSortTest is TestPlus {
     }
 
     function testIntersectionOnRandomArray(uint256[] memory a, uint256[] memory b) public {
-        _boundArrayLength(a, 16);
-        _boundArrayLength(b, 16);
+        _boundArrayLength(a, 8);
+        _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
         LibSort.insertionSort(b);
         uint256[] memory c = LibSort.intersection(a, b);
@@ -904,8 +904,8 @@ contract LibSortTest is TestPlus {
     }
 
     function testIntersectionOnRandomArrayInt(int256[] memory a, int256[] memory b) public {
-        _boundArrayLength(a, 16);
-        _boundArrayLength(b, 16);
+        _boundArrayLength(a, 8);
+        _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
         LibSort.insertionSort(b);
         int256[] memory c = LibSort.intersection(a, b);
@@ -964,8 +964,8 @@ contract LibSortTest is TestPlus {
     }
 
     function testDifferenceBasicInt() public {
-        int256[] memory a = new int256[](5); // [-11,-10,1,5,56]
-        int256[] memory b = new int256[](5); // [-20,-14,-8,1,5]
+        int256[] memory a = new int256[](5); // [-11, -10, 1, 5, 56]
+        int256[] memory b = new int256[](5); // [-20, -14, -8, 1, 5]
         a[0] = -11;
         b[0] = -20;
         a[1] = -10;
@@ -985,8 +985,8 @@ contract LibSortTest is TestPlus {
         int256[] memory f;
         int256[] memory g = LibSort.difference(e, f);
         assertEq(g.length, 0);
-        int256[] memory p = new int256[](3); // [-8 , -5 , 1]
-        int256[] memory q = new int256[](5); // [ -10, -8, -6 , -5,-2]
+        int256[] memory p = new int256[](3); // [-8, -5, 1]
+        int256[] memory q = new int256[](5); // [-10, -8, -6, -5, -2]
         p[0] = -8;
         q[0] = -10;
         p[1] = -5;
@@ -1028,8 +1028,8 @@ contract LibSortTest is TestPlus {
     }
 
     function testDifferenceOnRandomArray(uint256[] memory a, uint256[] memory b) public {
-        _boundArrayLength(a, 16);
-        _boundArrayLength(b, 16);
+        _boundArrayLength(a, 8);
+        _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
         LibSort.insertionSort(b);
         uint256[] memory c = LibSort.difference(a, b);
@@ -1042,8 +1042,8 @@ contract LibSortTest is TestPlus {
     }
 
     function testDifferenceOnRandomArrayInt(int256[] memory a, int256[] memory b) public {
-        _boundArrayLength(a, 16);
-        _boundArrayLength(b, 16);
+        _boundArrayLength(a, 8);
+        _boundArrayLength(b, 8);
         LibSort.insertionSort(a);
         LibSort.insertionSort(b);
         int256[] memory c = LibSort.difference(a, b);
