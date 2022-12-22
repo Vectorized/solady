@@ -325,270 +325,118 @@ library LibSort {
         reverse(_cast(a));
     }
 
-    /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note : If Input arrays is not sorted then result is undefined
+    /// @dev Returns the sorted set difference of `a` and `b`.
+    /// Note: Behavior on non-sorted inputs is undefined.
     function difference(uint256[] memory a, uint256[] memory b)
         internal
         pure
-        returns (uint256[] memory r)
+        returns (uint256[] memory c)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // If the length of `a` is greater than 0.
-            if mload(a) {
-                let aE := add(a, shl(5, mload(a)))
-                let bE := add(b, shl(5, mload(b)))
-                r := mload(0x40) // free pointer
-                let w := 0x20
-                let i := add(a, w)
-                let j := add(b, w)
-                let k := r
-                for {} iszero(or(gt(i, aE), gt(j, bE))) {} {
-                    let aI := mload(i)
-                    let bJ := mload(j)
-                    let z := lt(aI, bJ)
-                    if z {
-                        k := add(k, w)
-                        mstore(k, aI)
-                    }
-                    j := add(j, mul(iszero(z), w))
-                    i := add(i, mul(iszero(gt(aI, bJ)), w))
-                }
-                for {} iszero(gt(i, aE)) {} {
-                    k := add(k, w)
-                    mstore(k, mload(i))
-                    i := add(i, w)
-                }
-                mstore(r, shr(5, sub(k, r)))
-                // update free pointer
-                mstore(0x40, add(k, w))
-            }
-        }
+        c = _difference(a, b, false);
     }
 
     /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note : If Input arrays is not sorted then result is undefined
+    /// Note: Behavior on non-sorted inputs is undefined.
     function difference(int256[] memory a, int256[] memory b)
         internal
         pure
-        returns (int256[] memory r)
+        returns (int256[] memory c)
     {
+        uint256[] memory t = _difference(_cast(a), _cast(b), true);
+        /// @solidity memory-safe-assembly
         assembly {
-            if mload(a) {
-                let aE := add(a, shl(5, mload(a)))
-                let bE := add(b, shl(5, mload(b)))
-                r := mload(0x40) // free pointer
-                let w := 0x20
-                let i := add(a, w)
-                let j := add(b, w)
-                let k := r
-                for {} iszero(or(gt(i, aE), gt(j, bE))) {} {
-                    let aI := mload(i)
-                    let bJ := mload(j)
-                    let z := slt(aI, bJ)
-                    if z {
-                        k := add(k, w)
-                        mstore(k, aI)
-                    }
-                    j := add(j, mul(iszero(z), w))
-                    i := add(i, mul(iszero(sgt(aI, bJ)), w))
-                }
-                for {} iszero(gt(i, aE)) {} {
-                    k := add(k, w)
-                    mstore(k, mload(i))
-                    i := add(i, w)
-                }
-                mstore(r, shr(5, sub(k, r)))
-                // update free pointer
-                mstore(0x40, add(k, w))
-            }
+            c := t
         }
     }
 
     /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note : If Input arrays is not sorted then result is undefined
+    /// Note: Behavior on non-sorted inputs is undefined.
     function difference(address[] memory a, address[] memory b)
         internal
         pure
-        returns (address[] memory r)
+        returns (address[] memory c)
     {
-        r = _cast(difference(_cast(a), _cast(b)));
+        uint256[] memory t = _difference(_cast(a), _cast(b), false);
+        /// @solidity memory-safe-assembly
+        assembly {
+            c := t
+        }
     }
 
     /// @dev Returns `r` array intersection of `a` and `b` array
-    /// Note : If Input arrays is not sorted then result is undefined
+    /// Note: Behavior on non-sorted inputs is undefined.
     function intersection(uint256[] memory a, uint256[] memory b)
         internal
         pure
-        returns (uint256[] memory r)
+        returns (uint256[] memory c)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let aE := add(a, shl(5, mload(a)))
-            let bE := add(b, shl(5, mload(b)))
-            r := mload(0x40) // free pointer
-            let w := 0x20
-            let i := add(a, w)
-            let j := add(b, w)
-            let k := r
-            for {} iszero(or(gt(i, aE), gt(j, bE))) {} {
-                let aI := mload(i)
-                let bJ := mload(j)
-                if eq(aI, bJ) {
-                    k := add(k, w)
-                    mstore(k, aI)
-                }
-                i := add(i, mul(iszero(gt(aI, bJ)), w))
-                j := add(j, mul(iszero(lt(aI, bJ)), w))
-            }
-            mstore(r, shr(5, sub(k, r)))
-            // update free pointer
-            mstore(0x40, add(k, w))
-        }
+        c = _intersection(a, b, false);
     }
 
     /// @dev Returns `r` array intersection of `a` and `b` array
-    /// Note : If Input arrays is not sorted then result is undefined
+    /// Note: Behavior on non-sorted inputs is undefined.
     function intersection(int256[] memory a, int256[] memory b)
         internal
         pure
-        returns (int256[] memory r)
+        returns (int256[] memory c)
     {
+        uint256[] memory t = _intersection(_cast(a), _cast(b), true);
         /// @solidity memory-safe-assembly
         assembly {
-            let aE := add(a, shl(5, mload(a)))
-            let bE := add(b, shl(5, mload(b)))
-            r := mload(0x40) // free pointer
-            let w := 0x20
-            let i := add(a, w)
-            let j := add(b, w)
-            let k := r
-            for {} iszero(or(gt(i, aE), gt(j, bE))) {} {
-                let aI := mload(i)
-                let bJ := mload(j)
-                if eq(aI, bJ) {
-                    k := add(k, w)
-                    mstore(k, aI)
-                }
-                i := add(i, mul(iszero(sgt(aI, bJ)), w))
-                j := add(j, mul(iszero(slt(aI, bJ)), w))
-            }
-            mstore(r, shr(5, sub(k, r)))
-            // update free pointer
-            mstore(0x40, add(k, w))
+            c := t
         }
     }
 
     /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note : If Input arrays is not sorted then result is undefined
+    /// Note: Behavior on non-sorted inputs is undefined.
     function intersection(address[] memory a, address[] memory b)
         internal
         pure
-        returns (address[] memory r)
+        returns (address[] memory c)
     {
-        r = _cast(intersection(_cast(a), _cast(b)));
-    }
-
-    /// @dev Returns `r` array union of `a` and `b` array
-    /// Note : If Input arrays is not sorted then result is undefined
-    function union(uint256[] memory a, uint256[] memory b)
-        internal
-        pure
-        returns (uint256[] memory r)
-    {
+        uint256[] memory t = _intersection(_cast(a), _cast(b), false);
         /// @solidity memory-safe-assembly
         assembly {
-            let aLen := mload(a)
-            let bLen := mload(b)
-            let aE := add(a, shl(5, aLen))
-            let bE := add(b, shl(5, bLen))
-            r := mload(0x40) // free pointer
-            let w := 0x20
-            let i := add(a, w)
-            let j := add(b, w)
-            let k := r
-
-            for {} iszero(or(gt(i, aE), gt(j, bE))) {} {
-                let aI := mload(i)
-                let bJ := mload(j)
-                let z := iszero(gt(aI, bJ))
-                k := add(k, w)
-                mstore(k, xor(mul(xor(aI, bJ), z), bJ))
-                i := add(i, mul(z, w))
-                j := add(j, mul(iszero(lt(aI, bJ)), w))
-            }
-
-            for {} iszero(gt(i, aE)) {} {
-                k := add(k, w)
-                mstore(k, mload(i))
-                i := add(i, w)
-            }
-
-            for {} iszero(gt(j, bE)) {} {
-                k := add(k, w)
-                mstore(k, mload(j))
-                j := add(j, w)
-            }
-            mstore(r, shr(5, sub(k, r)))
-            // update free pointer
-            mstore(0x40, add(k, w))
+            c := t
         }
     }
 
     /// @dev Returns `r` array union of `a` and `b` array
-    /// Note : If Input arrays is not sorted then result is undefined
+    /// Note: Behavior on non-sorted inputs is undefined.
+    function union(uint256[] memory a, uint256[] memory b)
+        internal
+        pure
+        returns (uint256[] memory c)
+    {
+        c = _union(a, b, false);
+    }
+
+    /// @dev Returns `r` array union of `a` and `b` array
+    /// Note: Behavior on non-sorted inputs is undefined.
     function union(int256[] memory a, int256[] memory b)
         internal
         pure
-        returns (int256[] memory r)
+        returns (int256[] memory c)
     {
+        uint256[] memory t = _union(_cast(a), _cast(b), true);
         /// @solidity memory-safe-assembly
         assembly {
-            let aLen := mload(a)
-            let bLen := mload(b)
-            let aE := add(a, shl(5, aLen))
-            let bE := add(b, shl(5, bLen))
-            r := mload(0x40) // free pointer
-            let w := 0x20
-            let i := add(a, w)
-            let j := add(b, w)
-            let k := r
-
-            for {} iszero(or(gt(i, aE), gt(j, bE))) {} {
-                let aI := mload(i)
-                let bJ := mload(j)
-                let z := iszero(sgt(aI, bJ))
-                k := add(k, w)
-                mstore(k, xor(mul(xor(aI, bJ), z), bJ))
-                i := add(i, mul(z, w))
-                j := add(j, mul(iszero(slt(aI, bJ)), w))
-            }
-
-            for {} iszero(gt(i, aE)) {} {
-                k := add(k, w)
-                mstore(k, mload(i))
-                i := add(i, w)
-            }
-
-            for {} iszero(gt(j, bE)) {} {
-                k := add(k, w)
-                mstore(k, mload(j))
-                j := add(j, w)
-            }
-            mstore(r, shr(5, sub(k, r)))
-            // update free pointer
-            mstore(0x40, add(k, w))
+            c := t
         }
     }
 
     /// @dev Returns `r` array difference of `a` and `b` array (A-B)
-    /// Note : If Input arrays is not sorted then result is undefined
+    /// Note: Behavior on non-sorted inputs is undefined.
     function union(address[] memory a, address[] memory b)
         internal
         pure
-        returns (address[] memory r)
+        returns (address[] memory c)
     {
-        r = _cast(union(_cast(a), _cast(b)));
+        uint256[] memory t = _union(_cast(a), _cast(b), false);
+        /// @solidity memory-safe-assembly
+        assembly {
+            c := t
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -614,17 +462,6 @@ library LibSort {
         }
     }
 
-    /// @dev Reinterpret cast to an address array.
-    function _cast(uint256[] memory a) private pure returns (address[] memory casted) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // As any address written to memory will have the upper 96 bits
-            // of the word zeroized (as per Solidity spec), we can directly
-            // compare these addresses as if they are whole uint256 words.
-            casted := a
-        }
-    }
-
     /// @dev Converts an array of signed two-complement integers
     /// to unsigned integers suitable for sorting.
     function _convertTwosComplement(int256[] memory a) private pure {
@@ -635,6 +472,139 @@ library LibSort {
                 a := add(a, 0x20)
                 mstore(a, add(mload(a), w))
             }
+        }
+    }
+
+    /// @dev Returns the sorted set difference of `a` and `b`.
+    /// Note: Behavior on non-sorted inputs is undefined.
+    function _difference(uint256[] memory a, uint256[] memory b, bool signed)
+        private
+        pure
+        returns (uint256[] memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the length of `a` is greater than 0.
+            if mload(a) {
+                let aEnd := add(a, shl(5, mload(a)))
+                let bEnd := add(b, shl(5, mload(b)))
+                c := mload(0x40) // Set `c` to the free memory pointer.
+                a := add(a, 0x20)
+                b := add(b, 0x20)
+                let k := c
+                let w := shl(255, signed)
+                for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
+                    let u := mload(a)
+                    let v := mload(b)
+                    if iszero(xor(u, v)) {
+                        a := add(a, 0x20)
+                        b := add(b, 0x20)
+                        continue
+                    }
+                    if iszero(lt(add(u, w), add(v, w))) {
+                        b := add(b, 0x20)
+                        continue
+                    }
+                    k := add(k, 0x20)
+                    mstore(k, u)
+                    a := add(a, 0x20)
+                }
+                for {} iszero(gt(a, aEnd)) {} {
+                    k := add(k, 0x20)
+                    mstore(k, mload(a))
+                    a := add(a, 0x20)
+                }
+                mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
+                mstore(0x40, add(k, 0x20)) // Allocate the memory for `c`.
+            }
+        }
+    }
+
+    /// @dev Returns `r` array intersection of `a` and `b` array
+    /// Note: Behavior on non-sorted inputs is undefined.
+    function _intersection(uint256[] memory a, uint256[] memory b, bool signed)
+        private
+        pure
+        returns (uint256[] memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let aEnd := add(a, shl(5, mload(a)))
+            let bEnd := add(b, shl(5, mload(b)))
+            c := mload(0x40) // Set `c` to the free memory pointer.
+            a := add(a, 0x20)
+            b := add(b, 0x20)
+            let k := c
+            let w := shl(255, signed)
+            for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
+                let u := mload(a)
+                let v := mload(b)
+                if iszero(xor(u, v)) {
+                    k := add(k, 0x20)
+                    mstore(k, u)
+                    a := add(a, 0x20)
+                    b := add(b, 0x20)
+                    continue
+                }
+                if iszero(lt(add(u, w), add(v, w))) {
+                    b := add(b, 0x20)
+                    continue
+                }
+                a := add(a, 0x20)
+            }
+            mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
+            mstore(0x40, add(k, 0x20)) // Allocate the memory for `c`.
+        }
+    }
+
+    /// @dev Returns `r` array union of `a` and `b` array
+    /// Note: Behavior on non-sorted inputs is undefined.
+    function _union(uint256[] memory a, uint256[] memory b, bool signed)
+        private
+        pure
+        returns (uint256[] memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let aEnd := add(a, shl(5, mload(a)))
+            let bEnd := add(b, shl(5, mload(b)))
+            c := mload(0x40) // Set `c` to the free memory pointer.
+            a := add(a, 0x20)
+            b := add(b, 0x20)
+            let k := c
+            let w := shl(255, signed)
+            for {} iszero(or(gt(a, aEnd), gt(b, bEnd))) {} {
+                let u := mload(a)
+                let v := mload(b)
+                if iszero(xor(u, v)) {
+                    k := add(k, 0x20)
+                    mstore(k, u)
+                    a := add(a, 0x20)
+                    b := add(b, 0x20)
+                    continue
+                }
+                if iszero(lt(add(u, w), add(v, w))) {
+                    k := add(k, 0x20)
+                    mstore(k, v)
+                    b := add(b, 0x20)
+                    continue
+                }
+                k := add(k, 0x20)
+                mstore(k, u)
+                a := add(a, 0x20)
+            }
+            for {} iszero(gt(a, aEnd)) {} {
+                k := add(k, 0x20)
+                mstore(k, mload(a))
+                a := add(a, 0x20)
+            }
+            for {} iszero(gt(b, bEnd)) {} {
+                k := add(k, 0x20)
+                mstore(k, mload(b))
+                b := add(b, 0x20)
+            }
+            mstore(c, shr(5, sub(k, c))) // Store the length of `c`.
+            mstore(0x40, add(k, 0x20)) // Allocate the memory for `c`.
         }
     }
 }
