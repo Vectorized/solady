@@ -112,7 +112,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testSortPsuedorandomG() public {
+    function testSortPsuedorandom() public {
         testSortPsuedorandom(123456789);
     }
 
