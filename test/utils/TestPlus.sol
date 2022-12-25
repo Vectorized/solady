@@ -73,8 +73,8 @@ contract TestPlus is Test {
     function _random() internal view returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, calldataload(0x00))
-            mstore(0x00, gas())
+            mstore(0x00, calldataload(0x00))
+            mstore(0x20, xor(calldataload(0x20), gas()))
             r := keccak256(0x00, 0x40)
         }
     }
