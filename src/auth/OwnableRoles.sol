@@ -215,14 +215,10 @@ abstract contract OwnableRoles is Ownable {
     function rolesFromOrdinals(uint8[] memory ordinals) public pure returns (uint256 roles) {
         /// @solidity memory-safe-assembly
         assembly {
-            // `shl` 5 is equivalent to multiplying by 0x20.
-            let end := add(ordinals, shl(5, mload(ordinals)))
-
-            for {} iszero(eq(ordinals, end)) {} {
-                ordinals := add(ordinals, 0x20)
+            for { let i := shl(5, mload(ordinals)) } i { i := sub(i, 0x20) } {
                 // We don't need to mask the values of `ordinals`, as Solidity
                 // cleans dirty upper bits when storing variables into memory.
-                roles := or(roles, shl(mload(ordinals), 1))
+                roles := or(shl(mload(add(ordinals, i)), 1), roles)
             }
         }
     }
