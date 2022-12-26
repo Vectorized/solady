@@ -147,7 +147,7 @@ abstract contract Ownable {
             uint256 expires = block.timestamp + ownershipHandoverValidFor();
             /// @solidity memory-safe-assembly
             assembly {
-                // Compute and set the handover slot to 1.
+                // Compute and set the handover slot to `expires`.
                 mstore(0x0c, _HANDOVER_SLOT_SEED)
                 mstore(0x00, caller())
                 sstore(keccak256(0x0c, 0x20), expires)
@@ -186,13 +186,8 @@ abstract contract Ownable {
             }
             // Set the handover slot to 0.
             sstore(handoverSlot, 0)
-            // Clean the upper 96 bits.
-            let newOwner := shr(96, mload(0x0c))
-            // Emit the {OwnershipTransferred} event.
-            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, caller(), newOwner)
-            // Store the new value.
-            sstore(not(_OWNER_SLOT_NOT), newOwner)
         }
+        _setOwner(pendingOwner);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
