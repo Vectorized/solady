@@ -36,8 +36,7 @@ contract DynamicBufferLibTest is TestPlus {
                 }
                 buffer.append(inputs[i]);
                 assertEq(buffer.data.length, expectedLength);
-                _brutalizeFreeMemoryStart();
-                _checkZeroRightPadded(buffer.data);
+                _checkMemory(buffer.data);
                 bool isCorrupted;
                 /// @solidity memory-safe-assembly
                 assembly {

@@ -270,10 +270,11 @@ contract LibCloneTest is TestPlus, Clone {
         uint256 noise = _random() >> 160;
         this.checkStartsWithCaller(bytes32(noise));
 
-        vm.expectRevert(LibClone.SaltDoesNotStartWithCaller.selector);
         uint256 r = _random();
         address randomCaller = address(uint160(r));
         if (randomCaller == msg.sender) return;
+        if (randomCaller == address(0)) return;
+        vm.expectRevert(LibClone.SaltDoesNotStartWithCaller.selector);
         this.checkStartsWithCaller(bytes32((r << 96) | noise));
 
         this.checkStartsWithCaller(bytes32((uint256(uint160(address(this))) << 96) | noise));

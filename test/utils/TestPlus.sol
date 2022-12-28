@@ -46,6 +46,28 @@ contract TestPlus is Test {
         _;
     }
 
+    function _random() internal view returns (uint256 r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, calldataload(0x00))
+            mstore(0x20, xor(calldataload(0x20), gas()))
+            r := keccak256(0x00, 0x40)
+            for {} 1 {} {
+                if iszero(byte(0, r)) {
+                    r := and(r, 3)
+                    break
+                }
+                if iszero(gt(byte(0, r), 16)) {
+                    r := sub(shl(shl(3, and(byte(1, r), 31)), 1), and(r, 3))
+                    break
+                }
+                mstore(0x00, r)
+                r := keccak256(0x00, 0x20)
+                break
+            }
+        }
+    }
+
     function _roundUpFreeMemoryPointer() internal pure {
         /// @solidity memory-safe-assembly
         assembly {
@@ -53,52 +75,45 @@ contract TestPlus is Test {
         }
     }
 
-    function _brutalizeFreeMemoryStart() internal pure {
-        bool failed;
+    function _checkMemory() internal pure {
+        bool zeroSlotIsNotZero;
+        bool freeMemoryPointerOverflowed;
         /// @solidity memory-safe-assembly
         assembly {
-            let freeMemoryPointer := mload(0x40)
-            // This ensures that the memory allocated is 32-byte aligned.
-            if and(freeMemoryPointer, 31) { failed := 1 }
+            // Technically, it can support up to 2**64 - 1, but we test at a lower,
+            // but reasonable limit for safety.
+            if gt(mload(0x40), 0xffffffff) { freeMemoryPointerOverflowed := 1 }
+            zeroSlotIsNotZero := mload(0x60)
+        }
+        if (freeMemoryPointerOverflowed) revert("Free memory pointer overflowed!");
+        if (zeroSlotIsNotZero) revert("Zero slot is not zero!");
+    }
+
+    function _checkMemory(bytes memory s) internal pure {
+        bool notZeroRightPadded;
+        bool fmpNotWordAligned;
+        bool insufficientMalloc;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let length := mload(s)
+            let lastWord := mload(add(add(s, 0x20), and(length, not(31))))
+            let remainder := and(length, 31)
+            if remainder { if shl(mul(8, remainder), lastWord) { notZeroRightPadded := 1 } }
+            // Check if the free memory pointer is a multiple of 32.
+            if and(mload(0x40), 31) { fmpNotWordAligned := 1 }
             // Write some garbage to the free memory.
-            // If the allocated memory is insufficient, this will change the
-            // decoded string and cause the subsequent asserts to fail.
-            mstore(freeMemoryPointer, keccak256(0x00, 0x60))
+            mstore(mload(0x40), keccak256(0x00, 0x60))
+            // Check if the memory allocated is sufficient.
+            if length { if gt(add(add(s, 0x20), length), mload(0x40)) { insufficientMalloc := 1 } }
         }
-        if (failed) {
-            revert("Free memory pointer `0x40` not 32-byte word aligned!");
-        }
+        if (notZeroRightPadded) revert("Not zero right padded!");
+        if (fmpNotWordAligned) revert("Free memory pointer `0x40` not 32-byte word aligned!");
+        if (insufficientMalloc) revert("Insufficient memory allocation!");
+        _checkMemory();
     }
 
-    function _random() internal view returns (uint256 r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, calldataload(0x00))
-            mstore(0x20, xor(calldataload(0x20), gas()))
-            r := keccak256(0x00, 0x40)
-        }
-    }
-
-    function _checkZeroRightPadded(string memory s) internal pure {
-        bool failed;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
-            let remainder := and(mload(s), 31)
-            if remainder { if shl(mul(8, remainder), lastWord) { failed := 1 } }
-        }
-        if (failed) revert("String not zero right padded!");
-    }
-
-    function _checkZeroRightPadded(bytes memory s) internal pure {
-        bool failed;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
-            let remainder := and(mload(s), 31)
-            if remainder { if shl(mul(8, remainder), lastWord) { failed := 1 } }
-        }
-        if (failed) revert("Bytes not zero right padded!");
+    function _checkMemory(string memory s) internal pure {
+        _checkMemory(bytes(s));
     }
 
     /// @dev Adapted from:
