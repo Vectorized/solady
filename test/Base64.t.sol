@@ -90,7 +90,10 @@ contract Base64Test is TestPlus {
         brutalizeMemory
     {
         for (uint256 i; i < 2; ++i) {
+            _roundUpFreeMemoryPointer();
             string memory encoded = Base64.encode(input);
+            _brutalizeFreeMemoryStart();
+            _checkZeroRightPadded(encoded);
 
             if (randomness & (1 << 0) != 0) {
                 encoded = LibString.replace(encoded, "=", "");
@@ -108,6 +111,7 @@ contract Base64Test is TestPlus {
             _roundUpFreeMemoryPointer();
             bytes memory decoded = Base64.decode(encoded);
             _brutalizeFreeMemoryStart();
+            _checkZeroRightPadded(decoded);
 
             assertEq(input, decoded);
 
@@ -134,6 +138,7 @@ contract Base64Test is TestPlus {
     function testBase64DecodeMemorySafety(bytes memory input) public brutalizeMemory {
         _roundUpFreeMemoryPointer();
         bytes memory decoded = bytes(Base64.decode(string(input)));
+        _checkZeroRightPadded(decoded);
         _brutalizeFreeMemoryStart();
 
         bytes32 hashBefore = keccak256(decoded);
