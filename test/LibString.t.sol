@@ -249,9 +249,11 @@ contract LibStringTest is TestPlus {
         );
     }
 
-    function testFromAddressToHexStringChecksumedDifferential(uint256) public brutalizeMemory {
+    function testFromAddressToHexStringChecksumedDifferential(uint256 randomness)
+        public
+        brutalizeMemory
+    {
         address r;
-        uint256 randomness = _random();
         /// @solidity memory-safe-assembly
         assembly {
             r := randomness
@@ -1183,6 +1185,7 @@ contract LibStringTest is TestPlus {
         assembly {
             if mload(byteChoices) {
                 result := mload(0x40)
+                mstore(0x00, randomness)
                 let resultLength := and(randomness, 0x7f)
                 mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
                 mstore(result, resultLength)

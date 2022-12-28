@@ -52,6 +52,13 @@ contract TestPlus is Test {
             mstore(0x00, calldataload(0x00))
             mstore(0x20, xor(calldataload(0x20), gas()))
             r := keccak256(0x00, 0x40)
+            switch byte(2, r)
+            case 0 { r := and(r, 3) }
+            case 1 { r := sub(shl(shl(3, and(byte(3, r), 31)), 1), and(r, 3)) }
+            default {
+                mstore(0x00, r)
+                r := keccak256(0x00, 0x20)
+            }
         }
     }
 
