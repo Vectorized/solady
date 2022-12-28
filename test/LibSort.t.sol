@@ -7,7 +7,7 @@ import "src/utils/LibSort.sol";
 contract LibSortTest is TestPlus {
     function testInsertionSortAddressesDifferential(uint256) public {
         unchecked {
-            address[] memory a = _randomAddresses(32);
+            address[] memory a = _randomAddresses(_randomArrayLength());
             // Make a copy of the `a` and perform insertion sort on it.
             address[] memory aCopy = _copy(a);
             for (uint256 i = 1; i < aCopy.length; ++i) {
@@ -38,7 +38,7 @@ contract LibSortTest is TestPlus {
 
     function testSortChecksumed(uint256[] memory a) public {
         unchecked {
-            _boundArrayLength(a, 2048);
+            _boundArrayLength(a, _randomArrayLength());
             uint256 checksum;
             for (uint256 i = 0; i < a.length; ++i) {
                 checksum += a[i];
@@ -55,7 +55,7 @@ contract LibSortTest is TestPlus {
 
     function testSortDifferential(uint256[] memory a) public {
         unchecked {
-            _boundArrayLength(a, 128);
+            _boundArrayLength(a, _randomArrayLength());
             // Make a copy of the `a` and perform insertion sort on it.
             uint256[] memory aCopy = _copy(a);
             LibSort.insertionSort(aCopy);
@@ -66,7 +66,7 @@ contract LibSortTest is TestPlus {
 
     function testSort(uint256[] memory a) public {
         unchecked {
-            _boundArrayLength(a, 2048);
+            _boundArrayLength(a, _randomArrayLength());
             LibSort.sort(a);
             assertTrue(_isSorted(a));
         }
@@ -172,7 +172,7 @@ contract LibSortTest is TestPlus {
 
     function testSortAddressesDifferential(uint256[] memory aRaw) public {
         unchecked {
-            _boundArrayLength(aRaw, 128);
+            _boundArrayLength(aRaw, _randomArrayLength());
             address[] memory a = new address[](aRaw.length);
             for (uint256 i; i < a.length; ++i) {
                 address addr;
@@ -310,21 +310,21 @@ contract LibSortTest is TestPlus {
     }
 
     function testUniquifySorted(uint256[] memory a) public {
-        _boundArrayLength(a, 256);
+        _boundArrayLength(a, _randomArrayLength());
         LibSort.sort(a);
         LibSort.uniquifySorted(a);
         assertTrue(_isSortedAndUniquified(a));
     }
 
     function testUniquifySortedAddress(address[] memory a) public {
-        _boundArrayLength(a, 256);
+        _boundArrayLength(a, _randomArrayLength());
         LibSort.sort(a);
         LibSort.uniquifySorted(a);
         assertTrue(_isSortedAndUniquified(a));
     }
 
     function testUniquifySortedDifferential(uint256[] memory a) public {
-        _boundArrayLength(a, 256);
+        _boundArrayLength(a, _randomArrayLength());
         LibSort.sort(a);
         uint256[] memory aCopy = new uint256[](a.length);
         for (uint256 i = 0; i < a.length; ++i) {
@@ -416,6 +416,7 @@ contract LibSortTest is TestPlus {
 
     function testSearchSortedElementInArray(uint256[] memory a, uint256 randomness) public {
         unchecked {
+            _boundArrayLength(a, _randomArrayLength());
             vm.assume(a.length != 0);
             LibSort.sort(a);
             uint256 randomIndex = randomness % a.length;
@@ -430,6 +431,7 @@ contract LibSortTest is TestPlus {
         public
     {
         unchecked {
+            _boundArrayLength(a, _randomArrayLength());
             vm.assume(a.length != 0);
             LibSort.sort(a);
             LibSort.uniquifySorted(a);
@@ -443,6 +445,7 @@ contract LibSortTest is TestPlus {
 
     function testSearchSortedElementNotInArray(uint256[] memory a, uint256 randomness) public {
         unchecked {
+            _boundArrayLength(a, _randomArrayLength());
             vm.assume(a.length != 0);
             LibSort.sort(a);
 
@@ -479,6 +482,7 @@ contract LibSortTest is TestPlus {
         public
     {
         unchecked {
+            _boundArrayLength(a, _randomArrayLength());
             vm.assume(a.length != 0);
             LibSort.sort(a);
             LibSort.uniquifySorted(a);
@@ -1080,5 +1084,12 @@ contract LibSortTest is TestPlus {
         LibSort.uniquifySorted(a);
         LibSort.insertionSort(b);
         LibSort.uniquifySorted(b);
+    }
+
+    function _randomArrayLength() internal view returns (uint256 r) {
+        r = _random() % 256;
+        if (r < 16) return _random() % 256;
+        if (r < 128) return _random() % 32;
+        return _random() % 16;
     }
 }
