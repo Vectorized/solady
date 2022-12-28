@@ -60,6 +60,7 @@ library Base64 {
                 // free memory pointer up the next multiple of 32.
                 mstore(0x40, and(add(end, 31), not(31)))
 
+                // Equivalent to `o = [0, 2, 1][dataLength % 3]`.
                 let o := byte(add(mod(dataLength, 3), 29), 0x0201)
 
                 // Offset `ptr` and pad with '='. We can simply write over the end.
