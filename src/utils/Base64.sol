@@ -61,7 +61,7 @@ library Base64 {
                 mstore(0x40, and(add(end, 31), not(31)))
 
                 // Equivalent to `o = [0, 2, 1][dataLength % 3]`.
-                let o := byte(add(mod(dataLength, 3), 29), 0x0201)
+                let o := div(2, mod(dataLength, 3))
 
                 // Offset `ptr` and pad with '='. We can simply write over the end.
                 mstore(sub(ptr, o), shl(240, 0x3d3d))
