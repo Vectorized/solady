@@ -46,30 +46,6 @@ contract TestPlus is Test {
         _;
     }
 
-    function _roundUpFreeMemoryPointer() internal pure {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x40, and(add(mload(0x40), 31), not(31)))
-        }
-    }
-
-    function _brutalizeFreeMemoryStart() internal pure {
-        bool failed;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let freeMemoryPointer := mload(0x40)
-            // This ensures that the memory allocated is 32-byte aligned.
-            if and(freeMemoryPointer, 31) { failed := 1 }
-            // Write some garbage to the free memory.
-            // If the allocated memory is insufficient, this will change the
-            // decoded string and cause the subsequent asserts to fail.
-            mstore(freeMemoryPointer, keccak256(0x00, 0x60))
-        }
-        if (failed) {
-            revert("Free memory pointer `0x40` not 32-byte word aligned!");
-        }
-    }
-
     function _random() internal view returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -79,26 +55,38 @@ contract TestPlus is Test {
         }
     }
 
-    function _checkZeroRightPadded(string memory s) internal pure {
-        bool failed;
+    function _roundUpFreeMemoryPointer() internal pure {
         /// @solidity memory-safe-assembly
         assembly {
-            let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
-            let remainder := and(mload(s), 31)
-            if remainder { if shl(mul(8, remainder), lastWord) { failed := 1 } }
+            mstore(0x40, and(add(mload(0x40), 31), not(31)))
         }
-        if (failed) revert("String not zero right padded!");
     }
 
-    function _checkZeroRightPadded(bytes memory s) internal pure {
-        bool failed;
+    function _checkMemory(bytes memory s) internal pure {
+        bool notZeroRightPadded;
+        bool fmpNotWordAligned;
+        bool insufficientMalloc;
         /// @solidity memory-safe-assembly
         assembly {
-            let lastWord := mload(add(add(s, 0x20), and(mload(s), not(31))))
-            let remainder := and(mload(s), 31)
-            if remainder { if shl(mul(8, remainder), lastWord) { failed := 1 } }
+            let length := mload(s)
+            let lastWord := mload(add(add(s, 0x20), and(length, not(31))))
+            let remainder := and(length, 31)
+            if remainder { if shl(mul(8, remainder), lastWord) { notZeroRightPadded := 1 } }
+            // Check if the memory allocated is 32-byte aligned.
+            if and(mload(0x40), 31) { fmpNotWordAligned := 1 }
+            // Write some garbage to the free memory.
+            // If the allocated memory is insufficient, this will change the
+            // decoded string and cause the subsequent asserts to fail.
+            mstore(mload(0x40), keccak256(0x00, 0x60))
+            if length { if gt(add(add(s, 0x20), length), mload(0x40)) { insufficientMalloc := 1 } }
         }
-        if (failed) revert("Bytes not zero right padded!");
+        if (notZeroRightPadded) revert("Not zero right padded!");
+        if (fmpNotWordAligned) revert("Free memory pointer `0x40` not 32-byte word aligned!");
+        if (insufficientMalloc) revert("Insufficient memory allocation!");
+    }
+
+    function _checkMemory(string memory s) internal pure {
+        _checkMemory(bytes(s));
     }
 
     /// @dev Adapted from:

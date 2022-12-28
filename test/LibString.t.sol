@@ -90,7 +90,9 @@ contract LibStringTest is TestPlus {
     }
 
     function testToStringZeroRightPadded(uint256 x) public pure {
-        _checkZeroRightPadded(LibString.toString(x));
+        _roundUpFreeMemoryPointer();
+        string memory s = LibString.toString(x);
+        _checkMemory(s);
     }
 
     function testToHexStringZero() public {
@@ -120,7 +122,7 @@ contract LibStringTest is TestPlus {
     }
 
     function testToHexStringZeroRightPadded(uint256 x) public pure {
-        _checkZeroRightPadded(LibString.toHexString(x));
+        _checkMemory(LibString.toHexString(x));
     }
 
     function testToHexStringFixedLengthInsufficientLength() public {
@@ -138,7 +140,7 @@ contract LibStringTest is TestPlus {
     function testToHexStringFixedLengthZeroRightPadded(uint256 x, uint256 randomness) public pure {
         uint256 minLength = (bytes(LibString.toHexString(x)).length - 2) * 2;
         uint256 length = (randomness % 32) + minLength;
-        _checkZeroRightPadded(LibString.toHexString(x, length));
+        _checkMemory(LibString.toHexString(x, length));
     }
 
     function testFromAddressToHexString() public {
@@ -151,7 +153,7 @@ contract LibStringTest is TestPlus {
     }
 
     function testAddressToHexStringZeroRightPadded(address x) public pure {
-        _checkZeroRightPadded(LibString.toHexString(x));
+        _checkMemory(LibString.toHexString(x));
     }
 
     function testFromAddressToHexStringWithLeadingZeros() public {
@@ -278,19 +280,16 @@ contract LibStringTest is TestPlus {
             }
         }
         string memory checksumed = LibString.toHexStringChecksumed(r);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(checksumed);
+        _checkMemory(checksumed);
         assertEq(keccak256(bytes(checksumed)), keccak256(bytes(expectedResult)));
     }
 
     function testHexStringNoPrefixVariants(uint256 x, uint256 randomness) public brutalizeMemory {
         string memory noPrefix = LibString.toHexStringNoPrefix(x);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(noPrefix);
+        _checkMemory(noPrefix);
         string memory expectedResult = LibString.concat("0x", noPrefix);
         string memory withPrefix = LibString.toHexString(x);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(withPrefix);
+        _checkMemory(withPrefix);
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
 
         uint256 length;
@@ -299,12 +298,10 @@ contract LibStringTest is TestPlus {
             length := add(shr(1, mload(noPrefix)), and(randomness, 63))
         }
         noPrefix = LibString.toHexStringNoPrefix(x, length);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(noPrefix);
+        _checkMemory(noPrefix);
         expectedResult = LibString.concat("0x", noPrefix);
         withPrefix = LibString.toHexString(x, length);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(withPrefix);
+        _checkMemory(withPrefix);
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
 
         address xAddress;
@@ -313,12 +310,10 @@ contract LibStringTest is TestPlus {
             xAddress := x
         }
         noPrefix = LibString.toHexStringNoPrefix(xAddress);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(noPrefix);
+        _checkMemory(noPrefix);
         expectedResult = LibString.concat("0x", noPrefix);
         withPrefix = LibString.toHexString(xAddress);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(withPrefix);
+        _checkMemory(withPrefix);
         assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
     }
 
@@ -385,7 +380,6 @@ contract LibStringTest is TestPlus {
                 )
             );
             _roundUpFreeMemoryPointer();
-            _brutalizeFreeMemoryStart();
             string memory expectedResult = string(
                 bytes.concat(
                     bytes(filler),
@@ -396,10 +390,8 @@ contract LibStringTest is TestPlus {
                 )
             );
             _roundUpFreeMemoryPointer();
-            _brutalizeFreeMemoryStart();
             string memory replaced = LibString.replace(subject, search, replacement);
-            _brutalizeFreeMemoryStart();
-            _checkZeroRightPadded(replaced);
+            _checkMemory(replaced);
             assertEq(replaced, expectedResult);
         } else {
             string memory expectedResult = string(
@@ -601,10 +593,8 @@ contract LibStringTest is TestPlus {
     function testStringRepeat(string memory subject, uint256 times) public brutalizeMemory {
         times = times % 8;
         string memory repeated = LibString.repeat(subject, times);
-        _brutalizeFreeMemoryStart();
         string memory expectedResult = _repeatOriginal(subject, times);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(repeated);
+        _checkMemory(repeated);
         assertEq(repeated, expectedResult);
     }
 
@@ -643,8 +633,9 @@ contract LibStringTest is TestPlus {
         uint256 start = bytes(filler0).length;
         uint256 end = start + bytes(expectedResult).length;
 
+        _roundUpFreeMemoryPointer();
         string memory slice = LibString.slice(subject, start, end);
-        _checkZeroRightPadded(slice);
+        _checkMemory(slice);
         assertEq(slice, expectedResult);
     }
 
@@ -777,10 +768,9 @@ contract LibStringTest is TestPlus {
             }
             _roundUpFreeMemoryPointer();
             string[] memory splitted = LibString.split(subject, delimiter);
-            _brutalizeFreeMemoryStart();
             assertTrue(_stringArraysAreSame(splitted, elements));
             for (uint256 i; i < splitted.length; ++i) {
-                _checkZeroRightPadded(splitted[i]);
+                _checkMemory(splitted[i]);
             }
         }
     }
@@ -828,12 +818,8 @@ contract LibStringTest is TestPlus {
 
     function testStringConcat(string memory a, string memory b) public brutalizeMemory {
         string memory concatenated = LibString.concat(a, b);
-        _roundUpFreeMemoryPointer();
-        _brutalizeFreeMemoryStart();
+        _checkMemory(concatenated);
         string memory expectedResult = string(bytes.concat(bytes(a), bytes(b)));
-        _roundUpFreeMemoryPointer();
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(concatenated);
         assertEq(concatenated, expectedResult);
     }
 
@@ -907,8 +893,7 @@ contract LibStringTest is TestPlus {
 
         _roundUpFreeMemoryPointer();
         string memory escaped = LibString.escapeHTML(input);
-        _checkZeroRightPadded(escaped);
-        _brutalizeFreeMemoryStart();
+        _checkMemory(escaped);
 
         assertEq(expectedResult, escaped);
     }
@@ -935,7 +920,7 @@ contract LibStringTest is TestPlus {
                     string memory expectedOutput =
                         string(bytes.concat(bytes("abc\\u"), bytes(hexCode), bytes("_123")));
                     string memory escaped = LibString.escapeJSON(input);
-                    _checkZeroRightPadded(escaped);
+                    _checkMemory(escaped);
                     assertEq(escaped, expectedOutput);
                 }
             }
@@ -968,8 +953,7 @@ contract LibStringTest is TestPlus {
         _roundUpFreeMemoryPointer();
         bytes32 packed = LibString.packOne(a);
         string memory unpacked = LibString.unpackOne(packed);
-        _checkZeroRightPadded(unpacked);
-        _brutalizeFreeMemoryStart();
+        _checkMemory(unpacked);
 
         if (bytes(a).length < 32) {
             assertEq(unpacked, a);
@@ -1015,9 +999,8 @@ contract LibStringTest is TestPlus {
         bytes32 packed = LibString.packTwo(a, b);
         _roundUpFreeMemoryPointer();
         (string memory unpackedA, string memory unpackedB) = LibString.unpackTwo(packed);
-        _checkZeroRightPadded(unpackedA);
-        _checkZeroRightPadded(unpackedB);
-        _brutalizeFreeMemoryStart();
+        _checkMemory(unpackedA);
+        _checkMemory(unpackedB);
 
         unchecked {
             if (bytes(a).length + bytes(b).length < 31) {
@@ -1061,8 +1044,7 @@ contract LibStringTest is TestPlus {
         string memory expectedResult = _lowerOriginal(s);
         _roundUpFreeMemoryPointer();
         string memory result = LibString.lower(s);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(result);
+        _checkMemory(result);
         assertEq(result, expectedResult);
     }
 
@@ -1089,8 +1071,7 @@ contract LibStringTest is TestPlus {
         string memory expectedResult = _upperOriginal(s);
         _roundUpFreeMemoryPointer();
         string memory result = LibString.upper(s);
-        _brutalizeFreeMemoryStart();
-        _checkZeroRightPadded(result);
+        _checkMemory(result);
         assertEq(result, expectedResult);
     }
 

@@ -49,20 +49,7 @@ contract Base64Test is TestPlus {
     }
 
     function _testBase64Encode(string memory input, string memory output) private {
-        string memory encoded = Base64.encode(bytes(input));
-
-        /// @solidity memory-safe-assembly
-        assembly {
-            let freeMemoryPointer := mload(0x40)
-            // This ensures that the memory allocated is 32-byte aligned.
-            if and(freeMemoryPointer, 31) { revert(0, 0) }
-            // Write some garbage to the free memory.
-            // If the allocated memory is insufficient, this will change the
-            // decoded string and cause the subsequent asserts to fail.
-            mstore(freeMemoryPointer, keccak256(0x00, 0x60))
-        }
-
-        assertEq(keccak256(bytes(encoded)), keccak256(bytes(output)));
+        assertEq(Base64.encode(bytes(input)), output);
     }
 
     function testBase64EncodeDecode(bytes memory input) public {
@@ -85,33 +72,28 @@ contract Base64Test is TestPlus {
         );
     }
 
-    function testBase64EncodeDecodeAltModes(bytes memory input, uint256 randomness)
-        public
-        brutalizeMemory
-    {
+    function testBase64EncodeDecodeAltModes(bytes memory input) public brutalizeMemory {
         for (uint256 i; i < 2; ++i) {
             _roundUpFreeMemoryPointer();
             string memory encoded = Base64.encode(input);
-            _brutalizeFreeMemoryStart();
-            _checkZeroRightPadded(encoded);
+            _checkMemory(encoded);
 
-            if (randomness & (1 << 0) != 0) {
+            if (_random() & 1 == 0) {
                 encoded = LibString.replace(encoded, "=", "");
             }
-            if (randomness & (1 << 1) != 0) {
+            if (_random() & 1 == 0) {
                 encoded = LibString.replace(encoded, "/", ",");
             }
-            if (randomness & (1 << 2) != 0) {
+            if (_random() & 1 == 0) {
                 encoded = LibString.replace(encoded, "/", "_");
             }
-            if (randomness & (1 << 3) != 0) {
+            if (_random() & 1 == 0) {
                 encoded = LibString.replace(encoded, "+", "-");
             }
 
             _roundUpFreeMemoryPointer();
             bytes memory decoded = Base64.decode(encoded);
-            _brutalizeFreeMemoryStart();
-            _checkZeroRightPadded(decoded);
+            _checkMemory(decoded);
 
             assertEq(input, decoded);
 
@@ -133,27 +115,5 @@ contract Base64Test is TestPlus {
         }
 
         assertEq(Base64.encode(input, fileSafe, noPadding), expectedEncoded);
-    }
-
-    function testBase64DecodeMemorySafety(bytes memory input) public brutalizeMemory {
-        _roundUpFreeMemoryPointer();
-        bytes memory decoded = bytes(Base64.decode(string(input)));
-        _checkZeroRightPadded(decoded);
-        _brutalizeFreeMemoryStart();
-
-        bytes32 hashBefore = keccak256(decoded);
-
-        /// @solidity memory-safe-assembly
-        assembly {
-            let freeMemoryPointer := mload(0x40)
-            // This ensures that the memory allocated is 32-byte aligned.
-            if and(freeMemoryPointer, 31) { revert(0, 0) }
-            // Write some garbage to the free memory.
-            // If the allocated memory is insufficient, this will change the
-            // decoded string and cause the subsequent asserts to fail.
-            mstore(freeMemoryPointer, hashBefore)
-        }
-        bytes32 hashAfter = keccak256(decoded);
-        assertEq(hashBefore, hashAfter);
     }
 }

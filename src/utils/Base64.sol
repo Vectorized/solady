@@ -169,7 +169,7 @@ library Base64 {
                 }
 
                 // Allocate the memory for the string.
-                // Add 32 + 31 and mask with `not(31)` to round the
+                // Add 31 and mask with `not(31)` to round the
                 // free memory pointer up the next multiple of 32.
                 mstore(0x40, and(add(end, 31), not(31)))
                 // Zeroize the slot after the bytes.
