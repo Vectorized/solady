@@ -83,8 +83,8 @@ contract TestPlus is Test {
         bool freeMemoryPointerOverflowed;
         /// @solidity memory-safe-assembly
         assembly {
-            // We test at a lower, but still reasonable limit.
-            freeMemoryPointerOverflowed := gt(mload(0x40), 0xffffffff)
+            // Test at a lower, but reasonable limit for more safety room.
+            if gt(mload(0x40), 0xffffffff) { freeMemoryPointerOverflowed := 1 }
             // Check the value of the zero slot.
             zeroSlotIsNotZero := mload(0x60)
         }
@@ -101,13 +101,13 @@ contract TestPlus is Test {
             let length := mload(s)
             let lastWord := mload(add(add(s, 0x20), and(length, not(31))))
             let remainder := and(length, 31)
-            notZeroRightPadded := and(gt(remainder, 0), gt(shl(mul(8, remainder), lastWord), 0))
+            if remainder { if shl(mul(8, remainder), lastWord) { notZeroRightPadded := 1 } }
             // Check if the free memory pointer is a multiple of 32.
             fmpNotWordAligned := and(mload(0x40), 31)
             // Write some garbage to the free memory.
             mstore(mload(0x40), keccak256(0x00, 0x60))
             // Check if the memory allocated is sufficient.
-            insufficientMalloc := and(gt(length, 0), gt(add(add(s, 0x20), length), mload(0x40)))
+            if length { if gt(add(add(s, 0x20), length), mload(0x40)) { insufficientMalloc := 1 } }
         }
         if (notZeroRightPadded) revert("Not zero right padded!");
         if (fmpNotWordAligned) revert("Free memory pointer `0x40` not 32-byte word aligned!");
