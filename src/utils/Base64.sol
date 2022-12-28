@@ -17,7 +17,9 @@ library Base64 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            for { let dataLength := mload(data) } dataLength {} {
+            let dataLength := mload(data)
+
+            if dataLength {
                 // Multiply by 4/3 rounded up.
                 // The `shl(2, ...)` is equivalent to multiplying by 4.
                 let encodedLength := shl(2, div(add(dataLength, 2), 3))
@@ -58,19 +60,17 @@ library Base64 {
                 // free memory pointer up the next multiple of 32.
                 mstore(0x40, and(add(end, 31), not(31)))
 
-                let r := mod(dataLength, 3)
+                // Equivalent to `o = [0, 2, 1][dataLength % 3]`.
+                let o := div(2, mod(dataLength, 3))
 
-                if iszero(noPadding) {
-                    // Offset `ptr` and pad with '='. We can simply write over the end.
-                    mstore8(sub(ptr, iszero(iszero(r))), 0x3d) // Pad at `ptr - 1` if `r > 0`.
-                    mstore8(sub(ptr, shl(1, eq(r, 1))), 0x3d) // Pad at `ptr - 2` if `r == 1`.
-                    // Write the length of the string.
-                    mstore(result, encodedLength)
-                    break
-                }
+                // Offset `ptr` and pad with '='. We can simply write over the end.
+                mstore(sub(ptr, o), shl(240, 0x3d3d))
+                // Set `o` to zero if there is padding.
+                o := mul(iszero(iszero(noPadding)), o)
+                // Zeroize the slot after the string.
+                mstore(sub(ptr, o), 0)
                 // Write the length of the string.
-                mstore(result, sub(encodedLength, add(iszero(iszero(r)), eq(r, 1))))
-                break
+                mstore(result, sub(encodedLength, o))
             }
         }
     }
@@ -111,13 +111,12 @@ library Base64 {
             let dataLength := mload(data)
 
             if dataLength {
-                let end := add(data, dataLength)
                 let decodedLength := mul(shr(2, dataLength), 3)
 
                 for {} 1 {} {
                     // If padded.
                     if iszero(and(dataLength, 3)) {
-                        let t := xor(mload(end), 0x3d3d)
+                        let t := xor(mload(add(data, dataLength)), 0x3d3d)
                         // forgefmt: disable-next-item
                         decodedLength := sub(
                             decodedLength,
@@ -131,11 +130,12 @@ library Base64 {
                 }
                 result := mload(0x40)
 
-                // Write the length of the string.
+                // Write the length of the bytes.
                 mstore(result, decodedLength)
 
                 // Skip the first slot, which stores the length.
                 let ptr := add(result, 0x20)
+                let end := add(ptr, decodedLength)
 
                 // Load the table into the scratch space.
                 // Constants are optimized for smaller bytecode with zero gas overhead.
@@ -165,14 +165,15 @@ library Base64 {
 
                     ptr := add(ptr, 3)
 
-                    if iszero(lt(data, end)) { break }
+                    if iszero(lt(ptr, end)) { break }
                 }
 
                 // Allocate the memory for the string.
                 // Add 32 + 31 and mask with `not(31)` to round the
                 // free memory pointer up the next multiple of 32.
-                mstore(0x40, and(add(add(result, decodedLength), 63), not(31)))
-
+                mstore(0x40, and(add(end, 31), not(31)))
+                // Zeroize the slot after the bytes.
+                mstore(end, 0)
                 // Restore the zero slot.
                 mstore(0x60, 0)
             }
