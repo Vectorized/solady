@@ -44,14 +44,17 @@ contract TestPlus is Test {
         }
 
         _;
+
+        _checkMemory();
     }
 
     function _random() internal view returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, calldataload(0x00))
-            mstore(0x20, xor(calldataload(0x20), gas()))
-            r := keccak256(0x00, 0x40)
+            let m := mload(0x40)
+            calldatacopy(add(m, 0x20), 0, calldatasize())
+            mstore(m, gas())
+            r := keccak256(m, add(calldatasize(), 0x20))
             for {} 1 {} {
                 if iszero(byte(0, r)) {
                     r := and(r, 3)
@@ -80,9 +83,9 @@ contract TestPlus is Test {
         bool freeMemoryPointerOverflowed;
         /// @solidity memory-safe-assembly
         assembly {
-            // Technically, it can support up to 2**64 - 1, but we test at a lower,
-            // but reasonable limit for safety.
+            // Test at a lower, but reasonable limit for more safety room.
             if gt(mload(0x40), 0xffffffff) { freeMemoryPointerOverflowed := 1 }
+            // Check the value of the zero slot.
             zeroSlotIsNotZero := mload(0x60)
         }
         if (freeMemoryPointerOverflowed) revert("Free memory pointer overflowed!");
@@ -100,7 +103,7 @@ contract TestPlus is Test {
             let remainder := and(length, 31)
             if remainder { if shl(mul(8, remainder), lastWord) { notZeroRightPadded := 1 } }
             // Check if the free memory pointer is a multiple of 32.
-            if and(mload(0x40), 31) { fmpNotWordAligned := 1 }
+            fmpNotWordAligned := and(mload(0x40), 31)
             // Write some garbage to the free memory.
             mstore(mload(0x40), keccak256(0x00, 0x60))
             // Check if the memory allocated is sufficient.

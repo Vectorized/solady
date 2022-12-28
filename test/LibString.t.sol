@@ -1181,12 +1181,12 @@ contract LibStringTest is TestPlus {
         returns (string memory result)
     {
         uint256 randomness = _random();
+        uint256 resultLength = _randomStringLength();
         /// @solidity memory-safe-assembly
         assembly {
             if mload(byteChoices) {
                 result := mload(0x40)
                 mstore(0x00, randomness)
-                let resultLength := and(randomness, 0x7f)
                 mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
                 mstore(result, resultLength)
 
@@ -1200,6 +1200,13 @@ contract LibStringTest is TestPlus {
                 }
             }
         }
+    }
+
+    function _randomStringLength() internal view returns (uint256 r) {
+        r = _random() % 256;
+        if (r < 64) return _random() % 128;
+        if (r < 128) return _random() % 64;
+        return _random() % 16;
     }
 
     function _stringArraysAreSame(string[] memory a, string[] memory b)
