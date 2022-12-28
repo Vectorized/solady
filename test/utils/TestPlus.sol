@@ -42,7 +42,9 @@ contract TestPlus is Test {
                 if iszero(i) { break }
             }
         }
+
         _;
+
         _checkMemory();
     }
 
@@ -77,10 +79,16 @@ contract TestPlus is Test {
 
     function _checkMemory() internal pure {
         bool zeroSlotIsNotZero;
+        bool freeMemoryPointerOverflowed;
         /// @solidity memory-safe-assembly
         assembly {
+            // Technically, it can support up to 2**64 - 1, but we test at a lower,
+            // but reasonable limit for safety.
+            if gt(mload(0x40), 0xffffffff) { freeMemoryPointerOverflowed := 1 }
+            // Check if the zero slot is zero.
             zeroSlotIsNotZero := mload(0x60)
         }
+        if (freeMemoryPointerOverflowed) revert("Free memory pointer overflowed!");
         if (zeroSlotIsNotZero) revert("Zero slot is not zero!");
     }
 
