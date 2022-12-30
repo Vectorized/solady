@@ -107,4 +107,47 @@ library LibPRNG {
             }
         }
     }
+
+    /// @dev Shuffles the bytes in-place with Fisher-Yates shuffle.
+    function shuffle(PRNG memory prng, bytes memory a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(a)
+            let w := not(0)
+            let mask := shr(128, w)
+            if n {
+                let b := add(a, 0x01)
+                for { a := add(a, 0x20) } 1 {} {
+                    // We can just directly use `keccak256`, cuz
+                    // the other approaches don't save much.
+                    let r := keccak256(prng, 0x20)
+                    mstore(prng, r)
+
+                    // Note that there will be a very tiny modulo bias
+                    // if the length of the array is not a power of 2.
+                    // For all practical purposes, it is negligible
+                    // and will not be a fairness or security concern.
+                    {
+                        let o := mod(shr(128, r), n)
+                        n := add(n, w) // `sub(n, 1)`.
+                        if iszero(n) { break }
+
+                        let t := mload(add(b, n))
+                        mstore8(add(a, n), mload(add(b, o)))
+                        mstore8(add(a, o), t)
+                    }
+
+                    {
+                        let o := mod(and(r, mask), n)
+                        n := add(n, w) // `sub(n, 1)`.
+                        if iszero(n) { break }
+
+                        let t := mload(add(b, n))
+                        mstore8(add(a, n), mload(add(b, o)))
+                        mstore8(add(a, o), t)
+                    }
+                }
+            }
+        }
+    }
 }
