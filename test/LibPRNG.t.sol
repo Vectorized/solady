@@ -59,6 +59,14 @@ contract LibPRNGTest is TestPlus {
         }
     }
 
+    function testPRNGShuffleBytesGas() public pure {
+        unchecked {
+            bytes memory a = new bytes(10000);
+            LibPRNG.PRNG memory prng;
+            prng.shuffle(a);
+        }
+    }
+
     function testPRNGShuffle() public {
         unchecked {
             LibPRNG.PRNG memory prng;
@@ -69,18 +77,40 @@ contract LibPRNGTest is TestPlus {
                     a[i] = i;
                 }
                 bytes32 hashBefore = keccak256(abi.encode(a));
-                uint256 numDifferent;
-                for (uint256 i; i < 30; ++i) {
+                for (;;) {
                     prng.shuffle(a);
                     bytes32 hashAfterShuffle = keccak256(abi.encode(a));
-                    if (hashBefore != hashAfterShuffle) {
-                        numDifferent++;
-                    }
                     LibSort.sort(a);
                     bytes32 hashAfterSort = keccak256(abi.encode(a));
                     assertTrue(hashBefore == hashAfterSort);
+                    if (hashBefore != hashAfterShuffle) break;
                 }
-                assertTrue(numDifferent > 1);
+            }
+            // Checking that we won't crash.
+            for (uint256 n = 0; n < 2; ++n) {
+                uint256[] memory a = new uint256[](n);
+                prng.shuffle(a);
+            }
+        }
+    }
+
+    function testPRNGShuffleBytes() public {
+        unchecked {
+            LibPRNG.PRNG memory prng;
+            for (uint256 s = 1; s < 9; ++s) {
+                uint256 n = 1 << s; // 2, 4, 8, 16, ...
+                bytes memory a = new bytes(n);
+                for (uint256 i; i < n; ++i) {
+                    a[i] = bytes1(uint8(i & 0xff));
+                }
+                bytes32 hashBefore = keccak256(abi.encode(a));
+                uint256 checksumBefore = _bytesOrderAgnosticChecksum(a);
+                for (uint256 i; i < 30; ++i) {
+                    prng.shuffle(a);
+                    assertEq(_bytesOrderAgnosticChecksum(a), checksumBefore);
+                    bytes32 hashAfterShuffle = keccak256(abi.encode(a));
+                    if (hashBefore != hashAfterShuffle) break;
+                }
             }
             // Checking that we won't crash.
             for (uint256 n = 0; n < 2; ++n) {
@@ -108,6 +138,15 @@ contract LibPRNGTest is TestPlus {
                 randomness = prng.next();
             }
             assertTrue(randomness != 0);
+        }
+    }
+
+    function _bytesOrderAgnosticChecksum(bytes memory a) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for { let n := mload(a) } n { n := sub(n, 1) } {
+                result := add(result, and(mload(add(a, n)), 0xff))
+            }
         }
     }
 
