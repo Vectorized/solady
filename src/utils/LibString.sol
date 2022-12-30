@@ -62,6 +62,23 @@ library LibString {
         }
     }
 
+    /// @dev Returns the base 10 decimal representation of `value`.
+    function toString(int256 value) internal pure returns (string memory str) {
+        if (value >= 0) {
+            return toString(uint256(value));
+        }
+        unchecked {
+            str = toString(uint256(-value));
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            let length := mload(str) // Load the string length.
+            mstore(str, 0x2d) // Store the '-' character.
+            str := sub(str, 1) // Move back the string pointer by a byte.
+            mstore(str, add(length, 1)) // Update the string length.
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   HEXADECIMAL OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
