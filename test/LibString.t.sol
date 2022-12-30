@@ -24,7 +24,7 @@ contract LibStringTest is TestPlus {
         );
     }
 
-    function testToStringZeroBrutalized() public {
+    function testToStringZeroBrutalized() public brutalizeMemory {
         string memory s0 = LibString.toString(uint256(0));
         /// @solidity memory-safe-assembly
         assembly {
@@ -41,7 +41,7 @@ contract LibStringTest is TestPlus {
         assertEq(keccak256(bytes(s1)), keccak256(bytes("0")));
     }
 
-    function testToStringPositiveNumberBrutalized() public {
+    function testToStringPositiveNumberBrutalized() public brutalizeMemory {
         string memory s0 = LibString.toString(uint256(4132));
         /// @solidity memory-safe-assembly
         assembly {
@@ -58,7 +58,7 @@ contract LibStringTest is TestPlus {
         assertEq(keccak256(bytes(s1)), keccak256(bytes("4132")));
     }
 
-    function testToStringUint256MaxBrutalized() public {
+    function testToStringUint256MaxBrutalized() public brutalizeMemory {
         string memory s0 = LibString.toString(type(uint256).max);
         /// @solidity memory-safe-assembly
         assembly {
@@ -89,15 +89,15 @@ contract LibStringTest is TestPlus {
         );
     }
 
-    function testToStringZeroRightPadded(uint256 x) public pure {
+    function testToStringZeroRightPadded(uint256 x) public view brutalizeMemory {
         _checkMemory(LibString.toString(x));
     }
 
-    function testToStringSignedDifferential(int256 x) public {
+    function testToStringSignedDifferential(int256 x) public brutalizeMemory {
         assertEq(LibString.toString(x), _toStringSignedOriginal(x));
     }
 
-    function testToStringSignedMemory(int256 x) public pure {
+    function testToStringSignedMemory(int256 x) public view brutalizeMemory {
         _roundUpFreeMemoryPointer();
         uint256 freeMemoryPointer;
         /// @solidity memory-safe-assembly
