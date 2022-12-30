@@ -6,11 +6,11 @@ import {LibString} from "../src/utils/LibString.sol";
 
 contract LibStringTest is TestPlus {
     function testToStringZero() public {
-        assertEq(keccak256(bytes(LibString.toString(0))), keccak256(bytes("0")));
+        assertEq(keccak256(bytes(LibString.toString(uint256(0)))), keccak256(bytes("0")));
     }
 
     function testToStringPositiveNumber() public {
-        assertEq(keccak256(bytes(LibString.toString(4132))), keccak256(bytes("4132")));
+        assertEq(keccak256(bytes(LibString.toString(uint256(4132)))), keccak256(bytes("4132")));
     }
 
     function testToStringUint256Max() public {
@@ -25,13 +25,13 @@ contract LibStringTest is TestPlus {
     }
 
     function testToStringZeroBrutalized() public {
-        string memory s0 = LibString.toString(0);
+        string memory s0 = LibString.toString(uint256(0));
         /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
-        string memory s1 = LibString.toString(0);
+        string memory s1 = LibString.toString(uint256(0));
         /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
@@ -42,13 +42,13 @@ contract LibStringTest is TestPlus {
     }
 
     function testToStringPositiveNumberBrutalized() public {
-        string memory s0 = LibString.toString(4132);
+        string memory s0 = LibString.toString(uint256(4132));
         /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
-        string memory s1 = LibString.toString(4132);
+        string memory s1 = LibString.toString(uint256(4132));
         /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(0x40), not(0))
@@ -91,6 +91,45 @@ contract LibStringTest is TestPlus {
 
     function testToStringZeroRightPadded(uint256 x) public pure {
         _checkMemory(LibString.toString(x));
+    }
+
+    function testToStringSignedDifferential(int256 x) public {
+        assertEq(LibString.toString(x), _toStringSignedOriginal(x));
+    }
+
+    function testToStringSignedMemory(int256 x) public pure {
+        _roundUpFreeMemoryPointer();
+        uint256 freeMemoryPointer;
+        /// @solidity memory-safe-assembly
+        assembly {
+            freeMemoryPointer := mload(0x40)
+        }
+        string memory str = LibString.toString(x);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if lt(str, freeMemoryPointer) { revert(0, 0) }
+        }
+        _checkMemory(str);
+    }
+
+    function testToStringSignedGas() public pure {
+        for (int256 x = -10; x < 10; ++x) {
+            LibString.toString(x);
+        }
+    }
+
+    function testToStringSignedOriginalGas() public pure {
+        for (int256 x = -10; x < 10; ++x) {
+            _toStringSignedOriginal(x);
+        }
+    }
+
+    function _toStringSignedOriginal(int256 x) internal pure returns (string memory) {
+        unchecked {
+            return x >= 0
+                ? LibString.toString(uint256(x))
+                : string(abi.encodePacked("-", LibString.toString(uint256(-x))));
+        }
     }
 
     function testToHexStringZero() public {
@@ -323,6 +362,7 @@ contract LibStringTest is TestPlus {
         unchecked {
             string memory runes = new string(256);
             for (uint256 i; i < 256; ++i) {
+                /// @solidity memory-safe-assembly
                 assembly {
                     mstore8(add(add(runes, 0x20), i), i)
                 }
@@ -1050,6 +1090,7 @@ contract LibStringTest is TestPlus {
         unchecked {
             string memory ascii = new string(128);
             for (uint256 i; i < 128; ++i) {
+                /// @solidity memory-safe-assembly
                 assembly {
                     mstore8(add(add(ascii, 0x20), i), i)
                 }
@@ -1077,6 +1118,7 @@ contract LibStringTest is TestPlus {
         unchecked {
             string memory ascii = new string(128);
             for (uint256 i; i < 128; ++i) {
+                /// @solidity memory-safe-assembly
                 assembly {
                     mstore8(add(add(ascii, 0x20), i), i)
                 }
