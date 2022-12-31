@@ -6,21 +6,17 @@ import {LibString} from "../src/utils/LibString.sol";
 
 contract LibStringTest is TestPlus {
     function testToStringZero() public {
-        assertEq(keccak256(bytes(LibString.toString(uint256(0)))), keccak256(bytes("0")));
+        assertEq(LibString.toString(uint256(0)), "0");
     }
 
     function testToStringPositiveNumber() public {
-        assertEq(keccak256(bytes(LibString.toString(uint256(4132)))), keccak256(bytes("4132")));
+        assertEq(LibString.toString(uint256(4132)), "4132");
     }
 
     function testToStringUint256Max() public {
         assertEq(
-            keccak256(bytes(LibString.toString(type(uint256).max))),
-            keccak256(
-                bytes(
-                    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-                )
-            )
+            LibString.toString(type(uint256).max),
+            "115792089237316195423570985008687907853269984665640564039457584007913129639935"
         );
     }
 
@@ -37,8 +33,8 @@ contract LibStringTest is TestPlus {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
-        assertEq(keccak256(bytes(s0)), keccak256(bytes("0")));
-        assertEq(keccak256(bytes(s1)), keccak256(bytes("0")));
+        assertEq(s0, "0");
+        assertEq(s1, "0");
     }
 
     function testToStringPositiveNumberBrutalized() public brutalizeMemory {
@@ -54,8 +50,8 @@ contract LibStringTest is TestPlus {
             mstore(mload(0x40), not(0))
             mstore(0x40, add(mload(0x40), 0x20))
         }
-        assertEq(keccak256(bytes(s0)), keccak256(bytes("4132")));
-        assertEq(keccak256(bytes(s1)), keccak256(bytes("4132")));
+        assertEq(s0, "4132");
+        assertEq(s1, "4132");
     }
 
     function testToStringUint256MaxBrutalized() public brutalizeMemory {
@@ -72,20 +68,10 @@ contract LibStringTest is TestPlus {
             mstore(0x40, add(mload(0x40), 0x20))
         }
         assertEq(
-            keccak256(bytes(s0)),
-            keccak256(
-                bytes(
-                    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-                )
-            )
+            s0, "115792089237316195423570985008687907853269984665640564039457584007913129639935"
         );
         assertEq(
-            keccak256(bytes(s1)),
-            keccak256(
-                bytes(
-                    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-                )
-            )
+            s1, "115792089237316195423570985008687907853269984665640564039457584007913129639935"
         );
     }
 
@@ -133,29 +119,29 @@ contract LibStringTest is TestPlus {
     }
 
     function testToHexStringZero() public {
-        assertEq(keccak256(bytes(LibString.toHexString(0))), keccak256(bytes("0x00")));
+        assertEq(LibString.toHexString(0), "0x00");
     }
 
     function testToHexStringPositiveNumber() public {
-        assertEq(keccak256(bytes(LibString.toHexString(0x4132))), keccak256(bytes("0x4132")));
+        assertEq(LibString.toHexString(0x4132), "0x4132");
     }
 
     function testToHexStringUint256Max() public {
         assertEq(
-            keccak256(bytes(LibString.toHexString(type(uint256).max))),
-            keccak256(bytes("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
+            LibString.toHexString(type(uint256).max),
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         );
     }
 
     function testToHexStringFixedLengthPositiveNumberLong() public {
         assertEq(
-            keccak256(bytes(LibString.toHexString(0x4132, 32))),
-            keccak256(bytes("0x0000000000000000000000000000000000000000000000000000000000004132"))
+            LibString.toHexString(0x4132, 32),
+            "0x0000000000000000000000000000000000000000000000000000000000004132"
         );
     }
 
     function testToHexStringFixedLengthPositiveNumberShort() public {
-        assertEq(keccak256(bytes(LibString.toHexString(0x4132, 2))), keccak256(bytes("0x4132")));
+        assertEq(LibString.toHexString(0x4132, 2), "0x4132");
     }
 
     function testToHexStringZeroRightPadded(uint256 x) public pure {
@@ -169,8 +155,8 @@ contract LibStringTest is TestPlus {
 
     function testToHexStringFixedLengthUint256Max() public {
         assertEq(
-            keccak256(bytes(LibString.toHexString(type(uint256).max, 32))),
-            keccak256(bytes("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
+            LibString.toHexString(type(uint256).max, 32),
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         );
     }
 
@@ -182,10 +168,8 @@ contract LibStringTest is TestPlus {
 
     function testFromAddressToHexString() public {
         assertEq(
-            keccak256(
-                bytes(LibString.toHexString(address(0xA9036907dCcae6a1E0033479B12E837e5cF5a02f)))
-            ),
-            keccak256(bytes("0xa9036907dccae6a1e0033479b12e837e5cf5a02f"))
+            LibString.toHexString(0xA9036907dCcae6a1E0033479B12E837e5cF5a02f),
+            "0xa9036907dccae6a1e0033479b12e837e5cf5a02f"
         );
     }
 
@@ -195,96 +179,46 @@ contract LibStringTest is TestPlus {
 
     function testFromAddressToHexStringWithLeadingZeros() public {
         assertEq(
-            keccak256(
-                bytes(LibString.toHexString(address(0x0000E0Ca771e21bD00057F54A68C30D400000000)))
-            ),
-            keccak256(bytes("0x0000e0ca771e21bd00057f54a68c30d400000000"))
+            LibString.toHexString(0x0000E0Ca771e21bD00057F54A68C30D400000000),
+            "0x0000e0ca771e21bd00057f54a68c30d400000000"
         );
     }
 
     function testFromAddressToHexStringChecksumed() public {
         // All caps.
         assertEq(
-            keccak256(
-                bytes(
-                    LibString.toHexStringChecksumed(
-                        address(0x52908400098527886E0F7030069857D2E4169EE7)
-                    )
-                )
-            ),
-            keccak256(bytes("0x52908400098527886E0F7030069857D2E4169EE7"))
+            LibString.toHexStringChecksumed(0x52908400098527886E0F7030069857D2E4169EE7),
+            "0x52908400098527886E0F7030069857D2E4169EE7"
         );
         assertEq(
-            keccak256(
-                bytes(
-                    LibString.toHexStringChecksumed(
-                        address(0x8617E340B3D01FA5F11F306F4090FD50E238070D)
-                    )
-                )
-            ),
-            keccak256(bytes("0x8617E340B3D01FA5F11F306F4090FD50E238070D"))
+            LibString.toHexStringChecksumed(0x8617E340B3D01FA5F11F306F4090FD50E238070D),
+            "0x8617E340B3D01FA5F11F306F4090FD50E238070D"
         );
         // All lower.
         assertEq(
-            keccak256(
-                bytes(
-                    LibString.toHexStringChecksumed(
-                        address(0xde709f2102306220921060314715629080e2fb77)
-                    )
-                )
-            ),
-            keccak256(bytes("0xde709f2102306220921060314715629080e2fb77"))
+            LibString.toHexStringChecksumed(0xde709f2102306220921060314715629080e2fb77),
+            "0xde709f2102306220921060314715629080e2fb77"
         );
         assertEq(
-            keccak256(
-                bytes(
-                    LibString.toHexStringChecksumed(
-                        address(0x27b1fdb04752bbc536007a920d24acb045561c26)
-                    )
-                )
-            ),
-            keccak256(bytes("0x27b1fdb04752bbc536007a920d24acb045561c26"))
+            LibString.toHexStringChecksumed(0x27b1fdb04752bbc536007a920d24acb045561c26),
+            "0x27b1fdb04752bbc536007a920d24acb045561c26"
         );
         // Normal.
         assertEq(
-            keccak256(
-                bytes(
-                    LibString.toHexStringChecksumed(
-                        address(0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed)
-                    )
-                )
-            ),
-            keccak256(bytes("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"))
+            LibString.toHexStringChecksumed(0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed),
+            "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
         );
         assertEq(
-            keccak256(
-                bytes(
-                    LibString.toHexStringChecksumed(
-                        address(0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359)
-                    )
-                )
-            ),
-            keccak256(bytes("0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359"))
+            LibString.toHexStringChecksumed(0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359),
+            "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359"
         );
         assertEq(
-            keccak256(
-                bytes(
-                    LibString.toHexStringChecksumed(
-                        address(0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB)
-                    )
-                )
-            ),
-            keccak256(bytes("0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB"))
+            LibString.toHexStringChecksumed(0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB),
+            "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB"
         );
         assertEq(
-            keccak256(
-                bytes(
-                    LibString.toHexStringChecksumed(
-                        address(0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb)
-                    )
-                )
-            ),
-            keccak256(bytes("0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"))
+            LibString.toHexStringChecksumed(0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb),
+            "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"
         );
     }
 
@@ -318,7 +252,7 @@ contract LibStringTest is TestPlus {
         }
         string memory checksumed = LibString.toHexStringChecksumed(r);
         _checkMemory(checksumed);
-        assertEq(keccak256(bytes(checksumed)), keccak256(bytes(expectedResult)));
+        assertEq(checksumed, expectedResult);
     }
 
     function testHexStringNoPrefixVariants(uint256 x, uint256 randomness) public brutalizeMemory {
@@ -327,31 +261,35 @@ contract LibStringTest is TestPlus {
         string memory expectedResult = LibString.concat("0x", noPrefix);
         string memory withPrefix = LibString.toHexString(x);
         _checkMemory(withPrefix);
-        assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
+        assertEq(withPrefix, expectedResult);
 
         uint256 length;
         /// @solidity memory-safe-assembly
         assembly {
             length := add(shr(1, mload(noPrefix)), and(randomness, 63))
         }
+        _roundUpFreeMemoryPointer();
         noPrefix = LibString.toHexStringNoPrefix(x, length);
         _checkMemory(noPrefix);
         expectedResult = LibString.concat("0x", noPrefix);
+        _roundUpFreeMemoryPointer();
         withPrefix = LibString.toHexString(x, length);
         _checkMemory(withPrefix);
-        assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
+        assertEq(withPrefix, expectedResult);
 
         address xAddress;
         /// @solidity memory-safe-assembly
         assembly {
             xAddress := x
         }
+        _roundUpFreeMemoryPointer();
         noPrefix = LibString.toHexStringNoPrefix(xAddress);
         _checkMemory(noPrefix);
         expectedResult = LibString.concat("0x", noPrefix);
+        _roundUpFreeMemoryPointer();
         withPrefix = LibString.toHexString(xAddress);
         _checkMemory(withPrefix);
-        assertEq(keccak256(bytes(withPrefix)), keccak256(bytes(expectedResult)));
+        assertEq(withPrefix, expectedResult);
     }
 
     function testStringRuneCountDifferential(string memory s) public {
