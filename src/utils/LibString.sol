@@ -112,12 +112,11 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let start := mload(0x40)
             // We need 0x20 bytes for the trailing zeros padding, `length * 2` bytes
             // for the digits, 0x02 bytes for the prefix, and 0x20 bytes for the length.
             // We add 0x20 to the total and round down to a multiple of 0x20.
             // (0x20 + 0x20 + 0x02 + 0x20) = 0x62.
-            str := add(start, and(add(shl(1, length), 0x42), not(0x1f)))
+            str := add(mload(0x40), and(add(shl(1, length), 0x42), not(0x1f)))
             // Allocate the memory.
             mstore(0x40, add(str, 0x20))
             // Zeroize the slot after the string.
@@ -128,16 +127,17 @@ library LibString {
             // Store "0123456789abcdef" in scratch space.
             mstore(0x0f, 0x30313233343536373839616263646566)
 
+            let start := sub(str, add(length, length))
+            let w := not(1) // Tsk.
             let temp := value
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             for {} 1 {} {
-                str := sub(str, 2)
+                str := add(str, w) // `sub(str, 2)`.
                 mstore8(add(str, 1), mload(and(temp, 15)))
                 mstore8(str, mload(and(shr(4, temp), 15)))
                 temp := shr(8, temp)
-                length := sub(length, 1)
-                if iszero(length) { break }
+                if iszero(xor(str, start)) { break }
             }
 
             if temp {
@@ -177,15 +177,12 @@ library LibString {
     function toHexStringNoPrefix(uint256 value) internal pure returns (string memory str) {
         /// @solidity memory-safe-assembly
         assembly {
-            let start := mload(0x40)
             // We need 0x20 bytes for the trailing zeros padding, 0x20 bytes for the length,
             // 0x02 bytes for the prefix, and 0x40 bytes for the digits.
             // The next multiple of 0x20 above (0x20 + 0x20 + 0x02 + 0x40) is 0xa0.
-            let m := add(start, 0xa0)
+            str := add(mload(0x40), 0x80)
             // Allocate the memory.
-            mstore(0x40, m)
-            // Assign the `str` to the end.
-            str := sub(m, 0x20)
+            mstore(0x40, add(str, 0x20))
             // Zeroize the slot after the string.
             mstore(str, 0)
 
@@ -194,10 +191,11 @@ library LibString {
             // Store "0123456789abcdef" in scratch space.
             mstore(0x0f, 0x30313233343536373839616263646566)
 
+            let w := not(1) // Tsk.
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             for { let temp := value } 1 {} {
-                str := sub(str, 2)
+                str := add(str, w) // `sub(str, 2)`.
                 mstore8(add(str, 1), mload(and(temp, 15)))
                 mstore8(str, mload(and(shr(4, temp), 15)))
                 temp := shr(8, temp)
