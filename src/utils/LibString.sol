@@ -44,7 +44,7 @@ library LibString {
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             for { let temp := value } 1 {} {
-                str := add(str, w) // `sub(str, 1)`
+                str := add(str, w) // `sub(str, 1)`.
                 // Write the character to the pointer.
                 // The ASCII index of the '0' character is 48.
                 mstore8(str, add(48, mod(temp, 10)))
