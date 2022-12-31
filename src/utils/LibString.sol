@@ -30,22 +30,21 @@ library LibString {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
             // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.
             // We will need 1 word for the trailing zeros padding, 1 word for the length,
-            // and 3 words for a maximum of 78 digits. Total: 5 * 0x20 = 0xa0.
-            let m := add(mload(0x40), 0xa0)
+            // and 3 words for a maximum of 78 digits.
+            str := add(mload(0x40), 0x80)
             // Update the free memory pointer to allocate.
-            mstore(0x40, m)
-            // Assign the `str` to the end.
-            str := sub(m, 0x20)
+            mstore(0x40, add(str, 0x20))
             // Zeroize the slot after the string.
             mstore(str, 0)
 
             // Cache the end of the memory to calculate the length later.
             let end := str
 
+            let w := not(0) // Tsk.
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             for { let temp := value } 1 {} {
-                str := sub(str, 1)
+                str := add(str, w) // `sub(str, 1)`.
                 // Write the character to the pointer.
                 // The ASCII index of the '0' character is 48.
                 mstore8(str, add(48, mod(temp, 10)))
@@ -72,6 +71,8 @@ library LibString {
         }
         /// @solidity memory-safe-assembly
         assembly {
+            // We still have some spare memory space on the left,
+            // as we have allocated 3 words (96 bytes) for up to 78 digits.
             let length := mload(str) // Load the string length.
             mstore(str, 0x2d) // Store the '-' character.
             str := sub(str, 1) // Move back the string pointer by a byte.
@@ -116,11 +117,9 @@ library LibString {
             // for the digits, 0x02 bytes for the prefix, and 0x20 bytes for the length.
             // We add 0x20 to the total and round down to a multiple of 0x20.
             // (0x20 + 0x20 + 0x02 + 0x20) = 0x62.
-            let m := add(start, and(add(shl(1, length), 0x62), not(0x1f)))
+            str := add(start, and(add(shl(1, length), 0x42), not(0x1f)))
             // Allocate the memory.
-            mstore(0x40, m)
-            // Assign the `str` to the end.
-            str := sub(m, 0x20)
+            mstore(0x40, add(str, 0x20))
             // Zeroize the slot after the string.
             mstore(str, 0)
 
