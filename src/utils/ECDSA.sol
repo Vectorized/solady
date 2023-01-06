@@ -99,7 +99,12 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    0x01, // Address of `ecrecover`.
+                    and(
+                        // If the signature is exactly 65 bytes in length.
+                        eq(signature.length, 65),
+                        // If `s` in lower half order, such that the signature is not malleable.
+                        lt(mload(0x60), add(_MALLEABILITY_THRESHOLD, 1))
+                    ), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x00, // Start of output.
@@ -107,19 +112,8 @@ library ECDSA {
                 )
             )
             result := mload(0x00)
-            // Revert if the recovery fails.
-            if iszero(
-                mul(
-                    and(
-                        // If the signature is exactly 65 bytes in length.
-                        eq(signature.length, 65),
-                        // If `s` in lower half order, such that the signature is not malleable.
-                        lt(mload(0x60), add(_MALLEABILITY_THRESHOLD, 1))
-                    ),
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    returndatasize()
-                )
-            ) {
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            if iszero(returndatasize()) {
                 // Store the function selector of `InvalidSignature()`.
                 mstore(0x00, 0x8baa579f)
                 // Revert with (offset, size).
@@ -245,7 +239,8 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    0x01, // Address of `ecrecover`.
+                    // If `s` in lower half order, such that the signature is not malleable.
+                    lt(s, add(_MALLEABILITY_THRESHOLD, 1)), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x00, // Start of output.
@@ -253,15 +248,8 @@ library ECDSA {
                 )
             )
             result := mload(0x00)
-            // Revert if the recovery fails.
-            if iszero(
-                mul(
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    returndatasize(),
-                    // If `s` in lower half order, such that the signature is not malleable.
-                    lt(s, add(_MALLEABILITY_THRESHOLD, 1))
-                )
-            ) {
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            if iszero(returndatasize()) {
                 // Store the function selector of `InvalidSignature()`.
                 mstore(0x00, 0x8baa579f)
                 // Revert with (offset, size).
