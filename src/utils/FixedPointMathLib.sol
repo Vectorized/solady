@@ -126,7 +126,15 @@ library FixedPointMathLib {
 
             // When the result is > (2**255 - 1) / 1e18 we can not represent it as an
             // int. This happens when x >= floor(log((2**255 - 1) / 1e18) * 1e18) ~ 135.
-            if (x >= 135305999368893231589) revert ExpOverflow();
+            if (x >= 135305999368893231589) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    // Store the function selector of `ExpOverflow()`.
+                    mstore(0x00, 0xa37bfec9)
+                    // Revert with (offset, size).
+                    revert(0x1c, 0x04)
+                }
+            }
 
             // x is now in the range (-42, 136) * 1e18. Convert to (-42, 136) * 2**96
             // for more intermediate precision and a binary basis. This base conversion
@@ -182,7 +190,15 @@ library FixedPointMathLib {
     /// @dev Returns `ln(x)`, denominated in `WAD`.
     function lnWad(int256 x) internal pure returns (int256 r) {
         unchecked {
-            if (x <= 0) revert LnWadUndefined();
+            if (x <= 0) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    // Store the function selector of `LnWadUndefined()`.
+                    mstore(0x00, 0x1615e638)
+                    // Revert with (offset, size).
+                    revert(0x1c, 0x04)
+                }
+            }
 
             // We want to convert x from 10**18 fixed point to 2**96 fixed point.
             // We do this by multiplying by 2**96 / 10**18. But since
@@ -583,7 +599,7 @@ library FixedPointMathLib {
     function abs(int256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            let mask := mul(shr(255, x), not(0))
+            let mask := sub(0, shr(255, x))
             z := xor(mask, add(mask, x))
         }
     }
@@ -632,6 +648,6 @@ library FixedPointMathLib {
         pure
         returns (uint256 z)
     {
-        return min(max(x, minValue), maxValue);
+        z = min(max(x, minValue), maxValue);
     }
 }
