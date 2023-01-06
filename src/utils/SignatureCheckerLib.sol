@@ -31,34 +31,33 @@ library SignatureCheckerLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Load the free memory pointer.
-            // Simply using the free memory usually costs less if many slots are needed.
-            let m := mload(0x40)
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
+                // Load the free memory pointer.
+                // Simply using the free memory usually costs less if many slots are needed.
+                let m := mload(0x40)
+
                 // If the signature is exactly 65 bytes in length.
                 if iszero(xor(signature.length, 65)) {
                     // Directly copy `r` and `s` from the calldata.
-                    calldatacopy(0x40, signature.offset, 0x40)
+                    calldatacopy(add(m, 0x40), signature.offset, 0x40)
                     // If `s` in lower half order, such that the signature is not malleable.
-                    if iszero(gt(mload(0x60), _MALLEABILITY_THRESHOLD)) {
-                        mstore(0x00, hash)
-                        // Compute `v` and store it in the scratch space.
-                        mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40))))
+                    if iszero(gt(mload(add(m, 0x60)), _MALLEABILITY_THRESHOLD)) {
+                        mstore(m, hash)
+                        // Compute `v` and store it in the memory.
+                        mstore(add(m, 0x20), byte(0, calldataload(add(signature.offset, 0x40))))
                         pop(
                             staticcall(
                                 gas(), // Amount of gas left for the transaction.
                                 0x01, // Address of `ecrecover`.
-                                0x00, // Start of input.
+                                m, // Start of input.
                                 0x80, // Size of input.
-                                0x40, // Start of output.
+                                m, // Start of output.
                                 0x20 // Size of output.
                             )
                         )
-                        // Restore the zero slot.
-                        mstore(0x60, 0)
                         // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                        if iszero(xor(mload(xor(0x60, returndatasize())), signer)) {
+                        if mul(eq(mload(m), signer), returndatasize()) {
                             isValid := 1
                             break
                         }
@@ -97,8 +96,6 @@ library SignatureCheckerLib {
                 )
                 break
             }
-            // Restore the free memory pointer.
-            mstore(0x40, m)
         }
     }
 
@@ -134,33 +131,32 @@ library SignatureCheckerLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Load the free memory pointer.
-            // Simply using the free memory usually costs less if many slots are needed.
-            let m := mload(0x40)
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
+                // Load the free memory pointer.
+                // Simply using the free memory usually costs less if many slots are needed.
+                let m := mload(0x40)
+
                 // Clean the excess bits of `v` in case they are dirty.
                 v := and(v, 0xff)
                 // If `s` in lower half order, such that the signature is not malleable.
                 if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
-                    mstore(0x00, hash)
-                    mstore(0x20, v)
-                    mstore(0x40, r)
-                    mstore(0x60, s)
+                    mstore(m, hash)
+                    mstore(add(m, 0x20), v)
+                    mstore(add(m, 0x40), r)
+                    mstore(add(m, 0x60), s)
                     pop(
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
                             0x01, // Address of `ecrecover`.
-                            0x00, // Start of input.
+                            m, // Start of input.
                             0x80, // Size of input.
-                            0x40, // Start of output.
+                            m, // Start of output.
                             0x20 // Size of output.
                         )
                     )
-                    // Restore the zero slot.
-                    mstore(0x60, 0)
                     // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if iszero(xor(mload(xor(0x60, returndatasize())), signer)) {
+                    if mul(eq(mload(m), signer), returndatasize()) {
                         isValid := 1
                         break
                     }
@@ -199,8 +195,6 @@ library SignatureCheckerLib {
                 )
                 break
             }
-            // Restore the free memory pointer.
-            mstore(0x40, m)
         }
     }
 }
