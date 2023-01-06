@@ -7,6 +7,13 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol)
 library ECDSA {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CUSTOM ERRORS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The signature is invalid.
+    error InvalidSignature();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -30,19 +37,18 @@ library ECDSA {
     /// The `result` will be the zero address upon recovery failure.
     /// As such, it is extremely important to ensure that the address which
     /// the `result` is compared against is never zero.
-    function recover(bytes32 hash, bytes calldata signature)
+    function tryRecover(bytes32 hash, bytes calldata signature)
         internal
         view
         returns (address result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if eq(signature.length, 65) {
+            if iszero(xor(signature.length, 65)) {
                 // Copy the free memory pointer so that we can restore it later.
                 let m := mload(0x40)
                 // Directly copy `r` and `s` from the calldata.
                 calldatacopy(0x40, signature.offset, 0x40)
-
                 // If `s` in lower half order, such that the signature is not malleable.
                 if iszero(gt(mload(0x60), _MALLEABILITY_THRESHOLD)) {
                     mstore(0x00, hash)
@@ -61,11 +67,62 @@ library ECDSA {
                     // Restore the zero slot.
                     mstore(0x60, 0)
                     // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    result := mload(sub(0x60, returndatasize()))
+                    result := mload(xor(0x60, returndatasize()))
                 }
                 // Restore the free memory pointer.
                 mstore(0x40, m)
             }
+        }
+    }
+
+    /// @dev Recovers the signer's address from a message digest `hash`,
+    /// and the `signature`.
+    ///
+    /// This function does NOT accept EIP-2098 short form signatures.
+    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
+    /// short form signatures instead.
+    function recover(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        returns (address result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Copy the free memory pointer so that we can restore it later.
+            let m := mload(0x40)
+            // Directly copy `r` and `s` from the calldata.
+            calldatacopy(0x40, signature.offset, 0x40)
+            // Store the `hash` in the scratch space.
+            mstore(0x00, hash)
+            // Compute `v` and store it in the scratch space.
+            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40))))
+            pop(
+                staticcall(
+                    gas(), // Amount of gas left for the transaction.
+                    and(
+                        // If the signature is exactly 65 bytes in length.
+                        eq(signature.length, 65),
+                        // If `s` in lower half order, such that the signature is not malleable.
+                        lt(mload(0x60), add(_MALLEABILITY_THRESHOLD, 1))
+                    ), // Address of `ecrecover`.
+                    0x00, // Start of input.
+                    0x80, // Size of input.
+                    0x00, // Start of output.
+                    0x20 // Size of output.
+                )
+            )
+            result := mload(0x00)
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            if iszero(returndatasize()) {
+                // Store the function selector of `InvalidSignature()`.
+                mstore(0x00, 0x8baa579f)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            // Restore the zero slot.
+            mstore(0x60, 0)
+            // Restore the free memory pointer.
+            mstore(0x40, m)
         }
     }
 
@@ -85,6 +142,32 @@ library ECDSA {
     /// The `result` will be the zero address upon recovery failure.
     /// As such, it is extremely important to ensure that the address which
     /// the `result` is compared against is never zero.
+    function tryRecover(bytes32 hash, bytes32 r, bytes32 vs)
+        internal
+        view
+        returns (address result)
+    {
+        uint8 v;
+        bytes32 s;
+        /// @solidity memory-safe-assembly
+        assembly {
+            s := shr(1, shl(1, vs))
+            v := add(shr(255, vs), 27)
+        }
+        result = tryRecover(hash, v, r, s);
+    }
+
+    /// @dev Recovers the signer's address from a message digest `hash`,
+    /// and the EIP-2098 short form signature defined by `r` and `vs`.
+    ///
+    /// This function only accepts EIP-2098 short form signatures.
+    /// See: https://eips.ethereum.org/EIPS/eip-2098
+    ///
+    /// To be honest, I do not recommend using EIP-2098 signatures
+    /// for simplicity, performance, and security reasons. Most if not
+    /// all clients support traditional non EIP-2098 signatures by default.
+    /// As such, this method is intentionally not fully inlined.
+    /// It is merely included for completeness.
     function recover(bytes32 hash, bytes32 r, bytes32 vs) internal view returns (address result) {
         uint8 v;
         bytes32 s;
@@ -103,7 +186,7 @@ library ECDSA {
     /// The `result` will be the zero address upon recovery failure.
     /// As such, it is extremely important to ensure that the address which
     /// the `result` is compared against is never zero.
-    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
+    function tryRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
         internal
         view
         returns (address result)
@@ -112,11 +195,10 @@ library ECDSA {
         assembly {
             // Copy the free memory pointer so that we can restore it later.
             let m := mload(0x40)
-
             // If `s` in lower half order, such that the signature is not malleable.
             if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
                 mstore(0x00, hash)
-                mstore(0x20, v)
+                mstore(0x20, and(v, 0xff))
                 mstore(0x40, r)
                 mstore(0x60, s)
                 pop(
@@ -132,8 +214,49 @@ library ECDSA {
                 // Restore the zero slot.
                 mstore(0x60, 0)
                 // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                result := mload(sub(0x60, returndatasize()))
+                result := mload(xor(0x60, returndatasize()))
             }
+            // Restore the free memory pointer.
+            mstore(0x40, m)
+        }
+    }
+
+    /// @dev Recovers the signer's address from a message digest `hash`,
+    /// and the signature defined by `v`, `r`, `s`.
+    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
+        internal
+        view
+        returns (address result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Copy the free memory pointer so that we can restore it later.
+            let m := mload(0x40)
+            mstore(0x00, hash)
+            mstore(0x20, and(v, 0xff))
+            mstore(0x40, r)
+            mstore(0x60, s)
+            pop(
+                staticcall(
+                    gas(), // Amount of gas left for the transaction.
+                    // If `s` in lower half order, such that the signature is not malleable.
+                    lt(s, add(_MALLEABILITY_THRESHOLD, 1)), // Address of `ecrecover`.
+                    0x00, // Start of input.
+                    0x80, // Size of input.
+                    0x00, // Start of output.
+                    0x20 // Size of output.
+                )
+            )
+            result := mload(0x00)
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            if iszero(returndatasize()) {
+                // Store the function selector of `InvalidSignature()`.
+                mstore(0x00, 0x8baa579f)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            // Restore the zero slot.
+            mstore(0x60, 0)
             // Restore the free memory pointer.
             mstore(0x40, m)
         }

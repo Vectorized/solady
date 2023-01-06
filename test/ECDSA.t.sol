@@ -20,21 +20,113 @@ contract ECDSATest is Test {
 
     address constant V1_SIGNER = 0x1E318623aB09Fe6de3C9b8672098464Aeda9100E;
 
-    function testRecoverWithInvalidShortSignatureReturnsZero() public {
+    function testTryRecoverWithInvalidShortSignatureReturnsZero() public {
         bytes memory signature = hex"1234";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
     }
 
-    function testRecoverWithInvalidLongSignatureReturnsZero() public {
+    function testTryRecoverWithInvalidLongSignatureReturnsZero() public {
         bytes memory signature =
             hex"01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+    }
+
+    function testTryRecoverWithValidSignature() public {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        assertTrue(this.tryRecover(TEST_MESSAGE.toEthSignedMessageHash(), signature) == SIGNER);
+    }
+
+    function testTryRecoverWithWrongSigner() public {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        assertTrue(this.tryRecover(WRONG_MESSAGE.toEthSignedMessageHash(), signature) != SIGNER);
+    }
+
+    function testTryRecoverWithInvalidSignature() public {
+        bytes memory signature =
+            hex"332ce75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e01c";
+        assertTrue(this.tryRecover(TEST_MESSAGE.toEthSignedMessageHash(), signature) != SIGNER);
+    }
+
+    function testTryRecoverWithV0SignatureWithVersion00ReturnsZero() public {
+        bytes memory signature =
+            hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be89200";
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+    }
+
+    function testTryRecoverWithV0SignatureWithVersion27() public {
+        bytes memory signature =
+            hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be8921b";
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == V0_SIGNER);
+    }
+
+    function testTryRecoverWithV0SignatureWithWrongVersionReturnsZero() public {
+        bytes memory signature =
+            hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be89202";
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+    }
+
+    function testTryRecoverWithV0SignatureWithShortEIP2098Format() public {
+        bytes32 r = 0x5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f;
+        bytes32 vs = 0x3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be892;
+        assertTrue(this.tryRecover(TEST_MESSAGE, r, vs) == V0_SIGNER);
+    }
+
+    function testTryRecoverWithV0SignatureWithShortEIP2098FormatAsCalldataReturnsZero() public {
+        bytes memory signature =
+            hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be892";
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+    }
+
+    function testTryRecoverWithV1SignatureWithVersion01ReturnsZero() public {
+        bytes memory signature =
+            hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e001";
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+    }
+
+    function testTryRecoverWithV1SignatureWithVersion28() public {
+        bytes memory signature =
+            hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e01c";
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == V1_SIGNER);
+    }
+
+    function testTryRecoverWithV1SignatureWithWrongVersionReturnsZero() public {
+        bytes memory signature =
+            hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e002";
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+    }
+
+    function testTryRecoverWithV1SignatureWithShortEIP2098Format() public {
+        bytes32 r = 0x331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff;
+        bytes32 vs = 0xc8e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e0;
+        assertTrue(this.tryRecover(TEST_MESSAGE, r, vs) == V1_SIGNER);
+    }
+
+    function testTryRecoverWithV1SignatureWithShortEIP2098FormatAsCalldataReturnsZero() public {
+        bytes memory signature =
+            hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feffc8e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e0";
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+    }
+
+    function testRecoverWithInvalidShortSignatureReturnsZero() public {
+        bytes memory signature = hex"1234";
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE, signature);
+    }
+
+    function testRecoverWithInvalidLongSignatureReverts() public {
+        bytes memory signature =
+            hex"01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE, signature);
     }
 
     function testRecoverWithValidSignature() public {
         bytes memory signature =
             hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
-        assertTrue(this.recover(TEST_MESSAGE.toEthSignedMessageHash(), signature) == SIGNER);
+        address recovered = this.recover(TEST_MESSAGE.toEthSignedMessageHash(), signature);
+        assertTrue(recovered == SIGNER);
     }
 
     function testRecoverWithWrongSigner() public {
@@ -43,16 +135,18 @@ contract ECDSATest is Test {
         assertTrue(this.recover(WRONG_MESSAGE.toEthSignedMessageHash(), signature) != SIGNER);
     }
 
-    function testRecoverWithInvalidSignature() public {
+    function testRecoverWithInvalidSignatureReverts() public {
         bytes memory signature =
             hex"332ce75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e01c";
-        assertTrue(this.recover(TEST_MESSAGE.toEthSignedMessageHash(), signature) != SIGNER);
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE.toEthSignedMessageHash(), signature);
     }
 
-    function testRecoverWithV0SignatureWithVersion00ReturnsZero() public {
+    function testRecoverWithV0SignatureWithVersion00Reverts() public {
         bytes memory signature =
             hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be89200";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE, signature);
     }
 
     function testRecoverWithV0SignatureWithVersion27() public {
@@ -61,10 +155,11 @@ contract ECDSATest is Test {
         assertTrue(this.recover(TEST_MESSAGE, signature) == V0_SIGNER);
     }
 
-    function testRecoverWithV0SignatureWithWrongVersionReturnsZero() public {
+    function testRecoverWithV0SignatureWithWrongVersionReverts() public {
         bytes memory signature =
             hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be89202";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE, signature);
     }
 
     function testRecoverWithV0SignatureWithShortEIP2098Format() public {
@@ -73,16 +168,18 @@ contract ECDSATest is Test {
         assertTrue(this.recover(TEST_MESSAGE, r, vs) == V0_SIGNER);
     }
 
-    function testRecoverWithV0SignatureWithShortEIP2098FormatAsCalldataReturnsZero() public {
+    function testRecoverWithV0SignatureWithShortEIP2098FormatAsCalldataReverts() public {
         bytes memory signature =
             hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be892";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE, signature);
     }
 
-    function testRecoverWithV1SignatureWithVersion01ReturnsZero() public {
+    function testRecoverWithV1SignatureWithVersion01Reverts() public {
         bytes memory signature =
             hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e001";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE, signature);
     }
 
     function testRecoverWithV1SignatureWithVersion28() public {
@@ -91,10 +188,11 @@ contract ECDSATest is Test {
         assertTrue(this.recover(TEST_MESSAGE, signature) == V1_SIGNER);
     }
 
-    function testRecoverWithV1SignatureWithWrongVersionReturnsZero() public {
+    function testRecoverWithV1SignatureWithWrongVersionReverts() public {
         bytes memory signature =
             hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feff48e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e002";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE, signature);
     }
 
     function testRecoverWithV1SignatureWithShortEIP2098Format() public {
@@ -103,10 +201,11 @@ contract ECDSATest is Test {
         assertTrue(this.recover(TEST_MESSAGE, r, vs) == V1_SIGNER);
     }
 
-    function testRecoverWithV1SignatureWithShortEIP2098FormatAsCalldataReturnsZero() public {
+    function testRecoverWithV1SignatureWithShortEIP2098FormatAsCalldataReverts() public {
         bytes memory signature =
             hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feffc8e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e0";
-        assertTrue(this.recover(TEST_MESSAGE, signature) == address(0));
+        vm.expectRevert(ECDSA.InvalidSignature.selector);
+        this.recover(TEST_MESSAGE, signature);
     }
 
     function testBytes32ToEthSignedMessageHash() public {
@@ -139,6 +238,14 @@ contract ECDSATest is Test {
             message.toEthSignedMessageHash()
                 == bytes32(0xa46dbedd405cff161b6e80c17c8567597621d9f4c087204201097cb34448e71b)
         );
+    }
+
+    function tryRecover(bytes32 hash, bytes calldata signature) external view returns (address) {
+        return ECDSA.tryRecover(hash, signature);
+    }
+
+    function tryRecover(bytes32 hash, bytes32 r, bytes32 vs) external view returns (address) {
+        return ECDSA.tryRecover(hash, r, vs);
     }
 
     function recover(bytes32 hash, bytes calldata signature) external view returns (address) {
