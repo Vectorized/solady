@@ -55,11 +55,26 @@ contract MulticallableTest is Test {
         assertEq(t1.b, b1);
     }
 
-    function testMulticallableReturnDataIsProperlyEncoded(string memory sIn) public {
-        bytes[] memory data = new bytes[](1);
-        data[0] = abi.encodeWithSelector(MockMulticallable.returnsString.selector, sIn);
-        string memory sOut = abi.decode(multicallable.multicall(data)[0], (string));
-        assertEq(sIn, sOut);
+    function testMulticallableReturnDataIsProperlyEncoded(
+        string memory sIn0,
+        string memory sIn1,
+        uint256 n
+    ) public {
+        n = n % 2;
+        bytes[] memory dataIn = new bytes[](n);
+        if (n > 0) {
+            dataIn[0] = abi.encodeWithSelector(MockMulticallable.returnsString.selector, sIn0);
+        }
+        if (n > 1) {
+            dataIn[1] = abi.encodeWithSelector(MockMulticallable.returnsString.selector, sIn1);
+        }
+        bytes[] memory dataOut = multicallable.multicall(dataIn);
+        if (n > 0) {
+            assertEq(abi.decode(dataOut[0], (string)), sIn0);
+        }
+        if (n > 1) {
+            assertEq(abi.decode(dataOut[1], (string)), sIn1);
+        }
     }
 
     function testMulticallableReturnDataIsProperlyEncoded() public {

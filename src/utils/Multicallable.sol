@@ -29,9 +29,7 @@ abstract contract Multicallable {
             // Pointer to the top of the memory (i.e. start of the free memory).
             let resultsOffset := end
 
-            end := add(results, end)
-
-            for {} 1 {} {
+            for { end := add(results, end) } 1 {} {
                 // The offset of the current bytes in the calldata.
                 let o := add(data.offset, mload(results))
                 let memPtr := add(resultsOffset, 0x40)
