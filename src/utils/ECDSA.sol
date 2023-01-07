@@ -288,8 +288,8 @@ library ECDSA {
     function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32 result) {
         assembly {
             // The length of "\x19Ethereum Signed Message:\n" is 26 bytes (i.e. 0x1a).
-            // If we reserve 2 words, we'll have 64 - 26 = 38 bytes to represent
-            // the length of `s` in base 10 (up to 2 ** 126). Way more than enough.
+            // If we reserve 2 words, we'll have 64 - 26 = 38 bytes to store the
+            // ASCII decimal representation of the length of `s` up to about 2 ** 126.
 
             // Instead of allocating, we temporarily copy the 64 bytes before the
             // start of `s` data to some variables.
