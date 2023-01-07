@@ -5,22 +5,27 @@ import "forge-std/Test.sol";
 
 contract TestPlus is Test {
     modifier brutalizeMemory() {
+        // To prevent a solidity 0.8.13 bug.
+        // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
+        // Basically, we need to access a solidity variable from the assembly to
+        // tell the compiler that this assembly block is not in isolation.
+        uint256 zero;
         /// @solidity memory-safe-assembly
         assembly {
             let offset := mload(0x40) // Start the offset at the free memory pointer.
-            calldatacopy(offset, 0, calldatasize())
+            calldatacopy(offset, zero, calldatasize())
 
             // Fill the 64 bytes of scratch space with garbage.
-            mstore(0x00, xor(gas(), calldatasize()))
+            mstore(zero, xor(gas(), calldatasize()))
             mstore(0x20, xor(caller(), keccak256(offset, calldatasize())))
-            mstore(0x00, keccak256(0x00, 0x40))
-            mstore(0x20, keccak256(0x00, 0x40))
+            mstore(zero, keccak256(zero, 0x40))
+            mstore(0x20, keccak256(zero, 0x40))
 
             let size := 0x40 // Start with 2 slots.
-            mstore(offset, mload(0x00))
+            mstore(offset, mload(zero))
             mstore(add(offset, 0x20), mload(0x20))
 
-            for { let i := add(11, and(mload(0x00), 1)) } 1 {} {
+            for { let i := add(11, and(mload(zero), 1)) } 1 {} {
                 let nextOffset := add(offset, size)
                 // Duplicate the data.
                 pop(
@@ -79,9 +84,14 @@ contract TestPlus is Test {
     }
 
     function _roundUpFreeMemoryPointer() internal pure {
+        // To prevent a solidity 0.8.13 bug.
+        // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
+        // Basically, we need to access a solidity variable from the assembly to
+        // tell the compiler that this assembly block is not in isolation.
+        uint256 twoWords = 0x40;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x40, and(add(mload(0x40), 31), not(31)))
+            mstore(twoWords, and(add(mload(twoWords), 31), not(31)))
         }
     }
 
