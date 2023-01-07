@@ -51,6 +51,7 @@ library ECDSA {
                 calldatacopy(0x40, signature.offset, 0x40)
                 // If `s` in lower half order, such that the signature is not malleable.
                 if iszero(gt(mload(0x60), _MALLEABILITY_THRESHOLD)) {
+                    // Store the `hash` in the scratch space.
                     mstore(0x00, hash)
                     // Compute `v` and store it in the scratch space.
                     mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40))))
@@ -197,6 +198,7 @@ library ECDSA {
             let m := mload(0x40)
             // If `s` in lower half order, such that the signature is not malleable.
             if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
+                // Store the `hash`, `v`, `r`, `s` in the scratch space.
                 mstore(0x00, hash)
                 mstore(0x20, and(v, 0xff))
                 mstore(0x40, r)

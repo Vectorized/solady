@@ -315,18 +315,4 @@ library SignatureCheckerLib {
             )
         }
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      PRIVATE HELPERS                       */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Returns if `recovered` matches `signer`, and `signer` is not zero.
-    function _recovered(address recovered, address signer) private pure returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Clean the upper 96 bits of `signer` in case they are dirty.
-            signer := shr(96, shl(96, signer))
-            result := mul(eq(signer, recovered), signer)
-        }
-    }
 }
