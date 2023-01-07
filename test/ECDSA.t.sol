@@ -209,36 +209,36 @@ contract ECDSATest is TestPlus {
     }
 
     function _checkSignature(
+        address signer,
         bytes32 digest,
         uint8 v,
         bytes32 r,
         bytes32 s,
-        address signer,
-        bool shouldMatch
+        bool expectedResult
     ) internal {
-        assertEq(this.tryRecover(digest, v, r, s) == signer, shouldMatch);
+        assertEq(this.tryRecover(digest, v, r, s) == signer, expectedResult);
 
         try this.recover(digest, v, r, s) returns (address recovered) {
-            assertEq(recovered == signer, shouldMatch);
+            assertEq(recovered == signer, expectedResult);
         } catch {}
 
         if (v == 27 || v == 28) {
             bytes32 vs = bytes32((v == 28 ? 1 << 255 : 0) | uint256(s));
 
-            assertEq(this.tryRecover(digest, r, vs) == signer, shouldMatch);
+            assertEq(this.tryRecover(digest, r, vs) == signer, expectedResult);
 
             try this.recover(digest, r, vs) returns (address recovered) {
-                assertEq(recovered == signer, shouldMatch);
+                assertEq(recovered == signer, expectedResult);
             } catch {}
         }
 
         if (_random() & 1 == 0) {
             bytes memory signature = abi.encodePacked(r, s, v);
 
-            assertEq(this.tryRecover(digest, signature) == signer, shouldMatch);
+            assertEq(this.tryRecover(digest, signature) == signer, expectedResult);
 
             try this.recover(digest, signature) returns (address recovered) {
-                assertEq(recovered == signer, shouldMatch);
+                assertEq(recovered == signer, expectedResult);
             } catch {}
         }
     }
@@ -251,14 +251,14 @@ contract ECDSATest is TestPlus {
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         if (_random() & 7 == 0) {
-            _checkSignature(digest, v, r, s, signer, true);
+            _checkSignature(signer, digest, v, r, s, true);
         }
 
         uint8 vc = v ^ uint8(_random() & 0xff);
         bytes32 rc = bytes32(uint256(r) ^ _random());
         bytes32 sc = bytes32(uint256(s) ^ _random());
         bool anyCorrupted = vc != v || rc != r || sc != s;
-        _checkSignature(digest, vc, rc, sc, signer, !anyCorrupted);
+        _checkSignature(signer, digest, vc, rc, sc, !anyCorrupted);
     }
 
     function testBytes32ToEthSignedMessageHash() public {
