@@ -26,8 +26,8 @@ library ECDSA {
     /*                    RECOVERY OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// Note: as of the Solady version v0.0.68, these functions will
-    /// revert upon recovery failure for more safety.
+    // Note: as of the Solady version v0.0.68, these functions will
+    // revert upon recovery failure for more safety.
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the `signature`.
@@ -147,11 +147,11 @@ library ECDSA {
     /*                   TRY-RECOVER OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// WARNING!
-    /// These functions will NOT revert upon recovery failure, and will
-    /// return the zero address instead. As such, it is extremely important
-    /// to ensure that the returned address is never compared against
-    /// a zero address (e.g. an uninitialized address variable).
+    // WARNING!
+    // These functions will NOT revert upon recovery failure, and will
+    // return the zero address instead. As such, it is extremely important
+    // to ensure that the returned address is never compared against
+    // a zero address (e.g. an uninitialized address variable).
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the `signature`.
