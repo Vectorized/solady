@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import {SignatureCheckerLib} from "../src/utils/SignatureCheckerLib.sol";
 import {MockERC1271Wallet} from "./utils/mocks/MockERC1271Wallet.sol";
 import {MockERC1271Malicious} from "./utils/mocks/MockERC1271Malicious.sol";
 
-contract SignatureCheckerLibTest is Test {
+contract SignatureCheckerLibTest is TestPlus {
     bytes32 constant TEST_MESSAGE =
         0x7dbaf558b0a1a5dc7a67202117ab143c1d8605a983e4a743bc06fcc03162dc0d;
 
@@ -78,6 +78,21 @@ contract SignatureCheckerLibTest is Test {
 
     function testSignatureCheckerOnMaliciousWallet() public {
         _checkSignature(address(mockERC1271Malicious), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false);
+    }
+
+    function testSignatureChecker(bytes32 digest) public {
+        (uint256 privateKey, address signer) = _randomSigner();
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        if (_random() & 7 == 0) {
+            _checkSignature(signer, digest, abi.encodePacked(r, s, v), true);
+        }
+
+        uint8 vc = v ^ uint8(_random() & 0xff);
+        bytes32 rc = bytes32(uint256(r) ^ _random());
+        bytes32 sc = bytes32(uint256(s) ^ _random());
+        bool anyCorrupted = vc != v || rc != r || sc != s;
+        _checkSignature(signer, digest, abi.encodePacked(rc, sc, vc), !anyCorrupted);
     }
 
     function _checkSignature(

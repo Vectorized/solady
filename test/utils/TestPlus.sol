@@ -71,6 +71,13 @@ contract TestPlus is Test {
         }
     }
 
+    function _randomSigner() internal returns (uint256 privateKey, address signer) {
+        uint256 privateKeyMax = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
+        privateKey = _bound(_random(), 1, privateKeyMax);
+        signer = vm.addr(privateKey);
+        require(signer != address(0));
+    }
+
     function _roundUpFreeMemoryPointer() internal pure {
         /// @solidity memory-safe-assembly
         assembly {
