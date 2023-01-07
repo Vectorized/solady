@@ -102,7 +102,7 @@ contract SafeCastLibTest is TestPlus {
         SafeCastLib.toUint248(x);
     }
 
-    function testSafeCastToUint(uint256 x, uint8 s) public {
+    function testSafeCastToUint128(uint256 x, uint8 s) public {
         _randomizeReturndatasize();
         x = x >> uint256(s);
         assertEq(this.toUint128(uint128(x)), uint128(x));
@@ -257,11 +257,11 @@ contract SafeCastLibTest is TestPlus {
         SafeCastLib.toInt248(x);
     }
 
-    function testSafeCastToInt(int256 x, uint8 s) public {
+    function testSafeCastToInt128(int256 x, uint8 s) public {
         _randomizeReturndatasize();
         /// @solidity memory-safe-assembly
         assembly {
-            x := shl(s, x)
+            x := shl(and(s, 0xff), x)
         }
         assertEq(this.toInt128(int128(x)), int128(x));
         if (int128(x) != x) vm.expectRevert();
