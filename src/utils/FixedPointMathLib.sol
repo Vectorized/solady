@@ -122,13 +122,13 @@ library FixedPointMathLib {
         unchecked {
             // When the result is < 0.5 we return zero. This happens when
             // x <= floor(log(0.5e18) * 1e18) ~ -42e18
-            if (x <= -42139678854452767551) return 0;
+            if (x <= -42139678854452767551) return r;
 
-            // When the result is > (2**255 - 1) / 1e18 we can not represent it as an
-            // int. This happens when x >= floor(log((2**255 - 1) / 1e18) * 1e18) ~ 135.
-            if (x >= 135305999368893231589) {
-                /// @solidity memory-safe-assembly
-                assembly {
+            /// @solidity memory-safe-assembly
+            assembly {
+                // When the result is > (2**255 - 1) / 1e18 we can not represent it as an
+                // int. This happens when x >= floor(log((2**255 - 1) / 1e18) * 1e18) ~ 135.
+                if iszero(slt(x, 135305999368893231589)) {
                     // Store the function selector of `ExpOverflow()`.
                     mstore(0x00, 0xa37bfec9)
                     // Revert with (offset, size).
@@ -190,9 +190,9 @@ library FixedPointMathLib {
     /// @dev Returns `ln(x)`, denominated in `WAD`.
     function lnWad(int256 x) internal pure returns (int256 r) {
         unchecked {
-            if (x <= 0) {
-                /// @solidity memory-safe-assembly
-                assembly {
+            /// @solidity memory-safe-assembly
+            assembly {
+                if iszero(sgt(x, 0)) {
                     // Store the function selector of `LnWadUndefined()`.
                     mstore(0x00, 0x1615e638)
                     // Revert with (offset, size).
@@ -305,7 +305,7 @@ library FixedPointMathLib {
                 let prod0 := mul(a, b)
                 let mm := mulmod(a, b, not(0))
                 // Most significant 256 bits of the product
-                let prod1 := sub(sub(mm, prod0), lt(mm, prod0))
+                let prod1 := sub(mm, add(prod0, lt(mm, prod0)))
 
                 // Handle non-overflow cases, 256 by 256 division.
                 if iszero(prod1) {
