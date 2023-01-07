@@ -414,7 +414,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        if (fromTimestamp > toTimestamp) _revertArithmeticError();
+        toTimestamp - fromTimestamp;
         (uint256 fromYear,,) = epochDayToDate(fromTimestamp / 86400);
         (uint256 toYear,,) = epochDayToDate(toTimestamp / 86400);
         result = _sub(toYear, fromYear);
@@ -430,7 +430,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        if (fromTimestamp > toTimestamp) _revertArithmeticError();
+        toTimestamp - fromTimestamp;
         (uint256 fromYear, uint256 fromMonth,) = epochDayToDate(fromTimestamp / 86400);
         (uint256 toYear, uint256 toMonth,) = epochDayToDate(toTimestamp / 86400);
         result = _sub(_totalMonths(toYear, toMonth), _totalMonths(fromYear, fromMonth));
@@ -512,15 +512,5 @@ library DateTimeLib {
             day = dm;
         }
         result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-    }
-
-    /// @dev Reverts with the standard arithmetic error.
-    function _revertArithmeticError() private pure {
-        assembly {
-            // Store the 4 byte selector of the standard arithmetic error.
-            mstore(0x00, 0x4e487b71)
-            // Revert with (offset, size).
-            revert(0x1c, 0x04)
-        }
     }
 }
