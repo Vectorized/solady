@@ -243,11 +243,8 @@ contract ECDSATest is TestPlus {
         }
     }
 
-    function testRecoverAndTryRecover(uint256 privateKey, bytes32 digest) public {
-        uint256 privateKeyMax = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
-        privateKey = _bound(privateKey, 1, privateKeyMax);
-        address signer = vm.addr(privateKey);
-        require(signer != address(0));
+    function testRecoverAndTryRecover(bytes32 digest) public {
+        (uint256 privateKey, address signer) = _randomSigner();
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         if (_random() & 7 == 0) {
