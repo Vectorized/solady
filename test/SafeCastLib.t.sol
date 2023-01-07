@@ -10,157 +10,157 @@ contract SafeCastLibTest is TestPlus {
     function testSafeCastToUint(uint256 x) public {
         assertEq(SafeCastLib.toUint8(uint8(x)), uint8(x));
         if (x >= (1 << 8)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint8(x);
         }
         assertEq(SafeCastLib.toUint16(uint16(x)), uint16(x));
         if (x >= (1 << 16)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint16(x);
         }
         assertEq(SafeCastLib.toUint24(uint24(x)), uint24(x));
         if (x >= (1 << 24)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint24(x);
         }
         assertEq(SafeCastLib.toUint32(uint32(x)), uint32(x));
         if (x >= (1 << 32)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint32(x);
         }
         assertEq(SafeCastLib.toUint40(uint40(x)), uint40(x));
         if (x >= (1 << 40)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint40(x);
         }
         assertEq(SafeCastLib.toUint48(uint48(x)), uint48(x));
         if (x >= (1 << 48)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint48(x);
         }
         assertEq(SafeCastLib.toUint56(uint56(x)), uint56(x));
         if (x >= (1 << 56)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint56(x);
         }
         assertEq(SafeCastLib.toUint64(uint64(x)), uint64(x));
         if (x >= (1 << 64)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint64(x);
         }
         assertEq(SafeCastLib.toUint72(uint72(x)), uint72(x));
         if (x >= (1 << 72)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint72(x);
         }
         assertEq(SafeCastLib.toUint80(uint80(x)), uint80(x));
         if (x >= (1 << 80)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint80(x);
         }
         assertEq(SafeCastLib.toUint88(uint88(x)), uint88(x));
         if (x >= (1 << 88)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint88(x);
         }
         assertEq(SafeCastLib.toUint96(uint96(x)), uint96(x));
         if (x >= (1 << 96)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint96(x);
         }
         assertEq(SafeCastLib.toUint104(uint104(x)), uint104(x));
         if (x >= (1 << 104)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint104(x);
         }
         assertEq(SafeCastLib.toUint112(uint112(x)), uint112(x));
         if (x >= (1 << 112)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint112(x);
         }
         assertEq(SafeCastLib.toUint120(uint120(x)), uint120(x));
         if (x >= (1 << 120)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint120(x);
         }
         assertEq(SafeCastLib.toUint128(uint128(x)), uint128(x));
         if (x >= (1 << 128)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint128(x);
         }
         assertEq(SafeCastLib.toUint136(uint136(x)), uint136(x));
         if (x >= (1 << 136)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint136(x);
         }
         assertEq(SafeCastLib.toUint144(uint144(x)), uint144(x));
         if (x >= (1 << 144)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint144(x);
         }
         assertEq(SafeCastLib.toUint152(uint152(x)), uint152(x));
         if (x >= (1 << 152)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint152(x);
         }
         assertEq(SafeCastLib.toUint160(uint160(x)), uint160(x));
         if (x >= (1 << 160)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint160(x);
         }
         assertEq(SafeCastLib.toUint168(uint168(x)), uint168(x));
         if (x >= (1 << 168)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint168(x);
         }
         assertEq(SafeCastLib.toUint176(uint176(x)), uint176(x));
         if (x >= (1 << 176)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint176(x);
         }
         assertEq(SafeCastLib.toUint184(uint184(x)), uint184(x));
         if (x >= (1 << 184)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint184(x);
         }
         assertEq(SafeCastLib.toUint192(uint192(x)), uint192(x));
         if (x >= (1 << 192)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint192(x);
         }
         assertEq(SafeCastLib.toUint200(uint200(x)), uint200(x));
         if (x >= (1 << 200)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint200(x);
         }
         assertEq(SafeCastLib.toUint208(uint208(x)), uint208(x));
         if (x >= (1 << 208)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint208(x);
         }
         assertEq(SafeCastLib.toUint216(uint216(x)), uint216(x));
         if (x >= (1 << 216)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint216(x);
         }
         assertEq(SafeCastLib.toUint224(uint224(x)), uint224(x));
         if (x >= (1 << 224)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint224(x);
         }
         assertEq(SafeCastLib.toUint232(uint232(x)), uint232(x));
         if (x >= (1 << 232)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint232(x);
         }
         assertEq(SafeCastLib.toUint240(uint240(x)), uint240(x));
         if (x >= (1 << 240)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint240(x);
         }
         assertEq(SafeCastLib.toUint248(uint248(x)), uint248(x));
         if (x >= (1 << 248)) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toUint248(x);
         }
     }
@@ -171,6 +171,46 @@ contract SafeCastLibTest is TestPlus {
                 testSafeCastToUint(1 << i);
             }
         }
+    }
+
+    function testSafeCastToUintBench() public {
+        uint256 sum;
+        unchecked {
+            for (uint256 i; i != 256; ++i) {
+                sum += uint256(SafeCastLib.toUint8(i));
+                sum += uint256(SafeCastLib.toUint16(i));
+                sum += uint256(SafeCastLib.toUint24(i));
+                sum += uint256(SafeCastLib.toUint32(i));
+                sum += uint256(SafeCastLib.toUint40(i));
+                sum += uint256(SafeCastLib.toUint48(i));
+                sum += uint256(SafeCastLib.toUint56(i));
+                sum += uint256(SafeCastLib.toUint64(i));
+                sum += uint256(SafeCastLib.toUint72(i));
+                sum += uint256(SafeCastLib.toUint80(i));
+                sum += uint256(SafeCastLib.toUint88(i));
+                sum += uint256(SafeCastLib.toUint96(i));
+                sum += uint256(SafeCastLib.toUint104(i));
+                sum += uint256(SafeCastLib.toUint112(i));
+                sum += uint256(SafeCastLib.toUint120(i));
+                sum += uint256(SafeCastLib.toUint128(i));
+                sum += uint256(SafeCastLib.toUint136(i));
+                sum += uint256(SafeCastLib.toUint144(i));
+                sum += uint256(SafeCastLib.toUint152(i));
+                sum += uint256(SafeCastLib.toUint160(i));
+                sum += uint256(SafeCastLib.toUint168(i));
+                sum += uint256(SafeCastLib.toUint176(i));
+                sum += uint256(SafeCastLib.toUint184(i));
+                sum += uint256(SafeCastLib.toUint192(i));
+                sum += uint256(SafeCastLib.toUint200(i));
+                sum += uint256(SafeCastLib.toUint208(i));
+                sum += uint256(SafeCastLib.toUint216(i));
+                sum += uint256(SafeCastLib.toUint224(i));
+                sum += uint256(SafeCastLib.toUint232(i));
+                sum += uint256(SafeCastLib.toUint240(i));
+                sum += uint256(SafeCastLib.toUint248(i));
+            }
+        }
+        assertTrue(sum > 100);
     }
 
     function testSafeCastToInt(int256 x) public {

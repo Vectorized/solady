@@ -16,158 +16,220 @@ library SafeCastLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function toUint8(uint256 x) internal pure returns (uint8 y) {
-        if (x >= 1 << 8) _revertOverflow();
-        y = uint8(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(8, x)))
+            y := x
+        }
     }
 
     function toUint16(uint256 x) internal pure returns (uint16 y) {
-        if (x >= 1 << 16) _revertOverflow();
-        y = uint16(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(16, x)))
+            y := x
+        }
     }
 
     function toUint24(uint256 x) internal pure returns (uint24 y) {
-        if (x >= 1 << 24) _revertOverflow();
-        y = uint24(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(24, x)))
+            y := x
+        }
     }
 
     function toUint32(uint256 x) internal pure returns (uint32 y) {
-        if (x >= 1 << 32) _revertOverflow();
-        y = uint32(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(32, x)))
+            y := x
+        }
     }
 
     function toUint40(uint256 x) internal pure returns (uint40 y) {
-        if (x >= 1 << 40) _revertOverflow();
-        y = uint40(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(40, x)))
+            y := x
+        }
     }
 
     function toUint48(uint256 x) internal pure returns (uint48 y) {
-        if (x >= 1 << 48) _revertOverflow();
-        y = uint48(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(48, x)))
+            y := x
+        }
     }
 
     function toUint56(uint256 x) internal pure returns (uint56 y) {
-        if (x >= 1 << 56) _revertOverflow();
-        y = uint56(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(56, x)))
+            y := x
+        }
     }
 
     function toUint64(uint256 x) internal pure returns (uint64 y) {
-        if (x >= 1 << 64) _revertOverflow();
-        y = uint64(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(64, not(y))))
+            y := x
+        }
     }
 
     function toUint72(uint256 x) internal pure returns (uint72 y) {
-        if (x >= 1 << 72) _revertOverflow();
-        y = uint72(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(72, not(y))))
+            y := x
+        }
     }
 
     function toUint80(uint256 x) internal pure returns (uint80 y) {
-        if (x >= 1 << 80) _revertOverflow();
-        y = uint80(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(80, not(y))))
+            y := x
+        }
     }
 
     function toUint88(uint256 x) internal pure returns (uint88 y) {
-        if (x >= 1 << 88) _revertOverflow();
-        y = uint88(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(88, not(y))))
+            y := x
+        }
     }
 
     function toUint96(uint256 x) internal pure returns (uint96 y) {
-        if (x >= 1 << 96) _revertOverflow();
-        y = uint96(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(96, not(y))))
+            y := x
+        }
     }
 
     function toUint104(uint256 x) internal pure returns (uint104 y) {
-        if (x >= 1 << 104) _revertOverflow();
-        y = uint104(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(104, not(y))))
+            y := x
+        }
     }
 
     function toUint112(uint256 x) internal pure returns (uint112 y) {
-        if (x >= 1 << 112) _revertOverflow();
-        y = uint112(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(112, not(y))))
+            y := x
+        }
     }
 
     function toUint120(uint256 x) internal pure returns (uint120 y) {
-        if (x >= 1 << 120) _revertOverflow();
-        y = uint120(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(120, not(y))))
+            y := x
+        }
     }
 
     function toUint128(uint256 x) internal pure returns (uint128 y) {
-        if (x >= 1 << 128) _revertOverflow();
-        y = uint128(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(128, not(y))))
+            y := x
+        }
     }
 
     function toUint136(uint256 x) internal pure returns (uint136 y) {
-        if (x >= 1 << 136) _revertOverflow();
-        y = uint136(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(136, not(y))))
+            y := x
+        }
     }
 
     function toUint144(uint256 x) internal pure returns (uint144 y) {
-        if (x >= 1 << 144) _revertOverflow();
-        y = uint144(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(144, not(y))))
+            y := x
+        }
     }
 
     function toUint152(uint256 x) internal pure returns (uint152 y) {
-        if (x >= 1 << 152) _revertOverflow();
-        y = uint152(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(152, not(y))))
+            y := x
+        }
     }
 
     function toUint160(uint256 x) internal pure returns (uint160 y) {
-        if (x >= 1 << 160) _revertOverflow();
-        y = uint160(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(160, not(y))))
+            y := x
+        }
     }
 
     function toUint168(uint256 x) internal pure returns (uint168 y) {
-        if (x >= 1 << 168) _revertOverflow();
-        y = uint168(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(168, not(y))))
+            y := x
+        }
     }
 
     function toUint176(uint256 x) internal pure returns (uint176 y) {
-        if (x >= 1 << 176) _revertOverflow();
-        y = uint176(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(176, not(y))))
+            y := x
+        }
     }
 
     function toUint184(uint256 x) internal pure returns (uint184 y) {
-        if (x >= 1 << 184) _revertOverflow();
-        y = uint184(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(184, not(y))))
+            y := x
+        }
     }
 
     function toUint192(uint256 x) internal pure returns (uint192 y) {
-        if (x >= 1 << 192) _revertOverflow();
-        y = uint192(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(192, not(y))))
+            y := x
+        }
     }
 
     function toUint200(uint256 x) internal pure returns (uint200 y) {
-        if (x >= 1 << 200) _revertOverflow();
-        y = uint200(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(200, not(y))))
+            y := x
+        }
     }
 
     function toUint208(uint256 x) internal pure returns (uint208 y) {
-        if (x >= 1 << 208) _revertOverflow();
-        y = uint208(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(208, not(y))))
+            y := x
+        }
     }
 
     function toUint216(uint256 x) internal pure returns (uint216 y) {
-        if (x >= 1 << 216) _revertOverflow();
-        y = uint216(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(216, not(y))))
+            y := x
+        }
     }
 
     function toUint224(uint256 x) internal pure returns (uint224 y) {
-        if (x >= 1 << 224) _revertOverflow();
-        y = uint224(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(224, not(y))))
+            y := x
+        }
     }
 
     function toUint232(uint256 x) internal pure returns (uint232 y) {
-        if (x >= 1 << 232) _revertOverflow();
-        y = uint232(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(232, not(y))))
+            y := x
+        }
     }
 
     function toUint240(uint256 x) internal pure returns (uint240 y) {
-        if (x >= 1 << 240) _revertOverflow();
-        y = uint240(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(240, not(y))))
+            y := x
+        }
     }
 
     function toUint248(uint256 x) internal pure returns (uint248 y) {
-        if (x >= 1 << 248) _revertOverflow();
-        y = uint248(x);
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), and(x, shl(248, not(y))))
+            y := x
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
