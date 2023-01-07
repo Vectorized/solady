@@ -5,9 +5,7 @@ import "./utils/TestPlus.sol";
 import {SafeCastLib} from "../src/utils/SafeCastLib.sol";
 
 contract SafeCastLibTest is TestPlus {
-    error Overflow();
-
-    function testSafeCastToUint(uint256 x) public {
+    function testSafeCastToUint(uint256 x) public brutalizeMemory {
         assertEq(SafeCastLib.toUint8(uint8(x)), uint8(x));
         if (x >= (1 << 8)) {
             vm.expectRevert();
@@ -213,7 +211,7 @@ contract SafeCastLibTest is TestPlus {
         }
     }
 
-    function testSafeCastToInt(int256 x) public {
+    function testSafeCastToInt(int256 x) public brutalizeMemory {
         assertEq(SafeCastLib.toInt8(int8(x)), int8(x));
         if (int8(x) != x) {
             vm.expectRevert();
