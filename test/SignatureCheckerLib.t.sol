@@ -55,29 +55,35 @@ contract SignatureCheckerLibTest is TestPlus {
     }
 
     function testSignatureCheckerOnWalletWithMatchingSignerAndSignature() public {
-        _checkSignature(address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, true);
+        _checkSignatureBothModes(
+            address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, true
+        );
     }
 
     function testSignatureCheckerOnWalletWithInvalidSigner() public {
-        _checkSignature(address(this), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, false);
+        _checkSignatureBothModes(address(this), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, false);
     }
 
     function testSignatureCheckerOnWalletWithZeroAddressSigner() public {
-        _checkSignature(address(0), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, false);
+        _checkSignatureBothModes(address(0), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, false);
     }
 
     function testSignatureCheckerOnWalletWithWrongSignedMessageHash() public {
-        _checkSignature(address(mockERC1271Wallet), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false);
+        _checkSignatureBothModes(
+            address(mockERC1271Wallet), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false
+        );
     }
 
     function testSignatureCheckerOnWalletWithInvalidSignature() public {
-        _checkSignature(
+        _checkSignatureBothModes(
             address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, INVALID_SIGNATURE, false
         );
     }
 
     function testSignatureCheckerOnMaliciousWallet() public {
-        _checkSignature(address(mockERC1271Malicious), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false);
+        _checkSignatureBothModes(
+            address(mockERC1271Malicious), WRONG_SIGNED_MESSAGE_HASH, SIGNATURE, false
+        );
     }
 
     function testSignatureChecker(bytes32 digest) public {
@@ -95,7 +101,27 @@ contract SignatureCheckerLibTest is TestPlus {
         _checkSignature(signer, digest, abi.encodePacked(rc, sc, vc), !anyCorrupted);
     }
 
+    function _checkSignatureBothModes(
+        address signer,
+        bytes32 hash,
+        bytes memory signature,
+        bool expectedResult
+    ) internal {
+        _checkSignature(false, signer, hash, signature, expectedResult);
+        _checkSignature(true, signer, hash, signature, expectedResult);
+    }
+
     function _checkSignature(
+        address signer,
+        bytes32 hash,
+        bytes memory signature,
+        bool expectedResult
+    ) internal {
+        _checkSignature(false, signer, hash, signature, expectedResult);
+    }
+
+    function _checkSignature(
+        bool onlyERC1271,
         address signer,
         bytes32 hash,
         bytes memory signature,
@@ -108,6 +134,10 @@ contract SignatureCheckerLibTest is TestPlus {
 
             // `bytes4(keccak256("isValidSignatureNow(address,bytes32,bytes)"))`.
             mstore(m, shl(224, 0x6ccea652))
+            if onlyERC1271 {
+                // `bytes4(keccak256("isValidERC1271SignatureNow(address,bytes32,bytes)"))`.
+                mstore(m, shl(224, 0x3ae5d83c))
+            }
             mstore(add(m, 0x04), signer)
             mstore(add(m, 0x24), hash)
             mstore(add(m, 0x44), 0x60) // Offset of signature in calldata.
@@ -163,8 +193,18 @@ contract SignatureCheckerLibTest is TestPlus {
             for { let i := 0 } lt(i, 30) { i := add(i, 1) } { mstore(add(m, shl(5, i)), not(0)) }
         }
 
-        assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, r, vs), expectedResult);
-        assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, v, r, s), expectedResult);
+        if (onlyERC1271) {
+            assertEq(
+                SignatureCheckerLib.isValidERC1271SignatureNow(signer, hash, r, vs), expectedResult
+            );
+            assertEq(
+                SignatureCheckerLib.isValidERC1271SignatureNow(signer, hash, v, r, s),
+                expectedResult
+            );
+        } else {
+            assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, r, vs), expectedResult);
+            assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, v, r, s), expectedResult);
+        }
     }
 
     function isValidSignatureNow(address signer, bytes32 hash, bytes calldata signature)
@@ -183,5 +223,23 @@ contract SignatureCheckerLibTest is TestPlus {
         if (!signatureIsBrutalized) revert("Signature is not brutalized.");
 
         return SignatureCheckerLib.isValidSignatureNow(signer, hash, signature);
+    }
+
+    function isValidERC1271SignatureNow(address signer, bytes32 hash, bytes calldata signature)
+        external
+        view
+        returns (bool)
+    {
+        bool signatureIsBrutalized;
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Contaminate the upper 96 bits.
+            signer := or(shl(160, 1), signer)
+            // Ensure that the bytes right after the signature is brutalized.
+            signatureIsBrutalized := calldataload(add(signature.offset, signature.length))
+        }
+        if (!signatureIsBrutalized) revert("Signature is not brutalized.");
+
+        return SignatureCheckerLib.isValidERC1271SignatureNow(signer, hash, signature);
     }
 }
