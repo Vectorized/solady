@@ -177,4 +177,11 @@ contract TestPlus is Test {
             }
         }
     }
+
+    function test__codesize() public view {
+        /// @solidity memory-safe-assembly
+        assembly {
+            pop(staticcall(codesize(), 0x09, 0x00, 0x00, 0x00, 0x00))
+        }
+    }
 }

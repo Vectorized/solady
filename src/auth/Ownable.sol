@@ -131,7 +131,13 @@ abstract contract Ownable {
 
     /// @dev Allows the owner to transfer the ownership to `newOwner`.
     function transferOwnership(address newOwner) public payable virtual onlyOwner {
-        if (newOwner == address(0)) revert NewOwnerIsZeroAddress();
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(shl(96, newOwner)) {
+                mstore(0x00, _NEW_OWNER_IS_ZERO_ADDRESS_ERROR_SELECTOR)
+                revert(0x1c, 0x04)
+            }
+        }
         _setOwner(newOwner);
     }
 

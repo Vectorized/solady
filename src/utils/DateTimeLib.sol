@@ -18,19 +18,6 @@ pragma solidity ^0.8.4;
 /// All timestamps of days are rounded down to 00:00:00 UTC.
 library DateTimeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev The date time addition has overflowed.
-    error Overflow();
-
-    /// @dev The date time subtraction has underflowed.
-    error Underflow();
-
-    /// @dev The `fromTimestamp` is greater than the `toTimestamp`.
-    error InvalidDiff();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -136,9 +123,7 @@ library DateTimeLib {
         pure
         returns (uint256 year, uint256 month, uint256 day)
     {
-        unchecked {
-            (year, month, day) = epochDayToDate(timestamp / 86400);
-        }
+        (year, month, day) = epochDayToDate(timestamp / 86400);
     }
 
     /// @dev Returns the unix timestamp from
@@ -317,16 +302,8 @@ library DateTimeLib {
     /// the result's month day will be the maximum possible value for the month.
     /// (e.g. from 29th Feb to 28th Feb)
     function addYears(uint256 timestamp, uint256 numYears) internal pure returns (uint256 result) {
-        unchecked {
-            (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
-            year += numYears;
-            uint256 dm = daysInMonth(year, month);
-            if (day > dm) {
-                day = dm;
-            }
-            result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-            if (result < timestamp) revert Overflow();
-        }
+        (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
+        result = _offsetted(year + numYears, month, day, timestamp);
     }
 
     /// @dev Adds `numMonths` to the unix timestamp, and returns the result.
@@ -339,34 +316,19 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
-            month += numMonths;
-            year += (month - 1) / 12;
-            month = ((month - 1) % 12) + 1;
-            uint256 dm = daysInMonth(year, month);
-            if (day > dm) {
-                day = dm;
-            }
-            result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-            if (result < timestamp) revert Overflow();
-        }
+        (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
+        month = _sub(month + numMonths, 1);
+        result = _offsetted(year + month / 12, _add(month % 12, 1), day, timestamp);
     }
 
     /// @dev Adds `numDays` to the unix timestamp, and returns the result.
     function addDays(uint256 timestamp, uint256 numDays) internal pure returns (uint256 result) {
-        unchecked {
-            result = timestamp + numDays * 86400;
-            if (result < timestamp) revert Overflow();
-        }
+        result = timestamp + numDays * 86400;
     }
 
     /// @dev Adds `numHours` to the unix timestamp, and returns the result.
     function addHours(uint256 timestamp, uint256 numHours) internal pure returns (uint256 result) {
-        unchecked {
-            result = timestamp + numHours * 3600;
-            if (result < timestamp) revert Overflow();
-        }
+        result = timestamp + numHours * 3600;
     }
 
     /// @dev Adds `numMinutes` to the unix timestamp, and returns the result.
@@ -375,10 +337,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            result = timestamp + numMinutes * 60;
-            if (result < timestamp) revert Overflow();
-        }
+        result = timestamp + numMinutes * 60;
     }
 
     /// @dev Adds `numSeconds` to the unix timestamp, and returns the result.
@@ -387,10 +346,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            result = timestamp + numSeconds;
-            if (result < timestamp) revert Overflow();
-        }
+        result = timestamp + numSeconds;
     }
 
     /// @dev Subtracts `numYears` from the unix timestamp, and returns the result.
@@ -401,16 +357,8 @@ library DateTimeLib {
     /// the result's month day will be the maximum possible value for the month.
     /// (e.g. from 29th Feb to 28th Feb)
     function subYears(uint256 timestamp, uint256 numYears) internal pure returns (uint256 result) {
-        unchecked {
-            (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
-            year -= numYears;
-            uint256 dm = daysInMonth(year, month);
-            if (day > dm) {
-                day = dm;
-            }
-            result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-            if (result > timestamp) revert Underflow();
-        }
+        (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
+        result = _offsetted(year - numYears, month, day, timestamp);
     }
 
     /// @dev Subtracts `numYears` from the unix timestamp, and returns the result.
@@ -423,34 +371,19 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
-            uint256 yearMonth = year * 12 + (month - 1) - numMonths;
-            year = yearMonth / 12;
-            month = (yearMonth % 12) + 1;
-            uint256 dm = daysInMonth(year, month);
-            if (day > dm) {
-                day = dm;
-            }
-            result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
-            if (result > timestamp) revert Underflow();
-        }
+        (uint256 year, uint256 month, uint256 day) = epochDayToDate(timestamp / 86400);
+        uint256 yearMonth = _totalMonths(year, month) - _add(numMonths, 1);
+        result = _offsetted(yearMonth / 12, _add(yearMonth % 12, 1), day, timestamp);
     }
 
     /// @dev Subtracts `numDays` from the unix timestamp, and returns the result.
     function subDays(uint256 timestamp, uint256 numDays) internal pure returns (uint256 result) {
-        unchecked {
-            result = timestamp - numDays * 86400;
-            if (result > timestamp) revert Underflow();
-        }
+        result = timestamp - numDays * 86400;
     }
 
     /// @dev Subtracts `numHours` from the unix timestamp, and returns the result.
     function subHours(uint256 timestamp, uint256 numHours) internal pure returns (uint256 result) {
-        unchecked {
-            result = timestamp - numHours * 3600;
-            if (result > timestamp) revert Underflow();
-        }
+        result = timestamp - numHours * 3600;
     }
 
     /// @dev Subtracts `numMinutes` from the unix timestamp, and returns the result.
@@ -459,10 +392,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            result = timestamp - numMinutes * 60;
-            if (result > timestamp) revert Underflow();
-        }
+        result = timestamp - numMinutes * 60;
     }
 
     /// @dev Subtracts `numSeconds` from the unix timestamp, and returns the result.
@@ -471,10 +401,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            result = timestamp - numSeconds;
-            if (result > timestamp) revert Underflow();
-        }
+        result = timestamp - numSeconds;
     }
 
     /// @dev Returns the difference in Gregorian calendar years
@@ -487,12 +414,10 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            if (fromTimestamp > toTimestamp) revert InvalidDiff();
-            (uint256 fromYear,,) = epochDayToDate(fromTimestamp / 86400);
-            (uint256 toYear,,) = epochDayToDate(toTimestamp / 86400);
-            result = toYear - fromYear;
-        }
+        toTimestamp - fromTimestamp;
+        (uint256 fromYear,,) = epochDayToDate(fromTimestamp / 86400);
+        (uint256 toYear,,) = epochDayToDate(toTimestamp / 86400);
+        result = _sub(toYear, fromYear);
     }
 
     /// @dev Returns the difference in Gregorian calendar months
@@ -505,12 +430,10 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            if (fromTimestamp > toTimestamp) revert InvalidDiff();
-            (uint256 fromYear, uint256 fromMonth,) = epochDayToDate(fromTimestamp / 86400);
-            (uint256 toYear, uint256 toMonth,) = epochDayToDate(toTimestamp / 86400);
-            result = toYear * 12 + toMonth - fromYear * 12 - fromMonth;
-        }
+        toTimestamp - fromTimestamp;
+        (uint256 fromYear, uint256 fromMonth,) = epochDayToDate(fromTimestamp / 86400);
+        (uint256 toYear, uint256 toMonth,) = epochDayToDate(toTimestamp / 86400);
+        result = _sub(_totalMonths(toYear, toMonth), _totalMonths(fromYear, fromMonth));
     }
 
     /// @dev Returns the difference in days between `fromTimestamp` and `toTimestamp`.
@@ -519,10 +442,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            if (fromTimestamp > toTimestamp) revert InvalidDiff();
-            result = (toTimestamp - fromTimestamp) / 86400;
-        }
+        result = (toTimestamp - fromTimestamp) / 86400;
     }
 
     /// @dev Returns the difference in hours between `fromTimestamp` and `toTimestamp`.
@@ -531,10 +451,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            if (fromTimestamp > toTimestamp) revert InvalidDiff();
-            result = (toTimestamp - fromTimestamp) / 3600;
-        }
+        result = (toTimestamp - fromTimestamp) / 3600;
     }
 
     /// @dev Returns the difference in minutes between `fromTimestamp` and `toTimestamp`.
@@ -543,10 +460,7 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
-        unchecked {
-            if (fromTimestamp > toTimestamp) revert InvalidDiff();
-            result = (toTimestamp - fromTimestamp) / 60;
-        }
+        result = (toTimestamp - fromTimestamp) / 60;
     }
 
     /// @dev Returns the difference in seconds between `fromTimestamp` and `toTimestamp`.
@@ -555,9 +469,48 @@ library DateTimeLib {
         pure
         returns (uint256 result)
     {
+        result = toTimestamp - fromTimestamp;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Unchecked arithmetic for computing the total number of months.
+    function _totalMonths(uint256 numYears, uint256 numMonths)
+        private
+        pure
+        returns (uint256 total)
+    {
         unchecked {
-            if (fromTimestamp > toTimestamp) revert InvalidDiff();
-            result = toTimestamp - fromTimestamp;
+            total = numYears * 12 + numMonths;
         }
+    }
+
+    /// @dev Unchecked arithmetic for adding two numbers.
+    function _add(uint256 a, uint256 b) private pure returns (uint256 c) {
+        unchecked {
+            c = a + b;
+        }
+    }
+
+    /// @dev Unchecked arithmetic for subtracting two numbers.
+    function _sub(uint256 a, uint256 b) private pure returns (uint256 c) {
+        unchecked {
+            c = a - b;
+        }
+    }
+
+    /// @dev Returns the offsetted timestamp.
+    function _offsetted(uint256 year, uint256 month, uint256 day, uint256 timestamp)
+        private
+        pure
+        returns (uint256 result)
+    {
+        uint256 dm = daysInMonth(year, month);
+        if (day >= dm) {
+            day = dm;
+        }
+        result = dateToEpochDay(year, month, day) * 86400 + (timestamp % 86400);
     }
 }

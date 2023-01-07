@@ -544,46 +544,46 @@ contract DateTimeLibTest is TestPlus {
     }
 
     function testDateTimeArithmeticReverts() public {
-        vm.expectRevert(DateTimeLib.Overflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.addYears(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.Underflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.subYears(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.diffYears(2 ** 128 - 1, 2 ** 127 - 1);
 
-        vm.expectRevert(DateTimeLib.Overflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.addMonths(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.Underflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.subMonths(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.diffMonths(2 ** 128 - 1, 2 ** 127 - 1);
 
-        vm.expectRevert(DateTimeLib.Overflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.addDays(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.Underflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.subDays(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.diffDays(2 ** 128 - 1, 2 ** 127 - 1);
 
-        vm.expectRevert(DateTimeLib.Overflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.addHours(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.Underflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.subHours(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.diffHours(2 ** 128 - 1, 2 ** 127 - 1);
 
-        vm.expectRevert(DateTimeLib.Overflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.addMinutes(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.Underflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.subMinutes(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.diffMinutes(2 ** 128 - 1, 2 ** 127 - 1);
 
-        vm.expectRevert(DateTimeLib.Overflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.addSeconds(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.Underflow.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.subSeconds(2 ** 128 - 1, 2 ** 255 - 1);
-        vm.expectRevert(DateTimeLib.InvalidDiff.selector);
+        vm.expectRevert(stdError.arithmeticError);
         DateTimeLib.diffSeconds(2 ** 128 - 1, 2 ** 127 - 1);
     }
 
