@@ -250,6 +250,9 @@ contract ECDSATest is TestPlus {
         require(signer != address(0));
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        if (_random() & 7 == 0) {
+            _checkSignature(digest, v, r, s, signer, true);
+        }
 
         uint8 vc = v ^ uint8(_random() & 0xff);
         bytes32 rc = bytes32(uint256(r) ^ _random());
