@@ -22,8 +22,7 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        if (signer == address(0)) return false;
-        if (ECDSA.tryRecover(hash, signature) == signer) return true;
+        if (_isSuccessfullyRecovered(ECDSA.tryRecover(hash, signature), signer)) return true;
         return isValidERC1271SignatureNow(signer, hash, signature);
     }
 
@@ -35,8 +34,7 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        if (signer == address(0)) return false;
-        if (ECDSA.tryRecover(hash, r, vs) == signer) return true;
+        if (_isSuccessfullyRecovered(ECDSA.tryRecover(hash, r, vs), signer)) return true;
         return isValidERC1271SignatureNow(signer, hash, r, vs);
     }
 
@@ -48,8 +46,7 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        if (signer == address(0)) return false;
-        if (ECDSA.tryRecover(hash, v, r, s) == signer) return true;
+        if (_isSuccessfullyRecovered(ECDSA.tryRecover(hash, v, r, s), signer)) return true;
         return isValidERC1271SignatureNow(signer, hash, v, r, s);
     }
 
@@ -164,6 +161,24 @@ library SignatureCheckerLib {
                     0x20 // Length of returndata to write.
                 )
             )
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns if `recovered` matches `signer`, and `signer` is not zero.
+    function _isSuccessfullyRecovered(address recovered, address signer)
+        private
+        pure
+        returns (bool result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Clean the upper 96 bits of `signer` in case they are dirty.
+            signer := shr(96, shl(96, signer))
+            result := mul(eq(signer, recovered), signer)
         }
     }
 }
