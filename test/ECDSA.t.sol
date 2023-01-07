@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import {ECDSA} from "../src/utils/ECDSA.sol";
 
-contract ECDSATest is Test {
+contract ECDSATest is TestPlus {
     using ECDSA for bytes32;
     using ECDSA for bytes;
 
@@ -208,6 +208,56 @@ contract ECDSATest is Test {
         this.recover(TEST_MESSAGE, signature);
     }
 
+    function _checkSignature(
+        bytes32 digest,
+        uint8 v,
+        bytes32 r,
+        bytes32 s,
+        address signer,
+        bool shouldMatch
+    ) internal {
+        assertEq(this.tryRecover(digest, v, r, s) == signer, shouldMatch);
+
+        try this.recover(digest, v, r, s) returns (address recovered) {
+            assertEq(recovered == signer, shouldMatch);
+        } catch {}
+
+        if (v == 27 || v == 28) {
+            bytes32 vs = bytes32((v == 28 ? 1 << 255 : 0) | uint256(s));
+
+            assertEq(this.tryRecover(digest, r, vs) == signer, shouldMatch);
+
+            try this.recover(digest, r, vs) returns (address recovered) {
+                assertEq(recovered == signer, shouldMatch);
+            } catch {}
+        }
+
+        if (_random() & 1 == 0) {
+            bytes memory signature = abi.encodePacked(r, s, v);
+
+            assertEq(this.tryRecover(digest, signature) == signer, shouldMatch);
+
+            try this.recover(digest, signature) returns (address recovered) {
+                assertEq(recovered == signer, shouldMatch);
+            } catch {}
+        }
+    }
+
+    function testRecoverAndTryRecover(uint256 privateKey, bytes32 digest) public {
+        uint256 privateKeyMax = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
+        privateKey = _bound(privateKey, 1, privateKeyMax);
+        address signer = vm.addr(privateKey);
+        require(signer != address(0));
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+
+        uint8 vc = v ^ uint8(_random() & 0xff);
+        bytes32 rc = bytes32(uint256(r) ^ _random());
+        bytes32 sc = bytes32(uint256(s) ^ _random());
+        bool anyCorrupted = vc != v || rc != r || sc != s;
+        _checkSignature(digest, vc, rc, sc, signer, !anyCorrupted);
+    }
+
     function testBytes32ToEthSignedMessageHash() public {
         assertTrue(
             TEST_MESSAGE.toEthSignedMessageHash()
@@ -244,6 +294,14 @@ contract ECDSATest is Test {
         return ECDSA.tryRecover(hash, signature);
     }
 
+    function tryRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
+        external
+        view
+        returns (address)
+    {
+        return ECDSA.tryRecover(hash, v, r, s);
+    }
+
     function tryRecover(bytes32 hash, bytes32 r, bytes32 vs) external view returns (address) {
         return ECDSA.tryRecover(hash, r, vs);
     }
@@ -254,5 +312,9 @@ contract ECDSATest is Test {
 
     function recover(bytes32 hash, bytes32 r, bytes32 vs) external view returns (address) {
         return ECDSA.recover(hash, r, vs);
+    }
+
+    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) external view returns (address) {
+        return ECDSA.recover(hash, v, r, s);
     }
 }
