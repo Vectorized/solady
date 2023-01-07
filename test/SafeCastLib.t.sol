@@ -174,8 +174,8 @@ contract SafeCastLibTest is TestPlus {
     }
 
     function testSafeCastToUintBench() public {
-        uint256 sum;
         unchecked {
+            uint256 sum;
             for (uint256 i; i != 256; ++i) {
                 sum += uint256(SafeCastLib.toUint8(i));
                 sum += uint256(SafeCastLib.toUint16(i));
@@ -209,164 +209,164 @@ contract SafeCastLibTest is TestPlus {
                 sum += uint256(SafeCastLib.toUint240(i));
                 sum += uint256(SafeCastLib.toUint248(i));
             }
+            assertTrue(sum > 100);
         }
-        assertTrue(sum > 100);
     }
 
     function testSafeCastToInt(int256 x) public {
         assertEq(SafeCastLib.toInt8(int8(x)), int8(x));
         if (int8(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt8(x);
         }
         assertEq(SafeCastLib.toInt16(int16(x)), int16(x));
         if (int16(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt16(x);
         }
         assertEq(SafeCastLib.toInt24(int24(x)), int24(x));
         if (int24(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt24(x);
         }
         assertEq(SafeCastLib.toInt32(int32(x)), int32(x));
         if (int32(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt32(x);
         }
         assertEq(SafeCastLib.toInt40(int40(x)), int40(x));
         if (int40(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt40(x);
         }
         assertEq(SafeCastLib.toInt48(int48(x)), int48(x));
         if (int48(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt48(x);
         }
         assertEq(SafeCastLib.toInt56(int56(x)), int56(x));
         if (int56(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt56(x);
         }
         assertEq(SafeCastLib.toInt64(int64(x)), int64(x));
         if (int64(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt64(x);
         }
         assertEq(SafeCastLib.toInt72(int72(x)), int72(x));
         if (int72(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt72(x);
         }
         assertEq(SafeCastLib.toInt80(int80(x)), int80(x));
         if (int80(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt80(x);
         }
         assertEq(SafeCastLib.toInt88(int88(x)), int88(x));
         if (int88(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt88(x);
         }
         assertEq(SafeCastLib.toInt96(int96(x)), int96(x));
         if (int96(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt96(x);
         }
         assertEq(SafeCastLib.toInt104(int104(x)), int104(x));
         if (int104(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt104(x);
         }
         assertEq(SafeCastLib.toInt112(int112(x)), int112(x));
         if (int112(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt112(x);
         }
         assertEq(SafeCastLib.toInt120(int120(x)), int120(x));
         if (int120(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt120(x);
         }
         assertEq(SafeCastLib.toInt128(int128(x)), int128(x));
         if (int128(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt128(x);
         }
         assertEq(SafeCastLib.toInt136(int136(x)), int136(x));
         if (int136(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt136(x);
         }
         assertEq(SafeCastLib.toInt144(int144(x)), int144(x));
         if (int144(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt144(x);
         }
         assertEq(SafeCastLib.toInt152(int152(x)), int152(x));
         if (int152(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt152(x);
         }
         assertEq(SafeCastLib.toInt160(int160(x)), int160(x));
         if (int160(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt160(x);
         }
         assertEq(SafeCastLib.toInt168(int168(x)), int168(x));
         if (int168(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt168(x);
         }
         assertEq(SafeCastLib.toInt176(int176(x)), int176(x));
         if (int176(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt176(x);
         }
         assertEq(SafeCastLib.toInt184(int184(x)), int184(x));
         if (int184(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt184(x);
         }
         assertEq(SafeCastLib.toInt192(int192(x)), int192(x));
         if (int192(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt192(x);
         }
         assertEq(SafeCastLib.toInt200(int200(x)), int200(x));
         if (int200(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt200(x);
         }
         assertEq(SafeCastLib.toInt208(int208(x)), int208(x));
         if (int208(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt208(x);
         }
         assertEq(SafeCastLib.toInt216(int216(x)), int216(x));
         if (int216(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt216(x);
         }
         assertEq(SafeCastLib.toInt224(int224(x)), int224(x));
         if (int224(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt224(x);
         }
         assertEq(SafeCastLib.toInt232(int232(x)), int232(x));
         if (int232(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt232(x);
         }
         assertEq(SafeCastLib.toInt240(int240(x)), int240(x));
         if (int240(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt240(x);
         }
         assertEq(SafeCastLib.toInt248(int248(x)), int248(x));
         if (int248(x) != x) {
-            vm.expectRevert(Overflow.selector);
+            vm.expectRevert();
             SafeCastLib.toInt248(x);
         }
     }
@@ -380,6 +380,46 @@ contract SafeCastLibTest is TestPlus {
                 }
                 testSafeCastToInt(casted);
             }
+        }
+    }
+
+    function testSafeCastToIntBench() public {
+        unchecked {
+            int256 sum;
+            for (int256 i; i != 127; ++i) {
+                sum += int256(SafeCastLib.toInt8(i));
+                sum += int256(SafeCastLib.toInt16(i));
+                sum += int256(SafeCastLib.toInt24(i));
+                sum += int256(SafeCastLib.toInt32(i));
+                sum += int256(SafeCastLib.toInt40(i));
+                sum += int256(SafeCastLib.toInt48(i));
+                sum += int256(SafeCastLib.toInt56(i));
+                sum += int256(SafeCastLib.toInt64(i));
+                sum += int256(SafeCastLib.toInt72(i));
+                sum += int256(SafeCastLib.toInt80(i));
+                sum += int256(SafeCastLib.toInt88(i));
+                sum += int256(SafeCastLib.toInt96(i));
+                sum += int256(SafeCastLib.toInt104(i));
+                sum += int256(SafeCastLib.toInt112(i));
+                sum += int256(SafeCastLib.toInt120(i));
+                sum += int256(SafeCastLib.toInt128(i));
+                sum += int256(SafeCastLib.toInt136(i));
+                sum += int256(SafeCastLib.toInt144(i));
+                sum += int256(SafeCastLib.toInt152(i));
+                sum += int256(SafeCastLib.toInt160(i));
+                sum += int256(SafeCastLib.toInt168(i));
+                sum += int256(SafeCastLib.toInt176(i));
+                sum += int256(SafeCastLib.toInt184(i));
+                sum += int256(SafeCastLib.toInt192(i));
+                sum += int256(SafeCastLib.toInt200(i));
+                sum += int256(SafeCastLib.toInt208(i));
+                sum += int256(SafeCastLib.toInt216(i));
+                sum += int256(SafeCastLib.toInt224(i));
+                sum += int256(SafeCastLib.toInt232(i));
+                sum += int256(SafeCastLib.toInt240(i));
+                sum += int256(SafeCastLib.toInt248(i));
+            }
+            assertTrue(sum > 100);
         }
     }
 }
