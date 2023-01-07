@@ -26,8 +26,8 @@ library ECDSA {
     /*                    RECOVERY OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// Note: as of the Solady version v0.0.68, these functions will
-    /// revert upon recovery failure for more safety.
+    // Note: as of the Solady version v0.0.68, these functions will
+    // revert upon recovery failure for more safety.
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the `signature`.
@@ -147,11 +147,11 @@ library ECDSA {
     /*                   TRY-RECOVER OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// WARNING!
-    /// These functions will NOT revert upon recovery failure, and will
-    /// return the zero address instead. As such, it is extremely important
-    /// to ensure that the returned address is never compared against
-    /// a zero address (e.g. an uninitialized address variable).
+    // WARNING!
+    // These functions will NOT revert upon recovery failure.
+    // Instead, they will return the zero address upon recovery failure.
+    // It is critical that the returned address is NEVER compared against
+    // a zero address (e.g. an uninitialized address variable).
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the `signature`.
@@ -287,43 +287,34 @@ library ECDSA {
     /// JSON-RPC method as part of EIP-191.
     function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32 result) {
         assembly {
-            // We need at most 128 bytes for Ethereum signed message header.
-            // The max length of the ASCII reprenstation of a uint256 is 78 bytes.
             // The length of "\x19Ethereum Signed Message:\n" is 26 bytes (i.e. 0x1a).
-            // The next multiple of 32 above 78 + 26 is 128 (i.e. 0x80).
+            // If we reserve 2 words, we'll have 64 - 26 = 38 bytes to store the
+            // ASCII decimal representation of the length of `s` up to about 2 ** 126.
 
-            // Instead of allocating, we temporarily copy the 128 bytes before the
+            // Instead of allocating, we temporarily copy the 64 bytes before the
             // start of `s` data to some variables.
-            let m3 := mload(sub(s, 0x60))
-            let m2 := mload(sub(s, 0x40))
             let m1 := mload(sub(s, 0x20))
             // The length of `s` is in bytes.
             let sLength := mload(s)
-
             let ptr := add(s, 0x20)
-
+            let w := not(0)
             // `end` marks the end of the memory which we will compute the keccak256 of.
             let end := add(ptr, sLength)
-
             // Convert the length of the bytes to ASCII decimal representation
             // and store it into the memory.
             for { let temp := sLength } 1 {} {
-                ptr := sub(ptr, 1)
+                ptr := add(ptr, w) // `sub(ptr, 1)`.
                 mstore8(ptr, add(48, mod(temp, 10)))
                 temp := div(temp, 10)
                 if iszero(temp) { break }
             }
-
             // Copy the header over to the memory.
             mstore(sub(ptr, 0x20), "\x00\x00\x00\x00\x00\x00\x19Ethereum Signed Message:\n")
             // Compute the keccak256 of the memory.
             result := keccak256(sub(ptr, 0x1a), sub(end, sub(ptr, 0x1a)))
-
             // Restore the previous memory.
             mstore(s, sLength)
             mstore(sub(s, 0x20), m1)
-            mstore(sub(s, 0x40), m2)
-            mstore(sub(s, 0x60), m3)
         }
     }
 }
