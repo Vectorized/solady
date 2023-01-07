@@ -17,217 +17,217 @@ library SafeCastLib {
 
     function toUint8(uint256 x) internal pure returns (uint8 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(8, x)))
+            returndatacopy(returndatasize(), returndatasize(), shr(8, x))
             y := x
         }
     }
 
     function toUint16(uint256 x) internal pure returns (uint16 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(16, x)))
+            returndatacopy(returndatasize(), returndatasize(), shr(16, x))
             y := x
         }
     }
 
     function toUint24(uint256 x) internal pure returns (uint24 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(24, x)))
+            returndatacopy(returndatasize(), returndatasize(), shr(24, x))
             y := x
         }
     }
 
     function toUint32(uint256 x) internal pure returns (uint32 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(32, x)))
+            returndatacopy(returndatasize(), returndatasize(), shr(32, x))
             y := x
         }
     }
 
     function toUint40(uint256 x) internal pure returns (uint40 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(40, x)))
+            returndatacopy(returndatasize(), returndatasize(), shr(40, x))
             y := x
         }
     }
 
     function toUint48(uint256 x) internal pure returns (uint48 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(48, x)))
+            returndatacopy(returndatasize(), returndatasize(), shr(48, x))
             y := x
         }
     }
 
     function toUint56(uint256 x) internal pure returns (uint56 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), sub(y, shr(56, x)))
+            returndatacopy(returndatasize(), returndatasize(), shr(56, x))
             y := x
         }
     }
 
     function toUint64(uint256 x) internal pure returns (uint64 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(64, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(64, x))
             y := x
         }
     }
 
     function toUint72(uint256 x) internal pure returns (uint72 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(72, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(72, x))
             y := x
         }
     }
 
     function toUint80(uint256 x) internal pure returns (uint80 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(80, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(80, x))
             y := x
         }
     }
 
     function toUint88(uint256 x) internal pure returns (uint88 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(88, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(88, x))
             y := x
         }
     }
 
     function toUint96(uint256 x) internal pure returns (uint96 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(96, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(96, x))
             y := x
         }
     }
 
     function toUint104(uint256 x) internal pure returns (uint104 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(104, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(104, x))
             y := x
         }
     }
 
     function toUint112(uint256 x) internal pure returns (uint112 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(112, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(112, x))
             y := x
         }
     }
 
     function toUint120(uint256 x) internal pure returns (uint120 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(120, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(120, x))
             y := x
         }
     }
 
     function toUint128(uint256 x) internal pure returns (uint128 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(128, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(128, x))
             y := x
         }
     }
 
     function toUint136(uint256 x) internal pure returns (uint136 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(136, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(136, x))
             y := x
         }
     }
 
     function toUint144(uint256 x) internal pure returns (uint144 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(144, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(144, x))
             y := x
         }
     }
 
     function toUint152(uint256 x) internal pure returns (uint152 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(152, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(152, x))
             y := x
         }
     }
 
     function toUint160(uint256 x) internal pure returns (uint160 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(160, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(160, x))
             y := x
         }
     }
 
     function toUint168(uint256 x) internal pure returns (uint168 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(168, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(168, x))
             y := x
         }
     }
 
     function toUint176(uint256 x) internal pure returns (uint176 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(176, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(176, x))
             y := x
         }
     }
 
     function toUint184(uint256 x) internal pure returns (uint184 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(184, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(184, x))
             y := x
         }
     }
 
     function toUint192(uint256 x) internal pure returns (uint192 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(192, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(192, x))
             y := x
         }
     }
 
     function toUint200(uint256 x) internal pure returns (uint200 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(200, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(200, x))
             y := x
         }
     }
 
     function toUint208(uint256 x) internal pure returns (uint208 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(208, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(208, x))
             y := x
         }
     }
 
     function toUint216(uint256 x) internal pure returns (uint216 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(216, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(216, x))
             y := x
         }
     }
 
     function toUint224(uint256 x) internal pure returns (uint224 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(224, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(224, x))
             y := x
         }
     }
 
     function toUint232(uint256 x) internal pure returns (uint232 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(232, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(232, x))
             y := x
         }
     }
 
     function toUint240(uint256 x) internal pure returns (uint240 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(240, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(240, x))
             y := x
         }
     }
 
     function toUint248(uint256 x) internal pure returns (uint248 y) {
         assembly {
-            returndatacopy(returndatasize(), returndatasize(), and(x, shl(248, not(y))))
+            returndatacopy(returndatasize(), returndatasize(), shr(248, x))
             y := x
         }
     }
