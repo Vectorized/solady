@@ -29,11 +29,9 @@ jobs:
         run: >
           (
             [ "${{ matrix.profile }}" = "solc-past-versions" ] && 
-            FOUNDRY_PROFILE=${{ matrix.profile }} forge test
-          ) || (
             forge test --use 0.8.12 && 
             forge test --use 0.8.13 && 
             forge test --use 0.8.14 && 
             forge test --use 0.8.15 && 
             forge test --use 0.8.16
-          )
+          ) || FOUNDRY_PROFILE=${{ matrix.profile }} forge test
