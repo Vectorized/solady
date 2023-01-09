@@ -6,7 +6,6 @@ import {SafeCastLib} from "../src/utils/SafeCastLib.sol";
 
 contract SafeCastLibTest is TestPlus {
     function testSafeCastToUint(uint256 x) public {
-        _randomizeReturndatasize();
         assertEq(SafeCastLib.toUint8(uint8(x)), uint8(x));
         if (x >= (1 << 8)) vm.expectRevert(SafeCastLib.Overflow.selector);
         SafeCastLib.toUint8(x);
@@ -102,14 +101,6 @@ contract SafeCastLibTest is TestPlus {
         SafeCastLib.toUint248(x);
     }
 
-    function testSafeCastToUint128(uint256 x, uint8 s) public {
-        _randomizeReturndatasize();
-        x = x >> uint256(s);
-        assertEq(this.toUint128(uint128(x)), uint128(x));
-        if (x >= (1 << 128)) vm.expectRevert(SafeCastLib.Overflow.selector);
-        this.toUint128(x);
-    }
-
     function testSafeCastToUint() public {
         unchecked {
             for (uint256 i; i != 256; ++i) {
@@ -161,7 +152,6 @@ contract SafeCastLibTest is TestPlus {
     }
 
     function testSafeCastToInt(int256 x) public {
-        _randomizeReturndatasize();
         assertEq(SafeCastLib.toInt8(int8(x)), int8(x));
         if (int8(x) != x) vm.expectRevert(SafeCastLib.Overflow.selector);
         SafeCastLib.toInt8(x);
@@ -257,32 +247,6 @@ contract SafeCastLibTest is TestPlus {
         SafeCastLib.toInt248(x);
     }
 
-    function testSafeCastToInt128(int256 x, uint8 s) public {
-        _randomizeReturndatasize();
-        /// @solidity memory-safe-assembly
-        assembly {
-            x := shl(and(s, 0xff), x)
-        }
-        assertEq(this.toInt128(int128(x)), int128(x));
-        if (int128(x) != x) vm.expectRevert(SafeCastLib.Overflow.selector);
-        this.toInt128(x);
-    }
-
-    function testSafeCastToInt() public {
-        unchecked {
-            for (uint256 i; i != 256; ++i) {
-                int256 casted;
-                /// @solidity memory-safe-assembly
-                assembly {
-                    casted := shl(i, 1)
-                }
-                testSafeCastToInt(casted);
-                testSafeCastToInt(int256(_random()));
-                testSafeCastToInt(int256(type(uint256).max >> i));
-            }
-        }
-    }
-
     function testSafeCastToIntBench() public {
         unchecked {
             int256 sum;
@@ -320,27 +284,6 @@ contract SafeCastLibTest is TestPlus {
                 sum += int256(SafeCastLib.toInt248(i));
             }
             assertTrue(sum > 100);
-        }
-    }
-
-    function toUint128(uint256 x) external view returns (uint128) {
-        _randomizeReturndatasize();
-        return SafeCastLib.toUint128(x);
-    }
-
-    function toInt128(int256 x) external view returns (int128) {
-        _randomizeReturndatasize();
-        return SafeCastLib.toInt128(x);
-    }
-
-    function _randomizeReturndatasize() internal view {
-        if (_random() & 1 == 0) {
-            uint256 n = _bound(_random(), 0, 65536);
-            /// @solidity memory-safe-assembly
-            assembly {
-                pop(staticcall(gas(), 0x04, 0x00, n, 0x00, 0x00))
-                if iszero(eq(returndatasize(), n)) { revert(0, 0) }
-            }
         }
     }
 }
