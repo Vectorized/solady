@@ -26,13 +26,9 @@ jobs:
         run: forge fmt --check
 
       - name: Run Tests with ${{ matrix.profile }}
-        if: ${{ matrix.profile != 'solc-past-versions' }}
+        if: matrix.profile != 'solc-past-versions'
         run: FOUNDRY_PROFILE=${{ matrix.profile }} forge test
 
       - name: Run Tests with solc v0.8.12 to v0.8.16
-        if: ${{ matrix.profile == 'solc-past-versions' }}
-        run: forge test --use 0.8.12 && \
-        forge test --use 0.8.13 && \
-        forge test --use 0.8.14 && \
-        forge test --use 0.8.15 && \
-        forge test --use 0.8.16
+        if: matrix.profile == 'solc-past-versions'
+        run: forge test --use 0.8.12 && forge test --use 0.8.13 && forge test --use 0.8.14 && forge test --use 0.8.15 && forge test --use 0.8.16
