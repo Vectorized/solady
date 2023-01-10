@@ -7,13 +7,13 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/EIP712.sol)
 abstract contract EIP712 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                   OPERATIONS TO OVERRIDE                   */
+    /*                   FUNCTIONS TO OVERRIDE                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Please override this function to return the keccak256 of the domain name.
     /// ```
     ///     function _domainNameHash() internal pure override returns (bytes32) {
-    ///         return keccak256(bytes("Solady"));
+    ///         return keccak256("Solady");
     ///     }
     /// ```
     function _domainNameHash() internal pure virtual returns (bytes32);
@@ -21,7 +21,7 @@ abstract contract EIP712 {
     /// @dev Please override this function to return the keccak256 of the domain version.
     /// ```
     ///     function _domainVersionHash() internal pure override returns (bytes32) {
-    ///         return keccak256(bytes("1"));
+    ///         return keccak256("1");
     ///     }
     /// ```
     function _domainVersionHash() internal pure virtual returns (bytes32);
