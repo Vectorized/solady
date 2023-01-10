@@ -39,7 +39,7 @@ abstract contract EIP712 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the EIP-712 domain separator.
-    function _domainSeparator() internal view returns (bytes32 separator) {
+    function _domainSeparator() internal view virtual returns (bytes32 separator) {
         bytes32 domainNameHash = _domainNameHash();
         bytes32 domainVersionHash = _domainVersionHash();
         /// @solidity memory-safe-assembly
@@ -67,7 +67,7 @@ abstract contract EIP712 {
     ///     )));
     ///     address signer = ECDSA.recover(digest, signature);
     /// ```
-    function _hashTypedData(bytes32 structHash) internal view returns (bytes32 digest) {
+    function _hashTypedData(bytes32 structHash) internal view virtual returns (bytes32 digest) {
         bytes32 domainNameHash = _domainNameHash();
         bytes32 domainVersionHash = _domainVersionHash();
         /// @solidity memory-safe-assembly
