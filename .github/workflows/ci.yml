@@ -12,6 +12,8 @@ jobs:
         profile: [via-ir,min-solc,min-solc-via-ir,intense,solc-past-versions]
 
     steps:
+      - uses: actions/checkout@v3
+
       - name: Install Foundry
         uses: onbjerg/foundry-toolchain@v1
         with:
