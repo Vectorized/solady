@@ -18,6 +18,7 @@ utils
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
 ├─ ECDSA — "Library for verification of ECDSA signatures"
+├─ EIP712 — "Contract for EIP-712 typed structured data hashing and signing"
 ├─ LibSort — "Library for efficient sorting of memory arrays"
 ├─ LibPRNG — "Library for generating psuedorandom numbers"
 ├─ Base64 — "Library for Base64 encoding and decoding"
