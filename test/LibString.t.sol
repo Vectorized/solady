@@ -292,6 +292,50 @@ contract LibStringTest is TestPlus {
         assertEq(withPrefix, expectedResult);
     }
 
+    function testBytesToHexStringNoPrefix() public {
+        assertEq(LibString.toHexStringNoPrefix(""), "");
+        assertEq(LibString.toHexStringNoPrefix("A"), "41");
+        assertEq(
+            LibString.toHexStringNoPrefix("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+            "4142434445464748494a4b4c4d4e4f505152535455565758595a"
+        );
+    }
+
+    function testBytesToHexStringNoPrefix(bytes memory raw) public brutalizeMemory {
+        string memory converted = LibString.toHexStringNoPrefix(raw);
+        _checkMemory(converted);
+        unchecked {
+            bytes memory hexChars = "0123456789abcdef";
+            for (uint256 i; i != raw.length; ++i) {
+                uint256 t = uint8(bytes1(raw[i]));
+                assertTrue(hexChars[t & 15] == bytes(converted)[i * 2 + 1]);
+                assertTrue(hexChars[(t >> 4) & 15] == bytes(converted)[i * 2]);
+            }
+        }
+    }
+
+    function testBytesToHexString() public {
+        assertEq(LibString.toHexString(""), "0x");
+        assertEq(LibString.toHexString("A"), "0x41");
+        assertEq(
+            LibString.toHexString("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+            "0x4142434445464748494a4b4c4d4e4f505152535455565758595a"
+        );
+    }
+
+    function testBytesToHexString(bytes memory raw) public brutalizeMemory {
+        string memory converted = LibString.toHexString(raw);
+        _checkMemory(converted);
+        unchecked {
+            bytes memory hexChars = "0123456789abcdef";
+            for (uint256 i; i != raw.length; ++i) {
+                uint256 t = uint8(bytes1(raw[i]));
+                assertTrue(hexChars[t & 15] == bytes(converted)[i * 2 + 1 + 2]);
+                assertTrue(hexChars[(t >> 4) & 15] == bytes(converted)[i * 2 + 2]);
+            }
+        }
+    }
+
     function testStringRuneCountDifferential(string memory s) public {
         assertEq(LibString.runeCount(s), _runeCountOriginal(s));
     }
