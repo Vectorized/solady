@@ -7,6 +7,14 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/EIP712.sol)
 abstract contract EIP712 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
+    bytes32 internal constant _DOMAIN_TYPEHASH =
+        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   FUNCTIONS TO OVERRIDE                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -37,9 +45,7 @@ abstract contract EIP712 {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Load the free memory pointer.
-            // Store the domain type hash.
-            // `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
-            mstore(m, 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f)
+            mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), domainNameHash)
             mstore(add(m, 0x40), domainVersionHash)
             mstore(add(m, 0x60), chainid())
@@ -67,17 +73,15 @@ abstract contract EIP712 {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Load the free memory pointer.
-            // Compute the domain type hash.
-            // `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
-            mstore(m, 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f)
+            mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), domainNameHash)
             mstore(add(m, 0x40), domainVersionHash)
             mstore(add(m, 0x60), chainid())
             mstore(add(m, 0x80), address())
             // Compute the digest.
-            mstore(0x00, 0x1901001122334455)
-            mstore(0x1a, keccak256(m, 0xa0))
-            mstore(0x3a, structHash)
+            mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
+            mstore(0x1a, keccak256(m, 0xa0)) // Store the domain separator.
+            mstore(0x3a, structHash) // Store the struct hash.
             digest := keccak256(0x18, 0x42)
             // Restore the part of the free memory slot that was overwritten.
             mstore(0x3a, 0)
