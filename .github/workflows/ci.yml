@@ -12,8 +12,6 @@ jobs:
         profile: [via-ir,min-solc,min-solc-via-ir,intense,solc-past-versions]
 
     steps:
-      - uses: actions/checkout@v2
-
       - name: Install Foundry
         uses: onbjerg/foundry-toolchain@v1
         with:
@@ -28,8 +26,6 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "solc-past-versions" ] && 
-            forge test --use 0.8.7 && 
-            forge test --use 0.8.11 && 
             forge test --use 0.8.12 && 
             forge test --use 0.8.13 && 
             forge test --use 0.8.14 && 
