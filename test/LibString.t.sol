@@ -434,6 +434,7 @@ contract LibStringTest is TestPlus {
         string memory filler0 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString("abcdefghijklmnopqrstuvwxyz");
+        _roundUpFreeMemoryPointer();
 
         string memory subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
 
