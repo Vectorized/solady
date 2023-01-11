@@ -189,7 +189,7 @@ library SafeTransferLib {
             mstore(0x1a, to) // Store the `to` argument.
             mstore(0x3a, amount) // Store the `amount` argument.
             // Store the function selector of `transfer(address,uint256)`,
-            // left by 6 bytes (enough for 8tb of memory).
+            // left by 6 bytes (enough for 8tb of memory represented by the free memory pointer).
             // We waste 6-3 = 3 bytes to save on 6 runtime gas (PUSH1 0x224 SHL).
             mstore(0x00, 0xa9059cbb000000000000)
 
@@ -223,7 +223,7 @@ library SafeTransferLib {
             mstore(0x1a, to) // Store the `to` argument.
             mstore(0x3a, amount) // Store the `amount` argument.
             // Store the function selector of `approve(address,uint256)`,
-            // left by 6 bytes (enough for 8tb of memory).
+            // left by 6 bytes (enough for 8tb of memory represented by the free memory pointer).
             // We waste 6-3 = 3 bytes to save on 6 runtime gas (PUSH1 0x224 SHL).
             mstore(0x00, 0x095ea7b3000000000000)
 
