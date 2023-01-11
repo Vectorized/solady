@@ -151,8 +151,7 @@ library SafeTransferLib {
     function safeTransferFrom(address token, address from, address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            // We'll write our calldata to this slot below, but restore it later.
-            let memPointer := mload(0x40)
+            let m := mload(0x40) // Cache the free memory pointer.
 
             // Store the function selector of `transferFrom(address,address,uint256)`.
             mstore(0x00, 0x23b872dd)
@@ -178,7 +177,7 @@ library SafeTransferLib {
             }
 
             mstore(0x60, 0) // Restore the zero slot to zero.
-            mstore(0x40, memPointer) // Restore the memPointer.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -187,8 +186,8 @@ library SafeTransferLib {
     function safeTransfer(address token, address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x3a, amount) // Store the `amount` argument.
             mstore(0x1a, to) // Store the `to` argument.
+            mstore(0x3a, amount) // Store the `amount` argument.
             // Store the function selector of `transfer(address,uint256)`,
             // left by 6 bytes (enough for 8tb of memory).
             // We waste 6-3 = 3 bytes to save on 6 runtime gas (PUSH1 0x224 SHL).
@@ -221,8 +220,8 @@ library SafeTransferLib {
     function safeApprove(address token, address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x3a, amount) // Store the `amount` argument.
             mstore(0x1a, to) // Store the `to` argument.
+            mstore(0x3a, amount) // Store the `amount` argument.
             // Store the function selector of `approve(address,uint256)`,
             // left by 6 bytes (enough for 8tb of memory).
             // We waste 6-3 = 3 bytes to save on 6 runtime gas (PUSH1 0x224 SHL).
