@@ -151,14 +151,13 @@ library SafeTransferLib {
     function safeTransferFrom(address token, address from, address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            // We'll write our calldata to this slot below, but restore it later.
-            let memPointer := mload(0x40)
+            let m := mload(0x40) // Cache the free memory pointer.
 
-            // Write the abi-encoded calldata into memory, beginning with the function selector.
+            // Store the function selector of `transferFrom(address,address,uint256)`.
             mstore(0x00, 0x23b872dd)
-            mstore(0x20, from) // Append the "from" argument.
-            mstore(0x40, to) // Append the "to" argument.
-            mstore(0x60, amount) // Append the "amount" argument.
+            mstore(0x20, from) // Store the `from` argument.
+            mstore(0x40, to) // Store the `to` argument.
+            mstore(0x60, amount) // Store the `amount` argument.
 
             if iszero(
                 and(
@@ -178,7 +177,7 @@ library SafeTransferLib {
             }
 
             mstore(0x60, 0) // Restore the zero slot to zero.
-            mstore(0x40, memPointer) // Restore the memPointer.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -187,13 +186,12 @@ library SafeTransferLib {
     function safeTransfer(address token, address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            // We'll write our calldata to this slot below, but restore it later.
-            let memPointer := mload(0x40)
-
-            // Write the abi-encoded calldata into memory, beginning with the function selector.
-            mstore(0x00, 0xa9059cbb)
-            mstore(0x20, to) // Append the "to" argument.
-            mstore(0x40, amount) // Append the "amount" argument.
+            mstore(0x1a, to) // Store the `to` argument.
+            mstore(0x3a, amount) // Store the `amount` argument.
+            // Store the function selector of `transfer(address,uint256)`,
+            // left by 6 bytes (enough for 8tb of memory represented by the free memory pointer).
+            // We waste 6-3 = 3 bytes to save on 6 runtime gas (PUSH1 0x224 SHL).
+            mstore(0x00, 0xa9059cbb000000000000)
 
             if iszero(
                 and(
@@ -203,7 +201,7 @@ library SafeTransferLib {
                     // We use 0x44 because that's the total length of our calldata (0x04 + 0x20 * 2)
                     // Counterintuitively, this call() must be positioned after the or() in the
                     // surrounding and() because and() evaluates its arguments from right to left.
-                    call(gas(), token, 0, 0x1c, 0x44, 0x00, 0x20)
+                    call(gas(), token, 0, 0x16, 0x44, 0x00, 0x20)
                 )
             ) {
                 // Store the function selector of `TransferFailed()`.
@@ -211,8 +209,9 @@ library SafeTransferLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-
-            mstore(0x40, memPointer) // Restore the memPointer.
+            // Restore the part of the free memory pointer that was overwritten,
+            // which is guaranteed to be zero, if less than 8tb of memory is used.
+            mstore(0x3a, 0)
         }
     }
 
@@ -221,13 +220,12 @@ library SafeTransferLib {
     function safeApprove(address token, address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            // We'll write our calldata to this slot below, but restore it later.
-            let memPointer := mload(0x40)
-
-            // Write the abi-encoded calldata into memory, beginning with the function selector.
-            mstore(0x00, 0x095ea7b3)
-            mstore(0x20, to) // Append the "to" argument.
-            mstore(0x40, amount) // Append the "amount" argument.
+            mstore(0x1a, to) // Store the `to` argument.
+            mstore(0x3a, amount) // Store the `amount` argument.
+            // Store the function selector of `approve(address,uint256)`,
+            // left by 6 bytes (enough for 8tb of memory represented by the free memory pointer).
+            // We waste 6-3 = 3 bytes to save on 6 runtime gas (PUSH1 0x224 SHL).
+            mstore(0x00, 0x095ea7b3000000000000)
 
             if iszero(
                 and(
@@ -237,7 +235,7 @@ library SafeTransferLib {
                     // We use 0x44 because that's the total length of our calldata (0x04 + 0x20 * 2)
                     // Counterintuitively, this call() must be positioned after the or() in the
                     // surrounding and() because and() evaluates its arguments from right to left.
-                    call(gas(), token, 0, 0x1c, 0x44, 0x00, 0x20)
+                    call(gas(), token, 0, 0x16, 0x44, 0x00, 0x20)
                 )
             ) {
                 // Store the function selector of `ApproveFailed()`.
@@ -245,8 +243,9 @@ library SafeTransferLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-
-            mstore(0x40, memPointer) // Restore the memPointer.
+            // Restore the part of the free memory pointer that was overwritten,
+            // which is guaranteed to be zero, if less than 8tb of memory is used.
+            mstore(0x3a, 0)
         }
     }
 }
