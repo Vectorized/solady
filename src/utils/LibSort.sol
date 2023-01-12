@@ -22,16 +22,17 @@ library LibSort {
             mstore(a, 0) // For insertion sort's inner loop to terminate.
             let h := add(a, shl(5, n)) // High slot.
             let s := 0x20
+            let w := not(31)
             for { let i := add(a, s) } 1 {} {
                 i := add(i, s)
                 if gt(i, h) { break }
                 let k := mload(i) // Key.
-                let j := sub(i, s) // The slot before the current slot.
+                let j := add(i, w) // The slot before the current slot.
                 let v := mload(j) // The value of `j`.
                 if iszero(gt(v, k)) { continue }
                 for {} 1 {} {
                     mstore(add(j, s), v)
-                    j := sub(j, s)
+                    j := add(j, w) // `sub(j, 0x20)`.
                     v := mload(j)
                     if iszero(gt(v, k)) { break }
                 }
@@ -90,7 +91,7 @@ library LibSort {
 
                 j := h
                 // forgefmt: disable-next-item
-                for {} iszero(or(eq(j, l), gt(mload(j), mload(add(j, w))))) {} {
+                for {} iszero(gt(mload(j), mload(add(j, w)))) {} {
                     j := add(j, w) // `sub(j, 0x20)`.
                 }
                 // If the array is reversed sorted.
@@ -300,12 +301,13 @@ library LibSort {
         assembly {
             if iszero(lt(mload(a), 2)) {
                 let s := 0x20
+                let w := not(31)
                 let h := add(a, shl(5, mload(a)))
                 for { a := add(a, s) } 1 {} {
                     let t := mload(a)
                     mstore(a, mload(h))
                     mstore(h, t)
-                    h := sub(h, s)
+                    h := add(h, w)
                     a := add(a, s)
                     if iszero(lt(a, h)) { break }
                 }
