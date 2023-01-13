@@ -45,10 +45,11 @@ library Base64 {
                     let input := mload(data)
 
                     // Write 4 bytes. Optimized for fewer stack operations.
-                    mstore8(ptr, mload(and(shr(18, input), 0x3F)))
-                    mstore8(add(ptr, 1), mload(and(shr(12, input), 0x3F)))
-                    mstore8(add(ptr, 2), mload(and(shr(6, input), 0x3F)))
-                    mstore8(add(ptr, 3), mload(and(input, 0x3F)))
+                    mstore8(0, mload(and(shr(18, input), 0x3F)))
+                    mstore8(1, mload(and(shr(12, input), 0x3F)))
+                    mstore8(2, mload(and(shr(6, input), 0x3F)))
+                    mstore8(3, mload(and(input, 0x3F)))
+                    mstore(ptr, mload(0x00))
 
                     ptr := add(ptr, 4) // Advance 4 bytes.
 
