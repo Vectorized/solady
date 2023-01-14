@@ -263,6 +263,10 @@ contract SafeTransferLibTest is TestPlus {
         verifySafeApprove(address(returnsTooLittle), address(0xBEEF), 1e18, REVERTS_WITH_SELECTOR);
     }
 
+    function testBalanceOfStandardERC20() public view {
+        erc20.balanceOf(address(this));
+    }
+
     function testFuzzBalanceOfStandardERC20(address to, uint256 amount) public {
         uint256 originalBalance = erc20.balanceOf(address(this));
         vm.assume(originalBalance >= amount);
@@ -270,6 +274,12 @@ contract SafeTransferLibTest is TestPlus {
 
         SafeTransferLib.safeTransfer(address(erc20), to, originalBalance - amount);
         assertEq(SafeTransferLib.balanceOf(address(erc20), address(this)), amount);
+
+        assertEq(SafeTransferLib.balanceOf(address(0), address(this)), 0);
+    }
+
+    function testTransferAllWithStandardERC20() public {
+        SafeTransferLib.safeTransferAll(address(erc20), address(1));
     }
 
     function testFuzzTransferAllWithStandardERC20(address to, uint256 amount) public {
@@ -284,6 +294,11 @@ contract SafeTransferLibTest is TestPlus {
 
         assertEq(erc20.balanceOf(address(this)), 0);
         assertEq(erc20.balanceOf(to), originalBalance);
+    }
+
+    function testTransferAllFromWithStandardERC20() public {
+        forceApprove(address(erc20), address(this), address(this), type(uint256).max);
+        SafeTransferLib.safeTransferAllFrom(address(erc20), address(this), address(1));
     }
 
     function testFuzzTransferAllFromWithStandardERC20(address to, address from, uint256 amount)

@@ -194,7 +194,7 @@ library SafeTransferLib {
             mstore(0x00, 0x70a08231) // Store the function selector of `balanceOf(address)`.
             mstore(0x20, from) // Store the `from` argument.
             if iszero(
-                and(eq(returndatasize(), 0x20), staticcall(gas(), token, 0x1c, 0x24, 0x60, 0x20))
+                and(gt(returndatasize(), 0x1f), staticcall(gas(), token, 0x1c, 0x24, 0x60, 0x20))
             ) {
                 // Store the function selector of `TransferFromFailed()`.
                 mstore(0x00, 0x7939f424)
@@ -205,6 +205,8 @@ library SafeTransferLib {
             // Store the function selector of `transferFrom(address,address,uint256)`.
             mstore(0x00, 0x23b872dd)
             mstore(0x40, to) // Store the `to` argument.
+            // The `amount` argument is already written to the memory word at 0x6a.
+            amount := mload(0x60)
 
             if iszero(
                 and(
@@ -219,8 +221,6 @@ library SafeTransferLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            // The `amount` argument is already written to the memory word at 0x6a.
-            amount := mload(0x60)
 
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
@@ -266,7 +266,7 @@ library SafeTransferLib {
             mstore(0x00, 0x70a08231) // Store the function selector of `balanceOf(address)`.
             mstore(0x20, address()) // Store the address of the current contract.
             if iszero(
-                and(eq(returndatasize(), 0x20), staticcall(gas(), token, 0x1c, 0x24, 0x3a, 0x20))
+                and(gt(returndatasize(), 0x1f), staticcall(gas(), token, 0x1c, 0x24, 0x3a, 0x20))
             ) {
                 // Store the function selector of `TransferFailed()`.
                 mstore(0x00, 0x90b8ec18)
@@ -275,6 +275,8 @@ library SafeTransferLib {
             }
 
             mstore(0x1a, to) // Store the `to` argument.
+            // The `amount` argument is already written to the memory word at 0x3a.
+            amount := mload(0x3a)
             // Store the function selector of `transfer(address,uint256)`,
             // left by 6 bytes (enough for 8tb of memory represented by the free memory pointer).
             // We waste 6-3 = 3 bytes to save on 6 runtime gas (PUSH1 0x224 SHL).
@@ -293,8 +295,6 @@ library SafeTransferLib {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            // The `amount` argument is already written to the memory word at 0x3a.
-            amount := mload(0x3a)
             // Restore the part of the free memory pointer that was overwritten,
             // which is guaranteed to be zero, if less than 8tb of memory is used.
             mstore(0x3a, 0)
@@ -342,7 +342,7 @@ library SafeTransferLib {
             amount :=
                 mul(
                     mload(0x20),
-                    and(eq(returndatasize(), 0x20), staticcall(gas(), token, 0x1c, 0x24, 0x20, 0x20))
+                    and(gt(returndatasize(), 0x1f), staticcall(gas(), token, 0x1c, 0x24, 0x20, 0x20))
                 )
         }
     }
