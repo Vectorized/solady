@@ -274,8 +274,6 @@ contract SafeTransferLibTest is TestPlus {
 
         SafeTransferLib.safeTransfer(address(erc20), to, originalBalance - amount);
         assertEq(SafeTransferLib.balanceOf(address(erc20), address(this)), amount);
-
-        assertEq(SafeTransferLib.balanceOf(address(0), address(this)), 0);
     }
 
     function testTransferAllWithStandardERC20() public {

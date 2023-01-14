@@ -194,7 +194,10 @@ library SafeTransferLib {
             mstore(0x00, 0x70a08231) // Store the function selector of `balanceOf(address)`.
             mstore(0x20, from) // Store the `from` argument.
             if iszero(
-                and(gt(returndatasize(), 0x1f), staticcall(gas(), token, 0x1c, 0x24, 0x60, 0x20))
+                and(
+                    gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                    staticcall(gas(), token, 0x1c, 0x24, 0x60, 0x20)
+                )
             ) {
                 // Store the function selector of `TransferFromFailed()`.
                 mstore(0x00, 0x7939f424)
@@ -266,7 +269,10 @@ library SafeTransferLib {
             mstore(0x00, 0x70a08231) // Store the function selector of `balanceOf(address)`.
             mstore(0x20, address()) // Store the address of the current contract.
             if iszero(
-                and(gt(returndatasize(), 0x1f), staticcall(gas(), token, 0x1c, 0x24, 0x3a, 0x20))
+                and(
+                    gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                    staticcall(gas(), token, 0x1c, 0x24, 0x3a, 0x20)
+                )
             ) {
                 // Store the function selector of `TransferFailed()`.
                 mstore(0x00, 0x90b8ec18)
@@ -342,7 +348,10 @@ library SafeTransferLib {
             amount :=
                 mul(
                     mload(0x20),
-                    and(gt(returndatasize(), 0x1f), staticcall(gas(), token, 0x1c, 0x24, 0x20, 0x20))
+                    and(
+                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                        staticcall(gas(), token, 0x1c, 0x24, 0x20, 0x20)
+                    )
                 )
         }
     }
