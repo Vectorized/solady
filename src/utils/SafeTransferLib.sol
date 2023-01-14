@@ -78,9 +78,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 // We can directly use `SELFDESTRUCT` in the contract creation.
-                // We don't check and revert upon failure here, just in case
-                // `SELFDESTRUCT`'s behavior is changed some day in the future.
-                // (If that ever happens, we will riot, and port the code to use WETH).
+                // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 pop(create(amount, 0x0b, 0x16))
             }
         }
@@ -112,9 +110,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 // We can directly use `SELFDESTRUCT` in the contract creation.
-                // We don't check and revert upon failure here, just in case
-                // `SELFDESTRUCT`'s behavior is changed some day in the future.
-                // (If that ever happens, we will riot, and port the code to use WETH).
+                // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 pop(create(amount, 0x0b, 0x16))
             }
         }
@@ -160,7 +156,7 @@ library SafeTransferLib {
             mstore(0x60, amount) // Store the `amount` argument.
 
             if iszero(
-                and(
+                and( // The arguments of `and` are evaluated from right to left.
                     // Set success to whether the call reverted, if not we check it either
                     // returned exactly 1 (can't just be non-zero data), or had no return data.
                     or(eq(mload(0x00), 1), iszero(returndatasize())),
@@ -194,7 +190,7 @@ library SafeTransferLib {
             mstore(0x00, 0x70a08231) // Store the function selector of `balanceOf(address)`.
             mstore(0x20, from) // Store the `from` argument.
             if iszero(
-                and(
+                and( // The arguments of `and` are evaluated from right to left.
                     gt(returndatasize(), 0x1f), // At least 32 bytes returned.
                     staticcall(gas(), token, 0x1c, 0x24, 0x60, 0x20)
                 )
@@ -212,7 +208,7 @@ library SafeTransferLib {
             amount := mload(0x60)
 
             if iszero(
-                and(
+                and( // The arguments of `and` are evaluated from right to left.
                     // Set success to whether the call reverted, if not we check it either
                     // returned exactly 1 (can't just be non-zero data), or had no return data.
                     or(eq(mload(0x00), 1), iszero(returndatasize())),
@@ -243,7 +239,7 @@ library SafeTransferLib {
             mstore(0x00, 0xa9059cbb000000000000)
 
             if iszero(
-                and(
+                and( // The arguments of `and` are evaluated from right to left.
                     // Set success to whether the call reverted, if not we check it either
                     // returned exactly 1 (can't just be non-zero data), or had no return data.
                     or(eq(mload(0x00), 1), iszero(returndatasize())),
@@ -269,7 +265,7 @@ library SafeTransferLib {
             mstore(0x00, 0x70a08231) // Store the function selector of `balanceOf(address)`.
             mstore(0x20, address()) // Store the address of the current contract.
             if iszero(
-                and(
+                and( // The arguments of `and` are evaluated from right to left.
                     gt(returndatasize(), 0x1f), // At least 32 bytes returned.
                     staticcall(gas(), token, 0x1c, 0x24, 0x3a, 0x20)
                 )
@@ -289,7 +285,7 @@ library SafeTransferLib {
             mstore(0x00, 0xa9059cbb000000000000)
 
             if iszero(
-                and(
+                and( // The arguments of `and` are evaluated from right to left.
                     // Set success to whether the call reverted, if not we check it either
                     // returned exactly 1 (can't just be non-zero data), or had no return data.
                     or(eq(mload(0x00), 1), iszero(returndatasize())),
@@ -320,7 +316,7 @@ library SafeTransferLib {
             mstore(0x00, 0x095ea7b3000000000000)
 
             if iszero(
-                and(
+                and( // The arguments of `and` are evaluated from right to left.
                     // Set success to whether the call reverted, if not we check it either
                     // returned exactly 1 (can't just be non-zero data), or had no return data.
                     or(eq(mload(0x00), 1), iszero(returndatasize())),
@@ -348,7 +344,7 @@ library SafeTransferLib {
             amount :=
                 mul(
                     mload(0x20),
-                    and(
+                    and( // The arguments of `and` are evaluated from right to left.
                         gt(returndatasize(), 0x1f), // At least 32 bytes returned.
                         staticcall(gas(), token, 0x1c, 0x24, 0x20, 0x20)
                     )
