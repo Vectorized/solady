@@ -26,8 +26,8 @@ library ECDSA {
     /*                    RECOVERY OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: as of the Solady version v0.0.68, these functions will
-    // revert upon recovery failure for more safety.
+    // Note: as of Solady version 0.0.68, these functions will
+    // revert upon recovery failure for more safety by default.
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the `signature`.
@@ -293,7 +293,7 @@ library ECDSA {
 
             // Instead of allocating, we temporarily copy the 64 bytes before the
             // start of `s` data to some variables.
-            let m1 := mload(sub(s, 0x20))
+            let m := mload(sub(s, 0x20))
             // The length of `s` is in bytes.
             let sLength := mload(s)
             let ptr := add(s, 0x20)
@@ -314,7 +314,7 @@ library ECDSA {
             result := keccak256(sub(ptr, 0x1a), sub(end, sub(ptr, 0x1a)))
             // Restore the previous memory.
             mstore(s, sLength)
-            mstore(sub(s, 0x20), m1)
+            mstore(sub(s, 0x20), m)
         }
     }
 }
