@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for managing a minimum heap in storage.
+/// @notice Library for managing a min-heap in storage.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibHeap.sol)
 library LibHeap {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -23,6 +23,12 @@ library LibHeap {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Tips:
+    // - To use as a max-map, simply negate the input and output values.
+    // - If use on tuples, simply pack the tuple values into a single integer.
+    // - To use on signed integers, convert the signed integers into
+    //   their ordered unsigned counterparts via `uint256(x) + (1 << 255)`.
 
     /// @dev Returns the minimum value of the heap.
     /// Reverts if the heap is empty.
@@ -69,6 +75,8 @@ library LibHeap {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Helper function for heap operations.
+    /// Designed for code conciseness, bytecode compactness, and decent performance.
     function _set(Heap storage heap, uint256 value, uint256 maxLength, uint256 mode)
         private
         returns (bool success, bool hasPopped, uint256 popped)
@@ -170,6 +178,7 @@ library LibHeap {
                 sstore(add(sOffset, pos), parent)
                 pos := parentPos
             }
+
             // If `childPos` is not `not(0)`.
             if add(childPos, 1) { sstore(add(sOffset, pos), value) }
         }
