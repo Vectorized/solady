@@ -57,7 +57,12 @@ library LibHeap {
     /// @dev Pops the minimum value from the min-heap.
     /// Reverts if the heap is empty.
     function pop(Heap storage heap) internal returns (uint256 popped) {
-        (,, popped) = _set(heap, 0, 0, 0);
+        (,, popped) = _set(heap, 0, 0, 3);
+    }
+
+    /// @dev Pushes the `value` onto the min-heap, and pops the minimum value.
+    function pushPop(Heap storage heap, uint256 value) internal returns (uint256 popped) {
+        (,, popped) = _set(heap, value, 0, 2);
     }
 
     /// @dev Pops the minimum value, and pushes the new `value` onto the min-heap.
@@ -66,9 +71,24 @@ library LibHeap {
         (,, popped) = _set(heap, value, 0, 1);
     }
 
-    /// @dev Pushes the `value` onto the min-heap, and pops the minimum value.
-    function pushPop(Heap storage heap, uint256 value) internal returns (uint256 popped) {
-        (,, popped) = _set(heap, value, 0, 2);
+    /// @dev Pushes the `value` onto the min-heap, and pops the minimum value
+    /// if the length of the heap exceeds `maxLength`.
+    ///
+    /// Reverts if `maxLength` is zero.
+    ///
+    /// - If the queue is not full:
+    ///   (`success` = true, `hasPopped` = false, `popped` = 0)
+    /// - If the queue is full, and `value` is not greater than the minimum value:
+    ///   (`success` = false, `hasPopped` = false, `popped` = 0)
+    /// - If the queue is full, and `value` is greater than the minimum value:
+    ///   (`success` = true, `hasPopped` = true, `popped` = <minimum value>)
+    ///
+    /// Useful for implementing a bounded priority queue.
+    function enqueue(Heap storage heap, uint256 value, uint256 maxLength)
+        internal
+        returns (bool success, bool hasPopped, uint256 popped)
+    {
+        (success, hasPopped, popped) = _set(heap, value, maxLength, 0);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -90,12 +110,13 @@ library LibHeap {
 
             let pos := 0
             let childPos := not(0)
+            // Operations are ordered from most likely usage to least likely usage.
             for {} 1 {
                 mstore(0x00, 0xa6ca772e) // Store the function selector of `HeapIsEmpty()`.
                 revert(0x1c, 0x04) // Revert with (offset, size).
             } {
-                if eq(mode, 3) {
-                    // Enqueue Min.
+                // `enqueue`.
+                if iszero(mode) {
                     if iszero(maxLength) { continue }
                     if iszero(eq(n, maxLength)) {
                         // If queue is not full.
@@ -116,23 +137,27 @@ library LibHeap {
                     }
                     break
                 }
-                if eq(mode, 4) {
-                    // Push.
-                    // Increment and update the length.
-                    pos := n
-                    sstore(heap.slot, add(pos, 1))
-                    childPos := add(childPos, childPos)
-                    break
-                }
+                // `replace`.
                 if eq(mode, 1) {
-                    // Replace.
                     if iszero(n) { continue }
                     popped := sload(sOffset)
                     childPos := 1
                     break
                 }
-                if iszero(mode) {
-                    // Pop.
+                // `pushPop`.
+                if eq(mode, 2) {
+                    popped := value
+                    if n {
+                        let r := sload(sOffset)
+                        if lt(r, value) {
+                            popped := r
+                            childPos := 1
+                        }
+                    }
+                    break
+                }
+                // `pop`.
+                if eq(mode, 3) {
                     if iszero(n) { continue }
                     // Decrement and update the length.
                     n := sub(n, 1)
@@ -146,16 +171,14 @@ library LibHeap {
                     }
                     break
                 }
-                // Push pop.
-                popped := value
-                if n {
-                    let r := sload(sOffset)
-                    if lt(r, value) {
-                        popped := r
-                        childPos := 1
-                    }
+                // `push`.
+                {
+                    // Increment and update the length.
+                    pos := n
+                    sstore(heap.slot, add(pos, 1))
+                    childPos := add(childPos, childPos)
+                    break
                 }
-                break
             }
 
             for {} lt(childPos, n) {} {
