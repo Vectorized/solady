@@ -434,9 +434,10 @@ contract LibStringTest is TestPlus {
         string memory filler0 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString("abcdefghijklmnopqrstuvwxyz");
-        _roundUpFreeMemoryPointer();
 
-        string memory subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
+        // Somehow, `string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)))`
+        // causes the test to fail for high fuzz runs.
+        string memory subject = string(abi.encodePacked(filler0, search, filler1));
 
         uint256 from = _generateFrom(subject);
 
