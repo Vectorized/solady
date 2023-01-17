@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import "./utils/TestPlus.sol";
 import {LibHeap} from "../src/utils/LibHeap.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
-import {LibString} from "../src/utils/LibString.sol";
 
 contract LibHeapTest is TestPlus {
     using LibHeap for LibHeap.Heap;
