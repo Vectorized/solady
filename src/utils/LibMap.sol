@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for mapping integers to pack integers.
+/// @notice Library for mapping integers to packed integers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibMap.sol)
 library LibMap {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
