@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./LibBit.sol";
 
-/// @notice Efficient bitmap library for mapping integers to single bit booleans.
+/// @notice Library for storage of packed unsigned booleans.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibBitmap.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibBitmap.sol)
 /// @author Modified from Solidity-Bits (https://github.com/estarriolvetch/solidity-bits/blob/main/contracts/BitMaps.sol)
