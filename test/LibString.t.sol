@@ -432,11 +432,12 @@ contract LibStringTest is TestPlus {
 
     function testStringIndexOf(uint256) public brutalizeMemory {
         string memory filler0 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        string memory filler1 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory filler1 =
+            _random() % 2 == 0 ? filler0 : _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString("abcdefghijklmnopqrstuvwxyz");
         _roundUpFreeMemoryPointer();
 
-        string memory subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
+        string memory subject = LibString.concat(LibString.concat(filler0, search), filler1);
 
         uint256 from = _generateFrom(subject);
 
@@ -1231,7 +1232,7 @@ contract LibStringTest is TestPlus {
         r = _random() % 256;
         if (r < 64) return _random() % 128;
         if (r < 128) return _random() % 64;
-        return _random() % 16;
+        return _random() % 8;
     }
 
     function _stringArraysAreSame(string[] memory a, string[] memory b)
