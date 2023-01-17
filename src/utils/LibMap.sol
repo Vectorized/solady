@@ -43,7 +43,7 @@ library LibMap {
         assembly {
             mstore(0x20, map.slot)
             mstore(0x00, shr(5, index))
-            result := byte(and(index, 0x1f), sload(keccak256(0x00, 0x40)))
+            result := byte(xor(31, and(index, 0x1f)), sload(keccak256(0x00, 0x40)))
         }
     }
 
@@ -53,12 +53,10 @@ library LibMap {
         assembly {
             mstore(0x20, map.slot)
             mstore(0x00, shr(5, index))
-            let storageSlot := keccak256(0x00, 0x40)
-            // Store the value into the 0x00 slot.
-            mstore(0x00, sload(storageSlot))
-            // And abuse `mstore8` to directly set the byte.
-            mstore8(and(index, 0x1f), value)
-            sstore(storageSlot, mload(0x00))
+            let s := keccak256(0x00, 0x40) // Storage slot.
+            mstore(0x00, sload(s))
+            mstore8(xor(31, and(index, 0x1f)), value)
+            sstore(s, mload(0x00))
         }
     }
 

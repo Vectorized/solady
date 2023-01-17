@@ -54,7 +54,7 @@ contract LibMapTest is TestPlus {
     function testUint8MapSetAndGet(uint256) public {
         uint8 u = uint8(_random());
         uint8s.set(0, u);
-        assertEq(uint8s.map[0], uint256(u) << uint256(8 * 31));
+        assertEq(uint8s.map[0], u);
         unchecked {
             for (uint256 t; t < 8; ++t) {
                 uint256 r = _random();
