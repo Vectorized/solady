@@ -131,8 +131,8 @@ library LibHeap {
                     if lt(r, value) {
                         success := 1
                         hasPopped := 1
-                        popped := r
                         childPos := 1
+                        popped := r
                         break
                     }
                     break
