@@ -93,6 +93,7 @@ contract LibHeapTest is TestPlus {
                     rejected[numRejected++] = popped;
                 }
                 if (!success) {
+                    assertEq(heap0.length(), maxLength);
                     rejected[numRejected++] = r;
                 }
                 a[i] = r;
@@ -111,5 +112,17 @@ contract LibHeapTest is TestPlus {
                 assertEq(a[i], rejected[i]);
             }
         }
+    }
+
+    function testHeapEnqueueGas() public {
+        unchecked {
+            for (uint256 i; i < 256; ++i) {
+                this.enqueue(_random() % 16, 8);
+            }
+        }
+    }
+
+    function enqueue(uint256 value, uint256 maxLength) public {
+        heap0.enqueue(value, maxLength);
     }
 }
