@@ -25,8 +25,8 @@ library LibHeap {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Tips:
-    // - To use as a max-map, simply negate the input and output values.
-    // - If use on tuples, simply pack the tuple values into a single integer.
+    // - To use as a max-map, negate the values.
+    // - If use on tuples, pack the tuple values into a single integer.
     // - To use on signed integers, convert the signed integers into
     //   their ordered unsigned counterparts via `uint256(x) + (1 << 255)`.
 
@@ -128,13 +128,11 @@ library LibHeap {
                         break
                     }
                     let r := sload(sOffset)
-                    if lt(r, value) {
-                        success := 1
-                        hasPopped := 1
-                        childPos := 1
-                        popped := r
-                        break
-                    }
+                    if iszero(lt(r, value)) { break }
+                    success := 1
+                    hasPopped := 1
+                    childPos := 1
+                    popped := r
                     break
                 }
                 // `replace`.
@@ -147,13 +145,11 @@ library LibHeap {
                 // `pushPop`.
                 if eq(mode, 2) {
                     popped := value
-                    if n {
-                        let r := sload(sOffset)
-                        if lt(r, value) {
-                            popped := r
-                            childPos := 1
-                        }
-                    }
+                    if iszero(n) { break }
+                    let r := sload(sOffset)
+                    if iszero(lt(r, value)) { break }
+                    popped := r
+                    childPos := 1
                     break
                 }
                 // `pop`.
@@ -165,10 +161,9 @@ library LibHeap {
                     // Set the `value` to the last item.
                     value := sload(add(sOffset, n))
                     popped := value
-                    if n {
-                        popped := sload(sOffset)
-                        childPos := 1
-                    }
+                    if iszero(n) { break }
+                    popped := sload(sOffset)
+                    childPos := 1
                     break
                 }
                 // `push`.
