@@ -2,18 +2,18 @@
 pragma solidity ^0.8.4;
 
 import "./utils/TestPlus.sol";
-import {LibHeap} from "../src/utils/LibHeap.sol";
+import {MinHeapLib} from "../src/utils/MinHeapLib.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
 
-contract LibHeapTest is TestPlus {
-    using LibHeap for LibHeap.Heap;
+contract MinHeapLibTest is TestPlus {
+    using MinHeapLib for MinHeapLib.Heap;
 
-    LibHeap.Heap heap0;
+    MinHeapLib.Heap heap0;
 
-    LibHeap.Heap heap1;
+    MinHeapLib.Heap heap1;
 
     function testHeapRoot(uint256 x) public {
-        vm.expectRevert(LibHeap.HeapIsEmpty.selector);
+        vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
         heap0.root();
         heap0.data.push(x);
         assertEq(heap0.length(), 1);
@@ -115,6 +115,9 @@ contract LibHeapTest is TestPlus {
 
     function testHeapEnqueueGas(uint256) public {
         unchecked {
+            for (uint256 i; i < 16; ++i) {
+                this.enqueue(i, 8);
+            }
             for (uint256 i; i < 16; ++i) {
                 this.enqueue(_random() % 16, 8);
             }

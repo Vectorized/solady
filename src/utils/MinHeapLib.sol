@@ -2,8 +2,8 @@
 pragma solidity ^0.8.4;
 
 /// @notice Library for managing a min-heap in storage.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibHeap.sol)
-library LibHeap {
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MinHeapLib.sol)
+library MinHeapLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
