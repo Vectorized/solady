@@ -114,9 +114,9 @@ contract LibHeapTest is TestPlus {
         }
     }
 
-    function testHeapEnqueueGas() public {
+    function testHeapEnqueueGas(uint256) public {
         unchecked {
-            for (uint256 i; i < 256; ++i) {
+            for (uint256 i; i < 16; ++i) {
                 this.enqueue(_random() % 16, 8);
             }
         }
