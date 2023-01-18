@@ -39,7 +39,12 @@ library LibMap {
 
     /// @dev Returns the uint8 value at `index` in `map`.
     function get(Uint8Map storage map, uint256 index) internal view returns (uint8 result) {
-        result = uint8(map.map[index >> 5] >> ((index & 31) << 3));
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, map.slot)
+            mstore(0x00, shr(5, index))
+            result := byte(and(31, not(index)), sload(keccak256(0x00, 0x40)))
+        }
     }
 
     /// @dev Updates the uint8 value at `index` in `map`.
@@ -50,7 +55,7 @@ library LibMap {
             mstore(0x00, shr(5, index))
             let s := keccak256(0x00, 0x40) // Storage slot.
             mstore(0x00, sload(s))
-            mstore8(xor(31, and(index, 31)), value)
+            mstore8(and(31, not(index)), value)
             sstore(s, mload(0x00))
         }
     }
