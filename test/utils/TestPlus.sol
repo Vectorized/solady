@@ -27,7 +27,7 @@ contract TestPlus is Test {
             if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 31)) }
             let start := mod(mload(0x10), cSize)
             let size := mul(sub(cSize, start), gt(cSize, start))
-            let times := div(0x3ffff, cSize)
+            let times := div(0x7ffff, cSize)
             if iszero(lt(times, 128)) { times := 128 }
 
             // Occasionally offset the offset by a psuedorandom large amount.
