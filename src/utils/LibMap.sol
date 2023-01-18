@@ -39,12 +39,7 @@ library LibMap {
 
     /// @dev Returns the uint8 value at `index` in `map`.
     function get(Uint8Map storage map, uint256 index) internal view returns (uint8 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x20, map.slot)
-            mstore(0x00, shr(5, index))
-            result := byte(xor(31, and(index, 0x1f)), sload(keccak256(0x00, 0x40)))
-        }
+        result = uint8(map.map[index >> 5] >> ((index & 31) << 3));
     }
 
     /// @dev Updates the uint8 value at `index` in `map`.
@@ -55,20 +50,14 @@ library LibMap {
             mstore(0x00, shr(5, index))
             let s := keccak256(0x00, 0x40) // Storage slot.
             mstore(0x00, sload(s))
-            mstore8(xor(31, and(index, 0x1f)), value)
+            mstore8(xor(31, and(index, 31)), value)
             sstore(s, mload(0x00))
         }
     }
 
     /// @dev Returns the uint16 value at `index` in `map`.
     function get(Uint16Map storage map, uint256 index) internal view returns (uint16 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x20, map.slot)
-            mstore(0x00, shr(4, index))
-            let m := 0xffff // Value mask.
-            result := and(m, shr(shl(4, and(index, 15)), sload(keccak256(0x00, 0x40))))
-        }
+        result = uint16(map.map[index >> 4] >> ((index & 15) << 4));
     }
 
     /// @dev Updates the uint16 value at `index` in `map`.
@@ -87,13 +76,7 @@ library LibMap {
 
     /// @dev Returns the uint32 value at `index` in `map`.
     function get(Uint32Map storage map, uint256 index) internal view returns (uint32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x20, map.slot)
-            mstore(0x00, shr(3, index))
-            let m := 0xffffffff // Value mask.
-            result := and(m, shr(shl(5, and(index, 7)), sload(keccak256(0x00, 0x40))))
-        }
+        result = uint32(map.map[index >> 3] >> ((index & 7) << 5));
     }
 
     /// @dev Updates the uint32 value at `index` in `map`.
@@ -112,13 +95,7 @@ library LibMap {
 
     /// @dev Returns the uint64 value at `index` in `map`.
     function get(Uint64Map storage map, uint256 index) internal view returns (uint64 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x20, map.slot)
-            mstore(0x00, shr(2, index))
-            let m := 0xffffffffffffffff // Value mask.
-            result := and(m, shr(shl(6, and(index, 3)), sload(keccak256(0x00, 0x40))))
-        }
+        result = uint64(map.map[index >> 2] >> ((index & 3) << 6));
     }
 
     /// @dev Updates the uint64 value at `index` in `map`.
@@ -137,13 +114,7 @@ library LibMap {
 
     /// @dev Returns the uint128 value at `index` in `map`.
     function get(Uint128Map storage map, uint256 index) internal view returns (uint128 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x20, map.slot)
-            mstore(0x00, shr(1, index))
-            let m := 0xffffffffffffffffffffffffffffffff // Value mask.
-            result := and(m, shr(shl(7, and(index, 1)), sload(keccak256(0x00, 0x40))))
-        }
+        result = uint128(map.map[index >> 1] >> ((index & 1) << 7));
     }
 
     /// @dev Updates the uint128 value at `index` in `map`.
