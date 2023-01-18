@@ -16,35 +16,32 @@ contract TestPlus is Test {
             calldatacopy(offset, zero, calldatasize())
 
             // Fill the 64 bytes of scratch space with garbage.
-            mstore(zero, xor(gas(), calldatasize()))
-            mstore(0x20, xor(caller(), keccak256(offset, calldatasize())))
+            mstore(zero, caller())
+            mstore(0x20, keccak256(offset, calldatasize()))
             mstore(zero, keccak256(zero, 0x40))
             mstore(0x20, keccak256(zero, 0x40))
 
-            let size := 0x40 // Start with 2 slots.
-            mstore(offset, mload(zero))
-            mstore(add(offset, 0x20), mload(0x20))
+            let r0 := mload(zero)
+            let r1 := mload(0x20)
 
-            for { let i := add(11, and(mload(zero), 1)) } 1 {} {
-                let nextOffset := add(offset, size)
-                // Duplicate the data.
-                pop(
-                    staticcall(
-                        gas(), // Pass along all the gas in the call.
-                        0x04, // Call the identity precompile address.
-                        offset, // Offset is the bytes' pointer.
-                        size, // We want to pass the length of the bytes.
-                        nextOffset, // Store the return value at the next offset.
-                        size // Since the precompile just returns its input, we reuse size.
-                    )
-                )
-                // Duplicate the data again.
-                returndatacopy(add(nextOffset, size), 0, size)
-                offset := nextOffset
-                size := mul(2, size)
+            let cSize := add(codesize(), iszero(codesize()))
+            let start := mod(mload(0x10), cSize)
+            let size := mul(sub(cSize, start), gt(cSize, start))
+            let times := and(div(0x3ffff, cSize), 0x7f)
 
-                i := sub(i, 1)
-                if iszero(i) { break }
+            // Offset the offset by a psuedo-random large amount occasionally.
+            offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
+
+            // Fill the free memory with garbage.
+            for { let w := not(0) } 1 {} {
+                mstore(offset, r0)
+                mstore(add(offset, 0x20), r1)
+                offset := add(offset, 0x40)
+                codecopy(offset, start, size)
+                codecopy(add(offset, size), 0, start)
+                offset := add(offset, cSize)
+                times := add(times, w) // `sub(times, 1)`.
+                if iszero(times) { break }
             }
         }
 
@@ -53,13 +50,27 @@ contract TestPlus is Test {
         _checkMemory();
     }
 
-    function _random() internal view returns (uint256 r) {
+    function _random() internal returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            let m := mload(0x40)
-            calldatacopy(add(m, 0x20), 0, calldatasize())
-            mstore(m, gas())
-            r := keccak256(m, add(calldatasize(), 0x20))
+            let sSlot := 0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee
+            let sValue := sload(sSlot)
+
+            for {} 1 {} {
+                // If the storage is uninitialized, initialize it to the calldata hash.
+                if iszero(sValue) {
+                    let m := mload(0x40)
+                    calldatacopy(m, 0, calldatasize())
+                    r := keccak256(m, calldatasize())
+                    break
+                }
+                // Otherwise, step the randomness loaded from the storage.
+                mstore(0x20, sValue)
+                r := keccak256(0x20, 0x40)
+                break
+            }
+            sstore(sSlot, add(r, 1))
+
             for {} 1 {} {
                 if iszero(byte(0, r)) {
                     r := and(r, 3)
@@ -69,8 +80,8 @@ contract TestPlus is Test {
                     r := sub(shl(shl(3, and(byte(1, r), 31)), 1), and(r, 3))
                     break
                 }
-                mstore(0x00, r)
-                r := keccak256(0x00, 0x20)
+                mstore(0x20, r)
+                r := keccak256(0x20, 0x40)
                 break
             }
         }
