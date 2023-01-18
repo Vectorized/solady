@@ -18,30 +18,30 @@ contract TestPlus is Test {
             // Fill the 64 bytes of scratch space with garbage.
             mstore(zero, caller())
             mstore(0x20, keccak256(offset, calldatasize()))
-
-            let cSize := add(codesize(), iszero(codesize()))
-            let start := mod(mload(0x20), cSize)
-            let size := mul(sub(cSize, start), gt(cSize, start))
-            let times := div(0x3ffff, cSize)
-            if iszero(lt(times, 128)) { times := 128 }
-
             mstore(zero, keccak256(zero, 0x40))
             mstore(0x20, keccak256(zero, 0x40))
 
-            let r1 := mload(0x20)
             let r0 := mload(zero)
+            let r1 := mload(0x20)
 
-            if iszero(and(r1, 15)) { offset := add(offset, and(r0, 0xfffff)) }
+            let cSize := add(codesize(), iszero(codesize()))
+            let start := mod(mload(0x10), cSize)
+            let size := mul(sub(cSize, start), gt(cSize, start))
+            let times := and(div(0x3ffff, cSize), 0x7f)
 
-            for { let i := 0 } 1 {} {
+            // Offset the offset by a psuedo-random large amount occasionally.
+            offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
+
+            // Fill the free memory with garbage.
+            for { let w := not(0) } 1 {} {
                 mstore(offset, r0)
                 mstore(add(offset, 0x20), r1)
                 offset := add(offset, 0x40)
                 codecopy(offset, start, size)
                 codecopy(add(offset, size), 0, start)
                 offset := add(offset, cSize)
-                i := add(i, 1)
-                if eq(i, times) { break }
+                times := add(times, w) // `sub(times, 1)`.
+                if iszero(times) { break }
             }
         }
 
@@ -53,22 +53,23 @@ contract TestPlus is Test {
     function _random() internal returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            let sSlot := 0x06748fb1e692af26c0fdb4b2e406f9e4690df321d69e1171d13bbec264b8363b
+            let sSlot := 0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee
             let sValue := sload(sSlot)
 
-            switch sValue
-            case 0 {
-                let m := mload(0x40)
-                calldatacopy(m, 0, calldatasize())
-                r := keccak256(m, calldatasize())
-                sstore(sSlot, r)
+            for {} 1 {} {
+                // If the storage is uninitialized, initialize it to the calldata hash.
+                if iszero(sValue) {
+                    let m := mload(0x40)
+                    calldatacopy(m, 0, calldatasize())
+                    r := keccak256(m, calldatasize())
+                    break
+                }
+                // Otherwise, step the randomness loaded from the storage.
+                mstore(0x20, sValue)
+                r := keccak256(0x20, 0x40)
+                break
             }
-            default {
-                sValue := add(sValue, 1)
-                mstore(0x00, sValue)
-                r := keccak256(0x00, 0x20)
-                sstore(sSlot, sValue)
-            }
+            sstore(sSlot, add(r, 1))
 
             for {} 1 {} {
                 if iszero(byte(0, r)) {
@@ -79,8 +80,8 @@ contract TestPlus is Test {
                     r := sub(shl(shl(3, and(byte(1, r), 31)), 1), and(r, 3))
                     break
                 }
-                mstore(0x00, r)
-                r := keccak256(0x00, 0x20)
+                mstore(0x20, r)
+                r := keccak256(0x20, 0x40)
                 break
             }
         }
