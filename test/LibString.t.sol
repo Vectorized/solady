@@ -1192,7 +1192,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function _generateFrom(string memory subject) internal view returns (uint256) {
+    function _generateFrom(string memory subject) internal returns (uint256) {
         unchecked {
             if (_random() % 8 == 0) {
                 return _random() << (_random() & 255);
@@ -1201,11 +1201,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function _generateString(string memory byteChoices)
-        internal
-        view
-        returns (string memory result)
-    {
+    function _generateString(string memory byteChoices) internal returns (string memory result) {
         uint256 randomness = _random();
         uint256 resultLength = _randomStringLength();
         /// @solidity memory-safe-assembly
@@ -1228,7 +1224,7 @@ contract LibStringTest is TestPlus {
         }
     }
 
-    function _randomStringLength() internal view returns (uint256 r) {
+    function _randomStringLength() internal returns (uint256 r) {
         r = _random() % 256;
         if (r < 64) return _random() % 128;
         if (r < 128) return _random() % 64;

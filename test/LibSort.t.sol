@@ -991,7 +991,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function _randomUints(uint256 n) private view returns (uint256[] memory a) {
+    function _randomUints(uint256 n) private returns (uint256[] memory a) {
         unchecked {
             a = new uint256[](n);
             for (uint256 i; i != n; ++i) {
@@ -1000,7 +1000,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function _randomAddresses(uint256 n) private view returns (address[] memory a) {
+    function _randomAddresses(uint256 n) private returns (address[] memory a) {
         unchecked {
             a = new address[](n);
             for (uint256 i; i != n; ++i) {
@@ -1009,7 +1009,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function _randomInts(uint256 n) private view returns (int256[] memory a) {
+    function _randomInts(uint256 n) private returns (int256[] memory a) {
         unchecked {
             uint256[] memory aRaw = _randomUints(n);
             /// @solidity memory-safe-assembly
@@ -1086,7 +1086,7 @@ contract LibSortTest is TestPlus {
         LibSort.uniquifySorted(b);
     }
 
-    function _randomArrayLength() internal view returns (uint256 r) {
+    function _randomArrayLength() internal returns (uint256 r) {
         r = _random() % 256;
         if (r < 16) return _random() % 256;
         if (r < 128) return _random() % 32;
