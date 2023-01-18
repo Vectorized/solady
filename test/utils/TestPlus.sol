@@ -19,17 +19,19 @@ contract TestPlus is Test {
             mstore(zero, caller())
             mstore(0x20, keccak256(offset, calldatasize()))
             mstore(zero, keccak256(zero, 0x40))
-            mstore(0x20, keccak256(zero, 0x40))
 
             let r0 := mload(zero)
             let r1 := mload(0x20)
 
             let cSize := add(codesize(), iszero(codesize()))
+            if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 31)) }
             let start := mod(mload(0x10), cSize)
             let size := mul(sub(cSize, start), gt(cSize, start))
-            let times := and(div(0x3ffff, cSize), 0x7f)
+            let times := div(0x7ffff, cSize)
+            if iszero(lt(times, 128)) { times := 128 }
 
-            // Offset the offset by a psuedo-random large amount occasionally.
+            // Occasionally offset the offset by a psuedorandom large amount.
+            // Can't be too large, or we will easily get out-of-gas errors.
             offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
 
             // Fill the free memory with garbage.
@@ -56,18 +58,14 @@ contract TestPlus is Test {
             let sSlot := 0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee
             let sValue := sload(sSlot)
 
-            for {} 1 {} {
-                // If the storage is uninitialized, initialize it to the calldata hash.
-                if iszero(sValue) {
-                    let m := mload(0x40)
-                    calldatacopy(m, 0, calldatasize())
-                    r := keccak256(m, calldatasize())
-                    break
-                }
-                // Otherwise, step the randomness loaded from the storage.
-                mstore(0x20, sValue)
-                r := keccak256(0x20, 0x40)
-                break
+            mstore(0x20, sValue)
+            r := keccak256(0x20, 0x40)
+
+            // If the storage is uninitialized, initialize it to the calldata hash.
+            if iszero(sValue) {
+                let m := mload(0x40)
+                calldatacopy(m, 0, calldatasize())
+                r := keccak256(m, calldatasize())
             }
             sstore(sSlot, add(r, 1))
 
