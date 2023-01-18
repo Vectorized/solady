@@ -37,7 +37,7 @@ library LibMap {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the uint8 value of the byte at `index` in `map`.
+    /// @dev Returns the uint8 value at `index` in `map`.
     function get(Uint8Map storage map, uint256 index) internal view returns (uint8 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -47,7 +47,7 @@ library LibMap {
         }
     }
 
-    /// @dev Updates the uint8 value of the byte at `index` in `map`.
+    /// @dev Updates the uint8 value at `index` in `map`.
     function set(Uint8Map storage map, uint256 index, uint8 value) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -60,7 +60,7 @@ library LibMap {
         }
     }
 
-    /// @dev Returns the uint16 value of the byte at `index` in `map`.
+    /// @dev Returns the uint16 value at `index` in `map`.
     function get(Uint16Map storage map, uint256 index) internal view returns (uint16 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -71,7 +71,7 @@ library LibMap {
         }
     }
 
-    /// @dev Updates the uint16 value of the byte at `index` in `map`.
+    /// @dev Updates the uint16 value at `index` in `map`.
     function set(Uint16Map storage map, uint256 index, uint16 value) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -85,7 +85,7 @@ library LibMap {
         }
     }
 
-    /// @dev Returns the uint32 value of the byte at `index` in `map`.
+    /// @dev Returns the uint32 value at `index` in `map`.
     function get(Uint32Map storage map, uint256 index) internal view returns (uint32 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -96,7 +96,7 @@ library LibMap {
         }
     }
 
-    /// @dev Updates the uint32 value of the byte at `index` in `map`.
+    /// @dev Updates the uint32 value at `index` in `map`.
     function set(Uint32Map storage map, uint256 index, uint32 value) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -110,7 +110,7 @@ library LibMap {
         }
     }
 
-    /// @dev Returns the uint64 value of the byte at `index` in `map`.
+    /// @dev Returns the uint64 value at `index` in `map`.
     function get(Uint64Map storage map, uint256 index) internal view returns (uint64 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -121,7 +121,7 @@ library LibMap {
         }
     }
 
-    /// @dev Updates the uint64 value of the byte at `index` in `map`.
+    /// @dev Updates the uint64 value at `index` in `map`.
     function set(Uint64Map storage map, uint256 index, uint64 value) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -135,7 +135,7 @@ library LibMap {
         }
     }
 
-    /// @dev Returns the uint128 value of the byte at `index` in `map`.
+    /// @dev Returns the uint128 value at `index` in `map`.
     function get(Uint128Map storage map, uint256 index) internal view returns (uint128 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -146,7 +146,7 @@ library LibMap {
         }
     }
 
-    /// @dev Updates the uint128 value of the byte at `index` in `map`.
+    /// @dev Updates the uint128 value at `index` in `map`.
     function set(Uint128Map storage map, uint256 index, uint128 value) internal {
         /// @solidity memory-safe-assembly
         assembly {
