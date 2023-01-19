@@ -63,6 +63,7 @@ contract TestPlus is Test {
 
             // If the storage is uninitialized, initialize it to the calldata hash.
             if iszero(sValue) {
+                sValue := sSlot
                 let m := mload(0x40)
                 calldatacopy(m, 0, calldatasize())
                 r := keccak256(m, calldatasize())
@@ -70,16 +71,21 @@ contract TestPlus is Test {
             sstore(sSlot, add(r, 1))
 
             for {} 1 {} {
-                if iszero(byte(0, r)) {
+                let d := byte(0, r)
+                if iszero(d) {
                     r := and(r, 3)
                     break
                 }
-                if iszero(gt(byte(0, r), 16)) {
-                    r := sub(shl(shl(3, and(byte(1, r), 31)), 1), and(r, 3))
+                if iszero(gt(d, 16)) {
+                    let u := and(0x80, r)
+                    let t := 1
+                    if iszero(gt(byte(1, r), 32)) { t := not(0) }
+                    if iszero(gt(byte(2, r), 128)) { t := xor(sValue, r) }
+                    r := sub(shl(shl(3, and(byte(3, r), 31)), t), and(r, 3))
+                    if iszero(u) { r := not(r) }
                     break
                 }
-                mstore(0x20, r)
-                r := keccak256(0x20, 0x40)
+                r := xor(sValue, r)
                 break
             }
         }
