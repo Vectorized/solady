@@ -53,7 +53,7 @@ contract CREATE3Test is Test {
         CREATE3.deploy(salt, type(MockAuthChild).creationCode, 0);
     }
 
-    function testFuzzDeployERC20(
+    function testDeployERC20(
         bytes32 salt,
         string calldata name,
         string calldata symbol,
@@ -74,16 +74,14 @@ contract CREATE3Test is Test {
         assertEq(deployed.decimals(), decimals);
     }
 
-    function testFuzzDoubleDeploySameBytecodeReverts(bytes32 salt, bytes calldata bytecode)
-        public
-    {
+    function testDoubleDeploySameBytecodeReverts(bytes32 salt, bytes calldata bytecode) public {
         bytes memory creationCode = _creationCode(bytecode);
         CREATE3.deploy(salt, creationCode, 0);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
         CREATE3.deploy(salt, creationCode, 0);
     }
 
-    function testFuzzDoubleDeployDifferentBytecodeReverts(
+    function testDoubleDeployDifferentBytecodeReverts(
         bytes32 salt,
         bytes memory bytecode1,
         bytes memory bytecode2

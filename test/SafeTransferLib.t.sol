@@ -267,7 +267,7 @@ contract SafeTransferLibTest is TestPlus {
         erc20.balanceOf(address(this));
     }
 
-    function testFuzzBalanceOfStandardERC20(address to, uint256 amount) public {
+    function testBalanceOfStandardERC20(address to, uint256 amount) public {
         uint256 originalBalance = erc20.balanceOf(address(this));
         vm.assume(originalBalance >= amount);
         vm.assume(to != address(this));
@@ -280,7 +280,7 @@ contract SafeTransferLibTest is TestPlus {
         SafeTransferLib.safeTransferAll(address(erc20), address(1));
     }
 
-    function testFuzzTransferAllWithStandardERC20(address to, uint256 amount) public {
+    function testTransferAllWithStandardERC20(address to, uint256 amount) public {
         uint256 originalBalance = erc20.balanceOf(address(this));
         vm.assume(originalBalance >= amount);
         vm.assume(to != address(this));
@@ -299,7 +299,7 @@ contract SafeTransferLibTest is TestPlus {
         SafeTransferLib.safeTransferAllFrom(address(erc20), address(this), address(1));
     }
 
-    function testFuzzTransferAllFromWithStandardERC20(address to, address from, uint256 amount)
+    function testTransferAllFromWithStandardERC20(address to, address from, uint256 amount)
         public
     {
         SafeTransferLib.safeTransferAll(address(erc20), from);
@@ -319,19 +319,19 @@ contract SafeTransferLibTest is TestPlus {
         assertEq(erc20.balanceOf(to), originalBalance);
     }
 
-    function testFuzzTransferWithMissingReturn(address to, uint256 amount) public {
+    function testTransferWithMissingReturn(address to, uint256 amount) public {
         verifySafeTransfer(address(missingReturn), to, amount, SUCCESS);
     }
 
-    function testFuzzTransferWithStandardERC20(address to, uint256 amount) public {
+    function testTransferWithStandardERC20(address to, uint256 amount) public {
         verifySafeTransfer(address(erc20), to, amount, SUCCESS);
     }
 
-    function testFuzzTransferWithReturnsTooMuch(address to, uint256 amount) public {
+    function testTransferWithReturnsTooMuch(address to, uint256 amount) public {
         verifySafeTransfer(address(returnsTooMuch), to, amount, SUCCESS);
     }
 
-    function testFuzzTransferWithGarbage(address to, uint256 amount, bytes memory garbage) public {
+    function testTransferWithGarbage(address to, uint256 amount, bytes memory garbage) public {
         if (garbageIsGarbage(garbage)) return;
 
         returnsGarbage.setGarbage(garbage);
@@ -339,9 +339,7 @@ contract SafeTransferLibTest is TestPlus {
         verifySafeTransfer(address(returnsGarbage), to, amount, SUCCESS);
     }
 
-    function testFuzzTransferWithNonContract(address nonContract, address to, uint256 amount)
-        public
-    {
+    function testTransferWithNonContract(address nonContract, address to, uint256 amount) public {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
             return;
         }
@@ -354,25 +352,19 @@ contract SafeTransferLibTest is TestPlus {
         this.safeTransferETH(address(this), 1e18);
     }
 
-    function testFuzzTransferFromWithMissingReturn(address from, address to, uint256 amount)
-        public
-    {
+    function testTransferFromWithMissingReturn(address from, address to, uint256 amount) public {
         verifySafeTransferFrom(address(missingReturn), from, to, amount, SUCCESS);
     }
 
-    function testFuzzTransferFromWithStandardERC20(address from, address to, uint256 amount)
-        public
-    {
+    function testTransferFromWithStandardERC20(address from, address to, uint256 amount) public {
         verifySafeTransferFrom(address(erc20), from, to, amount, SUCCESS);
     }
 
-    function testFuzzTransferFromWithReturnsTooMuch(address from, address to, uint256 amount)
-        public
-    {
+    function testTransferFromWithReturnsTooMuch(address from, address to, uint256 amount) public {
         verifySafeTransferFrom(address(returnsTooMuch), from, to, amount, SUCCESS);
     }
 
-    function testFuzzTransferFromWithGarbage(
+    function testTransferFromWithGarbage(
         address from,
         address to,
         uint256 amount,
@@ -385,7 +377,7 @@ contract SafeTransferLibTest is TestPlus {
         verifySafeTransferFrom(address(returnsGarbage), from, to, amount, SUCCESS);
     }
 
-    function testFuzzTransferFromWithNonContract(
+    function testTransferFromWithNonContract(
         address nonContract,
         address from,
         address to,
@@ -398,19 +390,19 @@ contract SafeTransferLibTest is TestPlus {
         SafeTransferLib.safeTransferFrom(nonContract, from, to, amount);
     }
 
-    function testFuzzApproveWithMissingReturn(address to, uint256 amount) public {
+    function testApproveWithMissingReturn(address to, uint256 amount) public {
         verifySafeApprove(address(missingReturn), to, amount, SUCCESS);
     }
 
-    function testFuzzApproveWithStandardERC20(address to, uint256 amount) public {
+    function testApproveWithStandardERC20(address to, uint256 amount) public {
         verifySafeApprove(address(erc20), to, amount, SUCCESS);
     }
 
-    function testFuzzApproveWithReturnsTooMuch(address to, uint256 amount) public {
+    function testApproveWithReturnsTooMuch(address to, uint256 amount) public {
         verifySafeApprove(address(returnsTooMuch), to, amount, SUCCESS);
     }
 
-    function testFuzzApproveWithGarbage(address to, uint256 amount, bytes memory garbage) public {
+    function testApproveWithGarbage(address to, uint256 amount, bytes memory garbage) public {
         if (garbageIsGarbage(garbage)) return;
 
         returnsGarbage.setGarbage(garbage);
@@ -418,9 +410,7 @@ contract SafeTransferLibTest is TestPlus {
         verifySafeApprove(address(returnsGarbage), to, amount, SUCCESS);
     }
 
-    function testFuzzApproveWithNonContract(address nonContract, address to, uint256 amount)
-        public
-    {
+    function testApproveWithNonContract(address nonContract, address to, uint256 amount) public {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
             return;
         }
@@ -428,7 +418,7 @@ contract SafeTransferLibTest is TestPlus {
         SafeTransferLib.safeApprove(nonContract, to, amount);
     }
 
-    function testFuzzTransferETH(address recipient, uint256 amount) public {
+    function testTransferETH(address recipient, uint256 amount) public {
         // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
         if (
             recipient.code.length > 0 || uint256(uint160(recipient)) <= 18
@@ -442,23 +432,23 @@ contract SafeTransferLibTest is TestPlus {
         SafeTransferLib.safeTransferETH(recipient, amount);
     }
 
-    function testFuzzTransferWithReturnsFalseReverts(address to, uint256 amount) public {
+    function testTransferWithReturnsFalseReverts(address to, uint256 amount) public {
         verifySafeTransfer(address(returnsFalse), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzTransferWithRevertingReverts(address to, uint256 amount) public {
+    function testTransferWithRevertingReverts(address to, uint256 amount) public {
         verifySafeTransfer(address(reverting), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzTransferWithReturnsTooLittleReverts(address to, uint256 amount) public {
+    function testTransferWithReturnsTooLittleReverts(address to, uint256 amount) public {
         verifySafeTransfer(address(returnsTooLittle), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzTransferWithReturnsTwoReverts(address to, uint256 amount) public {
+    function testTransferWithReturnsTwoReverts(address to, uint256 amount) public {
         verifySafeTransfer(address(returnsTwo), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzTransferWithGarbageReverts(address to, uint256 amount, bytes memory garbage)
+    function testTransferWithGarbageReverts(address to, uint256 amount, bytes memory garbage)
         public
     {
         vm.assume(garbageIsGarbage(garbage));
@@ -468,33 +458,31 @@ contract SafeTransferLibTest is TestPlus {
         verifySafeTransfer(address(returnsGarbage), to, amount, REVERTS_WITH_ANY);
     }
 
-    function testFuzzTransferFromWithReturnsFalseReverts(address from, address to, uint256 amount)
+    function testTransferFromWithReturnsFalseReverts(address from, address to, uint256 amount)
         public
     {
         verifySafeTransferFrom(address(returnsFalse), from, to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzTransferFromWithRevertingReverts(address from, address to, uint256 amount)
+    function testTransferFromWithRevertingReverts(address from, address to, uint256 amount)
         public
     {
         verifySafeTransferFrom(address(reverting), from, to, amount, REVERTS_WITH_ANY);
     }
 
-    function testFuzzTransferFromWithReturnsTooLittleReverts(
-        address from,
-        address to,
-        uint256 amount
-    ) public {
+    function testTransferFromWithReturnsTooLittleReverts(address from, address to, uint256 amount)
+        public
+    {
         verifySafeTransferFrom(address(returnsTooLittle), from, to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzTransferFromWithReturnsTwoReverts(address from, address to, uint256 amount)
+    function testTransferFromWithReturnsTwoReverts(address from, address to, uint256 amount)
         public
     {
         verifySafeTransferFrom(address(returnsTwo), from, to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzTransferFromWithGarbageReverts(
+    function testTransferFromWithGarbageReverts(
         address from,
         address to,
         uint256 amount,
@@ -507,23 +495,23 @@ contract SafeTransferLibTest is TestPlus {
         verifySafeTransferFrom(address(returnsGarbage), from, to, amount, REVERTS_WITH_ANY);
     }
 
-    function testFuzzApproveWithReturnsFalseReverts(address to, uint256 amount) public {
+    function testApproveWithReturnsFalseReverts(address to, uint256 amount) public {
         verifySafeApprove(address(returnsFalse), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzApproveWithRevertingReverts(address to, uint256 amount) public {
+    function testApproveWithRevertingReverts(address to, uint256 amount) public {
         verifySafeApprove(address(reverting), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzApproveWithReturnsTooLittleReverts(address to, uint256 amount) public {
+    function testApproveWithReturnsTooLittleReverts(address to, uint256 amount) public {
         verifySafeApprove(address(returnsTooLittle), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzApproveWithReturnsTwoReverts(address to, uint256 amount) public {
+    function testApproveWithReturnsTwoReverts(address to, uint256 amount) public {
         verifySafeApprove(address(returnsTwo), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testFuzzApproveWithGarbageReverts(address to, uint256 amount, bytes memory garbage)
+    function testApproveWithGarbageReverts(address to, uint256 amount, bytes memory garbage)
         public
     {
         vm.assume(garbageIsGarbage(garbage));
@@ -533,7 +521,7 @@ contract SafeTransferLibTest is TestPlus {
         verifySafeApprove(address(returnsGarbage), to, amount, REVERTS_WITH_ANY);
     }
 
-    function testFuzzTransferETHToContractWithoutFallbackReverts(uint256 amount) public {
+    function testTransferETHToContractWithoutFallbackReverts(uint256 amount) public {
         vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
         this.safeTransferETH(address(this), amount);
     }
