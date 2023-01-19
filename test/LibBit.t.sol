@@ -5,7 +5,8 @@ import "forge-std/Test.sol";
 import {LibBit} from "../src/utils/LibBit.sol";
 
 contract LibBitTest is Test {
-    function testFuzzFLS() public {
+    function testFLS() public {
+        assertEq(LibBit.fls(0xff << 3), 10);
         for (uint256 i = 1; i < 255; i++) {
             assertEq(LibBit.fls((1 << i) - 1), i - 1);
             assertEq(LibBit.fls((1 << i)), i);
@@ -14,11 +15,7 @@ contract LibBitTest is Test {
         assertEq(LibBit.fls(0), 256);
     }
 
-    function testFLS() public {
-        assertEq(LibBit.fls(0xff << 3), 10);
-    }
-
-    function testFuzzCLZ() public {
+    function testCLZ() public {
         for (uint256 i = 1; i < 255; i++) {
             assertEq(LibBit.clz((1 << i) - 1), 255 - (i - 1));
             assertEq(LibBit.clz((1 << i)), 255 - i);
@@ -27,7 +24,8 @@ contract LibBitTest is Test {
         assertEq(LibBit.clz(0), 256);
     }
 
-    function testFuzzFFS() public {
+    function testFFS() public {
+        assertEq(LibBit.ffs(0xff << 3), 3);
         uint256 brutalizer = uint256(keccak256(abi.encode(address(this), block.timestamp)));
         for (uint256 i = 0; i < 256; i++) {
             assertEq(LibBit.ffs(1 << i), i);
@@ -37,11 +35,7 @@ contract LibBitTest is Test {
         assertEq(LibBit.ffs(0), 256);
     }
 
-    function testFFS() public {
-        assertEq(LibBit.ffs(0xff << 3), 3);
-    }
-
-    function testFuzzPopCount(uint256 x) public {
+    function testPopCount(uint256 x) public {
         uint256 c;
         unchecked {
             for (uint256 t = x; t != 0; c++) {
@@ -59,7 +53,7 @@ contract LibBitTest is Test {
         }
     }
 
-    function testFuzzIsPo2(uint8 a, uint8 b) public {
+    function testIsPo2(uint8 a, uint8 b) public {
         unchecked {
             uint256 x = (1 << uint256(a)) | (1 << uint256(b));
             if (a == b) {
@@ -70,7 +64,7 @@ contract LibBitTest is Test {
         }
     }
 
-    function testFuzzIsPo2(uint256 x) public {
+    function testIsPo2(uint256 x) public {
         uint256 c;
         unchecked {
             for (uint256 t = x; t != 0; c++) {

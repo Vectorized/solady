@@ -62,7 +62,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.dateToEpochDay(1667952000, 2, 29), 609206238891);
     }
 
-    function testFuzzDateToEpochDayGas() public {
+    function testDateToEpochDayGas() public {
         unchecked {
             uint256 sum;
             for (uint256 i; i < 256; ++i) {
@@ -77,7 +77,7 @@ contract DateTimeLibTest is TestPlus {
         }
     }
 
-    function testFuzzDateToEpochDayGas2() public {
+    function testDateToEpochDayGas2() public {
         unchecked {
             uint256 sum;
             for (uint256 i; i < 256; ++i) {
@@ -92,7 +92,7 @@ contract DateTimeLibTest is TestPlus {
         }
     }
 
-    function testFuzzEpochDayToDateGas() public {
+    function testEpochDayToDateGas() public {
         unchecked {
             uint256 sum;
             for (uint256 i; i < 256; ++i) {
@@ -104,7 +104,7 @@ contract DateTimeLibTest is TestPlus {
         }
     }
 
-    function testFuzzEpochDayToDateGas2() public {
+    function testEpochDayToDateGas2() public {
         unchecked {
             uint256 sum;
             for (uint256 i; i < 256; ++i) {
@@ -188,13 +188,13 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(d.year == 100000 && d.month == 12 && d.day == 31);
     }
 
-    function testFuzzEpochDayToDate(uint256 epochDay) public {
+    function testEpochDayToDate(uint256 epochDay) public {
         DateTime memory d;
         (d.year, d.month, d.day) = DateTimeLib.epochDayToDate(epochDay);
         assertEq(epochDay, DateTimeLib.dateToEpochDay(d.year, d.month, d.day));
     }
 
-    function testFuzzDateToAndFroEpochDay(DateTime memory a) public {
+    function testDateToAndFroEpochDay(DateTime memory a) public {
         a.year = _bound(a.year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
         a.month = _bound(a.month, 1, 12);
         uint256 md = DateTimeLib.daysInMonth(a.year, a.month);
@@ -205,7 +205,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(a.year == b.year && a.month == b.month && a.day == b.day);
     }
 
-    function testFuzzDateTimeToAndFroTimestamp(DateTime memory a) public {
+    function testDateTimeToAndFroTimestamp(DateTime memory a) public {
         a.year = _bound(a.year, 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
         a.month = _bound(a.month, 1, 12);
         uint256 md = DateTimeLib.daysInMonth(a.year, a.month);
@@ -222,7 +222,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
-    function testFuzzDateToAndFroEpochDay() public {
+    function testDateToAndFroEpochDay() public {
         unchecked {
             for (uint256 i; i < 256; ++i) {
                 uint256 year = _bound(_random(), 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
@@ -236,7 +236,7 @@ contract DateTimeLibTest is TestPlus {
         }
     }
 
-    function testFuzzDateToAndFroTimestamp() public {
+    function testDateToAndFroTimestamp() public {
         unchecked {
             for (uint256 i; i < 256; ++i) {
                 uint256 year = _bound(_random(), 1970, DateTimeLib.MAX_SUPPORTED_YEAR);
@@ -265,7 +265,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(DateTimeLib.isLeapYear(10916));
     }
 
-    function testFuzzIsLeapYear(uint256 year) public {
+    function testIsLeapYear(uint256 year) public {
         assertEq(
             DateTimeLib.isLeapYear(year), (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0)
         );
@@ -289,7 +289,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.daysInMonth(1900, 2), 28);
     }
 
-    function testFuzzDaysInMonth(uint256 year, uint256 month) public {
+    function testDaysInMonth(uint256 year, uint256 month) public {
         month = _bound(month, 1, 12);
         if (DateTimeLib.isLeapYear(year) && month == 2) {
             assertEq(DateTimeLib.daysInMonth(year, month), 29);
@@ -316,7 +316,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.weekday(518400), 3);
     }
 
-    function testFuzzDayOfWeek() public {
+    function testDayOfWeek() public {
         uint256 timestamp = 0;
         uint256 weekday = 3;
         unchecked {
@@ -360,7 +360,7 @@ contract DateTimeLibTest is TestPlus {
         assertFalse(DateTimeLib.isSupportedDate(type(uint256).max, 5, 31));
     }
 
-    function testFuzzIsSupportedDateTime(DateTime memory a) public {
+    function testIsSupportedDateTime(DateTime memory a) public {
         a.month = _bound(a.month, 0, 20);
         a.day = _bound(a.day, 0, 50);
         a.hour = _bound(a.hour, 0, 50);
@@ -434,7 +434,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2023, 1, 6, wd), 0);
     }
 
-    function testFuzzNthWeekdayInMonthOfYearTimestamp(
+    function testNthWeekdayInMonthOfYearTimestamp(
         uint256 year,
         uint256 month,
         uint256 n,
@@ -501,7 +501,7 @@ contract DateTimeLibTest is TestPlus {
         assertEq(DateTimeLib.mondayTimestamp(1667174400), 1667174400);
     }
 
-    function testFuzzMondayTimestamp(uint256 timestamp) public {
+    function testMondayTimestamp(uint256 timestamp) public {
         uint256 day = timestamp / 86400;
         uint256 weekday = (day + 3) % 7;
         assertEq(
@@ -509,7 +509,7 @@ contract DateTimeLibTest is TestPlus {
         );
     }
 
-    function testFuzzIsWeekEnd(uint256 timestamp) public {
+    function testIsWeekEnd(uint256 timestamp) public {
         timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP);
         uint256 weekday = DateTimeLib.weekday(timestamp);
         assertEq(
@@ -518,7 +518,7 @@ contract DateTimeLibTest is TestPlus {
         );
     }
 
-    function testFuzzAddSubDiffYears(uint256 timestamp, uint256 numYears) public {
+    function testAddSubDiffYears(uint256 timestamp, uint256 numYears) public {
         uint256 maxNumYears = 1000000;
         numYears = _bound(numYears, 0, maxNumYears);
         timestamp =
@@ -587,7 +587,7 @@ contract DateTimeLibTest is TestPlus {
         DateTimeLib.diffSeconds(2 ** 128 - 1, 2 ** 127 - 1);
     }
 
-    function testFuzzAddSubDiffMonths(uint256 timestamp, uint256 numMonths) public {
+    function testAddSubDiffMonths(uint256 timestamp, uint256 numMonths) public {
         uint256 maxNumMonths = 1000000;
         numMonths = _bound(numMonths, 0, maxNumMonths);
         timestamp =
@@ -611,7 +611,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
-    function testFuzzAddSubDiffDays(uint256 timestamp, uint256 numDays) public {
+    function testAddSubDiffDays(uint256 timestamp, uint256 numDays) public {
         uint256 maxNumDays = 100000000;
         numDays = _bound(numDays, 0, maxNumDays);
         timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP - maxNumDays * 86400);
@@ -635,7 +635,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
-    function testFuzzAddSubDiffHours(uint256 timestamp, uint256 numHours) public {
+    function testAddSubDiffHours(uint256 timestamp, uint256 numHours) public {
         uint256 maxNumHours = 10000000000;
         numHours = _bound(numHours, 0, maxNumHours);
         timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP - maxNumHours * 3600);
@@ -659,7 +659,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
-    function testFuzzAddSubDiffMinutes(uint256 timestamp, uint256 numMinutes) public {
+    function testAddSubDiffMinutes(uint256 timestamp, uint256 numMinutes) public {
         uint256 maxNumMinutes = 10000000000;
         numMinutes = _bound(numMinutes, 0, maxNumMinutes);
         timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP - maxNumMinutes * 60);
@@ -686,7 +686,7 @@ contract DateTimeLibTest is TestPlus {
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
-    function testFuzzAddSubDiffSeconds(uint256 timestamp, uint256 numSeconds) public {
+    function testAddSubDiffSeconds(uint256 timestamp, uint256 numSeconds) public {
         uint256 maxNumSeconds = 1000000000000;
         numSeconds = _bound(numSeconds, 0, maxNumSeconds);
         timestamp = _bound(timestamp, 0, DateTimeLib.MAX_SUPPORTED_TIMESTAMP - maxNumSeconds);

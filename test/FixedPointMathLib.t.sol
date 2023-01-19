@@ -211,6 +211,11 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.sqrt(2704), 52);
         assertEq(FixedPointMathLib.sqrt(110889), 333);
         assertEq(FixedPointMathLib.sqrt(32239684), 5678);
+        unchecked {
+            for (uint256 i = 100; i < 200; ++i) {
+                assertEq(FixedPointMathLib.sqrt(i * i), i);
+            }
+        }
     }
 
     function testLog2() public {
@@ -219,6 +224,11 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.log2(1024), 10);
         assertEq(FixedPointMathLib.log2(1048576), 20);
         assertEq(FixedPointMathLib.log2(1073741824), 30);
+        for (uint256 i = 1; i < 255; i++) {
+            assertEq(FixedPointMathLib.log2((1 << i) - 1), i - 1);
+            assertEq(FixedPointMathLib.log2((1 << i)), i);
+            assertEq(FixedPointMathLib.log2((1 << i) + 1), i);
+        }
     }
 
     function testLog2RevertsForZero() public {
@@ -239,6 +249,11 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.log2Up(1048576 + 1), 21);
         assertEq(FixedPointMathLib.log2Up(1073741824), 30);
         assertEq(FixedPointMathLib.log2Up(1073741824 + 1), 31);
+        for (uint256 i = 2; i < 255; i++) {
+            assertEq(FixedPointMathLib.log2Up((1 << i) - 1), i);
+            assertEq(FixedPointMathLib.log2Up((1 << i)), i);
+            assertEq(FixedPointMathLib.log2Up((1 << i) + 1), i + 1);
+        }
     }
 
     function testLog2UpRevertsForZero() public {
@@ -335,7 +350,7 @@ contract FixedPointMathLibTest is TestPlus {
         );
     }
 
-    function testFuzzFullMulDiv(uint256 a, uint256 b, uint256 d) public returns (uint256 result) {
+    function testFullMulDiv(uint256 a, uint256 b, uint256 d) public returns (uint256 result) {
         if (d == 0) {
             vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
             FixedPointMathLib.fullMulDiv(a, b, d);
@@ -380,8 +395,8 @@ contract FixedPointMathLibTest is TestPlus {
         return q;
     }
 
-    function testFuzzFullMulDivUp(uint256 a, uint256 b, uint256 d) public {
-        uint256 fullMulDivResult = testFuzzFullMulDiv(a, b, d);
+    function testFullMulDivUp(uint256 a, uint256 b, uint256 d) public {
+        uint256 fullMulDivResult = testFullMulDiv(a, b, d);
         if (fullMulDivResult != 0) {
             uint256 expectedResult = fullMulDivResult;
             if (mulmod(a, b, d) > 0) {
@@ -396,7 +411,7 @@ contract FixedPointMathLibTest is TestPlus {
         }
     }
 
-    function testFuzzMulWad(uint256 x, uint256 y) public {
+    function testMulWad(uint256 x, uint256 y) public {
         // Ignore cases where x * y overflows.
         unchecked {
             if (x != 0 && (x * y) / x != y) return;
@@ -405,7 +420,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.mulWad(x, y), (x * y) / 1e18);
     }
 
-    function testFuzzMulWadOverflowReverts(uint256 x, uint256 y) public {
+    function testMulWadOverflowReverts(uint256 x, uint256 y) public {
         // Ignore cases where x * y does not overflow.
         unchecked {
             vm.assume(x != 0 && (x * y) / x != y);
@@ -414,7 +429,7 @@ contract FixedPointMathLibTest is TestPlus {
         FixedPointMathLib.mulWad(x, y);
     }
 
-    function testFuzzMulWadUp(uint256 x, uint256 y) public {
+    function testMulWadUp(uint256 x, uint256 y) public {
         // Ignore cases where x * y overflows.
         unchecked {
             if (x != 0 && (x * y) / x != y) return;
@@ -423,7 +438,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.mulWadUp(x, y), x * y == 0 ? 0 : (x * y - 1) / 1e18 + 1);
     }
 
-    function testFuzzMulWadUpOverflowReverts(uint256 x, uint256 y) public {
+    function testMulWadUpOverflowReverts(uint256 x, uint256 y) public {
         // Ignore cases where x * y does not overflow.
         unchecked {
             vm.assume(x != 0 && !((x * y) / x == y));
@@ -432,7 +447,7 @@ contract FixedPointMathLibTest is TestPlus {
         FixedPointMathLib.mulWadUp(x, y);
     }
 
-    function testFuzzDivWad(uint256 x, uint256 y) public {
+    function testDivWad(uint256 x, uint256 y) public {
         // Ignore cases where x * WAD overflows or y is 0.
         unchecked {
             if (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) return;
@@ -441,7 +456,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.divWad(x, y), (x * 1e18) / y);
     }
 
-    function testFuzzDivWadOverflowReverts(uint256 x, uint256 y) public {
+    function testDivWadOverflowReverts(uint256 x, uint256 y) public {
         // Ignore cases where x * WAD does not overflow or y is 0.
         unchecked {
             vm.assume(y != 0 && (x * 1e18) / 1e18 != x);
@@ -450,12 +465,12 @@ contract FixedPointMathLibTest is TestPlus {
         FixedPointMathLib.divWad(x, y);
     }
 
-    function testFuzzDivWadZeroDenominatorReverts(uint256 x) public {
+    function testDivWadZeroDenominatorReverts(uint256 x) public {
         vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
         FixedPointMathLib.divWad(x, 0);
     }
 
-    function testFuzzDivWadUp(uint256 x, uint256 y) public {
+    function testDivWadUp(uint256 x, uint256 y) public {
         // Ignore cases where x * WAD overflows or y is 0.
         unchecked {
             if (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) return;
@@ -464,7 +479,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.divWadUp(x, y), x == 0 ? 0 : (x * 1e18 - 1) / y + 1);
     }
 
-    function testFuzzDivWadUpOverflowReverts(uint256 x, uint256 y) public {
+    function testDivWadUpOverflowReverts(uint256 x, uint256 y) public {
         // Ignore cases where x * WAD does not overflow or y is 0.
         unchecked {
             vm.assume(y != 0 && (x * 1e18) / 1e18 != x);
@@ -473,12 +488,12 @@ contract FixedPointMathLibTest is TestPlus {
         FixedPointMathLib.divWadUp(x, y);
     }
 
-    function testFuzzDivWadUpZeroDenominatorReverts(uint256 x) public {
+    function testDivWadUpZeroDenominatorReverts(uint256 x) public {
         vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
         FixedPointMathLib.divWadUp(x, 0);
     }
 
-    function testFuzzMulDiv(uint256 x, uint256 y, uint256 denominator) public {
+    function testMulDiv(uint256 x, uint256 y, uint256 denominator) public {
         // Ignore cases where x * y overflows or denominator is 0.
         unchecked {
             if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
@@ -487,7 +502,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.mulDiv(x, y, denominator), (x * y) / denominator);
     }
 
-    function testFuzzMulDivOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
+    function testMulDivOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
         // Ignore cases where x * y does not overflow or denominator is 0.
         unchecked {
             vm.assume(denominator != 0 && x != 0 && (x * y) / x != y);
@@ -496,12 +511,12 @@ contract FixedPointMathLibTest is TestPlus {
         FixedPointMathLib.mulDiv(x, y, denominator);
     }
 
-    function testFuzzMulDivZeroDenominatorReverts(uint256 x, uint256 y) public {
+    function testMulDivZeroDenominatorReverts(uint256 x, uint256 y) public {
         vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
         FixedPointMathLib.mulDiv(x, y, 0);
     }
 
-    function testFuzzMulDivUp(uint256 x, uint256 y, uint256 denominator) public {
+    function testMulDivUp(uint256 x, uint256 y, uint256 denominator) public {
         // Ignore cases where x * y overflows or denominator is 0.
         unchecked {
             if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
@@ -513,7 +528,7 @@ contract FixedPointMathLibTest is TestPlus {
         );
     }
 
-    function testFuzzMulDivUpOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
+    function testMulDivUpOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
         // Ignore cases where x * y does not overflow or denominator is 0.
         unchecked {
             vm.assume(denominator != 0 && x != 0 && (x * y) / x != y);
@@ -522,20 +537,12 @@ contract FixedPointMathLibTest is TestPlus {
         FixedPointMathLib.mulDivUp(x, y, denominator);
     }
 
-    function testFuzzMulDivUpZeroDenominatorReverts(uint256 x, uint256 y) public {
+    function testMulDivUpZeroDenominatorReverts(uint256 x, uint256 y) public {
         vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
         FixedPointMathLib.mulDivUp(x, y, 0);
     }
 
-    function testFuzzSqrt() public {
-        unchecked {
-            for (uint256 i = 100; i < 200; ++i) {
-                assertEq(FixedPointMathLib.sqrt(i * i), i);
-            }
-        }
-    }
-
-    function testFuzzSqrt(uint256 x) public {
+    function testSqrt(uint256 x) public {
         uint256 root = FixedPointMathLib.sqrt(x);
         uint256 next = root + 1;
 
@@ -547,7 +554,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertTrue(root * root <= x && next * next > x);
     }
 
-    function testFuzzSqrtBack(uint256 x) public {
+    function testSqrtBack(uint256 x) public {
         unchecked {
             x >>= 128;
             while (x != 0) {
@@ -557,41 +564,25 @@ contract FixedPointMathLibTest is TestPlus {
         }
     }
 
-    function testFuzzSqrtHashed(uint256 x) public {
-        testFuzzSqrtBack(uint256(keccak256(abi.encode(x))));
+    function testSqrtHashed(uint256 x) public {
+        testSqrtBack(uint256(keccak256(abi.encode(x))));
     }
 
-    function testFuzzSqrtHashedSingle() public {
-        testFuzzSqrtHashed(123);
+    function testSqrtHashedSingle() public {
+        testSqrtHashed(123);
     }
 
-    function testFuzzLog2() public {
-        for (uint256 i = 1; i < 255; i++) {
-            assertEq(FixedPointMathLib.log2((1 << i) - 1), i - 1);
-            assertEq(FixedPointMathLib.log2((1 << i)), i);
-            assertEq(FixedPointMathLib.log2((1 << i) + 1), i);
-        }
-    }
-
-    function testFuzzLog2Up() public {
-        for (uint256 i = 2; i < 255; i++) {
-            assertEq(FixedPointMathLib.log2Up((1 << i) - 1), i);
-            assertEq(FixedPointMathLib.log2Up((1 << i)), i);
-            assertEq(FixedPointMathLib.log2Up((1 << i) + 1), i + 1);
-        }
-    }
-
-    function testFuzzMin(uint256 x, uint256 y) public {
+    function testMin(uint256 x, uint256 y) public {
         uint256 z = x < y ? x : y;
         assertEq(FixedPointMathLib.min(x, y), z);
     }
 
-    function testFuzzMax(uint256 x, uint256 y) public {
+    function testMax(uint256 x, uint256 y) public {
         uint256 z = x > y ? x : y;
         assertEq(FixedPointMathLib.max(x, y), z);
     }
 
-    function testFuzzMaxCasted(uint32 x, uint32 y, uint256 brutalizer) public {
+    function testMaxCasted(uint32 x, uint32 y, uint256 brutalizer) public {
         uint32 z = x > y ? x : y;
         /// @solidity memory-safe-assembly
         assembly {
@@ -604,12 +595,12 @@ contract FixedPointMathLibTest is TestPlus {
         assertTrue(FixedPointMathLib.max(x, y) == z);
     }
 
-    function testFuzzZeroFloorSub(uint256 x, uint256 y) public {
+    function testZeroFloorSub(uint256 x, uint256 y) public {
         uint256 z = x > y ? x - y : 0;
         assertEq(FixedPointMathLib.zeroFloorSub(x, y), z);
     }
 
-    function testFuzzZeroFloorSubCasted(uint32 x, uint32 y, uint256 brutalizer) public {
+    function testZeroFloorSubCasted(uint32 x, uint32 y, uint256 brutalizer) public {
         uint256 z = x > y ? x - y : 0;
         /// @solidity memory-safe-assembly
         assembly {
@@ -622,7 +613,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertTrue(FixedPointMathLib.zeroFloorSub(x, y) == z);
     }
 
-    function testFuzzDist(int256 x, int256 y) public {
+    function testDist(int256 x, int256 y) public {
         uint256 z;
         unchecked {
             if (x > y) {
@@ -634,7 +625,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.dist(x, y), z);
     }
 
-    function testFuzzAbs(int256 x) public {
+    function testAbs(int256 x) public {
         uint256 z = uint256(x);
         if (x < 0) {
             if (x == type(int256).min) {
@@ -646,11 +637,11 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.abs(x), z);
     }
 
-    function testFuzzGcd(uint256 x, uint256 y) public {
+    function testGcd(uint256 x, uint256 y) public {
         assertEq(FixedPointMathLib.gcd(x, y), _gcd(x, y));
     }
 
-    function testFuzzClamp(uint256 x, uint256 minValue, uint256 maxValue) public {
+    function testClamp(uint256 x, uint256 minValue, uint256 maxValue) public {
         uint256 clamped = x;
         if (clamped < minValue) {
             clamped = minValue;
@@ -661,7 +652,7 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.clamp(x, minValue, maxValue), clamped);
     }
 
-    function testFuzzFactorial() public {
+    function testFactorial() public {
         uint256 result = 1;
         assertEq(FixedPointMathLib.factorial(0), result);
         unchecked {
@@ -672,7 +663,7 @@ contract FixedPointMathLibTest is TestPlus {
         }
     }
 
-    function testFuzzFactorialOriginal() public {
+    function testFactorialOriginal() public {
         uint256 result = 1;
         assertEq(_factorialOriginal(0), result);
         unchecked {
