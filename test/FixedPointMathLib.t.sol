@@ -692,4 +692,67 @@ contract FixedPointMathLibTest is TestPlus {
             return _gcd(y, x % y);
         }
     }
+
+    function testRawDiv(uint256 x, uint256 y) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := div(x, y)
+        }
+        assertEq(FixedPointMathLib.rawDiv(x, y), z);
+    }
+
+    function testRawSDiv(int256 x, int256 y) public {
+        int256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sdiv(x, y)
+        }
+        assertEq(FixedPointMathLib.rawSDiv(x, y), z);
+    }
+
+    function testRawMod(uint256 x, uint256 y) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mod(x, y)
+        }
+        assertEq(FixedPointMathLib.rawMod(x, y), z);
+    }
+
+    function testRawSMod(int256 x, int256 y) public {
+        int256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := smod(x, y)
+        }
+        assertEq(FixedPointMathLib.rawSMod(x, y), z);
+    }
+
+    function testRawAddMod(uint256 x, uint256 y, uint256 denominator) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := addmod(x, y, denominator)
+        }
+        assertEq(FixedPointMathLib.rawAddMod(x, y, denominator), z);
+    }
+
+    function testRawMulMod(uint256 x, uint256 y, uint256 denominator) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mulmod(x, y, denominator)
+        }
+        assertEq(FixedPointMathLib.rawMulMod(x, y, denominator), z);
+    }
+
+    function testRawBoolToUint(bool b) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := b
+        }
+        assertEq(FixedPointMathLib.rawBoolToUint(b), z);
+    }
 }

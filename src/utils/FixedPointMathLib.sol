@@ -650,4 +650,73 @@ library FixedPointMathLib {
     {
         z = min(max(x, minValue), maxValue);
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   RAW NUMBER OPERATIONS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns `x / y`, returning 0 if `y` is zero.
+    function rawDiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := div(x, y)
+        }
+    }
+
+    /// @dev Returns `x / y`, returning 0 if `y` is zero.
+    function rawSDiv(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sdiv(x, y)
+        }
+    }
+
+    /// @dev Returns `x % y`, returning 0 if `y` is zero.
+    function rawMod(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mod(x, y)
+        }
+    }
+
+    /// @dev Returns `x % y`, returning 0 if `y` is zero.
+    function rawSMod(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := smod(x, y)
+        }
+    }
+
+    /// @dev Returns `(x + y) % denominator`, return 0 if `denominator` if zero.
+    function rawAddMod(uint256 x, uint256 y, uint256 denominator)
+        internal
+        pure
+        returns (uint256 z)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := addmod(x, y, denominator)
+        }
+    }
+
+    /// @dev Returns `(x * y) % denominator`, return 0 if `denominator` if zero.
+    function rawMulMod(uint256 x, uint256 y, uint256 denominator)
+        internal
+        pure
+        returns (uint256 z)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mulmod(x, y, denominator)
+        }
+    }
+
+    /// @dev Returns a non-zero number if `b` is true, else 0.
+    /// If `b` is from plain Solidity, the non-zero number will be 1.
+    function rawBoolToUint(bool b) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := b
+        }
+    }
 }
