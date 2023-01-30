@@ -283,45 +283,41 @@ library FixedPointMathLib {
     /*                  GENERAL NUMBER UTILITIES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Calculates floor(a × b ÷ denominator) with full precision.
-    /// Throws if result overflows a uint256 or when the denominator is zero.
-    /// Credit to Remco Bloemen under MIT license: https://xn--2-umb.com/21/muldiv
-    function fullMulDiv(uint256 a, uint256 b, uint256 denominator)
-        internal
-        pure
-        returns (uint256 result)
-    {
+    /// @dev Calculates `floor(a * b / d)` with full precision.
+    /// Throws if result overflows a uint256 or when `d` is zero.
+    /// Credit to Remco Bloemen under MIT license: https://2π.com/21/muldiv
+    function fullMulDiv(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             // forgefmt: disable-next-item
             for {} 1 {} {
-                // 512-bit multiply [prod1 prod0] = a * b
-                // Compute the product mod 2**256 and mod 2**256 - 1
+                // 512-bit multiply `[prod1 prod0] = x * y`.
+                // Compute the product mod `2**256` and mod `2**256 - 1`
                 // then use the Chinese Remainder Theorem to reconstruct
                 // the 512 bit result. The result is stored in two 256
-                // variables such that product = prod1 * 2**256 + prod0
+                // variables such that `product = prod1 * 2**256 + prod0`.
 
-                // Least significant 256 bits of the product
-                let prod0 := mul(a, b)
-                let mm := mulmod(a, b, not(0))
-                // Most significant 256 bits of the product
+                // Least significant 256 bits of the product.
+                let prod0 := mul(x, y)
+                let mm := mulmod(x, y, not(0))
+                // Most significant 256 bits of the product.
                 let prod1 := sub(mm, add(prod0, lt(mm, prod0)))
 
                 // Handle non-overflow cases, 256 by 256 division.
                 if iszero(prod1) {
-                    if iszero(denominator) {
+                    if iszero(d) {
                         // Store the function selector of `FullMulDivFailed()`.
                         mstore(0x00, 0xae47f702)
                         // Revert with (offset, size).
                         revert(0x1c, 0x04)
                     }
-                    result := div(prod0, denominator)
+                    result := div(prod0, d)
                     break       
                 }
 
-                // Make sure the result is less than 2**256.
-                // Also prevents `denominator == 0`.
-                if iszero(gt(denominator, prod1)) {
+                // Make sure the result is less than `2**256`.
+                // Also prevents `d == 0`.
+                if iszero(gt(d, prod1)) {
                     // Store the function selector of `FullMulDivFailed()`.
                     mstore(0x00, 0xae47f702)
                     // Revert with (offset, size).
@@ -332,57 +328,53 @@ library FixedPointMathLib {
                 // 512 by 256 division.
                 ///////////////////////////////////////////////
 
-                // Make division exact by subtracting the remainder from [prod1 prod0].
+                // Make division exact by subtracting the remainder from `[prod1 prod0]`.
                 // Compute remainder using mulmod.
-                let remainder := mulmod(a, b, denominator)
+                let remainder := mulmod(x, y, d)
                 // Subtract 256 bit number from 512 bit number.
                 prod1 := sub(prod1, gt(remainder, prod0))
                 prod0 := sub(prod0, remainder)
-                // Factor powers of two out of denominator.
-                // Compute largest power of two divisor of denominator.
-                // Always >= 1.
-                let twos := and(denominator, sub(0, denominator))
-                // Divide denominator by power of two
-                denominator := div(denominator, twos)
-                // Divide [prod1 prod0] by the factors of two
+                // Factor powers of two out of `d`.
+                // Compute largest power of two divisor of `d`.
+                // Always greater or equal to 1.
+                let twos := and(d, sub(0, d))
+                // Divide d by power of two.
+                d := div(d, twos)
+                // Divide [prod1 prod0] by the factors of two.
                 prod0 := div(prod0, twos)
-                // Shift in bits from prod1 into prod0. For this we need
-                // to flip `twos` such that it is 2**256 / twos.
+                // Shift in bits from `prod1` into `prod0`. For this we need
+                // to flip `twos` such that it is `2**256 / twos`.
                 // If `twos` is zero, then it becomes one.
                 prod0 := or(prod0, mul(prod1, add(div(sub(0, twos), twos), 1)))
-                // Invert denominator mod 2**256
-                // Now that denominator is an odd number, it has an inverse
-                // modulo 2**256 such that denominator * inv = 1 mod 2**256.
+                // Invert `d mod 2**256`
+                // Now that `d` is an odd number, it has an inverse
+                // modulo `2**256` such that `d * inv = 1 mod 2**256`.
                 // Compute the inverse by starting with a seed that is correct
-                // correct for four bits. That is, denominator * inv = 1 mod 2**4
-                let inv := xor(mul(3, denominator), 2)
+                // correct for four bits. That is, `d * inv = 1 mod 2**4`.
+                let inv := xor(mul(3, d), 2)
                 // Now use Newton-Raphson iteration to improve the precision.
                 // Thanks to Hensel's lifting lemma, this also works in modular
                 // arithmetic, doubling the correct bits in each step.
-                inv := mul(inv, sub(2, mul(denominator, inv))) // inverse mod 2**8
-                inv := mul(inv, sub(2, mul(denominator, inv))) // inverse mod 2**16
-                inv := mul(inv, sub(2, mul(denominator, inv))) // inverse mod 2**32
-                inv := mul(inv, sub(2, mul(denominator, inv))) // inverse mod 2**64
-                inv := mul(inv, sub(2, mul(denominator, inv))) // inverse mod 2**128
-                result := mul(prod0, mul(inv, sub(2, mul(denominator, inv)))) // inverse mod 2**256
+                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**8
+                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**16
+                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**32
+                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**64
+                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**128
+                result := mul(prod0, mul(inv, sub(2, mul(d, inv)))) // inverse mod 2**256
                 break
             }
         }
     }
 
-    /// @dev Calculates floor(a × b ÷ denominator) with full precision, rounded up.
-    /// Throws if result overflows a uint256 or when the denominator is zero.
+    /// @dev Calculates `floor(x * y / d)` with full precision, rounded up.
+    /// Throws if result overflows a uint256 or when `d` is zero.
     /// Credit to Uniswap-v3-core under MIT license:
     /// https://github.com/Uniswap/v3-core/blob/contracts/libraries/FullMath.sol
-    function fullMulDivUp(uint256 a, uint256 b, uint256 denominator)
-        internal
-        pure
-        returns (uint256 result)
-    {
-        result = fullMulDiv(a, b, denominator);
+    function fullMulDivUp(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 result) {
+        result = fullMulDiv(x, y, d);
         /// @solidity memory-safe-assembly
         assembly {
-            if mulmod(a, b, denominator) {
+            if mulmod(x, y, d) {
                 if iszero(add(result, 1)) {
                     // Store the function selector of `FullMulDivFailed()`.
                     mstore(0x00, 0xae47f702)
@@ -394,54 +386,50 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `floor(x * y / denominator)`.
-    /// Reverts if `x * y` overflows, or `denominator` is zero.
-    function mulDiv(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 z) {
+    /// @dev Returns `floor(x * y / d)`.
+    /// Reverts if `x * y` overflows, or `d` is zero.
+    function mulDiv(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
-            if iszero(mul(denominator, iszero(mul(y, gt(x, div(not(0), y)))))) {
+            // Equivalent to require(d != 0 && (y == 0 || x <= type(uint256).max / y))
+            if iszero(mul(d, iszero(mul(y, gt(x, div(not(0), y)))))) {
                 // Store the function selector of `MulDivFailed()`.
                 mstore(0x00, 0xad251c27)
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            z := div(mul(x, y), denominator)
+            z := div(mul(x, y), d)
         }
     }
 
-    /// @dev Returns `ceil(x * y / denominator)`.
-    /// Reverts if `x * y` overflows, or `denominator` is zero.
-    function mulDivUp(uint256 x, uint256 y, uint256 denominator)
-        internal
-        pure
-        returns (uint256 z)
-    {
+    /// @dev Returns `ceil(x * y / d)`.
+    /// Reverts if `x * y` overflows, or `d` is zero.
+    function mulDivUp(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to require(denominator != 0 && (y == 0 || x <= type(uint256).max / y))
-            if iszero(mul(denominator, iszero(mul(y, gt(x, div(not(0), y)))))) {
+            // Equivalent to require(d != 0 && (y == 0 || x <= type(uint256).max / y))
+            if iszero(mul(d, iszero(mul(y, gt(x, div(not(0), y)))))) {
                 // Store the function selector of `MulDivFailed()`.
                 mstore(0x00, 0xad251c27)
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            z := add(iszero(iszero(mod(mul(x, y), denominator))), div(mul(x, y), denominator))
+            z := add(iszero(iszero(mod(mul(x, y), d))), div(mul(x, y), d))
         }
     }
 
-    /// @dev Returns `ceil(x / denominator)`.
-    /// Reverts if `denominator` is zero.
-    function divUp(uint256 x, uint256 denominator) internal pure returns (uint256 z) {
+    /// @dev Returns `ceil(x / d)`.
+    /// Reverts if `d` is zero.
+    function divUp(uint256 x, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(denominator) {
+            if iszero(d) {
                 // Store the function selector of `DivFailed()`.
                 mstore(0x00, 0x65244e4e)
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            z := add(iszero(iszero(mod(x, denominator))), div(x, denominator))
+            z := add(iszero(iszero(mod(x, d))), div(x, d))
         }
     }
 
@@ -587,7 +575,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the averege of `x` and `y`.
+    /// @dev Returns the average of `x` and `y`.
     function avg(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -629,7 +617,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns gcd of `x` and `y`.
+    /// @dev Returns greatest common divisor of `x` and `y`.
     function gcd(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -687,27 +675,19 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `(x + y) % denominator`, return 0 if `denominator` if zero.
-    function rawAddMod(uint256 x, uint256 y, uint256 denominator)
-        internal
-        pure
-        returns (uint256 z)
-    {
+    /// @dev Returns `(x + y) % d`, return 0 if `d` if zero.
+    function rawAddMod(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := addmod(x, y, denominator)
+            z := addmod(x, y, d)
         }
     }
 
-    /// @dev Returns `(x * y) % denominator`, return 0 if `denominator` if zero.
-    function rawMulMod(uint256 x, uint256 y, uint256 denominator)
-        internal
-        pure
-        returns (uint256 z)
-    {
+    /// @dev Returns `(x * y) % d`, return 0 if `d` if zero.
+    function rawMulMod(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := mulmod(x, y, denominator)
+            z := mulmod(x, y, d)
         }
     }
 
