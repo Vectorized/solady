@@ -655,7 +655,7 @@ library FixedPointMathLib {
     /*                   RAW NUMBER OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns `x` divided by `y`, returning 0 if `y` is zero.
+    /// @dev Returns `x / y`, returning 0 if `y` is zero.
     function rawDiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -663,7 +663,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `x` divided by `y`, returning 0 if `y` is zero.
+    /// @dev Returns `x / y`, returning 0 if `y` is zero.
     function rawSDiv(int256 x, int256 y) internal pure returns (int256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -671,7 +671,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `x` modulo by `y`, returning 0 if `y` is zero.
+    /// @dev Returns `x % y`, returning 0 if `y` is zero.
     function rawMod(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -679,7 +679,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `x` modulo by `y`, returning 0 if `y` is zero.
+    /// @dev Returns `x % y`, returning 0 if `y` is zero.
     function rawSMod(int256 x, int256 y) internal pure returns (int256 z) {
         /// @solidity memory-safe-assembly
         assembly {
