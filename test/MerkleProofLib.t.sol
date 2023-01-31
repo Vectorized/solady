@@ -394,4 +394,15 @@ contract MerkleProofLibTest is TestPlus {
             result := keccak256(0x0, 0x40)
         }
     }
+
+    function testEmptyCalldataHelpers() public {
+        assertFalse(
+            MerkleProofLib.verifyMultiProof(
+                MerkleProofLib.emptyProof(),
+                bytes32(0),
+                MerkleProofLib.emptyLeafs(),
+                MerkleProofLib.emptyFlags()
+            )
+        );
+    }
 }

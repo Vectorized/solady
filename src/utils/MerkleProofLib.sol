@@ -6,6 +6,10 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/MerkleProofLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/MerkleProof.sol)
 library MerkleProofLib {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*            MERKLE PROOF VERIFICATION OPERATIONS            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @dev Returns whether `leaf` exists in the Merkle tree with `root`, given `proof`.
     function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf)
         internal
@@ -123,6 +127,34 @@ library MerkleProofLib {
                 isValid := eq(mload(sub(hashesBack, 0x20)), root)
                 break
             }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   EMPTY CALLDATA HELPERS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns an empty calldata bytes32 array.
+    function emptyProof() internal pure returns (bytes32[] calldata proof) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            proof.length := 0
+        }
+    }
+
+    /// @dev Returns an empty calldata bytes32 array.
+    function emptyLeafs() internal pure returns (bytes32[] calldata leafs) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            leafs.length := 0
+        }
+    }
+
+    /// @dev Returns an empty calldata bool array.
+    function emptyFlags() internal pure returns (bool[] calldata flags) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            flags.length := 0
         }
     }
 }

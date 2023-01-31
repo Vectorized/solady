@@ -307,4 +307,16 @@ library SignatureCheckerLib {
             )
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   EMPTY CALLDATA HELPERS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns an empty calldata bytes.
+    function emptySignature() internal pure returns (bytes calldata signature) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            signature.length := 0
+        }
+    }
 }

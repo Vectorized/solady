@@ -242,4 +242,12 @@ contract SignatureCheckerLibTest is TestPlus {
 
         return SignatureCheckerLib.isValidERC1271SignatureNow(signer, hash, signature);
     }
+
+    function testEmptyCalldataHelpers() public {
+        assertFalse(
+            SignatureCheckerLib.isValidSignatureNow(
+                address(1), bytes32(0), SignatureCheckerLib.emptySignature()
+            )
+        );
+    }
 }

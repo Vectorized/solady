@@ -317,4 +317,16 @@ library ECDSA {
             mstore(sub(s, 0x20), m)
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   EMPTY CALLDATA HELPERS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns an empty calldata bytes.
+    function emptySignature() internal pure returns (bytes calldata signature) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            signature.length := 0
+        }
+    }
 }
