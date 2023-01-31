@@ -14,7 +14,7 @@ abstract contract Multicallable {
     /// and store the `abi.encode` formatted results of each `DELEGATECALL` into `results`.
     /// If any of the `DELEGATECALL`s reverts, the entire transaction is reverted,
     /// and the error is bubbled up.
-    function multicall(bytes[] calldata data) external payable returns (bytes[] memory) {
+    function multicall(bytes[] calldata data) external payable virtual returns (bytes[] memory) {
         assembly {
             mstore(0x00, 0x20)
             mstore(0x20, data.length) // Store `data.length` into `results`.
