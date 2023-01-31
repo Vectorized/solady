@@ -317,4 +317,8 @@ contract ECDSATest is TestPlus {
     function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) external view returns (address) {
         return ECDSA.recover(hash, v, r, s);
     }
+
+    function testEmptyCalldataHelpers() public {
+        assertFalse(ECDSA.tryRecover(bytes32(0), ECDSA.emptySignature()) == address(1));
+    }
 }

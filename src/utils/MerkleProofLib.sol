@@ -134,7 +134,7 @@ library MerkleProofLib {
     /*                   EMPTY CALLDATA HELPERS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns an empty bytes32 calldata array.
+    /// @dev Returns an empty calldata bytes32 array.
     function emptyProof() internal pure returns (bytes32[] calldata proof) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -142,7 +142,7 @@ library MerkleProofLib {
         }
     }
 
-    /// @dev Returns an empty bytes32 calldata array.
+    /// @dev Returns an empty calldata bytes32 array.
     function emptyLeafs() internal pure returns (bytes32[] calldata leafs) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -150,7 +150,7 @@ library MerkleProofLib {
         }
     }
 
-    /// @dev Returns an empty bool calldata array.
+    /// @dev Returns an empty calldata bool array.
     function emptyFlags() internal pure returns (bool[] calldata flags) {
         /// @solidity memory-safe-assembly
         assembly {
