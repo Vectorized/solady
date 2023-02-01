@@ -34,7 +34,6 @@ library SSTORE2 {
 
     /// @dev Writes `data` into the bytecode of a storage contract and returns its address.
     function write(bytes memory data) internal returns (address pointer) {
-        // Note: The assembly block below does not expand the memory.
         /// @solidity memory-safe-assembly
         assembly {
             let originalDataLength := mload(data)
@@ -80,6 +79,73 @@ library SSTORE2 {
 
             // Restore original length of the variable size `data`.
             mstore(data, originalDataLength)
+        }
+    }
+
+    /// @dev Writes `data` into the bytecode of a storage contract with `salt`
+    /// and returns its deterministic address.
+    function writeDeterministic(bytes memory data, bytes32 salt)
+        internal
+        returns (address pointer)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let originalDataLength := mload(data)
+            let dataSize := add(originalDataLength, DATA_OFFSET)
+
+            mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
+
+            // Deploy a new contract with the generated creation code.
+            pointer := create2(0, add(data, 0x15), add(dataSize, 0xa), salt)
+
+            // If `pointer` is zero, revert.
+            if iszero(pointer) {
+                // Store the function selector of `DeploymentFailed()`.
+                mstore(0x00, 0x30116425)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+
+            // Restore original length of the variable size `data`.
+            mstore(data, originalDataLength)
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the storage contract for `data`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHash(bytes memory data) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let originalDataLength := mload(data)
+            let dataSize := add(originalDataLength, DATA_OFFSET)
+
+            mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
+
+            hash := keccak256(add(data, 0x15), add(dataSize, 0xa))
+
+            // Restore original length of the variable size `data`.
+            mstore(data, originalDataLength)
+        }
+    }
+
+    /// @dev Returns the address of the storage contract for `data`
+    /// deployed with `salt` by `deployer`.
+    function predictDeterministicAddress(bytes memory data, bytes32 salt, address deployer)
+        internal
+        pure
+        returns (address predicted)
+    {
+        bytes32 hash = initCodeHash(data);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute and store the bytecode hash.
+            mstore8(0x00, 0xff) // Write the prefix.
+            mstore(0x35, hash)
+            mstore(0x01, shl(96, deployer))
+            mstore(0x15, salt)
+            predicted := keccak256(0x00, 0x55)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x35, 0)
         }
     }
 

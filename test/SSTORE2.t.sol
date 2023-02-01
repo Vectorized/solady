@@ -152,4 +152,21 @@ contract SSTORE2Test is TestPlus {
         vm.expectRevert(SSTORE2.ReadOutOfBounds.selector);
         SSTORE2.read(pointer, startIndex, endIndex);
     }
+
+    function testWriteReadDeterministic(bytes calldata testBytes) public brutalizeMemory {
+        bytes32 salt = bytes32(_random());
+        address deployer = address(this);
+        if (_random() % 8 == 0) {
+            (, deployer) = _randomSigner();
+        }
+        vm.prank(deployer);
+        address deterministicPointer = SSTORE2.writeDeterministic(testBytes, salt);
+        assertEq(SSTORE2.read(deterministicPointer), testBytes);
+        assertEq(
+            SSTORE2.predictDeterministicAddress(testBytes, salt, deployer), deterministicPointer
+        );
+
+        address pointer = SSTORE2.write(testBytes);
+        assertEq(pointer.code, deterministicPointer.code);
+    }
 }
