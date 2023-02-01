@@ -68,6 +68,12 @@ To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffl
 npm install solady
 ```
 
+## Upgradability
+
+All contracts in Solady are compatible with both upgradeable and non-upgradeable (i.e. regular) contracts. 
+
+Please call any required internal initialization methods accordingly.
+
 ## Acknowledgements
 
 This repository is inspired by or directly modified from many sources, primarily:
