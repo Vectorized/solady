@@ -54,10 +54,6 @@ This is **experimental software** and is provided on an "as is" and "as availabl
 
 We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
-## Use in Upgradeable Contracts
-
-Solady libraries should not have storage incompatibilities across versions and are therefore safe to use in upgradeable contracts.
-
 ## Installation
 
 To install with [**Foundry**](https://github.com/gakonst/foundry):
@@ -71,6 +67,12 @@ To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffl
 ```sh
 npm install solady
 ```
+
+## Upgradeable Contracts
+
+All contracts in Solady are compatible with both regular and upgradeable contracts. 
+
+Please call any required internal initialization methods accordingly.
 
 ## Acknowledgements
 
