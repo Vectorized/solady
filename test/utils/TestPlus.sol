@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./forge-std/Test.sol";
 
 contract TestPlus is Test {
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
