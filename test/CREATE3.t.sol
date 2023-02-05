@@ -7,9 +7,9 @@ import {MockAuthChild} from "./utils/mocks/MockAuthChild.sol";
 
 import {CREATE3} from "../src/utils/CREATE3.sol";
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 
-contract CREATE3Test is Test {
+contract CREATE3Test is TestPlus {
     function testDeployERC20() public {
         bytes32 salt = keccak256(bytes("A salt!"));
 

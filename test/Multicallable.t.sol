@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "./utils/TestPlus.sol";
 import {MockMulticallable} from "./utils/mocks/MockMulticallable.sol";
 
-contract MulticallableTest is Test {
+contract MulticallableTest is TestPlus {
     MockMulticallable multicallable;
 
     function setUp() public {
