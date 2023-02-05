@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./forge-std/Test.sol";
+import "forge-std/Test.sol";
 
 contract TestPlus is Test {
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
@@ -96,7 +96,7 @@ contract TestPlus is Test {
                     if iszero(gt(byte(2, r), 128)) { t := xor(sValue, r) }
                     // Set `r` to `t` shifted left or right by a random multiple of 8.
                     r := sub(shl(shl(3, and(byte(3, r), 31)), t), and(r, 3))
-                    //
+                    // Negate `r` if `u` is zero.
                     if iszero(u) { r := not(r) }
                     break
                 }
@@ -107,8 +107,8 @@ contract TestPlus is Test {
         }
     }
 
-    /// @dev Returns a random private key and its associated public signer.
-    function _randomSigner() internal returns (uint256 privateKey, address signer) {
+    /// @dev Returns a random signer and its private key.
+    function _randomSigner() internal returns (address signer, uint256 privateKey) {
         uint256 privateKeyMax = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
         privateKey = _bound(_random(), 1, privateKeyMax);
         signer = vm.addr(privateKey);
@@ -240,11 +240,13 @@ contract TestPlus is Test {
     /// @dev This function will make forge's gas output display the approximate codesize of
     /// the test contract as the amount of gas burnt. Useful for quick guess checking if
     /// certain optimizations actually compiles to similar bytecode.
-    function test__codesize() public view {
+    function test__codesize() external view {
         /// @solidity memory-safe-assembly
         assembly {
-            // The blake2f precompile `0x09` burns all the gas passed into it for invalid inputs.
-            pop(staticcall(codesize(), 0x09, 0x00, 0x00, 0x00, 0x00))
+            // If the caller is the contract itself (i.e. recursive call), burn all the gas.
+            if eq(caller(), address()) { invalid() }
+            mstore(0x00, 0xf09ff470) // Store the function selector of `test__codesize()`.
+            pop(staticcall(codesize(), address(), 0x1c, 0x04, 0x00, 0x00))
         }
     }
 }

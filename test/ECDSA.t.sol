@@ -244,7 +244,7 @@ contract ECDSATest is TestPlus {
     }
 
     function testRecoverAndTryRecover(bytes32 digest) public {
-        (uint256 privateKey, address signer) = _randomSigner();
+        (address signer, uint256 privateKey) = _randomSigner();
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         if (_random() & 7 == 0) {

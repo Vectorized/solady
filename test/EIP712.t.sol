@@ -12,9 +12,9 @@ contract EIP712Test is TestPlus {
     }
 
     function testHashTypedData() public {
-        (uint256 privateKey, address signer) = _randomSigner();
+        (address signer, uint256 privateKey) = _randomSigner();
 
-        (, address to) = _randomSigner();
+        (address to,) = _randomSigner();
 
         string memory message = "Hello Milady!";
 
