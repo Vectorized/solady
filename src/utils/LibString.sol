@@ -454,12 +454,12 @@ library LibString {
                 result := not(0) // Initialize to `NOT_FOUND`.
 
                 subject := add(subjectStart, from)
-                let subjectSearchEnd := add(sub(add(subjectStart, subjectLength), searchLength), 1)
+                let end := add(sub(add(subjectStart, subjectLength), searchLength), 1)
 
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(add(search, 0x20))
 
-                if iszero(and(lt(subject, subjectSearchEnd), lt(from, subjectLength))) { break }
+                if iszero(and(lt(subject, end), lt(from, subjectLength))) { break }
 
                 if iszero(lt(searchLength, 32)) {
                     for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
@@ -470,7 +470,7 @@ library LibString {
                             }
                         }
                         subject := add(subject, 1)
-                        if iszero(lt(subject, subjectSearchEnd)) { break }
+                        if iszero(lt(subject, end)) { break }
                     }
                     break
                 }
@@ -480,7 +480,7 @@ library LibString {
                         break
                     }
                     subject := add(subject, 1)
-                    if iszero(lt(subject, subjectSearchEnd)) { break }
+                    if iszero(lt(subject, end)) { break }
                 }
                 break
             }
@@ -509,28 +509,30 @@ library LibString {
         /// @solidity memory-safe-assembly
         assembly {
             for {} 1 {} {
+                result := not(0) // Initialize to `NOT_FOUND`.
+
                 let searchLength := mload(search)
                 let subjectLength := mload(subject)
+
+                if gt(searchLength, subjectLength) { break }
+                let w := result
+
                 let fromMax := sub(subjectLength, searchLength)
                 if iszero(gt(fromMax, from)) { from := fromMax }
 
-                result := not(0) // Initialize to `NOT_FOUND`.
-                if or(gt(from, subjectLength), gt(searchLength, subjectLength)) { break }
-                let w := not(0)
-
-                let subjectSearchEnd := add(add(subject, 0x20), w)
+                let end := add(add(subject, 0x20), w)
 
                 subject := add(add(subject, 0x20), from)
-                if iszero(gt(subject, subjectSearchEnd)) { break }
+                if iszero(gt(subject, end)) { break }
                 // As this function is not too often used,
                 // we shall simply use keccak256 for smaller bytecode size.
                 for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
                     if eq(keccak256(subject, searchLength), h) {
-                        result := sub(subject, add(subjectSearchEnd, 1))
+                        result := sub(subject, add(end, 1))
                         break
                     }
                     subject := add(subject, w) // `sub(subject, 1)`.
-                    if iszero(gt(subject, subjectSearchEnd)) { break }
+                    if iszero(gt(subject, end)) { break }
                 }
                 break
             }
