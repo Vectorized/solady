@@ -62,7 +62,13 @@ abstract contract Test is DSTest, Script {
     }
 
     function assertEq(uint256[] memory a, uint256[] memory b) internal {
-        if (keccak256(abi.encode(a)) != keccak256(abi.encode(b))) {
+        bool inputsEq;
+        /// @solidity memory-safe-assembly
+        assembly {
+            inputsEq :=
+                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
+        }
+        if (!inputsEq) {
             emit log("Error: a == b not satisfied [uint[]]");
             emit log_named_array("  Expected", b);
             emit log_named_array("    Actual", a);
@@ -71,7 +77,13 @@ abstract contract Test is DSTest, Script {
     }
 
     function assertEq(int256[] memory a, int256[] memory b) internal {
-        if (keccak256(abi.encode(a)) != keccak256(abi.encode(b))) {
+        bool inputsEq;
+        /// @solidity memory-safe-assembly
+        assembly {
+            inputsEq :=
+                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
+        }
+        if (!inputsEq) {
             emit log("Error: a == b not satisfied [int[]]");
             emit log_named_array("  Expected", b);
             emit log_named_array("    Actual", a);
@@ -80,7 +92,13 @@ abstract contract Test is DSTest, Script {
     }
 
     function assertEq(address[] memory a, address[] memory b) internal {
-        if (keccak256(abi.encode(a)) != keccak256(abi.encode(b))) {
+        bool inputsEq;
+        /// @solidity memory-safe-assembly
+        assembly {
+            inputsEq :=
+                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
+        }
+        if (!inputsEq) {
             emit log("Error: a == b not satisfied [address[]]");
             emit log_named_array("  Expected", b);
             emit log_named_array("    Actual", a);
@@ -89,21 +107,39 @@ abstract contract Test is DSTest, Script {
     }
 
     function assertEq(uint256[] memory a, uint256[] memory b, string memory err) internal {
-        if (keccak256(abi.encode(a)) != keccak256(abi.encode(b))) {
+        bool inputsEq;
+        /// @solidity memory-safe-assembly
+        assembly {
+            inputsEq :=
+                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
+        }
+        if (!inputsEq) {
             emit log_named_string("Error", err);
             assertEq(a, b);
         }
     }
 
     function assertEq(int256[] memory a, int256[] memory b, string memory err) internal {
-        if (keccak256(abi.encode(a)) != keccak256(abi.encode(b))) {
+        bool inputsEq;
+        /// @solidity memory-safe-assembly
+        assembly {
+            inputsEq :=
+                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
+        }
+        if (!inputsEq) {
             emit log_named_string("Error", err);
             assertEq(a, b);
         }
     }
 
     function assertEq(address[] memory a, address[] memory b, string memory err) internal {
-        if (keccak256(abi.encode(a)) != keccak256(abi.encode(b))) {
+        bool inputsEq;
+        /// @solidity memory-safe-assembly
+        assembly {
+            inputsEq :=
+                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
+        }
+        if (!inputsEq) {
             emit log_named_string("Error", err);
             assertEq(a, b);
         }
