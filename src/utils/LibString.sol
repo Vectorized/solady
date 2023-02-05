@@ -510,9 +510,7 @@ library LibString {
         assembly {
             for {} 1 {} {
                 result := not(0) // Initialize to `NOT_FOUND`.
-
                 let searchLength := mload(search)
-
                 if gt(searchLength, mload(subject)) { break }
                 let w := result
 
@@ -520,7 +518,6 @@ library LibString {
                 if iszero(gt(fromMax, from)) { from := fromMax }
 
                 let end := add(add(subject, 0x20), w)
-
                 subject := add(add(subject, 0x20), from)
                 if iszero(gt(subject, end)) { break }
                 // As this function is not too often used,
