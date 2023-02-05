@@ -441,8 +441,11 @@ library LibString {
         assembly {
             for { let subjectLength := mload(subject) } 1 {} {
                 if iszero(mload(search)) {
-                    // `result = min(from, subjectLength)`.
-                    result := xor(from, mul(xor(from, subjectLength), lt(subjectLength, from)))
+                    if iszero(gt(from, subjectLength)) {
+                        result := from
+                        break
+                    }
+                    result := subjectLength
                     break
                 }
                 let searchLength := mload(search)
@@ -456,7 +459,7 @@ library LibString {
                 let m := shl(3, sub(32, and(searchLength, 31)))
                 let s := mload(add(search, 0x20))
 
-                if iszero(lt(subject, subjectSearchEnd)) { break }
+                if iszero(and(lt(subject, subjectSearchEnd), lt(from, subjectLength))) { break }
 
                 if iszero(lt(searchLength, 32)) {
                     for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
@@ -507,15 +510,15 @@ library LibString {
         assembly {
             for {} 1 {} {
                 let searchLength := mload(search)
-                let fromMax := sub(mload(subject), searchLength)
+                let subjectLength := mload(subject)
+                let fromMax := sub(subjectLength, searchLength)
                 if iszero(gt(fromMax, from)) { from := fromMax }
-                if iszero(mload(search)) {
-                    result := from
-                    break
-                }
-                result := not(0) // Initialize to `NOT_FOUND`.
 
-                let subjectSearchEnd := sub(add(subject, 0x20), 1)
+                result := not(0) // Initialize to `NOT_FOUND`.
+                if or(gt(from, subjectLength), gt(searchLength, subjectLength)) { break }
+                let w := not(0)
+
+                let subjectSearchEnd := add(add(subject, 0x20), w)
 
                 subject := add(add(subject, 0x20), from)
                 if iszero(gt(subject, subjectSearchEnd)) { break }
@@ -526,7 +529,7 @@ library LibString {
                         result := sub(subject, add(subjectSearchEnd, 1))
                         break
                     }
-                    subject := sub(subject, 1)
+                    subject := add(subject, w) // `sub(subject, 1)`.
                     if iszero(gt(subject, subjectSearchEnd)) { break }
                 }
                 break
