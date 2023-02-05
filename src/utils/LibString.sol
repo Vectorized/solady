@@ -512,12 +512,11 @@ library LibString {
                 result := not(0) // Initialize to `NOT_FOUND`.
 
                 let searchLength := mload(search)
-                let subjectLength := mload(subject)
 
-                if gt(searchLength, subjectLength) { break }
+                if gt(searchLength, mload(subject)) { break }
                 let w := result
 
-                let fromMax := sub(subjectLength, searchLength)
+                let fromMax := sub(mload(subject), searchLength)
                 if iszero(gt(fromMax, from)) { from := fromMax }
 
                 let end := add(add(subject, 0x20), w)
