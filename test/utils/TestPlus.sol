@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./forge-std/Test.sol";
+import "forge-std/Test.sol";
 
 contract TestPlus is Test {
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
@@ -11,43 +11,45 @@ contract TestPlus is Test {
         // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
         // Basically, we need to access a solidity variable from the assembly to
         // tell the compiler that this assembly block is not in isolation.
-        uint256 zero;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let offset := mload(0x40) // Start the offset at the free memory pointer.
-            calldatacopy(offset, zero, calldatasize())
+        {
+            uint256 zero;
+            /// @solidity memory-safe-assembly
+            assembly {
+                let offset := mload(0x40) // Start the offset at the free memory pointer.
+                calldatacopy(offset, zero, calldatasize())
 
-            // Fill the 64 bytes of scratch space with garbage.
-            mstore(zero, caller())
-            mstore(0x20, keccak256(offset, calldatasize()))
-            mstore(zero, keccak256(zero, 0x40))
+                // Fill the 64 bytes of scratch space with garbage.
+                mstore(zero, caller())
+                mstore(0x20, keccak256(offset, calldatasize()))
+                mstore(zero, keccak256(zero, 0x40))
 
-            let r0 := mload(zero)
-            let r1 := mload(0x20)
+                let r0 := mload(zero)
+                let r1 := mload(0x20)
 
-            let cSize := add(codesize(), iszero(codesize()))
-            if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 31)) }
-            let start := mod(mload(0x10), cSize)
-            let size := mul(sub(cSize, start), gt(cSize, start))
-            let times := div(0x7ffff, cSize)
-            if iszero(lt(times, 128)) { times := 128 }
+                let cSize := add(codesize(), iszero(codesize()))
+                if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 31)) }
+                let start := mod(mload(0x10), cSize)
+                let size := mul(sub(cSize, start), gt(cSize, start))
+                let times := div(0x7ffff, cSize)
+                if iszero(lt(times, 128)) { times := 128 }
 
-            // Occasionally offset the offset by a psuedorandom large amount.
-            // Can't be too large, or we will easily get out-of-gas errors.
-            offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
+                // Occasionally offset the offset by a psuedorandom large amount.
+                // Can't be too large, or we will easily get out-of-gas errors.
+                offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
 
-            // Fill the free memory with garbage.
-            for { let w := not(0) } 1 {} {
-                mstore(offset, r0)
-                mstore(add(offset, 0x20), r1)
-                offset := add(offset, 0x40)
-                // We use codecopy instead of the identity precompile
-                // to avoid polluting the `forge test -vvvv` output with tons of junk.
-                codecopy(offset, start, size)
-                codecopy(add(offset, size), 0, start)
-                offset := add(offset, cSize)
-                times := add(times, w) // `sub(times, 1)`.
-                if iszero(times) { break }
+                // Fill the free memory with garbage.
+                for { let w := not(0) } 1 {} {
+                    mstore(offset, r0)
+                    mstore(add(offset, 0x20), r1)
+                    offset := add(offset, 0x40)
+                    // We use codecopy instead of the identity precompile
+                    // to avoid polluting the `forge test -vvvv` output with tons of junk.
+                    codecopy(offset, start, size)
+                    codecopy(add(offset, size), 0, start)
+                    offset := add(offset, cSize)
+                    times := add(times, w) // `sub(times, 1)`.
+                    if iszero(times) { break }
+                }
             }
         }
 
@@ -96,7 +98,7 @@ contract TestPlus is Test {
                     if iszero(gt(byte(2, r), 128)) { t := xor(sValue, r) }
                     // Set `r` to `t` shifted left or right by a random multiple of 8.
                     r := sub(shl(shl(3, and(byte(3, r), 31)), t), and(r, 3))
-                    //
+                    // Negate `r` if `u` is zero.
                     if iszero(u) { r := not(r) }
                     break
                 }
@@ -107,12 +109,11 @@ contract TestPlus is Test {
         }
     }
 
-    /// @dev Returns a random private key and its associated public signer.
-    function _randomSigner() internal returns (uint256 privateKey, address signer) {
+    /// @dev Returns a random signer and its private key.
+    function _randomSigner() internal returns (address signer, uint256 privateKey) {
         uint256 privateKeyMax = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
         privateKey = _bound(_random(), 1, privateKeyMax);
         signer = vm.addr(privateKey);
-        require(signer != address(0));
     }
 
     /// @dev Rounds up the free memory pointer the the next word boundary.
@@ -240,11 +241,13 @@ contract TestPlus is Test {
     /// @dev This function will make forge's gas output display the approximate codesize of
     /// the test contract as the amount of gas burnt. Useful for quick guess checking if
     /// certain optimizations actually compiles to similar bytecode.
-    function test__codesize() public view {
+    function test__codesize() external view {
         /// @solidity memory-safe-assembly
         assembly {
-            // The blake2f precompile `0x09` burns all the gas passed into it for invalid inputs.
-            pop(staticcall(codesize(), 0x09, 0x00, 0x00, 0x00, 0x00))
+            // If the caller is the contract itself (i.e. recursive call), burn all the gas.
+            if eq(caller(), address()) { invalid() }
+            mstore(0x00, 0xf09ff470) // Store the function selector of `test__codesize()`.
+            pop(staticcall(codesize(), address(), 0x1c, 0x04, 0x00, 0x00))
         }
     }
 }

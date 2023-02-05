@@ -157,7 +157,7 @@ contract SSTORE2Test is TestPlus {
         bytes32 salt = bytes32(_random());
         address deployer = address(this);
         if (_random() % 8 == 0) {
-            (, deployer) = _randomSigner();
+            (deployer,) = _randomSigner();
         }
         vm.prank(deployer);
         address deterministicPointer = SSTORE2.writeDeterministic(testBytes, salt);

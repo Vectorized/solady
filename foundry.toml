@@ -10,7 +10,7 @@ optimizer = true
 optimizer_runs = 1_000
 gas_limit = 100_000_000 # ETH is 30M, but we use a higher value.
 remappings = [
-  "forge-std=lib/forge-std/src/",
+  "forge-std=test/utils/forge-std/",
   "solmate=lib/solmate/src/",
 ]
 
