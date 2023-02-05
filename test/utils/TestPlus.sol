@@ -114,7 +114,6 @@ contract TestPlus is Test {
         uint256 privateKeyMax = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
         privateKey = _bound(_random(), 1, privateKeyMax);
         signer = vm.addr(privateKey);
-        require(signer != address(0));
     }
 
     /// @dev Rounds up the free memory pointer the the next word boundary.
