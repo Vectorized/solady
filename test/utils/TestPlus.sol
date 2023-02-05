@@ -4,6 +4,8 @@ pragma solidity ^0.8.4;
 import "forge-std/Test.sol";
 
 contract TestPlus is Test {
+    /// @dev Fills the memory with junk, for more robust testing of inline assembly
+    /// which reads/write to the memory.
     modifier brutalizeMemory() {
         // To prevent a solidity 0.8.13 bug.
         // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
@@ -39,6 +41,8 @@ contract TestPlus is Test {
                 mstore(offset, r0)
                 mstore(add(offset, 0x20), r1)
                 offset := add(offset, 0x40)
+                // We use codecopy instead of the identity precompile
+                // to avoid polluting the `forge test -vvvv` output with tons of junk.
                 codecopy(offset, start, size)
                 codecopy(add(offset, size), 0, start)
                 offset := add(offset, cSize)
@@ -52,16 +56,20 @@ contract TestPlus is Test {
         _checkMemory();
     }
 
+    /// @dev Returns a psuedorandom random number from [0 .. 2**256 - 1] (inclusive).
+    /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
+    /// e.g. `testSomething(uint256) public`.
     function _random() internal returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
+            // This is the keccak256 of a very long string I randomly mashed on my keyboard.
             let sSlot := 0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee
             let sValue := sload(sSlot)
 
             mstore(0x20, sValue)
             r := keccak256(0x20, 0x40)
 
-            // If the storage is uninitialized, initialize it to the calldata hash.
+            // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
                 sValue := sSlot
                 let m := mload(0x40)
@@ -70,27 +78,36 @@ contract TestPlus is Test {
             }
             sstore(sSlot, add(r, 1))
 
+            // Do some biased sampling for more robust tests.
             for {} 1 {} {
                 let d := byte(0, r)
+                // With a 1/256 chance, randomly set `r` to any of 0,1,2.
                 if iszero(d) {
                     r := and(r, 3)
                     break
                 }
+                // With a 15/256 chance, set `r` to near a random power of 2.
                 if iszero(gt(d, 16)) {
-                    let u := and(0x80, r)
+                    let u := and(0x80, r) // With a 1/2 chance, negate `r`.
                     let t := 1
+                    // If the 1st byte of `r` is not greater than 32, set `t` to `not(0)`.
                     if iszero(gt(byte(1, r), 32)) { t := not(0) }
+                    // If the 2nd byte of `r` is not greater than 128, set `t` to `xor(sValue, r)`.
                     if iszero(gt(byte(2, r), 128)) { t := xor(sValue, r) }
+                    // Set `r` to `t` shifted left or right by a random multiple of 8.
                     r := sub(shl(shl(3, and(byte(3, r), 31)), t), and(r, 3))
+                    //
                     if iszero(u) { r := not(r) }
                     break
                 }
+                // Otherwise, just set `r` to `xor(sValue, r)`.
                 r := xor(sValue, r)
                 break
             }
         }
     }
 
+    /// @dev Returns a random private key and its associated public signer.
     function _randomSigner() internal returns (uint256 privateKey, address signer) {
         uint256 privateKeyMax = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
         privateKey = _bound(_random(), 1, privateKeyMax);
@@ -98,6 +115,8 @@ contract TestPlus is Test {
         require(signer != address(0));
     }
 
+    /// @dev Rounds up the free memory pointer the the next word boundary.
+    /// Sometimes, some Solidity operations causes the free memory pointer to be misaligned.
     function _roundUpFreeMemoryPointer() internal pure {
         // To prevent a solidity 0.8.13 bug.
         // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
@@ -110,6 +129,8 @@ contract TestPlus is Test {
         }
     }
 
+    /// @dev Check if the free memory pointer and the zero slot are not contaminated.
+    /// Useful for cases where these slots are used for temporary storage.
     function _checkMemory() internal pure {
         bool zeroSlotIsNotZero;
         bool freeMemoryPointerOverflowed;
@@ -124,6 +145,11 @@ contract TestPlus is Test {
         if (zeroSlotIsNotZero) revert("Zero slot is not zero!");
     }
 
+    /// @dev Check if `s`:
+    /// - Has sufficient memory allocated.
+    /// - Is aligned to a word boundary
+    /// - Is zero right padded (cuz some frontends like Etherscan has issues
+    ///   with decoding non-zero-right-padded strings)
     function _checkMemory(bytes memory s) internal pure {
         bool notZeroRightPadded;
         bool fmpNotWordAligned;
@@ -147,6 +173,7 @@ contract TestPlus is Test {
         _checkMemory();
     }
 
+    /// @dev For checking the memory allocation for string `s`.
     function _checkMemory(string memory s) internal pure {
         _checkMemory(bytes(s));
     }
@@ -210,9 +237,13 @@ contract TestPlus is Test {
         }
     }
 
+    /// @dev This function will make forge's gas output display the approximate codesize of
+    /// the test contract as the amount of gas burnt. Useful for quick guess checking if
+    /// certain optimizations actually compiles to similar bytecode.
     function test__codesize() public view {
         /// @solidity memory-safe-assembly
         assembly {
+            // The blake2f precompile `0x09` burns all the gas passed into it for invalid inputs.
             pop(staticcall(codesize(), 0x09, 0x00, 0x00, 0x00, 0x00))
         }
     }
