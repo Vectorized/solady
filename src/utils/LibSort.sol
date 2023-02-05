@@ -10,7 +10,6 @@ library LibSort {
 
     // - Faster on small arrays (32 or lesser elements).
     // - Faster on almost sorted arrays.
-    // - Stable (may matter if you are sorting packed numbers).
     // - Smaller bytecode.
     // - May be suitable for view functions intended for off-chain querying.
 
@@ -61,7 +60,6 @@ library LibSort {
     // - Faster on larger arrays (more than 32 elements).
     // - Robust performance.
     // - Larger bytecode.
-    // - NOT Stable (may matter if you are sorting packed numbers).
 
     /// @dev Sorts the array in-place with intro-quicksort.
     function sort(uint256[] memory a) internal pure {
