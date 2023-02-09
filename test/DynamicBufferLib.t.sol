@@ -86,17 +86,8 @@ contract DynamicBufferLibTest is TestPlus {
         bufferA = bufferB.append("0", "1", "2");
         _checkSamePointers(bufferA, bufferB);
         bufferA = bufferB.append("0", "1", "2", "3");
-        _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2", "3", "4");
-        _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2", "3", "4", "5");
-        _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2", "3", "4", "5", "6");
-        _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2", "3", "4", "5", "6", "7");
-        _checkSamePointers(bufferA, bufferB);
-        assertEq(bufferA.data, "01012012301234012345012345601234567");
-        assertEq(bufferB.data, "01012012301234012345012345601234567");
+        assertEq(bufferA.data, "0101201230123");
+        assertEq(bufferB.data, "0101201230123");
     }
 
     function _checkSamePointers(
