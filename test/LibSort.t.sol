@@ -993,7 +993,12 @@ contract LibSortTest is TestPlus {
 
     function _randomUints(uint256 n) private returns (uint256[] memory a) {
         unchecked {
-            a = new uint256[](n);
+            _misalignFreeMemoryPointer();
+            assembly {
+                a := mload(0x40)
+                mstore(a, n)
+                mstore(0x40, add(add(0x20, a), shl(5, n)))
+            }
             for (uint256 i; i != n; ++i) {
                 a[i] = _random();
             }
@@ -1002,7 +1007,12 @@ contract LibSortTest is TestPlus {
 
     function _randomAddresses(uint256 n) private returns (address[] memory a) {
         unchecked {
-            a = new address[](n);
+            _misalignFreeMemoryPointer();
+            assembly {
+                a := mload(0x40)
+                mstore(a, n)
+                mstore(0x40, add(add(0x20, a), shl(5, n)))
+            }
             for (uint256 i; i != n; ++i) {
                 a[i] = address(uint160(_random()));
             }
