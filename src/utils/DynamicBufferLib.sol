@@ -21,7 +21,12 @@ library DynamicBufferLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Appends `data` to `buffer`.
-    function append(DynamicBuffer memory buffer, bytes memory data) internal pure {
+    /// Returns the same buffer, so that it can be used for function chaining.
+    function append(DynamicBuffer memory buffer, bytes memory data)
+        internal
+        pure
+        returns (DynamicBuffer memory)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             if mload(data) {
@@ -90,5 +95,45 @@ library DynamicBufferLib {
                 mstore(bufferData, newBufferDataLength)
             }
         }
+        return buffer;
+    }
+
+    /// @dev Appends `data0`, `data1` to `buffer`.
+    /// Returns the same buffer, so that it can be used for function chaining.
+    function append(DynamicBuffer memory buffer, bytes memory data0, bytes memory data1)
+        internal
+        pure
+        returns (DynamicBuffer memory)
+    {
+        append(buffer, data0);
+        return append(buffer, data1);
+    }
+
+    /// @dev Appends `data0`, `data1`, `data2` to `buffer`.
+    /// Returns the same buffer, so that it can be used for function chaining.
+    function append(
+        DynamicBuffer memory buffer,
+        bytes memory data0,
+        bytes memory data1,
+        bytes memory data2
+    ) internal pure returns (DynamicBuffer memory) {
+        append(buffer, data0);
+        append(buffer, data1);
+        return append(buffer, data2);
+    }
+
+    /// @dev Appends `data0`, `data1`, `data2`, `data3` to `buffer`.
+    /// Returns the same buffer, so that it can be used for function chaining.
+    function append(
+        DynamicBuffer memory buffer,
+        bytes memory data0,
+        bytes memory data1,
+        bytes memory data2,
+        bytes memory data3
+    ) internal pure returns (DynamicBuffer memory) {
+        append(buffer, data0);
+        append(buffer, data1);
+        append(buffer, data2);
+        return append(buffer, data3);
     }
 }

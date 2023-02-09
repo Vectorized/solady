@@ -78,6 +78,29 @@ contract DynamicBufferLibTest is TestPlus {
         assertEq(keccak256(buffer.data), joinedHash);
     }
 
+    function testDynamicBufferChaining() public {
+        DynamicBufferLib.DynamicBuffer memory bufferA;
+        DynamicBufferLib.DynamicBuffer memory bufferB;
+        bufferA = bufferB.append("0", "1");
+        _checkSamePointers(bufferA, bufferB);
+        bufferA = bufferB.append("0", "1", "2");
+        _checkSamePointers(bufferA, bufferB);
+        bufferA = bufferB.append("0", "1", "2", "3");
+        assertEq(bufferA.data, "010120123");
+        assertEq(bufferB.data, "010120123");
+    }
+
+    function _checkSamePointers(
+        DynamicBufferLib.DynamicBuffer memory a,
+        DynamicBufferLib.DynamicBuffer memory b
+    ) internal {
+        bool isSamePointer;
+        assembly {
+            isSamePointer := eq(a, b)
+        }
+        assertTrue(isSamePointer);
+    }
+
     function _getChunks() internal pure returns (bytes[] memory chunks, bytes32 joinedHash) {
         chunks = new bytes[](20);
         chunks[0] = bytes(
