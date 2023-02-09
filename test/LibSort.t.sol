@@ -994,6 +994,7 @@ contract LibSortTest is TestPlus {
     function _randomUints(uint256 n) private returns (uint256[] memory a) {
         unchecked {
             _misalignFreeMemoryPointer();
+            /// @solidity memory-safe-assembly
             assembly {
                 a := mload(0x40)
                 mstore(a, n)
@@ -1008,6 +1009,7 @@ contract LibSortTest is TestPlus {
     function _randomAddresses(uint256 n) private returns (address[] memory a) {
         unchecked {
             _misalignFreeMemoryPointer();
+            /// @solidity memory-safe-assembly
             assembly {
                 a := mload(0x40)
                 mstore(a, n)
