@@ -50,9 +50,9 @@ Do refer to the [contribution guidelines](https://github.com/Vectorized/solady/i
 
 ## Safety
 
-While Solady has been heavily tested, there may be parts that may yield unexpected emergent behavior when used with other code. 
+While Solady has been heavily tested, some parts may yield unexpected emergent behavior when used with other code. 
 
-Please always include your own thorough tests when using Solady. 
+Please always include your own thorough tests when using Solady to make sure it works correctly with your code. 
 
 This is **experimental software** and is provided on an "as is" and "as available" basis.
 
