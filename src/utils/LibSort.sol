@@ -145,9 +145,8 @@ library LibSort {
                     }
                     continue
                 }
-                // Pivot slot is the average of `l` and `h`,
-                // rounded down to nearest multiple of 0x20.
-                let p := shl(5, shr(6, add(l, h)))
+                // Pivot slot is the average of `l` and `h`.
+                let p := add(shl(5, shr(6, add(l, h))), and(31, l))
                 // Median of 3 with sorting.
                 {
                     let e0 := mload(l)
@@ -479,8 +478,8 @@ library LibSort {
             let l := add(a, s) // Slot of the start of search.
             let h := add(a, shl(5, mload(a))) // Slot of the end of search.
             for { needle := add(signed, needle) } 1 {} {
-                // Average of `l` and `h`, rounded down to the nearest multiple of 0x20.
-                m := shl(5, shr(6, add(l, h)))
+                // Average of `l` and `h`.
+                m := add(shl(5, shr(6, add(l, h))), and(31, l))
                 let t := add(signed, mload(m))
                 found := eq(t, needle)
                 if or(gt(l, h), found) { break }

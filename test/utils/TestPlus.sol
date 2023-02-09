@@ -130,6 +130,17 @@ contract TestPlus is Test {
         }
     }
 
+    /// @dev Misaligns the free memory pointer.
+    function _misalignFreeMemoryPointer() internal pure {
+        uint256 twoWords = 0x40;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(twoWords)
+            m := add(m, mul(and(keccak256(0x00, twoWords), 31), iszero(and(m, 31))))
+            mstore(twoWords, add(m, iszero(and(m, 31))))
+        }
+    }
+
     /// @dev Check if the free memory pointer and the zero slot are not contaminated.
     /// Useful for cases where these slots are used for temporary storage.
     function _checkMemory() internal pure {
