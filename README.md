@@ -54,6 +54,10 @@ This is **experimental software** and is provided on an "as is" and "as availabl
 
 We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
+While Solady has been heavily tested, that may be parts that may yield unexpected emergent behavior when used with other code. 
+
+Please always include your own thorough tests when using Solady to make sure it works correctly with your code. 
+
 ## Installation
 
 To install with [**Foundry**](https://github.com/gakonst/foundry):
