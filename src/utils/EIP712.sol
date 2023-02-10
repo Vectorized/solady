@@ -54,9 +54,9 @@ abstract contract EIP712 {
         virtual
         returns (string memory name, string memory version);
 
-    /// @dev You may override this function to directly return the
-    /// `nameHash` and the `versionHash` for gas savings if the
-    /// domain separator has to be computed on-the-fly.
+    /// @dev You may override this function to directly return the `nameHash`
+    /// and the `versionHash` for gas savings if the domain separator has to be
+    /// computed on-the-fly (in upgradeable contracts, or if chain id changes).
     /// ```
     ///     function _domainNameAndVersionHashes()
     ///         internal
