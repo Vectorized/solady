@@ -99,23 +99,27 @@ contract EIP712Test is TestPlus {
         _testEIP5267(mockClone);
     }
 
-    function _testEIP5267(MockEIP712 mockToTest) public {
-        (
-            bytes1 fields,
-            string memory name,
-            string memory version,
-            uint256 chainId,
-            address verifyingContract,
-            bytes32 salt,
-            uint256[] memory extensions
-        ) = mockToTest.eip712Domain();
+    struct _testEIP5267Variables {
+        bytes1 fields;
+        string name;
+        string version;
+        uint256 chainId;
+        address verifyingContract;
+        bytes32 salt;
+        uint256[] extensions;
+    }
 
-        assertEq(fields, hex"0f");
-        assertEq(name, "Milady");
-        assertEq(version, "1");
-        assertEq(chainId, block.chainid);
-        assertEq(verifyingContract, address(mockToTest));
-        assertEq(salt, bytes32(0));
-        assertEq(extensions, new uint256[](0));
+    function _testEIP5267(MockEIP712 mockToTest) public {
+        _testEIP5267Variables memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            mockToTest.eip712Domain();
+
+        assertEq(t.fields, hex"0f");
+        assertEq(t.name, "Milady");
+        assertEq(t.version, "1");
+        assertEq(t.chainId, block.chainid);
+        assertEq(t.verifyingContract, address(mockToTest));
+        assertEq(t.salt, bytes32(0));
+        assertEq(t.extensions, new uint256[](0));
     }
 }
