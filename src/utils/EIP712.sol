@@ -16,20 +16,40 @@ abstract contract EIP712 {
 
     address private immutable _cachedThis;
     uint256 private immutable _cachedChainId;
+    bytes32 private immutable _cachedNameHash;
+    bytes32 private immutable _cachedVersionHash;
     bytes32 private immutable _cachedDomainSeparator;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Cache the domain separator for cheaper runtime gas costs in
-    /// non-upgradeable contracts. In the case of upgradeable contracts
-    /// (i.e. proxies), or if the chain id changes due to a hard fork,
+    /// @dev Cache the hashes for cheaper runtime gas costs.
+    /// In the case of upgradeable contracts (i.e. proxies),
+    /// or if the chain id changes due to a hard fork,
     /// the domain separator will be seamlessly calculated on-the-fly.
     constructor() {
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
-        _cachedDomainSeparator = _buildDomainSeparator();
+
+        (string memory name, string memory version) = _domainNameAndVersion();
+        bytes32 nameHash = keccak256(bytes(name));
+        bytes32 versionHash = keccak256(bytes(version));
+        _cachedNameHash = nameHash;
+        _cachedVersionHash = versionHash;
+
+        bytes32 separator;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), nameHash)
+            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x60), chainid())
+            mstore(add(m, 0x80), address())
+            separator := keccak256(m, 0xa0)
+        }
+        _cachedDomainSeparator = separator;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -53,31 +73,6 @@ abstract contract EIP712 {
         pure
         virtual
         returns (string memory name, string memory version);
-
-    /// @dev You may override this function to directly return the `nameHash`
-    /// and the `versionHash` for gas savings if the domain separator has to be
-    /// computed on-the-fly (in upgradeable contracts, or if chain id changes).
-    /// ```
-    ///     function _domainNameAndVersionHashes()
-    ///         internal
-    ///         pure
-    ///         virtual
-    ///         returns (bytes32 nameHash, bytes32 versionHash)
-    ///     {
-    ///         nameHash = keccak256(bytes("Solady"));
-    ///         versionHash = keccak256(bytes("1"));
-    ///     }
-    /// ```
-    function _domainNameAndVersionHashes()
-        internal
-        pure
-        virtual
-        returns (bytes32 nameHash, bytes32 versionHash)
-    {
-        (string memory name, string memory version) = _domainNameAndVersion();
-        nameHash = keccak256(bytes(name));
-        versionHash = keccak256(bytes(version));
-    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
@@ -154,7 +149,8 @@ abstract contract EIP712 {
 
     /// @dev Returns the EIP-712 domain separator.
     function _buildDomainSeparator() private view returns (bytes32 separator) {
-        (bytes32 nameHash, bytes32 versionHash) = _domainNameAndVersionHashes();
+        bytes32 nameHash = _cachedNameHash;
+        bytes32 versionHash = _cachedVersionHash;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Load the free memory pointer.
