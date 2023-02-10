@@ -22,6 +22,9 @@ abstract contract EIP712 {
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Cache the domain separator for cheaper runtime gas costs
+    /// in non-upgradeable contracts. For upgradeable contracts,
+    /// the domain separator will be seamlessly calculated on-the-fly.
     constructor() {
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
@@ -111,12 +114,12 @@ abstract contract EIP712 {
             uint256[] memory extensions
         )
     {
-        fields = hex"0f";
+        fields = hex"0f"; // `0b01111`.
         (name, version) = _domainNameAndVersion();
         chainId = block.chainid;
         verifyingContract = address(this);
-        salt = salt;
-        extensions = extensions;
+        salt = salt; // `bytes32(0)`.
+        extensions = extensions; // `new uint256[](0)`.
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

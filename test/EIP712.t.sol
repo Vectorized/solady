@@ -90,4 +90,36 @@ contract EIP712Test is TestPlus {
 
         assertEq(mockToTest.DOMAIN_SEPARATOR(), expectedDomainSeparator);
     }
+
+    function testEIP5267() public {
+        _testEIP5267(mock);
+        _testEIP5267(mockClone);
+        vm.chainId(32123);
+        _testEIP5267(mock);
+        _testEIP5267(mockClone);
+    }
+
+    struct _testEIP5267Variables {
+        bytes1 fields;
+        string name;
+        string version;
+        uint256 chainId;
+        address verifyingContract;
+        bytes32 salt;
+        uint256[] extensions;
+    }
+
+    function _testEIP5267(MockEIP712 mockToTest) public {
+        _testEIP5267Variables memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            mockToTest.eip712Domain();
+
+        assertEq(t.fields, hex"0f");
+        assertEq(t.name, "Milady");
+        assertEq(t.version, "1");
+        assertEq(t.chainId, block.chainid);
+        assertEq(t.verifyingContract, address(mockToTest));
+        assertEq(t.salt, bytes32(0));
+        assertEq(t.extensions, new uint256[](0));
+    }
 }
