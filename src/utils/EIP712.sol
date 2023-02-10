@@ -31,13 +31,14 @@ abstract contract EIP712 {
     constructor() {
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
+
         (string memory name, string memory version) = _domainNameAndVersion();
         bytes32 nameHash = keccak256(bytes(name));
         bytes32 versionHash = keccak256(bytes(version));
-        bytes32 separator;
         _cachedNameHash = nameHash;
         _cachedVersionHash = versionHash;
 
+        bytes32 separator;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Load the free memory pointer.
