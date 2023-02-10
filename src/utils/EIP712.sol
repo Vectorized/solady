@@ -32,9 +32,23 @@ abstract contract EIP712 {
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
         (string memory name, string memory version) = _domainNameAndVersion();
-        _cachedNameHash = keccak256(bytes(name));
-        _cachedVersionHash = keccak256(bytes(version));
-        _cachedDomainSeparator = _buildDomainSeparator();
+        bytes32 nameHash = keccak256(bytes(name));
+        bytes32 versionHash = keccak256(bytes(version));
+        bytes32 separator;
+        _cachedNameHash = nameHash;
+        _cachedVersionHash = versionHash;
+
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), nameHash)
+            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x60), chainid())
+            mstore(add(m, 0x80), address())
+            separator := keccak256(m, 0xa0)
+        }
+        _cachedDomainSeparator = separator;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
