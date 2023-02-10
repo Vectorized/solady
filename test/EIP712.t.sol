@@ -22,6 +22,18 @@ contract EIP712Test is TestPlus {
         _testHashTypedDataOnClone(mockClone);
     }
 
+    function testHashTypedDataWithChaindIdChange() public {
+        _testHashTypedDataOnClone(mock);
+        vm.chainId(32123);
+        _testHashTypedDataOnClone(mock);
+    }
+
+    function testHashTypedDataOnCloneWithChaindIdChange() public {
+        _testHashTypedDataOnClone(mockClone);
+        vm.chainId(32123);
+        _testHashTypedDataOnClone(mockClone);
+    }
+
     function _testHashTypedDataOnClone(MockEIP712 mockToTest) internal {
         (address signer, uint256 privateKey) = _randomSigner();
 
@@ -48,6 +60,18 @@ contract EIP712Test is TestPlus {
     }
 
     function testDomainSeparatorOnClone() public {
+        _testDomainSeparator(mockClone);
+    }
+
+    function testDomainSeparatorWithChainIdChange() public {
+        _testDomainSeparator(mock);
+        vm.chainId(32123);
+        _testDomainSeparator(mock);
+    }
+
+    function testDomainSeparatorOnCloneWithChainIdChange() public {
+        _testDomainSeparator(mockClone);
+        vm.chainId(32123);
         _testDomainSeparator(mockClone);
     }
 
