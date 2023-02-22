@@ -19,7 +19,7 @@ library LibArray {
 
             // last element is `el` + `len` * 32 bytes.
             for { let end := add(el, mul(len, 0x20)) } lt(el, end) { el := add(el, 0x20) } {
-                // load element into mem and add it to `sum`
+                // load element into mem and add it to `sum`.
                 sum := add(sum, mload(el))
             }
         }
@@ -34,7 +34,7 @@ library LibArray {
             // first element is 32 bytes after len.
             let el := add(arr, 0x20)
 
-            // set first element as current max
+            // set first element as current max.
             max := mload(el)
 
             // last element is `el` + `len` * 32 bytes.
@@ -57,7 +57,7 @@ library LibArray {
             // first element is 32 bytes after len.
             let el := add(arr, 0x20)
 
-            // set first element as current min
+            // set first element as current min.
             min := mload(el)
 
             // last element is `el` + `len` * 32 bytes.

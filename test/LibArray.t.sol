@@ -40,7 +40,7 @@ contract LibArrayTest is TestPlus {
     }
 
     function _bruteForceMax(uint256[] memory arr) internal returns (uint256 max) {
-        // default is 0
+        // default is 0.
         if (arr.length == 0) {
             return 0;
         }
@@ -51,7 +51,7 @@ contract LibArrayTest is TestPlus {
     }
 
     function _bruteForceMin(uint256[] memory arr) internal returns (uint256 min) {
-        // default is 0
+        // default is 0.
         if (arr.length == 0) {
             return 0;
         }
