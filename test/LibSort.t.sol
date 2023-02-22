@@ -762,7 +762,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testIsSortedSignedDifferential(uint256) public {
+    function testIsSortedIntsDifferential(uint256) public {
         unchecked {
             uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
             int256[] memory a = new int256[](n);
@@ -771,6 +771,19 @@ contract LibSortTest is TestPlus {
                 if (_random() % 2 == 0) {
                     a[i] = -a[i];
                 }
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+            LibSort.sort(a);
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+        }
+    }
+
+    function testIsSortedAddressesDifferential(uint256) public {
+        unchecked {
+            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            address[] memory a = new address[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = address(uint160(_random() % 4));
             }
             assertEq(LibSort.isSorted(a), _isSorted(a));
             LibSort.sort(a);
@@ -795,7 +808,7 @@ contract LibSortTest is TestPlus {
         }
     }
 
-    function testIsUniquifiedSortedSignedDifferential(uint256) public {
+    function testIsUniquifiedSortedIntsDifferential(uint256) public {
         unchecked {
             uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
             int256[] memory a = new int256[](n);
@@ -806,6 +819,23 @@ contract LibSortTest is TestPlus {
                 }
             }
             int256[] memory aCopy = _copy(a);
+            LibSort.sort(aCopy);
+            LibSort.uniquifySorted(aCopy);
+            bool isUniquified = aCopy.length == a.length;
+            assertEq(LibSort.isUniquifiedSorted(a), _isSorted(a) && isUniquified);
+            LibSort.sort(a);
+            assertEq(LibSort.isUniquifiedSorted(a), _isSorted(a) && isUniquified);
+        }
+    }
+
+    function testIsUniquifiedSortedAddressesDifferential(uint256) public {
+        unchecked {
+            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            address[] memory a = new address[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = address(uint160(_random() % 4));
+            }
+            address[] memory aCopy = _copy(a);
             LibSort.sort(aCopy);
             LibSort.uniquifySorted(aCopy);
             bool isUniquified = aCopy.length == a.length;
