@@ -362,7 +362,7 @@ library LibSort {
     }
 
     /// @dev Returns whether the array is strictly ascending (sorted and uniquified).
-    function isUniquifiedSorted(uint256[] memory a) internal pure returns (bool result) {
+    function isSortedAndUniquified(uint256[] memory a) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := 1
@@ -379,7 +379,7 @@ library LibSort {
     }
 
     /// @dev Returns whether the array is strictly ascending (sorted and uniquified).
-    function isUniquifiedSorted(int256[] memory a) internal pure returns (bool result) {
+    function isSortedAndUniquified(int256[] memory a) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := 1
@@ -396,8 +396,8 @@ library LibSort {
     }
 
     /// @dev Returns whether the array is strictly ascending (sorted and uniquified).
-    function isUniquifiedSorted(address[] memory a) internal pure returns (bool result) {
-        result = isUniquifiedSorted(_toUints(a));
+    function isSortedAndUniquified(address[] memory a) internal pure returns (bool result) {
+        result = isSortedAndUniquified(_toUints(a));
     }
 
     /// @dev Returns the sorted set difference of `a` and `b`.
