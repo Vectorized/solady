@@ -322,6 +322,84 @@ library LibSort {
         reverse(_toUints(a));
     }
 
+    /// @dev Returns whether the array is sorted in ascending order.
+    function isSorted(uint256[] memory a) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := 1
+            if iszero(lt(mload(a), 2)) {
+                let end := add(a, shl(5, mload(a)))
+                for { a := add(a, 0x20) } 1 {} {
+                    let p := mload(a)
+                    a := add(a, 0x20)
+                    result := iszero(gt(p, mload(a)))
+                    if iszero(mul(result, xor(a, end))) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Returns whether the array is sorted in ascending order.
+    function isSorted(int256[] memory a) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := 1
+            if iszero(lt(mload(a), 2)) {
+                let end := add(a, shl(5, mload(a)))
+                for { a := add(a, 0x20) } 1 {} {
+                    let p := mload(a)
+                    a := add(a, 0x20)
+                    result := iszero(sgt(p, mload(a)))
+                    if iszero(mul(result, xor(a, end))) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Returns whether the array is sorted in ascending order.
+    function isSorted(address[] memory a) internal pure returns (bool result) {
+        result = isSorted(_toUints(a));
+    }
+
+    /// @dev Returns whether the array is strictly ascending (sorted and uniquified).
+    function isSortedAndUniquified(uint256[] memory a) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := 1
+            if iszero(lt(mload(a), 2)) {
+                let end := add(a, shl(5, mload(a)))
+                for { a := add(a, 0x20) } 1 {} {
+                    let p := mload(a)
+                    a := add(a, 0x20)
+                    result := lt(p, mload(a))
+                    if iszero(mul(result, xor(a, end))) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Returns whether the array is strictly ascending (sorted and uniquified).
+    function isSortedAndUniquified(int256[] memory a) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := 1
+            if iszero(lt(mload(a), 2)) {
+                let end := add(a, shl(5, mload(a)))
+                for { a := add(a, 0x20) } 1 {} {
+                    let p := mload(a)
+                    a := add(a, 0x20)
+                    result := slt(p, mload(a))
+                    if iszero(mul(result, xor(a, end))) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Returns whether the array is strictly ascending (sorted and uniquified).
+    function isSortedAndUniquified(address[] memory a) internal pure returns (bool result) {
+        result = isSortedAndUniquified(_toUints(a));
+    }
+
     /// @dev Returns the sorted set difference of `a` and `b`.
     /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
     function difference(uint256[] memory a, uint256[] memory b)

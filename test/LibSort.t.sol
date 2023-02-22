@@ -749,6 +749,132 @@ contract LibSortTest is TestPlus {
         }
     }
 
+    function testIsSortedDifferential(uint256) public {
+        unchecked {
+            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            uint256[] memory a = new uint256[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = _random() % 4;
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+            LibSort.sort(a);
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+            if (n != 0) {
+                a[_random() % n] = 0;
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+        }
+    }
+
+    function testIsSortedIntsDifferential(uint256) public {
+        unchecked {
+            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            int256[] memory a = new int256[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = int256(_random() % 4);
+                if (_random() % 2 == 0) {
+                    a[i] = -a[i];
+                }
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+            LibSort.sort(a);
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+            if (n != 0) {
+                a[_random() % n] = 0;
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+        }
+    }
+
+    function testIsSortedAddressesDifferential(uint256) public {
+        unchecked {
+            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            address[] memory a = new address[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = address(uint160(_random() % 4));
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+            LibSort.sort(a);
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+            if (n != 0) {
+                a[_random() % n] = address(0);
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
+        }
+    }
+
+    function testIsSortedAndUniquifiedDifferential(uint256) public {
+        unchecked {
+            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            uint256[] memory a = new uint256[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = _random() % 4;
+            }
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            LibSort.sort(a);
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            if (n != 0) {
+                a[_random() % n] = 0;
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+        }
+    }
+
+    function testIsSortedAndUniquifiedIntsDifferential(uint256) public {
+        unchecked {
+            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            int256[] memory a = new int256[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = int256(_random() % 4);
+                if (_random() % 2 == 0) {
+                    a[i] = -a[i];
+                }
+            }
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            LibSort.sort(a);
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            if (n != 0) {
+                a[_random() % n] = 0;
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+        }
+    }
+
+    function testIsSortedAndUniquifiedAddressesDifferential(uint256) public {
+        unchecked {
+            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            address[] memory a = new address[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = address(uint160(_random() % 4));
+            }
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            LibSort.sort(a);
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            if (n != 0) {
+                a[_random() % n] = address(0);
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+        }
+    }
+
     function _unionOriginal(uint256[] memory a, uint256[] memory b)
         private
         pure
@@ -903,6 +1029,21 @@ contract LibSortTest is TestPlus {
     }
 
     function _isSortedAndUniquified(uint256[] memory a) private pure returns (bool) {
+        if (a.length == 0) {
+            return true;
+        }
+        unchecked {
+            uint256 end = a.length - 1;
+            for (uint256 i = 0; i != end; ++i) {
+                if (a[i] >= a[i + 1]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    function _isSortedAndUniquified(int256[] memory a) private pure returns (bool) {
         if (a.length == 0) {
             return true;
         }
