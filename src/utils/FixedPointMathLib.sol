@@ -577,9 +577,15 @@ library FixedPointMathLib {
 
     /// @dev Returns the average of `x` and `y`.
     function avg(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            z := add(and(x, y), shr(1, xor(x, y)))
+        unchecked {
+            z = (x & y) + ((x ^ y) >> 1);
+        }
+    }
+
+    /// @dev Returns the average of `x` and `y`.
+    function avg(int256 x, int256 y) internal pure returns (int256 z) {
+        unchecked {
+            z = (x >> 1) + (y >> 1) + (((x & 1) + (y & 1)) >> 1);
         }
     }
 
@@ -609,12 +615,42 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns the minimum of `x` and `y`.
+    function min(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := xor(x, mul(xor(x, y), slt(y, x)))
+        }
+    }
+
     /// @dev Returns the maximum of `x` and `y`.
     function max(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             z := xor(x, mul(xor(x, y), gt(y, x)))
         }
+    }
+
+    /// @dev Returns the maximum of `x` and `y`.
+    function max(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := xor(x, mul(xor(x, y), sgt(y, x)))
+        }
+    }
+
+    /// @dev Returns `x`, bounded to `minValue` and `maxValue`.
+    function clamp(uint256 x, uint256 minValue, uint256 maxValue)
+        internal
+        pure
+        returns (uint256 z)
+    {
+        z = min(max(x, minValue), maxValue);
+    }
+
+    /// @dev Returns `x`, bounded to `minValue` and `maxValue`.
+    function clamp(int256 x, int256 minValue, int256 maxValue) internal pure returns (int256 z) {
+        z = min(max(x, minValue), maxValue);
     }
 
     /// @dev Returns greatest common divisor of `x` and `y`.
@@ -630,18 +666,51 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `x`, bounded to `minValue` and `maxValue`.
-    function clamp(uint256 x, uint256 minValue, uint256 maxValue)
-        internal
-        pure
-        returns (uint256 z)
-    {
-        z = min(max(x, minValue), maxValue);
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   RAW NUMBER OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns `x + y`, without checking for overflow.
+    function rawAdd(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        unchecked {
+            z = x + y;
+        }
+    }
+
+    /// @dev Returns `x + y`, without checking for overflow.
+    function rawAdd(int256 x, int256 y) internal pure returns (int256 z) {
+        unchecked {
+            z = x + y;
+        }
+    }
+
+    /// @dev Returns `x - y`, without checking for underflow.
+    function rawSub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        unchecked {
+            z = x - y;
+        }
+    }
+
+    /// @dev Returns `x - y`, without checking for underflow.
+    function rawSub(int256 x, int256 y) internal pure returns (int256 z) {
+        unchecked {
+            z = x - y;
+        }
+    }
+
+    /// @dev Returns `x * y`, without checking for overflow.
+    function rawMul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        unchecked {
+            z = x * y;
+        }
+    }
+
+    /// @dev Returns `x * y`, without checking for overflow.
+    function rawMul(int256 x, int256 y) internal pure returns (int256 z) {
+        unchecked {
+            z = x * y;
+        }
+    }
 
     /// @dev Returns `x / y`, returning 0 if `y` is zero.
     function rawDiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
@@ -688,15 +757,6 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             z := mulmod(x, y, d)
-        }
-    }
-
-    /// @dev Returns a non-zero number if `b` is true, else 0.
-    /// If `b` is from plain Solidity, the non-zero number will be 1.
-    function rawBoolToUint(bool b) internal pure returns (uint256 z) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            z := b
         }
     }
 }

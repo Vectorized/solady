@@ -262,15 +262,28 @@ contract FixedPointMathLibTest is TestPlus {
     }
 
     function testAvg() public {
-        assertEq(FixedPointMathLib.avg(5, 6), 5);
-        assertEq(FixedPointMathLib.avg(0, 1), 0);
-        assertEq(FixedPointMathLib.avg(45645465, 4846513), 25245989);
+        assertEq(FixedPointMathLib.avg(uint256(5), uint256(6)), uint256(5));
+        assertEq(FixedPointMathLib.avg(uint256(0), uint256(1)), uint256(0));
+        assertEq(FixedPointMathLib.avg(uint256(45645465), uint256(4846513)), uint256(25245989));
+    }
+
+    function testAvgSigned() public {
+        assertEq(FixedPointMathLib.avg(int256(5), int256(6)), int256(5));
+        assertEq(FixedPointMathLib.avg(int256(0), int256(1)), int256(0));
+        assertEq(FixedPointMathLib.avg(int256(45645465), int256(4846513)), int256(25245989));
+
+        assertEq(FixedPointMathLib.avg(int256(5), int256(-6)), int256(-1));
+        assertEq(FixedPointMathLib.avg(int256(0), int256(-1)), int256(-1));
+        assertEq(FixedPointMathLib.avg(int256(45645465), int256(-4846513)), int256(20399476));
     }
 
     function testAvgEdgeCase() public {
-        assertEq(FixedPointMathLib.avg(2 ** 256 - 1, 1), 2 ** 255);
-        assertEq(FixedPointMathLib.avg(2 ** 256 - 1, 10), 2 ** 255 + 4);
-        assertEq(FixedPointMathLib.avg(2 ** 256 - 1, 2 ** 256 - 1), 2 ** 256 - 1);
+        assertEq(FixedPointMathLib.avg(uint256(2 ** 256 - 1), uint256(1)), uint256(2 ** 255));
+        assertEq(FixedPointMathLib.avg(uint256(2 ** 256 - 1), uint256(10)), uint256(2 ** 255 + 4));
+        assertEq(
+            FixedPointMathLib.avg(uint256(2 ** 256 - 1), uint256(2 ** 256 - 1)),
+            uint256(2 ** 256 - 1)
+        );
     }
 
     function testAbs() public {
@@ -577,8 +590,18 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.min(x, y), z);
     }
 
+    function testMinSigned(int256 x, int256 y) public {
+        int256 z = x < y ? x : y;
+        assertEq(FixedPointMathLib.min(x, y), z);
+    }
+
     function testMax(uint256 x, uint256 y) public {
         uint256 z = x > y ? x : y;
+        assertEq(FixedPointMathLib.max(x, y), z);
+    }
+
+    function testMaxSigned(int256 x, int256 y) public {
+        int256 z = x > y ? x : y;
         assertEq(FixedPointMathLib.max(x, y), z);
     }
 
@@ -652,6 +675,17 @@ contract FixedPointMathLibTest is TestPlus {
         assertEq(FixedPointMathLib.clamp(x, minValue, maxValue), clamped);
     }
 
+    function testClampSigned(int256 x, int256 minValue, int256 maxValue) public {
+        int256 clamped = x;
+        if (clamped < minValue) {
+            clamped = minValue;
+        }
+        if (clamped > maxValue) {
+            clamped = maxValue;
+        }
+        assertEq(FixedPointMathLib.clamp(x, minValue, maxValue), clamped);
+    }
+
     function testFactorial() public {
         uint256 result = 1;
         assertEq(FixedPointMathLib.factorial(0), result);
@@ -691,6 +725,60 @@ contract FixedPointMathLibTest is TestPlus {
         } else {
             return _gcd(y, x % y);
         }
+    }
+
+    function testRawAdd(uint256 x, uint256 y) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := add(x, y)
+        }
+        assertEq(FixedPointMathLib.rawAdd(x, y), z);
+    }
+
+    function testRawAdd(int256 x, int256 y) public {
+        int256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := add(x, y)
+        }
+        assertEq(FixedPointMathLib.rawAdd(x, y), z);
+    }
+
+    function testRawSub(uint256 x, uint256 y) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sub(x, y)
+        }
+        assertEq(FixedPointMathLib.rawSub(x, y), z);
+    }
+
+    function testRawSub(int256 x, int256 y) public {
+        int256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sub(x, y)
+        }
+        assertEq(FixedPointMathLib.rawSub(x, y), z);
+    }
+
+    function testRawMul(uint256 x, uint256 y) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mul(x, y)
+        }
+        assertEq(FixedPointMathLib.rawMul(x, y), z);
+    }
+
+    function testRawMul(int256 x, int256 y) public {
+        int256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mul(x, y)
+        }
+        assertEq(FixedPointMathLib.rawMul(x, y), z);
     }
 
     function testRawDiv(uint256 x, uint256 y) public {
@@ -745,14 +833,5 @@ contract FixedPointMathLibTest is TestPlus {
             z := mulmod(x, y, denominator)
         }
         assertEq(FixedPointMathLib.rawMulMod(x, y, denominator), z);
-    }
-
-    function testRawBoolToUint(bool b) public {
-        uint256 z;
-        /// @solidity memory-safe-assembly
-        assembly {
-            z := b
-        }
-        assertEq(FixedPointMathLib.rawBoolToUint(b), z);
     }
 }
