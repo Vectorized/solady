@@ -759,6 +759,13 @@ contract LibSortTest is TestPlus {
             assertEq(LibSort.isSorted(a), _isSorted(a));
             LibSort.sort(a);
             assertEq(LibSort.isSorted(a), _isSorted(a));
+            if (n != 0) {
+                a[_random() % n] = 0;
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
         }
     }
 
@@ -775,6 +782,13 @@ contract LibSortTest is TestPlus {
             assertEq(LibSort.isSorted(a), _isSorted(a));
             LibSort.sort(a);
             assertEq(LibSort.isSorted(a), _isSorted(a));
+            if (n != 0) {
+                a[_random() % n] = 0;
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
         }
     }
 
@@ -788,6 +802,13 @@ contract LibSortTest is TestPlus {
             assertEq(LibSort.isSorted(a), _isSorted(a));
             LibSort.sort(a);
             assertEq(LibSort.isSorted(a), _isSorted(a));
+            if (n != 0) {
+                a[_random() % n] = address(0);
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSorted(a), _isSorted(a));
         }
     }
 
@@ -800,6 +821,13 @@ contract LibSortTest is TestPlus {
             }
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
             LibSort.sort(a);
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            if (n != 0) {
+                a[_random() % n] = 0;
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
         }
     }
@@ -817,6 +845,13 @@ contract LibSortTest is TestPlus {
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
             LibSort.sort(a);
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            if (n != 0) {
+                a[_random() % n] = 0;
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
         }
     }
 
@@ -829,6 +864,13 @@ contract LibSortTest is TestPlus {
             }
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
             LibSort.sort(a);
+            assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
+            if (n != 0) {
+                a[_random() % n] = address(0);
+                if (_random() % 2 == 0) {
+                    a[_random() % n] = a[_random() % n];
+                }
+            }
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
         }
     }
