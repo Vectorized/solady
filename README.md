@@ -25,7 +25,7 @@ utils
 ├─ SSTORE2 — "Library for cheaper reads and writes to persistent storage"
 ├─ CREATE3 — "Deploy to deterministic addresses without an initcode factor"
 ├─ LibRLP — "Library for computing contract addresses from their deployer and nonce"
-├─ LibBit — "Library for bit twiddling operations"
+├─ LibBit — "Library for bit twiddling and boolean operations"
 ├─ Clone — "Class with helper read functions for clone with immutable args"
 ├─ LibClone — "Minimal proxy library"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
@@ -54,7 +54,7 @@ This is **experimental software** and is provided on an "as is" and "as availabl
 
 We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
-While Solady has been heavily tested, that may be parts that may yield unexpected emergent behavior when used with other code. 
+While Solady has been heavily tested, there may be parts that may exhibit unexpected emergent behavior when used with other code. 
 
 Please always include your own thorough tests when using Solady to make sure it works correctly with your code. 
 
