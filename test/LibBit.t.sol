@@ -85,4 +85,21 @@ contract LibBitTest is TestPlus {
             }
         }
     }
+
+    function testAnd(bool x, bool y) public {
+        assertEq(LibBit.and(x, y), x && y);
+    }
+
+    function testOr(bool x, bool y) public {
+        assertEq(LibBit.or(x, y), x || y);
+    }
+
+    function testBoolToUint(bool b) public {
+        uint256 z;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := b
+        }
+        assertEq(LibBit.toUint(b), z);
+    }
 }
