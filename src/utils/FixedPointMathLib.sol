@@ -498,6 +498,34 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns the cube root of `x`.
+    /// Credit to bout3fiddy and pcaversaccio under GNUv3 license:
+    /// https://github.com/pcaversaccio/snekmate/blob/main/src/utils/Math.vy
+    function cbrt(uint256 x) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let v := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            v := or(v, shl(6, lt(0xffffffffffffffff, shr(v, x))))
+            v := or(v, shl(5, lt(0xffffffff, shr(v, x))))
+            v := or(v, shl(4, lt(0xffff, shr(v, x))))
+            v := or(v, shl(3, lt(0xff, shr(v, x))))
+            v := or(v, shl(2, lt(0xf, shr(v, x))))
+
+            let r := mod(v, 3)
+            z := div(mul(shl(div(or(v, 3), 3), 1), exp(1260, r)), exp(1000, r))
+
+            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
+            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
+            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
+            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
+            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
+            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
+            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
+
+            z := sub(z, lt(div(x, mul(z, z)), z))
+        }
+    }
+
     /// @dev Returns the factorial of `x`.
     function factorial(uint256 x) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
