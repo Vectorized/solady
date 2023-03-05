@@ -108,21 +108,6 @@ contract MulticallableTest is TestPlus {
         assertEq(multicallable.multicall(data).length, 0);
     }
 
-    function testMulticallablePreservesMsgValue() public {
-        bytes[] memory data = new bytes[](1);
-        data[0] = abi.encodeWithSelector(MockMulticallable.pay.selector);
-        multicallable.multicall{value: 3}(data);
-        assertEq(multicallable.paid(), 3);
-    }
-
-    function testMulticallablePreservesMsgValueUsedTwice() public {
-        bytes[] memory data = new bytes[](2);
-        data[0] = abi.encodeWithSelector(MockMulticallable.pay.selector);
-        data[1] = abi.encodeWithSelector(MockMulticallable.pay.selector);
-        multicallable.multicall{value: 3}(data);
-        assertEq(multicallable.paid(), 6);
-    }
-
     function testMulticallablePreservesMsgSender() public {
         address caller = address(uint160(0xbeef));
         bytes[] memory data = new bytes[](1);
