@@ -513,7 +513,7 @@ library FixedPointMathLib {
 
             let j := xor(31, mod(v, 3))
 
-            z := div(mul(shl(div(or(v, 3), 3), 1), byte(j, 0xa90d01)), byte(j, 0x640a01))
+            z := div(mul(shl(div(v, 3), 1), byte(j, 0xa90d02)), byte(j, 0x320501))
 
             z := div(add(shl(1, z), div(x, mul(z, z))), 3)
             z := div(add(shl(1, z), div(x, mul(z, z))), 3)
