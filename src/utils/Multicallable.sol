@@ -10,7 +10,7 @@ abstract contract Multicallable {
     /// If any of the `DELEGATECALL`s reverts, the entire transaction is reverted,
     /// and the error is bubbled up.
     ///
-    /// This function is deliberately non-payable to guard against double-spend vulnerabilities.
+    /// This function is deliberately made non-payable to guard against double-spending.
     /// (See: https://www.paradigm.xyz/2021/08/two-rights-might-make-a-wrong)
     ///
     /// For efficiency, this function will directly return the results and terminate the call.
