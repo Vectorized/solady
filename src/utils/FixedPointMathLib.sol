@@ -511,7 +511,7 @@ library FixedPointMathLib {
             v := or(v, shl(3, lt(0xff, shr(v, x))))
             v := or(v, shl(2, lt(0xf, shr(v, x))))
 
-            let j := xor(mod(v, 3), 31)
+            let j := xor(31, mod(v, 3))
 
             z := div(mul(shl(div(or(v, 3), 3), 1), byte(j, 0xa90d01)), byte(j, 0x640a01))
 
