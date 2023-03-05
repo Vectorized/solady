@@ -7,13 +7,13 @@ pragma solidity ^0.8.4;
 abstract contract Multicallable {
     /// @dev Apply `DELEGATECALL` with the current contract to each calldata in `data`,
     /// and store the `abi.encode` formatted results of each `DELEGATECALL` into `results`.
-    /// If any of the `DELEGATECALL`s reverts, the entire transaction is reverted,
+    /// If any of the `DELEGATECALL`s reverts, the entire context is reverted,
     /// and the error is bubbled up.
     ///
     /// This function is deliberately made non-payable to guard against double-spending.
     /// (See: https://www.paradigm.xyz/2021/08/two-rights-might-make-a-wrong)
     ///
-    /// For efficiency, this function will directly return the results and terminate the call.
+    /// For efficiency, this function will directly return the results, terminating the context.
     /// If called internally, it must be called at the end of a function
     /// that returns `(bytes[] memory)`.
     function multicall(bytes[] calldata data) public virtual returns (bytes[] memory) {
