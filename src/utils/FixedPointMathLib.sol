@@ -499,7 +499,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the cube root of `x`.
-    /// Credit to bout3fiddy and pcaversaccio under GNUv3 license:
+    /// Credit to bout3fiddy and pcaversaccio under AGPLv3 license:
     /// https://github.com/pcaversaccio/snekmate/blob/main/src/utils/Math.vy
     function cbrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
