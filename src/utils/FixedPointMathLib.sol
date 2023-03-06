@@ -513,13 +513,13 @@ library FixedPointMathLib {
 
             z := div(shl(div(r, 3), 0xff), byte(mod(r, 3), shl(232, 0x7f624b)))
 
-            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
-            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
-            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
-            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
-            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
-            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
-            z := div(add(shl(1, z), div(x, mul(z, z))), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
 
             z := sub(z, lt(div(x, mul(z, z)), z))
         }
