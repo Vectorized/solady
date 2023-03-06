@@ -209,8 +209,7 @@ contract SignatureCheckerLibTest is TestPlus {
 
     function isValidSignatureNow(address signer, bytes32 hash, bytes calldata signature)
         external
-        view
-        returns (bool)
+        returns (bool result)
     {
         bool signatureIsBrutalized;
         /// @solidity memory-safe-assembly
@@ -222,7 +221,8 @@ contract SignatureCheckerLibTest is TestPlus {
         }
         if (!signatureIsBrutalized) revert("Signature is not brutalized.");
 
-        return SignatureCheckerLib.isValidSignatureNow(signer, hash, signature);
+        result = SignatureCheckerLib.isValidSignatureNowCalldata(signer, hash, signature);
+        assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, signature), result);
     }
 
     function isValidERC1271SignatureNow(address signer, bytes32 hash, bytes calldata signature)

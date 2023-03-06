@@ -290,8 +290,9 @@ contract ECDSATest is TestPlus {
         );
     }
 
-    function tryRecover(bytes32 hash, bytes calldata signature) external view returns (address) {
-        return ECDSA.tryRecover(hash, signature);
+    function tryRecover(bytes32 hash, bytes calldata signature) external returns (address result) {
+        result = ECDSA.tryRecoverCalldata(hash, signature);
+        assertEq(ECDSA.tryRecover(hash, signature), result);
     }
 
     function tryRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
@@ -306,8 +307,9 @@ contract ECDSATest is TestPlus {
         return ECDSA.tryRecover(hash, r, vs);
     }
 
-    function recover(bytes32 hash, bytes calldata signature) external view returns (address) {
-        return ECDSA.recover(hash, signature);
+    function recover(bytes32 hash, bytes calldata signature) external returns (address result) {
+        result = ECDSA.recoverCalldata(hash, signature);
+        assertEq(ECDSA.recover(hash, signature), result);
     }
 
     function recover(bytes32 hash, bytes32 r, bytes32 vs) external view returns (address) {
