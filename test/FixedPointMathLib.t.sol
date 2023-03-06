@@ -218,6 +218,26 @@ contract FixedPointMathLibTest is TestPlus {
         }
     }
 
+    function testCbrt() public {
+        assertEq(FixedPointMathLib.cbrt(0), 0);
+        assertEq(FixedPointMathLib.cbrt(1), 1);
+        assertEq(FixedPointMathLib.cbrt(2), 1);
+        assertEq(FixedPointMathLib.cbrt(3), 1);
+        assertEq(FixedPointMathLib.cbrt(9), 2);
+        assertEq(FixedPointMathLib.cbrt(27), 3);
+        assertEq(FixedPointMathLib.cbrt(80), 4);
+        assertEq(FixedPointMathLib.cbrt(81), 4);
+        assertEq(FixedPointMathLib.cbrt(10 ** 18), 10 ** 6);
+        assertEq(FixedPointMathLib.cbrt(8 * 10 ** 18), 2 * 10 ** 6);
+        assertEq(FixedPointMathLib.cbrt(9 * 10 ** 18), 2080083);
+        assertEq(FixedPointMathLib.cbrt(type(uint8).max), 6);
+        assertEq(FixedPointMathLib.cbrt(type(uint16).max), 40);
+        assertEq(FixedPointMathLib.cbrt(type(uint32).max), 1625);
+        assertEq(FixedPointMathLib.cbrt(type(uint64).max), 2642245);
+        assertEq(FixedPointMathLib.cbrt(type(uint128).max), 6981463658331);
+        assertEq(FixedPointMathLib.cbrt(type(uint256).max), 48740834812604276470692694);
+    }
+
     function testLog2() public {
         assertEq(FixedPointMathLib.log2(2), 1);
         assertEq(FixedPointMathLib.log2(4), 2);
@@ -555,11 +575,34 @@ contract FixedPointMathLibTest is TestPlus {
         FixedPointMathLib.mulDivUp(x, y, 0);
     }
 
+    function testCbrt(uint256 x) public {
+        uint256 root = FixedPointMathLib.cbrt(x);
+        uint256 next = root + 1;
+
+        // Ignore cases where `next * next * next` or `next * next` overflows.
+        unchecked {
+            if (next * next * next < next * next) return;
+            if (next * next < next) return;
+        }
+
+        assertTrue(root * root * root <= x && next * next * next > x);
+    }
+
+    function testCbrtBack(uint256 x) public {
+        unchecked {
+            x = _bound(x, 0, 48740834812604276470692694);
+            while (x != 0) {
+                assertEq(FixedPointMathLib.cbrt(x * x * x), x);
+                x >>= 1;
+            }
+        }
+    }
+
     function testSqrt(uint256 x) public {
         uint256 root = FixedPointMathLib.sqrt(x);
         uint256 next = root + 1;
 
-        // Ignore cases where next * next overflows.
+        // Ignore cases where `next * next` overflows.
         unchecked {
             if (next * next < next) return;
         }
