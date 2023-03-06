@@ -588,6 +588,16 @@ contract FixedPointMathLibTest is TestPlus {
         assertTrue(root * root * root <= x && next * next * next > x);
     }
 
+    function testCbrtBack(uint256 x) public {
+        unchecked {
+            x = _bound(x, 0, 48740834812604276470692694);
+            while (x != 0) {
+                assertEq(FixedPointMathLib.cbrt(x * x * x), x);
+                x >>= 1;
+            }
+        }
+    }
+
     function testSqrt(uint256 x) public {
         uint256 root = FixedPointMathLib.sqrt(x);
         uint256 next = root + 1;

@@ -504,16 +504,16 @@ library FixedPointMathLib {
     function cbrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            let v := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
-            v := or(v, shl(6, lt(0xffffffffffffffff, shr(v, x))))
-            v := or(v, shl(5, lt(0xffffffff, shr(v, x))))
-            v := or(v, shl(4, lt(0xffff, shr(v, x))))
-            v := or(v, shl(3, lt(0xff, shr(v, x))))
-            v := or(v, shl(2, lt(0xf, shr(v, x))))
+            let r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            r := or(r, shl(4, lt(0xffff, shr(r, x))))
+            r := or(r, shl(3, lt(0xff, shr(r, x))))
+            r := or(r, shl(2, lt(0xf, shr(r, x))))
 
-            let j := xor(31, mod(v, 3))
+            let j := xor(31, mod(r, 3))
 
-            z := div(mul(shl(div(v, 3), 1), byte(j, 0xa90d02)), byte(j, 0x320501))
+            z := div(mul(shl(div(r, 3), 1), byte(j, 0xa90d02)), byte(j, 0x320501))
 
             z := div(add(shl(1, z), div(x, mul(z, z))), 3)
             z := div(add(shl(1, z), div(x, mul(z, z))), 3)
