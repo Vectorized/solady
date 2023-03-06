@@ -270,10 +270,10 @@ contract MerkleProofLibTest is TestPlus {
 
     function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf)
         external
-        pure
-        returns (bool)
+        returns (bool result)
     {
-        return MerkleProofLib.verify(proof, root, leaf);
+        result = MerkleProofLib.verifyCalldata(proof, root, leaf);
+        assertEq(MerkleProofLib.verify(proof, root, leaf), result);
     }
 
     function verifyMultiProof(
@@ -297,7 +297,7 @@ contract MerkleProofLibTest is TestPlus {
             mstore(add(offsetsAndLengths, shl(5, add(1, 5))), flags.length)
         }
 
-        result = MerkleProofLib.verifyMultiProof(proof, root, leafs, flags);
+        result = MerkleProofLib.verifyMultiProofCalldata(proof, root, leafs, flags);
 
         /// @solidity memory-safe-assembly
         assembly {
@@ -315,6 +315,8 @@ contract MerkleProofLibTest is TestPlus {
         assertEq(offsetsAndLengths[3], offsetsAndLengths[9]);
         assertEq(offsetsAndLengths[4], offsetsAndLengths[10]);
         assertEq(offsetsAndLengths[5], offsetsAndLengths[11]);
+
+        assertEq(MerkleProofLib.verifyMultiProof(proof, root, leafs, flags), result);
     }
 
     // Following code is adapted from https://github.com/dmfxyz/murky/blob/main/src/common/MurkyBase.sol.
@@ -396,6 +398,15 @@ contract MerkleProofLibTest is TestPlus {
     }
 
     function testEmptyCalldataHelpers() public {
+        assertFalse(
+            MerkleProofLib.verifyMultiProofCalldata(
+                MerkleProofLib.emptyProof(),
+                bytes32(0),
+                MerkleProofLib.emptyLeafs(),
+                MerkleProofLib.emptyFlags()
+            )
+        );
+
         assertFalse(
             MerkleProofLib.verifyMultiProof(
                 MerkleProofLib.emptyProof(),

@@ -11,7 +11,39 @@ library MerkleProofLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns whether `leaf` exists in the Merkle tree with `root`, given `proof`.
-    function verify(bytes32[] calldata proof, bytes32 root, bytes32 leaf)
+    function verify(bytes32[] memory proof, bytes32 root, bytes32 leaf)
+        internal
+        pure
+        returns (bool isValid)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if mload(proof) {
+                // Initialize `offset` to the offset of `proof` elements in memory.
+                let offset := add(proof, 0x20)
+                // Left shift by 5 is equivalent to multiplying by 0x20.
+                let end := add(offset, shl(5, mload(proof)))
+                // Iterate over proof elements to compute root hash.
+                for {} 1 {} {
+                    // Slot of `leaf` in scratch space.
+                    // If the condition is true: 0x20, otherwise: 0x00.
+                    let scratch := shl(5, gt(leaf, mload(offset)))
+                    // Store elements to hash contiguously in scratch space.
+                    // Scratch space is 64 bytes (0x00 - 0x3f) and both elements are 32 bytes.
+                    mstore(scratch, leaf)
+                    mstore(xor(scratch, 0x20), mload(offset))
+                    // Reuse `leaf` to store the hash to reduce stack operations.
+                    leaf := keccak256(0x00, 0x40)
+                    offset := add(offset, 0x20)
+                    if iszero(lt(offset, end)) { break }
+                }
+            }
+            isValid := eq(leaf, root)
+        }
+    }
+
+    /// @dev Returns whether `leaf` exists in the Merkle tree with `root`, given `proof`.
+    function verifyCalldata(bytes32[] calldata proof, bytes32 root, bytes32 leaf)
         internal
         pure
         returns (bool isValid)
@@ -45,6 +77,98 @@ library MerkleProofLib {
     /// @dev Returns whether all `leafs` exist in the Merkle tree with `root`,
     /// given `proof` and `flags`.
     function verifyMultiProof(
+        bytes32[] memory proof,
+        bytes32 root,
+        bytes32[] memory leafs,
+        bool[] memory flags
+    ) internal pure returns (bool isValid) {
+        // Rebuilds the root by consuming and producing values on a queue.
+        // The queue starts with the `leafs` array, and goes into a `hashes` array.
+        // After the process, the last element on the queue is verified
+        // to be equal to the `root`.
+        //
+        // The `flags` array denotes whether the sibling
+        // should be popped from the queue (`flag == true`), or
+        // should be popped from the `proof` (`flag == false`).
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Cache the lengths of the arrays.
+            let leafsLength := mload(leafs)
+            let proofLength := mload(proof)
+            let flagsLength := mload(flags)
+
+            // Advance the pointers of the arrays to point to the data.
+            leafs := add(0x20, leafs)
+            proof := add(0x20, proof)
+            flags := add(0x20, flags)
+
+            // If the number of flags is correct.
+            for {} eq(add(leafsLength, proofLength), add(flagsLength, 1)) {} {
+                // For the case where `proof.length + leafs.length == 1`.
+                if iszero(flagsLength) {
+                    // `isValid = (proof.length == 1 ? proof[0] : leafs[0]) == root`.
+                    isValid := eq(mload(xor(leafs, mul(xor(proof, leafs), proofLength))), root)
+                    break
+                }
+
+                // We can use the free memory space for the queue.
+                // We don't need to allocate, since the queue is temporary.
+                let hashesFront := mload(0x40)
+                // Copy the leafs into the hashes.
+                // Sometimes, a little memory expansion costs less than branching.
+                // Should cost less, even with a high free memory offset of 0x7d00.
+                // Left shift by 5 is equivalent to multiplying by 0x20.
+                leafsLength := shl(5, leafsLength)
+                for { let i := 0 } iszero(eq(i, leafsLength)) { i := add(i, 0x20) } {
+                    mstore(add(hashesFront, i), mload(add(leafs, i)))
+                }
+                // Compute the back of the hashes.
+                let hashesBack := add(hashesFront, leafsLength)
+                // This is the end of the memory for the queue.
+                // We recycle `flagsLength` to save on stack variables
+                // (this trick may not always save gas).
+                flagsLength := add(hashesBack, shl(5, flagsLength))
+
+                for {} 1 {} {
+                    // Pop from `hashes`.
+                    let a := mload(hashesFront)
+                    // Pop from `hashes`.
+                    let b := mload(add(hashesFront, 0x20))
+                    hashesFront := add(hashesFront, 0x40)
+
+                    // If the flag is false, load the next proof,
+                    // else, pops from the queue.
+                    if iszero(mload(flags)) {
+                        // Loads the next proof.
+                        b := mload(proof)
+                        proof := add(proof, 0x20)
+                        // Unpop from `hashes`.
+                        hashesFront := sub(hashesFront, 0x20)
+                    }
+
+                    // Advance to the next flag.
+                    flags := add(flags, 0x20)
+
+                    // Slot of `a` in scratch space.
+                    // If the condition is true: 0x20, otherwise: 0x00.
+                    let scratch := shl(5, gt(a, b))
+                    // Hash the scratch space and push the result onto the queue.
+                    mstore(scratch, a)
+                    mstore(xor(scratch, 0x20), b)
+                    mstore(hashesBack, keccak256(0x00, 0x40))
+                    hashesBack := add(hashesBack, 0x20)
+                    if iszero(lt(hashesBack, flagsLength)) { break }
+                }
+                // Checks if the last value in the queue is same as the root.
+                isValid := eq(mload(sub(hashesBack, 0x20)), root)
+                break
+            }
+        }
+    }
+
+    /// @dev Returns whether all `leafs` exist in the Merkle tree with `root`,
+    /// given `proof` and `flags`.
+    function verifyMultiProofCalldata(
         bytes32[] calldata proof,
         bytes32 root,
         bytes32[] calldata leafs,
