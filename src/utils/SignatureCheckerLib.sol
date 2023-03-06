@@ -73,10 +73,15 @@ library SignatureCheckerLib {
                 mstore(m, f)
                 mstore(add(m, 0x04), hash)
                 mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
-                mstore(add(m, 0x44), signatureLength) // The signature length.
-                // Copy the `signature` over.
-                for { let i := 0 } lt(i, signatureLength) { i := add(i, 0x20) } {
-                    mstore(add(add(m, 0x64), i), mload(add(add(signature, 0x20), i)))
+                {
+                    let j := add(m, 0x44)
+                    mstore(j, signatureLength) // The signature length.
+                    // Copy the `signature` over.
+                    for { let i := 0 } 1 {} {
+                        i := add(i, 0x20)
+                        mstore(add(j, i), mload(add(signature, i)))
+                        if iszero(lt(i, signatureLength)) { break }
+                    }
                 }
 
                 // forgefmt: disable-next-item
@@ -283,11 +288,66 @@ library SignatureCheckerLib {
 
     /// @dev Returns whether `signature` is valid for `hash`
     /// for an ERC1271 `signer` contract.
-    function isValidERC1271SignatureNow(address signer, bytes32 hash, bytes calldata signature)
+    function isValidERC1271SignatureNow(address signer, bytes32 hash, bytes memory signature)
         internal
         view
         returns (bool isValid)
     {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Load the free memory pointer.
+            // Simply using the free memory usually costs less if many slots are needed.
+            let m := mload(0x40)
+
+            let signatureLength := mload(signature)
+
+            // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            let f := shl(224, 0x1626ba7e)
+            // Write the abi-encoded calldata into memory, beginning with the function selector.
+            mstore(m, f)
+            mstore(add(m, 0x04), hash)
+            mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+            {
+                let j := add(m, 0x44)
+                mstore(j, signatureLength) // The signature length.
+                // Copy the `signature` over.
+                for { let i := 0 } 1 {} {
+                    i := add(i, 0x20)
+                    mstore(add(j, i), mload(add(signature, i)))
+                    if iszero(lt(i, signatureLength)) { break }
+                }
+            }
+
+            // forgefmt: disable-next-item
+            isValid := and(
+                and(
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(0x00), f),
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
+                    eq(returndatasize(), 0x20)
+                ),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    signer, // The `signer` address.
+                    m, // Offset of calldata in memory.
+                    add(signatureLength, 0x64), // Length of calldata in memory.
+                    0x00, // Offset of returndata.
+                    0x20 // Length of returndata to write.
+                )
+            )
+        }
+    }
+
+    /// @dev Returns whether `signature` is valid for `hash`
+    /// for an ERC1271 `signer` contract.
+    function isValidERC1271SignatureNowCalldata(
+        address signer,
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view returns (bool isValid) {
         /// @solidity memory-safe-assembly
         assembly {
             // Load the free memory pointer.
