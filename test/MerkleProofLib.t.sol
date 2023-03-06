@@ -406,5 +406,14 @@ contract MerkleProofLibTest is TestPlus {
                 MerkleProofLib.emptyFlags()
             )
         );
+
+        assertFalse(
+            MerkleProofLib.verifyMultiProof(
+                MerkleProofLib.emptyProof(),
+                bytes32(0),
+                MerkleProofLib.emptyLeafs(),
+                MerkleProofLib.emptyFlags()
+            )
+        );
     }
 }
