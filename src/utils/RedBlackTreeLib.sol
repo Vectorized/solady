@@ -66,6 +66,7 @@ library RedBlackTreeLib {
     uint256 private constant _BITPOS_RIGHT = 31;
     uint256 private constant _BITPOS_PARENT = 31 * 2;
     uint256 private constant _BITPOS_RED = 31 * 3;
+    uint256 private constant _BITMASK_RED = 1 << (31 * 3);
     uint256 private constant _BITWIDTH_PACKED_VALUE = 160;
     uint256 private constant _BITPOS_PACKED_VALUE = 96;
     uint256 private constant _BITMASK_PACKED_VALUE = (1 << 160) - 1;
@@ -241,16 +242,15 @@ library RedBlackTreeLib {
             }
 
             function setRed(packed_, value_) -> result_ {
-                result_ := or(and(not(shl(_BITPOS_RED, 1)), packed_), shl(_BITPOS_RED, value_))
+                result_ := or(and(not(_BITMASK_RED), packed_), shl(_BITPOS_RED, value_))
             }
 
             function isRed(packed_) -> red_ {
-                red_ := and(shl(_BITPOS_RED, 1), packed_)
+                red_ := and(_BITMASK_RED, packed_)
             }
 
             function copyRed(packed_, fromPacked_) -> result_ {
-                let mask_ := shl(_BITPOS_RED, 1)
-                result_ := or(and(not(mask_), packed_), and(mask_, fromPacked_))
+                result_ := or(and(not(_BITMASK_RED), packed_), and(_BITMASK_RED, fromPacked_))
             }
 
             function rotate(nodes_, key_, L, R) {
@@ -285,14 +285,6 @@ library RedBlackTreeLib {
                 sstore(or(nodes_, key_), setKey(packed_, _BITPOS_PARENT, cursor_))
             }
 
-            function insertFixupUp(nodes_, key_) -> grandParent_ {
-                let parent_ := getKey(sload(or(nodes_, key_)), _BITPOS_PARENT)
-                let parentPacked_ := sload(or(nodes_, parent_))
-                sstore(or(nodes_, parent_), setRed(parentPacked_, 0))
-                grandParent_ := getKey(parentPacked_, _BITPOS_PARENT)
-                sstore(or(nodes_, grandParent_), setRed(sload(or(nodes_, grandParent_)), 1))
-            }
-
             function insertFixup(nodes_, key_) {
                 for {} 1 {} {
                     if eq(key_, getKey(mload(0x00), _BITPOS_ROOT)) { break }
@@ -304,31 +296,27 @@ library RedBlackTreeLib {
                     let grandParent_ := getKey(parentPacked_, _BITPOS_PARENT)
                     let grandParentPacked_ := sload(or(nodes_, grandParent_))
 
+                    let L := _BITPOS_RIGHT
+                    let R := _BITPOS_LEFT
                     if eq(parent_, getKey(grandParentPacked_, _BITPOS_LEFT)) {
-                        let cursor_ := getKey(grandParentPacked_, _BITPOS_RIGHT)
-                        let cursorPacked_ := sload(or(nodes_, cursor_))
-                        if iszero(isRed(cursorPacked_)) {
-                            if eq(key_, getKey(parentPacked_, _BITPOS_RIGHT)) {
-                                key_ := parent_
-                                rotate(nodes_, key_, _BITPOS_LEFT, _BITPOS_RIGHT)
-                            }
-                            rotate(nodes_, insertFixupUp(nodes_, key_), _BITPOS_RIGHT, _BITPOS_LEFT)
-                            continue
-                        }
-                        sstore(or(nodes_, parent_), setRed(parentPacked_, 0))
-                        sstore(or(nodes_, cursor_), setRed(cursorPacked_, 0))
-                        sstore(or(nodes_, grandParent_), setRed(grandParentPacked_, 1))
-                        key_ := grandParent_
-                        continue
+                        L := _BITPOS_LEFT
+                        R := _BITPOS_RIGHT
                     }
-                    let cursor_ := getKey(grandParentPacked_, _BITPOS_LEFT)
+
+                    let cursor_ := getKey(grandParentPacked_, R)
                     let cursorPacked_ := sload(or(nodes_, cursor_))
                     if iszero(isRed(cursorPacked_)) {
-                        if eq(key_, getKey(parentPacked_, _BITPOS_LEFT)) {
+                        if eq(key_, getKey(parentPacked_, R)) {
                             key_ := parent_
-                            rotate(nodes_, key_, _BITPOS_RIGHT, _BITPOS_LEFT)
+                            rotate(nodes_, key_, L, R)
                         }
-                        rotate(nodes_, insertFixupUp(nodes_, key_), _BITPOS_LEFT, _BITPOS_RIGHT)
+                        parent_ := getKey(sload(or(nodes_, key_)), _BITPOS_PARENT)
+                        parentPacked_ := sload(or(nodes_, parent_))
+                        sstore(or(nodes_, parent_), setRed(parentPacked_, 0))
+                        grandParent_ := getKey(parentPacked_, _BITPOS_PARENT)
+                        let s_ := or(nodes_, grandParent_)
+                        sstore(s_, setRed(sload(s_), 1))
+                        rotate(nodes_, grandParent_, R, L)
                         continue
                     }
                     sstore(or(nodes_, parent_), setRed(parentPacked_, 0))
@@ -356,7 +344,7 @@ library RedBlackTreeLib {
 
                 treePacked_ := setKey(treePacked_, _BITPOS_TOTAL_NODES, totalNodes_)
 
-                let packed_ := or(shl(_BITPOS_RED, 1), shl(_BITPOS_PARENT, cursor_))
+                let packed_ := or(_BITMASK_RED, shl(_BITPOS_PARENT, cursor_))
                 let nodePointer_ := or(nodes_, totalNodes_)
 
                 for {} 1 {} {
@@ -389,50 +377,6 @@ library RedBlackTreeLib {
                 insertFixup(nodes_, totalNodes_)
             }
 
-            function removeFixupUp(nodes_, key_, L, R) -> o_ {
-                let packed_ := sload(or(nodes_, key_))
-                let parent_ := getKey(packed_, _BITPOS_PARENT)
-                let parentPacked_ := sload(or(nodes_, parent_))
-                let cursor_ := getKey(parentPacked_, R)
-                let cursorPacked_ := sload(or(nodes_, cursor_))
-
-                if isRed(cursorPacked_) {
-                    sstore(or(nodes_, cursor_), setRed(cursorPacked_, 0))
-                    sstore(or(nodes_, parent_), setRed(parentPacked_, 1))
-                    rotate(nodes_, parent_, L, R)
-                    cursor_ := getKey(sload(or(nodes_, parent_)), R)
-                    cursorPacked_ := sload(or(nodes_, cursor_))
-                }
-
-                let cursorLeft_ := getKey(cursorPacked_, L)
-                let cursorLeftPacked_ := sload(or(nodes_, cursorLeft_))
-                let cursorRight_ := getKey(cursorPacked_, R)
-                let cursorRightPacked_ := sload(or(nodes_, cursorRight_))
-
-                if iszero(or(isRed(cursorLeftPacked_), isRed(cursorRightPacked_))) {
-                    sstore(or(nodes_, cursor_), setRed(cursorPacked_, 1))
-                    o_ := parent_
-                    leave
-                }
-
-                if iszero(isRed(cursorRightPacked_)) {
-                    sstore(or(nodes_, cursorLeft_), setRed(cursorLeftPacked_, 0))
-                    sstore(or(nodes_, cursor_), setRed(cursorPacked_, 1))
-                    rotate(nodes_, cursor_, R, L)
-                    cursor_ := getKey(sload(or(nodes_, parent_)), R)
-                    cursorPacked_ := sload(or(nodes_, cursor_))
-                    cursorRight_ := getKey(cursorPacked_, R)
-                    cursorRightPacked_ := sload(or(nodes_, cursorRight_))
-                }
-
-                parentPacked_ := sload(or(nodes_, parent_))
-                sstore(or(nodes_, cursor_), copyRed(cursorPacked_, parentPacked_))
-                sstore(or(nodes_, parent_), setRed(parentPacked_, 0))
-                sstore(or(nodes_, cursorRight_), setRed(cursorRightPacked_, 0))
-                rotate(nodes_, parent_, L, R)
-                o_ := getKey(mload(0x00), _BITPOS_ROOT)
-            }
-
             function removeFixup(nodes_, key_) {
                 for {} 1 {} {
                     if eq(key_, getKey(mload(0x00), _BITPOS_ROOT)) { break }
@@ -442,11 +386,51 @@ library RedBlackTreeLib {
                     let parent_ := getKey(packed_, _BITPOS_PARENT)
                     let parentPacked_ := sload(or(nodes_, parent_))
 
+                    let L := _BITPOS_RIGHT
+                    let R := _BITPOS_LEFT
                     if eq(key_, getKey(parentPacked_, _BITPOS_LEFT)) {
-                        key_ := removeFixupUp(nodes_, key_, _BITPOS_LEFT, _BITPOS_RIGHT)
+                        L := _BITPOS_LEFT
+                        R := _BITPOS_RIGHT
+                    }
+
+                    let cursor_ := getKey(parentPacked_, R)
+                    let cursorPacked_ := sload(or(nodes_, cursor_))
+
+                    if isRed(cursorPacked_) {
+                        sstore(or(nodes_, cursor_), setRed(cursorPacked_, 0))
+                        sstore(or(nodes_, parent_), setRed(parentPacked_, 1))
+                        rotate(nodes_, parent_, L, R)
+                        cursor_ := getKey(sload(or(nodes_, parent_)), R)
+                        cursorPacked_ := sload(or(nodes_, cursor_))
+                    }
+
+                    let cursorLeft_ := getKey(cursorPacked_, L)
+                    let cursorLeftPacked_ := sload(or(nodes_, cursorLeft_))
+                    let cursorRight_ := getKey(cursorPacked_, R)
+                    let cursorRightPacked_ := sload(or(nodes_, cursorRight_))
+
+                    if iszero(or(isRed(cursorLeftPacked_), isRed(cursorRightPacked_))) {
+                        sstore(or(nodes_, cursor_), setRed(cursorPacked_, 1))
+                        key_ := parent_
                         continue
                     }
-                    key_ := removeFixupUp(nodes_, key_, _BITPOS_RIGHT, _BITPOS_LEFT)
+
+                    if iszero(isRed(cursorRightPacked_)) {
+                        sstore(or(nodes_, cursorLeft_), setRed(cursorLeftPacked_, 0))
+                        sstore(or(nodes_, cursor_), setRed(cursorPacked_, 1))
+                        rotate(nodes_, cursor_, R, L)
+                        cursor_ := getKey(sload(or(nodes_, parent_)), R)
+                        cursorPacked_ := sload(or(nodes_, cursor_))
+                        cursorRight_ := getKey(cursorPacked_, R)
+                        cursorRightPacked_ := sload(or(nodes_, cursorRight_))
+                    }
+
+                    parentPacked_ := sload(or(nodes_, parent_))
+                    sstore(or(nodes_, cursor_), copyRed(cursorPacked_, parentPacked_))
+                    sstore(or(nodes_, parent_), setRed(parentPacked_, 0))
+                    sstore(or(nodes_, cursorRight_), setRed(cursorRightPacked_, 0))
+                    rotate(nodes_, parent_, L, R)
+                    break
                 }
                 sstore(or(nodes_, key_), setRed(sload(or(nodes_, key_)), 0))
             }
@@ -566,7 +550,6 @@ library RedBlackTreeLib {
                 if iszero(eq(cursor_, key_)) {
                     let packed_ := sload(or(nodes_, key_))
                     let parent_ := getKey(packed_, _BITPOS_PARENT)
-                    cursorPacked_ := setKey(cursorPacked_, _BITPOS_PARENT, parent_)
                     for {} 1 {} {
                         if iszero(parent_) {
                             mstore(0x00, setKey(mload(0x00), _BITPOS_ROOT, cursor_))
@@ -583,20 +566,18 @@ library RedBlackTreeLib {
                     }
 
                     let left_ := getKey(packed_, _BITPOS_LEFT)
-                    cursorPacked_ := setKey(cursorPacked_, _BITPOS_LEFT, left_)
-                    sstore(
-                        or(nodes_, left_), setKey(sload(or(nodes_, left_)), _BITPOS_PARENT, cursor_)
-                    )
+                    let leftSlot_ := or(nodes_, left_)
+                    sstore(leftSlot_, setKey(sload(leftSlot_), _BITPOS_PARENT, cursor_))
 
                     let right_ := getKey(packed_, _BITPOS_RIGHT)
-                    cursorPacked_ := setKey(cursorPacked_, _BITPOS_RIGHT, right_)
-                    sstore(
-                        or(nodes_, right_),
-                        setKey(sload(or(nodes_, right_)), _BITPOS_PARENT, cursor_)
-                    )
+                    let rightSlot_ := or(nodes_, right_)
+                    sstore(rightSlot_, setKey(sload(rightSlot_), _BITPOS_PARENT, cursor_))
 
-                    cursorPacked_ := copyRed(cursorPacked_, packed_)
-                    sstore(or(nodes_, cursor_), cursorPacked_)
+                    let m_ := sub(shl(_BITPOS_PACKED_VALUE, 1), 1)
+                    sstore(
+                        or(nodes_, cursor_),
+                        xor(cursorPacked_, and(xor(packed_, cursorPacked_), m_))
+                    )
 
                     let t_ := cursor_
                     cursor_ := key_
