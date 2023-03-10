@@ -12,14 +12,59 @@ contract RedBlackTreeLibTest is TestPlus {
 
     RedBlackTreeLib.Tree tree;
 
-    function testRedBlackTreePerformance() public {
+    function testRedBlackTreeInsertBenchUint160() public {
         unchecked {
             LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
             uint256 n = 128;
             uint256[] memory a = new uint256[](n);
-            uint256 m = (1 << 161) - 1;
+            uint256 m = (1 << 160) - 1;
             for (uint256 i; i != n; ++i) {
                 uint256 r = 1 | (prng.next() & m);
+                a[i] = r;
+                tree.insert(r);
+            }
+        }
+    }
+
+    function testRedBlackTreeBenchUint160() public {
+        unchecked {
+            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            uint256 n = 128;
+            uint256[] memory a = new uint256[](n);
+            uint256 m = (1 << 160) - 1;
+            for (uint256 i; i != n; ++i) {
+                uint256 r = 1 | (prng.next() & m);
+                a[i] = r;
+                tree.insert(r);
+            }
+            prng.shuffle(a);
+            for (uint256 i; i != n; ++i) {
+                tree.remove(a[i]);
+            }
+            assertEq(tree.size(), 0);
+        }
+    }
+
+    function testRedBlackTreeInsertBenchUint256() public {
+        unchecked {
+            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            uint256 n = 128;
+            uint256[] memory a = new uint256[](n);
+            for (uint256 i; i != n; ++i) {
+                uint256 r = 1 | prng.next();
+                a[i] = r;
+                tree.insert(r);
+            }
+        }
+    }
+
+    function testRedBlackTreeBenchUint256() public {
+        unchecked {
+            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            uint256 n = 128;
+            uint256[] memory a = new uint256[](n);
+            for (uint256 i; i != n; ++i) {
+                uint256 r = 1 | prng.next();
                 a[i] = r;
                 tree.insert(r);
             }

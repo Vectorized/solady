@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for managing a red-black-tree in storage.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/RedBlackTreeLib.sol)
+/// @author Modified from BokkyPooBahsRedBlackTreeLibrary (https://github.com/bokkypoobah/BokkyPooBahsRedBlackTreeLibrary)
 library RedBlackTreeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
