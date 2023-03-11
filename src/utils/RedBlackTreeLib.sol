@@ -237,23 +237,23 @@ library RedBlackTreeLib {
                 let packed := sload(pointer)
                 cursor := and(shr(R, packed), _BITMASK_KEY)
                 for {} 1 {} {
-                    if cursor {
+                    if iszero(cursor) {
+                        cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                         for {} 1 {} {
+                            if iszero(cursor) { break }
                             packed := sload(or(nodes, cursor))
-                            let left := and(shr(L, packed), _BITMASK_KEY)
-                            if iszero(left) { break }
-                            cursor := left
+                            let right := and(shr(R, packed), _BITMASK_KEY)
+                            if iszero(eq(target, right)) { break }
+                            target := cursor
+                            cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                         }
                         break
                     }
-                    cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                     for {} 1 {} {
-                        if iszero(cursor) { break }
                         packed := sload(or(nodes, cursor))
-                        let right := and(shr(R, packed), _BITMASK_KEY)
-                        if iszero(eq(target, right)) { break }
-                        target := cursor
-                        cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
+                        let left := and(shr(L, packed), _BITMASK_KEY)
+                        if iszero(left) { break }
+                        cursor := left
                     }
                     break
                 }
@@ -662,22 +662,20 @@ library RedBlackTreeLib {
                 revert(0x1c, 0x04) // Revert with (offset, size).
             }
 
-            let probe := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY)
-            for {} probe {} {
+            mstore(0x00, 0)
+            mstore(0x01, _BITPOS_RIGHT)
+            for { let probe := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY) } probe {} {
                 cursor := probe
-                let nodePointer := or(nodes, probe)
-                let nodePacked := sload(nodePointer)
+                let nodePacked := sload(or(nodes, probe))
                 let nodeValue := shr(_BITPOS_PACKED_VALUE, nodePacked)
-                if iszero(nodeValue) { nodeValue := sload(or(nodePointer, _BIT_FULL_VALUE_SLOT)) }
+                if iszero(nodeValue) {
+                    nodeValue := sload(or(or(nodes, probe), _BIT_FULL_VALUE_SLOT))
+                }
                 if eq(nodeValue, v) {
                     key := cursor
                     break
                 }
-                if iszero(lt(v, nodeValue)) {
-                    probe := and(shr(_BITPOS_RIGHT, nodePacked), _BITMASK_KEY)
-                    continue
-                }
-                probe := and(shr(_BITPOS_LEFT, nodePacked), _BITMASK_KEY)
+                probe := and(shr(mload(gt(v, nodeValue)), nodePacked), _BITMASK_KEY)
             }
         }
     }

@@ -12,6 +12,19 @@ contract RedBlackTreeLibTest is TestPlus {
 
     RedBlackTreeLib.Tree tree;
 
+    function testRedBlackTreeInsertBenchStep() public {
+        unchecked {
+            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            uint256 n = 128;
+            uint256 m = (1 << 160) - 1;
+            for (uint256 i; i != n; ++i) {
+                uint256 r = 1 | (prng.next() & m);
+                tree.insert(r);
+            }
+            _testIterateTree();
+        }
+    }
+
     function testRedBlackTreeInsertBenchUint160() public {
         unchecked {
             LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
