@@ -50,7 +50,7 @@ library SSTORE2 {
              * 60 0xa      | PUSH1 0xa       | 0xa codeSize codeSize   |                     |
              * 3D          | RETURNDATASIZE  | 0 0xa codeSize codeSize |                     |
              * 39          | CODECOPY        | codeSize                | [0..codeSize): code |
-             * 3D          | RETURNDATASZIE  | 0 codeSize              | [0..codeSize): code |
+             * 3D          | RETURNDATASIZE  | 0 codeSize              | [0..codeSize): code |
              * F3          | RETURN          |                         | [0..codeSize): code |
              * 00          | STOP            |                         |                     |
              * ------------------------------------------------------------------------------+
