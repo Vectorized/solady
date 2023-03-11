@@ -118,8 +118,9 @@ library RedBlackTreeLib {
     }
 
     /// @dev Removes the pointer's value from the tree.
-    /// Reverts if the value does not exist.
-    /// An empty or invalid pointer is equivalent to a non-existent value.
+    /// Reverts if the value does not exist,
+    /// or if the pointer is empty,
+    /// or if the pointer is out of bounds.
     function remove(bytes32 pointer) internal {
         (uint256 nodes, uint256 key) = _unpack(pointer);
         _update(nodes, 0, key, 0, 1);
@@ -150,13 +151,15 @@ library RedBlackTreeLib {
     }
 
     /// @dev Returns the pointer to the next largest value.
-    /// If there is no next value, the returned pointer will be empty.
+    /// If there is no next value, or if the pointer is empty,
+    /// the returned pointer will be empty.
     function next(bytes32 pointer) internal view returns (bytes32 result) {
         result = _step(pointer, _BITPOS_LEFT, _BITPOS_RIGHT);
     }
 
     /// @dev Returns the pointer to the next smallest value.
-    /// If there is no previous value, the returned pointer will be empty.
+    /// If there is no previous value, or if the pointer is empty,
+    /// the returned pointer will be empty.
     function prev(bytes32 pointer) internal view returns (bytes32 result) {
         result = _step(pointer, _BITPOS_RIGHT, _BITPOS_LEFT);
     }
@@ -199,33 +202,35 @@ library RedBlackTreeLib {
 
     /// @dev Step the `pointer` forwards or backwards.
     function _step(bytes32 pointer, uint256 L, uint256 R) private view returns (bytes32 result) {
-        (uint256 nodes, uint256 target) = _unpack(pointer);
-        /// @solidity memory-safe-assembly
-        assembly {
-            let packed := sload(pointer)
-            let cursor := and(shr(R, packed), _BITMASK_KEY)
-            for {} 1 {} {
-                if cursor {
+        if (pointer != bytes32(0)) {
+            (uint256 nodes, uint256 target) = _unpack(pointer);
+            /// @solidity memory-safe-assembly
+            assembly {
+                let packed := sload(pointer)
+                let cursor := and(shr(R, packed), _BITMASK_KEY)
+                for {} 1 {} {
+                    if cursor {
+                        for {} 1 {} {
+                            packed := sload(or(nodes, cursor))
+                            let left := and(shr(L, packed), _BITMASK_KEY)
+                            if iszero(left) { break }
+                            cursor := left
+                        }
+                        break
+                    }
+                    cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                     for {} 1 {} {
+                        if iszero(cursor) { break }
                         packed := sload(or(nodes, cursor))
-                        let left := and(shr(L, packed), _BITMASK_KEY)
-                        if iszero(left) { break }
-                        cursor := left
+                        let right := and(shr(R, packed), _BITMASK_KEY)
+                        if iszero(eq(target, right)) { break }
+                        target := cursor
+                        cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                     }
                     break
                 }
-                cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
-                for {} 1 {} {
-                    if iszero(cursor) { break }
-                    packed := sload(or(nodes, cursor))
-                    let right := and(shr(R, packed), _BITMASK_KEY)
-                    if iszero(eq(target, right)) { break }
-                    target := cursor
-                    cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
-                }
-                break
+                result := mul(or(nodes, cursor), iszero(iszero(cursor)))
             }
-            result := mul(or(nodes, cursor), iszero(iszero(cursor)))
         }
     }
 

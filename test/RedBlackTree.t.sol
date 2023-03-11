@@ -180,6 +180,7 @@ contract RedBlackTreeLibTest is TestPlus {
             uint256 m = n < 8 ? 4 : n;
             for (uint256 i; i != n; ++i) {
                 tree.remove(a[i]);
+                assertEq(tree.size(), n - i - 1);
                 if (_random() % m == 0) {
                     _testIterateTree();
                 }
@@ -198,5 +199,63 @@ contract RedBlackTreeLibTest is TestPlus {
             assertTrue(tree.last().isEmpty());
             assertEq(tree.last().value(), 0);
         }
+    }
+
+    function testRedBlackTreeRejectsEmptyValue() public {
+        vm.expectRevert(RedBlackTreeLib.ValueIsEmpty.selector);
+        tree.insert(0);
+        vm.expectRevert(RedBlackTreeLib.ValueIsEmpty.selector);
+        tree.remove(0);
+        vm.expectRevert(RedBlackTreeLib.ValueIsEmpty.selector);
+        tree.find(0);
+    }
+
+    function testRedBlackTreeRemoveViaPointer() public {
+        tree.insert(1);
+        tree.insert(2);
+
+        bytes32 ptr = tree.find(1);
+        ptr.remove();
+        ptr.remove();
+
+        vm.expectRevert(RedBlackTreeLib.PointerOutOfBounds.selector);
+        ptr.remove();
+
+        ptr = bytes32(0);
+        vm.expectRevert(RedBlackTreeLib.ValueDoesNotExist.selector);
+        ptr.remove();
+    }
+
+    function testRedBlackTreePointers() public {
+        assertTrue(tree.find(1).isEmpty());
+        assertTrue(tree.find(2).isEmpty());
+
+        tree.insert(1);
+        tree.insert(2);
+
+        assertFalse(tree.find(1).isEmpty());
+        assertFalse(tree.find(2).isEmpty());
+
+        assertTrue(tree.find(1).prev().isEmpty());
+        assertFalse(tree.find(1).next().isEmpty());
+
+        assertFalse(tree.find(2).prev().isEmpty());
+        assertTrue(tree.find(2).next().isEmpty());
+
+        assertEq(tree.find(1).next(), tree.find(2));
+        assertEq(tree.find(1), tree.find(2).prev());
+
+        assertTrue(tree.find(1).prev().isEmpty());
+        assertTrue(tree.find(1).prev().prev().isEmpty());
+        assertTrue(tree.find(1).prev().next().isEmpty());
+
+        assertTrue(tree.find(2).next().isEmpty());
+        assertTrue(tree.find(2).next().next().isEmpty());
+        assertTrue(tree.find(2).next().prev().isEmpty());
+
+        assertEq(tree.first(), tree.find(1));
+        assertEq(tree.last(), tree.find(2));
+
+        assertTrue(tree.find(3).isEmpty());
     }
 }
