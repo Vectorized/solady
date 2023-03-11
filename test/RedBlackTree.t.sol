@@ -150,7 +150,6 @@ contract RedBlackTreeLibTest is TestPlus {
         unchecked {
             for (uint256 i; i != n;) {
                 uint256 r = _bound(_random(), 1, type(uint256).max);
-
                 if (tree.find(r).isEmpty()) {
                     a[i++] = r;
                     tree.insert(r);
@@ -223,7 +222,7 @@ contract RedBlackTreeLibTest is TestPlus {
                 candidates[i] = _bound(_random(), 1, type(uint256).max);
             }
             uint256[] memory records = _makeArray(0);
-            for (uint256 t; t != 8; ++t) {
+            for (uint256 t = _random() % 32 + 1; t != 0; --t) {
                 uint256 r = candidates[_random() % candidates.length];
                 bytes32 ptr = tree.find(r);
                 if (_random() % 2 == 0) {
@@ -242,7 +241,7 @@ contract RedBlackTreeLibTest is TestPlus {
             assertEq(tree.size(), records.length);
 
             {
-                uint256 i;
+                uint256 i = 0;
                 bytes32 ptr = tree.first();
                 while (!ptr.isEmpty()) {
                     assertEq(records[i++], ptr.value());
