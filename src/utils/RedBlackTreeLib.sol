@@ -39,8 +39,8 @@ library RedBlackTreeLib {
     // mstore(0x00, tree.slot)
     // let nodes := shl(_NODES_SLOT_SHIFT, keccak256(0x00, 0x40))
     //
-    // let treePacked := sload(not(nodes))
-    // let root := and(treePacked, _BITMASK_KEY)
+    // let treePacked := sload(nodes)
+    // let root := and(shr(_BITPOS_ROOT, treePacked), _BITMASK_KEY)
     // let totalNodes := and(shr(_BITPOS_TOTAL_NODES, treePacked), _BITMASK_KEY)
     //
     // let nodePointer := or(nodes, nodeIndex)
@@ -61,7 +61,7 @@ library RedBlackTreeLib {
     uint256 private constant _NODES_SLOT_SHIFT = 32;
     uint256 private constant _BITMASK_KEY = (1 << 31) - 1;
     uint256 private constant _BITPOS_ROOT = 0;
-    uint256 private constant _BITPOS_TOTAL_NODES = 31;
+    uint256 private constant _BITPOS_TOTAL_NODES = 32;
     uint256 private constant _BITPOS_LEFT = 0;
     uint256 private constant _BITPOS_RIGHT = 31;
     uint256 private constant _BITPOS_PARENT = 31 * 2;
@@ -81,7 +81,7 @@ library RedBlackTreeLib {
         uint256 nodes = _nodes(tree);
         /// @solidity memory-safe-assembly
         assembly {
-            let treePacked := sload(not(nodes))
+            let treePacked := sload(nodes)
             result := and(shr(_BITPOS_TOTAL_NODES, treePacked), _BITMASK_KEY)
         }
     }
@@ -184,7 +184,7 @@ library RedBlackTreeLib {
         uint256 nodes = _nodes(tree);
         /// @solidity memory-safe-assembly
         assembly {
-            let key := and(shr(_BITPOS_ROOT, sload(not(nodes))), _BITMASK_KEY)
+            let key := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY)
             if key {
                 for {} 1 {} {
                     let packed := sload(or(nodes, key))
@@ -588,7 +588,7 @@ library RedBlackTreeLib {
                 removeLast(nodes_, cursor_)
             }
 
-            let treePacked := sload(not(nodes))
+            let treePacked := sload(nodes)
             mstore(0x00, treePacked)
 
             for {} 1 {} {
@@ -600,7 +600,7 @@ library RedBlackTreeLib {
                 break
             }
 
-            if iszero(eq(mload(0x00), treePacked)) { sstore(not(nodes), mload(0x00)) }
+            if iszero(eq(mload(0x00), treePacked)) { sstore(nodes, mload(0x00)) }
         }
     }
 
@@ -629,7 +629,7 @@ library RedBlackTreeLib {
                 revert(0x1c, 0x04) // Revert with (offset, size).
             }
 
-            let probe := and(shr(_BITPOS_ROOT, sload(not(nodes))), _BITMASK_KEY)
+            let probe := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY)
             for {} probe {} {
                 cursor := probe
                 let nodePointer := or(nodes, probe)

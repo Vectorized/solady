@@ -84,45 +84,72 @@ contract RedBlackTreeLibTest is TestPlus {
         }
     }
 
+    function _testRandomlyAndInsert(uint256[] memory a, uint256 n, uint256 t) internal {
+        unchecked {
+            uint256 choice = a[_random() % n];
+            bytes32 ptr = tree.find(choice);
+            bool exists = !ptr.isEmpty();
+            if (exists) {
+                assertEq(ptr.value(), choice);
+                ptr.remove();
+                assertTrue(tree.find(choice).isEmpty());
+                assertFalse(tree.exists(choice));
+            }
+            if (t != 0) {
+                _testRandomlyAndInsert(a, n, t - 1);
+            }
+            if (exists) {
+                tree.insert(choice);
+                assertFalse(tree.find(choice).isEmpty());
+                assertTrue(tree.exists(choice));
+            }
+        }
+    }
+
+    function _testIterateTree() internal {
+        bytes32 ptr = tree.first();
+        uint256 prevValue;
+        while (!ptr.isEmpty()) {
+            uint256 v = ptr.value();
+            assertTrue(prevValue < v);
+            prevValue = v;
+            ptr = ptr.next();
+        }
+        assertEq(ptr.next().value(), 0);
+
+        ptr = tree.last();
+        prevValue = 0;
+        while (!ptr.isEmpty()) {
+            uint256 v = ptr.value();
+            assertTrue(prevValue == 0 || prevValue > v);
+            prevValue = v;
+            ptr = ptr.prev();
+        }
+        assertEq(ptr.prev().value(), 0);
+    }
+
     function _testRedBlackTreeInsertAndRemove() internal {
-        uint256 n = _random() % 16;
+        uint256 n = _random() % (_random() % 32 == 0 ? 32 : 8);
         uint256[] memory a = new uint256[](n);
 
         unchecked {
-            for (uint256 i; i != n; ++i) {
+            for (uint256 i; i != n;) {
                 uint256 r = _bound(_random(), 1, type(uint256).max);
-                a[i] = r;
+
                 if (tree.find(r).isEmpty()) {
+                    a[i++] = r;
                     tree.insert(r);
                 }
-
-                if (_random() % 2 == 0) {
-                    uint256 c0 = a[_random() % (i + 1)];
-                    bytes32 p0 = tree.find(c0);
-                    assertEq(p0.value(), c0);
-                    if (!p0.isEmpty()) {
-                        p0.remove();
-                        assertTrue(tree.find(c0).isEmpty());
-                        assertFalse(tree.exists(c0));
-                        if (_random() % 2 == 0) {
-                            uint256 c1 = a[_random() % (i + 1)];
-                            bytes32 p1 = tree.find(c1);
-                            if (!p1.isEmpty()) {
-                                assertEq(p1.value(), c1);
-                                p1.remove();
-                                tree.insert(c1);
-                            }
-                        }
-                        tree.insert(c0);
-                        assertFalse(tree.find(c0).isEmpty());
-                        assertTrue(tree.exists(c0));
-                    }
+                if (_random() % 4 == 0) {
+                    _testRandomlyAndInsert(a, i, (3 + i >> 2));
                 }
             }
         }
 
         LibSort.sort(a);
         LibSort.uniquifySorted(a);
+        assertEq(a.length, n);
+        assertEq(tree.size(), n);
 
         unchecked {
             uint256 i;
@@ -135,7 +162,7 @@ contract RedBlackTreeLibTest is TestPlus {
         }
 
         unchecked {
-            uint256 i = a.length;
+            uint256 i = n;
             bytes32 ptr = tree.last();
             while (!ptr.isEmpty()) {
                 assertEq(a[--i], ptr.value());
@@ -144,21 +171,27 @@ contract RedBlackTreeLibTest is TestPlus {
             assertEq(ptr.prev().value(), 0);
         }
 
-        assertEq(tree.size(), a.length);
+        _testIterateTree();
 
         LibPRNG.PRNG memory prng = LibPRNG.PRNG(_random());
         prng.shuffle(a);
 
         unchecked {
-            for (uint256 i; i != a.length; ++i) {
+            uint256 m = n < 8 ? 4 : n;
+            for (uint256 i; i != n; ++i) {
                 tree.remove(a[i]);
+                if (_random() % m == 0) {
+                    _testIterateTree();
+                }
             }
         }
         assertEq(tree.size(), 0);
 
         unchecked {
-            for (uint256 i; i != a.length; ++i) {
-                assertTrue(tree.find(a[i]).isEmpty());
+            if (_random() % 2 == 0) {
+                for (uint256 i; i != n; ++i) {
+                    assertTrue(tree.find(a[i]).isEmpty());
+                }
             }
             assertTrue(tree.first().isEmpty());
             assertEq(tree.first().value(), 0);
