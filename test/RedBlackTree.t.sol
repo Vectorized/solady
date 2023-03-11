@@ -370,7 +370,6 @@ contract RedBlackTreeLibTest is TestPlus {
         unchecked {
             for (uint256 i; i != n;) {
                 uint256 r = _bound(_random(), 1, type(uint256).max);
-
                 if (tree.find(r).isEmpty()) {
                     a[i++] = r;
                     tree.insert(r);

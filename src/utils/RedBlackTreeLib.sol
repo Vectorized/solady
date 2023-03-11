@@ -121,7 +121,8 @@ library RedBlackTreeLib {
             uint256 bValue = value(b);
             uint256 aDist = v < aValue ? aValue - v : v - aValue;
             uint256 bDist = v < bValue ? bValue - v : v - bValue;
-            return (aDist == bDist ? aValue < bValue : aDist < bDist) ? a : b;
+            if (aDist == bDist) return aValue < bValue ? a : b;
+            return aDist < bDist ? a : b;
         }
     }
 
@@ -277,8 +278,7 @@ library RedBlackTreeLib {
                         for {} 1 {} {
                             if iszero(cursor) { break }
                             packed := sload(or(nodes, cursor))
-                            let right := and(shr(R, packed), _BITMASK_KEY)
-                            if iszero(eq(target, right)) { break }
+                            if iszero(eq(target, and(shr(R, packed), _BITMASK_KEY))) { break }
                             target := cursor
                             cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                         }
