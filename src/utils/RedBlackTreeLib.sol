@@ -109,8 +109,7 @@ library RedBlackTreeLib {
             uint256 bValue = value(b);
             uint256 aDist = v < aValue ? aValue - v : v - aValue;
             uint256 bDist = v < bValue ? bValue - v : v - bValue;
-            if (aDist == bDist) return aValue < bValue ? a : b;
-            return aDist < bDist ? a : b;
+            return (aDist == bDist ? aValue < bValue : aDist < bDist) ? a : b;
         }
     }
 
