@@ -91,9 +91,26 @@ library RedBlackTreeLib {
     /// If the value is not in the tree, the returned pointer will be empty.
     function find(Tree storage tree, uint256 v) internal view returns (bytes32 result) {
         (uint256 nodes,, uint256 found) = _find(tree, v);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mul(or(nodes, found), iszero(iszero(found)))
+        result = _pack(nodes, found);
+    }
+
+    /// @dev Returns a pointer to the nearest value to `v`.
+    /// In a tie-breaker, the pointer will point to the smaller value.
+    /// If the tree is empty, the returned pointer will be empty.
+    function nearest(Tree storage tree, uint256 v) internal view returns (bytes32 result) {
+        (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
+        unchecked {
+            if (cursor == 0) return bytes32(0);
+            if (found != 0) return _pack(nodes, found);
+            bytes32 a = _pack(nodes, cursor);
+            uint256 aValue = value(a);
+            bytes32 b = v < aValue ? prev(a) : next(a);
+            if (b == bytes32(0)) return a;
+            uint256 bValue = value(b);
+            uint256 aDist = v < aValue ? aValue - v : v - aValue;
+            uint256 bDist = v < bValue ? bValue - v : v - bValue;
+            if (aDist == bDist) return aValue < bValue ? a : b;
+            return aDist < bDist ? a : b;
         }
     }
 
@@ -184,12 +201,21 @@ library RedBlackTreeLib {
         }
     }
 
+    /// @dev Packs the `nodes` and the `key` into a single pointer.
+    function _pack(uint256 nodes, uint256 key) private pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mul(or(nodes, key), iszero(iszero(key)))
+        }
+    }
+
     /// @dev Returns the pointer to either end of the `tree`.
     function _end(Tree storage tree, uint256 L) private view returns (bytes32 result) {
         uint256 nodes = _nodes(tree);
+        uint256 key;
         /// @solidity memory-safe-assembly
         assembly {
-            let key := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY)
+            key := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY)
             if key {
                 for {} 1 {} {
                     let packed := sload(or(nodes, key))
@@ -198,18 +224,19 @@ library RedBlackTreeLib {
                     key := left
                 }
             }
-            result := mul(or(nodes, key), iszero(iszero(key)))
         }
+        result = _pack(nodes, key);
     }
 
     /// @dev Step the `pointer` forwards or backwards.
     function _step(bytes32 pointer, uint256 L, uint256 R) private view returns (bytes32 result) {
         if (pointer != bytes32(0)) {
             (uint256 nodes, uint256 target) = _unpack(pointer);
+            uint256 cursor;
             /// @solidity memory-safe-assembly
             assembly {
                 let packed := sload(pointer)
-                let cursor := and(shr(R, packed), _BITMASK_KEY)
+                cursor := and(shr(R, packed), _BITMASK_KEY)
                 for {} 1 {} {
                     if cursor {
                         for {} 1 {} {
@@ -231,8 +258,8 @@ library RedBlackTreeLib {
                     }
                     break
                 }
-                result := mul(or(nodes, cursor), iszero(iszero(cursor)))
             }
+            result = _pack(nodes, cursor);
         }
     }
 

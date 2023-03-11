@@ -6,6 +6,8 @@ import {LibSort} from "../src/utils/LibSort.sol";
 import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {RedBlackTreeLib} from "../src/utils/RedBlackTreeLib.sol";
 
+import {LibString} from "../src/utils/LibString.sol";
+
 contract RedBlackTreeLibTest is TestPlus {
     using RedBlackTreeLib for *;
     using LibPRNG for *;
@@ -257,5 +259,43 @@ contract RedBlackTreeLibTest is TestPlus {
         assertEq(tree.last(), tree.find(2));
 
         assertTrue(tree.find(3).isEmpty());
+    }
+
+    function testRedBlackTreeNearest(uint256) public {
+        assertEq(tree.nearest(1), bytes32(0));
+        uint256 n = _bound(_random(), 1, 8);
+        uint256[] memory a = new uint256[](n);
+        unchecked {
+            for (uint256 i; i != n;) {
+                uint256 r = _bound(_random(), 1, type(uint256).max);
+
+                if (tree.find(r).isEmpty()) {
+                    a[i++] = r;
+                    tree.insert(r);
+                }
+            }
+        }
+        uint256 x = _bound(_random(), 1, type(uint256).max);
+        uint256 nearestIndex = _nearestIndex(x, a);
+        assertEq(tree.nearest(x).value(), a[nearestIndex]);
+    }
+
+    function _nearestIndex(uint256 x, uint256[] memory a) internal pure returns (uint256) {
+        unchecked {
+            uint256 nearestIndex;
+            uint256 nearestValue = type(uint256).max;
+            uint256 nearestDist = type(uint256).max;
+            uint256 n = a.length;
+            for (uint256 i; i != n; ++i) {
+                uint256 y = a[i];
+                uint256 dist = x < y ? y - x : x - y;
+                if (dist < nearestDist || (dist == nearestDist && y < nearestValue)) {
+                    nearestIndex = i;
+                    nearestValue = y;
+                    nearestDist = dist;
+                }
+            }
+            return nearestIndex;
+        }
     }
 }
