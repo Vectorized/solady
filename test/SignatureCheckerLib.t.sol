@@ -97,6 +97,9 @@ contract SignatureCheckerLibTest is TestPlus {
         uint8 vc = v ^ uint8(_random() & 0xff);
         bytes32 rc = bytes32(uint256(r) ^ _random());
         bytes32 sc = bytes32(uint256(s) ^ _random());
+        unchecked {
+            if (((vc - 27) & 1) != ((v - 27) & 1)) return;
+        }
         bool anyCorrupted = vc != v || rc != r || sc != s;
         _checkSignature(signer, digest, abi.encodePacked(rc, sc, vc), !anyCorrupted);
     }
