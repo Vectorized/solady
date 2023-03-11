@@ -6,6 +6,8 @@ import {LibSort} from "../src/utils/LibSort.sol";
 import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {RedBlackTreeLib} from "../src/utils/RedBlackTreeLib.sol";
 
+import {LibString} from "../src/utils/LibString.sol";
+
 contract RedBlackTreeLibTest is TestPlus {
     using RedBlackTreeLib for *;
     using LibPRNG for *;
@@ -29,7 +31,7 @@ contract RedBlackTreeLibTest is TestPlus {
         unchecked {
             LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
             uint256 n = 128;
-            uint256[] memory a = new uint256[](n);
+            uint256[] memory a = _makeArray(n);
             uint256 m = (1 << 160) - 1;
             for (uint256 i; i != n; ++i) {
                 uint256 r = 1 | (prng.next() & m);
@@ -43,7 +45,7 @@ contract RedBlackTreeLibTest is TestPlus {
         unchecked {
             LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
             uint256 n = 128;
-            uint256[] memory a = new uint256[](n);
+            uint256[] memory a = _makeArray(n);
             uint256 m = (1 << 160) - 1;
             for (uint256 i; i != n; ++i) {
                 uint256 r = 1 | (prng.next() & m);
@@ -62,7 +64,7 @@ contract RedBlackTreeLibTest is TestPlus {
         unchecked {
             LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
             uint256 n = 128;
-            uint256[] memory a = new uint256[](n);
+            uint256[] memory a = _makeArray(n);
             for (uint256 i; i != n; ++i) {
                 uint256 r = 1 | prng.next();
                 a[i] = r;
@@ -75,7 +77,7 @@ contract RedBlackTreeLibTest is TestPlus {
         unchecked {
             LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
             uint256 n = 128;
-            uint256[] memory a = new uint256[](n);
+            uint256[] memory a = _makeArray(n);
             for (uint256 i; i != n; ++i) {
                 uint256 r = 1 | prng.next();
                 a[i] = r;
@@ -142,8 +144,8 @@ contract RedBlackTreeLibTest is TestPlus {
     }
 
     function _testRedBlackTreeInsertAndRemove() internal {
-        uint256 n = _random() % (_random() % 32 == 0 ? 32 : 8);
-        uint256[] memory a = new uint256[](n);
+        uint256 n = _random() % (_random() % 128 == 0 ? 32 : 8);
+        uint256[] memory a = _makeArray(n);
 
         unchecked {
             for (uint256 i; i != n;) {
@@ -214,6 +216,96 @@ contract RedBlackTreeLibTest is TestPlus {
         }
     }
 
+    function testRedBlackTreeInsertAndRemove2(uint256) public {
+        unchecked {
+            uint256[] memory candidates = _makeArray(32);
+            for (uint256 i; i != candidates.length; ++i) {
+                candidates[i] = _bound(_random(), 1, type(uint256).max);
+            }
+            uint256[] memory records = _makeArray(0);
+            for (uint256 t; t != 8; ++t) {
+                uint256 r = candidates[_random() % candidates.length];
+                bytes32 ptr = tree.find(r);
+                if (_random() % 2 == 0) {
+                    if (ptr.isEmpty()) {
+                        tree.insert(r);
+                        _addToArray(records, r);
+                    }
+                } else {
+                    if (!ptr.isEmpty()) {
+                        tree.remove(r);
+                        _removeFromArray(records, r);
+                    }
+                }
+            }
+            LibSort.sort(records);
+            assertEq(tree.size(), records.length);
+
+            {
+                uint256 i;
+                bytes32 ptr = tree.first();
+                while (!ptr.isEmpty()) {
+                    assertEq(records[i++], ptr.value());
+                    ptr = ptr.next();
+                }
+                assertEq(ptr.next().value(), 0);
+            }
+        }
+    }
+
+    function _makeArray(uint256 size, uint256 maxCap)
+        internal
+        pure
+        returns (uint256[] memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, size)
+            mstore(0x40, add(result, shl(5, add(maxCap, 1))))
+        }
+    }
+
+    function _makeArray(uint256 size) internal pure returns (uint256[] memory result) {
+        require(size <= 512, "Size too big.");
+        result = _makeArray(size, 512);
+    }
+
+    function _addToArray(uint256[] memory a, uint256 x) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let exists := 0
+            let n := mload(a)
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                let o := add(add(a, 0x20), shl(5, i))
+                if eq(mload(o), x) {
+                    exists := 1
+                    break
+                }
+            }
+            if iszero(exists) {
+                n := add(n, 1)
+                mstore(add(a, shl(5, n)), x)
+                mstore(a, n)
+            }
+        }
+    }
+
+    function _removeFromArray(uint256[] memory a, uint256 x) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(a)
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                let o := add(add(a, 0x20), shl(5, i))
+                if eq(mload(o), x) {
+                    mstore(o, mload(add(a, shl(5, n))))
+                    mstore(a, sub(n, 1))
+                    break
+                }
+            }
+        }
+    }
+
     function testRedBlackTreeRejectsEmptyValue() public {
         vm.expectRevert(RedBlackTreeLib.ValueIsEmpty.selector);
         tree.insert(0);
@@ -275,7 +367,7 @@ contract RedBlackTreeLibTest is TestPlus {
     function testRedBlackTreeNearest(uint256) public {
         assertEq(tree.nearest(1), bytes32(0));
         uint256 n = _bound(_random(), 1, 8);
-        uint256[] memory a = new uint256[](n);
+        uint256[] memory a = _makeArray(n);
         unchecked {
             for (uint256 i; i != n;) {
                 uint256 r = _bound(_random(), 1, type(uint256).max);
@@ -287,11 +379,11 @@ contract RedBlackTreeLibTest is TestPlus {
             }
         }
         uint256 x = _bound(_random(), 1, type(uint256).max);
-        uint256 nearestIndex = _nearestIndex(x, a);
+        uint256 nearestIndex = _nearestIndex(a, x);
         assertEq(tree.nearest(x).value(), a[nearestIndex]);
     }
 
-    function _nearestIndex(uint256 x, uint256[] memory a) internal pure returns (uint256) {
+    function _nearestIndex(uint256[] memory a, uint256 x) internal pure returns (uint256) {
         unchecked {
             uint256 nearestIndex;
             uint256 nearestValue = type(uint256).max;
