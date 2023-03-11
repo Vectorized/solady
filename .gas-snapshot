@@ -490,7 +490,7 @@ OwnableRolesTest:testTransferOwnership(address,bool,bool) (runs: 256, μ: 13890,
 OwnableRolesTest:test__codesize() (gas: 21128)
 RedBlackTreeLibTest:testRedBlackTreeBenchUint160() (gas: 3487614)
 RedBlackTreeLibTest:testRedBlackTreeBenchUint256() (gas: 5892769)
-RedBlackTreeLibTest:testRedBlackTreeInsertAndRemove(uint256) (runs: 256, μ: 829484, ~: 590475)
+RedBlackTreeLibTest:testRedBlackTreeInsertAndRemove(uint256) (runs: 256, μ: 841610, ~: 531538)
 RedBlackTreeLibTest:testRedBlackTreeInsertBenchUint160() (gas: 3527861)
 RedBlackTreeLibTest:testRedBlackTreeInsertBenchUint256() (gas: 6421875)
 RedBlackTreeLibTest:testRedBlackTreePointers() (gas: 114105)

@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Library for managing a red-black-tree in storage.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/RedBlackTreeLib.sol)
 /// @author Modified from BokkyPooBahsRedBlackTreeLibrary (https://github.com/bokkypoobah/BokkyPooBahsRedBlackTreeLibrary)
+/// @dev This red-black-tree does not support inserting and removing the 0 (i.e. empty) value.
 library RedBlackTreeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -76,7 +77,7 @@ library RedBlackTreeLib {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the number of values in the tree.
+    /// @dev Returns the number of unique values in the tree.
     function size(Tree storage tree) internal view returns (uint256 result) {
         uint256 nodes = _nodes(tree);
         /// @solidity memory-safe-assembly
@@ -86,7 +87,7 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Returns a pointer to the value `v`.
+    /// @dev Returns a pointer to the value.
     /// If the value is not in the tree, the returned pointer will be empty.
     function find(Tree storage tree, uint256 v) internal view returns (bytes32 result) {
         (uint256 nodes,, uint256 found) = _find(tree, v);
@@ -96,13 +97,13 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Returns whether the value `v` exists.
+    /// @dev Returns whether the value exists.
     function exists(Tree storage tree, uint256 v) internal view returns (bool result) {
         (,, uint256 found) = _find(tree, v);
         result = found != 0;
     }
 
-    /// @dev Inserts the value `v` into the tree.
+    /// @dev Inserts the value into the tree.
     /// Reverts if the value already exists.
     function insert(Tree storage tree, uint256 v) internal {
         (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
@@ -110,7 +111,7 @@ library RedBlackTreeLib {
         _update(nodes, cursor, found, v, 0);
     }
 
-    /// @dev Removes the value `v` from the tree.
+    /// @dev Removes the value from the tree.
     /// Reverts if the value does not exist.
     function remove(Tree storage tree, uint256 v) internal {
         (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
@@ -118,9 +119,10 @@ library RedBlackTreeLib {
     }
 
     /// @dev Removes the pointer's value from the tree.
-    /// Reverts if the value does not exist,
-    /// or if the pointer is empty,
+    /// Reverts if the pointer is empty (i.e. value does not exist),
     /// or if the pointer is out of bounds.
+    /// After removal, the pointer may point to another existing value.
+    /// For safety, do not reuse a pointer after calling remove on it.
     function remove(bytes32 pointer) internal {
         (uint256 nodes, uint256 key) = _unpack(pointer);
         _update(nodes, 0, key, 0, 1);
@@ -164,7 +166,7 @@ library RedBlackTreeLib {
         result = _step(pointer, _BITPOS_RIGHT, _BITPOS_LEFT);
     }
 
-    /// @dev Returns whether the `pointer` is empty.
+    /// @dev Returns whether the pointer is empty.
     function isEmpty(bytes32 pointer) internal pure returns (bool result) {
         result = pointer == bytes32(0);
     }
