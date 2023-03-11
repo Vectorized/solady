@@ -25,9 +25,6 @@ library RedBlackTreeLib {
     /// @dev The tree is full.
     error TreeIsFull();
 
-    /// @dev `bytes4(keccak256(bytes("ValueIsEmpty()")))`.
-    uint256 internal constant ERROR_VALUE_IS_EMPTY = 0xc94f1877;
-
     /// @dev `bytes4(keccak256(bytes("ValueAlreadyExists()")))`.
     uint256 internal constant ERROR_VALUE_ALREADY_EXISTS = 0xbb33e6ac;
 
@@ -105,7 +102,6 @@ library RedBlackTreeLib {
     /// @dev Returns a pointer to the value.
     /// If the value is not in the tree, the returned pointer will be empty.
     function find(Tree storage tree, uint256 v) internal view returns (bytes32 result) {
-        if (v == 0) _revert(ERROR_VALUE_IS_EMPTY);
         (uint256 nodes,, uint256 found) = _find(tree, v);
         result = _pack(nodes, found);
     }
@@ -114,7 +110,6 @@ library RedBlackTreeLib {
     /// In a tie-breaker, the pointer will point to the smaller value.
     /// If the tree is empty, the returned pointer will be empty.
     function nearest(Tree storage tree, uint256 v) internal view returns (bytes32 result) {
-        if (v == 0) _revert(ERROR_VALUE_IS_EMPTY);
         (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
         unchecked {
             if (cursor == 0) return bytes32(0);
@@ -132,7 +127,6 @@ library RedBlackTreeLib {
 
     /// @dev Returns whether the value exists.
     function exists(Tree storage tree, uint256 v) internal view returns (bool result) {
-        if (v == 0) _revert(ERROR_VALUE_IS_EMPTY);
         (,, uint256 found) = _find(tree, v);
         result = found != 0;
     }
@@ -145,9 +139,9 @@ library RedBlackTreeLib {
     }
 
     /// @dev Inserts the value into the tree.
-    /// Returns a non-zero error code upon failure instead of reverting.
+    /// Returns a non-zero error code upon failure instead of reverting
+    /// (except for empty values).
     function tryInsert(Tree storage tree, uint256 v) internal returns (uint256 err) {
-        if (v == 0) return ERROR_VALUE_IS_EMPTY;
         (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
         err = _update(nodes, cursor, found, v, 0);
     }
@@ -160,9 +154,9 @@ library RedBlackTreeLib {
     }
 
     /// @dev Removes the value from the tree.
-    /// Returns a non-zero error code upon failure instead of reverting.
+    /// Returns a non-zero error code upon failure instead of reverting
+    /// (except for empty values).
     function tryRemove(Tree storage tree, uint256 v) internal returns (uint256 err) {
-        if (v == 0) return ERROR_VALUE_IS_EMPTY;
         (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
         err = _update(nodes, cursor, found, v, 1);
     }
@@ -697,6 +691,7 @@ library RedBlackTreeLib {
         view
         returns (uint256 nodes, uint256 cursor, uint256 key)
     {
+        if (v == 0) _revert(0xc94f1877); // `ValueIsEmpty()`.
         nodes = _nodes(tree);
         /// @solidity memory-safe-assembly
         assembly {
