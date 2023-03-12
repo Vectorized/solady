@@ -21,7 +21,7 @@ abstract contract Clone {
             mstore(arg, length)
             // Copy the array.
             calldatacopy(add(arg, 0x20), add(offset, argOffset), length)
-            // Allocate the memory, rounded up to the next 32 byte boudnary.
+            // Allocate the memory, rounded up to the next 32 byte boundary.
             mstore(0x40, and(add(add(arg, 0x3f), length), not(0x1f)))
         }
     }
