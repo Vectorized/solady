@@ -49,8 +49,8 @@ library RedBlackTreeLib {
 
     // Custom storage:
     // ```
-    // mstore(0x20, _NODES_SLOT_SEED)
-    // mstore(0x00, tree.slot)
+    // mstore(0x20, tree.slot)
+    // mstore(0x00, _NODES_SLOT_SEED)
     // let nodes := shl(_NODES_SLOT_SHIFT, keccak256(0x00, 0x40))
     //
     // let root := shr(128, sload(nodes))
@@ -68,7 +68,7 @@ library RedBlackTreeLib {
     // }
     // ```
 
-    uint256 private constant _NODES_SLOT_SEED = 0x846f2876cd72bffd;
+    uint256 private constant _NODES_SLOT_SEED = 0x1dc27bb5462fdadcb;
     uint256 private constant _NODES_SLOT_SHIFT = 32;
     uint256 private constant _BITMASK_KEY = (1 << 31) - 1;
     uint256 private constant _BITPOS_LEFT = 0;
@@ -176,13 +176,12 @@ library RedBlackTreeLib {
     /// @dev Returns the value at pointer `ptr`.
     /// If `ptr` is empty, the result will be zero.
     function value(bytes32 ptr) internal view returns (uint256 result) {
+        if (ptr == bytes32(0)) return result;
         /// @solidity memory-safe-assembly
         assembly {
-            if ptr {
-                let packed := sload(ptr)
-                result := shr(_BITPOS_PACKED_VALUE, packed)
-                if iszero(result) { result := sload(or(ptr, _BIT_FULL_VALUE_SLOT)) }
-            }
+            let packed := sload(ptr)
+            result := shr(_BITPOS_PACKED_VALUE, packed)
+            if iszero(result) { result := sload(or(ptr, _BIT_FULL_VALUE_SLOT)) }
         }
     }
 
@@ -645,8 +644,8 @@ library RedBlackTreeLib {
     function _nodes(Tree storage tree) private pure returns (uint256 nodes) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, _NODES_SLOT_SEED)
-            mstore(0x00, tree.slot)
+            mstore(0x20, tree.slot)
+            mstore(0x00, _NODES_SLOT_SEED)
             nodes := shl(_NODES_SLOT_SHIFT, keccak256(0x00, 0x40))
         }
     }
@@ -658,10 +657,12 @@ library RedBlackTreeLib {
         returns (uint256 nodes, uint256 cursor, uint256 key)
     {
         if (x == 0) _revert(0xc94f1877); // `ValueIsEmpty()`.
-        nodes = _nodes(tree);
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, 0)
+            mstore(0x20, tree.slot)
+            mstore(0x00, _NODES_SLOT_SEED)
+            nodes := shl(_NODES_SLOT_SHIFT, keccak256(0x00, 0x40))
+
             mstore(0x01, _BITPOS_RIGHT)
             for { let probe := shr(128, sload(nodes)) } probe {} {
                 cursor := probe
