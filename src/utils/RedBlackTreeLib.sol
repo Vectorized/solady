@@ -3,8 +3,9 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for managing a red-black-tree in storage.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/RedBlackTreeLib.sol)
-/// @author Modified from BokkyPooBahsRedBlackTreeLibrary (https://github.com/bokkypoobah/BokkyPooBahsRedBlackTreeLibrary)
-/// @dev This red-black-tree does not support inserting and removing the 0 (i.e. empty) value.
+/// @author Modified from BokkyPooBahsRedBlackTreeLibrary
+/// (https://github.com/bokkypoobah/BokkyPooBahsRedBlackTreeLibrary)
+/// @dev This red-black-tree does not support the zero (i.e. empty) value.
 library RedBlackTreeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
