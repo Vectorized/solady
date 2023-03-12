@@ -19,7 +19,7 @@ library RedBlackTreeLib {
     /// @dev Cannot remove a value that does not exist.
     error ValueDoesNotExist();
 
-    /// @dev The pointer is out of bounds.
+    /// @dev The ptr is out of bounds.
     error PointerOutOfBounds();
 
     /// @dev The tree is full.
@@ -99,95 +99,95 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Returns a pointer to the value.
-    /// If the value is not in the tree, the returned pointer will be empty.
-    function find(Tree storage tree, uint256 v) internal view returns (bytes32 result) {
-        (uint256 nodes,, uint256 found) = _find(tree, v);
-        result = _pack(nodes, found);
+    /// @dev Returns a pointer to the value `x`.
+    /// If the value `x` is not in the tree, the returned pointer will be empty.
+    function find(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
+        (uint256 nodes,, uint256 key) = _find(tree, x);
+        result = _pack(nodes, key);
     }
 
-    /// @dev Returns a pointer to the nearest value to `v`.
-    /// In a tie-breaker, the pointer will point to the smaller value.
+    /// @dev Returns a pointer to the nearest value to `x`.
+    /// In a tie-breaker, the returned pointer will point to the smaller value.
     /// If the tree is empty, the returned pointer will be empty.
-    function nearest(Tree storage tree, uint256 v) internal view returns (bytes32 result) {
-        (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
+    function nearest(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
+        (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
         unchecked {
             if (cursor == 0) return bytes32(0);
-            if (found != 0) return _pack(nodes, found);
+            if (key != 0) return _pack(nodes, key);
             bytes32 a = _pack(nodes, cursor);
             uint256 aValue = value(a);
-            bytes32 b = v < aValue ? prev(a) : next(a);
+            bytes32 b = x < aValue ? prev(a) : next(a);
             if (b == bytes32(0)) return a;
             uint256 bValue = value(b);
-            uint256 aDist = v < aValue ? aValue - v : v - aValue;
-            uint256 bDist = v < bValue ? bValue - v : v - bValue;
+            uint256 aDist = x < aValue ? aValue - x : x - aValue;
+            uint256 bDist = x < bValue ? bValue - x : x - bValue;
             if (aDist == bDist) return aValue < bValue ? a : b;
             return aDist < bDist ? a : b;
         }
     }
 
-    /// @dev Returns whether the value exists.
-    function exists(Tree storage tree, uint256 v) internal view returns (bool result) {
-        (,, uint256 found) = _find(tree, v);
-        result = found != 0;
+    /// @dev Returns whether the value `x` exists.
+    function exists(Tree storage tree, uint256 x) internal view returns (bool result) {
+        (,, uint256 key) = _find(tree, x);
+        result = key != 0;
     }
 
-    /// @dev Inserts the value into the tree.
-    /// Reverts if the value already exists.
-    function insert(Tree storage tree, uint256 v) internal {
-        uint256 err = tryInsert(tree, v);
+    /// @dev Inserts the value `x` into the tree.
+    /// Reverts if the value `x` already exists.
+    function insert(Tree storage tree, uint256 x) internal {
+        uint256 err = tryInsert(tree, x);
         if (err != 0) _revert(err);
     }
 
-    /// @dev Inserts the value into the tree.
+    /// @dev Inserts the value `x` into the tree.
     /// Returns a non-zero error code upon failure instead of reverting
-    /// (except for empty values).
-    function tryInsert(Tree storage tree, uint256 v) internal returns (uint256 err) {
-        (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
-        err = _update(nodes, cursor, found, v, 0);
+    /// (except for reverting if `x` is an empty value).
+    function tryInsert(Tree storage tree, uint256 x) internal returns (uint256 err) {
+        (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
+        err = _update(nodes, cursor, key, x, 0);
     }
 
     /// @dev Removes the value from the tree.
     /// Reverts if the value does not exist.
-    function remove(Tree storage tree, uint256 v) internal {
-        uint256 err = tryRemove(tree, v);
+    function remove(Tree storage tree, uint256 x) internal {
+        uint256 err = tryRemove(tree, x);
         if (err != 0) _revert(err);
     }
 
-    /// @dev Removes the value from the tree.
+    /// @dev Removes the value `x` from the tree.
     /// Returns a non-zero error code upon failure instead of reverting
-    /// (except for empty values).
-    function tryRemove(Tree storage tree, uint256 v) internal returns (uint256 err) {
-        (uint256 nodes, uint256 cursor, uint256 found) = _find(tree, v);
-        err = _update(nodes, cursor, found, v, 1);
+    /// (except for reverting if `x` is an empty value).
+    function tryRemove(Tree storage tree, uint256 x) internal returns (uint256 err) {
+        (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
+        err = _update(nodes, cursor, key, x, 1);
     }
 
-    /// @dev Removes the pointer's value from the tree.
-    /// Reverts if the pointer is empty (i.e. value does not exist),
-    /// or if the pointer is out of bounds.
-    /// After removal, the pointer may point to another existing value.
-    /// For safety, do not reuse a pointer after calling remove on it.
-    function remove(bytes32 pointer) internal {
-        uint256 err = tryRemove(pointer);
+    /// @dev Removes the value at pointer `ptr` from the tree.
+    /// Reverts if `ptr` is empty (i.e. value does not exist),
+    /// or if `ptr` is out of bounds.
+    /// After removal, `ptr` may point to another existing value.
+    /// For safety, do not reuse `ptr` after calling remove on it.
+    function remove(bytes32 ptr) internal {
+        uint256 err = tryRemove(ptr);
         if (err != 0) _revert(err);
     }
 
-    /// @dev Removes the pointer's value from the tree.
+    /// @dev Removes the value at pointer `ptr` from the tree.
     /// Returns a non-zero error code upon failure instead of reverting.
-    function tryRemove(bytes32 pointer) internal returns (uint256 err) {
-        (uint256 nodes, uint256 key) = _unpack(pointer);
+    function tryRemove(bytes32 ptr) internal returns (uint256 err) {
+        (uint256 nodes, uint256 key) = _unpack(ptr);
         err = _update(nodes, 0, key, 0, 1);
     }
 
-    /// @dev Returns the value at `pointer`.
-    /// If the pointer is empty, the result will be zero.
-    function value(bytes32 pointer) internal view returns (uint256 result) {
+    /// @dev Returns the value at `ptr`.
+    /// If `ptr` is empty, the result will be zero.
+    function value(bytes32 ptr) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            if pointer {
-                let packed := sload(pointer)
+            if ptr {
+                let packed := sload(ptr)
                 result := shr(_BITPOS_PACKED_VALUE, packed)
-                if iszero(result) { result := sload(or(pointer, _BIT_FULL_VALUE_SLOT)) }
+                if iszero(result) { result := sload(or(ptr, _BIT_FULL_VALUE_SLOT)) }
             }
         }
     }
@@ -205,34 +205,34 @@ library RedBlackTreeLib {
     }
 
     /// @dev Returns the pointer to the next largest value.
-    /// If there is no next value, or if the pointer is empty,
+    /// If there is no next value, or if `ptr` is empty,
     /// the returned pointer will be empty.
-    function next(bytes32 pointer) internal view returns (bytes32 result) {
-        result = _step(pointer, _BITPOS_LEFT, _BITPOS_RIGHT);
+    function next(bytes32 ptr) internal view returns (bytes32 result) {
+        result = _step(ptr, _BITPOS_LEFT, _BITPOS_RIGHT);
     }
 
     /// @dev Returns the pointer to the next smallest value.
-    /// If there is no previous value, or if the pointer is empty,
+    /// If there is no previous value, or if `ptr` is empty,
     /// the returned pointer will be empty.
-    function prev(bytes32 pointer) internal view returns (bytes32 result) {
-        result = _step(pointer, _BITPOS_RIGHT, _BITPOS_LEFT);
+    function prev(bytes32 ptr) internal view returns (bytes32 result) {
+        result = _step(ptr, _BITPOS_RIGHT, _BITPOS_LEFT);
     }
 
     /// @dev Returns whether the pointer is empty.
-    function isEmpty(bytes32 pointer) internal pure returns (bool result) {
-        result = pointer == bytes32(0);
+    function isEmpty(bytes32 ptr) internal pure returns (bool result) {
+        result = ptr == bytes32(0);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Unpacks the `pointer` to its components.
-    function _unpack(bytes32 pointer) private pure returns (uint256 nodes, uint256 key) {
+    /// @dev Unpacks the `ptr` to its components.
+    function _unpack(bytes32 ptr) private pure returns (uint256 nodes, uint256 key) {
         /// @solidity memory-safe-assembly
         assembly {
-            nodes := shl(_NODES_SLOT_SHIFT, shr(_NODES_SLOT_SHIFT, pointer))
-            key := and(_BITMASK_KEY, pointer)
+            nodes := shl(_NODES_SLOT_SHIFT, shr(_NODES_SLOT_SHIFT, ptr))
+            key := and(_BITMASK_KEY, ptr)
         }
     }
 
@@ -244,7 +244,7 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Returns the pointer to either end of the `tree`.
+    /// @dev Returns the pointer to either end of the tree.
     function _end(Tree storage tree, uint256 L) private view returns (bytes32 result) {
         uint256 nodes = _nodes(tree);
         uint256 key;
@@ -263,14 +263,14 @@ library RedBlackTreeLib {
         result = _pack(nodes, key);
     }
 
-    /// @dev Step the `pointer` forwards or backwards.
-    function _step(bytes32 pointer, uint256 L, uint256 R) private view returns (bytes32 result) {
-        if (pointer != bytes32(0)) {
-            (uint256 nodes, uint256 target) = _unpack(pointer);
+    /// @dev Step the pointer `ptr` forwards or backwards.
+    function _step(bytes32 ptr, uint256 L, uint256 R) private view returns (bytes32 result) {
+        if (ptr != bytes32(0)) {
+            (uint256 nodes, uint256 target) = _unpack(ptr);
             uint256 cursor;
             /// @solidity memory-safe-assembly
             assembly {
-                let packed := sload(pointer)
+                let packed := sload(ptr)
                 cursor := and(shr(R, packed), _BITMASK_KEY)
                 for {} 1 {} {
                     if iszero(cursor) {
@@ -297,8 +297,8 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Inserts or delete.
-    function _update(uint256 nodes, uint256 cursor, uint256 key, uint256 v, uint256 mode)
+    /// @dev Inserts or delete the value `x` from the tree.
+    function _update(uint256 nodes, uint256 cursor, uint256 key, uint256 x, uint256 mode)
         private
         returns (uint256 err)
     {
@@ -308,12 +308,12 @@ library RedBlackTreeLib {
                 index_ := and(shr(bitpos_, packed_), _BITMASK_KEY)
             }
 
-            function setKey(packed_, bitpos_, value_) -> result_ {
-                result_ := or(and(not(shl(bitpos_, _BITMASK_KEY)), packed_), shl(bitpos_, value_))
+            function setKey(packed_, bitpos_, key_) -> result_ {
+                result_ := or(and(not(shl(bitpos_, _BITMASK_KEY)), packed_), shl(bitpos_, key_))
             }
 
-            function setRed(packed_, value_) -> result_ {
-                result_ := or(and(not(_BITMASK_RED), packed_), shl(_BITPOS_RED, value_))
+            function setRed(packed_, red_) -> result_ {
+                result_ := or(and(not(_BITMASK_RED), packed_), shl(_BITPOS_RED, red_))
             }
 
             function isRed(packed_) -> red_ {
@@ -399,9 +399,9 @@ library RedBlackTreeLib {
                 sstore(or(nodes_, root_), setRed(sload(or(nodes_, root_)), 0))
             }
 
-            function insert(nodes_, cursor_, key_, value_) -> error_ {
+            function insert(nodes_, cursor_, key_, x_) -> err_ {
                 if key_ {
-                    error_ := ERROR_VALUE_ALREADY_EXISTS
+                    err_ := ERROR_VALUE_ALREADY_EXISTS
                     leave
                 }
 
@@ -409,7 +409,7 @@ library RedBlackTreeLib {
                 let totalNodes_ := add(getKey(treePacked_, _BITPOS_TOTAL_NODES), 1)
 
                 if gt(totalNodes_, _BITMASK_KEY) {
-                    error_ := ERROR_TREE_IS_FULL
+                    err_ := ERROR_TREE_IS_FULL
                     leave
                 }
 
@@ -419,11 +419,11 @@ library RedBlackTreeLib {
                 let nodePointer_ := or(nodes_, totalNodes_)
 
                 for {} 1 {} {
-                    if iszero(gt(value_, _BITMASK_PACKED_VALUE)) {
-                        packed_ := or(shl(_BITPOS_PACKED_VALUE, value_), packed_)
+                    if iszero(gt(x_, _BITMASK_PACKED_VALUE)) {
+                        packed_ := or(shl(_BITPOS_PACKED_VALUE, x_), packed_)
                         break
                     }
-                    sstore(or(nodePointer_, _BIT_FULL_VALUE_SLOT), value_)
+                    sstore(or(nodePointer_, _BIT_FULL_VALUE_SLOT), x_)
                     break
                 }
                 sstore(nodePointer_, packed_)
@@ -437,7 +437,7 @@ library RedBlackTreeLib {
                     let cursorPacked_ := sload(s_)
                     let cursorValue_ := shr(_BITPOS_PACKED_VALUE, cursorPacked_)
                     if iszero(cursorValue_) { cursorValue_ := sload(or(s_, _BIT_FULL_VALUE_SLOT)) }
-                    if iszero(lt(value_, cursorValue_)) {
+                    if iszero(lt(x_, cursorValue_)) {
                         sstore(s_, setKey(cursorPacked_, _BITPOS_RIGHT, totalNodes_))
                         break
                     }
@@ -562,15 +562,15 @@ library RedBlackTreeLib {
                 mstore(0x00, setKey(treePacked_, _BITPOS_TOTAL_NODES, sub(last_, 1)))
             }
 
-            function remove(nodes_, key_) -> error_ {
+            function remove(nodes_, key_) -> err_ {
                 let last_ := getKey(mload(0x00), _BITPOS_TOTAL_NODES)
 
                 if gt(key_, last_) {
-                    error_ := ERROR_POINTER_OUT_OF_BOUNDS
+                    err_ := ERROR_POINTER_OUT_OF_BOUNDS
                     leave
                 }
                 if iszero(key_) {
-                    error_ := ERROR_VALUE_DOES_NOT_EXISTS
+                    err_ := ERROR_VALUE_DOES_NOT_EXISTS
                     leave
                 }
 
@@ -664,7 +664,7 @@ library RedBlackTreeLib {
 
             for {} 1 {} {
                 if iszero(mode) {
-                    err := insert(nodes, cursor, key, v)
+                    err := insert(nodes, cursor, key, x)
                     break
                 }
                 err := remove(nodes, key)
@@ -675,7 +675,7 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Returns the `nodes` pointer for `tree`.
+    /// @dev Returns the `nodes` ptr for `tree`.
     function _nodes(Tree storage tree) private pure returns (uint256 nodes) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -685,13 +685,13 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Finds `v` in `tree`. The `key` will be zero if `v` is not found.
-    function _find(Tree storage tree, uint256 v)
+    /// @dev Finds `x` in `tree`. The `key` will be zero if `x` is not found.
+    function _find(Tree storage tree, uint256 x)
         private
         view
         returns (uint256 nodes, uint256 cursor, uint256 key)
     {
-        if (v == 0) _revert(0xc94f1877); // `ValueIsEmpty()`.
+        if (x == 0) _revert(0xc94f1877); // `ValueIsEmpty()`.
         nodes = _nodes(tree);
         /// @solidity memory-safe-assembly
         assembly {
@@ -704,11 +704,11 @@ library RedBlackTreeLib {
                 if iszero(nodeValue) {
                     nodeValue := sload(or(or(nodes, probe), _BIT_FULL_VALUE_SLOT))
                 }
-                if eq(nodeValue, v) {
+                if eq(nodeValue, x) {
                     key := cursor
                     break
                 }
-                probe := and(shr(mload(gt(v, nodeValue)), nodePacked), _BITMASK_KEY)
+                probe := and(shr(mload(gt(x, nodeValue)), nodePacked), _BITMASK_KEY)
             }
         }
     }
