@@ -6,13 +6,12 @@ import {LibSort} from "../src/utils/LibSort.sol";
 import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {RedBlackTreeLib} from "../src/utils/RedBlackTreeLib.sol";
 
-import {LibString} from "../src/utils/LibString.sol";
-
 contract RedBlackTreeLibTest is TestPlus {
     using RedBlackTreeLib for *;
     using LibPRNG for *;
 
     RedBlackTreeLib.Tree tree;
+    RedBlackTreeLib.Tree emptyTree;
 
     function testRedBlackTreeInsertBenchStep() public {
         unchecked {
@@ -99,7 +98,7 @@ contract RedBlackTreeLibTest is TestPlus {
         }
     }
 
-    function _testRandomlyAndInsert(uint256[] memory a, uint256 n, uint256 t) internal {
+    function _testRemoveAndInsertBack(uint256[] memory a, uint256 n, uint256 t) internal {
         unchecked {
             uint256 choice = a[_random() % n];
             bytes32 ptr = tree.find(choice);
@@ -111,7 +110,7 @@ contract RedBlackTreeLibTest is TestPlus {
                 assertFalse(tree.exists(choice));
             }
             if (t != 0) {
-                _testRandomlyAndInsert(a, n, t - 1);
+                _testRemoveAndInsertBack(a, n, t - 1);
             }
             if (exists) {
                 tree.insert(choice);
@@ -155,7 +154,7 @@ contract RedBlackTreeLibTest is TestPlus {
                     tree.insert(r);
                 }
                 if (_random() % 4 == 0) {
-                    _testRandomlyAndInsert(a, i, (3 + i >> 2));
+                    _testRemoveAndInsertBack(a, i, (3 + i >> 2));
                 }
             }
         }
@@ -164,6 +163,8 @@ contract RedBlackTreeLibTest is TestPlus {
         LibSort.uniquifySorted(a);
         assertEq(a.length, n);
         assertEq(tree.size(), n);
+
+        assertEq(emptyTree.size(), 0);
 
         unchecked {
             uint256 i;
@@ -213,19 +214,23 @@ contract RedBlackTreeLibTest is TestPlus {
             assertTrue(tree.last().isEmpty());
             assertEq(tree.last().value(), 0);
         }
+
+        assertEq(emptyTree.size(), 0);
     }
 
     function testRedBlackTreeInsertAndRemove2(uint256) public {
         unchecked {
-            uint256[] memory candidates = _makeArray(32);
-            for (uint256 i; i != candidates.length; ++i) {
+            uint256 n = _random() % 2 == 0 ? 16 : 32;
+            uint256[] memory candidates = _makeArray(n);
+            for (uint256 i; i != n; ++i) {
                 candidates[i] = _bound(_random(), 1, type(uint256).max);
             }
             uint256[] memory records = _makeArray(0);
+            uint256 mode = 0;
             for (uint256 t = _random() % 32 + 1; t != 0; --t) {
-                uint256 r = candidates[_random() % candidates.length];
+                uint256 r = candidates[_random() % n];
                 bytes32 ptr = tree.find(r);
-                if (_random() % 2 == 0) {
+                if (mode == 0) {
                     if (ptr.isEmpty()) {
                         tree.insert(r);
                         _addToArray(records, r);
@@ -236,9 +241,12 @@ contract RedBlackTreeLibTest is TestPlus {
                         _removeFromArray(records, r);
                     }
                 }
+                if (_random() % 3 == 0) mode = _random() % 2;
             }
             LibSort.sort(records);
             assertEq(tree.size(), records.length);
+
+            assertEq(emptyTree.size(), 0);
 
             {
                 uint256 i = 0;
