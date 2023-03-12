@@ -315,27 +315,37 @@ contract RedBlackTreeLibTest is TestPlus {
 
     function testRedBlackTreeInsertAndRemove3() public {
         unchecked {
-            for (uint256 i; i < 512; ++i) {
-                tree.insert(1000000 - i);
+            uint256 m = type(uint256).max;
+            for (uint256 i; i < 256; ++i) {
+                tree.insert(m - i);
                 assertEq(tree.size(), i + 1);
             }
-            for (uint256 i; i < 512; ++i) {
+            for (uint256 i; i < 256; ++i) {
                 tree2.insert(i + 1);
                 assertEq(tree2.size(), i + 1);
             }
-            for (uint256 i; i < 512; ++i) {
-                assertTrue(tree.exists(1000000 - i));
+            for (uint256 i; i < 256; ++i) {
+                assertTrue(tree.exists(m - i));
                 assertFalse(tree.exists(i + 1));
                 assertTrue(tree2.exists(i + 1));
-                assertFalse(tree2.exists(1000000 - i));
+                assertFalse(tree2.exists(m - i));
             }
-            for (uint256 i; i < 512; ++i) {
-                tree.remove(1000000 - i);
-                assertEq(tree.size(), 512 - (i + 1));
+            bytes32[] memory ptrs = new bytes32[](256);
+            for (uint256 i; i < 256; ++i) {
+                bytes32 ptr = tree.find(m - i);
+                ptr.remove();
+                assertTrue(ptr.value() != m - i);
+                ptrs[i] = ptr;
+                assertEq(tree.size(), 256 - (i + 1));
             }
-            for (uint256 i; i < 512; ++i) {
+            for (uint256 i; i < 256; ++i) {
+                assertEq(ptrs[i].value(), 0);
+                vm.expectRevert(RedBlackTreeLib.PointerOutOfBounds.selector);
+                ptrs[i].remove();
+            }
+            for (uint256 i; i < 256; ++i) {
                 tree2.remove(i + 1);
-                assertEq(tree2.size(), 512 - (i + 1));
+                assertEq(tree2.size(), 256 - (i + 1));
             }
         }
     }
