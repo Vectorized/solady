@@ -113,7 +113,7 @@ library RedBlackTreeLib {
     function nearest(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
         (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
         unchecked {
-            if (cursor == 0) return bytes32(0);
+            if (cursor == 0) return result;
             if (key != 0) return _pack(nodes, key);
             bytes32 a = _pack(nodes, cursor);
             uint256 aValue = value(a);
@@ -265,13 +265,12 @@ library RedBlackTreeLib {
 
     /// @dev Step the pointer `ptr` forwards or backwards.
     function _step(bytes32 ptr, uint256 L, uint256 R) private view returns (bytes32 result) {
-        if (ptr == bytes32(0)) return bytes32(0);
+        if (ptr == bytes32(0)) return ptr;
         (uint256 nodes, uint256 target) = _unpack(ptr);
         /// @solidity memory-safe-assembly
         assembly {
             let packed := sload(ptr)
-            result := and(shr(R, packed), _BITMASK_KEY)
-            for {} 1 {} {
+            for { result := and(shr(R, packed), _BITMASK_KEY) } 1 {} {
                 if iszero(result) {
                     result := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                     for {} 1 {} {
@@ -348,10 +347,10 @@ library RedBlackTreeLib {
                     sstore(s_, setKey(parentPacked_, R, cursor_))
                     break
                 }
-                cursorPacked_ := setKey(cursorPacked_, _BITPOS_PARENT, parent_)
-                sstore(or(nodes_, cursor_), setKey(cursorPacked_, L, key_))
                 packed_ := setKey(packed_, R, cursorLeft_)
                 sstore(or(nodes_, key_), setKey(packed_, _BITPOS_PARENT, cursor_))
+                cursorPacked_ := setKey(cursorPacked_, _BITPOS_PARENT, parent_)
+                sstore(or(nodes_, cursor_), setKey(cursorPacked_, L, key_))
             }
 
             function insertFixup(nodes_, key_) {
@@ -597,8 +596,7 @@ library RedBlackTreeLib {
                     }
                     let yParentSlot_ := or(nodes_, yParent_)
                     let yParentPacked_ := sload(yParentSlot_)
-                    let yParentLeft_ := getKey(yParentPacked_, _BITPOS_LEFT)
-                    if eq(cursor_, yParentLeft_) {
+                    if eq(cursor_, getKey(yParentPacked_, _BITPOS_LEFT)) {
                         sstore(yParentSlot_, setKey(yParentPacked_, _BITPOS_LEFT, probe_))
                         break
                     }
