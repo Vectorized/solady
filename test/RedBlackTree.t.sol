@@ -11,7 +11,7 @@ contract RedBlackTreeLibTest is TestPlus {
     using LibPRNG for *;
 
     RedBlackTreeLib.Tree tree;
-    RedBlackTreeLib.Tree emptyTree;
+    RedBlackTreeLib.Tree tree2;
 
     function testRedBlackTreeInsertBenchStep() public {
         unchecked {
@@ -164,7 +164,7 @@ contract RedBlackTreeLibTest is TestPlus {
         assertEq(a.length, n);
         assertEq(tree.size(), n);
 
-        assertEq(emptyTree.size(), 0);
+        assertEq(tree2.size(), 0);
 
         unchecked {
             uint256 i;
@@ -215,7 +215,7 @@ contract RedBlackTreeLibTest is TestPlus {
             assertEq(tree.last().value(), 0);
         }
 
-        assertEq(emptyTree.size(), 0);
+        assertEq(tree2.size(), 0);
     }
 
     function testRedBlackTreeInsertAndRemove2(uint256) public {
@@ -246,7 +246,7 @@ contract RedBlackTreeLibTest is TestPlus {
             LibSort.sort(records);
             assertEq(tree.size(), records.length);
 
-            assertEq(emptyTree.size(), 0);
+            assertEq(tree2.size(), 0);
 
             {
                 uint256 i = 0;
@@ -309,6 +309,33 @@ contract RedBlackTreeLibTest is TestPlus {
                     mstore(a, sub(n, 1))
                     break
                 }
+            }
+        }
+    }
+
+    function testRedBlackTreeInsertAndRemove3() public {
+        unchecked {
+            for (uint256 i; i < 512; ++i) {
+                tree.insert(1000000 - i);
+                assertEq(tree.size(), i + 1);
+            }
+            for (uint256 i; i < 512; ++i) {
+                tree2.insert(i + 1);
+                assertEq(tree2.size(), i + 1);
+            }
+            for (uint256 i; i < 512; ++i) {
+                assertTrue(tree.exists(1000000 - i));
+                assertFalse(tree.exists(i + 1));
+                assertTrue(tree2.exists(i + 1));
+                assertFalse(tree2.exists(1000000 - i));
+            }
+            for (uint256 i; i < 512; ++i) {
+                tree.remove(1000000 - i);
+                assertEq(tree.size(), 512 - (i + 1));
+            }
+            for (uint256 i; i < 512; ++i) {
+                tree2.remove(i + 1);
+                assertEq(tree2.size(), 512 - (i + 1));
             }
         }
     }
