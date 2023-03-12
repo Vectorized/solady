@@ -526,9 +526,9 @@ library RedBlackTreeLib {
                             break
                         }
                         let s_ := or(nodes_, lastParent_)
-                        let lastParentPacked_ := sload(s_)
-                        let t_ := iszero(eq(last_, getKey(lastParentPacked_, _BITPOS_LEFT)))
-                        sstore(s_, setKey(lastParentPacked_, mul(t_, _BITPOS_RIGHT), cursor_))
+                        let p_ := sload(s_)
+                        let t_ := iszero(eq(last_, getKey(p_, _BITPOS_LEFT)))
+                        sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), cursor_))
                         break
                     }
                     let lastRight_ := getKey(lastPacked_, _BITPOS_RIGHT)
@@ -591,10 +591,10 @@ library RedBlackTreeLib {
                         mstore(0x00, setKey(mload(0x00), _BITPOS_ROOT, probe_))
                         break
                     }
-                    let yParentSlot_ := or(nodes_, yParent_)
-                    let yParentPacked_ := sload(yParentSlot_)
-                    let t_ := iszero(eq(cursor_, getKey(yParentPacked_, _BITPOS_LEFT)))
-                    sstore(yParentSlot_, setKey(yParentPacked_, mul(t_, _BITPOS_RIGHT), probe_))
+                    let s_ := or(nodes_, yParent_)
+                    let p_ := sload(s_)
+                    let t_ := iszero(eq(cursor_, getKey(p_, _BITPOS_LEFT)))
+                    sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), probe_))
                     break
                 }
 
@@ -609,9 +609,9 @@ library RedBlackTreeLib {
                             break
                         }
                         let s_ := or(nodes_, parent_)
-                        let parentPacked_ := sload(s_)
-                        let t_ := iszero(eq(key_, getKey(parentPacked_, _BITPOS_LEFT)))
-                        sstore(s_, setKey(parentPacked_, mul(t_, _BITPOS_RIGHT), cursor_))
+                        let p_ := sload(s_)
+                        let t_ := iszero(eq(key_, getKey(p_, _BITPOS_LEFT)))
+                        sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), cursor_))
                         break
                     }
 
