@@ -53,13 +53,10 @@ library RedBlackTreeLib {
     // mstore(0x00, tree.slot)
     // let nodes := shl(_NODES_SLOT_SHIFT, keccak256(0x00, 0x40))
     //
-    // let treePacked := sload(nodes)
-    // let root := and(shr(_BITPOS_ROOT, treePacked), _BITMASK_KEY)
-    // let totalNodes := and(shr(_BITPOS_TOTAL_NODES, treePacked), _BITMASK_KEY)
+    // let root := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY)
+    // let totalNodes := and(shr(_BITPOS_TOTAL_NODES, sload(nodes)), _BITMASK_KEY)
     //
-    // let nodePointer := or(nodes, nodeIndex)
-    //
-    // let nodePacked := sload(nodePointer)
+    // let nodePacked := sload(or(nodes, nodeIndex))
     // let nodeLeft   := and(nodePacked, _BITMASK_KEY)
     // let nodeRight  := and(shr(_BITPOS_RIGHT, nodePacked), _BITMASK_KEY)
     // let nodeParent := and(shr(_BITPOS_PARENT, nodePacked), _BITMASK_KEY)
@@ -67,7 +64,7 @@ library RedBlackTreeLib {
     //
     // let nodeValue := shr(_BITPOS_PACKED_VALUE, nodePacked)
     // if iszero(nodeValue) {
-    //     nodeValue := sload(or(_BIT_FULL_VALUE_SLOT, nodePointer))
+    //     nodeValue := sload(or(_BIT_FULL_VALUE_SLOT, or(nodes, nodeIndex)))
     // }
     // ```
 
