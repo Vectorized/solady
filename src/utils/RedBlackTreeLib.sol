@@ -81,7 +81,6 @@ library RedBlackTreeLib {
     uint256 private constant _BITPOS_PARENT = 31 * 2;
     uint256 private constant _BITPOS_RED = 31 * 3;
     uint256 private constant _BITMASK_RED = 1 << (31 * 3);
-    uint256 private constant _BITWIDTH_PACKED_VALUE = 160;
     uint256 private constant _BITPOS_PACKED_VALUE = 96;
     uint256 private constant _BITMASK_PACKED_VALUE = (1 << 160) - 1;
     uint256 private constant _BIT_FULL_VALUE_SLOT = 1 << 31;
