@@ -159,8 +159,8 @@ library RedBlackTreeLib {
     /// Returns a non-zero error code upon failure instead of reverting
     /// (except for reverting if `x` is an empty value).
     function tryRemove(Tree storage tree, uint256 x) internal returns (uint256 err) {
-        (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
-        err = _update(nodes, cursor, key, x, 1);
+        (uint256 nodes,, uint256 key) = _find(tree, x);
+        err = _update(nodes, 0, key, 0, 1);
     }
 
     /// @dev Removes the value at pointer `ptr` from the tree.
@@ -365,12 +365,8 @@ library RedBlackTreeLib {
                     let grandParent_ := getKey(parentPacked_, _BITPOS_PARENT)
                     let grandParentPacked_ := sload(or(nodes_, grandParent_))
 
-                    let L := _BITPOS_RIGHT
-                    let R := _BITPOS_LEFT
-                    if eq(parent_, getKey(grandParentPacked_, _BITPOS_LEFT)) {
-                        L := _BITPOS_LEFT
-                        R := _BITPOS_RIGHT
-                    }
+                    let R := mul(eq(parent_, getKey(grandParentPacked_, 0)), _BITPOS_RIGHT)
+                    let L := xor(R, _BITPOS_RIGHT)
 
                     let cursor_ := getKey(grandParentPacked_, R)
                     let cursorPacked_ := sload(or(nodes_, cursor_))
@@ -455,12 +451,8 @@ library RedBlackTreeLib {
                     let parent_ := getKey(packed_, _BITPOS_PARENT)
                     let parentPacked_ := sload(or(nodes_, parent_))
 
-                    let L := _BITPOS_RIGHT
-                    let R := _BITPOS_LEFT
-                    if eq(key_, getKey(parentPacked_, _BITPOS_LEFT)) {
-                        L := _BITPOS_LEFT
-                        R := _BITPOS_RIGHT
-                    }
+                    let R := mul(eq(key_, getKey(parentPacked_, 0)), _BITPOS_RIGHT)
+                    let L := xor(R, _BITPOS_RIGHT)
 
                     let cursor_ := getKey(parentPacked_, R)
                     let cursorPacked_ := sload(or(nodes_, cursor_))
