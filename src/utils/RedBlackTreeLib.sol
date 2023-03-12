@@ -19,7 +19,7 @@ library RedBlackTreeLib {
     /// @dev Cannot remove a value that does not exist.
     error ValueDoesNotExist();
 
-    /// @dev The ptr is out of bounds.
+    /// @dev The pointer is out of bounds.
     error PointerOutOfBounds();
 
     /// @dev The tree is full.
@@ -147,7 +147,7 @@ library RedBlackTreeLib {
         err = _update(nodes, cursor, key, x, 0);
     }
 
-    /// @dev Removes the value from the tree.
+    /// @dev Removes the value `x` from the tree.
     /// Reverts if the value does not exist.
     function remove(Tree storage tree, uint256 x) internal {
         uint256 err = tryRemove(tree, x);
@@ -179,7 +179,7 @@ library RedBlackTreeLib {
         err = _update(nodes, 0, key, 0, 1);
     }
 
-    /// @dev Returns the value at `ptr`.
+    /// @dev Returns the value at pointer `ptr`.
     /// If `ptr` is empty, the result will be zero.
     function value(bytes32 ptr) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
@@ -227,7 +227,7 @@ library RedBlackTreeLib {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Unpacks the `ptr` to its components.
+    /// @dev Unpacks the pointer `ptr` to its components.
     function _unpack(bytes32 ptr) private pure returns (uint256 nodes, uint256 key) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -236,7 +236,7 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Packs the `nodes` and the `key` into a single pointer.
+    /// @dev Packs `nodes` and `key` into a single pointer.
     function _pack(uint256 nodes, uint256 key) private pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -247,54 +247,51 @@ library RedBlackTreeLib {
     /// @dev Returns the pointer to either end of the tree.
     function _end(Tree storage tree, uint256 L) private view returns (bytes32 result) {
         uint256 nodes = _nodes(tree);
-        uint256 key;
         /// @solidity memory-safe-assembly
         assembly {
-            key := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY)
-            if key {
+            result := and(shr(_BITPOS_ROOT, sload(nodes)), _BITMASK_KEY)
+            if result {
                 for {} 1 {} {
-                    let packed := sload(or(nodes, key))
+                    let packed := sload(or(nodes, result))
                     let left := and(shr(L, packed), _BITMASK_KEY)
                     if iszero(left) { break }
-                    key := left
+                    result := left
                 }
             }
         }
-        result = _pack(nodes, key);
+        result = _pack(nodes, uint256(result));
     }
 
     /// @dev Step the pointer `ptr` forwards or backwards.
     function _step(bytes32 ptr, uint256 L, uint256 R) private view returns (bytes32 result) {
-        if (ptr != bytes32(0)) {
-            (uint256 nodes, uint256 target) = _unpack(ptr);
-            uint256 cursor;
-            /// @solidity memory-safe-assembly
-            assembly {
-                let packed := sload(ptr)
-                cursor := and(shr(R, packed), _BITMASK_KEY)
-                for {} 1 {} {
-                    if iszero(cursor) {
-                        cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
-                        for {} 1 {} {
-                            if iszero(cursor) { break }
-                            packed := sload(or(nodes, cursor))
-                            if iszero(eq(target, and(shr(R, packed), _BITMASK_KEY))) { break }
-                            target := cursor
-                            cursor := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
-                        }
-                        break
-                    }
+        if (ptr == bytes32(0)) return bytes32(0);
+        (uint256 nodes, uint256 target) = _unpack(ptr);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let packed := sload(ptr)
+            result := and(shr(R, packed), _BITMASK_KEY)
+            for {} 1 {} {
+                if iszero(result) {
+                    result := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                     for {} 1 {} {
-                        packed := sload(or(nodes, cursor))
-                        let left := and(shr(L, packed), _BITMASK_KEY)
-                        if iszero(left) { break }
-                        cursor := left
+                        if iszero(result) { break }
+                        packed := sload(or(nodes, result))
+                        if iszero(eq(target, and(shr(R, packed), _BITMASK_KEY))) { break }
+                        target := result
+                        result := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                     }
                     break
                 }
+                for {} 1 {} {
+                    packed := sload(or(nodes, result))
+                    let left := and(shr(L, packed), _BITMASK_KEY)
+                    if iszero(left) { break }
+                    result := left
+                }
+                break
             }
-            result = _pack(nodes, cursor);
         }
+        result = _pack(nodes, uint256(result));
     }
 
     /// @dev Inserts or delete the value `x` from the tree.
@@ -675,7 +672,7 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Returns the `nodes` ptr for `tree`.
+    /// @dev Returns the pointer to the `nodes` for the tree.
     function _nodes(Tree storage tree) private pure returns (uint256 nodes) {
         /// @solidity memory-safe-assembly
         assembly {
