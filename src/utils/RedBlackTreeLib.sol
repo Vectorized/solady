@@ -527,11 +527,8 @@ library RedBlackTreeLib {
                         }
                         let s_ := or(nodes_, lastParent_)
                         let lastParentPacked_ := sload(s_)
-                        if eq(last_, getKey(lastParentPacked_, _BITPOS_LEFT)) {
-                            sstore(s_, setKey(lastParentPacked_, _BITPOS_LEFT, cursor_))
-                            break
-                        }
-                        sstore(s_, setKey(lastParentPacked_, _BITPOS_RIGHT, cursor_))
+                        let t_ := iszero(eq(last_, getKey(lastParentPacked_, _BITPOS_LEFT)))
+                        sstore(s_, setKey(lastParentPacked_, mul(t_, _BITPOS_RIGHT), cursor_))
                         break
                     }
                     let lastRight_ := getKey(lastPacked_, _BITPOS_RIGHT)
@@ -596,11 +593,8 @@ library RedBlackTreeLib {
                     }
                     let yParentSlot_ := or(nodes_, yParent_)
                     let yParentPacked_ := sload(yParentSlot_)
-                    if eq(cursor_, getKey(yParentPacked_, _BITPOS_LEFT)) {
-                        sstore(yParentSlot_, setKey(yParentPacked_, _BITPOS_LEFT, probe_))
-                        break
-                    }
-                    sstore(yParentSlot_, setKey(yParentPacked_, _BITPOS_RIGHT, probe_))
+                    let t_ := iszero(eq(cursor_, getKey(yParentPacked_, _BITPOS_LEFT)))
+                    sstore(yParentSlot_, setKey(yParentPacked_, mul(t_, _BITPOS_RIGHT), probe_))
                     break
                 }
 
@@ -616,11 +610,8 @@ library RedBlackTreeLib {
                         }
                         let s_ := or(nodes_, parent_)
                         let parentPacked_ := sload(s_)
-                        if eq(key_, getKey(parentPacked_, _BITPOS_LEFT)) {
-                            sstore(s_, setKey(parentPacked_, _BITPOS_LEFT, cursor_))
-                            break
-                        }
-                        sstore(s_, setKey(parentPacked_, _BITPOS_RIGHT, cursor_))
+                        let t_ := iszero(eq(key_, getKey(parentPacked_, _BITPOS_LEFT)))
+                        sstore(s_, setKey(parentPacked_, mul(t_, _BITPOS_RIGHT), cursor_))
                         break
                     }
 
