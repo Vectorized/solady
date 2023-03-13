@@ -375,6 +375,18 @@ contract RedBlackTreeLibTest is TestPlus {
         ptr.remove();
     }
 
+    function testRedBlackTreeTryInsertAndRemove() public {
+        tree.insert(1);
+        tree.insert(2);
+        assertEq(tree.size(), 2);
+        tree.tryInsert(1);
+        assertEq(tree.size(), 2);
+        tree.tryRemove(2);
+        assertEq(tree.size(), 1);
+        tree.tryRemove(2);
+        assertEq(tree.size(), 1);
+    }
+
     function testRedBlackTreePointers() public {
         assertTrue(tree.find(1).isEmpty());
         assertTrue(tree.find(2).isEmpty());
