@@ -32,6 +32,7 @@ utils
 ├─ LibBitmap — "Library for storage of packed booleans"
 ├─ LibMap — "Library for storage of packed unsigned integers"
 ├─ MinHeapLib — "Library for managing a min-heap in storage"
+├─ RedBlackTreeLib — "Library for managing a red-black-tree in storage"
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
 ├─ DynamicBufferLib — "Library for buffers with automatic capacity resizing"
