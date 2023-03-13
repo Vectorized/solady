@@ -410,25 +410,23 @@ contract RedBlackTreeLibTest is TestPlus {
 
     function testRedBlackTreeNearest(uint256) public {
         assertEq(tree.nearest(1), bytes32(0));
-        uint256 n = _bound(_random(), 1, 8);
-        uint256[] memory a = _makeArray(n);
-        unchecked {
-            for (uint256 i; i != n;) {
-                uint256 r = _bound(_random(), 1, type(uint256).max);
-                if (tree.find(r).isEmpty()) {
-                    a[i++] = r;
-                    tree.insert(r);
-                }
-            }
-        }
+        uint256 n = _bound(_random(), 0, 8);
+        uint256[] memory a = _fillTree(n);
         uint256 x = _bound(_random(), 1, type(uint256).max);
-        uint256 nearestIndex = _nearestIndex(a, x);
-        assertEq(tree.nearest(x).value(), a[nearestIndex]);
+        (uint256 nearestIndex, bool found) = _nearestIndex(a, x);
+        if (found) {
+            assertEq(tree.nearest(x).value(), a[nearestIndex]);
+        } else {
+            assertEq(tree.nearest(x), bytes32(0));
+        }
     }
 
-    function _nearestIndex(uint256[] memory a, uint256 x) internal pure returns (uint256) {
+    function _nearestIndex(uint256[] memory a, uint256 x)
+        internal
+        pure
+        returns (uint256 nearestIndex, bool found)
+    {
         unchecked {
-            uint256 nearestIndex;
             uint256 nearestValue = type(uint256).max;
             uint256 nearestDist = type(uint256).max;
             uint256 n = a.length;
@@ -439,9 +437,90 @@ contract RedBlackTreeLibTest is TestPlus {
                     nearestIndex = i;
                     nearestValue = y;
                     nearestDist = dist;
+                    found = true;
                 }
             }
-            return nearestIndex;
+        }
+    }
+
+    function testRedBlackTreeNearestBefore(uint256) public {
+        assertEq(tree.nearestBefore(1), bytes32(0));
+        uint256 n = _bound(_random(), 0, 8);
+        uint256[] memory a = _fillTree(n);
+        uint256 x = _bound(_random(), 1, type(uint256).max);
+        (uint256 nearestIndexBefore, bool found) = _nearestIndexBefore(a, x);
+        if (found) {
+            assertEq(tree.nearestBefore(x).value(), a[nearestIndexBefore]);
+        } else {
+            assertEq(tree.nearestBefore(x), bytes32(0));
+        }
+    }
+
+    function _nearestIndexBefore(uint256[] memory a, uint256 x)
+        internal
+        pure
+        returns (uint256 nearestIndex, bool found)
+    {
+        unchecked {
+            uint256 nearestDist = type(uint256).max;
+            uint256 n = a.length;
+            for (uint256 i; i != n; ++i) {
+                uint256 y = a[i];
+                if (y > x) continue;
+                uint256 dist = x - y;
+                if (dist < nearestDist) {
+                    nearestIndex = i;
+                    nearestDist = dist;
+                    found = true;
+                }
+            }
+        }
+    }
+
+    function testRedBlackTreeNearestAfter(uint256) public {
+        assertEq(tree.nearestBefore(1), bytes32(0));
+        uint256 n = _bound(_random(), 0, 8);
+        uint256[] memory a = _fillTree(n);
+        uint256 x = _bound(_random(), 1, type(uint256).max);
+        (uint256 nearestIndexAfter, bool found) = _nearestIndexAfter(a, x);
+        if (found) {
+            assertEq(tree.nearestAfter(x).value(), a[nearestIndexAfter]);
+        } else {
+            assertEq(tree.nearestAfter(x), bytes32(0));
+        }
+    }
+
+    function _nearestIndexAfter(uint256[] memory a, uint256 x)
+        internal
+        pure
+        returns (uint256 nearestIndex, bool found)
+    {
+        unchecked {
+            uint256 nearestDist = type(uint256).max;
+            uint256 n = a.length;
+            for (uint256 i; i != n; ++i) {
+                uint256 y = a[i];
+                if (y < x) continue;
+                uint256 dist = y - x;
+                if (dist < nearestDist) {
+                    nearestIndex = i;
+                    nearestDist = dist;
+                    found = true;
+                }
+            }
+        }
+    }
+
+    function _fillTree(uint256 n) internal returns (uint256[] memory a) {
+        a = _makeArray(n);
+        unchecked {
+            for (uint256 i; i != n;) {
+                uint256 r = _bound(_random(), 1, type(uint256).max);
+                if (tree.find(r).isEmpty()) {
+                    a[i++] = r;
+                    tree.insert(r);
+                }
+            }
         }
     }
 }

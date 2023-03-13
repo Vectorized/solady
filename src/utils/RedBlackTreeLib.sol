@@ -106,18 +106,38 @@ library RedBlackTreeLib {
     function nearest(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
         (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
         unchecked {
-            if (cursor == 0) return result;
-            if (key != 0) return _pack(nodes, key);
+            if (cursor == 0) return result; // Nothing found -- empty tree.
+            if (key != 0) return _pack(nodes, key); // Exact match.
             bytes32 a = _pack(nodes, cursor);
             uint256 aValue = value(a);
             bytes32 b = x < aValue ? prev(a) : next(a);
-            if (b == bytes32(0)) return a;
+            if (b == bytes32(0)) return a; // Only node found.
             uint256 bValue = value(b);
             uint256 aDist = x < aValue ? aValue - x : x - aValue;
             uint256 bDist = x < bValue ? bValue - x : x - bValue;
-            if (aDist == bDist) return aValue < bValue ? a : b;
+            if (aDist == bDist) return aValue < bValue ? a : b; // Tie-breaker.
             return aDist < bDist ? a : b;
         }
+    }
+
+    /// @dev Returns a pointer to the nearest value greater or equal to `x`.
+    /// If there is no value greater or equal to `x`, the returned pointer will be empty.
+    function nearestBefore(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
+        (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
+        if (cursor == 0) return result; // Nothing found -- empty tree.
+        if (key != 0) return _pack(nodes, key); // Exact match.
+        bytes32 a = _pack(nodes, cursor);
+        return value(a) < x ? a : prev(a);
+    }
+
+    /// @dev Returns a pointer to the nearest value lesser or equal to `x`.
+    /// If there is no value lesser or equal to `x`, the returned pointer will be empty.
+    function nearestAfter(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
+        (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
+        if (cursor == 0) return result; // Nothing found -- empty tree.
+        if (key != 0) return _pack(nodes, key); // Exact match.
+        bytes32 a = _pack(nodes, cursor);
+        return value(a) > x ? a : next(a);
     }
 
     /// @dev Returns whether the value `x` exists.
