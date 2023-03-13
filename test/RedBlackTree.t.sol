@@ -389,6 +389,18 @@ contract RedBlackTreeLibTest is TestPlus {
         assertEq(tree.size(), 1);
     }
 
+    function testRedBlackTreeTreeFullReverts() public {
+        tree.insert(1);
+        bytes32 ptr = tree.find(1);
+        /// @solidity memory-safe-assembly
+        assembly {
+            ptr := shl(32, shr(32, ptr))
+            sstore(ptr, or(sload(ptr), sub(shl(31, 1), 1)))
+        }
+        vm.expectRevert(RedBlackTreeLib.TreeIsFull.selector);
+        tree.insert(2);
+    }
+
     function testRedBlackTreePointers() public {
         assertTrue(tree.find(1).isEmpty());
         assertTrue(tree.find(2).isEmpty());
