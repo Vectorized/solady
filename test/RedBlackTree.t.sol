@@ -106,6 +106,7 @@ contract RedBlackTreeLibTest is TestPlus {
             if (exists) {
                 assertEq(ptr.value(), choice);
                 ptr.remove();
+                if (_random() % 4 == 0) tree.tryRemove(choice);
                 assertTrue(tree.find(choice).isEmpty());
                 assertFalse(tree.exists(choice));
             }
@@ -114,6 +115,7 @@ contract RedBlackTreeLibTest is TestPlus {
             }
             if (exists) {
                 tree.insert(choice);
+                if (_random() % 4 == 0) tree.tryInsert(choice);
                 assertFalse(tree.find(choice).isEmpty());
                 assertTrue(tree.exists(choice));
             }
@@ -376,8 +378,8 @@ contract RedBlackTreeLibTest is TestPlus {
     }
 
     function testRedBlackTreeTryInsertAndRemove() public {
-        tree.insert(1);
-        tree.insert(2);
+        tree.tryInsert(1);
+        tree.tryInsert(2);
         assertEq(tree.size(), 2);
         tree.tryInsert(1);
         assertEq(tree.size(), 2);
