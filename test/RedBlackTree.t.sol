@@ -410,8 +410,7 @@ contract RedBlackTreeLibTest is TestPlus {
 
     function testRedBlackTreeNearest(uint256) public {
         assertEq(tree.nearest(1), bytes32(0));
-        uint256 n = _bound(_random(), 0, 8);
-        uint256[] memory a = _fillTree(n);
+        uint256[] memory a = _fillTree(_random() % 8);
         uint256 x = _bound(_random(), 1, type(uint256).max);
         (uint256 nearestIndex, bool found) = _nearestIndex(a, x);
         if (found) {
@@ -445,8 +444,7 @@ contract RedBlackTreeLibTest is TestPlus {
 
     function testRedBlackTreeNearestBefore(uint256) public {
         assertEq(tree.nearestBefore(1), bytes32(0));
-        uint256 n = _bound(_random(), 0, 8);
-        uint256[] memory a = _fillTree(n);
+        uint256[] memory a = _fillTree(_random() % 8);
         uint256 x = _bound(_random(), 1, type(uint256).max);
         (uint256 nearestIndexBefore, bool found) = _nearestIndexBefore(a, x);
         if (found) {
@@ -478,9 +476,8 @@ contract RedBlackTreeLibTest is TestPlus {
     }
 
     function testRedBlackTreeNearestAfter(uint256) public {
-        assertEq(tree.nearestBefore(1), bytes32(0));
-        uint256 n = _bound(_random(), 0, 8);
-        uint256[] memory a = _fillTree(n);
+        assertEq(tree.nearestAfter(1), bytes32(0));
+        uint256[] memory a = _fillTree(_random() % 8);
         uint256 x = _bound(_random(), 1, type(uint256).max);
         (uint256 nearestIndexAfter, bool found) = _nearestIndexAfter(a, x);
         if (found) {
