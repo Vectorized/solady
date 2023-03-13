@@ -106,6 +106,7 @@ contract RedBlackTreeLibTest is TestPlus {
             if (exists) {
                 assertEq(ptr.value(), choice);
                 ptr.remove();
+                if (_random() % 4 == 0) tree.tryRemove(choice);
                 assertTrue(tree.find(choice).isEmpty());
                 assertFalse(tree.exists(choice));
             }
@@ -114,6 +115,7 @@ contract RedBlackTreeLibTest is TestPlus {
             }
             if (exists) {
                 tree.insert(choice);
+                if (_random() % 4 == 0) tree.tryInsert(choice);
                 assertFalse(tree.find(choice).isEmpty());
                 assertTrue(tree.exists(choice));
             }
@@ -373,6 +375,31 @@ contract RedBlackTreeLibTest is TestPlus {
         ptr = bytes32(0);
         vm.expectRevert(RedBlackTreeLib.ValueDoesNotExist.selector);
         ptr.remove();
+    }
+
+    function testRedBlackTreeTryInsertAndRemove() public {
+        tree.tryInsert(1);
+        tree.tryInsert(2);
+        assertEq(tree.size(), 2);
+        tree.tryInsert(1);
+        assertEq(tree.size(), 2);
+        tree.tryRemove(2);
+        assertEq(tree.size(), 1);
+        tree.tryRemove(2);
+        assertEq(tree.size(), 1);
+    }
+
+    function testRedBlackTreeTreeFullReverts() public {
+        tree.insert(1);
+        bytes32 ptr = tree.find(1);
+        /// @solidity memory-safe-assembly
+        assembly {
+            ptr := shl(32, shr(32, ptr))
+            sstore(ptr, or(sload(ptr), sub(shl(31, 1), 1)))
+        }
+        vm.expectRevert(RedBlackTreeLib.TreeIsFull.selector);
+        tree.insert(2);
+        assertEq(tree.size(), 2 ** 31 - 1);
     }
 
     function testRedBlackTreePointers() public {
