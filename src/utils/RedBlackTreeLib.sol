@@ -411,12 +411,13 @@ library RedBlackTreeLib {
                 }
 
                 let totalNodes_ := add(shr(128, mload(0x20)), 1)
-                mstore(0x20, shl(128, totalNodes_))
 
                 if gt(totalNodes_, _BITMASK_KEY) {
                     err_ := ERROR_TREE_IS_FULL
                     leave
                 }
+
+                mstore(0x20, shl(128, totalNodes_))
 
                 let packed_ := or(_BITMASK_RED, shl(_BITPOS_PARENT, cursor_))
                 let nodePointer_ := or(nodes_, totalNodes_)
