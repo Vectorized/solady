@@ -120,8 +120,8 @@ library RedBlackTreeLib {
         }
     }
 
-    /// @dev Returns a pointer to the nearest value greater or equal to `x`.
-    /// If there is no value greater or equal to `x`, the returned pointer will be empty.
+    /// @dev Returns a pointer to the nearest value lesser or equal to `x`.
+    /// If there is no value lesser or equal to `x`, the returned pointer will be empty.
     function nearestBefore(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
         (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
         if (cursor == 0) return result; // Nothing found -- empty tree.
@@ -130,8 +130,8 @@ library RedBlackTreeLib {
         return value(a) < x ? a : prev(a);
     }
 
-    /// @dev Returns a pointer to the nearest value lesser or equal to `x`.
-    /// If there is no value lesser or equal to `x`, the returned pointer will be empty.
+    /// @dev Returns a pointer to the nearest value greater or equal to `x`.
+    /// If there is no value greater or equal to `x`, the returned pointer will be empty.
     function nearestAfter(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
         (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
         if (cursor == 0) return result; // Nothing found -- empty tree.
