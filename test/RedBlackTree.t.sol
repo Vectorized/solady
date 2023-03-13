@@ -399,6 +399,7 @@ contract RedBlackTreeLibTest is TestPlus {
         }
         vm.expectRevert(RedBlackTreeLib.TreeIsFull.selector);
         tree.insert(2);
+        assertEq(tree.size(), 2 ** 31 - 1);
     }
 
     function testRedBlackTreePointers() public {
