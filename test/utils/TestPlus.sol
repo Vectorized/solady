@@ -33,11 +33,12 @@ contract TestPlus is Test {
                 let times := div(0x7ffff, cSize)
                 if iszero(lt(times, 128)) { times := 128 }
 
-                // Occasionally offset the offset by a psuedorandom large amount.
+                // Occasionally offset the offset by a pseudorandom large amount.
                 // Can't be too large, or we will easily get out-of-gas errors.
                 offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
 
                 // Fill the free memory with garbage.
+                // prettier-ignore
                 for { let w := not(0) } 1 {} {
                     mstore(offset, r0)
                     mstore(add(offset, 0x20), r1)
@@ -58,7 +59,7 @@ contract TestPlus is Test {
         _checkMemory();
     }
 
-    /// @dev Returns a psuedorandom random number from [0 .. 2**256 - 1] (inclusive).
+    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
     /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
     /// e.g. `testSomething(uint256) public`.
     function _random() internal returns (uint256 r) {
@@ -81,6 +82,7 @@ contract TestPlus is Test {
             sstore(sSlot, add(r, 1))
 
             // Do some biased sampling for more robust tests.
+            // prettier-ignore
             for {} 1 {} {
                 let d := byte(0, r)
                 // With a 1/256 chance, randomly set `r` to any of 0,1,2.
@@ -88,22 +90,18 @@ contract TestPlus is Test {
                     r := and(r, 3)
                     break
                 }
-                // With a 1/2 chance, set `r` to near a random power of 2.
-                if iszero(and(2, d)) {
-                    // Set `t` either `not(0)` or `xor(sValue, r)`.
-                    let t := xor(not(0), mul(iszero(and(4, d)), not(xor(sValue, r))))
+                // With a 15/256 chance, set `r` to near a random power of 2.
+                if iszero(gt(d, 16)) {
+                    let u := and(0x80, r) // With a 1/2 chance, negate `r`.
+                    let t := 1
+                    // If the 1st byte of `r` is not greater than 32, set `t` to `not(0)`.
+                    if iszero(gt(byte(1, r), 32)) { t := not(0) }
+                    // If the 2nd byte of `r` is not greater than 128, set `t` to `xor(sValue, r)`.
+                    if iszero(gt(byte(2, r), 128)) { t := xor(sValue, r) }
                     // Set `r` to `t` shifted left or right by a random multiple of 8.
-                    switch and(8, d)
-                    case 0 {
-                        if iszero(and(16, d)) { t := 1 }
-                        r := add(shl(shl(3, and(byte(3, r), 31)), t), sub(and(r, 7), 3))
-                    }
-                    default {
-                        if iszero(and(16, d)) { t := shl(255, 1) }
-                        r := add(shr(shl(3, and(byte(3, r), 31)), t), sub(and(r, 7), 3))
-                    }
-                    // With a 1/2 chance, negate `r`.
-                    if iszero(and(32, d)) { r := not(r) }
+                    r := sub(shl(shl(3, and(byte(3, r), 31)), t), and(r, 3))
+                    // Negate `r` if `u` is zero.
+                    if iszero(u) { r := not(r) }
                     break
                 }
                 // Otherwise, just set `r` to `xor(sValue, r)`.
@@ -207,6 +205,7 @@ contract TestPlus is Test {
 
         /// @solidity memory-safe-assembly
         assembly {
+            // prettier-ignore
             for {} 1 {} {
                 // If `x` is between `min` and `max`, return `x` directly.
                 // This is to ensure that dictionary values
