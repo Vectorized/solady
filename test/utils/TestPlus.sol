@@ -33,7 +33,7 @@ contract TestPlus is Test {
                 let times := div(0x7ffff, cSize)
                 if iszero(lt(times, 128)) { times := 128 }
 
-                // Occasionally offset the offset by a psuedorandom large amount.
+                // Occasionally offset the offset by a pseudorandom large amount.
                 // Can't be too large, or we will easily get out-of-gas errors.
                 offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
 
@@ -59,7 +59,7 @@ contract TestPlus is Test {
         _checkMemory();
     }
 
-    /// @dev Returns a psuedorandom random number from [0 .. 2**256 - 1] (inclusive).
+    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
     /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
     /// e.g. `testSomething(uint256) public`.
     function _random() internal returns (uint256 r) {
