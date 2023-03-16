@@ -33,11 +33,12 @@ contract TestPlus is Test {
                 let times := div(0x7ffff, cSize)
                 if iszero(lt(times, 128)) { times := 128 }
 
-                // Occasionally offset the offset by a psuedorandom large amount.
+                // Occasionally offset the offset by a pseudorandom large amount.
                 // Can't be too large, or we will easily get out-of-gas errors.
                 offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
 
                 // Fill the free memory with garbage.
+                // prettier-ignore
                 for { let w := not(0) } 1 {} {
                     mstore(offset, r0)
                     mstore(add(offset, 0x20), r1)
@@ -58,7 +59,7 @@ contract TestPlus is Test {
         _checkMemory();
     }
 
-    /// @dev Returns a psuedorandom random number from [0 .. 2**256 - 1] (inclusive).
+    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
     /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
     /// e.g. `testSomething(uint256) public`.
     function _random() internal returns (uint256 r) {
@@ -81,6 +82,7 @@ contract TestPlus is Test {
             sstore(sSlot, add(r, 1))
 
             // Do some biased sampling for more robust tests.
+            // prettier-ignore
             for {} 1 {} {
                 let d := byte(0, r)
                 // With a 1/256 chance, randomly set `r` to any of 0,1,2.
@@ -207,6 +209,7 @@ contract TestPlus is Test {
 
         /// @solidity memory-safe-assembly
         assembly {
+            // prettier-ignore
             for {} 1 {} {
                 // If `x` is between `min` and `max`, return `x` directly.
                 // This is to ensure that dictionary values
