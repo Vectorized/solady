@@ -389,6 +389,47 @@ contract RedBlackTreeLibTest is TestPlus {
         assertEq(tree.size(), 1);
     }
 
+    function testRedBlackTreeClear() public {
+        tree.tryInsert(1);
+        tree.tryInsert(2);
+        bytes32 ptr1 = tree.find(1);
+        bytes32 ptr2 = tree.find(2);
+        assertEq(tree.size(), 2);
+        tree.clear();
+        assertEq(tree.size(), 0);
+        assertEq(ptr1.value(), 0);
+        assertEq(ptr2.value(), 0);
+    }
+
+    function testRedBlackTreeClear(uint256) public {
+        unchecked {
+            uint256 n = _random() % (_random() % 128 == 0 ? 32 : 8);
+            uint256[] memory a = _makeArray(n);
+
+            for (uint256 i; i != n;) {
+                uint256 r = _bound(_random(), 1, type(uint256).max);
+                if (tree.find(r).isEmpty()) {
+                    a[i++] = r;
+                    tree.insert(r);
+                }
+                if (_random() % 4 == 0) {
+                    _testRemoveAndInsertBack(a, i, (3 + i >> 2));
+                }
+            }
+
+            bytes32[] memory ptrs = new bytes32[](n);
+            for (uint256 i; i != n; ++i) {
+                ptrs[i] = tree.find(a[i]);
+                assertTrue(ptrs[i].value() != 0);
+            }
+            tree.clear();
+            assertEq(tree.size(), 0);
+            for (uint256 i; i != n; ++i) {
+                assertEq(ptrs[i].value(), 0);
+            }
+        }
+    }
+
     function testRedBlackTreeTreeFullReverts() public {
         tree.insert(1);
         bytes32 ptr = tree.find(1);
