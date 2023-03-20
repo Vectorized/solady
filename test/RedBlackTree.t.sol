@@ -146,20 +146,7 @@ contract RedBlackTreeLibTest is TestPlus {
 
     function _testRedBlackTreeInsertAndRemove() internal {
         uint256 n = _random() % (_random() % 128 == 0 ? 32 : 8);
-        uint256[] memory a = _makeArray(n);
-
-        unchecked {
-            for (uint256 i; i != n;) {
-                uint256 r = _bound(_random(), 1, type(uint256).max);
-                if (tree.find(r).isEmpty()) {
-                    a[i++] = r;
-                    tree.insert(r);
-                }
-                if (_random() % 4 == 0) {
-                    _testRemoveAndInsertBack(a, i, (3 + i >> 2));
-                }
-            }
-        }
+        uint256[] memory a = _fillTree(n);
 
         LibSort.sort(a);
         LibSort.uniquifySorted(a);
@@ -404,18 +391,7 @@ contract RedBlackTreeLibTest is TestPlus {
     function testRedBlackTreeClear(uint256) public {
         unchecked {
             uint256 n = _random() % (_random() % 128 == 0 ? 32 : 8);
-            uint256[] memory a = _makeArray(n);
-
-            for (uint256 i; i != n;) {
-                uint256 r = _bound(_random(), 1, type(uint256).max);
-                if (tree.find(r).isEmpty()) {
-                    a[i++] = r;
-                    tree.insert(r);
-                }
-                if (_random() % 4 == 0) {
-                    _testRemoveAndInsertBack(a, i, (3 + i >> 2));
-                }
-            }
+            uint256[] memory a = _fillTree(n);
 
             bytes32[] memory ptrs = new bytes32[](n);
             for (uint256 i; i != n; ++i) {
@@ -584,6 +560,9 @@ contract RedBlackTreeLibTest is TestPlus {
                 if (tree.find(r).isEmpty()) {
                     a[i++] = r;
                     tree.insert(r);
+                }
+                if (_random() % 4 == 0) {
+                    _testRemoveAndInsertBack(a, i, (3 + i >> 2));
                 }
             }
         }
