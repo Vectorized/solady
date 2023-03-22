@@ -23,14 +23,6 @@ contract ERC1967Factory {
     /// @dev Proxy admin registry.
     mapping(address proxy => address admin) public adminOf;
 
-    /// @dev Sets the admin of the caller.
-    function setAdmin(address admin) external {
-        // TODO: add non-zero code check?
-        // if (msg.sender.codehash != bytes32(0)) revert NonContract();
-        adminOf[msg.sender] = admin;
-        emit AdminSet(msg.sender, admin);
-    }
-
     /// @dev Sets the admin of the proxy if authorized.
     function setAdminFor(address proxy, address admin) external {
         if (adminOf[proxy] != msg.sender) revert Unauthorized();
