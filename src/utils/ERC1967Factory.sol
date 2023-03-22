@@ -74,11 +74,7 @@ contract ERC1967Factory {
             mstore(implementationOffset, implementation)
             mstore(factoryOffset, address())
 
-            // proxy := create(
-            //     0x00,
-            //     add(initcodeWithArg, 0x20),
-            //     mload(initcodeWithArg)
-            // )
+            proxy := create(0x00, add(memPtr, 0x40), codeSize)
         }
         adminOf[proxy] = admin;
         emit AdminSet(proxy, admin);
