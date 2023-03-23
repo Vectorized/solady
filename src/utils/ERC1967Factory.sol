@@ -343,7 +343,7 @@ contract ERC1967Factory {
              * f3          | RETURN         |                     | [0..returndatasize): returndata |
              *                                                                                      |
              * ::: set new implementation (caller is factory) ::::::::::::::::::::::::::::::::::::: |
-             * 5b          | JUMPDEST       | 0                   |                                 |
+             * 5b          | JUMPDEST       |                     |                                 |
              * 3d          | RETURNDATASIZE | 0                   |                                 |
              * 35          | CALLDATALOAD   | impl                |                                 |
              * 7f slot     | PUSH32 slot    | slot impl           |                                 |
