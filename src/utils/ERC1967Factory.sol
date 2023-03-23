@@ -247,7 +247,7 @@ contract ERC1967Factory {
     }
 
     /// @dev Returns the address of the proxy deployed with `salt`.
-    function predictDeterministicAddress(bytes32 salt) internal pure returns (address predicted) {
+    function predictDeterministicAddress(bytes32 salt) internal view returns (address predicted) {
         bytes32 hash = initCodeHash();
         /// @solidity memory-safe-assembly
         assembly {

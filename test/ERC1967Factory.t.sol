@@ -49,7 +49,7 @@ contract ERC1967FactoryTest is TestPlus {
 
         address proxy = factory.deploy(impl0, admin);
 
-        (success, retdata) = proxy.call(abi.encodeCall(MockImplementation.fails, ()));
+        (success, retdata) = proxy.call(abi.encodeWithSignature("fails()"));
 
         assertFalse(success);
         assertEq(retdata.length, 4);
