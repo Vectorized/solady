@@ -226,9 +226,9 @@ contract ERC1967Factory {
             calldatacopy(add(m, 0x20), data.offset, data.length)
             // Try setting the implementation the proxy and revert upon failure.
             if iszero(call(gas(), proxy, callvalue(), m, add(0x20, data.length), 0x00, 0x00)) {
-                // Revert with the `UpgradeFailed` selector if there is no error returndata.
+                // Revert with the `DeploymentFailed` selector if there is no error returndata.
                 if iszero(returndatasize()) {
-                    mstore(0x00, _UPGRADE_FAILED_ERROR_SELECTOR)
+                    mstore(0x00, _DEPLOYMENT_FAILED_ERROR_SELECTOR)
                     revert(0x1c, 0x04)
                 }
                 // Otherwise, bubble up the returned error.
