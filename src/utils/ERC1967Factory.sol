@@ -51,7 +51,87 @@ contract ERC1967Factory {
     /// @dev Deploys a proxy contract, sets the implementation, and sets the admin.
     function deployProxy(address implementation, address admin) external returns (address proxy) {
         assembly {
-            // TODO: that big mf table describing the bytecode once the proxy is tested.
+            /**
+             * -------------------------------------------------------------------------------------|
+             * CREATION (48 bytes)                                                                  |
+             * -------------------------------------------------------------------------------------|
+             * Opcode      | Mnemonic       | Stack               | Memory                          |
+             * -------------------------------------------------------------------------------------|
+             * 60 initsize | PUSH1 initsize | is                  |                                 |
+             * 80          | DUP1           | is is               |                                 |
+             * 38          | CODESIZE       | cs is is            |                                 |
+             * 03          | SUB            | rs is               |                                 |
+             * 90          | SWAP1          | is rs               |                                 |
+             * 3d          | RETURNDATASIZE | 0 is rs             |                                 |
+             * 39          | CODECOPY       |                     | [0..runsize): runtime code      |
+             * 60 runsize  | PUSH1 runsize  | rs                  | [0..runsize): runtime code      |
+             * 80          | DUP1           | rs rs               | [0..runsize): runtime code      |
+             * 51          | MLOAD          | arg rs              | [0..runsize): runtime code      |
+             * 7f slot     | PUSH32 SLOT    | s arg rs            | [0..runsize): runtime code      |
+             * 55          | SSTORE         | rs                  | [0..runsize): runtime code      |
+             * 3d          | RETURNDATASIZE | 0 rs                | [0..runsize): runtime code      |
+             * f3          | RETURN         |                     | [0..runsize): runtime code      |
+             * -------------------------------------------------------------------------------------|
+             * RUNTIME (122 bytes)                                                                  |
+             * -------------------------------------------------------------------------------------|
+             * Opcode      | Mnemonic       | Stack               | Memory                          |
+             * -------------------------------------------------------------------------------------|
+             *                                                                                      |
+             * ::: check if caller is factory ::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 73 factory  | PUSH20 factory | f                   |                                 |
+             * 33          | CALLER         | c f                 |                                 |
+             * 14          | EQ             | isf                 |                                 |
+             * 60 55       | PUSH1 0x55     | isf_dst isf         |                                 |
+             * 57          | JUMPI          |                     |                                 |
+             *                                                                                      |
+             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36          | CALLDATASIZE   | cds                 |                                 |
+             * 3d          | RETURNDATASIZE | 0 cds               |                                 |
+             * 3d          | RETURNDATASIZE | 0 0 cds             |                                 |
+             * 37          | CALLDATACOPY   |                     | [0..calldatasize): calldata     |
+             *                                                                                      |
+             * ::: cache zero for after delegatecall :::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d          | RETURNDATASIZE | 0                   | [0..calldatasize): calldata     |
+             *                                                                                      |
+             * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d          | RETURNDATASIZE | 0 0                 | [0..calldatasize): calldata     |
+             * 3d          | RETURNDATASIZE | 0 0 0               | [0..calldatasize): calldata     |
+             * 36          | CALLDATASIZE   | cds 0 0 0           | [0..calldatasize): calldata     |
+             * 3d          | RETURNDATASIZE | 0 cds 0 0 0         | [0..calldatasize): calldata     |
+             * 7f slot     | PUSH32 slot    | s 0 cds 0 0 0       | [0..calldatasize): calldata     |
+             * 54          | SLOAD          | i cds 0 0 0         | [0..calldatasize): calldata     |
+             * 5a          | GAS            | g i cds 0 0 0       | [0..calldatasize): calldata     |
+             * f4          | DELEGATECALL   | success 0           | [0..calldatasize): calldata     |
+             *                                                                                      |
+             * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d          | RETURNDATASIZE | rds success 0       | [0..calldatasize): calldata     |
+             * 82          | DUP3           | 0 rds success 0     | [0..calldatasize): calldata     |
+             * 80          | DUP1           | 0 0 rds success 0   | [0..calldatasize): calldata     |
+             * 3e          | RETURNDATACOPY | success 0           | [0..returndatasize): returndata |
+             *                                                                                      |
+             * ::: revert if delegatecall failed :::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 60 0x51     | PUSH1 0x51     | succ_dest success 0 | [0..returndatasize): returndata |
+             * 57          | JUMPI          | 0                   | [0..returndatasize): returndata |
+             *                                                                                      |
+             * ::: call failed, revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d          | RETURNDATASIZE | rds 0               | [0..returndatasize): returndata |
+             * 90          | SWAP1          | 0 rds               | [0..returndatasize): returndata |
+             * fd          | REVERT         |                     | [0..returndatasize): returndata |
+             *                                                                                      |
+             * ::: call succeeded, return ::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b          | JUMPDEST       | 0                   | [0..returndatasize): returndata |
+             * 3d          | RETURNDATASIZE | rds 0               | [0..returndatasize): returndata |
+             * 90          | SWAP1          | 0 rds               | [0..returndatasize): returndata |
+             * f3          | RETURN         |                     | [0..returndatasize): returndata |
+             *                                                                                      |
+             * ::: set new implementation (caller is factory) ::::::::::::::::::::::::::::::::::::: |
+             * 3d          | RETURNDATASIZE | 0                   |                                 |
+             * 35          | CALLDATALOAD   | impl                |                                 |
+             * 7f slot     | PUSH32 slot    | slot impl           |                                 |
+             * 55          | SSTORE         |                     |                                 |
+             * 00          | STOP           |                     |                                 |
+             * -------------------------------------------------------------------------------------+
+             */
 
             // get the free memory pointer,
             // set it to the end of the memory allocation.
@@ -93,7 +173,7 @@ uint256 constant factoryOffset = 0x25;
 // bytecode chunks
 uint256 constant chunk0 = 0x6030803803903d39607d80517f360894a13ba1a3210667c828492db98dca3e20;
 uint256 constant chunk1 = 0x76cc3735a920a3ca505d382bbc553df373000000000000000000000000000000;
-uint256 constant chunk2 = 0x0000000000331461005757363d3d373d3d3d363d7f360894a13ba1a3210667c8;
-uint256 constant chunk3 = 0x28492db98dca3e2076cc3735a920a3ca505d382bbc545af43d82803e61005357;
-uint256 constant chunk4 = 0x3d90fd5b3d90f35b3d357f360894a13ba1a3210667c828492db98dca3e2076cc;
-uint256 constant chunk5 = 0x3735a920a3ca505d382bbc550000000000000000000000000000000000000000;
+uint256 constant chunk2 = 0x00000000003314605557363d3d373d3d3d363d7f360894a13ba1a3210667c828;
+uint256 constant chunk3 = 0x492db98dca3e2076cc3735a920a3ca505d382bbc545af43d82803e6051573d90;
+uint256 constant chunk4 = 0xfd5b3d90f35b3d357f360894a13ba1a3210667c828492db98dca3e2076cc3735;
+uint256 constant chunk5 = 0xa920a3ca505d382bbc5500000000000000000000000000000000000000000000;
