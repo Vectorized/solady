@@ -37,28 +37,26 @@ contract ERC1967Factory {
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The admin of a proxy contract has been set.
-    event AdminSet(address indexed proxy, address indexed admin);
+    /// @dev The admin of a proxy contract has been changed.
+    event AdminChanged(address indexed proxy, address indexed admin);
 
     /// @dev The implementation for a proxy has been upgraded.
-    event ProxyUpgraded(address indexed proxy, address indexed implementation);
+    event Upgraded(address indexed proxy, address indexed implementation);
 
     /// @dev A proxy has been deployed.
-    event ProxyDeployed(
-        address indexed proxy, address indexed implementation, address indexed admin
-    );
+    event Deployed(address indexed proxy, address indexed implementation, address indexed admin);
 
-    /// @dev `keccak256(bytes("AdminSet(address,address)"))`.
-    uint256 internal constant _ADMIN_SET_EVENT_SIGNATURE =
-        0xbf265e8326285a2747e33e54d5945f7111f2b5edb826eb8c08d4677779b3ff97;
+    /// @dev `keccak256(bytes("AdminChanged(address,address)"))`.
+    uint256 internal constant _ADMIN_CHANGED_EVENT_SIGNATURE =
+        0x7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f;
 
-    /// @dev `keccak256(bytes("ProxyUpgraded(address,address)"))`.
-    uint256 internal constant _PROXY_UPGRADED_EVENT_SIGNATURE =
-        0x3684250ce1e33b790ed973c23080f312db0adb21a6d98c61a5c9ff99e4babc17;
+    /// @dev `keccak256(bytes("Upgraded(address,address)"))`.
+    uint256 internal constant _UPGRADED_EVENT_SIGNATURE =
+        0x5d611f318680d00598bb735d61bacf0c514c6b50e1e5ad30040a4df2b12791c7;
 
-    /// @dev `keccak256(bytes("ProxyDeployed(address,address,address)"))`.
-    uint256 internal constant _PROXY_DEPLOYED_EVENT_SIGNATURE =
-        0x9e0862c4ebff2150fbbfd3f8547483f55bdec0c34fd977d3fccaa55d6c4ce784;
+    /// @dev `keccak256(bytes("Deployed(address,address,address)"))`.
+    uint256 internal constant _DEPLOYED_EVENT_SIGNATURE =
+        0xc95935a66d15e0da5e412aca0ad27ae891d20b2fb91cf3994b6a3bf2b8178082;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -93,7 +91,7 @@ contract ERC1967Factory {
 
     /// @dev Sets the admin of the proxy.
     /// The caller of this function must be the admin of the proxy on this factory.
-    function setAdmin(address proxy, address admin) public {
+    function changeAdmin(address proxy, address admin) public {
         /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
@@ -106,8 +104,8 @@ contract ERC1967Factory {
             }
             // Store the admin for the proxy.
             sstore(adminSlot, admin)
-            // Emit the {AdminSet} event.
-            log3(0, 0, _ADMIN_SET_EVENT_SIGNATURE, proxy, admin)
+            // Emit the {AdminChanged} event.
+            log3(0, 0, _ADMIN_CHANGED_EVENT_SIGNATURE, proxy, admin)
         }
     }
 
@@ -153,8 +151,8 @@ contract ERC1967Factory {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
-            // Emit the {ProxyUpgraded} event.
-            log3(0, 0, _PROXY_UPGRADED_EVENT_SIGNATURE, proxy, implementation)
+            // Emit the {Upgraded} event.
+            log3(0, 0, _UPGRADED_EVENT_SIGNATURE, proxy, implementation)
         }
     }
 
@@ -255,13 +253,13 @@ contract ERC1967Factory {
             mstore(0x00, proxy)
             sstore(keccak256(0x0c, 0x20), admin)
 
-            // Emit the {ProxyDeployed} event.
-            log4(0, 0, _PROXY_DEPLOYED_EVENT_SIGNATURE, proxy, implementation, admin)
+            // Emit the {Deployed} event.
+            log4(0, 0, _DEPLOYED_EVENT_SIGNATURE, proxy, implementation, admin)
         }
     }
 
     /// @dev Returns the address of the proxy deployed with `salt`.
-    function predictDeterministicAddress(bytes32 salt) internal view returns (address predicted) {
+    function predictDeterministicAddress(bytes32 salt) public view returns (address predicted) {
         bytes32 hash = initCodeHash();
         /// @solidity memory-safe-assembly
         assembly {
@@ -345,12 +343,12 @@ contract ERC1967Factory {
              * 60 0x51     | PUSH1 0x51     | succ_dest success 0 | [0..returndatasize): returndata |
              * 57          | JUMPI          | 0                   | [0..returndatasize): returndata |
              *                                                                                      |
-             * ::: call failed, revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::::::: |
              * 3d          | RETURNDATASIZE | rds 0               | [0..returndatasize): returndata |
              * 90          | SWAP1          | 0 rds               | [0..returndatasize): returndata |
              * fd          | REVERT         |                     | [0..returndatasize): returndata |
              *                                                                                      |
-             * ::: call succeeded, return ::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::::::: |
              * 5b          | JUMPDEST       | 0                   | [0..returndatasize): returndata |
              * 3d          | RETURNDATASIZE | rds 0               | [0..returndatasize): returndata |
              * 90          | SWAP1          | 0 rds               | [0..returndatasize): returndata |
@@ -399,7 +397,7 @@ contract ERC1967Factory {
              * 60 0x51     | PUSH1 0x51     | succ_dest success 0 | [0..returndatasize): returndata |
              * 57          | JUMPI          | 0                   | [0..returndatasize): returndata |
              *                                                                                      |
-             * ::: call failed, revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::::::: |
              * 3d          | RETURNDATASIZE | rds 0               | [0..returndatasize): returndata |
              * 90          | SWAP1          | 0 rds               | [0..returndatasize): returndata |
              * fd          | REVERT         |                     | [0..returndatasize): returndata |
