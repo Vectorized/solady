@@ -160,7 +160,7 @@ contract ERC1967Factory {
     /// and returns its address.
     /// The value passed into this function will be forwarded to the proxy.
     function deploy(address implementation, address admin) public payable returns (address proxy) {
-        proxy = _deploy(implementation, admin, bytes32(0), false, _emptyData());
+        proxy = deployAndCall(implementation, admin, _emptyData());
     }
 
     /// @dev Deploys a proxy for `implementation`, with `admin`,
@@ -181,22 +181,29 @@ contract ERC1967Factory {
     function deployDeterministic(address implementation, address admin, bytes32 salt)
         public
         payable
-        checkStartsWithCaller(salt)
         returns (address proxy)
     {
-        proxy = _deploy(implementation, admin, salt, true, _emptyData());
+        proxy = deployDeterministicAndCall(implementation, admin, salt, _emptyData());
     }
 
     /// @dev Deploys a proxy for `implementation`, with `admin`, `salt`,
     /// and returns its deterministic address.
     /// The value passed into this function will be forwarded to the proxy.
     /// Then, calls the proxy with abi encoded `data`.
-    function deployDeterministic(
+    function deployDeterministicAndCall(
         address implementation,
         address admin,
         bytes32 salt,
         bytes calldata data
-    ) public payable checkStartsWithCaller(salt) returns (address proxy) {
+    ) public payable returns (address proxy) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the salt does not start with the zero address or the caller.
+            if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
+                mstore(0x00, _SALT_DOES_NOT_START_WITH_CALLER_ERROR_SELECTOR)
+                revert(0x1c, 0x04)
+            }
+        }
         proxy = _deploy(implementation, admin, salt, true, data);
     }
 
@@ -410,19 +417,6 @@ contract ERC1967Factory {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          HELPERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Reverts if `salt` does not start with either the zero address or the caller.
-    modifier checkStartsWithCaller(bytes32 salt) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // If the salt does not start with the zero address or the caller.
-            if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
-                mstore(0x00, _SALT_DOES_NOT_START_WITH_CALLER_ERROR_SELECTOR)
-                revert(0x1c, 0x04)
-            }
-        }
-        _;
-    }
 
     /// @dev Helper function to return an empty bytes calldata.
     function _emptyData() internal pure returns (bytes calldata data) {
