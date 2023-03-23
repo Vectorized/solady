@@ -15,6 +15,20 @@ contract ERC1967FactoryTest is TestPlus {
     ERC1967Factory factory;
     address[2] implentation;
 
+    struct _TestTemps {
+        uint256 key;
+        uint256 value;
+        uint256 msgValue;
+        bytes32 salt;
+    }
+
+    function _testTemps() internal returns (_TestTemps memory t) {
+        t.key = _random();
+        t.value = _random();
+        t.msgValue = _bound(_random(), 0, 2 ** 96 - 1);
+        t.salt = bytes32(_random() & (2 ** 96 - 1));
+    }
+
     function setUp() public {
         factory = new ERC1967Factory();
         implentation[0] = address(new MockImplementation());
@@ -33,48 +47,44 @@ contract ERC1967FactoryTest is TestPlus {
         _checkImplementationSlot(proxy, implentation[0]);
     }
 
-    function testDeployAndCall(uint256 key, uint256 value, uint96 msgValue) public {
+    function testDeployAndCall(uint256) public {
         (address admin,) = _randomSigner();
+        _TestTemps memory t = _testTemps();
 
-        bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", key, value);
+        bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", t.key, t.value);
         vm.deal(admin, type(uint128).max);
         vm.prank(admin);
-        address proxy = factory.deployAndCall{value: msgValue}(implentation[0], admin, data);
+        address proxy = factory.deployAndCall{value: t.msgValue}(implentation[0], admin, data);
 
         assertEq(factory.adminOf(proxy), admin);
         assertTrue(proxy != address(0));
         assertTrue(proxy.code.length > 0);
         _checkImplementationSlot(proxy, implentation[0]);
-        assertEq(MockImplementation(proxy).getValue(key), value);
-        assertEq(proxy.balance, msgValue);
+        assertEq(MockImplementation(proxy).getValue(t.key), t.value);
+        assertEq(proxy.balance, t.msgValue);
     }
 
-    function testDeployDeterministicAndCall(
-        uint256 key,
-        uint256 value,
-        uint96 msgValue,
-        bytes32 salt
-    ) public {
+    function testDeployDeterministicAndCall(uint256) public {
         (address admin,) = _randomSigner();
+        _TestTemps memory t = _testTemps();
 
-        salt = bytes32(uint256(salt) & (2 ** 96 - 1));
-        address predictedProxy = factory.predictDeterministicAddress(salt);
-        bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", key, value);
+        address predictedProxy = factory.predictDeterministicAddress(t.salt);
+        bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", t.key, t.value);
         vm.deal(admin, type(uint128).max);
         vm.prank(admin);
         address proxy;
         if (_random() % 8 == 0) {
-            salt = keccak256(abi.encode(key, value, salt));
+            t.salt = keccak256(abi.encode(t.key, t.value, t.salt));
             vm.expectRevert(ERC1967Factory.SaltDoesNotStartWithCaller.selector);
-            proxy = factory.deployDeterministicAndCall{value: msgValue}(
-                implentation[0], admin, salt, data
+            proxy = factory.deployDeterministicAndCall{value: t.msgValue}(
+                implentation[0], admin, t.salt, data
             );
             return;
         } else {
             vm.expectEmit(true, true, true, true);
             emit Deployed(predictedProxy, implentation[0], admin);
-            proxy = factory.deployDeterministicAndCall{value: msgValue}(
-                implentation[0], admin, salt, data
+            proxy = factory.deployDeterministicAndCall{value: t.msgValue}(
+                implentation[0], admin, t.salt, data
             );
             assertEq(proxy, predictedProxy);
         }
@@ -83,8 +93,8 @@ contract ERC1967FactoryTest is TestPlus {
         assertTrue(proxy != address(0));
         assertTrue(proxy.code.length > 0);
         _checkImplementationSlot(proxy, implentation[0]);
-        assertEq(MockImplementation(proxy).getValue(key), value);
-        assertEq(proxy.balance, msgValue);
+        assertEq(MockImplementation(proxy).getValue(t.key), t.value);
+        assertEq(proxy.balance, t.msgValue);
     }
 
     function testDeployAndCallWithRevert() public {
@@ -157,8 +167,9 @@ contract ERC1967FactoryTest is TestPlus {
         _checkImplementationSlot(proxy, implentation[1]);
     }
 
-    function testUpgradeAndCall(uint256 key, uint256 value, uint96 msgValue) public {
+    function testUpgradeAndCall(uint256) public {
         (address admin,) = _randomSigner();
+        _TestTemps memory t = _testTemps();
 
         vm.prank(admin);
         address proxy = factory.deploy(implentation[0], admin);
@@ -168,12 +179,12 @@ contract ERC1967FactoryTest is TestPlus {
 
         vm.prank(admin);
         vm.deal(admin, type(uint128).max);
-        bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", key, value);
-        factory.upgradeAndCall{value: msgValue}(proxy, implentation[1], data);
+        bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", t.key, t.value);
+        factory.upgradeAndCall{value: t.msgValue}(proxy, implentation[1], data);
 
         _checkImplementationSlot(proxy, implentation[1]);
-        assertEq(MockImplementation(proxy).getValue(key), value);
-        assertEq(proxy.balance, msgValue);
+        assertEq(MockImplementation(proxy).getValue(t.key), t.value);
+        assertEq(proxy.balance, t.msgValue);
     }
 
     function testUpgradeAndCallWithRevert() public {
