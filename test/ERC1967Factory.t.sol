@@ -25,7 +25,7 @@ contract ERC1967FactoryTest is TestPlus {
         bytes32 value = bytes32(uint256(uint160(impl0)));
 
         vm.prank(admin);
-        address proxy = factory.deployProxy(impl0, admin);
+        address proxy = factory.deploy(impl0, admin);
 
         assertEq(factory.adminOf(proxy), admin);
         assertTrue(proxy != address(0));
@@ -37,7 +37,7 @@ contract ERC1967FactoryTest is TestPlus {
         (address admin,) = _randomSigner();
         uint256 a = 1;
 
-        MockImplementation proxy = MockImplementation(factory.deployProxy(impl0, admin));
+        MockImplementation proxy = MockImplementation(factory.deploy(impl0, admin));
 
         assertEq(proxy.succeeds(a), a);
     }
@@ -47,7 +47,7 @@ contract ERC1967FactoryTest is TestPlus {
         bool success;
         bytes memory retdata;
 
-        address proxy = factory.deployProxy(impl0, admin);
+        address proxy = factory.deploy(impl0, admin);
 
         (success, retdata) = proxy.call(abi.encodeCall(MockImplementation.fails, ()));
 
@@ -61,13 +61,13 @@ contract ERC1967FactoryTest is TestPlus {
         (address newAdmin,) = _randomSigner();
 
         vm.prank(admin);
-        address proxy = factory.deployProxy(impl0, admin);
+        address proxy = factory.deploy(impl0, admin);
 
         vm.expectEmit(true, true, true, true, address(factory));
         emit AdminSet(proxy, newAdmin);
 
         vm.prank(admin);
-        factory.setAdminFor(proxy, newAdmin);
+        factory.setAdmin(proxy, newAdmin);
 
         assertEq(factory.adminOf(proxy), newAdmin);
     }
@@ -77,41 +77,60 @@ contract ERC1967FactoryTest is TestPlus {
         (address sussyAccount,) = _randomSigner();
 
         vm.prank(admin);
-        address proxy = factory.deployProxy(impl0, admin);
+        address proxy = factory.deploy(impl0, admin);
 
         vm.expectRevert();
 
         vm.prank(sussyAccount);
-        factory.setAdminFor(proxy, sussyAccount);
+        factory.setAdmin(proxy, sussyAccount);
     }
 
-    function testUpgradeProxyFor() public {
+    function testUpgrade() public {
         (address admin,) = _randomSigner();
         bytes32 key = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
         bytes32 value = bytes32(uint256(uint160(impl1)));
 
         vm.prank(admin);
-        address proxy = factory.deployProxy(impl0, admin);
+        address proxy = factory.deploy(impl0, admin);
 
         vm.expectEmit(true, true, true, true, address(factory));
         emit ProxyUpgraded(proxy, impl1);
 
         vm.prank(admin);
-        factory.upgradeProxyFor(proxy, impl1);
+        factory.upgrade(proxy, impl1);
 
         assertEq(vm.load(proxy, key), value);
     }
 
-    function testUpgradeProxyForUnauthorized() public {
+    function testUpgradeAndCall() public {
+        (address admin,) = _randomSigner();
+        bytes32 key = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
+        bytes32 value = bytes32(uint256(uint160(impl1)));
+
+        vm.prank(admin);
+        address proxy = factory.deploy(impl0, admin);
+
+        vm.expectEmit(true, true, true, true, address(factory));
+        emit ProxyUpgraded(proxy, impl1);
+
+        vm.prank(admin);
+        uint256 x = 123;
+        factory.upgradeAndCall(proxy, impl1, abi.encodeWithSignature("setX(uint256)", x));
+
+        assertEq(vm.load(proxy, key), value);
+        assertEq(MockImplementation(proxy).x(), x);
+    }
+
+    function testUpgradeUnauthorized() public {
         (address admin,) = _randomSigner();
         (address sussyAccount,) = _randomSigner();
 
         vm.prank(admin);
-        address proxy = factory.deployProxy(impl0, admin);
+        address proxy = factory.deploy(impl0, admin);
 
         vm.expectRevert();
 
         vm.prank(sussyAccount);
-        factory.upgradeProxyFor(proxy, impl1);
+        factory.upgrade(proxy, impl1);
     }
 }
