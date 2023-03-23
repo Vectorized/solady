@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 contract MockImplementation {
     error Fail();
 
-    uint256 public x;
+    mapping(uint256 => uint256) internal _values;
 
     function fails() external pure {
         revert Fail();
@@ -14,7 +14,11 @@ contract MockImplementation {
         return a;
     }
 
-    function setX(uint256 value) external {
-        x = value;
+    function setValue(uint256 key, uint256 value) external payable {
+        _values[key] = value;
+    }
+
+    function getValue(uint256 key) external view returns (uint256) {
+        return _values[key];
     }
 }

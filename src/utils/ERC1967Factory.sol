@@ -304,7 +304,7 @@ contract ERC1967Factory {
              * 39         | CODECOPY        | 0 r                 | [0..runSize): runtime code      |
              * f3         | RETURN          |                     | [0..runSize): runtime code      |
              * -------------------------------------------------------------------------------------|
-             * RUNTIME (154 bytes)                                                                  |
+             * RUNTIME (124 bytes)                                                                  |
              * -------------------------------------------------------------------------------------|
              * Opcode      | Mnemonic       | Stack               | Memory                          |
              * -------------------------------------------------------------------------------------|
@@ -341,7 +341,7 @@ contract ERC1967Factory {
              * 80          | DUP1           | 0 0 rds success 0   | [0..calldatasize): calldata     |
              * 3e          | RETURNDATACOPY | success 0           | [0..returndatasize): returndata |
              *                                                                                      |
-             * ::: revert if delegatecall failed :::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::::::: |
              * 60 0x51     | PUSH1 0x51     | succ_dest success 0 | [0..returndatasize): returndata |
              * 57          | JUMPI          | 0                   | [0..returndatasize): returndata |
              *                                                                                      |
@@ -395,7 +395,7 @@ contract ERC1967Factory {
              * 80          | DUP1           | 0 0 rds success 0   | [0..t): extra calldata          |
              * 3e          | RETURNDATACOPY | success 0           | [0..returndatasize): returndata |
              *                                                                                      |
-             * ::: revert if delegatecall failed :::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::::::: |
              * 60 0x51     | PUSH1 0x51     | succ_dest success 0 | [0..returndatasize): returndata |
              * 57          | JUMPI          | 0                   | [0..returndatasize): returndata |
              *                                                                                      |
