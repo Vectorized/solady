@@ -44,16 +44,11 @@ contract ERC1967FactoryTest is TestPlus {
 
     function testProxyFails() public {
         (address admin,) = _randomSigner();
-        bool success;
-        bytes memory retdata;
 
         address proxy = factory.deploy(impl0, admin);
 
-        (success, retdata) = proxy.call(abi.encodeWithSignature("fails()"));
-
-        assertFalse(success);
-        assertEq(retdata.length, 4);
-        assertEq(keccak256(retdata), keccak256(hex"552670ff"));
+        vm.expectRevert(MockImplementation.Fail.selector);
+        MockImplementation(proxy).fails();
     }
 
     function testSetAdminFor() public {
@@ -119,6 +114,18 @@ contract ERC1967FactoryTest is TestPlus {
 
         assertEq(vm.load(proxy, key), value);
         assertEq(MockImplementation(proxy).x(), x);
+    }
+
+    function testUpgradeAndCallWithRevert() public {
+        (address admin,) = _randomSigner();
+
+        vm.prank(admin);
+        address proxy = factory.deploy(impl0, admin);
+
+        vm.prank(admin);
+        uint256 x = 123;
+        vm.expectRevert(MockImplementation.Fail.selector);
+        factory.upgradeAndCall(proxy, impl1, abi.encodeWithSignature("fails()", x));
     }
 
     function testUpgradeUnauthorized() public {
