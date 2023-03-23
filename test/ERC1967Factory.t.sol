@@ -20,7 +20,7 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testDeployProxy() public {
-        (address admin, ) = _randomSigner();
+        (address admin,) = _randomSigner();
         bytes32 key = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
         bytes32 value = bytes32(uint256(uint160(impl0)));
 
@@ -34,7 +34,7 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testProxySucceeds() public {
-        (address admin, ) = _randomSigner();
+        (address admin,) = _randomSigner();
         uint256 a = 1;
 
         MockImplementation proxy = MockImplementation(factory.deployProxy(impl0, admin));
@@ -43,7 +43,7 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testProxyFails() public {
-        (address admin, ) = _randomSigner();
+        (address admin,) = _randomSigner();
         bool success;
         bytes memory retdata;
 
@@ -57,8 +57,8 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testSetAdminFor() public {
-        (address admin, ) = _randomSigner();
-        (address newAdmin, ) = _randomSigner();
+        (address admin,) = _randomSigner();
+        (address newAdmin,) = _randomSigner();
 
         vm.prank(admin);
         address proxy = factory.deployProxy(impl0, admin);
@@ -73,12 +73,12 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testSetAdminForUnauthorized() public {
-        (address admin, ) = _randomSigner();
-        (address sussyAccount, ) = _randomSigner();
+        (address admin,) = _randomSigner();
+        (address sussyAccount,) = _randomSigner();
 
         vm.prank(admin);
         address proxy = factory.deployProxy(impl0, admin);
-        
+
         vm.expectRevert();
 
         vm.prank(sussyAccount);
@@ -86,7 +86,7 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testUpgradeProxyFor() public {
-        (address admin, ) = _randomSigner();
+        (address admin,) = _randomSigner();
         bytes32 key = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
         bytes32 value = bytes32(uint256(uint160(impl1)));
 
@@ -103,12 +103,12 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testUpgradeProxyForUnauthorized() public {
-        (address admin, ) = _randomSigner();
-        (address sussyAccount, ) = _randomSigner();
+        (address admin,) = _randomSigner();
+        (address sussyAccount,) = _randomSigner();
 
         vm.prank(admin);
         address proxy = factory.deployProxy(impl0, admin);
-        
+
         vm.expectRevert();
 
         vm.prank(sussyAccount);

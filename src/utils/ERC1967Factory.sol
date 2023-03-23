@@ -49,10 +49,7 @@ contract ERC1967Factory {
     }
 
     /// @dev Deploys a proxy contract, sets the implementation, and sets the admin.
-    function deployProxy(
-        address implementation,
-        address admin
-    ) external returns (address proxy) {
+    function deployProxy(address implementation, address admin) external returns (address proxy) {
         assembly {
             // TODO: that big mf table describing the bytecode once the proxy is tested.
 
