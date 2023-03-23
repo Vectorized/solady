@@ -306,7 +306,7 @@ contract ERC1967Factory {
              * 73 factory  | PUSH20 factory | f                   |                                 |
              * 33          | CALLER         | c f                 |                                 |
              * 14          | EQ             | isf                 |                                 |
-             * 60 55       | PUSH1 0x55     | isf_dst isf         |                                 |
+             * 60 0x55     | PUSH1 0x55     | isf_dst isf         |                                 |
              * 57          | JUMPI          |                     |                                 |
              *                                                                                      |
              * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
