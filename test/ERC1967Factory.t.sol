@@ -13,8 +13,8 @@ contract ERC1967FactoryTest is TestPlus {
     event Deployed(address indexed proxy, address indexed implementation, address indexed admin);
 
     ERC1967Factory factory;
-    address implentation0;
-    address implentation1;
+    address implementation0;
+    address implementation1;
 
     struct _TestTemps {
         uint256 key;
@@ -34,20 +34,49 @@ contract ERC1967FactoryTest is TestPlus {
 
     function setUp() public {
         factory = new ERC1967Factory();
-        implentation0 = address(new MockImplementation());
-        implentation1 = address(new MockImplementation());
+        implementation0 = address(new MockImplementation());
+        implementation1 = address(new MockImplementation());
     }
 
     function testDeploy() public {
         (address admin,) = _randomSigner();
 
         vm.prank(admin);
-        address proxy = factory.deploy(implentation0, admin);
+        address proxy = factory.deploy(implementation0, admin);
 
         assertEq(factory.adminOf(proxy), admin);
         assertTrue(proxy != address(0));
         assertTrue(proxy.code.length > 0);
-        _checkImplementationSlot(proxy, implentation0);
+        _checkImplementationSlot(proxy, implementation0);
+    }
+
+    function testDeployBrutalized(uint256) public {
+        (address admin,) = _randomSigner();
+        address implementation = implementation0;
+        bool brutalized;
+        bool success;
+        address f = address(factory);
+        /// @solidity memory-safe-assembly
+        assembly {
+            calldatacopy(0x00, 0x00, 0x40)
+            brutalized := eq(and(mload(0x00), 1), 0)
+            if brutalized {
+                // Extremely unlikely that all 96 upper bits will be zero.
+                admin := or(shl(160, keccak256(0x00, 0x20)), admin)
+                implementation := or(shl(160, keccak256(0x00, 0x40)), implementation)
+            }
+            let m := mload(0x40)
+            mstore(m, 0x545e7c61) // `deploy(address, address)`.
+            mstore(add(m, 0x20), admin)
+            mstore(add(m, 0x40), admin)
+            mstore(0x00, 0)
+            // Basically, we want to demonstrate that Solidity has checks
+            // to reject dirty upper bits for addresses.
+            success := call(gas(), f, 0, add(m, 0x1c), 0x44, 0x00, 0x20)
+            // If the call is successful, there will be a deployment.
+            if and(success, iszero(mload(0x00))) { revert(0, 0) }
+        }
+        assertEq(brutalized, !success);
     }
 
     function testDeployAndCall(uint256) public {
@@ -57,12 +86,12 @@ contract ERC1967FactoryTest is TestPlus {
         bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", t.key, t.value);
         vm.deal(admin, type(uint128).max);
         vm.prank(admin);
-        address proxy = factory.deployAndCall{value: t.msgValue}(implentation0, admin, data);
+        address proxy = factory.deployAndCall{value: t.msgValue}(implementation0, admin, data);
 
         assertEq(factory.adminOf(proxy), admin);
         assertTrue(proxy != address(0));
         assertTrue(proxy.code.length > 0);
-        _checkImplementationSlot(proxy, implentation0);
+        _checkImplementationSlot(proxy, implementation0);
         assertEq(MockImplementation(proxy).getValue(t.key), t.value);
         assertEq(proxy.balance, t.msgValue);
     }
@@ -79,14 +108,14 @@ contract ERC1967FactoryTest is TestPlus {
             t.salt = keccak256(abi.encode(_random()));
             vm.expectRevert(ERC1967Factory.SaltDoesNotStartWithCaller.selector);
             t.proxy = factory.deployDeterministicAndCall{value: t.msgValue}(
-                implentation0, admin, t.salt, data
+                implementation0, admin, t.salt, data
             );
             return;
         } else {
             vm.expectEmit(true, true, true, true);
-            emit Deployed(t.predictedProxy, implentation0, admin);
+            emit Deployed(t.predictedProxy, implementation0, admin);
             t.proxy = factory.deployDeterministicAndCall{value: t.msgValue}(
-                implentation0, admin, t.salt, data
+                implementation0, admin, t.salt, data
             );
             assertEq(t.proxy, t.predictedProxy);
         }
@@ -94,7 +123,7 @@ contract ERC1967FactoryTest is TestPlus {
         assertEq(factory.adminOf(t.proxy), admin);
         assertTrue(t.proxy != address(0));
         assertTrue(t.proxy.code.length > 0);
-        _checkImplementationSlot(t.proxy, implentation0);
+        _checkImplementationSlot(t.proxy, implementation0);
         assertEq(MockImplementation(t.proxy).getValue(t.key), t.value);
         assertEq(t.proxy.balance, t.msgValue);
     }
@@ -104,14 +133,14 @@ contract ERC1967FactoryTest is TestPlus {
 
         bytes memory data = abi.encodeWithSignature("fails()");
         vm.expectRevert(MockImplementation.Fail.selector);
-        factory.deployAndCall(implentation0, admin, data);
+        factory.deployAndCall(implementation0, admin, data);
     }
 
     function testProxySucceeds() public {
         (address admin,) = _randomSigner();
         uint256 a = 1;
 
-        MockImplementation proxy = MockImplementation(factory.deploy(implentation0, admin));
+        MockImplementation proxy = MockImplementation(factory.deploy(implementation0, admin));
 
         assertEq(proxy.succeeds(a), a);
     }
@@ -119,7 +148,7 @@ contract ERC1967FactoryTest is TestPlus {
     function testProxyFails() public {
         (address admin,) = _randomSigner();
 
-        address proxy = factory.deploy(implentation0, admin);
+        address proxy = factory.deploy(implementation0, admin);
 
         vm.expectRevert(MockImplementation.Fail.selector);
         MockImplementation(proxy).fails();
@@ -130,7 +159,7 @@ contract ERC1967FactoryTest is TestPlus {
         (address newAdmin,) = _randomSigner();
 
         vm.prank(admin);
-        address proxy = factory.deploy(implentation0, admin);
+        address proxy = factory.deploy(implementation0, admin);
 
         vm.expectEmit(true, true, true, true, address(factory));
         emit AdminChanged(proxy, newAdmin);
@@ -146,7 +175,7 @@ contract ERC1967FactoryTest is TestPlus {
         (address sussyAccount,) = _randomSigner();
 
         vm.prank(admin);
-        address proxy = factory.deploy(implentation0, admin);
+        address proxy = factory.deploy(implementation0, admin);
 
         vm.expectRevert();
 
@@ -158,15 +187,15 @@ contract ERC1967FactoryTest is TestPlus {
         (address admin,) = _randomSigner();
 
         vm.prank(admin);
-        address proxy = factory.deploy(implentation0, admin);
+        address proxy = factory.deploy(implementation0, admin);
 
         vm.expectEmit(true, true, true, true, address(factory));
-        emit Upgraded(proxy, implentation1);
+        emit Upgraded(proxy, implementation1);
 
         vm.prank(admin);
-        factory.upgrade(proxy, implentation1);
+        factory.upgrade(proxy, implementation1);
 
-        _checkImplementationSlot(proxy, implentation1);
+        _checkImplementationSlot(proxy, implementation1);
     }
 
     function testUpgradeAndCall(uint256) public {
@@ -174,17 +203,17 @@ contract ERC1967FactoryTest is TestPlus {
         _TestTemps memory t = _testTemps();
 
         vm.prank(admin);
-        address proxy = factory.deploy(implentation0, admin);
+        address proxy = factory.deploy(implementation0, admin);
 
         vm.expectEmit(true, true, true, true, address(factory));
-        emit Upgraded(proxy, implentation1);
+        emit Upgraded(proxy, implementation1);
 
         vm.prank(admin);
         vm.deal(admin, type(uint128).max);
         bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", t.key, t.value);
-        factory.upgradeAndCall{value: t.msgValue}(proxy, implentation1, data);
+        factory.upgradeAndCall{value: t.msgValue}(proxy, implementation1, data);
 
-        _checkImplementationSlot(proxy, implentation1);
+        _checkImplementationSlot(proxy, implementation1);
         assertEq(MockImplementation(proxy).getValue(t.key), t.value);
         assertEq(proxy.balance, t.msgValue);
     }
@@ -193,11 +222,11 @@ contract ERC1967FactoryTest is TestPlus {
         (address admin,) = _randomSigner();
 
         vm.prank(admin);
-        address proxy = factory.deploy(implentation0, admin);
+        address proxy = factory.deploy(implementation0, admin);
 
         vm.prank(admin);
         vm.expectRevert(MockImplementation.Fail.selector);
-        factory.upgradeAndCall(proxy, implentation1, abi.encodeWithSignature("fails()"));
+        factory.upgradeAndCall(proxy, implementation1, abi.encodeWithSignature("fails()"));
     }
 
     function testUpgradeUnauthorized() public {
@@ -206,12 +235,12 @@ contract ERC1967FactoryTest is TestPlus {
         vm.assume(admin != sussyAccount);
 
         vm.prank(admin);
-        address proxy = factory.deploy(implentation0, admin);
+        address proxy = factory.deploy(implementation0, admin);
 
         vm.expectRevert();
 
         vm.prank(sussyAccount);
-        factory.upgrade(proxy, implentation1);
+        factory.upgrade(proxy, implementation1);
     }
 
     function _checkImplementationSlot(address proxy, address implementation) internal {
