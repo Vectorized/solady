@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/TestPlus.sol";
 import {MockImplementation} from "./utils/mocks/MockImplementation.sol";
 import {ERC1967Factory} from "../src/utils/ERC1967Factory.sol";
+import {ERC1967FactoryConstants} from "../src/utils/ERC1967FactoryConstants.sol";
 
 contract ERC1967FactoryTest is TestPlus {
     event AdminChanged(address indexed proxy, address indexed admin);
@@ -241,6 +242,15 @@ contract ERC1967FactoryTest is TestPlus {
 
         vm.prank(sussyAccount);
         factory.upgrade(proxy, implementation1);
+    }
+
+    function testFactoryDeployment() public {
+        address deployment = _safeCreate2(
+            ERC1967FactoryConstants.IMMUTABLE_CREATE2_FACTORY_SALT, 
+            ERC1967FactoryConstants.INITCODE;
+        );
+        assertEq(deployment, ERC1967FactoryConstants.ADDRESS);
+        assertEq(deployment.code, ERC1967FactoryConstants.BYTECODE);
     }
 
     function _checkImplementationSlot(address proxy, address implementation) internal {
