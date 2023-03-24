@@ -224,8 +224,8 @@ contract ERC1967Factory {
         assembly {
             // Create the proxy.
             switch useSalt
-            case 0 { proxy := create(0, add(m, 0x12), 0x85) }
-            default { proxy := create2(0, add(m, 0x12), 0x85, salt) }
+            case 0 { proxy := create(0, add(m, 0x12), 0x84) }
+            default { proxy := create2(0, add(m, 0x12), 0x84, salt) }
             // Revert if the creation fails.
             if iszero(proxy) {
                 mstore(0x00, _DEPLOYMENT_FAILED_ERROR_SELECTOR)
@@ -280,7 +280,7 @@ contract ERC1967Factory {
         bytes memory m = _initCode();
         /// @solidity memory-safe-assembly
         assembly {
-            result := keccak256(add(m, 0x12), 0x85)
+            result := keccak256(add(m, 0x12), 0x84)
         }
     }
 
@@ -367,12 +367,11 @@ contract ERC1967Factory {
              * 80          | DUP1           | 2w 2w 0 0 0         |                                 |
              * 36          | CALLDATASIZE   | cds 2w 2w 0 0 0     |                                 |
              * 11          | GT             | gt 2w 0 0 0         |                                 |
-             * 60 0x65     | PUSH1 0x65     | dest gt 2w 0 0 0    |                                 |
+             * 15          | ISZERO         | lte 2w 0 0 0        |                                 |
+             * 60 0x51     | PUSH1 0x51     | dest lte 2w 0 0 0   |                                 |
              * 57          | JUMPI          | 2w 0 0 0            |                                 |
-             * 00          | STOP           | 2w 0 0 0            |                                 |
              *                                                                                      |
              * ::: copy extra calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 5b          | JUMPDEST       | 2w 0 0 0            |                                 |
              * 36          | CALLDATASIZE   | cds 2w 0 0 0        |                                 |
              * 03          | SUB            | t 0 0 0             |                                 |
              * 80          | DUP1           | t t 0 0 0           |                                 |
@@ -405,12 +404,12 @@ contract ERC1967Factory {
              */
 
             m := mload(0x40)
-            mstore(add(m, 0x77), 0x3d90fd) // 3
-            mstore(add(m, 0x74), 0x2035556040803611606557005b36038060403d373d3d355af43d82803e605157) // 32
+            mstore(add(m, 0x76), 0x90fd) // 2
+            mstore(add(m, 0x74), 0x20355560408036111560515736038060403d373d3d355af43d82803e6051573d) // 32
             mstore(add(m, 0x54), 0x3735a920a3ca505d382bbc545af43d82803e6051573d90fd5b3d90f35b3d3560) // 32
             mstore(add(m, 0x34), 0x14605557363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc) // 32
             mstore(add(m, 0x14), address()) // 20
-            mstore(m, 0x607c3d8160093d39f33d3d3d3373) // 9 + 5
+            mstore(m, 0x607b3d8160093d39f33d3d3d3373) // 9 + 5
         }
     }
 
