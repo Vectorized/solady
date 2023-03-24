@@ -246,8 +246,7 @@ contract ERC1967FactoryTest is TestPlus {
 
     function testFactoryDeployment() public {
         address deployment = _safeCreate2(
-            ERC1967FactoryConstants.IMMUTABLE_CREATE2_FACTORY_SALT, 
-            ERC1967FactoryConstants.INITCODE;
+            ERC1967FactoryConstants.IMMUTABLE_CREATE2_FACTORY_SALT, ERC1967FactoryConstants.INITCODE
         );
         assertEq(deployment, ERC1967FactoryConstants.ADDRESS);
         assertEq(deployment.code, ERC1967FactoryConstants.BYTECODE);
