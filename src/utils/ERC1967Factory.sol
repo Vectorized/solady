@@ -316,7 +316,7 @@ contract ERC1967Factory {
              * 33          | CALLER         | c 0 0 0             |                                 |
              * 73 factory  | PUSH20 factory | f c 0 0 0           |                                 |
              * 14          | EQ             | isf 0 0 0           |                                 |
-             * 60 0x55     | PUSH1 0x55     | isf_dst isf 0 0 0   |                                 |
+             * 60 0x55     | PUSH1 0x55     | dest isf 0 0 0      |                                 |
              * 57          | JUMPI          | 0 0 0               |                                 |
              *                                                                                      |
              * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -331,16 +331,16 @@ contract ERC1967Factory {
              * 7f slot     | PUSH32 slot    | s 0 cds 0 0 0       | [0..calldatasize): calldata     |
              * 54          | SLOAD          | i cds 0 0 0         | [0..calldatasize): calldata     |
              * 5a          | GAS            | g i cds 0 0 0       | [0..calldatasize): calldata     |
-             * f4          | DELEGATECALL   | success 0           | [0..calldatasize): calldata     |
+             * f4          | DELEGATECALL   | succ 0              | [0..calldatasize): calldata     |
              *                                                                                      |
              * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d          | RETURNDATASIZE | rds success 0       | [0..calldatasize): calldata     |
-             * 82          | DUP3           | 0 rds success 0     | [0..calldatasize): calldata     |
-             * 80          | DUP1           | 0 0 rds success 0   | [0..calldatasize): calldata     |
-             * 3e          | RETURNDATACOPY | success 0           | [0..returndatasize): returndata |
+             * 3d          | RETURNDATASIZE | rds succ 0          | [0..calldatasize): calldata     |
+             * 82          | DUP3           | 0 rds succ 0        | [0..calldatasize): calldata     |
+             * 80          | DUP1           | 0 0 rds succ 0      | [0..calldatasize): calldata     |
+             * 3e          | RETURNDATACOPY | succ 0              | [0..returndatasize): returndata |
              *                                                                                      |
              * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 60 0x51     | PUSH1 0x51     | succ_dest success 0 | [0..returndatasize): returndata |
+             * 60 0x51     | PUSH1 0x51     | dest succ 0         | [0..returndatasize): returndata |
              * 57          | JUMPI          | 0                   | [0..returndatasize): returndata |
              *                                                                                      |
              * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -367,7 +367,7 @@ contract ERC1967Factory {
              * 80          | DUP1           | 2w 2w 0 0 0         |                                 |
              * 36          | CALLDATASIZE   | cds 2w 2w 0 0 0     |                                 |
              * 11          | GT             | gt 2w 0 0 0         |                                 |
-             * 60 0x64     | PUSH1 0x64     | dest gt 2w 0 0 0    |                                 |
+             * 60 0x65     | PUSH1 0x65     | dest gt 2w 0 0 0    |                                 |
              * 57          | JUMPI          | 2w 0 0 0            |                                 |
              * 00          | STOP           | 2w 0 0 0            |                                 |
              *                                                                                      |
@@ -385,16 +385,16 @@ contract ERC1967Factory {
              * 3d          | RETURNDATASIZE | 0 0 t 0 0 0         | [0..t): extra calldata          |
              * 35          | CALLDATALOAD   | i t 0 0 0           | [0..t): extra calldata          |
              * 5a          | GAS            | g i t 0 0 0         | [0..t): extra calldata          |
-             * f4          | DELEGATECALL   | success 0           | [0..t): extra calldata          |
+             * f4          | DELEGATECALL   | succ 0              | [0..t): extra calldata          |
              *                                                                                      |
              * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d          | RETURNDATASIZE | rds success 0       | [0..t): extra calldata          |
-             * 82          | DUP3           | 0 rds success 0     | [0..t): extra calldata          |
-             * 80          | DUP1           | 0 0 rds success 0   | [0..t): extra calldata          |
-             * 3e          | RETURNDATACOPY | success 0           | [0..returndatasize): returndata |
+             * 3d          | RETURNDATASIZE | rds succ 0          | [0..t): extra calldata          |
+             * 82          | DUP3           | 0 rds succ 0        | [0..t): extra calldata          |
+             * 80          | DUP1           | 0 0 rds succ 0      | [0..t): extra calldata          |
+             * 3e          | RETURNDATACOPY | succ 0              | [0..returndatasize): returndata |
              *                                                                                      |
              * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 60 0x51     | PUSH1 0x51     | succ_dest success 0 | [0..returndatasize): returndata |
+             * 60 0x51     | PUSH1 0x51     | dest succ 0         | [0..returndatasize): returndata |
              * 57          | JUMPI          | 0                   | [0..returndatasize): returndata |
              *                                                                                      |
              * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::::::: |
