@@ -403,36 +403,26 @@ contract ERC1967Factory {
              */
 
             m := mload(0x40)
+            // forgefmt: disable-start
             switch shr(112, address())
             case 0 {
                 // If the factory's address has six or more leading zero bytes.
                 mstore(add(m, 0x70), 0x90fd) // 2
-                mstore(
-                    add(m, 0x6e), 0x203555604080361115604b5736038060403d373d3d355af43d82803e604b573d
-                ) // 32
-                mstore(
-                    add(m, 0x4e), 0x3735a920a3ca505d382bbc545af43d82803e604b573d90fd5b3d90f35b3d3560
-                ) // 32
-                mstore(
-                    add(m, 0x2e), 0x14604f57363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc
-                ) // 32
+                mstore(add(m, 0x6e), 0x203555604080361115604b5736038060403d373d3d355af43d82803e604b573d) // 32
+                mstore(add(m, 0x4e), 0x3735a920a3ca505d382bbc545af43d82803e604b573d90fd5b3d90f35b3d3560) // 32
+                mstore(add(m, 0x2e), 0x14604f57363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc) // 32
                 mstore(add(m, 0x0e), address()) // 14
                 mstore(m, 0x60753d8160093d39f33d3d3d336d) // 9 + 5
             }
             default {
                 mstore(add(m, 0x76), 0x90fd) // 2
-                mstore(
-                    add(m, 0x74), 0x20355560408036111560515736038060403d373d3d355af43d82803e6051573d
-                ) // 32
-                mstore(
-                    add(m, 0x54), 0x3735a920a3ca505d382bbc545af43d82803e6051573d90fd5b3d90f35b3d3560
-                ) // 32
-                mstore(
-                    add(m, 0x34), 0x14605557363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc
-                ) // 32
+                mstore(add(m, 0x74), 0x20355560408036111560515736038060403d373d3d355af43d82803e6051573d) // 32
+                mstore(add(m, 0x54), 0x3735a920a3ca505d382bbc545af43d82803e6051573d90fd5b3d90f35b3d3560) // 32
+                mstore(add(m, 0x34), 0x14605557363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc) // 32
                 mstore(add(m, 0x14), address()) // 20
                 mstore(m, 0x607b3d8160093d39f33d3d3d3373) // 9 + 5
             }
+            // forgefmt: disable-end
         }
     }
 
