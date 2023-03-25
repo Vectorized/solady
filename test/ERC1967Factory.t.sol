@@ -78,7 +78,7 @@ contract ERC1967FactoryTest is TestPlus {
             }
             let m := mload(0x40)
             mstore(m, 0x545e7c61) // `deploy(address, address)`.
-            mstore(add(m, 0x20), admin)
+            mstore(add(m, 0x20), implementation)
             mstore(add(m, 0x40), admin)
             mstore(0x00, 0)
             // Basically, we want to demonstrate that Solidity has checks
