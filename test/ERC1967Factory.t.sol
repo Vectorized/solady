@@ -33,14 +33,19 @@ contract ERC1967FactoryTest is TestPlus {
         t.salt = bytes32(_random() & uint256(type(uint96).max));
     }
 
-    modifier withFactories() {
+    function setUp() public {
         factory = new ERC1967Factory();
         implementation0 = address(new MockImplementation());
         implementation1 = address(new MockImplementation());
+    }
+
+    modifier withFactories() {
         _;
-        address minedFactoryAddress = 0x0000000000001122334455667788990011223344;
-        vm.etch(minedFactoryAddress, address(factory).code);
-        factory = ERC1967Factory(minedFactoryAddress);
+        {
+            address minedFactoryAddress = 0x0000000000001122334455667788990011223344;
+            vm.etch(minedFactoryAddress, address(factory).code);
+            factory = ERC1967Factory(minedFactoryAddress);
+        }
         _;
     }
 
