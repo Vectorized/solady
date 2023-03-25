@@ -62,13 +62,12 @@ contract ERC1967Factory {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The admin slot for a `proxy` is given by:
-    /// ```
-    ///     mstore(0x0c, _ADMIN_SLOT_SEED)
-    ///     mstore(0x00, proxy)
-    ///     let adminSlot := keccak256(0x0c, 0x20)
-    /// ```
-    uint256 internal constant _ADMIN_SLOT_SEED = 0x98762005;
+    // The admin slot for a `proxy` is given by:
+    // ```
+    //     mstore(0x0c, address())
+    //     mstore(0x00, proxy)
+    //     let adminSlot := keccak256(0x0c, 0x20)
+    // ```
 
     /// @dev The ERC-1967 storage slot for the implementation in the proxy.
     /// `uint256(keccak256("eip1967.proxy.implementation")) - 1`.
@@ -83,7 +82,7 @@ contract ERC1967Factory {
     function adminOf(address proxy) public view returns (address admin) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x0c, _ADMIN_SLOT_SEED)
+            mstore(0x0c, address())
             mstore(0x00, proxy)
             admin := sload(keccak256(0x0c, 0x20))
         }
@@ -95,7 +94,7 @@ contract ERC1967Factory {
         /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
-            mstore(0x0c, _ADMIN_SLOT_SEED)
+            mstore(0x0c, address())
             mstore(0x00, proxy)
             let adminSlot := keccak256(0x0c, 0x20)
             if iszero(eq(sload(adminSlot), caller())) {
@@ -129,7 +128,7 @@ contract ERC1967Factory {
         /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
-            mstore(0x0c, _ADMIN_SLOT_SEED)
+            mstore(0x0c, address())
             mstore(0x00, proxy)
             if iszero(eq(sload(keccak256(0x0c, 0x20)), caller())) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
@@ -249,7 +248,7 @@ contract ERC1967Factory {
             }
 
             // Store the admin for the proxy.
-            mstore(0x0c, _ADMIN_SLOT_SEED)
+            mstore(0x0c, address())
             mstore(0x00, proxy)
             sstore(keccak256(0x0c, 0x20), admin)
 
@@ -404,12 +403,36 @@ contract ERC1967Factory {
              */
 
             m := mload(0x40)
-            mstore(add(m, 0x76), 0x90fd) // 2
-            mstore(add(m, 0x74), 0x20355560408036111560515736038060403d373d3d355af43d82803e6051573d) // 32
-            mstore(add(m, 0x54), 0x3735a920a3ca505d382bbc545af43d82803e6051573d90fd5b3d90f35b3d3560) // 32
-            mstore(add(m, 0x34), 0x14605557363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc) // 32
-            mstore(add(m, 0x14), address()) // 20
-            mstore(m, 0x607b3d8160093d39f33d3d3d3373) // 9 + 5
+            switch shr(112, address())
+            case 0 {
+                // If the factory's address has six or more leading zero bytes.
+                mstore(add(m, 0x70), 0x90fd) // 2
+                mstore(
+                    add(m, 0x6e), 0x203555604080361115604b5736038060403d373d3d355af43d82803e604b573d
+                ) // 32
+                mstore(
+                    add(m, 0x4e), 0x3735a920a3ca505d382bbc545af43d82803e604b573d90fd5b3d90f35b3d3560
+                ) // 32
+                mstore(
+                    add(m, 0x2e), 0x14604f57363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc
+                ) // 32
+                mstore(add(m, 0x0e), address()) // 14
+                mstore(m, 0x60753d8160093d39f33d3d3d336d) // 9 + 5
+            }
+            default {
+                mstore(add(m, 0x76), 0x90fd) // 2
+                mstore(
+                    add(m, 0x74), 0x20355560408036111560515736038060403d373d3d355af43d82803e6051573d
+                ) // 32
+                mstore(
+                    add(m, 0x54), 0x3735a920a3ca505d382bbc545af43d82803e6051573d90fd5b3d90f35b3d3560
+                ) // 32
+                mstore(
+                    add(m, 0x34), 0x14605557363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc
+                ) // 32
+                mstore(add(m, 0x14), address()) // 20
+                mstore(m, 0x607b3d8160093d39f33d3d3d3373) // 9 + 5
+            }
         }
     }
 

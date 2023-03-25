@@ -33,13 +33,18 @@ contract ERC1967FactoryTest is TestPlus {
         t.salt = bytes32(_random() & uint256(type(uint96).max));
     }
 
-    function setUp() public {
+    modifier withFactories() {
         factory = new ERC1967Factory();
         implementation0 = address(new MockImplementation());
         implementation1 = address(new MockImplementation());
+        _;
+        address minedFactoryAddress = 0x0000000000001122334455667788990011223344;
+        vm.etch(minedFactoryAddress, address(factory).code);
+        factory = ERC1967Factory(minedFactoryAddress);
+        _;
     }
 
-    function testDeploy() public {
+    function testDeploy() public withFactories {
         (address admin,) = _randomSigner();
 
         vm.prank(admin);
@@ -51,7 +56,7 @@ contract ERC1967FactoryTest is TestPlus {
         _checkImplementationSlot(proxy, implementation0);
     }
 
-    function testDeployBrutalized(uint256) public {
+    function testDeployBrutalized(uint256) public withFactories {
         (address admin,) = _randomSigner();
         address implementation = implementation0;
         bool brutalized;
@@ -80,7 +85,7 @@ contract ERC1967FactoryTest is TestPlus {
         assertEq(brutalized, !success);
     }
 
-    function testDeployAndCall(uint256) public {
+    function testDeployAndCall(uint256) public withFactories {
         (address admin,) = _randomSigner();
         _TestTemps memory t = _testTemps();
 
@@ -97,7 +102,7 @@ contract ERC1967FactoryTest is TestPlus {
         assertEq(proxy.balance, t.msgValue);
     }
 
-    function testDeployDeterministicAndCall(uint256) public {
+    function testDeployDeterministicAndCall(uint256) public withFactories {
         (address admin,) = _randomSigner();
         _TestTemps memory t = _testTemps();
 
@@ -129,7 +134,7 @@ contract ERC1967FactoryTest is TestPlus {
         assertEq(t.proxy.balance, t.msgValue);
     }
 
-    function testDeployAndCallWithRevert() public {
+    function testDeployAndCallWithRevert() public withFactories {
         (address admin,) = _randomSigner();
 
         bytes memory data = abi.encodeWithSignature("fails()");
@@ -137,7 +142,7 @@ contract ERC1967FactoryTest is TestPlus {
         factory.deployAndCall(implementation0, admin, data);
     }
 
-    function testProxySucceeds() public {
+    function testProxySucceeds() public withFactories {
         (address admin,) = _randomSigner();
         uint256 a = 1;
 
@@ -146,7 +151,7 @@ contract ERC1967FactoryTest is TestPlus {
         assertEq(proxy.succeeds(a), a);
     }
 
-    function testProxyFails() public {
+    function testProxyFails() public withFactories {
         (address admin,) = _randomSigner();
 
         address proxy = factory.deploy(implementation0, admin);
@@ -155,7 +160,7 @@ contract ERC1967FactoryTest is TestPlus {
         MockImplementation(proxy).fails();
     }
 
-    function testChangeAdmin() public {
+    function testChangeAdmin() public withFactories {
         (address admin,) = _randomSigner();
         (address newAdmin,) = _randomSigner();
 
@@ -171,7 +176,7 @@ contract ERC1967FactoryTest is TestPlus {
         assertEq(factory.adminOf(proxy), newAdmin);
     }
 
-    function testChangeAdminUnauthorized() public {
+    function testChangeAdminUnauthorized() public withFactories {
         (address admin,) = _randomSigner();
         (address sussyAccount,) = _randomSigner();
 
@@ -184,7 +189,7 @@ contract ERC1967FactoryTest is TestPlus {
         factory.changeAdmin(proxy, sussyAccount);
     }
 
-    function testUpgrade() public {
+    function testUpgrade() public withFactories {
         (address admin,) = _randomSigner();
 
         vm.prank(admin);
@@ -199,7 +204,7 @@ contract ERC1967FactoryTest is TestPlus {
         _checkImplementationSlot(proxy, implementation1);
     }
 
-    function testUpgradeAndCall(uint256) public {
+    function testUpgradeAndCall(uint256) public withFactories {
         (address admin,) = _randomSigner();
         _TestTemps memory t = _testTemps();
 
@@ -219,7 +224,7 @@ contract ERC1967FactoryTest is TestPlus {
         assertEq(proxy.balance, t.msgValue);
     }
 
-    function testUpgradeAndCallWithRevert() public {
+    function testUpgradeAndCallWithRevert() public withFactories {
         (address admin,) = _randomSigner();
 
         vm.prank(admin);
@@ -230,7 +235,7 @@ contract ERC1967FactoryTest is TestPlus {
         factory.upgradeAndCall(proxy, implementation1, abi.encodeWithSignature("fails()"));
     }
 
-    function testUpgradeUnauthorized() public {
+    function testUpgradeUnauthorized() public withFactories {
         (address admin,) = _randomSigner();
         (address sussyAccount,) = _randomSigner();
         vm.assume(admin != sussyAccount);
