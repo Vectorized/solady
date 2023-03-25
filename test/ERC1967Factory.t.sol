@@ -209,7 +209,7 @@ contract ERC1967FactoryTest is TestPlus {
         _checkImplementationSlot(proxy, implementation1);
     }
 
-    function testUpgradeAndCall(uint256) public withFactories {
+    function testUpgradeAndCall() public withFactories {
         (address admin,) = _randomSigner();
         _TestTemps memory t = _testTemps();
 
@@ -225,7 +225,12 @@ contract ERC1967FactoryTest is TestPlus {
         factory.upgradeAndCall{value: t.msgValue}(proxy, implementation1, data);
 
         _checkImplementationSlot(proxy, implementation1);
-        assertEq(MockImplementation(proxy).getValue(t.key), t.value);
+        uint256 gasBefore = gasleft();
+        uint256 storedValue = MockImplementation(proxy).getValue(t.key);
+        unchecked {
+            console.log(gasBefore - gasleft());
+        }
+        assertEq(storedValue, t.value);
         assertEq(proxy.balance, t.msgValue);
     }
 
