@@ -357,7 +357,7 @@ contract ERC1967Factory {
              * 3d          | RETURNDATASIZE | 0 0 0               |                                 |
              * 35          | CALLDATALOAD   | impl 0 0            |                                 |
              * 06 0x20     | PUSH1 0x20     | w impl 0 0          |                                 |
-             * 35          | PUSH32 slot    | slot impl 0 0       |                                 |
+             * 35          | CALLDATALOAD   | slot impl 0 0       |                                 |
              * 55          | SSTORE         | 0 0                 |                                 |
              *                                                                                      |
              * ::: no extra calldata, return :::::::::::::::::::::::::::::::::::::::::::::::::::::: |
