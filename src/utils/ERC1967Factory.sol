@@ -235,7 +235,7 @@ contract ERC1967Factory {
             mstore(m, implementation)
             mstore(add(m, 0x20), _IMPLEMENTATION_SLOT)
             calldatacopy(add(m, 0x40), data.offset, data.length)
-            // Try setting the implementation the proxy and revert upon failure.
+            // Try setting the implementation on the proxy and revert upon failure.
             if iszero(call(gas(), proxy, callvalue(), m, add(0x40, data.length), 0x00, 0x00)) {
                 // Revert with the `DeploymentFailed` selector if there is no error returndata.
                 if iszero(returndatasize()) {
