@@ -4,11 +4,23 @@ pragma solidity ^0.8.4;
 /// @notice The address and bytecode of the canonical ERC1967Factory deployment.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ERC1967FactoryLib.sol)
 /// @author jtriley-eth (https://github.com/jtriley-eth/minimum-viable-proxy)
+///
+/// @dev The canonical ERC1967Factory is deployed permissionlessly via
+/// 0age's ImmutableCreate2Factory located at 0x0000000000FFe8B47B3e2130213B802212439497.
+///
+/// `ADDRESS = immutableCreate2Factory.safeCreate2(SALT, INITCODE)`
+///
+/// If the canonical ERC1967Factory has not been deployed on your EVM chain of choice,
+/// please feel free to deploy via 0age's ImmutableCreate2Factory.
+///
+/// If 0age's ImmutableCreate2Factory has not been deployed on your EVM chain of choice,
+/// please refer to 0age's ImmutableCreate2Factory deployment instructions at:
+/// https://github.com/ProjectOpenSea/seaport/blob/main/docs/Deployment.md
+///
+/// Contract verification can be done either via command line or block explorers like Etherscan.
+/// The simplest and most reliable way is via block explorer with single file input.
 library ERC1967FactoryConstants {
     /// @dev The canonical ERC1967Factory address for EVM chains.
-    /// If the deployment is not on your EVM chain of choice,
-    /// please feel free to deploy via the canonical
-    /// ImmutableCreate2Factory with `IMMUTABLE_CREATE2_FACTORY_SALT`.
     address internal constant ADDRESS = 0x0000000000000c5b7100000b04DbcB3daCeeE29c;
 
     /// @dev The canonical ERC1967Factory bytecode for EVM chains.
@@ -22,8 +34,7 @@ library ERC1967FactoryConstants {
         hex"608060405234801561001057600080fd5b506107f6806100206000396000f3fe", BYTECODE
     );
 
-    /// @dev For deterministic deployment at the canonical ImmutableCreate2Factory:
-    /// 0x0000000000ffe8b47b3e2130213b802212439497
-    bytes32 internal constant IMMUTABLE_CREATE2_FACTORY_SALT =
+    /// @dev For deterministic deployment via 0age's ImmutableCreate2Factory.
+    bytes32 internal constant SALT =
         0x0000000000000000000000000000000000000000ea4afe5c76cc02018034ea85;
 }
