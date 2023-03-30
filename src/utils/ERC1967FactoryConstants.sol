@@ -9,7 +9,7 @@ library ERC1967FactoryConstants {
     /// If the deployment is not on your EVM chain of choice,
     /// please feel free to deploy via the canonical
     /// ImmutableCreate2Factory with `IMMUTABLE_CREATE2_FACTORY_SALT`.
-    address internal constant ADDRESS = 0x000000000000695aEdFfDF075669DF8Ba14c36Ad;
+    address internal constant ADDRESS = 0x0000000000000c5b7100000b04DbcB3daCeeE29c;
 
     /// @dev The canonical ERC1967Factory bytecode for EVM chains.
     /// Useful for forge tests:
@@ -25,5 +25,5 @@ library ERC1967FactoryConstants {
     /// @dev For deterministic deployment at the canonical ImmutableCreate2Factory:
     /// 0x0000000000ffe8b47b3e2130213b802212439497
     bytes32 internal constant IMMUTABLE_CREATE2_FACTORY_SALT =
-        0x0000000000000000000000000000000000000000526ac0722815d4023a5c9351;
+        0x0000000000000000000000000000000000000000ea4afe5c76cc02018034ea85;
 }
