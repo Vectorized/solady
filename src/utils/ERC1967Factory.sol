@@ -403,15 +403,15 @@ contract ERC1967Factory {
 
             m := mload(0x40)
             // forgefmt: disable-start
-            switch shr(112, address())
+            switch shr(104, address())
             case 0 {
-                // If the factory's address has six or more leading zero bytes.
-                mstore(add(m, 0x75), 0x604c573d6000fd) // 7
-                mstore(add(m, 0x6e), 0x3d3560203555604080361115604c5736038060403d373d3d355af43d6000803e) // 32
-                mstore(add(m, 0x4e), 0x3735a920a3ca505d382bbc545af43d6000803e604c573d6000fd5b3d6000f35b) // 32
-                mstore(add(m, 0x2e), 0x14605157363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc) // 32
-                mstore(add(m, 0x0e), address()) // 14
-                mstore(m, 0x60793d8160093d39f33d3d336d) // 9 + 4
+                // If the factory's address has seven or more leading zero bytes.
+                mstore(add(m, 0x74), 0x604b573d6000fd) // 7
+                mstore(add(m, 0x6d), 0x3d3560203555604080361115604b5736038060403d373d3d355af43d6000803e) // 32
+                mstore(add(m, 0x4d), 0x3735a920a3ca505d382bbc545af43d6000803e604b573d6000fd5b3d6000f35b) // 32
+                mstore(add(m, 0x2d), 0x14605057363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc) // 32
+                mstore(add(m, 0x0d), address()) // 13
+                mstore(m, 0x60783d8160093d39f33d3d336c) // 9 + 4
             }
             default {
                 mstore(add(m, 0x7b), 0x6052573d6000fd) // 7

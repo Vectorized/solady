@@ -42,7 +42,7 @@ contract ERC1967FactoryTest is TestPlus {
     modifier withFactories() {
         _;
         {
-            address minedFactoryAddress = 0x0000000000001122334455667788990011223344;
+            address minedFactoryAddress = 0x0000000000000011223344556677889900112233;
             vm.etch(minedFactoryAddress, address(factory).code);
             factory = ERC1967Factory(minedFactoryAddress);
         }
@@ -275,6 +275,6 @@ contract ERC1967FactoryTest is TestPlus {
     function _checkProxyBytecode(address proxy) internal {
         bytes memory code = address(proxy).code;
         assertEq(uint8(bytes1(code[code.length - 1])), 0xfd);
-        assertTrue(code.length == 127 || code.length == 121);
+        assertTrue(code.length == 127 || code.length == 120);
     }
 }
