@@ -54,6 +54,7 @@ contract ERC1967FactoryTest is TestPlus {
 
         vm.prank(admin);
         address proxy = factory.deploy(implementation0, admin);
+        _checkProxyBytecode(proxy);
 
         assertEq(factory.adminOf(proxy), admin);
         assertTrue(proxy != address(0));
@@ -269,5 +270,11 @@ contract ERC1967FactoryTest is TestPlus {
     function _checkImplementationSlot(address proxy, address implementation) internal {
         bytes32 slot = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
         assertEq(vm.load(proxy, slot), bytes32(uint256(uint160(implementation))));
+    }
+
+    function _checkProxyBytecode(address proxy) internal {
+        bytes memory code = address(proxy).code;
+        assertEq(uint8(bytes1(code[code.length - 1])), 0xfd);
+        assertTrue(code.length == 127 || code.length == 121);
     }
 }

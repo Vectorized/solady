@@ -411,7 +411,7 @@ contract ERC1967Factory {
                 mstore(add(m, 0x4e), 0x3735a920a3ca505d382bbc545af43d6000803e604c573d6000fd5b3d6000f35b) // 32
                 mstore(add(m, 0x2e), 0x14605157363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc) // 32
                 mstore(add(m, 0x0e), address()) // 14
-                mstore(m, 0x607a3d8160093d39f33d3d336d) // 9 + 4
+                mstore(m, 0x60793d8160093d39f33d3d336d) // 9 + 4
             }
             default {
                 mstore(add(m, 0x7b), 0x6052573d6000fd) // 7
@@ -419,7 +419,7 @@ contract ERC1967Factory {
                 mstore(add(m, 0x54), 0x3735a920a3ca505d382bbc545af43d6000803e6052573d6000fd5b3d6000f35b) // 32
                 mstore(add(m, 0x34), 0x14605757363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc) // 32
                 mstore(add(m, 0x14), address()) // 20
-                mstore(m, 0x60803d8160093d39f33d3d3373) // 9 + 4
+                mstore(m, 0x607f3d8160093d39f33d3d3373) // 9 + 4
             }
             // forgefmt: disable-end
         }
