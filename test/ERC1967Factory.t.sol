@@ -258,14 +258,25 @@ contract ERC1967FactoryTest is TestPlus {
         vm.prank(sussyAccount);
         factory.upgrade(proxy, implementation1);
 
-        sussyAccount = address(uint160(admin) ^ 1);
-
         vm.expectRevert(ERC1967Factory.Unauthorized.selector);
-        vm.prank(sussyAccount);
+        vm.prank(address(uint160(admin) ^ 1));
         factory.upgrade(proxy, implementation1);
 
         vm.prank(admin);
         factory.upgrade(proxy, implementation1);
+    }
+
+    function testUpgradeWithCorruptedProxy() public withFactories {
+        (address admin,) = _randomSigner();
+
+        vm.prank(admin);
+        address proxy = factory.deploy(implementation0, admin);
+
+        vm.expectRevert(ERC1967Factory.Unauthorized.selector);
+        vm.prank(admin);
+        factory.upgrade(address(uint160(proxy) ^ 1), implementation1);
+
+        _checkImplementationSlot(proxy, implementation0);
     }
 
     function testFactoryDeployment() public {
