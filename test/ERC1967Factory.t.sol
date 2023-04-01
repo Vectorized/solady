@@ -167,8 +167,7 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testChangeAdmin() public withFactories {
-        (address admin,) = _randomSigner();
-        (address newAdmin,) = _randomSigner();
+        (address admin, address newAdmin) = _randomAccounts();
 
         vm.prank(admin);
         address proxy = factory.deploy(implementation0, admin);
@@ -183,8 +182,7 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testChangeAdminUnauthorized() public withFactories {
-        (address admin,) = _randomSigner();
-        (address sussyAccount,) = _randomSigner();
+        (address admin, address sussyAccount) = _randomAccounts();
 
         vm.prank(admin);
         address proxy = factory.deploy(implementation0, admin);
@@ -247,9 +245,7 @@ contract ERC1967FactoryTest is TestPlus {
     }
 
     function testUpgradeUnauthorized() public withFactories {
-        (address admin,) = _randomSigner();
-        (address sussyAccount,) = _randomSigner();
-        vm.assume(admin != sussyAccount);
+        (address admin, address sussyAccount) = _randomAccounts();
 
         vm.prank(admin);
         address proxy = factory.deploy(implementation0, admin);
@@ -284,6 +280,13 @@ contract ERC1967FactoryTest is TestPlus {
             _safeCreate2(ERC1967FactoryConstants.SALT, ERC1967FactoryConstants.INITCODE);
         assertEq(deployment, ERC1967FactoryConstants.ADDRESS);
         assertEq(deployment.code, ERC1967FactoryConstants.BYTECODE);
+    }
+
+    function _randomAccounts() internal returns (address a, address b) {
+        (a,) = _randomSigner();
+        do {
+            (b,) = _randomSigner();
+        } while (a == b);
     }
 
     function _checkImplementationSlot(address proxy, address implementation) internal {
