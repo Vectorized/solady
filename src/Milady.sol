@@ -43,6 +43,8 @@ import "./utils/DateTimeLib.sol";
 import "./utils/DynamicBufferLib.sol";
 import "./utils/ECDSA.sol";
 import "./utils/EIP712.sol";
+import "./utils/ERC1967Factory.sol";
+import "./utils/ERC1967FactoryConstants.sol";
 import "./utils/FixedPointMathLib.sol";
 import "./utils/LibBit.sol";
 import "./utils/LibBitmap.sol";

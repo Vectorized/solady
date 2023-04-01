@@ -19,6 +19,8 @@ utils
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
 ├─ ECDSA — "Library for verification of ECDSA signatures"
 ├─ EIP712 — "Contract for EIP-712 typed structured data hashing and signing"
+├─ ERC1967Factory — "Factory for deploying and managing ERC1967 proxy contracts"
+├─ ERC1967FactoryConstants — "The address and bytecode of the canonical ERC1967Factory"
 ├─ LibSort — "Library for efficient sorting of memory arrays"
 ├─ LibPRNG — "Library for generating psuedorandom numbers"
 ├─ Base64 — "Library for Base64 encoding and decoding"
