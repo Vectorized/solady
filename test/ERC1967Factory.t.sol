@@ -189,7 +189,7 @@ contract ERC1967FactoryTest is TestPlus {
         vm.prank(admin);
         address proxy = factory.deploy(implementation0, admin);
 
-        vm.expectRevert();
+        vm.expectRevert(ERC1967Factory.Unauthorized.selector);
 
         vm.prank(sussyAccount);
         factory.changeAdmin(proxy, sussyAccount);
