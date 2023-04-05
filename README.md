@@ -14,6 +14,8 @@ I'm sooooooOooooooooOoooOoooooooooooooooo...
 auth
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
+tokens
+├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
 utils
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
