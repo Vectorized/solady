@@ -18,21 +18,20 @@ contract ERC20Test is TestPlus {
 
     struct _TestTemps {
         address owner;
-        uint256 privateKey;
         address to;
         uint256 amount;
-        uint256 nonce;
         uint256 deadline;
         uint8 v;
         bytes32 r;
         bytes32 s;
+        uint256 privateKey;
+        uint256 nonce;
     }
 
     function _testTemps() internal returns (_TestTemps memory t) {
         (t.owner, t.privateKey) = _randomSigner();
         (t.to,) = _randomSigner();
         t.amount = _random();
-        t.nonce = _random();
         t.deadline = _random();
     }
 
@@ -123,27 +122,14 @@ contract ERC20Test is TestPlus {
     }
 
     function testPermit() public {
-        (address owner, uint256 privateKey) = _randomSigner();
+        _TestTemps memory t = _testTemps();
+        t.deadline = block.timestamp;
 
-        (t.v, t.r, t.s) = vm.sign(
-            privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(
-                        abi.encode(
-                            PERMIT_TYPEHASH, owner, address(0xCAFE), 1e18, 0, block.timestamp
-                        )
-                    )
-                )
-            )
-        );
+        _signPermit(t);
 
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, t.v, t.r, t.s);
+        _permit(t);
 
-        assertEq(token.allowance(owner, address(0xCAFE)), 1e18);
-        assertEq(token.nonces(owner), 1);
+        _checkAllowanceAndNonce(t);
     }
 
     function testMintOverMaxUintReverts() public {
@@ -234,95 +220,6 @@ contract ERC20Test is TestPlus {
         token.transferFrom(from, address(0xBEEF), 1e18);
     }
 
-    function testPermitBadNonceReverts() public {
-        (address owner, uint256 privateKey) = _randomSigner();
-
-        (t.v, t.r, t.s) = vm.sign(
-            privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(
-                        abi.encode(
-                            PERMIT_TYPEHASH, owner, address(0xCAFE), 1e18, 1, block.timestamp
-                        )
-                    )
-                )
-            )
-        );
-
-        vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, t.v, t.r, t.s);
-    }
-
-    function testPermitBadDeadlineReverts() public {
-        (address owner, uint256 privateKey) = _randomSigner();
-
-        (t.v, t.r, t.s) = vm.sign(
-            privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(
-                        abi.encode(
-                            PERMIT_TYPEHASH, owner, address(0xCAFE), 1e18, 0, block.timestamp
-                        )
-                    )
-                )
-            )
-        );
-
-        vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp + 1, t.v, t.r, t.s);
-    }
-
-    function testPermitPastDeadlineReverts() public {
-        uint256 oldTimestamp = block.timestamp;
-        (address owner, uint256 privateKey) = _randomSigner();
-
-        (t.v, t.r, t.s) = vm.sign(
-            privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(
-                        abi.encode(PERMIT_TYPEHASH, owner, address(0xCAFE), 1e18, 0, oldTimestamp)
-                    )
-                )
-            )
-        );
-
-        vm.warp(block.timestamp + 1);
-        vm.expectRevert(ERC20.PermitExpired.selector);
-        token.permit(owner, address(0xCAFE), 1e18, oldTimestamp, t.v, t.r, t.s);
-    }
-
-    function testPermitReplayReverts() public {
-        (address owner, uint256 privateKey) = _randomSigner();
-
-        (t.v, t.r, t.s) = vm.sign(
-            privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(
-                        abi.encode(
-                            PERMIT_TYPEHASH, owner, address(0xCAFE), 1e18, 0, block.timestamp
-                        )
-                    )
-                )
-            )
-        );
-
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, t.v, t.r, t.s);
-        vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, t.v, t.r, t.s);
-    }
-
     function testMetadata(string calldata name, string calldata symbol, uint8 decimals) public {
         MockERC20 tkn = new MockERC20(name, symbol, decimals);
         assertEq(tkn.name(), name);
@@ -330,17 +227,21 @@ contract ERC20Test is TestPlus {
         assertEq(tkn.decimals(), decimals);
     }
 
-    function testMint(address from, uint256 amount) public {
-        token.mint(from, amount);
+    function testMint(address to, uint256 amount) public {
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(address(0), to, amount);
+        token.mint(to, amount);
 
         assertEq(token.totalSupply(), amount);
-        assertEq(token.balanceOf(from), amount);
+        assertEq(token.balanceOf(to), amount);
     }
 
     function testBurn(address from, uint256 mintAmount, uint256 burnAmount) public {
         burnAmount = _bound(burnAmount, 0, mintAmount);
 
         token.mint(from, mintAmount);
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(from, address(0), burnAmount);
         token.burn(from, burnAmount);
 
         assertEq(token.totalSupply(), mintAmount - burnAmount);
@@ -396,21 +297,16 @@ contract ERC20Test is TestPlus {
         _TestTemps memory t = _testTemps();
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
 
-        (t.v, t.r, t.s) = vm.sign(
-            t.privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(PERMIT_TYPEHASH, t.owner, t.to, t.amount, 0, t.deadline))
-                )
-            )
-        );
+        _signPermit(t);
 
-        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
+        _permit(t);
 
+        _checkAllowanceAndNonce(t);
+    }
+
+    function _checkAllowanceAndNonce(_TestTemps memory t) internal {
         assertEq(token.allowance(t.owner, t.to), t.amount);
-        assertEq(token.nonces(t.owner), 1);
+        assertEq(token.nonces(t.owner), t.nonce + 1);
     }
 
     function testBurnInsufficientBalanceReverts(address to, uint256 mintAmount, uint256 burnAmount)
@@ -478,23 +374,12 @@ contract ERC20Test is TestPlus {
     function testPermitBadNonceReverts(uint256) public {
         _TestTemps memory t = _testTemps();
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
-        if (t.nonce == 0) t.nonce = 1;
+        while (t.nonce == 0) t.nonce = _random();
 
-        (t.v, t.r, t.s) = vm.sign(
-            t.privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(
-                        abi.encode(PERMIT_TYPEHASH, t.owner, t.to, t.amount, t.nonce, t.deadline)
-                    )
-                )
-            )
-        );
+        _signPermit(t);
 
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
+        _permit(t);
     }
 
     function testPermitBadDeadlineReverts(uint256) public {
@@ -502,58 +387,51 @@ contract ERC20Test is TestPlus {
         if (t.deadline == type(uint256).max) t.deadline--;
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
 
-        (t.v, t.r, t.s) = vm.sign(
-            t.privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(PERMIT_TYPEHASH, t.owner, t.to, t.amount, 0, t.deadline))
-                )
-            )
-        );
+        _signPermit(t);
 
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(t.owner, t.to, t.amount, t.deadline + 1, t.v, t.r, t.s);
+        t.deadline += 1;
+        _permit(t);
     }
 
     function testPermitPastDeadlineReverts(uint256) public {
         _TestTemps memory t = _testTemps();
         t.deadline = _bound(t.deadline, 0, block.timestamp - 1);
 
-        (t.v, t.r, t.s) = vm.sign(
-            t.privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(PERMIT_TYPEHASH, t.owner, t.to, t.amount, 0, t.deadline))
-                )
-            )
-        );
+        _signPermit(t);
 
         vm.expectRevert(ERC20.PermitExpired.selector);
-        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
+        _permit(t);
     }
 
     function testPermitReplayReverts(uint256) public {
         _TestTemps memory t = _testTemps();
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
 
-        (t.v, t.r, t.s) = vm.sign(
-            t.privateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    token.DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(PERMIT_TYPEHASH, t.owner, t.to, t.amount, 0, t.deadline))
-                )
-            )
-        );
+        _signPermit(t);
 
-        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
+        _permit(t);
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
+        _permit(t);
+    }
+
+    function _signPermit(_TestTemps memory t) internal view {
+        bytes32 innerHash =
+            keccak256(abi.encode(PERMIT_TYPEHASH, t.owner, t.to, t.amount, t.nonce, t.deadline));
+        bytes32 domainSeparator = token.DOMAIN_SEPARATOR();
+        bytes32 outerHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, innerHash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, outerHash);
+    }
+
+    function _permit(_TestTemps memory t) internal {
+        address token_ = address(token);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(sub(t, 0x20))
+            mstore(sub(t, 0x20), 0xd505accf)
+            pop(call(gas(), token_, 0, sub(t, 0x04), 0xe4, 0x00, 0x00))
+            mstore(sub(t, 0x20), m)
+        }
     }
 }
 
