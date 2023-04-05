@@ -173,40 +173,58 @@ abstract contract ERC20 {
 
     /// @dev Atomically increases the allowance granted to `spender` by the caller.
     function increaseAllowance(address spender, uint256 difference) public virtual returns (bool) {
-        uint256 allowanceBefore = allowance(msg.sender, spender);
-        uint256 allowanceAfter;
         /// @solidity memory-safe-assembly
         assembly {
-            allowanceAfter := add(allowanceBefore, difference)
+            // Compute the allowance slot and load its value.
+            mstore(0x20, spender)
+            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
+            mstore(0x00, caller())
+            let allowanceSlot := keccak256(0x0c, 0x34)
+            let allowanceBefore := sload(allowanceSlot)
+            // Add to the allowance.
+            let allowanceAfter := add(allowanceBefore, difference)
             // Revert upon overflow.
             if lt(allowanceAfter, allowanceBefore) {
                 mstore(0x00, _ALLOWANCE_OVERFLOW_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
+            // Store the updated allowance.
+            sstore(allowanceSlot, allowanceAfter)
+            // Emit the {Approval} event.
+            mstore(0x00, allowanceAfter)
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, shl(96, spender)))
         }
-        _approve(msg.sender, spender, allowanceAfter);
         return true;
     }
 
     /// @dev Atomically decreases the allowance granted to `spender` by the caller.
     function decreaseAllowance(address spender, uint256 difference) public virtual returns (bool) {
-        uint256 allowanceBefore = allowance(msg.sender, spender);
-        uint256 allowanceAfter;
         /// @solidity memory-safe-assembly
         assembly {
+            // Compute the allowance slot and load its value.
+            mstore(0x20, spender)
+            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
+            mstore(0x00, caller())
+            let allowanceSlot := keccak256(0x0c, 0x34)
+            let allowanceBefore := sload(allowanceSlot)
             // Revert if will underflow.
             if lt(allowanceBefore, difference) {
                 mstore(0x00, _ALLOWANCE_UNDERFLOW_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
-            allowanceAfter := sub(allowanceBefore, difference)
+            // Subtract and store the updated allowance.
+            let allowanceAfter := sub(allowanceBefore, difference)
+            sstore(allowanceSlot, allowanceAfter)
+            // Emit the {Approval} event.
+            mstore(0x00, allowanceAfter)
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, shl(96, spender)))
         }
-        _approve(msg.sender, spender, allowanceAfter);
         return true;
     }
 
     /// @dev Transfer `amount` tokens from the caller to `to`.
     function transfer(address to, uint256 amount) public virtual returns (bool) {
+        _beforeTokenTransfer(msg.sender, to, amount);
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the balance slot and load its value.
@@ -232,17 +250,19 @@ abstract contract ERC20 {
             mstore(0x00, amount)
             log3(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, caller(), shr(96, shl(96, to)))
         }
+        _afterTokenTransfer(msg.sender, to, amount);
         return true;
     }
 
     /// @dev Transfers `amount` tokens from `from` to `to`.
     function transferFrom(address from, address to, uint256 amount) public virtual returns (bool) {
+        _beforeTokenTransfer(from, to, amount);
         /// @solidity memory-safe-assembly
         assembly {
+            from := shl(96, from)
             // Compute the allowance slot and load its value.
             mstore(0x20, caller())
-            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
-            mstore(0x00, from)
+            mstore(0x0c, or(from, _ALLOWANCE_SLOT_SEED))
             let allowanceSlot := keccak256(0x0c, 0x34)
             let allowanceValue := sload(allowanceSlot)
             // If the allowance is not the maximum uint256 value.
@@ -256,8 +276,7 @@ abstract contract ERC20 {
                 sstore(allowanceSlot, sub(allowanceValue, amount))
             }
             // Compute the balance slot and load its value.
-            mstore(0x0c, _BALANCE_SLOT_SEED)
-            mstore(0x00, from)
+            mstore(0x0c, or(from, _BALANCE_SLOT_SEED))
             let fromBalanceSlot := keccak256(0x0c, 0x20)
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
@@ -275,11 +294,10 @@ abstract contract ERC20 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
-            // forgefmt: disable-next-item
-            log3(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE,
-                shr(96, shl(96, from)), shr(96, shl(96, to)))
+            mstore(0x20, amount)
+            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, from), shr(96, mload(0x0c)))
         }
+        _afterTokenTransfer(from, to, amount);
         return true;
     }
 
@@ -392,6 +410,7 @@ abstract contract ERC20 {
 
     /// @dev Mints `amount` tokens to `to`, increasing the total supply.
     function _mint(address to, uint256 amount) internal virtual {
+        _beforeTokenTransfer(address(0), to, amount);
         /// @solidity memory-safe-assembly
         assembly {
             let totalSupplyBefore := sload(_TOTAL_SUPPLY_SLOT)
@@ -413,10 +432,12 @@ abstract contract ERC20 {
             mstore(0x00, amount)
             log3(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, 0, shr(96, shl(96, to)))
         }
+        _afterTokenTransfer(address(0), to, amount);
     }
 
     /// @dev Burns `amount` tokens from `from`, reducing the total supply.
     function _burn(address from, uint256 amount) internal virtual {
+        _beforeTokenTransfer(from, address(0), amount);
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the balance slot and load its value.
@@ -437,22 +458,79 @@ abstract contract ERC20 {
             mstore(0x00, amount)
             log3(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), 0)
         }
+        _afterTokenTransfer(from, address(0), amount);
+    }
+
+    /// @dev Moves `amount` of tokens from `from` to `to`.
+    function _transfer(address from, address to, uint256 amount) internal virtual {
+        _beforeTokenTransfer(from, to, amount);
+        /// @solidity memory-safe-assembly
+        assembly {
+            from := shl(96, from)
+            // Compute the balance slot and load its value.
+            mstore(0x0c, or(from, _BALANCE_SLOT_SEED))
+            let fromBalanceSlot := keccak256(0x0c, 0x20)
+            let fromBalance := sload(fromBalanceSlot)
+            // Revert if insufficient balance.
+            if gt(amount, fromBalance) {
+                mstore(0x00, _INSUFFICIENT_BALANCE_ERROR_SELECTOR)
+                revert(0x1c, 0x04)
+            }
+            // Subtract and store the updated balance.
+            sstore(fromBalanceSlot, sub(fromBalance, amount))
+            // Compute the balance slot of `to`, and load its value.
+            mstore(0x00, to)
+            let toBalanceSlot := keccak256(0x0c, 0x20)
+            // Add and store the updated balance of `to`.
+            // Will not overflow because the sum of all user balances
+            // cannot exceed the maximum uint256 value.
+            sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
+            // Emit the {Transfer} event.
+            mstore(0x20, amount)
+            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, from), shr(96, mload(0x0c)))
+        }
+        _afterTokenTransfer(from, to, amount);
+    }
+
+    /// @dev Updates the allowance of `owner` for `spender` based on spent `amount`.
+    function _spendAllowance(address owner, address spender, uint256 amount) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the allowance slot and load its value.
+            mstore(0x20, spender)
+            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
+            mstore(0x00, owner)
+            let allowanceSlot := keccak256(0x0c, 0x34)
+            let allowanceValue := sload(allowanceSlot)
+            // If the allowance is not the maximum uint256 value.
+            if iszero(eq(allowanceValue, not(0))) {
+                // Revert if the amount to be transferred exceeds the allowance.
+                if gt(amount, allowanceValue) {
+                    mstore(0x00, _INSUFFICIENT_ALLOWANCE_ERROR_SELECTOR)
+                    revert(0x1c, 0x04)
+                }
+                // Subtract and store the updated allowance.
+                sstore(allowanceSlot, sub(allowanceValue, amount))
+            }
+        }
     }
 
     /// @dev Sets `amount` as the allowance of `spender` over the tokens of `owner`.
     function _approve(address owner, address spender, uint256 amount) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
+            owner := shl(96, owner)
             // Compute the allowance slot and store the amount.
             mstore(0x20, spender)
-            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
-            mstore(0x00, owner)
+            mstore(0x0c, or(owner, _ALLOWANCE_SLOT_SEED))
             sstore(keccak256(0x0c, 0x34), amount)
             // Emit the {Approval} event.
             mstore(0x00, amount)
-            // forgefmt: disable-next-item
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE,
-                shr(96, shl(96, owner)), shr(96, shl(96, spender)))
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, shr(96, owner), shr(96, mload(0x2c)))
         }
     }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual {}
+
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual {}
 }

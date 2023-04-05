@@ -294,6 +294,38 @@ contract ERC20Test is TestPlus {
         }
     }
 
+    function testDirectTransfer(uint256) public {
+        _TestTemps memory t = _testTemps();
+        uint256 totalSupply = _random();
+        token.mint(t.owner, totalSupply);
+        assertEq(token.balanceOf(t.owner), totalSupply);
+        assertEq(token.balanceOf(t.to), 0);
+        if (t.amount > totalSupply) {
+            vm.expectRevert(ERC20.InsufficientBalance.selector);
+            token.directTransfer(t.owner, t.to, t.amount);
+        } else {
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(t.owner, t.to, t.amount);
+            token.directTransfer(t.owner, t.to, t.amount);
+            assertEq(token.balanceOf(t.owner), totalSupply - t.amount);
+            assertEq(token.balanceOf(t.to), t.amount);
+        }
+    }
+
+    function testDirectSpendAllowance(uint256) public {
+        _TestTemps memory t = _testTemps();
+        uint256 allowance = _random();
+        vm.prank(t.owner);
+        token.approve(t.to, allowance);
+        if (t.amount > allowance) {
+            vm.expectRevert(ERC20.InsufficientAllowance.selector);
+            token.directSpendAllowance(t.owner, t.to, t.amount);
+        } else {
+            token.directSpendAllowance(t.owner, t.to, t.amount);
+            assertEq(token.allowance(t.owner, t.to), allowance - t.amount);
+        }
+    }
+
     function testPermit(uint256) public {
         _TestTemps memory t = _testTemps();
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;

@@ -33,4 +33,12 @@ contract MockERC20 is ERC20 {
     function burn(address from, uint256 value) public virtual {
         _burn(from, value);
     }
+
+    function directTransfer(address from, address to, uint256 amount) public virtual {
+        _transfer(from, to, amount);
+    }
+
+    function directSpendAllowance(address owner, address spender, uint256 amount) public virtual {
+        _spendAllowance(owner, spender, amount);
+    }
 }
