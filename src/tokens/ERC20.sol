@@ -391,8 +391,7 @@ abstract contract ERC20 {
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Grab the free memory pointer.
-            result := mload(0x40)
+            result := mload(0x40) // Grab the free memory pointer.
         }
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
         bytes32 nameHash = keccak256(bytes(name()));
