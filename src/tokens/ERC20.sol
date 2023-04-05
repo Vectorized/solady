@@ -239,7 +239,7 @@ abstract contract ERC20 {
             }
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
-            // Compute the balance slot of `to`, and load its value.
+            // Compute the balance slot of `to`.
             mstore(0x00, to)
             let toBalanceSlot := keccak256(0x0c, 0x20)
             // Add and store the updated balance of `to`.
@@ -286,7 +286,7 @@ abstract contract ERC20 {
             }
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
-            // Compute the balance slot of `to`, and load its value.
+            // Compute the balance slot of `to`.
             mstore(0x00, to)
             let toBalanceSlot := keccak256(0x0c, 0x20)
             // Add and store the updated balance of `to`.
@@ -358,29 +358,32 @@ abstract contract ERC20 {
             mstore(add(m, 0x80), nonceValue)
             mstore(add(m, 0xa0), deadline)
             // Prepare the outer hash.
-            mstore(add(m, 0x40), keccak256(m, 0xc0))
-            mstore(add(m, 0x20), domainSeparator)
-            mstore(m, 0x1901)
+            mstore(0, 0x1901)
+            mstore(0x20, domainSeparator)
+            mstore(0x40, keccak256(m, 0xc0))
             // Prepare the ecrecover calldata.
-            mstore(m, keccak256(add(m, 0x1e), 0x42))
-            mstore(add(m, 0x20), and(0xff, v))
-            mstore(add(m, 0x40), r)
-            mstore(add(m, 0x60), s)
-            pop(staticcall(gas(), 1, m, 0x80, m, 0x20))
-            // Revert if the ecrecover fails (zero returndata),
+            mstore(0, keccak256(0x1e, 0x42))
+            mstore(0x20, and(0xff, v))
+            mstore(0x40, r)
+            mstore(0x60, s)
+            pop(staticcall(gas(), 1, 0, 0x80, 0x20, 0x20))
+            // Revert if the ecrecover fails (returndata will be 0x00),
             // or if the recovered address is not equal to `owner`.
-            if iszero(mul(returndatasize(), eq(mload(m), owner))) {
+            // If ecrecover succeeds, returndatasize will be 0x20.
+            if iszero(eq(mload(returndatasize()), owner)) {
                 mstore(0x00, _INVALID_PERMIT_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
             // Compute the allowance slot and store the value.
-            mstore(0x20, spender)
+            mstore(returndatasize(), spender)
             mstore(0x0c, _ALLOWANCE_SLOT_SEED)
             mstore(0x00, owner)
             sstore(keccak256(0x0c, 0x34), value)
             // Emit the {Approval} event.
             mstore(0x00, value)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, owner, spender)
+            log3(0x00, returndatasize(), _APPROVAL_EVENT_SIGNATURE, owner, spender)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
         }
     }
 
@@ -478,7 +481,7 @@ abstract contract ERC20 {
             }
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
-            // Compute the balance slot of `to`, and load its value.
+            // Compute the balance slot of `to`.
             mstore(0x00, to)
             let toBalanceSlot := keccak256(0x0c, 0x20)
             // Add and store the updated balance of `to`.
