@@ -166,7 +166,7 @@ abstract contract ERC20 {
             sstore(keccak256(0x0c, 0x34), amount)
             // Emit the {Approval} event.
             mstore(0x00, amount)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, shl(96, spender)))
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
         }
         return true;
     }
@@ -192,7 +192,7 @@ abstract contract ERC20 {
             sstore(allowanceSlot, allowanceAfter)
             // Emit the {Approval} event.
             mstore(0x00, allowanceAfter)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, shl(96, spender)))
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
         }
         return true;
     }
@@ -217,7 +217,7 @@ abstract contract ERC20 {
             sstore(allowanceSlot, allowanceAfter)
             // Emit the {Approval} event.
             mstore(0x00, allowanceAfter)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, shl(96, spender)))
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
         }
         return true;
     }
@@ -247,8 +247,8 @@ abstract contract ERC20 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
-            log3(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, caller(), shr(96, shl(96, to)))
+            mstore(0x20, amount)
+            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, caller(), shr(96, mload(0x0c)))
         }
         _afterTokenTransfer(msg.sender, to, amount);
         return true;
@@ -259,24 +259,24 @@ abstract contract ERC20 {
         _beforeTokenTransfer(from, to, amount);
         /// @solidity memory-safe-assembly
         assembly {
-            from := shl(96, from)
+            let from_ := shl(96, from)
             // Compute the allowance slot and load its value.
             mstore(0x20, caller())
-            mstore(0x0c, or(from, _ALLOWANCE_SLOT_SEED))
+            mstore(0x0c, or(from_, _ALLOWANCE_SLOT_SEED))
             let allowanceSlot := keccak256(0x0c, 0x34)
-            let allowanceValue := sload(allowanceSlot)
+            let allowance_ := sload(allowanceSlot)
             // If the allowance is not the maximum uint256 value.
-            if iszero(eq(allowanceValue, not(0))) {
+            if iszero(eq(allowance_, not(0))) {
                 // Revert if the amount to be transferred exceeds the allowance.
-                if gt(amount, allowanceValue) {
+                if gt(amount, allowance_) {
                     mstore(0x00, _INSUFFICIENT_ALLOWANCE_ERROR_SELECTOR)
                     revert(0x1c, 0x04)
                 }
                 // Subtract and store the updated allowance.
-                sstore(allowanceSlot, sub(allowanceValue, amount))
+                sstore(allowanceSlot, sub(allowance_, amount))
             }
             // Compute the balance slot and load its value.
-            mstore(0x0c, or(from, _BALANCE_SLOT_SEED))
+            mstore(0x0c, or(from_, _BALANCE_SLOT_SEED))
             let fromBalanceSlot := keccak256(0x0c, 0x20)
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
@@ -295,7 +295,7 @@ abstract contract ERC20 {
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
             mstore(0x20, amount)
-            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, from), shr(96, mload(0x0c)))
+            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, from_), shr(96, mload(0x0c)))
         }
         _afterTokenTransfer(from, to, amount);
         return true;
@@ -429,8 +429,8 @@ abstract contract ERC20 {
             // Add and store the updated balance.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
-            log3(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, 0, shr(96, shl(96, to)))
+            mstore(0x20, amount)
+            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, 0, shr(96, mload(0x0c)))
         }
         _afterTokenTransfer(address(0), to, amount);
     }
@@ -466,9 +466,9 @@ abstract contract ERC20 {
         _beforeTokenTransfer(from, to, amount);
         /// @solidity memory-safe-assembly
         assembly {
-            from := shl(96, from)
+            let from_ := shl(96, from)
             // Compute the balance slot and load its value.
-            mstore(0x0c, or(from, _BALANCE_SLOT_SEED))
+            mstore(0x0c, or(from_, _BALANCE_SLOT_SEED))
             let fromBalanceSlot := keccak256(0x0c, 0x20)
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
@@ -487,7 +487,7 @@ abstract contract ERC20 {
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
             mstore(0x20, amount)
-            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, from), shr(96, mload(0x0c)))
+            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, from_), shr(96, mload(0x0c)))
         }
         _afterTokenTransfer(from, to, amount);
     }
@@ -501,16 +501,16 @@ abstract contract ERC20 {
             mstore(0x0c, _ALLOWANCE_SLOT_SEED)
             mstore(0x00, owner)
             let allowanceSlot := keccak256(0x0c, 0x34)
-            let allowanceValue := sload(allowanceSlot)
+            let allowance_ := sload(allowanceSlot)
             // If the allowance is not the maximum uint256 value.
-            if iszero(eq(allowanceValue, not(0))) {
+            if iszero(eq(allowance_, not(0))) {
                 // Revert if the amount to be transferred exceeds the allowance.
-                if gt(amount, allowanceValue) {
+                if gt(amount, allowance_) {
                     mstore(0x00, _INSUFFICIENT_ALLOWANCE_ERROR_SELECTOR)
                     revert(0x1c, 0x04)
                 }
                 // Subtract and store the updated allowance.
-                sstore(allowanceSlot, sub(allowanceValue, amount))
+                sstore(allowanceSlot, sub(allowance_, amount))
             }
         }
     }
@@ -519,14 +519,14 @@ abstract contract ERC20 {
     function _approve(address owner, address spender, uint256 amount) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            owner := shl(96, owner)
+            let owner_ := shl(96, owner)
             // Compute the allowance slot and store the amount.
             mstore(0x20, spender)
-            mstore(0x0c, or(owner, _ALLOWANCE_SLOT_SEED))
+            mstore(0x0c, or(owner_, _ALLOWANCE_SLOT_SEED))
             sstore(keccak256(0x0c, 0x34), amount)
             // Emit the {Approval} event.
             mstore(0x00, amount)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, shr(96, owner), shr(96, mload(0x2c)))
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, shr(96, owner_), shr(96, mload(0x2c)))
         }
     }
 
