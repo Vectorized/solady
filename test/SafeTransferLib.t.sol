@@ -630,13 +630,23 @@ contract SafeTransferLibTest is TestPlus {
     }
 
     function forceApprove(address token, address from, address to, uint256 amount) public {
-        uint256 slot = token == address(erc20) ? 4 : 2; // Standard ERC20 name and symbol aren't constant.
-
-        vm.store(
-            token,
-            keccak256(abi.encode(to, keccak256(abi.encode(from, uint256(slot))))),
-            bytes32(uint256(amount))
-        );
+        if (token == address(erc20)) {
+            bytes32 allowanceSlot;
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x20, to)
+                mstore(0x0c, 0x7f5e9f20) // `_ALLOWANCE_SLOT_SEED`.
+                mstore(0x00, from)
+                allowanceSlot := keccak256(0x0c, 0x34)
+            }
+            vm.store(token, allowanceSlot, bytes32(uint256(amount)));
+        } else {
+            vm.store(
+                token,
+                keccak256(abi.encode(to, keccak256(abi.encode(from, uint256(2))))),
+                bytes32(uint256(amount))
+            );
+        }
 
         assertEq(ERC20(token).allowance(from, to), amount, "wrong allowance");
     }
