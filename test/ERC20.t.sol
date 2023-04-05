@@ -127,6 +127,7 @@ contract ERC20Test is TestPlus {
 
         _signPermit(t);
 
+        _expectPermitEmitApproval(t);
         _permit(t);
 
         _checkAllowanceAndNonce(t);
@@ -299,6 +300,7 @@ contract ERC20Test is TestPlus {
 
         _signPermit(t);
 
+        _expectPermitEmitApproval(t);
         _permit(t);
 
         _checkAllowanceAndNonce(t);
@@ -410,6 +412,7 @@ contract ERC20Test is TestPlus {
 
         _signPermit(t);
 
+        _expectPermitEmitApproval(t);
         _permit(t);
         vm.expectRevert(ERC20.InvalidPermit.selector);
         _permit(t);
@@ -421,6 +424,11 @@ contract ERC20Test is TestPlus {
         bytes32 domainSeparator = token.DOMAIN_SEPARATOR();
         bytes32 outerHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, innerHash));
         (t.v, t.r, t.s) = vm.sign(t.privateKey, outerHash);
+    }
+
+    function _expectPermitEmitApproval(_TestTemps memory t) internal {
+        vm.expectEmit(true, true, true, true);
+        emit Approval(t.owner, t.to, t.amount);
     }
 
     function _permit(_TestTemps memory t) internal {
