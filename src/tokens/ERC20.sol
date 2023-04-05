@@ -530,7 +530,11 @@ abstract contract ERC20 {
         }
     }
 
+    /// @dev Hook that is called before any transfer of tokens.
+    /// This includes minting and burning.
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual {}
 
+    /// @dev Hook that is called after any transfer of tokens.
+    /// This includes minting and burning.
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual {}
 }
