@@ -21,13 +21,18 @@ contract ERC20Test is TestPlus {
         uint256 privateKey;
         address to;
         uint256 amount;
+        uint256 nonce;
         uint256 deadline;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
     }
 
     function _testTemps() internal returns (_TestTemps memory t) {
         (t.owner, t.privateKey) = _randomSigner();
         (t.to,) = _randomSigner();
         t.amount = _random();
+        t.nonce = _random();
         t.deadline = _random();
     }
 
@@ -120,7 +125,7 @@ contract ERC20Test is TestPlus {
     function testPermit() public {
         (address owner, uint256 privateKey) = _randomSigner();
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             privateKey,
             keccak256(
                 abi.encodePacked(
@@ -135,7 +140,7 @@ contract ERC20Test is TestPlus {
             )
         );
 
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
+        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, t.v, t.r, t.s);
 
         assertEq(token.allowance(owner, address(0xCAFE)), 1e18);
         assertEq(token.nonces(owner), 1);
@@ -232,7 +237,7 @@ contract ERC20Test is TestPlus {
     function testPermitBadNonceReverts() public {
         (address owner, uint256 privateKey) = _randomSigner();
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             privateKey,
             keccak256(
                 abi.encodePacked(
@@ -248,13 +253,13 @@ contract ERC20Test is TestPlus {
         );
 
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
+        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, t.v, t.r, t.s);
     }
 
     function testPermitBadDeadlineReverts() public {
         (address owner, uint256 privateKey) = _randomSigner();
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             privateKey,
             keccak256(
                 abi.encodePacked(
@@ -270,14 +275,14 @@ contract ERC20Test is TestPlus {
         );
 
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp + 1, v, r, s);
+        token.permit(owner, address(0xCAFE), 1e18, block.timestamp + 1, t.v, t.r, t.s);
     }
 
     function testPermitPastDeadlineReverts() public {
         uint256 oldTimestamp = block.timestamp;
         (address owner, uint256 privateKey) = _randomSigner();
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             privateKey,
             keccak256(
                 abi.encodePacked(
@@ -292,13 +297,13 @@ contract ERC20Test is TestPlus {
 
         vm.warp(block.timestamp + 1);
         vm.expectRevert(ERC20.PermitExpired.selector);
-        token.permit(owner, address(0xCAFE), 1e18, oldTimestamp, v, r, s);
+        token.permit(owner, address(0xCAFE), 1e18, oldTimestamp, t.v, t.r, t.s);
     }
 
     function testPermitReplayReverts() public {
         (address owner, uint256 privateKey) = _randomSigner();
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             privateKey,
             keccak256(
                 abi.encodePacked(
@@ -313,9 +318,9 @@ contract ERC20Test is TestPlus {
             )
         );
 
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
+        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, t.v, t.r, t.s);
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
+        token.permit(owner, address(0xCAFE), 1e18, block.timestamp, t.v, t.r, t.s);
     }
 
     function testMetadata(string calldata name, string calldata symbol, uint8 decimals) public {
@@ -391,7 +396,7 @@ contract ERC20Test is TestPlus {
         _TestTemps memory t = _testTemps();
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             t.privateKey,
             keccak256(
                 abi.encodePacked(
@@ -402,7 +407,7 @@ contract ERC20Test is TestPlus {
             )
         );
 
-        token.permit(t.owner, t.to, t.amount, t.deadline, v, r, s);
+        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
 
         assertEq(token.allowance(t.owner, t.to), t.amount);
         assertEq(token.nonces(t.owner), 1);
@@ -470,26 +475,26 @@ contract ERC20Test is TestPlus {
         token.transferFrom(from, to, sendAmount);
     }
 
-    function testPermitBadNonceReverts(uint256, uint256 nonce) public {
+    function testPermitBadNonceReverts(uint256) public {
         _TestTemps memory t = _testTemps();
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
-        if (nonce == 0) nonce = 1;
+        if (t.nonce == 0) t.nonce = 1;
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             t.privateKey,
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
                     token.DOMAIN_SEPARATOR(),
                     keccak256(
-                        abi.encode(PERMIT_TYPEHASH, t.owner, t.to, t.amount, nonce, t.deadline)
+                        abi.encode(PERMIT_TYPEHASH, t.owner, t.to, t.amount, t.nonce, t.deadline)
                     )
                 )
             )
         );
 
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(t.owner, t.to, t.amount, t.deadline, v, r, s);
+        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
     }
 
     function testPermitBadDeadlineReverts(uint256) public {
@@ -497,7 +502,7 @@ contract ERC20Test is TestPlus {
         if (t.deadline == type(uint256).max) t.deadline--;
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             t.privateKey,
             keccak256(
                 abi.encodePacked(
@@ -509,14 +514,14 @@ contract ERC20Test is TestPlus {
         );
 
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(t.owner, t.to, t.amount, t.deadline + 1, v, r, s);
+        token.permit(t.owner, t.to, t.amount, t.deadline + 1, t.v, t.r, t.s);
     }
 
     function testPermitPastDeadlineReverts(uint256) public {
         _TestTemps memory t = _testTemps();
         t.deadline = _bound(t.deadline, 0, block.timestamp - 1);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             t.privateKey,
             keccak256(
                 abi.encodePacked(
@@ -528,14 +533,14 @@ contract ERC20Test is TestPlus {
         );
 
         vm.expectRevert(ERC20.PermitExpired.selector);
-        token.permit(t.owner, t.to, t.amount, t.deadline, v, r, s);
+        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
     }
 
     function testPermitReplayReverts(uint256) public {
         _TestTemps memory t = _testTemps();
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+        (t.v, t.r, t.s) = vm.sign(
             t.privateKey,
             keccak256(
                 abi.encodePacked(
@@ -546,9 +551,9 @@ contract ERC20Test is TestPlus {
             )
         );
 
-        token.permit(t.owner, t.to, t.amount, t.deadline, v, r, s);
+        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
         vm.expectRevert(ERC20.InvalidPermit.selector);
-        token.permit(t.owner, t.to, t.amount, t.deadline, v, r, s);
+        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
     }
 }
 
