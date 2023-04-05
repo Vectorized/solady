@@ -10,13 +10,6 @@ import "./Ownable.sol";
 /// may be unique to this codebase.
 abstract contract OwnableRoles is Ownable {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev `bytes4(keccak256(bytes("Unauthorized()")))`.
-    uint256 private constant _UNAUTHORIZED_ERROR_SELECTOR = 0x82b42900;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -96,7 +89,7 @@ abstract contract OwnableRoles is Ownable {
             // Load the stored value, and if the `and` intersection
             // of the value and `roles` is zero, revert.
             if iszero(and(sload(keccak256(0x0c, 0x20)), roles)) {
-                mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                mstore(0x00, 0x82b42900) // `Unauthorized()`.
                 revert(0x1c, 0x04)
             }
         }
@@ -117,7 +110,7 @@ abstract contract OwnableRoles is Ownable {
                 // Load the stored value, and if the `and` intersection
                 // of the value and `roles` is zero, revert.
                 if iszero(and(sload(keccak256(0x0c, 0x20)), roles)) {
-                    mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                    mstore(0x00, 0x82b42900) // `Unauthorized()`.
                     revert(0x1c, 0x04)
                 }
             }
@@ -139,7 +132,7 @@ abstract contract OwnableRoles is Ownable {
                 // If the caller is not the stored owner.
                 // Note: `_ROLE_SLOT_SEED` is equal to `_OWNER_SLOT_NOT`.
                 if iszero(eq(caller(), sload(not(_ROLE_SLOT_SEED)))) {
-                    mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                    mstore(0x00, 0x82b42900) // `Unauthorized()`.
                     revert(0x1c, 0x04)
                 }
             }
