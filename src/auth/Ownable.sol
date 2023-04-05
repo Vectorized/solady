@@ -20,15 +20,6 @@ abstract contract Ownable {
     /// @dev The `pendingOwner` does not have a valid handover request.
     error NoHandoverRequest();
 
-    /// @dev `bytes4(keccak256(bytes("Unauthorized()")))`.
-    uint256 private constant _UNAUTHORIZED_ERROR_SELECTOR = 0x82b42900;
-
-    /// @dev `bytes4(keccak256(bytes("NewOwnerIsZeroAddress()")))`.
-    uint256 private constant _NEW_OWNER_IS_ZERO_ADDRESS_ERROR_SELECTOR = 0x7448fbae;
-
-    /// @dev `bytes4(keccak256(bytes("NoHandoverRequest()")))`.
-    uint256 private constant _NO_HANDOVER_REQUEST_ERROR_SELECTOR = 0x6f5e8818;
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -119,7 +110,7 @@ abstract contract Ownable {
         assembly {
             // If the caller is not the stored owner, revert.
             if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
-                mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
+                mstore(0x00, 0x82b42900) // `Unauthorized()`.
                 revert(0x1c, 0x04)
             }
         }
@@ -134,7 +125,7 @@ abstract contract Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(shl(96, newOwner)) {
-                mstore(0x00, _NEW_OWNER_IS_ZERO_ADDRESS_ERROR_SELECTOR)
+                mstore(0x00, 0x7448fbae) // `NewOwnerIsZeroAddress()`.
                 revert(0x1c, 0x04)
             }
         }
@@ -187,7 +178,7 @@ abstract contract Ownable {
             let handoverSlot := keccak256(0x0c, 0x20)
             // If the handover does not exist, or has expired.
             if gt(timestamp(), sload(handoverSlot)) {
-                mstore(0x00, _NO_HANDOVER_REQUEST_ERROR_SELECTOR)
+                mstore(0x00, 0x6f5e8818) // `NoHandoverRequest()`.
                 revert(0x1c, 0x04)
             }
             // Set the handover slot to 0.
