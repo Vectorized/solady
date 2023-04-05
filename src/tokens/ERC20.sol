@@ -370,18 +370,18 @@ abstract contract ERC20 {
             // Revert if the ecrecover fails (returndata will be 0x00),
             // or if the recovered address is not equal to `owner`.
             // If ecrecover succeeds, returndatasize will be 0x20.
-            if iszero(eq(mload(returndatasize()), owner)) {
+            if iszero(mul(returndatasize(), eq(mload(returndatasize()), owner))) {
                 mstore(0x00, _INVALID_PERMIT_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
             // Compute the allowance slot and store the value.
-            mstore(returndatasize(), spender)
+            mstore(0x20, spender)
             mstore(0x0c, _ALLOWANCE_SLOT_SEED)
             mstore(0x00, owner)
             sstore(keccak256(0x0c, 0x34), value)
             // Emit the {Approval} event.
             mstore(0x00, value)
-            log3(0x00, returndatasize(), _APPROVAL_EVENT_SIGNATURE, owner, spender)
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, owner, spender)
             mstore(0x40, m) // Restore the free memory pointer.
             mstore(0x60, 0) // Restore the zero pointer.
         }
