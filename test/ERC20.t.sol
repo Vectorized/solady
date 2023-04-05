@@ -296,6 +296,8 @@ contract ERC20Test is TestPlus {
 
     function testDirectTransfer(uint256) public {
         _TestTemps memory t = _testTemps();
+        while (t.owner == t.to) (t.to,) = _randomSigner();
+
         uint256 totalSupply = _random();
         token.mint(t.owner, totalSupply);
         assertEq(token.balanceOf(t.owner), totalSupply);
