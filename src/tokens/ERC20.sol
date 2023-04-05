@@ -389,11 +389,16 @@ abstract contract ERC20 {
 
     /// @dev Returns the EIP-2612 domains separator.
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result) {
-        bytes32 nameHash = keccak256(bytes(name()));
         /// @solidity memory-safe-assembly
         assembly {
             // Grab the free memory pointer.
-            let m := mload(0x40)
+            result := mload(0x40)
+        }
+        //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
+        bytes32 nameHash = keccak256(bytes(name()));
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := result
             // `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
             // forgefmt: disable-next-item
             mstore(m, 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f)
