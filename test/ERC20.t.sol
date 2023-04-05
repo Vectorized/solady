@@ -255,17 +255,19 @@ contract ERC20Test is TestPlus {
         assertEq(token.allowance(address(this), to), amount);
     }
 
-    function testTransfer(address from, uint256 amount) public {
+    function testTransfer(address to, uint256 amount) public {
         token.mint(address(this), amount);
 
-        assertTrue(token.transfer(from, amount));
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(address(this), to, amount);
+        assertTrue(token.transfer(to, amount));
         assertEq(token.totalSupply(), amount);
 
-        if (address(this) == from) {
+        if (address(this) == to) {
             assertEq(token.balanceOf(address(this)), amount);
         } else {
             assertEq(token.balanceOf(address(this)), 0);
-            assertEq(token.balanceOf(from), amount);
+            assertEq(token.balanceOf(to), amount);
         }
     }
 
@@ -279,6 +281,8 @@ contract ERC20Test is TestPlus {
         vm.prank(from);
         token.approve(address(this), approval);
 
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(from, to, amount);
         assertTrue(token.transferFrom(from, to, amount));
         assertEq(token.totalSupply(), amount);
 
