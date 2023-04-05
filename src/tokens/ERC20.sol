@@ -31,27 +31,6 @@ abstract contract ERC20 {
     /// @dev The permit has expired.
     error PermitExpired();
 
-    /// @dev `bytes4(keccak256(bytes("TotalSupplyOverflow()")))`.
-    uint256 private constant _TOTAL_SUPPLY_OVERFLOW_ERROR_SELECTOR = 0xe5cfe957;
-
-    /// @dev `bytes4(keccak256(bytes("AllowanceOverflow()")))`.
-    uint256 private constant _ALLOWANCE_OVERFLOW_ERROR_SELECTOR = 0xf9067066;
-
-    /// @dev `bytes4(keccak256(bytes("AllowanceUnderflow()")))`.
-    uint256 private constant _ALLOWANCE_UNDERFLOW_ERROR_SELECTOR = 0x8301ab38;
-
-    /// @dev `bytes4(keccak256(bytes("InsufficientBalance()")))`.
-    uint256 private constant _INSUFFICIENT_BALANCE_ERROR_SELECTOR = 0xf4d678b8;
-
-    /// @dev `bytes4(keccak256(bytes("InsufficientAllowance()")))`.
-    uint256 private constant _INSUFFICIENT_ALLOWANCE_ERROR_SELECTOR = 0x13be252b;
-
-    /// @dev `bytes4(keccak256(bytes("InvalidPermit()")))`.
-    uint256 private constant _INVALID_PERMIT_ERROR_SELECTOR = 0xddafbaef;
-
-    /// @dev `bytes4(keccak256(bytes("PermitExpired()")))`.
-    uint256 private constant _PERMIT_EXPIRED_ERROR_SELECTOR = 0x1a15a3cc;
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -185,7 +164,7 @@ abstract contract ERC20 {
             let allowanceAfter := add(allowanceBefore, difference)
             // Revert upon overflow.
             if lt(allowanceAfter, allowanceBefore) {
-                mstore(0x00, _ALLOWANCE_OVERFLOW_ERROR_SELECTOR)
+                mstore(0x00, 0xf9067066) // `AllowanceOverflow()`.
                 revert(0x1c, 0x04)
             }
             // Store the updated allowance.
@@ -209,7 +188,7 @@ abstract contract ERC20 {
             let allowanceBefore := sload(allowanceSlot)
             // Revert if will underflow.
             if lt(allowanceBefore, difference) {
-                mstore(0x00, _ALLOWANCE_UNDERFLOW_ERROR_SELECTOR)
+                mstore(0x00, 0x8301ab38) // `AllowanceUnderflow()`.
                 revert(0x1c, 0x04)
             }
             // Subtract and store the updated allowance.
@@ -234,7 +213,7 @@ abstract contract ERC20 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x00, _INSUFFICIENT_BALANCE_ERROR_SELECTOR)
+                mstore(0x00, 0xf4d678b8) // `InsufficientBalance()`.
                 revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance.
@@ -269,7 +248,7 @@ abstract contract ERC20 {
             if iszero(eq(allowance_, not(0))) {
                 // Revert if the amount to be transferred exceeds the allowance.
                 if gt(amount, allowance_) {
-                    mstore(0x00, _INSUFFICIENT_ALLOWANCE_ERROR_SELECTOR)
+                    mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                     revert(0x1c, 0x04)
                 }
                 // Subtract and store the updated allowance.
@@ -281,7 +260,7 @@ abstract contract ERC20 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x00, _INSUFFICIENT_BALANCE_ERROR_SELECTOR)
+                mstore(0x00, 0xf4d678b8) // `InsufficientBalance()`.
                 revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance.
@@ -333,7 +312,7 @@ abstract contract ERC20 {
         assembly {
             // Revert if the block timestamp greater than `deadline`.
             if gt(timestamp(), deadline) {
-                mstore(0x00, _PERMIT_EXPIRED_ERROR_SELECTOR)
+                mstore(0x00, 0x1a15a3cc) // `PermitExpired()`.
                 revert(0x1c, 0x04)
             }
             // Clean the upper 96 bits.
@@ -371,7 +350,7 @@ abstract contract ERC20 {
             // or if the recovered address is not equal to `owner`.
             // If ecrecover succeeds, returndatasize will be 0x20.
             if iszero(mul(returndatasize(), eq(mload(returndatasize()), owner))) {
-                mstore(0x00, _INVALID_PERMIT_ERROR_SELECTOR)
+                mstore(0x00, 0xddafbaef) // `InvalidPermit()`.
                 revert(0x1c, 0x04)
             }
             // Compute the allowance slot and store the value.
@@ -424,7 +403,7 @@ abstract contract ERC20 {
             let totalSupplyAfter := add(totalSupplyBefore, amount)
             // Revert if the total supply overflows.
             if lt(totalSupplyAfter, totalSupplyBefore) {
-                mstore(0x00, _TOTAL_SUPPLY_OVERFLOW_ERROR_SELECTOR)
+                mstore(0x00, 0xe5cfe957) // `TotalSupplyOverflow()`.
                 revert(0x1c, 0x04)
             }
             // Store the updated total supply.
@@ -454,7 +433,7 @@ abstract contract ERC20 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x00, _INSUFFICIENT_BALANCE_ERROR_SELECTOR)
+                mstore(0x00, 0xf4d678b8) // `InsufficientBalance()`.
                 revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance.
@@ -480,7 +459,7 @@ abstract contract ERC20 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x00, _INSUFFICIENT_BALANCE_ERROR_SELECTOR)
+                mstore(0x00, 0xf4d678b8) // `InsufficientBalance()`.
                 revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance.
@@ -513,7 +492,7 @@ abstract contract ERC20 {
             if iszero(eq(allowance_, not(0))) {
                 // Revert if the amount to be transferred exceeds the allowance.
                 if gt(amount, allowance_) {
-                    mstore(0x00, _INSUFFICIENT_ALLOWANCE_ERROR_SELECTOR)
+                    mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                     revert(0x1c, 0x04)
                 }
                 // Subtract and store the updated allowance.
