@@ -126,39 +126,61 @@ contract ERC20Test is TestPlus {
         assertEq(token.nonces(owner), 1);
     }
 
-    function testMintBeyondMaxUintReverts() public {
+    function testMintOverMaxUintReverts() public {
         token.mint(address(this), type(uint256).max);
         vm.expectRevert(ERC20.TotalSupplyOverflow.selector);
         token.mint(address(this), 1);
     }
 
-    function testIncreaseAllowance() public {
+    function testIncreaseAllowance(uint256 difference0, uint256 difference1) public {
         uint256 expected;
+        (address spender,) = _randomSigner();
         (address owner,) = _randomSigner();
-        for (uint256 i; i < 3; ++i) {
-            uint256 difference = _bound(_random(), 0, 1 << 128);
-            expected += difference;
-            vm.expectEmit(true, true, true, true);
-            emit Approval(owner, address(0xCAFE), expected);
+
+        expected += difference0;
+        vm.expectEmit(true, true, true, true);
+        emit Approval(owner, spender, expected);
+        vm.prank(owner);
+        token.increaseAllowance(spender, difference0);
+        assertEq(token.allowance(owner, spender), expected);
+
+        if (type(uint256).max - difference1 < difference0) {
+            vm.expectRevert(ERC20.AllowanceOverflow.selector);
             vm.prank(owner);
-            token.increaseAllowance(address(0xCAFE), difference);
-            assertEq(token.allowance(owner, address(0xCAFE)), expected);
+            token.increaseAllowance(spender, difference1);
+        } else {
+            expected += difference1;
+            vm.prank(owner);
+            vm.expectEmit(true, true, true, true);
+            emit Approval(owner, spender, expected);
+            token.increaseAllowance(spender, difference1);
+            assertEq(token.allowance(owner, spender), expected);
         }
     }
 
-    function testDecreaseAllowance() public {
+    function testDecreaseAllowance(uint256 difference0, uint256 difference1) public {
         uint256 expected = type(uint256).max;
+        (address spender,) = _randomSigner();
         (address owner,) = _randomSigner();
         vm.prank(owner);
-        token.approve(address(0xCAFE), expected);
-        for (uint256 i; i < 3; ++i) {
-            uint256 difference = _bound(_random(), 0, 1 << 128);
-            expected -= difference;
-            vm.expectEmit(true, true, true, true);
-            emit Approval(owner, address(0xCAFE), expected);
+        token.approve(spender, expected);
+
+        expected -= difference0;
+        vm.prank(owner);
+        token.decreaseAllowance(spender, difference0);
+        assertEq(token.allowance(owner, spender), expected);
+
+        if (difference1 > expected) {
+            vm.expectRevert(ERC20.AllowanceUnderflow.selector);
             vm.prank(owner);
-            token.decreaseAllowance(address(0xCAFE), difference);
-            assertEq(token.allowance(owner, address(0xCAFE)), expected);
+            token.decreaseAllowance(spender, difference1);
+        } else {
+            expected -= difference1;
+            vm.prank(owner);
+            vm.expectEmit(true, true, true, true);
+            emit Approval(owner, spender, expected);
+            token.decreaseAllowance(spender, difference1);
+            assertEq(token.allowance(owner, spender), expected);
         }
     }
 
