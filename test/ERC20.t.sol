@@ -317,7 +317,11 @@ contract ERC20Test is TestPlus {
         uint256 allowance = _random();
         vm.prank(t.owner);
         token.approve(t.to, allowance);
-        if (t.amount > allowance) {
+        assertEq(token.allowance(t.owner, t.to), allowance);
+        if (allowance == type(uint256).max) {
+            token.directSpendAllowance(t.owner, t.to, t.amount);
+            assertEq(token.allowance(t.owner, t.to), allowance);
+        } else if (t.amount > allowance) {
             vm.expectRevert(ERC20.InsufficientAllowance.selector);
             token.directSpendAllowance(t.owner, t.to, t.amount);
         } else {
