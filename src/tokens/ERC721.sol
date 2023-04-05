@@ -161,21 +161,6 @@ abstract contract ERC721 {
         }
     }
 
-    function isApprovedForAll(address owner, address operator)
-        public
-        view
-        virtual
-        returns (bool result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x20, operator)
-            mstore(0x0c, _OPERATOR_APPROVAL_SLOT_SEED)
-            mstore(0x00, owner)
-            result := sload(keccak256(0x0c, 0x34))
-        }
-    }
-
     function approve(address spender, uint256 id) public payable virtual {
         /// @solidity memory-safe-assembly
         assembly {
@@ -200,6 +185,21 @@ abstract contract ERC721 {
             sstore(keccak256(0x00, 0x40), spender)
             // Emit the {Approval} event.
             log4(0x00, 0x00, _APPROVAL_EVENT_SIGNATURE, caller(), spender, id)
+        }
+    }
+
+    function isApprovedForAll(address owner, address operator)
+        public
+        view
+        virtual
+        returns (bool result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, operator)
+            mstore(0x0c, _OPERATOR_APPROVAL_SLOT_SEED)
+            mstore(0x00, owner)
+            result := sload(keccak256(0x0c, 0x34))
         }
     }
 
@@ -296,15 +296,6 @@ abstract contract ERC721 {
         if (to.code.length != 0) _checkContractOnERC721Received(from, to, id, _data);
     }
 
-    function _exists(uint256 id) internal view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
-            mstore(0x00, id)
-            result := iszero(iszero(shl(96, sload(keccak256(0x00, 0x40)))))
-        }
-    }
-
     function supportsInterface(bytes4 interfaceId) public view virtual returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -314,14 +305,17 @@ abstract contract ERC721 {
         }
     }
 
-    function _safeMint(address to, uint256 id) internal virtual {
-        _mint(to, id);
-        if (to.code.length != 0) _checkContractOnERC721Received(address(0), to, id, "");
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                INTERNAL FUNCTIONS FOR USAGE                */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _safeMint(address to, uint256 id, bytes memory _data) internal virtual {
-        _mint(to, id);
-        if (to.code.length != 0) _checkContractOnERC721Received(address(0), to, id, _data);
+    function _exists(uint256 id) internal view virtual returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
+            mstore(0x00, id)
+            result := iszero(iszero(shl(96, sload(keccak256(0x00, 0x40)))))
+        }
     }
 
     function _mint(address to, uint256 id) internal virtual {
@@ -361,6 +355,16 @@ abstract contract ERC721 {
             // Emit the {Transfer} event.
             log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, 0, to, id)
         }
+    }
+
+    function _safeMint(address to, uint256 id) internal virtual {
+        _mint(to, id);
+        if (to.code.length != 0) _checkContractOnERC721Received(address(0), to, id, "");
+    }
+
+    function _safeMint(address to, uint256 id, bytes memory _data) internal virtual {
+        _mint(to, id);
+        if (to.code.length != 0) _checkContractOnERC721Received(address(0), to, id, _data);
     }
 
     function _burn(uint256 id) internal virtual {
@@ -418,6 +422,50 @@ abstract contract ERC721 {
             log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, owner, 0, id)
         }
     }
+
+    function _getAux(address owner) internal virtual returns (uint224 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+            mstore(0x00, owner)
+            result := shr(32, sload(keccak256(0x0c, 0x20)))
+        }
+    }
+
+    function _setAux(address owner, uint224 value) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+            mstore(0x00, owner)
+            let addressDataSlot := keccak256(0x0c, 0x20)
+            let packed := sload(addressDataSlot)
+            sstore(addressDataSlot, xor(packed, shl(32, xor(value, shr(32, packed)))))
+        }
+    }
+
+    function _getExtraData(uint256 id) internal virtual returns (uint96 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
+            mstore(0x00, id)
+            result := shr(160, sload(keccak256(0x00, 0x40)))
+        }
+    }
+
+    function _setExtraData(uint256 id, uint96 value) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
+            mstore(0x00, id)
+            let ownershipDataSlot := keccak256(0x00, 0x40)
+            let packed := sload(ownershipDataSlot)
+            sstore(ownershipDataSlot, xor(packed, shl(160, xor(value, shr(160, packed)))))
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _checkContractOnERC721Received(
         address from,

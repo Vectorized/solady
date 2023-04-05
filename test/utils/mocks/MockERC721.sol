@@ -26,19 +26,35 @@ contract MockERC721 is ERC721 {
         return string(abi.encodePacked("https://example.com/", LibString.toString(id)));
     }
 
-    function mint(address to, uint256 tokenId) public virtual {
-        _mint(to, tokenId);
+    function mint(address to, uint256 id) public virtual {
+        _mint(to, id);
     }
 
-    function burn(uint256 tokenId) public virtual {
-        _burn(tokenId);
+    function burn(uint256 id) public virtual {
+        _burn(id);
     }
 
-    function safeMint(address to, uint256 tokenId) public virtual {
-        _safeMint(to, tokenId);
+    function safeMint(address to, uint256 id) public virtual {
+        _safeMint(to, id);
     }
 
-    function safeMint(address to, uint256 tokenId, bytes memory data) public virtual {
-        _safeMint(to, tokenId, data);
+    function safeMint(address to, uint256 id, bytes memory data) public virtual {
+        _safeMint(to, id, data);
+    }
+
+    function getExtraData(uint256 id) public virtual returns (uint96) {
+        return _getExtraData(id);
+    }
+
+    function setExtraData(uint256 id, uint96 value) public virtual {
+        _setExtraData(id, value);
+    }
+
+    function getAux(address owner) public virtual returns (uint224) {
+        return _getAux(owner);
+    }
+
+    function setAux(address owner, uint224 value) public virtual {
+        _setAux(owner, value);
     }
 }

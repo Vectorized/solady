@@ -63,6 +63,12 @@ contract NonERC721Recipient {}
 contract ERC721Test is TestPlus {
     MockERC721 token;
 
+    event Transfer(address indexed from, address indexed to, uint256 indexed id);
+
+    event Approval(address indexed owner, address indexed approved, uint256 indexed id);
+
+    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+
     function setUp() public {
         token = new MockERC721("Token", "TKN");
     }
@@ -407,6 +413,121 @@ contract ERC721Test is TestPlus {
 
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
         token.ownerOf(id);
+    }
+
+    function testExtraData(uint256) public {
+        uint256 id = _random();
+        (address owner0,) = _randomSigner();
+        (address owner1,) = _randomSigner();
+        while (owner0 == owner1) (owner1,) = _randomSigner();
+
+        bool setExtraData = _random() % 2 == 0;
+        uint96 extraData = uint96(_bound(_random(), 0, type(uint96).max));
+        if (setExtraData) {
+            token.setExtraData(id, extraData);
+        }
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(address(0), owner0, id);
+        token.mint(owner0, id);
+        if (setExtraData) {
+            assertEq(token.getExtraData(id), extraData);
+        } else {
+            assertEq(token.getExtraData(id), 0);
+        }
+
+        vm.prank(owner0);
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(owner0, owner1, id);
+        token.transferFrom(owner0, owner1, id);
+        if (setExtraData) {
+            assertEq(token.getExtraData(id), extraData);
+        } else {
+            assertEq(token.getExtraData(id), 0);
+        }
+        assertEq(token.ownerOf(id), owner1);
+
+        if (_random() % 2 == 0) {
+            extraData = uint96(_bound(_random(), 0, type(uint96).max));
+            token.setExtraData(id, extraData);
+            setExtraData = true;
+        }
+
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(owner1, address(0), id);
+        token.burn(id);
+        if (setExtraData) {
+            assertEq(token.getExtraData(id), extraData);
+        } else {
+            assertEq(token.getExtraData(id), 0);
+        }
+        vm.expectRevert(ERC721.TokenDoesNotExist.selector);
+        token.ownerOf(id);
+    }
+
+    function testExtraData2(uint256) public {
+        uint256 id0 = _random();
+        uint256 id1 = _random();
+        while (id0 == id1) id1 = _random();
+        uint96 extraData0 = uint96(_bound(_random(), 0, type(uint96).max));
+        uint96 extraData1 = uint96(_bound(_random(), 0, type(uint96).max));
+        token.setExtraData(id0, extraData0);
+        token.setExtraData(id1, extraData1);
+        assertEq(token.getExtraData(id0), extraData0);
+        assertEq(token.getExtraData(id1), extraData1);
+    }
+
+    function testAux(uint256) public {
+        (address owner0,) = _randomSigner();
+        (address owner1,) = _randomSigner();
+        while (owner0 == owner1) (owner1,) = _randomSigner();
+
+        bool setAux = _random() % 2 == 0;
+        uint224 aux0 = uint224(_bound(_random(), 0, type(uint224).max));
+        uint224 aux1 = uint224(_bound(_random(), 0, type(uint224).max));
+        if (setAux) {
+            token.setAux(owner0, aux0);
+            token.setAux(owner1, aux1);
+        }
+
+        for (uint256 i; i < 2; ++i) {
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(address(0), owner0, i * 2 + 0);
+            token.mint(owner0, i * 2 + 0);
+            assertEq(token.balanceOf(owner0), i + 1);
+
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(address(0), owner1, i * 2 + 1);
+            token.mint(owner1, i * 2 + 1);
+            assertEq(token.balanceOf(owner1), i + 1);
+
+            if (setAux) {
+                assertEq(token.getAux(owner0), aux0);
+                assertEq(token.getAux(owner1), aux1);
+            } else {
+                assertEq(token.getAux(owner0), 0);
+                assertEq(token.getAux(owner1), 0);
+            }
+        }
+
+        for (uint256 i; i < 2; ++i) {
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(owner0, address(0), i * 2 + 0);
+            token.burn(i * 2 + 0);
+            assertEq(token.balanceOf(owner0), 1 - i);
+
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(owner1, address(0), i * 2 + 1);
+            token.burn(i * 2 + 1);
+            assertEq(token.balanceOf(owner1), 1 - i);
+
+            if (setAux) {
+                assertEq(token.getAux(owner0), aux0);
+                assertEq(token.getAux(owner1), aux1);
+            } else {
+                assertEq(token.getAux(owner0), 0);
+                assertEq(token.getAux(owner1), 0);
+            }
+        }
     }
 
     function testApprove(address to, uint256 id) public {
