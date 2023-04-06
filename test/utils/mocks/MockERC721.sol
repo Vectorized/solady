@@ -26,6 +26,10 @@ contract MockERC721 is ERC721 {
         return string(abi.encodePacked("https://example.com/", LibString.toString(id)));
     }
 
+    function exists(uint256 id) public view virtual returns (bool) {
+        return _exists(id);
+    }
+
     function mint(address to, uint256 id) public virtual {
         _mint(_brutalized(to), id);
     }
@@ -63,6 +67,7 @@ contract MockERC721 is ERC721 {
     }
 
     function directApprove(address spender, uint256 id) public virtual {
+        if (!_isApprovedOrOwner(_brutalizedMsgSender(), id)) revert NotOwnerNorApproved();
         _approve(_brutalized(spender), id);
     }
 
@@ -80,6 +85,35 @@ contract MockERC721 is ERC721 {
 
     function directTransferFrom(address from, address to, uint256 id) public virtual {
         _transfer(_brutalized(from), _brutalized(to), id, _brutalizedMsgSender());
+    }
+
+    function safeTransferFrom(address from, address to, uint256 id)
+        public
+        payable
+        virtual
+        override
+    {
+        super.safeTransferFrom(_brutalized(from), _brutalized(to), id);
+    }
+
+    function directSafeTransferFrom(address from, address to, uint256 id) public virtual {
+        _safeTransfer(_brutalized(from), _brutalized(to), id, _brutalizedMsgSender());
+    }
+
+    function safeTransferFrom(address from, address to, uint256 id, bytes memory data)
+        public
+        payable
+        virtual
+        override
+    {
+        super.safeTransferFrom(_brutalized(from), _brutalized(to), id, data);
+    }
+
+    function directSafeTransferFrom(address from, address to, uint256 id, bytes memory data)
+        public
+        virtual
+    {
+        _safeTransfer(_brutalized(from), _brutalized(to), id, data, _brutalizedMsgSender());
     }
 
     function isApprovedOrOwner(address spender, uint256 id) public view virtual returns (bool) {
