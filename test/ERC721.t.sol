@@ -535,9 +535,17 @@ contract ERC721Test is TestPlus {
 
         token.mint(address(this), id);
 
-        token.approve(to, id);
-
-        assertEq(token.getApproved(id), to);
+        if (_random() % 2 == 0) {
+            vm.expectEmit(true, true, true, true);
+            emit Approval(address(this), to, id);
+            token.approve(to, id);
+            assertEq(token.getApproved(id), to);
+        } else {
+            vm.expectEmit(true, true, true, true);
+            emit Approval(address(this), to, id);
+            token.directApprove(to, id);
+            assertEq(token.getApproved(id), to);
+        }
     }
 
     function testApproveBurn(address to, uint256 id) public {
@@ -555,9 +563,17 @@ contract ERC721Test is TestPlus {
     }
 
     function testApproveAll(address to, bool approved) public {
-        token.setApprovalForAll(to, approved);
-
-        assertEq(token.isApprovedForAll(address(this), to), approved);
+        if (_random() % 2 == 0) {
+            vm.expectEmit(true, true, true, true);
+            emit ApprovalForAll(address(this), to, approved);
+            token.setApprovalForAll(to, approved);
+            assertEq(token.isApprovedForAll(address(this), to), approved);
+        } else {
+            vm.expectEmit(true, true, true, true);
+            emit ApprovalForAll(address(this), to, approved);
+            token.directSetApprovalForAll(to, approved);
+            assertEq(token.isApprovedForAll(address(this), to), approved);
+        }
     }
 
     function testTransferFrom(uint256 id, address to) public {
@@ -570,7 +586,15 @@ contract ERC721Test is TestPlus {
         vm.prank(from);
         token.approve(address(this), id);
 
-        token.transferFrom(from, to, id);
+        if (_random() % 2 == 0) {
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(from, to, id);
+            token.transferFrom(from, to, id);
+        } else {
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(from, to, id);
+            token.directTransferFrom(from, to, id);
+        }
 
         assertEq(token.getApproved(id), address(0));
         assertEq(token.ownerOf(id), to);

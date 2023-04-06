@@ -57,4 +57,23 @@ contract MockERC721 is ERC721 {
     function setAux(address owner, uint224 value) public virtual {
         _setAux(owner, value);
     }
+
+    function directApprove(address spender, uint256 id) public virtual {
+        _approve(spender, id);
+    }
+
+    function directSetApprovalForAll(address operator, bool approved) public virtual {
+        _setApprovalForAll(_brutalizedMsgSender(), operator, approved);
+    }
+
+    function directTransferFrom(address from, address to, uint256 id) public virtual {
+        _transfer(from, to, id, _brutalizedMsgSender());
+    }
+
+    function _brutalizedMsgSender() internal view returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := or(caller(), shl(160, not(0)))
+        }
+    }
 }
