@@ -286,8 +286,7 @@ abstract contract ERC721 {
     }
 
     function safeTransferFrom(address from, address to, uint256 id) public payable virtual {
-        transferFrom(from, to, id);
-        if (to.code.length != 0) _checkOnERC721Received(from, to, id, "", msg.sender);
+        safeTransferFrom(from, to, id, "");
     }
 
     function safeTransferFrom(address from, address to, uint256 id, bytes memory _data)
