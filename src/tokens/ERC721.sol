@@ -356,7 +356,7 @@ abstract contract ERC721 {
         }
     }
 
-    function _transfer(address from, address to, uint256 id) public payable virtual {
+    function _transfer(address from, address to, uint256 id) internal virtual {
         _transfer(from, to, id, address(0));
     }
 
@@ -428,32 +428,24 @@ abstract contract ERC721 {
         }
     }
 
-    function _safeTransfer(address from, address to, uint256 id) public payable virtual {
-        _transfer(from, to, id, address(0));
-        if (to.code.length != 0) _checkOnERC721Received(from, to, id, "", msg.sender);
+    function _safeTransfer(address from, address to, uint256 id) internal virtual {
+        _safeTransfer(from, to, id, "");
     }
 
     function _safeTransfer(address from, address to, uint256 id, bytes memory _data)
-        public
-        payable
+        internal
         virtual
     {
         _transfer(from, to, id, address(0));
         if (to.code.length != 0) _checkOnERC721Received(from, to, id, _data, msg.sender);
     }
 
-    function _safeTransfer(address from, address to, uint256 id, address by)
-        public
-        payable
-        virtual
-    {
-        _transfer(from, to, id, by);
-        if (to.code.length != 0) _checkOnERC721Received(from, to, id, "", by);
+    function _safeTransfer(address from, address to, uint256 id, address by) internal virtual {
+        _safeTransfer(from, to, id, "", by);
     }
 
     function _safeTransfer(address from, address to, uint256 id, bytes memory _data, address by)
-        public
-        payable
+        internal
         virtual
     {
         _transfer(from, to, id, by);
@@ -500,8 +492,7 @@ abstract contract ERC721 {
     }
 
     function _safeMint(address to, uint256 id) internal virtual {
-        _mint(to, id);
-        if (to.code.length != 0) _checkOnERC721Received(address(0), to, id, "", msg.sender);
+        _safeMint(to, id, "");
     }
 
     function _safeMint(address to, uint256 id, bytes memory _data) internal virtual {
