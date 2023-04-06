@@ -82,6 +82,10 @@ contract MockERC721 is ERC721 {
         _transfer(_brutalized(from), _brutalized(to), id, _brutalizedMsgSender());
     }
 
+    function isApprovedOrOwner(address spender, uint256 id) public view virtual returns (bool) {
+        return _isApprovedOrOwner(_brutalized(spender), id);
+    }
+
     function _brutalized(address a) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
