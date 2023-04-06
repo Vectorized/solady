@@ -71,33 +71,27 @@ abstract contract ERC721 {
 
     /// @dev The ownership data slot of `id` is given by.
     /// ```
-    ///     mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
     ///     mstore(0x00, id)
-    ///     let ownershipDataSlot := keccak256(0x00, 0x40)
+    ///     mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+    ///     let ownershipSlot := add(id, keccak256(0x00, 0x20))
     /// ```
     /// Bits Layout:
     // - [0..159]   `addr`
     // - [160..223] `extraData`
-    uint256 private constant _OWNERSHIP_DATA_SLOT_SEED = 0x1e498770;
+    ///
+    /// The approved address slot is given by: `not(ownershipSlot)`.
+    uint256 private constant _OWNERSHIP_SLOT_SEED = 0x1e498770 << 224;
 
-    /// @dev The address data slot of `owner` is given by.
+    /// @dev The balance slot of `owner` is given by.
     /// ```
-    ///     mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+    ///     mstore(0x0c, _BALANCE_SLOT_SEED)
     ///     mstore(0x00, owner)
-    ///     let addressDataSlot := keccak256(0x0c, 0x20)
+    ///     let balanceSlot := keccak256(0x0c, 0x20)
     /// ```
     /// Bits Layout:
     /// - [0..31]   `balance`
     /// - [32..225] `aux`
-    uint256 private constant _ADDRESS_DATA_SLOT_SEED = 0xee1757ab;
-
-    /// @dev The approved address slot of token `id` is given by.
-    /// ```
-    ///     mstore(0x20, _APPROVED_ADDRESS_SLOT_SEED)
-    ///     mstore(0x00, id)
-    ///     let approvedAddressSlot := keccak256(0x00, 0x40)
-    /// ```
-    uint256 private constant _APPROVED_ADDRESS_SLOT_SEED = 0x2f2069df;
+    uint256 private constant _BALANCE_SLOT_SEED = 0xee1757ab;
 
     /// @dev The operator approval slot of `owner` is given by.
     /// ```
@@ -128,9 +122,9 @@ abstract contract ERC721 {
     function ownerOf(uint256 id) public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            result := shr(96, shl(96, sload(keccak256(0x00, 0x40))))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            result := shr(96, shl(96, sload(add(id, keccak256(0x00, 0x20)))))
             if iszero(result) {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
                 revert(0x1c, 0x04)
@@ -141,14 +135,13 @@ abstract contract ERC721 {
     function balanceOf(address owner) public view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
-            mstore(0x00, owner)
-            owner := shr(96, mload(0x0c))
             // Revert if the `owner` is the zero address.
             if iszero(owner) {
                 mstore(0x00, 0x8f4eb604) // `BalanceQueryForZeroAddress()`.
                 revert(0x1c, 0x04)
             }
+            mstore(0x0c, _BALANCE_SLOT_SEED)
+            mstore(0x00, owner)
             result := and(sload(keccak256(0x0c, 0x20)), _MAX_ACCOUNT_BALANCE)
         }
     }
@@ -156,9 +149,9 @@ abstract contract ERC721 {
     function getApproved(uint256 id) public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, _APPROVED_ADDRESS_SLOT_SEED)
             mstore(0x00, id)
-            result := shr(96, shl(96, sload(keccak256(0x00, 0x40))))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            result := shr(96, shl(96, sload(not(add(id, keccak256(0x00, 0x20))))))
         }
     }
 
@@ -169,9 +162,10 @@ abstract contract ERC721 {
             let bitmaskAddress := shr(96, not(0))
             spender := and(bitmaskAddress, spender)
             // Load the owner of the token.
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            let owner := and(bitmaskAddress, sload(keccak256(0x00, 0x40)))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
+            let owner := and(bitmaskAddress, sload(ownershipSlot))
             // Revert if the token does not exist.
             if iszero(owner) {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
@@ -188,9 +182,7 @@ abstract contract ERC721 {
                 }
             }
             // Update the `spender` for `id`.
-            mstore(0x20, _APPROVED_ADDRESS_SLOT_SEED)
-            mstore(0x00, id)
-            sstore(keccak256(0x00, 0x40), spender)
+            sstore(not(ownershipSlot), spender)
             // Emit the {Approval} event.
             log4(0x00, 0x00, _APPROVAL_EVENT_SIGNATURE, caller(), spender, id)
         }
@@ -237,9 +229,9 @@ abstract contract ERC721 {
             from := and(bitmaskAddress, from)
             to := and(bitmaskAddress, to)
             // Load the ownership data.
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            let ownershipSlot := keccak256(0x00, 0x40)
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
             let ownershipPacked := sload(ownershipSlot)
             let owner := and(bitmaskAddress, ownershipPacked)
             // Revert if the token does not exist.
@@ -259,12 +251,9 @@ abstract contract ERC721 {
             }
             // Load, check, and update the token approval.
             {
-                mstore(0x20, _APPROVED_ADDRESS_SLOT_SEED)
-                mstore(0x00, id)
-                let approvedAddressSlot := keccak256(0x00, 0x40)
-                let approvedAddress := sload(approvedAddressSlot)
+                let approvedAddress := sload(not(ownershipSlot))
                 // Delete the approved address if any.
-                if approvedAddress { sstore(approvedAddressSlot, 0) }
+                if approvedAddress { sstore(not(ownershipSlot), 0) }
                 // Revert if the caller is not the owner, nor approved.
                 if iszero(or(eq(caller(), from), eq(caller(), approvedAddress))) {
                     mstore(0x20, caller())
@@ -280,7 +269,7 @@ abstract contract ERC721 {
             sstore(ownershipSlot, xor(ownershipPacked, xor(from, to)))
             // Decrement the balance of `from`.
             {
-                mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+                mstore(0x0c, _BALANCE_SLOT_SEED)
                 mstore(0x00, from)
                 let fromBalanceSlot := keccak256(0x0c, 0x20)
                 sstore(fromBalanceSlot, sub(sload(fromBalanceSlot), 1))
@@ -330,18 +319,18 @@ abstract contract ERC721 {
     function _exists(uint256 id) internal view virtual returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            result := iszero(iszero(shl(96, sload(keccak256(0x00, 0x40)))))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            result := iszero(iszero(shl(96, sload(add(id, keccak256(0x00, 0x20))))))
         }
     }
 
     function _ownerOf(uint256 id) internal view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            result := shr(96, shl(96, sload(keccak256(0x00, 0x40))))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            result := shr(96, shl(96, sload(add(id, keccak256(0x00, 0x20)))))
         }
     }
 
@@ -358,9 +347,10 @@ abstract contract ERC721 {
             let bitmaskAddress := shr(96, not(0))
             spender := and(bitmaskAddress, spender)
             // Load the ownership data.
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            let owner := and(bitmaskAddress, sload(keccak256(0x00, 0x40)))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
+            let owner := and(bitmaskAddress, sload(ownershipSlot))
             // Revert if the token does not exist.
             if iszero(owner) {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
@@ -373,9 +363,7 @@ abstract contract ERC721 {
                 mstore(0x00, owner)
                 // Check if `spender` is approved to
                 if iszero(sload(keccak256(0x0c, 0x34))) {
-                    mstore(0x20, _APPROVED_ADDRESS_SLOT_SEED)
-                    mstore(0x00, id)
-                    result := eq(spender, and(bitmaskAddress, sload(keccak256(0x00, 0x40))))
+                    result := eq(spender, and(bitmaskAddress, sload(not(ownershipSlot))))
                 }
             }
         }
@@ -387,15 +375,20 @@ abstract contract ERC721 {
             // Clear the upper 96 bits.
             let bitmaskAddress := shr(96, not(0))
             spender := and(bitmaskAddress, spender)
-            // Update the `spender` for `id`.
-            mstore(0x20, _APPROVED_ADDRESS_SLOT_SEED)
+            // Load the owner of the token.
             mstore(0x00, id)
-            sstore(keccak256(0x00, 0x40), spender)
-            // Load the owner of `id` for the event.
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
-            let owner := and(bitmaskAddress, sload(keccak256(0x00, 0x40)))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
+            let owner := and(bitmaskAddress, sload(ownershipSlot))
+            // Revert if the token does not exist.
+            if iszero(owner) {
+                mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
+                revert(0x1c, 0x04)
+            }
+            // Update the `spender` for `id`.
+            sstore(not(ownershipSlot), spender)
             // Emit the {Approval} event.
-            log4(0x00, 0x00, _APPROVAL_EVENT_SIGNATURE, owner, spender, id)
+            log4(0x00, 0x00, _APPROVAL_EVENT_SIGNATURE, caller(), spender, id)
         }
     }
 
@@ -432,9 +425,9 @@ abstract contract ERC721 {
             to := and(bitmaskAddress, to)
             spender := and(bitmaskAddress, spender)
             // Load the ownership data.
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            let ownershipSlot := keccak256(0x00, 0x40)
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
             let ownershipPacked := sload(ownershipSlot)
             let owner := and(bitmaskAddress, ownershipPacked)
             // Revert if the token does not exist.
@@ -454,12 +447,9 @@ abstract contract ERC721 {
             }
             // Load, check, and update the token approval.
             {
-                mstore(0x20, _APPROVED_ADDRESS_SLOT_SEED)
-                mstore(0x00, id)
-                let approvedAddressSlot := keccak256(0x00, 0x40)
-                let approvedAddress := sload(approvedAddressSlot)
+                let approvedAddress := sload(not(ownershipSlot))
                 // Delete the approved address if any.
-                if approvedAddress { sstore(approvedAddressSlot, 0) }
+                if approvedAddress { sstore(not(ownershipSlot), 0) }
                 // If `spender` is not the zero address, do the approval check.
                 if spender {
                     // Revert if the caller is not the owner, nor approved.
@@ -478,7 +468,7 @@ abstract contract ERC721 {
             sstore(ownershipSlot, xor(ownershipPacked, xor(from, to)))
             // Decrement the balance of `from`.
             {
-                mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+                mstore(0x0c, _BALANCE_SLOT_SEED)
                 mstore(0x00, from)
                 let fromBalanceSlot := keccak256(0x0c, 0x20)
                 sstore(fromBalanceSlot, sub(sload(fromBalanceSlot), 1))
@@ -541,9 +531,9 @@ abstract contract ERC721 {
                 revert(0x1c, 0x04)
             }
             // Load the ownership data.
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            let ownershipSlot := keccak256(0x00, 0x40)
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
             let ownershipPacked := sload(ownershipSlot)
             // Revert if the token already exists.
             if and(bitmaskAddress, ownershipPacked) {
@@ -554,7 +544,7 @@ abstract contract ERC721 {
             sstore(ownershipSlot, or(ownershipPacked, to))
             // Increment the balance of the owner.
             {
-                mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+                mstore(0x0c, _BALANCE_SLOT_SEED)
                 mstore(0x00, to)
                 let balanceSlot := keccak256(0x0c, 0x20)
                 let balanceSlotPacked := add(sload(balanceSlot), 1)
@@ -589,9 +579,9 @@ abstract contract ERC721 {
             let bitmaskAddress := shr(96, not(0))
             spender := and(bitmaskAddress, spender)
             // Load the ownership data.
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            let ownershipSlot := keccak256(0x00, 0x40)
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
             let ownershipPacked := sload(ownershipSlot)
             let owner := and(bitmaskAddress, ownershipPacked)
             // Revert if the token does not exist.
@@ -603,12 +593,9 @@ abstract contract ERC721 {
             sstore(ownershipSlot, xor(ownershipPacked, owner))
             // Load, check, and update the token approval.
             {
-                mstore(0x20, _APPROVED_ADDRESS_SLOT_SEED)
-                mstore(0x00, id)
-                let approvedAddressSlot := keccak256(0x00, 0x40)
-                let approvedAddress := sload(approvedAddressSlot)
+                let approvedAddress := sload(not(ownershipSlot))
                 // Delete the approved address if any.
-                if approvedAddress { sstore(approvedAddressSlot, 0) }
+                if approvedAddress { sstore(not(ownershipSlot), 0) }
                 // If `spender` is not the zero address, do the approval check.
                 if spender {
                     // Revert if the `spender` is not the owner, nor approved.
@@ -625,7 +612,7 @@ abstract contract ERC721 {
             }
             // Decrement the balance of `owner`.
             {
-                mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+                mstore(0x0c, _BALANCE_SLOT_SEED)
                 mstore(0x00, owner)
                 let balanceSlot := keccak256(0x0c, 0x20)
                 sstore(balanceSlot, sub(sload(balanceSlot), 1))
@@ -638,7 +625,7 @@ abstract contract ERC721 {
     function _getAux(address owner) internal virtual returns (uint224 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+            mstore(0x0c, _BALANCE_SLOT_SEED)
             mstore(0x00, owner)
             result := shr(32, sload(keccak256(0x0c, 0x20)))
         }
@@ -647,31 +634,31 @@ abstract contract ERC721 {
     function _setAux(address owner, uint224 value) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x0c, _ADDRESS_DATA_SLOT_SEED)
+            mstore(0x0c, _BALANCE_SLOT_SEED)
             mstore(0x00, owner)
-            let addressDataSlot := keccak256(0x0c, 0x20)
-            let packed := sload(addressDataSlot)
-            sstore(addressDataSlot, xor(packed, shl(32, xor(value, shr(32, packed)))))
+            let balanceSlot := keccak256(0x0c, 0x20)
+            let packed := sload(balanceSlot)
+            sstore(balanceSlot, xor(packed, shl(32, xor(value, shr(32, packed)))))
         }
     }
 
     function _getExtraData(uint256 id) internal virtual returns (uint96 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            result := shr(160, sload(keccak256(0x00, 0x40)))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            result := shr(160, sload(add(id, keccak256(0x00, 0x20))))
         }
     }
 
     function _setExtraData(uint256 id, uint96 value) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, _OWNERSHIP_DATA_SLOT_SEED)
             mstore(0x00, id)
-            let ownershipDataSlot := keccak256(0x00, 0x40)
-            let packed := sload(ownershipDataSlot)
-            sstore(ownershipDataSlot, xor(packed, shl(160, xor(value, shr(160, packed)))))
+            mstore(0x1c, _OWNERSHIP_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
+            let packed := sload(ownershipSlot)
+            sstore(ownershipSlot, xor(packed, shl(160, xor(value, shr(160, packed)))))
         }
     }
 
