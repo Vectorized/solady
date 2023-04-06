@@ -27,7 +27,7 @@ contract MockERC721 is ERC721 {
     }
 
     function mint(address to, uint256 id) public virtual {
-        _mint(to, id);
+        _mint(_brutalized(to), id);
     }
 
     function burn(uint256 id) public virtual {
@@ -35,11 +35,11 @@ contract MockERC721 is ERC721 {
     }
 
     function safeMint(address to, uint256 id) public virtual {
-        _safeMint(to, id);
+        _safeMint(_brutalized(to), id);
     }
 
     function safeMint(address to, uint256 id, bytes memory data) public virtual {
-        _safeMint(to, id, data);
+        _safeMint(_brutalized(to), id, data);
     }
 
     function getExtraData(uint256 id) public virtual returns (uint96) {
@@ -51,29 +51,48 @@ contract MockERC721 is ERC721 {
     }
 
     function getAux(address owner) public virtual returns (uint224) {
-        return _getAux(owner);
+        return _getAux(_brutalized(owner));
     }
 
     function setAux(address owner, uint224 value) public virtual {
-        _setAux(owner, value);
+        _setAux(_brutalized(owner), value);
+    }
+
+    function approve(address spender, uint256 id) public payable virtual override {
+        super.approve(_brutalized(spender), id);
     }
 
     function directApprove(address spender, uint256 id) public virtual {
-        _approve(spender, id);
+        _approve(_brutalized(spender), id);
+    }
+
+    function setApprovalForAll(address operator, bool approved) public virtual override {
+        super.setApprovalForAll(_brutalized(operator), approved);
     }
 
     function directSetApprovalForAll(address operator, bool approved) public virtual {
-        _setApprovalForAll(_brutalizedMsgSender(), operator, approved);
+        _setApprovalForAll(_brutalizedMsgSender(), _brutalized(operator), approved);
+    }
+
+    function transferFrom(address from, address to, uint256 id) public payable virtual override {
+        super.transferFrom(_brutalized(from), _brutalized(to), id);
     }
 
     function directTransferFrom(address from, address to, uint256 id) public virtual {
-        _transfer(from, to, id, _brutalizedMsgSender());
+        _transfer(_brutalized(from), _brutalized(to), id, _brutalizedMsgSender());
+    }
+
+    function _brutalized(address a) internal view returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := or(a, shl(160, gas()))
+        }
     }
 
     function _brutalizedMsgSender() internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(caller(), shl(160, not(0)))
+            result := or(caller(), shl(160, gas()))
         }
     }
 }
