@@ -200,6 +200,22 @@ contract ERC721Test is TestPlus {
         require(safe, "Custom storage not safe");
     }
 
+    function testAuthorizedEquivalence(address by, bool isOwnerOrOperator, bool isApprovedAccount)
+        public
+    {
+        bool a = true;
+        bool b = true;
+        if (by != address(0)) {
+            if (!isOwnerOrOperator) {
+                a = isApprovedAccount;
+            }
+        }
+        if (!(by == address(0) || isOwnerOrOperator)) {
+            b = isApprovedAccount;
+        }
+        assertEq(a, b);
+    }
+
     function testCannotExceedMaxBalance() public {
         bytes32 balanceSlot;
         (address owner0, address owner1) = _owners();
