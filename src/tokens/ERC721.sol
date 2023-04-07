@@ -263,7 +263,7 @@ abstract contract ERC721 {
         assembly {
             mstore(0x00, id)
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            result := iszero(iszero(shl(96, sload(add(id, keccak256(0x00, 0x20))))))
+            result := shl(96, sload(add(id, keccak256(0x00, 0x20))))
         }
     }
 
