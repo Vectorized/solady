@@ -82,7 +82,7 @@ abstract contract ERC721 {
     ///
     /// The approved address slot is given by: `add(1, ownershipSlot)`.
     ///
-    /// See: https://notes.ethereum.org/@vbuterin/verkle_tree_eip
+    /// See: https://notes.ethereum.org/%40vbuterin/verkle_tree_eip
     ///
     /// The balance slot of `owner` is given by:
     /// ```
