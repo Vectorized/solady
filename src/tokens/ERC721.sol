@@ -343,7 +343,7 @@ abstract contract ERC721 {
         virtual
     {
         transferFrom(from, to, id);
-        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data, msg.sender);
+        if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, data);
     }
 
     /// @dev Returns true if this contract implements the interface defined by `interfaceId`.
@@ -431,15 +431,9 @@ abstract contract ERC721 {
         }
     }
 
-    /// @dev Sets `account` as the approved account to manage token `id`,
-    /// without authorization checks.
-    ///
-    /// Requirements:
-    /// - Token `id` must exist.
-    ///
-    /// Emits a {Transfer} event.
+    /// @dev Equivalent to `_approve(address(0), account, id)`.
     function _approve(address account, uint256 id) internal virtual {
-        _approve(account, id, address(0));
+        _approve(address(0), account, id);
     }
 
     /// @dev Sets `account` as the approved account to manage token `id`, using `by`.
@@ -450,7 +444,7 @@ abstract contract ERC721 {
     ///   or an approved operator for the token owner.
     ///
     /// Emits a {Transfer} event.
-    function _approve(address account, uint256 id, address by) internal virtual {
+    function _approve(address by, address account, uint256 id) internal virtual {
         assembly {
             // Clear the upper 96 bits.
             let bitmaskAddress := shr(96, not(0))
@@ -510,9 +504,9 @@ abstract contract ERC721 {
         }
     }
 
-    /// @dev Equivalent to `_transfer(from, to, id, address(0))`.
+    /// @dev Equivalent to `_transfer(address(0), from, to, id)`.
     function _transfer(address from, address to, uint256 id) internal virtual {
-        _transfer(from, to, id, address(0));
+        _transfer(address(0), from, to, id);
     }
 
     /// @dev Transfers token `id` from `from` to `to`.
@@ -526,7 +520,7 @@ abstract contract ERC721 {
     ///   it must be the owner of the token, or be approved to manage the token.
     ///
     /// Emits a {Transfer} event.
-    function _transfer(address from, address to, uint256 id, address by) internal virtual {
+    function _transfer(address by, address from, address to, uint256 id) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -616,13 +610,13 @@ abstract contract ERC721 {
         internal
         virtual
     {
-        _transfer(from, to, id, address(0));
-        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data, msg.sender);
+        _transfer(address(0), from, to, id);
+        if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, data);
     }
 
-    /// @dev Equivalent to `_safeTransfer(from, to, id, "", by)`.
-    function _safeTransfer(address from, address to, uint256 id, address by) internal virtual {
-        _safeTransfer(from, to, id, "", by);
+    /// @dev Equivalent to `_safeTransfer(by, from, to, id, "")`.
+    function _safeTransfer(address by, address from, address to, uint256 id) internal virtual {
+        _safeTransfer(by, from, to, id, "");
     }
 
     /// @dev Transfers token `id` from `from` to `to`.
@@ -638,12 +632,12 @@ abstract contract ERC721 {
     ///   {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
     ///
     /// Emits a {Transfer} event.
-    function _safeTransfer(address from, address to, uint256 id, bytes memory data, address by)
+    function _safeTransfer(address by, address from, address to, uint256 id, bytes memory data)
         internal
         virtual
     {
-        _transfer(from, to, id, by);
-        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data, by);
+        _transfer(by, from, to, id);
+        if (_hasCode(to)) _checkOnERC721Received(by, from, to, id, data);
     }
 
     /// @dev Mints token `id` to `to`.
@@ -710,12 +704,12 @@ abstract contract ERC721 {
     /// Emits a {Transfer} event.
     function _safeMint(address to, uint256 id, bytes memory data) internal virtual {
         _mint(to, id);
-        if (_hasCode(to)) _checkOnERC721Received(address(0), to, id, data, msg.sender);
+        if (_hasCode(to)) _checkOnERC721Received(msg.sender, address(0), to, id, data);
     }
 
-    /// @dev Equivalent to `_burn(id, address(0))`.
+    /// @dev Equivalent to `_burn(address(0), id)`.
     function _burn(uint256 id) internal virtual {
-        _burn(id, address(0));
+        _burn(address(0), id);
     }
 
     /// @dev Destroys token `id`, using `by`.
@@ -727,7 +721,7 @@ abstract contract ERC721 {
     ///   it must be the owner of the token, or be approved to manage the token.
     ///
     /// Emits a {Transfer} event.
-    function _burn(uint256 id, address by) internal virtual {
+    function _burn(address by, uint256 id) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -840,11 +834,11 @@ abstract contract ERC721 {
     /// @dev Perform a call to invoke {IERC721Receiver-onERC721Received} on `to`.
     /// Reverts if the target does not support the function correctly.
     function _checkOnERC721Received(
+        address by,
         address from,
         address to,
         uint256 id,
-        bytes memory data,
-        address by
+        bytes memory data
     ) private {
         /// @solidity memory-safe-assembly
         assembly {

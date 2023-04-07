@@ -84,7 +84,7 @@ contract MockERC721 is ERC721 {
     }
 
     function directTransferFrom(address from, address to, uint256 id) public virtual {
-        _transfer(_brutalized(from), _brutalized(to), id, _brutalizedMsgSender());
+        _transfer(_brutalizedMsgSender(), _brutalized(from), _brutalized(to), id);
     }
 
     function safeTransferFrom(address from, address to, uint256 id)
@@ -97,7 +97,7 @@ contract MockERC721 is ERC721 {
     }
 
     function directSafeTransferFrom(address from, address to, uint256 id) public virtual {
-        _safeTransfer(_brutalized(from), _brutalized(to), id, _brutalizedMsgSender());
+        _safeTransfer(_brutalizedMsgSender(), _brutalized(from), _brutalized(to), id);
     }
 
     function safeTransferFrom(address from, address to, uint256 id, bytes memory data)
@@ -113,7 +113,7 @@ contract MockERC721 is ERC721 {
         public
         virtual
     {
-        _safeTransfer(_brutalized(from), _brutalized(to), id, data, _brutalizedMsgSender());
+        _safeTransfer(_brutalizedMsgSender(), _brutalized(from), _brutalized(to), id, data);
     }
 
     function isApprovedOrOwner(address account, uint256 id) public view virtual returns (bool) {
