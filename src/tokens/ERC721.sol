@@ -391,14 +391,10 @@ abstract contract ERC721 {
         assembly {
             // Prep the slot again.
             mstore(0x1c, seed)
-            // Clear the owner.
-            sstore(ownershipSlot, xor(ownershipPacked, owner))
             // Load, check, and update the token approval.
             {
                 mstore(0x00, owner)
                 let approvedAddress := sload(not(ownershipSlot))
-                // Delete the approved address if any.
-                if approvedAddress { sstore(not(ownershipSlot), 0) }
                 // If `by` is not the zero address, do the authorization check.
                 // Revert if the `by` is not the owner, nor approved.
                 if iszero(or(iszero(by), or(eq(by, owner), eq(by, approvedAddress)))) {
@@ -407,7 +403,11 @@ abstract contract ERC721 {
                         revert(0x1c, 0x04)
                     }
                 }
+                // Delete the approved address if any.
+                if approvedAddress { sstore(not(ownershipSlot), 0) }
             }
+            // Clear the owner.
+            sstore(ownershipSlot, xor(ownershipPacked, owner))
             // Decrement the balance of `owner`.
             {
                 let balanceSlot := keccak256(0x0c, 0x1c)
@@ -636,8 +636,6 @@ abstract contract ERC721 {
             {
                 mstore(0x00, from)
                 let approvedAddress := sload(not(ownershipSlot))
-                // Delete the approved address if any.
-                if approvedAddress { sstore(not(ownershipSlot), 0) }
                 // If `by` is not the zero address, do the authorization check.
                 // Revert if the caller is not the owner, nor approved.
                 if iszero(or(iszero(by), or(eq(by, from), eq(by, approvedAddress)))) {
@@ -646,6 +644,8 @@ abstract contract ERC721 {
                         revert(0x1c, 0x04)
                     }
                 }
+                // Delete the approved address if any.
+                if approvedAddress { sstore(not(ownershipSlot), 0) }
             }
             // Update with the new owner.
             sstore(ownershipSlot, xor(ownershipPacked, xor(from, to)))
@@ -769,7 +769,7 @@ abstract contract ERC721 {
                     returndatacopy(0x00, 0x00, returndatasize())
                     revert(0x00, returndatasize())
                 }
-                mstore(m, returndatasize())
+                mstore(m, 0)
             }
             // Load the returndata and compare it.
             if iszero(eq(mload(m), shl(224, onERC721ReceivedSelector))) {
