@@ -266,10 +266,10 @@ contract ERC721Test is TestPlus {
 
         _expectMintEvent(owner, id);
         token.mint(owner, id);
-        
+
         if (_random() % 2 == 0) {
             _expectBurnEvent(owner, id);
-            token.uncheckedBurn(id);    
+            token.uncheckedBurn(id);
         } else {
             vm.expectRevert(ERC721.NotOwnerNorApproved.selector);
             token.burn(id);
@@ -278,19 +278,19 @@ contract ERC721Test is TestPlus {
                 vm.prank(owner);
                 _transferFrom(owner, address(this), id);
                 _expectBurnEvent(address(this), id);
-                token.burn(id);    
+                token.burn(id);
             }
             if (r == 1) {
                 vm.prank(owner);
                 _setApprovalForAll(address(this), true);
                 _expectBurnEvent(owner, id);
-                token.burn(id);    
+                token.burn(id);
             }
             if (r == 2) {
                 vm.prank(owner);
                 _approve(address(this), id);
                 _expectBurnEvent(owner, id);
-                token.burn(id);    
+                token.burn(id);
             }
         }
 
@@ -562,20 +562,20 @@ contract ERC721Test is TestPlus {
                 vm.prank(from);
                 _approve(address(this), id);
                 _expectTransferEvent(from, to, id);
-                _transferFrom(from, to, id);    
+                _transferFrom(from, to, id);
             }
             if (r == 1) {
                 vm.prank(from);
                 _setApprovalForAll(address(this), true);
                 _expectTransferEvent(from, to, id);
-                _transferFrom(from, to, id);    
+                _transferFrom(from, to, id);
             }
             if (r == 2) {
                 vm.prank(from);
                 _expectTransferEvent(from, address(this), id);
-                _transferFrom(from, address(this), id);    
+                _transferFrom(from, address(this), id);
                 _expectTransferEvent(address(this), to, id);
-                _transferFrom(address(this), to, id);    
+                _transferFrom(address(this), to, id);
             }
         } else {
             address temp;
