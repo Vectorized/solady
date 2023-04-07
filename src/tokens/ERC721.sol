@@ -398,7 +398,7 @@ abstract contract ERC721 {
                 let approvedAddress := sload(not(ownershipSlot))
                 // Delete the approved address if any.
                 if approvedAddress { sstore(not(ownershipSlot), 0) }
-                // If `by` is not the zero address, do the approval check.
+                // If `by` is not the zero address, do the authorization check.
                 if by {
                     // Revert if the `by` is not the owner, nor approved.
                     if iszero(or(eq(by, owner), eq(by, approvedAddress))) {
@@ -423,7 +423,7 @@ abstract contract ERC721 {
     /// @dev Returns the auxiliary data for `owner`.
     /// Minting, transferring, burning the tokens of `owner` will not change the auxiliary data.
     /// Auxiliary can be set for any address, even if it does not have any tokens.
-    function _getAux(address owner) internal virtual returns (uint224 result) {
+    function _getAux(address owner) internal view virtual returns (uint224 result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
@@ -449,7 +449,7 @@ abstract contract ERC721 {
     /// @dev Returns the extra data for token `id`.
     /// Minting, transferring, burning a token will not clear the extra data.
     /// The extra data can be set on a non existent token.
-    function _getExtraData(uint256 id) internal virtual returns (uint96 result) {
+    function _getExtraData(uint256 id) internal view virtual returns (uint96 result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, id)
@@ -549,7 +549,7 @@ abstract contract ERC721 {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
                 revert(0x1c, 0x04)
             }
-            // If `by` is not the zero address, do the approval check.
+            // If `by` is not the zero address, do the authorization check.
             if by {
                 // Revert if `by` is not the owner, nor approved.
                 if iszero(eq(by, owner)) {
@@ -642,7 +642,7 @@ abstract contract ERC721 {
                 let approvedAddress := sload(not(ownershipSlot))
                 // Delete the approved address if any.
                 if approvedAddress { sstore(not(ownershipSlot), 0) }
-                // If `by` is not the zero address, do the approval check.
+                // If `by` is not the zero address, do the authorization check.
                 if by {
                     // Revert if the caller is not the owner, nor approved.
                     if iszero(or(eq(by, from), eq(by, approvedAddress))) {

@@ -38,7 +38,7 @@ contract MockERC721 is ERC721 {
         _safeMint(_brutalized(to), id, data);
     }
 
-    function getExtraData(uint256 id) public virtual returns (uint96) {
+    function getExtraData(uint256 id) public view virtual returns (uint96) {
         return _getExtraData(id);
     }
 
@@ -46,7 +46,7 @@ contract MockERC721 is ERC721 {
         _setExtraData(id, value);
     }
 
-    function getAux(address owner) public virtual returns (uint224) {
+    function getAux(address owner) public view virtual returns (uint224) {
         return _getAux(_brutalized(owner));
     }
 
