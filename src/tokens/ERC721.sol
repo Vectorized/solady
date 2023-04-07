@@ -426,9 +426,8 @@ abstract contract ERC721 {
     ///
     /// Emits a {Transfer} event.
     function _burn(address by, uint256 id) internal virtual {
-        uint256 ownershipSlot;
-        uint256 ownershipPacked;
-        address owner;
+        address owner = ownerOf(id);
+        _beforeTokenTransfer(owner, address(0), id);
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -436,8 +435,9 @@ abstract contract ERC721 {
             // Load the ownership data.
             mstore(0x00, id)
             mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, by))
-            ownershipSlot := add(id, keccak256(0x00, 0x20))
-            ownershipPacked := sload(ownershipSlot)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
+            let ownershipPacked := sload(ownershipSlot)
+            // Reload the owner in case it is changed in `_beforeTokenTransfer`.
             owner := shr(96, shl(96, ownershipPacked))
             // Revert if the token does not exist.
             if iszero(owner) {
@@ -447,21 +447,18 @@ abstract contract ERC721 {
             // Load and check the token approval.
             {
                 mstore(0x00, owner)
+                let approvedAddress := sload(not(ownershipSlot))
                 // If `by` is not the zero address, do the authorization check.
                 // Revert if the `by` is not the owner, nor approved.
-                if iszero(or(iszero(by), or(eq(by, owner), eq(by, sload(not(ownershipSlot)))))) {
+                if iszero(or(iszero(by), or(eq(by, owner), eq(by, approvedAddress)))) {
                     if iszero(sload(keccak256(0x0c, 0x30))) {
                         mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
                         revert(0x1c, 0x04)
                     }
                 }
+                // Delete the approved address if any.
+                if approvedAddress { sstore(not(ownershipSlot), 0) }
             }
-        }
-        _beforeTokenTransfer(owner, address(0), id);
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Delete the approved address.
-            sstore(not(ownershipSlot), 0)
             // Clear the owner.
             sstore(ownershipSlot, xor(ownershipPacked, owner))
             // Decrement the balance of `owner`.
@@ -737,10 +734,10 @@ abstract contract ERC721 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Hook that is called before any token transfers, including minting and burning.
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual {}
+    function _beforeTokenTransfer(address from, address to, uint256 id) internal virtual {}
 
     /// @dev Hook that is called after any token transfers, including minting and burning.
-    function _afterTokenTransfer(address from, address to, uint256 tokenId) internal virtual {}
+    function _afterTokenTransfer(address from, address to, uint256 id) internal virtual {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
