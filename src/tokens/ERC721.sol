@@ -97,8 +97,7 @@ abstract contract ERC721 {
     ///     mstore(0x00, owner)
     ///     let operatorApprovalSlot := keccak256(0x0c, 0x30)
     /// ```
-    uint256 private constant _ERC721_MASTER_SLOT_SEED =
-        0x7d8825530a5a2e7aa1d73ca10000000000000000000000000000000000000000;
+    uint256 private constant _ERC721_MASTER_SLOT_SEED = 0x7d8825530a5a2e7a << 192;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      ERC721 METADATA                       */
@@ -122,11 +121,9 @@ abstract contract ERC721 {
     /// Requirements:
     /// - Token `id` must exist.
     function ownerOf(uint256 id) public view virtual returns (address result) {
+        result = _ownerOf(id);
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, id)
-            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            result := shr(96, shl(96, sload(add(id, keccak256(0x00, 0x20)))))
             if iszero(result) {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
                 revert(0x1c, 0x04)
@@ -179,34 +176,7 @@ abstract contract ERC721 {
     ///
     /// Emits a {Approval} event.
     function approve(address account, uint256 id) public payable virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Clear the upper 96 bits.
-            let bitmaskAddress := shr(96, not(0))
-            account := and(bitmaskAddress, account)
-            // Load the owner of the token.
-            mstore(0x00, id)
-            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, caller()))
-            let ownershipSlot := add(id, keccak256(0x00, 0x20))
-            let owner := and(bitmaskAddress, sload(ownershipSlot))
-            // Revert if the token does not exist.
-            if iszero(owner) {
-                mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
-                revert(0x1c, 0x04)
-            }
-            // Revert if the caller is not the owner, nor approved.
-            if iszero(eq(caller(), owner)) {
-                mstore(0x00, owner)
-                if iszero(sload(keccak256(0x0c, 0x30))) {
-                    mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                    revert(0x1c, 0x04)
-                }
-            }
-            // Sets `account` as the approved account to manage `id`.
-            sstore(not(ownershipSlot), account)
-            // Emit the {Approval} event.
-            log4(0x00, 0x00, _APPROVAL_EVENT_SIGNATURE, caller(), account, id)
-        }
+        _approve(msg.sender, account, id);
     }
 
     /// @dev Returns whether `operator` is approved to manage the tokens of `owner`.
@@ -228,20 +198,7 @@ abstract contract ERC721 {
     ///
     /// Emits a {ApprovalForAll} event.
     function setApprovalForAll(address operator, bool isApproved) public virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Clear the upper 96 bits.
-            operator := shr(96, shl(96, operator))
-            // Convert to 0 or 1.
-            isApproved := iszero(iszero(isApproved))
-            // Store the `isApproved` flag.
-            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, operator))
-            mstore(0x00, caller())
-            sstore(keccak256(0x0c, 0x30), isApproved)
-            // Emit the {ApprovalForAll} event.
-            mstore(0x00, isApproved)
-            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), operator)
-        }
+        _setApprovalForAll(msg.sender, operator, isApproved);
     }
 
     /// @dev Transfers token `id` from `from` to `to`.
@@ -255,71 +212,7 @@ abstract contract ERC721 {
     ///
     /// Emits a {Transfer} event.
     function transferFrom(address from, address to, uint256 id) public payable virtual {
-        _beforeTokenTransfer(from, to, id);
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Clear the upper 96 bits.
-            let bitmaskAddress := shr(96, not(0))
-            from := and(bitmaskAddress, from)
-            to := and(bitmaskAddress, to)
-            // Load the ownership data.
-            mstore(0x00, id)
-            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, caller()))
-            let ownershipSlot := add(id, keccak256(0x00, 0x20))
-            let ownershipPacked := sload(ownershipSlot)
-            let owner := and(bitmaskAddress, ownershipPacked)
-            // Revert if the token does not exist.
-            if iszero(owner) {
-                mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
-                revert(0x1c, 0x04)
-            }
-            // Revert if `from` is not the owner.
-            if iszero(eq(owner, from)) {
-                mstore(0x00, 0xa1148100) // `TransferFromIncorrectOwner()`.
-                revert(0x1c, 0x04)
-            }
-            // Revert if `to` is the zero address.
-            if iszero(to) {
-                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
-                revert(0x1c, 0x04)
-            }
-            // Load, check, and update the token approval.
-            {
-                mstore(0x00, from)
-                let approvedAddress := sload(not(ownershipSlot))
-                // Delete the approved address if any.
-                if approvedAddress { sstore(not(ownershipSlot), 0) }
-                // Revert if the caller is not the owner, nor approved.
-                if iszero(or(eq(caller(), from), eq(caller(), approvedAddress))) {
-                    if iszero(sload(keccak256(0x0c, 0x30))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
-                    }
-                }
-            }
-            // Update with the new owner.
-            sstore(ownershipSlot, xor(ownershipPacked, xor(from, to)))
-            // Decrement the balance of `from`.
-            {
-                let fromBalanceSlot := keccak256(0x0c, 0x1c)
-                sstore(fromBalanceSlot, sub(sload(fromBalanceSlot), 1))
-            }
-            // Increment the balance of `to`.
-            {
-                mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-                mstore(0x00, to)
-                let toBalanceSlot := keccak256(0x0c, 0x1c)
-                let toBalanceSlotPacked := add(sload(toBalanceSlot), 1)
-                if iszero(and(toBalanceSlotPacked, _MAX_ACCOUNT_BALANCE)) {
-                    mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
-                    revert(0x1c, 0x04)
-                }
-                sstore(toBalanceSlot, toBalanceSlotPacked)
-            }
-            // Emit the {Transfer} event.
-            log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
-        }
-        _afterTokenTransfer(from, to, id);
+        _transfer(msg.sender, from, to, id);
     }
 
     /// @dev Equivalent to `safeTransferFrom(from, to, id, '')`.
@@ -363,12 +256,6 @@ abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                INTERNAL FUNCTIONS FOR USAGE                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // Some internal functions contain duplicated code.
-    // This is intentional for both runtime gas performance and smaller bytecode.
-    // For most use cases, the internal transfer and approval functions are not needed.
-    // Making the mandatory ERC721 public functions call these internal functions
-    // with extra checks creates extra bloat. The compiler isn't smart enough.
 
     /// @dev Returns if token `id` exists.
     function _exists(uint256 id) internal view virtual returns (bool result) {
