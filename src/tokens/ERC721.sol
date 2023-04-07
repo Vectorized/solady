@@ -398,7 +398,7 @@ abstract contract ERC721 {
                 let approvedAddress := sload(not(ownershipSlot))
                 // Delete the approved address if any.
                 if approvedAddress { sstore(not(ownershipSlot), 0) }
-                // If `by` is not the zero address, do the approval check.
+                // If `by` is not the zero address, do the authorization check.
                 if by {
                     // Revert if the `by` is not the owner, nor approved.
                     if iszero(or(eq(by, owner), eq(by, approvedAddress))) {
@@ -549,7 +549,7 @@ abstract contract ERC721 {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
                 revert(0x1c, 0x04)
             }
-            // If `by` is not the zero address, do the approval check.
+            // If `by` is not the zero address, do the authorization check.
             if by {
                 // Revert if `by` is not the owner, nor approved.
                 if iszero(eq(by, owner)) {
@@ -642,7 +642,7 @@ abstract contract ERC721 {
                 let approvedAddress := sload(not(ownershipSlot))
                 // Delete the approved address if any.
                 if approvedAddress { sstore(not(ownershipSlot), 0) }
-                // If `by` is not the zero address, do the approval check.
+                // If `by` is not the zero address, do the authorization check.
                 if by {
                     // Revert if the caller is not the owner, nor approved.
                     if iszero(or(eq(by, from), eq(by, approvedAddress))) {
