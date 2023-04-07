@@ -856,10 +856,10 @@ abstract contract ERC721 {
             mstore(add(m, 0x40), and(bitmaskAddress, from))
             mstore(add(m, 0x60), id)
             mstore(add(m, 0x80), 0x80)
-            let n := mload(data)
-            pop(staticcall(gas(), 4, data, add(n, 0x20), add(m, 0xa0), add(n, 0x20)))
+            let n := add(mload(data), 0x20)
+            pop(staticcall(gas(), 4, data, n, add(m, 0xa0), n))
             // Revert if the call reverts.
-            if iszero(call(gas(), to, 0, add(m, 0x1c), add(n, 0xa4), m, 0x20)) {
+            if iszero(call(gas(), to, 0, add(m, 0x1c), add(returndatasize(), 0x84), m, 0x20)) {
                 if iszero(returndatasize()) {
                     mstore(0x00, 0xd1a57ed6) // `TransferToNonERC721ReceiverImplementer()`.
                     revert(0x1c, 0x04)
