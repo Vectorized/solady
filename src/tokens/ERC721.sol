@@ -220,7 +220,8 @@ abstract contract ERC721 {
 
     /// @dev Equivalent to `safeTransferFrom(from, to, id, "")`.
     function safeTransferFrom(address from, address to, uint256 id) public payable virtual {
-        safeTransferFrom(from, to, id, "");
+        _transfer(msg.sender, from, to, id);
+        if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, "");
     }
 
     /// @dev Transfers token `id` from `from` to `to`.
@@ -240,7 +241,7 @@ abstract contract ERC721 {
         payable
         virtual
     {
-        transferFrom(from, to, id);
+        _transfer(msg.sender, from, to, id);
         if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, data);
     }
 
