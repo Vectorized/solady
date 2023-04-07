@@ -36,6 +36,8 @@ pragma solidity ^0.8.4;
 
 import "./auth/Ownable.sol";
 import "./auth/OwnableRoles.sol";
+import "./tokens/ERC20.sol";
+import "./tokens/ERC721.sol";
 import "./utils/Base64.sol";
 import "./utils/CREATE3.sol";
 import "./utils/Clone.sol";
