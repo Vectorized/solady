@@ -365,6 +365,7 @@ abstract contract ERC721 {
         uint256 bitmaskAddress;
         uint256 ownershipSlot;
         uint256 ownershipPacked;
+        uint256 seed;
         address owner;
         /// @solidity memory-safe-assembly
         assembly {
@@ -373,7 +374,8 @@ abstract contract ERC721 {
             by := and(bitmaskAddress, by)
             // Load the ownership data.
             mstore(0x00, id)
-            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            seed := or(_ERC721_MASTER_SLOT_SEED, by)
+            mstore(0x1c, seed)
             ownershipSlot := add(id, keccak256(0x00, 0x20))
             ownershipPacked := sload(ownershipSlot)
             owner := and(bitmaskAddress, ownershipPacked)
@@ -387,7 +389,7 @@ abstract contract ERC721 {
         /// @solidity memory-safe-assembly
         assembly {
             // Prep the slot again.
-            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, by))
+            mstore(0x1c, seed)
             // Clear the owner.
             sstore(ownershipSlot, xor(ownershipPacked, owner))
             // Load, check, and update the token approval.
@@ -758,7 +760,8 @@ abstract contract ERC721 {
             // Prepare the calldata.
             let bitmaskAddress := shr(96, not(0))
             let m := mload(0x40)
-            mstore(m, 0x150b7a02)
+            let onERC721ReceivedSelector := 0x150b7a02
+            mstore(m, onERC721ReceivedSelector)
             mstore(add(m, 0x20), and(bitmaskAddress, by))
             mstore(add(m, 0x40), and(bitmaskAddress, from))
             mstore(add(m, 0x60), id)
@@ -776,7 +779,7 @@ abstract contract ERC721 {
                 revert(0x00, returndatasize())
             }
             // Load the returndata and compare it.
-            if iszero(eq(mload(m), shl(224, 0x150b7a02))) {
+            if iszero(eq(mload(m), shl(224, onERC721ReceivedSelector))) {
                 mstore(0x00, 0xd1a57ed6) // `TransferToNonERC721ReceiverImplementer()`.
                 revert(0x1c, 0x04)
             }
