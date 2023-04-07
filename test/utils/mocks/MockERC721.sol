@@ -27,6 +27,10 @@ contract MockERC721 is ERC721 {
     }
 
     function burn(uint256 id) public virtual {
+        _burn(msg.sender, id);
+    }
+
+    function uncheckedBurn(uint256 id) public virtual {
         _burn(id);
     }
 
@@ -73,6 +77,10 @@ contract MockERC721 is ERC721 {
 
     function transferFrom(address from, address to, uint256 id) public payable virtual override {
         super.transferFrom(_brutalized(from), _brutalized(to), id);
+    }
+
+    function uncheckedTransferFrom(address from, address to, uint256 id) public payable virtual {
+        _transfer(address(0), _brutalized(from), _brutalized(to), id);
     }
 
     function directTransferFrom(address from, address to, uint256 id) public virtual {
