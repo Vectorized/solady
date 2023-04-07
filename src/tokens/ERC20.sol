@@ -56,7 +56,7 @@ abstract contract ERC20 {
     /// @dev The storage slot for the total supply.
     uint256 private constant _TOTAL_SUPPLY_SLOT = 0x05345cdf77eb68f44c;
 
-    /// @dev The balance slot of `owner` is given by.
+    /// @dev The balance slot of `owner` is given by:
     /// ```
     ///     mstore(0x0c, _BALANCE_SLOT_SEED)
     ///     mstore(0x00, owner)
@@ -64,7 +64,7 @@ abstract contract ERC20 {
     /// ```
     uint256 private constant _BALANCE_SLOT_SEED = 0x87a211a2;
 
-    /// @dev The allowance slot of (`owner`, `spender`) is given by.
+    /// @dev The allowance slot of (`owner`, `spender`) is given by:
     /// ```
     ///     mstore(0x20, spender)
     ///     mstore(0x0c, _ALLOWANCE_SLOT_SEED)
@@ -73,7 +73,7 @@ abstract contract ERC20 {
     /// ```
     uint256 private constant _ALLOWANCE_SLOT_SEED = 0x7f5e9f20;
 
-    /// @dev The nonce slot of `owner` is given by.
+    /// @dev The nonce slot of `owner` is given by:
     /// ```
     ///     mstore(0x0c, _NONCES_SLOT_SEED)
     ///     mstore(0x00, owner)
