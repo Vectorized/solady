@@ -742,12 +742,11 @@ abstract contract ERC721 {
         /// @solidity memory-safe-assembly
         assembly {
             // Prepare the calldata.
-            let bitmaskAddress := shr(96, not(0))
             let m := mload(0x40)
             let onERC721ReceivedSelector := 0x150b7a02
             mstore(m, onERC721ReceivedSelector)
-            mstore(add(m, 0x20), and(bitmaskAddress, by))
-            mstore(add(m, 0x40), and(bitmaskAddress, from))
+            mstore(add(m, 0x20), shr(96, shl(96, by)))
+            mstore(add(m, 0x40), shr(96, shl(96, from)))
             mstore(add(m, 0x60), id)
             mstore(add(m, 0x80), 0x80)
             let n := add(mload(data), 0x20)
