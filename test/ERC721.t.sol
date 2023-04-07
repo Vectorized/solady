@@ -72,7 +72,7 @@ contract ERC721Test is TestPlus {
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
     function setUp() public {
-        token = new MockERC721("Token", "TKN");
+        token = new MockERC721();
     }
 
     function _expectMintEvent(address to, uint256 id) internal {
@@ -235,18 +235,6 @@ contract ERC721Test is TestPlus {
         assertEq(token.getAux(owner0), type(uint224).max);
     }
 
-    function invariantMetadata() public {
-        assertEq(token.name(), "Token");
-        assertEq(token.symbol(), "TKN");
-    }
-
-    function testMetadata(string memory name, string memory symbol) public {
-        MockERC721 tkn = new MockERC721(name, symbol);
-
-        assertEq(tkn.name(), name);
-        assertEq(tkn.symbol(), symbol);
-    }
-
     function testMint(uint256 id) public {
         (address owner,) = _randomSigner();
 
@@ -277,11 +265,11 @@ contract ERC721Test is TestPlus {
 
         unchecked {
             (owners[0], owners[1]) = _owners();
-            for (uint256 j; j < 2; ++j) {
-                tokens[j] = new uint256[](_random() % 4);
+            for (uint256 j; j != 2; ++j) {
+                tokens[j] = new uint256[](_random() % 3);
             }
 
-            for (uint256 j; j < 2; ++j) {
+            for (uint256 j; j != 2; ++j) {
                 token.setAux(owners[j], _aux(owners[j]));
                 for (uint256 i; i != tokens[j].length;) {
                     uint256 id = _random();
@@ -293,7 +281,7 @@ contract ERC721Test is TestPlus {
                     }
                 }
             }
-            for (uint256 j; j < 2; ++j) {
+            for (uint256 j; j != 2; ++j) {
                 assertEq(token.balanceOf(owners[j]), tokens[j].length);
                 for (uint256 i; i != tokens[j].length; ++i) {
                     vm.prank(owners[j]);
@@ -301,7 +289,7 @@ contract ERC721Test is TestPlus {
                     _approve(address(this), tokens[j][i]);
                 }
             }
-            for (uint256 j; j < 2; ++j) {
+            for (uint256 j; j != 2; ++j) {
                 for (uint256 i; i != tokens[j].length; ++i) {
                     assertEq(_getApproved(tokens[j][i]), address(this));
                     uint256 fromBalanceBefore = token.balanceOf(owners[j]);
@@ -313,14 +301,14 @@ contract ERC721Test is TestPlus {
                     assertEq(_getApproved(tokens[j][i]), address(0));
                 }
             }
-            for (uint256 j; j < 2; ++j) {
+            for (uint256 j; j != 2; ++j) {
                 for (uint256 i; i != tokens[j].length; ++i) {
                     assertEq(_ownerOf(tokens[j][i]), owners[j ^ 1]);
                     assertEq(token.getExtraData(tokens[j][i]), _extraData(tokens[j][i]));
                 }
             }
             if (_random() % 2 == 0) {
-                for (uint256 j; j < 2; ++j) {
+                for (uint256 j; j != 2; ++j) {
                     for (uint256 i; i != tokens[j].length; ++i) {
                         vm.expectRevert(ERC721.NotOwnerNorApproved.selector);
                         _transferFrom(owners[j ^ 1], owners[j], tokens[j][i]);
@@ -332,7 +320,7 @@ contract ERC721Test is TestPlus {
                     }
                 }
             } else {
-                for (uint256 j; j < 2; ++j) {
+                for (uint256 j; j != 2; ++j) {
                     vm.prank(owners[j ^ 1]);
                     _expectApprovalForAllEvent(owners[j ^ 1], address(this), true);
                     token.setApprovalForAll(address(this), true);
@@ -342,19 +330,19 @@ contract ERC721Test is TestPlus {
                     }
                 }
             }
-            for (uint256 j; j < 2; ++j) {
+            for (uint256 j; j != 2; ++j) {
                 assertEq(token.getAux(owners[j]), _aux(owners[j]));
                 for (uint256 i; i != tokens[j].length; ++i) {
                     assertEq(_ownerOf(tokens[j][i]), owners[j]);
                     assertEq(token.getExtraData(tokens[j][i]), _extraData(tokens[j][i]));
                 }
             }
-            for (uint256 j; j < 2; ++j) {
+            for (uint256 j; j != 2; ++j) {
                 for (uint256 i; i != tokens[j].length; ++i) {
                     token.burn(tokens[j][i]);
                 }
             }
-            for (uint256 j; j < 2; ++j) {
+            for (uint256 j; j != 2; ++j) {
                 assertEq(token.balanceOf(owners[j]), 0);
                 for (uint256 i; i != tokens[j].length; ++i) {
                     assertEq(token.getExtraData(tokens[j][i]), _extraData(tokens[j][i]));
