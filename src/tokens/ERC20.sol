@@ -135,6 +135,8 @@ abstract contract ERC20 {
     }
 
     /// @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+    ///
+    /// Emits a {Approval} event.
     function approve(address spender, uint256 amount) public virtual returns (bool) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -151,6 +153,8 @@ abstract contract ERC20 {
     }
 
     /// @dev Atomically increases the allowance granted to `spender` by the caller.
+    ///
+    /// Emits a {Approval} event.
     function increaseAllowance(address spender, uint256 difference) public virtual returns (bool) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -177,6 +181,8 @@ abstract contract ERC20 {
     }
 
     /// @dev Atomically decreases the allowance granted to `spender` by the caller.
+    ///
+    /// Emits a {Approval} event.
     function decreaseAllowance(address spender, uint256 difference) public virtual returns (bool) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -202,6 +208,11 @@ abstract contract ERC20 {
     }
 
     /// @dev Transfer `amount` tokens from the caller to `to`.
+    ///
+    /// Requirements:
+    /// - `from` must at least have `amount`.
+    ///
+    /// Emits a {Transfer} event.
     function transfer(address to, uint256 amount) public virtual returns (bool) {
         _beforeTokenTransfer(msg.sender, to, amount);
         /// @solidity memory-safe-assembly
@@ -234,6 +245,14 @@ abstract contract ERC20 {
     }
 
     /// @dev Transfers `amount` tokens from `from` to `to`.
+    ///
+    /// Note: does not update the allowance if it is the maximum uint256 value.
+    ///
+    /// Requirements:
+    /// - `from` must at least have `amount`.
+    /// - The caller must have at least `amount` of allowance to transfer the tokens of `from`.
+    ///
+    /// Emits a {Transfer} event.
     function transferFrom(address from, address to, uint256 amount) public virtual returns (bool) {
         _beforeTokenTransfer(from, to, amount);
         /// @solidity memory-safe-assembly
@@ -298,6 +317,8 @@ abstract contract ERC20 {
 
     /// @dev Sets `value` as the allowance of `spender` over the tokens of `owner`,
     /// authorized by a signed approval by `owner`.
+    ///
+    /// Emits a {Approval} event.
     function permit(
         address owner,
         address spender,
@@ -395,6 +416,8 @@ abstract contract ERC20 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Mints `amount` tokens to `to`, increasing the total supply.
+    ///
+    /// Emits a {Transfer} event.
     function _mint(address to, uint256 amount) internal virtual {
         _beforeTokenTransfer(address(0), to, amount);
         /// @solidity memory-safe-assembly
@@ -422,6 +445,8 @@ abstract contract ERC20 {
     }
 
     /// @dev Burns `amount` tokens from `from`, reducing the total supply.
+    ///
+    /// Emits a {Transfer} event.
     function _burn(address from, uint256 amount) internal virtual {
         _beforeTokenTransfer(from, address(0), amount);
         /// @solidity memory-safe-assembly
@@ -502,6 +527,8 @@ abstract contract ERC20 {
     }
 
     /// @dev Sets `amount` as the allowance of `spender` over the tokens of `owner`.
+    ///
+    /// Emits a {Approval} event.
     function _approve(address owner, address spender, uint256 amount) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
