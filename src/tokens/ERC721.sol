@@ -255,6 +255,7 @@ abstract contract ERC721 {
     ///
     /// Emits a {Transfer} event.
     function transferFrom(address from, address to, uint256 id) public payable virtual {
+        _beforeTokenTransfer(from, to, id);
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -318,6 +319,7 @@ abstract contract ERC721 {
             // Emit the {Transfer} event.
             log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
         }
+        _afterTokenTransfer(from, to, id);
     }
 
     /// @dev Equivalent to `safeTransferFrom(from, to, id, '')`.
@@ -398,6 +400,7 @@ abstract contract ERC721 {
     ///
     /// Emits a {Transfer} event.
     function _mint(address to, uint256 id) internal virtual {
+        _beforeTokenTransfer(address(0), to, id);
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -434,6 +437,7 @@ abstract contract ERC721 {
             // Emit the {Transfer} event.
             log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, 0, to, id)
         }
+        _afterTokenTransfer(address(0), to, id);
     }
 
     /// @dev Equivalent to `_safeMint(to, id, "")`.
@@ -471,22 +475,32 @@ abstract contract ERC721 {
     ///
     /// Emits a {Transfer} event.
     function _burn(address by, uint256 id) internal virtual {
+        uint256 bitmaskAddress;
+        uint256 ownershipSlot;
+        uint256 ownershipPacked;
+        address owner;
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
-            let bitmaskAddress := shr(96, not(0))
+            bitmaskAddress := shr(96, not(0))
             by := and(bitmaskAddress, by)
             // Load the ownership data.
             mstore(0x00, id)
-            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, by))
-            let ownershipSlot := add(id, keccak256(0x00, 0x20))
-            let ownershipPacked := sload(ownershipSlot)
-            let owner := and(bitmaskAddress, ownershipPacked)
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            ownershipSlot := add(id, keccak256(0x00, 0x20))
+            ownershipPacked := sload(ownershipSlot)
+            owner := and(bitmaskAddress, ownershipPacked)
             // Revert if the token does not exist.
             if iszero(owner) {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
                 revert(0x1c, 0x04)
             }
+        }
+        _beforeTokenTransfer(owner, address(0), id);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Prep the slot again.
+            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, by))
             // Clear the owner.
             sstore(ownershipSlot, xor(ownershipPacked, owner))
             // Load, check, and update the token approval.
@@ -514,6 +528,7 @@ abstract contract ERC721 {
             // Emit the {Transfer} event.
             log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, owner, 0, id)
         }
+        _afterTokenTransfer(owner, address(0), id);
     }
 
     /// @dev Returns the auxiliary data for `owner`.
@@ -703,6 +718,7 @@ abstract contract ERC721 {
     ///
     /// Emits a {Transfer} event.
     function _transfer(address by, address from, address to, uint256 id) internal virtual {
+        _beforeTokenTransfer(from, to, id);
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -769,6 +785,7 @@ abstract contract ERC721 {
             // Emit the {Transfer} event.
             log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
         }
+        _afterTokenTransfer(from, to, id);
     }
 
     /// @dev Equivalent to `_safeTransfer(from, to, id, "")`.
@@ -821,6 +838,12 @@ abstract contract ERC721 {
         _transfer(by, from, to, id);
         if (_hasCode(to)) _checkOnERC721Received(by, from, to, id, data);
     }
+
+    /// @dev Hook that is called before any token transfers, including minting and burning.
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual {}
+
+    /// @dev Hook that is called after any token transfers, including minting and burning.
+    function _afterTokenTransfer(address from, address to, uint256 tokenId) internal virtual {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
