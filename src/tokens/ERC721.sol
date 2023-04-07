@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Basic flexible gas efficient ERC721 implementation.
+/// @notice Simple ERC721 implementation with storage hitchhiking.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC721.sol)
-/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokenss/ERC721.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)
 abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */

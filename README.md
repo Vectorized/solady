@@ -16,6 +16,7 @@ auth
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
 tokens
 ├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
+├─ ERC721 — "Simple ERC721 implementation with storage hitchhiking"
 utils
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
