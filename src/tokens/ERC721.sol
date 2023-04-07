@@ -423,7 +423,7 @@ abstract contract ERC721 {
     /// @dev Returns the auxiliary data for `owner`.
     /// Minting, transferring, burning the tokens of `owner` will not change the auxiliary data.
     /// Auxiliary can be set for any address, even if it does not have any tokens.
-    function _getAux(address owner) internal virtual returns (uint224 result) {
+    function _getAux(address owner) internal view virtual returns (uint224 result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
@@ -449,7 +449,7 @@ abstract contract ERC721 {
     /// @dev Returns the extra data for token `id`.
     /// Minting, transferring, burning a token will not clear the extra data.
     /// The extra data can be set on a non existent token.
-    function _getExtraData(uint256 id) internal virtual returns (uint96 result) {
+    function _getExtraData(uint256 id) internal view virtual returns (uint96 result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, id)
