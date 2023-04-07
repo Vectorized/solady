@@ -183,12 +183,12 @@ contract ERC721Test is TestPlus {
         assembly {
             mstore(0x00, id0)
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            let slot0 := add(id0, keccak256(0x00, 0x20))
-            let slot2 := not(slot0)
+            let slot0 := add(id0, add(id0, keccak256(0x00, 0x20)))
+            let slot2 := add(1, slot0)
             mstore(0x00, id1)
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            let slot1 := add(id1, keccak256(0x00, 0x20))
-            let slot3 := not(slot1)
+            let slot1 := add(id1, add(id1, keccak256(0x00, 0x20)))
+            let slot3 := add(1, slot1)
             safe := 1
             if eq(slot0, slot1) { safe := 0 }
             if eq(slot0, slot2) { safe := 0 }
