@@ -578,12 +578,8 @@ contract ERC721Test is TestPlus {
                 _transferFrom(address(this), to, id);
             }
         } else {
-            address temp;
-            /// @solidity memory-safe-assembly
-            assembly {
-                mstore(0x00, from)
-                temp := keccak256(0x00, 0x20)
-            }
+            (address temp,) = _randomSigner();
+            while (temp == from || temp == to) (temp,) = _randomSigner();
             if (_random() % 2 == 0) {
                 _expectTransferEvent(from, temp, id);
                 token.uncheckedTransferFrom(from, temp, id);
