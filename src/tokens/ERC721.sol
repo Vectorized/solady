@@ -37,7 +37,8 @@ abstract contract ERC721 {
     /// @dev The recipient's balance has overflowed.
     error AccountBalanceOverflow();
 
-    /// @dev Cannot safely transfer to a contract that does not implement the ERC721Receiver interface.
+    /// @dev Cannot safely transfer to a contract that does not implement
+    /// the ERC721Receiver interface.
     error TransferToNonERC721ReceiverImplementer();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -399,13 +400,11 @@ abstract contract ERC721 {
                 // Delete the approved address if any.
                 if approvedAddress { sstore(not(ownershipSlot), 0) }
                 // If `by` is not the zero address, do the authorization check.
-                if by {
-                    // Revert if the `by` is not the owner, nor approved.
-                    if iszero(or(eq(by, owner), eq(by, approvedAddress))) {
-                        if iszero(sload(keccak256(0x0c, 0x30))) {
-                            mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                            revert(0x1c, 0x04)
-                        }
+                // Revert if the `by` is not the owner, nor approved.
+                if iszero(or(iszero(by), or(eq(by, owner), eq(by, approvedAddress)))) {
+                    if iszero(sload(keccak256(0x0c, 0x30))) {
+                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                        revert(0x1c, 0x04)
                     }
                 }
             }
@@ -550,14 +549,12 @@ abstract contract ERC721 {
                 revert(0x1c, 0x04)
             }
             // If `by` is not the zero address, do the authorization check.
-            if by {
-                // Revert if `by` is not the owner, nor approved.
-                if iszero(eq(by, owner)) {
-                    mstore(0x00, owner)
-                    if iszero(sload(keccak256(0x0c, 0x30))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
-                    }
+            // Revert if `by` is not the owner, nor approved.
+            if iszero(or(iszero(by), eq(by, owner))) {
+                mstore(0x00, owner)
+                if iszero(sload(keccak256(0x0c, 0x30))) {
+                    mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                    revert(0x1c, 0x04)
                 }
             }
             // Sets `account` as the approved account to manage `id`.
@@ -621,13 +618,12 @@ abstract contract ERC721 {
             let ownershipSlot := add(id, keccak256(0x00, 0x20))
             let ownershipPacked := sload(ownershipSlot)
             let owner := and(bitmaskAddress, ownershipPacked)
-            // Revert if the token does not exist.
-            if iszero(owner) {
-                mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
-                revert(0x1c, 0x04)
-            }
-            // Revert if `from` is not the owner.
-            if iszero(eq(owner, from)) {
+            // Revert if `from` is not the owner, or does not exist.
+            if iszero(mul(owner, eq(owner, from))) {
+                if iszero(owner) {
+                    mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
+                    revert(0x1c, 0x04)
+                }
                 mstore(0x00, 0xa1148100) // `TransferFromIncorrectOwner()`.
                 revert(0x1c, 0x04)
             }
@@ -643,13 +639,11 @@ abstract contract ERC721 {
                 // Delete the approved address if any.
                 if approvedAddress { sstore(not(ownershipSlot), 0) }
                 // If `by` is not the zero address, do the authorization check.
-                if by {
-                    // Revert if the caller is not the owner, nor approved.
-                    if iszero(or(eq(by, from), eq(by, approvedAddress))) {
-                        if iszero(sload(keccak256(0x0c, 0x30))) {
-                            mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                            revert(0x1c, 0x04)
-                        }
+                // Revert if the caller is not the owner, nor approved.
+                if iszero(or(iszero(by), or(eq(by, from), eq(by, approvedAddress)))) {
+                    if iszero(sload(keccak256(0x0c, 0x30))) {
+                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                        revert(0x1c, 0x04)
                     }
                 }
             }
@@ -770,13 +764,12 @@ abstract contract ERC721 {
             pop(staticcall(gas(), 4, data, n, add(m, 0xa0), n))
             // Revert if the call reverts.
             if iszero(call(gas(), to, 0, add(m, 0x1c), add(returndatasize(), 0x84), m, 0x20)) {
-                if iszero(returndatasize()) {
-                    mstore(0x00, 0xd1a57ed6) // `TransferToNonERC721ReceiverImplementer()`.
-                    revert(0x1c, 0x04)
+                if returndatasize() {
+                    // Bubble up the revert if the delegatecall reverts.
+                    returndatacopy(0x00, 0x00, returndatasize())
+                    revert(0x00, returndatasize())
                 }
-                // Bubble up the revert if the delegatecall reverts.
-                returndatacopy(0x00, 0x00, returndatasize())
-                revert(0x00, returndatasize())
+                mstore(m, returndatasize())
             }
             // Load the returndata and compare it.
             if iszero(eq(mload(m), shl(224, onERC721ReceivedSelector))) {
