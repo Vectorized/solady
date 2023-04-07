@@ -237,7 +237,7 @@ contract ERC721Test is TestPlus {
         vm.expectRevert(ERC721.AccountBalanceOverflow.selector);
         token.mint(owner0, 1);
 
-        token.burn(0);
+        token.uncheckedBurn(0);
         assertEq(token.balanceOf(owner0), 0xfffffffe);
 
         token.mint(owner1, 0);
@@ -266,8 +266,33 @@ contract ERC721Test is TestPlus {
 
         _expectMintEvent(owner, id);
         token.mint(owner, id);
-        _expectBurnEvent(owner, id);
-        token.burn(id);
+
+        if (_random() % 2 == 0) {
+            _expectBurnEvent(owner, id);
+            token.uncheckedBurn(id);
+        } else {
+            vm.expectRevert(ERC721.NotOwnerNorApproved.selector);
+            token.burn(id);
+            uint256 r = _random() % 3;
+            if (r == 0) {
+                vm.prank(owner);
+                _transferFrom(owner, address(this), id);
+                _expectBurnEvent(address(this), id);
+                token.burn(id);
+            }
+            if (r == 1) {
+                vm.prank(owner);
+                _setApprovalForAll(address(this), true);
+                _expectBurnEvent(owner, id);
+                token.burn(id);
+            }
+            if (r == 2) {
+                vm.prank(owner);
+                _approve(address(this), id);
+                _expectBurnEvent(owner, id);
+                token.burn(id);
+            }
+        }
 
         assertEq(token.balanceOf(owner), 0);
 
@@ -355,7 +380,7 @@ contract ERC721Test is TestPlus {
             }
             for (uint256 j; j != 2; ++j) {
                 for (uint256 i; i != tokens[j].length; ++i) {
-                    token.burn(tokens[j][i]);
+                    token.uncheckedBurn(tokens[j][i]);
                 }
             }
             for (uint256 j; j != 2; ++j) {
@@ -426,7 +451,7 @@ contract ERC721Test is TestPlus {
         }
 
         _expectBurnEvent(owner1, id);
-        token.burn(id);
+        token.uncheckedBurn(id);
         if (setExtraData) {
             assertEq(token.getExtraData(id), extraData);
         } else {
@@ -473,11 +498,11 @@ contract ERC721Test is TestPlus {
 
         for (uint256 i; i < 2; ++i) {
             _expectBurnEvent(owner0, i * 2 + 0);
-            token.burn(i * 2 + 0);
+            token.uncheckedBurn(i * 2 + 0);
             assertEq(token.balanceOf(owner0), 1 - i);
 
             _expectBurnEvent(owner1, i * 2 + 1);
-            token.burn(i * 2 + 1);
+            token.uncheckedBurn(i * 2 + 1);
             assertEq(token.balanceOf(owner1), 1 - i);
 
             if (setAux) {
@@ -507,7 +532,7 @@ contract ERC721Test is TestPlus {
 
         _approve(spender, id);
 
-        token.burn(id);
+        token.uncheckedBurn(id);
 
         assertEq(token.balanceOf(address(this)), 0);
 
@@ -531,11 +556,41 @@ contract ERC721Test is TestPlus {
 
         token.mint(from, id);
 
-        vm.prank(from);
-        _approve(address(this), id);
-
-        _expectTransferEvent(from, to, id);
-        _transferFrom(from, to, id);
+        if (_random() % 2 == 0) {
+            uint256 r = _random() % 3;
+            if (r == 0) {
+                vm.prank(from);
+                _approve(address(this), id);
+                _expectTransferEvent(from, to, id);
+                _transferFrom(from, to, id);
+            }
+            if (r == 1) {
+                vm.prank(from);
+                _setApprovalForAll(address(this), true);
+                _expectTransferEvent(from, to, id);
+                _transferFrom(from, to, id);
+            }
+            if (r == 2) {
+                vm.prank(from);
+                _expectTransferEvent(from, address(this), id);
+                _transferFrom(from, address(this), id);
+                _expectTransferEvent(address(this), to, id);
+                _transferFrom(address(this), to, id);
+            }
+        } else {
+            (address temp,) = _randomSigner();
+            while (temp == from || temp == to) (temp,) = _randomSigner();
+            if (_random() % 2 == 0) {
+                _expectTransferEvent(from, temp, id);
+                token.uncheckedTransferFrom(from, temp, id);
+            } else {
+                vm.prank(from);
+                _expectTransferEvent(from, temp, id);
+                _transferFrom(from, temp, id);
+            }
+            _expectTransferEvent(temp, to, id);
+            token.uncheckedTransferFrom(temp, to, id);
+        }
 
         assertEq(_getApproved(id), address(0));
         assertEq(_ownerOf(id), to);
@@ -688,7 +743,7 @@ contract ERC721Test is TestPlus {
 
     function testBurnNonExistentReverts(uint256 id) public {
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        token.burn(id);
+        token.uncheckedBurn(id);
     }
 
     function testDoubleBurnReverts(uint256 id) public {
@@ -696,9 +751,9 @@ contract ERC721Test is TestPlus {
 
         token.mint(to, id);
 
-        token.burn(id);
+        token.uncheckedBurn(id);
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        token.burn(id);
+        token.uncheckedBurn(id);
     }
 
     function testApproveNonExistentReverts(uint256 id, address to) public {
