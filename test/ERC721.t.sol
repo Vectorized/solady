@@ -63,6 +63,8 @@ contract NonERC721Recipient {}
 contract ERC721Test is TestPlus {
     MockERC721 token;
 
+    uint256 private constant _ERC721_MASTER_SLOT_SEED = 0x7d8825530a5a2e7a << 192;
+
     event Transfer(address indexed from, address indexed to, uint256 indexed id);
 
     event Approval(address indexed owner, address indexed approved, uint256 indexed id);
@@ -168,18 +170,23 @@ contract ERC721Test is TestPlus {
         }
     }
 
+    function _owners() internal returns (address a, address b) {
+        (a,) = _randomSigner();
+        (b,) = _randomSigner();
+        while (a == b) (b,) = _randomSigner();
+    }
+
     function testSafetyOfCustomStorage(uint256 id0, uint256 id1) public {
-        uint256 slotSeed = 0x7d8825530a5a2e7a << 192;
         bool safe;
         while (id0 == id1) id1 = _random();
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, id0)
-            mstore(0x1c, slotSeed)
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
             let slot0 := add(id0, keccak256(0x00, 0x20))
             let slot2 := not(slot0)
             mstore(0x00, id1)
-            mstore(0x1c, slotSeed)
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
             let slot1 := add(id1, keccak256(0x00, 0x20))
             let slot3 := not(slot1)
             safe := 1
@@ -191,6 +198,41 @@ contract ERC721Test is TestPlus {
             if eq(slot2, slot3) { safe := 0 }
         }
         require(safe, "Custom storage not safe");
+    }
+
+    function testCannotExceedMaxBalance() public {
+        bytes32 balanceSlot;
+        (address owner0, address owner1) = _owners();
+
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            mstore(0x00, owner0)
+            balanceSlot := keccak256(0x0c, 0x1c)
+        }
+
+        vm.store(address(token), balanceSlot, bytes32(uint256(0xfffffffe)));
+        token.setAux(owner0, type(uint224).max);
+        assertEq(token.balanceOf(owner0), 0xfffffffe);
+        assertEq(token.getAux(owner0), type(uint224).max);
+        token.mint(owner0, 0);
+        assertEq(token.balanceOf(owner0), 0xffffffff);
+
+        vm.expectRevert(ERC721.AccountBalanceOverflow.selector);
+        token.mint(owner0, 1);
+
+        token.burn(0);
+        assertEq(token.balanceOf(owner0), 0xfffffffe);
+
+        token.mint(owner1, 0);
+        vm.prank(owner1);
+        _transferFrom(owner1, owner0, 0);
+
+        token.mint(owner1, 1);
+        vm.expectRevert(ERC721.AccountBalanceOverflow.selector);
+        vm.prank(owner1);
+        _transferFrom(owner1, owner0, 1);
+        assertEq(token.getAux(owner0), type(uint224).max);
     }
 
     function invariantMetadata() public {
@@ -234,11 +276,10 @@ contract ERC721Test is TestPlus {
         uint256[][2] memory tokens;
 
         unchecked {
+            (owners[0], owners[1]) = _owners();
             for (uint256 j; j < 2; ++j) {
-                (owners[j],) = _randomSigner();
                 tokens[j] = new uint256[](_random() % 4);
             }
-            while (owners[0] == owners[1]) (owners[1],) = _randomSigner();
 
             for (uint256 j; j < 2; ++j) {
                 token.setAux(owners[j], _aux(owners[j]));
@@ -323,9 +364,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testIsApprovedOrOwner(uint256 id) public {
-        (address owner0,) = _randomSigner();
-        (address owner1,) = _randomSigner();
-        while (owner0 == owner1) (owner1,) = _randomSigner();
+        (address owner0, address owner1) = _owners();
 
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
         token.isApprovedOrOwner(owner0, id);
@@ -351,9 +390,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testExtraData(uint256 id) public {
-        (address owner0,) = _randomSigner();
-        (address owner1,) = _randomSigner();
-        while (owner0 == owner1) (owner1,) = _randomSigner();
+        (address owner0, address owner1) = _owners();
 
         bool setExtraData = _random() % 2 == 0;
         uint96 extraData = uint96(_bound(_random(), 0, type(uint96).max));
@@ -404,9 +441,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testAux(uint256) public {
-        (address owner0,) = _randomSigner();
-        (address owner1,) = _randomSigner();
-        while (owner0 == owner1) (owner1,) = _randomSigner();
+        (address owner0, address owner1) = _owners();
 
         bool setAux = _random() % 2 == 0;
         if (setAux) {
@@ -488,9 +523,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testTransferFrom(uint256 id) public {
-        (address from,) = _randomSigner();
-        (address to,) = _randomSigner();
-        while (from == to) (to,) = _randomSigner();
+        (address from, address to) = _owners();
 
         token.mint(from, id);
 
@@ -520,9 +553,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testTransferFromApproveAll(uint256 id) public {
-        (address from,) = _randomSigner();
-        (address to,) = _randomSigner();
-        while (from == to) (to,) = _randomSigner();
+        (address from, address to) = _owners();
 
         token.mint(from, id);
 
@@ -538,9 +569,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testSafeTransferFromToEOA(uint256 id) public {
-        (address from,) = _randomSigner();
-        (address to,) = _randomSigner();
-        while (from == to) (to,) = _randomSigner();
+        (address from, address to) = _owners();
 
         token.mint(from, id);
 
@@ -674,8 +703,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testApproveUnauthorizedReverts(uint256 id) public {
-        (address owner,) = _randomSigner();
-        (address to,) = _randomSigner();
+        (address owner, address to) = _owners();
 
         token.mint(owner, id);
         vm.expectRevert(ERC721.NotOwnerNorApproved.selector);
@@ -688,9 +716,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testTransferFromWrongFromReverts(address to, uint256 id) public {
-        (address owner,) = _randomSigner();
-        (address from,) = _randomSigner();
-        while (owner == from) (from,) = _randomSigner();
+        (address owner, address from) = _owners();
 
         token.mint(owner, id);
         vm.expectRevert(ERC721.TransferFromIncorrectOwner.selector);
@@ -705,8 +731,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testTransferFromNotOwner(uint256 id) public {
-        (address from,) = _randomSigner();
-        (address to,) = _randomSigner();
+        (address from, address to) = _owners();
 
         token.mint(from, id);
 
