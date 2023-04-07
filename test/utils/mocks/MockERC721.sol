@@ -62,13 +62,13 @@ contract MockERC721 is ERC721 {
         _setAux(_brutalized(owner), value);
     }
 
-    function approve(address spender, uint256 id) public payable virtual override {
-        super.approve(_brutalized(spender), id);
+    function approve(address account, uint256 id) public payable virtual override {
+        super.approve(_brutalized(account), id);
     }
 
-    function directApprove(address spender, uint256 id) public virtual {
+    function directApprove(address account, uint256 id) public virtual {
         if (!_isApprovedOrOwner(_brutalizedMsgSender(), id)) revert NotOwnerNorApproved();
-        _approve(_brutalized(spender), id);
+        _approve(_brutalized(account), id);
     }
 
     function setApprovalForAll(address operator, bool approved) public virtual override {
@@ -116,8 +116,18 @@ contract MockERC721 is ERC721 {
         _safeTransfer(_brutalized(from), _brutalized(to), id, data, _brutalizedMsgSender());
     }
 
-    function isApprovedOrOwner(address spender, uint256 id) public view virtual returns (bool) {
-        return _isApprovedOrOwner(_brutalized(spender), id);
+    function isApprovedOrOwner(address account, uint256 id) public view virtual returns (bool) {
+        return _isApprovedOrOwner(_brutalized(account), id);
+    }
+
+    function directOwnerOf(uint256 id) public view virtual returns (address) {
+        if (!_exists(id)) revert TokenDoesNotExist();
+        return _ownerOf(id);
+    }
+
+    function directGetApproved(uint256 id) public view virtual returns (address) {
+        if (!_exists(id)) revert TokenDoesNotExist();
+        return _getApproved(id);
     }
 
     function _brutalized(address a) internal view returns (address result) {

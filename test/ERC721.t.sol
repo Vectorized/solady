@@ -152,6 +152,22 @@ contract ERC721Test is TestPlus {
         }
     }
 
+    function _ownerOf(uint256 id) internal returns (address) {
+        if (_random() % 2 == 0) {
+            return token.ownerOf(id);
+        } else {
+            return token.directOwnerOf(id);
+        }
+    }
+
+    function _getApproved(uint256 id) internal returns (address) {
+        if (_random() % 2 == 0) {
+            return token.getApproved(id);
+        } else {
+            return token.directGetApproved(id);
+        }
+    }
+
     function invariantMetadata() public {
         assertEq(token.name(), "Token");
         assertEq(token.symbol(), "TKN");
@@ -171,7 +187,7 @@ contract ERC721Test is TestPlus {
         token.mint(owner, id);
 
         assertEq(token.balanceOf(owner), 1);
-        assertEq(token.ownerOf(id), owner);
+        assertEq(_ownerOf(id), owner);
     }
 
     function testBurn(uint256 id) public {
@@ -185,7 +201,7 @@ contract ERC721Test is TestPlus {
         assertEq(token.balanceOf(owner), 0);
 
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        token.ownerOf(id);
+        _ownerOf(id);
     }
 
     function testEverything(uint256) public {
@@ -221,19 +237,19 @@ contract ERC721Test is TestPlus {
             }
             for (uint256 j; j < 2; ++j) {
                 for (uint256 i; i != tokens[j].length; ++i) {
-                    assertEq(token.getApproved(tokens[j][i]), address(this));
+                    assertEq(_getApproved(tokens[j][i]), address(this));
                     uint256 fromBalanceBefore = token.balanceOf(owners[j]);
                     uint256 toBalanceBefore = token.balanceOf(owners[j ^ 1]);
                     _expectTransferEvent(owners[j], owners[j ^ 1], tokens[j][i]);
                     _transferFrom(owners[j], owners[j ^ 1], tokens[j][i]);
                     assertEq(token.balanceOf(owners[j]), fromBalanceBefore - 1);
                     assertEq(token.balanceOf(owners[j ^ 1]), toBalanceBefore + 1);
-                    assertEq(token.getApproved(tokens[j][i]), address(0));
+                    assertEq(_getApproved(tokens[j][i]), address(0));
                 }
             }
             for (uint256 j; j < 2; ++j) {
                 for (uint256 i; i != tokens[j].length; ++i) {
-                    assertEq(token.ownerOf(tokens[j][i]), owners[j ^ 1]);
+                    assertEq(_ownerOf(tokens[j][i]), owners[j ^ 1]);
                     assertEq(token.getExtraData(tokens[j][i]), _extraData(tokens[j][i]));
                 }
             }
@@ -263,7 +279,7 @@ contract ERC721Test is TestPlus {
             for (uint256 j; j < 2; ++j) {
                 assertEq(token.getAux(owners[j]), _aux(owners[j]));
                 for (uint256 i; i != tokens[j].length; ++i) {
-                    assertEq(token.ownerOf(tokens[j][i]), owners[j]);
+                    assertEq(_ownerOf(tokens[j][i]), owners[j]);
                     assertEq(token.getExtraData(tokens[j][i]), _extraData(tokens[j][i]));
                 }
             }
@@ -335,7 +351,7 @@ contract ERC721Test is TestPlus {
         } else {
             assertEq(token.getExtraData(id), 0);
         }
-        assertEq(token.ownerOf(id), owner1);
+        assertEq(_ownerOf(id), owner1);
 
         if (_random() % 2 == 0) {
             extraData = uint96(_bound(_random(), 0, type(uint96).max));
@@ -351,7 +367,7 @@ contract ERC721Test is TestPlus {
             assertEq(token.getExtraData(id), 0);
         }
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        token.ownerOf(id);
+        _ownerOf(id);
     }
 
     function testExtraData2(uint256 id0, uint256 id1) public {
@@ -417,7 +433,7 @@ contract ERC721Test is TestPlus {
 
         _expectApprovalEvent(address(this), spender, id);
         _approve(spender, id);
-        assertEq(token.getApproved(id), spender);
+        assertEq(_getApproved(id), spender);
     }
 
     function testApproveBurn(uint256 id) public {
@@ -430,10 +446,12 @@ contract ERC721Test is TestPlus {
         token.burn(id);
 
         assertEq(token.balanceOf(address(this)), 0);
-        assertEq(token.getApproved(id), address(0));
 
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        token.ownerOf(id);
+        _getApproved(id);
+
+        vm.expectRevert(ERC721.TokenDoesNotExist.selector);
+        _ownerOf(id);
     }
 
     function testApproveAll(uint256) public {
@@ -457,8 +475,8 @@ contract ERC721Test is TestPlus {
         _expectTransferEvent(from, to, id);
         _transferFrom(from, to, id);
 
-        assertEq(token.getApproved(id), address(0));
-        assertEq(token.ownerOf(id), to);
+        assertEq(_getApproved(id), address(0));
+        assertEq(_ownerOf(id), to);
         assertEq(token.balanceOf(to), 1);
         assertEq(token.balanceOf(from), 0);
     }
@@ -470,8 +488,8 @@ contract ERC721Test is TestPlus {
 
         _transferFrom(address(this), to, id);
 
-        assertEq(token.getApproved(id), address(0));
-        assertEq(token.ownerOf(id), to);
+        assertEq(_getApproved(id), address(0));
+        assertEq(_ownerOf(id), to);
         assertEq(token.balanceOf(to), 1);
         assertEq(token.balanceOf(address(this)), 0);
     }
@@ -488,8 +506,8 @@ contract ERC721Test is TestPlus {
 
         _transferFrom(from, to, id);
 
-        assertEq(token.getApproved(id), address(0));
-        assertEq(token.ownerOf(id), to);
+        assertEq(_getApproved(id), address(0));
+        assertEq(_ownerOf(id), to);
         assertEq(token.balanceOf(to), 1);
         assertEq(token.balanceOf(from), 0);
     }
@@ -506,8 +524,8 @@ contract ERC721Test is TestPlus {
 
         _safeTransferFrom(from, to, id);
 
-        assertEq(token.getApproved(id), address(0));
-        assertEq(token.ownerOf(id), to);
+        assertEq(_getApproved(id), address(0));
+        assertEq(_ownerOf(id), to);
         assertEq(token.balanceOf(to), 1);
         assertEq(token.balanceOf(from), 0);
     }
@@ -524,8 +542,8 @@ contract ERC721Test is TestPlus {
 
         _safeTransferFrom(from, address(recipient), id);
 
-        assertEq(token.getApproved(id), address(0));
-        assertEq(token.ownerOf(id), address(recipient));
+        assertEq(_getApproved(id), address(0));
+        assertEq(_ownerOf(id), address(recipient));
         assertEq(token.balanceOf(address(recipient)), 1);
         assertEq(token.balanceOf(from), 0);
 
@@ -549,8 +567,8 @@ contract ERC721Test is TestPlus {
 
         _safeTransferFrom(from, address(recipient), id, data);
 
-        assertEq(token.getApproved(id), address(0));
-        assertEq(token.ownerOf(id), address(recipient));
+        assertEq(_getApproved(id), address(0));
+        assertEq(_ownerOf(id), address(recipient));
         assertEq(token.balanceOf(address(recipient)), 1);
         assertEq(token.balanceOf(from), 0);
 
@@ -565,7 +583,7 @@ contract ERC721Test is TestPlus {
 
         token.safeMint(to, id);
 
-        assertEq(token.ownerOf(id), address(to));
+        assertEq(_ownerOf(id), address(to));
         assertEq(token.balanceOf(address(to)), 1);
     }
 
@@ -574,7 +592,7 @@ contract ERC721Test is TestPlus {
 
         token.safeMint(address(to), id);
 
-        assertEq(token.ownerOf(id), address(to));
+        assertEq(_ownerOf(id), address(to));
         assertEq(token.balanceOf(address(to)), 1);
 
         assertEq(to.operator(), address(this));
@@ -588,7 +606,7 @@ contract ERC721Test is TestPlus {
 
         token.safeMint(address(to), id, data);
 
-        assertEq(token.ownerOf(id), address(to));
+        assertEq(_ownerOf(id), address(to));
         assertEq(token.balanceOf(address(to)), 1);
 
         assertEq(to.operator(), address(this));
@@ -767,6 +785,6 @@ contract ERC721Test is TestPlus {
 
     function testOwnerOfNonExistent(uint256 id) public {
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
-        token.ownerOf(id);
+        _ownerOf(id);
     }
 }
