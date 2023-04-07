@@ -343,7 +343,7 @@ abstract contract ERC721 {
         virtual
     {
         transferFrom(from, to, id);
-        if (to.code.length != 0) _checkOnERC721Received(from, to, id, data, msg.sender);
+        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data, msg.sender);
     }
 
     /// @dev Returns true if this contract implements the interface defined by `interfaceId`.
@@ -617,7 +617,7 @@ abstract contract ERC721 {
         virtual
     {
         _transfer(from, to, id, address(0));
-        if (to.code.length != 0) _checkOnERC721Received(from, to, id, data, msg.sender);
+        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data, msg.sender);
     }
 
     /// @dev Equivalent to `_safeTransfer(from, to, id, "", by)`.
@@ -643,7 +643,7 @@ abstract contract ERC721 {
         virtual
     {
         _transfer(from, to, id, by);
-        if (to.code.length != 0) _checkOnERC721Received(from, to, id, data, by);
+        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data, by);
     }
 
     /// @dev Mints token `id` to `to`.
@@ -710,7 +710,7 @@ abstract contract ERC721 {
     /// Emits a {Transfer} event.
     function _safeMint(address to, uint256 id, bytes memory data) internal virtual {
         _mint(to, id);
-        if (to.code.length != 0) _checkOnERC721Received(address(0), to, id, data, msg.sender);
+        if (_hasCode(to)) _checkOnERC721Received(address(0), to, id, data, msg.sender);
     }
 
     /// @dev Equivalent to `_burn(id, address(0))`.
@@ -829,6 +829,14 @@ abstract contract ERC721 {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns if `a` has bytecode of non-zero length.
+    function _hasCode(address a) private view returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := extcodesize(a)
+        }
+    }
+
     /// @dev Perform a call to invoke {IERC721Receiver-onERC721Received} on `to`.
     /// Reverts if the target does not support the function correctly.
     function _checkOnERC721Received(
@@ -849,12 +857,7 @@ abstract contract ERC721 {
             mstore(add(m, 0x60), id)
             mstore(add(m, 0x80), 0x80)
             let n := mload(data)
-            let o := add(m, 0xa0)
-            mstore(o, n)
-            for { let i := 0 } lt(i, n) {} {
-                i := add(i, 0x20)
-                mstore(add(o, i), mload(add(data, i)))
-            }
+            pop(staticcall(gas(), 4, data, add(n, 0x20), add(m, 0xa0), add(n, 0x20)))
             // Revert if the call reverts.
             if iszero(call(gas(), to, 0, add(m, 0x1c), add(n, 0xa4), m, 0x20)) {
                 if iszero(returndatasize()) {
