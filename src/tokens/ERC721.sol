@@ -70,7 +70,7 @@ abstract contract ERC721 {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The ownership data slot of `id` is given by.
+    /// @dev The ownership data slot of `id` is given by:
     /// ```
     ///     mstore(0x00, id)
     ///     mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
@@ -82,7 +82,9 @@ abstract contract ERC721 {
     ///
     /// The approved address slot is given by: `add(1, ownershipSlot)`.
     ///
-    /// The balance slot of `owner` is given by.
+    /// See: https://notes.ethereum.org/@vbuterin/verkle_tree_eip
+    ///
+    /// The balance slot of `owner` is given by:
     /// ```
     ///     mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
     ///     mstore(0x00, owner)
@@ -92,7 +94,7 @@ abstract contract ERC721 {
     /// - [0..31]   `balance`
     /// - [32..225] `aux`
     ///
-    /// The operator approval slot of `owner` is given by.
+    /// The `operator` approval slot of `owner` is given by:
     /// ```
     ///     mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, operator))
     ///     mstore(0x00, owner)
