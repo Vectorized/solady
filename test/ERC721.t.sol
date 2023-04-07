@@ -168,6 +168,31 @@ contract ERC721Test is TestPlus {
         }
     }
 
+    function testSafetyOfCustomStorage(uint256 id0, uint256 id1) public {
+        uint256 slotSeed = 0x7d8825530a5a2e7a << 192;
+        bool safe;
+        while (id0 == id1) id1 = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, id0)
+            mstore(0x1c, slotSeed)
+            let slot0 := add(id0, keccak256(0x00, 0x20))
+            let slot2 := not(slot0)
+            mstore(0x00, id1)
+            mstore(0x1c, slotSeed)
+            let slot1 := add(id1, keccak256(0x00, 0x20))
+            let slot3 := not(slot1)
+            safe := 1
+            if eq(slot0, slot1) { safe := 0 }
+            if eq(slot0, slot2) { safe := 0 }
+            if eq(slot0, slot3) { safe := 0 }
+            if eq(slot1, slot2) { safe := 0 }
+            if eq(slot1, slot3) { safe := 0 }
+            if eq(slot2, slot3) { safe := 0 }
+        }
+        require(safe, "Custom storage not safe");
+    }
+
     function invariantMetadata() public {
         assertEq(token.name(), "Token");
         assertEq(token.symbol(), "TKN");
