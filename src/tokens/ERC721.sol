@@ -168,7 +168,7 @@ abstract contract ERC721 {
         }
     }
 
-    /// @dev Returns the account approved to managed token `id`.
+    /// @dev Sets `account` as the approved account to manage token `id`.
     ///
     /// Requirements:
     /// - Token `id` must exist.
@@ -216,7 +216,7 @@ abstract contract ERC721 {
         _transfer(msg.sender, from, to, id);
     }
 
-    /// @dev Equivalent to `safeTransferFrom(from, to, id, '')`.
+    /// @dev Equivalent to `safeTransferFrom(from, to, id, "")`.
     function safeTransferFrom(address from, address to, uint256 id) public payable virtual {
         safeTransferFrom(from, to, id, "");
     }
@@ -255,7 +255,7 @@ abstract contract ERC721 {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                INTERNAL FUNCTIONS FOR USAGE                */
+    /*                  INTERNAL QUERY FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns if token `id` exists.
@@ -278,6 +278,66 @@ abstract contract ERC721 {
             result := shr(96, shl(96, sload(add(id, keccak256(0x00, 0x20)))))
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*            INTERNAL DATA HITCHHIKING FUNCTIONS             */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the auxiliary data for `owner`.
+    /// Minting, transferring, burning the tokens of `owner` will not change the auxiliary data.
+    /// Auxiliary data can be set for any address, even if it does not have any tokens.
+    function _getAux(address owner) internal view virtual returns (uint224 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            mstore(0x00, owner)
+            result := shr(32, sload(keccak256(0x0c, 0x1c)))
+        }
+    }
+
+    /// @dev Set the auxiliary data for `owner` to `value`.
+    /// Minting, transferring, burning the tokens of `owner` will not change the auxiliary data.
+    /// Auxiliary data can be set for any address, even if it does not have any tokens.
+    function _setAux(address owner, uint224 value) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            mstore(0x00, owner)
+            let balanceSlot := keccak256(0x0c, 0x1c)
+            let packed := sload(balanceSlot)
+            sstore(balanceSlot, xor(packed, shl(32, xor(value, shr(32, packed)))))
+        }
+    }
+
+    /// @dev Returns the extra data for token `id`.
+    /// Minting, transferring, burning a token will not change the extra data.
+    /// The extra data can be set on a non existent token.
+    function _getExtraData(uint256 id) internal view virtual returns (uint96 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, id)
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            result := shr(160, sload(add(id, keccak256(0x00, 0x20))))
+        }
+    }
+
+    /// @dev Sets the extra data for token `id` to `value`.
+    /// Minting, transferring, burning a token will not change the extra data.
+    /// The extra data can be set on a non existent token.
+    function _setExtraData(uint256 id, uint96 value) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, id)
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            let ownershipSlot := add(id, keccak256(0x00, 0x20))
+            let packed := sload(ownershipSlot)
+            sstore(ownershipSlot, xor(packed, shl(160, xor(value, shr(160, packed)))))
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  INTERNAL MINT FUNCTIONS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Mints token `id` to `to`.
     ///
@@ -347,6 +407,10 @@ abstract contract ERC721 {
         if (_hasCode(to)) _checkOnERC721Received(msg.sender, address(0), to, id, data);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  INTERNAL BURN FUNCTIONS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @dev Equivalent to `_burn(address(0), id)`.
     function _burn(uint256 id) internal virtual {
         _burn(address(0), id);
@@ -411,68 +475,9 @@ abstract contract ERC721 {
         _afterTokenTransfer(owner, address(0), id);
     }
 
-    /// @dev Returns the auxiliary data for `owner`.
-    /// Minting, transferring, burning the tokens of `owner` will not change the auxiliary data.
-    /// Auxiliary can be set for any address, even if it does not have any tokens.
-    function _getAux(address owner) internal view virtual returns (uint224 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            mstore(0x00, owner)
-            result := shr(32, sload(keccak256(0x0c, 0x1c)))
-        }
-    }
-
-    /// @dev Set the auxiliary data for `owner` to `value`.
-    /// Minting, transferring, burning the tokens of `owner` will not change the auxiliary data.
-    /// Auxiliary can be set for any address, even if it does not have any tokens.
-    function _setAux(address owner, uint224 value) internal virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            mstore(0x00, owner)
-            let balanceSlot := keccak256(0x0c, 0x1c)
-            let packed := sload(balanceSlot)
-            sstore(balanceSlot, xor(packed, shl(32, xor(value, shr(32, packed)))))
-        }
-    }
-
-    /// @dev Returns the extra data for token `id`.
-    /// Minting, transferring, burning a token will not clear the extra data.
-    /// The extra data can be set on a non existent token.
-    function _getExtraData(uint256 id) internal view virtual returns (uint96 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, id)
-            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            result := shr(160, sload(add(id, keccak256(0x00, 0x20))))
-        }
-    }
-
-    /// @dev Sets the extra data for token `id` to `value`.
-    /// Minting, transferring, burning a token will not clear the extra data.
-    /// The extra data can be set on a non existent token.
-    function _setExtraData(uint256 id, uint96 value) internal virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, id)
-            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            let ownershipSlot := add(id, keccak256(0x00, 0x20))
-            let packed := sload(ownershipSlot)
-            sstore(ownershipSlot, xor(packed, shl(160, xor(value, shr(160, packed)))))
-        }
-    }
-
-    /// @dev Returns the account approved to manage token `id`.
-    /// Returns the zero address instead of reverting if the token does not exist.
-    function _getApproved(uint256 id) internal view virtual returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, id)
-            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            result := sload(not(add(id, keccak256(0x00, 0x20))))
-        }
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                INTERNAL APPROVAL FUNCTIONS                 */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns whether `account` is the owner of token `id`, or is approved to managed it.
     ///
@@ -507,6 +512,17 @@ abstract contract ERC721 {
                     result := eq(account, sload(not(ownershipSlot)))
                 }
             }
+        }
+    }
+
+    /// @dev Returns the account approved to manage token `id`.
+    /// Returns the zero address instead of reverting if the token does not exist.
+    function _getApproved(uint256 id) internal view virtual returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, id)
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            result := sload(not(add(id, keccak256(0x00, 0x20))))
         }
     }
 
@@ -576,6 +592,10 @@ abstract contract ERC721 {
             log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, by, operator)
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                INTERNAL TRANSFER FUNCTIONS                 */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Equivalent to `_transfer(address(0), from, to, id)`.
     function _transfer(address from, address to, uint256 id) internal virtual {
@@ -711,6 +731,10 @@ abstract contract ERC721 {
         _transfer(by, from, to, id);
         if (_hasCode(to)) _checkOnERC721Received(by, from, to, id, data);
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    HOOKS FOR OVERRIDING                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Hook that is called before any token transfers, including minting and burning.
     function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual {}
