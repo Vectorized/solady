@@ -201,7 +201,20 @@ abstract contract ERC721 {
     ///
     /// Emits a {ApprovalForAll} event.
     function setApprovalForAll(address operator, bool isApproved) public virtual {
-        _setApprovalForAll(msg.sender, operator, isApproved);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Clear the upper 96 bits.
+            operator := shr(96, shl(96, operator))
+            // Convert to 0 or 1.
+            isApproved := iszero(iszero(isApproved))
+            // Update the `isApproved` for (`msg.sender`, `operator`).
+            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, operator))
+            mstore(0x00, caller())
+            sstore(keccak256(0x0c, 0x30), isApproved)
+            // Emit the {ApprovalForAll} event.
+            mstore(0x00, isApproved)
+            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), operator)
+        }
     }
 
     /// @dev Transfers token `id` from `from` to `to`.
@@ -583,7 +596,7 @@ abstract contract ERC721 {
             operator := shr(96, shl(96, operator))
             // Convert to 0 or 1.
             isApproved := iszero(iszero(isApproved))
-            // Update the `isApproved` for (`msg.sender`, `operator`).
+            // Update the `isApproved` for (`by`, `operator`).
             mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, operator))
             mstore(0x00, by)
             sstore(keccak256(0x0c, 0x30), isApproved)
