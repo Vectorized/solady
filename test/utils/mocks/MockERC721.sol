@@ -38,7 +38,7 @@ contract MockERC721 is ERC721 {
         _safeMint(_brutalized(to), id);
     }
 
-    function safeMint(address to, uint256 id, bytes memory data) public virtual {
+    function safeMint(address to, uint256 id, bytes calldata data) public virtual {
         _safeMint(_brutalized(to), id, data);
     }
 
@@ -100,7 +100,7 @@ contract MockERC721 is ERC721 {
         _safeTransfer(_brutalizedMsgSender(), _brutalized(from), _brutalized(to), id);
     }
 
-    function safeTransferFrom(address from, address to, uint256 id, bytes memory data)
+    function safeTransferFrom(address from, address to, uint256 id, bytes calldata data)
         public
         payable
         virtual
@@ -109,7 +109,7 @@ contract MockERC721 is ERC721 {
         super.safeTransferFrom(_brutalized(from), _brutalized(to), id, data);
     }
 
-    function directSafeTransferFrom(address from, address to, uint256 id, bytes memory data)
+    function directSafeTransferFrom(address from, address to, uint256 id, bytes calldata data)
         public
         virtual
     {
