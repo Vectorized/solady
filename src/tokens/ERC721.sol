@@ -220,7 +220,8 @@ abstract contract ERC721 {
 
     /// @dev Equivalent to `safeTransferFrom(from, to, id, "")`.
     function safeTransferFrom(address from, address to, uint256 id) public payable virtual {
-        safeTransferFrom(from, to, id, "");
+        _transfer(msg.sender, from, to, id);
+        if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, "");
     }
 
     /// @dev Transfers token `id` from `from` to `to`.
@@ -240,7 +241,7 @@ abstract contract ERC721 {
         payable
         virtual
     {
-        transferFrom(from, to, id);
+        _transfer(msg.sender, from, to, id);
         if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, data);
     }
 
@@ -772,10 +773,11 @@ abstract contract ERC721 {
             mstore(add(m, 0x40), shr(96, shl(96, from)))
             mstore(add(m, 0x60), id)
             mstore(add(m, 0x80), 0x80)
-            let n := add(mload(data), 0x20)
-            pop(staticcall(gas(), 4, data, n, add(m, 0xa0), n))
+            let n := mload(data)
+            mstore(add(m, 0xa0), n)
+            if n { pop(staticcall(gas(), 4, add(data, 0x20), n, add(m, 0xc0), n)) }
             // Revert if the call reverts.
-            if iszero(call(gas(), to, 0, add(m, 0x1c), add(returndatasize(), 0x84), m, 0x20)) {
+            if iszero(call(gas(), to, 0, add(m, 0x1c), add(n, 0xa4), m, 0x20)) {
                 if returndatasize() {
                     // Bubble up the revert if the delegatecall reverts.
                     returndatacopy(0x00, 0x00, returndatasize())
