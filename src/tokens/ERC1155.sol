@@ -198,7 +198,6 @@ abstract contract ERC1155 {
             }
             // Emit a {TransferSingle} event.
             {
-                mstore(0x00, id)
                 mstore(0x20, amount)
                 log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), from, to)
             }
@@ -266,13 +265,13 @@ abstract contract ERC1155 {
             }
             // Loop through all the `ids` and update the balances.
             {
-                for { let i := 0 } iszero(eq(i, ids.length)) { i := add(i, 1) } {
-                    let id := calldataload(add(ids.offset, shl(5, i)))
-                    let amount := calldataload(add(amounts.offset, shl(5, i)))
+                let end := shl(5, ids.length)
+                for { let i := 0 } iszero(eq(i, end)) { i := add(i, 0x20) } {
+                    let amount := calldataload(add(amounts.offset, i))
                     // Subtract and store the updated balance of `from`.
                     {
                         mstore(0x20, fromSlotSeed)
-                        mstore(0x00, id)
+                        mstore(0x00, calldataload(add(ids.offset, i)))
                         let fromBalanceSlot := keccak256(0x00, 0x40)
                         let fromBalance := sload(fromBalanceSlot)
                         if gt(amount, fromBalance) {
@@ -298,16 +297,13 @@ abstract contract ERC1155 {
             let m := mload(0x40)
             // Emit a {TransferBatch} event.
             {
-                mstore(m, 0x40)
-                mstore(add(m, 0x20), 0x40)
                 // Copy the `ids`.
                 mstore(m, 0x40)
                 let n := add(0x20, shl(5, ids.length))
                 let o := add(m, 0x40)
                 calldatacopy(o, sub(ids.offset, 0x20), n)
                 // Copy the `amounts`.
-                let s := add(0x40, n)
-                mstore(add(m, 0x20), s)
+                mstore(add(m, 0x20), add(0x40, n))
                 o := add(o, n)
                 n := add(0x20, shl(5, amounts.length))
                 calldatacopy(o, sub(amounts.offset, 0x20), n)
@@ -373,12 +369,11 @@ abstract contract ERC1155 {
             let o := add(balances, 0x20)
             let end := shl(5, ids.length)
             mstore(0x40, add(end, o))
-
-            for { let i := 0 } lt(i, end) { i := add(i, 0x20) } {
+            // Loop through all the `ids` and load the balances.
+            for { let i := 0 } iszero(eq(i, end)) { i := add(i, 0x20) } {
                 let owner := calldataload(add(owners.offset, i))
-                let id := calldataload(add(ids.offset, i))
                 mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, shl(96, owner)))
-                mstore(0x00, id)
+                mstore(0x00, calldataload(add(ids.offset, i)))
                 mstore(add(o, i), sload(keccak256(0x00, 0x40)))
             }
         }
@@ -457,14 +452,13 @@ abstract contract ERC1155 {
             // Loop through all the `ids` and update the balances.
             {
                 let end := shl(5, mload(ids))
-                for { let i := 0 } lt(i, end) {} {
+                for { let i := 0 } iszero(eq(i, end)) {} {
                     i := add(i, 0x20)
-                    let id := mload(add(ids, i))
                     let amount := mload(add(amounts, i))
                     // Increase and store the updated balance of `to`.
                     {
                         mstore(0x20, toSlotSeed)
-                        mstore(0x00, id)
+                        mstore(0x00, mload(add(ids, i)))
                         let toBalanceSlot := keccak256(0x00, 0x40)
                         let toBalanceBefore := sload(toBalanceSlot)
                         let toBalanceAfter := add(toBalanceBefore, amount)
@@ -582,11 +576,10 @@ abstract contract ERC1155 {
                 let end := shl(5, mload(ids))
                 for { let i := 0 } iszero(eq(i, end)) {} {
                     i := add(i, 0x20)
-                    let id := mload(add(ids, i))
                     let amount := mload(add(amounts, i))
                     // Increase and store the updated balance of `to`.
                     {
-                        mstore(0x00, id)
+                        mstore(0x00, mload(add(ids, i)))
                         let fromBalanceSlot := keccak256(0x00, 0x40)
                         let fromBalance := sload(fromBalanceSlot)
                         if gt(amount, fromBalance) {
