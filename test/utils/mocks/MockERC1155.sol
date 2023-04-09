@@ -10,7 +10,12 @@ contract MockERC1155 is ERC1155 {
         _mint(to, id, amount, data);
     }
 
-    function batchMint(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public virtual {
+    function batchMint(
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public virtual {
         _batchMint(to, ids, amounts, data);
     }
 
@@ -18,7 +23,10 @@ contract MockERC1155 is ERC1155 {
         _burn(from, id, amount);
     }
 
-    function batchBurn(address from, uint256[] memory ids, uint256[] memory amounts) public virtual {
+    function batchBurn(address from, uint256[] memory ids, uint256[] memory amounts)
+        public
+        virtual
+    {
         _batchBurn(from, ids, amounts);
     }
 }

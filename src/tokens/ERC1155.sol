@@ -212,7 +212,7 @@ abstract contract ERC1155 {
                 mstore(add(m, 0x40), from)
                 mstore(add(m, 0x60), id)
                 mstore(add(m, 0x80), amount)
-                mstore(add(m, 0xa0), 0xc0)
+                mstore(add(m, 0xa0), 0xa0)
                 calldatacopy(add(m, 0xc0), sub(data.offset, 0x20), add(0x20, data.length))
                 // Revert if the call reverts.
                 if iszero(call(gas(), to, 0, add(m, 0x1c), add(0xc4, data.length), m, 0x20)) {
@@ -266,7 +266,7 @@ abstract contract ERC1155 {
             }
             // Loop through all the `ids` and update the balances.
             {
-                for { let i := 0 } lt(i, ids.length) { i := add(i, 1) } {
+                for { let i := 0 } iszero(eq(i, ids.length)) { i := add(i, 1) } {
                     let id := calldataload(add(ids.offset, shl(5, i)))
                     let amount := calldataload(add(amounts.offset, shl(5, i)))
                     // Subtract and store the updated balance of `from`.
@@ -295,9 +295,9 @@ abstract contract ERC1155 {
                     }
                 }
             }
+            let m := mload(0x40)
             // Emit a {TransferBatch} event.
             {
-                let m := mload(0x40)
                 mstore(m, 0x40)
                 mstore(add(m, 0x20), 0x40)
                 // Copy the `ids`.
@@ -317,7 +317,6 @@ abstract contract ERC1155 {
             // Do the {onERC1155BatchReceived} check if `to` is a smart contract.
             if extcodesize(to) {
                 // Prepare the calldata.
-                let m := mload(0x40)
                 let onERC1155BatchReceivedSelector := 0xbc197c81
                 mstore(m, onERC1155BatchReceivedSelector)
                 mstore(add(m, 0x20), caller())
@@ -401,10 +400,7 @@ abstract contract ERC1155 {
     /*                  INTERNAL MINT FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _mint(address to, uint256 id, uint256 amount, bytes memory data)
-        internal
-        virtual
-    {
+    function _mint(address to, uint256 id, uint256 amount, bytes memory data) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             let toSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, to))
@@ -507,16 +503,28 @@ abstract contract ERC1155 {
     /*                  INTERNAL BURN FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _burn(address from, uint256 id, uint256 amount)
-        internal
-        virtual
-    {
+    function _burn(address from, uint256 id, uint256 amount) internal virtual {
+        _burn(address(0), from, id, amount);
+    }
+
+    function _burn(address by, address from, uint256 id, uint256 amount) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             let fromSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, from))
             mstore(0x20, fromSlotSeed)
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
+            by := shr(96, shl(96, by))
+            // If the `by` is not `from`, do the authorization check.
+            if by {
+                if iszero(eq(by, from)) {
+                    mstore(0x00, by)
+                    if iszero(sload(keccak256(0x0c, 0x34))) {
+                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                        revert(0x1c, 0x04)
+                    }
+                }
+            }
             // Decrease and store the updated balance of `from`.
             {
                 mstore(0x00, id)
@@ -537,11 +545,17 @@ abstract contract ERC1155 {
         }
     }
 
-    function _batchBurn(
-        address from,
-        uint256[] memory ids,
-        uint256[] memory amounts
-    ) internal virtual {
+    function _batchBurn(address from, uint256[] memory ids, uint256[] memory amounts)
+        internal
+        virtual
+    {
+        _batchBurn(address(0), from, ids, amounts);
+    }
+
+    function _batchBurn(address by, address from, uint256[] memory ids, uint256[] memory amounts)
+        internal
+        virtual
+    {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(eq(mload(ids), mload(amounts))) {
@@ -552,10 +566,21 @@ abstract contract ERC1155 {
             mstore(0x20, fromSlotSeed)
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
+            by := shr(96, shl(96, by))
+            // If the `by` is not `from`, do the authorization check.
+            if by {
+                if iszero(eq(by, from)) {
+                    mstore(0x00, by)
+                    if iszero(sload(keccak256(0x0c, 0x34))) {
+                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                        revert(0x1c, 0x04)
+                    }
+                }
+            }
             // Loop through all the `ids` and update the balances.
             {
                 let end := shl(5, mload(ids))
-                for { let i := 0 } lt(i, end) {} {
+                for { let i := 0 } iszero(eq(i, end)) {} {
                     i := add(i, 0x20)
                     let id := mload(add(ids, i))
                     let amount := mload(add(amounts, i))
