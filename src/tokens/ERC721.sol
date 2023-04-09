@@ -296,7 +296,7 @@ abstract contract ERC721 {
     /// @dev Equivalent to `safeTransferFrom(from, to, id, "")`.
     function safeTransferFrom(address from, address to, uint256 id) public payable virtual {
         transferFrom(from, to, id);
-        if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, "");
+        if (_hasCode(to)) _checkOnERC721Received(from, to, id, "");
     }
 
     /// @dev Transfers token `id` from `from` to `to`.
@@ -317,7 +317,7 @@ abstract contract ERC721 {
         virtual
     {
         transferFrom(from, to, id);
-        if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, data);
+        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data);
     }
 
     /// @dev Returns true if this contract implements the interface defined by `interfaceId`.
@@ -482,7 +482,7 @@ abstract contract ERC721 {
     /// Emits a {Transfer} event.
     function _safeMint(address to, uint256 id, bytes memory data) internal virtual {
         _mint(to, id);
-        if (_hasCode(to)) _checkOnERC721Received(msg.sender, address(0), to, id, data);
+        if (_hasCode(to)) _checkOnERC721Received(address(0), to, id, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -778,7 +778,7 @@ abstract contract ERC721 {
         virtual
     {
         _transfer(address(0), from, to, id);
-        if (_hasCode(to)) _checkOnERC721Received(msg.sender, from, to, id, data);
+        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data);
     }
 
     /// @dev Equivalent to `_safeTransfer(by, from, to, id, "")`.
@@ -804,7 +804,7 @@ abstract contract ERC721 {
         virtual
     {
         _transfer(by, from, to, id);
-        if (_hasCode(to)) _checkOnERC721Received(by, from, to, id, data);
+        if (_hasCode(to)) _checkOnERC721Received(from, to, id, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -831,20 +831,16 @@ abstract contract ERC721 {
 
     /// @dev Perform a call to invoke {IERC721Receiver-onERC721Received} on `to`.
     /// Reverts if the target does not support the function correctly.
-    function _checkOnERC721Received(
-        address by,
-        address from,
-        address to,
-        uint256 id,
-        bytes memory data
-    ) private {
+    function _checkOnERC721Received(address from, address to, uint256 id, bytes memory data)
+        private
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // Prepare the calldata.
             let m := mload(0x40)
             let onERC721ReceivedSelector := 0x150b7a02
             mstore(m, onERC721ReceivedSelector)
-            mstore(add(m, 0x20), shr(96, shl(96, by)))
+            mstore(add(m, 0x20), caller()) // The `operator`, which is always `msg.sender`.
             mstore(add(m, 0x40), shr(96, shl(96, from)))
             mstore(add(m, 0x60), id)
             mstore(add(m, 0x80), 0x80)
