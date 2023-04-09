@@ -79,7 +79,10 @@ library SafeTransferLib {
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 // We can directly use `SELFDESTRUCT` in the contract creation.
                 // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
-                if iszero(create(amount, 0x0b, 0x16)) { revert(0, 0) } // For better gas estimation.
+                if iszero(create(amount, 0x0b, 0x16)) {
+                    // For better gas estimation.
+                    if iszero(gt(gas(), 1000000)) { revert(0, 0) }
+                }
             }
         }
     }
@@ -111,7 +114,10 @@ library SafeTransferLib {
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 // We can directly use `SELFDESTRUCT` in the contract creation.
                 // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
-                if iszero(create(amount, 0x0b, 0x16)) { revert(0, 0) } // For better gas estimation.
+                if iszero(create(amount, 0x0b, 0x16)) {
+                    // For better gas estimation.
+                    if iszero(gt(gas(), 1000000)) { revert(0, 0) }
+                }
             }
         }
     }
