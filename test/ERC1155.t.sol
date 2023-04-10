@@ -1051,7 +1051,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
     function testBatchMintToEOA(uint256) public {
         _TestTemps memory t = _testTemps();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[t.to][id];
@@ -1066,7 +1066,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         _expectMintEvent(t.to, t.ids, t.mintAmounts);
         token.batchMint(t.to, t.ids, t.mintAmounts, t.mintData);
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             assertEq(token.balanceOf(t.to, id), userMintAmounts[t.to][id]);
@@ -1078,7 +1078,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
 
         ERC1155Recipient to = new ERC1155Recipient();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[address(to)][id];
@@ -1099,7 +1099,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         assertEq(to.batchAmounts(), t.mintAmounts);
         assertEq(to.batchData(), t.mintData);
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             assertEq(token.balanceOf(address(to), id), userMintAmounts[address(to)][id]);
@@ -1123,7 +1123,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
     function testBatchBurn(uint256) public {
         _TestTemps memory t = _testTemps();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[t.to][id];
@@ -1220,7 +1220,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
     function testSafeBatchTransferFromToEOA(uint256) public {
         _TestTemps memory t = _testTemps();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[t.from][id];
@@ -1243,7 +1243,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         _expectTransferEvent(t.from, t.to, t.ids, t.transferAmounts);
         token.safeBatchTransferFrom(t.from, t.to, t.ids, t.transferAmounts, t.transferData);
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             assertEq(token.balanceOf(t.to, id), userTransferOrBurnAmounts[t.from][id]);
@@ -1303,7 +1303,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
 
         address[] memory tos = new address[](t.n);
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
             (address to,) = _randomSigner();
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[to][id];
@@ -1319,7 +1319,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
 
         uint256[] memory balances = token.balanceOfBatch(tos, t.ids);
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             assertEq(balances[i], token.balanceOf(tos[i], t.ids[i]));
         }
     }
@@ -1433,7 +1433,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
 
         while (t.n == 0) t = _testTemps();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[t.from][id];
@@ -1460,7 +1460,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
     function testSafeBatchTransferFromToZeroReverts(uint256) public {
         _TestTemps memory t = _testTemps();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[t.from][id];
@@ -1486,7 +1486,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
     function testSafeBatchTransferFromToNonERC1155RecipientReverts(uint256) public {
         _TestTemps memory t = _testTemps();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[t.from][id];
@@ -1514,7 +1514,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
     function testSafeBatchTransferFromToRevertingERC1155RecipientReverts(uint256) public {
         _TestTemps memory t = _testTemps();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[t.from][id];
@@ -1541,7 +1541,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
     function testSafeBatchTransferFromToWrongReturnDataERC1155RecipientReverts(uint256) public {
         _TestTemps memory t = _testTemps();
 
-        for (uint256 i = 0; i < t.n; i++) {
+        for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[t.from][id];
