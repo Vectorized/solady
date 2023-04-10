@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Modern and gas efficient ERC1155 implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC1155.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC1155.sol)
+/// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC1155/ERC1155.sol)
 abstract contract ERC1155 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -57,6 +58,7 @@ abstract contract ERC1155 {
 
     /// @dev Emitted when the Uniform Resource Identifier (URI) for token `id`
     /// is updated to `value`. This event is not used in the base contract.
+    /// You may need to emit this event depending on your URI logic.
     event URI(string value, uint256 indexed id);
 
     /// @dev `keccak256(bytes("TransferSingle(address,address,address,uint256,uint256)"))`.
@@ -99,12 +101,19 @@ abstract contract ERC1155 {
     /*                      ERC1155 METADATA                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns the URI for token `id`.
+    ///
+    /// Can either return the same templated URI for all token IDs,
+    /// or substitute the `id` on the contract side.
+    ///
+    /// See: https://eips.ethereum.org/EIPS/eip-1155#metadata
     function uri(uint256 id) public view virtual returns (string memory);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          ERC1155                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns the amount of `id` owned by `owner`.
     function balanceOf(address owner, uint256 id) public view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -114,6 +123,24 @@ abstract contract ERC1155 {
         }
     }
 
+    /// @dev Returns whether `operator` is approved to manage the tokens of `owner`.
+    function isApprovedForAll(address owner, address operator)
+        public
+        view
+        virtual
+        returns (bool result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, shl(96, owner)))
+            mstore(0x00, operator)
+            result := sload(keccak256(0x0c, 0x34))
+        }
+    }
+
+    /// @dev Sets whether `operator` is approved to manage the tokens of the caller.
+    ///
+    /// Emits a {ApprovalForAll} event.
     function setApprovalForAll(address operator, bool isApproved) public virtual {
         /// @solidity memory-safe-assembly
         assembly {
@@ -131,20 +158,17 @@ abstract contract ERC1155 {
         }
     }
 
-    function isApprovedForAll(address owner, address operator)
-        public
-        view
-        virtual
-        returns (bool result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, shl(96, owner)))
-            mstore(0x00, operator)
-            result := sload(keccak256(0x0c, 0x34))
-        }
-    }
-
+    /// @dev Transfers `amount` of `id` from `from` to `to`.
+    ///
+    /// Requirements:
+    /// - `to` cannot be the zero address.
+    /// - `from` must have at least `amount` of `id`.
+    /// - If the caller is not `from`,
+    ///   it must be approved to manage the tokens of `from`.
+    /// - If `to` refers to a smart contract, it must implement
+    ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
+    ///
+    /// Emits a {Transfer} event.
     function safeTransferFrom(
         address from,
         address to,
@@ -153,7 +177,7 @@ abstract contract ERC1155 {
         bytes calldata data
     ) public virtual {
         if (_useBeforeTokenTransfer()) {
-            _beforeTokenTransfer(msg.sender, from, to, _single(id), _single(amount), data);
+            _beforeTokenTransfer(from, to, _single(id), _single(amount), data);
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -206,7 +230,7 @@ abstract contract ERC1155 {
             }
         }
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransfer(msg.sender, from, to, _single(id), _single(amount), data);
+            _afterTokenTransfer(from, to, _single(id), _single(amount), data);
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -240,6 +264,18 @@ abstract contract ERC1155 {
         }
     }
 
+    /// @dev Transfers `amounts` of `ids` from `from` to `to`.
+    ///
+    /// Requirements:
+    /// - `to` cannot be the zero address.
+    /// - `from` must have at least `amount` of `id`.
+    /// - `ids` and `amounts` must have the same length.
+    /// - If the caller is not `from`,
+    ///   it must be approved to manage the tokens of `from`.
+    /// - If `to` refers to a smart contract, it must implement
+    ///   {ERC1155-onERC1155BatchReveived}, which is called upon a batch transfer.
+    ///
+    /// Emits a {TransferBatch} event.
     function safeBatchTransferFrom(
         address from,
         address to,
@@ -248,7 +284,7 @@ abstract contract ERC1155 {
         bytes calldata data
     ) public virtual {
         if (_useBeforeTokenTransfer()) {
-            _beforeTokenTransfer(msg.sender, from, to, ids, amounts, data);
+            _beforeTokenTransfer(from, to, ids, amounts, data);
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -325,7 +361,7 @@ abstract contract ERC1155 {
             }
         }
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransferCalldata(msg.sender, from, to, ids, amounts, data);
+            _afterTokenTransferCalldata(from, to, ids, amounts, data);
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -372,6 +408,10 @@ abstract contract ERC1155 {
         }
     }
 
+    /// @dev Returns the amounts of `ids` for `owners.
+    ///
+    /// Requirements:
+    /// - `owners` and `ids` must have the same length.
     function balanceOfBatch(address[] calldata owners, uint256[] calldata ids)
         public
         view
@@ -415,9 +455,17 @@ abstract contract ERC1155 {
     /*                  INTERNAL MINT FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Mints `amount` of `id` to `to`.
+    ///
+    /// Requirements:
+    /// - `to` cannot be the zero address.
+    /// - If `to` refers to a smart contract, it must implement
+    ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
+    ///
+    /// Emits a {Transfer} event.
     function _mint(address to, uint256 id, uint256 amount, bytes memory data) internal virtual {
         if (_useBeforeTokenTransfer()) {
-            _beforeTokenTransfer(msg.sender, address(0), to, _single(id), _single(amount), data);
+            _beforeTokenTransfer(address(0), to, _single(id), _single(amount), data);
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -450,11 +498,20 @@ abstract contract ERC1155 {
             }
         }
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransfer(msg.sender, address(0), to, _single(id), _single(amount), data);
+            _afterTokenTransfer(address(0), to, _single(id), _single(amount), data);
         }
         if (_hasCode(to)) _checkOnERC1155Received(address(0), to, id, amount, data);
     }
 
+    /// @dev Mints `amounts` of `ids` to `to`.
+    ///
+    /// Requirements:
+    /// - `to` cannot be the zero address.
+    /// - `ids` and `amounts` must have the same length.
+    /// - If `to` refers to a smart contract, it must implement
+    ///   {ERC1155-onERC1155BatchReveived}, which is called upon a batch transfer.
+    ///
+    /// Emits a {TransferBatch} event.
     function _batchMint(
         address to,
         uint256[] memory ids,
@@ -462,7 +519,7 @@ abstract contract ERC1155 {
         bytes memory data
     ) internal virtual {
         if (_useBeforeTokenTransfer()) {
-            _beforeTokenTransfer(msg.sender, address(0), to, ids, amounts, data);
+            _beforeTokenTransfer(address(0), to, ids, amounts, data);
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -518,7 +575,7 @@ abstract contract ERC1155 {
             }
         }
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransfer(msg.sender, address(0), to, ids, amounts, data);
+            _afterTokenTransfer(address(0), to, ids, amounts, data);
         }
         if (_hasCode(to)) _checkOnERC1155BatchReceived(address(0), to, ids, amounts, data);
     }
@@ -527,13 +584,22 @@ abstract contract ERC1155 {
     /*                  INTERNAL BURN FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Equivalent to `_burn(address(0), from, id, amount)`.
     function _burn(address from, uint256 id, uint256 amount) internal virtual {
         _burn(address(0), from, id, amount);
     }
 
+    /// @dev Destroys `amount` of `id` from `from`.
+    ///
+    /// Requirements:
+    /// - `from` must have at least `amount` of `id`.
+    /// - If `by` is not the zero address, it must be either `from`,
+    ///   or approved to manage the tokens of `from`.
+    ///
+    /// Emits a {Transfer} event.
     function _burn(address by, address from, uint256 id, uint256 amount) internal virtual {
         if (_useBeforeTokenTransfer()) {
-            _beforeTokenTransfer(msg.sender, from, address(0), _single(id), _single(amount), "");
+            _beforeTokenTransfer(from, address(0), _single(id), _single(amount), "");
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -571,10 +637,11 @@ abstract contract ERC1155 {
             }
         }
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransfer(msg.sender, from, address(0), _single(id), _single(amount), "");
+            _afterTokenTransfer(from, address(0), _single(id), _single(amount), "");
         }
     }
 
+    /// @dev Equivalent to `_batchBurn(address(0), from, ids, amounts)`.
     function _batchBurn(address from, uint256[] memory ids, uint256[] memory amounts)
         internal
         virtual
@@ -582,12 +649,21 @@ abstract contract ERC1155 {
         _batchBurn(address(0), from, ids, amounts);
     }
 
+    /// @dev Destroys `amounts` of `ids` from `from`.
+    ///
+    /// Requirements:
+    /// - `ids` and `amounts` must have the same length.
+    /// - `from` must have at least `amounts` of `ids`.
+    /// - If `by` is not the zero address, it must be either `from`,
+    ///   or approved to manage the tokens of `from`.
+    ///
+    /// Emits a {TransferBatch} event.
     function _batchBurn(address by, address from, uint256[] memory ids, uint256[] memory amounts)
         internal
         virtual
     {
         if (_useBeforeTokenTransfer()) {
-            _beforeTokenTransfer(msg.sender, from, address(0), ids, amounts, "");
+            _beforeTokenTransfer(from, address(0), ids, amounts, "");
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -648,7 +724,7 @@ abstract contract ERC1155 {
             }
         }
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransfer(msg.sender, from, address(0), ids, amounts, "");
+            _afterTokenTransfer(from, address(0), ids, amounts, "");
         }
     }
 
@@ -681,6 +757,7 @@ abstract contract ERC1155 {
     /*                INTERNAL TRANSFER FUNCTIONS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Equivalent to `_safeTransfer(address(0), from, to, id, amount, data)`.
     function _safeTransfer(address from, address to, uint256 id, uint256 amount, bytes memory data)
         internal
         virtual
@@ -688,6 +765,17 @@ abstract contract ERC1155 {
         _safeTransfer(address(0), from, to, id, amount, data);
     }
 
+    /// @dev Transfers `amount` of `id` from `from` to `to`.
+    ///
+    /// Requirements:
+    /// - `to` cannot be the zero address.
+    /// - `from` must have at least `amount` of `id`.
+    /// - If `by` is not the zero address, it must be either `from`,
+    ///   or approved to manage the tokens of `from`.
+    /// - If `to` refers to a smart contract, it must implement
+    ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
+    ///
+    /// Emits a {Transfer} event.
     function _safeTransfer(
         address by,
         address from,
@@ -697,7 +785,7 @@ abstract contract ERC1155 {
         bytes memory data
     ) internal virtual {
         if (_useBeforeTokenTransfer()) {
-            _beforeTokenTransfer(msg.sender, from, to, _single(id), _single(amount), data);
+            _beforeTokenTransfer(from, to, _single(id), _single(amount), data);
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -754,10 +842,11 @@ abstract contract ERC1155 {
         }
         if (_hasCode(to)) _checkOnERC1155Received(from, to, id, amount, data);
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransfer(msg.sender, from, to, _single(id), _single(amount), data);
+            _afterTokenTransfer(from, to, _single(id), _single(amount), data);
         }
     }
 
+    /// @dev Equivalent to `_safeBatchTransfer(address(0), from, to, ids, amounts, data)`.
     function _safeBatchTransfer(
         address from,
         address to,
@@ -768,6 +857,18 @@ abstract contract ERC1155 {
         _safeBatchTransfer(address(0), from, to, ids, amounts, data);
     }
 
+    /// @dev Transfers `amounts` of `ids` from `from` to `to`.
+    ///
+    /// Requirements:
+    /// - `to` cannot be the zero address.
+    /// - `ids` and `amounts` must have the same length.
+    /// - `from` must have at least `amounts` of `ids`.
+    /// - If `by` is not the zero address, it must be either `from`,
+    ///   or approved to manage the tokens of `from`.
+    /// - If `to` refers to a smart contract, it must implement
+    ///   {ERC1155-onERC1155BatchReveived}, which is called upon a batch transfer.
+    ///
+    /// Emits a {TransferBatch} event.
     function _safeBatchTransfer(
         address by,
         address from,
@@ -777,7 +878,7 @@ abstract contract ERC1155 {
         bytes memory data
     ) internal virtual {
         if (_useBeforeTokenTransfer()) {
-            _beforeTokenTransfer(msg.sender, from, to, ids, amounts, data);
+            _beforeTokenTransfer(from, to, ids, amounts, data);
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -859,7 +960,7 @@ abstract contract ERC1155 {
         }
         if (_hasCode(to)) _checkOnERC1155BatchReceived(from, to, ids, amounts, data);
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransfer(msg.sender, from, to, ids, amounts, data);
+            _afterTokenTransfer(from, to, ids, amounts, data);
         }
     }
 
@@ -867,12 +968,18 @@ abstract contract ERC1155 {
     /*                    HOOKS FOR OVERRIDING                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Override this function to return true if `_beforeTokenTransfer` is used.
+    /// The is to help the compiler avoid producing dead bytecode.
     function _useBeforeTokenTransfer() internal view virtual returns (bool) {
         return false;
     }
 
+    /// @dev Hook that is called before any token transfer.
+    /// This includes minting and burning, as well as batched variants.
+    ///
+    /// The same hook is called on both single and batched variants.
+    /// For single transfers, the length of the `id` and `amount` arrays are 1.
     function _beforeTokenTransfer(
-        address operator,
         address from,
         address to,
         uint256[] memory ids,
@@ -880,12 +987,18 @@ abstract contract ERC1155 {
         bytes memory data
     ) internal virtual {}
 
+    /// @dev Override this function to return true if `_afterTokenTransfer` is used.
+    /// The is to help the compiler avoid producing dead bytecode.
     function _useAfterTokenTransfer() internal view virtual returns (bool) {
         return false;
     }
 
+    /// @dev Hook that is called after any token transfer.
+    /// This includes minting and burning, as well as batched variants.
+    ///
+    /// The same hook is called on both single and batched variants.
+    /// For single transfers, the length of the `id` and `amount` arrays are 1.
     function _afterTokenTransfer(
-        address operator,
         address from,
         address to,
         uint256[] memory ids,
@@ -897,8 +1010,9 @@ abstract contract ERC1155 {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Helper for calling the `_afterTokenTransfer` hook.
+    /// The is to help the compiler avoid producing dead bytecode.
     function _afterTokenTransferCalldata(
-        address operator,
         address from,
         address to,
         uint256[] calldata ids,
@@ -906,7 +1020,7 @@ abstract contract ERC1155 {
         bytes calldata data
     ) private {
         if (_useAfterTokenTransfer()) {
-            _afterTokenTransfer(operator, from, to, ids, amounts, data);
+            _afterTokenTransfer(from, to, ids, amounts, data);
         }
     }
 
@@ -1009,6 +1123,7 @@ abstract contract ERC1155 {
         }
     }
 
+    /// @dev Returns `x` in an array with a single element.
     function _single(uint256 x) private pure returns (uint256[] memory result) {
         assembly {
             result := mload(0x40)

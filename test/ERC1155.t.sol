@@ -541,6 +541,13 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         assertEq(token.balanceOf(address(this), t.id), t.mintAmount - t.transferAmount);
     }
 
+    function testSafeBatchTransfer() public {
+        for (uint256 i; i != 8; ++i) {
+            testSafeTransferFromToEOA(_random());
+            testSafeBatchTransferFromToERC1155Recipient(_random());
+        }
+    }
+
     function testSafeBatchTransferFromToEOA(uint256) public {
         _TestTemps memory t = _testTemps();
 
