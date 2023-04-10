@@ -165,7 +165,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
     }
 
     function _randomBytes() internal returns (bytes memory b) {
-        uint256 n = _random() % 64;
+        uint256 n = _random() % 65;
         uint256 r0 = _random();
         uint256 r1 = _random();
         /// @solidity memory-safe-assembly
@@ -197,7 +197,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
             (t.from,) = _randomSigner();
             (t.to,) = _randomSigner();
             while (t.from == t.to) (t.to,) = _randomSigner();
-            uint256 n = _random() % 8;
+            uint256 n = _random() % 4;
             t.n = n;
             t.ids = _randomArray(n);
             t.mintAmounts = _randomArray(n);
@@ -1711,7 +1711,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         token.batchBurn(t.to, t.ids, t.burnAmounts);
     }
 
-    function testBalanceOfBatchWithArrayMismatch(uint256) public {
+    function testBalanceOfBatchWithArrayMismatchReverts(uint256) public {
         address[] memory tos = new address[](_random() % 4);
         uint256[] memory ids = new uint256[](_random() % 4);
         if (tos.length == ids.length) return;
