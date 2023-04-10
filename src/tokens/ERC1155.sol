@@ -389,7 +389,7 @@ abstract contract ERC1155 {
                 o := add(o, n)
                 n := add(0x20, data.length)
                 calldatacopy(o, sub(data.offset, 0x20), n)
-                n := add(o, n)
+                n := sub(add(o, n), add(m, 0x1c))
                 // Revert if the call reverts.
                 if iszero(call(gas(), to, 0, add(m, 0x1c), n, m, 0x20)) {
                     if returndatasize() {
