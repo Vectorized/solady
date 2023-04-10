@@ -174,8 +174,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
             mstore(b, n)
             mstore(add(b, 0x20), r0)
             mstore(add(b, 0x40), r1)
-            mstore(0x40, add(b, 0xa0))
-            mstore(add(add(b, 0x20), n), 0)
+            mstore(0x40, add(b, 0x60))
         }
     }
 
@@ -198,7 +197,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
             (t.from,) = _randomSigner();
             (t.to,) = _randomSigner();
             while (t.from == t.to) (t.to,) = _randomSigner();
-            uint256 n = _random() % 4;
+            uint256 n = _random() % 8;
             t.n = n;
             t.ids = _randomArray(n);
             t.mintAmounts = _randomArray(n);
@@ -1707,8 +1706,6 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         _TestTemps memory t = _testTemps();
 
         if (t.ids.length == t.burnAmounts.length) t.burnAmounts = _randomArray(t.n + 1);
-
-        token.batchMint(t.to, t.ids, t.mintAmounts, t.mintData);
 
         vm.expectRevert(ERC1155.ArrayLengthsMismatch.selector);
         token.batchBurn(t.to, t.ids, t.burnAmounts);
