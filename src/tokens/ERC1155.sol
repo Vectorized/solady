@@ -307,8 +307,9 @@ abstract contract ERC1155 {
                 o := add(o, n)
                 n := add(0x20, shl(5, amounts.length))
                 calldatacopy(o, sub(amounts.offset, 0x20), n)
+                n := sub(add(o, n), m)
                 // Do the emit.
-                log4(m, add(o, n), _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, to)
+                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, to)
             }
             // Do the {onERC1155BatchReceived} check if `to` is a smart contract.
             if extcodesize(to) {
@@ -473,21 +474,19 @@ abstract contract ERC1155 {
             // Emit a {TransferBatch} event.
             {
                 let m := mload(0x40)
-                mstore(m, 0x40)
-                mstore(add(m, 0x20), 0x40)
                 // Copy the `ids`.
                 mstore(m, 0x40)
                 let n := add(0x20, shl(5, mload(ids)))
                 let o := add(m, 0x40)
                 pop(staticcall(gas(), 4, ids, n, o, n))
                 // Copy the `amounts`.
-                let s := add(0x40, returndatasize())
-                mstore(add(m, 0x80), s)
+                mstore(add(m, 0x20), add(0x40, returndatasize()))
                 o := add(o, returndatasize())
                 n := add(0x20, shl(5, mload(amounts)))
                 pop(staticcall(gas(), 4, amounts, n, o, n))
+                n := sub(add(o, returndatasize()), m)
                 // Do the emit.
-                log4(0x00, add(o, n), _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), 0, to)
+                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), 0, to)
             }
         }
         if (_hasCode(to)) _checkOnERC1155BatchReceived(address(0), to, ids, amounts, data);
@@ -593,21 +592,19 @@ abstract contract ERC1155 {
             // Emit a {TransferBatch} event.
             {
                 let m := mload(0x40)
-                mstore(m, 0x40)
-                mstore(add(m, 0x20), 0x40)
                 // Copy the `ids`.
                 mstore(m, 0x40)
                 let n := add(0x20, shl(5, mload(ids)))
                 let o := add(m, 0x40)
                 pop(staticcall(gas(), 4, ids, n, o, n))
                 // Copy the `amounts`.
-                let s := add(0x40, returndatasize())
-                mstore(add(m, 0x80), s)
+                mstore(add(m, 0x20), add(0x40, returndatasize()))
                 o := add(o, returndatasize())
                 n := add(0x20, shl(5, mload(amounts)))
                 pop(staticcall(gas(), 4, amounts, n, o, n))
+                n := sub(add(o, returndatasize()), m)
                 // Do the emit.
-                log4(0x00, add(o, n), _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, 0)
+                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, 0)
             }
         }
     }
@@ -697,7 +694,7 @@ abstract contract ERC1155 {
             o := add(o, returndatasize())
             n := add(0x20, mload(data))
             pop(staticcall(gas(), 4, data, n, o, n))
-            n := add(o, returndatasize())
+            n := sub(add(o, returndatasize()), add(m, 0x1c))
             // Revert if the call reverts.
             if iszero(call(gas(), to, 0, add(m, 0x1c), n, m, 0x20)) {
                 if returndatasize() {
