@@ -59,6 +59,8 @@ abstract contract ERC1155 {
     /// @dev Emitted when the Uniform Resource Identifier (URI) for token `id`
     /// is updated to `value`. This event is not used in the base contract.
     /// You may need to emit this event depending on your URI logic.
+    ///
+    /// See: https://eips.ethereum.org/EIPS/eip-1155#metadata
     event URI(string value, uint256 indexed id);
 
     /// @dev `keccak256(bytes("TransferSingle(address,address,address,uint256,uint256)"))`.
@@ -608,14 +610,13 @@ abstract contract ERC1155 {
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
             by := shr(96, shl(96, by))
-            // If the `by` is not `from`, do the authorization check.
-            if by {
-                if iszero(eq(by, from)) {
-                    mstore(0x00, by)
-                    if iszero(sload(keccak256(0x0c, 0x34))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
-                    }
+            // If `by` is not the zero address, and not equal to `from`,
+            // check if it is approved to manage all the tokens of `from`.
+            if iszero(or(iszero(by), eq(by, from))) {
+                mstore(0x00, by)
+                if iszero(sload(keccak256(0x0c, 0x34))) {
+                    mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                    revert(0x1c, 0x04)
                 }
             }
             // Decrease and store the updated balance of `from`.
@@ -676,14 +677,13 @@ abstract contract ERC1155 {
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
             by := shr(96, shl(96, by))
-            // If the `by` is not `from`, do the authorization check.
-            if by {
-                if iszero(eq(by, from)) {
-                    mstore(0x00, by)
-                    if iszero(sload(keccak256(0x0c, 0x34))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
-                    }
+            // If `by` is not the zero address, and not equal to `from`,
+            // check if it is approved to manage all the tokens of `from`.
+            if iszero(or(iszero(by), eq(by, from))) {
+                mstore(0x00, by)
+                if iszero(sload(keccak256(0x0c, 0x34))) {
+                    mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                    revert(0x1c, 0x04)
                 }
             }
             // Loop through all the `ids` and update the balances.
@@ -796,14 +796,13 @@ abstract contract ERC1155 {
             from := shr(96, fromSlotSeed)
             to := shr(96, toSlotSeed)
             by := shr(96, shl(96, by))
-            // If the `by` is not `from`, do the authorization check.
-            if by {
-                if iszero(eq(by, from)) {
-                    mstore(0x00, by)
-                    if iszero(sload(keccak256(0x0c, 0x34))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
-                    }
+            // If `by` is not the zero address, and not equal to `from`,
+            // check if it is approved to manage all the tokens of `from`.
+            if iszero(or(iszero(by), eq(by, from))) {
+                mstore(0x00, by)
+                if iszero(sload(keccak256(0x0c, 0x34))) {
+                    mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                    revert(0x1c, 0x04)
                 }
             }
             // Revert if `to` is the zero address.
@@ -898,14 +897,13 @@ abstract contract ERC1155 {
                 mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
                 revert(0x1c, 0x04)
             }
-            // If the `by` is not `from`, do the authorization check.
-            if by {
-                if iszero(eq(by, from)) {
-                    mstore(0x00, by)
-                    if iszero(sload(keccak256(0x0c, 0x34))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
-                    }
+            // If `by` is not the zero address, and not equal to `from`,
+            // check if it is approved to manage all the tokens of `from`.
+            if iszero(or(iszero(by), eq(by, from))) {
+                mstore(0x00, by)
+                if iszero(sload(keccak256(0x0c, 0x34))) {
+                    mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                    revert(0x1c, 0x04)
                 }
             }
             // Loop through all the `ids` and update the balances.
