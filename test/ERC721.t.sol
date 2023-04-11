@@ -205,13 +205,10 @@ contract ERC721Test is TestPlus {
     {
         bool a = true;
         bool b = true;
-        if (by != address(0)) {
-            if (!isOwnerOrOperator) {
-                a = isApprovedAccount;
-            }
-        }
-        if (!(by == address(0) || isOwnerOrOperator)) {
-            b = isApprovedAccount;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if by { if iszero(isOwnerOrOperator) { a := isApprovedAccount } }
+            if iszero(or(iszero(by), isOwnerOrOperator)) { b := isApprovedAccount }
         }
         assertEq(a, b);
     }

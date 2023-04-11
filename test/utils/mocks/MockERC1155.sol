@@ -30,6 +30,16 @@ contract MockERC1155 is ERC1155 {
         _batchBurn(_brutalized(from), ids, amounts);
     }
 
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes calldata data
+    ) public virtual override {
+        super.safeTransferFrom(_brutalized(from), _brutalized(to), id, amount, data);
+    }
+
     function directSafeTransferFrom(
         address from,
         address to,
@@ -40,6 +50,16 @@ contract MockERC1155 is ERC1155 {
         _safeTransfer(_brutalizedMsgSender(), from, to, id, amount, data);
     }
 
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] calldata ids,
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) public virtual override {
+        super.safeBatchTransferFrom(_brutalized(from), _brutalized(to), ids, amounts, data);
+    }
+
     function directSafeBatchTransferFrom(
         address from,
         address to,
@@ -47,7 +67,9 @@ contract MockERC1155 is ERC1155 {
         uint256[] memory amounts,
         bytes memory data
     ) public virtual {
-        _safeBatchTransfer(_brutalizedMsgSender(), from, to, ids, amounts, data);
+        _safeBatchTransfer(
+            _brutalizedMsgSender(), _brutalized(from), _brutalized(to), ids, amounts, data
+        );
     }
 
     function directSetApprovalForAll(address operator, bool approved) public virtual {

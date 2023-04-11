@@ -27,45 +27,23 @@ contract MockERC20 is ERC20 {
     }
 
     function mint(address to, uint256 value) public virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            to := or(to, shl(160, not(0)))
-        }
-        _mint(to, value);
+        _mint(_brutalized(to), value);
     }
 
     function burn(address from, uint256 value) public virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            from := or(from, shl(160, not(0)))
-        }
-        _burn(from, value);
+        _burn(_brutalized(from), value);
     }
 
     function directTransfer(address from, address to, uint256 amount) public virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            from := or(from, shl(160, not(0)))
-            to := or(to, shl(160, not(0)))
-        }
-        _transfer(from, to, amount);
+        _transfer(_brutalized(from), _brutalized(to), amount);
     }
 
     function directSpendAllowance(address owner, address spender, uint256 amount) public virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            owner := or(owner, shl(160, not(0)))
-            spender := or(spender, shl(160, not(0)))
-        }
-        _spendAllowance(owner, spender, amount);
+        _spendAllowance(_brutalized(owner), _brutalized(spender), amount);
     }
 
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            to := or(to, shl(160, not(0)))
-        }
-        return super.transfer(to, amount);
+        return super.transfer(_brutalized(to), amount);
     }
 
     function transferFrom(address from, address to, uint256 amount)
@@ -74,12 +52,7 @@ contract MockERC20 is ERC20 {
         override
         returns (bool)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
-            from := or(from, shl(160, not(0)))
-            to := or(to, shl(160, not(0)))
-        }
-        return super.transferFrom(from, to, amount);
+        return super.transferFrom(_brutalized(from), _brutalized(to), amount);
     }
 
     function increaseAllowance(address spender, uint256 difference)
@@ -88,11 +61,7 @@ contract MockERC20 is ERC20 {
         override
         returns (bool)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
-            spender := or(spender, shl(160, not(0)))
-        }
-        return super.increaseAllowance(spender, difference);
+        return super.increaseAllowance(_brutalized(spender), difference);
     }
 
     function decreaseAllowance(address spender, uint256 difference)
@@ -101,10 +70,13 @@ contract MockERC20 is ERC20 {
         override
         returns (bool)
     {
+        return super.decreaseAllowance(_brutalized(spender), difference);
+    }
+
+    function _brutalized(address a) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            spender := or(spender, shl(160, not(0)))
+            result := or(a, shl(160, gas()))
         }
-        return super.decreaseAllowance(spender, difference);
     }
 }
