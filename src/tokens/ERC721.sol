@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Simple ERC721 implementation with storage hitchhiking.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC721.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)
+/// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC721/ERC721.sol)
 abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */

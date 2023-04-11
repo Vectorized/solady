@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Modern and gas efficient ERC1155 implementation.
+/// @notice Simple ERC1155 implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC1155.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC1155.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC1155/ERC1155.sol)
@@ -105,8 +105,9 @@ abstract contract ERC1155 {
 
     /// @dev Returns the URI for token `id`.
     ///
-    /// Can either return the same templated URI for all token IDs,
-    /// or substitute the `id` on the contract side.
+    /// You can either return the same templated URI for all token IDs,
+    /// (e.g. "https://example.com/api/{id}.json"),
+    /// or return a unique URI for each `id`.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-1155#metadata
     function uri(uint256 id) public view virtual returns (string memory);
