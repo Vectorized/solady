@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
+/// @notice Simple ERC20 + EIP-2612 implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC20.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokenss/ERC20.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol)
