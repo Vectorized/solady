@@ -347,6 +347,21 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         token = new MockERC1155();
     }
 
+    function testAuthorizedEquivalence(address by, address from, bool isApprovedAccount) public {
+        bool a = true;
+        bool b = true;
+        if (by != address(0)) {
+            if (by != from) {
+                a = isApprovedAccount;
+            }
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(or(iszero(by), eq(by, from))) { b := isApprovedAccount }
+        }
+        assertEq(a, b);
+    }
+
     function testMintToEOA(uint256) public {
         _TestTemps memory t = _testTemps();
 
