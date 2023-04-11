@@ -297,6 +297,13 @@ contract ERC721Test is TestPlus {
         _ownerOf(id);
     }
 
+    function testTransferFrom() public {
+        (address owner,) = _randomSigner();
+        token.mint(owner, 0);
+        vm.prank(owner);
+        token.transferFrom(owner, address(this), 0);
+    }
+
     function testEverything(uint256) public {
         address[2] memory owners;
         uint256[][2] memory tokens;
