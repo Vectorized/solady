@@ -305,7 +305,7 @@ abstract contract ERC20 {
 
     /// @dev Returns the current nonce for `owner`.
     /// This value is used to compute the signature for EIP-2612 permit.
-    function nonces(address owner) public virtual returns (uint256 result) {
+    function nonces(address owner) public view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the nonce slot and load its value.
