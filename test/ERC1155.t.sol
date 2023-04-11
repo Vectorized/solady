@@ -449,8 +449,20 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         _expectMintEvent(t.to, t.id, t.mintAmount);
         token.mint(t.to, t.id, t.mintAmount, t.mintData);
 
-        _expectBurnEvent(t.to, t.id, t.burnAmount);
-        token.burn(t.to, t.id, t.burnAmount);
+        if (_random() % 2 == 0) {
+            _expectBurnEvent(t.to, t.id, t.burnAmount);
+            token.uncheckedBurn(t.to, t.id, t.burnAmount);
+        } else if (_random() % 8 == 0) {
+            vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
+            token.burn(t.to, t.id, t.burnAmount);
+            return;
+        } else {
+            vm.prank(t.to);
+            _setApprovalForAll(address(this), true);
+
+            _expectBurnEvent(t.to, t.id, t.burnAmount);
+            token.burn(t.to, t.id, t.burnAmount);
+        }
 
         assertEq(token.balanceOf(t.to, t.id), t.mintAmount - t.burnAmount);
     }
@@ -472,8 +484,21 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
 
         _expectMintEvent(t.to, t.ids, t.mintAmounts);
         token.batchMint(t.to, t.ids, t.mintAmounts, t.mintData);
-        _expectBurnEvent(t.to, t.ids, t.burnAmounts);
-        token.batchBurn(t.to, t.ids, t.burnAmounts);
+
+        if (_random() % 2 == 0) {
+            _expectBurnEvent(t.to, t.ids, t.burnAmounts);
+            token.uncheckedBatchBurn(t.to, t.ids, t.burnAmounts);
+        } else if (_random() % 8 == 0) {
+            vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
+            token.batchBurn(t.to, t.ids, t.burnAmounts);
+            return;
+        } else {
+            vm.prank(t.to);
+            _setApprovalForAll(address(this), true);
+
+            _expectBurnEvent(t.to, t.ids, t.burnAmounts);
+            token.batchBurn(t.to, t.ids, t.burnAmounts);
+        }
 
         for (uint256 i = 0; i < t.ids.length; i++) {
             uint256 id = t.ids[i];
@@ -499,11 +524,20 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         _expectMintEvent(t.from, t.id, t.mintAmount);
         token.mint(t.from, t.id, t.mintAmount, t.mintData);
 
-        vm.prank(t.from);
-        _setApprovalForAll(address(this), true);
+        if (_random() % 2 == 0) {
+            _expectTransferEvent(t.from, t.to, t.id, t.transferAmount);
+            token.uncheckedSafeTransferFrom(t.from, t.to, t.id, t.transferAmount, t.transferData);
+        } else if (_random() % 8 == 0) {
+            vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
+            _safeTransferFrom(t.from, t.to, t.id, t.transferAmount, t.transferData);
+            return;
+        } else {
+            vm.prank(t.from);
+            _setApprovalForAll(address(this), true);
 
-        _expectTransferEvent(t.from, t.to, t.id, t.transferAmount);
-        _safeTransferFrom(t.from, t.to, t.id, t.transferAmount, t.transferData);
+            _expectTransferEvent(t.from, t.to, t.id, t.transferAmount);
+            _safeTransferFrom(t.from, t.to, t.id, t.transferAmount, t.transferData);
+        }
 
         if (t.to == t.from) {
             assertEq(token.balanceOf(t.to, t.id), t.mintAmount);
@@ -579,11 +613,22 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         _expectMintEvent(t.from, t.ids, t.mintAmounts);
         token.batchMint(t.from, t.ids, t.mintAmounts, t.mintData);
 
-        vm.prank(t.from);
-        _setApprovalForAll(address(this), true);
+        if (_random() % 2 == 0) {
+            _expectTransferEvent(t.from, t.to, t.ids, t.transferAmounts);
+            token.uncheckedSafeBatchTransferFrom(
+                t.from, t.to, t.ids, t.transferAmounts, t.transferData
+            );
+        } else if (_random() % 8 == 0) {
+            vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
+            _safeBatchTransferFrom(t.from, t.to, t.ids, t.transferAmounts, t.transferData);
+            return;
+        } else {
+            vm.prank(t.from);
+            _setApprovalForAll(address(this), true);
 
-        _expectTransferEvent(t.from, t.to, t.ids, t.transferAmounts);
-        _safeBatchTransferFrom(t.from, t.to, t.ids, t.transferAmounts, t.transferData);
+            _expectTransferEvent(t.from, t.to, t.ids, t.transferAmounts);
+            _safeBatchTransferFrom(t.from, t.to, t.ids, t.transferAmounts, t.transferData);
+        }
 
         for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
@@ -695,6 +740,9 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         t.burnAmount = _bound(t.burnAmount, t.mintAmount + 1, type(uint256).max);
 
         token.mint(t.to, t.id, t.mintAmount, t.mintData);
+
+        vm.prank(t.to);
+        _setApprovalForAll(address(this), true);
 
         vm.expectRevert(ERC1155.InsufficientBalance.selector);
         token.burn(t.to, t.id, t.burnAmount);
@@ -1040,6 +1088,9 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         }
 
         token.batchMint(t.to, t.ids, t.mintAmounts, t.mintData);
+
+        vm.prank(t.to);
+        _setApprovalForAll(address(this), true);
 
         vm.expectRevert(ERC1155.InsufficientBalance.selector);
         token.batchBurn(t.to, t.ids, t.burnAmounts);

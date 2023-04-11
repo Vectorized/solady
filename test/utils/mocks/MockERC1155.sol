@@ -20,6 +20,10 @@ contract MockERC1155 is ERC1155 {
     }
 
     function burn(address from, uint256 id, uint256 amount) public virtual {
+        _burn(_brutalizedMsgSender(), _brutalized(from), id, amount);
+    }
+
+    function uncheckedBurn(address from, uint256 id, uint256 amount) public virtual {
         _burn(_brutalized(from), id, amount);
     }
 
@@ -27,7 +31,24 @@ contract MockERC1155 is ERC1155 {
         public
         virtual
     {
+        _batchBurn(_brutalizedMsgSender(), _brutalized(from), ids, amounts);
+    }
+
+    function uncheckedBatchBurn(address from, uint256[] memory ids, uint256[] memory amounts)
+        public
+        virtual
+    {
         _batchBurn(_brutalized(from), ids, amounts);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes calldata data
+    ) public virtual override {
+        super.safeTransferFrom(_brutalized(from), _brutalized(to), id, amount, data);
     }
 
     function directSafeTransferFrom(
@@ -40,6 +61,26 @@ contract MockERC1155 is ERC1155 {
         _safeTransfer(_brutalizedMsgSender(), from, to, id, amount, data);
     }
 
+    function uncheckedSafeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes memory data
+    ) public virtual {
+        _safeTransfer(address(0), from, to, id, amount, data);
+    }
+
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] calldata ids,
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) public virtual override {
+        super.safeBatchTransferFrom(_brutalized(from), _brutalized(to), ids, amounts, data);
+    }
+
     function directSafeBatchTransferFrom(
         address from,
         address to,
@@ -47,7 +88,19 @@ contract MockERC1155 is ERC1155 {
         uint256[] memory amounts,
         bytes memory data
     ) public virtual {
-        _safeBatchTransfer(_brutalizedMsgSender(), from, to, ids, amounts, data);
+        _safeBatchTransfer(
+            _brutalizedMsgSender(), _brutalized(from), _brutalized(to), ids, amounts, data
+        );
+    }
+
+    function uncheckedSafeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public virtual {
+        _safeBatchTransfer(address(0), _brutalized(from), _brutalized(to), ids, amounts, data);
     }
 
     function directSetApprovalForAll(address operator, bool approved) public virtual {

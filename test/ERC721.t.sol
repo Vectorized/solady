@@ -205,13 +205,10 @@ contract ERC721Test is TestPlus {
     {
         bool a = true;
         bool b = true;
-        if (by != address(0)) {
-            if (!isOwnerOrOperator) {
-                a = isApprovedAccount;
-            }
-        }
-        if (!(by == address(0) || isOwnerOrOperator)) {
-            b = isApprovedAccount;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if by { if iszero(isOwnerOrOperator) { a := isApprovedAccount } }
+            if iszero(or(iszero(by), isOwnerOrOperator)) { b := isApprovedAccount }
         }
         assertEq(a, b);
     }
@@ -298,6 +295,13 @@ contract ERC721Test is TestPlus {
 
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
         _ownerOf(id);
+    }
+
+    function testTransferFrom() public {
+        (address owner,) = _randomSigner();
+        token.mint(owner, 0);
+        vm.prank(owner);
+        token.transferFrom(owner, address(this), 0);
     }
 
     function testEverything(uint256) public {
