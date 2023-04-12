@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./utils/TestPlus.sol";
+import "./utils/InvariantTest.sol";
 
 import {ERC20, MockERC20} from "./utils/mocks/MockERC20.sol";
 
@@ -482,19 +483,6 @@ contract ERC20Test is TestPlus {
             pop(call(gas(), token_, 0, sub(t, 0x04), 0xe4, 0x00, 0x00))
             mstore(sub(t, 0x20), m)
         }
-    }
-}
-
-contract InvariantTest {
-    address[] private _targets;
-
-    function targetContracts() public view virtual returns (address[] memory) {
-        require(_targets.length > 0, "NO_TARGET_CONTRACTS");
-        return _targets;
-    }
-
-    function _addTargetContract(address newTargetContract) internal virtual {
-        _targets.push(newTargetContract);
     }
 }
 
