@@ -15,6 +15,7 @@ auth
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
 tokens
+├─ WETH — "Simple Wrapped Ether implementation"
 ├─ ERC20 — "Simple ERC20 + EIP-2612 implementation"
 ├─ ERC721 — "Simple ERC721 implementation with storage hitchhiking"
 ├─ ERC1155 — "Simple ERC1155 implementation"
