@@ -38,12 +38,12 @@ contract WETH is ERC20 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the name of the token.
-    function name() public view virtual override returns (string memory result) {
+    function name() public view virtual override returns (string memory) {
         return "Wrapped Ether";
     }
 
     /// @dev Returns the symbol of the token.
-    function symbol() public view virtual override returns (string memory result) {
+    function symbol() public view virtual override returns (string memory) {
         return "WETH";
     }
 
@@ -67,6 +67,9 @@ contract WETH is ERC20 {
         _burn(msg.sender, amount);
         /// @solidity memory-safe-assembly
         assembly {
+            // Emit a {Withdrawal} event.
+            mstore(0x00, amount)
+            log2(0x00, 0x20, _WITHDRAWAL_EVENT_SIGNATURE, caller())
             // Transfer the ETH and check if it succeeded or not.
             if iszero(call(gas(), caller(), amount, 0, 0, 0, 0)) {
                 // Store the function selector of `ETHTransferFailed()`.
@@ -74,9 +77,6 @@ contract WETH is ERC20 {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
-            // Emit a {Withdrawal} event.
-            mstore(0x00, amount)
-            log2(0x00, 0x20, _WITHDRAWAL_EVENT_SIGNATURE, caller())
         }
     }
 

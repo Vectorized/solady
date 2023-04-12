@@ -39,6 +39,12 @@ contract WETHTest is TestPlus {
         _expectWithdrawalEvent(address(this), amount);
     }
 
+    function testMetdata() public {
+        assertEq(weth.name(), "Wrapped Ether");
+        assertEq(weth.symbol(), "WETH");
+        assertEq(weth.decimals(), 18);
+    }
+
     function testFallbackDeposit() public {
         assertEq(weth.balanceOf(address(this)), 0);
         assertEq(weth.totalSupply(), 0);
