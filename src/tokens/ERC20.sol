@@ -367,10 +367,12 @@ abstract contract ERC20 {
             mstore(0x40, r)
             mstore(0x60, s)
             pop(staticcall(gas(), 1, 0, 0x80, 0x20, 0x20))
-            // Revert if the ecrecover fails (returndatasize will be 0x00),
-            // or if the recovered address is not equal to `owner`.
-            // If ecrecover succeeds, returndatasize will be 0x20.
-            if iszero(mul(returndatasize(), eq(mload(returndatasize()), owner))) {
+            // If the ecrecover fails, the returndatasize will be 0x00,
+            // `owner` will be be checked if it equals the hash at 0x00,
+            // which evaluates to false, and we will revert.
+            // If the ecrecover succeeds, the returndatasize will be 0x20,
+            // `owner` will be compared against the returned address at 0x20.
+            if iszero(eq(mload(returndatasize()), owner)) {
                 mstore(0x00, 0xddafbaef) // `InvalidPermit()`.
                 revert(0x1c, 0x04)
             }
