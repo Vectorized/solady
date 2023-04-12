@@ -49,6 +49,12 @@ abstract contract ERC20 {
     uint256 private constant _APPROVAL_EVENT_SIGNATURE =
         0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925;
 
+    /// @dev used to recalculate DOMAIN_SEPARATOR in case of network fork
+    uint256 private immutable INITIAL_CHAIN_ID;
+
+    /// @dev default DOMAIN_SEPARATOR
+    bytes32 internal immutable INITIAL_DOMAIN_SEPARATOR;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -94,6 +100,17 @@ abstract contract ERC20 {
     /// @dev Returns the decimals places of the token.
     function decimals() public view virtual returns (uint8) {
         return 18;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Initializes the contract.
+    constructor() {
+        INITIAL_CHAIN_ID = block.chainid;
+        /// Computes and set the DOMAIN_SEPARATOR once.
+        INITIAL_DOMAIN_SEPARATOR = computeDomainSeparator();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -388,7 +405,12 @@ abstract contract ERC20 {
     }
 
     /// @dev Returns the EIP-2612 domains separator.
-    function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result) {
+    function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
+        return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : computeDomainSeparator();
+    }
+
+    /// @dev Returns the EIP-2612 domains separator.
+    function computeDomainSeparator() internal view virtual returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40) // Grab the free memory pointer.
