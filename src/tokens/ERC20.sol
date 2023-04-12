@@ -381,8 +381,7 @@ abstract contract ERC20 {
             mstore(0x40, or(shl(160, _ALLOWANCE_SLOT_SEED), spender))
             sstore(keccak256(0x2c, 0x34), value)
             // Emit the {Approval} event.
-            mstore(0x00, value)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, owner, spender)
+            log3(add(m, 0x60), 0x20, _APPROVAL_EVENT_SIGNATURE, owner, spender)
             mstore(0x40, m) // Restore the free memory pointer.
             mstore(0x60, 0) // Restore the zero pointer.
         }
