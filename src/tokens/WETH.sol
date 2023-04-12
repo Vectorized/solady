@@ -84,7 +84,7 @@ contract WETH is ERC20 {
         }
     }
 
-    /// @dev For receiving deposits.
+    /// @dev Equivalent to `deposit()`.
     receive() external payable virtual {
         deposit();
     }
