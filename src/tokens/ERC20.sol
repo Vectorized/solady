@@ -331,6 +331,8 @@ abstract contract ERC20 {
         bytes32 domainSeparator = DOMAIN_SEPARATOR();
         /// @solidity memory-safe-assembly
         assembly {
+            // Grab the free memory pointer.
+            let m := mload(0x40)
             // Revert if the block timestamp greater than `deadline`.
             if gt(timestamp(), deadline) {
                 mstore(0x00, 0x1a15a3cc) // `PermitExpired()`.
@@ -346,8 +348,6 @@ abstract contract ERC20 {
             let nonceValue := sload(nonceSlot)
             // Increment and store the updated nonce.
             sstore(nonceSlot, add(nonceValue, 1))
-            // Grab the free memory pointer.
-            let m := mload(0x40)
             // Prepare the inner hash.
             // `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
             // forgefmt: disable-next-item
@@ -367,21 +367,21 @@ abstract contract ERC20 {
             mstore(0x40, r)
             mstore(0x60, s)
             pop(staticcall(gas(), 1, 0, 0x80, 0x20, 0x20))
-            // Revert if the ecrecover fails (returndatasize will be 0x00),
-            // or if the recovered address is not equal to `owner`.
-            // If ecrecover succeeds, returndatasize will be 0x20.
-            if iszero(mul(returndatasize(), eq(mload(returndatasize()), owner))) {
+            // If the ecrecover fails, the returndatasize will be 0x00,
+            // `owner` will be be checked if it equals the hash at 0x00,
+            // which evaluates to false (i.e. 0), and we will revert.
+            // If the ecrecover succeeds, the returndatasize will be 0x20,
+            // `owner` will be compared against the returned address at 0x20.
+            if iszero(eq(mload(returndatasize()), owner)) {
                 mstore(0x00, 0xddafbaef) // `InvalidPermit()`.
                 revert(0x1c, 0x04)
             }
             // Compute the allowance slot and store the value.
-            mstore(0x20, spender)
-            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
-            mstore(0x00, owner)
-            sstore(keccak256(0x0c, 0x34), value)
+            // The `owner` is already at slot 0x20.
+            mstore(0x40, or(shl(160, _ALLOWANCE_SLOT_SEED), spender))
+            sstore(keccak256(0x2c, 0x34), value)
             // Emit the {Approval} event.
-            mstore(0x00, value)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, owner, spender)
+            log3(add(m, 0x60), 0x20, _APPROVAL_EVENT_SIGNATURE, owner, spender)
             mstore(0x40, m) // Restore the free memory pointer.
             mstore(0x60, 0) // Restore the zero pointer.
         }
