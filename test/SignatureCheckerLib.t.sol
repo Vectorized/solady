@@ -90,18 +90,68 @@ contract SignatureCheckerLibTest is TestPlus {
         (address signer, uint256 privateKey) = _randomSigner();
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-        if (_random() & 7 == 0) {
-            _checkSignature(signer, digest, abi.encodePacked(r, s, v), true);
+        _checkSignature(signer, digest, abi.encodePacked(r, s, v), true);
+
+        if (_random() % 8 == 0) {
+            assertEq(
+                this.isValidSignatureNowCalldata(signer, digest, abi.encodePacked(r, s, v)), true
+            );
+            assertEq(
+                SignatureCheckerLib.isValidSignatureNow(signer, digest, abi.encodePacked(r, s, v)),
+                true
+            );
+            assertEq(
+                SignatureCheckerLib.isValidSignatureNow(
+                    signer, digest, abi.encodePacked(r, s, v + 1)
+                ),
+                false
+            );
+            assertEq(
+                SignatureCheckerLib.isValidSignatureNow(
+                    signer, digest, abi.encodePacked(r, s, v - 1)
+                ),
+                false
+            );
+            assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, v, r, s), true);
         }
 
-        uint8 vc = v ^ uint8(_random() & 0xff);
-        bytes32 rc = bytes32(uint256(r) ^ _random());
-        bytes32 sc = bytes32(uint256(s) ^ _random());
-        unchecked {
-            if (((vc - 27) & 1) != ((v - 27) & 1)) return;
+        if (_random() % 8 == 0) {
+            bytes32 vs;
+            /// @solidity memory-safe-assembly
+            assembly {
+                vs := or(shl(255, sub(v, 27)), s)
+            }
+            assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, r, vs), true);
         }
-        bool anyCorrupted = vc != v || rc != r || sc != s;
-        _checkSignature(signer, digest, abi.encodePacked(rc, sc, vc), !anyCorrupted);
+
+        if (_random() % 8 == 0) {
+            bytes32 vsc; // Corrupted `vs`.
+            /// @solidity memory-safe-assembly
+            assembly {
+                vsc := or(shl(255, xor(1, sub(v, 27))), s)
+            }
+            assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, r, vsc), false);
+        }
+
+        if (_random() % 8 == 0) {
+            bytes32 rc = bytes32(uint256(r) ^ _random()); // Corrupted `r`.
+            bytes32 sc = bytes32(uint256(s) ^ _random()); // Corrupted `s`.
+            bool anyCorrupted = rc != r || sc != s;
+            _checkSignature(signer, digest, abi.encodePacked(rc, sc, v), !anyCorrupted);
+        }
+
+        if (_random() % 8 == 0) {
+            uint8 vc = uint8(_random()); // Corrupted `v`.
+            while (vc == 28 || vc == 27) vc = uint8(_random());
+            assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, vc, r, s), false);
+            assertEq(
+                SignatureCheckerLib.isValidSignatureNow(signer, digest, abi.encodePacked(r, s, vc)),
+                false
+            );
+            assertEq(
+                this.isValidSignatureNowCalldata(signer, digest, abi.encodePacked(r, s, vc)), false
+            );
+        }
     }
 
     function _checkSignatureBothModes(
@@ -244,6 +294,22 @@ contract SignatureCheckerLibTest is TestPlus {
 
         result = SignatureCheckerLib.isValidERC1271SignatureNowCalldata(signer, hash, signature);
         assertEq(SignatureCheckerLib.isValidERC1271SignatureNow(signer, hash, signature), result);
+    }
+
+    function isValidSignatureNowCalldata(address signer, bytes32 hash, bytes calldata signature)
+        external
+        view
+        returns (bool result)
+    {
+        result = SignatureCheckerLib.isValidSignatureNowCalldata(signer, hash, signature);
+    }
+
+    function isValidERC1271SignatureNowCalldata(
+        address signer,
+        bytes32 hash,
+        bytes calldata signature
+    ) external view returns (bool result) {
+        result = SignatureCheckerLib.isValidERC1271SignatureNowCalldata(signer, hash, signature);
     }
 
     function testEmptyCalldataHelpers() public {
