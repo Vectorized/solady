@@ -49,12 +49,6 @@ abstract contract ERC20 {
     uint256 private constant _APPROVAL_EVENT_SIGNATURE =
         0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925;
 
-    /// @dev used to recalculate DOMAIN_SEPARATOR in case of network fork
-    uint256 private immutable INITIAL_CHAIN_ID;
-
-    /// @dev default DOMAIN_SEPARATOR
-    bytes32 internal immutable INITIAL_DOMAIN_SEPARATOR;
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -78,6 +72,12 @@ abstract contract ERC20 {
     ///     let allowanceSlot := keccak256(0x0c, 0x34)
     /// ```
     uint256 private constant _ALLOWANCE_SLOT_SEED = 0x7f5e9f20;
+
+    /// @dev used to recalculate DOMAIN_SEPARATOR in case of network fork
+    uint256 private immutable INITIAL_CHAIN_ID;
+
+    /// @dev default DOMAIN_SEPARATOR
+    bytes32 internal immutable INITIAL_DOMAIN_SEPARATOR;
 
     /// @dev The nonce slot of `owner` is given by:
     /// ```
@@ -107,10 +107,10 @@ abstract contract ERC20 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Initializes the contract.
-    constructor() {
+    constructor(bytes memory _name) {
         INITIAL_CHAIN_ID = block.chainid;
         /// Computes and set the DOMAIN_SEPARATOR once.
-        INITIAL_DOMAIN_SEPARATOR = computeDomainSeparator();
+        INITIAL_DOMAIN_SEPARATOR = computeDomainSeparator(_name);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -406,17 +406,17 @@ abstract contract ERC20 {
 
     /// @dev Returns the EIP-2612 domains separator.
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
-        return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : computeDomainSeparator();
+        return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : computeDomainSeparator(bytes(name()));
     }
 
     /// @dev Returns the EIP-2612 domains separator.
-    function computeDomainSeparator() internal view virtual returns (bytes32 result) {
+    function computeDomainSeparator(bytes memory _name) internal view virtual returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40) // Grab the free memory pointer.
         }
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
-        bytes32 nameHash = keccak256(bytes(name()));
+        bytes32 nameHash = keccak256(_name);
         /// @solidity memory-safe-assembly
         assembly {
             let m := result
