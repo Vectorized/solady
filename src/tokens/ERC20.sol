@@ -369,7 +369,7 @@ abstract contract ERC20 {
             pop(staticcall(gas(), 1, 0, 0x80, 0x20, 0x20))
             // If the ecrecover fails, the returndatasize will be 0x00,
             // `owner` will be be checked if it equals the hash at 0x00,
-            // which evaluates to false, and we will revert.
+            // which evaluates to false (i.e. 0), and we will revert.
             // If the ecrecover succeeds, the returndatasize will be 0x20,
             // `owner` will be compared against the returned address at 0x20.
             if iszero(eq(mload(returndatasize()), owner)) {
