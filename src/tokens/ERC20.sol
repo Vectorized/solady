@@ -367,7 +367,7 @@ abstract contract ERC20 {
             mstore(0x40, r)
             mstore(0x60, s)
             pop(staticcall(gas(), 1, 0, 0x80, 0x20, 0x20))
-            // Revert if the ecrecover fails (returndata will be 0x00),
+            // Revert if the ecrecover fails (returndatasize will be 0x00),
             // or if the recovered address is not equal to `owner`.
             // If ecrecover succeeds, returndatasize will be 0x20.
             if iszero(mul(returndatasize(), eq(mload(returndatasize()), owner))) {
