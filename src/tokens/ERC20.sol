@@ -331,6 +331,8 @@ abstract contract ERC20 {
         bytes32 domainSeparator = DOMAIN_SEPARATOR();
         /// @solidity memory-safe-assembly
         assembly {
+            // Grab the free memory pointer.
+            let m := mload(0x40)
             // Revert if the block timestamp greater than `deadline`.
             if gt(timestamp(), deadline) {
                 mstore(0x00, 0x1a15a3cc) // `PermitExpired()`.
@@ -346,8 +348,6 @@ abstract contract ERC20 {
             let nonceValue := sload(nonceSlot)
             // Increment and store the updated nonce.
             sstore(nonceSlot, add(nonceValue, 1))
-            // Grab the free memory pointer.
-            let m := mload(0x40)
             // Prepare the inner hash.
             // `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
             // forgefmt: disable-next-item
@@ -377,10 +377,9 @@ abstract contract ERC20 {
                 revert(0x1c, 0x04)
             }
             // Compute the allowance slot and store the value.
-            mstore(0x20, spender)
-            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
-            mstore(0x00, owner)
-            sstore(keccak256(0x0c, 0x34), value)
+            // The `owner` is already at slot 0x20.
+            mstore(0x40, or(shl(160, _ALLOWANCE_SLOT_SEED), spender))
+            sstore(keccak256(0x2c, 0x34), value)
             // Emit the {Approval} event.
             mstore(0x00, value)
             log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, owner, spender)
