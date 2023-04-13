@@ -119,7 +119,42 @@ contract LibCloneTest is TestPlus, Clone {
     }
 
     function getArgUint256(uint256 argOffset) public pure returns (uint256) {
-        return _getArgUint256(argOffset);
+        uint256 result = _getArgUint256(argOffset);
+        unchecked {
+            require(bytes32(result) == _getArgBytes32(argOffset));
+            require(uint248(result) == _getArgUint248(argOffset + 1));
+            require(uint240(result) == _getArgUint240(argOffset + 2));
+            require(uint232(result) == _getArgUint232(argOffset + 3));
+            require(uint224(result) == _getArgUint224(argOffset + 4));
+            require(uint216(result) == _getArgUint216(argOffset + 5));
+            require(uint208(result) == _getArgUint208(argOffset + 6));
+            require(uint200(result) == _getArgUint200(argOffset + 7));
+            require(uint192(result) == _getArgUint192(argOffset + 8));
+            require(uint184(result) == _getArgUint184(argOffset + 9));
+            require(uint176(result) == _getArgUint176(argOffset + 10));
+            require(uint168(result) == _getArgUint168(argOffset + 11));
+            require(uint160(result) == _getArgUint160(argOffset + 12));
+            require(uint152(result) == _getArgUint152(argOffset + 13));
+            require(uint144(result) == _getArgUint144(argOffset + 14));
+            require(uint136(result) == _getArgUint136(argOffset + 15));
+            require(uint128(result) == _getArgUint128(argOffset + 16));
+            require(uint120(result) == _getArgUint120(argOffset + 17));
+            require(uint112(result) == _getArgUint112(argOffset + 18));
+            require(uint104(result) == _getArgUint104(argOffset + 19));
+            require(uint96(result) == _getArgUint96(argOffset + 20));
+            require(uint88(result) == _getArgUint88(argOffset + 21));
+            require(uint80(result) == _getArgUint80(argOffset + 22));
+            require(uint72(result) == _getArgUint72(argOffset + 23));
+            require(uint64(result) == _getArgUint64(argOffset + 24));
+            require(uint56(result) == _getArgUint56(argOffset + 25));
+            require(uint48(result) == _getArgUint48(argOffset + 26));
+            require(uint40(result) == _getArgUint40(argOffset + 27));
+            require(uint32(result) == _getArgUint32(argOffset + 28));
+            require(uint24(result) == _getArgUint24(argOffset + 29));
+            require(uint16(result) == _getArgUint16(argOffset + 30));
+            require(uint8(result) == _getArgUint8(argOffset + 31));
+        }
+        return result;
     }
 
     function getArgUint256Array(uint256 argOffset, uint256 length)
@@ -127,7 +162,10 @@ contract LibCloneTest is TestPlus, Clone {
         pure
         returns (uint256[] memory)
     {
-        return _getArgUint256Array(argOffset, length);
+        uint256[] memory result = _getArgUint256Array(argOffset, length);
+        bytes32 hash = keccak256(abi.encode(_getArgBytes32Array(argOffset, length)));
+        require(keccak256(abi.encode(result)) == hash);
+        return result;
     }
 
     function getArgUint64(uint256 argOffset) public pure returns (uint64) {
