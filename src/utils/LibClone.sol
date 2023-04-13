@@ -285,11 +285,11 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic PUSH0 clone of `implementation`,
     /// with `salt` by `deployer`.
-    function predictDeterministicAddress_PUSH0(address implementation, bytes32 salt, address deployer)
-        internal
-        pure
-        returns (address predicted)
-    {
+    function predictDeterministicAddress_PUSH0(
+        address implementation,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
         bytes32 hash = initCodeHash_PUSH0(implementation);
         predicted = predictDeterministicAddress(hash, salt, deployer);
     }
