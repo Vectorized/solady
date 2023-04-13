@@ -15,8 +15,8 @@ pragma solidity ^0.8.4;
 /// @dev Minimal proxy (PUSH0 variant):
 /// This is a new minimal proxy that uses the PUSH0 opcode introduced during Shanghai.
 /// It is optimized first for minimal runtime gas, then for minimal bytecode.
-/// The PUSH0 clone functions are deliberately postfixed with a jarring "_PUSH0",
-/// because they may not be supported on many EVM chains the early months after Shanghai.
+/// The PUSH0 clone functions are intentionally postfixed with a jarring "_PUSH0" as
+/// many EVM chains may not support the PUSH0 opcode in the early months after Shanghai.
 /// Please use with caution.
 ///
 /// @dev Clones with immutable args (CWIA):
