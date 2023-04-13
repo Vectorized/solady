@@ -55,6 +55,26 @@ abstract contract Clone {
         }
     }
 
+    /// @dev Reads a bytes32 array stored in the immutable args.
+    function _getArgBytes32Array(uint256 argOffset, uint256 length)
+        internal
+        pure
+        returns (bytes32[] memory arg)
+    {
+        uint256 offset = _getImmutableArgsOffset();
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Grab the free memory pointer.
+            arg := mload(0x40)
+            // Store the array length.
+            mstore(arg, length)
+            // Copy the array.
+            calldatacopy(add(arg, 0x20), add(offset, argOffset), shl(5, length))
+            // Allocate the memory.
+            mstore(0x40, add(add(arg, 0x20), shl(5, length)))
+        }
+    }
+
     /// @dev Reads an immutable arg with type bytes32.
     function _getArgBytes32(uint256 argOffset) internal pure returns (bytes32 arg) {
         uint256 offset = _getImmutableArgsOffset();
