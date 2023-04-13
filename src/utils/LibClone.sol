@@ -15,9 +15,9 @@ pragma solidity ^0.8.4;
 /// @dev Minimal proxy (PUSH0 variant):
 /// This is a new minimal proxy that uses the PUSH0 opcode introduced during Shanghai.
 /// It is optimized first for minimal runtime gas, then for minimal bytecode.
-/// The PUSH0 clone functions are deliberately postfixed with "_PUSH0",
-/// because they may not be widely supported in the early months after Shanghai.
-/// Use with caution.
+/// The PUSH0 clone functions are deliberately postfixed with a jarring "_PUSH0",
+/// because they may not be supported on many EVM chains the early months after Shanghai.
+/// Please use with caution.
 ///
 /// @dev Clones with immutable args (CWIA):
 /// The implementation of CWIA here implements a `receive()` method that emits the
@@ -285,11 +285,11 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic PUSH0 clone of `implementation`,
     /// with `salt` by `deployer`.
-    function predictDeterministicAddress_PUSH0(
-        address implementation,
-        bytes32 salt,
-        address deployer
-    ) internal pure returns (address predicted) {
+    function predictDeterministicAddress_PUSH0(address implementation, bytes32 salt, address deployer)
+        internal
+        pure
+        returns (address predicted)
+    {
         bytes32 hash = initCodeHash_PUSH0(implementation);
         predicted = predictDeterministicAddress(hash, salt, deployer);
     }
