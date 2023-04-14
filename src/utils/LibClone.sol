@@ -12,6 +12,13 @@ pragma solidity ^0.8.4;
 /// it is not supported out-of-the-box on Etherscan. Hence, we choose to use the 0age pattern,
 /// which saves 4 gas over the erc-1167 pattern during runtime, and has the smallest bytecode.
 ///
+/// @dev Minimal proxy (PUSH0 variant):
+/// This is a new minimal proxy that uses the PUSH0 opcode introduced during Shanghai.
+/// It is optimized first for minimal runtime gas, then for minimal bytecode.
+/// The PUSH0 clone functions are intentionally postfixed with a jarring "_PUSH0" as
+/// many EVM chains may not support the PUSH0 opcode in the early months after Shanghai.
+/// Please use with caution.
+///
 /// @dev Clones with immutable args (CWIA):
 /// The implementation of CWIA here implements a `receive()` method that emits the
 /// `ReceiveETH(uint256)` event. This skips the `DELEGATECALL` when there is no calldata,
@@ -154,6 +161,136 @@ library LibClone {
         returns (address predicted)
     {
         bytes32 hash = initCodeHash(implementation);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*          MINIMAL PROXY OPERATIONS (PUSH0 VARIANT)          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Deploys a PUSH0 clone of `implementation`.
+    function clone_PUSH0(address implementation) internal returns (address instance) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            /**
+             * --------------------------------------------------------------------------+
+             * CREATION (9 bytes)                                                        |
+             * --------------------------------------------------------------------------|
+             * Opcode     | Mnemonic          | Stack     | Memory                       |
+             * --------------------------------------------------------------------------|
+             * 60 runSize | PUSH1 runSize     | r         |                              |
+             * 5f         | PUSH0             | 0 r       |                              |
+             * 81         | DUP2              | r 0 r     |                              |
+             * 60 offset  | PUSH1 offset      | o r 0 r   |                              |
+             * 5f         | PUSH0             | 0 o r 0 r |                              |
+             * 39         | CODECOPY          | 0 r       | [0..runSize): runtime code   |
+             * f3         | RETURN            |           | [0..runSize): runtime code   |
+             * --------------------------------------------------------------------------|
+             * RUNTIME (45 bytes)                                                        |
+             * --------------------------------------------------------------------------|
+             * Opcode  | Mnemonic       | Stack                  | Memory                |
+             * --------------------------------------------------------------------------|
+             *                                                                           |
+             * ::: keep some values in stack ::::::::::::::::::::::::::::::::::::::::::: |
+             * 5f      | PUSH0          | 0                      |                       |
+             * 5f      | PUSH0          | 0 0                    |                       |
+             *                                                                           |
+             * ::: copy calldata to memory ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36      | CALLDATASIZE   | cds 0 0                |                       |
+             * 5f      | PUSH0          | 0 cds 0 0              |                       |
+             * 5f      | PUSH0          | 0 0 cds 0 0            |                       |
+             * 37      | CALLDATACOPY   | 0 0                    | [0..cds): calldata    |
+             *                                                                           |
+             * ::: delegate call to the implementation contract :::::::::::::::::::::::: |
+             * 36      | CALLDATASIZE   | cds 0 0                | [0..cds): calldata    |
+             * 5f      | PUSH0          | 0 cds 0 0              | [0..cds): calldata    |
+             * 73 addr | PUSH20 addr    | addr 0 cds 0 0         | [0..cds): calldata    |
+             * 5a      | GAS            | gas addr 0 cds 0 0     | [0..cds): calldata    |
+             * f4      | DELEGATECALL   | success                | [0..cds): calldata    |
+             *                                                                           |
+             * ::: copy return data to memory :::::::::::::::::::::::::::::::::::::::::: |
+             * 3d      | RETURNDATASIZE | rds success            | [0..cds): calldata    |
+             * 5f      | PUSH0          | 0 rds success          | [0..cds): calldata    |
+             * 5f      | PUSH0          | 0 0 rds success        | [0..cds): calldata    |
+             * 3e      | RETURNDATACOPY | success                | [0..rds): returndata  |
+             *                                                                           |
+             * 60 0x29 | PUSH1 0x29     | 0x29 success           | [0..rds): returndata  |
+             * 57      | JUMPI          |                        | [0..rds): returndata  |
+             *                                                                           |
+             * ::: revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d      | RETURNDATASIZE | rds                    | [0..rds): returndata  |
+             * 5f      | PUSH0          | 0 rds                  | [0..rds): returndata  |
+             * fd      | REVERT         |                        | [0..rds): returndata  |
+             *                                                                           |
+             * ::: return :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b      | JUMPDEST       |                        | [0..rds): returndata  |
+             * 3d      | RETURNDATASIZE | rds                    | [0..rds): returndata  |
+             * 5f      | PUSH0          | 0 rds                  | [0..rds): returndata  |
+             * f3      | RETURN         |                        | [0..rds): returndata  |
+             * --------------------------------------------------------------------------+
+             */
+
+            mstore(0x24, 0x5af43d5f5f3e6029573d5ffd5b3d5ff3) // 16
+            mstore(0x14, implementation) // 20
+            mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
+            instance := create(0, 0x0e, 0x36)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x24, 0)
+            // If `instance` is zero, revert.
+            if iszero(instance) {
+                // Store the function selector of `DeploymentFailed()`.
+                mstore(0x00, 0x30116425)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Deploys a deterministic PUSH0 clone of `implementation` with `salt`.
+    function cloneDeterministic_PUSH0(address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x24, 0x5af43d5f5f3e6029573d5ffd5b3d5ff3) // 16
+            mstore(0x14, implementation) // 20
+            mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
+            instance := create2(0, 0x0e, 0x36, salt)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x24, 0)
+            // If `instance` is zero, revert.
+            if iszero(instance) {
+                // Store the function selector of `DeploymentFailed()`.
+                mstore(0x00, 0x30116425)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the PUSH0 clone of `implementation`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHash_PUSH0(address implementation) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x24, 0x5af43d5f5f3e6029573d5ffd5b3d5ff3) // 16
+            mstore(0x14, implementation) // 20
+            mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
+            hash := keccak256(0x0e, 0x36)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x24, 0)
+        }
+    }
+
+    /// @dev Returns the address of the deterministic PUSH0 clone of `implementation`,
+    /// with `salt` by `deployer`.
+    function predictDeterministicAddress_PUSH0(
+        address implementation,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        bytes32 hash = initCodeHash_PUSH0(implementation);
         predicted = predictDeterministicAddress(hash, salt, deployer);
     }
 
