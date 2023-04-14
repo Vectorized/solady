@@ -214,7 +214,7 @@ library LibClone {
              * 5f      | PUSH0          | 0 0 rds success        | [0..cds): calldata    |
              * 3e      | RETURNDATACOPY | success                | [0..rds): returndata  |
              *                                                                           |
-             * 60 0x29 | PUSH1 0x29     | 0x28 success           | [0..rds): returndata  |
+             * 60 0x29 | PUSH1 0x29     | 0x29 success           | [0..rds): returndata  |
              * 57      | JUMPI          |                        | [0..rds): returndata  |
              *                                                                           |
              * ::: revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
