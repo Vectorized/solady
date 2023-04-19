@@ -194,9 +194,9 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
 
     function _testTemps() internal returns (_TestTemps memory t) {
         unchecked {
-            (t.from,) = _randomSigner();
-            (t.to,) = _randomSigner();
-            while (t.from == t.to) (t.to,) = _randomSigner();
+            t.from = _randomNonZeroAddress();
+            t.to = _randomNonZeroAddress();
+            while (t.from == t.to) t.to = _randomNonZeroAddress();
             uint256 n = _random() % 4;
             t.n = n;
             t.ids = _randomArray(n);
@@ -692,7 +692,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
 
         for (uint256 i = 0; i != t.n; i++) {
             uint256 id = t.ids[i];
-            (address to,) = _randomSigner();
+            address to = _randomNonZeroAddress();
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[to][id];
 
             tos[i] = to;
@@ -972,7 +972,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
         vm.prank(from);
         _setApprovalForAll(address(this), true);
 
-        (address to,) = _randomSigner();
+        address to = _randomNonZeroAddress();
 
         vm.expectRevert(ERC1155.ArrayLengthsMismatch.selector);
         _safeBatchTransferFrom(from, to, ids, transferAmounts, _randomBytes());
@@ -1064,7 +1064,7 @@ contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
 
         if (ids.length == amounts.length) return;
 
-        (address to,) = _randomSigner();
+        address to = _randomNonZeroAddress();
 
         vm.expectRevert(ERC1155.ArrayLengthsMismatch.selector);
         token.batchMint(to, ids, amounts, _randomBytes());
