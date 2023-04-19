@@ -31,7 +31,7 @@ contract ERC20Test is TestPlus {
 
     function _testTemps() internal returns (_TestTemps memory t) {
         (t.owner, t.privateKey) = _randomSigner();
-        (t.to,) = _randomSigner();
+        t.to = _randomNonZeroAddress();
         t.amount = _random();
         t.deadline = _random();
     }
