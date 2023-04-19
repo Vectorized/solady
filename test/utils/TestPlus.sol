@@ -129,12 +129,9 @@ contract TestPlus is Test {
 
     /// @dev Returns a random non-zero address.
     function _randomNonZeroAddress() internal returns (address result) {
-        uint256 r = _random();
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := shr(96, shl(96, r))
-            result := or(iszero(result), result)
-        }
+        do {
+            result = address(uint160(_random()));
+        } while (result == address(0));
     }
 
     /// @dev Rounds up the free memory pointer the the next word boundary.
