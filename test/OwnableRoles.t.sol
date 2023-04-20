@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import "./utils/mocks/MockOwnableRoles.sol";
 
-contract OwnableRolesTest is TestPlus {
+contract OwnableRolesTest is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
     event OwnershipHandoverRequested(address indexed pendingOwner);

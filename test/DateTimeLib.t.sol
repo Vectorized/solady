@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "../test/utils/TestPlus.sol";
+import "../test/utils/SoladyTest.sol";
 import {DateTimeLib} from "../src/utils/DateTimeLib.sol";
 
-contract DateTimeLibTest is TestPlus {
+contract DateTimeLibTest is SoladyTest {
     struct DateTime {
         uint256 year;
         uint256 month;

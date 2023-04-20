@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {LibBitmap} from "../src/utils/LibBitmap.sol";
 import {LibBit} from "../src/utils/LibBit.sol";
 
-contract LibBitmapTest is TestPlus {
+contract LibBitmapTest is SoladyTest {
     using LibBitmap for LibBitmap.Bitmap;
 
     error AlreadyClaimed();

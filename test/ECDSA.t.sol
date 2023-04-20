@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {ECDSA} from "../src/utils/ECDSA.sol";
 
-contract ECDSATest is TestPlus {
+contract ECDSATest is SoladyTest {
     using ECDSA for bytes32;
     using ECDSA for bytes;
 

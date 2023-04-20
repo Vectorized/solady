@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
 
-contract LibPRNGTest is TestPlus {
+contract LibPRNGTest is SoladyTest {
     using LibPRNG for *;
 
     function testPRNGNext() public {

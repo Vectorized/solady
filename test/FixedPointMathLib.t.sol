@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
-contract FixedPointMathLibTest is TestPlus {
+contract FixedPointMathLibTest is SoladyTest {
     function testExpWad() public {
         assertEq(FixedPointMathLib.expWad(-42139678854452767551), 0);
 

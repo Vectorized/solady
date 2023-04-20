@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {MockImplementation} from "./utils/mocks/MockImplementation.sol";
 import {ERC1967Factory} from "../src/utils/ERC1967Factory.sol";
 import {ERC1967FactoryConstants} from "../src/utils/ERC1967FactoryConstants.sol";
 
-contract ERC1967FactoryTest is TestPlus {
+contract ERC1967FactoryTest is SoladyTest {
     event AdminChanged(address indexed proxy, address indexed admin);
 
     event Upgraded(address indexed proxy, address indexed implementation);

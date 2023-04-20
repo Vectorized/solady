@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import "./utils/InvariantTest.sol";
 
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
@@ -10,7 +10,7 @@ import {WETH} from "../src/tokens/WETH.sol";
 
 contract ContractWithoutReceive {}
 
-contract WETHTest is TestPlus {
+contract WETHTest is SoladyTest {
     WETH weth;
 
     event Deposit(address indexed from, uint256 amount);
@@ -163,7 +163,7 @@ contract WETHTest is TestPlus {
     receive() external payable {}
 }
 
-contract WETHInvariants is TestPlus, InvariantTest {
+contract WETHInvariants is SoladyTest, InvariantTest {
     WETHTester wethTester;
     WETH weth;
 

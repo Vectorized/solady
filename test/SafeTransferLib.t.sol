@@ -11,12 +11,12 @@ import {ReturnsTooMuchToken} from "./utils/weird-tokens/ReturnsTooMuchToken.sol"
 import {ReturnsGarbageToken} from "./utils/weird-tokens/ReturnsGarbageToken.sol";
 import {ReturnsTooLittleToken} from "./utils/weird-tokens/ReturnsTooLittleToken.sol";
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 
-contract SafeTransferLibTest is TestPlus {
+contract SafeTransferLibTest is SoladyTest {
     uint256 constant SUCCESS = 1;
     uint256 constant REVERTS_WITH_SELECTOR = 2;
     uint256 constant REVERTS_WITH_ANY = 3;

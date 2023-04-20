@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import "src/utils/LibSort.sol";
 
-contract LibSortTest is TestPlus {
+contract LibSortTest is SoladyTest {
     function testInsertionSortAddressesDifferential(uint256) public {
         unchecked {
             address[] memory a = _randomAddresses(_randomArrayLength());
