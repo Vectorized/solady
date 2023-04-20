@@ -178,8 +178,8 @@ contract TestPlus {
             // Check the value of the zero slot.
             zeroSlotIsNotZero := mload(0x60)
         }
-        if (freeMemoryPointerOverflowed) revert("Free memory pointer overflowed!");
-        if (zeroSlotIsNotZero) revert("Zero slot is not zero!");
+        if (freeMemoryPointerOverflowed) revert("`0x40` overflowed!");
+        if (zeroSlotIsNotZero) revert("`0x60` is not zero!");
     }
 
     /// @dev Check if `s`:
@@ -205,7 +205,7 @@ contract TestPlus {
             if length { if gt(add(add(s, 0x20), length), mload(0x40)) { insufficientMalloc := 1 } }
         }
         if (notZeroRightPadded) revert("Not zero right padded!");
-        if (fmpNotWordAligned) revert("Free memory pointer `0x40` not 32-byte word aligned!");
+        if (fmpNotWordAligned) revert("`0x40` not word aligned!");
         if (insufficientMalloc) revert("Insufficient memory allocation!");
         _checkMemory();
     }
@@ -224,7 +224,7 @@ contract TestPlus {
         virtual
         returns (uint256 result)
     {
-        require(min <= max, "_hem(uint256,uint256,uint256): Max is less than min.");
+        require(min <= max, "Max is less than min.");
 
         /// @solidity memory-safe-assembly
         assembly {
