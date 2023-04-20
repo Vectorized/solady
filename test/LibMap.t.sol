@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {LibMap} from "../src/utils/LibMap.sol";
 
-contract LibMapTest is TestPlus {
+contract LibMapTest is SoladyTest {
     using LibMap for *;
 
     uint8[0xffffffffffffffff] bigUint8ArrayMap;

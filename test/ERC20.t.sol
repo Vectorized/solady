@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import "./utils/InvariantTest.sol";
 
 import {ERC20, MockERC20} from "./utils/mocks/MockERC20.sol";
 
-contract ERC20Test is TestPlus {
+contract ERC20Test is SoladyTest {
     MockERC20 token;
 
     bytes32 constant PERMIT_TYPEHASH = keccak256(
@@ -486,7 +486,7 @@ contract ERC20Test is TestPlus {
     }
 }
 
-contract ERC20Invariants is TestPlus, InvariantTest {
+contract ERC20Invariants is SoladyTest, InvariantTest {
     BalanceSum balanceSum;
     MockERC20 token;
 

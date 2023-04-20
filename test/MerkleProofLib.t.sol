@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {MerkleProofLib} from "../src/utils/MerkleProofLib.sol";
 
-contract MerkleProofLibTest is TestPlus {
+contract MerkleProofLibTest is SoladyTest {
     function testVerifyProofForHeightOneTree(
         bool hasProof,
         bool nonEmptyProof,

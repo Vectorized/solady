@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {Clone} from "../src/utils/Clone.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 
-contract LibCloneTest is TestPlus, Clone {
+contract LibCloneTest is SoladyTest, Clone {
     error CustomError(uint256 currentValue);
 
     event ReceiveETH(uint256 amount);

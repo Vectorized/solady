@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
 
-contract DynamicBufferLibTest is TestPlus {
+contract DynamicBufferLibTest is SoladyTest {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
     function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {

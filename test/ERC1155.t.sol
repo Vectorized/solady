@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 
 import {ERC1155, MockERC1155} from "./utils/mocks/MockERC1155.sol";
 
@@ -123,7 +123,7 @@ contract WrongReturnDataERC1155Recipient is ERC1155TokenReceiver {
 
 contract NonERC1155Recipient {}
 
-contract ERC1155Test is TestPlus, ERC1155TokenReceiver {
+contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
     MockERC1155 token;
 
     event TransferSingle(
