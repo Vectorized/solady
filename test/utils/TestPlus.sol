@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 contract TestPlus {
+    /// @dev `address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))`.
     address private constant _VM_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
 
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
