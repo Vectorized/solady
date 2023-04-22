@@ -272,8 +272,8 @@ contract SafeTransferLibTest is SoladyTest {
         vm.assume(originalBalance >= amount);
         vm.assume(to != address(this));
 
-        SafeTransferLib.safeTransfer(address(erc20), to, originalBalance - amount);
-        assertEq(SafeTransferLib.balanceOf(address(erc20), address(this)), amount);
+        SafeTransferLib.safeTransfer(address(erc20), _brutalized(to), originalBalance - amount);
+        assertEq(SafeTransferLib.balanceOf(address(erc20), _brutalized(address(this))), amount);
     }
 
     function testTransferAllWithStandardERC20() public {
@@ -285,10 +285,10 @@ contract SafeTransferLibTest is SoladyTest {
         vm.assume(originalBalance >= amount);
         vm.assume(to != address(this));
 
-        SafeTransferLib.safeTransfer(address(erc20), to, originalBalance - amount);
+        SafeTransferLib.safeTransfer(address(erc20), _brutalized(to), originalBalance - amount);
         assertEq(erc20.balanceOf(address(this)), amount);
 
-        assertEq(SafeTransferLib.safeTransferAll(address(erc20), to), amount);
+        assertEq(SafeTransferLib.safeTransferAll(address(erc20), _brutalized(to)), amount);
 
         assertEq(erc20.balanceOf(address(this)), 0);
         assertEq(erc20.balanceOf(to), originalBalance);
@@ -302,7 +302,7 @@ contract SafeTransferLibTest is SoladyTest {
     function testTransferAllFromWithStandardERC20(address to, address from, uint256 amount)
         public
     {
-        SafeTransferLib.safeTransferAll(address(erc20), from);
+        SafeTransferLib.safeTransferAll(address(erc20), _brutalized(from));
 
         uint256 originalBalance = erc20.balanceOf(from);
         vm.assume(originalBalance >= amount);
@@ -310,10 +310,15 @@ contract SafeTransferLibTest is SoladyTest {
 
         forceApprove(address(erc20), from, address(this), type(uint256).max);
 
-        SafeTransferLib.safeTransferFrom(address(erc20), from, to, originalBalance - amount);
+        SafeTransferLib.safeTransferFrom(
+            address(erc20), _brutalized(from), _brutalized(to), originalBalance - amount
+        );
         assertEq(erc20.balanceOf(from), amount);
 
-        assertEq(SafeTransferLib.safeTransferAllFrom(address(erc20), from, to), amount);
+        assertEq(
+            SafeTransferLib.safeTransferAllFrom(address(erc20), _brutalized(from), _brutalized(to)),
+            amount
+        );
 
         assertEq(erc20.balanceOf(address(this)), 0);
         assertEq(erc20.balanceOf(to), originalBalance);
@@ -344,7 +349,7 @@ contract SafeTransferLibTest is SoladyTest {
             return;
         }
 
-        SafeTransferLib.safeTransfer(nonContract, to, amount);
+        SafeTransferLib.safeTransfer(nonContract, _brutalized(to), amount);
     }
 
     function testTransferETHToContractWithoutFallbackReverts() public {
@@ -387,7 +392,7 @@ contract SafeTransferLibTest is SoladyTest {
             return;
         }
 
-        SafeTransferLib.safeTransferFrom(nonContract, from, to, amount);
+        SafeTransferLib.safeTransferFrom(nonContract, _brutalized(from), _brutalized(to), amount);
     }
 
     function testApproveWithMissingReturn(address to, uint256 amount) public {
@@ -415,7 +420,7 @@ contract SafeTransferLibTest is SoladyTest {
             return;
         }
 
-        SafeTransferLib.safeApprove(nonContract, to, amount);
+        SafeTransferLib.safeApprove(nonContract, _brutalized(to), amount);
     }
 
     function testTransferETH(address recipient, uint256 amount) public {
@@ -544,9 +549,9 @@ contract SafeTransferLibTest is SoladyTest {
     function verifySafeTransfer(address token, address to, uint256 amount) public brutalizeMemory {
         uint256 preBal = ERC20(token).balanceOf(to);
         if (amount == ERC20(token).balanceOf(address(this)) && _random() % 2 == 0) {
-            SafeTransferLib.safeTransferAll(address(token), to);
+            SafeTransferLib.safeTransferAll(address(token), _brutalized(to));
         } else {
-            SafeTransferLib.safeTransfer(address(token), to, amount);
+            SafeTransferLib.safeTransfer(address(token), _brutalized(to), amount);
         }
 
         uint256 postBal = ERC20(token).balanceOf(to);
@@ -595,9 +600,9 @@ contract SafeTransferLibTest is SoladyTest {
 
         uint256 preBal = ERC20(token).balanceOf(to);
         if (amount == ERC20(token).balanceOf(from) && _random() % 2 == 0) {
-            SafeTransferLib.safeTransferAllFrom(address(token), from, to);
+            SafeTransferLib.safeTransferAllFrom(address(token), _brutalized(from), _brutalized(to));
         } else {
-            SafeTransferLib.safeTransferFrom(token, from, to, amount);
+            SafeTransferLib.safeTransferFrom(token, _brutalized(from), _brutalized(to), amount);
         }
         uint256 postBal = ERC20(token).balanceOf(to);
 
@@ -624,7 +629,7 @@ contract SafeTransferLibTest is SoladyTest {
     }
 
     function verifySafeApprove(address token, address to, uint256 amount) public {
-        SafeTransferLib.safeApprove(address(token), to, amount);
+        SafeTransferLib.safeApprove(_brutalized(address(token)), _brutalized(to), amount);
 
         assertEq(ERC20(token).allowance(address(this), to), amount);
     }
@@ -671,6 +676,13 @@ contract SafeTransferLibTest is SoladyTest {
                     or(lt(mload(garbage), 32), iszero(eq(mload(add(garbage, 0x20)), 1))),
                     gt(mload(garbage), 0)
                 )
+        }
+    }
+
+    function _brutalized(address a) internal pure returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := or(a, shl(160, keccak256(0x00, 0x20)))
         }
     }
 }
