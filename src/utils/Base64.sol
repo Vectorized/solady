@@ -92,7 +92,7 @@ library Base64 {
         result = encode(data, fileSafe, false);
     }
 
-    /// @dev Encodes base64 encoded `data`.
+    /// @dev Decodes base64 encoded `data`.
     ///
     /// Supports:
     /// - RFC 4648 (both standard and file-safe mode).
