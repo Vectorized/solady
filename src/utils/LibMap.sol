@@ -23,6 +23,11 @@ library LibMap {
         mapping(uint256 => uint256) map;
     }
 
+    /// @dev A uint40 map in storage. Useful for storing timestamps up to 34841 A.D.
+    struct Uint40Map {
+        mapping(uint256 => uint256) map;
+    }
+
     /// @dev A uint64 map in storage.
     struct Uint64Map {
         mapping(uint256 => uint256) map;
@@ -94,6 +99,27 @@ library LibMap {
             let o := shl(5, and(index, 7)) // Storage slot offset (bits).
             let v := sload(s) // Storage slot value.
             let m := 0xffffffff // Value mask.
+            sstore(s, xor(v, shl(o, and(m, xor(shr(o, v), value)))))
+        }
+    }
+
+    /// @dev Returns the uint40 value at `index` in `map`.
+    function get(Uint40Map storage map, uint256 index) internal view returns (uint40 result) {
+        unchecked {
+            result = uint40(map.map[index / 6] >> ((index % 6) * 40));
+        }
+    }
+
+    /// @dev Updates the uint40 value at `index` in `map`.
+    function set(Uint40Map storage map, uint256 index, uint40 value) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, map.slot)
+            mstore(0x00, div(index, 6))
+            let s := keccak256(0x00, 0x40) // Storage slot.
+            let o := mul(40, mod(index, 6)) // Storage slot offset (bits).
+            let v := sload(s) // Storage slot value.
+            let m := 0xffffffffff // Value mask.
             sstore(s, xor(v, shl(o, and(m, xor(shr(o, v), value)))))
         }
     }

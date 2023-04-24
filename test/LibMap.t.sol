@@ -15,6 +15,8 @@ contract LibMapTest is SoladyTest {
 
     LibMap.Uint32Map uint32s;
 
+    LibMap.Uint40Map uint40s;
+
     LibMap.Uint64Map uint64s;
 
     LibMap.Uint128Map uint128s;
@@ -175,6 +177,49 @@ contract LibMapTest is SoladyTest {
                         casted := or(add(mul(n, t), i), r)
                     }
                     assertEq(uint32s.get(i), casted);
+                }
+            }
+        }
+    }
+
+    function testUint40MapSetAndGet(uint256) public {
+        uint40 u = uint40(_random());
+        uint40s.set(0, u);
+        assertEq(uint40s.map[0], u);
+        unchecked {
+            for (uint256 t; t < 8; ++t) {
+                uint256 r = _random();
+                uint40 casted;
+                /// @solidity memory-safe-assembly
+                assembly {
+                    casted := r
+                }
+                uint256 index = _random() % 32;
+                uint40s.set(index, casted);
+                assertEq(uint40s.get(index), casted);
+            }
+        }
+    }
+
+    function testUint40MapSetAndGet() public {
+        unchecked {
+            for (uint256 t; t < 16; ++t) {
+                uint256 n = 64;
+                uint40 casted;
+                uint256 r = _random();
+                for (uint256 i; i < n; ++i) {
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        casted := or(add(mul(n, t), i), r)
+                    }
+                    uint40s.set(i, casted);
+                }
+                for (uint256 i; i < n; ++i) {
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        casted := or(add(mul(n, t), i), r)
+                    }
+                    assertEq(uint40s.get(i), casted);
                 }
             }
         }
