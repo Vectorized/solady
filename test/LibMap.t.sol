@@ -9,22 +9,39 @@ contract LibMapTest is SoladyTest {
 
     uint8[0xffffffffffffffff] bigUint8ArrayMap;
 
-    LibMap.Uint8Map uint8s;
+    LibMap.Uint8Map[2] uint8s;
 
-    LibMap.Uint16Map uint16s;
+    LibMap.Uint16Map[2] uint16s;
 
-    LibMap.Uint32Map uint32s;
+    LibMap.Uint32Map[2] uint32s;
 
-    LibMap.Uint64Map uint64s;
+    LibMap.Uint40Map[2] uint40s;
 
-    LibMap.Uint128Map uint128s;
+    LibMap.Uint64Map[2] uint64s;
+
+    LibMap.Uint128Map[2] uint128s;
+
+    struct _TestTemps {
+        uint256 i0;
+        uint256 i1;
+        uint256 v0;
+        uint256 v1;
+    }
+
+    function _testTemps() internal returns (_TestTemps memory t) {
+        uint256 r = _random();
+        t.i0 = (r >> 8) & 31;
+        t.i1 = (r >> 16) & 31;
+        t.v0 = _random();
+        t.v1 = _random();
+    }
 
     function getUint8(uint256 index) public view returns (uint8 result) {
-        result = uint8s.get(index);
+        result = uint8s[0].get(index);
     }
 
     function setUint8(uint256 index, uint8 value) public {
-        uint8s.set(index, value);
+        uint8s[0].set(index, value);
     }
 
     function getUint8FromBigArray(uint256 index) public view returns (uint8 result) {
@@ -53,8 +70,8 @@ contract LibMapTest is SoladyTest {
 
     function testUint8MapSetAndGet(uint256) public {
         uint8 u = uint8(_random());
-        uint8s.set(0, u);
-        assertEq(uint8s.map[0], u);
+        uint8s[0].set(0, u);
+        assertEq(uint8s[0].map[0], u);
         unchecked {
             for (uint256 t; t < 8; ++t) {
                 uint256 r = _random();
@@ -64,8 +81,8 @@ contract LibMapTest is SoladyTest {
                     casted := r
                 }
                 uint256 index = _random() % 32;
-                uint8s.set(index, casted);
-                assertEq(uint8s.get(index), casted);
+                uint8s[0].set(index, casted);
+                assertEq(uint8s[0].get(index), casted);
             }
         }
     }
@@ -81,23 +98,31 @@ contract LibMapTest is SoladyTest {
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    uint8s.set(i, casted);
+                    uint8s[0].set(i, casted);
                 }
                 for (uint256 i; i < n; ++i) {
                     /// @solidity memory-safe-assembly
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    assertEq(uint8s.get(i), casted);
+                    assertEq(uint8s[0].get(i), casted);
                 }
             }
         }
     }
 
+    function testUint8MapSetAndGet2(uint256) public {
+        _TestTemps memory t = _testTemps();
+        uint8s[0].set(t.i0, uint8(t.v0));
+        uint8s[1].set(t.i1, uint8(t.v1));
+        assertEq(uint8s[0].get(t.i0), uint8(t.v0));
+        assertEq(uint8s[1].get(t.i1), uint8(t.v1));
+    }
+
     function testUint16MapSetAndGet(uint256) public {
         uint16 u = uint16(_random());
-        uint16s.set(0, u);
-        assertEq(uint16s.map[0], u);
+        uint16s[0].set(0, u);
+        assertEq(uint16s[0].map[0], u);
         unchecked {
             for (uint256 t; t < 8; ++t) {
                 uint256 r = _random();
@@ -107,8 +132,8 @@ contract LibMapTest is SoladyTest {
                     casted := r
                 }
                 uint256 index = _random() % 32;
-                uint16s.set(index, casted);
-                assertEq(uint16s.get(index), casted);
+                uint16s[0].set(index, casted);
+                assertEq(uint16s[0].get(index), casted);
             }
         }
     }
@@ -124,23 +149,31 @@ contract LibMapTest is SoladyTest {
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    uint16s.set(i, casted);
+                    uint16s[0].set(i, casted);
                 }
                 for (uint256 i; i < n; ++i) {
                     /// @solidity memory-safe-assembly
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    assertEq(uint16s.get(i), casted);
+                    assertEq(uint16s[0].get(i), casted);
                 }
             }
         }
     }
 
+    function testUint16MapSetAndGet2(uint256) public {
+        _TestTemps memory t = _testTemps();
+        uint16s[0].set(t.i0, uint16(t.v0));
+        uint16s[1].set(t.i1, uint16(t.v1));
+        assertEq(uint16s[0].get(t.i0), uint16(t.v0));
+        assertEq(uint16s[1].get(t.i1), uint16(t.v1));
+    }
+
     function testUint32MapSetAndGet(uint256) public {
         uint32 u = uint32(_random());
-        uint32s.set(0, u);
-        assertEq(uint32s.map[0], u);
+        uint32s[0].set(0, u);
+        assertEq(uint32s[0].map[0], u);
         unchecked {
             for (uint256 t; t < 8; ++t) {
                 uint256 r = _random();
@@ -150,8 +183,8 @@ contract LibMapTest is SoladyTest {
                     casted := r
                 }
                 uint256 index = _random() % 32;
-                uint32s.set(index, casted);
-                assertEq(uint32s.get(index), casted);
+                uint32s[0].set(index, casted);
+                assertEq(uint32s[0].get(index), casted);
             }
         }
     }
@@ -167,23 +200,82 @@ contract LibMapTest is SoladyTest {
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    uint32s.set(i, casted);
+                    uint32s[0].set(i, casted);
                 }
                 for (uint256 i; i < n; ++i) {
                     /// @solidity memory-safe-assembly
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    assertEq(uint32s.get(i), casted);
+                    assertEq(uint32s[0].get(i), casted);
                 }
             }
         }
     }
 
+    function testUint32MapSetAndGet2(uint256) public {
+        _TestTemps memory t = _testTemps();
+        uint32s[0].set(t.i0, uint32(t.v0));
+        uint32s[1].set(t.i1, uint32(t.v1));
+        assertEq(uint32s[0].get(t.i0), uint32(t.v0));
+        assertEq(uint32s[1].get(t.i1), uint32(t.v1));
+    }
+
+    function testUint40MapSetAndGet(uint256) public {
+        uint40 u = uint40(_random());
+        uint40s[0].set(0, u);
+        assertEq(uint40s[0].map[0], u);
+        unchecked {
+            for (uint256 t; t < 8; ++t) {
+                uint256 r = _random();
+                uint40 casted;
+                /// @solidity memory-safe-assembly
+                assembly {
+                    casted := r
+                }
+                uint256 index = _random() % 32;
+                uint40s[0].set(index, casted);
+                assertEq(uint40s[0].get(index), casted);
+            }
+        }
+    }
+
+    function testUint40MapSetAndGet() public {
+        unchecked {
+            for (uint256 t; t < 16; ++t) {
+                uint256 n = 64;
+                uint40 casted;
+                uint256 r = _random();
+                for (uint256 i; i < n; ++i) {
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        casted := or(add(mul(n, t), i), r)
+                    }
+                    uint40s[0].set(i, casted);
+                }
+                for (uint256 i; i < n; ++i) {
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        casted := or(add(mul(n, t), i), r)
+                    }
+                    assertEq(uint40s[0].get(i), casted);
+                }
+            }
+        }
+    }
+
+    function testUint40MapSetAndGet2(uint256) public {
+        _TestTemps memory t = _testTemps();
+        uint40s[0].set(t.i0, uint40(t.v0));
+        uint40s[1].set(t.i1, uint40(t.v1));
+        assertEq(uint40s[0].get(t.i0), uint40(t.v0));
+        assertEq(uint40s[1].get(t.i1), uint40(t.v1));
+    }
+
     function testUint64MapSetAndGet(uint256) public {
         uint64 u = uint64(_random());
-        uint64s.set(0, u);
-        assertEq(uint64s.map[0], u);
+        uint64s[0].set(0, u);
+        assertEq(uint64s[0].map[0], u);
         unchecked {
             for (uint256 t; t < 8; ++t) {
                 uint256 r = _random();
@@ -193,8 +285,8 @@ contract LibMapTest is SoladyTest {
                     casted := r
                 }
                 uint256 index = _random() % 32;
-                uint64s.set(index, casted);
-                assertEq(uint64s.get(index), casted);
+                uint64s[0].set(index, casted);
+                assertEq(uint64s[0].get(index), casted);
             }
         }
     }
@@ -210,23 +302,31 @@ contract LibMapTest is SoladyTest {
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    uint64s.set(i, casted);
+                    uint64s[0].set(i, casted);
                 }
                 for (uint256 i; i < n; ++i) {
                     /// @solidity memory-safe-assembly
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    assertEq(uint64s.get(i), casted);
+                    assertEq(uint64s[0].get(i), casted);
                 }
             }
         }
     }
 
+    function testUint64MapSetAndGet2(uint256) public {
+        _TestTemps memory t = _testTemps();
+        uint64s[0].set(t.i0, uint64(t.v0));
+        uint64s[1].set(t.i1, uint64(t.v1));
+        assertEq(uint64s[0].get(t.i0), uint64(t.v0));
+        assertEq(uint64s[1].get(t.i1), uint64(t.v1));
+    }
+
     function testUint128MapSetAndGet(uint256) public {
         uint128 u = uint128(_random());
-        uint128s.set(0, u);
-        assertEq(uint128s.map[0], u);
+        uint128s[0].set(0, u);
+        assertEq(uint128s[0].map[0], u);
         unchecked {
             for (uint256 t; t < 8; ++t) {
                 uint256 r = _random();
@@ -236,8 +336,8 @@ contract LibMapTest is SoladyTest {
                     casted := r
                 }
                 uint256 index = _random() % 32;
-                uint128s.set(index, casted);
-                assertEq(uint128s.get(index), casted);
+                uint128s[0].set(index, casted);
+                assertEq(uint128s[0].get(index), casted);
             }
         }
     }
@@ -253,16 +353,24 @@ contract LibMapTest is SoladyTest {
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    uint128s.set(i, casted);
+                    uint128s[0].set(i, casted);
                 }
                 for (uint256 i; i < n; ++i) {
                     /// @solidity memory-safe-assembly
                     assembly {
                         casted := or(add(mul(n, t), i), r)
                     }
-                    assertEq(uint128s.get(i), casted);
+                    assertEq(uint128s[0].get(i), casted);
                 }
             }
         }
+    }
+
+    function testUint128MapSetAndGet2(uint256) public {
+        _TestTemps memory t = _testTemps();
+        uint128s[0].set(t.i0, uint128(t.v0));
+        uint128s[1].set(t.i1, uint128(t.v1));
+        assertEq(uint128s[0].get(t.i0), uint128(t.v0));
+        assertEq(uint128s[1].get(t.i1), uint128(t.v1));
     }
 }
