@@ -272,24 +272,32 @@ contract ERC20Test is SoladyTest {
         }
     }
 
-    function testTransferFrom(address to, uint256 approval, uint256 amount) public {
+    function testTransferFrom(
+        address spender,
+        address from,
+        address to,
+        uint256 approval,
+        uint256 amount
+    ) public {
         amount = _bound(amount, 0, approval);
 
-        address from = address(0xABCD);
-
         token.mint(from, amount);
+        assertEq(token.balanceOf(from), amount);
 
         vm.prank(from);
-        token.approve(address(this), approval);
+        token.approve(spender, approval);
 
         vm.expectEmit(true, true, true, true);
         emit Transfer(from, to, amount);
+        vm.prank(spender);
         assertTrue(token.transferFrom(from, to, amount));
         assertEq(token.totalSupply(), amount);
 
-        uint256 app =
-            from == address(this) || approval == type(uint256).max ? approval : approval - amount;
-        assertEq(token.allowance(from, address(this)), app);
+        if (approval == type(uint256).max) {
+            assertEq(token.allowance(from, spender), approval);
+        } else {
+            assertEq(token.allowance(from, spender), approval - amount);
+        }
 
         if (from == to) {
             assertEq(token.balanceOf(from), amount);
