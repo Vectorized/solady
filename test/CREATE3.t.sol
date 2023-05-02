@@ -91,8 +91,8 @@ contract CREATE3Test is SoladyTest {
         this.deploy(salt, _creationCode(bytecode2), 0);
     }
 
-    function deploy(bytes32 salt, bytes calldata creationCode, uint256 value) external {
-        CREATE3.deploy(salt, creationCode, value);
+    function deploy(bytes32 salt, bytes calldata creationCode, uint256 value) external returns (address) {
+        return CREATE3.deploy(salt, creationCode, value);
     }
 
     function _creationCode(bytes memory bytecode) internal pure returns (bytes memory result) {
