@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {MinHeapLib} from "../src/utils/MinHeapLib.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
 
-contract MinHeapLibTest is TestPlus {
+contract MinHeapLibTest is SoladyTest {
     using MinHeapLib for MinHeapLib.Heap;
 
     MinHeapLib.Heap heap0;

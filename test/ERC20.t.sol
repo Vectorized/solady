@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import "./utils/InvariantTest.sol";
 
 import {ERC20, MockERC20} from "./utils/mocks/MockERC20.sol";
 
-contract ERC20Test is TestPlus {
+contract ERC20Test is SoladyTest {
     MockERC20 token;
 
     bytes32 constant PERMIT_TYPEHASH = keccak256(
@@ -31,7 +31,7 @@ contract ERC20Test is TestPlus {
 
     function _testTemps() internal returns (_TestTemps memory t) {
         (t.owner, t.privateKey) = _randomSigner();
-        (t.to,) = _randomSigner();
+        t.to = _randomNonZeroAddress();
         t.amount = _random();
         t.deadline = _random();
     }
@@ -272,24 +272,32 @@ contract ERC20Test is TestPlus {
         }
     }
 
-    function testTransferFrom(address to, uint256 approval, uint256 amount) public {
+    function testTransferFrom(
+        address spender,
+        address from,
+        address to,
+        uint256 approval,
+        uint256 amount
+    ) public {
         amount = _bound(amount, 0, approval);
 
-        address from = address(0xABCD);
-
         token.mint(from, amount);
+        assertEq(token.balanceOf(from), amount);
 
         vm.prank(from);
-        token.approve(address(this), approval);
+        token.approve(spender, approval);
 
         vm.expectEmit(true, true, true, true);
         emit Transfer(from, to, amount);
+        vm.prank(spender);
         assertTrue(token.transferFrom(from, to, amount));
         assertEq(token.totalSupply(), amount);
 
-        uint256 app =
-            from == address(this) || approval == type(uint256).max ? approval : approval - amount;
-        assertEq(token.allowance(from, address(this)), app);
+        if (approval == type(uint256).max) {
+            assertEq(token.allowance(from, spender), approval);
+        } else {
+            assertEq(token.allowance(from, spender), approval - amount);
+        }
 
         if (from == to) {
             assertEq(token.balanceOf(from), amount);
@@ -486,7 +494,7 @@ contract ERC20Test is TestPlus {
     }
 }
 
-contract ERC20Invariants is TestPlus, InvariantTest {
+contract ERC20Invariants is SoladyTest, InvariantTest {
     BalanceSum balanceSum;
     MockERC20 token;
 

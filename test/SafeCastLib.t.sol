@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {SafeCastLib} from "../src/utils/SafeCastLib.sol";
 
-contract SafeCastLibTest is TestPlus {
+contract SafeCastLibTest is SoladyTest {
     function testSafeCastToUint(uint256 x) public {
         assertEq(SafeCastLib.toUint8(uint8(x)), uint8(x));
         if (x >= (1 << 8)) vm.expectRevert(SafeCastLib.Overflow.selector);

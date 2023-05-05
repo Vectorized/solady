@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 
 import {ERC721, MockERC721} from "./utils/mocks/MockERC721.sol";
 
@@ -60,7 +60,7 @@ contract WrongReturnDataERC721Recipient is ERC721TokenReceiver {
 
 contract NonERC721Recipient {}
 
-contract ERC721Test is TestPlus {
+contract ERC721Test is SoladyTest {
     MockERC721 token;
 
     uint256 private constant _ERC721_MASTER_SLOT_SEED = 0x7d8825530a5a2e7a << 192;
@@ -171,9 +171,9 @@ contract ERC721Test is TestPlus {
     }
 
     function _owners() internal returns (address a, address b) {
-        (a,) = _randomSigner();
-        (b,) = _randomSigner();
-        while (a == b) (b,) = _randomSigner();
+        a = _randomNonZeroAddress();
+        b = _randomNonZeroAddress();
+        while (a == b) b = _randomNonZeroAddress();
     }
 
     function testSafetyOfCustomStorage(uint256 id0, uint256 id1) public {
@@ -249,7 +249,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testMint(uint256 id) public {
-        (address owner,) = _randomSigner();
+        address owner = _randomNonZeroAddress();
 
         _expectMintEvent(owner, id);
         token.mint(owner, id);
@@ -259,7 +259,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testBurn(uint256 id) public {
-        (address owner,) = _randomSigner();
+        address owner = _randomNonZeroAddress();
 
         _expectMintEvent(owner, id);
         token.mint(owner, id);
@@ -298,7 +298,7 @@ contract ERC721Test is TestPlus {
     }
 
     function testTransferFrom() public {
-        (address owner,) = _randomSigner();
+        address owner = _randomNonZeroAddress();
         token.mint(owner, 0);
         vm.prank(owner);
         token.transferFrom(owner, address(this), 0);

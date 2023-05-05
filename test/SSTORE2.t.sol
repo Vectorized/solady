@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {SSTORE2} from "../src/utils/SSTORE2.sol";
 
-contract SSTORE2Test is TestPlus {
+contract SSTORE2Test is SoladyTest {
     function testWriteRead() public {
         bytes memory testBytes = abi.encode("this is a test");
 

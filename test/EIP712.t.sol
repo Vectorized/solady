@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {MockEIP712} from "./utils/mocks/MockEIP712.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
-contract EIP712Test is TestPlus {
+contract EIP712Test is SoladyTest {
     MockEIP712 mock;
     MockEIP712 mockClone;
 

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/TestPlus.sol";
+import "./utils/SoladyTest.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
-contract LibStringTest is TestPlus {
+contract LibStringTest is SoladyTest {
     function testToStringZero() public {
         assertEq(LibString.toString(uint256(0)), "0");
     }
