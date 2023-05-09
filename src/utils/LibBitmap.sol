@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./LibBit.sol";
+import {LibBit} from "./LibBit.sol";
 
 /// @notice Library for storage of packed unsigned booleans.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibBitmap.sol)
