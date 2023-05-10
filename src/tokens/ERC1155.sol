@@ -99,6 +99,10 @@ abstract contract ERC1155 {
     /// ```
     uint256 private constant _ERC1155_MASTER_SLOT_SEED = 0x9a31110384e0b0c9;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// The address mask is used to clean the upper 96 bits of an address.
     uint256 private constant _ADDRESS_MASK = 0x00ffffffffffffffffffffffffffffffffffffffff;
 

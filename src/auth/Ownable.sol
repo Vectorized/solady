@@ -67,6 +67,10 @@ abstract contract Ownable {
     /// It stores the expiry timestamp of the two-step ownership handover.
     uint256 private constant _HANDOVER_SLOT_SEED = 0x389a75e1;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// The address mask is used to clean the upper 96 bits of an address.
     uint256 private constant _ADDRESS_MASK = 0x00ffffffffffffffffffffffffffffffffffffffff;
 
