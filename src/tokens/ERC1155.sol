@@ -120,7 +120,8 @@ abstract contract ERC1155 {
     function balanceOf(address owner, uint256 id) public view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, shl(96, owner)))
+            mstore(0x20, _ERC1155_MASTER_SLOT_SEED)
+            mstore(0x14, owner)
             mstore(0x00, id)
             result := sload(keccak256(0x00, 0x40))
         }
@@ -135,7 +136,8 @@ abstract contract ERC1155 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, shl(96, owner)))
+            mstore(0x20, _ERC1155_MASTER_SLOT_SEED)
+            mstore(0x14, owner)
             mstore(0x00, operator)
             result := sload(keccak256(0x0c, 0x34))
         }
@@ -147,17 +149,18 @@ abstract contract ERC1155 {
     function setApprovalForAll(address operator, bool isApproved) public virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            // Clear the upper 96 bits.
-            operator := shr(96, shl(96, operator))
             // Convert to 0 or 1.
             isApproved := iszero(iszero(isApproved))
             // Update the `isApproved` for (`msg.sender`, `operator`).
-            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, shl(96, caller())))
+            mstore(0x20, _ERC1155_MASTER_SLOT_SEED)
+            mstore(0x14, caller())
             mstore(0x00, operator)
             sstore(keccak256(0x0c, 0x34), isApproved)
             // Emit the {ApprovalForAll} event.
             mstore(0x00, isApproved)
-            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), operator)
+            log3(
+                0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator))
+            )
         }
     }
 
@@ -227,10 +230,8 @@ abstract contract ERC1155 {
                 sstore(toBalanceSlot, toBalanceAfter)
             }
             // Emit a {TransferSingle} event.
-            {
-                mstore(0x20, amount)
-                log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), from, to)
-            }
+            mstore(0x20, amount)
+            log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), from, to)
         }
         if (_useAfterTokenTransfer()) {
             _afterTokenTransfer(from, to, _single(id), _single(amount), data);
@@ -472,17 +473,16 @@ abstract contract ERC1155 {
         }
         /// @solidity memory-safe-assembly
         assembly {
-            let toSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, to))
-            // Clear the upper 96 bits.
-            to := shr(96, toSlotSeed)
+            let to_ := shl(96, to)
             // Revert if `to` is the zero address.
-            if iszero(to) {
+            if iszero(to_) {
                 mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
                 revert(0x1c, 0x04)
             }
             // Increase and store the updated balance of `to`.
             {
-                mstore(0x20, toSlotSeed)
+                mstore(0x20, _ERC1155_MASTER_SLOT_SEED)
+                mstore(0x14, to)
                 mstore(0x00, id)
                 let toBalanceSlot := keccak256(0x00, 0x40)
                 let toBalanceBefore := sload(toBalanceSlot)
@@ -494,11 +494,9 @@ abstract contract ERC1155 {
                 sstore(toBalanceSlot, toBalanceAfter)
             }
             // Emit a {TransferSingle} event.
-            {
-                mstore(0x00, id)
-                mstore(0x20, amount)
-                log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), 0, to)
-            }
+            mstore(0x00, id)
+            mstore(0x20, amount)
+            log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), 0, shr(96, to_))
         }
         if (_useAfterTokenTransfer()) {
             _afterTokenTransfer(address(0), to, _single(id), _single(amount), data);
@@ -530,23 +528,21 @@ abstract contract ERC1155 {
                 mstore(0x00, 0x3b800a46) // `ArrayLengthsMismatch()`.
                 revert(0x1c, 0x04)
             }
-            let toSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, to))
-            // Clear the upper 96 bits.
-            to := shr(96, toSlotSeed)
+            let to_ := shl(96, to)
             // Revert if `to` is the zero address.
-            if iszero(to) {
+            if iszero(to_) {
                 mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
                 revert(0x1c, 0x04)
             }
             // Loop through all the `ids` and update the balances.
             {
+                mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, to_))
                 let end := shl(5, mload(ids))
                 for { let i := 0 } iszero(eq(i, end)) {} {
                     i := add(i, 0x20)
                     let amount := mload(add(amounts, i))
                     // Increase and store the updated balance of `to`.
                     {
-                        mstore(0x20, toSlotSeed)
                         mstore(0x00, mload(add(ids, i)))
                         let toBalanceSlot := keccak256(0x00, 0x40)
                         let toBalanceBefore := sload(toBalanceSlot)
@@ -574,7 +570,7 @@ abstract contract ERC1155 {
                 pop(staticcall(gas(), 4, amounts, n, o, n))
                 n := sub(add(o, returndatasize()), m)
                 // Do the emit.
-                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), 0, to)
+                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), 0, shr(96, to_))
             }
         }
         if (_useAfterTokenTransfer()) {
@@ -606,14 +602,11 @@ abstract contract ERC1155 {
         }
         /// @solidity memory-safe-assembly
         assembly {
-            let fromSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, from))
-            mstore(0x20, fromSlotSeed)
-            // Clear the upper 96 bits.
-            from := shr(96, fromSlotSeed)
-            by := shr(96, shl(96, by))
+            let from_ := shl(96, from)
+            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, from_))
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
-            if iszero(or(iszero(by), eq(by, from))) {
+            if iszero(or(iszero(shl(96, by)), eq(shl(96, by), from_))) {
                 mstore(0x00, by)
                 if iszero(sload(keccak256(0x0c, 0x34))) {
                     mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
@@ -632,11 +625,9 @@ abstract contract ERC1155 {
                 sstore(fromBalanceSlot, sub(fromBalance, amount))
             }
             // Emit a {TransferSingle} event.
-            {
-                mstore(0x00, id)
-                mstore(0x20, amount)
-                log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), from, 0)
-            }
+            mstore(0x00, id)
+            mstore(0x20, amount)
+            log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), shr(96, from_), 0)
         }
         if (_useAfterTokenTransfer()) {
             _afterTokenTransfer(from, address(0), _single(id), _single(amount), "");
@@ -673,14 +664,12 @@ abstract contract ERC1155 {
                 mstore(0x00, 0x3b800a46) // `ArrayLengthsMismatch()`.
                 revert(0x1c, 0x04)
             }
-            let fromSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, from))
-            mstore(0x20, fromSlotSeed)
-            // Clear the upper 96 bits.
-            from := shr(96, fromSlotSeed)
-            by := shr(96, shl(96, by))
+            let from_ := shl(96, from)
+            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, from_))
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
-            if iszero(or(iszero(by), eq(by, from))) {
+            let by_ := shl(96, by)
+            if iszero(or(iszero(by_), eq(by_, from_))) {
                 mstore(0x00, by)
                 if iszero(sload(keccak256(0x0c, 0x34))) {
                     mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
@@ -721,7 +710,7 @@ abstract contract ERC1155 {
                 pop(staticcall(gas(), 4, amounts, n, o, n))
                 n := sub(add(o, returndatasize()), m)
                 // Do the emit.
-                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, 0)
+                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), shr(96, from_), 0)
             }
         }
         if (_useAfterTokenTransfer()) {
@@ -740,17 +729,18 @@ abstract contract ERC1155 {
     function _setApprovalForAll(address by, address operator, bool isApproved) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            // Clear the upper 96 bits.
-            operator := shr(96, shl(96, operator))
             // Convert to 0 or 1.
             isApproved := iszero(iszero(isApproved))
             // Update the `isApproved` for (`by`, `operator`).
-            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, shl(96, by)))
+            mstore(0x20, _ERC1155_MASTER_SLOT_SEED)
+            mstore(0x14, by)
             mstore(0x00, operator)
             sstore(keccak256(0x0c, 0x34), isApproved)
             // Emit the {ApprovalForAll} event.
             mstore(0x00, isApproved)
-            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), operator)
+            log3(
+                0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator))
+            )
         }
     }
 
@@ -790,16 +780,13 @@ abstract contract ERC1155 {
         }
         /// @solidity memory-safe-assembly
         assembly {
-            let fromSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, from))
-            let toSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, to))
-            mstore(0x20, fromSlotSeed)
-            // Clear the upper 96 bits.
-            from := shr(96, fromSlotSeed)
-            to := shr(96, toSlotSeed)
-            by := shr(96, shl(96, by))
+            let from_ := shl(96, from)
+            let to_ := shl(96, to)
+            mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, from_))
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
-            if iszero(or(iszero(by), eq(by, from))) {
+            let by_ := shl(96, by)
+            if iszero(or(iszero(by_), eq(by_, from_))) {
                 mstore(0x00, by)
                 if iszero(sload(keccak256(0x0c, 0x34))) {
                     mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
@@ -807,7 +794,7 @@ abstract contract ERC1155 {
                 }
             }
             // Revert if `to` is the zero address.
-            if iszero(to) {
+            if iszero(to_) {
                 mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
                 revert(0x1c, 0x04)
             }
@@ -824,7 +811,7 @@ abstract contract ERC1155 {
             }
             // Increase and store the updated balance of `to`.
             {
-                mstore(0x20, toSlotSeed)
+                mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, to_))
                 let toBalanceSlot := keccak256(0x00, 0x40)
                 let toBalanceBefore := sload(toBalanceSlot)
                 let toBalanceAfter := add(toBalanceBefore, amount)
@@ -835,10 +822,9 @@ abstract contract ERC1155 {
                 sstore(toBalanceSlot, toBalanceAfter)
             }
             // Emit a {TransferSingle} event.
-            {
-                mstore(0x20, amount)
-                log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), from, to)
-            }
+            mstore(0x20, amount)
+            // forgefmt: disable-next-line
+            log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), shr(96, from_), shr(96, to_))
         }
         if (_hasCode(to)) _checkOnERC1155Received(from, to, id, amount, data);
         if (_useAfterTokenTransfer()) {
@@ -886,21 +872,20 @@ abstract contract ERC1155 {
                 mstore(0x00, 0x3b800a46) // `ArrayLengthsMismatch()`.
                 revert(0x1c, 0x04)
             }
-            let fromSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, from))
-            let toSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, shl(96, to))
+            let from_ := shl(96, from)
+            let to_ := shl(96, to)
+            let fromSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, from_)
+            let toSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, to_)
             mstore(0x20, fromSlotSeed)
-            // Clear the upper 96 bits.
-            from := shr(96, fromSlotSeed)
-            to := shr(96, toSlotSeed)
-            by := shr(96, shl(96, by))
             // Revert if `to` is the zero address.
-            if iszero(to) {
+            if iszero(to_) {
                 mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
                 revert(0x1c, 0x04)
             }
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
-            if iszero(or(iszero(by), eq(by, from))) {
+            let by_ := shl(96, by)
+            if iszero(or(iszero(by_), eq(by_, from_))) {
                 mstore(0x00, by)
                 if iszero(sload(keccak256(0x0c, 0x34))) {
                     mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
@@ -954,7 +939,7 @@ abstract contract ERC1155 {
                 pop(staticcall(gas(), 4, amounts, n, o, n))
                 n := sub(add(o, returndatasize()), m)
                 // Do the emit.
-                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, to)
+                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), shr(96, from_), shr(96, to_))
             }
         }
         if (_hasCode(to)) _checkOnERC1155BatchReceived(from, to, ids, amounts, data);

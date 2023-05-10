@@ -103,6 +103,9 @@ abstract contract ERC721 {
     /// ```
     uint256 private constant _ERC721_MASTER_SLOT_SEED = 0x7d8825530a5a2e7a << 192;
 
+    /// @dev Pre-shifted and pre-masked constant.
+    uint256 private constant _ERC721_MASTER_SLOT_SEED_MASKED = 0x0a5a2e7a00000000;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      ERC721 METADATA                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -192,7 +195,8 @@ abstract contract ERC721 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, shr(96, shl(96, operator))))
+            mstore(0x1c, operator)
+            mstore(0x08, _ERC721_MASTER_SLOT_SEED_MASKED)
             mstore(0x00, owner)
             result := sload(keccak256(0x0c, 0x30))
         }
@@ -204,17 +208,18 @@ abstract contract ERC721 {
     function setApprovalForAll(address operator, bool isApproved) public virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            // Clear the upper 96 bits.
-            operator := shr(96, shl(96, operator))
             // Convert to 0 or 1.
             isApproved := iszero(iszero(isApproved))
             // Update the `isApproved` for (`msg.sender`, `operator`).
-            mstore(0x1c, or(_ERC721_MASTER_SLOT_SEED, operator))
+            mstore(0x1c, operator)
+            mstore(0x08, _ERC721_MASTER_SLOT_SEED_MASKED)
             mstore(0x00, caller())
             sstore(keccak256(0x0c, 0x30), isApproved)
             // Emit the {ApprovalForAll} event.
             mstore(0x00, isApproved)
-            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), operator)
+            log3(
+                0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator))
+            )
         }
     }
 

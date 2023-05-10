@@ -20,7 +20,7 @@ contract MockERC1155 is ERC1155 {
     }
 
     function burn(address from, uint256 id, uint256 amount) public virtual {
-        _burn(_brutalizedMsgSender(), _brutalized(from), id, amount);
+        _burn(_brutalized(msg.sender), _brutalized(from), id, amount);
     }
 
     function uncheckedBurn(address from, uint256 id, uint256 amount) public virtual {
@@ -31,7 +31,7 @@ contract MockERC1155 is ERC1155 {
         public
         virtual
     {
-        _batchBurn(_brutalizedMsgSender(), _brutalized(from), ids, amounts);
+        _batchBurn(_brutalized(msg.sender), _brutalized(from), ids, amounts);
     }
 
     function uncheckedBatchBurn(address from, uint256[] memory ids, uint256[] memory amounts)
@@ -58,7 +58,7 @@ contract MockERC1155 is ERC1155 {
         uint256 amount,
         bytes memory data
     ) public virtual {
-        _safeTransfer(_brutalizedMsgSender(), from, to, id, amount, data);
+        _safeTransfer(_brutalized(msg.sender), _brutalized(from), _brutalized(to), id, amount, data);
     }
 
     function uncheckedSafeTransferFrom(
@@ -68,7 +68,7 @@ contract MockERC1155 is ERC1155 {
         uint256 amount,
         bytes memory data
     ) public virtual {
-        _safeTransfer(address(0), from, to, id, amount, data);
+        _safeTransfer(_brutalized(address(0)), _brutalized(from), _brutalized(to), id, amount, data);
     }
 
     function safeBatchTransferFrom(
@@ -89,7 +89,7 @@ contract MockERC1155 is ERC1155 {
         bytes memory data
     ) public virtual {
         _safeBatchTransfer(
-            _brutalizedMsgSender(), _brutalized(from), _brutalized(to), ids, amounts, data
+            _brutalized(msg.sender), _brutalized(from), _brutalized(to), ids, amounts, data
         );
     }
 
@@ -100,24 +100,19 @@ contract MockERC1155 is ERC1155 {
         uint256[] memory amounts,
         bytes memory data
     ) public virtual {
-        _safeBatchTransfer(address(0), _brutalized(from), _brutalized(to), ids, amounts, data);
+        _safeBatchTransfer(
+            _brutalized(address(0)), _brutalized(from), _brutalized(to), ids, amounts, data
+        );
     }
 
     function directSetApprovalForAll(address operator, bool approved) public virtual {
-        _setApprovalForAll(_brutalizedMsgSender(), _brutalized(operator), approved);
+        _setApprovalForAll(_brutalized(msg.sender), _brutalized(operator), approved);
     }
 
     function _brutalized(address a) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := or(a, shl(160, gas()))
-        }
-    }
-
-    function _brutalizedMsgSender() internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(caller(), shl(160, gas()))
         }
     }
 }
