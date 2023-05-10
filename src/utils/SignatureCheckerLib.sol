@@ -17,6 +17,9 @@ library SignatureCheckerLib {
     bytes32 private constant _MALLEABILITY_THRESHOLD =
         0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
 
+    /// The address mask is used to clean the upper 96 bits of an address.
+    uint256 private constant _ADDRESS_MASK = 0x00ffffffffffffffffffffffffffffffffffffffff;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               SIGNATURE CHECKING OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -32,7 +35,7 @@ library SignatureCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Clean the upper 96 bits of `signer` in case they are dirty.
-            for { signer := shr(96, shl(96, signer)) } signer {} {
+            for { signer := and(signer, _ADDRESS_MASK) } signer {} {
                 // Load the free memory pointer.
                 // Simply using the free memory usually costs less if many slots are needed.
                 let m := mload(0x40)
@@ -120,7 +123,7 @@ library SignatureCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Clean the upper 96 bits of `signer` in case they are dirty.
-            for { signer := shr(96, shl(96, signer)) } signer {} {
+            for { signer := and(signer, _ADDRESS_MASK) } signer {} {
                 // Load the free memory pointer.
                 // Simply using the free memory usually costs less if many slots are needed.
                 let m := mload(0x40)
@@ -216,7 +219,7 @@ library SignatureCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Clean the upper 96 bits of `signer` in case they are dirty.
-            for { signer := shr(96, shl(96, signer)) } signer {} {
+            for { signer := and(signer, _ADDRESS_MASK) } signer {} {
                 // Load the free memory pointer.
                 // Simply using the free memory usually costs less if many slots are needed.
                 let m := mload(0x40)
