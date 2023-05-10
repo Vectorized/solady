@@ -58,7 +58,7 @@ contract MockERC1155 is ERC1155 {
         uint256 amount,
         bytes memory data
     ) public virtual {
-        _safeTransfer(_brutalizedMsgSender(), from, to, id, amount, data);
+        _safeTransfer(_brutalizedMsgSender(), _brutalized(from), _brutalized(to), id, amount, data);
     }
 
     function uncheckedSafeTransferFrom(
@@ -68,7 +68,7 @@ contract MockERC1155 is ERC1155 {
         uint256 amount,
         bytes memory data
     ) public virtual {
-        _safeTransfer(address(0), from, to, id, amount, data);
+        _safeTransfer(_brutalized(address(0)), _brutalized(from), _brutalized(to), id, amount, data);
     }
 
     function safeBatchTransferFrom(
@@ -100,7 +100,9 @@ contract MockERC1155 is ERC1155 {
         uint256[] memory amounts,
         bytes memory data
     ) public virtual {
-        _safeBatchTransfer(address(0), _brutalized(from), _brutalized(to), ids, amounts, data);
+        _safeBatchTransfer(
+            _brutalized(address(0)), _brutalized(from), _brutalized(to), ids, amounts, data
+        );
     }
 
     function directSetApprovalForAll(address operator, bool approved) public virtual {
