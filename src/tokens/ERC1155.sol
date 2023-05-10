@@ -158,9 +158,8 @@ abstract contract ERC1155 {
             sstore(keccak256(0x0c, 0x34), isApproved)
             // Emit the {ApprovalForAll} event.
             mstore(0x00, isApproved)
-            log3(
-                0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator))
-            )
+            // forgefmt: disable-next-line
+            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator)))
         }
     }
 
@@ -738,9 +737,8 @@ abstract contract ERC1155 {
             sstore(keccak256(0x0c, 0x34), isApproved)
             // Emit the {ApprovalForAll} event.
             mstore(0x00, isApproved)
-            log3(
-                0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator))
-            )
+            // forgefmt: disable-next-line
+            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator)))
         }
     }
 
