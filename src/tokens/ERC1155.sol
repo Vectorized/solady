@@ -540,8 +540,7 @@ abstract contract ERC1155 {
             }
             // Loop through all the `ids` and update the balances.
             {
-                mstore(0x20, _ERC1155_MASTER_SLOT_SEED)
-                mstore(0x14, to)
+                mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, to_))
                 let end := shl(5, mload(ids))
                 for { let i := 0 } iszero(eq(i, end)) {} {
                     i := add(i, 0x20)
