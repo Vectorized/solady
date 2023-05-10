@@ -99,6 +99,9 @@ abstract contract ERC1155 {
     /// ```
     uint256 private constant _ERC1155_MASTER_SLOT_SEED = 0x9a31110384e0b0c9;
 
+    /// The address mask is used to clean the upper 96 bits of an address.
+    uint256 private constant _ADDRESS_MASK = 0x00ffffffffffffffffffffffffffffffffffffffff;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      ERC1155 METADATA                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -148,7 +151,7 @@ abstract contract ERC1155 {
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
-            operator := shr(96, shl(96, operator))
+            operator := and(operator, _ADDRESS_MASK)
             // Convert to 0 or 1.
             isApproved := iszero(iszero(isApproved))
             // Update the `isApproved` for (`msg.sender`, `operator`).
@@ -610,7 +613,7 @@ abstract contract ERC1155 {
             mstore(0x20, fromSlotSeed)
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
-            by := shr(96, shl(96, by))
+            by := and(by, _ADDRESS_MASK)
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
             if iszero(or(iszero(by), eq(by, from))) {
@@ -677,7 +680,7 @@ abstract contract ERC1155 {
             mstore(0x20, fromSlotSeed)
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
-            by := shr(96, shl(96, by))
+            by := and(by, _ADDRESS_MASK)
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
             if iszero(or(iszero(by), eq(by, from))) {
@@ -741,7 +744,7 @@ abstract contract ERC1155 {
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
-            operator := shr(96, shl(96, operator))
+            operator := and(operator, _ADDRESS_MASK)
             // Convert to 0 or 1.
             isApproved := iszero(iszero(isApproved))
             // Update the `isApproved` for (`by`, `operator`).
@@ -796,7 +799,7 @@ abstract contract ERC1155 {
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
             to := shr(96, toSlotSeed)
-            by := shr(96, shl(96, by))
+            by := and(by, _ADDRESS_MASK)
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
             if iszero(or(iszero(by), eq(by, from))) {
@@ -892,7 +895,7 @@ abstract contract ERC1155 {
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
             to := shr(96, toSlotSeed)
-            by := shr(96, shl(96, by))
+            by := and(by, _ADDRESS_MASK)
             // Revert if `to` is the zero address.
             if iszero(to) {
                 mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
@@ -1047,7 +1050,7 @@ abstract contract ERC1155 {
             let onERC1155ReceivedSelector := 0xf23a6e61
             mstore(m, onERC1155ReceivedSelector)
             mstore(add(m, 0x20), caller())
-            mstore(add(m, 0x40), shr(96, shl(96, from)))
+            mstore(add(m, 0x40), and(from, _ADDRESS_MASK))
             mstore(add(m, 0x60), id)
             mstore(add(m, 0x80), amount)
             mstore(add(m, 0xa0), 0xa0)
@@ -1087,7 +1090,7 @@ abstract contract ERC1155 {
             let onERC1155BatchReceivedSelector := 0xbc197c81
             mstore(m, onERC1155BatchReceivedSelector)
             mstore(add(m, 0x20), caller())
-            mstore(add(m, 0x40), shr(96, shl(96, from)))
+            mstore(add(m, 0x40), and(from, _ADDRESS_MASK))
             // Copy the `ids`.
             mstore(add(m, 0x60), 0xa0)
             let n := add(0x20, shl(5, mload(ids)))
