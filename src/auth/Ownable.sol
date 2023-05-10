@@ -67,6 +67,9 @@ abstract contract Ownable {
     /// It stores the expiry timestamp of the two-step ownership handover.
     uint256 private constant _HANDOVER_SLOT_SEED = 0x389a75e1;
 
+    /// The address mask is used to clean the upper 96 bits of an address.
+    uint256 private constant _ADDRESS_MASK = 0x00ffffffffffffffffffffffffffffffffffffffff;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     INTERNAL FUNCTIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -82,7 +85,7 @@ abstract contract Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // Clean the upper 96 bits.
-            newOwner := shr(96, shl(96, newOwner))
+            newOwner := and(newOwner, _ADDRESS_MASK)
             // Store the new value.
             sstore(not(_OWNER_SLOT_NOT), newOwner)
             // Emit the {OwnershipTransferred} event.
@@ -96,7 +99,7 @@ abstract contract Ownable {
         assembly {
             let ownerSlot := not(_OWNER_SLOT_NOT)
             // Clean the upper 96 bits.
-            newOwner := shr(96, shl(96, newOwner))
+            newOwner := and(newOwner, _ADDRESS_MASK)
             // Emit the {OwnershipTransferred} event.
             log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, sload(ownerSlot), newOwner)
             // Store the new value.
