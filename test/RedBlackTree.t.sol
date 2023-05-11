@@ -306,7 +306,8 @@ contract RedBlackTreeLibTest is SoladyTest {
         unchecked {
             uint256 m = type(uint256).max;
             for (uint256 i; i < 256; ++i) {
-                tree.insert(m - i);
+                bytes32 p = tree.insert(m - i);
+                assertEq(tree.find(m - i), p);
                 assertEq(tree.size(), i + 1);
             }
             for (uint256 i; i < 256; ++i) {

@@ -147,18 +147,25 @@ library RedBlackTreeLib {
     }
 
     /// @dev Inserts the value `x` into the tree.
+    /// Returns the pointer to the inserted value.
     /// Reverts if the value `x` already exists.
-    function insert(Tree storage tree, uint256 x) internal {
-        uint256 err = tryInsert(tree, x);
+    function insert(Tree storage tree, uint256 x) internal returns (bytes32 result) {
+        uint256 err;
+        (result, err) = tryInsert(tree, x);
         if (err != 0) _revert(err);
     }
 
     /// @dev Inserts the value `x` into the tree.
+    /// Returns the pointer to the inserted value.
     /// Returns a non-zero error code upon failure instead of reverting
     /// (except for reverting if `x` is an empty value).
-    function tryInsert(Tree storage tree, uint256 x) internal returns (uint256 err) {
+    function tryInsert(Tree storage tree, uint256 x)
+        internal
+        returns (bytes32 result, uint256 err)
+    {
         (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
         err = _update(nodes, cursor, key, x, 0);
+        result = _pack(nodes, cursor);
     }
 
     /// @dev Removes the value `x` from the tree.
