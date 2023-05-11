@@ -260,6 +260,17 @@ library RedBlackTreeLib {
         result = ptr == bytes32(0);
     }
 
+    /// @dev Returns the offset of the pointer.
+    function offset(bytes32 ptr) internal pure returns (uint32 result) {
+        (, uint256 target) = _unpack(ptr);
+        result = uint32(target);
+    }
+
+    /// @dev Returns the pointer given the offset `o`.
+    function pointer(Tree storage tree, uint32 o) internal pure returns (bytes32 result) {
+        result = _pack(_nodes(tree), o);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

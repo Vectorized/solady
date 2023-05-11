@@ -308,6 +308,8 @@ contract RedBlackTreeLibTest is SoladyTest {
             for (uint256 i; i < 256; ++i) {
                 bytes32 p = tree.insert(m - i);
                 assertEq(tree.find(m - i), p);
+                uint32 o = p.offset();
+                assertEq(tree.pointer(o), p);
                 assertEq(tree.size(), i + 1);
             }
             for (uint256 i; i < 256; ++i) {
