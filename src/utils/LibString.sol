@@ -343,6 +343,32 @@ library LibString {
         }
     }
 
+    /// @dev Returns if this string is a 7-bit ASCII string.
+    /// (i.e. all characters codes are in [0..127])
+    function is7BitASCII(string memory s) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let mask := shl(7, div(not(0), 255))
+            result := 1
+            let n := mload(s)
+            if n {
+                let o := add(s, 0x20)
+                let end := add(o, n)
+                let last := mload(n)
+                mstore(end, 0)
+                for {} 1 {} {
+                    if and(mask, mload(o)) {
+                        result := 0
+                        break
+                    }
+                    o := add(o, 0x20)
+                    if iszero(lt(o, end)) { break }
+                }
+                mstore(end, last)
+            }
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   BYTE STRING OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -821,6 +847,7 @@ library LibString {
     }
 
     /// @dev Returns a copy of the string in either lowercase or UPPERCASE.
+    /// WARNING! This function is only compatible with 7-bit ASCII strings.
     function toCase(string memory subject, bool toUpper)
         internal
         pure
@@ -832,7 +859,7 @@ library LibString {
             if length {
                 result := add(mload(0x40), 0x20)
                 subject := add(subject, 1)
-                let flags := shl(add(70, shl(5, toUpper)), 67108863)
+                let flags := shl(add(70, shl(5, toUpper)), 0x3ffffff)
                 let w := not(0)
                 for { let o := length } 1 {} {
                     o := add(o, w)
@@ -855,11 +882,13 @@ library LibString {
     }
 
     /// @dev Returns a lowercased copy of the string.
+    /// WARNING! This function is only compatible with 7-bit ASCII strings.
     function lower(string memory subject) internal pure returns (string memory result) {
         result = toCase(subject, false);
     }
 
     /// @dev Returns an UPPERCASED copy of the string.
+    /// WARNING! This function is only compatible with 7-bit ASCII strings.
     function upper(string memory subject) internal pure returns (string memory result) {
         result = toCase(subject, true);
     }

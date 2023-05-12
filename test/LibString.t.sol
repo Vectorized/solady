@@ -336,6 +336,13 @@ contract LibStringTest is SoladyTest {
         }
     }
 
+    function testStringIs7BitASCIIDifferential(bytes memory raw) public brutalizeMemory {
+        string memory s = string(raw);
+        bytes32 hashBefore = keccak256(raw);
+        assertEq(LibString.is7BitASCII(s), _is7BitASCIIOriginal(s));
+        assertEq(keccak256(raw), hashBefore);
+    }
+
     function testStringRuneCountDifferential(string memory s) public {
         assertEq(LibString.runeCount(s), _runeCountOriginal(s));
     }
@@ -1145,6 +1152,16 @@ contract LibStringTest is SoladyTest {
                     )
                 }
             }
+        }
+    }
+
+    function _is7BitASCIIOriginal(string memory s) internal pure returns (bool) {
+        unchecked {
+            bytes memory sBytes = bytes(s);
+            for (uint256 i; i < sBytes.length; ++i) {
+                if (uint8(bytes1(sBytes[i])) > 127) return false;
+            }
+            return true;
         }
     }
 
