@@ -354,7 +354,7 @@ library LibString {
             if n {
                 let o := add(s, 0x20)
                 let end := add(o, n)
-                let last := mload(n)
+                let last := mload(end)
                 mstore(end, 0)
                 for {} 1 {} {
                     if and(mask, mload(o)) {
