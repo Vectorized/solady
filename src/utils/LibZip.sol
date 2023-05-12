@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for the Run-length encoding.
+/// @notice Library for the provide rle and lz77 algorithms.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibRLE.sol)
-library LibRLE {
-    /// @dev Encodes `data` using run-length encoding.
-    /// See: https://en.wikipedia.org/wiki/Run-length_encoding
-    function encode(bytes memory data) internal pure returns (bytes memory result) {
+library LibZip {
+    /// @dev Run-length encoding (RLE) compression on the given data.
+    /// RLE compression works by replacing consecutive runs of identical bytes with a single byte
+    /// followed by the number of times that byte appears. For example, the string "AAABCCD" would be
+    /// compressed to "A3B2C2D". See : https://en.wikipedia.org/wiki/Run-length_encoding
+    function rleCompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             if mload(data) {
@@ -23,10 +25,11 @@ library LibRLE {
                     let currChar := byte(0, mload(i))
 
                     if and(eq(prevChar, currChar), lt(count, 255)) {
+                        // Count the number of consecutive occurrences of this byte.
                         count := add(count, 1)
                         continue
                     }
-
+                    // Append the byte and the count to the result.
                     mstore8(p, count)
                     mstore8(add(p, 1), prevChar)
 
@@ -54,7 +57,7 @@ library LibRLE {
     /// Outputs for invalid inputs will simply be undefined behaviour.
     /// It is the user's responsibility to ensure that the `data`
     /// is a valid RLE encoded string.
-    function decode(bytes memory data) internal pure returns (bytes memory result) {
+    function rleDecompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             if mload(data) {
