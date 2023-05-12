@@ -16,8 +16,8 @@ contract LibCloneTest is SoladyTest, Clone {
     mapping(bytes32 => bool) saltIsUsed;
 
     function setUp() public {
-        // Mini test to check if `_this()` returns a word with brutalized upper 96 bits.
-        address t = _this();
+        // Mini test to check if `_thisBrutalized()` returns a word with brutalized upper 96 bits.
+        address t = _thisBrutalized();
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(shr(160, t)) { revert(0, 0) }
@@ -77,7 +77,7 @@ contract LibCloneTest is SoladyTest, Clone {
     }
 
     function testClone(uint256 value_) public {
-        address clone = LibClone.clone(_this());
+        address clone = LibClone.clone(_thisBrutalized());
         _shouldBehaveLikeClone(clone, value_);
     }
 
@@ -88,17 +88,29 @@ contract LibCloneTest is SoladyTest, Clone {
     function testCloneDeterministic(uint256 value_, bytes32 salt) public {
         if (saltIsUsed[salt]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
-            LibClone.cloneDeterministic(_this(), salt);
+            this.cloneDeterministic(_thisBrutalized(), salt);
             return;
         }
 
-        address clone = LibClone.cloneDeterministic(_this(), salt);
+        address clone = this.cloneDeterministic(_thisBrutalized(), salt);
         saltIsUsed[salt] = true;
 
         _shouldBehaveLikeClone(clone, value_);
 
-        address predicted = LibClone.predictDeterministicAddress(_this(), salt, _this());
+        address predicted =
+            LibClone.predictDeterministicAddress(_thisBrutalized(), salt, _thisBrutalized());
         assertEq(clone, predicted);
+    }
+
+    function cloneDeterministic(address implementation, bytes32 salt) external returns (address) {
+        return LibClone.cloneDeterministic(implementation, salt);
+    }
+
+    function cloneDeterministic(address implementation, bytes calldata data, bytes32 salt)
+        external
+        returns (address)
+    {
+        return LibClone.cloneDeterministic(implementation, data, salt);
     }
 
     function testCloneDeterministicRevertsIfAddressAlreadyUsed() public {
@@ -186,7 +198,7 @@ contract LibCloneTest is SoladyTest, Clone {
     ) public brutalizeMemory {
         bytes memory data =
             abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
-        LibCloneTest clone = LibCloneTest(LibClone.clone(_this(), data));
+        LibCloneTest clone = LibCloneTest(LibClone.clone(_thisBrutalized(), data));
         _shouldBehaveLikeClone(address(clone), value_);
 
         // For avoiding stack too deep. Also, no risk of overflow.
@@ -242,7 +254,7 @@ contract LibCloneTest is SoladyTest, Clone {
             bytes32 saltKey = keccak256(abi.encode(data, salt));
             if (saltIsUsed[saltKey]) {
                 vm.expectRevert(LibClone.DeploymentFailed.selector);
-                LibCloneTest(LibClone.cloneDeterministic(_this(), data, salt));
+                LibCloneTest(this.cloneDeterministic(_thisBrutalized(), data, salt));
                 return;
             }
             saltIsUsed[saltKey] = true;
@@ -250,7 +262,7 @@ contract LibCloneTest is SoladyTest, Clone {
 
         bytes32 dataHashBefore = keccak256(data);
 
-        LibCloneTest clone = LibCloneTest(LibClone.cloneDeterministic(_this(), data, salt));
+        LibCloneTest clone = LibCloneTest(this.cloneDeterministic(_thisBrutalized(), data, salt));
         // Check that memory management is done properly.
         assertEq(keccak256(data), dataHashBefore);
 
@@ -278,7 +290,9 @@ contract LibCloneTest is SoladyTest, Clone {
         }
 
         {
-            address predicted = LibClone.predictDeterministicAddress(_this(), data, salt, _this());
+            address predicted = LibClone.predictDeterministicAddress(
+                _thisBrutalized(), data, salt, _thisBrutalized()
+            );
             assertEq(address(clone), predicted);
         }
 
@@ -322,7 +336,7 @@ contract LibCloneTest is SoladyTest, Clone {
         LibClone.checkStartsWithCaller(salt);
     }
 
-    function _this() internal view returns (address result) {
+    function _thisBrutalized() internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := or(shl(160, add(timestamp(), 123456789)), address())

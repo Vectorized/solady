@@ -14,7 +14,7 @@ contract CREATE3Test is SoladyTest {
         bytes32 salt = keccak256(bytes("A salt!"));
 
         MockERC20 deployed = MockERC20(
-            CREATE3.deploy(
+            this.deploy(
                 salt,
                 abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18)),
                 0
@@ -40,17 +40,17 @@ contract CREATE3Test is SoladyTest {
     function testDoubleDeploySameBytecodeReverts() public {
         bytes32 salt = keccak256(bytes("Salty..."));
 
-        CREATE3.deploy(salt, type(MockAuthChild).creationCode, 0);
+        this.deploy(salt, type(MockAuthChild).creationCode, 0);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        CREATE3.deploy(salt, type(MockAuthChild).creationCode, 0);
+        this.deploy(salt, type(MockAuthChild).creationCode, 0);
     }
 
     function testDoubleDeployDifferentBytecodeReverts() public {
         bytes32 salt = keccak256(bytes("and sweet!"));
 
-        CREATE3.deploy(salt, type(WETH).creationCode, 0);
+        this.deploy(salt, type(WETH).creationCode, 0);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        CREATE3.deploy(salt, type(MockAuthChild).creationCode, 0);
+        this.deploy(salt, type(MockAuthChild).creationCode, 0);
     }
 
     function testDeployERC20(
@@ -60,7 +60,7 @@ contract CREATE3Test is SoladyTest {
         uint8 decimals
     ) public {
         MockERC20 deployed = MockERC20(
-            CREATE3.deploy(
+            this.deploy(
                 salt,
                 abi.encodePacked(type(MockERC20).creationCode, abi.encode(name, symbol, decimals)),
                 0
@@ -76,9 +76,9 @@ contract CREATE3Test is SoladyTest {
 
     function testDoubleDeploySameBytecodeReverts(bytes32 salt, bytes calldata bytecode) public {
         bytes memory creationCode = _creationCode(bytecode);
-        CREATE3.deploy(salt, creationCode, 0);
+        this.deploy(salt, creationCode, 0);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        CREATE3.deploy(salt, creationCode, 0);
+        this.deploy(salt, creationCode, 0);
     }
 
     function testDoubleDeployDifferentBytecodeReverts(
@@ -86,9 +86,16 @@ contract CREATE3Test is SoladyTest {
         bytes memory bytecode1,
         bytes memory bytecode2
     ) public {
-        CREATE3.deploy(salt, _creationCode(bytecode1), 0);
+        this.deploy(salt, _creationCode(bytecode1), 0);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        CREATE3.deploy(salt, _creationCode(bytecode2), 0);
+        this.deploy(salt, _creationCode(bytecode2), 0);
+    }
+
+    function deploy(bytes32 salt, bytes calldata creationCode, uint256 value)
+        external
+        returns (address)
+    {
+        return CREATE3.deploy(salt, creationCode, value);
     }
 
     function _creationCode(bytes memory bytecode) internal pure returns (bytes memory result) {

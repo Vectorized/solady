@@ -28,21 +28,22 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] && 
-            forge test --use 0.8.5 && 
-            forge test --use 0.8.6 && 
-            forge test --use 0.8.7 && 
-            forge test --use 0.8.8 && 
-            forge test --use 0.8.9 && 
+            forge test --use 0.8.5 &&
+            forge test --use 0.8.6 &&
+            forge test --use 0.8.7 &&
+            forge test --use 0.8.8 &&
+            forge test --use 0.8.9 &&
             forge test --use 0.8.10 &&
-            forge test --use 0.8.11  
+            forge test --use 0.8.11 &&
+            forge test --use 0.8.12
           ) || 
-          ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] && 
-            forge test --use 0.8.12 && 
-            forge test --use 0.8.13 && 
-            forge test --use 0.8.14 && 
-            forge test --use 0.8.15 && 
-            forge test --use 0.8.16 && 
-            forge test --use 0.8.17 && 
-            forge test --use 0.8.18 
+          ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] &&
+            forge test --use 0.8.13 &&
+            forge test --use 0.8.14 &&
+            forge test --use 0.8.15 &&
+            forge test --use 0.8.16 &&
+            forge test --use 0.8.17 &&
+            forge test --use 0.8.18 &&
+            forge test --use 0.8.19
           ) || 
           FOUNDRY_PROFILE=${{ matrix.profile }} forge test
