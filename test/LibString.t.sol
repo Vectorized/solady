@@ -336,11 +336,30 @@ contract LibStringTest is SoladyTest {
         }
     }
 
+    function testStringIs7BitASCII() public {
+        bytes memory raw = new bytes(1);
+        for (uint256 i; i < 256; ++i) {
+            raw[0] = bytes1(uint8(i));
+            assertEq(LibString.is7BitASCII(string(raw)), i < 128);
+            assertEq(LibString.is7BitASCII(string(raw)), _is7BitASCIIOriginal(string(raw)));
+        }
+    }
+
     function testStringIs7BitASCIIDifferential(bytes memory raw) public brutalizeMemory {
         string memory s = string(raw);
         bytes32 hashBefore = keccak256(raw);
         assertEq(LibString.is7BitASCII(s), _is7BitASCIIOriginal(s));
         assertEq(keccak256(raw), hashBefore);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(add(raw, add(0x20, mload(raw))), hashBefore)
+        }
+        assertEq(LibString.is7BitASCII(s), _is7BitASCIIOriginal(s));
+        assertEq(keccak256(raw), hashBefore);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(eq(mload(add(raw, add(0x20, mload(raw)))), hashBefore)) { revert(0, 0) }
+        }
     }
 
     function testStringRuneCountDifferential(string memory s) public {
