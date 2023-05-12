@@ -847,7 +847,7 @@ library LibString {
     }
 
     /// @dev Returns a copy of the string in either lowercase or UPPERCASE.
-    /// WARNING! This function is only compatible 7-bit ASCII strings.
+    /// WARNING! This function is only compatible with 7-bit ASCII strings.
     function toCase(string memory subject, bool toUpper)
         internal
         pure
@@ -859,7 +859,7 @@ library LibString {
             if length {
                 result := add(mload(0x40), 0x20)
                 subject := add(subject, 1)
-                let flags := shl(add(70, shl(5, toUpper)), 67108863)
+                let flags := shl(add(70, shl(5, toUpper)), 0x3ffffff)
                 let w := not(0)
                 for { let o := length } 1 {} {
                     o := add(o, w)
@@ -882,13 +882,13 @@ library LibString {
     }
 
     /// @dev Returns a lowercased copy of the string.
-    /// WARNING! This function is only compatible 7-bit ASCII strings.
+    /// WARNING! This function is only compatible with 7-bit ASCII strings.
     function lower(string memory subject) internal pure returns (string memory result) {
         result = toCase(subject, false);
     }
 
     /// @dev Returns an UPPERCASED copy of the string.
-    /// WARNING! This function is only compatible 7-bit ASCII strings.
+    /// WARNING! This function is only compatible with 7-bit ASCII strings.
     function upper(string memory subject) internal pure returns (string memory result) {
         result = toCase(subject, true);
     }
