@@ -23,10 +23,35 @@ contract LibZipTest is SoladyTest {
         assertEq(keccak256(compressed), compressedHash);
     }
 
+    function testCdCompressDecompress(uint256) public brutalizeMemory {
+        unchecked {
+            uint256 n = _random() % 8 == 0 ? _random() % 2048 : _random() % 256;
+            bytes memory data = new bytes(n);
+            if (n != 0) {
+                uint256 m = _random() % 8;
+                for (uint256 j; j < m; ++j) {
+                    data[_random() % n] = bytes1(uint8(_random()));
+                }
+            }
+            bytes memory compressed = LibZip.cdCompress(data);
+            bytes memory decompressed = LibZip.cdDecompress(compressed);
+            assertEq(decompressed, data);
+        }
+    }
+
+    function testDecompressWontRevert(bytes memory data) public brutalizeMemory {
+        data = LibZip.cdDecompress(data);
+        bytes memory compressed = LibZip.cdCompress(data);
+        bytes memory decompressed = LibZip.cdDecompress(compressed);
+        assertEq(decompressed, data);
+    }
+
     function testCdFallback() public {
         uint256[] memory numbers = new uint256[](100);
-        for (uint256 i; i < numbers.length; ++i) {
-            numbers[i] = i;
+        unchecked {
+            for (uint256 i; i < numbers.length; ++i) {
+                numbers[i] = i;
+            }
         }
         assertEq(numbersHash, 0);
         assertEq(lastCallvalue, 0);

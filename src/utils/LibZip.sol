@@ -3,8 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for compressing and decompressing bytes.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibZip.sol)
-/// @author Calldata compression by clabby
-/// (https://github.com/clabby/op-kompressor)
+/// @author Calldata compression by clabby (https://github.com/clabby/op-kompressor)
 library LibZip {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    CALLDATA OPERATIONS                     */
@@ -46,8 +45,7 @@ library LibZip {
                     o := add(o, 2)
                 }
                 // Bitwise negate the first 4 bytes.
-                let s := add(result, 4)
-                mstore(s, xor(0xffffffff, mload(s)))
+                mstore(add(result, 4), xor(0xffffffff, mload(add(result, 4))))
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
                 mstore(o, 0) // Zeroize the slot after the string.
                 mstore(0x40, and(add(o, 31), not(31))) // Allocate the memory.
@@ -64,10 +62,9 @@ library LibZip {
                 let o := add(result, 0x20)
                 let s := add(data, 4)
                 let v := mload(s)
-                // Bitwise negate the first 4 bytes.
-                mstore(s, xor(0xffffffff, v))
+                mstore(s, xor(0xffffffff, v)) // Bitwise negate the first 4 bytes.
                 let end := add(data, mload(data))
-                for {} iszero(eq(data, end)) {} {
+                for {} lt(data, end) {} {
                     data := add(data, 1)
                     let c := and(0xff, mload(data))
                     if iszero(c) {
@@ -100,7 +97,7 @@ library LibZip {
         assembly {
             let o := 0
             let i := 0
-            let f := shl(224, 0xffffffff)
+            let f := shl(224, 0xffffffff) // For negating the first 4 bytes.
             for {} lt(i, calldatasize()) {} {
                 let c := xor(byte(i, f), byte(0, calldataload(i)))
                 i := add(i, 1)
