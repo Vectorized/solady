@@ -72,8 +72,8 @@ library LibZip {
                     if iszero(c) {
                         data := add(data, 1)
                         let d := byte(31, mload(data))
-                        mstore(o, not(0)) // Fill with 0xff.
-                        // Fill with 0x00.
+                        // Fill with either 0xff or 0x00.
+                        mstore(o, not(0))
                         if iszero(gt(d, 127)) { codecopy(o, codesize(), add(d, 1)) }
                         o := add(o, add(and(d, 127), 1))
                         continue
@@ -108,8 +108,8 @@ library LibZip {
                 if iszero(c) {
                     let d := xor(byte(i, f), byte(0, calldataload(i)))
                     i := add(i, 1)
-                    mstore(o, not(0)) // Fill with 0xff.
-                    // Fill with 0x00.
+                    // Fill with either 0xff or 0x00.
+                    mstore(o, not(0))
                     if iszero(gt(d, 127)) { codecopy(o, codesize(), add(d, 1)) }
                     o := add(o, add(and(d, 127), 1))
                     continue
