@@ -2,14 +2,11 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
+import {MockCd} from "./utils/mocks/MockCd.sol";
+import {LibClone} from "../src/utils/LibClone.sol";
 import {LibZip} from "../src/utils/LibZip.sol";
 
 contract LibZipTest is SoladyTest {
-    bytes32 public numbersHash;
-    uint256 public lastCallvalue;
-
-    error NumbersHash(bytes32 h);
-
     function testCdCompressDecompress(bytes memory data) public brutalizeMemory {
         bytes32 dataHash = keccak256(data);
         bytes memory compressed = LibZip.cdCompress(data);
@@ -63,19 +60,26 @@ contract LibZipTest is SoladyTest {
     }
 
     function testCdFallback() public {
+        MockCd mockCd = new MockCd();
+        _testCdFallback(mockCd);
+        mockCd = MockCd(payable(LibClone.clone(address(mockCd))));
+        _testCdFallback(mockCd);
+    }
+
+    function _testCdFallback(MockCd mockCd) internal {
         uint256[] memory numbers = new uint256[](100);
         unchecked {
             for (uint256 i; i < numbers.length; ++i) {
                 numbers[i] = i % 2 == 0 ? i : ~i;
             }
         }
-        assertEq(numbersHash, 0);
-        assertEq(lastCallvalue, 0);
+        assertEq(mockCd.numbersHash(), 0);
+        assertEq(mockCd.lastCallvalue(), 0);
 
         uint256 v = 123 ether;
-        vm.deal(address(this), v);
+        vm.deal(address(this), v * 2);
 
-        (bool success, bytes memory result) = payable(this).call{value: v}(
+        (bool success, bytes memory result) = payable(mockCd).call{value: v}(
             LibZip.cdCompress(
                 abi.encodeWithSignature("storeNumbersHash(uint256[],bool)", numbers, true)
             )
@@ -84,38 +88,19 @@ contract LibZipTest is SoladyTest {
         assertTrue(success);
         bytes32 decodedNumbersHash = abi.decode(result, (bytes32));
         bytes32 expectedNumbersHash = keccak256(abi.encode(numbers));
-        assertEq(numbersHash, expectedNumbersHash);
         assertEq(decodedNumbersHash, expectedNumbersHash);
-        assertEq(lastCallvalue, v);
+        assertEq(mockCd.numbersHash(), expectedNumbersHash);
+        assertEq(mockCd.lastCallvalue(), v);
+        assertEq(address(mockCd).balance, v);
 
-        (success, result) = payable(this).call{value: v}(
+        (success, result) = payable(mockCd).call{value: v}(
             LibZip.cdCompress(
                 abi.encodeWithSignature("storeNumbersHash(uint256[],bool)", numbers, false)
             )
         );
 
         assertFalse(success);
-        assertEq(abi.encodeWithSelector(NumbersHash.selector, expectedNumbersHash), result);
-    }
-
-    function storeNumbersHash(uint256[] calldata numbers, bool success)
-        external
-        payable
-        returns (bytes32 result)
-    {
-        result = keccak256(abi.encode(numbers));
-        numbersHash = result;
-        lastCallvalue = msg.value;
-        if (!success) {
-            revert NumbersHash(keccak256(abi.encode(numbers)));
-        }
-    }
-
-    receive() external payable {
-        LibZip.cdFallback();
-    }
-
-    fallback() external payable {
-        LibZip.cdFallback();
+        assertEq(abi.encodeWithSelector(MockCd.NumbersHash.selector, expectedNumbersHash), result);
+        assertEq(address(mockCd).balance, v);
     }
 }
