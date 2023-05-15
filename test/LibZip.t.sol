@@ -3,7 +3,6 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {LibZip} from "../src/utils/LibZip.sol";
-import {LibString} from "../src/utils/LibString.sol";
 
 contract LibZipTest is SoladyTest {
     bytes32 public numbersHash;
@@ -67,7 +66,7 @@ contract LibZipTest is SoladyTest {
         uint256[] memory numbers = new uint256[](100);
         unchecked {
             for (uint256 i; i < numbers.length; ++i) {
-                numbers[i] = i;
+                numbers[i] = i % 2 == 0 ? i : ~i;
             }
         }
         assertEq(numbersHash, 0);
