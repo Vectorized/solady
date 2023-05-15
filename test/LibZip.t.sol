@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {MockCd} from "./utils/mocks/MockCd.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
+import {ERC1967Factory} from "../src/utils/ERC1967Factory.sol";
 import {LibZip} from "../src/utils/LibZip.sol";
 
 contract LibZipTest is SoladyTest {
@@ -62,7 +63,12 @@ contract LibZipTest is SoladyTest {
     function testCdFallback() public {
         MockCd mockCd = new MockCd();
         _testCdFallback(mockCd);
+        // Check if it also works for clones.
         mockCd = MockCd(payable(LibClone.clone(address(mockCd))));
+        _testCdFallback(mockCd);
+        // Check if it also works for ERC1967 proxies.
+        ERC1967Factory factory = new ERC1967Factory();
+        mockCd = MockCd(payable(factory.deploy(address(mockCd), address(this))));
         _testCdFallback(mockCd);
     }
 
@@ -76,10 +82,10 @@ contract LibZipTest is SoladyTest {
         assertEq(mockCd.numbersHash(), 0);
         assertEq(mockCd.lastCallvalue(), 0);
 
-        uint256 v = 123 ether;
-        vm.deal(address(this), v * 2);
+        uint256 callValue = 123 ether;
+        vm.deal(address(this), callValue * 2);
 
-        (bool success, bytes memory result) = payable(mockCd).call{value: v}(
+        (bool success, bytes memory result) = payable(mockCd).call{value: callValue}(
             LibZip.cdCompress(
                 abi.encodeWithSignature("storeNumbersHash(uint256[],bool)", numbers, true)
             )
@@ -90,10 +96,10 @@ contract LibZipTest is SoladyTest {
         bytes32 expectedNumbersHash = keccak256(abi.encode(numbers));
         assertEq(decodedNumbersHash, expectedNumbersHash);
         assertEq(mockCd.numbersHash(), expectedNumbersHash);
-        assertEq(mockCd.lastCallvalue(), v);
-        assertEq(address(mockCd).balance, v);
+        assertEq(mockCd.lastCallvalue(), callValue);
+        assertEq(address(mockCd).balance, callValue);
 
-        (success, result) = payable(mockCd).call{value: v}(
+        (success, result) = payable(mockCd).call{value: callValue}(
             LibZip.cdCompress(
                 abi.encodeWithSignature("storeNumbersHash(uint256[],bool)", numbers, false)
             )
@@ -101,6 +107,6 @@ contract LibZipTest is SoladyTest {
 
         assertFalse(success);
         assertEq(abi.encodeWithSelector(MockCd.NumbersHash.selector, expectedNumbersHash), result);
-        assertEq(address(mockCd).balance, v);
+        assertEq(address(mockCd).balance, callValue);
     }
 }
