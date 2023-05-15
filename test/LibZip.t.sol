@@ -28,6 +28,14 @@ contract LibZipTest is SoladyTest {
         unchecked {
             uint256 n = _random() % 8 == 0 ? _random() % 2048 : _random() % 256;
             bytes memory data = new bytes(n);
+            if (_random() % 2 == 0) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                        mstore(add(add(data, 0x20), i), not(0))
+                    }
+                }
+            }
             if (n != 0) {
                 uint256 m = _random() % 8;
                 for (uint256 j; j < m; ++j) {
