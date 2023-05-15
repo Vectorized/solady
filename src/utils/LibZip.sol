@@ -99,6 +99,7 @@ library LibZip {
     function cdFallback() internal {
         /// @solidity memory-safe-assembly
         assembly {
+            if iszero(calldatasize()) { return(calldatasize(), calldatasize()) }
             let o := 0
             let i := 0
             let f := shl(224, 0xffffffff) // For negating the first 4 bytes.

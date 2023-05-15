@@ -66,6 +66,9 @@ contract LibZipTest is SoladyTest {
         // Check if it also works for clones.
         mockCd = MockCd(payable(LibClone.clone(address(mockCd))));
         _testCdFallback(mockCd);
+        // Check if it also works for CWIA.
+        mockCd = MockCd(payable(LibClone.clone(address(mockCd), "")));
+        _testCdFallback(mockCd);
         // Check if it also works for ERC1967 proxies.
         ERC1967Factory factory = new ERC1967Factory();
         mockCd = MockCd(payable(factory.deploy(address(mockCd), address(this))));
@@ -106,7 +109,12 @@ contract LibZipTest is SoladyTest {
         );
 
         assertFalse(success);
+        assertEq(address(mockCd).balance, callValue);
         assertEq(abi.encodeWithSelector(MockCd.NumbersHash.selector, expectedNumbersHash), result);
         assertEq(address(mockCd).balance, callValue);
+
+        (success, result) = payable(mockCd).call{value: callValue}("");
+        assertEq(address(mockCd).balance, callValue * 2);
+        assertTrue(success);
     }
 }
