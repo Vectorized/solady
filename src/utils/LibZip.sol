@@ -16,34 +16,42 @@ library LibZip {
             if mload(data) {
                 result := mload(0x40)
                 let o := add(result, 0x20)
-                let z := 0 // Number of consecutive zeros.
+                let z := 0 // Number of consecutive 0x00.
+                let y := 0 // Number of consecutive 0xff.
                 let end := add(data, mload(data))
+                function rle(v_, o_, d_) -> _o, _d {
+                    mstore(o_, 0)
+                    mstore8(add(o_, 1), or(sub(d_, 1), and(128, v_)))
+                    _o := add(o_, 2)
+                }
                 for {} iszero(eq(data, end)) {} {
                     data := add(data, 1)
-                    let c := and(0xff, mload(data))
-                    // If the byte is zero, run length encode.
+                    let c := byte(31, mload(data))
                     if iszero(c) {
-                        if eq(z, 0xff) {
-                            mstore(o, shl(240, 0xff))
-                            o := add(o, 2)
-                            z := 0
+                        if eq(z, 127) {
+                            o, z := rle(0x00, o, 128)
                             continue
                         }
+                        if y { o, y := rle(0xff, o, y) }
                         z := add(z, 1)
                         continue
                     }
-                    if z {
-                        mstore(o, shl(240, sub(z, 1)))
-                        o := add(o, 2)
+                    if eq(c, 0xff) {
+                        if eq(y, 31) {
+                            o, y := rle(0xff, o, 32)
+                            continue
+                        }
+                        if z { o, z := rle(0x00, o, z) }
+                        y := add(y, 1)
+                        continue
                     }
+                    if y { o, y := rle(0xff, o, y) }
+                    if z { o, z := rle(0x00, o, z) }
                     mstore8(o, c)
                     o := add(o, 1)
-                    z := 0
                 }
-                if z {
-                    mstore(o, shl(240, sub(z, 1)))
-                    o := add(o, 2)
-                }
+                if y { o, y := rle(0xff, o, y) }
+                if z { o, z := rle(0x00, o, z) }
                 // Bitwise negate the first 4 bytes.
                 mstore(add(result, 4), xor(0xffffffff, mload(add(result, 4))))
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
@@ -66,12 +74,17 @@ library LibZip {
                 let end := add(data, mload(data))
                 for {} lt(data, end) {} {
                     data := add(data, 1)
-                    let c := and(0xff, mload(data))
+                    let c := byte(31, mload(data))
                     if iszero(c) {
                         data := add(data, 1)
-                        let z := add(and(0xff, mload(data)), 1)
-                        codecopy(o, codesize(), z) // Fill with zeros.
-                        o := add(o, z)
+                        let d := byte(31, mload(data))
+                        if iszero(gt(d, 127)) {
+                            codecopy(o, codesize(), add(d, 1)) // Fill with 0x00.
+                            o := add(o, add(d, 1))
+                            continue
+                        }
+                        mstore(o, not(0)) // Fill with 0xff.
+                        o := add(o, add(and(d, 127), 1))
                         continue
                     }
                     mstore8(o, c)
@@ -102,10 +115,16 @@ library LibZip {
                 let c := xor(byte(i, f), byte(0, calldataload(i)))
                 i := add(i, 1)
                 if iszero(c) {
-                    let z := add(xor(byte(i, f), byte(0, calldataload(i))), 1)
+                    let d := xor(byte(i, f), byte(0, calldataload(i)))
+                    if iszero(gt(d, 127)) {
+                        i := add(i, 1)
+                        codecopy(o, codesize(), add(d, 1)) // Fill with 0x00.
+                        o := add(o, add(d, 1))
+                        continue
+                    }
                     i := add(i, 1)
-                    codecopy(o, codesize(), z) // Fill with zeros.
-                    o := add(o, z)
+                    mstore(o, not(0)) // Fill with 0xff.
+                    o := add(o, add(d, 1))
                     continue
                 }
                 mstore8(o, c)
