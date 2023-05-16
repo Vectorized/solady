@@ -55,7 +55,7 @@ library LibZip {
         }
     }
 
-    /// @dev Returns the uncompressed `data`.
+    /// @dev Returns the decompressed `data`.
     function cdDecompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
