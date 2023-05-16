@@ -33,6 +33,7 @@ utils
 ├─ CREATE3 — "Deploy to deterministic addresses without an initcode factor"
 ├─ LibRLP — "Library for computing contract addresses from their deployer and nonce"
 ├─ LibBit — "Library for bit twiddling and boolean operations"
+├─ LibZip — "Library for compressing and decompressing bytes"
 ├─ Clone — "Class with helper read functions for clone with immutable args"
 ├─ LibClone — "Minimal proxy library"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
