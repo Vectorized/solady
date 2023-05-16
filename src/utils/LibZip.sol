@@ -21,7 +21,7 @@ library LibZip {
                 let end := add(data, mload(data))
                 function rle(v_, o_, d_) -> _o, _d {
                     mstore(o_, 0)
-                    mstore8(add(o_, 1), or(sub(d_, 1), and(128, v_)))
+                    mstore8(add(o_, 1), or(sub(d_, 1), and(0x80, v_)))
                     _o := add(o_, 2)
                 }
                 for {} iszero(eq(data, end)) {} {
@@ -30,13 +30,13 @@ library LibZip {
                     if iszero(c) {
                         if y { o, y := rle(0xff, o, y) }
                         z := add(z, 1)
-                        if eq(z, 128) { o, z := rle(0x00, o, 128) }
+                        if eq(z, 0x80) { o, z := rle(0x00, o, 0x80) }
                         continue
                     }
                     if eq(c, 0xff) {
                         if z { o, z := rle(0x00, o, z) }
                         y := add(y, 1)
-                        if eq(y, 32) { o, y := rle(0xff, o, 32) }
+                        if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
                         continue
                     }
                     if y { o, y := rle(0xff, o, y) }
@@ -50,7 +50,7 @@ library LibZip {
                 mstore(add(result, 4), xor(0xffffffff, mload(add(result, 4))))
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
                 mstore(o, 0) // Zeroize the slot after the string.
-                mstore(0x40, and(add(o, 31), not(31))) // Allocate the memory.
+                mstore(0x40, and(add(o, 0x3f), not(0x1f))) // Allocate the memory.
             }
         }
     }
@@ -74,8 +74,8 @@ library LibZip {
                         let d := byte(31, mload(data))
                         // Fill with either 0xff or 0x00.
                         mstore(o, not(0))
-                        if iszero(gt(d, 127)) { codecopy(o, codesize(), add(d, 1)) }
-                        o := add(o, add(and(d, 127), 1))
+                        if iszero(gt(d, 0x7f)) { codecopy(o, codesize(), add(d, 1)) }
+                        o := add(o, add(and(d, 0x7f), 1))
                         continue
                     }
                     mstore8(o, c)
@@ -83,7 +83,7 @@ library LibZip {
                 }
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
                 mstore(o, 0) // Zeroize the slot after the string.
-                mstore(0x40, and(add(o, 31), not(31))) // Allocate the memory.
+                mstore(0x40, and(add(o, 0x3f), not(0x1f))) // Allocate the memory.
                 mstore(s, v) // Restore the first 4 bytes.
             }
         }
@@ -111,8 +111,8 @@ library LibZip {
                     i := add(i, 1)
                     // Fill with either 0xff or 0x00.
                     mstore(o, not(0))
-                    if iszero(gt(d, 127)) { codecopy(o, codesize(), add(d, 1)) }
-                    o := add(o, add(and(d, 127), 1))
+                    if iszero(gt(d, 0x7f)) { codecopy(o, codesize(), add(d, 1)) }
+                    o := add(o, add(and(d, 0x7f), 1))
                     continue
                 }
                 mstore8(o, c)
