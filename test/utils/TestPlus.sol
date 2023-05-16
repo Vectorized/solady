@@ -28,7 +28,7 @@ contract TestPlus {
                 let r1 := mload(0x20)
 
                 let cSize := add(codesize(), iszero(codesize()))
-                if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 31)) }
+                if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 0x1f)) }
                 let start := mod(mload(0x10), cSize)
                 let size := mul(sub(cSize, start), gt(cSize, start))
                 let times := div(0x7ffff, cSize)
@@ -99,14 +99,14 @@ contract TestPlus {
                     switch and(8, d)
                     case 0 {
                         if iszero(and(16, d)) { t := 1 }
-                        r := add(shl(shl(3, and(byte(3, r), 31)), t), sub(and(r, 7), 3))
+                        r := add(shl(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
                     }
                     default {
                         if iszero(and(16, d)) { t := shl(255, 1) }
-                        r := add(shr(shl(3, and(byte(3, r), 31)), t), sub(and(r, 7), 3))
+                        r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
                     }
                     // With a 1/2 chance, negate `r`.
-                    if iszero(and(32, d)) { r := not(r) }
+                    if iszero(and(0x20, d)) { r := not(r) }
                     break
                 }
                 // Otherwise, just set `r` to `xor(sValue, r)`.
@@ -151,7 +151,7 @@ contract TestPlus {
         uint256 twoWords = 0x40;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(twoWords, and(add(mload(twoWords), 31), not(31)))
+            mstore(twoWords, and(add(mload(twoWords), 0x1f), not(0x1f)))
         }
     }
 
@@ -161,8 +161,8 @@ contract TestPlus {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(twoWords)
-            m := add(m, mul(and(keccak256(0x00, twoWords), 31), iszero(and(m, 31))))
-            mstore(twoWords, add(m, iszero(and(m, 31))))
+            m := add(m, mul(and(keccak256(0x00, twoWords), 0x1f), iszero(and(m, 0x1f))))
+            mstore(twoWords, add(m, iszero(and(m, 0x1f))))
         }
     }
 
@@ -194,11 +194,11 @@ contract TestPlus {
         /// @solidity memory-safe-assembly
         assembly {
             let length := mload(s)
-            let lastWord := mload(add(add(s, 0x20), and(length, not(31))))
-            let remainder := and(length, 31)
+            let lastWord := mload(add(add(s, 0x20), and(length, not(0x1f))))
+            let remainder := and(length, 0x1f)
             if remainder { if shl(mul(8, remainder), lastWord) { notZeroRightPadded := 1 } }
             // Check if the free memory pointer is a multiple of 32.
-            fmpNotWordAligned := and(mload(0x40), 31)
+            fmpNotWordAligned := and(mload(0x40), 0x1f)
             // Write some garbage to the free memory.
             mstore(mload(0x40), keccak256(0x00, 0x60))
             // Check if the memory allocated is sufficient.

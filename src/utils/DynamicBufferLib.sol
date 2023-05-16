@@ -30,7 +30,7 @@ library DynamicBufferLib {
         /// @solidity memory-safe-assembly
         assembly {
             if mload(data) {
-                let w := not(31)
+                let w := not(0x1f)
                 let bufferData := mload(buffer)
                 let bufferDataLength := mload(bufferData)
                 let newBufferDataLength := add(mload(data), bufferDataLength)
@@ -53,7 +53,7 @@ library DynamicBufferLib {
                     // ensuring more than enough space for the combined data,
                     // rounding up to the next multiple of 32.
                     let newCapacity :=
-                        and(add(capacity, add(or(capacity, newBufferDataLength), 32)), w)
+                        and(add(capacity, add(or(capacity, newBufferDataLength), 0x20)), w)
 
                     // If next word after current buffer is not eligible for use.
                     if iszero(eq(mload(0x40), add(bufferData, add(0x40, capacity)))) {
@@ -64,7 +64,7 @@ library DynamicBufferLib {
                         // Store the `newBufferData`.
                         mstore(buffer, newBufferData)
                         // Copy `bufferData` one word at a time, backwards.
-                        for { let o := and(add(bufferDataLength, 32), w) } 1 {} {
+                        for { let o := and(add(bufferDataLength, 0x20), w) } 1 {} {
                             mstore(add(newBufferData, o), mload(add(bufferData, o)))
                             o := add(o, w) // `sub(o, 0x20)`.
                             if iszero(o) { break }
@@ -84,7 +84,7 @@ library DynamicBufferLib {
                 // Initalize `output` to the next empty position in `bufferData`.
                 let output := add(bufferData, bufferDataLength)
                 // Copy `data` one word at a time, backwards.
-                for { let o := and(add(mload(data), 32), w) } 1 {} {
+                for { let o := and(add(mload(data), 0x20), w) } 1 {} {
                     mstore(add(output, o), mload(add(data, o)))
                     o := add(o, w) // `sub(o, 0x20)`.
                     if iszero(o) { break }
