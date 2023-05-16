@@ -58,6 +58,7 @@ import "./utils/LibPRNG.sol";
 import "./utils/LibRLP.sol";
 import "./utils/LibSort.sol";
 import "./utils/LibString.sol";
+import "./utils/LibZip.sol";
 import "./utils/MerkleProofLib.sol";
 import "./utils/MinHeapLib.sol";
 import "./utils/Multicallable.sol";
