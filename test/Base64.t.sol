@@ -74,7 +74,7 @@ contract Base64Test is SoladyTest {
 
     function testBase64EncodeDecodeAltModes(bytes memory input) public brutalizeMemory {
         for (uint256 i; i < 2; ++i) {
-            _roundUpFreeMemoryPointer();
+            _misalignFreeMemoryPointer();
             string memory encoded = Base64.encode(input);
             _checkMemory(encoded);
 
@@ -91,7 +91,7 @@ contract Base64Test is SoladyTest {
                 encoded = LibString.replace(encoded, "+", "-");
             }
 
-            _roundUpFreeMemoryPointer();
+            _misalignFreeMemoryPointer();
             bytes memory decoded = Base64.decode(encoded);
             _checkMemory(decoded);
 

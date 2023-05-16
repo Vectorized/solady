@@ -69,7 +69,7 @@ contract SSTORE2Test is SoladyTest {
     }
 
     function testWriteRead(bytes calldata testBytes) public brutalizeMemory {
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes));
         _checkMemory(readResult);
         assertEq(readResult, testBytes);
@@ -83,7 +83,7 @@ contract SSTORE2Test is SoladyTest {
 
         startIndex = _bound(startIndex, 0, testBytes.length);
 
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex);
         _checkMemory(readResult);
         assertEq(readResult, bytes(testBytes[startIndex:]));
@@ -101,7 +101,7 @@ contract SSTORE2Test is SoladyTest {
 
         if (startIndex > endIndex) return;
 
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex, endIndex);
         _checkMemory(readResult);
         assertEq(readResult, bytes(testBytes[startIndex:endIndex]));
