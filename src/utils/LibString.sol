@@ -318,7 +318,7 @@ library LibString {
                 o := add(o, 2)
             }
             mstore(o, 0) // Zeroize the slot after the string.
-            mstore(0x40, and(add(o, 31), not(31))) // Allocate the memory.
+            mstore(0x40, and(add(o, 0x3f), not(0x1f))) // Allocate the memory.
         }
     }
 
@@ -397,8 +397,8 @@ library LibString {
             if iszero(gt(searchLength, subjectLength)) {
                 let subjectSearchEnd := add(sub(subjectEnd, searchLength), 1)
                 let h := 0
-                if iszero(lt(searchLength, 32)) { h := keccak256(search, searchLength) }
-                let m := shl(3, sub(32, and(searchLength, 31)))
+                if iszero(lt(searchLength, 0x20)) { h := keccak256(search, searchLength) }
+                let m := shl(3, sub(0x20, and(searchLength, 0x1f)))
                 let s := mload(search)
                 for {} 1 {} {
                     let t := mload(subject)
@@ -444,14 +444,10 @@ library LibString {
                 subject := add(subject, 0x20)
             }
             result := sub(result, 0x20)
-            // Zeroize the slot after the string.
-            let last := add(add(result, 0x20), k)
+            let last := add(add(result, 0x20), k) // Zeroize the slot after the string.
             mstore(last, 0)
-            // Allocate memory for the length and the bytes,
-            // rounded up to a multiple of 32.
-            mstore(0x40, and(add(last, 31), not(31)))
-            // Store the length of the result.
-            mstore(result, k)
+            mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(result, k) // Store the length.
         }
     }
 
@@ -482,12 +478,12 @@ library LibString {
                 subject := add(subjectStart, from)
                 let end := add(sub(add(subjectStart, subjectLength), searchLength), 1)
 
-                let m := shl(3, sub(32, and(searchLength, 31)))
+                let m := shl(3, sub(0x20, and(searchLength, 0x1f)))
                 let s := mload(add(search, 0x20))
 
                 if iszero(and(lt(subject, end), lt(from, subjectLength))) { break }
 
-                if iszero(lt(searchLength, 32)) {
+                if iszero(lt(searchLength, 0x20)) {
                     for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
                         if iszero(shr(m, xor(mload(subject), s))) {
                             if eq(keccak256(subject, searchLength), h) {
@@ -645,14 +641,11 @@ library LibString {
                     times := sub(times, 1)
                     if iszero(times) { break }
                 }
-                // Zeroize the slot after the string.
-                mstore(output, 0)
-                // Store the length.
+                mstore(output, 0) // Zeroize the slot after the string.
                 let resultLength := sub(output, add(result, 0x20))
-                mstore(result, resultLength)
-                // Allocate memory for the length and the bytes,
-                // rounded up to a multiple of 32.
-                mstore(0x40, add(result, and(add(resultLength, 63), not(31))))
+                mstore(result, resultLength) // Store the length.
+                // Allocate the memory.
+                mstore(0x40, add(result, and(add(resultLength, 0x3f), not(0x1f))))
             }
         }
     }
@@ -674,9 +667,9 @@ library LibString {
                 let resultLength := sub(end, start)
                 mstore(result, resultLength)
                 subject := add(subject, start)
-                let w := not(31)
+                let w := not(0x1f)
                 // Copy the `subject` one word at a time, backwards.
-                for { let o := and(add(resultLength, 31), w) } 1 {} {
+                for { let o := and(add(resultLength, 0x1f), w) } 1 {} {
                     mstore(add(result, o), mload(add(subject, o)))
                     o := add(o, w) // `sub(o, 0x20)`.
                     if iszero(o) { break }
@@ -685,7 +678,7 @@ library LibString {
                 mstore(add(add(result, 0x20), resultLength), 0)
                 // Allocate memory for the length and the bytes,
                 // rounded up to a multiple of 32.
-                mstore(0x40, add(result, and(add(resultLength, 63), w)))
+                mstore(0x40, add(result, and(add(resultLength, 0x3f), w)))
             }
         }
     }
@@ -720,8 +713,8 @@ library LibString {
                 let subjectStart := subject
                 let subjectSearchEnd := add(sub(add(subject, subjectLength), searchLength), 1)
                 let h := 0
-                if iszero(lt(searchLength, 32)) { h := keccak256(search, searchLength) }
-                let m := shl(3, sub(32, and(searchLength, 31)))
+                if iszero(lt(searchLength, 0x20)) { h := keccak256(search, searchLength) }
+                let m := shl(3, sub(0x20, and(searchLength, 0x1f)))
                 let s := mload(search)
                 for {} 1 {} {
                     let t := mload(subject)
@@ -769,7 +762,7 @@ library LibString {
         uint256[] memory indices = indicesOf(subject, delimiter);
         /// @solidity memory-safe-assembly
         assembly {
-            let w := not(31)
+            let w := not(0x1f)
             let indexPtr := add(indices, 0x20)
             let indicesEnd := add(indexPtr, shl(5, add(mload(indices), 1)))
             mstore(add(indicesEnd, w), mload(subject))
@@ -783,7 +776,7 @@ library LibString {
                     let elementLength := sub(index, prevIndex)
                     mstore(element, elementLength)
                     // Copy the `subject` one word at a time, backwards.
-                    for { let o := and(add(elementLength, 31), w) } 1 {} {
+                    for { let o := and(add(elementLength, 0x1f), w) } 1 {} {
                         mstore(add(element, o), mload(add(add(subject, prevIndex), o)))
                         o := add(o, w) // `sub(o, 0x20)`.
                         if iszero(o) { break }
@@ -792,7 +785,7 @@ library LibString {
                     mstore(add(add(element, 0x20), elementLength), 0)
                     // Allocate memory for the length and the bytes,
                     // rounded up to a multiple of 32.
-                    mstore(0x40, add(element, and(add(elementLength, 63), w)))
+                    mstore(0x40, add(element, and(add(elementLength, 0x3f), w)))
                     // Store the `element` into the array.
                     mstore(indexPtr, element)
                 }
@@ -817,11 +810,11 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let w := not(31)
+            let w := not(0x1f)
             result := mload(0x40)
             let aLength := mload(a)
             // Copy `a` one word at a time, backwards.
-            for { let o := and(add(mload(a), 32), w) } 1 {} {
+            for { let o := and(add(mload(a), 0x20), w) } 1 {} {
                 mstore(add(result, o), mload(add(a, o)))
                 o := add(o, w) // `sub(o, 0x20)`.
                 if iszero(o) { break }
@@ -829,7 +822,7 @@ library LibString {
             let bLength := mload(b)
             let output := add(result, mload(a))
             // Copy `b` one word at a time, backwards.
-            for { let o := and(add(bLength, 32), w) } 1 {} {
+            for { let o := and(add(bLength, 0x20), w) } 1 {} {
                 mstore(add(output, o), mload(add(b, o)))
                 o := add(o, w) // `sub(o, 0x20)`.
                 if iszero(o) { break }
@@ -842,7 +835,7 @@ library LibString {
             mstore(result, totalLength)
             // Allocate memory for the length and the bytes,
             // rounded up to a multiple of 32.
-            mstore(0x40, and(add(last, 31), w))
+            mstore(0x40, and(add(last, 0x1f), w))
         }
     }
 
@@ -867,16 +860,11 @@ library LibString {
                     mstore8(add(result, o), xor(b, and(shr(b, flags), 0x20)))
                     if iszero(o) { break }
                 }
-                // Restore the result.
                 result := mload(0x40)
-                // Stores the string length.
-                mstore(result, length)
-                // Zeroize the slot after the string.
+                mstore(result, length) // Store the length.
                 let last := add(add(result, 0x20), length)
-                mstore(last, 0)
-                // Allocate memory for the length and the bytes,
-                // rounded up to a multiple of 32.
-                mstore(0x40, and(add(last, 31), not(31)))
+                mstore(last, 0) // Zeroize the slot after the string.
+                mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
             }
         }
     }
@@ -916,19 +904,14 @@ library LibString {
                     continue
                 }
                 let t := shr(248, mload(c))
-                mstore(result, mload(and(t, 31)))
+                mstore(result, mload(and(t, 0x1f)))
                 result := add(result, shr(5, t))
             }
             let last := result
-            // Zeroize the slot after the string.
-            mstore(last, 0)
-            // Restore the result to the start of the free memory.
+            mstore(last, 0) // Zeroize the slot after the string.
             result := mload(0x40)
-            // Store the length of the result.
-            mstore(result, sub(last, add(result, 0x20)))
-            // Allocate memory for the length and the bytes,
-            // rounded up to a multiple of 32.
-            mstore(0x40, and(add(last, 31), not(31)))
+            mstore(result, sub(last, add(result, 0x20))) // Store the length.
+            mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
         }
     }
 
@@ -974,15 +957,10 @@ library LibString {
                 result := add(result, 2)
             }
             let last := result
-            // Zeroize the slot after the string.
-            mstore(last, 0)
-            // Restore the result to the start of the free memory.
+            mstore(last, 0) // Zeroize the slot after the string.
             result := mload(0x40)
-            // Store the length of the result.
-            mstore(result, sub(last, add(result, 0x20)))
-            // Allocate memory for the length and the bytes,
-            // rounded up to a multiple of 32.
-            mstore(0x40, and(add(last, 31), not(31)))
+            mstore(result, sub(last, add(result, 0x20))) // Store the length.
+            mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
         }
     }
 

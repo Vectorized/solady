@@ -125,7 +125,7 @@ abstract contract Clone {
         uint256 offset = _getImmutableArgsOffset();
         /// @solidity memory-safe-assembly
         assembly {
-            arg := shr(32, calldataload(add(offset, argOffset)))
+            arg := shr(0x20, calldataload(add(offset, argOffset)))
         }
     }
 

@@ -52,26 +52,17 @@ library Base64 {
                     mstore(ptr, mload(0x00))
 
                     ptr := add(ptr, 4) // Advance 4 bytes.
-
                     if iszero(lt(ptr, end)) { break }
                 }
-
-                // Allocate the memory for the string.
-                // Add 31 and mask with `not(31)` to round the
-                // free memory pointer up the next multiple of 32.
-                mstore(0x40, and(add(end, 31), not(31)))
-
+                mstore(0x40, and(add(end, 0x3f), not(0x1f))) // Allocate the memory.
                 // Equivalent to `o = [0, 2, 1][dataLength % 3]`.
                 let o := div(2, mod(dataLength, 3))
-
                 // Offset `ptr` and pad with '='. We can simply write over the end.
                 mstore(sub(ptr, o), shl(240, 0x3d3d))
                 // Set `o` to zero if there is padding.
                 o := mul(iszero(iszero(noPadding)), o)
-                // Zeroize the slot after the string.
-                mstore(sub(ptr, o), 0)
-                // Write the length of the string.
-                mstore(result, sub(encodedLength, o))
+                mstore(sub(ptr, o), 0) // Zeroize the slot after the string.
+                mstore(result, sub(encodedLength, o)) // Store the length.
             }
         }
     }
@@ -163,20 +154,12 @@ library Base64 {
                             ))
                         ))
                     ))
-
                     ptr := add(ptr, 3)
-
                     if iszero(lt(ptr, end)) { break }
                 }
-
-                // Allocate the memory for the string.
-                // Add 31 and mask with `not(31)` to round the
-                // free memory pointer up the next multiple of 32.
-                mstore(0x40, and(add(end, 31), not(31)))
-                // Zeroize the slot after the bytes.
-                mstore(end, 0)
-                // Restore the zero slot.
-                mstore(0x60, 0)
+                mstore(0x40, and(add(end, 0x3f), not(0x1f))) // Allocate the memory.
+                mstore(end, 0) // Zeroize the slot after the bytes.
+                mstore(0x60, 0) // Restore the zero slot.
             }
         }
     }

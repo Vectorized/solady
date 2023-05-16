@@ -109,7 +109,7 @@ contract CREATE3Test is SoladyTest {
             result := mload(0x40)
             length := mload(bytecode)
             let dataSize := add(length, 1)
-            mstore(0x40, and(add(add(result, dataSize), 0x60), not(31)))
+            mstore(0x40, and(add(add(result, dataSize), 0x60), not(0x1f)))
             mstore(add(result, 0x0b), or(0x61000080600a3d393df300, shl(0x40, dataSize)))
             mstore(result, add(dataSize, 0xa)) // Store the length of result.
             // Copy the bytes over.

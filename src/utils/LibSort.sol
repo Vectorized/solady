@@ -21,7 +21,7 @@ library LibSort {
             mstore(a, 0) // For insertion sort's inner loop to terminate.
             let h := add(a, shl(5, n)) // High slot.
             let s := 0x20
-            let w := not(31)
+            let w := not(0x1f)
             for { let i := add(a, s) } 1 {} {
                 i := add(i, s)
                 if gt(i, h) { break }
@@ -65,7 +65,7 @@ library LibSort {
     function sort(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
-            let w := not(31)
+            let w := not(0x1f)
             let s := 0x20
             let n := mload(a) // Length of `a`.
             mstore(a, 0) // For insertion sort's inner loop to terminate.
@@ -298,7 +298,7 @@ library LibSort {
         assembly {
             if iszero(lt(mload(a), 2)) {
                 let s := 0x20
-                let w := not(31)
+                let w := not(0x1f)
                 let h := add(a, shl(5, mload(a)))
                 for { a := add(a, s) } 1 {} {
                     let t := mload(a)
