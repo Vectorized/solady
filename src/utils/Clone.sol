@@ -20,7 +20,7 @@ abstract contract Clone {
             calldatacopy(add(arg, 0x20), add(offset, argOffset), length)
             let o := add(add(arg, 0x20), length)
             mstore(o, 0) // Zeroize the slot after the bytes.
-            mstore(0x40, and(add(o, 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(0x40, add(o, 0x20)) // Allocate the memory.
         }
     }
 
