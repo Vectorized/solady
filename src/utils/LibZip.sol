@@ -95,12 +95,12 @@ library LibZip {
             let n := sub(op, t)
             mstore(result, n) // Store the length.
             // Copy the result to compact the memory, overwriting the hashmap.
+            let o := add(result, 0x20)
             for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
-                mstore(add(add(result, 0x20), i), mload(add(t, i)))
+                mstore(add(o, i), mload(add(t, i)))
             }
-            let last := add(add(result, 0x20), n)
-            mstore(last, 0) // Zeroize the slot after the string.
-            mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(add(o, n), 0) // Zeroize the slot after the string.
+            mstore(0x40, and(add(add(o, n), 0x3f), not(0x1f))) // Allocate the memory.
         }
     }
 
@@ -117,10 +117,9 @@ library LibZip {
             }
             let dest := 0
             let end := add(add(data, 0x20), mload(data))
-            data := add(data, 0x20)
             result := mload(0x40)
             let output := add(result, 0x20)
-            for {} lt(data, end) {} {
+            for { data := add(data, 0x20) } lt(data, end) {} {
                 let srcWord := mload(data)
                 let srcValue := byte(0, srcWord)
                 let t := shr(5, srcValue)
