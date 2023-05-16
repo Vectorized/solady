@@ -156,13 +156,14 @@ contract TestPlus {
     }
 
     /// @dev Misaligns the free memory pointer.
+    /// The free memory pointer has a 1/32 chance to be aligned.
     function _misalignFreeMemoryPointer() internal pure {
         uint256 twoWords = 0x40;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(twoWords)
             m := add(m, mul(and(keccak256(0x00, twoWords), 0x1f), iszero(and(m, 0x1f))))
-            mstore(twoWords, add(m, iszero(and(m, 0x1f))))
+            mstore(twoWords, m)
         }
     }
 
@@ -173,13 +174,13 @@ contract TestPlus {
         bool freeMemoryPointerOverflowed;
         /// @solidity memory-safe-assembly
         assembly {
+            // Write ones to the free memory, to make subsequent checks fail if
+            // insufficient memory is allocated.
+            mstore(mload(0x40), not(0))
             // Test at a lower, but reasonable limit for more safety room.
             if gt(mload(0x40), 0xffffffff) { freeMemoryPointerOverflowed := 1 }
             // Check the value of the zero slot.
             zeroSlotIsNotZero := mload(0x60)
-            // Write ones to the free memory, to make subsequent checks fail if
-            // insufficient memory is allocated.
-            mstore(mload(0x40), not(0))
         }
         if (freeMemoryPointerOverflowed) revert("`0x40` overflowed!");
         if (zeroSlotIsNotZero) revert("`0x60` is not zero!");
@@ -194,12 +195,13 @@ contract TestPlus {
         bool insufficientMalloc;
         /// @solidity memory-safe-assembly
         assembly {
+            // Write ones to the free memory, to make subsequent checks fail if
+            // insufficient memory is allocated.
+            mstore(mload(0x40), not(0))
             let length := mload(s)
             let lastWord := mload(add(add(s, 0x20), and(length, not(0x1f))))
             let remainder := and(length, 0x1f)
             if remainder { if shl(mul(8, remainder), lastWord) { notZeroRightPadded := 1 } }
-            // Write some garbage to the free memory.
-            mstore(mload(0x40), keccak256(0x00, 0x60))
             // Check if the memory allocated is sufficient.
             if length { if gt(add(add(s, 0x20), length), mload(0x40)) { insufficientMalloc := 1 } }
         }
