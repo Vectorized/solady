@@ -13,18 +13,17 @@ library LibZip {
     function cdCompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
+            function rle(v_, o_, d_) -> _o, _d {
+                mstore(o_, 0)
+                mstore8(add(o_, 1), or(sub(d_, 1), and(0x80, v_)))
+                _o := add(o_, 2)
+            }
             if mload(data) {
                 result := mload(0x40)
                 let o := add(result, 0x20)
                 let z := 0 // Number of consecutive 0x00.
                 let y := 0 // Number of consecutive 0xff.
-                let end := add(data, mload(data))
-                function rle(v_, o_, d_) -> _o, _d {
-                    mstore(o_, 0)
-                    mstore8(add(o_, 1), or(sub(d_, 1), and(0x80, v_)))
-                    _o := add(o_, 2)
-                }
-                for {} iszero(eq(data, end)) {} {
+                for { let end := add(data, mload(data)) } iszero(eq(data, end)) {} {
                     data := add(data, 1)
                     let c := byte(31, mload(data))
                     if iszero(c) {
@@ -65,8 +64,7 @@ library LibZip {
                 let s := add(data, 4)
                 let v := mload(s)
                 mstore(s, xor(0xffffffff, v)) // Bitwise negate the first 4 bytes.
-                let end := add(data, mload(data))
-                for {} lt(data, end) {} {
+                for { let end := add(data, mload(data)) } lt(data, end) {} {
                     data := add(data, 1)
                     let c := byte(31, mload(data))
                     if iszero(c) {
@@ -101,9 +99,8 @@ library LibZip {
         assembly {
             if iszero(calldatasize()) { return(calldatasize(), calldatasize()) }
             let o := 0
-            let i := 0
             let f := shl(224, 0xffffffff) // For negating the first 4 bytes.
-            for {} lt(i, calldatasize()) {} {
+            for { let i := 0 } lt(i, calldatasize()) {} {
                 let c := xor(byte(i, f), byte(0, calldataload(i)))
                 i := add(i, 1)
                 if iszero(c) {
