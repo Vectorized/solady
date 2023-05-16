@@ -84,7 +84,7 @@ contract LibStringTest is SoladyTest {
     }
 
     function testToStringSignedMemory(int256 x) public view brutalizeMemory {
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         uint256 freeMemoryPointer;
         /// @solidity memory-safe-assembly
         assembly {
@@ -268,11 +268,11 @@ contract LibStringTest is SoladyTest {
         assembly {
             length := add(shr(1, mload(noPrefix)), and(randomness, 63))
         }
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         noPrefix = LibString.toHexStringNoPrefix(x, length);
         _checkMemory(noPrefix);
         expectedResult = LibString.concat("0x", noPrefix);
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         withPrefix = LibString.toHexString(x, length);
         _checkMemory(withPrefix);
         assertEq(withPrefix, expectedResult);
@@ -282,11 +282,11 @@ contract LibStringTest is SoladyTest {
         assembly {
             xAddress := x
         }
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         noPrefix = LibString.toHexStringNoPrefix(xAddress);
         _checkMemory(noPrefix);
         expectedResult = LibString.concat("0x", noPrefix);
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         withPrefix = LibString.toHexString(xAddress);
         _checkMemory(withPrefix);
         assertEq(withPrefix, expectedResult);
@@ -425,7 +425,7 @@ contract LibStringTest is SoladyTest {
                     bytes(filler), bytes(search), bytes(filler), bytes(search), bytes(filler)
                 )
             );
-            _roundUpFreeMemoryPointer();
+            _misalignFreeMemoryPointer();
             string memory expectedResult = string(
                 bytes.concat(
                     bytes(filler),
@@ -435,7 +435,7 @@ contract LibStringTest is SoladyTest {
                     bytes(filler)
                 )
             );
-            _roundUpFreeMemoryPointer();
+            _misalignFreeMemoryPointer();
             string memory replaced = LibString.replace(subject, search, replacement);
             _checkMemory(replaced);
             assertEq(replaced, expectedResult);
@@ -679,7 +679,7 @@ contract LibStringTest is SoladyTest {
         uint256 start = bytes(filler0).length;
         uint256 end = start + bytes(expectedResult).length;
 
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         string memory slice = LibString.slice(subject, start, end);
         _checkMemory(slice);
         assertEq(slice, expectedResult);
@@ -812,7 +812,7 @@ contract LibStringTest is SoladyTest {
                 elements[0] = filler0;
                 elements[1] = filler1;
             }
-            _roundUpFreeMemoryPointer();
+            _misalignFreeMemoryPointer();
             string[] memory splitted = LibString.split(subject, delimiter);
             assertTrue(_stringArraysAreSame(splitted, elements));
             for (uint256 i; i < splitted.length; ++i) {
@@ -937,7 +937,7 @@ contract LibStringTest is SoladyTest {
         string memory input =
             string(bytes.concat(bytes(filler0), bytes(originalChars[r]), bytes(filler1)));
 
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         string memory escaped = LibString.escapeHTML(input);
         _checkMemory(escaped);
 
@@ -996,7 +996,7 @@ contract LibStringTest is SoladyTest {
     }
 
     function testStringPackAndUnpackOne(string memory a) public brutalizeMemory {
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         bytes32 packed = LibString.packOne(a);
         string memory unpacked = LibString.unpackOne(packed);
         _checkMemory(unpacked);
@@ -1043,7 +1043,7 @@ contract LibStringTest is SoladyTest {
 
     function testStringPackAndUnpackTwo(string memory a, string memory b) public brutalizeMemory {
         bytes32 packed = LibString.packTwo(a, b);
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         (string memory unpackedA, string memory unpackedB) = LibString.unpackTwo(packed);
         _checkMemory(unpackedA);
         _checkMemory(unpackedB);
@@ -1088,7 +1088,7 @@ contract LibStringTest is SoladyTest {
 
     function testStringLowerDifferential(string memory s) public {
         string memory expectedResult = _lowerOriginal(s);
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         string memory result = LibString.lower(s);
         _checkMemory(result);
         assertEq(result, expectedResult);
@@ -1116,7 +1116,7 @@ contract LibStringTest is SoladyTest {
 
     function testStringUpperDifferential(string memory s) public {
         string memory expectedResult = _upperOriginal(s);
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         string memory result = LibString.upper(s);
         _checkMemory(result);
         assertEq(result, expectedResult);
@@ -1221,7 +1221,7 @@ contract LibStringTest is SoladyTest {
                     result = string(bytes.concat(bytes(result), bytes(subject)));
                 }
             }
-            _roundUpFreeMemoryPointer();
+            _misalignFreeMemoryPointer();
             return result;
         }
     }

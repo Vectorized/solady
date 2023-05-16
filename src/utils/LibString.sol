@@ -318,7 +318,7 @@ library LibString {
                 o := add(o, 2)
             }
             mstore(o, 0) // Zeroize the slot after the string.
-            mstore(0x40, and(add(o, 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(0x40, add(o, 0x20)) // Allocate the memory.
         }
     }
 
@@ -446,7 +446,7 @@ library LibString {
             result := sub(result, 0x20)
             let last := add(add(result, 0x20), k) // Zeroize the slot after the string.
             mstore(last, 0)
-            mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(0x40, add(last, 0x20)) // Allocate the memory.
             mstore(result, k) // Store the length.
         }
     }
@@ -645,7 +645,7 @@ library LibString {
                 let resultLength := sub(output, add(result, 0x20))
                 mstore(result, resultLength) // Store the length.
                 // Allocate the memory.
-                mstore(0x40, add(result, and(add(resultLength, 0x3f), not(0x1f))))
+                mstore(0x40, add(result, add(resultLength, 0x20)))
             }
         }
     }
@@ -864,7 +864,7 @@ library LibString {
                 mstore(result, length) // Store the length.
                 let last := add(add(result, 0x20), length)
                 mstore(last, 0) // Zeroize the slot after the string.
-                mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
+                mstore(0x40, add(last, 0x20)) // Allocate the memory.
             }
         }
     }
@@ -911,7 +911,7 @@ library LibString {
             mstore(last, 0) // Zeroize the slot after the string.
             result := mload(0x40)
             mstore(result, sub(last, add(result, 0x20))) // Store the length.
-            mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(0x40, add(last, 0x20)) // Allocate the memory.
         }
     }
 
@@ -960,7 +960,7 @@ library LibString {
             mstore(last, 0) // Zeroize the slot after the string.
             result := mload(0x40)
             mstore(result, sub(last, add(result, 0x20))) // Store the length.
-            mstore(0x40, and(add(last, 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(0x40, add(last, 0x20)) // Allocate the memory.
         }
     }
 

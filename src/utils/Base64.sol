@@ -54,7 +54,7 @@ library Base64 {
                     ptr := add(ptr, 4) // Advance 4 bytes.
                     if iszero(lt(ptr, end)) { break }
                 }
-                mstore(0x40, and(add(end, 0x3f), not(0x1f))) // Allocate the memory.
+                mstore(0x40, add(end, 0x20)) // Allocate the memory.
                 // Equivalent to `o = [0, 2, 1][dataLength % 3]`.
                 let o := div(2, mod(dataLength, 3))
                 // Offset `ptr` and pad with '='. We can simply write over the end.
@@ -157,7 +157,7 @@ library Base64 {
                     ptr := add(ptr, 3)
                     if iszero(lt(ptr, end)) { break }
                 }
-                mstore(0x40, and(add(end, 0x3f), not(0x1f))) // Allocate the memory.
+                mstore(0x40, add(end, 0x20)) // Allocate the memory.
                 mstore(end, 0) // Zeroize the slot after the bytes.
                 mstore(0x60, 0) // Restore the zero slot.
             }

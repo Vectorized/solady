@@ -10,7 +10,7 @@ contract DynamicBufferLibTest is SoladyTest {
     function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {
         _boundInputs(inputs);
 
-        _roundUpFreeMemoryPointer();
+        _misalignFreeMemoryPointer();
         DynamicBufferLib.DynamicBuffer memory buffer;
         unchecked {
             uint256 expectedLength;

@@ -15,14 +15,12 @@ abstract contract Clone {
         uint256 offset = _getImmutableArgsOffset();
         /// @solidity memory-safe-assembly
         assembly {
-            // Grab the free memory pointer.
             arg := mload(0x40)
-            // Store the array length.
-            mstore(arg, length)
-            // Copy the array.
+            mstore(arg, length) // Store the length.
             calldatacopy(add(arg, 0x20), add(offset, argOffset), length)
-            // Allocate the memory, rounded up to the next 32 byte boundary.
-            mstore(0x40, and(add(add(arg, 0x3f), length), not(0x1f)))
+            let o := add(add(arg, 0x20), length)
+            mstore(o, 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(o, 0x20)) // Allocate the memory.
         }
     }
 
@@ -44,14 +42,10 @@ abstract contract Clone {
         uint256 offset = _getImmutableArgsOffset();
         /// @solidity memory-safe-assembly
         assembly {
-            // Grab the free memory pointer.
             arg := mload(0x40)
-            // Store the array length.
-            mstore(arg, length)
-            // Copy the array.
+            mstore(arg, length) // Store the length.
             calldatacopy(add(arg, 0x20), add(offset, argOffset), shl(5, length))
-            // Allocate the memory.
-            mstore(0x40, add(add(arg, 0x20), shl(5, length)))
+            mstore(0x40, add(add(arg, 0x20), shl(5, length))) // Allocate the memory.
         }
     }
 
@@ -64,14 +58,10 @@ abstract contract Clone {
         uint256 offset = _getImmutableArgsOffset();
         /// @solidity memory-safe-assembly
         assembly {
-            // Grab the free memory pointer.
             arg := mload(0x40)
-            // Store the array length.
-            mstore(arg, length)
-            // Copy the array.
+            mstore(arg, length) // Store the length.
             calldatacopy(add(arg, 0x20), add(offset, argOffset), shl(5, length))
-            // Allocate the memory.
-            mstore(0x40, add(add(arg, 0x20), shl(5, length)))
+            mstore(0x40, add(add(arg, 0x20), shl(5, length))) // Allocate the memory.
         }
     }
 
