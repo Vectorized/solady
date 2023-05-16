@@ -100,7 +100,7 @@ library LibZip {
                 mstore(add(o, i), mload(add(t, i)))
             }
             mstore(add(o, n), 0) // Zeroize the slot after the string.
-            mstore(0x40, and(add(add(o, n), 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(0x40, add(add(o, n), 0x20)) // Allocate the memory.
         }
     }
 
@@ -147,7 +147,7 @@ library LibZip {
             mstore(result, dest) // Store the length.
             let o := add(add(result, 0x20), dest)
             mstore(o, 0) // Zeroize the slot after the string.
-            mstore(0x40, and(add(o, 0x3f), not(0x1f))) // Allocate the memory.
+            mstore(0x40, add(o, 0x20)) // Allocate the memory.
         }
     }
 
@@ -195,7 +195,7 @@ library LibZip {
                 mstore(add(result, 4), xor(0xffffffff, mload(add(result, 4))))
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
                 mstore(o, 0) // Zeroize the slot after the string.
-                mstore(0x40, and(add(o, 0x3f), not(0x1f))) // Allocate the memory.
+                mstore(0x40, add(o, 0x20)) // Allocate the memory.
             }
         }
     }
@@ -227,7 +227,7 @@ library LibZip {
                 }
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
                 mstore(o, 0) // Zeroize the slot after the string.
-                mstore(0x40, and(add(o, 0x3f), not(0x1f))) // Allocate the memory.
+                mstore(0x40, add(o, 0x20)) // Allocate the memory.
                 mstore(s, v) // Restore the first 4 bytes.
             }
         }

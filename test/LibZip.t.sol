@@ -31,9 +31,11 @@ contract LibZipTest is SoladyTest {
             }
         }
         bytes32 dataHash = keccak256(data);
+        _misalignFreeMemoryPointer();
         bytes memory compressed = LibZip.flzCompress(data);
         bytes32 compressedHash = keccak256(compressed);
         _checkMemory(compressed);
+        _misalignFreeMemoryPointer();
         bytes memory decompressed = LibZip.flzDecompress(compressed);
         _checkMemory(compressed);
         _checkMemory(decompressed);
@@ -62,9 +64,11 @@ contract LibZipTest is SoladyTest {
 
     function testCdCompressDecompress(bytes memory data) public brutalizeMemory {
         bytes32 dataHash = keccak256(data);
+        _misalignFreeMemoryPointer();
         bytes memory compressed = LibZip.cdCompress(data);
         bytes32 compressedHash = keccak256(compressed);
         _checkMemory(compressed);
+        _misalignFreeMemoryPointer();
         bytes memory decompressed = LibZip.cdDecompress(compressed);
         _checkMemory(compressed);
         _checkMemory(decompressed);
