@@ -126,18 +126,17 @@ library LibZip {
                     continue
                 }
                 let g := eq(t, 7)
-                let l := add(mul(g, add(7, byte(1, w))), add(mul(iszero(g), t), 2))
-                let s := add(add(shl(8, and(0x1f, c)), byte(add(1, g), w)), 1)
-                let r := add(op, sub(n, s))
-                let o := add(op, n)
-                let oend := add(o, l)
-                let a := lt(s, 0x21)
-                let f := or(mul(a, s), mul(iszero(a), 0x20))
-                for { let j := o } 1 {} {
-                    mstore(j, mload(r))
+                let l := add(2, xor(t, mul(g, xor(t, add(7, byte(1, w))))))
+                for {
+                    let s := add(add(shl(8, and(0x1f, c)), byte(add(1, g), w)), 1)
+                    let r := add(op, sub(n, s))
+                    let o := add(op, n)
+                    let f := xor(s, mul(gt(s, 0x20), xor(0x20, s)))
+                    let j := 0
+                } 1 {} {
+                    mstore(add(o, j), mload(add(r, j)))
                     j := add(j, f)
-                    if iszero(lt(j, oend)) { break }
-                    r := add(r, f)
+                    if iszero(lt(j, l)) { break }
                 }
                 data := add(data, add(2, g))
                 n := add(n, l)
