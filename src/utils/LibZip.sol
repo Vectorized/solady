@@ -13,6 +13,7 @@ library LibZip {
     // LZ77 implementation based on FastLZ.
     // It is equivalent to level 1 compression and decompression at the following commit:
     // https://github.com/ariya/FastLZ/commit/344eb4025f9ae866ebf7a2ec48850f7113a97a42
+    // Decompression is backwards compatible.
 
     /// @dev Returns the compressed `data`.
     function flzCompress(bytes memory data) internal pure returns (bytes memory result) {
