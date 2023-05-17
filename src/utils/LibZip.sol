@@ -96,9 +96,7 @@ library LibZip {
             mstore(result, n) // Store the length.
             // Copy the result to compact the memory, overwriting the hashmap.
             let o := add(result, 0x20)
-            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
-                mstore(add(o, i), mload(add(t, i)))
-            }
+            for { let i } lt(i, n) { i := add(i, 0x20) } { mstore(add(o, i), mload(add(t, i))) }
             mstore(add(o, n), 0) // Zeroize the slot after the string.
             mstore(0x40, add(add(o, n), 0x20)) // Allocate the memory.
         }
@@ -125,12 +123,9 @@ library LibZip {
                 }
                 let g := gt(t, 6)
                 let l := or(mul(g, add(9, byte(1, w))), mul(iszero(g), add(2, t)))
-
-                let o := add(op, n)
                 let r := add(op, sub(n, add(add(shl(8, and(0x1f, c)), byte(add(1, g), w)), 0x20)))
-                for { let j := 0 } iszero(eq(j, l)) { j := add(j, 1) } {
-                    mstore8(add(o, j), mload(add(r, j)))
-                }
+                let o := add(op, n)
+                for { let j } xor(j, l) { j := add(j, 1) } { mstore8(add(o, j), mload(add(r, j))) }
                 data := add(data, add(2, g))
                 n := add(n, l)
             }
