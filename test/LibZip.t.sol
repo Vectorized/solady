@@ -6,9 +6,12 @@ import {MockCd} from "./utils/mocks/MockCd.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {ERC1967Factory} from "../src/utils/ERC1967Factory.sol";
 import {LibString} from "../src/utils/LibString.sol";
+import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
 import {LibZip} from "../src/utils/LibZip.sol";
 
 contract LibZipTest is SoladyTest {
+    using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
+
     function testFlzCompressDecompress() public brutalizeMemory {
         assertEq(LibZip.flzCompress(""), "");
         assertEq(LibZip.flzDecompress(""), "");
@@ -21,14 +24,22 @@ contract LibZipTest is SoladyTest {
         assertEq(LibZip.flzCompress(decompressed), compressed);
     }
 
+    function _expandedData(bytes memory data) internal returns (bytes memory) {
+        unchecked {
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            bytes memory r = abi.encode(_random());
+            uint256 n = _random() % 8 + 1;
+            uint256 c = _random();
+            for (uint256 i; i < n; ++i) {
+                buffer.append((c >> i) & 1 == 0 ? r : data);
+            }
+            return buffer.data;
+        }
+    }
+
     function testFlzCompressDecompress(bytes memory data) public brutalizeMemory {
         if (_random() % 2 == 0) {
-            uint256 r = _random();
-            if (_random() % 2 == 0) {
-                data = abi.encode(data, r, data, r, data, r, data);
-            } else {
-                data = abi.encode(data, data, r, r, r, data, r);
-            }
+            data = _expandedData(data);
         }
         bytes32 dataHash = keccak256(data);
         _misalignFreeMemoryPointer();
@@ -63,6 +74,9 @@ contract LibZipTest is SoladyTest {
     }
 
     function testCdCompressDecompress(bytes memory data) public brutalizeMemory {
+        if (_random() % 8 == 0) {
+            data = _expandedData(data);
+        }
         bytes32 dataHash = keccak256(data);
         _misalignFreeMemoryPointer();
         bytes memory compressed = LibZip.cdCompress(data);
@@ -140,6 +154,7 @@ contract LibZipTest is SoladyTest {
         }
         assertEq(mockCd.numbersHash(), 0);
         assertEq(mockCd.lastCallvalue(), 0);
+        assertEq(mockCd.lastCaller(), address(0));
 
         uint256 callValue = 123 ether;
         vm.deal(address(this), callValue * 2);
@@ -156,6 +171,7 @@ contract LibZipTest is SoladyTest {
         assertEq(decodedNumbersHash, expectedNumbersHash);
         assertEq(mockCd.numbersHash(), expectedNumbersHash);
         assertEq(mockCd.lastCallvalue(), callValue);
+        assertEq(mockCd.lastCaller(), address(this));
         assertEq(address(mockCd).balance, callValue);
 
         (success, result) = payable(mockCd).call{value: callValue}(
@@ -166,7 +182,42 @@ contract LibZipTest is SoladyTest {
 
         assertFalse(success);
         assertEq(address(mockCd).balance, callValue);
-        assertEq(abi.encodeWithSelector(MockCd.NumbersHash.selector, expectedNumbersHash), result);
+        assertEq(abi.encodeWithSelector(MockCd.Hash.selector, expectedNumbersHash), result);
+        assertEq(address(mockCd).balance, callValue);
+
+        (success, result) = payable(mockCd).call{value: callValue}("");
+        assertEq(address(mockCd).balance, callValue * 2);
+        assertTrue(success);
+    }
+
+    function testCdFallback(bytes memory data, uint256 callValue) public brutalizeMemory {
+        MockCd mockCd = new MockCd();
+        callValue = _bound(callValue, 0, 123 ether);
+        vm.deal(address(this), callValue * 2);
+        if (_random() % 8 == 0) {
+            data = _expandedData(data);
+        }
+
+        (bool success, bytes memory result) = payable(mockCd).call{value: callValue}(
+            LibZip.cdCompress(abi.encodeWithSignature("storeDataHash(bytes,bool)", data, true))
+        );
+
+        assertTrue(success);
+        bytes32 decodedDataHash = abi.decode(result, (bytes32));
+        bytes32 expectedDataHash = keccak256(data);
+        assertEq(decodedDataHash, expectedDataHash);
+        assertEq(mockCd.dataHash(), expectedDataHash);
+        assertEq(mockCd.lastCallvalue(), callValue);
+        assertEq(mockCd.lastCaller(), address(this));
+        assertEq(address(mockCd).balance, callValue);
+
+        (success, result) = payable(mockCd).call{value: callValue}(
+            LibZip.cdCompress(abi.encodeWithSignature("storeDataHash(bytes,bool)", data, false))
+        );
+
+        assertFalse(success);
+        assertEq(address(mockCd).balance, callValue);
+        assertEq(abi.encodeWithSelector(MockCd.Hash.selector, expectedDataHash), result);
         assertEq(address(mockCd).balance, callValue);
 
         (success, result) = payable(mockCd).call{value: callValue}("");
