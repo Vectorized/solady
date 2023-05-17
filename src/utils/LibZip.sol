@@ -131,8 +131,8 @@ library LibZip {
                 let r := add(op, sub(n, s))
                 let o := add(op, n)
                 let oend := add(o, l)
-                let a := lt(s, 33)
-                let f := or(mul(a, s), mul(iszero(a), 32))
+                let a := lt(s, 0x21)
+                let f := or(mul(a, s), mul(iszero(a), 0x20))
                 for { let j := o } 1 {} {
                     mstore(j, mload(r))
                     j := add(j, f)
