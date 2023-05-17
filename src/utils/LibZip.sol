@@ -96,9 +96,7 @@ library LibZip {
             mstore(result, n) // Store the length.
             // Copy the result to compact the memory, overwriting the hashmap.
             let o := add(result, 0x20)
-            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
-                mstore(add(o, i), mload(add(t, i)))
-            }
+            for { let i } lt(i, n) { i := add(i, 0x20) } { mstore(add(o, i), mload(add(t, i))) }
             mstore(add(o, n), 0) // Zeroize the slot after the string.
             mstore(0x40, add(add(o, n), 0x20)) // Allocate the memory.
         }
@@ -108,44 +106,30 @@ library LibZip {
     function flzDecompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            function append(output_, dest_, ofs_, len_) {
-                let r := add(output_, sub(dest_, add(ofs_, 0x20)))
-                let o := add(output_, dest_)
-                for { let j := 0 } iszero(eq(j, len_)) { j := add(j, 1) } {
-                    mstore8(add(o, j), mload(add(r, j)))
-                }
-            }
-            let dest := 0
+            let n := 0
             let end := add(add(data, 0x20), mload(data))
             result := mload(0x40)
-            let output := add(result, 0x20)
+            let op := add(result, 0x20)
             for { data := add(data, 0x20) } lt(data, end) {} {
-                let srcWord := mload(data)
-                let srcValue := byte(0, srcWord)
-                let t := shr(5, srcValue)
+                let w := mload(data)
+                let c := byte(0, w)
+                let t := shr(5, c)
                 if iszero(t) {
-                    data := add(data, 1)
-                    mstore(add(output, dest), mload(data))
-                    data := add(data, add(1, srcValue))
-                    dest := add(dest, add(1, srcValue))
+                    mstore(add(op, n), mload(add(data, 1)))
+                    data := add(data, add(2, c))
+                    n := add(n, add(1, c))
                     continue
                 }
-                if iszero(lt(t, 7)) {
-                    let ofs := add(shl(8, and(31, srcValue)), byte(2, srcWord))
-                    let len := add(9, byte(1, srcWord))
-                    data := add(data, 3)
-                    append(output, dest, ofs, len)
-                    dest := add(dest, len)
-                    continue
-                }
-                let ofs := add(shl(8, and(31, srcValue)), byte(1, srcWord))
-                let len := add(2, t)
-                data := add(data, 2)
-                append(output, dest, ofs, len)
-                dest := add(dest, len)
+                let g := gt(t, 6)
+                let l := or(mul(g, add(9, byte(1, w))), mul(iszero(g), add(2, t)))
+                let r := add(op, sub(n, add(add(shl(8, and(0x1f, c)), byte(add(1, g), w)), 0x20)))
+                let o := add(op, n)
+                for { let j } xor(j, l) { j := add(j, 1) } { mstore8(add(o, j), mload(add(r, j))) }
+                data := add(data, add(2, g))
+                n := add(n, l)
             }
-            mstore(result, dest) // Store the length.
-            let o := add(add(result, 0x20), dest)
+            mstore(result, n) // Store the length.
+            let o := add(add(result, 0x20), n)
             mstore(o, 0) // Zeroize the slot after the string.
             mstore(0x40, add(o, 0x20)) // Allocate the memory.
         }
