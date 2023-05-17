@@ -115,9 +115,8 @@ library LibZip {
                 let c := byte(0, w)
                 let t := shr(5, c)
                 if iszero(t) {
-                    data := add(data, 1)
-                    mstore(add(op, n), mload(data))
-                    data := add(data, add(1, c))
+                    mstore(add(op, n), mload(add(data, 1)))
+                    data := add(data, add(2, c))
                     n := add(n, add(1, c))
                     continue
                 }
