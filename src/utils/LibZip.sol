@@ -131,7 +131,7 @@ library LibZip {
                     let s := add(add(shl(8, and(0x1f, c)), byte(add(1, g), w)), 1)
                     let r := add(op, sub(n, s))
                     let o := add(op, n)
-                    let f := xor(s, mul(gt(s, 0x20), xor(0x20, s)))
+                    let f := xor(s, mul(gt(s, 0x20), xor(s, 0x20)))
                     let j := 0
                 } 1 {} {
                     mstore(add(o, j), mload(add(r, j)))
