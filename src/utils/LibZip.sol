@@ -10,6 +10,11 @@ library LibZip {
     /*                     FAST LZ OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // LZ77 implementation based on FastLZ.
+    // Equivalent to level 1 compression and decompression at the following commit:
+    // https://github.com/ariya/FastLZ/commit/344eb4025f9ae866ebf7a2ec48850f7113a97a42
+    // Decompression is backwards compatible.
+
     /// @dev Returns the compressed `data`.
     function flzCompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
@@ -139,48 +144,58 @@ library LibZip {
     /*                    CALLDATA OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // Calldata compression and decompression using selective run length encoding:
+    // - Sequences of 0x00 (up to 128 consecutive).
+    // - Sequences of 0xff (up to 32 consecutive).
+    //
+    // A run length encoded block consists of two bytes:
+    // (0) 0x00
+    // (1) A control byte with the following bit layout:
+    //     - [7]     `0: 0x00, 1: 0xff`.
+    //     - [0..6]  `runLength - 1`.
+    //
+    // The first 4 bytes are bitwise negated so that the compressed calldata
+    // can be dispatched into the `fallback` and `receive` functions.
+
     /// @dev Returns the compressed `data`.
     function cdCompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             function rle(v_, o_, d_) -> _o, _d {
-                mstore(o_, 0)
-                mstore8(add(o_, 1), or(sub(d_, 1), and(0x80, v_)))
+                mstore(o_, shl(240, or(and(0xff, add(d_, 0xff)), and(0x80, v_))))
                 _o := add(o_, 2)
             }
-            if mload(data) {
-                result := mload(0x40)
-                let o := add(result, 0x20)
-                let z := 0 // Number of consecutive 0x00.
-                let y := 0 // Number of consecutive 0xff.
-                for { let end := add(data, mload(data)) } iszero(eq(data, end)) {} {
-                    data := add(data, 1)
-                    let c := byte(31, mload(data))
-                    if iszero(c) {
-                        if y { o, y := rle(0xff, o, y) }
-                        z := add(z, 1)
-                        if eq(z, 0x80) { o, z := rle(0x00, o, 0x80) }
-                        continue
-                    }
-                    if eq(c, 0xff) {
-                        if z { o, z := rle(0x00, o, z) }
-                        y := add(y, 1)
-                        if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
-                        continue
-                    }
+            result := mload(0x40)
+            let o := add(result, 0x20)
+            let z := 0 // Number of consecutive 0x00.
+            let y := 0 // Number of consecutive 0xff.
+            for { let end := add(data, mload(data)) } iszero(eq(data, end)) {} {
+                data := add(data, 1)
+                let c := byte(31, mload(data))
+                if iszero(c) {
                     if y { o, y := rle(0xff, o, y) }
+                    z := add(z, 1)
+                    if eq(z, 0x80) { o, z := rle(0x00, o, 0x80) }
+                    continue
+                }
+                if eq(c, 0xff) {
                     if z { o, z := rle(0x00, o, z) }
-                    mstore8(o, c)
-                    o := add(o, 1)
+                    y := add(y, 1)
+                    if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
+                    continue
                 }
                 if y { o, y := rle(0xff, o, y) }
                 if z { o, z := rle(0x00, o, z) }
-                // Bitwise negate the first 4 bytes.
-                mstore(add(result, 4), xor(0xffffffff, mload(add(result, 4))))
-                mstore(result, sub(o, add(result, 0x20))) // Store the length.
-                mstore(o, 0) // Zeroize the slot after the string.
-                mstore(0x40, add(o, 0x20)) // Allocate the memory.
+                mstore8(o, c)
+                o := add(o, 1)
             }
+            if y { o, y := rle(0xff, o, y) }
+            if z { o, z := rle(0x00, o, z) }
+            // Bitwise negate the first 4 bytes.
+            mstore(add(result, 4), not(mload(add(result, 4))))
+            mstore(result, sub(o, add(result, 0x20))) // Store the length.
+            mstore(o, 0) // Zeroize the slot after the string.
+            mstore(0x40, add(o, 0x20)) // Allocate the memory.
         }
     }
 
@@ -193,8 +208,9 @@ library LibZip {
                 let o := add(result, 0x20)
                 let s := add(data, 4)
                 let v := mload(s)
-                mstore(s, xor(0xffffffff, v)) // Bitwise negate the first 4 bytes.
-                for { let end := add(data, mload(data)) } lt(data, end) {} {
+                let end := add(data, mload(data))
+                mstore(s, not(v)) // Bitwise negate the first 4 bytes.
+                for {} lt(data, end) {} {
                     data := add(data, 1)
                     let c := byte(31, mload(data))
                     if iszero(c) {
@@ -209,10 +225,10 @@ library LibZip {
                     mstore8(o, c)
                     o := add(o, 1)
                 }
+                mstore(s, v) // Restore the first 4 bytes.
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
                 mstore(o, 0) // Zeroize the slot after the string.
                 mstore(0x40, add(o, 0x20)) // Allocate the memory.
-                mstore(s, v) // Restore the first 4 bytes.
             }
         }
     }
@@ -245,11 +261,9 @@ library LibZip {
                 mstore8(o, c)
                 o := add(o, 1)
             }
-            if iszero(delegatecall(gas(), address(), 0x00, o, 0x00, 0x00)) {
-                returndatacopy(0x00, 0x00, returndatasize())
-                revert(0x00, returndatasize())
-            }
+            let success := delegatecall(gas(), address(), 0x00, o, 0x00, 0x00)
             returndatacopy(0x00, 0x00, returndatasize())
+            if iszero(success) { revert(0x00, returndatasize()) }
             return(0x00, returndatasize())
         }
     }
