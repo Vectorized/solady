@@ -39,14 +39,19 @@ test("Calldata compress / decompress.", function () {
         return Math.random() < 0.5 ? s.toUpperCase() : s.toLowerCase();
     }
 
+    var totalDataLength = 0;
+    var totalCompressedLength = 0;
     for (var t = 0; t < 10000; ++t) {
         var data = randomData();
         var compressed = solady.LibZip.cdCompress(data);
         var decompressed = solady.LibZip.cdDecompress(compressed);
+        totalDataLength += data.length;
+        totalCompressedLength += compressed.length;
         assertEq(compressed.slice(0, 2), "0x");
         assertEq(decompressed.slice(0, 2), "0x");
         assertEq(decompressed.replace(/^0x/, ""), data.toLowerCase().replace(/^0x/, ""));
     }
+    assert(totalCompressedLength < totalDataLength, "Compress not working as intended.");
 });
 
 test("ERC1967Factory ABI and address.", function () {
