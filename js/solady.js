@@ -53,7 +53,7 @@
 
     /**
      * Compresses hex encoded calldata.
-     * @param {string} data A hex encoded string,
+     * @param {string} data A hex encoded string representing the original data.
      * @returns {string} The compressed result as a hex encoded string.
      */
     LibZip.cdCompress = function (data) {
@@ -91,7 +91,7 @@
 
     /**
      * Decompresses hex encoded calldata.
-     * @param {string} data A hex encoded string,
+     * @param {string} data A hex encoded string representing the compressed data.
      * @returns {string} The decompressed result as a hex encoded string.
      */
     LibZip.cdDecompress = function (data) {
