@@ -32,7 +32,11 @@ contract LibZipTest is SoladyTest {
         unchecked {
             DynamicBufferLib.DynamicBuffer memory buffer;
             bytes memory r = abi.encode(_random());
-            uint256 n = _random() % 8 + 1;
+            if (_random() % 8 == 0) {
+                r = abi.encodePacked(r, r, r, r);
+                r = bytes(LibString.slice(string(r), 0, _random() % r.length));
+            }
+            uint256 n = _random() % 16 + 1;
             uint256 c = _random();
             for (uint256 i; i < n; ++i) {
                 buffer.append((c >> i) & 1 == 0 ? r : data);
