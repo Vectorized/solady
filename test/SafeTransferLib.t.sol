@@ -13,7 +13,7 @@ import {ReturnsTooLittleToken} from "./utils/weird-tokens/ReturnsTooLittleToken.
 
 import "./utils/SoladyTest.sol";
 
-import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC20} from "../src/tokens/ERC20.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 
 contract SafeTransferLibTest is SoladyTest {
