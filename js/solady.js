@@ -1,4 +1,4 @@
-(function (global, factory) {
+(function(global, factory) {
 
     "use strict";
 
@@ -11,7 +11,7 @@
         factory(global);
     }
 
-})(typeof window !== "undefined" ? window : this, function (window, noGlobal) {
+})(typeof window !== "undefined" ? window : this, function(window, noGlobal) {
 
     "use strict";
 
@@ -56,36 +56,39 @@
      * @param {string} data A hex encoded string representing the original data.
      * @returns {string} The compressed result as a hex encoded string.
      */
-    LibZip.cdCompress = function (data) {
+    LibZip.cdCompress = function(data) {
         data = hexString(data);
         var o = "0x";
         var z = 0;
         var y = 0;
+
         function pushByte(b) {
             o += byteToString(o.length < 4 * 2 + 2 ? 0xff ^ b : b);
         }
+
         function rle(v, d) {
             pushByte(0x00);
             pushByte(d - 1 + v * 0x80);
         }
+
         for (var i = 0; i < data.length; i += 2) {
             var c = parseInt(data.slice(i, i + 2), 16);
             if (c === 0x00) {
-                if (y) { rle(1, y); y = 0; }
-                if (++z === 0x80) { rle(0, 0x80); z = 0; }
+                if (y) rle(1, y), y = 0;
+                if (++z === 0x80) rle(0, 0x80), z = 0;
                 continue;
             }
             if (c === 0xff) {
-                if (z) { rle(0, z); z = 0; }
-                if (++y === 0x20) { rle(1, 0x20); y = 0; }
+                if (z) rle(0, z), z = 0;
+                if (++y === 0x20) rle(1, 0x20), y = 0;
                 continue;
             }
-            if (y) { rle(1, y); y = 0; }
-            if (z) { rle(0, z); z = 0; }
+            if (y) rle(1, y), y = 0;
+            if (z) rle(0, z), z = 0;
             pushByte(c);
         }
-        if (y) { rle(1, y); y = 0; }
-        if (z) { rle(0, z); z = 0; }
+        if (y) rle(1, y), y = 0;
+        if (z) rle(0, z), z = 0;
         return o;
     }
 
@@ -94,14 +97,16 @@
      * @param {string} data A hex encoded string representing the compressed data.
      * @returns {string} The decompressed result as a hex encoded string.
      */
-    LibZip.cdDecompress = function (data) {
+    LibZip.cdDecompress = function(data) {
         data = hexString(data);
         var o = "0x";
+
         function getByte(data, i) {
             var c = parseInt(data.slice(i, i + 2), 16);
             return i < 4 * 2 ? 0xff ^ c : c;
         }
-        for (var i = 0; i < data.length; ) {
+
+        for (var i = 0; i < data.length;) {
             var c = getByte(data, i);
             i += 2;
             if (c === 0x00) {
@@ -127,9 +132,11 @@
     }
 
     /*--------------------------- END ----------------------------*/
-    
+
     if (typeof define === "function" && define.amd) {
-        define("solady", [], function () { return solady });
+        define("solady", [], function() {
+            return solady
+        });
     }
 
     if (!noGlobal) {
