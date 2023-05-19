@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {WETH} from "solmate/tokens/WETH.sol";
+import {WETH} from "../src/tokens/WETH.sol";
 import {MockERC20} from "./utils/mocks/MockERC20.sol";
-import {MockAuthChild} from "./utils/mocks/MockAuthChild.sol";
+import {MockCd} from "./utils/mocks/MockCd.sol";
 
 import {CREATE3} from "../src/utils/CREATE3.sol";
 
@@ -40,9 +40,9 @@ contract CREATE3Test is SoladyTest {
     function testDoubleDeploySameBytecodeReverts() public {
         bytes32 salt = keccak256(bytes("Salty..."));
 
-        this.deploy(salt, type(MockAuthChild).creationCode, 0);
+        this.deploy(salt, type(MockCd).creationCode, 0);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        this.deploy(salt, type(MockAuthChild).creationCode, 0);
+        this.deploy(salt, type(MockCd).creationCode, 0);
     }
 
     function testDoubleDeployDifferentBytecodeReverts() public {
@@ -50,7 +50,7 @@ contract CREATE3Test is SoladyTest {
 
         this.deploy(salt, type(WETH).creationCode, 0);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        this.deploy(salt, type(MockAuthChild).creationCode, 0);
+        this.deploy(salt, type(MockCd).creationCode, 0);
     }
 
     function testDeployERC20(
