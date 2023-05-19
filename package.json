@@ -4,8 +4,11 @@
   "version": "0.0.93",
   "description": "Optimized Solidity snippets.",
   "files": [
-    "src/**/*.sol"
+    "src/**/*.sol",
+    "js/**/*.js"
   ],
+  "main": "js/solady.js",
+  "module": "js/solady.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vectorized/solady.git"
