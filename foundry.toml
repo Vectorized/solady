@@ -4,7 +4,8 @@
 
 # The Default Profile
 [profile.default]
-solc_version = '0.8.20'
+solc_version = "0.8.20"
+evm_version = "shanghai"
 auto_detect_solc = false
 optimizer = true
 optimizer_runs = 1_000
@@ -29,14 +30,14 @@ via_ir = true
 runs = 1_000
 
 [profile.min-solc]
-solc_version = '0.8.4'
+solc_version = "0.8.4"
 
 [profile.min-solc.fuzz]
 runs = 1_000
 
 [profile.min-solc-via-ir]
 via_ir = true
-solc_version = '0.8.4'
+solc_version = "0.8.4"
 
 [profile.min-solc-via-ir.fuzz]
 runs = 1_000
