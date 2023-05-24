@@ -11,6 +11,16 @@ import {SafeTransferLib} from "../utils/SafeTransferLib.sol";
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC4626.sol)
 abstract contract ERC4626 is ERC20 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The default underlying decimals.
+    uint8 internal constant _DEFAULT_UNDERLYING_DECIMALS = 18;
+
+    /// @dev The default decimals offset.
+    uint8 internal constant _DEFAULT_DECIMALS_OFFSET = 0;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -56,26 +66,74 @@ abstract contract ERC4626 is ERC20 {
     ///
     /// - MUST NOT revert.
     function _underlyingDecimals() internal view virtual returns (uint8) {
-        return 18;
+        return _DEFAULT_UNDERLYING_DECIMALS;
     }
 
-    /// @dev May be overridden to return a non-zero value to mitigate the inflation attack.
-    /// See: https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
+    /// @dev Override to return a non-zero value to make the inflation attack even more unfeasible.
+    /// Only used when {_useVirtualShares} returns true.
+    /// Default: 0.
     ///
     /// - MUST NOT revert.
     function _decimalsOffset() internal view virtual returns (uint8) {
-        return 0;
+        return _DEFAULT_DECIMALS_OFFSET;
+    }
+
+    /// @dev Returns whether virtual shares will be used to mitigate the inflation attack.
+    /// See: https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
+    /// Override to return true or false.
+    /// Default: true.
+    ///
+    /// - MUST NOT revert.
+    function _useVirtualShares() internal view virtual returns (bool) {
+        return true;
     }
 
     /// @dev Returns the decimals places of the token.
     ///
     /// - MUST NOT revert.
     function decimals() public view virtual override(ERC20) returns (uint8) {
+        if (!_useVirtualShares()) return _underlyingDecimals();
         return _underlyingDecimals() + _decimalsOffset();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          ERC4626                           */
+    /*                ASSET DECIMALS GETTER HELPER                */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Helper function to get the decimals of the underlying asset.
+    /// Useful for setting the return value of `_underlyingDecimals` during initialization.
+    /// If the retrieval succeeds, `success` will be true, and `result` will hold the result.
+    /// Otherwise, `success` will be false, and `result` will be zero.
+    ///
+    /// Example usage:
+    /// ```
+    /// (bool success, uint8 result) = _tryGetAssetDecimals(underlying);
+    /// _decimals = success ? result : _DEFAULT_UNDERLYING_DECIMALS;
+    /// ```
+    function _tryGetAssetDecimals(address underlying)
+        internal
+        view
+        returns (bool success, uint8 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Store the function selector of `decimals()`.
+            mstore(0x00, 0x313ce567)
+            // Arguments are evaluated last to first.
+            if and(
+                // Returned value is less than 256, at left-padded to 32 bytes.
+                and(lt(mload(0x00), 0x100), gt(returndatasize(), 0x1f)),
+                // The staticcall succeeds.
+                staticcall(gas(), underlying, 0x1c, 0x04, 0x00, 0x20)
+            ) {
+                success := 1
+                result := mload(0x00)
+            }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      ACCOUNTING LOGIC                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the total amount of the underlying asset managed by the Vault.
@@ -99,6 +157,12 @@ abstract contract ERC4626 is ERC20 {
     /// should reflect the "average-user's" price-per-share, i.e. what the average user should
     /// expect to see when exchanging to and from.
     function convertToShares(uint256 assets) public view virtual returns (uint256 shares) {
+        if (!_useVirtualShares()) {
+            uint256 supply = totalSupply();
+            return _eitherIsZero(assets, supply)
+                ? _initialConvertToShares(assets)
+                : FixedPointMathLib.fullMulDiv(assets, supply, totalAssets());
+        }
         shares = FixedPointMathLib.fullMulDiv(
             assets, totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1
         );
@@ -116,50 +180,15 @@ abstract contract ERC4626 is ERC20 {
     /// should reflect the "average-user's" price-per-share, i.e. what the average user should
     /// expect to see when exchanging to and from.
     function convertToAssets(uint256 shares) public view virtual returns (uint256 assets) {
+        if (!_useVirtualShares()) {
+            uint256 supply = totalSupply();
+            return supply == 0
+                ? _initialConvertToAssets(shares)
+                : FixedPointMathLib.fullMulDiv(shares, totalAssets(), supply);
+        }
         assets = FixedPointMathLib.fullMulDiv(
             shares, totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset()
         );
-    }
-
-    /// @dev Returns the maximum amount of the underlying asset that can be deposited
-    /// into the Vault for the receiver, via a deposit call.
-    ///
-    /// - MUST return a limited value if receiver is subject to some deposit limit.
-    /// - MUST return `2**256-1` if there is no maximum limit.
-    /// - MUST NOT revert.
-    function maxDeposit(address receiver) public view virtual returns (uint256 maxAssets) {
-        receiver; // Silence unused variable warning.
-        maxAssets = type(uint256).max;
-    }
-
-    /// @dev Returns the maximum amount of the Vault shares that can be minter for the
-    /// receiver, via a mint call.
-    ///
-    /// - MUST return a limited value if receiver is subject to some mint limit.
-    /// - MUST return `2**256-1` if there is no maximum limit.
-    /// - MUST NOT revert.
-    function maxMint(address receiver) public view virtual returns (uint256 maxShares) {
-        receiver; // Silence unused variable warning.
-        maxShares = type(uint256).max;
-    }
-
-    /// @dev Returns the maximum amount of the underlying asset that can be withdrawn
-    /// from the owner's balance in the Vault, via a withdraw call.
-    ///
-    /// - MUST return a limited value if owner is subject to some withdrawal limit or timelock.
-    /// - MUST NOT revert.
-    function maxWithdraw(address owner) public view virtual returns (uint256 maxAssets) {
-        maxAssets = convertToAssets(balanceOf(owner));
-    }
-
-    /// @dev Returns the maximum amount of Vault shares that can be redeemed
-    /// from the owner's balance in the Vault, via a redeem call.
-    ///
-    /// - MUST return a limited value if owner is subject to some withdrawal limit or timelock.
-    /// - MUST return `balanceOf(owner)` otherwise.
-    /// - MUST NOT revert.
-    function maxRedeem(address owner) public view virtual returns (uint256 maxShares) {
-        maxShares = balanceOf(owner);
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their deposit
@@ -195,6 +224,12 @@ abstract contract ERC4626 is ERC20 {
     /// be considered slippage in share price or some other type of condition,
     /// meaning the depositor will lose assets by minting.
     function previewMint(uint256 shares) public view virtual returns (uint256 assets) {
+        if (!_useVirtualShares()) {
+            uint256 supply = totalSupply();
+            return supply == 0
+                ? _initialConvertToAssets(shares)
+                : FixedPointMathLib.fullMulDivUp(shares, totalAssets(), supply);
+        }
         assets = FixedPointMathLib.fullMulDivUp(
             shares, totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset()
         );
@@ -215,6 +250,12 @@ abstract contract ERC4626 is ERC20 {
     /// be considered slippage in share price or some other type of condition,
     /// meaning the depositor will lose assets by depositing.
     function previewWithdraw(uint256 assets) public view virtual returns (uint256 shares) {
+        if (!_useVirtualShares()) {
+            uint256 supply = totalSupply();
+            return _eitherIsZero(assets, supply)
+                ? _initialConvertToShares(assets)
+                : FixedPointMathLib.fullMulDivUp(assets, supply, totalAssets());
+        }
         shares = FixedPointMathLib.fullMulDivUp(
             assets, totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1
         );
@@ -237,6 +278,63 @@ abstract contract ERC4626 is ERC20 {
     function previewRedeem(uint256 shares) public view virtual returns (uint256 assets) {
         assets = convertToAssets(shares);
     }
+
+    /// @dev Private helper to return if either value is zero.
+    function _eitherIsZero(uint256 a, uint256 b) private pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := or(iszero(a), iszero(b))
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              DEPOSIT / WITHDRAWAL LIMIT LOGIC              */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the maximum amount of the underlying asset that can be deposited
+    /// into the Vault for the `receiver`, via a deposit call.
+    ///
+    /// - MUST return a limited value if `receiver` is subject to some deposit limit.
+    /// - MUST return `2**256-1` if there is no maximum limit.
+    /// - MUST NOT revert.
+    function maxDeposit(address receiver) public view virtual returns (uint256 maxAssets) {
+        receiver = receiver; // Silence unused variable warning.
+        maxAssets = type(uint256).max;
+    }
+
+    /// @dev Returns the maximum amount of the Vault shares that can be minter for the
+    /// `receiver`, via a mint call.
+    ///
+    /// - MUST return a limited value if `receiver` is subject to some mint limit.
+    /// - MUST return `2**256-1` if there is no maximum limit.
+    /// - MUST NOT revert.
+    function maxMint(address receiver) public view virtual returns (uint256 maxShares) {
+        receiver = receiver; // Silence unused variable warning.
+        maxShares = type(uint256).max;
+    }
+
+    /// @dev Returns the maximum amount of the underlying asset that can be withdrawn
+    /// from the `owner`'s balance in the Vault, via a withdraw call.
+    ///
+    /// - MUST return a limited value if `owner` is subject to some withdrawal limit or timelock.
+    /// - MUST NOT revert.
+    function maxWithdraw(address owner) public view virtual returns (uint256 maxAssets) {
+        maxAssets = convertToAssets(balanceOf(owner));
+    }
+
+    /// @dev Returns the maximum amount of Vault shares that can be redeemed
+    /// from the `owner`'s balance in the Vault, via a redeem call.
+    ///
+    /// - MUST return a limited value if `owner` is subject to some withdrawal limit or timelock.
+    /// - MUST return `balanceOf(owner)` otherwise.
+    /// - MUST NOT revert.
+    function maxRedeem(address owner) public view virtual returns (uint256 maxShares) {
+        maxShares = balanceOf(owner);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 DEPOSIT / WITHDRAWAL LOGIC                 */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Mints `shares` Vault shares to `receiver` by depositing exactly `assets`
     /// of underlying tokens.
@@ -278,7 +376,7 @@ abstract contract ERC4626 is ERC20 {
     /// - MUST emit the {Withdraw} event.
     /// - MAY support an additional flow in which the underlying tokens are owned by the Vault
     ///   contract before the withdraw execution, and are accounted for during withdraw.
-    /// - MUST revert if all of `assets` cannot be withdrawan, such as due to withdrawal limit,
+    /// - MUST revert if all of `assets` cannot be withdrawn, such as due to withdrawal limit,
     ///   slippage, insufficient balance, etc.
     ///
     /// NOTE: some implementations will require pre-requesting to the Vault before a withdrawal
@@ -315,10 +413,10 @@ abstract contract ERC4626 is ERC20 {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     INTERNAL FUNCTIONS                     */
+    /*                      INTERNAL HELPERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev For deposit and mint.
+    /// @dev For deposits and mints.
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares)
         internal
         virtual
@@ -329,7 +427,7 @@ abstract contract ERC4626 is ERC20 {
         _afterDeposit(assets, shares);
     }
 
-    /// @dev For withdraw and redeem.
+    /// @dev For withdrawals and redemptions.
     function _withdraw(
         address caller,
         address receiver,
@@ -337,22 +435,48 @@ abstract contract ERC4626 is ERC20 {
         uint256 assets,
         uint256 shares
     ) internal virtual {
-        if (caller != owner) {
-            _spendAllowance(owner, caller, shares);
-        }
+        if (caller != owner) _spendAllowance(owner, caller, shares);
         _beforeWithdraw(assets, shares);
         _burn(owner, shares);
         SafeTransferLib.safeTransfer(asset(), receiver, assets);
         emit Withdraw(caller, receiver, owner, assets, shares);
     }
 
+    /// @dev Internal conversion function (from assets to shares) to apply when the Vault is empty.
+    /// Only used when {_useVirtualShares} returns false.
+    ///
+    /// NOTE: Make sure to keep this function consistent with {_initialConvertToAssets}
+    /// when overriding it.
+    function _initialConvertToShares(uint256 assets)
+        internal
+        view
+        virtual
+        returns (uint256 shares)
+    {
+        shares = assets;
+    }
+
+    /// @dev Internal conversion function (from shares to assets) to apply when the Vault is empty.
+    /// Only used when {_useVirtualShares} returns false.
+    ///
+    /// NOTE: Make sure to keep this function consistent with {_initialConvertToShares}
+    /// when overriding it.
+    function _initialConvertToAssets(uint256 shares)
+        internal
+        view
+        virtual
+        returns (uint256 assets)
+    {
+        assets = shares;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HOOKS TO OVERRIDE                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Hook that is called before any withdraw or redeem.
-    function _beforeWithdraw(uint256 assets, uint256 shares) internal virtual;
+    /// @dev Hook that is called before any withdrawal or redemption.
+    function _beforeWithdraw(uint256 assets, uint256 shares) internal virtual {}
 
     /// @dev Hook that is called after any deposit or mint.
-    function _afterDeposit(uint256 assets, uint256 shares) internal virtual;
+    function _afterDeposit(uint256 assets, uint256 shares) internal virtual {}
 }
