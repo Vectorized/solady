@@ -121,15 +121,14 @@ abstract contract ERC4626 is ERC20 {
             // Store the function selector of `decimals()`.
             mstore(0x00, 0x313ce567)
             // Arguments are evaluated last to first.
-            if and(
-                // Returned value is less than 256, at left-padded to 32 bytes.
-                and(lt(mload(0x00), 0x100), gt(returndatasize(), 0x1f)),
-                // The staticcall succeeds.
-                staticcall(gas(), underlying, 0x1c, 0x04, 0x00, 0x20)
-            ) {
-                success := 1
-                result := mload(0x00)
-            }
+            success :=
+                and(
+                    // Returned value is less than 256, at left-padded to 32 bytes.
+                    and(lt(mload(0x00), 0x100), gt(returndatasize(), 0x1f)),
+                    // The staticcall succeeds.
+                    staticcall(gas(), underlying, 0x1c, 0x04, 0x00, 0x20)
+                )
+            result := mul(mload(0x00), success)
         }
     }
 
