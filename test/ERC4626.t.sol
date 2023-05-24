@@ -11,6 +11,16 @@ contract ERC4626Test is SoladyTest {
     MockERC20 underlying;
     MockERC4626 vault;
 
+    event Deposit(address indexed by, address indexed owner, uint256 assets, uint256 shares);
+
+    event Withdraw(
+        address indexed by,
+        address indexed to,
+        address indexed owner,
+        uint256 assets,
+        uint256 shares
+    );
+
     function setUp() public {
         underlying = new MockERC20("Mock Token", "TKN", 18);
         vault = new MockERC4626(address(underlying), "Mock Token Vault", "vwTKN", false, 0);
@@ -207,8 +217,8 @@ contract ERC4626Test is SoladyTest {
         // |            0 |       0 |        0 |       0 |        0 |
         // |______________|_________|__________|_________|__________|
 
-        address alice = address(0xABCD);
-        address bob = address(0xDCBA);
+        address alice = address(0x9988776655443322110000112233445566778899);
+        address bob = address(0x1122334455667788990000998877665544332211);
 
         uint256 mutationUnderlyingAmount = 3000;
 
@@ -228,6 +238,8 @@ contract ERC4626Test is SoladyTest {
 
         // 1. Alice mints 2000 shares (costs 2000 tokens)
         vm.prank(alice);
+        vm.expectEmit(true, true, true, true);
+        emit Deposit(alice, alice, 2000, 2000);
         uint256 aliceUnderlyingAmount = vault.mint(2000, alice);
 
         uint256 aliceShareAmount = vault.previewDeposit(aliceUnderlyingAmount);
@@ -248,6 +260,8 @@ contract ERC4626Test is SoladyTest {
 
         // 2. Bob deposits 4000 tokens (mints 4000 shares)
         vm.prank(bob);
+        vm.expectEmit(true, true, true, true);
+        emit Deposit(bob, bob, 4000, 4000);
         uint256 bobShareAmount = vault.deposit(4000, bob);
         uint256 bobUnderlyingAmount = vault.previewWithdraw(bobShareAmount);
         assertEq(vault.afterDepositHookCalledCounter(), 2);
@@ -353,8 +367,9 @@ contract ERC4626Test is SoladyTest {
         // 9. Alice withdraws 3643 assets (2000 shares)
         // NOTE: Bob's assets have been rounded back up
         vm.prank(alice);
+        vm.expectEmit(true, true, true, true);
+        emit Withdraw(alice, alice, alice, 3643, 2000);
         vault.withdraw(3643, alice, alice);
-
         assertEq(underlying.balanceOf(alice), 6071 - slippage);
         assertEq(vault.totalSupply(), 4392);
         assertEq(vault.totalAssets(), 8001);
@@ -365,6 +380,8 @@ contract ERC4626Test is SoladyTest {
 
         // 10. Bob redeem 4392 shares (8001 tokens)
         vm.prank(bob);
+        vm.expectEmit(true, true, true, true);
+        emit Withdraw(bob, bob, bob, 8001 - slippage, 4392);
         vault.redeem(4392, bob, bob);
         assertEq(underlying.balanceOf(bob), 10930);
         assertEq(vault.totalSupply(), 0);
@@ -460,6 +477,8 @@ contract ERC4626Test is SoladyTest {
 
         // alice deposits 1e18 for bob
         vm.prank(alice);
+        vm.expectEmit(true, true, true, true);
+        emit Deposit(alice, bob, 1e18, 1e18);
         vault.deposit(1e18, bob);
 
         assertEq(vault.balanceOf(alice), 0);
@@ -468,6 +487,8 @@ contract ERC4626Test is SoladyTest {
 
         // bob mint 1e18 for alice
         vm.prank(bob);
+        vm.expectEmit(true, true, true, true);
+        emit Deposit(bob, alice, 1e18, 1e18);
         vault.mint(1e18, alice);
         assertEq(vault.balanceOf(alice), 1e18);
         assertEq(vault.balanceOf(bob), 1e18);
@@ -475,6 +496,8 @@ contract ERC4626Test is SoladyTest {
 
         // alice redeem 1e18 for bob
         vm.prank(alice);
+        vm.expectEmit(true, true, true, true);
+        emit Withdraw(alice, bob, alice, 1e18, 1e18);
         vault.redeem(1e18, bob, alice);
 
         assertEq(vault.balanceOf(alice), 0);
@@ -483,6 +506,8 @@ contract ERC4626Test is SoladyTest {
 
         // bob withdraw 1e18 for alice
         vm.prank(bob);
+        vm.expectEmit(true, true, true, true);
+        emit Withdraw(bob, alice, bob, 1e18, 1e18);
         vault.withdraw(1e18, alice, bob);
 
         assertEq(vault.balanceOf(alice), 0);
