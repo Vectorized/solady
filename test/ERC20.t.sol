@@ -40,7 +40,7 @@ contract ERC20Test is SoladyTest {
         token = new MockERC20("Token", "TKN", 18);
     }
 
-    function invariantMetadata() public {
+    function testMetadata() public {
         assertEq(token.name(), "Token");
         assertEq(token.symbol(), "TKN");
         assertEq(token.decimals(), 18);
@@ -220,13 +220,6 @@ contract ERC20Test is SoladyTest {
 
         vm.expectRevert(ERC20.InsufficientBalance.selector);
         token.transferFrom(from, address(0xBEEF), 1e18);
-    }
-
-    function testMetadata(string calldata name, string calldata symbol, uint8 decimals) public {
-        MockERC20 tkn = new MockERC20(name, symbol, decimals);
-        assertEq(tkn.name(), name);
-        assertEq(tkn.symbol(), symbol);
-        assertEq(tkn.decimals(), decimals);
     }
 
     function testMint(address to, uint256 amount) public {
