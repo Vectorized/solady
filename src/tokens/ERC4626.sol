@@ -171,9 +171,11 @@ abstract contract ERC4626 is ERC20 {
                 ? _initialConvertToShares(assets)
                 : FixedPointMathLib.fullMulDiv(assets, supply, totalAssets());
         }
-        shares = FixedPointMathLib.fullMulDiv(
-            assets, totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1
-        );
+        uint256 o = _decimalsOffset();
+        if (o == 0) {
+            return FixedPointMathLib.fullMulDiv(assets, totalSupply() + 1, _inc(totalAssets()));
+        }
+        return FixedPointMathLib.fullMulDiv(assets, totalSupply() + 10 ** o, _inc(totalAssets()));
     }
 
     /// @dev Returns the amount of assets that the Vault will exchange for the amount of
@@ -194,9 +196,11 @@ abstract contract ERC4626 is ERC20 {
                 ? _initialConvertToAssets(shares)
                 : FixedPointMathLib.fullMulDiv(shares, totalAssets(), supply);
         }
-        assets = FixedPointMathLib.fullMulDiv(
-            shares, totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset()
-        );
+        uint256 o = _decimalsOffset();
+        if (o == 0) {
+            return FixedPointMathLib.fullMulDiv(shares, totalAssets() + 1, _inc(totalSupply()));
+        }
+        return FixedPointMathLib.fullMulDiv(shares, totalAssets() + 1, totalSupply() + 10 ** o);
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their deposit
@@ -238,9 +242,11 @@ abstract contract ERC4626 is ERC20 {
                 ? _initialConvertToAssets(shares)
                 : FixedPointMathLib.fullMulDivUp(shares, totalAssets(), supply);
         }
-        assets = FixedPointMathLib.fullMulDivUp(
-            shares, totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset()
-        );
+        uint256 o = _decimalsOffset();
+        if (o == 0) {
+            return FixedPointMathLib.fullMulDivUp(shares, totalAssets() + 1, _inc(totalSupply()));
+        }
+        return FixedPointMathLib.fullMulDivUp(shares, totalAssets() + 1, totalSupply() + 10 ** o);
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their withdrawal
@@ -264,9 +270,11 @@ abstract contract ERC4626 is ERC20 {
                 ? _initialConvertToShares(assets)
                 : FixedPointMathLib.fullMulDivUp(assets, supply, totalAssets());
         }
-        shares = FixedPointMathLib.fullMulDivUp(
-            assets, totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1
-        );
+        uint256 o = _decimalsOffset();
+        if (o == 0) {
+            return FixedPointMathLib.fullMulDivUp(assets, totalSupply() + 1, _inc(totalAssets()));
+        }
+        return FixedPointMathLib.fullMulDivUp(assets, totalSupply() + 10 ** o, _inc(totalAssets()));
     }
 
     /// @dev Allows an on-chain or off-chain user to simulate the effects of their redemption
@@ -292,6 +300,13 @@ abstract contract ERC4626 is ERC20 {
         /// @solidity memory-safe-assembly
         assembly {
             result := or(iszero(a), iszero(b))
+        }
+    }
+
+    /// @dev Private helper to return the value plus one.
+    function _inc(uint256 x) private pure returns (uint256) {
+        unchecked {
+            return x + 1;
         }
     }
 
