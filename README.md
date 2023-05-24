@@ -17,6 +17,7 @@ auth
 tokens
 ├─ WETH — "Simple Wrapped Ether implementation"
 ├─ ERC20 — "Simple ERC20 + EIP-2612 implementation"
+├─ ERC4626 — "Simple ERC4626 tokenized Vault implementation"
 ├─ ERC721 — "Simple ERC721 implementation with storage hitchhiking"
 ├─ ERC1155 — "Simple ERC1155 implementation"
 utils
