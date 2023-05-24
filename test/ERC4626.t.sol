@@ -321,9 +321,10 @@ contract ERC4626Test is SoladyTest {
         // 6. Vault mutates by +3000 tokens
         // NOTE: Vault holds 17001 tokens, but sum of assetsOf() is 17000.
         underlying.mint(address(vault), mutationUnderlyingAmount);
-        assertEq(vault.totalAssets(), 17001 - slippage);
         assertEq(vault.convertToAssets(vault.balanceOf(alice)), 6071 - slippage);
         assertEq(vault.convertToAssets(vault.balanceOf(bob)), 10929 - slippage);
+        assertEq(vault.totalSupply(), 9333);
+        assertEq(vault.totalAssets(), 17001 - slippage);
 
         // 7. Alice redeem 1333 shares (2428 assets)
         vm.prank(alice);
