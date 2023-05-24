@@ -63,6 +63,7 @@ abstract contract ERC4626 is ERC20 {
     function asset() public view virtual returns (address);
 
     /// @dev To be overridden to return the number of decimals of the underlying asset.
+    /// Default: 18.
     ///
     /// - MUST NOT revert.
     function _underlyingDecimals() internal view virtual returns (uint8) {
