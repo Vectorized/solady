@@ -9,7 +9,7 @@ jobs:
     
     strategy:
       matrix:
-        profile: [via-ir,min-solc,min-solc-via-ir,intense,solc-past-versions-0,solc-past-versions-1]
+        profile: [via-ir,min-solc,min-solc-via-ir,intense,solc-past-versions-0,solc-past-versions-1,shanghai,shanghai-via-ir]
 
     steps:
       - uses: actions/checkout@v3
@@ -27,6 +27,12 @@ jobs:
 
       - name: Run Tests with ${{ matrix.profile }}
         run: >
+          ( [ "${{ matrix.profile }}" = "shanghai" ] && 
+            forge test --use 0.8.20
+          ) ||
+          ( [ "${{ matrix.profile }}" = "shanghai-via-ir" ] && 
+            forge test --use 0.8.20 --via-ir
+          ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] && 
             forge test --use 0.8.5 &&
             forge test --use 0.8.6 &&
@@ -43,7 +49,6 @@ jobs:
             forge test --use 0.8.15 &&
             forge test --use 0.8.16 &&
             forge test --use 0.8.17 &&
-            forge test --use 0.8.18 &&
-            forge test --use 0.8.19
+            forge test --use 0.8.18
           ) || 
           FOUNDRY_PROFILE=${{ matrix.profile }} forge test
