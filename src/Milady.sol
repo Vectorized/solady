@@ -38,6 +38,7 @@ import "./auth/Ownable.sol";
 import "./auth/OwnableRoles.sol";
 import "./tokens/WETH.sol";
 import "./tokens/ERC20.sol";
+import "./tokens/ERC4626.sol";
 import "./tokens/ERC721.sol";
 import "./tokens/ERC1155.sol";
 import "./utils/Base64.sol";
