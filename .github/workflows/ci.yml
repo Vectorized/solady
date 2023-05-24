@@ -28,10 +28,10 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "shanghai" ] && 
-            forge test --use 0.8.20
+            forge test --use 0.8.20 --evm-version "shanghai"
           ) ||
           ( [ "${{ matrix.profile }}" = "shanghai-via-ir" ] && 
-            forge test --use 0.8.20 --via-ir
+            forge test --use 0.8.20 --evm-version "shanghai" --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] && 
             forge test --use 0.8.5 &&
@@ -40,10 +40,10 @@ jobs:
             forge test --use 0.8.8 &&
             forge test --use 0.8.9 &&
             forge test --use 0.8.10 &&
-            forge test --use 0.8.11 &&
-            forge test --use 0.8.12
+            forge test --use 0.8.11
           ) || 
           ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] &&
+            forge test --use 0.8.12 &&
             forge test --use 0.8.13 &&
             forge test --use 0.8.14 &&
             forge test --use 0.8.15 &&
