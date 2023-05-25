@@ -6,6 +6,7 @@ import "./utils/SoladyTest.sol";
 import {ERC20, MockERC20} from "./utils/mocks/MockERC20.sol";
 import {ERC4626, MockERC4626} from "./utils/mocks/MockERC4626.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
+import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
 contract ERC4626Test is SoladyTest {
     MockERC20 underlying;
@@ -32,6 +33,31 @@ contract ERC4626Test is SoladyTest {
 
     function _replaceWithVirtualSharesVault() internal {
         _replaceWithVirtualSharesVault(0);
+    }
+
+    function testDifferentialFullMulDiv(uint256 x, uint256 y, uint256 d) public {
+        d = type(uint256).max - d % 4;
+        (bool success0,) = address(this).call(
+            abi.encodeWithSignature("fullMulDivChecked(uint256,uint256,uint256)", x, y, d)
+        );
+        (bool success1,) = address(this).call(
+            abi.encodeWithSignature("fullMulDivUnchecked(uint256,uint256,uint256)", x, y, d)
+        );
+        if (d == type(uint256).max) {
+            assertFalse(success0);
+            assertFalse(success1);
+        }
+        assertEq(success0, success1);
+    }
+
+    function fullMulDivChecked(uint256 x, uint256 y, uint256 d) public pure {
+        FixedPointMathLib.fullMulDiv(x, y, d + 1);
+    }
+
+    function fullMulDivUnchecked(uint256 x, uint256 y, uint256 d) public pure {
+        unchecked {
+            FixedPointMathLib.fullMulDiv(x, y, d + 1);
+        }
     }
 
     function testMetadata() public {
