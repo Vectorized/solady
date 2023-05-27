@@ -247,6 +247,15 @@ contract SafeCastLibTest is SoladyTest {
         SafeCastLib.toInt248(x);
     }
 
+    function testSafeCastToInt256(uint256 x) public {
+        if (x > uint256(type(int256).max)) {
+            vm.expectRevert(SafeCastLib.Overflow.selector);
+            SafeCastLib.toInt256(x);
+        } else {
+            assertEq(SafeCastLib.toInt256(x), int256(x));
+        }
+    }
+
     function testSafeCastToIntBench() public {
         unchecked {
             int256 sum;
