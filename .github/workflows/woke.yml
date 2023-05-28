@@ -7,6 +7,10 @@ jobs:
     name: Woke Testing
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        profile: [via-ir-off, via-ir-on]
+
     steps:
       - uses: actions/checkout@v3
 
@@ -20,6 +24,10 @@ jobs:
 
       - name: Install Woke
         run: pip3 install woke
+
+      - name: Copy Woke config
+        if: ${{ matrix.profile }} == 'via-ir-on'
+        run: cp woke-via-ir.toml woke.toml
 
       - name: Generate pytypes
         run: woke init pytypes
