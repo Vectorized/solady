@@ -1,0 +1,28 @@
+name: Woke tests
+
+on: [push]
+
+jobs:
+  tests:
+    name: Woke Testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Install Woke
+        run: pip3 install woke
+
+      - name: Generate pytypes
+        run: woke init pytypes
+
+      - name: Run tests
+        run: woke test
