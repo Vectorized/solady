@@ -192,6 +192,11 @@ abstract contract ERC1155 {
             // Clear the upper 96 bits.
             from := shr(96, fromSlotSeed)
             to := shr(96, toSlotSeed)
+            // Revert if `to` is the zero address.
+            if iszero(to) {
+                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
+                revert(0x1c, 0x04)
+            }
             // If the caller is not `from`, do the authorization check.
             if iszero(eq(caller(), from)) {
                 mstore(0x00, caller())
@@ -199,11 +204,6 @@ abstract contract ERC1155 {
                     mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
                     revert(0x1c, 0x04)
                 }
-            }
-            // Revert if `to` is the zero address.
-            if iszero(to) {
-                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
-                revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance of `from`.
             {
@@ -780,6 +780,11 @@ abstract contract ERC1155 {
         assembly {
             let from_ := shl(96, from)
             let to_ := shl(96, to)
+            // Revert if `to` is the zero address.
+            if iszero(to_) {
+                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
+                revert(0x1c, 0x04)
+            }
             mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, from_))
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
@@ -790,11 +795,6 @@ abstract contract ERC1155 {
                     mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
                     revert(0x1c, 0x04)
                 }
-            }
-            // Revert if `to` is the zero address.
-            if iszero(to_) {
-                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
-                revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance of `from`.
             {
@@ -872,14 +872,14 @@ abstract contract ERC1155 {
             }
             let from_ := shl(96, from)
             let to_ := shl(96, to)
-            let fromSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, from_)
-            let toSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, to_)
-            mstore(0x20, fromSlotSeed)
             // Revert if `to` is the zero address.
             if iszero(to_) {
                 mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
                 revert(0x1c, 0x04)
             }
+            let fromSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, from_)
+            let toSlotSeed := or(_ERC1155_MASTER_SLOT_SEED, to_)
+            mstore(0x20, fromSlotSeed)
             // If `by` is not the zero address, and not equal to `from`,
             // check if it is approved to manage all the tokens of `from`.
             let by_ := shl(96, by)
