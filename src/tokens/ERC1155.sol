@@ -824,10 +824,10 @@ abstract contract ERC1155 {
             // forgefmt: disable-next-line
             log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), shr(96, from_), shr(96, to_))
         }
-        if (_hasCode(to)) _checkOnERC1155Received(from, to, id, amount, data);
         if (_useAfterTokenTransfer()) {
             _afterTokenTransfer(from, to, _single(id), _single(amount), data);
         }
+        if (_hasCode(to)) _checkOnERC1155Received(from, to, id, amount, data);
     }
 
     /// @dev Equivalent to `_safeBatchTransfer(address(0), from, to, ids, amounts, data)`.
@@ -940,10 +940,10 @@ abstract contract ERC1155 {
                 log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), shr(96, from_), shr(96, to_))
             }
         }
-        if (_hasCode(to)) _checkOnERC1155BatchReceived(from, to, ids, amounts, data);
         if (_useAfterTokenTransfer()) {
             _afterTokenTransfer(from, to, ids, amounts, data);
         }
+        if (_hasCode(to)) _checkOnERC1155BatchReceived(from, to, ids, amounts, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
