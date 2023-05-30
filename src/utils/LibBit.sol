@@ -110,7 +110,7 @@ library LibBit {
         }
     }
 
-    /// @dev Returns `x` at the bit level.
+    /// @dev Returns `x` reversed at the bit level.
     function reverseBits(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
