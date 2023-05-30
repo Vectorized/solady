@@ -681,7 +681,7 @@ abstract contract ERC1155 {
                 for { let i := 0 } iszero(eq(i, end)) {} {
                     i := add(i, 0x20)
                     let amount := mload(add(amounts, i))
-                    // Increase and store the updated balance of `to`.
+                    // Decrease and store the updated balance of `to`.
                     {
                         mstore(0x00, mload(add(ids, i)))
                         let fromBalanceSlot := keccak256(0x00, 0x40)
