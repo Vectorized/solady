@@ -191,36 +191,45 @@ contract ERC1155HooksTest is SoladyTest, ERC1155TokenReceiver {
     }
 
     function _testHooks(MockERC1155WithHooks token) internal {
+        address from = _randomNonZeroAddress();
         expectedBeforeCounter++;
         expectedAfterCounter++;
         token.mint(address(this), 1, 1000, "");
 
         expectedBeforeCounter++;
         expectedAfterCounter++;
-        token.safeTransferFrom(address(this), address(1), 1, 1, "");
+        token.safeTransferFrom(address(this), from, 1, 1000, "");
 
+        vm.prank(from);
         expectedBeforeCounter++;
         expectedAfterCounter++;
-        token.directSafeTransferFrom(address(this), address(1), 1, 1, "");
+        token.safeTransferFrom(from, address(this), 1, 1, "");
+
+        vm.prank(from);
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.directSafeTransferFrom(from, address(this), 1, 1, "");
 
         uint256[] memory ids = new uint256[](1);
         uint256[] memory amounts = new uint256[](1);
         ids[0] = 1;
         amounts[0] = 1;
 
+        vm.prank(from);
         expectedBeforeCounter++;
         expectedAfterCounter++;
-        token.safeBatchTransferFrom(address(this), address(1), ids, amounts, "");
+        token.safeBatchTransferFrom(from, address(this), ids, amounts, "");
 
+        vm.prank(from);
         expectedBeforeCounter++;
         expectedAfterCounter++;
-        token.directSafeBatchTransferFrom(address(this), address(1), ids, amounts, "");
+        token.directSafeBatchTransferFrom(from, address(this), ids, amounts, "");
     }
 
     function testERC1155Hooks() public {
         MockERC1155WithHooks token = new MockERC1155WithHooks();
 
-        for (uint256 i; i < 3; ++i) {
+        for (uint256 i; i < 32; ++i) {
             _testHooks(token);
         }
     }

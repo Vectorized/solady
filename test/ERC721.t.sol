@@ -105,7 +105,11 @@ contract ERC721HooksTest is SoladyTest, ERC721TokenReceiver {
             uint256(keccak256(abi.encode(expectedBeforeCounter, expectedAfterCounter)));
         expectedBeforeCounter++;
         expectedAfterCounter++;
-        token.mint(from, tokenId);
+        token.mint(address(this), tokenId);
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.transferFrom(address(this), from, tokenId);
 
         expectedBeforeCounter++;
         expectedAfterCounter++;
