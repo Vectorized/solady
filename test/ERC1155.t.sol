@@ -347,6 +347,12 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         token = new MockERC1155();
     }
 
+    function testDirectSetApprovalForAll(address by, address operator, bool approved) public {
+        _expectApprovalForAllEvent(by, operator, approved);
+        vm.prank(by);
+        token.directSetApprovalForAll(operator, approved);
+    }
+
     function testAuthorizedEquivalence(address by, address from, bool isApprovedAccount) public {
         bool a = true;
         bool b = true;
