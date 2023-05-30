@@ -123,6 +123,123 @@ contract WrongReturnDataERC1155Recipient is ERC1155TokenReceiver {
 
 contract NonERC1155Recipient {}
 
+contract MockERC1155WithHooks is MockERC1155 {
+    uint256 public beforeCounter;
+    uint256 public afterCounter;
+
+    function _useBeforeTokenTransfer() internal view virtual override returns (bool) {
+        return true;
+    }
+
+    function _useAfterTokenTransfer() internal view virtual override returns (bool) {
+        return true;
+    }
+
+    function _beforeTokenTransfer(
+        address,
+        address,
+        uint256[] memory,
+        uint256[] memory,
+        bytes memory
+    ) internal virtual override {
+        beforeCounter++;
+    }
+
+    function _afterTokenTransfer(address, address, uint256[] memory, uint256[] memory, bytes memory)
+        internal
+        virtual
+        override
+    {
+        afterCounter++;
+    }
+}
+
+contract ERC1155TestHooks is SoladyTest, ERC1155TokenReceiver {
+    uint256 public expectedBeforeCounter;
+    uint256 public expectedAfterCounter;
+
+    function _checkCounters() internal view {
+        require(
+            expectedBeforeCounter == MockERC1155WithHooks(msg.sender).beforeCounter(),
+            "Before counter mismatch."
+        );
+        require(
+            expectedAfterCounter == MockERC1155WithHooks(msg.sender).afterCounter(),
+            "After counter mismatch."
+        );
+    }
+
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+        external
+        virtual
+        override
+        returns (bytes4)
+    {
+        _checkCounters();
+        return ERC1155TokenReceiver.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata,
+        bytes calldata
+    ) external virtual override returns (bytes4) {
+        _checkCounters();
+        return ERC1155TokenReceiver.onERC1155BatchReceived.selector;
+    }
+
+    function testERC1155Hooks() public {
+        MockERC1155WithHooks token = new MockERC1155WithHooks();
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.mint(address(this), 1, 1000, "");
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.mint(address(this), 1, 1000, "");
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.safeTransferFrom(address(this), address(1), 1, 1, "");
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.safeTransferFrom(address(this), address(1), 1, 1, "");
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.directSafeTransferFrom(address(this), address(1), 1, 1, "");
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.directSafeTransferFrom(address(this), address(1), 1, 1, "");
+
+        uint256[] memory ids = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+        ids[0] = 1;
+        amounts[0] = 1;
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.safeBatchTransferFrom(address(this), address(1), ids, amounts, "");
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.safeBatchTransferFrom(address(this), address(1), ids, amounts, "");
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.directSafeBatchTransferFrom(address(this), address(1), ids, amounts, "");
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.directSafeBatchTransferFrom(address(this), address(1), ids, amounts, "");
+    }
+}
+
 contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
     MockERC1155 token;
 
