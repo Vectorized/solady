@@ -60,6 +60,83 @@ contract WrongReturnDataERC721Recipient is ERC721TokenReceiver {
 
 contract NonERC721Recipient {}
 
+contract MockERC721WithHooks is MockERC721 {
+    uint256 public beforeCounter;
+    uint256 public afterCounter;
+
+    function _beforeTokenTransfer(address, address, uint256) internal virtual override {
+        beforeCounter++;
+    }
+
+    function _afterTokenTransfer(address, address, uint256) internal virtual override {
+        afterCounter++;
+    }
+}
+
+contract ERC721HooksTest is SoladyTest, ERC721TokenReceiver {
+    uint256 public expectedBeforeCounter;
+    uint256 public expectedAfterCounter;
+    uint256 public ticker;
+
+    function _checkCounters() internal view {
+        require(
+            expectedBeforeCounter == MockERC721WithHooks(msg.sender).beforeCounter(),
+            "Before counter mismatch."
+        );
+        require(
+            expectedAfterCounter == MockERC721WithHooks(msg.sender).afterCounter(),
+            "After counter mismatch."
+        );
+    }
+
+    function onERC721Received(address, address, uint256, bytes calldata)
+        external
+        virtual
+        override
+        returns (bytes4)
+    {
+        _checkCounters();
+        return ERC721TokenReceiver.onERC721Received.selector;
+    }
+
+    function _testHooks(MockERC721WithHooks token) internal {
+        address from = _randomNonZeroAddress();
+        uint256 tokenId =
+            uint256(keccak256(abi.encode(expectedBeforeCounter, expectedAfterCounter)));
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.mint(address(this), tokenId);
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        token.transferFrom(address(this), from, tokenId);
+
+        expectedBeforeCounter++;
+        expectedAfterCounter++;
+        uint256 r = ticker < 4 ? ticker : _random() % 4;
+        vm.prank(from);
+        if (r == 0) {
+            token.safeTransferFrom(from, address(this), tokenId);
+        } else if (r == 1) {
+            token.safeTransferFrom(from, address(this), tokenId, "");
+        } else if (r == 2) {
+            token.directSafeTransferFrom(from, address(this), tokenId);
+        } else if (r == 3) {
+            token.directSafeTransferFrom(from, address(this), tokenId, "");
+        } else {
+            revert();
+        }
+    }
+
+    function testERC721Hooks() public {
+        MockERC721WithHooks token = new MockERC721WithHooks();
+
+        for (uint256 i; i < 32; ++i) {
+            _testHooks(token);
+        }
+    }
+}
+
 contract ERC721Test is SoladyTest {
     MockERC721 token;
 
