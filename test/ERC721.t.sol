@@ -100,23 +100,25 @@ contract ERC721HooksTest is SoladyTest, ERC721TokenReceiver {
     }
 
     function _testHooks(MockERC721WithHooks token) internal {
+        address from = _randomNonZeroAddress();
         uint256 tokenId =
             uint256(keccak256(abi.encode(expectedBeforeCounter, expectedAfterCounter)));
         expectedBeforeCounter++;
         expectedAfterCounter++;
-        token.mint(address(this), tokenId);
+        token.mint(from, tokenId);
 
         expectedBeforeCounter++;
         expectedAfterCounter++;
         uint256 r = ticker < 4 ? ticker : _random() % 4;
+        vm.prank(from);
         if (r == 0) {
-            token.safeTransferFrom(address(this), address(1), tokenId);
+            token.safeTransferFrom(from, address(this), tokenId);
         } else if (r == 1) {
-            token.safeTransferFrom(address(this), address(1), tokenId, "");
+            token.safeTransferFrom(from, address(this), tokenId, "");
         } else if (r == 2) {
-            token.directSafeTransferFrom(address(this), address(1), tokenId);
+            token.directSafeTransferFrom(from, address(this), tokenId);
         } else if (r == 3) {
-            token.directSafeTransferFrom(address(this), address(1), tokenId, "");
+            token.directSafeTransferFrom(from, address(this), tokenId, "");
         } else {
             revert();
         }
