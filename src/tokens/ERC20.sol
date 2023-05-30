@@ -7,8 +7,8 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol)
 /// Note:
 /// The ERC20 standard allows minting and transferring to and from the zero address,
-/// as well as minting and transferring zero tokens.
-/// For performance, this implementation WILL NOT revert for these cases.
+/// minting and transferring zero tokens, as well as self-approvals.
+/// For performance, this implementation WILL NOT revert for such actions.
 /// Please add any checks with overrides if desired.
 abstract contract ERC20 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
