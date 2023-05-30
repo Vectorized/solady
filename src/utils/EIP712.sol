@@ -7,7 +7,7 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/EIP712.sol)
 /// Note, this implementation:
 /// - Uses `address(this)` for the `verifyingContract` field.
-/// - Does NOT use the optional EIP-712 salt. 
+/// - Does NOT use the optional EIP-712 salt.
 /// - Does NOT use any EIP-712 extensions.
 /// This is for simplicity and to save gas.
 /// If you need to customize, please fork / modify accordingly.
@@ -79,8 +79,6 @@ abstract contract EIP712 {
         pure
         virtual
         returns (string memory name, string memory version);
-
-    function _eip712VerifyingContract
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
