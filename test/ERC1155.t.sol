@@ -154,7 +154,7 @@ contract MockERC1155WithHooks is MockERC1155 {
     }
 }
 
-contract ERC1155TestHooks is SoladyTest, ERC1155TokenReceiver {
+contract ERC1155HooksTest is SoladyTest, ERC1155TokenReceiver {
     uint256 public expectedBeforeCounter;
     uint256 public expectedAfterCounter;
 
