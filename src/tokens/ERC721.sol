@@ -5,6 +5,10 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC721.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC721/ERC721.sol)
+/// Note:
+/// The ERC721 standard allows for self-approvals.
+/// For performance, this implementation WILL NOT revert for such actions.
+/// Please add any checks with overrides if desired.
 abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
