@@ -28,27 +28,19 @@
     solady.LibZip = LibZip;
 
     function hexString(data) {
-        var isHexString = false;
         if (typeof data === "string" || data instanceof String) {
-            data = data.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "").toLowerCase();
-            if (data.match(/^(0x)?[0-9a-f]*$/)) {
-                data = data.replace(/^0x/, "");
-                if (data.length % 2 > 0) {
+            if (data = data.match(/^[\s\uFEFF\xA0]*(0[Xx])?([0-9A-Fa-f]*)[\s\uFEFF\xA0]*$/)) {
+                if (data[2].length % 2) {
                     throw new Error("Hex string length must be a multiple of 2.");
-                } else {
-                    isHexString = true;
                 }
+                return data[2];
             }
         }
-        if (!isHexString) {
-            throw new Error("Data must be a hex string.");
-        }
-        return data;
+        throw new Error("Data must be a hex string.");
     }
 
     function byteToString(b) {
-        b = b.toString(16);
-        return b.length === 1 ? "0" + b : b;
+        return (b | 0x100).toString(16).slice(1);
     }
 
     /**
@@ -58,12 +50,10 @@
      */
     LibZip.cdCompress = function(data) {
         data = hexString(data);
-        var o = "0x";
-        var z = 0;
-        var y = 0;
+        var o = "0x", z = 0, y = 0, i = 0, c;
 
         function pushByte(b) {
-            o += byteToString(o.length < 4 * 2 + 2 ? 0xff ^ b : b);
+            o += byteToString(((o.length < 4 * 2 + 2) * 0xff) ^ b);
         }
 
         function rle(v, d) {
@@ -71,8 +61,8 @@
             pushByte(d - 1 + v * 0x80);
         }
 
-        for (var i = 0; i < data.length; i += 2) {
-            var c = parseInt(data.slice(i, i + 2), 16);
+        for (; i < data.length; i += 2) {
+            c = parseInt(data.slice(i, i + 2), 16);
             if (c === 0x00) {
                 if (y) rle(1, y), y = 0;
                 if (++z === 0x80) rle(0, 0x80), z = 0;
@@ -99,22 +89,20 @@
      */
     LibZip.cdDecompress = function(data) {
         data = hexString(data);
-        var o = "0x";
+        var o = "0x", i = 0, c, s;
 
-        function getByte(data, i) {
-            var c = parseInt(data.slice(i, i + 2), 16);
-            return i < 4 * 2 ? 0xff ^ c : c;
+        function getByte(j) {
+            return ((j < 4 * 2) * 0xff) ^ parseInt(data.slice(j, j + 2), 16);
         }
 
-        for (var i = 0; i < data.length;) {
-            var c = getByte(data, i);
+        while (i < data.length) {
+            c = getByte(i);
             i += 2;
             if (c === 0x00) {
-                var d = getByte(data, i);
-                var s = (d & 0x7f) + 1;
+                c = getByte(i);
+                s = (c & 0x7f) + 1;
                 i += 2;
-                var b = d < 0x80 ? 0x00 : 0xff;
-                for (var j = 0; j < s; ++j) o += byteToString(b);
+                while (s--) o += byteToString((c >> 7) * 0xff);
                 continue;
             }
             o += byteToString(c);
@@ -128,7 +116,7 @@
 
     solady.ERC1967Factory = {
         "address": "0x0000000000006396FF2a80c067f99B3d2Ab4Df24",
-        "abi": JSON.parse('[{0:[],1:"DeploymentFailed"96"SaltDoesNotStartWithCaller"96"Unauthorized"96"UpgradeFailed",2:3959790,9791],1:"AdminChanged",2:10959790,9792,9791],1:"Deployed",2:10959790,9792],1:"Upgraded",2:10},{0:[{90],1:"adminOf",12:[{9199{0:[{90,{91],1:"changeAdmin",12:[],13:"nonpayable",2:15},{0:[{92,{91],1:"deploy",12:[{9098,{0:[{92,{91,{94],1:"deployAndCall",12:[{9098,{0:[{92,{91,{93],1:"deployDeterministic",12:[{9098,{0:[{92,{91,{93,{94],1:"deployDeterministicAndCall",12:[{9098,{0:[],1:"initCodeHash",12:[{6:19,1:"result",2:19}99{0:[{93],1:"predictDeterministicAddress",12:[{6:7,1:"predicted",2:7}99{0:[{90,{92],1:"upgrade",12:[98,{0:[{90,{92,{94],1:"upgradeAndCall",12:[98]'.replace(/9\d/g, function (m) { return ["6:7,1:8,2:7}","6:7,1:9,2:7}","6:7,1:11,2:7}","6:19,1:20,2:19}","6:17,1:18,2:17}","},{4:false,0:[",",2:3},{0:[],1:","{5:true,","],13:16,2:15}","],13:14,2:15},"][m-90] }).replace(/\d+/g, function (m) { return '"' + ("inputs,name,type,error,anonymous,indexed,internalType,address,proxy,admin,event,implementation,outputs,stateMutability,view,function,payable,bytes,data,bytes32,salt".split(",")[~~m]) + '"' }))
+        "abi": JSON.parse('[{0:[],1:"DeploymentFailed"96"SaltDoesNotStartWithCaller"96"Unauthorized"96"UpgradeFailed",2:3959790,9791],1:"AdminChanged",2:10959790,9792,9791],1:"Deployed",2:10959790,9792],1:"Upgraded",2:10},{0:[{90],1:"adminOf",12:[{9199{0:[{90,{91],1:"changeAdmin",12:[],13:"nonpayable",2:15},{0:[{92,{91],1:"deploy",12:[{9098,{0:[{92,{91,{94],1:"deployAndCall",12:[{9098,{0:[{92,{91,{93],1:"deployDeterministic",12:[{9098,{0:[{92,{91,{93,{94],1:"deployDeterministicAndCall",12:[{9098,{0:[],1:"initCodeHash",12:[{6:19,1:"result",2:19}99{0:[{93],1:"predictDeterministicAddress",12:[{6:7,1:"predicted",2:7}99{0:[{90,{92],1:"upgrade",12:[98,{0:[{90,{92,{94],1:"upgradeAndCall",12:[98]'.replace(/9\d/g, function (m) { return ["6:7,1:8,2:7}","6:7,1:9,2:7}","6:7,1:11,2:7}","6:19,1:20,2:19}","6:17,1:18,2:17}","},{4:false,0:[",",2:3},{0:[],1:","{5:true,","],13:16,2:15}","],13:14,2:15},"][m-90] }).replace(/\d+/g, function (m) { return '"' + ("inputs,name,type,error,anonymous,indexed,internalType,address,proxy,admin,event,implementation,outputs,stateMutability,view,function,payable,bytes,data,bytes32,salt".split(",")[m]) + '"' }))
     }
 
     /*--------------------------- END ----------------------------*/

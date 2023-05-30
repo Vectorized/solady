@@ -20,12 +20,18 @@ function assertEq(a, b) {
     assert(a === b, "Assertion failed!\n    Expected: " + b + "\n    Actual: " + a);
 }
 
+function expectRevert(fn) {
+    var hasRevert = false;
+    try { fn() } catch (e) { hasRevert = true }
+    assert(hasRevert, "Revert expected.\n" + fn);
+}
+
 test("Calldata compress / decompress.", function() {
     function randomData() {
         var n = ~~(Math.random() * 2000);
         var s = Math.random() < 0.5 ? "" : "0x";
-        var g = Math.random() < 0.5 ? 0.45 : 0.99;
-        var h = Math.random() < 0.5 ? 0.90 : 0.9999;
+        var g = Math.random() < 0.5 ? 0.45 : (Math.random() ? 0.99 : 0.999);
+        var h = g + 0.5 * (1.0 - g);
         for (var i = 0; i < n; ++i) {
             var r = Math.random();
             if (r < g) {
@@ -40,12 +46,20 @@ test("Calldata compress / decompress.", function() {
         return Math.random() < 0.5 ? s.toUpperCase() : s.toLowerCase();
     }
 
+    function padRandomWhitespace(data) {
+        var before = "";
+        var after = "";
+        while (Math.random() < 0.5) before += Math.random() ? "\t" : " ";
+        while (Math.random() < 0.5) after += Math.random() ? "\t" : " ";
+        return before + data + after;
+    }
+
     var totalDataLength = 0;
     var totalCompressedLength = 0;
     for (var t = 0; t < 10000; ++t) {
         var data = randomData();
-        var compressed = solady.LibZip.cdCompress(data);
-        var decompressed = solady.LibZip.cdDecompress(compressed);
+        var compressed = solady.LibZip.cdCompress(padRandomWhitespace(data));
+        var decompressed = solady.LibZip.cdDecompress(padRandomWhitespace(compressed));
         totalDataLength += data.length;
         totalCompressedLength += compressed.length;
         assertEq(compressed.slice(0, 2), "0x");
@@ -53,6 +67,23 @@ test("Calldata compress / decompress.", function() {
         assertEq(decompressed.replace(/^0x/, ""), data.toLowerCase().replace(/^0x/, ""));
     }
     assert(totalCompressedLength < totalDataLength, "Compress not working as intended.");
+
+    assertEq(solady.LibZip.cdCompress(""), "0x");
+    assertEq(solady.LibZip.cdCompress("0x"), "0x");
+    assertEq(solady.LibZip.cdDecompress(""), "0x");
+    assertEq(solady.LibZip.cdDecompress("0x"), "0x");
+
+    function checkRevertOnInvalidInputs(fn) {
+        expectRevert(function () { fn("hehe") });
+        expectRevert(function () { fn("0xa") });
+        expectRevert(function () { fn("0xas") });
+        expectRevert(function () { fn(123) });
+        expectRevert(function () { fn(false) });
+        expectRevert(function () { fn(null) });
+    }
+
+    checkRevertOnInvalidInputs(solady.LibZip.cdCompress);
+    checkRevertOnInvalidInputs(solady.LibZip.cdDecompress);
 });
 
 test("Calldata compress", function() {
