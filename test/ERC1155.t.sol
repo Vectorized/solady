@@ -190,13 +190,7 @@ contract ERC1155HooksTest is SoladyTest, ERC1155TokenReceiver {
         return ERC1155TokenReceiver.onERC1155BatchReceived.selector;
     }
 
-    function testERC1155Hooks() public {
-        MockERC1155WithHooks token = new MockERC1155WithHooks();
-
-        expectedBeforeCounter++;
-        expectedAfterCounter++;
-        token.mint(address(this), 1, 1000, "");
-
+    function _testHooks(MockERC1155WithHooks token) internal {
         expectedBeforeCounter++;
         expectedAfterCounter++;
         token.mint(address(this), 1, 1000, "");
@@ -204,14 +198,6 @@ contract ERC1155HooksTest is SoladyTest, ERC1155TokenReceiver {
         expectedBeforeCounter++;
         expectedAfterCounter++;
         token.safeTransferFrom(address(this), address(1), 1, 1, "");
-
-        expectedBeforeCounter++;
-        expectedAfterCounter++;
-        token.safeTransferFrom(address(this), address(1), 1, 1, "");
-
-        expectedBeforeCounter++;
-        expectedAfterCounter++;
-        token.directSafeTransferFrom(address(this), address(1), 1, 1, "");
 
         expectedBeforeCounter++;
         expectedAfterCounter++;
@@ -228,15 +214,15 @@ contract ERC1155HooksTest is SoladyTest, ERC1155TokenReceiver {
 
         expectedBeforeCounter++;
         expectedAfterCounter++;
-        token.safeBatchTransferFrom(address(this), address(1), ids, amounts, "");
-
-        expectedBeforeCounter++;
-        expectedAfterCounter++;
         token.directSafeBatchTransferFrom(address(this), address(1), ids, amounts, "");
+    }
 
-        expectedBeforeCounter++;
-        expectedAfterCounter++;
-        token.directSafeBatchTransferFrom(address(this), address(1), ids, amounts, "");
+    function testERC1155Hooks() public {
+        MockERC1155WithHooks token = new MockERC1155WithHooks();
+
+        for (uint256 i; i < 3; ++i) {
+            _testHooks(token);
+        }
     }
 }
 
