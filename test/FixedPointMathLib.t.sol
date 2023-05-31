@@ -738,6 +738,8 @@ contract FixedPointMathLibTest is SoladyTest {
                 assertEq(FixedPointMathLib.factorial(i), result);
             }
         }
+        vm.expectRevert(FixedPointMathLib.FactorialOverflow.selector);
+        FixedPointMathLib.factorial(58);
     }
 
     function testFactorialOriginal() public {
