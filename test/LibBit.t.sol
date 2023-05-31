@@ -102,4 +102,28 @@ contract LibBitTest is SoladyTest {
         }
         assertEq(LibBit.toUint(b), z);
     }
+
+    function testReverseBitsDifferential(uint256 x) public {
+        assertEq(LibBit.reverseBits(x), _reverseBitsOriginal(x));
+    }
+
+    function _reverseBitsOriginal(uint256 x) internal pure returns (uint256 r) {
+        unchecked {
+            for (uint256 i; i != 256; ++i) {
+                r = (r << 1) | ((x >> i) & 1);
+            }
+        }
+    }
+
+    function testReverseBytesDifferential(uint256 x) public {
+        assertEq(LibBit.reverseBytes(x), _reverseBytesOriginal(x));
+    }
+
+    function _reverseBytesOriginal(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for { let i := 0 } lt(i, 32) { i := add(i, 1) } { mstore8(i, byte(sub(31, i), x)) }
+            r := mload(0x00)
+        }
+    }
 }
