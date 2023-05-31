@@ -38,24 +38,22 @@ library DynamicBufferLib {
                 // we know that the `capacity` is for a dynamic buffer.
                 // Selected to be larger than any memory pointer realistically.
                 let prime := 1621250193422201
-                let capacity := mload(add(bufferData, w))
+                let capacity := mload(add(bufferData, w)) // `mload(sub(bufferData, 0x20))`.
 
-                // Extract `capacity`, and set it to 0, if it is not a multiple of `prime`.
+                // Extract `capacity`, initializing it to zero if it is not a multiple of `prime`.
                 capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
 
                 // Expand / Reallocate memory if required.
-                // Note that we need to allocate an exta word for the length, and
+                // Note that we need to allocate an extra word for the length, and
                 // and another extra word as a safety word (giving a total of 0x40 bytes).
-                // Without the safety word, the data at the next free memory word can be overwritten,
-                // because the backwards copying can exceed the buffer space used for storage.
+                // Without the safety word, the backwards copying can cause a buffer overflow.
                 for {} iszero(lt(newBufferDataLength, capacity)) {} {
-                    // Approximately double the memory with a heuristic,
-                    // ensuring more than enough space for the combined data,
-                    // rounding up to the next multiple of 32.
+                    // Set `newCapacity` to `(2 * capacity + 0x20) / 0x20 * 0x20`,
+                    // ensuring more than enough space.
                     let newCapacity :=
                         and(add(capacity, add(or(capacity, newBufferDataLength), 0x20)), w)
 
-                    // If next word after current buffer is not eligible for use.
+                    // If the memory is discontiguous, we have to reallocate.
                     if iszero(eq(mload(0x40), add(bufferData, add(0x40, capacity)))) {
                         // Set the `newBufferData` to point to the word after capacity.
                         let newBufferData := add(mload(0x40), 0x20)
@@ -69,15 +67,15 @@ library DynamicBufferLib {
                             o := add(o, w) // `sub(o, 0x20)`.
                             if iszero(o) { break }
                         }
-                        // Store the `capacity` multiplied by `prime` in the word before the `length`.
+                        // Store the `capacity * prime` in the word before the `length`.
                         mstore(add(newBufferData, w), mul(prime, newCapacity))
                         // Assign `newBufferData` to `bufferData`.
                         bufferData := newBufferData
                         break
                     }
-                    // Expand the memory.
+                    // Otherwise, we can expand the memory.
                     mstore(0x40, add(bufferData, add(0x40, newCapacity)))
-                    // Store the `capacity` multiplied by `prime` in the word before the `length`.
+                    // Store the `capacity * prime` in the word before the `length`.
                     mstore(add(bufferData, w), mul(prime, newCapacity))
                     break
                 }
