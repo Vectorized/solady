@@ -27,12 +27,12 @@ contract DynamicBufferLibTest is SoladyTest {
                 // Manually store the randomness in the next free memory word,
                 // and then check if append will corrupt it
                 // (in the case of insufficient memory allocation).
-                uint256 corruptCheck;
+                uint256 corruptCheckSlot;
                 /// @solidity memory-safe-assembly
                 assembly {
-                    corruptCheck := mload(0x40)
-                    mstore(corruptCheck, randomness)
-                    mstore(0x40, add(corruptCheck, 0x20))
+                    corruptCheckSlot := mload(0x40)
+                    mstore(corruptCheckSlot, randomness)
+                    mstore(0x40, add(corruptCheckSlot, 0x20))
                 }
                 buffer.append(inputs[i]);
                 assertEq(buffer.data.length, expectedLength);
@@ -40,7 +40,7 @@ contract DynamicBufferLibTest is SoladyTest {
                 bool isCorrupted;
                 /// @solidity memory-safe-assembly
                 assembly {
-                    isCorrupted := iszero(eq(randomness, mload(corruptCheck)))
+                    isCorrupted := iszero(eq(randomness, mload(corruptCheckSlot)))
                 }
                 assertFalse(isCorrupted);
             }
