@@ -529,33 +529,15 @@ library FixedPointMathLib {
     function factorial(uint256 x) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            for {} 1 {} {
-                if iszero(lt(10, x)) {
-                    // forgefmt: disable-next-item
-                    result := and(
-                        shr(mul(22, x), 0x375f0016260009d80004ec0002d00001e0000180000180000200000400001),
-                        0x3fffff
-                    )
-                    break
-                }
-                if iszero(lt(57, x)) {
-                    let end := 31
-                    result := 8222838654177922817725562880000000
-                    if iszero(lt(end, x)) {
-                        end := 10
-                        result := 3628800
-                    }
-                    for { let w := not(0) } 1 {} {
-                        result := mul(result, x)
-                        x := add(x, w)
-                        if eq(x, end) { break }
-                    }
-                    break
-                }
+            if iszero(lt(x, 58)) {
                 // Store the function selector of `FactorialOverflow()`.
                 mstore(0x00, 0xaba0f2a2)
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
+            }
+            for { result := 1 } x {} {
+                result := mul(result, x)
+                x := sub(x, 1)
             }
         }
     }
