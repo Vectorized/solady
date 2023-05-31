@@ -114,21 +114,15 @@ library LibBit {
     function reverseBits(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            r := or(shr(128, x), shl(128, x))
-            let m := 0xffffffffffffffff0000000000000000ffffffffffffffff
-            r := or(and(shr(64, r), m), and(shl(64, r), not(m)))
-            m := xor(m, shl(32, m))
-            r := or(and(shr(32, r), m), and(shl(32, r), not(m)))
-            m := xor(m, shl(16, m))
-            r := or(and(shr(16, r), m), and(shl(16, r), not(m)))
-            m := xor(m, shl(8, m))
-            r := or(and(shr(8, r), m), and(shl(8, r), not(m)))
-            m := xor(m, shl(4, m))
-            r := or(and(shr(4, r), m), and(shl(4, r), not(m)))
-            m := xor(m, shl(2, m))
-            r := or(and(shr(2, r), m), and(shl(2, r), not(m)))
-            m := xor(m, shl(1, m))
-            r := or(and(shr(1, r), m), and(shl(1, r), not(m)))
+            // Computing masks on-the-fly reduces bytecode size by about 500 bytes.
+            let m := not(0)
+            r := x
+            for { let s := 128 } 1 {} {
+                m := xor(m, shl(s, m))
+                r := or(and(shr(s, r), m), and(shl(s, r), not(m)))
+                s := shr(1, s)
+                if iszero(s) { break }
+            }
         }
     }
 
@@ -136,15 +130,15 @@ library LibBit {
     function reverseBytes(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            r := or(shr(128, x), shl(128, x))
-            let m := 0xffffffffffffffff0000000000000000ffffffffffffffff
-            r := or(and(shr(64, r), m), and(shl(64, r), not(m)))
-            m := xor(m, shl(32, m))
-            r := or(and(shr(32, r), m), and(shl(32, r), not(m)))
-            m := xor(m, shl(16, m))
-            r := or(and(shr(16, r), m), and(shl(16, r), not(m)))
-            m := xor(m, shl(8, m))
-            r := or(and(shr(8, r), m), and(shl(8, r), not(m)))
+            // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
+            let m := not(0)
+            r := x
+            for { let s := 128 } 1 {} {
+                m := xor(m, shl(s, m))
+                r := or(and(shr(s, r), m), and(shl(s, r), not(m)))
+                s := shr(1, s)
+                if eq(s, 4) { break }
+            }
         }
     }
 
