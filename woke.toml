@@ -1,0 +1,27 @@
+[compiler.solc]
+ignore_paths = ["node_modules", ".woke-build", "venv", "lib", "test"]
+include_paths = ["node_modules"]
+remappings = [
+    "ds-test/=lib/ds-test/src/",
+    "forge-std/=test/utils/forge-std/",
+]
+
+[compiler.solc.optimizer]
+enabled = true
+runs = 1000
+
+[detectors]
+exclude = ["unused-contract"]
+ignore_paths = ["node_modules", ".woke-build", "venv", "lib"]
+
+[testing]
+cmd = "anvil"
+
+[testing.anvil]
+cmd_args = "--prune-history 100 --transaction-block-keeper 10 --steps-tracing --silent"
+
+[testing.ganache]
+cmd_args = "-k istanbul -q"
+
+[testing.hardhat]
+cmd_args = ""
