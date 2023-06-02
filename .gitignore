@@ -25,3 +25,11 @@ broadcast
 
 # Coverage
 lcov.info
+
+.woke-build
+.woke-logs
+pytypes
+__pycache__/
+*.py[cod]
+.hypothesis/
+woke-coverage.cov
