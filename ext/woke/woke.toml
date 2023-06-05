@@ -1,5 +1,5 @@
 [compiler.solc]
-ignore_paths = ["node_modules", ".woke-build", "venv", "lib", "test"]
+ignore_paths = ["node_modules", ".woke-build", "venv", "lib", "test", "ext"]
 include_paths = ["node_modules"]
 remappings = [
     "ds-test/=lib/ds-test/src/",
