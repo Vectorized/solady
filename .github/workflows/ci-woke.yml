@@ -1,0 +1,39 @@
+name: ci - Woke
+
+on: [push]
+
+jobs:
+  tests:
+    name: Woke Testing
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        profile: [via-ir-off, via-ir-on]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Move Woke test files
+        run: mv ext/woke tests && mv tests/woke*.toml .
+
+      - name: Install Woke
+        run: pip3 install woke
+
+      - name: Copy Woke config
+        if: ${{ matrix.profile }} == 'via-ir-on'
+        run: cp woke-via-ir.toml woke.toml
+
+      - name: Generate pytypes
+        run: woke init pytypes
+
+      - name: Run tests
+        run: woke test
