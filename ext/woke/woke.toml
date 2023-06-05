@@ -12,7 +12,7 @@ runs = 1000
 
 [detectors]
 exclude = ["unused-contract"]
-ignore_paths = ["node_modules", ".woke-build", "venv", "lib"]
+ignore_paths = ["node_modules", ".woke-build", "venv", "lib", "ext"]
 
 [testing]
 cmd = "anvil"
