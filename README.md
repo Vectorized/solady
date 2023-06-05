@@ -8,7 +8,23 @@ Gas optimized Solidity snippets.
 
 I'm sooooooOooooooooOoooOoooooooooooooooo...
 
+## Installation
+
+To install with [**Foundry**](https://github.com/gakonst/foundry):
+
+```sh
+forge install vectorized/solady
+```
+
+To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffle**](https://github.com/trufflesuite/truffle):
+
+```sh
+npm install solady
+```
+
 ## Contracts
+
+The Solidity smart contracts are located in the `src` directory.
 
 ```ml
 auth
@@ -50,6 +66,15 @@ utils
 └─ DateTimeLib — "Library for date time operations"
 ```
 
+## Directories
+
+```ml
+src — "The Solidity smart contracts"
+js — "Accompanying JavaScript helper library"
+test — "Foundry Forge tests"
+ext — "Extra tests"
+```
+
 ## Contributing
 
 This repository serves as a laboratory for cutting edge snippets that may be merged into [Solmate](https://github.com/rari-capital/solmate).
@@ -67,20 +92,6 @@ We **do not give any warranties** and **will not be liable for any loss** incurr
 While Solady has been heavily tested, there may be parts that may exhibit unexpected emergent behavior when used with other code, or may break in future Solidity versions.  
 
 Please always include your own thorough tests when using Solady to make sure it works correctly with your code.  
-
-## Installation
-
-To install with [**Foundry**](https://github.com/gakonst/foundry):
-
-```sh
-forge install vectorized/solady
-```
-
-To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffle**](https://github.com/trufflesuite/truffle):
-
-```sh
-npm install solady
-```
 
 ## Upgradability
 
