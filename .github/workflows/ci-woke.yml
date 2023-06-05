@@ -30,10 +30,7 @@ jobs:
 
       - name: Copy Woke config
         if: ${{ matrix.profile }} == 'via-ir-on'
-        run: cp woke-via-ir.toml woke.toml
-
-      - name: Generate pytypes
-        run: woke init pytypes
+        run: cp ext/woke/woke-via-ir.toml ext/woke/woke.toml
 
       - name: Run tests
-        run: woke test
+        run: ./ext/woke.sh
