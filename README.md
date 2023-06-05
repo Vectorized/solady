@@ -69,9 +69,9 @@ utils
 ## Directories
 
 ```ml
-src — "The Solidity smart contracts"
-js — "Accompanying JavaScript helper library"
+src — "Solidity smart contracts"
 test — "Foundry Forge tests"
+js — "Accompanying JavaScript helper library"
 ext — "Extra tests"
 ```
 
