@@ -245,8 +245,8 @@ abstract contract ERC1155 {
             if extcodesize(to) {
                 // Prepare the calldata.
                 let m := mload(0x40)
-                let onERC1155ReceivedSelector := 0xf23a6e61
-                mstore(m, onERC1155ReceivedSelector)
+                // `onERC1155Received(address,address,uint256,uint256,bytes)`.
+                mstore(m, 0xf23a6e61)
                 mstore(add(m, 0x20), caller())
                 mstore(add(m, 0x40), from)
                 mstore(add(m, 0x60), id)
@@ -262,8 +262,8 @@ abstract contract ERC1155 {
                     }
                     mstore(m, 0)
                 }
-                // Load the returndata and compare it.
-                if iszero(eq(mload(m), shl(224, onERC1155ReceivedSelector))) {
+                // Load the returndata and compare it with the function selector.
+                if iszero(eq(mload(m), shl(224, 0xf23a6e61))) {
                     mstore(0x00, 0x9c05499b) // `TransferToNonERC1155ReceiverImplementer()`.
                     revert(0x1c, 0x04)
                 }
@@ -376,8 +376,8 @@ abstract contract ERC1155 {
             if extcodesize(to) {
                 let m := mload(0x40)
                 // Prepare the calldata.
-                let onERC1155BatchReceivedSelector := 0xbc197c81
-                mstore(m, onERC1155BatchReceivedSelector)
+                // `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+                mstore(m, 0xbc197c81)
                 mstore(add(m, 0x20), caller())
                 mstore(add(m, 0x40), from)
                 // Copy the `ids`.
@@ -406,8 +406,8 @@ abstract contract ERC1155 {
                     }
                     mstore(m, 0)
                 }
-                // Load the returndata and compare it.
-                if iszero(eq(mload(m), shl(224, onERC1155BatchReceivedSelector))) {
+                // Load the returndata and compare it with the function selector.
+                if iszero(eq(mload(m), shl(224, 0xbc197c81))) {
                     mstore(0x00, 0x9c05499b) // `TransferToNonERC1155ReceiverImplementer()`.
                     revert(0x1c, 0x04)
                 }
@@ -1031,8 +1031,8 @@ abstract contract ERC1155 {
         assembly {
             // Prepare the calldata.
             let m := mload(0x40)
-            let onERC1155ReceivedSelector := 0xf23a6e61
-            mstore(m, onERC1155ReceivedSelector)
+            // `onERC1155Received(address,address,uint256,uint256,bytes)`.
+            mstore(m, 0xf23a6e61)
             mstore(add(m, 0x20), caller())
             mstore(add(m, 0x40), shr(96, shl(96, from)))
             mstore(add(m, 0x60), id)
@@ -1050,8 +1050,8 @@ abstract contract ERC1155 {
                 }
                 mstore(m, 0)
             }
-            // Load the returndata and compare it.
-            if iszero(eq(mload(m), shl(224, onERC1155ReceivedSelector))) {
+            // Load the returndata and compare it with the function selector.
+            if iszero(eq(mload(m), shl(224, 0xf23a6e61))) {
                 mstore(0x00, 0x9c05499b) // `TransferToNonERC1155ReceiverImplementer()`.
                 revert(0x1c, 0x04)
             }
@@ -1071,8 +1071,8 @@ abstract contract ERC1155 {
         assembly {
             // Prepare the calldata.
             let m := mload(0x40)
-            let onERC1155BatchReceivedSelector := 0xbc197c81
-            mstore(m, onERC1155BatchReceivedSelector)
+            // `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+            mstore(m, 0xbc197c81)
             mstore(add(m, 0x20), caller())
             mstore(add(m, 0x40), shr(96, shl(96, from)))
             // Copy the `ids`.
@@ -1101,8 +1101,8 @@ abstract contract ERC1155 {
                 }
                 mstore(m, 0)
             }
-            // Load the returndata and compare it.
-            if iszero(eq(mload(m), shl(224, onERC1155BatchReceivedSelector))) {
+            // Load the returndata and compare it with the function selector.
+            if iszero(eq(mload(m), shl(224, 0xbc197c81))) {
                 mstore(0x00, 0x9c05499b) // `TransferToNonERC1155ReceiverImplementer()`.
                 revert(0x1c, 0x04)
             }
