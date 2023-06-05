@@ -27,6 +27,7 @@ broadcast
 lcov.info
 
 # Woke testing
+tests
 .woke-build
 .woke-logs
 pytypes
