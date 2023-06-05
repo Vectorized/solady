@@ -73,6 +73,7 @@ src — "Solidity smart contracts"
 test — "Foundry Forge tests"
 js — "Accompanying JavaScript helper library"
 ext — "Extra tests"
+audits — "Audit reports"
 ```
 
 ## Contributing
