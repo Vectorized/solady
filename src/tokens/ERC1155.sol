@@ -406,7 +406,7 @@ abstract contract ERC1155 {
                     }
                     mstore(m, 0)
                 }
-                // Load the returndata and compare it to the function selector.
+                // Load the returndata and compare it with the function selector.
                 if iszero(eq(mload(m), shl(224, 0xbc197c81))) {
                     mstore(0x00, 0x9c05499b) // `TransferToNonERC1155ReceiverImplementer()`.
                     revert(0x1c, 0x04)
