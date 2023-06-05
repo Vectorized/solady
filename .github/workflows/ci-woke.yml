@@ -22,9 +22,6 @@ jobs:
       - name: Install Dependencies
         run: forge install
 
-      - name: Move Woke test files
-        run: mv ext/woke tests && mv tests/woke*.toml .
-
       - name: Install Woke
         run: pip3 install woke
 
