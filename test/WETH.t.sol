@@ -12,6 +12,7 @@ contract ContractWithoutReceive {}
 
 contract WETHTest is SoladyTest {
     WETH weth;
+    address alice = vm.addr(uint256(keccak256(abi.encode(string("solady")))));
 
     event Deposit(address indexed from, uint256 amount);
 
@@ -67,6 +68,29 @@ contract WETHTest is SoladyTest {
         assertEq(weth.totalSupply(), 1 ether);
     }
 
+    function testDepositTo() public {
+        assertEq(weth.balanceOf(address(this)), 0);
+        assertEq(weth.totalSupply(), 0);
+
+        _expectDepositEvent(alice, 1 ether);
+        weth.depositTo{value: 1 ether}(alice);
+
+        assertEq(weth.totalSupply(), 1 ether);
+        assertEq(weth.balanceOf(alice), 1 ether);
+    }
+
+    function testDepositAndApprove() public {
+        assertEq(weth.balanceOf(address(this)), 0);
+        assertEq(weth.totalSupply(), 0);
+
+        assertEq(weth.allowance(address(this), alice), 0);
+        _expectDepositEvent(1 ether);
+        weth.depositAndApprove{value: 1 ether}(alice);
+
+        assertEq(weth.allowance(address(this), alice), 1 ether);
+        assertEq(weth.balanceOf(address(this)), 1 ether);
+    }
+
     function testWithdraw() public {
         uint256 startingBalance = address(this).balance;
 
@@ -81,6 +105,19 @@ contract WETHTest is SoladyTest {
         assertEq(balanceAfterWithdraw, startingBalance);
         assertEq(weth.balanceOf(address(this)), 0);
         assertEq(weth.totalSupply(), 0);
+    }
+
+    function testWithdrawTo() public {
+        uint256 startingBalance = address(alice).balance;
+        _expectDepositEvent(1 ether);
+
+        weth.deposit{value: 1 ether}();
+        _expectWithdrawalEvent(alice, 1 ether);
+        weth.withdrawTo(alice, 1 ether);
+
+        uint256 afterbalance = address(alice).balance;
+
+        assertEq(afterbalance - startingBalance, 1 ether);
     }
 
     function testPartialWithdraw() public {
@@ -141,6 +178,34 @@ contract WETHTest is SoladyTest {
         assertEq(weth.totalSupply(), amount);
     }
 
+    function testDepositTo(address to, uint256 amount) public {
+        amount = _bound(amount, 0, address(this).balance);
+
+        assertEq(weth.balanceOf(to), 0);
+        assertEq(weth.totalSupply(), 0);
+
+        _expectDepositEvent(to, amount);
+        weth.depositTo{value: amount}(to);
+
+        assertEq(weth.balanceOf(to), amount);
+        assertEq(weth.totalSupply(), amount);
+    }
+
+    function testDepositAndApprove(address to, uint256 amount) public {
+        amount = _bound(amount, 0, address(this).balance);
+
+        assertEq(weth.balanceOf(address(this)), 0);
+        assertEq(weth.totalSupply(), 0);
+        assertEq(weth.allowance(address(this), to), 0);
+
+        _expectDepositEvent( amount);
+        weth.depositAndApprove{value: amount}(to);
+
+        assertEq(weth.balanceOf(address(this)), amount);
+        assertEq(weth.totalSupply(), amount);
+        assertEq(weth.allowance(address(this), to), amount);
+    }
+
     function testWithdraw(uint256 depositAmount, uint256 withdrawAmount) public {
         depositAmount = _bound(depositAmount, 0, address(this).balance);
         withdrawAmount = _bound(withdrawAmount, 0, depositAmount);
@@ -151,10 +216,30 @@ contract WETHTest is SoladyTest {
         uint256 balanceBeforeWithdraw = address(this).balance;
 
         _expectWithdrawalEvent(withdrawAmount);
-        weth.withdraw(withdrawAmount);
+        weth.withdraw( withdrawAmount);
 
         uint256 balanceAfterWithdraw = address(this).balance;
 
+        assertEq(balanceAfterWithdraw, balanceBeforeWithdraw + withdrawAmount);
+        assertEq(weth.balanceOf(address(this)), depositAmount - withdrawAmount);
+        assertEq(weth.totalSupply(), depositAmount - withdrawAmount);
+    }
+
+    function testWithdrawTo(uint256 depositAmount, uint256 withdrawAmount) public {
+        depositAmount = _bound(depositAmount, 0, address(this).balance);
+        withdrawAmount = _bound(withdrawAmount, 0, depositAmount);
+
+        _expectDepositEvent(depositAmount);
+        weth.deposit{value: depositAmount}();
+
+       
+        uint256 balanceBeforeWithdraw = address(alice).balance;
+
+        _expectWithdrawalEvent(alice, withdrawAmount);
+        weth.withdrawTo(alice, withdrawAmount);
+
+        uint256 balanceAfterWithdraw = address(alice).balance;
+       
         assertEq(balanceAfterWithdraw, balanceBeforeWithdraw + withdrawAmount);
         assertEq(weth.balanceOf(address(this)), depositAmount - withdrawAmount);
         assertEq(weth.totalSupply(), depositAmount - withdrawAmount);
@@ -177,6 +262,7 @@ contract WETHInvariants is SoladyTest, InvariantTest {
     function invariantTotalSupplyEqualsBalance() public {
         assertEq(address(weth).balance, weth.totalSupply());
     }
+    receive() external payable {}
 }
 
 contract WETHTester {
