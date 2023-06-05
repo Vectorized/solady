@@ -198,7 +198,7 @@ contract WETHTest is SoladyTest {
         assertEq(weth.totalSupply(), 0);
         assertEq(weth.allowance(address(this), to), 0);
 
-        _expectDepositEvent( amount);
+        _expectDepositEvent(amount);
         weth.depositAndApprove{value: amount}(to);
 
         assertEq(weth.balanceOf(address(this)), amount);
@@ -216,7 +216,7 @@ contract WETHTest is SoladyTest {
         uint256 balanceBeforeWithdraw = address(this).balance;
 
         _expectWithdrawalEvent(withdrawAmount);
-        weth.withdraw( withdrawAmount);
+        weth.withdraw(withdrawAmount);
 
         uint256 balanceAfterWithdraw = address(this).balance;
 
@@ -232,14 +232,13 @@ contract WETHTest is SoladyTest {
         _expectDepositEvent(depositAmount);
         weth.deposit{value: depositAmount}();
 
-       
         uint256 balanceBeforeWithdraw = address(alice).balance;
 
         _expectWithdrawalEvent(alice, withdrawAmount);
         weth.withdrawTo(alice, withdrawAmount);
 
         uint256 balanceAfterWithdraw = address(alice).balance;
-       
+
         assertEq(balanceAfterWithdraw, balanceBeforeWithdraw + withdrawAmount);
         assertEq(weth.balanceOf(address(this)), depositAmount - withdrawAmount);
         assertEq(weth.totalSupply(), depositAmount - withdrawAmount);
@@ -262,6 +261,7 @@ contract WETHInvariants is SoladyTest, InvariantTest {
     function invariantTotalSupplyEqualsBalance() public {
         assertEq(address(weth).balance, weth.totalSupply());
     }
+
     receive() external payable {}
 }
 
