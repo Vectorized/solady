@@ -1,4 +1,4 @@
-name: Woke
+name: ci - Woke
 
 on: [push]
 
