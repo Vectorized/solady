@@ -214,7 +214,7 @@ library LibString {
     /// The output is prefixed with "0x", encoded using 2 hexadecimal digits per byte,
     /// and the alphabets are capitalized conditionally according to
     /// https://eips.ethereum.org/EIPS/eip-55
-    function toHexStringChecksumed(address value) internal pure returns (string memory str) {
+    function toHexStringChecksummed(address value) internal pure returns (string memory str) {
         str = toHexString(value);
         /// @solidity memory-safe-assembly
         assembly {
