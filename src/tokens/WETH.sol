@@ -97,15 +97,6 @@ contract WETH is ERC20 {
         }
     }
 
-    /// @dev Deposits `amount` ETH of the caller and mints `amount` WETH to the caller.
-    /// @dev Sets `amount` as the allowance of `spender` over the tokens of `owner`.
-    /// @notice It will update old allowance to new allowance.
-    /// Emits a {Deposit} event.
-    function depositAndApprove(address spender) external payable virtual {
-        deposit();
-        _approve(msg.sender, spender, msg.value);
-    }
-
     /// @dev Burns `amount` WETH of the caller and sends `amount` ETH to the `to`.
     ///
     /// Emits a {Withdrawal} event.

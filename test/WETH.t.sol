@@ -79,18 +79,6 @@ contract WETHTest is SoladyTest {
         assertEq(weth.balanceOf(alice), 1 ether);
     }
 
-    function testDepositAndApprove() public {
-        assertEq(weth.balanceOf(address(this)), 0);
-        assertEq(weth.totalSupply(), 0);
-
-        assertEq(weth.allowance(address(this), alice), 0);
-        _expectDepositEvent(1 ether);
-        weth.depositAndApprove{value: 1 ether}(alice);
-
-        assertEq(weth.allowance(address(this), alice), 1 ether);
-        assertEq(weth.balanceOf(address(this)), 1 ether);
-    }
-
     function testWithdraw() public {
         uint256 startingBalance = address(this).balance;
 
@@ -189,21 +177,6 @@ contract WETHTest is SoladyTest {
 
         assertEq(weth.balanceOf(to), amount);
         assertEq(weth.totalSupply(), amount);
-    }
-
-    function testDepositAndApprove(address to, uint256 amount) public {
-        amount = _bound(amount, 0, address(this).balance);
-
-        assertEq(weth.balanceOf(address(this)), 0);
-        assertEq(weth.totalSupply(), 0);
-        assertEq(weth.allowance(address(this), to), 0);
-
-        _expectDepositEvent(amount);
-        weth.depositAndApprove{value: amount}(to);
-
-        assertEq(weth.balanceOf(address(this)), amount);
-        assertEq(weth.totalSupply(), amount);
-        assertEq(weth.allowance(address(this), to), amount);
     }
 
     function testWithdraw(uint256 depositAmount, uint256 withdrawAmount) public {
