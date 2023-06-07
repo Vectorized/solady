@@ -9,7 +9,7 @@ abstract contract ERC2981 {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The royalty fee exceeds the fee denominator.
+    /// @dev The royalty fee numerator exceeds the fee denominator.
     error RoyaltyOverflow();
 
     /// @dev The royalty receiver cannot be the zero address.
@@ -71,7 +71,7 @@ abstract contract ERC2981 {
         virtual
         returns (address receiver, uint256 royaltyAmount)
     {
-        uint256 d = _feeDenominator();
+        uint256 feeDenominator = _feeDenominator();
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, tokenId)
@@ -85,8 +85,9 @@ abstract contract ERC2981 {
             let x := salePrice
             let y := xor(packed, shl(96, receiver)) // `feeNumerator`.
             // Overflow check, equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
+            // Out-of-gas revert. Should not be triggered in practice, but included for safety.
             returndatacopy(returndatasize(), returndatasize(), mul(y, gt(x, div(not(0), y))))
-            royaltyAmount := div(mul(x, y), d)
+            royaltyAmount := div(mul(x, y), feeDenominator)
         }
     }
 

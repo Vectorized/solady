@@ -40,6 +40,18 @@ contract ERC2981Test is SoladyTest {
         t.royaltyFractions[1] = _bound(_random(), 0, t.feeDenominator);
     }
 
+    function testRoyaltyOverflowCheckDifferential(uint256 x, uint256 y) public {
+        unchecked {
+            bool expected = x != 0 && (x * y) / x != y;
+            bool computed;
+            /// @solidity memory-safe-assembly
+            assembly {
+                computed := mul(y, gt(x, div(not(0), y)))
+            }
+            assertEq(computed, expected);
+        }
+    }
+
     function testSetAndGetRoyaltyInfo(uint256) public {
         _TestTemps memory t = _testTemps();
 
