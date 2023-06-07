@@ -41,7 +41,7 @@ abstract contract ERC2981 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Checks that `_feeDenominator` is non-zero.
-    constructor() payable {
+    constructor() {
         require(_feeDenominator() != 0, "Fee denominator cannot be zero.");
     }
 
@@ -85,6 +85,7 @@ abstract contract ERC2981 {
             let x := salePrice
             let y := xor(packed, shl(96, receiver)) // `feeNumerator`.
             // Overflow check, equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
+            // Out-of-gas revert. Should not be triggered in practice, but included for safety.
             returndatacopy(returndatasize(), returndatasize(), mul(y, gt(x, div(not(0), y))))
             royaltyAmount := div(mul(x, y), feeDenominator)
         }
