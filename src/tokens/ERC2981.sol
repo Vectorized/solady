@@ -21,7 +21,7 @@ abstract contract ERC2981 {
 
     /// @dev The default royalty info is given by:
     /// ```
-    ///     let packed := sload(not(_ERC2981_MASTER_SLOT_SEED))
+    ///     let packed := sload(_ERC2981_MASTER_SLOT_SEED)
     ///     let receiver := shr(96, packed)
     ///     let royaltyFraction := xor(packed, shl(96, receiver))
     /// ```
@@ -34,7 +34,7 @@ abstract contract ERC2981 {
     ///     let receiver := shr(96, packed)
     ///     let royaltyFraction := xor(packed, shl(96, receiver))
     /// ```
-    uint256 private constant _ERC2981_MASTER_SLOT_SEED = 0xaa4ec00224afcc4f;
+    uint256 private constant _ERC2981_MASTER_SLOT_SEED = 0xaa4ec00224afccfdb7;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          ERC2981                           */
@@ -79,7 +79,7 @@ abstract contract ERC2981 {
             let packed := sload(keccak256(0x00, 0x40))
             receiver := shr(96, packed)
             if iszero(receiver) {
-                packed := sload(not(mload(0x20)))
+                packed := sload(mload(0x20))
                 receiver := shr(96, packed)
             }
             let x := salePrice
@@ -109,7 +109,7 @@ abstract contract ERC2981 {
                 mstore(0x00, 0xb4457eaa) // `RoyaltyReceiverIsZeroAddress()`.
                 revert(0x1c, 0x04)
             }
-            sstore(not(_ERC2981_MASTER_SLOT_SEED), or(packed, feeNumerator))
+            sstore(_ERC2981_MASTER_SLOT_SEED, or(packed, feeNumerator))
         }
     }
 
@@ -117,7 +117,7 @@ abstract contract ERC2981 {
     function _deleteDefaultRoyalty() internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            sstore(not(_ERC2981_MASTER_SLOT_SEED), 0)
+            sstore(_ERC2981_MASTER_SLOT_SEED, 0)
         }
     }
 
