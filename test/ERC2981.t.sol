@@ -22,8 +22,7 @@ contract ERC2981Test is SoladyTest {
         uint256 defaultRoyaltyFraction;
     }
 
-    function testSetAndGetRoyaltyInfo(uint256) public {
-        _TestTemps memory t;
+    function _testTemps() internal returns (_TestTemps memory t) {
         t.feeDenominator = token.feeDenominator();
         t.tokenIds[0] = _random();
         do {
@@ -39,66 +38,81 @@ contract ERC2981Test is SoladyTest {
         t.defaultRoyaltyFraction = _bound(_random(), 0, t.feeDenominator);
         t.royaltyFractions[0] = _bound(_random(), 0, t.feeDenominator);
         t.royaltyFractions[1] = _bound(_random(), 0, t.feeDenominator);
+    }
+
+    function testSetAndGetRoyaltyInfo(uint256) public {
+        _TestTemps memory t = _testTemps();
+
+        if (_random() % 16 == 0) _checkReverts(t);
 
         _checkRoyaltyInfoIsZero(t);
 
-        vm.expectRevert(ERC2981.RoyaltyReceiverIsZeroAddress.selector);
-        token.setDefaultRoyalty(address(0), 1);
-        vm.expectRevert(ERC2981.RoyaltyOverflow.selector);
-        token.setDefaultRoyalty(t.defaultReceiver, _getInvalidFeeNumerator(t));
-
         token.setDefaultRoyalty(t.defaultReceiver, uint96(t.defaultRoyaltyFraction));
+        _checkRoyaltyInfoIsDefault(t, 0);
+        _checkRoyaltyInfoIsDefault(t, 1);
 
-        for (uint256 i; i < 2; ++i) {
-            _checkRoyaltyInfoIsDefault(t, i);
-        }
+        token.setTokenRoyalty(t.tokenIds[0], t.receivers[0], uint96(t.royaltyFractions[0]));
+        _checkRoyaltyInfo(t, 0);
+        _checkRoyaltyInfoIsDefault(t, 1);
+        token.setTokenRoyalty(t.tokenIds[1], t.receivers[1], uint96(t.royaltyFractions[1]));
+        _checkRoyaltyInfo(t, 0);
+        _checkRoyaltyInfo(t, 1);
 
-        for (uint256 i; i < 2; ++i) {
-            vm.expectRevert(ERC2981.RoyaltyReceiverIsZeroAddress.selector);
-            token.setTokenRoyalty(t.tokenIds[i], address(0), 1);
-            vm.expectRevert(ERC2981.RoyaltyOverflow.selector);
-            token.setTokenRoyalty(t.tokenIds[i], t.receivers[i], _getInvalidFeeNumerator(t));
+        if (_random() % 16 == 0) _checkReverts(t);
 
-            token.setTokenRoyalty(t.tokenIds[i], t.receivers[i], uint96(t.royaltyFractions[i]));
-        }
+        token.resetTokenRoyalty(t.tokenIds[0]);
+        _checkRoyaltyInfoIsDefault(t, 0);
+        _checkRoyaltyInfo(t, 1);
+        token.resetTokenRoyalty(t.tokenIds[1]);
+        _checkRoyaltyInfoIsDefault(t, 0);
+        _checkRoyaltyInfoIsDefault(t, 1);
 
-        for (uint256 i; i < 2; ++i) {
-            _checkRoyaltyInfo(
-                t, i, t.receivers[i], t.salePrices[i] * t.royaltyFractions[i] / t.feeDenominator
-            );
-        }
-
-        for (uint256 i; i < 2; ++i) {
-            token.resetTokenRoyalty(t.tokenIds[i]);
-            _checkRoyaltyInfoIsDefault(t, i);
-        }
-
-        for (uint256 i; i < 2; ++i) {
-            _checkRoyaltyInfoIsDefault(t, i);
-        }
+        if (_random() % 16 == 0) _checkReverts(t);
 
         token.deleteDefaultRoyalty();
 
         _checkRoyaltyInfoIsZero(t);
+
+        if (_random() % 16 == 0) _checkReverts(t);
     }
 
     function _getInvalidFeeNumerator(_TestTemps memory t) internal returns (uint96 r) {
         while (true) {
             r = uint96(_random());
-            if (r > t.feeDenominator) return r;
+            if (r > t.feeDenominator) break;
         }
+    }
+
+    function _checkReverts(_TestTemps memory t) internal {
+        vm.expectRevert(ERC2981.RoyaltyReceiverIsZeroAddress.selector);
+        token.setDefaultRoyalty(address(0), 1);
+        vm.expectRevert(ERC2981.RoyaltyOverflow.selector);
+        token.setDefaultRoyalty(t.defaultReceiver, _getInvalidFeeNumerator(t));
+
+        vm.expectRevert(ERC2981.RoyaltyReceiverIsZeroAddress.selector);
+        token.setTokenRoyalty(t.tokenIds[0], address(0), 1);
+        vm.expectRevert(ERC2981.RoyaltyOverflow.selector);
+        token.setTokenRoyalty(t.tokenIds[0], t.receivers[0], _getInvalidFeeNumerator(t));
+
+        vm.expectRevert(ERC2981.RoyaltyReceiverIsZeroAddress.selector);
+        token.setTokenRoyalty(t.tokenIds[1], address(0), 1);
+        vm.expectRevert(ERC2981.RoyaltyOverflow.selector);
+        token.setTokenRoyalty(t.tokenIds[1], t.receivers[1], _getInvalidFeeNumerator(t));
     }
 
     function _checkRoyaltyInfoIsZero(_TestTemps memory t) internal {
-        for (uint256 i; i < 2; ++i) {
-            _checkRoyaltyInfo(t, i, address(0), 0);
-        }
+        _checkRoyaltyInfo(t, 0, address(0), 0);
+        _checkRoyaltyInfo(t, 1, address(0), 0);
     }
 
     function _checkRoyaltyInfoIsDefault(_TestTemps memory t, uint256 i) internal {
-        _checkRoyaltyInfo(
-            t, i, t.defaultReceiver, t.salePrices[i] * t.defaultRoyaltyFraction / t.feeDenominator
-        );
+        uint256 expected = t.salePrices[i] * t.defaultRoyaltyFraction / t.feeDenominator;
+        _checkRoyaltyInfo(t, i, t.defaultReceiver, expected);
+    }
+
+    function _checkRoyaltyInfo(_TestTemps memory t, uint256 i) internal {
+        uint256 expected = t.salePrices[i] * t.royaltyFractions[i] / t.feeDenominator;
+        _checkRoyaltyInfo(t, i, t.receivers[i], expected);
     }
 
     function _checkRoyaltyInfo(
