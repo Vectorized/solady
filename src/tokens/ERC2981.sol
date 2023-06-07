@@ -42,7 +42,7 @@ abstract contract ERC2981 {
 
     /// @dev Checks that `_feeDenominator` is non-zero.
     constructor() {
-        require(_feeDenominator() != 0);
+        require(_feeDenominator() != 0, "Fee denominator cannot be zero.");
     }
 
     /// @dev Returns the denominator for the royalty amount.
