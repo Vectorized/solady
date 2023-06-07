@@ -5,13 +5,18 @@ import "./utils/SoladyTest.sol";
 import "./utils/InvariantTest.sol";
 
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
-
+import {LibClone} from "../src/utils/LibClone.sol";
 import {WETH} from "../src/tokens/WETH.sol";
 
 contract ContractWithoutReceive {}
 
 contract WETHTest is SoladyTest {
+    bytes32 constant PERMIT_TYPEHASH = keccak256(
+        "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
+    );
+
     WETH weth;
+
     address alice = vm.addr(uint256(keccak256(abi.encode(string("solady")))));
 
     event Deposit(address indexed from, uint256 amount);
@@ -215,6 +220,29 @@ contract WETHTest is SoladyTest {
         assertEq(balanceAfterWithdraw, balanceBeforeWithdraw + withdrawAmount);
         assertEq(weth.balanceOf(address(this)), depositAmount - withdrawAmount);
         assertEq(weth.totalSupply(), depositAmount - withdrawAmount);
+    }
+
+    function testDomainSeparator() public {
+        assertEq(weth.DOMAIN_SEPARATOR(), _buildDomainSeparator(weth));
+        WETH clone = WETH(payable(LibClone.clone(address(weth))));
+        assertEq(clone.DOMAIN_SEPARATOR(), _buildDomainSeparator(clone));
+        vm.chainId(2);
+        assertEq(weth.DOMAIN_SEPARATOR(), _buildDomainSeparator(weth));
+        assertEq(clone.DOMAIN_SEPARATOR(), _buildDomainSeparator(clone));
+    }
+
+    function _buildDomainSeparator(WETH token) internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256("Wrapped Ether"),
+                keccak256("1"),
+                block.chainid,
+                address(token)
+            )
+        );
     }
 
     receive() external payable {}
