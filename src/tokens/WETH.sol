@@ -84,6 +84,39 @@ contract WETH is ERC20 {
         }
     }
 
+    /// @dev Deposits `amount` ETH of the caller and mints `amount` WETH to the `to`.
+    ///
+    /// Emits a {Deposit} event.
+    function depositTo(address to) public payable virtual {
+        _mint(to, msg.value);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Emit the {Deposit} event.
+            mstore(0x00, callvalue())
+            log2(0x00, 0x20, _DEPOSIT_EVENT_SIGNATURE, to)
+        }
+    }
+
+    /// @dev Burns `amount` WETH of the caller and sends `amount` ETH to the `to`.
+    ///
+    /// Emits a {Withdrawal} event.
+    function withdrawTo(address to, uint256 amount) public virtual {
+        _burn(msg.sender, amount);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Emit the {Withdrawal} event.
+            mstore(0x00, amount)
+            log2(0x00, 0x20, _WITHDRAWAL_EVENT_SIGNATURE, to)
+            // Transfer the ETH and check if it succeeded or not.
+            if iszero(call(gas(), to, amount, 0, 0, 0, 0)) {
+                // Store the function selector of `ETHTransferFailed()`.
+                mstore(0x00, 0xb12d13eb)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
     /// @dev Equivalent to `deposit()`.
     receive() external payable virtual {
         deposit();
