@@ -14,6 +14,9 @@ abstract contract ERC2981 {
 
     /// @dev The royalty receiver cannot be the zero address.
     error RoyaltyReceiverIsZeroAddress();
+    
+    /// @dev The Fee Denominator cannot be zero.
+    error FeeDenominatorIsZero();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -42,7 +45,14 @@ abstract contract ERC2981 {
 
     /// @dev Checks that `_feeDenominator` is non-zero.
     constructor() {
-        require(_feeDenominator() != 0, "Fee denominator cannot be zero.");
+        uint256 feeDenominator = _feeDenominator();
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(feeDenominator) {
+                mstore(0x00, 0x4ece301a) // `FeeDenominatorIsZero()`.
+                revert(0x1c, 0x04)
+            }
+        }
     }
 
     /// @dev Returns the denominator for the royalty amount.
