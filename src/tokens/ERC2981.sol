@@ -40,6 +40,18 @@ abstract contract ERC2981 {
     /*                          ERC2981                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Checks that `_feeDenominator` is non-zero.
+    constructor() {
+        require(_feeDenominator() != 0);
+    }
+
+    /// @dev Returns the denominator for the royalty amount.
+    /// Defaults to 10000, which represents fees in basis points.
+    /// Override this function to return a custom amount if needed.
+    function _feeDenominator() internal pure virtual returns (uint96) {
+        return 10000;
+    }
+
     /// @dev Returns true if this contract implements the interface defined by `interfaceId`.
     /// See: https://eips.ethereum.org/EIPS/eip-165
     /// This function call must use less than 30000 gas.
@@ -59,28 +71,23 @@ abstract contract ERC2981 {
         virtual
         returns (address receiver, uint256 royaltyAmount)
     {
-        uint256 royaltyFraction;
+        uint256 d = _feeDenominator();
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, tokenId)
             mstore(0x20, _ERC2981_MASTER_SLOT_SEED)
             let packed := sload(keccak256(0x00, 0x40))
             receiver := shr(96, packed)
-            royaltyFraction := xor(packed, shl(96, receiver))
             if iszero(receiver) {
                 packed := sload(not(mload(0x20)))
                 receiver := shr(96, packed)
-                royaltyFraction := xor(packed, shl(96, receiver))
             }
+            let x := salePrice
+            let y := xor(packed, shl(96, receiver)) // `feeNumerator`.
+            // Overflow check, equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
+            returndatacopy(returndatasize(), returndatasize(), mul(y, gt(x, div(not(0), y))))
+            royaltyAmount := div(mul(x, y), d)
         }
-        royaltyAmount = (salePrice * royaltyFraction) / _feeDenominator();
-    }
-
-    /// @dev Returns the denominator for the royalty amount.
-    /// Defaults to 10000, which represents fees in basis points.
-    /// Override this function to return a custom amount if needed.
-    function _feeDenominator() internal pure virtual returns (uint96) {
-        return 10000;
     }
 
     /// @dev Sets the default royalty `receiver` and `feeNumerator`.
