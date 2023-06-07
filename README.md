@@ -35,6 +35,7 @@ tokens
 ├─ ERC20 — "Simple ERC20 + EIP-2612 implementation"
 ├─ ERC4626 — "Simple ERC4626 tokenized Vault implementation"
 ├─ ERC721 — "Simple ERC721 implementation with storage hitchhiking"
+├─ ERC2981 — "Simple ERC2981 NFT Royalty Standard implementation"
 ├─ ERC1155 — "Simple ERC1155 implementation"
 utils
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
