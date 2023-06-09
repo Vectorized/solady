@@ -5,6 +5,9 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibZip.sol)
 /// @author Calldata compression by clabby (https://github.com/clabby/op-kompressor)
 /// @author FastLZ by ariya (https://github.com/ariya/FastLZ)
+/// Note:
+/// The accompanying solady.js library includes implementations of
+/// FastLZ and calldata operations for convenience.
 library LibZip {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     FAST LZ OPERATIONS                     */
