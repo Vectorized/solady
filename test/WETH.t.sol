@@ -39,7 +39,7 @@ contract WETHTest is SoladyTest {
         _expectWithdrawalEvent(address(this), amount);
     }
 
-    function testMetdata() public {
+    function testMetadata() public {
         assertEq(weth.name(), "Wrapped Ether");
         assertEq(weth.symbol(), "WETH");
         assertEq(weth.decimals(), 18);
