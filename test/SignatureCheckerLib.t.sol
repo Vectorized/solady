@@ -133,7 +133,7 @@ contract SignatureCheckerLibTest is SoladyTest {
             assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, r, vsc), false);
         }
 
-        if (_random() % 8 == 0) {
+        if (_random() % 8 == 0 && r != bytes32(0) && s != bytes32(0)) {
             bytes32 rc = bytes32(uint256(r) - (_random() & 1)); // Corrupted `r`.
             bytes32 sc = bytes32(uint256(s) - (_random() & 1)); // Corrupted `s`.
             bool anyCorrupted = rc != r || sc != s;
