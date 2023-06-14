@@ -7,56 +7,58 @@ contract TestPlus {
 
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
     /// which reads/write to the memory.
-    modifier brutalizeMemory() {
+    function _brutalizeMemory() private view {
         // To prevent a solidity 0.8.13 bug.
         // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
         // Basically, we need to access a solidity variable from the assembly to
         // tell the compiler that this assembly block is not in isolation.
-        {
-            uint256 zero;
-            /// @solidity memory-safe-assembly
-            assembly {
-                let offset := mload(0x40) // Start the offset at the free memory pointer.
-                calldatacopy(offset, zero, calldatasize())
+        uint256 zero;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let offset := mload(0x40) // Start the offset at the free memory pointer.
+            calldatacopy(offset, zero, calldatasize())
 
-                // Fill the 64 bytes of scratch space with garbage.
-                mstore(zero, caller())
-                mstore(0x20, keccak256(offset, calldatasize()))
-                mstore(zero, keccak256(zero, 0x40))
+            // Fill the 64 bytes of scratch space with garbage.
+            mstore(zero, caller())
+            mstore(0x20, keccak256(offset, calldatasize()))
+            mstore(zero, keccak256(zero, 0x40))
 
-                let r0 := mload(zero)
-                let r1 := mload(0x20)
+            let r0 := mload(zero)
+            let r1 := mload(0x20)
 
-                let cSize := add(codesize(), iszero(codesize()))
-                if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 0x1f)) }
-                let start := mod(mload(0x10), cSize)
-                let size := mul(sub(cSize, start), gt(cSize, start))
-                let times := div(0x7ffff, cSize)
-                if iszero(lt(times, 128)) { times := 128 }
+            let cSize := add(codesize(), iszero(codesize()))
+            if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 0x1f)) }
+            let start := mod(mload(0x10), cSize)
+            let size := mul(sub(cSize, start), gt(cSize, start))
+            let times := div(0x7ffff, cSize)
+            if iszero(lt(times, 128)) { times := 128 }
 
-                // Occasionally offset the offset by a pseudorandom large amount.
-                // Can't be too large, or we will easily get out-of-gas errors.
-                offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
+            // Occasionally offset the offset by a pseudorandom large amount.
+            // Can't be too large, or we will easily get out-of-gas errors.
+            offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
 
-                // Fill the free memory with garbage.
-                // prettier-ignore
-                for { let w := not(0) } 1 {} {
-                    mstore(offset, r0)
-                    mstore(add(offset, 0x20), r1)
-                    offset := add(offset, 0x40)
-                    // We use codecopy instead of the identity precompile
-                    // to avoid polluting the `forge test -vvvv` output with tons of junk.
-                    codecopy(offset, start, size)
-                    codecopy(add(offset, size), 0, start)
-                    offset := add(offset, cSize)
-                    times := add(times, w) // `sub(times, 1)`.
-                    if iszero(times) { break }
-                }
+            // Fill the free memory with garbage.
+            // prettier-ignore
+            for { let w := not(0) } 1 {} {
+                mstore(offset, r0)
+                mstore(add(offset, 0x20), r1)
+                offset := add(offset, 0x40)
+                // We use codecopy instead of the identity precompile
+                // to avoid polluting the `forge test -vvvv` output with tons of junk.
+                codecopy(offset, start, size)
+                codecopy(add(offset, size), 0, start)
+                offset := add(offset, cSize)
+                times := add(times, w) // `sub(times, 1)`.
+                if iszero(times) { break }
             }
         }
+    }
 
+    /// @dev Fills the memory with junk, for more robust testing of inline assembly
+    /// which reads/write to the memory.
+    modifier brutalizeMemory() {
+        _brutalizeMemory();
         _;
-
         _checkMemory();
     }
 
