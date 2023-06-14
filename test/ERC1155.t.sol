@@ -277,15 +277,14 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
     }
 
     function _randomBytes() internal returns (bytes memory b) {
-        uint256 n = _random() % 65;
-        uint256 r0 = _random();
-        uint256 r1 = _random();
+        uint256 r = _random();
         /// @solidity memory-safe-assembly
         assembly {
             b := mload(0x40)
-            mstore(b, n)
-            mstore(add(b, 0x20), r0)
-            mstore(add(b, 0x40), r1)
+            mstore(b, mod(r, 65))
+            let t := add(b, 0x20)
+            mstore(t, r)
+            mstore(add(b, 0x40), keccak256(t, 0x20))
             mstore(0x40, add(b, 0x60))
         }
     }
@@ -307,8 +306,9 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
     function _testTemps() internal returns (_TestTemps memory t) {
         unchecked {
             t.from = _randomNonZeroAddress();
-            t.to = _randomNonZeroAddress();
-            while (t.from == t.to) t.to = _randomNonZeroAddress();
+            do {
+                t.to = _randomNonZeroAddress();
+            } while (t.from == t.to);
             uint256 n = _random() % 4;
             t.n = n;
             t.ids = _randomArray(n);
