@@ -455,6 +455,7 @@ contract LibSortTest is SoladyTest {
             uint256 missingValue;
             if (_random() % 2 == 0) {
                 missingValue = a[randomIndex] + 1;
+                if (missingValue == 0) return;
                 for (uint256 i = randomIndex; i < a.length; ++i) {
                     if (a[i] == missingValue) return;
                 }
@@ -464,7 +465,11 @@ contract LibSortTest is SoladyTest {
                     assertEq(a[index], missingValue - 1);
                 }
             } else {
-                missingValue = uint256(keccak256(abi.encodePacked(missingValue)));
+                /// @solidity memory-safe-assembly
+                assembly {
+                    mstore(0x00, missingValue)
+                    missingValue := keccak256(0x00, 0x20)
+                }
                 (bool found,) = LibSort.searchSorted(a, missingValue);
                 assertFalse(found);
             }
