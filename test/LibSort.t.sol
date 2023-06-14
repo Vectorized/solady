@@ -7,10 +7,11 @@ import "src/utils/LibSort.sol";
 contract LibSortTest is SoladyTest {
     function testInsertionSortAddressesDifferential(uint256) public {
         unchecked {
-            address[] memory a = _randomAddresses(_randomArrayLength());
+            uint256 n = _random() % 32 == 0 ? _randomArrayLength() : _random() % 4;
+            address[] memory a = _randomAddresses(n);
             // Make a copy of the `a` and perform insertion sort on it.
             address[] memory aCopy = _copy(a);
-            for (uint256 i = 1; i < aCopy.length; ++i) {
+            for (uint256 i = 1; i < n; ++i) {
                 address key = aCopy[i];
                 uint256 j = i;
                 while (j != 0 && aCopy[j - 1] > key) {
@@ -1240,9 +1241,11 @@ contract LibSortTest is SoladyTest {
     }
 
     function _randomArrayLength() internal returns (uint256 r) {
-        r = _random() % 256;
-        if (r < 16) return _random() % 256;
-        if (r < 128) return _random() % 32;
-        return _random() % 16;
+        r = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f1f1f1f1f1f1f1f1f1f1f1f1f1f1fffff
+            r := and(byte(1, r), byte(and(r, 31), m))
+        }
     }
 }
