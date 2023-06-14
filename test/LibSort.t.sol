@@ -112,8 +112,9 @@ contract LibSortTest is SoladyTest {
 
     function testSortSorted() public {
         unchecked {
-            uint256[] memory a = new uint256[](100);
-            for (uint256 i; i < a.length; ++i) {
+            uint256 n = 100;
+            uint256[] memory a = new uint256[](n);
+            for (uint256 i; i != n; ++i) {
                 a[i] = i;
             }
             LibSort.sort(a);

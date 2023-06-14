@@ -255,7 +255,7 @@ library LibSort {
     }
 
     /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
-    /// `index` precedence: equal to, nearest before, nearest after.
+    /// `index` precedence: equal to > nearest before > nearest after.
     function searchSorted(uint256[] memory a, uint256 needle)
         internal
         pure
@@ -265,7 +265,7 @@ library LibSort {
     }
 
     /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
-    /// `index` precedence: equal to, nearest before, nearest after.
+    /// `index` precedence: equal to > nearest before > nearest after.
     function searchSorted(int256[] memory a, int256 needle)
         internal
         pure
@@ -275,7 +275,7 @@ library LibSort {
     }
 
     /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
-    /// `index` precedence: equal to, nearest before, nearest after.
+    /// `index` precedence: equal to > nearest before > nearest after.
     function searchSorted(address[] memory a, address needle)
         internal
         pure
@@ -535,7 +535,7 @@ library LibSort {
     }
 
     /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
-    /// `index` precedence: equal to, nearest before, nearest after.
+    /// `index` precedence: equal to > nearest before > nearest after.
     function _searchSorted(uint256[] memory a, uint256 needle, uint256 signed)
         private
         pure
