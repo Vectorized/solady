@@ -539,24 +539,26 @@ library LibSort {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            let w := not(0)
             let l := 1
             let h := mload(a)
+            let t := 0
             for { needle := add(signed, needle) } 1 {} {
                 index := shr(1, add(l, h))
-                let t := add(signed, mload(add(a, shl(5, index))))
+                t := add(signed, mload(add(a, shl(5, index))))
                 found := eq(t, needle)
                 if or(gt(l, h), found) { break }
                 // Decide whether to search the left or right half.
                 if iszero(gt(needle, t)) {
-                    h := sub(index, 1)
+                    h := add(index, w)
                     continue
                 }
                 l := add(index, 1)
             }
             // `index` will be zero in the case of an empty array,
             // or when the value is less than the smallest value in the array.
-            let t := iszero(iszero(index))
-            index := mul(sub(index, 1), t)
+            t := iszero(iszero(index))
+            index := mul(add(index, w), t)
             found := and(found, t)
         }
     }

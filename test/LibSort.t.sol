@@ -456,16 +456,18 @@ contract LibSortTest is SoladyTest {
             if (_random() % 2 == 0) {
                 missingValue = a[randomIndex] + 1;
                 for (uint256 i = randomIndex; i < a.length; ++i) {
-                    if (a[i] == missingValue) {
-                        missingValue = uint256(keccak256(abi.encodePacked(missingValue)));
-                        break;
-                    }
+                    if (a[i] == missingValue) return;
+                }
+                (bool found, uint256 index) = LibSort.searchSorted(a, missingValue);
+                assertFalse(found);
+                if (index < a.length) {
+                    assertEq(a[index], missingValue - 1);
                 }
             } else {
                 missingValue = uint256(keccak256(abi.encodePacked(missingValue)));
+                (bool found,) = LibSort.searchSorted(a, missingValue);
+                assertFalse(found);
             }
-            (bool found,) = LibSort.searchSorted(a, missingValue);
-            assertFalse(found);
         }
     }
 
