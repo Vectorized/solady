@@ -39,14 +39,15 @@ contract LibSortTest is SoladyTest {
 
     function testSortChecksumed(uint256) public {
         unchecked {
-            uint256[] memory a = _randomUints(_randomArrayLength());
+            uint256 n = _randomArrayLength();
+            uint256[] memory a = _randomUints(n);
             uint256 checksum;
-            for (uint256 i = 0; i < a.length; ++i) {
+            for (uint256 i = 0; i != n; ++i) {
                 checksum += a[i];
             }
             LibSort.sort(a);
             uint256 checksumAfterSort;
-            for (uint256 i = 0; i < a.length; ++i) {
+            for (uint256 i = 0; i != n; ++i) {
                 checksumAfterSort += a[i];
             }
             assertEq(checksum, checksumAfterSort);
@@ -478,10 +479,13 @@ contract LibSortTest is SoladyTest {
         }
     }
 
-    function _exists(uint256[] memory a, uint256 x) internal pure returns (bool) {
+    function _exists(uint256[] memory a, uint256 x) internal pure returns (bool result) {
         unchecked {
-            for (uint256 i; i < a.length; ++i) {
-                if (a[i] == x) return true;
+            uint256 n = a.length;
+            for (uint256 i; i != n; ++i) {
+                if (a[i] == x) {
+                    return true;
+                }
             }
             return false;
         }

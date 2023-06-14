@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-contract ReturnsGarbageToken {
+contract ReturnsRawBytesToken {
     /*///////////////////////////////////////////////////////////////
                                   EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -14,7 +14,7 @@ contract ReturnsGarbageToken {
                              METADATA STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    string public constant name = "ReturnsGarbageToken";
+    string public constant name = "ReturnsRawBytesToken";
 
     string public constant symbol = "RGT";
 
@@ -34,7 +34,7 @@ contract ReturnsGarbageToken {
                               MOCK STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    bytes garbage;
+    bytes rawBytes;
 
     /*///////////////////////////////////////////////////////////////
                                CONSTRUCTOR
@@ -54,11 +54,11 @@ contract ReturnsGarbageToken {
 
         emit Approval(msg.sender, spender, amount);
 
-        bytes memory _garbage = garbage;
+        bytes memory _rawBytes = rawBytes;
 
         /// @solidity memory-safe-assembly
         assembly {
-            return(add(_garbage, 32), mload(_garbage))
+            return(add(_rawBytes, 32), mload(_rawBytes))
         }
     }
 
@@ -73,11 +73,11 @@ contract ReturnsGarbageToken {
 
         emit Transfer(msg.sender, to, amount);
 
-        bytes memory _garbage = garbage;
+        bytes memory _rawBytes = rawBytes;
 
         /// @solidity memory-safe-assembly
         assembly {
-            return(add(_garbage, 32), mload(_garbage))
+            return(add(_rawBytes, 32), mload(_rawBytes))
         }
     }
 
@@ -98,11 +98,11 @@ contract ReturnsGarbageToken {
 
         emit Transfer(from, to, amount);
 
-        bytes memory _garbage = garbage;
+        bytes memory _rawBytes = rawBytes;
 
         /// @solidity memory-safe-assembly
         assembly {
-            return(add(_garbage, 32), mload(_garbage))
+            return(add(_rawBytes, 32), mload(_rawBytes))
         }
     }
 
@@ -110,7 +110,7 @@ contract ReturnsGarbageToken {
                               MOCK LOGIC
     //////////////////////////////////////////////////////////////*/
 
-    function setGarbage(bytes memory _garbage) public virtual {
-        garbage = _garbage;
+    function setRawBytes(bytes memory _rawBytes) public virtual {
+        rawBytes = _rawBytes;
     }
 }

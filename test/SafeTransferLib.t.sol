@@ -8,7 +8,7 @@ import {ReturnsTwoToken} from "./utils/weird-tokens/ReturnsTwoToken.sol";
 import {ReturnsFalseToken} from "./utils/weird-tokens/ReturnsFalseToken.sol";
 import {MissingReturnToken} from "./utils/weird-tokens/MissingReturnToken.sol";
 import {ReturnsTooMuchToken} from "./utils/weird-tokens/ReturnsTooMuchToken.sol";
-import {ReturnsGarbageToken} from "./utils/weird-tokens/ReturnsGarbageToken.sol";
+import {ReturnsRawBytesToken} from "./utils/weird-tokens/ReturnsRawBytesToken.sol";
 import {ReturnsTooLittleToken} from "./utils/weird-tokens/ReturnsTooLittleToken.sol";
 
 import "./utils/SoladyTest.sol";
@@ -26,7 +26,7 @@ contract SafeTransferLibTest is SoladyTest {
     ReturnsFalseToken returnsFalse;
     MissingReturnToken missingReturn;
     ReturnsTooMuchToken returnsTooMuch;
-    ReturnsGarbageToken returnsGarbage;
+    ReturnsRawBytesToken returnsRawBytes;
     ReturnsTooLittleToken returnsTooLittle;
 
     MockERC20 erc20;
@@ -37,7 +37,7 @@ contract SafeTransferLibTest is SoladyTest {
         returnsFalse = new ReturnsFalseToken();
         missingReturn = new MissingReturnToken();
         returnsTooMuch = new ReturnsTooMuchToken();
-        returnsGarbage = new ReturnsGarbageToken();
+        returnsRawBytes = new ReturnsRawBytesToken();
         returnsTooLittle = new ReturnsTooLittleToken();
 
         erc20 = new MockERC20("StandardToken", "ST", 18);
@@ -336,12 +336,10 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransfer(address(returnsTooMuch), to, amount, SUCCESS);
     }
 
-    function testTransferWithGarbage(address to, uint256 amount, bytes memory garbage) public {
-        if (garbageIsGarbage(garbage)) return;
+    function testTransferWithNonGarbage(address to, uint256 amount) public {
+        returnsRawBytes.setRawBytes(_generateNonGarbage());
 
-        returnsGarbage.setGarbage(garbage);
-
-        verifySafeTransfer(address(returnsGarbage), to, amount, SUCCESS);
+        verifySafeTransfer(address(returnsRawBytes), to, amount, SUCCESS);
     }
 
     function testTransferWithNonContract(address nonContract, address to, uint256 amount) public {
@@ -369,17 +367,10 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransferFrom(address(returnsTooMuch), from, to, amount, SUCCESS);
     }
 
-    function testTransferFromWithGarbage(
-        address from,
-        address to,
-        uint256 amount,
-        bytes memory garbage
-    ) public {
-        if (garbageIsGarbage(garbage)) return;
+    function testTransferFromWithGarbage(address from, address to, uint256 amount) public {
+        returnsRawBytes.setRawBytes(_generateNonGarbage());
 
-        returnsGarbage.setGarbage(garbage);
-
-        verifySafeTransferFrom(address(returnsGarbage), from, to, amount, SUCCESS);
+        verifySafeTransferFrom(address(returnsRawBytes), from, to, amount, SUCCESS);
     }
 
     function testTransferFromWithNonContract(
@@ -407,12 +398,10 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeApprove(address(returnsTooMuch), to, amount, SUCCESS);
     }
 
-    function testApproveWithGarbage(address to, uint256 amount, bytes memory garbage) public {
-        if (garbageIsGarbage(garbage)) return;
+    function testApproveWithGarbage(address to, uint256 amount) public {
+        returnsRawBytes.setRawBytes(_generateNonGarbage());
 
-        returnsGarbage.setGarbage(garbage);
-
-        verifySafeApprove(address(returnsGarbage), to, amount, SUCCESS);
+        verifySafeApprove(address(returnsRawBytes), to, amount, SUCCESS);
     }
 
     function testApproveWithNonContract(address nonContract, address to, uint256 amount) public {
@@ -453,14 +442,10 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransfer(address(returnsTwo), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testTransferWithGarbageReverts(address to, uint256 amount, bytes memory garbage)
-        public
-    {
-        vm.assume(garbageIsGarbage(garbage));
+    function testTransferWithGarbageReverts(address to, uint256 amount) public {
+        returnsRawBytes.setRawBytes(_generateGarbage());
 
-        returnsGarbage.setGarbage(garbage);
-
-        verifySafeTransfer(address(returnsGarbage), to, amount, REVERTS_WITH_ANY);
+        verifySafeTransfer(address(returnsRawBytes), to, amount, REVERTS_WITH_ANY);
     }
 
     function testTransferFromWithReturnsFalseReverts(address from, address to, uint256 amount)
@@ -487,17 +472,10 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransferFrom(address(returnsTwo), from, to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testTransferFromWithGarbageReverts(
-        address from,
-        address to,
-        uint256 amount,
-        bytes memory garbage
-    ) public {
-        vm.assume(garbageIsGarbage(garbage));
+    function testTransferFromWithGarbageReverts(address from, address to, uint256 amount) public {
+        returnsRawBytes.setRawBytes(_generateGarbage());
 
-        returnsGarbage.setGarbage(garbage);
-
-        verifySafeTransferFrom(address(returnsGarbage), from, to, amount, REVERTS_WITH_ANY);
+        verifySafeTransferFrom(address(returnsRawBytes), from, to, amount, REVERTS_WITH_ANY);
     }
 
     function testApproveWithReturnsFalseReverts(address to, uint256 amount) public {
@@ -516,14 +494,10 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeApprove(address(returnsTwo), to, amount, REVERTS_WITH_SELECTOR);
     }
 
-    function testApproveWithGarbageReverts(address to, uint256 amount, bytes memory garbage)
-        public
-    {
-        vm.assume(garbageIsGarbage(garbage));
+    function testApproveWithGarbageReverts(address to, uint256 amount) public {
+        returnsRawBytes.setRawBytes(_generateGarbage());
 
-        returnsGarbage.setGarbage(garbage);
-
-        verifySafeApprove(address(returnsGarbage), to, amount, REVERTS_WITH_ANY);
+        verifySafeApprove(address(returnsRawBytes), to, amount, REVERTS_WITH_ANY);
     }
 
     function testTransferETHToContractWithoutFallbackReverts(uint256 amount) public {
@@ -668,14 +642,33 @@ contract SafeTransferLibTest is SoladyTest {
         SafeTransferLib.safeTransferETH(to, amount);
     }
 
-    function garbageIsGarbage(bytes memory garbage) public pure returns (bool result) {
+    function _generateGarbage() internal returns (bytes memory result) {
+        uint256 r = _random();
         /// @solidity memory-safe-assembly
         assembly {
-            result :=
-                and(
-                    or(lt(mload(garbage), 32), iszero(eq(mload(add(garbage, 0x20)), 1))),
-                    gt(mload(garbage), 0)
-                )
+            for {} 1 {} {
+                mstore(0x00, r)
+                result := mload(0x40)
+                let n := and(r, 0x7f)
+                mstore(result, n)
+                r := keccak256(0x00, 0x40)
+                mstore(add(result, 0x20), r)
+                mstore(0x40, add(result, 0x100))
+                if and(or(lt(n, 0x20), iszero(eq(r, 1))), gt(n, 0)) { break }
+            }
+        }
+    }
+
+    function _generateNonGarbage() internal returns (bytes memory result) {
+        uint256 r = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(and(r, 1)) {
+                result := mload(0x40)
+                mstore(result, 0x20)
+                mstore(add(result, 0x20), 1)
+                mstore(0x40, add(result, 0x40))
+            }
         }
     }
 
