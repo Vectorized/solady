@@ -254,8 +254,8 @@ library LibSort {
         uniquifySorted(_toUints(a));
     }
 
-    /// @dev Returns whether `a` contains `needle`,
-    /// and the index of the nearest element less than or equal to `needle`.
+    /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
+    /// `index` precedence: equal to > nearest before > nearest after.
     function searchSorted(uint256[] memory a, uint256 needle)
         internal
         pure
@@ -264,8 +264,8 @@ library LibSort {
         (found, index) = _searchSorted(a, needle, 0);
     }
 
-    /// @dev Returns whether `a` contains `needle`,
-    /// and the index of the nearest element less than or equal to `needle`.
+    /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
+    /// `index` precedence: equal to > nearest before > nearest after.
     function searchSorted(int256[] memory a, int256 needle)
         internal
         pure
@@ -274,8 +274,8 @@ library LibSort {
         (found, index) = _searchSorted(_toUints(a), uint256(needle), 1 << 255);
     }
 
-    /// @dev Returns whether `a` contains `needle`,
-    /// and the index of the nearest element less than or equal to `needle`.
+    /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
+    /// `index` precedence: equal to > nearest before > nearest after.
     function searchSorted(address[] memory a, address needle)
         internal
         pure
@@ -534,8 +534,8 @@ library LibSort {
         }
     }
 
-    /// @dev Returns whether `a` contains `needle`,
-    /// and the index of the nearest element less than or equal to `needle`.
+    /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
+    /// `index` precedence: equal to > nearest before > nearest after.
     function _searchSorted(uint256[] memory a, uint256 needle, uint256 signed)
         private
         pure
@@ -543,27 +543,26 @@ library LibSort {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let m := 0 // Middle slot.
-            let s := 0x20
-            let l := add(a, s) // Slot of the start of search.
-            let h := add(a, shl(5, mload(a))) // Slot of the end of search.
+            let w := not(0)
+            let l := 1
+            let h := mload(a)
+            let t := 0
             for { needle := add(signed, needle) } 1 {} {
-                // Average of `l` and `h`.
-                m := add(shl(5, shr(6, add(l, h))), and(31, l))
-                let t := add(signed, mload(m))
-                found := eq(t, needle)
-                if or(gt(l, h), found) { break }
+                index := shr(1, add(l, h))
+                t := add(signed, mload(add(a, shl(5, index))))
+                if or(gt(l, h), eq(t, needle)) { break }
                 // Decide whether to search the left or right half.
                 if iszero(gt(needle, t)) {
-                    h := sub(m, s)
+                    h := add(index, w)
                     continue
                 }
-                l := add(m, s)
+                l := add(index, 1)
             }
-            // `m` will be less than `add(a, 0x20)` in the case of an empty array,
+            // `index` will be zero in the case of an empty array,
             // or when the value is less than the smallest value in the array.
-            let t := iszero(lt(m, add(a, s)))
-            index := shr(5, mul(sub(m, add(a, s)), t))
+            found := eq(t, needle)
+            t := iszero(iszero(index))
+            index := mul(add(index, w), t)
             found := and(found, t)
         }
     }
