@@ -546,8 +546,7 @@ library LibSort {
             for { needle := add(signed, needle) } 1 {} {
                 index := shr(1, add(l, h))
                 t := add(signed, mload(add(a, shl(5, index))))
-                found := eq(t, needle)
-                if or(gt(l, h), found) { break }
+                if or(gt(l, h), eq(t, needle)) { break }
                 // Decide whether to search the left or right half.
                 if iszero(gt(needle, t)) {
                     h := add(index, w)
@@ -557,6 +556,7 @@ library LibSort {
             }
             // `index` will be zero in the case of an empty array,
             // or when the value is less than the smallest value in the array.
+            found := eq(t, needle)
             t := iszero(iszero(index))
             index := mul(add(index, w), t)
             found := and(found, t)
