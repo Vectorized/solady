@@ -367,7 +367,7 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransferFrom(address(returnsTooMuch), from, to, amount, SUCCESS);
     }
 
-    function testTransferFromWithGarbage(address from, address to, uint256 amount) public {
+    function testTransferFromWithNonGarbage(address from, address to, uint256 amount) public {
         returnsRawBytes.setRawBytes(_generateNonGarbage());
 
         verifySafeTransferFrom(address(returnsRawBytes), from, to, amount, SUCCESS);
@@ -398,7 +398,7 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeApprove(address(returnsTooMuch), to, amount, SUCCESS);
     }
 
-    function testApproveWithGarbage(address to, uint256 amount) public {
+    function testApproveWithNonGarbage(address to, uint256 amount) public {
         returnsRawBytes.setRawBytes(_generateNonGarbage());
 
         verifySafeApprove(address(returnsRawBytes), to, amount, SUCCESS);
