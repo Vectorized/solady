@@ -454,16 +454,17 @@ contract LibSortTest is SoladyTest {
             uint256 randomIndex = _random() % a.length;
             uint256 missingValue;
             if (_random() % 2 == 0) {
-                missingValue = a[randomIndex] + 1;
-                if (missingValue == 0) return;
-                for (uint256 i = randomIndex; i < a.length; ++i) {
-                    if (a[i] == missingValue) return;
+                if (_random() % 2 == 0) {
+                    missingValue = a[randomIndex] + 1;
+                    if (missingValue == 0) return;
+                } else {
+                    missingValue = a[randomIndex] - 1;
+                    if (missingValue == type(uint256).max) return;
                 }
+                if (_exists(a, missingValue)) return;
                 (bool found, uint256 index) = LibSort.searchSorted(a, missingValue);
                 assertFalse(found);
-                if (index < a.length) {
-                    assertEq(a[index], missingValue - 1);
-                }
+                assertEq(a[index], a[_nearestIndexBefore(a, missingValue)]);
             } else {
                 /// @solidity memory-safe-assembly
                 assembly {
@@ -472,6 +473,35 @@ contract LibSortTest is SoladyTest {
                 }
                 (bool found,) = LibSort.searchSorted(a, missingValue);
                 assertFalse(found);
+            }
+        }
+    }
+
+    function _exists(uint256[] memory a, uint256 x) internal pure returns (bool) {
+        unchecked {
+            for (uint256 i; i < a.length; ++i) {
+                if (a[i] == x) return true;
+            }
+            return false;
+        }
+    }
+
+    function _nearestIndexBefore(uint256[] memory a, uint256 x)
+        internal
+        pure
+        returns (uint256 nearestIndex)
+    {
+        unchecked {
+            uint256 nearestDist = type(uint256).max;
+            uint256 n = a.length;
+            for (uint256 i; i != n; ++i) {
+                uint256 y = a[i];
+                if (y > x) continue;
+                uint256 dist = x - y;
+                if (dist < nearestDist) {
+                    nearestIndex = i;
+                    nearestDist = dist;
+                }
             }
         }
     }
@@ -491,8 +521,19 @@ contract LibSortTest is SoladyTest {
         }
     }
 
-    function testSearchSorted(uint256[] memory a, uint256 needle) public {
+    function testSearchSortedDifferential(uint256) public {
+        uint256[] memory a = _randomUints(_randomArrayLength());
+        uint256 needle = _random();
+        if (_random() % 2 == 0 && a.length != 0) {
+            needle = a[_random() % a.length];
+        }
         (bool found, uint256 index) = LibSort.searchSorted(a, needle);
+        if (found) {
+            assertEq(a[index], needle);
+        }
+        LibSort.sort(a);
+        (found, index) = LibSort.searchSorted(a, needle);
+        assertEq(found, _exists(a, needle));
         if (found) {
             assertEq(a[index], needle);
         }
