@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {MerkleProofLib} from "../src/utils/MerkleProofLib.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract MerkleProofLibTest is SoladyTest {
     function testVerifyProofForHeightOneTree(
@@ -54,6 +55,27 @@ contract MerkleProofLibTest is SoladyTest {
 
     function testVerifyProofBasicCaseIsInvalid() public {
         testVerifyProofBasicCase(false, false, true, 0x00);
+    }
+
+    function testVerifyMultiProofMalicious() public {
+        bytes32[] memory realLeafs = new bytes32[](2);
+        realLeafs[0] = bytes32("real leaf");
+        realLeafs[1] = bytes32(0);
+        bytes32 root = _hashPair(realLeafs[0], realLeafs[1]);
+        
+        bytes32[] memory maliciousLeafs = new bytes32[](3);
+        maliciousLeafs[0] = bytes32("some");
+        maliciousLeafs[1] = bytes32("malicious");
+        maliciousLeafs[2] = bytes32("leafs");
+        bytes32[] memory maliciousProof = new bytes32[](2);
+        maliciousProof[0] = maliciousLeafs[0];
+        maliciousProof[1] = maliciousLeafs[1];
+        bool[] memory maliciousFlags = new bool[](3);
+        maliciousFlags[0] = true;
+        maliciousFlags[1] = true;
+        maliciousFlags[2] = false;
+
+        assertFalse(this.verifyMultiProof(maliciousProof, root, maliciousLeafs, maliciousFlags));
     }
 
     function testVerifyProofBasicCase(
