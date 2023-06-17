@@ -209,7 +209,7 @@ library MerkleProofLib {
                     mul(iszero(iszero(flags.length)), add(proof.offset, shl(5, proof.length)))
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
-                let hashesFront := add(mload(0x40), 0x40)
+                let hashesFront := mload(0x40)
                 // Copy the leafs into the hashes.
                 // Sometimes, a little memory expansion costs less than branching.
                 // Should cost less, even with a high free memory offset of 0x7d00.
