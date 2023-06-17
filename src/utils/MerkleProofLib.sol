@@ -126,7 +126,7 @@ library MerkleProofLib {
                 // Compute the back of the hashes.
                 let hashesBack := add(hashesFront, leafsLength)
                 // This is the end of the memory for the queue.
-                // We recycle `flags.length` to reduce stack pressure, saving gas.
+                // We recycle `flagsLength` to save on stack variables (sometimes save gas).
                 flagsLength := add(hashesBack, shl(5, flagsLength))
 
                 for {} 1 {} {
@@ -217,7 +217,7 @@ library MerkleProofLib {
                 // Compute the back of the hashes.
                 let hashesBack := add(hashesFront, shl(5, leafs.length))
                 // This is the end of the memory for the queue.
-                // We recycle `flags.length` to reduce stack pressure, saving gas.
+                // We recycle `flagsLength` to save on stack variables (sometimes save gas).
                 flags.length := add(hashesBack, shl(5, flags.length))
 
                 // We don't need to make a copy of `proof.offset` or `flags.offset`,
