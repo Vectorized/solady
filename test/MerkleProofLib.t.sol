@@ -62,14 +62,13 @@ contract MerkleProofLibTest is SoladyTest {
         realLeafs[0] = bytes32("real leaf");
         realLeafs[1] = bytes32(0);
         bytes32 root = _hashPair(realLeafs[0], realLeafs[1]);
-        
-        bytes32[] memory maliciousLeafs = new bytes32[](3);
-        maliciousLeafs[0] = bytes32("some");
-        maliciousLeafs[1] = bytes32("malicious");
-        maliciousLeafs[2] = bytes32("leafs");
+
+        bytes32[] memory maliciousLeafs = new bytes32[](2);
+        maliciousLeafs[0] = bytes32("malicious");
+        maliciousLeafs[1] = bytes32("leafs");
         bytes32[] memory maliciousProof = new bytes32[](2);
-        maliciousProof[0] = maliciousLeafs[0];
-        maliciousProof[1] = maliciousLeafs[1];
+        maliciousProof[0] = realLeafs[0];
+        maliciousProof[1] = realLeafs[0];
         bool[] memory maliciousFlags = new bool[](3);
         maliciousFlags[0] = true;
         maliciousFlags[1] = true;

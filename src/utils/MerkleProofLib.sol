@@ -111,13 +111,14 @@ library MerkleProofLib {
                     break
                 }
 
+                // The required final proof offset if `flagsLength` is not zero, otherwise zero.
+                let proofEnd := mul(iszero(iszero(flagsLength)), add(proof, shl(5, proofLength)))
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
                 let hashesFront := mload(0x40)
                 // Copy the leafs into the hashes.
                 // Sometimes, a little memory expansion costs less than branching.
                 // Should cost less, even with a high free memory offset of 0x7d00.
-                // Left shift by 5 is equivalent to multiplying by 0x20.
                 leafsLength := shl(5, leafsLength)
                 for { let i := 0 } iszero(eq(i, leafsLength)) { i := add(i, 0x20) } {
                     mstore(add(hashesFront, i), mload(add(leafs, i)))
@@ -125,8 +126,7 @@ library MerkleProofLib {
                 // Compute the back of the hashes.
                 let hashesBack := add(hashesFront, leafsLength)
                 // This is the end of the memory for the queue.
-                // We recycle `flagsLength` to save on stack variables
-                // (this trick may not always save gas).
+                // We recycle `flags.length` to reduce stack pressure, saving gas.
                 flagsLength := add(hashesBack, shl(5, flagsLength))
 
                 for {} 1 {} {
@@ -159,8 +159,13 @@ library MerkleProofLib {
                     hashesBack := add(hashesBack, 0x20)
                     if iszero(lt(hashesBack, flagsLength)) { break }
                 }
-                // Checks if the last value in the queue is same as the root.
-                isValid := eq(mload(sub(hashesBack, 0x20)), root)
+                isValid :=
+                    and(
+                        // Checks if the last value in the queue is same as the root.
+                        eq(mload(sub(hashesBack, 0x20)), root),
+                        // And whether all the proofs are used, if required (i.e. `proofEnd != 0`).
+                        or(iszero(proofEnd), eq(proofEnd, proof))
+                    )
                 break
             }
         }
@@ -199,19 +204,20 @@ library MerkleProofLib {
                     break
                 }
 
+                // The required final proof offset if `flagsLength` is not zero, otherwise zero.
+                let proofEnd :=
+                    mul(iszero(iszero(flags.length)), add(proof.offset, shl(5, proof.length)))
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
-                let hashesFront := mload(0x40)
+                let hashesFront := add(mload(0x40), 0x40)
                 // Copy the leafs into the hashes.
                 // Sometimes, a little memory expansion costs less than branching.
                 // Should cost less, even with a high free memory offset of 0x7d00.
-                // Left shift by 5 is equivalent to multiplying by 0x20.
                 calldatacopy(hashesFront, leafs.offset, shl(5, leafs.length))
                 // Compute the back of the hashes.
                 let hashesBack := add(hashesFront, shl(5, leafs.length))
                 // This is the end of the memory for the queue.
-                // We recycle `flags.length` to save on stack variables
-                // (this trick may not always save gas).
+                // We recycle `flags.length` to reduce stack pressure, saving gas.
                 flags.length := add(hashesBack, shl(5, flags.length))
 
                 // We don't need to make a copy of `proof.offset` or `flags.offset`,
@@ -247,8 +253,13 @@ library MerkleProofLib {
                     hashesBack := add(hashesBack, 0x20)
                     if iszero(lt(hashesBack, flags.length)) { break }
                 }
-                // Checks if the last value in the queue is same as the root.
-                isValid := eq(mload(sub(hashesBack, 0x20)), root)
+                isValid :=
+                    and(
+                        // Checks if the last value in the queue is same as the root.
+                        eq(mload(sub(hashesBack, 0x20)), root),
+                        // And whether all the proofs are used, if required (i.e. `proofEnd != 0`).
+                        or(iszero(proofEnd), eq(proofEnd, proof.offset))
+                    )
                 break
             }
         }
