@@ -53,7 +53,7 @@ abstract contract Ownable {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The owner slot is given by: `not(_OWNER_SLOT_NOT)`.
-    /// It is intentionally choosen to be a high value
+    /// It is intentionally chosen to be a high value
     /// to avoid collision with lower slots.
     /// The choice of manual storage layout is to enable compatibility
     /// with both regular and upgradeable contracts.
