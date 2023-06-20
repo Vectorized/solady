@@ -26,7 +26,7 @@ library CREATE3 {
      * -------------------------------------------------------------------|
      * 36          | CALLDATASIZE     | cds          |                    |
      * 3d          | RETURNDATASIZE   | 0 cds        |                    |
-     * 3d          | RETURNDATASIZE   | 0 0          |                    |
+     * 3d          | RETURNDATASIZE   | 0 0 cds      |                    |
      * 37          | CALLDATACOPY     |              | [0..cds): calldata |
      * 36          | CALLDATASIZE     | cds          | [0..cds): calldata |
      * 3d          | RETURNDATASIZE   | 0 cds        | [0..cds): calldata |
