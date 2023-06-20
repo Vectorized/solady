@@ -43,9 +43,9 @@ library LibSort {
 
     /// @dev Sorts the array in-place with insertion sort.
     function insertionSort(int256[] memory a) internal pure {
-        _convertTwosComplement(a);
+        _flipSign(a);
         insertionSort(_toUints(a));
-        _convertTwosComplement(a);
+        _flipSign(a);
     }
 
     /// @dev Sorts the array in-place with insertion sort.
@@ -205,9 +205,9 @@ library LibSort {
 
     /// @dev Sorts the array in-place with intro-quicksort.
     function sort(int256[] memory a) internal pure {
-        _convertTwosComplement(a);
+        _flipSign(a);
         sort(_toUints(a));
-        _convertTwosComplement(a);
+        _flipSign(a);
     }
 
     /// @dev Sorts the array in-place with intro-quicksort.
@@ -521,9 +521,9 @@ library LibSort {
         }
     }
 
-    /// @dev Converts an array of signed two-complement integers
-    /// to unsigned integers suitable for sorting.
-    function _convertTwosComplement(int256[] memory a) private pure {
+    /// @dev Converts an array of signed integers to unsigned
+    /// integers suitable for sorting or vice versa.
+    function _flipSign(int256[] memory a) private pure {
         /// @solidity memory-safe-assembly
         assembly {
             let w := shl(255, 1)
