@@ -408,7 +408,7 @@ library DateTimeLib {
     /// between `fromTimestamp` and `toTimestamp`.
     /// Note: Even if the true time difference is less than a year,
     /// the difference can be non-zero is the timestamps are
-    /// from diffrent Gregorian calendar years
+    /// from different Gregorian calendar years
     function diffYears(uint256 fromTimestamp, uint256 toTimestamp)
         internal
         pure
@@ -424,7 +424,7 @@ library DateTimeLib {
     /// between `fromTimestamp` and `toTimestamp`.
     /// Note: Even if the true time difference is less than a month,
     /// the difference can be non-zero is the timestamps are
-    /// from diffrent Gregorian calendar months.
+    /// from different Gregorian calendar months.
     function diffMonths(uint256 fromTimestamp, uint256 toTimestamp)
         internal
         pure

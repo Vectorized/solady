@@ -79,7 +79,7 @@ library DynamicBufferLib {
                     mstore(add(bufferData, w), mul(prime, newCapacity))
                     break
                 }
-                // Initalize `output` to the next empty position in `bufferData`.
+                // Initialize `output` to the next empty position in `bufferData`.
                 let output := add(bufferData, bufferDataLength)
                 // Copy `data` one word at a time, backwards.
                 for { let o := and(add(mload(data), 0x20), w) } 1 {} {
