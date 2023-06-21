@@ -4,7 +4,11 @@ pragma solidity ^0.8.4;
 /// @notice Safe ETH and ERC20 transfer library that gracefully handles missing return values.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SafeTransferLib.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SafeTransferLib.sol)
-/// @dev Caution! This library won't check that a token has code, responsibility is delegated to the caller.
+///
+/// @dev Note:
+/// - For ETH transfers, please use `forceSafeTransferETH` for gas griefing protection.
+/// - For ERC20s, this implementation won't check that a token has code,
+/// responsibility is delegated to the caller.
 library SafeTransferLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
