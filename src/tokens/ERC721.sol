@@ -5,7 +5,8 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC721.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC721/ERC721.sol)
-/// Note:
+///
+/// @dev Note:
 /// The ERC721 standard allows for self-approvals.
 /// For performance, this implementation WILL NOT revert for such actions.
 /// Please add any checks with overrides if desired.
@@ -399,7 +400,7 @@ abstract contract ERC721 {
 
     /// @dev Returns the extra data for token `id`.
     /// Minting, transferring, burning a token will not change the extra data.
-    /// The extra data can be set on a non existent token.
+    /// The extra data can be set on a non-existent token.
     function _getExtraData(uint256 id) internal view virtual returns (uint96 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -411,7 +412,7 @@ abstract contract ERC721 {
 
     /// @dev Sets the extra data for token `id` to `value`.
     /// Minting, transferring, burning a token will not change the extra data.
-    /// The extra data can be set on a non existent token.
+    /// The extra data can be set on a non-existent token.
     function _setExtraData(uint256 id, uint96 value) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {

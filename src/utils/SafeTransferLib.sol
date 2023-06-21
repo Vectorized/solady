@@ -4,7 +4,11 @@ pragma solidity ^0.8.4;
 /// @notice Safe ETH and ERC20 transfer library that gracefully handles missing return values.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SafeTransferLib.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SafeTransferLib.sol)
-/// @dev Caution! This library won't check that a token has code, responsibility is delegated to the caller.
+///
+/// @dev Note:
+/// - For ETH transfers, please use `forceSafeTransferETH` for gas griefing protection.
+/// - For ERC20s, this implementation won't check that a token has code,
+/// responsibility is delegated to the caller.
 library SafeTransferLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -41,6 +45,9 @@ library SafeTransferLib {
 
     /// @dev Sends `amount` (in wei) ETH to `to`.
     /// Reverts upon failure.
+    ///
+    /// Note: This implementation does NOT protect against gas griefing.
+    /// Please use `forceSafeTransferETH` for gas griefing protection.
     function safeTransferETH(address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -211,7 +218,7 @@ library SafeTransferLib {
 
             // Store the function selector of `transferFrom(address,address,uint256)`.
             mstore(0x00, 0x23b872dd)
-            // The `amount` argument is already written to the memory word at 0x6c.
+            // The `amount` argument is already written to the memory word at 0x60.
             amount := mload(0x60)
 
             if iszero(

@@ -5,7 +5,8 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC1155.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC1155.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC1155/ERC1155.sol)
-/// Note:
+///
+/// @dev Note:
 /// The ERC1155 standard allows for self-approvals.
 /// For performance, this implementation WILL NOT revert for such actions.
 /// Please add any checks with overrides if desired.

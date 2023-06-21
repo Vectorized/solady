@@ -5,7 +5,8 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC20.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC20.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol)
-/// Note:
+///
+/// @dev Note:
 /// The ERC20 standard allows minting and transferring to and from the zero address,
 /// minting and transferring zero tokens, as well as self-approvals.
 /// For performance, this implementation WILL NOT revert for such actions.
@@ -251,7 +252,7 @@ abstract contract ERC20 {
 
     /// @dev Transfers `amount` tokens from `from` to `to`.
     ///
-    /// Note: does not update the allowance if it is the maximum uint256 value.
+    /// Note: Does not update the allowance if it is the maximum uint256 value.
     ///
     /// Requirements:
     /// - `from` must at least have `amount`.
