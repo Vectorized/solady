@@ -87,7 +87,7 @@ library SafeTransferLib {
                 // We can directly use `SELFDESTRUCT` in the contract creation.
                 // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(amount, 0x0b, 0x16)) {
-                    // To coerce gas estimation to provide enough gas for the `create`.
+                    // To coerce gas estimation to provide enough gas for the `create` above.
                     if iszero(gt(gas(), 1000000)) { revert(0, 0) }
                 }
             }
@@ -122,7 +122,7 @@ library SafeTransferLib {
                 // We can directly use `SELFDESTRUCT` in the contract creation.
                 // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(amount, 0x0b, 0x16)) {
-                    // To coerce gas estimation to provide enough gas for the `create`.
+                    // To coerce gas estimation to provide enough gas for the `create` above.
                     if iszero(gt(gas(), 1000000)) { revert(0, 0) }
                 }
             }
