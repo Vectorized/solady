@@ -41,6 +41,9 @@ library SafeTransferLib {
 
     /// @dev Sends `amount` (in wei) ETH to `to`.
     /// Reverts upon failure.
+    ///
+    /// Note: This implementation does NOT protect against gas griefing.
+    /// Please use `forceSafeTransferETH` for gas griefing protection.
     function safeTransferETH(address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -211,7 +214,7 @@ library SafeTransferLib {
 
             // Store the function selector of `transferFrom(address,address,uint256)`.
             mstore(0x00, 0x23b872dd)
-            // The `amount` argument is already written to the memory word at 0x6c.
+            // The `amount` argument is already written to the memory word at 0x60.
             amount := mload(0x60)
 
             if iszero(
