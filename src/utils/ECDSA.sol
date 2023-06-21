@@ -17,7 +17,7 @@ library ECDSA {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The number which `s` must not exceed in order for
+    /// @dev The number which `s` must be less than in order for
     /// the signature to be non-malleable.
     bytes32 private constant _MALLEABILITY_THRESHOLD_PLUS_ONE =
         0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a1;
