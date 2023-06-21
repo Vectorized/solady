@@ -291,26 +291,37 @@ contract ECDSATest is SoladyTest {
         );
     }
 
-    function testBytesToEthSignedMessageHashLongZeroBytes() public brutalizeMemory {
-        assertEq(
-            _zeroBytes(999999).toEthSignedMessageHash(),
-            bytes32(0x19e0821234635932db8ca546944c888a4ea696dc5a3a3d7e053f295e0bbc7dd2)
-        );
-        assertEq(
-            _zeroBytes(99999).toEthSignedMessageHash(),
-            bytes32(0x1e91d0418ed9e44f839aa5527ef92976526ddcfebdee2908a14febffa9fe0c48)
-        );
+    function testBytesToEthSignedMessageHash() public {
+        _testBytesToEthSignedMessageHash(999999);
+        _testBytesToEthSignedMessageHash(135790);
+        _testBytesToEthSignedMessageHash(99999);
+        _testBytesToEthSignedMessageHash(88888);
+        _testBytesToEthSignedMessageHash(3210);
+        _testBytesToEthSignedMessageHash(111);
+        _testBytesToEthSignedMessageHash(22);
+        _testBytesToEthSignedMessageHash(1);
+        _testBytesToEthSignedMessageHash(0);
         vm.expectRevert();
-        _zeroBytes(999999 + 1).toEthSignedMessageHash();
+        _testBytesToEthSignedMessageHash(999999 + 1);
     }
 
-    function _zeroBytes(uint256 n) internal pure returns (bytes memory result) {
+    function _testBytesToEthSignedMessageHash(uint256 n) internal brutalizeMemory {
+        bytes memory message;
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40)
-            mstore(result, n)
-            codecopy(add(result, 0x20), codesize(), n)
+            message := mload(0x40)
+            mstore(message, n)
             mstore(0x40, add(n, 0x20))
+        }
+        assertEq(
+            message.toEthSignedMessageHash(),
+            keccak256(
+                abi.encodePacked("\x19Ethereum Signed Message:\n", LibString.toString(n), message)
+            )
+        );
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, message) // Release memory.
         }
     }
 
