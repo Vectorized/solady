@@ -19,8 +19,8 @@ library ECDSA {
 
     /// @dev The number which `s` must not exceed in order for
     /// the signature to be non-malleable.
-    bytes32 private constant _MALLEABILITY_THRESHOLD =
-        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+    bytes32 private constant _MALLEABILITY_THRESHOLD_PLUS_ONE =
+        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a1;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    RECOVERY OPERATIONS                     */
@@ -38,16 +38,12 @@ library ECDSA {
     function recover(bytes32 hash, bytes memory signature) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Copy the free memory pointer so that we can restore it later.
-            let m := mload(0x40)
-            // Copy `r` and `s`.
+            let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x40, mload(add(signature, 0x20))) // `r`.
             let s := mload(add(signature, 0x40))
             mstore(0x60, s)
-            // Store the `hash` in the scratch space.
             mstore(0x00, hash)
-            // Compute `v` and store it in the scratch space.
-            mstore(0x20, byte(0, mload(add(signature, 0x60))))
+            mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
@@ -55,7 +51,7 @@ library ECDSA {
                         // If the signature is exactly 65 bytes in length.
                         eq(mload(signature), 65),
                         // If `s` in lower half order, such that the signature is not malleable.
-                        lt(s, add(_MALLEABILITY_THRESHOLD, 1))
+                        lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE)
                     ), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
@@ -66,15 +62,11 @@ library ECDSA {
             result := mload(0x00)
             // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
             if iszero(returndatasize()) {
-                // Store the function selector of `InvalidSignature()`.
-                mstore(0x00, 0x8baa579f)
-                // Revert with (offset, size).
+                mstore(0x00, 0x8baa579f) // `InvalidSignature()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the zero slot.
-            mstore(0x60, 0)
-            // Restore the free memory pointer.
-            mstore(0x40, m)
+            mstore(0x60, 0) // Restore the zero slot.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -91,14 +83,10 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Copy the free memory pointer so that we can restore it later.
-            let m := mload(0x40)
-            // Directly copy `r` and `s` from the calldata.
-            calldatacopy(0x40, signature.offset, 0x40)
-            // Store the `hash` in the scratch space.
+            let m := mload(0x40) // Cache the free memory pointer.
+            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
             mstore(0x00, hash)
-            // Compute `v` and store it in the scratch space.
-            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40))))
+            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
@@ -106,7 +94,7 @@ library ECDSA {
                         // If the signature is exactly 65 bytes in length.
                         eq(signature.length, 65),
                         // If `s` in lower half order, such that the signature is not malleable.
-                        lt(mload(0x60), add(_MALLEABILITY_THRESHOLD, 1))
+                        lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE)
                     ), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
@@ -117,15 +105,11 @@ library ECDSA {
             result := mload(0x00)
             // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
             if iszero(returndatasize()) {
-                // Store the function selector of `InvalidSignature()`.
-                mstore(0x00, 0x8baa579f)
-                // Revert with (offset, size).
+                mstore(0x00, 0x8baa579f) // `InvalidSignature()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the zero slot.
-            mstore(0x60, 0)
-            // Restore the free memory pointer.
-            mstore(0x40, m)
+            mstore(0x60, 0) // Restore the zero slot.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -137,8 +121,7 @@ library ECDSA {
     function recover(bytes32 hash, bytes32 r, bytes32 vs) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Copy the free memory pointer so that we can restore it later.
-            let m := mload(0x40)
+            let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
             mstore(0x20, and(add(shr(255, vs), 27), 0xff)) // `v`.
             mstore(0x40, r)
@@ -147,7 +130,7 @@ library ECDSA {
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
                     // If `s` in lower half order, such that the signature is not malleable.
-                    lt(mload(0x60), add(_MALLEABILITY_THRESHOLD, 1)), // Address of `ecrecover`.
+                    lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x00, // Start of output.
@@ -157,15 +140,11 @@ library ECDSA {
             result := mload(0x00)
             // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
             if iszero(returndatasize()) {
-                // Store the function selector of `InvalidSignature()`.
-                mstore(0x00, 0x8baa579f)
-                // Revert with (offset, size).
+                mstore(0x00, 0x8baa579f) // `InvalidSignature()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the zero slot.
-            mstore(0x60, 0)
-            // Restore the free memory pointer.
-            mstore(0x40, m)
+            mstore(0x60, 0) // Restore the zero slot.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -178,8 +157,7 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Copy the free memory pointer so that we can restore it later.
-            let m := mload(0x40)
+            let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
             mstore(0x20, and(v, 0xff))
             mstore(0x40, r)
@@ -188,7 +166,7 @@ library ECDSA {
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
                     // If `s` in lower half order, such that the signature is not malleable.
-                    lt(s, add(_MALLEABILITY_THRESHOLD, 1)), // Address of `ecrecover`.
+                    lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x00, // Start of output.
@@ -198,15 +176,11 @@ library ECDSA {
             result := mload(0x00)
             // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
             if iszero(returndatasize()) {
-                // Store the function selector of `InvalidSignature()`.
-                mstore(0x00, 0x8baa579f)
-                // Revert with (offset, size).
+                mstore(0x00, 0x8baa579f) // `InvalidSignature()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the zero slot.
-            mstore(0x60, 0)
-            // Restore the free memory pointer.
-            mstore(0x40, m)
+            mstore(0x60, 0) // Restore the zero slot.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -233,37 +207,31 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(xor(mload(signature), 65)) {
-                // Copy the free memory pointer so that we can restore it later.
-                let m := mload(0x40)
-                // Copy `r` and `s`.
-                mstore(0x40, mload(add(signature, 0x20))) // `r`.
-                let s := mload(add(signature, 0x40))
-                mstore(0x60, s)
-                // If `s` in lower half order, such that the signature is not malleable.
-                if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
-                    // Store the `hash` in the scratch space.
-                    mstore(0x00, hash)
-                    // Compute `v` and store it in the scratch space.
-                    mstore(0x20, byte(0, mload(add(signature, 0x60))))
-                    pop(
-                        staticcall(
-                            gas(), // Amount of gas left for the transaction.
-                            0x01, // Address of `ecrecover`.
-                            0x00, // Start of input.
-                            0x80, // Size of input.
-                            0x40, // Start of output.
-                            0x20 // Size of output.
-                        )
-                    )
-                    // Restore the zero slot.
-                    mstore(0x60, 0)
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    result := mload(xor(0x60, returndatasize()))
-                }
-                // Restore the free memory pointer.
-                mstore(0x40, m)
-            }
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x40, mload(add(signature, 0x20))) // `r`.
+            let s := mload(add(signature, 0x40))
+            mstore(0x60, s)
+            mstore(0x00, hash)
+            mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+            pop(
+                staticcall(
+                    gas(), // Amount of gas left for the transaction.
+                    and(
+                        // If the signature is exactly 65 bytes in length.
+                        eq(mload(signature), 65),
+                        // If `s` in lower half order, such that the signature is not malleable.
+                        lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE)
+                    ), // Address of `ecrecover`.
+                    0x00, // Start of input.
+                    0x80, // Size of input.
+                    0x40, // Start of output.
+                    0x20 // Size of output.
+                )
+            )
+            mstore(0x60, 0) // Restore the zero slot.
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            result := mload(xor(0x60, returndatasize()))
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -280,35 +248,29 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(xor(signature.length, 65)) {
-                // Copy the free memory pointer so that we can restore it later.
-                let m := mload(0x40)
-                // Directly copy `r` and `s` from the calldata.
-                calldatacopy(0x40, signature.offset, 0x40)
-                // If `s` in lower half order, such that the signature is not malleable.
-                if iszero(gt(mload(0x60), _MALLEABILITY_THRESHOLD)) {
-                    // Store the `hash` in the scratch space.
-                    mstore(0x00, hash)
-                    // Compute `v` and store it in the scratch space.
-                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40))))
-                    pop(
-                        staticcall(
-                            gas(), // Amount of gas left for the transaction.
-                            0x01, // Address of `ecrecover`.
-                            0x00, // Start of input.
-                            0x80, // Size of input.
-                            0x40, // Start of output.
-                            0x20 // Size of output.
-                        )
-                    )
-                    // Restore the zero slot.
-                    mstore(0x60, 0)
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    result := mload(xor(0x60, returndatasize()))
-                }
-                // Restore the free memory pointer.
-                mstore(0x40, m)
-            }
+            let m := mload(0x40) // Cache the free memory pointer.
+            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+            mstore(0x00, hash)
+            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+            pop(
+                staticcall(
+                    gas(), // Amount of gas left for the transaction.
+                    and(
+                        // If the signature is exactly 65 bytes in length.
+                        eq(signature.length, 65),
+                        // If `s` in lower half order, such that the signature is not malleable.
+                        lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE)
+                    ), // Address of `ecrecover`.
+                    0x00, // Start of input.
+                    0x80, // Size of input.
+                    0x40, // Start of output.
+                    0x20 // Size of output.
+                )
+            )
+            mstore(0x60, 0) // Restore the zero slot.
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            result := mload(xor(0x60, returndatasize()))
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -324,33 +286,27 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Copy the free memory pointer so that we can restore it later.
-            let m := mload(0x40)
+            let m := mload(0x40) // Cache the free memory pointer.
             let s := shr(1, shl(1, vs))
-            // If `s` in lower half order, such that the signature is not malleable.
-            if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
-                // Store the `hash`, `v`, `r`, `s` in the scratch space.
-                mstore(0x00, hash)
-                mstore(0x20, and(add(shr(255, vs), 27), 0xff)) // `v`.
-                mstore(0x40, r)
-                mstore(0x60, s)
-                pop(
-                    staticcall(
-                        gas(), // Amount of gas left for the transaction.
-                        0x01, // Address of `ecrecover`.
-                        0x00, // Start of input.
-                        0x80, // Size of input.
-                        0x40, // Start of output.
-                        0x20 // Size of output.
-                    )
+            mstore(0x00, hash)
+            mstore(0x20, and(add(shr(255, vs), 27), 0xff)) // `v`.
+            mstore(0x40, r)
+            mstore(0x60, s)
+            pop(
+                staticcall(
+                    gas(), // Amount of gas left for the transaction.
+                    // If `s` in lower half order, such that the signature is not malleable.
+                    lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
+                    0x00, // Start of input.
+                    0x80, // Size of input.
+                    0x40, // Start of output.
+                    0x20 // Size of output.
                 )
-                // Restore the zero slot.
-                mstore(0x60, 0)
-                // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                result := mload(xor(0x60, returndatasize()))
-            }
-            // Restore the free memory pointer.
-            mstore(0x40, m)
+            )
+            mstore(0x60, 0) // Restore the zero slot.
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            result := mload(xor(0x60, returndatasize()))
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -363,32 +319,26 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Copy the free memory pointer so that we can restore it later.
-            let m := mload(0x40)
-            // If `s` in lower half order, such that the signature is not malleable.
-            if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
-                // Store the `hash`, `v`, `r`, `s` in the scratch space.
-                mstore(0x00, hash)
-                mstore(0x20, and(v, 0xff))
-                mstore(0x40, r)
-                mstore(0x60, s)
-                pop(
-                    staticcall(
-                        gas(), // Amount of gas left for the transaction.
-                        0x01, // Address of `ecrecover`.
-                        0x00, // Start of input.
-                        0x80, // Size of input.
-                        0x40, // Start of output.
-                        0x20 // Size of output.
-                    )
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x00, hash)
+            mstore(0x20, and(v, 0xff))
+            mstore(0x40, r)
+            mstore(0x60, s)
+            pop(
+                staticcall(
+                    gas(), // Amount of gas left for the transaction.
+                    // If `s` in lower half order, such that the signature is not malleable.
+                    lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
+                    0x00, // Start of input.
+                    0x80, // Size of input.
+                    0x40, // Start of output.
+                    0x20 // Size of output.
                 )
-                // Restore the zero slot.
-                mstore(0x60, 0)
-                // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                result := mload(xor(0x60, returndatasize()))
-            }
-            // Restore the free memory pointer.
-            mstore(0x40, m)
+            )
+            mstore(0x60, 0) // Restore the zero slot.
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            result := mload(xor(0x60, returndatasize()))
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
