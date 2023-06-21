@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {ECDSA} from "../src/utils/ECDSA.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract ECDSATest is SoladyTest {
     using ECDSA for bytes32;
@@ -259,35 +260,58 @@ contract ECDSATest is SoladyTest {
     }
 
     function testBytes32ToEthSignedMessageHash() public {
-        assertTrue(
-            TEST_MESSAGE.toEthSignedMessageHash()
-                == bytes32(0x7d768af957ef8cbf6219a37e743d5546d911dae3e46449d8a5810522db2ef65e)
+        assertEq(
+            TEST_MESSAGE.toEthSignedMessageHash(),
+            bytes32(0x7d768af957ef8cbf6219a37e743d5546d911dae3e46449d8a5810522db2ef65e)
         );
     }
 
     function testBytesToEthSignedMessageHashShort() public {
         bytes memory message = hex"61626364";
-        assertTrue(
-            message.toEthSignedMessageHash()
-                == bytes32(0xefd0b51a9c4e5f3449f4eeacb195bf48659fbc00d2f4001bf4c088ba0779fb33)
+        assertEq(
+            message.toEthSignedMessageHash(),
+            bytes32(0xefd0b51a9c4e5f3449f4eeacb195bf48659fbc00d2f4001bf4c088ba0779fb33)
         );
     }
 
     function testBytesToEthSignedMessageHashEmpty() public {
         bytes memory message = hex"";
-        assertTrue(
-            message.toEthSignedMessageHash()
-                == bytes32(0x5f35dce98ba4fba25530a026ed80b2cecdaa31091ba4958b99b52ea1d068adad)
+        assertEq(
+            message.toEthSignedMessageHash(),
+            bytes32(0x5f35dce98ba4fba25530a026ed80b2cecdaa31091ba4958b99b52ea1d068adad)
         );
     }
 
-    function testBytesToEthSignedMessageHashEmptyLong() public {
+    function testBytesToEthSignedMessageHashLong() public {
         bytes memory message =
             hex"4142434445464748494a4b4c4d4e4f505152535455565758595a6162636465666768696a6b6c6d6e6f707172737475767778797a3031323334353637383921402324255e262a28292d3d5b5d7b7d";
-        assertTrue(
-            message.toEthSignedMessageHash()
-                == bytes32(0xa46dbedd405cff161b6e80c17c8567597621d9f4c087204201097cb34448e71b)
+        assertEq(
+            message.toEthSignedMessageHash(),
+            bytes32(0xa46dbedd405cff161b6e80c17c8567597621d9f4c087204201097cb34448e71b)
         );
+    }
+
+    function testBytesToEthSignedMessageHashLongZeroBytes() public brutalizeMemory {
+        assertEq(
+            _zeroBytes(999999).toEthSignedMessageHash(),
+            bytes32(0x19e0821234635932db8ca546944c888a4ea696dc5a3a3d7e053f295e0bbc7dd2)
+        );
+        assertEq(
+            _zeroBytes(99999).toEthSignedMessageHash(),
+            bytes32(0x1e91d0418ed9e44f839aa5527ef92976526ddcfebdee2908a14febffa9fe0c48)
+        );
+        vm.expectRevert();
+        _zeroBytes(999999 + 1).toEthSignedMessageHash();
+    }
+
+    function _zeroBytes(uint256 n) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, n)
+            codecopy(add(result, 0x20), codesize(), n)
+            mstore(0x40, add(n, 0x20))
+        }
     }
 
     function tryRecover(bytes32 hash, bytes calldata signature) external returns (address result) {
