@@ -122,7 +122,7 @@ library ECDSA {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
-            mstore(0x20, and(add(shr(255, vs), 27), 0xff)) // `v`.
+            mstore(0x20, add(shr(255, vs), 27)) // `v`.
             mstore(0x40, r)
             mstore(0x60, shr(1, shl(1, vs))) // `s`.
             pop(
@@ -286,7 +286,7 @@ library ECDSA {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
-            mstore(0x20, and(add(shr(255, vs), 27), 0xff)) // `v`.
+            mstore(0x20, add(shr(255, vs), 27)) // `v`.
             mstore(0x40, r)
             mstore(0x60, shr(1, shl(1, vs))) // `s`.
             pop(
