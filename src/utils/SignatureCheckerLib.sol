@@ -6,7 +6,7 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SignatureCheckerLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
 ///
-/// Note: unlike ECDSA signatures, contract signatures are revocable.
+/// @dev Note: Unlike ECDSA signatures, contract signatures are revocable.
 library SignatureCheckerLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
