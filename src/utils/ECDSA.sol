@@ -39,11 +39,10 @@ library ECDSA {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x40, mload(add(signature, 0x20))) // `r`.
-            let s := mload(add(signature, 0x40))
-            mstore(0x60, s)
             mstore(0x00, hash)
             mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+            mstore(0x40, mload(add(signature, 0x20))) // `r`.
+            mstore(0x60, mload(add(signature, 0x40))) // `s`.
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
@@ -51,7 +50,7 @@ library ECDSA {
                         // If the signature is exactly 65 bytes in length.
                         eq(mload(signature), 65),
                         // If `s` in lower half order, such that the signature is not malleable.
-                        lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE)
+                        lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE)
                     ), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
@@ -84,9 +83,9 @@ library ECDSA {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
             mstore(0x00, hash)
             mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
@@ -208,11 +207,10 @@ library ECDSA {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x40, mload(add(signature, 0x20))) // `r`.
-            let s := mload(add(signature, 0x40))
-            mstore(0x60, s)
             mstore(0x00, hash)
             mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+            mstore(0x40, mload(add(signature, 0x20))) // `r`.
+            mstore(0x60, mload(add(signature, 0x40))) // `s`.
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
@@ -220,7 +218,7 @@ library ECDSA {
                         // If the signature is exactly 65 bytes in length.
                         eq(mload(signature), 65),
                         // If `s` in lower half order, such that the signature is not malleable.
-                        lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE)
+                        lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE)
                     ), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
@@ -249,9 +247,9 @@ library ECDSA {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
             mstore(0x00, hash)
             mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
@@ -287,16 +285,15 @@ library ECDSA {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            let s := shr(1, shl(1, vs))
             mstore(0x00, hash)
             mstore(0x20, and(add(shr(255, vs), 27), 0xff)) // `v`.
             mstore(0x40, r)
-            mstore(0x60, s)
+            mstore(0x60, shr(1, shl(1, vs))) // `s`.
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
                     // If `s` in lower half order, such that the signature is not malleable.
-                    lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
+                    lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
