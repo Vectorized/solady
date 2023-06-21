@@ -405,9 +405,8 @@ library ECDSA {
         assembly {
             // Store into scratch space for keccak256.
             mstore(0x20, hash)
-            mstore(0x00, "\x00\x00\x00\x00\x19Ethereum Signed Message:\n32")
-            // 0x40 - 0x04 = 0x3c
-            result := keccak256(0x04, 0x3c)
+            mstore(0x00, "\x00\x00\x00\x00\x19Ethereum Signed Message:\n32") // 28 bytes.
+            result := keccak256(0x04, 0x3c) // `32 * 2 - (32 - 28) = 60 = 0x3c`.
         }
     }
 
@@ -415,36 +414,32 @@ library ECDSA {
     /// This produces a hash corresponding to the one signed with the
     /// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
     /// JSON-RPC method as part of EIP-191.
+    // Supports lengths up to 999999 bytes.
     function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
         assembly {
-            // The length of "\x19Ethereum Signed Message:\n" is 26 bytes (i.e. 0x1a).
-            // If we reserve 2 words, we'll have 64 - 26 = 38 bytes to store the
-            // ASCII decimal representation of the length of `s` up to about 2 ** 126.
-
-            // Instead of allocating, we temporarily copy the 64 bytes before the
-            // start of `s` data to some variables.
-            let m := mload(sub(s, 0x20))
-            // The length of `s` is in bytes.
+            mstore(0x20, "\x19Ethereum Signed Message:\n") // 26 bytes, zero-right-padded.
+            mstore(0x00, 0x00)
             let sLength := mload(s)
-            let ptr := add(s, 0x20)
+            let o := 0x20
             let w := not(0)
-            // `end` marks the end of the memory which we will compute the keccak256 of.
-            let end := add(ptr, sLength)
             // Convert the length of the bytes to ASCII decimal representation
             // and store it into the memory.
             for { let temp := sLength } 1 {} {
-                ptr := add(ptr, w) // `sub(ptr, 1)`.
-                mstore8(ptr, add(48, mod(temp, 10)))
+                o := add(o, w)
+                mstore8(o, add(48, mod(temp, 10)))
                 temp := div(temp, 10)
                 if iszero(temp) { break }
             }
-            // Copy the header over to the memory.
-            mstore(sub(ptr, 0x20), "\x00\x00\x00\x00\x00\x00\x19Ethereum Signed Message:\n")
+            let n := sub(0x3a, o) // Header length: `32 - o + 26`.
+            // Do an out-of-gas revert if the header length exceeds 32 bytes.
+            // This allows for `sLength` up to 999999, which is 6 decimal digits long.
+            returndatacopy(returndatasize(), returndatasize(), gt(n, 0x20))
+            // Temporarily store the header in memory.
+            mstore(s, or(mload(0x00), mload(n)))
             // Compute the keccak256 of the memory.
-            result := keccak256(sub(ptr, 0x1a), sub(end, sub(ptr, 0x1a)))
-            // Restore the previous memory.
-            mstore(s, sLength)
-            mstore(sub(s, 0x20), m)
+            result := keccak256(add(s, sub(0x20, n)), add(n, sLength))
+            mstore(s, sLength) // Restore the length.
         }
     }
 
