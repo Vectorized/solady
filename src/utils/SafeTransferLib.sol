@@ -87,7 +87,7 @@ library SafeTransferLib {
                 // We can directly use `SELFDESTRUCT` in the contract creation.
                 // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(amount, 0x0b, 0x16)) {
-                    // For better gas estimation.
+                    // To coerce gas estimation to provide enough gas for the `create` above.
                     if iszero(gt(gas(), 1000000)) { revert(0, 0) }
                 }
             }
@@ -122,7 +122,7 @@ library SafeTransferLib {
                 // We can directly use `SELFDESTRUCT` in the contract creation.
                 // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(amount, 0x0b, 0x16)) {
-                    // For better gas estimation.
+                    // To coerce gas estimation to provide enough gas for the `create` above.
                     if iszero(gt(gas(), 1000000)) { revert(0, 0) }
                 }
             }
@@ -190,7 +190,7 @@ library SafeTransferLib {
     /// @dev Sends all of ERC20 `token` from `from` to `to`.
     /// Reverts upon failure.
     ///
-    /// The `from` account must have at least `amount` approved for
+    /// The `from` account must have their entire balance approved for
     /// the current contract to manage.
     function safeTransferAllFrom(address token, address from, address to)
         internal
