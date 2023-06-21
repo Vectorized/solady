@@ -418,20 +418,18 @@ library ECDSA {
     function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, "\x19Ethereum Signed Message:\n") // 26 bytes, zero-right-padded.
-            mstore(0x00, 0x00)
             let sLength := mload(s)
             let o := 0x20
-            let w := not(0)
-            // Convert the length of the bytes to ASCII decimal representation
-            // and store it into the memory.
+            mstore(o, "\x19Ethereum Signed Message:\n") // 26 bytes, zero-right-padded.
+            mstore(0x00, 0x00)
+            // Convert the length of the bytes to ASCII decimal representation.
             for { let temp := sLength } 1 {} {
-                o := add(o, w)
+                o := sub(o, 1)
                 mstore8(o, add(48, mod(temp, 10)))
                 temp := div(temp, 10)
                 if iszero(temp) { break }
             }
-            let n := sub(0x3a, o) // Header length: `32 - o + 26`.
+            let n := sub(0x3a, o) // Header length: `26 + 32 - o`.
             // Do an out-of-gas revert if the header length exceeds 32 bytes.
             // This allows for `sLength` up to 999999, which is 6 decimal digits long.
             returndatacopy(returndatasize(), returndatasize(), gt(n, 0x20))
