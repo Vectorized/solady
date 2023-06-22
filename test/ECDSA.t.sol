@@ -215,32 +215,59 @@ contract ECDSATest is SoladyTest {
         uint8 v,
         bytes32 r,
         bytes32 s,
-        bool expectedResult
+        bool expected
     ) internal {
-        assertEq(this.tryRecover(digest, v, r, s) == signer, expectedResult);
-
-        try this.recover(digest, v, r, s) returns (address recovered) {
-            assertEq(recovered == signer, expectedResult);
-        } catch {}
+        _checkSignature(
+            "(bytes32,uint8,bytes32,bytes32)", abi.encode(digest, v, r, s), signer, expected
+        );
 
         if (v == 27 || v == 28) {
             bytes32 vs = bytes32((v == 28 ? 1 << 255 : 0) | uint256(s));
-
-            assertEq(this.tryRecover(digest, r, vs) == signer, expectedResult);
-
-            try this.recover(digest, r, vs) returns (address recovered) {
-                assertEq(recovered == signer, expectedResult);
-            } catch {}
+            _checkSignature(
+                "(bytes32,bytes32,bytes32)", abi.encode(digest, r, vs), signer, expected
+            );
         }
 
         if (_random() & 1 == 0) {
-            bytes memory signature = abi.encodePacked(r, s, v);
+            _checkSignature(
+                "(bytes32,bytes)", abi.encode(digest, abi.encodePacked(r, s, v)), signer, expected
+            );
+        }
+    }
 
-            assertEq(this.tryRecover(digest, signature) == signer, expectedResult);
+    function _checkSignature(
+        bytes memory argsSignature,
+        bytes memory encodedCalldataArgs,
+        address signer,
+        bool expected
+    ) internal {
+        bool[] memory success = new bool[](2);
+        bytes[] memory result = new bytes[](2);
+        bytes4 s;
+        address recovered;
 
-            try this.recover(digest, signature) returns (address recovered) {
-                assertEq(recovered == signer, expectedResult);
-            } catch {}
+        s = bytes4(keccak256(abi.encodePacked("tryRecover", argsSignature)));
+        (success[0], result[0]) = address(this).call(abi.encodePacked(s, encodedCalldataArgs));
+        recovered = success[0] ? abi.decode(result[0], (address)) : address(0);
+        assertEq(recovered == signer, expected);
+
+        s = bytes4(keccak256(abi.encodePacked("tryRecoverBrutalized", argsSignature)));
+        (success[1], result[1]) = address(this).call(abi.encodePacked(s, encodedCalldataArgs));
+        recovered = success[1] ? abi.decode(result[1], (address)) : address(0);
+        assertEq(recovered == signer, expected);
+
+        s = bytes4(keccak256(abi.encodePacked("recover", argsSignature)));
+        (success[0], result[0]) = address(this).call(abi.encodePacked(s, encodedCalldataArgs));
+
+        s = bytes4(keccak256(abi.encodePacked("recoverBrutalized", argsSignature)));
+        (success[1], result[1]) = address(this).call(abi.encodePacked(s, encodedCalldataArgs));
+
+        assertEq(success[0], success[1]);
+        assertEq(result[0], result[1]);
+
+        if (success[0]) {
+            recovered = abi.decode(result[0], (address));
+            assertEq(recovered == signer, expected);
         }
     }
 
@@ -301,6 +328,9 @@ contract ECDSATest is SoladyTest {
         _testBytesToEthSignedMessageHash(22);
         _testBytesToEthSignedMessageHash(1);
         _testBytesToEthSignedMessageHash(0);
+    }
+
+    function testBytesToEthSignedMessageHashExceedsMaxLengthReverts() public {
         vm.expectRevert();
         _testBytesToEthSignedMessageHash(999999 + 1);
     }
@@ -311,7 +341,7 @@ contract ECDSATest is SoladyTest {
         assembly {
             message := mload(0x40)
             mstore(message, n)
-            mstore(0x40, add(n, 0x20))
+            mstore(0x40, add(add(message, 0x20), n))
         }
         assertEq(
             message.toEthSignedMessageHash(),
@@ -321,7 +351,7 @@ contract ECDSATest is SoladyTest {
         );
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x40, message) // Release memory.
+            mstore(0x40, message)
         }
     }
 
@@ -342,6 +372,33 @@ contract ECDSATest is SoladyTest {
         return ECDSA.tryRecover(hash, r, vs);
     }
 
+    function tryRecoverBrutalized(bytes32 hash, bytes calldata signature)
+        external
+        brutalizeMemory
+        returns (address result)
+    {
+        result = ECDSA.tryRecoverCalldata(hash, signature);
+        assertEq(ECDSA.tryRecover(hash, signature), result);
+    }
+
+    function tryRecoverBrutalized(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
+        external
+        view
+        brutalizeMemory
+        returns (address)
+    {
+        return ECDSA.tryRecover(hash, v, r, s);
+    }
+
+    function tryRecoverBrutalized(bytes32 hash, bytes32 r, bytes32 vs)
+        external
+        view
+        brutalizeMemory
+        returns (address)
+    {
+        return ECDSA.tryRecover(hash, r, vs);
+    }
+
     function recover(bytes32 hash, bytes calldata signature) external returns (address result) {
         result = ECDSA.recoverCalldata(hash, signature);
         assertEq(ECDSA.recover(hash, signature), result);
@@ -352,6 +409,33 @@ contract ECDSATest is SoladyTest {
     }
 
     function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) external view returns (address) {
+        return ECDSA.recover(hash, v, r, s);
+    }
+
+    function recoverBrutalized(bytes32 hash, bytes calldata signature)
+        external
+        brutalizeMemory
+        returns (address result)
+    {
+        result = ECDSA.recoverCalldata(hash, signature);
+        assertEq(ECDSA.recover(hash, signature), result);
+    }
+
+    function recoverBrutalized(bytes32 hash, bytes32 r, bytes32 vs)
+        external
+        view
+        brutalizeMemory
+        returns (address)
+    {
+        return ECDSA.recover(hash, r, vs);
+    }
+
+    function recoverBrutalized(bytes32 hash, uint8 v, bytes32 r, bytes32 s)
+        external
+        view
+        brutalizeMemory
+        returns (address)
+    {
         return ECDSA.recover(hash, v, r, s);
     }
 
