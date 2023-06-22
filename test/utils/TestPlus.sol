@@ -19,7 +19,7 @@ contract TestPlus {
             calldatacopy(offset, zero, calldatasize())
 
             // Fill the 64 bytes of scratch space with garbage.
-            mstore(zero, caller())
+            mstore(zero, add(caller(), gas()))
             mstore(0x20, keccak256(offset, calldatasize()))
             mstore(zero, keccak256(zero, 0x40))
 
