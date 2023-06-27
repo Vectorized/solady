@@ -3,9 +3,9 @@ pragma solidity ^0.8.4;
 
 /// @notice Simple single owner authorization mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/Ownable.sol)
-/// @dev While the ownable portion follows [EIP-173](https://eips.ethereum.org/EIPS/eip-173)
-/// For compatibility, the nomenclature for the 2-step ownership handover
-/// may be unique to this codebase.
+/// @dev While the ownable portion follows
+/// [EIP-173](https://eips.ethereum.org/EIPS/eip-173) for compatibility,
+/// the nomenclature for the 2-step ownership handover may be unique to this codebase.
 abstract contract Ownable {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -17,7 +17,7 @@ abstract contract Ownable {
     /// @dev The `newOwner` cannot be the zero address.
     error NewOwnerIsZeroAddress();
 
-    /// @dev The `_pendingOwner` does not have a valid handover request.
+    /// @dev The `pendingOwner` does not have a valid handover request.
     error NoHandoverRequest();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -28,13 +28,13 @@ abstract contract Ownable {
     /// This event is intentionally kept the same as OpenZeppelin's Ownable to be
     /// compatible with indexers and [EIP-173](https://eips.ethereum.org/EIPS/eip-173),
     /// despite it not being as lightweight as a single argument event.
-    event OwnershipTransferred(address indexed _oldOwner, address indexed _newOwner);
+    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    /// @dev An ownership handover to `_pendingOwner` has been requested.
-    event OwnershipHandoverRequested(address indexed _pendingOwner);
+    /// @dev An ownership handover to `pendingOwner` has been requested.
+    event OwnershipHandoverRequested(address indexed pendingOwner);
 
-    /// @dev The ownership handover to `_pendingOwner` has been canceled.
-    event OwnershipHandoverCanceled(address indexed _pendingOwner);
+    /// @dev The ownership handover to `pendingOwner` has been canceled.
+    event OwnershipHandoverCanceled(address indexed pendingOwner);
 
     /// @dev `keccak256(bytes("OwnershipTransferred(address,address)"))`.
     uint256 private constant _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE =
@@ -59,7 +59,7 @@ abstract contract Ownable {
     /// with both regular and upgradeable contracts.
     uint256 private constant _OWNER_SLOT_NOT = 0x8b78c6d8;
 
-    /// The ownership handover slot of `_newOwner` is given by:
+    /// The ownership handover slot of `newOwner` is given by:
     /// ```
     ///     mstore(0x00, or(shl(96, user), _HANDOVER_SLOT_SEED))
     ///     let handoverSlot := keccak256(0x00, 0x20)
@@ -78,29 +78,29 @@ abstract contract Ownable {
     /// and to save gas in case the initial owner is not the caller.
     /// For performance reasons, this function will not check if there
     /// is an existing owner.
-    function _initializeOwner(address _newOwner) internal virtual {
+    function _initializeOwner(address newOwner) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             // Clean the upper 96 bits.
-            _newOwner := shr(96, shl(96, _newOwner))
+            newOwner := shr(96, shl(96, newOwner))
             // Store the new value.
-            sstore(not(_OWNER_SLOT_NOT), _newOwner)
+            sstore(not(_OWNER_SLOT_NOT), newOwner)
             // Emit the {OwnershipTransferred} event.
-            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, 0, _newOwner)
+            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, 0, newOwner)
         }
     }
 
     /// @dev Sets the owner directly without authorization guard.
-    function _setOwner(address _newOwner) internal virtual {
+    function _setOwner(address newOwner) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             let ownerSlot := not(_OWNER_SLOT_NOT)
             // Clean the upper 96 bits.
-            _newOwner := shr(96, shl(96, _newOwner))
+            newOwner := shr(96, shl(96, newOwner))
             // Emit the {OwnershipTransferred} event.
-            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, sload(ownerSlot), _newOwner)
+            log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, sload(ownerSlot), newOwner)
             // Store the new value.
-            sstore(ownerSlot, _newOwner)
+            sstore(ownerSlot, newOwner)
         }
     }
 
@@ -120,16 +120,16 @@ abstract contract Ownable {
     /*                  PUBLIC UPDATE FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Allows the owner to transfer the ownership to `_newOwner`.
-    function transferOwnership(address _newOwner) public payable virtual onlyOwner {
+    /// @dev Allows the owner to transfer the ownership to `newOwner`.
+    function transferOwnership(address newOwner) public payable virtual onlyOwner {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(shl(96, _newOwner)) {
+            if iszero(shl(96, newOwner)) {
                 mstore(0x00, 0x7448fbae) // `NewOwnerIsZeroAddress()`.
                 revert(0x1c, 0x04)
             }
         }
-        _setOwner(_newOwner);
+        _setOwner(newOwner);
     }
 
     /// @dev Allows the owner to renounce their ownership.
@@ -167,14 +167,14 @@ abstract contract Ownable {
         }
     }
 
-    /// @dev Allows the owner to complete the two-step ownership handover to `_pendingOwner`.
-    /// Reverts if there is no existing ownership handover requested by `_pendingOwner`.
-    function completeOwnershipHandover(address _pendingOwner) public payable virtual onlyOwner {
+    /// @dev Allows the owner to complete the two-step ownership handover to `pendingOwner`.
+    /// Reverts if there is no existing ownership handover requested by `pendingOwner`.
+    function completeOwnershipHandover(address pendingOwner) public payable virtual onlyOwner {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute and set the handover slot to 0.
             mstore(0x0c, _HANDOVER_SLOT_SEED)
-            mstore(0x00, _pendingOwner)
+            mstore(0x00, pendingOwner)
             let handoverSlot := keccak256(0x0c, 0x20)
             // If the handover does not exist, or has expired.
             if gt(timestamp(), sload(handoverSlot)) {
@@ -199,8 +199,8 @@ abstract contract Ownable {
         }
     }
 
-    /// @dev Returns the expiry timestamp for the two-step ownership handover to `_pendingOwner`.
-    function ownershipHandoverExpiresAt(address _pendingOwner)
+    /// @dev Returns the expiry timestamp for the two-step ownership handover to `pendingOwner`.
+    function ownershipHandoverExpiresAt(address pendingOwner)
         public
         view
         virtual
@@ -210,7 +210,7 @@ abstract contract Ownable {
         assembly {
             // Compute the handover slot.
             mstore(0x0c, _HANDOVER_SLOT_SEED)
-            mstore(0x00, _pendingOwner)
+            mstore(0x00, pendingOwner)
             // Load the handover slot.
             result := sload(keccak256(0x0c, 0x20))
         }
