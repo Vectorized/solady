@@ -3,9 +3,9 @@ pragma solidity ^0.8.4;
 
 /// @notice Simple single owner authorization mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/Ownable.sol)
-/// @dev While the ownable portion follows [EIP-173](https://eips.ethereum.org/EIPS/eip-173)
-/// for compatibility, the nomenclature for the 2-step ownership handover
-/// may be unique to this codebase.
+/// @dev While the ownable portion follows
+/// [EIP-173](https://eips.ethereum.org/EIPS/eip-173) for compatibility,
+/// the nomenclature for the 2-step ownership handover may be unique to this codebase.
 abstract contract Ownable {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -138,7 +138,7 @@ abstract contract Ownable {
     }
 
     /// @dev Request a two-step ownership handover to the caller.
-    /// The request will be automatically expire in 48 hours (172800 seconds) by default.
+    /// The request will automatically expire in 48 hours (172800 seconds) by default.
     function requestOwnershipHandover() public payable virtual {
         unchecked {
             uint256 expires = block.timestamp + ownershipHandoverValidFor();
