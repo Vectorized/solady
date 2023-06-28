@@ -210,7 +210,7 @@ abstract contract ERC721 {
     /// @dev Sets whether `operator` is approved to manage the tokens of the caller.
     ///
     /// Emits a {ApprovalForAll} event.
-    function setApprovalForAll(address operator, bool isApproved) public virtual {
+    function setApprovalForAll(address operator, bool isApproved) public payable virtual {
         /// @solidity memory-safe-assembly
         assembly {
             // Convert to 0 or 1.

@@ -67,7 +67,7 @@ contract MockERC721 is ERC721 {
         _approve(_brutalized(account), id);
     }
 
-    function setApprovalForAll(address operator, bool approved) public virtual override {
+    function setApprovalForAll(address operator, bool approved) public payable virtual override {
         super.setApprovalForAll(_brutalized(operator), approved);
     }
 
