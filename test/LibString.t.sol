@@ -184,24 +184,24 @@ contract LibStringTest is SoladyTest {
         );
     }
 
-    function testToHexStringZeroUnpadded() public {
-        assertEq(LibString.toHexStringUnpadded(0), "0x0");
+    function testToMinimalHexStringZero() public {
+        assertEq(LibString.toMinimalHexString(0), "0x0");
     }
 
-    function testToHexStringPositiveNumberUnpadded() public {
-        assertEq(LibString.toHexStringUnpadded(0x4132), "0x4132");
-        assertEq(LibString.toHexStringUnpadded(0x0123), "0x123");
+    function testToMinimalHexStringPositiveNumber() public {
+        assertEq(LibString.toMinimalHexString(0x4132), "0x4132");
+        assertEq(LibString.toMinimalHexString(0x0123), "0x123");
     }
 
-    function testToHexStringUint256MaxUnpadded() public {
+    function testToMinimalHexStringUint256Max() public {
         assertEq(
-            LibString.toHexStringUnpadded(type(uint256).max),
+            LibString.toMinimalHexString(type(uint256).max),
             "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         );
     }
 
-    function testToHexStringUnpaddedZeroRightPadded(uint256 x) public pure {
-        _checkMemory(LibString.toHexStringUnpadded(x));
+    function testtoMinimalHexStringZeroRightPadded(uint256 x) public pure {
+        _checkMemory(LibString.toMinimalHexString(x));
     }
 
     function testFromAddressToHexStringChecksummed() public {

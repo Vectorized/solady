@@ -176,21 +176,18 @@ library LibString {
     /// As address are 20 bytes long, the output will left-padded to have
     /// a length of `20 * 2 + 2` bytes. Except where the leading byte is a "0" in which case
     /// the output will be left-padded to have a length of `20 * 2 + 1` bytes.
-    function toHexStringUnpadded(uint256 value) public pure returns (string memory str) {
+    function toMinimalHexString(uint256 value) public pure returns (string memory str) {
         str = toHexStringNoPrefix(value);
 
         /// @solidity memory-safe-assembly
         assembly {
             // forgefmt: disable-next-item
-            let leadingZero := eq(byte(0, mload(add(str, 0x20))), 0x30) // Check if leading zero is present.
-
-            let offset := 0
-            if leadingZero { offset := 1 }
+            let offset := eq(byte(0, mload(add(str, 0x20))), 0x30) // Check if leading zero is present.
 
             let strLength := add(mload(str), 2) // Compute the length.
-            mstore(add(str, offset), 0x3078) // Write the "0x" prefix. Adjusting for leading zero.
-            str := sub(str, sub(2, offset)) // Move the pointer.
-            mstore(str, sub(strLength, offset)) // Write the length.
+            mstore(add(str, offset), 0x3078) // Write the "0x" prefix, accounting for leading zero.
+            str := sub(str, sub(2, offset)) // Move the pointer, accounting for leading zero.
+            mstore(str, sub(strLength, offset)) // Write the length, account for leading zero.
         }
     }
 
