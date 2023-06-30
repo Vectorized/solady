@@ -198,6 +198,7 @@ abstract contract ERC721 {
         virtual
         returns (bool result)
     {
+        if (_isPreapprovedForAll(operator)) return true;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x1c, operator)
@@ -240,6 +241,7 @@ abstract contract ERC721 {
     /// Emits a {Transfer} event.
     function transferFrom(address from, address to, uint256 id) public payable virtual {
         _beforeTokenTransfer(from, to, id);
+        bool isPreapprovedForAll = _isPreapprovedForAll(msg.sender);
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -271,10 +273,12 @@ abstract contract ERC721 {
                 mstore(0x00, from)
                 let approvedAddress := sload(add(1, ownershipSlot))
                 // Revert if the caller is not the owner, nor approved.
-                if iszero(or(eq(caller(), from), eq(caller(), approvedAddress))) {
-                    if iszero(sload(keccak256(0x0c, 0x30))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
+                if iszero(isPreapprovedForAll) {
+                    if iszero(or(eq(caller(), from), eq(caller(), approvedAddress))) {
+                        if iszero(sload(keccak256(0x0c, 0x30))) {
+                            mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                            revert(0x1c, 0x04)
+                        }
                     }
                 }
                 // Delete the approved address if any.
@@ -517,6 +521,7 @@ abstract contract ERC721 {
     function _burn(address by, uint256 id) internal virtual {
         address owner = ownerOf(id);
         _beforeTokenTransfer(owner, address(0), id);
+        bool isPreapprovedForAll = _isPreapprovedForAll(by);
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -539,10 +544,12 @@ abstract contract ERC721 {
                 let approvedAddress := sload(add(1, ownershipSlot))
                 // If `by` is not the zero address, do the authorization check.
                 // Revert if the `by` is not the owner, nor approved.
-                if iszero(or(iszero(by), or(eq(by, owner), eq(by, approvedAddress)))) {
-                    if iszero(sload(keccak256(0x0c, 0x30))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
+                if iszero(isPreapprovedForAll) {
+                    if iszero(or(iszero(by), or(eq(by, owner), eq(by, approvedAddress)))) {
+                        if iszero(sload(keccak256(0x0c, 0x30))) {
+                            mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                            revert(0x1c, 0x04)
+                        }
                     }
                 }
                 // Delete the approved address if any.
@@ -575,6 +582,7 @@ abstract contract ERC721 {
         virtual
         returns (bool result)
     {
+        if (_isPreapprovedForAll(account)) return true;
         /// @solidity memory-safe-assembly
         assembly {
             result := 1
@@ -701,6 +709,7 @@ abstract contract ERC721 {
     /// Emits a {Transfer} event.
     function _transfer(address by, address from, address to, uint256 id) internal virtual {
         _beforeTokenTransfer(from, to, id);
+        bool isPreapprovedForAll = _isPreapprovedForAll(by);
         /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
@@ -734,10 +743,12 @@ abstract contract ERC721 {
                 let approvedAddress := sload(add(1, ownershipSlot))
                 // If `by` is not the zero address, do the authorization check.
                 // Revert if the `by` is not the owner, nor approved.
-                if iszero(or(iszero(by), or(eq(by, from), eq(by, approvedAddress)))) {
-                    if iszero(sload(keccak256(0x0c, 0x30))) {
-                        mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
-                        revert(0x1c, 0x04)
+                if iszero(isPreapprovedForAll) {
+                    if iszero(or(iszero(by), or(eq(by, from), eq(by, approvedAddress)))) {
+                        if iszero(sload(keccak256(0x0c, 0x30))) {
+                            mstore(0x00, 0x4b6e7f18) // `NotOwnerNorApproved()`.
+                            revert(0x1c, 0x04)
+                        }
                     }
                 }
                 // Delete the approved address if any.
@@ -827,6 +838,13 @@ abstract contract ERC721 {
 
     /// @dev Hook that is called after any token transfers, including minting and burning.
     function _afterTokenTransfer(address from, address to, uint256 id) internal virtual {}
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 FOR PREAPPROVING OPERATORS                 */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Override to return whether `operator` is a preapproved operator.
+    function _isPreapprovedForAll(address operator) internal view virtual returns (bool) {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
