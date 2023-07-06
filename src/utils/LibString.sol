@@ -814,13 +814,13 @@ library LibString {
             result := mload(0x40)
             let aLength := mload(a)
             // Copy `a` one word at a time, backwards.
-            for { let o := and(add(mload(a), 0x20), w) } 1 {} {
+            for { let o := and(add(aLength, 0x20), w) } 1 {} {
                 mstore(add(result, o), mload(add(a, o)))
                 o := add(o, w) // `sub(o, 0x20)`.
                 if iszero(o) { break }
             }
             let bLength := mload(b)
-            let output := add(result, mload(a))
+            let output := add(result, aLength)
             // Copy `b` one word at a time, backwards.
             for { let o := and(add(bLength, 0x20), w) } 1 {} {
                 mstore(add(output, o), mload(add(b, o)))
