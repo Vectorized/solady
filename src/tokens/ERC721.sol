@@ -11,11 +11,14 @@ pragma solidity ^0.8.4;
 /// For performance, this implementation WILL NOT revert for such actions.
 /// Please add any checks with overrides if desired.
 ///
-/// For performance, methods are made payable if permitted by the standard.
+/// For performance, methods are made payable where permitted by the ERC721 standard.
 ///
 /// For performance, most of the code is manually duplicated and inlined.
 /// Overriding internal functions may not alter the functionality of external functions.
 /// Please check and override accordingly.
+///
+/// Please take care when overriding to never violate the ERC721 invariant:
+/// the balance of an owner must be always be equal to their number of ownership slots.
 abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
