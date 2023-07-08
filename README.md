@@ -101,6 +101,12 @@ All contracts in Solady are compatible with both upgradeable and non-upgradeable
 
 Please call any required internal initialization methods accordingly.
 
+## EVM Compatibility
+
+Some parts of Solady may not be compatible with chains with partial EVM equivalence.
+
+Please always check and test for compatibility accordingly.
+
 ## Acknowledgements
 
 This repository is inspired by or directly modified from many sources, primarily:
