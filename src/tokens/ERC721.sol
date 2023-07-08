@@ -10,6 +10,15 @@ pragma solidity ^0.8.4;
 /// The ERC721 standard allows for self-approvals.
 /// For performance, this implementation WILL NOT revert for such actions.
 /// Please add any checks with overrides if desired.
+///
+/// For performance, methods are made payable where permitted by the ERC721 standard.
+///
+/// For performance, most of the code is manually duplicated and inlined.
+/// Overriding internal functions may not alter the functionality of external functions.
+/// Please check and override accordingly.
+///
+/// Please take care when overriding to never violate the ERC721 invariant:
+/// the balance of an owner must be always be equal to their number of ownership slots.
 abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -83,8 +92,8 @@ abstract contract ERC721 {
     ///     let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
     /// ```
     /// Bits Layout:
-    // - [0..159]   `addr`
-    // - [160..223] `extraData`
+    /// - [0..159]   `addr`
+    /// - [160..223] `extraData`
     ///
     /// The approved address slot is given by: `add(1, ownershipSlot)`.
     ///
@@ -161,7 +170,7 @@ abstract contract ERC721 {
         }
     }
 
-    /// @dev Returns the account approved to managed token `id`.
+    /// @dev Returns the account approved to manage token `id`.
     ///
     /// Requirements:
     /// - Token `id` must exist.
@@ -186,7 +195,7 @@ abstract contract ERC721 {
     /// - The caller must be the owner of the token,
     ///   or an approved operator for the token owner.
     ///
-    /// Emits a {Approval} event.
+    /// Emits an {Approval} event.
     function approve(address account, uint256 id) public payable virtual {
         _approve(msg.sender, account, id);
     }
@@ -209,7 +218,7 @@ abstract contract ERC721 {
 
     /// @dev Sets whether `operator` is approved to manage the tokens of the caller.
     ///
-    /// Emits a {ApprovalForAll} event.
+    /// Emits an {ApprovalForAll} event.
     function setApprovalForAll(address operator, bool isApproved) public virtual {
         /// @solidity memory-safe-assembly
         assembly {
@@ -371,6 +380,9 @@ abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*            INTERNAL DATA HITCHHIKING FUNCTIONS             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // For performance, no events are emitted for the hitchhiking setters.
+    // Please emit your own events if required.
 
     /// @dev Returns the auxiliary data for `owner`.
     /// Minting, transferring, burning the tokens of `owner` will not change the auxiliary data.
@@ -565,7 +577,7 @@ abstract contract ERC721 {
     /*                INTERNAL APPROVAL FUNCTIONS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns whether `account` is the owner of token `id`, or is approved to managed it.
+    /// @dev Returns whether `account` is the owner of token `id`, or is approved to manage it.
     ///
     /// Requirements:
     /// - Token `id` must exist.
@@ -593,7 +605,7 @@ abstract contract ERC721 {
             // Check if `account` is the `owner`.
             if iszero(eq(account, owner)) {
                 mstore(0x00, owner)
-                // Check if `account` is approved to
+                // Check if `account` is approved to manage the token.
                 if iszero(sload(keccak256(0x0c, 0x30))) {
                     result := eq(account, sload(add(1, ownershipSlot)))
                 }
@@ -660,7 +672,7 @@ abstract contract ERC721 {
     /// @dev Approve or remove the `operator` as an operator for `by`,
     /// without authorization checks.
     ///
-    /// Emits a {ApprovalForAll} event.
+    /// Emits an {ApprovalForAll} event.
     function _setApprovalForAll(address by, address operator, bool isApproved) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
