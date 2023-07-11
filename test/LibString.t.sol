@@ -203,7 +203,7 @@ contract LibStringTest is SoladyTest {
         );
     }
 
-    function testtoMinimalHexStringZeroRightPadded(uint256 x) public pure {
+    function testToMinimalHexStringZeroRightPadded(uint256 x) public pure {
         _checkMemory(LibString.toMinimalHexString(x));
     }
 
@@ -226,7 +226,7 @@ contract LibStringTest is SoladyTest {
         );
     }
 
-    function testtoMinimalHexStringNoPrefixZeroRightPadded(uint256 x) public pure {
+    function testToMinimalHexStringNoPrefixZeroRightPadded(uint256 x) public pure {
         _checkMemory(LibString.toMinimalHexStringNoPrefix(x));
     }
 

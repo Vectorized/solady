@@ -182,7 +182,7 @@ library LibString {
             let strLength := add(mload(str), 2) // Compute the length.
             mstore(add(str, o), 0x3078) // Write the "0x" prefix, accounting for leading zero.
             str := sub(add(str, o), 2) // Move the pointer, accounting for leading zero.
-            mstore(str, sub(strLength, o)) // Write the length, account for leading zero.
+            mstore(str, sub(strLength, o)) // Write the length, accounting for leading zero.
         }
     }
 
@@ -196,7 +196,7 @@ library LibString {
             let o := eq(byte(0, mload(add(str, 0x20))), 0x30) // Whether leading zero is present.
             let strLength := mload(str) // Get the length.
             str := add(str, o) // Move the pointer, accounting for leading zero.
-            mstore(str, sub(strLength, o)) // Write the length, account for leading zero.
+            mstore(str, sub(strLength, o)) // Write the length, accounting for leading zero.
         }
     }
 
