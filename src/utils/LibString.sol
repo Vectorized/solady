@@ -171,23 +171,32 @@ library LibString {
     }
 
     /// @dev Returns the hexadecimal representation of `value`.
-    /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
-    /// The output excludes leading "0" fromt the `toHexStringNoPrefix` output.
-    /// As address are 20 bytes long, the output will left-padded to have
-    /// a length of `20 * 2 + 2` bytes. Except where the leading byte is a "0" in which case
-    /// the output will be left-padded to have a length of `20 * 2 + 1` bytes.
-    function toMinimalHexString(uint256 value) public pure returns (string memory str) {
+    /// The output is prefixed with "0x".
+    /// The output excludes leading "0" from the `toHexString` output.
+    /// `0x00: "0x0", 0x01: "0x1", 0x12: "0x12", 0x123: "0x123"`.
+    function toMinimalHexString(uint256 value) internal pure returns (string memory str) {
         str = toHexStringNoPrefix(value);
-
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
-            let offset := eq(byte(0, mload(add(str, 0x20))), 0x30) // Check if leading zero is present.
-
+            let o := eq(byte(0, mload(add(str, 0x20))), 0x30) // Whether leading zero is present.
             let strLength := add(mload(str), 2) // Compute the length.
-            mstore(add(str, offset), 0x3078) // Write the "0x" prefix, accounting for leading zero.
-            str := sub(str, sub(2, offset)) // Move the pointer, accounting for leading zero.
-            mstore(str, sub(strLength, offset)) // Write the length, account for leading zero.
+            mstore(add(str, o), 0x3078) // Write the "0x" prefix, accounting for leading zero.
+            str := sub(add(str, o), 2) // Move the pointer, accounting for leading zero.
+            mstore(str, sub(strLength, o)) // Write the length, account for leading zero.
+        }
+    }
+
+    /// @dev Returns the hexadecimal representation of `value`.
+    /// The output excludes leading "0" from the `toHexStringNoPrefix` output.
+    /// `0x00: "0", 0x01: "1", 0x12: "12", 0x123: "123"`.
+    function toMinimalHexStringNoPrefix(uint256 value) internal pure returns (string memory str) {
+        str = toHexStringNoPrefix(value);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := eq(byte(0, mload(add(str, 0x20))), 0x30) // Whether leading zero is present.
+            let strLength := mload(str) // Get the length.
+            str := add(str, o) // Move the pointer, accounting for leading zero.
+            mstore(str, sub(strLength, o)) // Write the length, account for leading zero.
         }
     }
 
