@@ -184,6 +184,52 @@ contract LibStringTest is SoladyTest {
         );
     }
 
+    function testToMinimalHexStringZero() public {
+        assertEq(LibString.toMinimalHexString(0), "0x0");
+    }
+
+    function testToMinimalHexStringPositiveNumber() public {
+        assertEq(LibString.toMinimalHexString(0x54132), "0x54132");
+        assertEq(LibString.toMinimalHexString(0x4132), "0x4132");
+        assertEq(LibString.toMinimalHexString(0x0123), "0x123");
+        assertEq(LibString.toMinimalHexString(0x12), "0x12");
+        assertEq(LibString.toMinimalHexString(0x1), "0x1");
+    }
+
+    function testToMinimalHexStringUint256Max() public {
+        assertEq(
+            LibString.toMinimalHexString(type(uint256).max),
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+    }
+
+    function testToMinimalHexStringZeroRightPadded(uint256 x) public pure {
+        _checkMemory(LibString.toMinimalHexString(x));
+    }
+
+    function testToMinimalHexStringNoPrefixZero() public {
+        assertEq(LibString.toMinimalHexStringNoPrefix(0), "0");
+    }
+
+    function testToMinimalHexStringNoPrefixPositiveNumber() public {
+        assertEq(LibString.toMinimalHexStringNoPrefix(0x54132), "54132");
+        assertEq(LibString.toMinimalHexStringNoPrefix(0x4132), "4132");
+        assertEq(LibString.toMinimalHexStringNoPrefix(0x0123), "123");
+        assertEq(LibString.toMinimalHexStringNoPrefix(0x12), "12");
+        assertEq(LibString.toMinimalHexStringNoPrefix(0x1), "1");
+    }
+
+    function testToMinimalHexStringNoPrefixUint256Max() public {
+        assertEq(
+            LibString.toMinimalHexStringNoPrefix(type(uint256).max),
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+    }
+
+    function testToMinimalHexStringNoPrefixZeroRightPadded(uint256 x) public pure {
+        _checkMemory(LibString.toMinimalHexStringNoPrefix(x));
+    }
+
     function testFromAddressToHexStringChecksummed() public {
         // All caps.
         assertEq(
