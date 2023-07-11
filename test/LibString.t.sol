@@ -184,6 +184,26 @@ contract LibStringTest is SoladyTest {
         );
     }
 
+    function testToMinimalHexStringZero() public {
+        assertEq(LibString.toMinimalHexString(0), "0x0");
+    }
+
+    function testToMinimalHexStringPositiveNumber() public {
+        assertEq(LibString.toMinimalHexString(0x4132), "0x4132");
+        assertEq(LibString.toMinimalHexString(0x0123), "0x123");
+    }
+
+    function testToMinimalHexStringUint256Max() public {
+        assertEq(
+            LibString.toMinimalHexString(type(uint256).max),
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+    }
+
+    function testtoMinimalHexStringZeroRightPadded(uint256 x) public pure {
+        _checkMemory(LibString.toMinimalHexString(x));
+    }
+
     function testFromAddressToHexStringChecksummed() public {
         // All caps.
         assertEq(

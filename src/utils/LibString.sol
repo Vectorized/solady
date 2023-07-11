@@ -171,6 +171,27 @@ library LibString {
     }
 
     /// @dev Returns the hexadecimal representation of `value`.
+    /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
+    /// The output excludes leading "0" fromt the `toHexStringNoPrefix` output.
+    /// As address are 20 bytes long, the output will left-padded to have
+    /// a length of `20 * 2 + 2` bytes. Except where the leading byte is a "0" in which case
+    /// the output will be left-padded to have a length of `20 * 2 + 1` bytes.
+    function toMinimalHexString(uint256 value) public pure returns (string memory str) {
+        str = toHexStringNoPrefix(value);
+
+        /// @solidity memory-safe-assembly
+        assembly {
+            // forgefmt: disable-next-item
+            let offset := eq(byte(0, mload(add(str, 0x20))), 0x30) // Check if leading zero is present.
+
+            let strLength := add(mload(str), 2) // Compute the length.
+            mstore(add(str, offset), 0x3078) // Write the "0x" prefix, accounting for leading zero.
+            str := sub(str, sub(2, offset)) // Move the pointer, accounting for leading zero.
+            mstore(str, sub(strLength, offset)) // Write the length, account for leading zero.
+        }
+    }
+
+    /// @dev Returns the hexadecimal representation of `value`.
     /// The output is encoded using 2 hexadecimal digits per byte.
     /// As address are 20 bytes long, the output will left-padded to have
     /// a length of `20 * 2` bytes.
