@@ -633,6 +633,21 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.min(x, y), z);
     }
 
+    function testMinBrutalized(uint256 x, uint256 y) public {
+        uint32 xCasted;
+        uint32 yCasted;
+        /// @solidity memory-safe-assembly
+        assembly {
+            xCasted := x
+            yCasted := y
+        }
+        uint256 expected = xCasted < yCasted ? xCasted : yCasted;
+        assertEq(FixedPointMathLib.min(xCasted, yCasted), expected);
+        assertEq(FixedPointMathLib.min(uint32(x), uint32(y)), expected);
+        expected = uint32(x) < uint32(y) ? uint32(x) : uint32(y);
+        assertEq(FixedPointMathLib.min(xCasted, yCasted), expected);
+    }
+
     function testMinSigned(int256 x, int256 y) public {
         int256 z = x < y ? x : y;
         assertEq(FixedPointMathLib.min(x, y), z);
