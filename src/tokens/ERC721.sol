@@ -93,7 +93,7 @@ abstract contract ERC721 {
     /// ```
     /// Bits Layout:
     /// - [0..159]   `addr`
-    /// - [160..223] `extraData`
+    /// - [160..255] `extraData`
     ///
     /// The approved address slot is given by: `add(1, ownershipSlot)`.
     ///
@@ -107,7 +107,7 @@ abstract contract ERC721 {
     /// ```
     /// Bits Layout:
     /// - [0..31]   `balance`
-    /// - [32..225] `aux`
+    /// - [32..255] `aux`
     ///
     /// The `operator` approval slot of `owner` is given by:
     /// ```
