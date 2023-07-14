@@ -21,6 +21,8 @@ contract LibMapTest is SoladyTest {
 
     LibMap.Uint128Map[2] uint128s;
 
+    mapping(uint256 => LibMap.Uint32Map) uint32Maps;
+
     struct _TestTemps {
         uint256 i0;
         uint256 i1;
@@ -372,5 +374,38 @@ contract LibMapTest is SoladyTest {
         uint128s[1].set(t.i1, uint128(t.v1));
         assertEq(uint128s[0].get(t.i0), uint128(t.v0));
         assertEq(uint128s[1].get(t.i1), uint128(t.v1));
+    }
+
+    function testUint32Maps(uint256) public {
+        unchecked {
+            uint256 a0 = _random();
+            uint256 a1 = _random() % 2 == 0 ? a0 + _random() % 4 : a0 - _random() % 4;
+            uint256 b0 = _random();
+            uint256 b1 = _random() % 2 == 0 ? b0 + _random() % 4 : b0 - _random() % 4;
+            if (a0 == a1 && b1 == b0) {
+                if (_random() % 2 == 0) {
+                    if (_random() % 2 == 0) b1++;
+                    else a0++;
+                } else {
+                    if (_random() % 2 == 0) b1--;
+                    else a0--;
+                }
+            }
+            uint256 c0 = _random();
+            uint256 c1 = _random();
+            uint32 c0Casted;
+            uint32 c1Casted;
+            /// @solidity memory-safe-assembly
+            assembly {
+                c0Casted := c0
+                c1Casted := c1
+            }
+            assertEq(uint32Maps[a0].get(b0), 0);
+            assertEq(uint32Maps[a1].get(b1), 0);
+            uint32Maps[a0].set(b0, c0Casted);
+            uint32Maps[a1].set(b1, c1Casted);
+            assertEq(uint32Maps[a0].get(b0), uint32(c0));
+            assertEq(uint32Maps[a1].get(b1), uint32(c1));
+        }
     }
 }
