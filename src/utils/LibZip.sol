@@ -251,7 +251,6 @@ library LibZip {
     /// For efficiency, this function will directly return the results, terminating the context.
     /// If called internally, it must be called at the end of the function.
     function cdFallback() internal {
-        /// @solidity memory-safe-assembly
         assembly {
             if iszero(calldatasize()) { return(calldatasize(), calldatasize()) }
             let o := 0
