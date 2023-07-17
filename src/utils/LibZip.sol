@@ -255,12 +255,12 @@ library LibZip {
         assembly {
             if iszero(calldatasize()) { return(calldatasize(), calldatasize()) }
             let o := 0
-            let f := shl(224, 0xffffffff) // For negating the first 4 bytes.
+            let f := sub(0, 4) // For negating the first 4 bytes.
             for { let i := 0 } lt(i, calldatasize()) {} {
-                let c := xor(byte(i, f), byte(0, calldataload(i)))
+                let c := byte(0, xor(add(i, f), calldataload(i)))
                 i := add(i, 1)
                 if iszero(c) {
-                    let d := xor(byte(i, f), byte(0, calldataload(i)))
+                    let d := byte(0, xor(add(i, f), calldataload(i)))
                     i := add(i, 1)
                     // Fill with either 0xff or 0x00.
                     mstore(o, not(0))
