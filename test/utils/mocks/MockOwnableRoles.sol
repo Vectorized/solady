@@ -63,24 +63,12 @@ contract MockOwnableRoles is OwnableRoles {
         super.completeOwnershipHandover(_brutalizedAddress(pendingOwner));
     }
 
-    function hasAnyRole(address user, uint256 roles)
-        public
-        view
-        virtual
-        override
-        returns (bool result)
-    {
-        result = _checkedBool(super.hasAnyRole(_brutalizedAddress(user), roles));
+    function hasAnyRole(address user, uint256 roles) public view virtual returns (bool result) {
+        result = _checkedBool(_hasAnyRole(_brutalizedAddress(user), roles));
     }
 
-    function hasAllRoles(address user, uint256 roles)
-        public
-        view
-        virtual
-        override
-        returns (bool result)
-    {
-        result = _checkedBool(super.hasAllRoles(_brutalizedAddress(user), roles));
+    function hasAllRoles(address user, uint256 roles) public view virtual returns (bool result) {
+        result = _checkedBool(_hasAllRoles(_brutalizedAddress(user), roles));
     }
 
     function transferOwnership(address newOwner) public payable virtual override {
@@ -101,8 +89,8 @@ contract MockOwnableRoles is OwnableRoles {
         result = super.ownershipHandoverExpiresAt(_brutalizedAddress(pendingOwner));
     }
 
-    function ownershipHandoverValidFor() public view virtual override returns (uint64 result) {
-        result = super.ownershipHandoverValidFor();
+    function ownershipHandoverValidFor() public view returns (uint64 result) {
+        result = _ownershipHandoverValidFor();
         /// @solidity memory-safe-assembly
         assembly {
             // Some acrobatics to make the brutalized bits psuedorandomly
@@ -130,6 +118,14 @@ contract MockOwnableRoles is OwnableRoles {
 
     function updateFlagWithOnlyRolesOrOwner(uint256 roles) public payable onlyRolesOrOwner(roles) {
         flag = true;
+    }
+
+    function rolesFromOrdinals(uint8[] memory ordinals) public pure returns (uint256 roles) {
+        roles = _rolesFromOrdinals(ordinals);
+    }
+
+    function ordinalsFromRoles(uint256 roles) public pure returns (uint8[] memory ordinals) {
+        ordinals = _ordinalsFromRoles(roles);
     }
 
     function _brutalizedAddress(address value) private view returns (address result) {
