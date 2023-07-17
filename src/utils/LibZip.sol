@@ -255,7 +255,7 @@ library LibZip {
         assembly {
             if iszero(calldatasize()) { return(calldatasize(), calldatasize()) }
             let o := 0
-            let f := sub(0, 4) // For negating the first 4 bytes.
+            let f := not(3) // For negating the first 4 bytes.
             for { let i := 0 } lt(i, calldatasize()) {} {
                 let c := byte(0, xor(add(i, f), calldataload(i)))
                 i := add(i, 1)

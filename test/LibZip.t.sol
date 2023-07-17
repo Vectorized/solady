@@ -235,18 +235,15 @@ contract LibZipTest is SoladyTest {
         assertTrue(success);
     }
 
-    function testCdFallbackMaskTrick(uint256 i) public {
+    function testCdFallbackMaskTrick(uint256 i, uint256 j) public {
         i = _bound(i, 0, 2 ** 248 - 1);
-        uint256 mask;
+        uint256 a;
+        uint256 b;
         /// @solidity memory-safe-assembly
         assembly {
-            let f := sub(0, 4)
-            mask := byte(0, add(i, f))
+            a := byte(0, xor(add(i, not(3)), j))
+            b := xor(byte(i, shl(224, 0xffffffff)), byte(0, j))
         }
-        if (i < 4) {
-            assertEq(mask, 0xff);
-        } else {
-            assertEq(mask, 0x00);
-        }
+        assertEq(a, b);
     }
 }
