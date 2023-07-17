@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {MockCd} from "./utils/mocks/MockCd.sol";
+import {MockCd, MockCdFallbackDecompressor} from "./utils/mocks/MockCd.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {ERC1967Factory} from "../src/utils/ERC1967Factory.sol";
 import {LibString} from "../src/utils/LibString.sol";
@@ -99,28 +99,47 @@ contract LibZipTest is SoladyTest {
         assertEq(keccak256(compressed), compressedHash);
     }
 
+    function _randomCd() internal returns (bytes memory data) {
+        uint256 n = _random() % 8 == 0 ? _random() % 2048 : _random() % 256;
+        data = new bytes(n);
+        if (_random() % 2 == 0) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(add(add(data, 0x20), i), not(0))
+                }
+            }
+        }
+        if (n != 0) {
+            uint256 m = _random() % 8;
+            for (uint256 j; j < m; ++j) {
+                data[_random() % n] = bytes1(uint8(_random()));
+            }
+        }
+    }
+
     function testCdCompressDecompress(uint256) public brutalizeMemory {
         unchecked {
-            uint256 n = _random() % 8 == 0 ? _random() % 2048 : _random() % 256;
-            bytes memory data = new bytes(n);
-            if (_random() % 2 == 0) {
-                /// @solidity memory-safe-assembly
-                assembly {
-                    for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
-                        mstore(add(add(data, 0x20), i), not(0))
-                    }
-                }
-            }
-            if (n != 0) {
-                uint256 m = _random() % 8;
-                for (uint256 j; j < m; ++j) {
-                    data[_random() % n] = bytes1(uint8(_random()));
-                }
-            }
+            bytes memory data = _randomCd();
             bytes memory compressed = LibZip.cdCompress(data);
             bytes memory decompressed = LibZip.cdDecompress(compressed);
             assertEq(decompressed, data);
         }
+    }
+
+    function testCdFallbackDecompressor(bytes memory data) public {
+        bytes memory compressed = LibZip.cdCompress(data);
+        MockCdFallbackDecompressor decompressor = new MockCdFallbackDecompressor();
+        (, bytes memory result) = address(decompressor).call(compressed);
+        assertEq(abi.decode(result, (bytes32)), keccak256(data));
+    }
+
+    function testCdFallbackDecompressor(uint256) public {
+        bytes memory data = _randomCd();
+        bytes memory compressed = LibZip.cdCompress(data);
+        MockCdFallbackDecompressor decompressor = new MockCdFallbackDecompressor();
+        (, bytes memory result) = address(decompressor).call(compressed);
+        assertEq(abi.decode(result, (bytes32)), keccak256(data));
     }
 
     function testCdCompress() public {
@@ -233,5 +252,17 @@ contract LibZipTest is SoladyTest {
         (success, result) = payable(mockCd).call{value: callValue}("");
         assertEq(address(mockCd).balance, callValue * 2);
         assertTrue(success);
+    }
+
+    function testCdFallbackMaskTrick(uint256 i, uint256 j) public {
+        i = _bound(i, 0, 2 ** 248 - 1);
+        uint256 a;
+        uint256 b;
+        /// @solidity memory-safe-assembly
+        assembly {
+            a := byte(0, xor(add(i, not(3)), j))
+            b := xor(byte(i, shl(224, 0xffffffff)), byte(0, j))
+        }
+        assertEq(a, b);
     }
 }

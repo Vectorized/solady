@@ -47,3 +47,30 @@ contract MockCd {
         LibZip.cdFallback();
     }
 }
+
+contract MockCdFallbackDecompressor {
+    receive() external payable {
+        _interceptCdFallback();
+        LibZip.cdFallback();
+    }
+
+    fallback() external payable {
+        _interceptCdFallback();
+        LibZip.cdFallback();
+    }
+
+    function _interceptCdFallback() internal {
+        assembly {
+            if iszero(calldatasize()) {
+                mstore(0x00, keccak256(0x00, 0x00))
+                return(0x00, 0x20)
+            }
+            if sload(0) {
+                calldatacopy(0x00, 0x00, calldatasize())
+                mstore(0x00, keccak256(0x00, calldatasize()))
+                return(0x00, 0x20)
+            }
+            sstore(0, 1)
+        }
+    }
+}
