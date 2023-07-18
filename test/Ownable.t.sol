@@ -17,6 +17,12 @@ contract OwnableTest is SoladyTest {
         mockOwnable = new MockOwnable();
     }
 
+    function testBytecodeSize() public {
+        MockOwnableBytecodeSizer mock = new MockOwnableBytecodeSizer();
+        assertTrue(address(mock).code.length > 0);
+        assertEq(mock.owner(), address(this));
+    }
+
     function testInitializeOwnerDirect() public {
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), address(1));

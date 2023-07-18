@@ -40,43 +40,53 @@ abstract contract OwnableRoles is Ownable {
     /*                     INTERNAL FUNCTIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Grants the roles directly without authorization guard.
-    /// Each bit of `roles` represents the role to turn on.
-    function _grantRoles(address user, uint256 roles) internal virtual {
-        /// @solidity memory-safe-assembly
+    /// @dev Overwrite the roles directly without authorization guard.
+    function _setRoles(address user, uint256 roles) internal virtual {
+        // Compute the role slot.
         assembly {
-            // Compute the role slot.
             mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
-            let roleSlot := keccak256(0x0c, 0x20)
-            // Load the current value and `or` it with `roles`.
-            roles := or(sload(roleSlot), roles)
             // Store the new value.
-            sstore(roleSlot, roles)
+            sstore(keccak256(0x0c, 0x20), roles)
             // Emit the {RolesUpdated} event.
             log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, mload(0x0c)), roles)
         }
     }
 
-    /// @dev Removes the roles directly without authorization guard.
-    /// Each bit of `roles` represents the role to turn off.
-    function _removeRoles(address user, uint256 roles) internal virtual {
-        /// @solidity memory-safe-assembly
+    /// @dev Updates the roles directly without authorization guard.
+    /// If `on` is true, each set bit of `roles` will be turned on,
+    /// otherwise, each set bit of `roles` will be turned off.
+    function _updateRoles(address user, uint256 roles, bool on) internal virtual {
+        // Compute the role slot.
         assembly {
-            // Compute the role slot.
             mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
             let roleSlot := keccak256(0x0c, 0x20)
             // Load the current value.
-            let currentRoles := sload(roleSlot)
-            // Use `and` to compute the intersection of `currentRoles` and `roles`,
-            // `xor` it with `currentRoles` to flip the bits in the intersection.
-            roles := xor(currentRoles, and(currentRoles, roles))
+            let current := sload(roleSlot)
+            // Compute the updated roles if `on` is true.
+            let updated := or(current, roles)
+            // Compute the updated roles if `on` is false.
+            // Use `and` to compute the intersection of `current` and `roles`,
+            // `xor` it with `current` to flip the bits in the intersection.
+            if iszero(on) { updated := xor(current, and(current, roles)) }
             // Then, store the new value.
-            sstore(roleSlot, roles)
+            sstore(roleSlot, updated)
             // Emit the {RolesUpdated} event.
-            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, mload(0x0c)), roles)
+            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, mload(0x0c)), updated)
         }
+    }
+
+    /// @dev Grants the roles directly without authorization guard.
+    /// Each bit of `roles` represents the role to turn on.
+    function _grantRoles(address user, uint256 roles) internal virtual {
+        _updateRoles(user, roles, true);
+    }
+
+    /// @dev Removes the roles directly without authorization guard.
+    /// Each bit of `roles` represents the role to turn off.
+    function _removeRoles(address user, uint256 roles) internal virtual {
+        _updateRoles(user, roles, false);
     }
 
     /// @dev Throws if the sender does not have any of the `roles`.
@@ -139,6 +149,82 @@ abstract contract OwnableRoles is Ownable {
         }
     }
 
+    /// @dev Returns whether `user` has any of `roles`.
+    /// Made internal to conserve bytecode. Wrap it in a public function if needed.
+    function _hasAnyRole(address user, uint256 roles) internal view virtual returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the role slot.
+            mstore(0x0c, _ROLE_SLOT_SEED)
+            mstore(0x00, user)
+            // Load the stored value, and set the result to whether the
+            // `and` intersection of the value and `roles` is not zero.
+            result := iszero(iszero(and(sload(keccak256(0x0c, 0x20)), roles)))
+        }
+    }
+
+    /// @dev Returns whether `user` has all of `roles`.
+    /// Made internal to conserve bytecode. Wrap it in a public function if needed.
+    function _hasAllRoles(address user, uint256 roles)
+        internal
+        view
+        virtual
+        returns (bool result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the role slot.
+            mstore(0x0c, _ROLE_SLOT_SEED)
+            mstore(0x00, user)
+            // Whether the stored value is contains all the set bits in `roles`.
+            result := eq(and(sload(keccak256(0x0c, 0x20)), roles), roles)
+        }
+    }
+
+    /// @dev Convenience function to return a `roles` bitmap from an array of `ordinals`.
+    /// This is meant for frontends like Etherscan, and is therefore not fully optimized.
+    /// Not recommended to be called on-chain.
+    /// Made internal to conserve bytecode. Wrap it in a public function if needed.
+    function _rolesFromOrdinals(uint8[] memory ordinals) internal pure returns (uint256 roles) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for { let i := shl(5, mload(ordinals)) } i { i := sub(i, 0x20) } {
+                // We don't need to mask the values of `ordinals`, as Solidity
+                // cleans dirty upper bits when storing variables into memory.
+                roles := or(shl(mload(add(ordinals, i)), 1), roles)
+            }
+        }
+    }
+
+    /// @dev Convenience function to return an array of `ordinals` from the `roles` bitmap.
+    /// This is meant for frontends like Etherscan, and is therefore not fully optimized.
+    /// Not recommended to be called on-chain.
+    /// Made internal to conserve bytecode. Wrap it in a public function if needed.
+    function _ordinalsFromRoles(uint256 roles) internal pure returns (uint8[] memory ordinals) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Grab the pointer to the free memory.
+            ordinals := mload(0x40)
+            let ptr := add(ordinals, 0x20)
+            let o := 0
+            // The absence of lookup tables, De Bruijn, etc., here is intentional for
+            // smaller bytecode, as this function is not meant to be called on-chain.
+            for { let t := roles } 1 {} {
+                mstore(ptr, o)
+                // `shr` 5 is equivalent to multiplying by 0x20.
+                // Push back into the ordinals array if the bit is set.
+                ptr := add(ptr, shl(5, and(t, 1)))
+                o := add(o, 1)
+                t := shr(o, roles)
+                if iszero(t) { break }
+            }
+            // Store the length of `ordinals`.
+            mstore(ordinals, shr(5, sub(ptr, add(ordinals, 0x20))))
+            // Allocate the memory.
+            mstore(0x40, ptr)
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  PUBLIC UPDATE FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -165,31 +251,6 @@ abstract contract OwnableRoles is Ownable {
     /*                   PUBLIC READ FUNCTIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns whether `user` has any of `roles`.
-    function hasAnyRole(address user, uint256 roles) public view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the role slot.
-            mstore(0x0c, _ROLE_SLOT_SEED)
-            mstore(0x00, user)
-            // Load the stored value, and set the result to whether the
-            // `and` intersection of the value and `roles` is not zero.
-            result := iszero(iszero(and(sload(keccak256(0x0c, 0x20)), roles)))
-        }
-    }
-
-    /// @dev Returns whether `user` has all of `roles`.
-    function hasAllRoles(address user, uint256 roles) public view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the role slot.
-            mstore(0x0c, _ROLE_SLOT_SEED)
-            mstore(0x00, user)
-            // Whether the stored value is contains all the set bits in `roles`.
-            result := eq(and(sload(keccak256(0x0c, 0x20)), roles), roles)
-        }
-    }
-
     /// @dev Returns the roles of `user`.
     function rolesOf(address user) public view virtual returns (uint256 roles) {
         /// @solidity memory-safe-assembly
@@ -199,48 +260,6 @@ abstract contract OwnableRoles is Ownable {
             mstore(0x00, user)
             // Load the stored value.
             roles := sload(keccak256(0x0c, 0x20))
-        }
-    }
-
-    /// @dev Convenience function to return a `roles` bitmap from an array of `ordinals`.
-    /// This is meant for frontends like Etherscan, and is therefore not fully optimized.
-    /// Not recommended to be called on-chain.
-    function rolesFromOrdinals(uint8[] memory ordinals) public pure returns (uint256 roles) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            for { let i := shl(5, mload(ordinals)) } i { i := sub(i, 0x20) } {
-                // We don't need to mask the values of `ordinals`, as Solidity
-                // cleans dirty upper bits when storing variables into memory.
-                roles := or(shl(mload(add(ordinals, i)), 1), roles)
-            }
-        }
-    }
-
-    /// @dev Convenience function to return an array of `ordinals` from the `roles` bitmap.
-    /// This is meant for frontends like Etherscan, and is therefore not fully optimized.
-    /// Not recommended to be called on-chain.
-    function ordinalsFromRoles(uint256 roles) public pure returns (uint8[] memory ordinals) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Grab the pointer to the free memory.
-            ordinals := mload(0x40)
-            let ptr := add(ordinals, 0x20)
-            let o := 0
-            // The absence of lookup tables, De Bruijn, etc., here is intentional for
-            // smaller bytecode, as this function is not meant to be called on-chain.
-            for { let t := roles } 1 {} {
-                mstore(ptr, o)
-                // `shr` 5 is equivalent to multiplying by 0x20.
-                // Push back into the ordinals array if the bit is set.
-                ptr := add(ptr, shl(5, and(t, 1)))
-                o := add(o, 1)
-                t := shr(o, roles)
-                if iszero(t) { break }
-            }
-            // Store the length of `ordinals`.
-            mstore(ordinals, shr(5, sub(ptr, add(ordinals, 0x20))))
-            // Allocate the memory.
-            mstore(0x40, ptr)
         }
     }
 

@@ -49,8 +49,8 @@ contract MockOwnable is Ownable {
         result = super.ownershipHandoverExpiresAt(_brutalizedAddress(pendingOwner));
     }
 
-    function ownershipHandoverValidFor() public view virtual override returns (uint64 result) {
-        result = super.ownershipHandoverValidFor();
+    function ownershipHandoverValidFor() public view returns (uint64 result) {
+        result = _ownershipHandoverValidFor();
         /// @solidity memory-safe-assembly
         assembly {
             // Some acrobatics to make the brutalized bits psuedorandomly
@@ -79,5 +79,11 @@ contract MockOwnable is Ownable {
             mstore(0x40, add(0x20, mload(0x40)))
             mstore(0x00, result)
         }
+    }
+}
+
+contract MockOwnableBytecodeSizer is Ownable {
+    constructor() payable {
+        _initializeOwner(msg.sender);
     }
 }

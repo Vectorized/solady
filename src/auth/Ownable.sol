@@ -116,6 +116,13 @@ abstract contract Ownable {
         }
     }
 
+    /// @dev Returns how long a two-step ownership handover is valid for in seconds.
+    /// Override to return a different value if needed.
+    /// Made internal to conserve bytecode. Wrap it in a public function if needed.
+    function _ownershipHandoverValidFor() internal view virtual returns (uint64) {
+        return 48 * 3600;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  PUBLIC UPDATE FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -141,7 +148,7 @@ abstract contract Ownable {
     /// The request will automatically expire in 48 hours (172800 seconds) by default.
     function requestOwnershipHandover() public payable virtual {
         unchecked {
-            uint256 expires = block.timestamp + ownershipHandoverValidFor();
+            uint256 expires = block.timestamp + _ownershipHandoverValidFor();
             /// @solidity memory-safe-assembly
             assembly {
                 // Compute and set the handover slot to `expires`.
@@ -214,11 +221,6 @@ abstract contract Ownable {
             // Load the handover slot.
             result := sload(keccak256(0x0c, 0x20))
         }
-    }
-
-    /// @dev Returns how long a two-step ownership handover is valid for in seconds.
-    function ownershipHandoverValidFor() public view virtual returns (uint64) {
-        return 48 * 3600;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
