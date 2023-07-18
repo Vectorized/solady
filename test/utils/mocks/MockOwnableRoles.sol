@@ -43,6 +43,10 @@ contract MockOwnableRoles is OwnableRoles {
         _setOwner(_brutalizedAddress(newOwner));
     }
 
+    function setRolesDirect(address user, uint256 roles) public payable {
+        _setRoles(_brutalizedAddress(user), roles);
+    }
+
     function grantRolesDirect(address user, uint256 roles) public payable {
         _grantRoles(_brutalizedAddress(user), roles);
     }
@@ -151,5 +155,11 @@ contract MockOwnableRoles is OwnableRoles {
             resultIsOneOrZero := lt(result, 2)
         }
         if (!resultIsOneOrZero) result = !result;
+    }
+}
+
+contract MockOwnableRolesBytecodeSizer is OwnableRoles {
+    constructor() payable {
+        _initializeOwner(msg.sender);
     }
 }

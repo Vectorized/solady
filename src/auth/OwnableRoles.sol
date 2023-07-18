@@ -40,6 +40,19 @@ abstract contract OwnableRoles is Ownable {
     /*                     INTERNAL FUNCTIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Overwrite the roles directly without authorization guard.
+    function _setRoles(address user, uint256 roles) internal virtual {
+        // Compute the role slot.
+        assembly {
+            mstore(0x0c, _ROLE_SLOT_SEED)
+            mstore(0x00, user)
+            // Store the new value.
+            sstore(keccak256(0x0c, 0x20), roles)
+            // Emit the {RolesUpdated} event.
+            log3(0, 0, _ROLES_UPDATED_EVENT_SIGNATURE, shr(96, mload(0x0c)), roles)
+        }
+    }
+
     /// @dev Updates the roles directly without authorization guard.
     /// If `on` is true, each set bit of `roles` will be turned on,
     /// otherwise, each set bit of `roles` will be turned off.

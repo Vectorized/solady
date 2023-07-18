@@ -81,3 +81,9 @@ contract MockOwnable is Ownable {
         }
     }
 }
+
+contract MockOwnableBytecodeSizer is Ownable {
+    constructor() payable {
+        _initializeOwner(msg.sender);
+    }
+}

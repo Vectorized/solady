@@ -19,6 +19,12 @@ contract OwnableRolesTest is SoladyTest {
         mockOwnableRoles = new MockOwnableRoles();
     }
 
+    function testBytecodeSize() public {
+        MockOwnableRolesBytecodeSizer mock = new MockOwnableRolesBytecodeSizer();
+        assertTrue(address(mock).code.length > 0);
+        assertEq(mock.owner(), address(this));
+    }
+
     function testInitializeOwnerDirect() public {
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), address(1));
@@ -43,6 +49,23 @@ contract OwnableRolesTest is SoladyTest {
         assertEq(mockOwnableRoles.rolesOf(user), rolesToGrant);
         mockOwnableRoles.removeRolesDirect(user, rolesToRemove);
         assertEq(mockOwnableRoles.rolesOf(user), rolesToGrant ^ (rolesToGrant & rolesToRemove));
+    }
+
+    function testSetRolesDirect(uint256) public {
+        address userA = _randomNonZeroAddress();
+        address userB = _randomNonZeroAddress();
+        while (userA == userB) userA = _randomNonZeroAddress();
+        for (uint256 t; t != 2; ++t) {
+            uint256 rolesA = _random();
+            uint256 rolesB = _random();
+            vm.expectEmit(true, true, true, true);
+            emit RolesUpdated(userA, rolesA);
+            mockOwnableRoles.setRolesDirect(userA, rolesA);
+            emit RolesUpdated(userB, rolesB);
+            mockOwnableRoles.setRolesDirect(userB, rolesB);
+            assertEq(mockOwnableRoles.rolesOf(userA), rolesA);
+            assertEq(mockOwnableRoles.rolesOf(userB), rolesB);
+        }
     }
 
     function testSetOwnerDirect() public {
