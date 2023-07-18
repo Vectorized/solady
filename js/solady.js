@@ -1,3 +1,24 @@
+/**
+ * Accompanying JavaScript library for Solady.
+ *
+ * To install:
+ * 
+ * ```
+ * npm install solady
+ * ```
+ *
+ * Module exports:
+ * 
+ * - `LibZip`
+ *   - `flzCompress(data)`: Compresses hex encoded data with FastLZ.
+ *   - `flzDecompress(data)`: Decompresses hex encoded data with FastLZ.
+ *   - `cdCompress(data)`: Compresses hex encoded calldata.
+ *   - `cdDecompress(data)`: Decompresses hex encoded calldata.
+ *   
+ * - `ERC1967Factory`
+ *   - `address`: Canonical address of Solady's ERC1967Factory.
+ *   - `abi`: ABI of Solady's ERC1967Factory.
+ */
 (function(global, factory) {
 
     "use strict";
@@ -6,6 +27,7 @@
         module.exports = factory(global, 1);
         if (typeof exports === "object") {
             exports.LibZip = module.exports.LibZip;
+            exports.ERC1967Factory = module.exports.ERC1967Factory;
         }
     } else {
         factory(global);
@@ -21,7 +43,7 @@
     /*                     LibZip Operations                      */
     /*============================================================*/
 
-    // See: (src/utils/LibZip.sol)
+    // See: https://github.com/vectorized/solady/blob/main/src/utils/LibZip.sol
 
     var LibZip = {};
 
@@ -187,10 +209,23 @@
     /*                       ERC1967Factory                       */
     /*============================================================*/
 
-    solady.ERC1967Factory = {
-        "address": "0x0000000000006396FF2a80c067f99B3d2Ab4Df24",
-        "abi": JSON.parse('[{0:[],1:"DeploymentFailed"96"SaltDoesNotStartWithCaller"96"Unauthorized"96"UpgradeFailed",2:3959790,9791],1:"AdminChanged",2:10959790,9792,9791],1:"Deployed",2:10959790,9792],1:"Upgraded",2:10},{0:[{90],1:"adminOf",12:[{9199{0:[{90,{91],1:"changeAdmin",12:[],13:"nonpayable",2:15},{0:[{92,{91],1:"deploy",12:[{9098,{0:[{92,{91,{94],1:"deployAndCall",12:[{9098,{0:[{92,{91,{93],1:"deployDeterministic",12:[{9098,{0:[{92,{91,{93,{94],1:"deployDeterministicAndCall",12:[{9098,{0:[],1:"initCodeHash",12:[{6:19,1:"result",2:19}99{0:[{93],1:"predictDeterministicAddress",12:[{6:7,1:"predicted",2:7}99{0:[{90,{92],1:"upgrade",12:[98,{0:[{90,{92,{94],1:"upgradeAndCall",12:[98]'.replace(/9\d/g, function (m) { return ["6:7,1:8,2:7}","6:7,1:9,2:7}","6:7,1:11,2:7}","6:19,1:20,2:19}","6:17,1:18,2:17}","},{4:false,0:[",",2:3},{0:[],1:","{5:true,","],13:16,2:15}","],13:14,2:15},"][m-90] }).replace(/\d+/g, function (m) { return '"' + ("inputs,name,type,error,anonymous,indexed,internalType,address,proxy,admin,event,implementation,outputs,stateMutability,view,function,payable,bytes,data,bytes32,salt".split(",")[m]) + '"' }))
-    }
+    // See: https://github.com/vectorized/solady/blob/main/src/utils/ERC1967Factory.sol
+
+    var ERC1967Factory = {};
+
+    solady.ERC1967Factory = ERC1967Factory;
+
+    /**
+     * Canonical address of Solady's ERC1967Factory.
+     * @type {String}
+     */
+    ERC1967Factory.address = "0x0000000000006396FF2a80c067f99B3d2Ab4Df24";
+
+    /**
+     * ABI of Solady's ERC1967Factory.
+     * @type {Object}
+     */
+    ERC1967Factory.abi = JSON.parse('[{0:[],1:"DeploymentFailed"96"SaltDoesNotStartWithCaller"96"Unauthorized"96"UpgradeFailed",2:3959790,9791],1:"AdminChanged",2:10959790,9792,9791],1:"Deployed",2:10959790,9792],1:"Upgraded",2:10},{0:[{90],1:"adminOf",12:[{9199{0:[{90,{91],1:"changeAdmin",12:[],13:"nonpayable",2:15},{0:[{92,{91],1:"deploy",12:[{9098,{0:[{92,{91,{94],1:"deployAndCall",12:[{9098,{0:[{92,{91,{93],1:"deployDeterministic",12:[{9098,{0:[{92,{91,{93,{94],1:"deployDeterministicAndCall",12:[{9098,{0:[],1:"initCodeHash",12:[{6:19,1:"result",2:19}99{0:[{93],1:"predictDeterministicAddress",12:[{6:7,1:"predicted",2:7}99{0:[{90,{92],1:"upgrade",12:[98,{0:[{90,{92,{94],1:"upgradeAndCall",12:[98]'.replace(/9\d/g, function (m) { return ["6:7,1:8,2:7}","6:7,1:9,2:7}","6:7,1:11,2:7}","6:19,1:20,2:19}","6:17,1:18,2:17}","},{4:false,0:[",",2:3},{0:[],1:","{5:true,","],13:16,2:15}","],13:14,2:15},"][m-90] }).replace(/\d+/g, function (m) { return '"' + ("inputs,name,type,error,anonymous,indexed,internalType,address,proxy,admin,event,implementation,outputs,stateMutability,view,function,payable,bytes,data,bytes32,salt".split(",")[m]) + '"' }));
 
     /*--------------------------- END ----------------------------*/
 
