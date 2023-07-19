@@ -149,38 +149,6 @@ abstract contract OwnableRoles is Ownable {
         }
     }
 
-    /// @dev Returns whether `user` has any of `roles`.
-    /// Made internal to conserve bytecode. Wrap it in a public function if needed.
-    function _hasAnyRole(address user, uint256 roles) internal view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the role slot.
-            mstore(0x0c, _ROLE_SLOT_SEED)
-            mstore(0x00, user)
-            // Load the stored value, and set the result to whether the
-            // `and` intersection of the value and `roles` is not zero.
-            result := iszero(iszero(and(sload(keccak256(0x0c, 0x20)), roles)))
-        }
-    }
-
-    /// @dev Returns whether `user` has all of `roles`.
-    /// Made internal to conserve bytecode. Wrap it in a public function if needed.
-    function _hasAllRoles(address user, uint256 roles)
-        internal
-        view
-        virtual
-        returns (bool result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the role slot.
-            mstore(0x0c, _ROLE_SLOT_SEED)
-            mstore(0x00, user)
-            // Whether the stored value is contains all the set bits in `roles`.
-            result := eq(and(sload(keccak256(0x0c, 0x20)), roles), roles)
-        }
-    }
-
     /// @dev Convenience function to return a `roles` bitmap from an array of `ordinals`.
     /// This is meant for frontends like Etherscan, and is therefore not fully optimized.
     /// Not recommended to be called on-chain.
@@ -261,6 +229,16 @@ abstract contract OwnableRoles is Ownable {
             // Load the stored value.
             roles := sload(keccak256(0x0c, 0x20))
         }
+    }
+
+    /// @dev Returns whether `user` has any of `roles`.
+    function hasAnyRole(address user, uint256 roles) public view virtual returns (bool) {
+        return rolesOf(user) & roles != 0;
+    }
+
+    /// @dev Returns whether `user` has all of `roles`.
+    function hasAllRoles(address user, uint256 roles) public view virtual returns (bool) {
+        return rolesOf(user) & roles == roles;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
