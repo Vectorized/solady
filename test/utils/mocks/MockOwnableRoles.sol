@@ -67,14 +67,6 @@ contract MockOwnableRoles is OwnableRoles {
         super.completeOwnershipHandover(_brutalizedAddress(pendingOwner));
     }
 
-    function hasAnyRole(address user, uint256 roles) public view virtual returns (bool result) {
-        result = _checkedBool(_hasAnyRole(_brutalizedAddress(user), roles));
-    }
-
-    function hasAllRoles(address user, uint256 roles) public view virtual returns (bool result) {
-        result = _checkedBool(_hasAllRoles(_brutalizedAddress(user), roles));
-    }
-
     function transferOwnership(address newOwner) public payable virtual override {
         super.transferOwnership(_brutalizedAddress(newOwner));
     }
@@ -160,6 +152,10 @@ contract MockOwnableRoles is OwnableRoles {
 
 contract MockOwnableRolesBytecodeSizer is OwnableRoles {
     constructor() payable {
+        initialize();
+    }
+
+    function initialize() public payable {
         _initializeOwner(msg.sender);
     }
 }

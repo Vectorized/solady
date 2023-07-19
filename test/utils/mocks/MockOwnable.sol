@@ -84,6 +84,10 @@ contract MockOwnable is Ownable {
 
 contract MockOwnableBytecodeSizer is Ownable {
     constructor() payable {
+        initialize();
+    }
+
+    function initialize() public payable {
         _initializeOwner(msg.sender);
     }
 }
