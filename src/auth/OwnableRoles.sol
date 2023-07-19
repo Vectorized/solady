@@ -42,7 +42,7 @@ abstract contract OwnableRoles is Ownable {
 
     /// @dev Overwrite the roles directly without authorization guard.
     function _setRoles(address user, uint256 roles) internal virtual {
-        // Compute the role slot.
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
@@ -57,7 +57,7 @@ abstract contract OwnableRoles is Ownable {
     /// If `on` is true, each set bit of `roles` will be turned on,
     /// otherwise, each set bit of `roles` will be turned off.
     function _updateRoles(address user, uint256 roles, bool on) internal virtual {
-        // Compute the role slot.
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
@@ -232,13 +232,27 @@ abstract contract OwnableRoles is Ownable {
     }
 
     /// @dev Returns whether `user` has any of `roles`.
-    function hasAnyRole(address user, uint256 roles) public view virtual returns (bool) {
-        return rolesOf(user) & roles != 0;
+    function hasAnyRole(address user, uint256 roles) public view virtual returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the role slot.
+            mstore(0x0c, _ROLE_SLOT_SEED)
+            mstore(0x00, user)
+            // `rolesOf(user) & roles != 0`.
+            result := iszero(iszero(and(sload(keccak256(0x0c, 0x20)), roles)))
+        }
     }
 
     /// @dev Returns whether `user` has all of `roles`.
-    function hasAllRoles(address user, uint256 roles) public view virtual returns (bool) {
-        return rolesOf(user) & roles == roles;
+    function hasAllRoles(address user, uint256 roles) public view virtual returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the role slot.
+            mstore(0x0c, _ROLE_SLOT_SEED)
+            mstore(0x00, user)
+            // `rolesOf(user) & roles == roles`.
+            result := eq(and(sload(keccak256(0x0c, 0x20)), roles), roles)
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
