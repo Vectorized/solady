@@ -42,7 +42,7 @@ abstract contract OwnableRoles is Ownable {
 
     /// @dev Overwrite the roles directly without authorization guard.
     function _setRoles(address user, uint256 roles) internal virtual {
-        // Compute the role slot.
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
@@ -57,7 +57,7 @@ abstract contract OwnableRoles is Ownable {
     /// If `on` is true, each set bit of `roles` will be turned on,
     /// otherwise, each set bit of `roles` will be turned off.
     function _updateRoles(address user, uint256 roles, bool on) internal virtual {
-        // Compute the role slot.
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x0c, _ROLE_SLOT_SEED)
             mstore(0x00, user)
