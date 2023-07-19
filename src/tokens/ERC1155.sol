@@ -375,6 +375,7 @@ abstract contract ERC1155 {
         assembly {
             // Do the {onERC1155BatchReceived} check if `to` is a smart contract.
             if extcodesize(to) {
+                mstore(0x00, to) // Cache `to` to prevent stack too deep.
                 let m := mload(0x40)
                 // Prepare the calldata.
                 // `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
@@ -399,7 +400,7 @@ abstract contract ERC1155 {
                 calldatacopy(o, sub(data.offset, 0x20), n)
                 n := sub(add(o, n), add(m, 0x1c))
                 // Revert if the call reverts.
-                if iszero(call(gas(), to, 0, add(m, 0x1c), n, m, 0x20)) {
+                if iszero(call(gas(), mload(0x00), 0, add(m, 0x1c), n, m, 0x20)) {
                     if returndatasize() {
                         // Bubble up the revert if the call reverts.
                         returndatacopy(0x00, 0x00, returndatasize())
