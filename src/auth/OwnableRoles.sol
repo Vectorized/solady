@@ -232,27 +232,13 @@ abstract contract OwnableRoles is Ownable {
     }
 
     /// @dev Returns whether `user` has any of `roles`.
-    function hasAnyRole(address user, uint256 roles) public view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the role slot.
-            mstore(0x0c, _ROLE_SLOT_SEED)
-            mstore(0x00, user)
-            // `rolesOf(user) & roles != 0`.
-            result := iszero(iszero(and(sload(keccak256(0x0c, 0x20)), roles)))
-        }
+    function hasAnyRole(address user, uint256 roles) public view virtual returns (bool) {
+        return rolesOf(user) & roles != 0;
     }
 
     /// @dev Returns whether `user` has all of `roles`.
-    function hasAllRoles(address user, uint256 roles) public view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the role slot.
-            mstore(0x0c, _ROLE_SLOT_SEED)
-            mstore(0x00, user)
-            // `rolesOf(user) & roles == roles`.
-            result := eq(and(sload(keccak256(0x0c, 0x20)), roles), roles)
-        }
+    function hasAllRoles(address user, uint256 roles) public view virtual returns (bool) {
+        return rolesOf(user) & roles == roles;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
