@@ -32,12 +32,12 @@ library SafeTransferLib {
 
     /// @dev Suggested gas stipend for contract receiving ETH
     /// that disallows any storage writes.
-    uint256 internal constant _GAS_STIPEND_NO_STORAGE_WRITES = 2300;
+    uint256 internal constant GAS_STIPEND_NO_STORAGE_WRITES = 2300;
 
     /// @dev Suggested gas stipend for contract receiving ETH to perform a few
     /// storage reads and writes, but low enough to prevent griefing.
     /// Multiply by a small constant (e.g. 2), if needed.
-    uint256 internal constant _GAS_STIPEND_NO_GRIEF = 100000;
+    uint256 internal constant GAS_STIPEND_NO_GRIEF = 100000;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ETH OPERATIONS                       */
@@ -52,7 +52,7 @@ library SafeTransferLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Transfer the ETH and check if it succeeded or not.
-            if iszero(call(gas(), to, amount, 0, 0, 0, 0)) {
+            if iszero(call(gas(), to, amount, 0x00, 0x00, 0x00, 0x00)) {
                 // Store the function selector of `ETHTransferFailed()`.
                 mstore(0x00, 0xb12d13eb)
                 // Revert with (offset, size).
@@ -80,7 +80,7 @@ library SafeTransferLib {
                 revert(0x1c, 0x04)
             }
             // Transfer the ETH and check if it succeeded or not.
-            if iszero(call(gasStipend, to, amount, 0, 0, 0, 0)) {
+            if iszero(call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
@@ -88,14 +88,14 @@ library SafeTransferLib {
                 // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(amount, 0x0b, 0x16)) {
                     // To coerce gas estimation to provide enough gas for the `create` above.
-                    if iszero(gt(gas(), 1000000)) { revert(0, 0) }
+                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
                 }
             }
         }
     }
 
     /// @dev Force sends `amount` (in wei) ETH to `to`, with a gas stipend
-    /// equal to `_GAS_STIPEND_NO_GRIEF`. This gas stipend is a reasonable default
+    /// equal to `GAS_STIPEND_NO_GRIEF`. This gas stipend is a reasonable default
     /// for 99% of cases and can be overridden with the three-argument version of this
     /// function if necessary.
     ///
@@ -115,7 +115,7 @@ library SafeTransferLib {
                 revert(0x1c, 0x04)
             }
             // Transfer the ETH and check if it succeeded or not.
-            if iszero(call(_GAS_STIPEND_NO_GRIEF, to, amount, 0, 0, 0, 0)) {
+            if iszero(call(GAS_STIPEND_NO_GRIEF, to, amount, 0x00, 0x00, 0x00, 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
@@ -123,7 +123,7 @@ library SafeTransferLib {
                 // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(amount, 0x0b, 0x16)) {
                     // To coerce gas estimation to provide enough gas for the `create` above.
-                    if iszero(gt(gas(), 1000000)) { revert(0, 0) }
+                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
                 }
             }
         }
@@ -144,7 +144,7 @@ library SafeTransferLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Transfer the ETH and check if it succeeded or not.
-            success := call(gasStipend, to, amount, 0, 0, 0, 0)
+            success := call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00)
         }
     }
 

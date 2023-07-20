@@ -111,7 +111,7 @@ contract SafeTransferLibTest is SoladyTest {
 
         {
             bool success = SafeTransferLib.trySafeTransferETH(
-                address(recipient), 1e18, SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+                address(recipient), 1e18, SafeTransferLib.GAS_STIPEND_NO_STORAGE_WRITES
             );
             assertFalse(success);
         }
@@ -119,7 +119,7 @@ contract SafeTransferLibTest is SoladyTest {
         {
             uint256 counterBefore = recipient.counter();
             bool success = SafeTransferLib.trySafeTransferETH(
-                address(recipient), 1e18, SafeTransferLib._GAS_STIPEND_NO_GRIEF
+                address(recipient), 1e18, SafeTransferLib.GAS_STIPEND_NO_GRIEF
             );
             assertTrue(success);
             assertEq(recipient.counter(), counterBefore + 1);
@@ -138,7 +138,7 @@ contract SafeTransferLibTest is SoladyTest {
 
         {
             bool success = SafeTransferLib.trySafeTransferETH(
-                address(recipient), 1e18, SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+                address(recipient), 1e18, SafeTransferLib.GAS_STIPEND_NO_STORAGE_WRITES
             );
             assertFalse(success);
             assertTrue(recipient.garbage() == 0);
@@ -146,7 +146,7 @@ contract SafeTransferLibTest is SoladyTest {
 
         {
             bool success = SafeTransferLib.trySafeTransferETH(
-                address(recipient), 1e18, SafeTransferLib._GAS_STIPEND_NO_GRIEF
+                address(recipient), 1e18, SafeTransferLib.GAS_STIPEND_NO_GRIEF
             );
             assertFalse(success);
             assertTrue(recipient.garbage() == 0);
@@ -173,11 +173,11 @@ contract SafeTransferLibTest is SoladyTest {
             // Send to a griever with a gas stipend. Should not revert.
             if (r == 0) {
                 this.forceSafeTransferETH(
-                    address(recipient), amount, SafeTransferLib._GAS_STIPEND_NO_STORAGE_WRITES
+                    address(recipient), amount, SafeTransferLib.GAS_STIPEND_NO_STORAGE_WRITES
                 );
             } else if (r == 1) {
                 this.forceSafeTransferETH(
-                    address(recipient), amount, SafeTransferLib._GAS_STIPEND_NO_GRIEF
+                    address(recipient), amount, SafeTransferLib.GAS_STIPEND_NO_GRIEF
                 );
             } else {
                 this.forceSafeTransferETH(address(recipient), amount);
