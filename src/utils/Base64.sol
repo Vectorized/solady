@@ -31,9 +31,9 @@ library Base64 {
                 // Offsetted by -1 byte so that the `mload` will load the character.
                 // We will rewrite the free memory pointer at `0x40` later with
                 // the allocated size.
-                // The magic constant 0x0230 will translate "-_" + "+/".
+                // The magic constant 0x0670 will turn "-_" into "+/".
                 mstore(0x1f, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef")
-                mstore(0x3f, sub("ghijklmnopqrstuvwxyz0123456789-_", mul(iszero(fileSafe), 0x0230)))
+                mstore(0x3f, xor("ghijklmnopqrstuvwxyz0123456789-_", mul(iszero(fileSafe), 0x0670)))
 
                 // Skip the first slot, which stores the length.
                 let ptr := add(result, 0x20)
