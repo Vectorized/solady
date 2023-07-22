@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 import {ERC20, ERC4626} from "../../../src/tokens/ERC4626.sol";
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 /// @notice Library for storage of packed unsigned integers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibMap.sol)

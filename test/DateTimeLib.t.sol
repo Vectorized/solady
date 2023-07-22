@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 import "../test/utils/SoladyTest.sol";
 import {DateTimeLib} from "../src/utils/DateTimeLib.sol";

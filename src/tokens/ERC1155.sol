@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 /// @notice Simple ERC1155 implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC1155.sol)

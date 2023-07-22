@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 /// @notice Library to encode strings in Base64.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Base64.sol)

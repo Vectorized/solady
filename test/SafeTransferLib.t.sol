@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 import {MockERC20} from "./utils/mocks/MockERC20.sol";
 import {MockETHRecipient} from "./utils/mocks/MockETHRecipient.sol";

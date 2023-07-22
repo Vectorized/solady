@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 import "./utils/SoladyTest.sol";
 import {MockEIP712} from "./utils/mocks/MockEIP712.sol";

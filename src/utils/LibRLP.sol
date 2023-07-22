@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 /// @notice Library for computing contract addresses from their deployer and nonce.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibRLP.sol)

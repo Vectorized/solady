@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 /// @notice The address and bytecode of the canonical ERC1967Factory deployment.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ERC1967FactoryLib.sol)

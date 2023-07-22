@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 /// @notice Signature verification helper that supports both ECDSA signatures from EOAs
 /// and ERC1271 signatures from smart contract wallets like Argent and Gnosis safe.

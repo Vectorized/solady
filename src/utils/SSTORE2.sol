@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 /// @notice Read and write to persistent storage at a fraction of the cost.
 /// @author Solady (https://github.com/vectorized/solmady/blob/main/src/utils/SSTORE2.sol)
