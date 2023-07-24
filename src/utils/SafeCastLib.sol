@@ -361,12 +361,17 @@ library SafeCastLib {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*         UNSIGNED TO SIGNED SAFE CASTING OPERATIONS         */
+    /*               OTHER SAFE CASTING OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function toInt256(uint256 x) internal pure returns (int256) {
         if (x >= 1 << 255) _revertOverflow();
         return int256(x);
+    }
+
+    function toUint256(int256 x) internal pure returns (uint256) {
+        if (x < 0) _revertOverflow();
+        return uint256(x);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
