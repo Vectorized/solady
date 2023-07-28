@@ -271,9 +271,10 @@ library LibMap {
             uint256 m = (1 << bitWidth) - 1; // Value mask.
             uint256 h = end - start; // High.
             while (true) {
-                index = (l >> 1) + (h >> 1) + (h & l & 1);
+                index = (l & h) + ((l ^ h) >> 1);
+                if (l > h) break;
                 t = (map[_rawDiv(index + o, d)] >> (_rawMod(index + o, d) * bitWidth)) & m;
-                if (l > h || t == needle) break;
+                if (t == needle) break;
                 if (needle <= t) h = index - 1;
                 else l = index + 1;
             }
