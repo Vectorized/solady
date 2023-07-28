@@ -6,12 +6,11 @@ import "../../../src/utils/ECDSA.sol";
 /// @notice A generic interface for a contract which properly accepts ERC721 tokens.
 /// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)
 abstract contract ERC721TokenReceiver {
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external virtual returns (bytes4) {
+    function onERC721Received(address, address, uint256, bytes calldata)
+        external
+        virtual
+        returns (bytes4)
+    {
         return ERC721TokenReceiver.onERC721Received.selector;
     }
 }
@@ -19,13 +18,11 @@ abstract contract ERC721TokenReceiver {
 /// @notice A generic interface for a contract which properly accepts ERC1155 tokens.
 /// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC1155.sol)
 abstract contract ERC1155TokenReceiver {
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external virtual returns (bytes4) {
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+        external
+        virtual
+        returns (bytes4)
+    {
         return ERC1155TokenReceiver.onERC1155Received.selector;
     }
 
