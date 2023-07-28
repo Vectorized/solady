@@ -169,7 +169,7 @@ library LibMap {
         returns (uint256 result)
     {
         unchecked {
-            uint256 d = 256 / bitWidth; // Bucket size.
+            uint256 d = _rawDiv(256, bitWidth); // Bucket size.
             uint256 m = (1 << bitWidth) - 1; // Value mask.
             result = (map[_rawDiv(index, d)] >> (_rawMod(index, d) * bitWidth)) & m;
         }
@@ -183,7 +183,7 @@ library LibMap {
         uint256 bitWidth
     ) internal {
         unchecked {
-            uint256 d = 256 / bitWidth; // Bucket size.
+            uint256 d = _rawDiv(256, bitWidth); // Bucket size.
             uint256 m = (1 << bitWidth) - 1; // Value mask.
             uint256 o = _rawMod(index, d) * bitWidth; // Storage slot offset (bits).
             map[_rawDiv(index, d)] ^= (((map[_rawDiv(index, d)] >> o) ^ value) & m) << o;
@@ -267,7 +267,7 @@ library LibMap {
             uint256 t;
             uint256 o = start - 1; // Offset to derive the actual index.
             uint256 l = 1; // Low.
-            uint256 d = 256 / bitWidth; // Bucket size.
+            uint256 d = _rawDiv(256, bitWidth); // Bucket size.
             uint256 m = (1 << bitWidth) - 1; // Value mask.
             uint256 h = end - start; // High.
             while (true) {
@@ -279,8 +279,9 @@ library LibMap {
             }
             /// @solidity memory-safe-assembly
             assembly {
-                found := and(eq(t, needle), iszero(iszero(index)))
-                index := add(o, xor(index, mul(iszero(index), xor(index, 1))))
+                let i := or(iszero(index), iszero(bitWidth))
+                found := iszero(or(xor(t, needle), i))
+                index := add(o, xor(index, mul(xor(index, 1), i)))
             }
         }
     }

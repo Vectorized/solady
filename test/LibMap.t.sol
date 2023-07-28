@@ -568,4 +568,28 @@ contract LibMapTest is SoladyTest {
             _searchSortedTestVars(m, bitWidth);
         }
     }
+
+    function testGeneralMapFunctionsWithZeroBitWidth() public {
+        unchecked {
+            for (uint256 j; j < 3; ++j) {
+                for (uint256 i; i < 3; ++i) {
+                    generalMap.set(i, j + 1, 0);
+                    assertEq(generalMap.get(i, 0), 0);
+                    (bool found, uint256 index) = generalMap.searchSorted(i, j, j + 2, 0);
+                    assertFalse(found);
+                    assertEq(index, j);
+                }
+            }
+        }
+    }
+
+    function testFoundStatementDifferential(uint256 t, uint256 needle, uint256 index) public {
+        bool a;
+        bool b;
+        assembly {
+            a := and(eq(t, needle), iszero(iszero(index)))
+            b := iszero(or(xor(t, needle), iszero(index)))
+        }
+        assertEq(a, b);
+    }
 }
