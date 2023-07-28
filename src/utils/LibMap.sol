@@ -186,8 +186,7 @@ library LibMap {
             uint256 d = 256 / bitWidth; // Bucket size.
             uint256 m = (1 << bitWidth) - 1; // Value mask.
             uint256 o = _rawMod(index, d) * bitWidth; // Storage slot offset (bits).
-            uint256 b = _rawDiv(index, d);
-            map[b] ^= (((map[b] >> o) ^ value) & m) << o;
+            map[_rawDiv(index, d)] ^= (((map[_rawDiv(index, d)] >> o) ^ value) & m) << o;
         }
     }
 
@@ -207,7 +206,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = searchSorted(map.map, needle, start, end, 8);
+        return searchSorted(map.map, needle, start, end, 8);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -216,7 +215,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = searchSorted(map.map, needle, start, end, 16);
+        return searchSorted(map.map, needle, start, end, 16);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -225,7 +224,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = searchSorted(map.map, needle, start, end, 32);
+        return searchSorted(map.map, needle, start, end, 32);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -234,7 +233,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = searchSorted(map.map, needle, start, end, 40);
+        return searchSorted(map.map, needle, start, end, 40);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -243,7 +242,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = searchSorted(map.map, needle, start, end, 64);
+        return searchSorted(map.map, needle, start, end, 64);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -252,7 +251,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = searchSorted(map.map, needle, start, end, 128);
+        return searchSorted(map.map, needle, start, end, 128);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -267,10 +266,10 @@ library LibMap {
             if (start >= end) end = start;
             uint256 t;
             uint256 o = start - 1; // Offset to derive the actual index.
-            uint256 l = 1;
+            uint256 l = 1; // Low.
             uint256 d = 256 / bitWidth; // Bucket size.
             uint256 m = (1 << bitWidth) - 1; // Value mask.
-            uint256 h = end - start;
+            uint256 h = end - start; // High.
             while (true) {
                 index = (l >> 1) + (h >> 1) + (h & l & 1);
                 t = (map[_rawDiv(index + o, d)] >> (_rawMod(index + o, d) * bitWidth)) & m;
