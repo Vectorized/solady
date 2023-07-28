@@ -187,7 +187,7 @@ library LibMap {
             uint256 m = (1 << bitWidth) - 1; // Value mask.
             uint256 o = _rawMod(index, d) * bitWidth; // Storage slot offset (bits).
             uint256 b = _rawDiv(index, d);
-            map[b] ^= ((((map[b] >> o) ^ value) & m) << o);
+            map[b] ^= (((map[b] >> o) ^ value) & m) << o;
         }
     }
 
@@ -266,20 +266,17 @@ library LibMap {
         unchecked {
             if (start >= end) end = start;
             uint256 t;
-            uint256 d = 256 / bitWidth; // Bucket size.
             uint256 o = start - 1; // Offset to derive the actual index.
             uint256 l = 1;
-            uint256 h = end - start;
+            uint256 d = 256 / bitWidth; // Bucket size.
             uint256 m = (1 << bitWidth) - 1; // Value mask.
+            uint256 h = end - start;
             while (true) {
                 index = (l >> 1) + (h >> 1) + (h & l & 1);
                 t = (map[_rawDiv(index + o, d)] >> (_rawMod(index + o, d) * bitWidth)) & m;
                 if (l > h || t == needle) break;
-                if (needle <= t) {
-                    h = index - 1;
-                    continue;
-                }
-                l = index + 1;
+                if (needle <= t) h = index - 1;
+                else l = index + 1;
             }
             /// @solidity memory-safe-assembly
             assembly {
