@@ -429,8 +429,15 @@ contract LibMapTest is SoladyTest {
         returns (_SearchSortedTestVars memory t)
     {
         unchecked {
-            t.o = _random() % 4 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
             t.n = 1 + _random() % 7 + (_random() % 8 == 0 ? _random() % 64 : 0);
+            if (_random() % 2 == 0) {
+                t.o = type(uint256).max - t.n;
+                t.end = t.o + t.n;
+                assertEq(t.end, type(uint256).max);
+            } else {
+                t.o = _random() % 4 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
+                t.end = t.o + t.n;
+            }
             uint256 v = _random() % 4;
             uint256 b = (_random() % 2) * (_random() << 7);
             uint256 valueMask = (1 << bitWidth) - 1;
@@ -441,7 +448,6 @@ contract LibMapTest is SoladyTest {
             }
             t.randomIndex = t.o + _random() % t.n;
             t.randomIndexValue = map.get(t.randomIndex, bitWidth);
-            t.end = t.o + t.n;
 
             if (t.o > 0) map.set(t.o - 1, _random(), bitWidth);
             if (t.end < type(uint256).max) map.set(t.end, _random(), bitWidth);
