@@ -416,8 +416,6 @@ contract LibMapTest is SoladyTest {
     struct _SearchSortedTestVars {
         uint256 o;
         uint256 n;
-        uint256 v;
-        uint256 b;
         uint256 end;
         bool found;
         uint256 index;
@@ -432,28 +430,24 @@ contract LibMapTest is SoladyTest {
     {
         unchecked {
             t.o = _random() % 4 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
-            t.n = 1 + _random() % 7 + (_random() % 8 == 0 ? 32 : 0);
-            t.v = _random() % 3;
-            t.b = _random() % 2 == 0 ? _random() << 7 : 0;
-            uint256 valueMask = ((1 << bitWidth) - 1);
+            t.n = 1 + _random() % 7 + (_random() % 8 == 0 ? _random() % 64 : 0);
+            uint256 v = _random() % 4;
+            uint256 b = (_random() % 2) * (_random() << 7);
+            uint256 valueMask = (1 << bitWidth) - 1;
             for (uint256 i; i != t.n; ++i) {
-                map.set(t.o + i, t.b | t.v, bitWidth);
-                filled[(t.b | t.v) & valueMask] = true;
-                t.v += 1 + _random() % 2;
+                map.set(t.o + i, b | v, bitWidth);
+                filled[(b | v) & valueMask] = true;
+                v += 1 + _random() % 2;
             }
             t.randomIndex = t.o + _random() % t.n;
             t.randomIndexValue = map.get(t.randomIndex, bitWidth);
+            t.end = t.o + t.n;
 
-            if (t.o > 0) {
-                map.set(t.o - 1, _random(), bitWidth);
-            }
-            if (t.o + t.n < type(uint256).max) {
-                map.set(t.o + t.n, _random(), bitWidth);
-            }
+            if (t.o > 0) map.set(t.o - 1, _random(), bitWidth);
+            if (t.end < type(uint256).max) map.set(t.end, _random(), bitWidth);
 
             uint256 notFoundValue = _generateNotFoundValue(t.o);
 
-            t.end = t.o + t.n;
             (t.found, t.index) = map.searchSorted(notFoundValue, t.o, t.end, bitWidth);
             assertFalse(t.found);
             assertEq(t.index, _nearestIndexBefore(map, notFoundValue, t.o, t.n, bitWidth));
@@ -473,7 +467,7 @@ contract LibMapTest is SoladyTest {
         unchecked {
             uint256 max = 32;
             do {
-                notFoundValue = o + _bound(_random(), 0, max);
+                notFoundValue = o + _random() % max;
                 max += 32;
             } while (filled[notFoundValue]);
         }
