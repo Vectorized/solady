@@ -23,9 +23,9 @@ contract LibMapTest is SoladyTest {
 
     mapping(uint256 => LibMap.Uint32Map) uint32Maps;
 
-    mapping(uint256 => uint256) generalMap;
+    mapping(uint256 => mapping(uint256 => uint256)) generalMaps;
 
-    mapping(uint256 => bool) filled;
+    mapping(uint256 => uint256) filled;
 
     struct _TestTemps {
         uint256 i0;
@@ -436,7 +436,7 @@ contract LibMapTest is SoladyTest {
             uint256 valueMask = (1 << bitWidth) - 1;
             for (uint256 i; i != t.n; ++i) {
                 map.set(t.o + i, b | v, bitWidth);
-                filled[(b | v) & valueMask] = true;
+                filled.set((b | v) & valueMask, 1, 1);
                 v += 1 + _random() % 2;
             }
             t.randomIndex = t.o + _random() % t.n;
@@ -468,8 +468,8 @@ contract LibMapTest is SoladyTest {
             uint256 max = 32;
             do {
                 notFoundValue = o + _random() % max;
-                max += 32;
-            } while (filled[notFoundValue]);
+                max += 8;
+            } while (filled.get(notFoundValue, 1) == 1);
         }
     }
 
@@ -557,9 +557,46 @@ contract LibMapTest is SoladyTest {
 
     function testGeneralMapSearchSorted(uint256) public {
         unchecked {
-            mapping(uint256 => uint256) storage m = generalMap;
+            mapping(uint256 => uint256) storage m = generalMaps[0];
             uint256 bitWidth = _bound(_random(), 8, 256);
             _searchSortedTestVars(m, bitWidth);
+        }
+    }
+
+    function testGeneralMapFunctionsWithSmallBitWidths(uint256) public {
+        unchecked {
+            uint256 bitWidth = 1 + _random() % 6;
+            uint256 valueMask = (1 << bitWidth) - 1;
+            uint256 o = _random() % 64 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
+            uint256 n = _random() % 9;
+            for (uint256 k; k != 2; ++k) {
+                for (uint256 i; i != n; ++i) {
+                    uint256 j = o + i * 2;
+                    generalMaps[k].set(j, _hash(j), bitWidth);
+                }
+            }
+            for (uint256 k; k != 2; ++k) {
+                for (uint256 i; i != n; ++i) {
+                    uint256 j = o + i * 2 + 1;
+                    generalMaps[k].set(j, _hash(j), bitWidth);
+                }
+            }
+            for (uint256 k; k != 2; ++k) {
+                for (uint256 i; i != n; ++i) {
+                    uint256 j = o + i * 2;
+                    assertEq(generalMaps[k].get(j, bitWidth), _hash(j) & valueMask);
+                    j = j + 1;
+                    assertEq(generalMaps[k].get(j, bitWidth), _hash(j) & valueMask);
+                }
+            }
+        }
+    }
+
+    function _hash(uint256 x) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, x)
+            result := keccak256(0x00, 0x20)
         }
     }
 
@@ -567,9 +604,9 @@ contract LibMapTest is SoladyTest {
         unchecked {
             for (uint256 j; j < 3; ++j) {
                 for (uint256 i; i < 3; ++i) {
-                    generalMap.set(i, j + 1, 0);
-                    assertEq(generalMap.get(i, 0), 0);
-                    (bool found, uint256 index) = generalMap.searchSorted(i, j, j + 2, 0);
+                    generalMaps[0].set(i, j + 1, 0);
+                    assertEq(generalMaps[0].get(i, 0), 0);
+                    (bool found, uint256 index) = generalMaps[0].searchSorted(i, j, j + 2, 0);
                     assertFalse(found);
                     assertEq(index, j);
                 }
@@ -580,6 +617,7 @@ contract LibMapTest is SoladyTest {
     function testFoundStatementDifferential(uint256 t, uint256 needle, uint256 index) public {
         bool a;
         bool b;
+        /// @solidity memory-safe-assembly
         assembly {
             a := and(eq(t, needle), iszero(iszero(index)))
             b := iszero(or(xor(t, needle), iszero(index)))

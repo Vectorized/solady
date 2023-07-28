@@ -280,7 +280,7 @@ library LibMap {
             }
             /// @solidity memory-safe-assembly
             assembly {
-                let i := or(iszero(index), iszero(bitWidth))
+                let i := or(iszero(index), iszero(bitWidth)) // If not found.
                 found := iszero(or(xor(t, needle), i))
                 index := add(o, xor(index, mul(xor(index, 1), i)))
             }
