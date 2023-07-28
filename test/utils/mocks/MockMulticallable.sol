@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "../../../src/utils/Multicallable.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
-/// Do NOT copy anything here into production code unless you know what you are doing.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockMulticallable is Multicallable {
     error CustomError();
 

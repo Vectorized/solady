@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import {ERC1155} from "../../../src/tokens/ERC1155.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
-/// Do NOT copy anything here into production code unless you know what you are doing.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC1155 is ERC1155 {
     function uri(uint256) public pure virtual override returns (string memory) {}
 

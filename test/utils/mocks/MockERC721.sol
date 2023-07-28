@@ -5,7 +5,7 @@ import {ERC721} from "../../../src/tokens/ERC721.sol";
 import {LibString} from "../../../src/utils/LibString.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
-/// Do NOT copy anything here into production code unless you know what you are doing.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC721 is ERC721 {
     function name() public view virtual override returns (string memory) {
         return "TEST NFT";

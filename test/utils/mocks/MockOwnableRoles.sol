@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import {Ownable, OwnableRoles} from "../../../src/auth/OwnableRoles.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
-/// Do NOT copy anything here into production code unless you know what you are doing.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockOwnableRoles is OwnableRoles {
     bool public flag;
 
@@ -153,7 +153,7 @@ contract MockOwnableRoles is OwnableRoles {
 }
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
-/// Do NOT copy anything here into production code unless you know what you are doing.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockOwnableRolesBytecodeSizer is OwnableRoles {
     constructor() payable {
         initialize();
