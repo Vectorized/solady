@@ -186,7 +186,8 @@ library LibMap {
             uint256 d = _rawDiv(256, bitWidth); // Bucket size.
             uint256 m = (1 << bitWidth) - 1; // Value mask.
             uint256 o = _rawMod(index, d) * bitWidth; // Storage slot offset (bits).
-            map[_rawDiv(index, d)] ^= (((map[_rawDiv(index, d)] >> o) ^ value) & m) << o;
+            uint256 b = _rawDiv(index, d);
+            map[b] ^= (((map[b] >> o) ^ value) & m) << o;
         }
     }
 
