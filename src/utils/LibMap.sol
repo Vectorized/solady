@@ -168,14 +168,10 @@ library LibMap {
         view
         returns (uint256 result)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let d := div(256, bitWidth) // Bucket size.
-            let m := sub(shl(bitWidth, 1), 1) // Value mask.
-            mstore(0x20, map.slot)
-            mstore(0x00, div(index, d))
-            let o := mul(mod(index, d), bitWidth) // Storage slot offset (bits).
-            result := and(m, shr(o, sload(keccak256(0x00, 0x40))))
+        unchecked {
+            uint256 d = 256 / bitWidth; // Bucket size.
+            uint256 m = (1 << bitWidth) - 1; // Value mask.
+            result = (map[_rawDiv(index, d)] >> (_rawMod(index, d) * bitWidth)) & m;
         }
     }
 
@@ -186,16 +182,12 @@ library LibMap {
         uint256 value,
         uint256 bitWidth
     ) internal {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let d := div(256, bitWidth) // Bucket size.
-            let m := sub(shl(bitWidth, 1), 1) // Value mask.
-            mstore(0x20, map.slot)
-            mstore(0x00, div(index, d))
-            let s := keccak256(0x00, 0x40) // Storage slot.
-            let o := mul(mod(index, d), bitWidth) // Storage slot offset (bits).
-            let v := sload(s) // Storage slot value.
-            sstore(s, xor(v, shl(o, and(m, xor(shr(o, v), value)))))
+        unchecked {
+            uint256 d = 256 / bitWidth; // Bucket size.
+            uint256 m = (1 << bitWidth) - 1; // Value mask.
+            uint256 o = _rawMod(index, d) * bitWidth; // Storage slot offset (bits).
+            uint256 b = _rawDiv(index, d);
+            map[b] ^= ((((map[b] >> o) ^ value) & m) << o);
         }
     }
 
@@ -271,32 +263,49 @@ library LibMap {
         uint256 end,
         uint256 bitWidth
     ) internal view returns (bool found, uint256 index) {
+        unchecked {
+            if (start >= end) end = start;
+            uint256 t;
+            uint256 d = 256 / bitWidth; // Bucket size.
+            uint256 o = start - 1; // Offset to derive the actual index.
+            uint256 l = 1;
+            uint256 h = end - start;
+            uint256 m = (1 << bitWidth) - 1; // Value mask.
+            while (true) {
+                index = (l >> 1) + (h >> 1) + (h & l & 1);
+                t = (map[_rawDiv(index + o, d)] >> (_rawMod(index + o, d) * bitWidth)) & m;
+                if (l > h || t == needle) break;
+                if (needle <= t) {
+                    h = index - 1;
+                    continue;
+                }
+                l = index + 1;
+            }
+            /// @solidity memory-safe-assembly
+            assembly {
+                found := and(eq(t, needle), iszero(iszero(index)))
+                index := add(o, xor(index, mul(iszero(index), xor(index, 1))))
+            }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns `x / y`, returning 0 if `y` is zero.
+    function _rawDiv(uint256 x, uint256 y) private pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(start, end)) { end := start }
-            mstore(0x20, map.slot)
-            let t := 0
-            let d := div(256, bitWidth) // Bucket size.
-            let o := sub(start, 1) // Offset to derive the actual index.
-            let l := 1 // Low.
-            let h := sub(end, start) // High.
-            let m := sub(shl(bitWidth, 1), 1) // Value mask.
-            for {} 1 {} {
-                index := add(add(shr(1, l), shr(1, h)), and(1, and(l, h)))
-                let j := add(index, o)
-                mstore(0x00, div(j, d))
-                t := and(m, shr(mul(mod(j, d), bitWidth), sload(keccak256(0x00, 0x40))))
-                if or(gt(l, h), eq(t, needle)) { break }
-                // Decide whether to search the left or right half.
-                if iszero(gt(needle, t)) {
-                    h := sub(index, 1)
-                    continue
-                }
-                l := add(index, 1)
-            }
-            d := iszero(index)
-            index := add(o, xor(index, mul(d, xor(index, 1))))
-            found := and(eq(t, needle), iszero(d))
+            z := div(x, y)
+        }
+    }
+
+    /// @dev Returns `x % y`, returning 0 if `y` is zero.
+    function _rawMod(uint256 x, uint256 y) private pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mod(x, y)
         }
     }
 }
