@@ -3,6 +3,8 @@ pragma solidity ^0.8.4;
 
 import {ERC20, ERC4626} from "../../../src/tokens/ERC4626.sol";
 
+/// @dev WARNING! This mock is strictly intended for testing purposes only.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC4626 is ERC4626 {
     bool public immutable useVirtualShares;
     uint8 public immutable decimalsOffset;

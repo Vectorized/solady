@@ -3,6 +3,8 @@ pragma solidity ^0.8.4;
 
 import {ERC2981} from "../../../src/tokens/ERC2981.sol";
 
+/// @dev WARNING! This mock is strictly intended for testing purposes only.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC2981 is ERC2981 {
     function feeDenominator() external pure returns (uint256) {
         return _feeDenominator();

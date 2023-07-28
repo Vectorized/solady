@@ -3,6 +3,8 @@ pragma solidity ^0.8.4;
 
 import {Ownable} from "../../../src/auth/Ownable.sol";
 
+/// @dev WARNING! This mock is strictly intended for testing purposes only.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockOwnable is Ownable {
     bool public flag;
 
@@ -82,6 +84,8 @@ contract MockOwnable is Ownable {
     }
 }
 
+/// @dev WARNING! This mock is strictly intended for testing purposes only.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockOwnableBytecodeSizer is Ownable {
     constructor() payable {
         initialize();

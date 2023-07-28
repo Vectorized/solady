@@ -3,6 +3,8 @@ pragma solidity ^0.8.4;
 
 import {ERC20} from "../../../src/tokens/ERC20.sol";
 
+/// @dev WARNING! This mock is strictly intended for testing purposes only.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC20 is ERC20 {
     string internal _name;
     string internal _symbol;

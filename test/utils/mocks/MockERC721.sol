@@ -4,6 +4,8 @@ pragma solidity ^0.8.4;
 import {ERC721} from "../../../src/tokens/ERC721.sol";
 import {LibString} from "../../../src/utils/LibString.sol";
 
+/// @dev WARNING! This mock is strictly intended for testing purposes only.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC721 is ERC721 {
     function name() public view virtual override returns (string memory) {
         return "TEST NFT";

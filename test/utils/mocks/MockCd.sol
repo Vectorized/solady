@@ -3,6 +3,8 @@ pragma solidity ^0.8.4;
 
 import {LibZip} from "../../../src/utils/LibZip.sol";
 
+/// @dev WARNING! This mock is strictly intended for testing purposes only.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockCd {
     error Hash(bytes32 h);
 
@@ -48,6 +50,8 @@ contract MockCd {
     }
 }
 
+/// @dev WARNING! This mock is strictly intended for testing purposes only.
+/// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockCdFallbackDecompressor {
     receive() external payable {
         _interceptCdFallback();
