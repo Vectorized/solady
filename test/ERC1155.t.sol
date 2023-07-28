@@ -123,8 +123,6 @@ contract WrongReturnDataERC1155Recipient is ERC1155TokenReceiver {
 
 contract NonERC1155Recipient {}
 
-/// @dev WARNING! This mock is strictly intended for testing purposes only.
-/// Do NOT copy anything here into production code unless you know what you are doing.
 contract MockERC1155WithHooks is MockERC1155 {
     uint256 public beforeCounter;
     uint256 public afterCounter;

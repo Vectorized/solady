@@ -60,8 +60,6 @@ contract WrongReturnDataERC721Recipient is ERC721TokenReceiver {
 
 contract NonERC721Recipient {}
 
-/// @dev WARNING! This mock is strictly intended for testing purposes only.
-/// Do NOT copy anything here into production code unless you know what you are doing.
 contract MockERC721WithHooks is MockERC721 {
     uint256 public beforeCounter;
     uint256 public afterCounter;
