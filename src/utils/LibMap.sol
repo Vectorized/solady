@@ -39,7 +39,7 @@ library LibMap {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         OPERATIONS                         */
+    /*                     GETTERS / SETTERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the uint8 value at `index` in `map`.
@@ -159,6 +159,109 @@ library LibMap {
             let v := sload(s) // Storage slot value.
             let m := 0xffffffffffffffffffffffffffffffff // Value mask.
             sstore(s, xor(v, shl(o, and(m, xor(shr(o, v), value)))))
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       BINARY SEARCH                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // The following functions search in the range of [`start`, `end`)
+    // (i.e. `start <= index < end`).
+    // If the search range is invalid,
+    // `index` precedence: equal to > nearest before > nearest after.
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint8Map storage map, uint8 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        (found, index) = _searchSorted(map.map, 8, needle, start, end);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint16Map storage map, uint16 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        (found, index) = _searchSorted(map.map, 16, needle, start, end);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint32Map storage map, uint32 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        (found, index) = _searchSorted(map.map, 32, needle, start, end);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint40Map storage map, uint40 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        (found, index) = _searchSorted(map.map, 40, needle, start, end);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint64Map storage map, uint64 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        (found, index) = _searchSorted(map.map, 64, needle, start, end);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint128Map storage map, uint128 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        (found, index) = _searchSorted(map.map, 128, needle, start, end);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Binary search for `needle` in `map.
+    function _searchSorted(
+        mapping(uint256 => uint256) storage map,
+        uint256 bitWidth,
+        uint256 needle,
+        uint256 l,
+        uint256 h
+    ) private view returns (bool found, uint256 i) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(l, h)) { h := l }
+            mstore(0x20, map.slot)
+            let o := sub(l, 1)
+            h := sub(h, l)
+            l := 1
+            let t := 0
+            let d := div(256, bitWidth)
+            let m := sub(shl(bitWidth, 1), 1)
+            for {} 1 {} {
+                i := add(add(shr(1, l), shr(1, h)), and(1, and(l, h)))
+                mstore(0x00, div(add(o, i), d))
+                t := and(m, shr(mul(mod(add(o, i), d), bitWidth), sload(keccak256(0x00, 0x40))))
+                if or(gt(l, h), eq(t, needle)) { break }
+                // Decide whether to search the left or right half.
+                if iszero(gt(needle, t)) {
+                    h := sub(i, 1)
+                    continue
+                }
+                l := add(i, 1)
+            }
+            d := iszero(i)
+            i := add(o, xor(i, mul(d, xor(i, 1))))
+            found := and(eq(t, needle), iszero(d))
         }
     }
 }

@@ -23,6 +23,8 @@ contract LibMapTest is SoladyTest {
 
     mapping(uint256 => LibMap.Uint32Map) uint32Maps;
 
+    mapping(uint256 => bool) filled;
+
     struct _TestTemps {
         uint256 i0;
         uint256 i1;
@@ -406,6 +408,55 @@ contract LibMapTest is SoladyTest {
             uint32Maps[a1].set(b1, c1Casted);
             assertEq(uint32Maps[a0].get(b0), uint32(c0));
             assertEq(uint32Maps[a1].get(b1), uint32(c1));
+        }
+    }
+
+    function testUint32MapsSearchSorted(uint256) public {
+        unchecked {
+            LibMap.Uint32Map storage m = uint32s[0];
+            uint256 o = _random() % 4;
+            uint256 n = 1 + (_random() % 64);
+            uint256 v = _random() % 3;
+            uint256 b = _random() % 2 == 0 ? (1 << (32 - 1)) : 0;
+            for (uint256 i; i != n; ++i) {
+                m.set(o + i, uint32(b | v));
+                filled[uint32(b | v)] = true;
+                v += 1 + (_random() % 2);
+            }
+            uint256 randomIndex = o + _random() % n;
+            (bool found, uint256 index) = m.searchSorted(m.get(randomIndex), o, o + n);
+            assertTrue(found);
+            assertEq(index, randomIndex);
+            uint256 notFoundValue;
+            do {
+                notFoundValue = _bound(_random(), 0, b | v);
+            } while (filled[notFoundValue]);
+            assertFalse(filled[notFoundValue]);
+            (found, index) = m.searchSorted(uint32(notFoundValue), o, o + n);
+            assertFalse(found);
+            assertEq(index, _nearestIndexBefore(m, notFoundValue, o, n));
+
+            (found, index) = m.searchSorted(m.get(randomIndex), o, o - (o > 0 ? _random() % o : 0));
+            assertFalse(found);
+            assertEq(index, o);
+        }
+    }
+
+    function _nearestIndexBefore(LibMap.Uint32Map storage m, uint256 x, uint256 o, uint256 n)
+        internal
+        view
+        returns (uint256 nearestIndex)
+    {
+        nearestIndex = o;
+        uint256 nearestDist = type(uint256).max;
+        for (uint256 i; i != n; ++i) {
+            uint256 y = m.get(o + i);
+            if (y > x) continue;
+            uint256 dist = x - y;
+            if (dist < nearestDist) {
+                nearestIndex = o + i;
+                nearestDist = dist;
+            }
         }
     }
 }
