@@ -168,8 +168,8 @@ library LibMap {
 
     // The following functions search in the range of [`start`, `end`)
     // (i.e. `start <= index < end`).
-    // If the search range is invalid,
     // `index` precedence: equal to > nearest before > nearest after.
+    // An invalid search range will simply return `(found = false, index = start)`.
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
     function searchSorted(Uint8Map storage map, uint8 needle, uint256 start, uint256 end)
@@ -177,7 +177,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, 8, needle, start, end);
+        (found, index) = _searchSorted(map.map, needle, start, end, 8);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -186,7 +186,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, 16, needle, start, end);
+        (found, index) = _searchSorted(map.map, needle, start, end, 16);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -195,7 +195,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, 32, needle, start, end);
+        (found, index) = _searchSorted(map.map, needle, start, end, 32);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -204,7 +204,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, 40, needle, start, end);
+        (found, index) = _searchSorted(map.map, needle, start, end, 40);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -213,7 +213,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, 64, needle, start, end);
+        (found, index) = _searchSorted(map.map, needle, start, end, 64);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -222,7 +222,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, 128, needle, start, end);
+        (found, index) = _searchSorted(map.map, needle, start, end, 128);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -232,10 +232,10 @@ library LibMap {
     /// @dev Binary search for `needle` in `map.
     function _searchSorted(
         mapping(uint256 => uint256) storage map,
-        uint256 bitWidth,
         uint256 needle,
         uint256 l,
-        uint256 h
+        uint256 h,
+        uint256 bitWidth
     ) private view returns (bool found, uint256 i) {
         /// @solidity memory-safe-assembly
         assembly {
