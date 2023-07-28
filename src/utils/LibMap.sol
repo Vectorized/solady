@@ -162,12 +162,50 @@ library LibMap {
         }
     }
 
+    /// @dev Returns the value at `index` in `map`.
+    function get(mapping(uint256 => uint256) storage map, uint256 index, uint256 bitWidth)
+        internal
+        view
+        returns (uint256 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let d := div(256, bitWidth) // Bucket size.
+            let m := sub(shl(bitWidth, 1), 1) // Value mask.
+            mstore(0x20, map.slot)
+            mstore(0x00, div(index, d))
+            let o := mul(mod(index, d), bitWidth) // Storage slot offset (bits).
+            result := and(m, shr(o, sload(keccak256(0x00, 0x40))))
+        }
+    }
+
+    /// @dev Updates the value at `index` in `map`.
+    function set(
+        mapping(uint256 => uint256) storage map,
+        uint256 index,
+        uint256 value,
+        uint256 bitWidth
+    ) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let d := div(256, bitWidth) // Bucket size.
+            let m := sub(shl(bitWidth, 1), 1) // Value mask.
+            mstore(0x20, map.slot)
+            mstore(0x00, div(index, d))
+            let s := keccak256(0x00, 0x40) // Storage slot.
+            let o := mul(mod(index, d), bitWidth) // Storage slot offset (bits).
+            let v := sload(s) // Storage slot value.
+            sstore(s, xor(v, shl(o, and(m, xor(shr(o, v), value)))))
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       BINARY SEARCH                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // The following functions search in the range of [`start`, `end`)
     // (i.e. `start <= index < end`).
+    // The range must be sorted in ascending order.
     // `index` precedence: equal to > nearest before > nearest after.
     // An invalid search range will simply return `(found = false, index = start)`.
 
@@ -177,7 +215,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, needle, start, end, 8);
+        (found, index) = searchSorted(map.map, needle, start, end, 8);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -186,7 +224,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, needle, start, end, 16);
+        (found, index) = searchSorted(map.map, needle, start, end, 16);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -195,7 +233,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, needle, start, end, 32);
+        (found, index) = searchSorted(map.map, needle, start, end, 32);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -204,7 +242,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, needle, start, end, 40);
+        (found, index) = searchSorted(map.map, needle, start, end, 40);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -213,7 +251,7 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, needle, start, end, 64);
+        (found, index) = searchSorted(map.map, needle, start, end, 64);
     }
 
     /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
@@ -222,45 +260,42 @@ library LibMap {
         view
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(map.map, needle, start, end, 128);
+        (found, index) = searchSorted(map.map, needle, start, end, 128);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      PRIVATE HELPERS                       */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Binary search for `needle` in `map.
-    function _searchSorted(
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(
         mapping(uint256 => uint256) storage map,
         uint256 needle,
-        uint256 l,
-        uint256 h,
+        uint256 start,
+        uint256 end,
         uint256 bitWidth
-    ) private view returns (bool found, uint256 i) {
+    ) internal view returns (bool found, uint256 index) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(l, h)) { h := l }
+            if iszero(lt(start, end)) { end := start }
             mstore(0x20, map.slot)
-            let o := sub(l, 1)
-            h := sub(h, l)
-            l := 1
             let t := 0
-            let d := div(256, bitWidth)
-            let m := sub(shl(bitWidth, 1), 1)
+            let d := div(256, bitWidth) // Bucket size.
+            let o := sub(start, 1) // Offset to derive the actual index.
+            let l := 1 // Low.
+            let h := sub(end, start) // High.
+            let m := sub(shl(bitWidth, 1), 1) // Value mask.
             for {} 1 {} {
-                i := add(add(shr(1, l), shr(1, h)), and(1, and(l, h)))
-                mstore(0x00, div(add(o, i), d))
-                t := and(m, shr(mul(mod(add(o, i), d), bitWidth), sload(keccak256(0x00, 0x40))))
+                index := add(add(shr(1, l), shr(1, h)), and(1, and(l, h)))
+                let j := add(index, o)
+                mstore(0x00, div(j, d))
+                t := and(m, shr(mul(mod(j, d), bitWidth), sload(keccak256(0x00, 0x40))))
                 if or(gt(l, h), eq(t, needle)) { break }
                 // Decide whether to search the left or right half.
                 if iszero(gt(needle, t)) {
-                    h := sub(i, 1)
+                    h := sub(index, 1)
                     continue
                 }
-                l := add(i, 1)
+                l := add(index, 1)
             }
-            d := iszero(i)
-            i := add(o, xor(i, mul(d, xor(i, 1))))
+            d := iszero(index)
+            index := add(o, xor(index, mul(d, xor(index, 1))))
             found := and(eq(t, needle), iszero(d))
         }
     }

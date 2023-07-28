@@ -23,6 +23,8 @@ contract LibMapTest is SoladyTest {
 
     mapping(uint256 => LibMap.Uint32Map) uint32Maps;
 
+    mapping(uint256 => uint256) generalMap;
+
     mapping(uint256 => bool) filled;
 
     struct _TestTemps {
@@ -411,153 +413,118 @@ contract LibMapTest is SoladyTest {
         }
     }
 
-    function _searchSortedTestVars()
+    struct _SearchSortedTestVars {
+        uint256 o;
+        uint256 oEnd;
+        uint256 n;
+        uint256 v;
+        uint256 b;
+        bool found;
+        uint256 index;
+        uint256 randomIndex;
+        uint256 randomIndexValue;
+        uint256[] values;
+    }
+
+    function _searchSortedTestVars(mapping(uint256 => uint256) storage map, uint256 bitWidth)
         internal
-        returns (uint256 o, uint256 n, uint256 v, uint256 b)
+        returns (_SearchSortedTestVars memory t)
     {
         unchecked {
-            o = _random() % 4 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
-            n = 1 + _random() % 7 + (_random() % 8 == 0 ? 32 : 0);
-            v = _random() % 3;
-            b = _random() % 2 == 0 ? _random() << 7 : 0;
+            t.o = _random() % 4 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
+            t.n = 1 + _random() % 7 + (_random() % 8 == 0 ? 32 : 0);
+            t.v = _random() % 3;
+            t.b = _random() % 2 == 0 ? _random() << 7 : 0;
+            uint256 valueMask = ((1 << bitWidth) - 1);
+            for (uint256 i; i != t.n; ++i) {
+                map.set(t.o + i, t.b | t.v, bitWidth);
+                filled[(t.b | t.v) & valueMask] = true;
+                t.v += 1 + _random() % 2;
+            }
+            t.randomIndex = t.o + _random() % t.n;
+            t.randomIndexValue = map.get(t.randomIndex, bitWidth);
+            t.oEnd = t.o - (t.o > 0 ? _random() % t.o : 0);
+
+            uint256 notFoundValue = _generateNotFoundValue();
+            (t.found, t.index) = map.searchSorted(notFoundValue, t.o, t.o + t.n, bitWidth);
+            assertFalse(t.found);
+            assertEq(t.index, _nearestIndexBefore(map, notFoundValue, t.o, t.n, bitWidth));
+            (t.found, t.index) = map.searchSorted(t.randomIndexValue, t.o, t.oEnd, bitWidth);
+            assertFalse(t.found);
+            assertEq(t.index, t.o);
+
+            (t.found, t.index) = map.searchSorted(t.randomIndexValue, t.o, t.o + t.n, bitWidth);
+            assertTrue(t.found);
+            assertEq(t.index, t.randomIndex);
         }
     }
 
-    function testUint8MapsSearchSorted(uint256) public {
+    function testUint8MapSearchSorted(uint256) public {
         unchecked {
             LibMap.Uint8Map storage m = uint8s[0];
-            (uint256 o, uint256 n, uint256 v, uint256 b) = _searchSortedTestVars();
-            for (uint256 i; i != n; ++i) {
-                m.set(o + i, uint8(b | v));
-                filled[uint8(b | v)] = true;
-                v += 1 + _random() % 2;
-            }
-            uint256 randomIndex = o + _random() % n;
-            (bool found, uint256 index) = m.searchSorted(m.get(randomIndex), o, o + n);
-            assertTrue(found);
-            assertEq(index, randomIndex);
-            uint256 notFoundValue = _generateNotFoundValue();
-            (found, index) = m.searchSorted(uint8(notFoundValue), o, o + n);
-            assertFalse(found);
-            assertEq(index, _nearestIndexBefore(m.map, notFoundValue, o, n, 8));
-            (found, index) = m.searchSorted(m.get(randomIndex), o, o - (o > 0 ? _random() % o : 0));
-            assertFalse(found);
-            assertEq(index, o);
+            _SearchSortedTestVars memory t = _searchSortedTestVars(m.map, 8);
+            assertEq(m.get(t.randomIndex), t.randomIndexValue);
+            (bool found, uint256 index) = m.searchSorted(uint8(t.randomIndexValue), t.o, t.o + t.n);
+            assertTrue(found == t.found && index == t.index);
         }
     }
 
-    function testUint16MapsSearchSorted(uint256) public {
+    function testUint16MapSearchSorted(uint256) public {
         unchecked {
             LibMap.Uint16Map storage m = uint16s[0];
-            (uint256 o, uint256 n, uint256 v, uint256 b) = _searchSortedTestVars();
-            for (uint256 i; i != n; ++i) {
-                m.set(o + i, uint16(b | v));
-                filled[uint16(b | v)] = true;
-                v += 1 + _random() % 2;
-            }
-            uint256 randomIndex = o + _random() % n;
-            (bool found, uint256 index) = m.searchSorted(m.get(randomIndex), o, o + n);
-            assertTrue(found);
-            assertEq(index, randomIndex);
-            uint256 notFoundValue = _generateNotFoundValue();
-            (found, index) = m.searchSorted(uint16(notFoundValue), o, o + n);
-            assertFalse(found);
-            assertEq(index, _nearestIndexBefore(m.map, notFoundValue, o, n, 16));
-            (found, index) = m.searchSorted(m.get(randomIndex), o, o - (o > 0 ? _random() % o : 0));
-            assertFalse(found);
-            assertEq(index, o);
+            _SearchSortedTestVars memory t = _searchSortedTestVars(m.map, 16);
+            assertEq(m.get(t.randomIndex), t.randomIndexValue);
+            (bool found, uint256 index) = m.searchSorted(uint16(t.randomIndexValue), t.o, t.o + t.n);
+            assertTrue(found == t.found && index == t.index);
         }
     }
 
-    function testUint32MapsSearchSorted(uint256) public {
+    function testUint32MapSearchSorted(uint256) public {
         unchecked {
             LibMap.Uint32Map storage m = uint32s[0];
-            (uint256 o, uint256 n, uint256 v, uint256 b) = _searchSortedTestVars();
-            for (uint256 i; i != n; ++i) {
-                m.set(o + i, uint32(b | v));
-                filled[uint32(b | v)] = true;
-                v += 1 + _random() % 2;
-            }
-            uint256 randomIndex = o + _random() % n;
-            (bool found, uint256 index) = m.searchSorted(m.get(randomIndex), o, o + n);
-            assertTrue(found);
-            assertEq(index, randomIndex);
-            uint256 notFoundValue = _generateNotFoundValue();
-            (found, index) = m.searchSorted(uint32(notFoundValue), o, o + n);
-            assertFalse(found);
-            assertEq(index, _nearestIndexBefore(m.map, notFoundValue, o, n, 32));
-            (found, index) = m.searchSorted(m.get(randomIndex), o, o - (o > 0 ? _random() % o : 0));
-            assertFalse(found);
-            assertEq(index, o);
+            _SearchSortedTestVars memory t = _searchSortedTestVars(m.map, 32);
+            assertEq(m.get(t.randomIndex), t.randomIndexValue);
+            (bool found, uint256 index) = m.searchSorted(uint32(t.randomIndexValue), t.o, t.o + t.n);
+            assertTrue(found == t.found && index == t.index);
         }
     }
 
-    function testUint40MapsSearchSorted(uint256) public {
+    function testUint40MapSearchSorted(uint256) public {
         unchecked {
             LibMap.Uint40Map storage m = uint40s[0];
-            (uint256 o, uint256 n, uint256 v, uint256 b) = _searchSortedTestVars();
-            for (uint256 i; i != n; ++i) {
-                m.set(o + i, uint40(b | v));
-                filled[uint40(b | v)] = true;
-                v += 1 + _random() % 2;
-            }
-            uint256 randomIndex = o + _random() % n;
-            (bool found, uint256 index) = m.searchSorted(m.get(randomIndex), o, o + n);
-            assertTrue(found);
-            assertEq(index, randomIndex);
-            uint256 notFoundValue = _generateNotFoundValue();
-            (found, index) = m.searchSorted(uint40(notFoundValue), o, o + n);
-            assertFalse(found);
-            assertEq(index, _nearestIndexBefore(m.map, notFoundValue, o, n, 40));
-            (found, index) = m.searchSorted(m.get(randomIndex), o, o - (o > 0 ? _random() % o : 0));
-            assertFalse(found);
-            assertEq(index, o);
+            _SearchSortedTestVars memory t = _searchSortedTestVars(m.map, 40);
+            assertEq(m.get(t.randomIndex), t.randomIndexValue);
+            (bool found, uint256 index) = m.searchSorted(uint40(t.randomIndexValue), t.o, t.o + t.n);
+            assertTrue(found == t.found && index == t.index);
         }
     }
 
-    function testUint64MapsSearchSorted(uint256) public {
+    function testUint64MapSearchSorted(uint256) public {
         unchecked {
             LibMap.Uint64Map storage m = uint64s[0];
-            (uint256 o, uint256 n, uint256 v, uint256 b) = _searchSortedTestVars();
-            for (uint256 i; i != n; ++i) {
-                m.set(o + i, uint64(b | v));
-                filled[uint64(b | v)] = true;
-                v += 1 + _random() % 2;
-            }
-            uint256 randomIndex = o + _random() % n;
-            (bool found, uint256 index) = m.searchSorted(m.get(randomIndex), o, o + n);
-            assertTrue(found);
-            assertEq(index, randomIndex);
-            uint256 notFoundValue = _generateNotFoundValue();
-            (found, index) = m.searchSorted(uint64(notFoundValue), o, o + n);
-            assertFalse(found);
-            assertEq(index, _nearestIndexBefore(m.map, notFoundValue, o, n, 64));
-            (found, index) = m.searchSorted(m.get(randomIndex), o, o - (o > 0 ? _random() % o : 0));
-            assertFalse(found);
-            assertEq(index, o);
+            _SearchSortedTestVars memory t = _searchSortedTestVars(m.map, 64);
+            assertEq(m.get(t.randomIndex), t.randomIndexValue);
+            (bool found, uint256 index) = m.searchSorted(uint64(t.randomIndexValue), t.o, t.o + t.n);
+            assertTrue(found == t.found && index == t.index);
         }
     }
 
-    function testUint128MapsSearchSorted(uint256) public {
+    function testUint128MapSearchSorted(uint256) public {
         unchecked {
             LibMap.Uint128Map storage m = uint128s[0];
-            (uint256 o, uint256 n, uint256 v, uint256 b) = _searchSortedTestVars();
-            for (uint256 i; i != n; ++i) {
-                m.set(o + i, uint128(b | v));
-                filled[uint128(b | v)] = true;
-                v += 1 + _random() % 2;
-            }
-            uint256 randomIndex = o + _random() % n;
-            (bool found, uint256 index) = m.searchSorted(m.get(randomIndex), o, o + n);
-            assertTrue(found);
-            assertEq(index, randomIndex);
-            uint256 notFoundValue = _generateNotFoundValue();
-            (found, index) = m.searchSorted(uint128(notFoundValue), o, o + n);
-            assertFalse(found);
-            assertEq(index, _nearestIndexBefore(m.map, notFoundValue, o, n, 128));
-            (found, index) = m.searchSorted(m.get(randomIndex), o, o - (o > 0 ? _random() % o : 0));
-            assertFalse(found);
-            assertEq(index, o);
+            _SearchSortedTestVars memory t = _searchSortedTestVars(m.map, 128);
+            assertEq(m.get(t.randomIndex), t.randomIndexValue);
+            (bool found, uint256 index) =
+                m.searchSorted(uint128(t.randomIndexValue), t.o, t.o + t.n);
+            assertTrue(found == t.found && index == t.index);
+        }
+    }
+
+    function testGeneralMapSearchSorted(uint256) public {
+        unchecked {
+            mapping(uint256 => uint256) storage m = generalMap;
+            uint256 bitWidth = _bound(_random(), 8, 256);
+            _searchSortedTestVars(m, bitWidth);
         }
     }
 
@@ -581,10 +548,8 @@ contract LibMapTest is SoladyTest {
         unchecked {
             nearestIndex = o;
             uint256 nearestDist = type(uint256).max;
-            uint256 m = (1 << bitWidth) - 1;
-            uint256 d = 256 / bitWidth;
             for (uint256 i; i != n; ++i) {
-                uint256 y = (map[(o + i) / d] >> (((o + i) % d) * bitWidth)) & m;
+                uint256 y = map.get(o + i, bitWidth);
                 if (y > x) continue;
                 uint256 dist = x - y;
                 if (dist < nearestDist) {
