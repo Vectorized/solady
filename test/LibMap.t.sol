@@ -608,14 +608,30 @@ contract LibMapTest is SoladyTest {
 
     function testGeneralMapFunctionsWithZeroBitWidth() public {
         unchecked {
+            mapping(uint256 => uint256) storage m = generalMaps[0];
             for (uint256 j; j < 3; ++j) {
                 for (uint256 i; i < 3; ++i) {
-                    generalMaps[0].set(i, j + 1, 0);
-                    assertEq(generalMaps[0].get(i, 0), 0);
-                    (bool found, uint256 index) = generalMaps[0].searchSorted(i, j, j + 2, 0);
+                    m.set(i, j + 1, 0);
+                    assertEq(m.get(i, 0), 0);
+                    (bool found, uint256 index) = m.searchSorted(i, j, j + 2, 0);
                     assertFalse(found);
                     assertEq(index, j);
                 }
+            }
+        }
+    }
+
+    function testGeneralMapFunctionsGas() public {
+        unchecked {
+            mapping(uint256 => uint256) storage m = generalMaps[0];
+            for (uint256 i; i != 1000; ++i) {
+                m.set(i, i + 1, 32);
+                assertEq(m.get(i, 32), i + 1);
+            }
+            for (uint256 j = 1; j < 900; j += 37) {
+                (bool found, uint256 index) = m.searchSorted(j, 0, 1000, 32);
+                assertTrue(found);
+                assertEq(index, j - 1);
             }
         }
     }
