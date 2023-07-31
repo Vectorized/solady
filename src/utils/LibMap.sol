@@ -39,7 +39,7 @@ library LibMap {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         OPERATIONS                         */
+    /*                     GETTERS / SETTERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the uint8 value at `index` in `map`.
@@ -159,6 +159,151 @@ library LibMap {
             let v := sload(s) // Storage slot value.
             let m := 0xffffffffffffffffffffffffffffffff // Value mask.
             sstore(s, xor(v, shl(o, and(m, xor(shr(o, v), value)))))
+        }
+    }
+
+    /// @dev Returns the value at `index` in `map`.
+    function get(mapping(uint256 => uint256) storage map, uint256 index, uint256 bitWidth)
+        internal
+        view
+        returns (uint256 result)
+    {
+        unchecked {
+            uint256 d = _rawDiv(256, bitWidth); // Bucket size.
+            uint256 m = (1 << bitWidth) - 1; // Value mask.
+            result = (map[_rawDiv(index, d)] >> (_rawMod(index, d) * bitWidth)) & m;
+        }
+    }
+
+    /// @dev Updates the value at `index` in `map`.
+    function set(
+        mapping(uint256 => uint256) storage map,
+        uint256 index,
+        uint256 value,
+        uint256 bitWidth
+    ) internal {
+        unchecked {
+            uint256 d = _rawDiv(256, bitWidth); // Bucket size.
+            uint256 m = (1 << bitWidth) - 1; // Value mask.
+            uint256 o = _rawMod(index, d) * bitWidth; // Storage slot offset (bits).
+            map[_rawDiv(index, d)] ^= (((map[_rawDiv(index, d)] >> o) ^ value) & m) << o;
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       BINARY SEARCH                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // The following functions search in the range of [`start`, `end`)
+    // (i.e. `start <= index < end`).
+    // The range must be sorted in ascending order.
+    // `index` precedence: equal to > nearest before > nearest after.
+    // An invalid search range will simply return `(found = false, index = start)`.
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint8Map storage map, uint8 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        return searchSorted(map.map, needle, start, end, 8);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint16Map storage map, uint16 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        return searchSorted(map.map, needle, start, end, 16);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint32Map storage map, uint32 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        return searchSorted(map.map, needle, start, end, 32);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint40Map storage map, uint40 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        return searchSorted(map.map, needle, start, end, 40);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint64Map storage map, uint64 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        return searchSorted(map.map, needle, start, end, 64);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(Uint128Map storage map, uint128 needle, uint256 start, uint256 end)
+        internal
+        view
+        returns (bool found, uint256 index)
+    {
+        return searchSorted(map.map, needle, start, end, 128);
+    }
+
+    /// @dev Returns whether `map` contains `needle`, and the index of `needle`.
+    function searchSorted(
+        mapping(uint256 => uint256) storage map,
+        uint256 needle,
+        uint256 start,
+        uint256 end,
+        uint256 bitWidth
+    ) internal view returns (bool found, uint256 index) {
+        unchecked {
+            if (start >= end) end = start;
+            uint256 t;
+            uint256 o = start - 1; // Offset to derive the actual index.
+            uint256 l = 1; // Low.
+            uint256 d = _rawDiv(256, bitWidth); // Bucket size.
+            uint256 m = (1 << bitWidth) - 1; // Value mask.
+            uint256 h = end - start; // High.
+            while (true) {
+                index = (l & h) + ((l ^ h) >> 1);
+                if (l > h) break;
+                t = (map[_rawDiv(index + o, d)] >> (_rawMod(index + o, d) * bitWidth)) & m;
+                if (t == needle) break;
+                if (needle <= t) h = index - 1;
+                else l = index + 1;
+            }
+            /// @solidity memory-safe-assembly
+            assembly {
+                m := or(iszero(index), iszero(bitWidth))
+                found := iszero(or(xor(t, needle), m))
+                index := add(o, xor(index, mul(xor(index, 1), m)))
+            }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns `x / y`, returning 0 if `y` is zero.
+    function _rawDiv(uint256 x, uint256 y) private pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := div(x, y)
+        }
+    }
+
+    /// @dev Returns `x % y`, returning 0 if `y` is zero.
+    function _rawMod(uint256 x, uint256 y) private pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mod(x, y)
         }
     }
 }
