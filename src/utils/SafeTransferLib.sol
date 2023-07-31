@@ -218,7 +218,7 @@ library SafeTransferLib {
 
             // Store the function selector of `transferFrom(address,address,uint256)`.
             mstore(0x00, 0x23b872dd)
-            // The `amount` argument is already written to the memory word at 0x60.
+            // The `amount` is already at 0x60. Load it for the function's return value.
             amount := mload(0x60)
 
             if iszero(
@@ -288,7 +288,7 @@ library SafeTransferLib {
             }
 
             mstore(0x14, to) // Store the `to` argument.
-            // The `amount` argument is already written to the memory word at 0x34.
+            // The `amount` is already at 0x34. Load it for the function's return value.
             amount := mload(0x34)
             // Store the function selector of `transfer(address,uint256)`.
             mstore(0x00, 0xa9059cbb000000000000000000000000)
