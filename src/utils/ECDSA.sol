@@ -5,6 +5,10 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ECDSA.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/ECDSA.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol)
+///
+/// WARNING! Do NOT use signatures as unique identifiers.
+/// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
+/// This implementation does NOT check if a signature is non-malleable.
 library ECDSA {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
@@ -12,15 +16,6 @@ library ECDSA {
 
     /// @dev The signature is invalid.
     error InvalidSignature();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev The number which `s` must be less than in order for
-    /// the signature to be non-malleable.
-    bytes32 private constant _MALLEABILITY_THRESHOLD_PLUS_ONE =
-        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a1;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    RECOVERY OPERATIONS                     */
@@ -47,12 +42,7 @@ library ECDSA {
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        and(
-                            // If the signature is exactly 65 bytes in length.
-                            eq(mload(signature), 65),
-                            // If `s` in lower half order, such that the signature is not malleable.
-                            lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE)
-                        ), // Address of `ecrecover`.
+                        eq(mload(signature), 65), // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -90,12 +80,7 @@ library ECDSA {
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        and(
-                            // If the signature is exactly 65 bytes in length.
-                            eq(signature.length, 65),
-                            // If `s` in lower half order, such that the signature is not malleable.
-                            lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE)
-                        ), // Address of `ecrecover`.
+                        eq(signature.length, 65), // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -129,8 +114,7 @@ library ECDSA {
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        // If `s` in lower half order, such that the signature is not malleable.
-                        lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
+                        1, // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -165,8 +149,7 @@ library ECDSA {
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        // If `s` in lower half order, such that the signature is not malleable.
-                        lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
+                        1, // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -214,12 +197,7 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    and(
-                        // If the signature is exactly 65 bytes in length.
-                        eq(mload(signature), 65),
-                        // If `s` in lower half order, such that the signature is not malleable.
-                        lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE)
-                    ), // Address of `ecrecover`.
+                    eq(mload(signature), 65), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
@@ -253,12 +231,7 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    and(
-                        // If the signature is exactly 65 bytes in length.
-                        eq(signature.length, 65),
-                        // If `s` in lower half order, such that the signature is not malleable.
-                        lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE)
-                    ), // Address of `ecrecover`.
+                    eq(signature.length, 65), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
@@ -292,8 +265,7 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    // If `s` in lower half order, such that the signature is not malleable.
-                    lt(mload(0x60), _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
+                    1, // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
@@ -324,8 +296,7 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    // If `s` in lower half order, such that the signature is not malleable.
-                    lt(s, _MALLEABILITY_THRESHOLD_PLUS_ONE), // Address of `ecrecover`.
+                    1, // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.

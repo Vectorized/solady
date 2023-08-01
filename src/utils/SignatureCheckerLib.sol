@@ -7,16 +7,11 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
 ///
 /// @dev Note: Unlike ECDSA signatures, contract signatures are revocable.
+///
+/// WARNING! Do NOT use signatures as unique identifiers.
+/// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
+/// This implementation does NOT check if a signature is non-malleable.
 library SignatureCheckerLib {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev The number which `s` must not exceed in order for
-    /// the signature to be non-malleable.
-    bytes32 private constant _MALLEABILITY_THRESHOLD =
-        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               SIGNATURE CHECKING OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -42,28 +37,24 @@ library SignatureCheckerLib {
                 if iszero(xor(signatureLength, 65)) {
                     // Copy `r` and `s`.
                     mstore(add(m, 0x40), mload(add(signature, 0x20))) // `r`.
-                    let s := mload(add(signature, 0x40))
-                    mstore(add(m, 0x60), s)
-                    // If `s` in lower half order, such that the signature is not malleable.
-                    if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
-                        mstore(m, hash)
-                        // Compute `v` and store it in the memory.
-                        mstore(add(m, 0x20), byte(0, mload(add(signature, 0x60))))
-                        pop(
-                            staticcall(
-                                gas(), // Amount of gas left for the transaction.
-                                0x01, // Address of `ecrecover`.
-                                m, // Start of input.
-                                0x80, // Size of input.
-                                m, // Start of output.
-                                0x20 // Size of output.
-                            )
+                    mstore(add(m, 0x60), mload(add(signature, 0x40))) // `s`.
+                    mstore(m, hash)
+                    // Compute `v` and store it in the memory.
+                    mstore(add(m, 0x20), byte(0, mload(add(signature, 0x60))))
+                    pop(
+                        staticcall(
+                            gas(), // Amount of gas left for the transaction.
+                            1, // Address of `ecrecover`.
+                            m, // Start of input.
+                            0x80, // Size of input.
+                            m, // Start of output.
+                            0x20 // Size of output.
                         )
-                        // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                        if mul(eq(mload(m), signer), returndatasize()) {
-                            isValid := 1
-                            break
-                        }
+                    )
+                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+                    if mul(eq(mload(m), signer), returndatasize()) {
+                        isValid := 1
+                        break
                     }
                 }
 
@@ -129,26 +120,23 @@ library SignatureCheckerLib {
                 if iszero(xor(signature.length, 65)) {
                     // Directly copy `r` and `s` from the calldata.
                     calldatacopy(add(m, 0x40), signature.offset, 0x40)
-                    // If `s` in lower half order, such that the signature is not malleable.
-                    if iszero(gt(mload(add(m, 0x60)), _MALLEABILITY_THRESHOLD)) {
-                        mstore(m, hash)
-                        // Compute `v` and store it in the memory.
-                        mstore(add(m, 0x20), byte(0, calldataload(add(signature.offset, 0x40))))
-                        pop(
-                            staticcall(
-                                gas(), // Amount of gas left for the transaction.
-                                0x01, // Address of `ecrecover`.
-                                m, // Start of input.
-                                0x80, // Size of input.
-                                m, // Start of output.
-                                0x20 // Size of output.
-                            )
+                    mstore(m, hash)
+                    // Compute `v` and store it in the memory.
+                    mstore(add(m, 0x20), byte(0, calldataload(add(signature.offset, 0x40))))
+                    pop(
+                        staticcall(
+                            gas(), // Amount of gas left for the transaction.
+                            1, // Address of `ecrecover`.
+                            m, // Start of input.
+                            0x80, // Size of input.
+                            m, // Start of output.
+                            0x20 // Size of output.
                         )
-                        // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                        if mul(eq(mload(m), signer), returndatasize()) {
-                            isValid := 1
-                            break
-                        }
+                    )
+                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+                    if mul(eq(mload(m), signer), returndatasize()) {
+                        isValid := 1
+                        break
                     }
                 }
 
@@ -220,30 +208,24 @@ library SignatureCheckerLib {
                 // Load the free memory pointer.
                 // Simply using the free memory usually costs less if many slots are needed.
                 let m := mload(0x40)
-
-                // Clean the excess bits of `v` in case they are dirty.
-                v := and(v, 0xff)
-                // If `s` in lower half order, such that the signature is not malleable.
-                if iszero(gt(s, _MALLEABILITY_THRESHOLD)) {
-                    mstore(m, hash)
-                    mstore(add(m, 0x20), v)
-                    mstore(add(m, 0x40), r)
-                    mstore(add(m, 0x60), s)
-                    pop(
-                        staticcall(
-                            gas(), // Amount of gas left for the transaction.
-                            0x01, // Address of `ecrecover`.
-                            m, // Start of input.
-                            0x80, // Size of input.
-                            m, // Start of output.
-                            0x20 // Size of output.
-                        )
+                mstore(m, hash)
+                mstore(add(m, 0x20), and(v, 0xff))
+                mstore(add(m, 0x40), r)
+                mstore(add(m, 0x60), s)
+                pop(
+                    staticcall(
+                        gas(), // Amount of gas left for the transaction.
+                        1, // Address of `ecrecover`.
+                        m, // Start of input.
+                        0x80, // Size of input.
+                        m, // Start of output.
+                        0x20 // Size of output.
                     )
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if mul(eq(mload(m), signer), returndatasize()) {
-                        isValid := 1
-                        break
-                    }
+                )
+                // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+                if mul(eq(mload(m), signer), returndatasize()) {
+                    isValid := 1
+                    break
                 }
 
                 // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
