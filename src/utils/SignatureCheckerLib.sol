@@ -28,19 +28,13 @@ library SignatureCheckerLib {
         assembly {
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
-                // Load the free memory pointer.
-                // Simply using the free memory usually costs less if many slots are needed.
                 let m := mload(0x40)
-
                 let signatureLength := mload(signature)
-                // If the signature is exactly 65 bytes in length.
-                if iszero(xor(signatureLength, 65)) {
-                    // Copy `r` and `s`.
+                if eq(signatureLength, 65) {
+                    mstore(m, hash)
+                    mstore(add(m, 0x20), byte(0, mload(add(signature, 0x60)))) // `v`.
                     mstore(add(m, 0x40), mload(add(signature, 0x20))) // `r`.
                     mstore(add(m, 0x60), mload(add(signature, 0x40))) // `s`.
-                    mstore(m, hash)
-                    // Compute `v` and store it in the memory.
-                    mstore(add(m, 0x20), byte(0, mload(add(signature, 0x60))))
                     pop(
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
@@ -57,11 +51,8 @@ library SignatureCheckerLib {
                         break
                     }
                 }
-
-                // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 let f := shl(224, 0x1626ba7e)
-                // Write the abi-encoded calldata into memory, beginning with the function selector.
-                mstore(m, f)
+                mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
                 mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
                 {
@@ -74,7 +65,6 @@ library SignatureCheckerLib {
                         if iszero(lt(i, signatureLength)) { break }
                     }
                 }
-
                 // forgefmt: disable-next-item
                 isValid := and(
                     and(
@@ -112,17 +102,11 @@ library SignatureCheckerLib {
         assembly {
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
-                // Load the free memory pointer.
-                // Simply using the free memory usually costs less if many slots are needed.
                 let m := mload(0x40)
-
-                // If the signature is exactly 65 bytes in length.
-                if iszero(xor(signature.length, 65)) {
-                    // Directly copy `r` and `s` from the calldata.
-                    calldatacopy(add(m, 0x40), signature.offset, 0x40)
+                if eq(signature.length, 65) {
                     mstore(m, hash)
-                    // Compute `v` and store it in the memory.
-                    mstore(add(m, 0x20), byte(0, calldataload(add(signature.offset, 0x40))))
+                    mstore(add(m, 0x20), byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(add(m, 0x40), signature.offset, 0x40) // `r`, `s`.
                     pop(
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
@@ -139,17 +123,13 @@ library SignatureCheckerLib {
                         break
                     }
                 }
-
-                // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 let f := shl(224, 0x1626ba7e)
-                // Write the abi-encoded calldata into memory, beginning with the function selector.
-                mstore(m, f)
+                mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
                 mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
-                mstore(add(m, 0x44), signature.length) // The signature length
+                mstore(add(m, 0x44), signature.length)
                 // Copy the `signature` over.
                 calldatacopy(add(m, 0x64), signature.offset, signature.length)
-
                 // forgefmt: disable-next-item
                 isValid := and(
                     and(
@@ -205,13 +185,11 @@ library SignatureCheckerLib {
         assembly {
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
-                // Load the free memory pointer.
-                // Simply using the free memory usually costs less if many slots are needed.
                 let m := mload(0x40)
                 mstore(m, hash)
-                mstore(add(m, 0x20), and(v, 0xff))
-                mstore(add(m, 0x40), r)
-                mstore(add(m, 0x60), s)
+                mstore(add(m, 0x20), and(v, 0xff)) // `v`.
+                mstore(add(m, 0x40), r) // `r`.
+                mstore(add(m, 0x60), s) // `s`.
                 pop(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
@@ -227,18 +205,14 @@ library SignatureCheckerLib {
                     isValid := 1
                     break
                 }
-
-                // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 let f := shl(224, 0x1626ba7e)
-                // Write the abi-encoded calldata into memory, beginning with the function selector.
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
                 mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
-                mstore(add(m, 0x44), 65) // Store the length of the signature.
-                mstore(add(m, 0x64), r) // Store `r` of the signature.
-                mstore(add(m, 0x84), s) // Store `s` of the signature.
-                mstore8(add(m, 0xa4), v) // Store `v` of the signature.
-
+                mstore(add(m, 0x44), 65) // Length of the signature.
+                mstore(add(m, 0x64), r) // `r`.
+                mstore(add(m, 0x84), s) // `s`.
+                mstore8(add(m, 0xa4), v) // `v`.
                 // forgefmt: disable-next-item
                 isValid := and(
                     and(
@@ -277,16 +251,10 @@ library SignatureCheckerLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Load the free memory pointer.
-            // Simply using the free memory usually costs less if many slots are needed.
             let m := mload(0x40)
-
             let signatureLength := mload(signature)
-
-            // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             let f := shl(224, 0x1626ba7e)
-            // Write the abi-encoded calldata into memory, beginning with the function selector.
-            mstore(m, f)
+            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             mstore(add(m, 0x04), hash)
             mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
             {
@@ -299,7 +267,6 @@ library SignatureCheckerLib {
                     if iszero(lt(i, signatureLength)) { break }
                 }
             }
-
             // forgefmt: disable-next-item
             isValid := and(
                 and(
@@ -332,20 +299,14 @@ library SignatureCheckerLib {
     ) internal view returns (bool isValid) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Load the free memory pointer.
-            // Simply using the free memory usually costs less if many slots are needed.
             let m := mload(0x40)
-
-            // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             let f := shl(224, 0x1626ba7e)
-            // Write the abi-encoded calldata into memory, beginning with the function selector.
-            mstore(m, f)
+            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             mstore(add(m, 0x04), hash)
             mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
-            mstore(add(m, 0x44), signature.length) // The signature length
+            mstore(add(m, 0x44), signature.length)
             // Copy the `signature` over.
             calldatacopy(add(m, 0x64), signature.offset, signature.length)
-
             // forgefmt: disable-next-item
             isValid := and(
                 and(
@@ -395,21 +356,15 @@ library SignatureCheckerLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Load the free memory pointer.
-            // Simply using the free memory usually costs less if many slots are needed.
             let m := mload(0x40)
-
-            // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             let f := shl(224, 0x1626ba7e)
-            // Write the abi-encoded calldata into memory, beginning with the function selector.
             mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             mstore(add(m, 0x04), hash)
             mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
-            mstore(add(m, 0x44), 65) // Store the length of the signature.
-            mstore(add(m, 0x64), r) // Store `r` of the signature.
-            mstore(add(m, 0x84), s) // Store `s` of the signature.
-            mstore8(add(m, 0xa4), v) // Store `v` of the signature.
-
+            mstore(add(m, 0x44), 65) // Length of the signature.
+            mstore(add(m, 0x64), r) // `r`.
+            mstore(add(m, 0x84), s) // `s`.
+            mstore8(add(m, 0xa4), v) // `v`.
             // forgefmt: disable-next-item
             isValid := and(
                 and(
