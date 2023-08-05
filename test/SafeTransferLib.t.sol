@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {MockERC20} from "./utils/mocks/MockERC20.sol";
+import {MockERC20LikeUSDT} from "./utils/mocks/MockERC20LikeUSDT.sol";
 import {MockETHRecipient} from "./utils/mocks/MockETHRecipient.sol";
 import {RevertingToken} from "./utils/weird-tokens/RevertingToken.sol";
 import {ReturnsTwoToken} from "./utils/weird-tokens/ReturnsTwoToken.sol";
@@ -94,6 +95,10 @@ contract SafeTransferLibTest is SoladyTest {
 
     function testApproveWithNonContract() public {
         SafeTransferLib.safeApprove(address(0xBADBEEF), address(0xBEEF), 1e18);
+    }
+
+    function testApproveWithRetryWithNonContract() public {
+        SafeTransferLib.safeApproveWithRetry(address(0xBADBEEF), address(0xBEEF), 1e18);
     }
 
     function testTransferETH() public {
@@ -410,6 +415,32 @@ contract SafeTransferLibTest is SoladyTest {
         }
 
         SafeTransferLib.safeApprove(nonContract, _brutalized(to), amount);
+    }
+
+    function testApproveWithRetryWithNonContract(address nonContract, address to, uint256 amount)
+        public
+    {
+        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
+            return;
+        }
+
+        SafeTransferLib.safeApproveWithRetry(nonContract, _brutalized(to), amount);
+    }
+
+    function testApproveWithRetry(address to, uint256 amount0, uint256 amount1) public {
+        MockERC20LikeUSDT usdt = new MockERC20LikeUSDT();
+        assertEq(usdt.allowance(address(this), to), 0);
+        SafeTransferLib.safeApproveWithRetry(address(usdt), _brutalized(to), amount0);
+        assertEq(usdt.allowance(address(this), to), amount0);
+        if (amount0 != 0 && amount1 != 0) {
+            verifySafeApprove(address(usdt), to, amount1, REVERTS_WITH_SELECTOR);
+        }
+        SafeTransferLib.safeApproveWithRetry(address(usdt), _brutalized(to), amount1);
+        assertEq(usdt.allowance(address(this), to), amount1);
+    }
+
+    function testApproveWithRetry() public {
+        testApproveWithRetry(address(1), 123, 456);
     }
 
     function testTransferETH(address recipient, uint256 amount) public {
