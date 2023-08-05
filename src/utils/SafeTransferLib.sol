@@ -339,6 +339,49 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Sets `amount` of ERC20 `token` for `to` to manage on behalf of the current contract.
+    /// If the initial attempt to approve fails, attempts to reset the approved amount to zero,
+    /// then retries the approval again (some tokens, e.g. USDT, requires this).
+    /// Reverts upon failure.
+    function safeApproveWithRetry(address token, address to, uint256 amount) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x14, to) // Store the `to` argument.
+            mstore(0x34, amount) // Store the `amount` argument.
+            // Store the function selector of `approve(address,uint256)`.
+            mstore(0x00, 0x095ea7b3000000000000000000000000)
+
+            if iszero(
+                and( // The arguments of `and` are evaluated from right to left.
+                    // Set success to whether the call reverted, if not we check it either
+                    // returned exactly 1 (can't just be non-zero data), or had no return data.
+                    or(eq(mload(0x00), 1), iszero(returndatasize())),
+                    call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
+                )
+            ) {
+                mstore(0x34, 0) // Store 0 for the `amount`.
+                mstore(0x00, 0x095ea7b3000000000000000000000000) // Store the function selector.
+                // We can ignore the result of this call. Just need to check the next call.
+                pop(call(gas(), token, 0, 0x10, 0x44, 0x00, 0x00))
+                mstore(0x34, amount) // Store back the original `amount`.
+
+                if iszero(
+                    and(
+                        or(eq(mload(0x00), 1), iszero(returndatasize())),
+                        call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
+                    )
+                ) {
+                    // Store the function selector of `ApproveFailed()`.
+                    mstore(0x00, 0x3e3f8f73)
+                    // Revert with (offset, size).
+                    revert(0x1c, 0x04)
+                }
+            }
+            // Restore the part of the free memory pointer that was overwritten.
+            mstore(0x34, 0)
+        }
+    }
+
     /// @dev Returns the amount of ERC20 `token` owned by `account`.
     /// Returns zero if the `token` does not exist.
     function balanceOf(address token, address account) internal view returns (uint256 amount) {
