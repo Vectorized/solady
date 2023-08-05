@@ -340,8 +340,8 @@ library SafeTransferLib {
     }
 
     /// @dev Sets `amount` of ERC20 `token` for `to` to manage on behalf of the current contract.
-    /// If the first attempt to approve fails, attempts to reset the approved amount to zero,
-    /// and then retries the approval again (some tokens, such as USDT, requires this).
+    /// If the initial attempt to approve fails, attempts to reset the approved amount to zero,
+    /// then retries the approval again (some tokens, e.g. USDT, requires this).
     /// Reverts upon failure.
     function safeApproveWithRetry(address token, address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
