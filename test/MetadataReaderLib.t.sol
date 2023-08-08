@@ -94,7 +94,7 @@ contract MetadataReaderLibTest is SoladyTest {
         return uint8(_randomness);
     }
 
-    function testReadBytes32String() public {
+    function testReadBytes32String() public brutalizeMemory {
         bytes memory data;
         string memory result;
         data = abi.encodeWithSignature("returnsBytes32StringA()");
@@ -115,7 +115,7 @@ contract MetadataReaderLibTest is SoladyTest {
         assertEq(result, "");
     }
 
-    function testReadString(uint256 r) public {
+    function testReadString(uint256 r) public brutalizeMemory {
         bytes memory data;
         string memory result;
         string memory s = _generateString();
@@ -131,14 +131,16 @@ contract MetadataReaderLibTest is SoladyTest {
         result = MetadataReaderLib.readSymbol(address(this));
         _checkMemory(result);
         assertEq(result, s);
-    }
-
-    function testReadEmptyString(uint256 r) public {
-        string memory s = _generateString();
-        _stringToReturn = s;
-        _randomness = r;
-        bytes memory data = abi.encodeWithSignature("returnsEmptyString()");
-        string memory result = MetadataReaderLib.readString(address(this), data);
+        data = abi.encodeWithSignature("returnsEmptyString()");
+        result = MetadataReaderLib.readString(address(this), data);
+        _checkMemory(result);
+        assertEq(result, "");
+        data = abi.encodeWithSignature("reverts()");
+        result = MetadataReaderLib.readString(address(this), data);
+        _checkMemory(result);
+        assertEq(result, "");
+        data = abi.encodeWithSignature("returnsNothing()");
+        result = MetadataReaderLib.readString(address(this), data);
         _checkMemory(result);
         assertEq(result, "");
     }
