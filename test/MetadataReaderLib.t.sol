@@ -22,7 +22,9 @@ contract MetadataReaderLibTest is SoladyTest {
                 mstore(sub(s, 0x20), 0x20)
                 return(sub(s, 0x20), add(0x40, add(mload(s), byte(2, r))))
             }
-            mstore(add(mload(s), add(s, 0x20)), 0)
+            mstore(0x00, gas())
+            mstore(0x20, r)
+            mstore(add(mload(s), add(s, 0x20)), shr(8, keccak256(0x00, 0x40)))
             return(add(s, 0x20), add(mload(s), byte(2, r)))
         }
     }
@@ -50,8 +52,8 @@ contract MetadataReaderLibTest is SoladyTest {
                 mstore(sub(s, 0x20), 0x20)
                 return(sub(s, 0x20), add(0x40, n))
             }
-            mstore(0x00, 0)
-            mstore(0x20, 0)
+            codecopy(0x00, codesize(), 0x200)
+            mstore(0x00, and(63, byte(3, r)))
             return(0x00, and(63, byte(2, r)))
         }
     }

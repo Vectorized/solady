@@ -73,10 +73,9 @@ library MetadataReaderLib {
                     // If the string's offset is within bounds.
                     if iszero(gt(o, sub(returndatasize(), 0x20))) {
                         returndatacopy(0x00, o, 0x20)
-                        let n := mload(0x00)
                         // If the string's end is within bounds.
-                        if iszero(gt(n, sub(returndatasize(), add(o, 0x20)))) {
-                            let z := add(0x20, n)
+                        if iszero(gt(mload(0x00), sub(returndatasize(), add(o, 0x20)))) {
+                            let z := add(0x20, mload(0x00))
                             returndatacopy(m, o, z) // Copy the string's length and contents.
                             mstore(add(m, z), 0) // Zeroize the slot after the string.
                             mstore(0x40, add(0x20, add(m, z))) // Allocate memory for the string.
