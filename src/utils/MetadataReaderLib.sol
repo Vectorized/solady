@@ -9,7 +9,7 @@ library MetadataReaderLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Best-effort string reading operations.
-    // Will not revert if sufficient gas is provided.
+    // Should NOT revert if sufficient gas is provided.
     //
     // Performs the following in order:
     // 1. Returns the empty string for the following cases:
@@ -18,8 +18,8 @@ library MetadataReaderLib {
     //     - Returns empty string.
     // 2. Try to `abi.decode` the returndata into a string
     //    with a maximum supported returndatasize of 16777215 bytes.
-    // 3. Scans the entire returndata for the null byte '\0', or until the end,
-    //    to interpret it as a null-terminated string, as far as gas allows.
+    // 3. With any remaining gas, scans the returndata from start to end for the
+    //    null byte '\0', to interpret the returndata as a null-terminated string.
 
     /// @dev Equivalent to `readString(abi.encodeWithSignature("name()"))`.
     function readName(address target) internal view returns (string memory) {
@@ -36,11 +36,12 @@ library MetadataReaderLib {
         return _string(target, _ptr(data));
     }
 
-    // Best-effort uint reading operations.
-    // Will not revert if sufficient gas is provided.
+    // Best-effort unsigned integer reading operations.
+    // Should NOT revert if sufficient gas is provided.
     //
     // Performs the following in order:
-    // 1. Attempts to `abi.decode` the result into a uint (any bitwidth).
+    // 1. Attempts to `abi.decode` the result into a uint256
+    //    (equivalent across all Solidity uint types, downcast as needed).
     // 2. Returns zero for the following cases:
     //     - Reverts.
     //     - No returndata (e.g. function returns nothing, EOA).
