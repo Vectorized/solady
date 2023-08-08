@@ -12,7 +12,13 @@ contract MetadataReaderLibTest is SoladyTest {
 
     function returnsString() public view returns (string memory) {
         uint256 r = _randomness;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, add(0x100, mload(0x40)))
+            mstore(0x00, r)
+        }
         string memory s = _stringToReturn;
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(and(r, 1)) {
                 if iszero(and(r, 2)) {
@@ -31,7 +37,13 @@ contract MetadataReaderLibTest is SoladyTest {
 
     function returnsEmptyString() public view returns (string memory) {
         uint256 r = _randomness;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, add(0x100, mload(0x40)))
+            mstore(0x00, r)
+        }
         string memory s = _stringToReturn;
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(and(r, 1)) {
                 if iszero(and(r, 2)) {
@@ -51,18 +63,21 @@ contract MetadataReaderLibTest is SoladyTest {
                 mstore(sub(s, 0x20), 0x20)
                 return(sub(s, 0x20), add(0x40, n))
             }
-            codecopy(0x00, codesize(), 0x200)
-            mstore(0x00, and(63, byte(3, r)))
-            return(0x00, and(63, byte(2, r)))
+            let m := mload(0x40)
+            codecopy(m, codesize(), 0x200)
+            mstore(m, and(63, byte(3, r)))
+            return(m, and(63, byte(2, r)))
         }
     }
 
     function returnsChoppedString(uint256 chop) public pure returns (string memory) {
+        /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, 0x20)
-            mstore(0x20, 0x20)
-            mstore(0x40, "112233445566778899aa112233445566")
-            return(0x00, add(0x40, chop))
+            let m := mload(0x40)
+            mstore(add(m, 0x00), 0x20)
+            mstore(add(m, 0x20), 0x20)
+            mstore(add(m, 0x40), "112233445566778899aa112233445566")
+            return(add(m, 0x00), add(0x40, chop))
         }
     }
 
