@@ -56,6 +56,28 @@ contract MetadataReaderLibTest is SoladyTest {
         }
     }
 
+    function returnsBytes32StringA() public pure returns (bytes32) {
+        return bytes32(hex"4d696c616479");
+    }
+
+    function returnsBytes32StringB() public pure returns (bytes32) {
+        return bytes32("This string has thirty two bytes");
+    }
+
+    function returnsNothing() public pure {}
+
+    function reverts() public pure {
+        revert("Lorem Ipsum");
+    }
+
+    function returnsChoppedUint(uint256 v, uint256 chop) public pure returns (uint256) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, v)
+            return(0x00, chop)
+        }
+    }
+
     function name() public view returns (string memory) {
         return returnsString();
     }
@@ -72,12 +94,35 @@ contract MetadataReaderLibTest is SoladyTest {
         return uint8(_randomness);
     }
 
+    function testReadBytes32String() public {
+        bytes memory data;
+        string memory result;
+        data = abi.encodeWithSignature("returnsBytes32StringA()");
+        result = MetadataReaderLib.readString(address(this), data);
+        _checkMemory(result);
+        assertEq(result, "Milady");
+        data = abi.encodeWithSignature("returnsBytes32StringB()");
+        result = MetadataReaderLib.readString(address(this), data);
+        _checkMemory(result);
+        assertEq(result, "This string has thirty two bytes");
+        data = abi.encodeWithSignature("returnsNothing()");
+        result = MetadataReaderLib.readString(address(this), data);
+        _checkMemory(result);
+        assertEq(result, "");
+        data = abi.encodeWithSignature("reverts()");
+        result = MetadataReaderLib.readString(address(this), data);
+        _checkMemory(result);
+        assertEq(result, "");
+    }
+
     function testReadString(uint256 r) public {
+        bytes memory data;
+        string memory result;
         string memory s = _generateString();
         _stringToReturn = s;
         _randomness = r;
-        bytes memory data = abi.encodeWithSignature("returnsString()");
-        string memory result = MetadataReaderLib.readString(address(this), data);
+        data = abi.encodeWithSignature("returnsString()");
+        result = MetadataReaderLib.readString(address(this), data);
         _checkMemory(result);
         assertEq(result, s);
         result = MetadataReaderLib.readName(address(this));
@@ -103,6 +148,35 @@ contract MetadataReaderLibTest is SoladyTest {
         bytes memory data = abi.encodeWithSignature("returnsUint()");
         assertEq(MetadataReaderLib.readUint(address(this), data), r);
         assertEq(MetadataReaderLib.readDecimals(address(this)), uint8(r));
+    }
+
+    function testReadUint() public {
+        bytes memory data;
+        uint256 result;
+        data = abi.encodeWithSignature("returnsNothing()");
+        result = MetadataReaderLib.readUint(address(this), data);
+        assertEq(result, 0);
+        data = abi.encodeWithSignature("reverts()");
+        result = MetadataReaderLib.readUint(address(this), data);
+        assertEq(result, 0);
+
+        for (uint256 j; j != 8; ++j) {
+            for (uint256 i; i != 70; ++i) {
+                uint256 k = _hash(i, j);
+                data = abi.encodeWithSignature("returnsChoppedUint(uint256,uint256)", k, i);
+                result = MetadataReaderLib.readUint(address(this), data);
+                assertEq(result, i < 32 ? 0 : k);
+            }
+        }
+    }
+
+    function _hash(uint256 i, uint256 j) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, i)
+            mstore(0x20, j)
+            result := keccak256(0x00, 0x20)
+        }
     }
 
     function _generateString() internal returns (string memory result) {
