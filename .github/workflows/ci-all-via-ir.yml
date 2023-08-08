@@ -1,6 +1,7 @@
 name: ci-all-via-ir
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
   tests:
