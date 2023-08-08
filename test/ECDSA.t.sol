@@ -209,6 +209,17 @@ contract ECDSATest is SoladyTest {
         this.recover(TEST_MESSAGE, signature);
     }
 
+    struct _CheckSignatureTestTemps {
+        bytes argsSignature;
+        bytes encodedCalldataArgs;
+        address signer;
+        bool expected;
+        bool[2] success;
+        bytes[2] result;
+        bytes4 s;
+        address recovered;
+    }
+
     function _checkSignature(
         address signer,
         bytes32 digest,
@@ -217,57 +228,55 @@ contract ECDSATest is SoladyTest {
         bytes32 s,
         bool expected
     ) internal {
-        _checkSignature(
-            "(bytes32,uint8,bytes32,bytes32)", abi.encode(digest, v, r, s), signer, expected
-        );
+        _CheckSignatureTestTemps memory t;
+        t.signer = signer;
+        t.expected = expected;
+
+        t.argsSignature = "(bytes32,uint8,bytes32,bytes32)";
+        t.encodedCalldataArgs = abi.encode(digest, v, r, s);
+        _checkSignature(t);
 
         if (v == 27 || v == 28) {
             bytes32 vs = bytes32((v == 28 ? 1 << 255 : 0) | uint256(s));
-            _checkSignature(
-                "(bytes32,bytes32,bytes32)", abi.encode(digest, r, vs), signer, expected
-            );
+            t.argsSignature = "(bytes32,bytes32,bytes32)";
+            t.encodedCalldataArgs = abi.encode(digest, r, vs);
+            _checkSignature(t);
         }
 
         if (_random() & 1 == 0) {
-            _checkSignature(
-                "(bytes32,bytes)", abi.encode(digest, abi.encodePacked(r, s, v)), signer, expected
-            );
+            t.argsSignature = "(bytes32,bytes)";
+            t.encodedCalldataArgs = abi.encode(digest, abi.encodePacked(r, s, v));
+            _checkSignature(t);
         }
     }
 
-    function _checkSignature(
-        bytes memory argsSignature,
-        bytes memory encodedCalldataArgs,
-        address signer,
-        bool expected
-    ) internal {
-        bool[] memory success = new bool[](2);
-        bytes[] memory result = new bytes[](2);
-        bytes4 s;
-        address recovered;
+    function _checkSignature(_CheckSignatureTestTemps memory t) internal {
+        t.s = bytes4(keccak256(abi.encodePacked("tryRecover", t.argsSignature)));
+        (t.success[0], t.result[0]) =
+            address(this).call(abi.encodePacked(t.s, t.encodedCalldataArgs));
+        t.recovered = t.success[0] ? abi.decode(t.result[0], (address)) : address(0);
+        assertEq(t.recovered == t.signer, t.expected);
 
-        s = bytes4(keccak256(abi.encodePacked("tryRecover", argsSignature)));
-        (success[0], result[0]) = address(this).call(abi.encodePacked(s, encodedCalldataArgs));
-        recovered = success[0] ? abi.decode(result[0], (address)) : address(0);
-        assertEq(recovered == signer, expected);
+        t.s = bytes4(keccak256(abi.encodePacked("tryRecoverBrutalized", t.argsSignature)));
+        (t.success[1], t.result[1]) =
+            address(this).call(abi.encodePacked(t.s, t.encodedCalldataArgs));
+        t.recovered = t.success[1] ? abi.decode(t.result[1], (address)) : address(0);
+        assertEq(t.recovered == t.signer, t.expected);
 
-        s = bytes4(keccak256(abi.encodePacked("tryRecoverBrutalized", argsSignature)));
-        (success[1], result[1]) = address(this).call(abi.encodePacked(s, encodedCalldataArgs));
-        recovered = success[1] ? abi.decode(result[1], (address)) : address(0);
-        assertEq(recovered == signer, expected);
+        t.s = bytes4(keccak256(abi.encodePacked("recover", t.argsSignature)));
+        (t.success[0], t.result[0]) =
+            address(this).call(abi.encodePacked(t.s, t.encodedCalldataArgs));
 
-        s = bytes4(keccak256(abi.encodePacked("recover", argsSignature)));
-        (success[0], result[0]) = address(this).call(abi.encodePacked(s, encodedCalldataArgs));
+        t.s = bytes4(keccak256(abi.encodePacked("recoverBrutalized", t.argsSignature)));
+        (t.success[1], t.result[1]) =
+            address(this).call(abi.encodePacked(t.s, t.encodedCalldataArgs));
 
-        s = bytes4(keccak256(abi.encodePacked("recoverBrutalized", argsSignature)));
-        (success[1], result[1]) = address(this).call(abi.encodePacked(s, encodedCalldataArgs));
+        assertEq(t.success[0], t.success[1]);
+        assertEq(t.result[0], t.result[1]);
 
-        assertEq(success[0], success[1]);
-        assertEq(result[0], result[1]);
-
-        if (success[0]) {
-            recovered = abi.decode(result[0], (address));
-            assertEq(recovered == signer, expected);
+        if (t.success[0]) {
+            t.recovered = abi.decode(t.result[0], (address));
+            assertEq(t.recovered == t.signer, t.expected);
         }
     }
 
