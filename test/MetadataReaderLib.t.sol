@@ -6,7 +6,7 @@ import {MetadataReaderLib} from "../src/utils/MetadataReaderLib.sol";
 
 contract MetadataReaderLibTest is SoladyTest {
     string internal _stringToReturn;
-    
+
     uint256 internal _randomness;
 
     function returnsString() public view returns (string memory) {
@@ -17,13 +17,13 @@ contract MetadataReaderLibTest is SoladyTest {
             if iszero(and(r, 1)) {
                 if iszero(and(r, 2)) {
                     mstore(sub(s, 0x40), 0x40)
-                    return(sub(s, 0x40), add(0x60, add(mload(s), byte(2, r))))        
+                    return(sub(s, 0x40), add(0x60, add(mload(s), byte(2, r))))
                 }
                 mstore(sub(s, 0x20), 0x20)
-                return(sub(s, 0x20), add(0x40, add(mload(s), byte(2, r))))        
+                return(sub(s, 0x20), add(0x40, add(mload(s), byte(2, r))))
             }
             mstore(add(mload(s), add(s, 0x20)), 0)
-            return(add(s, 0x20), add(mload(s), byte(2, r)))        
+            return(add(s, 0x20), add(mload(s), byte(2, r)))
         }
     }
 
@@ -35,20 +35,20 @@ contract MetadataReaderLibTest is SoladyTest {
             if iszero(and(r, 1)) {
                 if iszero(and(r, 2)) {
                     mstore(sub(s, 0x40), 0x41)
-                    return(sub(s, 0x40), add(0x60, mload(s)))        
+                    return(sub(s, 0x40), add(0x60, mload(s)))
                 }
                 mstore(sub(s, 0x20), 0x21)
-                return(sub(s, 0x20), add(0x40, mload(s)))        
+                return(sub(s, 0x20), add(0x40, mload(s)))
             }
             if iszero(and(r, 2)) {
                 let n := mload(s)
                 mstore(s, add(n, 1))
                 if iszero(and(r, 2)) {
                     mstore(sub(s, 0x40), 0x40)
-                    return(sub(s, 0x40), add(0x60, n))        
+                    return(sub(s, 0x40), add(0x60, n))
                 }
                 mstore(sub(s, 0x20), 0x20)
-                return(sub(s, 0x20), add(0x40, n))        
+                return(sub(s, 0x20), add(0x40, n))
             }
             mstore(0x00, 0)
             mstore(0x20, 0)
@@ -73,7 +73,7 @@ contract MetadataReaderLibTest is SoladyTest {
     }
 
     function testReadString(uint256 r) public {
-        string memory s = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory s = _generateString();
         _stringToReturn = s;
         _randomness = r;
         bytes memory data = abi.encodeWithSignature("returnsString()");
@@ -89,7 +89,7 @@ contract MetadataReaderLibTest is SoladyTest {
     }
 
     function testReadEmptyString(uint256 r) public {
-        string memory s = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        string memory s = _generateString();
         _stringToReturn = s;
         _randomness = r;
         bytes memory data = abi.encodeWithSignature("returnsEmptyString()");
@@ -105,25 +105,21 @@ contract MetadataReaderLibTest is SoladyTest {
         assertEq(MetadataReaderLib.readDecimals(address(this)), uint8(r));
     }
 
-    function _generateString(string memory byteChoices) internal returns (string memory result) {
+    function _generateString() internal returns (string memory result) {
         uint256 randomness = _random();
         uint256 resultLength = _randomStringLength();
         /// @solidity memory-safe-assembly
         assembly {
-            if mload(byteChoices) {
-                result := mload(0x40)
-                mstore(0x00, randomness)
-                mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
-                mstore(result, resultLength)
+            result := mload(0x40)
+            mstore(0x00, randomness)
+            mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
+            mstore(result, resultLength)
 
-                // forgefmt: disable-next-item
-                for { let i := 0 } lt(i, resultLength) { i := add(i, 1) } {
-                    mstore(0x20, gas())
-                    mstore8(
-                        add(add(result, 0x20), i), 
-                        mload(add(add(byteChoices, 1), mod(keccak256(0x00, 0x40), mload(byteChoices))))
-                    )
-                }
+            // forgefmt: disable-next-item
+            for { let i := 0 } lt(i, resultLength) { i := add(i, 1) } {
+                mstore(0x20, gas())
+                let c := byte(0, keccak256(0x00, 0x40))
+                mstore8(add(add(result, 0x20), i), or(c, iszero(c)))
             }
         }
     }
