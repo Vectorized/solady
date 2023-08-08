@@ -62,6 +62,7 @@ utils
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
 ├─ DynamicBufferLib — "Library for buffers with automatic capacity resizing"
+├─ MetadataReaderLib — "Library for reading contract metadata robustly"
 ├─ FixedPointMathLib — "Arithmetic library with operations for fixed-point numbers"
 ├─ SafeCastLib — "Library for integer casting that reverts on overflow"
 └─ DateTimeLib — "Library for date time operations"
