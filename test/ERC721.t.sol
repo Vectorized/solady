@@ -747,9 +747,7 @@ contract ERC721Test is SoladyTest {
         assertEq(recipient.data(), "");
     }
 
-    function testSafeTransferFromToERC721RecipientWithData(uint256 id, bytes calldata data)
-        public
-    {
+    function testSafeTransferFromToERC721RecipientWithData(uint256 id, bytes memory data) public {
         (address from,) = _randomSigner();
 
         ERC721Recipient recipient = new ERC721Recipient();
@@ -761,15 +759,15 @@ contract ERC721Test is SoladyTest {
 
         _safeTransferFrom(from, address(recipient), id, data);
 
+        assertEq(recipient.data(), data);
+        assertEq(recipient.id(), id);
+        assertEq(recipient.operator(), address(this));
+        assertEq(recipient.from(), from);
+
         assertEq(_getApproved(id), address(0));
         assertEq(_ownerOf(id), address(recipient));
         assertEq(token.balanceOf(address(recipient)), 1);
         assertEq(token.balanceOf(from), 0);
-
-        assertEq(recipient.operator(), address(this));
-        assertEq(recipient.from(), from);
-        assertEq(recipient.id(), id);
-        assertEq(recipient.data(), data);
     }
 
     function testSafeMintToEOA(uint256 id) public {
@@ -795,7 +793,7 @@ contract ERC721Test is SoladyTest {
         assertEq(to.data(), "");
     }
 
-    function testSafeMintToERC721RecipientWithData(uint256 id, bytes calldata data) public {
+    function testSafeMintToERC721RecipientWithData(uint256 id, bytes memory data) public {
         ERC721Recipient to = new ERC721Recipient();
 
         token.safeMint(address(to), id, data);
@@ -886,10 +884,9 @@ contract ERC721Test is SoladyTest {
         _safeTransferFrom(address(this), address(to), id);
     }
 
-    function testSafeTransferFromToNonERC721RecipientWithDataReverts(
-        uint256 id,
-        bytes calldata data
-    ) public {
+    function testSafeTransferFromToNonERC721RecipientWithDataReverts(uint256 id, bytes memory data)
+        public
+    {
         token.mint(address(this), id);
         address to = address(new NonERC721Recipient());
         vm.expectRevert(ERC721.TransferToNonERC721ReceiverImplementer.selector);
@@ -905,7 +902,7 @@ contract ERC721Test is SoladyTest {
 
     function testSafeTransferFromToRevertingERC721RecipientWithDataReverts(
         uint256 id,
-        bytes calldata data
+        bytes memory data
     ) public {
         token.mint(address(this), id);
         address to = address(new RevertingERC721Recipient());
@@ -922,7 +919,7 @@ contract ERC721Test is SoladyTest {
 
     function testSafeTransferFromToERC721RecipientWithWrongReturnDataWithDataReverts(
         uint256 id,
-        bytes calldata data
+        bytes memory data
     ) public {
         token.mint(address(this), id);
         address to = address(new WrongReturnDataERC721Recipient());
@@ -936,7 +933,7 @@ contract ERC721Test is SoladyTest {
         token.safeMint(to, id);
     }
 
-    function testSafeMintToNonERC721RecipientWithDataReverts(uint256 id, bytes calldata data)
+    function testSafeMintToNonERC721RecipientWithDataReverts(uint256 id, bytes memory data)
         public
     {
         address to = address(new NonERC721Recipient());
@@ -950,7 +947,7 @@ contract ERC721Test is SoladyTest {
         token.safeMint(to, id);
     }
 
-    function testSafeMintToRevertingERC721RecipientWithDataReverts(uint256 id, bytes calldata data)
+    function testSafeMintToRevertingERC721RecipientWithDataReverts(uint256 id, bytes memory data)
         public
     {
         address to = address(new RevertingERC721Recipient());
@@ -964,10 +961,9 @@ contract ERC721Test is SoladyTest {
         token.safeMint(to, id);
     }
 
-    function testSafeMintToERC721RecipientWithWrongReturnDataWithData(
-        uint256 id,
-        bytes calldata data
-    ) public {
+    function testSafeMintToERC721RecipientWithWrongReturnDataWithData(uint256 id, bytes memory data)
+        public
+    {
         address to = address(new WrongReturnDataERC721Recipient());
         vm.expectRevert(ERC721.TransferToNonERC721ReceiverImplementer.selector);
         token.safeMint(to, id, data);
