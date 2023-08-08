@@ -16,7 +16,7 @@ library MetadataReaderLib {
     //     - Reverts.
     //     - No returndata (e.g. function returns nothing, EOA).
     //     - Returns empty string.
-    // 2. Try `abi.decode` the returndata into a string.
+    // 2. Attempts to `abi.decode` the returndata into a string.
     // 3. With any remaining gas, scans the returndata from start to end for the
     //    null byte '\0', to interpret the returndata as a null-terminated string.
 
@@ -79,35 +79,34 @@ library MetadataReaderLib {
             }
             for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
                 let m := mload(0x40) // Grab the free memory pointer.
-                let j := add(0x20, m) // Pointer to the string's contents in memory.
-                // Try `abi.decode` if the returndatasize is greater or equal to 64.
+                let s := add(0x20, m) // Start of the string's bytes in memory.
+                // Attempt to `abi.decode` if the returndatasize is greater or equal to 64.
                 if iszero(lt(returndatasize(), 0x40)) {
                     let o := mload(0x00) // Load the string's offset in the returndata.
                     // If the string's offset is within bounds.
                     if iszero(gt(o, sub(returndatasize(), 0x20))) {
                         returndatacopy(m, o, 0x20) // Copy the string's length.
-                        let n := mload(m) // Load the string's length.
                         // If the full string's end is within bounds.
                         // Note: If the full string doesn't fit, the `abi.decode` must be aborted
                         // for compliance purposes, regardless if the truncated string can fit.
-                        if iszero(gt(n, sub(returndatasize(), add(o, 0x20)))) {
-                            n := min(n, limit) // Truncate if needed.
+                        if iszero(gt(mload(m), sub(returndatasize(), add(o, 0x20)))) {
+                            let n := min(mload(m), limit) // Truncate if needed.
                             mstore(m, n) // Overwrite the length.
-                            returndatacopy(j, add(o, 0x20), n) // Copy the string's contents.
-                            mstore(add(j, n), 0) // Zeroize the slot after the string.
-                            mstore(0x40, add(0x20, add(j, n))) // Allocate memory for the string.
+                            returndatacopy(s, add(o, 0x20), n) // Copy the string's bytes.
+                            mstore(add(s, n), 0) // Zeroize the slot after the string.
+                            mstore(0x40, add(0x20, add(s, n))) // Allocate memory for the string.
                             result := m
                             break
                         }
                     }
                 }
                 // Try interpreting as a null-terminated string.
-                let i := j
-                let n := min(returndatasize(), limit)
-                returndatacopy(j, 0, n) // Copy the string's contents.
-                mstore8(add(j, n), 0) // Place a '\0' at the end.
+                let n := min(returndatasize(), limit) // Truncate if needed.
+                returndatacopy(s, 0, n) // Copy the string's bytes.
+                mstore8(add(s, n), 0) // Place a '\0' at the end.
+                let i := s // Pointer to the next byte to scan.
                 for {} byte(0, mload(i)) { i := add(i, 1) } {} // Scan for '\0'.
-                mstore(m, sub(i, j)) // Store the string's length.
+                mstore(m, sub(i, s)) // Store the string's length.
                 mstore(i, 0) // Zeroize the slot after the string.
                 mstore(0x40, add(0x20, i)) // Allocate memory for the string.
                 result := m
