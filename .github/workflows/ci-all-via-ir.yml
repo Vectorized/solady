@@ -1,5 +1,7 @@
 name: ci-all-via-ir
 
+on: []
+
 jobs:
   tests:
     name: Forge Testing all via-ir
