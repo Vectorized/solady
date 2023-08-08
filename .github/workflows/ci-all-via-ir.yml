@@ -1,0 +1,49 @@
+name: ci-all-via-ir
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Forge Testing all via-ir
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        profile: [via-ir-0,via-ir-1]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Run Tests with ${{ matrix.profile }}
+        run: >
+          ( [ "${{ matrix.profile }}" = "via-ir-0" ] &&
+            forge test --use 0.8.4 --via-ir &&
+            forge test --use 0.8.5 --via-ir &&
+            forge test --use 0.8.6 --via-ir &&
+            forge test --use 0.8.7 --via-ir &&
+            forge test --use 0.8.8 --via-ir &&
+            forge test --use 0.8.9 --via-ir &&
+            forge test --use 0.8.10 --via-ir &&
+            forge test --use 0.8.11 --via-ir &&
+            forge test --use 0.8.12 --via-ir
+          ) ||
+          ( [ "${{ matrix.profile }}" = "via-ir-1" ] &&
+            forge test --use 0.8.13 --via-ir &&
+            forge test --use 0.8.14 --via-ir &&
+            forge test --use 0.8.15 --via-ir &&
+            forge test --use 0.8.16 --via-ir &&
+            forge test --use 0.8.17 --via-ir &&
+            forge test --use 0.8.18 --via-ir &&
+            forge test --use 0.8.19 --via-ir &&
+            forge test --use 0.8.20 --via-ir &&
+            forge test --use 0.8.21 --via-ir
+          ) 
