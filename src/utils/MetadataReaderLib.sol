@@ -89,9 +89,10 @@ library MetadataReaderLib {
                     }
                 }
                 // Try interpreting as null-terminated string.
-                let i := 0
+                let i := m
                 mstore8(add(m, l), 0) // Place a '\0' at the end.
-                for {} byte(0, mload(add(i, m))) { i := add(i, 1) } {} // Scan for '\0'.
+                for {} byte(0, mload(i)) { i := add(i, 1) } {} // Scan for '\0'.
+                i := sub(i, m)
                 mstore(m, i) // Store the string's length.
                 let j := add(0x20, m)
                 returndatacopy(j, 0, i) // Copy the string's contents.
