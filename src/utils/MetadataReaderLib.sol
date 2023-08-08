@@ -69,30 +69,34 @@ library MetadataReaderLib {
             for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x00) {} {
                 let m := mload(0x40)
                 let l := returndatasize()
-                l := xor(l, mul(lt(0xffffff, l), xor(0xffffff, l)))
+                l := xor(l, mul(lt(0xffffff, l), xor(0xffffff, l))) // `min(0xffffff, l)`.
                 returndatacopy(m, 0, l)
+                // Try `abi.decode`.
                 if iszero(lt(l, 0x40)) {
                     let o := mload(m)
+                    // If the string's offset is within the returndata's bounds.
                     if iszero(gt(o, sub(l, 0x20))) {
                         let n := mload(add(m, o))
+                        // If the string's end is within the returndata's bounds.
                         if iszero(gt(n, sub(l, add(o, 0x20)))) {
                             let z := add(0x20, n)
-                            returndatacopy(m, o, z)
-                            mstore(add(m, z), 0)
-                            mstore(0x40, add(0x20, add(m, z)))
+                            returndatacopy(m, o, z) // Copy the string's length and contents.
+                            mstore(add(m, z), 0) // Zeroize the slot after the string.
+                            mstore(0x40, add(0x20, add(m, z))) // Allocate memory for the string.
                             result := m
                             break
                         }
                     }
                 }
+                // Try interpreting as null-terminated string.
                 let i := 0
-                mstore8(add(m, l), 0)
-                for {} byte(0, mload(add(i, m))) { i := add(i, 1) } {}
-                mstore(m, i)
+                mstore8(add(m, l), 0) // Place a '\0' at the end.
+                for {} byte(0, mload(add(i, m))) { i := add(i, 1) } {} // Scan for '\0'.
+                mstore(m, i) // Store the string's length.
                 let j := add(0x20, m)
-                returndatacopy(j, 0, i)
-                mstore(add(j, i), 0)
-                mstore(0x40, add(0x20, add(j, i)))
+                returndatacopy(j, 0, i) // Copy the string's contents.
+                mstore(add(j, i), 0) // Zeroize the slot after the string.
+                mstore(0x40, add(0x20, add(j, i))) // Allocate memory for the string.
                 result := m
                 break
             }
