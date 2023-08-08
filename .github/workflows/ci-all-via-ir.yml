@@ -1,6 +1,11 @@
 name: ci-all-via-ir
 
-on: []
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*'
 
 jobs:
   tests:
