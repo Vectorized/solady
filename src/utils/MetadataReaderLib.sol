@@ -16,7 +16,7 @@ library MetadataReaderLib {
     //     - Reverts.
     //     - No returndata (e.g. function returns nothing, EOA).
     //     - Returns empty string.
-    // 2. Try to `abi.decode` the returndata into a string.
+    // 2. Try `abi.decode` the returndata into a string.
     // 3. With any remaining gas, scans the returndata from start to end for the
     //    null byte '\0', to interpret the returndata as a null-terminated string.
 
@@ -88,6 +88,8 @@ library MetadataReaderLib {
                         returndatacopy(m, o, 0x20) // Copy the string's length.
                         let n := mload(m) // Load the string's length.
                         // If the full string's end is within bounds.
+                        // Note: If the full string doesn't fit, the `abi.decode` must be aborted
+                        // for compliance purposes, regardless if the truncated string can fit.
                         if iszero(gt(n, sub(returndatasize(), add(o, 0x20)))) {
                             n := min(n, limit) // Truncate if needed.
                             mstore(m, n) // Overwrite the length.
