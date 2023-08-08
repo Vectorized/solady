@@ -189,6 +189,18 @@ contract ERC4626Test is SoladyTest {
         _testMultipleMintDepositRedeemWithdraw(1);
     }
 
+    struct _TestTemps {
+        address alice;
+        address bob;
+        uint256 mutationUnderlyingAmount;
+        uint256 aliceUnderlyingAmount;
+        uint256 aliceShareAmount;
+        uint256 bobShareAmount;
+        uint256 bobUnderlyingAmount;
+        uint256 preMutationShareBal;
+        uint256 preMutationBal;
+    }
+
     function _testMultipleMintDepositRedeemWithdraw(uint256 slippage) public {
         // Scenario:
         // A = Alice, B = Bob
@@ -243,69 +255,70 @@ contract ERC4626Test is SoladyTest {
         // |            0 |       0 |        0 |       0 |        0 |
         // |______________|_________|__________|_________|__________|
 
-        address alice = address(0x9988776655443322110000112233445566778899);
-        address bob = address(0x1122334455667788990000998877665544332211);
+        _TestTemps memory t;
+        t.alice = address(0x9988776655443322110000112233445566778899);
+        t.bob = address(0x1122334455667788990000998877665544332211);
 
-        uint256 mutationUnderlyingAmount = 3000;
+        t.mutationUnderlyingAmount = 3000;
 
-        underlying.mint(alice, 4000);
+        underlying.mint(t.alice, 4000);
 
-        vm.prank(alice);
+        vm.prank(t.alice);
         underlying.approve(address(vault), 4000);
 
-        assertEq(underlying.allowance(alice, address(vault)), 4000);
+        assertEq(underlying.allowance(t.alice, address(vault)), 4000);
 
-        underlying.mint(bob, 7001);
+        underlying.mint(t.bob, 7001);
 
-        vm.prank(bob);
+        vm.prank(t.bob);
         underlying.approve(address(vault), 7001);
 
-        assertEq(underlying.allowance(bob, address(vault)), 7001);
+        assertEq(underlying.allowance(t.bob, address(vault)), 7001);
 
         // 1. Alice mints 2000 shares (costs 2000 tokens)
-        vm.prank(alice);
+        vm.prank(t.alice);
         vm.expectEmit(true, true, true, true);
-        emit Deposit(alice, alice, 2000, 2000);
-        uint256 aliceUnderlyingAmount = vault.mint(2000, alice);
+        emit Deposit(t.alice, t.alice, 2000, 2000);
+        t.aliceUnderlyingAmount = vault.mint(2000, t.alice);
 
-        uint256 aliceShareAmount = vault.previewDeposit(aliceUnderlyingAmount);
+        t.aliceShareAmount = vault.previewDeposit(t.aliceUnderlyingAmount);
         assertEq(vault.afterDepositHookCalledCounter(), 1);
 
         // Expect to have received the requested mint amount.
-        assertEq(aliceShareAmount, 2000);
-        assertEq(vault.balanceOf(alice), aliceShareAmount);
-        assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
-        assertEq(vault.convertToShares(aliceUnderlyingAmount), vault.balanceOf(alice));
+        assertEq(t.aliceShareAmount, 2000);
+        assertEq(vault.balanceOf(t.alice), t.aliceShareAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), t.aliceUnderlyingAmount);
+        assertEq(vault.convertToShares(t.aliceUnderlyingAmount), vault.balanceOf(t.alice));
 
         // Expect a 1:1 ratio before mutation.
-        assertEq(aliceUnderlyingAmount, 2000);
+        assertEq(t.aliceUnderlyingAmount, 2000);
 
         // Sanity check.
-        assertEq(vault.totalSupply(), aliceShareAmount);
-        assertEq(vault.totalAssets(), aliceUnderlyingAmount);
+        assertEq(vault.totalSupply(), t.aliceShareAmount);
+        assertEq(vault.totalAssets(), t.aliceUnderlyingAmount);
 
         // 2. Bob deposits 4000 tokens (mints 4000 shares)
-        vm.prank(bob);
+        vm.prank(t.bob);
         vm.expectEmit(true, true, true, true);
-        emit Deposit(bob, bob, 4000, 4000);
-        uint256 bobShareAmount = vault.deposit(4000, bob);
-        uint256 bobUnderlyingAmount = vault.previewWithdraw(bobShareAmount);
+        emit Deposit(t.bob, t.bob, 4000, 4000);
+        t.bobShareAmount = vault.deposit(4000, t.bob);
+        t.bobUnderlyingAmount = vault.previewWithdraw(t.bobShareAmount);
         assertEq(vault.afterDepositHookCalledCounter(), 2);
 
         // Expect to have received the requested underlying amount.
-        assertEq(bobUnderlyingAmount, 4000);
-        assertEq(vault.balanceOf(bob), bobShareAmount);
-        assertEq(vault.convertToAssets(vault.balanceOf(bob)), bobUnderlyingAmount);
-        assertEq(vault.convertToShares(bobUnderlyingAmount), vault.balanceOf(bob));
+        assertEq(t.bobUnderlyingAmount, 4000);
+        assertEq(vault.balanceOf(t.bob), t.bobShareAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), t.bobUnderlyingAmount);
+        assertEq(vault.convertToShares(t.bobUnderlyingAmount), vault.balanceOf(t.bob));
 
         // Expect a 1:1 ratio before mutation.
-        assertEq(bobShareAmount, bobUnderlyingAmount);
+        assertEq(t.bobShareAmount, t.bobUnderlyingAmount);
 
         // Sanity check.
-        uint256 preMutationShareBal = aliceShareAmount + bobShareAmount;
-        uint256 preMutationBal = aliceUnderlyingAmount + bobUnderlyingAmount;
-        assertEq(vault.totalSupply(), preMutationShareBal);
-        assertEq(vault.totalAssets(), preMutationBal);
+        t.preMutationShareBal = t.aliceShareAmount + t.bobShareAmount;
+        t.preMutationBal = t.aliceUnderlyingAmount + t.bobUnderlyingAmount;
+        assertEq(vault.totalSupply(), t.preMutationShareBal);
+        assertEq(vault.totalAssets(), t.preMutationBal);
         assertEq(vault.totalSupply(), 6000);
         assertEq(vault.totalAssets(), 6000);
 
@@ -315,107 +328,107 @@ contract ERC4626Test is SoladyTest {
         // Alice share is 33.33% of the Vault, Bob 66.66% of the Vault.
         // Alice's share count stays the same but the underlying amount changes from 2000 to 3000.
         // Bob's share count stays the same but the underlying amount changes from 4000 to 6000.
-        underlying.mint(address(vault), mutationUnderlyingAmount);
-        assertEq(vault.totalSupply(), preMutationShareBal);
-        assertEq(vault.totalAssets(), preMutationBal + mutationUnderlyingAmount);
-        assertEq(vault.balanceOf(alice), aliceShareAmount);
+        underlying.mint(address(vault), t.mutationUnderlyingAmount);
+        assertEq(vault.totalSupply(), t.preMutationShareBal);
+        assertEq(vault.totalAssets(), t.preMutationBal + t.mutationUnderlyingAmount);
+        assertEq(vault.balanceOf(t.alice), t.aliceShareAmount);
         assertEq(
-            vault.convertToAssets(vault.balanceOf(alice)),
-            aliceUnderlyingAmount + (mutationUnderlyingAmount / 3) * 1 - slippage
+            vault.convertToAssets(vault.balanceOf(t.alice)),
+            t.aliceUnderlyingAmount + (t.mutationUnderlyingAmount / 3) * 1 - slippage
         );
-        assertEq(vault.balanceOf(bob), bobShareAmount);
+        assertEq(vault.balanceOf(t.bob), t.bobShareAmount);
         assertEq(
-            vault.convertToAssets(vault.balanceOf(bob)),
-            bobUnderlyingAmount + (mutationUnderlyingAmount / 3) * 2 - slippage
+            vault.convertToAssets(vault.balanceOf(t.bob)),
+            t.bobUnderlyingAmount + (t.mutationUnderlyingAmount / 3) * 2 - slippage
         );
 
         // 4. Alice deposits 2000 tokens (mints 1333 shares)
-        vm.prank(alice);
-        vault.deposit(2000, alice);
+        vm.prank(t.alice);
+        vault.deposit(2000, t.alice);
 
         assertEq(vault.totalSupply(), 7333);
-        assertEq(vault.balanceOf(alice), 3333);
-        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 4999);
-        assertEq(vault.balanceOf(bob), 4000);
-        assertEq(vault.convertToAssets(vault.balanceOf(bob)), 6000);
+        assertEq(vault.balanceOf(t.alice), 3333);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 4999);
+        assertEq(vault.balanceOf(t.bob), 4000);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 6000);
 
         // 5. Bob mints 2000 shares (costs 3001 assets)
         // NOTE: Bob's assets spent got rounded up
         // NOTE: Alices's vault assets got rounded up
-        vm.prank(bob);
-        vault.mint(2000, bob);
+        vm.prank(t.bob);
+        vault.mint(2000, t.bob);
 
         assertEq(vault.totalSupply(), 9333);
-        assertEq(vault.balanceOf(alice), 3333);
-        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 5000 - slippage);
-        assertEq(vault.balanceOf(bob), 6000);
-        assertEq(vault.convertToAssets(vault.balanceOf(bob)), 9000);
+        assertEq(vault.balanceOf(t.alice), 3333);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 5000 - slippage);
+        assertEq(vault.balanceOf(t.bob), 6000);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 9000);
 
         // Sanity checks:
-        // Alice and bob should have spent all their tokens now
-        assertEq(underlying.balanceOf(alice), 0);
-        assertEq(underlying.balanceOf(bob) - slippage, 0);
-        // Assets in vault: 4k (alice) + 7k (bob) + 3k (yield) + 1 (round up)
+        // Alice and t.bob should have spent all their tokens now
+        assertEq(underlying.balanceOf(t.alice), 0);
+        assertEq(underlying.balanceOf(t.bob) - slippage, 0);
+        // Assets in vault: 4k (t.alice) + 7k (t.bob) + 3k (yield) + 1 (round up)
         assertEq(vault.totalAssets(), 14001 - slippage);
 
         // 6. Vault mutates by +3000 tokens
         // NOTE: Vault holds 17001 tokens, but sum of assetsOf() is 17000.
-        underlying.mint(address(vault), mutationUnderlyingAmount);
-        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 6071 - slippage);
-        assertEq(vault.convertToAssets(vault.balanceOf(bob)), 10929 - slippage);
+        underlying.mint(address(vault), t.mutationUnderlyingAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 6071 - slippage);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 10929 - slippage);
         assertEq(vault.totalSupply(), 9333);
         assertEq(vault.totalAssets(), 17001 - slippage);
 
         // 7. Alice redeem 1333 shares (2428 assets)
-        vm.prank(alice);
-        vault.redeem(1333, alice, alice);
+        vm.prank(t.alice);
+        vault.redeem(1333, t.alice, t.alice);
 
-        assertEq(underlying.balanceOf(alice), 2428 - slippage);
+        assertEq(underlying.balanceOf(t.alice), 2428 - slippage);
         assertEq(vault.totalSupply(), 8000);
         assertEq(vault.totalAssets(), 14573);
-        assertEq(vault.balanceOf(alice), 2000);
-        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 3643);
-        assertEq(vault.balanceOf(bob), 6000);
-        assertEq(vault.convertToAssets(vault.balanceOf(bob)), 10929);
+        assertEq(vault.balanceOf(t.alice), 2000);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 3643);
+        assertEq(vault.balanceOf(t.bob), 6000);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 10929);
 
         // 8. Bob withdraws 2929 assets (1608 shares)
-        vm.prank(bob);
-        vault.withdraw(2929, bob, bob);
+        vm.prank(t.bob);
+        vault.withdraw(2929, t.bob, t.bob);
 
-        assertEq(underlying.balanceOf(bob) - slippage, 2929);
+        assertEq(underlying.balanceOf(t.bob) - slippage, 2929);
         assertEq(vault.totalSupply(), 6392);
         assertEq(vault.totalAssets(), 11644);
-        assertEq(vault.balanceOf(alice), 2000);
-        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 3643);
-        assertEq(vault.balanceOf(bob), 4392);
-        assertEq(vault.convertToAssets(vault.balanceOf(bob)), 8000);
+        assertEq(vault.balanceOf(t.alice), 2000);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 3643);
+        assertEq(vault.balanceOf(t.bob), 4392);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 8000);
 
         // 9. Alice withdraws 3643 assets (2000 shares)
         // NOTE: Bob's assets have been rounded back up
-        vm.prank(alice);
+        vm.prank(t.alice);
         vm.expectEmit(true, true, true, true);
-        emit Withdraw(alice, alice, alice, 3643, 2000);
-        vault.withdraw(3643, alice, alice);
-        assertEq(underlying.balanceOf(alice), 6071 - slippage);
+        emit Withdraw(t.alice, t.alice, t.alice, 3643, 2000);
+        vault.withdraw(3643, t.alice, t.alice);
+        assertEq(underlying.balanceOf(t.alice), 6071 - slippage);
         assertEq(vault.totalSupply(), 4392);
         assertEq(vault.totalAssets(), 8001);
-        assertEq(vault.balanceOf(alice), 0);
-        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 0);
-        assertEq(vault.balanceOf(bob), 4392);
-        assertEq(vault.convertToAssets(vault.balanceOf(bob)), 8001 - slippage);
+        assertEq(vault.balanceOf(t.alice), 0);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 0);
+        assertEq(vault.balanceOf(t.bob), 4392);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 8001 - slippage);
 
         // 10. Bob redeem 4392 shares (8001 tokens)
-        vm.prank(bob);
+        vm.prank(t.bob);
         vm.expectEmit(true, true, true, true);
-        emit Withdraw(bob, bob, bob, 8001 - slippage, 4392);
-        vault.redeem(4392, bob, bob);
-        assertEq(underlying.balanceOf(bob), 10930);
+        emit Withdraw(t.bob, t.bob, t.bob, 8001 - slippage, 4392);
+        vault.redeem(4392, t.bob, t.bob);
+        assertEq(underlying.balanceOf(t.bob), 10930);
         assertEq(vault.totalSupply(), 0);
         assertEq(vault.totalAssets() - slippage, 0);
-        assertEq(vault.balanceOf(alice), 0);
-        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 0);
-        assertEq(vault.balanceOf(bob), 0);
-        assertEq(vault.convertToAssets(vault.balanceOf(bob)), 0);
+        assertEq(vault.balanceOf(t.alice), 0);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 0);
+        assertEq(vault.balanceOf(t.bob), 0);
+        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 0);
 
         // Sanity check
         assertEq(underlying.balanceOf(address(vault)) - slippage, 0);
