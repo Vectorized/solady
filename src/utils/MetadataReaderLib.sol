@@ -79,7 +79,7 @@ library MetadataReaderLib {
             }
             for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
                 let m := mload(0x40) // Grab the free memory pointer.
-                let p := add(0x20, m) // Pointer to the string's contents in memory.
+                let j := add(0x20, m) // Pointer to the string's contents in memory.
                 // Try `abi.decode` if the returndatasize is greater or equal to 64.
                 if iszero(lt(returndatasize(), 0x40)) {
                     let o := mload(0x00) // Load the string's offset in the returndata.
@@ -91,21 +91,21 @@ library MetadataReaderLib {
                         if iszero(gt(n, sub(returndatasize(), add(o, 0x20)))) {
                             n := min(n, limit) // Truncate if needed.
                             mstore(m, n) // Overwrite the length.
-                            returndatacopy(p, add(o, 0x20), n) // Copy the string's contents.
-                            mstore(add(p, n), 0) // Zeroize the slot after the string.
-                            mstore(0x40, add(0x20, add(p, n))) // Allocate memory for the string.
+                            returndatacopy(j, add(o, 0x20), n) // Copy the string's contents.
+                            mstore(add(j, n), 0) // Zeroize the slot after the string.
+                            mstore(0x40, add(0x20, add(j, n))) // Allocate memory for the string.
                             result := m
                             break
                         }
                     }
                 }
                 // Try interpreting as a null-terminated string.
-                let i := p
+                let i := j
                 let n := min(returndatasize(), limit)
-                returndatacopy(p, 0, n) // Copy the string's contents.
-                mstore8(add(p, n), 0) // Place a '\0' at the end.
+                returndatacopy(j, 0, n) // Copy the string's contents.
+                mstore8(add(j, n), 0) // Place a '\0' at the end.
                 for {} byte(0, mload(i)) { i := add(i, 1) } {} // Scan for '\0'.
-                mstore(m, sub(i, p)) // Store the string's length.
+                mstore(m, sub(i, j)) // Store the string's length.
                 mstore(i, 0) // Zeroize the slot after the string.
                 mstore(0x40, add(0x20, i)) // Allocate memory for the string.
                 result := m
