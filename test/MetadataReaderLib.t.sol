@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {MetadataReaderLib} from "../src/utils/MetadataReaderLib.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract MetadataReaderLibTest is SoladyTest {
     string internal _stringToReturn;
@@ -11,6 +12,11 @@ contract MetadataReaderLibTest is SoladyTest {
 
     function returnsString() public view returns (string memory) {
         uint256 r = _randomness;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, add(0x100, mload(0x40)))
+            mstore(0x00, r)
+        }
         string memory s = _stringToReturn;
         /// @solidity memory-safe-assembly
         assembly {
@@ -31,6 +37,11 @@ contract MetadataReaderLibTest is SoladyTest {
 
     function returnsEmptyString() public view returns (string memory) {
         uint256 r = _randomness;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, add(0x100, mload(0x40)))
+            mstore(0x00, r)
+        }
         string memory s = _stringToReturn;
         /// @solidity memory-safe-assembly
         assembly {
@@ -52,9 +63,21 @@ contract MetadataReaderLibTest is SoladyTest {
                 mstore(sub(s, 0x20), 0x20)
                 return(sub(s, 0x20), add(0x40, n))
             }
-            codecopy(0x00, codesize(), 0x200)
-            mstore(0x00, and(63, byte(3, r)))
-            return(0x00, and(63, byte(2, r)))
+            let m := mload(0x40)
+            codecopy(m, codesize(), 0x200)
+            mstore(m, and(63, byte(3, r)))
+            return(m, and(63, byte(2, r)))
+        }
+    }
+
+    function returnsChoppedString(uint256 chop) public pure returns (string memory) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(add(m, 0x00), 0x20)
+            mstore(add(m, 0x20), 0x20)
+            mstore(add(m, 0x40), "112233445566778899aa112233445566")
+            return(add(m, 0x00), add(0x40, chop))
         }
     }
 
@@ -100,21 +123,59 @@ contract MetadataReaderLibTest is SoladyTest {
         bytes memory data;
         string memory result;
         data = abi.encodeWithSignature("returnsBytes32StringA()");
-        result = MetadataReaderLib.readString(address(this), data);
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
         _checkMemory(result);
         assertEq(result, "Milady");
         data = abi.encodeWithSignature("returnsBytes32StringB()");
-        result = MetadataReaderLib.readString(address(this), data);
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
         _checkMemory(result);
         assertEq(result, "This string has thirty two bytes");
         data = abi.encodeWithSignature("returnsNothing()");
-        result = MetadataReaderLib.readString(address(this), data);
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
         _checkMemory(result);
         assertEq(result, "");
         data = abi.encodeWithSignature("reverts()");
-        result = MetadataReaderLib.readString(address(this), data);
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
         _checkMemory(result);
         assertEq(result, "");
+    }
+
+    function testReadBytes32StringTruncated() public brutalizeMemory {
+        bytes memory data;
+        string memory result;
+        unchecked {
+            data = abi.encodeWithSignature("returnsBytes32StringB()");
+            for (uint256 limit; limit < 39; ++limit) {
+                result = MetadataReaderLib.readString(address(this), data, limit);
+                _checkMemory(result);
+                assertEq(result, LibString.slice("This string has thirty two bytes", 0, limit));
+            }
+        }
+    }
+
+    function testReadStringChopped() public {
+        bytes memory data;
+        string memory result;
+        data = abi.encodeWithSignature("returnsChoppedString(uint256)", uint256(32));
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
+        _checkMemory(result);
+        assertEq(result, "112233445566778899aa112233445566");
+
+        for (uint256 limit; limit < 39; limit += 5) {
+            for (uint256 chop; chop < 39; chop += 3) {
+                data = abi.encodeWithSignature("returnsChoppedString(uint256)", uint256(chop));
+                result = MetadataReaderLib.readString(address(this), data, limit);
+                _checkMemory(result);
+                // As long as the returndatasize is insufficient, the `abi.decode` will fail,
+                // and the resultant string will be empty.
+                // Even if the `limit` is smaller than `chop`.
+                string memory expected;
+                if (chop >= 32) {
+                    expected = LibString.slice("112233445566778899aa112233445566", 0, limit);
+                }
+                assertEq(result, expected);
+            }
+        }
     }
 
     function testReadString(uint256 r) public brutalizeMemory {
@@ -124,27 +185,42 @@ contract MetadataReaderLibTest is SoladyTest {
         _stringToReturn = s;
         _randomness = r;
         data = abi.encodeWithSignature("returnsString()");
-        result = MetadataReaderLib.readString(address(this), data);
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
         _checkMemory(result);
         assertEq(result, s);
-        result = MetadataReaderLib.readName(address(this));
+        result = MetadataReaderLib.readName(address(this), type(uint256).max);
         _checkMemory(result);
         assertEq(result, s);
-        result = MetadataReaderLib.readSymbol(address(this));
+        result = MetadataReaderLib.readSymbol(address(this), type(uint256).max);
         _checkMemory(result);
         assertEq(result, s);
         data = abi.encodeWithSignature("returnsEmptyString()");
-        result = MetadataReaderLib.readString(address(this), data);
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
         _checkMemory(result);
         assertEq(result, "");
         data = abi.encodeWithSignature("reverts()");
-        result = MetadataReaderLib.readString(address(this), data);
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
         _checkMemory(result);
         assertEq(result, "");
         data = abi.encodeWithSignature("returnsNothing()");
-        result = MetadataReaderLib.readString(address(this), data);
+        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
         _checkMemory(result);
         assertEq(result, "");
+    }
+
+    function testReadStringTruncated(uint256 r) public brutalizeMemory {
+        bytes memory data;
+        string memory result;
+        string memory s = _generateString();
+        _stringToReturn = s;
+        _randomness = r;
+        unchecked {
+            uint256 limit = _bound(_random(), 0, bytes(s).length * 2);
+            data = abi.encodeWithSignature("returnsString()");
+            result = MetadataReaderLib.readString(address(this), data, limit);
+            _checkMemory(result);
+            assertEq(result, LibString.slice(s, 0, limit));
+        }
     }
 
     function testReadUint(uint256 r) public {
