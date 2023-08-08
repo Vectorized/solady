@@ -174,6 +174,24 @@ contract MetadataReaderLibTest is SoladyTest {
         }
     }
 
+    function testBoundsCheckDifferential(uint256) public {
+        uint256 rds = _bound(_random(), 0, 128);
+        uint256 l = _random() % 2 == 0 ? type(uint248).max : 128;
+        uint256 o = _bound(_random(), 0, l);
+        uint256 n = _bound(_random(), 0, l);
+        bool result;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(rds, 0x40)) {
+                if iszero(gt(o, sub(rds, 0x20))) {
+                    if iszero(gt(n, sub(rds, add(o, 0x20)))) { result := 1 }
+                }
+            }
+        }
+        bool expected = rds >= 0x40 && !(o + 0x20 > rds) && !(n + o + 0x20 > rds);
+        assertEq(result, expected);
+    }
+
     function _hash(uint256 i, uint256 j) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
