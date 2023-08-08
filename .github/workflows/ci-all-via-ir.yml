@@ -1,11 +1,6 @@
 name: ci-all-via-ir
 
-on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '*'
+on: workflow_dispatch
 
 jobs:
   tests:
