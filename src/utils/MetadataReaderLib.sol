@@ -16,8 +16,7 @@ library MetadataReaderLib {
     //     - Reverts.
     //     - No returndata (e.g. function returns nothing, EOA).
     //     - Returns empty string.
-    // 2. Try to `abi.decode` the returndata into a string
-    //    with a maximum supported returndatasize of 16777215 bytes.
+    // 2. Try to `abi.decode` the returndata into a string.
     // 3. With any remaining gas, scans the returndata from start to end for the
     //    null byte '\0', to interpret the returndata as a null-terminated string.
 
@@ -66,19 +65,17 @@ library MetadataReaderLib {
     function _string(address target, bytes32 ptr) private view returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x00) {} {
+            for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
                 let m := mload(0x40)
-                let l := returndatasize()
-                l := xor(l, mul(lt(0xffffff, l), xor(0xffffff, l))) // `min(0xffffff, l)`.
-                returndatacopy(m, 0, l)
                 // Try `abi.decode`.
-                if iszero(lt(l, 0x40)) {
-                    let o := mload(m)
-                    // If the string's offset is within the returndata's bounds.
-                    if iszero(gt(o, sub(l, 0x20))) {
-                        let n := mload(add(m, o))
-                        // If the string's end is within the returndata's bounds.
-                        if iszero(gt(n, sub(l, add(o, 0x20)))) {
+                if iszero(lt(returndatasize(), 0x40)) {
+                    let o := mload(0x00)
+                    // If the string's offset is within bounds.
+                    if iszero(gt(o, sub(returndatasize(), 0x20))) {
+                        returndatacopy(0x00, o, 0x20)
+                        let n := mload(0x00)
+                        // If the string's end is within bounds.
+                        if iszero(gt(n, sub(returndatasize(), add(o, 0x20)))) {
                             let z := add(0x20, n)
                             returndatacopy(m, o, z) // Copy the string's length and contents.
                             mstore(add(m, z), 0) // Zeroize the slot after the string.
@@ -89,15 +86,14 @@ library MetadataReaderLib {
                     }
                 }
                 // Try interpreting as null-terminated string.
-                let i := m
-                mstore8(add(m, l), 0) // Place a '\0' at the end.
-                for {} byte(0, mload(i)) { i := add(i, 1) } {} // Scan for '\0'.
-                i := sub(i, m)
-                mstore(m, i) // Store the string's length.
                 let j := add(0x20, m)
-                returndatacopy(j, 0, i) // Copy the string's contents.
-                mstore(add(j, i), 0) // Zeroize the slot after the string.
-                mstore(0x40, add(0x20, add(j, i))) // Allocate memory for the string.
+                let i := j
+                returndatacopy(j, 0, returndatasize())
+                mstore8(add(j, returndatasize()), 0) // Place a '\0' at the end.
+                for {} byte(0, mload(i)) { i := add(i, 1) } {} // Scan for '\0'.
+                mstore(m, sub(i, j)) // Store the string's length.
+                mstore(i, 0) // Zeroize the slot after the string.
+                mstore(0x40, add(0x20, i)) // Allocate memory for the string.
                 result := m
                 break
             }
