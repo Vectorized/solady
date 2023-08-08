@@ -66,31 +66,31 @@ library MetadataReaderLib {
         /// @solidity memory-safe-assembly
         assembly {
             for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
-                let m := mload(0x40)
-                let j := add(0x20, m)
-                // Try `abi.decode`.
+                let m := mload(0x40) // Grab the free memory pointer.
+                let p := add(0x20, m) // Pointer to the string's contents in memory.
+                // Try `abi.decode` if the returndatasize is greater or equal to 64.
                 if iszero(lt(returndatasize(), 0x40)) {
-                    let o := mload(0x00)
+                    let o := mload(0x00) // Load the string's offset in the returndata.
                     // If the string's offset is within bounds.
                     if iszero(gt(o, sub(returndatasize(), 0x20))) {
-                        returndatacopy(m, o, 0x20)
-                        let n := mload(m)
+                        returndatacopy(m, o, 0x20) // Copy the string's length.
+                        let n := mload(m) // Load the string's length.
                         // If the string's end is within bounds.
                         if iszero(gt(n, sub(returndatasize(), add(o, 0x20)))) {
-                            returndatacopy(j, add(o, 0x20), n) // Copy the string's contents.
-                            mstore(add(j, n), 0) // Zeroize the slot after the string.
-                            mstore(0x40, add(0x20, add(j, n))) // Allocate memory for the string.
+                            returndatacopy(p, add(o, 0x20), n) // Copy the string's contents.
+                            mstore(add(p, n), 0) // Zeroize the slot after the string.
+                            mstore(0x40, add(0x20, add(p, n))) // Allocate memory for the string.
                             result := m
                             break
                         }
                     }
                 }
                 // Try interpreting as null-terminated string.
-                let i := j
-                returndatacopy(j, 0, returndatasize())
-                mstore8(add(j, returndatasize()), 0) // Place a '\0' at the end.
+                let i := p
+                returndatacopy(p, 0, returndatasize()) // Copy the string's contents.
+                mstore8(add(p, returndatasize()), 0) // Place a '\0' at the end.
                 for {} byte(0, mload(i)) { i := add(i, 1) } {} // Scan for '\0'.
-                mstore(m, sub(i, j)) // Store the string's length.
+                mstore(m, sub(i, p)) // Store the string's length.
                 mstore(i, 0) // Zeroize the slot after the string.
                 mstore(0x40, add(0x20, i)) // Allocate memory for the string.
                 result := m
@@ -114,12 +114,14 @@ library MetadataReaderLib {
         }
     }
 
-    /// @dev Casts the `sel` into a pointer.
-    function _ptr(uint256 sel) private pure returns (bytes32 result) {
+    /// @dev Casts the function selector `s` into a pointer.
+    function _ptr(uint256 s) private pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x04, sel)
-            mstore(result, 4)
+            // Layout the calldata temporarily in the scratch space.
+            mstore(0x04, s) // Store the function selector.
+            mstore(result, 4) // Store the length.
+                // We'll leave `result` as zero, pointing to the start of the scratch space.
         }
     }
 
