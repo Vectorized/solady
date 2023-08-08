@@ -67,25 +67,25 @@ library MetadataReaderLib {
         assembly {
             for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
                 let m := mload(0x40)
+                let j := add(0x20, m)
                 // Try `abi.decode`.
                 if iszero(lt(returndatasize(), 0x40)) {
                     let o := mload(0x00)
                     // If the string's offset is within bounds.
                     if iszero(gt(o, sub(returndatasize(), 0x20))) {
-                        returndatacopy(0x00, o, 0x20)
+                        returndatacopy(m, o, 0x20)
+                        let n := mload(m)
                         // If the string's end is within bounds.
-                        if iszero(gt(mload(0x00), sub(returndatasize(), add(o, 0x20)))) {
-                            let z := add(0x20, mload(0x00))
-                            returndatacopy(m, o, z) // Copy the string's length and contents.
-                            mstore(add(m, z), 0) // Zeroize the slot after the string.
-                            mstore(0x40, add(0x20, add(m, z))) // Allocate memory for the string.
+                        if iszero(gt(n, sub(returndatasize(), add(o, 0x20)))) {
+                            returndatacopy(j, add(o, 0x20), n) // Copy the string's contents.
+                            mstore(add(j, n), 0) // Zeroize the slot after the string.
+                            mstore(0x40, add(0x20, add(j, n))) // Allocate memory for the string.
                             result := m
                             break
                         }
                     }
                 }
                 // Try interpreting as null-terminated string.
-                let j := add(0x20, m)
                 let i := j
                 returndatacopy(j, 0, returndatasize())
                 mstore8(add(j, returndatasize()), 0) // Place a '\0' at the end.
