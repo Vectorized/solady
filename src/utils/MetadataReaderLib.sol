@@ -16,7 +16,7 @@ library MetadataReaderLib {
     //     - Reverts.
     //     - No returndata (e.g. function returns nothing, EOA).
     //     - Returns empty string.
-    // 2. Try `abi.decode` the returndata into a string.
+    // 2. Attempts to `abi.decode` the returndata into a string.
     // 3. With any remaining gas, scans the returndata from start to end for the
     //    null byte '\0', to interpret the returndata as a null-terminated string.
 
@@ -80,7 +80,7 @@ library MetadataReaderLib {
             for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
                 let m := mload(0x40) // Grab the free memory pointer.
                 let j := add(0x20, m) // Pointer to the string's contents in memory.
-                // Try `abi.decode` if the returndatasize is greater or equal to 64.
+                // Attempt `abi.decode` if the returndatasize is greater or equal to 64.
                 if iszero(lt(returndatasize(), 0x40)) {
                     let o := mload(0x00) // Load the string's offset in the returndata.
                     // If the string's offset is within bounds.
@@ -103,7 +103,7 @@ library MetadataReaderLib {
                 }
                 // Try interpreting as a null-terminated string.
                 let i := j
-                let n := min(returndatasize(), limit)
+                let n := min(returndatasize(), limit) // Truncate if needed.
                 returndatacopy(j, 0, n) // Copy the string's contents.
                 mstore8(add(j, n), 0) // Place a '\0' at the end.
                 for {} byte(0, mload(i)) { i := add(i, 1) } {} // Scan for '\0'.
