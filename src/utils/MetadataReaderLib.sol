@@ -85,7 +85,7 @@ library MetadataReaderLib {
                         }
                     }
                 }
-                // Try interpreting as null-terminated string.
+                // Try interpreting as a null-terminated string.
                 let i := p
                 returndatacopy(p, 0, returndatasize()) // Copy the string's contents.
                 mstore8(add(p, returndatasize()), 0) // Place a '\0' at the end.
@@ -118,10 +118,9 @@ library MetadataReaderLib {
     function _ptr(uint256 s) private pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Layout the calldata temporarily in the scratch space.
+            // Layout the calldata in the scratch space for temporary usage.
             mstore(0x04, s) // Store the function selector.
             mstore(result, 4) // Store the length.
-                // We'll leave `result` as zero, pointing to the start of the scratch space.
         }
     }
 
