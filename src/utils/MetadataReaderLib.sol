@@ -80,7 +80,7 @@ library MetadataReaderLib {
             for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
                 let m := mload(0x40) // Grab the free memory pointer.
                 let s := add(0x20, m) // Start of the string's bytes in memory.
-                // Attempt `abi.decode` if the returndatasize is greater or equal to 64.
+                // Attempt to `abi.decode` if the returndatasize is greater or equal to 64.
                 if iszero(lt(returndatasize(), 0x40)) {
                     let o := mload(0x00) // Load the string's offset in the returndata.
                     // If the string's offset is within bounds.
