@@ -15,6 +15,9 @@ library FixedPointMathLib {
     /// @dev The operation failed, as the output exceeds the maximum value of uint256.
     error FactorialOverflow();
 
+    /// @dev The operation failed, due to an overflow.
+    error RPowOverflow();
+
     /// @dev The operation failed, due to an multiplication overflow.
     error MulWadFailed();
 
