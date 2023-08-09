@@ -55,16 +55,9 @@ library SignatureCheckerLib {
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
                 mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
-                {
-                    let j := add(m, 0x44)
-                    mstore(j, signatureLength) // The signature length.
-                    // Copy the `signature` over.
-                    for { let i := 0 } 1 {} {
-                        i := add(i, 0x20)
-                        mstore(add(j, i), mload(add(signature, i)))
-                        if iszero(lt(i, signatureLength)) { break }
-                    }
-                }
+                // Copy the `signature` over.
+                let n := add(0x20, signatureLength)
+                pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
                 // forgefmt: disable-next-item
                 isValid := and(
                     and(
@@ -257,16 +250,9 @@ library SignatureCheckerLib {
             mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             mstore(add(m, 0x04), hash)
             mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
-            {
-                let j := add(m, 0x44)
-                mstore(j, signatureLength) // The signature length.
-                // Copy the `signature` over.
-                for { let i := 0 } 1 {} {
-                    i := add(i, 0x20)
-                    mstore(add(j, i), mload(add(signature, i)))
-                    if iszero(lt(i, signatureLength)) { break }
-                }
-            }
+            // Copy the `signature` over.
+            let n := add(0x20, signatureLength)
+            pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
             // forgefmt: disable-next-item
             isValid := and(
                 and(
