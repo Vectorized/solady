@@ -444,19 +444,20 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Exponentiate `x` to `n` by squaring, denominated in `scalar`.
+    /// @dev Exponentiate `x` to `y` by squaring, denominated in base `b`.
     /// Reverts if the computation overflows.
-    function rpow(uint256 x, uint256 n, uint256 scalar) internal pure returns (uint256 z) {
+    function rpow(uint256 x, uint256 y, uint256 b) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
         assembly {
             // `0 ** 0 = 1`. Otherwise, `0 ** n = 0`.
-            z := mul(scalar, iszero(n))
+            z := mul(b, iszero(y))
             if x {
-                // `z = isEven(n) ? scale : x`
-                z := xor(scalar, mul(xor(scalar, x), and(n, 1)))
-                // Divide `scalar` by 2.
-                let half := shr(1, scalar)
-                // Divide `n` by 2 every iteration.
-                for { n := shr(1, n) } n { n := shr(1, n) } {
+                // `z = isEven(y) ? scale : x`
+                z := xor(b, mul(xor(b, x), and(y, 1)))
+                // Divide `b` by 2.
+                let half := shr(1, b)
+                // Divide `y` by 2 every iteration.
+                for { y := shr(1, y) } y { y := shr(1, y) } {
                     // Store x squared.
                     let xx := mul(x, x)
                     // Round to the nearest number.
@@ -470,9 +471,9 @@ library FixedPointMathLib {
                         revert(0x1c, 0x04)
                     }
                     // Set `x` to scaled `xxRound`.
-                    x := div(xxRound, scalar)
-                    // If `n` is odd:
-                    if and(n, 1) {
+                    x := div(xxRound, b)
+                    // If `y` is odd:
+                    if and(y, 1) {
                         // Compute `z * x`.
                         let zx := mul(z, x)
                         // Round to the nearest number.
@@ -488,7 +489,7 @@ library FixedPointMathLib {
                             }
                         }
                         // Return properly scaled `zxRound`.
-                        z := div(zxRound, scalar)
+                        z := div(zxRound, b)
                     }
                 }
             }

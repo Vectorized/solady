@@ -212,6 +212,13 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.rpow(8, 3, 1), 512);
     }
 
+    function testRPowOverflowReverts() public {
+        vm.expectRevert(FixedPointMathLib.RPowOverflow.selector);
+        FixedPointMathLib.rpow(2, type(uint128).max, 1);
+
+        // TODO: test all overflow conditions
+    }
+
     function testSqrt() public {
         assertEq(FixedPointMathLib.sqrt(0), 0);
         assertEq(FixedPointMathLib.sqrt(1), 1);
