@@ -15,6 +15,9 @@ library FixedPointMathLib {
     /// @dev The operation failed, as the output exceeds the maximum value of uint256.
     error FactorialOverflow();
 
+    /// @dev The operation failed, due to an overflow.
+    error RPowOverflow();
+
     /// @dev The operation failed, due to an multiplication overflow.
     error MulWadFailed();
 
@@ -438,6 +441,58 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             z := mul(gt(x, y), sub(x, y))
+        }
+    }
+
+    /// @dev Exponentiate `x` to `y` by squaring, denominated in base `b`.
+    /// Reverts if the computation overflows.
+    function rpow(uint256 x, uint256 y, uint256 b) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // `0 ** 0 = 1`. Otherwise, `0 ** n = 0`.
+            z := mul(b, iszero(y))
+            if x {
+                // `z = isEven(y) ? scale : x`
+                z := xor(b, mul(xor(b, x), and(y, 1)))
+                // Divide `b` by 2.
+                let half := shr(1, b)
+                // Divide `y` by 2 every iteration.
+                for { y := shr(1, y) } y { y := shr(1, y) } {
+                    // Store x squared.
+                    let xx := mul(x, x)
+                    // Round to the nearest number.
+                    let xxRound := add(xx, half)
+                    // Revert if `xx + half` overflowed,
+                    // or if `x ** 2` overflows.
+                    if or(lt(xxRound, xx), shr(128, x)) {
+                        // Store the function selector of `RPowOverflow()`.
+                        mstore(0x00, 0x49f7642b)
+                        // Revert with (offset, size).
+                        revert(0x1c, 0x04)
+                    }
+                    // Set `x` to scaled `xxRound`.
+                    x := div(xxRound, b)
+                    // If `y` is odd:
+                    if and(y, 1) {
+                        // Compute `z * x`.
+                        let zx := mul(z, x)
+                        // Round to the nearest number.
+                        let zxRound := add(zx, half)
+                        // If `z * x` overflowed or `zx + half` overflowed:
+                        if or(xor(div(zx, x), z), lt(zxRound, zx)) {
+                            // Revert if `x` is non-zero.
+                            if iszero(iszero(x)) {
+                                // Store the function selector of `RPowOverflow()`.
+                                mstore(0x00, 0x49f7642b)
+                                // Revert with (offset, size).
+                                revert(0x1c, 0x04)
+                            }
+                        }
+                        // Return properly scaled `zxRound`.
+                        z := div(zxRound, b)
+                    }
+                }
+            }
         }
     }
 

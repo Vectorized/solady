@@ -205,6 +205,26 @@ contract FixedPointMathLibTest is SoladyTest {
         FixedPointMathLib.lnWad(0);
     }
 
+    function testRPow() public {
+        assertEq(FixedPointMathLib.rpow(0, 0, 0), 0);
+        assertEq(FixedPointMathLib.rpow(1, 0, 0), 0);
+        assertEq(FixedPointMathLib.rpow(0, 1, 0), 0);
+        assertEq(FixedPointMathLib.rpow(0, 0, 1), 1);
+        assertEq(FixedPointMathLib.rpow(1, 1, 0), 1);
+        assertEq(FixedPointMathLib.rpow(1, 1, 1), 1);
+        assertEq(FixedPointMathLib.rpow(2e27, 0, 1e27), 1e27);
+        assertEq(FixedPointMathLib.rpow(2e27, 2, 1e27), 4e27);
+        assertEq(FixedPointMathLib.rpow(2e18, 2, 1e18), 4e18);
+        assertEq(FixedPointMathLib.rpow(2e8, 2, 1e8), 4e8);
+        assertEq(FixedPointMathLib.rpow(8, 3, 1), 512);
+    }
+
+    function testRPowOverflowReverts() public {
+        vm.expectRevert(FixedPointMathLib.RPowOverflow.selector);
+        FixedPointMathLib.rpow(2, type(uint128).max, 1);
+        FixedPointMathLib.rpow(type(uint128).max, 3, 1);
+    }
+
     function testSqrt() public {
         assertEq(FixedPointMathLib.sqrt(0), 0);
         assertEq(FixedPointMathLib.sqrt(1), 1);
