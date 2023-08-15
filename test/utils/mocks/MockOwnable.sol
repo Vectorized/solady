@@ -55,7 +55,7 @@ contract MockOwnable is Ownable {
         result = _ownershipHandoverValidFor();
         /// @solidity memory-safe-assembly
         assembly {
-            // Some acrobatics to make the brutalized bits psuedorandomly
+            // Some acrobatics to make the brutalized bits pseudorandomly
             // different with every call.
             mstore(0x00, or(calldataload(0), mload(0x40)))
             mstore(0x20, or(caller(), mload(0x00)))
@@ -73,7 +73,7 @@ contract MockOwnable is Ownable {
     function _brutalizedAddress(address value) private view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Some acrobatics to make the brutalized bits psuedorandomly
+            // Some acrobatics to make the brutalized bits pseudorandomly
             // different with every call.
             mstore(0x00, or(calldataload(0), mload(0x40)))
             mstore(0x20, or(caller(), mload(0x00)))

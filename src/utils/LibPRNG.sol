@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for generating psuedorandom numbers.
+/// @notice Library for generating pseudorandom numbers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibPRNG.sol)
 library LibPRNG {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev A psuedorandom number state in memory.
+    /// @dev A pseudorandom number state in memory.
     struct PRNG {
         uint256 state;
     }
@@ -25,7 +25,7 @@ library LibPRNG {
         }
     }
 
-    /// @dev Returns the next psuedorandom uint256.
+    /// @dev Returns the next pseudorandom uint256.
     /// All bits of the returned uint256 pass the NIST Statistical Test Suite.
     function next(PRNG memory prng) internal pure returns (uint256 result) {
         // We simply use `keccak256` for a great balance between
@@ -45,7 +45,7 @@ library LibPRNG {
         }
     }
 
-    /// @dev Returns a psuedorandom uint256, uniformly distributed
+    /// @dev Returns a pseudorandom uint256, uniformly distributed
     /// between 0 (inclusive) and `upper` (exclusive).
     /// If your modulus is big, this method is recommended
     /// for uniform sampling to avoid modulo bias.

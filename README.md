@@ -45,7 +45,7 @@ utils
 ├─ ERC1967Factory — "Factory for deploying and managing ERC1967 proxy contracts"
 ├─ ERC1967FactoryConstants — "The address and bytecode of the canonical ERC1967Factory"
 ├─ LibSort — "Library for efficient sorting of memory arrays"
-├─ LibPRNG — "Library for generating psuedorandom numbers"
+├─ LibPRNG — "Library for generating pseudorandom numbers"
 ├─ Base64 — "Library for Base64 encoding and decoding"
 ├─ SSTORE2 — "Library for cheaper reads and writes to persistent storage"
 ├─ CREATE3 — "Deploy to deterministic addresses without an initcode factor"
