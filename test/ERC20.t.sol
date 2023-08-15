@@ -200,7 +200,7 @@ contract ERC20Test is SoladyTest {
         testDecreaseAllowance(123, 12);
     }
 
-    function testDecreaseOrClearAllowance(uint256 difference0, uint256 difference1) public {
+    function testDecreaseAllowanceUntilZero(uint256 difference0, uint256 difference1) public {
         uint256 expected = type(uint256).max;
         (address spender,) = _randomSigner();
         (address owner,) = _randomSigner();
@@ -209,25 +209,25 @@ contract ERC20Test is SoladyTest {
 
         expected -= difference0;
         vm.prank(owner);
-        token.decreaseOrClearAllowance(spender, difference0);
+        token.decreaseAllowanceUntilZero(spender, difference0);
         assertEq(token.allowance(owner, spender), expected);
 
         if (difference1 > expected) {
             vm.prank(owner);
-            token.decreaseOrClearAllowance(spender, difference1);
+            token.decreaseAllowanceUntilZero(spender, difference1);
             assertEq(token.allowance(owner, spender), 0);
         } else {
             expected -= difference1;
             vm.prank(owner);
             vm.expectEmit(true, true, true, true);
             emit Approval(owner, spender, expected);
-            token.decreaseOrClearAllowance(spender, difference1);
+            token.decreaseAllowanceUntilZero(spender, difference1);
             assertEq(token.allowance(owner, spender), expected);
         }
     }
 
-    function testDecreaseOrClearAllowance() public {
-        testDecreaseOrClearAllowance(123, 12);
+    function testDecreaseAllowanceUntilZero() public {
+        testDecreaseAllowanceUntilZero(123, 12);
     }
 
     function testTransferInsufficientBalanceReverts() public {

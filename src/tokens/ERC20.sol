@@ -236,7 +236,7 @@ abstract contract ERC20 {
     /// sets the allowance to zero instead of reverting.
     ///
     /// Emits a {Approval} event.
-    function decreaseOrClearAllowance(address spender, uint256 difference)
+    function decreaseAllowanceUntilZero(address spender, uint256 difference)
         public
         virtual
         returns (bool)
