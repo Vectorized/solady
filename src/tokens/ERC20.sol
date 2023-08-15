@@ -95,15 +95,15 @@ abstract contract ERC20 {
     uint256 private constant _NONCES_SLOT_SEED_WITH_SIGNATURE_PREFIX = 0x383775081901;
 
     /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
-    bytes32 private constant _EIP2612_DOMAIN_TYPEHASH =
+    bytes32 private constant _DOMAIN_TYPEHASH =
         0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
     /// @dev `keccak256("1")`.
-    bytes32 private constant _EIP2612_VERSION_HASH =
+    bytes32 private constant _VERSION_HASH =
         0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
 
     /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
-    bytes32 private constant _EIP2612_PERMIT_TYPEHASH =
+    bytes32 private constant _PERMIT_TYPEHASH =
         0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -404,14 +404,14 @@ abstract contract ERC20 {
             let nonceSlot := keccak256(0x0c, 0x20)
             let nonceValue := sload(nonceSlot)
             // Prepare the domain separator.
-            mstore(m, _EIP2612_DOMAIN_TYPEHASH)
+            mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), nameHash)
-            mstore(add(m, 0x40), _EIP2612_VERSION_HASH)
+            mstore(add(m, 0x40), _VERSION_HASH)
             mstore(add(m, 0x60), chainid())
             mstore(add(m, 0x80), address())
             mstore(0x2e, keccak256(m, 0xa0))
             // Prepare the struct hash.
-            mstore(m, _EIP2612_PERMIT_TYPEHASH)
+            mstore(m, _PERMIT_TYPEHASH)
             mstore(add(m, 0x20), owner)
             mstore(add(m, 0x40), spender)
             mstore(add(m, 0x60), value)
@@ -454,9 +454,9 @@ abstract contract ERC20 {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Grab the free memory pointer.
-            mstore(m, _EIP2612_DOMAIN_TYPEHASH)
+            mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), nameHash)
-            mstore(add(m, 0x40), _EIP2612_VERSION_HASH)
+            mstore(add(m, 0x40), _VERSION_HASH)
             mstore(add(m, 0x60), chainid())
             mstore(add(m, 0x80), address())
             result := keccak256(m, 0xa0)
