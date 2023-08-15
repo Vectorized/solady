@@ -70,4 +70,5 @@ jobs:
         uses: codespell-project/actions-codespell@v2.0
         with:
           check_filenames: true
-          skip: ./.git,package-lock.json,ackee-blockchain-solady-report.pdf,EIP712Mock.sol,LibStringTest.json,OwnableRolesTest.json
+          ignore_words_list: userA
+          skip: ./.git,package-lock.json,ackee-blockchain-solady-report.pdf,EIP712Mock.sol
