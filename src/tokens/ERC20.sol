@@ -88,6 +88,25 @@ abstract contract ERC20 {
     uint256 private constant _NONCES_SLOT_SEED = 0x38377508;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev `(_NONCES_SLOT_SEED << 16) | 0x1901`.
+    uint256 private constant _NONCES_SLOT_SEED_WITH_SIGNATURE_PREFIX = 0x383775081901;
+
+    /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
+    bytes32 private constant _EIP2612_DOMAIN_TYPEHASH =
+        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+
+    /// @dev `keccak256("1")`.
+    bytes32 private constant _EIP2612_VERSION_HASH =
+        0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
+
+    /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
+    bytes32 private constant _EIP2612_PERMIT_TYPEHASH =
+        0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ERC20 METADATA                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -270,7 +289,7 @@ abstract contract ERC20 {
             let allowanceSlot := keccak256(0x0c, 0x34)
             let allowance_ := sload(allowanceSlot)
             // If the allowance is not the maximum uint256 value.
-            if iszero(eq(allowance_, not(0))) {
+            if add(allowance_, 1) {
                 // Revert if the amount to be transferred exceeds the allowance.
                 if gt(amount, allowance_) {
                     mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
@@ -334,45 +353,45 @@ abstract contract ERC20 {
         bytes32 r,
         bytes32 s
     ) public virtual {
-        bytes32 domainSeparator = DOMAIN_SEPARATOR();
+        //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
+        bytes32 nameHash = keccak256(bytes(name()));
         /// @solidity memory-safe-assembly
         assembly {
-            // Grab the free memory pointer.
-            let m := mload(0x40)
             // Revert if the block timestamp greater than `deadline`.
             if gt(timestamp(), deadline) {
                 mstore(0x00, 0x1a15a3cc) // `PermitExpired()`.
                 revert(0x1c, 0x04)
             }
+            let m := mload(0x40) // Grab the free memory pointer.
             // Clean the upper 96 bits.
             owner := shr(96, shl(96, owner))
             spender := shr(96, shl(96, spender))
             // Compute the nonce slot and load its value.
-            mstore(0x0c, _NONCES_SLOT_SEED)
+            mstore(0x0e, _NONCES_SLOT_SEED_WITH_SIGNATURE_PREFIX)
             mstore(0x00, owner)
             let nonceSlot := keccak256(0x0c, 0x20)
             let nonceValue := sload(nonceSlot)
-            // Increment and store the updated nonce.
-            sstore(nonceSlot, add(nonceValue, 1))
-            // Prepare the inner hash.
-            // `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
-            // forgefmt: disable-next-item
-            mstore(m, 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9)
+            // Prepare the domain separator.
+            mstore(m, _EIP2612_DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), nameHash)
+            mstore(add(m, 0x40), _EIP2612_VERSION_HASH)
+            mstore(add(m, 0x60), chainid())
+            mstore(add(m, 0x80), address())
+            mstore(0x2e, keccak256(m, 0xa0))
+            // Prepare the struct hash.
+            mstore(m, _EIP2612_PERMIT_TYPEHASH)
             mstore(add(m, 0x20), owner)
             mstore(add(m, 0x40), spender)
             mstore(add(m, 0x60), value)
             mstore(add(m, 0x80), nonceValue)
             mstore(add(m, 0xa0), deadline)
-            // Prepare the outer hash.
-            mstore(0, 0x1901)
-            mstore(0x20, domainSeparator)
-            mstore(0x40, keccak256(m, 0xc0))
+            mstore(0x4e, keccak256(m, 0xc0))
             // Prepare the ecrecover calldata.
-            mstore(0, keccak256(0x1e, 0x42))
+            mstore(0x00, keccak256(0x2c, 0x42))
             mstore(0x20, and(0xff, v))
             mstore(0x40, r)
             mstore(0x60, s)
-            pop(staticcall(gas(), 1, 0, 0x80, 0x20, 0x20))
+            let t := staticcall(gas(), 1, 0, 0x80, 0x20, 0x20)
             // If the ecrecover fails, the returndatasize will be 0x00,
             // `owner` will be be checked if it equals the hash at 0x00,
             // which evaluates to false (i.e. 0), and we will revert.
@@ -382,6 +401,8 @@ abstract contract ERC20 {
                 mstore(0x00, 0xddafbaef) // `InvalidPermit()`.
                 revert(0x1c, 0x04)
             }
+            // Increment and store the updated nonce.
+            sstore(nonceSlot, add(nonceValue, t)) // `t` is 1 iff ecrecover succeeds.
             // Compute the allowance slot and store the value.
             // The `owner` is already at slot 0x20.
             mstore(0x40, or(shl(160, _ALLOWANCE_SLOT_SEED), spender))
@@ -393,24 +414,16 @@ abstract contract ERC20 {
         }
     }
 
-    /// @dev Returns the EIP-2612 domains separator.
+    /// @dev Returns the EIP-2612 domain separator.
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(0x40) // Grab the free memory pointer.
-        }
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
         bytes32 nameHash = keccak256(bytes(name()));
         /// @solidity memory-safe-assembly
         assembly {
-            let m := result
-            // `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
-            // forgefmt: disable-next-item
-            mstore(m, 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f)
+            let m := mload(0x40) // Grab the free memory pointer.
+            mstore(m, _EIP2612_DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), nameHash)
-            // `keccak256("1")`.
-            // forgefmt: disable-next-item
-            mstore(add(m, 0x40), 0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6)
+            mstore(add(m, 0x40), _EIP2612_VERSION_HASH)
             mstore(add(m, 0x60), chainid())
             mstore(add(m, 0x80), address())
             result := keccak256(m, 0xa0)
@@ -532,7 +545,7 @@ abstract contract ERC20 {
             let allowanceSlot := keccak256(0x0c, 0x34)
             let allowance_ := sload(allowanceSlot)
             // If the allowance is not the maximum uint256 value.
-            if iszero(eq(allowance_, not(0))) {
+            if add(allowance_, 1) {
                 // Revert if the amount to be transferred exceeds the allowance.
                 if gt(amount, allowance_) {
                     mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
