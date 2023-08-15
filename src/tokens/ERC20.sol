@@ -446,7 +446,7 @@ abstract contract ERC20 {
         }
     }
 
-    /// @dev Returns the EIP-2612 domain separator.
+    /// @dev Returns the EIP-712 domain separator.
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result) {
         bytes32 nameHash = _constantNameHash();
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
