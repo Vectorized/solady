@@ -223,10 +223,37 @@ abstract contract ERC20 {
                 revert(0x1c, 0x04)
             }
             // Subtract and store the updated allowance.
-            let allowanceAfter := sub(allowanceBefore, difference)
-            sstore(allowanceSlot, allowanceAfter)
+            mstore(0x00, sub(allowanceBefore, difference))
+            sstore(allowanceSlot, mload(0x00))
             // Emit the {Approval} event.
-            mstore(0x00, allowanceAfter)
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
+        }
+        return true;
+    }
+
+    /// @dev Atomically decreases the allowance granted to `spender` by the caller.
+    /// If the `difference` is greater than the current allowance,
+    /// sets the allowance to zero instead of reverting.
+    ///
+    /// Emits a {Approval} event.
+    function decreaseOrClearAllowance(address spender, uint256 difference)
+        public
+        virtual
+        returns (bool)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the allowance slot and load its value.
+            mstore(0x20, spender)
+            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
+            mstore(0x00, caller())
+            let allowanceSlot := keccak256(0x0c, 0x34)
+            let allowanceBefore := sload(allowanceSlot)
+            // Subtract and store the updated allowance.
+            // `allowanceAfter` will be zero if `allowanceBefore < difference`.
+            mstore(0x00, mul(sub(allowanceBefore, difference), gt(allowanceBefore, difference)))
+            sstore(allowanceSlot, mload(0x00))
+            // Emit the {Approval} event.
             log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
         }
         return true;
