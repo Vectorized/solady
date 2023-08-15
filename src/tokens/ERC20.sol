@@ -355,6 +355,10 @@ abstract contract ERC20 {
     /*                          EIP-2612                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev For more performance, overwrite to return the constant value
+    /// of `keccak256(bytes(name()))` if `name()` will never change.
+    function _constantNameHash() internal view virtual returns (bytes32 result) {}
+
     /// @dev Returns the current nonce for `owner`.
     /// This value is used to compute the signature for EIP-2612 permit.
     function nonces(address owner) public view virtual returns (uint256 result) {
@@ -380,8 +384,9 @@ abstract contract ERC20 {
         bytes32 r,
         bytes32 s
     ) public virtual {
+        bytes32 nameHash = _constantNameHash();
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
-        bytes32 nameHash = keccak256(bytes(name()));
+        if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
         /// @solidity memory-safe-assembly
         assembly {
             // Revert if the block timestamp greater than `deadline`.
@@ -443,8 +448,9 @@ abstract contract ERC20 {
 
     /// @dev Returns the EIP-2612 domain separator.
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result) {
+        bytes32 nameHash = _constantNameHash();
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
-        bytes32 nameHash = keccak256(bytes(name()));
+        if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Grab the free memory pointer.
