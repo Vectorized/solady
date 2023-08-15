@@ -152,7 +152,7 @@ contract LibPRNGTest is SoladyTest {
 
     // This is for demonstrating that the gas savings
     // over the `keccak256` approach isn't that much.
-    // The multiplier and the increment are choosen for good enough
+    // The multiplier and the increment are chosen for good enough
     // statistical test results.
     //
     // See: https://github.com/stevenang/randomness_testsuite

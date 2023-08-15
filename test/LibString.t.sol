@@ -859,10 +859,10 @@ contract LibStringTest is SoladyTest {
                 elements[1] = filler1;
             }
             _misalignFreeMemoryPointer();
-            string[] memory splitted = LibString.split(subject, delimiter);
-            assertTrue(_stringArraysAreSame(splitted, elements));
-            for (uint256 i; i < splitted.length; ++i) {
-                _checkMemory(splitted[i]);
+            string[] memory split = LibString.split(subject, delimiter);
+            assertTrue(_stringArraysAreSame(split, elements));
+            for (uint256 i; i < split.length; ++i) {
+                _checkMemory(split[i]);
             }
         }
     }

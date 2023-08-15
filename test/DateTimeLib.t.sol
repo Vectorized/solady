@@ -398,7 +398,7 @@ contract DateTimeLibTest is SoladyTest {
 
     function testNthWeekdayInMonthOfYearTimestamp() public {
         uint256 wd;
-        // 1st 2nd 3rd 4th monday in Novermber 2022.
+        // 1st 2nd 3rd 4th monday in November 2022.
         wd = DateTimeLib.MON;
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 1, wd), 1667779200);
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 2, wd), 1668384000);
@@ -406,7 +406,7 @@ contract DateTimeLibTest is SoladyTest {
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 4, wd), 1669593600);
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 5, wd), 0);
 
-        // 1st... 5th Wednesday in Novermber 2022.
+        // 1st... 5th Wednesday in November 2022.
         wd = DateTimeLib.WED;
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 1, wd), 1667347200);
         assertEq(DateTimeLib.nthWeekdayInMonthOfYearTimestamp(2022, 11, 2, wd), 1667952000);
@@ -483,21 +483,21 @@ contract DateTimeLibTest is SoladyTest {
         assertEq(DateTimeLib.mondayTimestamp(259200), 0);
         // Monday 05 January 19700 -> 345600
         assertEq(DateTimeLib.mondayTimestamp(345600), 345600);
-        // Monday 07 Novermber 2022 -> 1667779200
+        // Monday 07 November 2022 -> 1667779200
         assertEq(DateTimeLib.mondayTimestamp(1667779200), 1667779200);
-        // Sunday 06 Novermber 2022 -> 1667692800
+        // Sunday 06 November 2022 -> 1667692800
         assertEq(DateTimeLib.mondayTimestamp(1667692800), 1667174400);
-        // Saturday 05 Novermber 2022 -> 1667606400
+        // Saturday 05 November 2022 -> 1667606400
         assertEq(DateTimeLib.mondayTimestamp(1667606400), 1667174400);
-        // Friday 04 Novermber 2022 -> 1667520000
+        // Friday 04 November 2022 -> 1667520000
         assertEq(DateTimeLib.mondayTimestamp(1667520000), 1667174400);
-        // Thursday 03 Novermber 2022 -> 1667433600
+        // Thursday 03 November 2022 -> 1667433600
         assertEq(DateTimeLib.mondayTimestamp(1667433600), 1667174400);
-        // Wednesday 02 Novermber 2022 -> 1667347200
+        // Wednesday 02 November 2022 -> 1667347200
         assertEq(DateTimeLib.mondayTimestamp(1667347200), 1667174400);
-        // Tuesday 01 Novermber 2022 -> 1667260800
+        // Tuesday 01 November 2022 -> 1667260800
         assertEq(DateTimeLib.mondayTimestamp(1667260800), 1667174400);
-        // Monday 01 Novermber 2022 -> 1667260800
+        // Monday 01 November 2022 -> 1667260800
         assertEq(DateTimeLib.mondayTimestamp(1667174400), 1667174400);
     }
 
