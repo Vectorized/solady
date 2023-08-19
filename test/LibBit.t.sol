@@ -88,6 +88,7 @@ contract LibBitTest is SoladyTest {
 
     function testAnd(bool x, bool y) public {
         assertEq(LibBit.and(x, y), x && y);
+        assertEq(LibBit.rawAnd(x, y), LibBit.and(x, y));
     }
 
     function testAnd() public {
@@ -105,6 +106,7 @@ contract LibBitTest is SoladyTest {
 
     function testOr(bool x, bool y) public {
         assertEq(LibBit.or(x, y), x || y);
+        assertEq(LibBit.rawOr(x, y), LibBit.or(x, y));
     }
 
     function testOr() public {
@@ -174,6 +176,7 @@ contract LibBitTest is SoladyTest {
             z := b
         }
         assertEq(LibBit.toUint(b), z);
+        assertEq(LibBit.rawToUint(b), z);
     }
 
     function testReverseBitsDifferential(uint256 x) public {
