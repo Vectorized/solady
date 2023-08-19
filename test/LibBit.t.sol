@@ -88,10 +88,85 @@ contract LibBitTest is SoladyTest {
 
     function testAnd(bool x, bool y) public {
         assertEq(LibBit.and(x, y), x && y);
+        assertEq(LibBit.rawAnd(x, y), LibBit.and(x, y));
+    }
+
+    function testAnd() public {
+        unchecked {
+            for (uint256 t; t != 100; ++t) {
+                uint256 i = _random();
+                uint256 j = _random();
+                uint256 k = _random();
+                bool a = i < j;
+                bool b = j < k;
+                assertEq(LibBit.and(a, b), i < j && j < k);
+            }
+        }
     }
 
     function testOr(bool x, bool y) public {
         assertEq(LibBit.or(x, y), x || y);
+        assertEq(LibBit.rawOr(x, y), LibBit.or(x, y));
+    }
+
+    function testOr() public {
+        unchecked {
+            for (uint256 t; t != 100; ++t) {
+                uint256 i = _random();
+                uint256 j = _random();
+                uint256 k = _random();
+                bool a = i < j;
+                bool b = j < k;
+                assertEq(LibBit.or(a, b), i < j || j < k);
+            }
+        }
+    }
+
+    function testAutoClean(uint256 x, uint256 y) public {
+        bool xCasted;
+        bool yCasted;
+        /// @solidity memory-safe-assembly
+        assembly {
+            xCasted := x
+            yCasted := y
+        }
+        bool result = LibBit.and(true, LibBit.or(xCasted, yCasted));
+        assertEq(result, xCasted || yCasted);
+    }
+
+    function testReturnsBool() public {
+        bool result;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0x40b98a2f)
+            mstore(0x20, 123)
+            pop(staticcall(gas(), address(), 0x1c, 0x24, 0x00, 0x20))
+            result := eq(mload(0x00), 1)
+        }
+        assertTrue(result);
+    }
+
+    function returnsBool(uint256 i) public pure returns (bool b) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            b := i
+        }
+    }
+
+    function testPassInBool() public {
+        bool result;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0x59a3028a)
+            mstore(0x20, 1)
+            pop(staticcall(gas(), address(), 0x1c, 0x24, 0x00, 0x20))
+            result := eq(mload(0x00), 1)
+        }
+        assertTrue(result);
+    }
+
+    function acceptsBool(bool) public pure returns (bool) {
+        return true;
     }
 
     function testBoolToUint(bool b) public {
@@ -101,6 +176,7 @@ contract LibBitTest is SoladyTest {
             z := b
         }
         assertEq(LibBit.toUint(b), z);
+        assertEq(LibBit.rawToUint(b), z);
     }
 
     function testReverseBitsDifferential(uint256 x) public {
