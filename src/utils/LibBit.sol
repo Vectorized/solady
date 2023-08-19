@@ -148,12 +148,12 @@ library LibBit {
 
     // A Solidity bool on the stack or memory is represented as a 256-bit word.
     // Non-zero values are true, zero is false.
-    // A cleaned bool is either 0 (false) or 1 (true) under the hood.
+    // A clean bool is either 0 (false) or 1 (true) under the hood.
     // Usually, if not always, the bool result of a regular Solidity expression,
-    // or the argument of a public/external function is clean.
+    // or the argument of a public/external function will be a clean bool.
     // You can usually use the raw variants for more performance.
-    // If uncertain, test. Best with exact compiler settings.
-    // Or use the non-raw variants.
+    // If uncertain, test (best with exact compiler settings).
+    // Or use the non-raw variants (compiler can sometimes optimize out the double `iszero`s).
 
     /// @dev Returns `x & y`. Inputs must be clean.
     function rawAnd(bool x, bool y) internal pure returns (bool z) {
