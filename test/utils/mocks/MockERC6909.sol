@@ -29,7 +29,7 @@ contract MockERC6909 is ERC6909 {
 
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
         if (!_exists(id)) revert TokenDoesNotExist();
-        return string.concat(baseURI_, LibString.toString(id));
+        return string(abi.encodePacked(baseURI_, LibString.toString(id)));
     }
 
     function mint(address to, uint256 id, uint256 amount) public virtual {
