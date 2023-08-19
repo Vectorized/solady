@@ -6,7 +6,6 @@ import "./utils/SoladyTest.sol";
 import {ERC6909, MockERC6909} from "./utils/mocks/MockERC6909.sol";
 
 contract ERC6909Test is SoladyTest {
-
     MockERC6909 token;
 
     event Transfer(
@@ -314,10 +313,11 @@ contract ERC6909Test is SoladyTest {
         sendAmount = _bound(sendAmount, mintAmount + 1, type(uint256).max);
 
         token.mint(address(this), id, mintAmount);
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, address(this), id));
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, address(this), id)
+        );
         token.transfer(to, id, sendAmount);
     }
-
 
     function testTransferFromInsufficientAllowanceReverts(
         address to,
@@ -335,7 +335,9 @@ contract ERC6909Test is SoladyTest {
         vm.prank(from);
         token.approve(address(this), id, approval);
 
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, address(this), id));
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, address(this), id)
+        );
         token.transferFrom(from, to, id, amount);
     }
 
@@ -353,25 +355,22 @@ contract ERC6909Test is SoladyTest {
         token.mint(from, id, mintAmount);
 
         vm.prank(from);
-        token.approve(address(this),id, sendAmount);
+        token.approve(address(this), id, sendAmount);
 
         vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, from, id));
-        token.transferFrom(from, to,id, sendAmount);
+        token.transferFrom(from, to, id, sendAmount);
     }
 
-    function testTransferFromCallerIsNotOperator(
-        address to,
-        uint256 id,
-        uint256 amount
-    ) public {
-
-        amount = _bound(amount, 1 , type(uint256).max);
+    function testTransferFromCallerIsNotOperator(address to, uint256 id, uint256 amount) public {
+        amount = _bound(amount, 1, type(uint256).max);
 
         address from = address(0xABCD);
 
         token.mint(from, id, amount);
 
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, address(this), id));
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, address(this), id)
+        );
         token.transferFrom(from, to, id, amount);
     }
 }
