@@ -146,11 +146,36 @@ library LibBit {
     /*                     BOOLEAN OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // A Solidity bool on the stack or memory is represented as a 256-bit word.
+    // Non-zero values are true, zero is false.
+    // A cleaned bool is either 0 (false) or 1 (true) under the hood.
+    // Usually, if not always, the bool result of a regular Solidity expression,
+    // or the argument of a public/external function is clean.
+    // You can usually use the raw variants for more performance.
+    // If uncertain, test. Best with exact compiler settings.
+    // Or use the non-raw variants.
+
+    /// @dev Returns `x & y`. Inputs must be clean.
+    function rawAnd(bool x, bool y) internal pure returns (bool z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := and(x, y)
+        }
+    }
+
     /// @dev Returns `x & y`.
     function and(bool x, bool y) internal pure returns (bool z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := and(x, y)
+            z := and(iszero(iszero(x)), iszero(iszero(y)))
+        }
+    }
+
+    /// @dev Returns `x | y`. Inputs must be clean.
+    function rawOr(bool x, bool y) internal pure returns (bool z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := or(x, y)
         }
     }
 
@@ -158,16 +183,23 @@ library LibBit {
     function or(bool x, bool y) internal pure returns (bool z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := or(x, y)
+            z := or(iszero(iszero(x)), iszero(iszero(y)))
         }
     }
 
-    /// @dev Returns a non-zero number if `b` is true, else 0.
-    /// If `b` is from plain Solidity, the non-zero number will be 1.
-    function toUint(bool b) internal pure returns (uint256 z) {
+    /// @dev Returns 1 if `b` is true, else 0. Input must be clean.
+    function rawToUint(bool b) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             z := b
+        }
+    }
+
+    /// @dev Returns 1 if `b` is true, else 0.
+    function toUint(bool b) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := iszero(iszero(b))
         }
     }
 }
