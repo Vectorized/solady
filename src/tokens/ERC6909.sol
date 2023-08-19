@@ -109,6 +109,9 @@ abstract contract ERC6909 {
     function symbol() public view virtual returns (string memory);
 
     /// @dev Returns the decimals places of the given token `id`.
+    ///
+    /// Note: If decimals is not set by `_setDecimals` function than
+    ///       it will return by default `18`.
     function decimals(uint256 id) public view virtual returns (uint8 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -116,6 +119,7 @@ abstract contract ERC6909 {
             mstore(0x20, id)
             let decimalsSlot := keccak256(0x14, 0x2c)
             result := sload(decimalsSlot)
+            result := add(result, mul(iszero(result), 18))
         }
     }
 

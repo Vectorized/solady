@@ -276,7 +276,11 @@ contract ERC6909Test is SoladyTest {
             decimal := or(shl(8, gas()), decimal)
         }
         token.setDecimals(id, decimal);
-        assertEq(token.decimals(id), decimal);
+        if ((decimal & 255) == 0) {
+            assertEq(token.decimals(id), 18);
+        } else {
+            assertEq(token.decimals(id), decimal);
+        }
     }
 
     function testMintTotalSupplyOverFlowReverts(address to, uint256 id, uint256 amount) public {
