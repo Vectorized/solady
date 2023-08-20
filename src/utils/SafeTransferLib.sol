@@ -44,20 +44,20 @@ library SafeTransferLib {
     // If gas griefing protection is needed, please use the force variants.
     //
     // The regular variants:
-    // - Forwards all gas to the target.
+    // - Forwards all remaining gas to the target.
     // - Reverts if the target reverts.
     // - Reverts if the current contract has insufficient balance.
     //
     // The force variants:
-    // - Forwards with an optional `gasStipend`
+    // - Forwards with an optional gas stipend
     //   (defaults to `GAS_STIPEND_NO_GRIEF`, which is sufficient for most cases).
     // - If the target reverts, or if the gas stipend is exhausted,
-    //   creates a temporary contract to send the ETH via `SELFDESTRUCT`.
+    //   creates a temporary contract to force send the ETH via `SELFDESTRUCT`.
     //   Future compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758.
     // - Reverts if the current contract has insufficient balance.
     //
     // The try variants:
-    // - Forwards with a `gasStipend`.
+    // - Forwards with a mandatory gas stipend.
     // - Instead of reverting, returns whether the transfer succeeded.
 
     /// @dev Sends `amount` (in wei) ETH to `to`.
