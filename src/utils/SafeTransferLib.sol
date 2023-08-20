@@ -30,80 +30,71 @@ library SafeTransferLib {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Suggested gas stipend for contract receiving ETH
-    /// that disallows any storage writes.
+    /// @dev Suggested gas stipend for contract receiving ETH that disallows any storage writes.
     uint256 internal constant GAS_STIPEND_NO_STORAGE_WRITES = 2300;
 
     /// @dev Suggested gas stipend for contract receiving ETH to perform a few
     /// storage reads and writes, but low enough to prevent griefing.
-    /// Multiply by a small constant (e.g. 2), if needed.
     uint256 internal constant GAS_STIPEND_NO_GRIEF = 100000;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ETH OPERATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // If gas griefing protection is needed, please use the force variants.
+    //
+    // The regular variants:
+    // - Forwards all gas to the target.
+    // - Reverts if the target reverts.
+    // - Reverts if the current contract has insufficient balance.
+    //
+    // The force variants:
+    // - Forwards with an optional `gasStipend`
+    //   (defaults to `GAS_STIPEND_NO_GRIEF`, which is sufficient for most cases).
+    // - If the target reverts, or if the gas stipend is exhausted,
+    //   creates a temporary contract to send the ETH via `SELFDESTRUCT`.
+    //   Future compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758.
+    // - Reverts if the current contract has insufficient balance.
+    //
+    // The try variants:
+    // - Forwards with a `gasStipend`.
+    // - Instead of reverting, returns whether the transfer succeeded.
+
     /// @dev Sends `amount` (in wei) ETH to `to`.
-    /// Reverts upon failure.
-    ///
-    /// Note: This implementation does NOT protect against gas griefing.
-    /// Please use `forceSafeTransferETH` for gas griefing protection.
     function safeTransferETH(address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            // Transfer the ETH and check if it succeeded or not.
             if iszero(call(gas(), to, amount, 0x00, 0x00, 0x00, 0x00)) {
-                // Store the function selector of `ETHTransferFailed()`.
-                mstore(0x00, 0xb12d13eb)
-                // Revert with (offset, size).
+                mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
         }
     }
 
-    /// @dev Sends all the ETH in the contract to `to`.
-    /// Reverts upon failure.
-    ///
-    /// Note: This implementation does NOT protect against gas griefing.
-    /// Please use `forceSafeTransferAllETH` for gas griefing protection.
+    /// @dev Sends all the ETH in the current contract to `to`.
     function safeTransferAllETH(address to) internal {
         /// @solidity memory-safe-assembly
         assembly {
             // Transfer all the ETH and check if it succeeded or not.
             if iszero(call(gas(), to, selfbalance(), 0x00, 0x00, 0x00, 0x00)) {
-                // Store the function selector of `ETHTransferFailed()`.
-                mstore(0x00, 0xb12d13eb)
-                // Revert with (offset, size).
+                mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
         }
     }
 
     /// @dev Force sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
-    /// The `gasStipend` can be set to a low enough value to prevent
-    /// storage writes or gas griefing.
-    ///
-    /// If sending via the normal procedure fails, force sends the ETH by
-    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
-    ///
-    /// Reverts if the current contract has insufficient balance.
     function forceSafeTransferETH(address to, uint256 amount, uint256 gasStipend) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            // If insufficient balance, revert.
             if lt(selfbalance(), amount) {
-                // Store the function selector of `ETHTransferFailed()`.
-                mstore(0x00, 0xb12d13eb)
-                // Revert with (offset, size).
+                mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Transfer the ETH and check if it succeeded or not.
             if iszero(call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
-                // We can directly use `SELFDESTRUCT` in the contract creation.
-                // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(amount, 0x0b, 0x16)) {
                     // To coerce gas estimation to provide enough gas for the `create` above.
                     if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
@@ -112,22 +103,14 @@ library SafeTransferLib {
         }
     }
 
-    /// @dev Force sends all the ETH in the contract to `to`, with a `gasStipend`.
-    /// The `gasStipend` can be set to a low enough value to prevent
-    /// storage writes or gas griefing.
-    ///
-    /// If sending via the normal procedure fails, force sends the ETH by
-    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
+    /// @dev Force sends all the ETH in the current contract to `to`, with a `gasStipend`.
     function forceSafeTransferAllETH(address to, uint256 gasStipend) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            // Transfer the ETH and check if it succeeded or not.
             if iszero(call(gasStipend, to, selfbalance(), 0x00, 0x00, 0x00, 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
-                // We can directly use `SELFDESTRUCT` in the contract creation.
-                // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(selfbalance(), 0x0b, 0x16)) {
                     // To coerce gas estimation to provide enough gas for the `create` above.
                     if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
@@ -136,33 +119,19 @@ library SafeTransferLib {
         }
     }
 
-    /// @dev Force sends `amount` (in wei) ETH to `to`, with a gas stipend
-    /// equal to `GAS_STIPEND_NO_GRIEF`. This gas stipend is a reasonable default
-    /// for 99% of cases and can be overridden with the three-argument version of this
-    /// function if necessary.
-    ///
-    /// If sending via the normal procedure fails, force sends the ETH by
-    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
-    ///
-    /// Reverts if the current contract has insufficient balance.
+    /// @dev Force sends `amount` (in wei) ETH to `to`, with `GAS_STIPEND_NO_GRIEF`.
     function forceSafeTransferETH(address to, uint256 amount) internal {
         // Manually inlined because the compiler doesn't inline functions with branches.
         /// @solidity memory-safe-assembly
         assembly {
-            // If insufficient balance, revert.
             if lt(selfbalance(), amount) {
-                // Store the function selector of `ETHTransferFailed()`.
-                mstore(0x00, 0xb12d13eb)
-                // Revert with (offset, size).
+                mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Transfer the ETH and check if it succeeded or not.
             if iszero(call(GAS_STIPEND_NO_GRIEF, to, amount, 0x00, 0x00, 0x00, 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
-                // We can directly use `SELFDESTRUCT` in the contract creation.
-                // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(amount, 0x0b, 0x16)) {
                     // To coerce gas estimation to provide enough gas for the `create` above.
                     if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
@@ -171,24 +140,15 @@ library SafeTransferLib {
         }
     }
 
-    /// @dev Force sends all the ETH in the contract to `to`, with a gas stipend
-    /// equal to `GAS_STIPEND_NO_GRIEF`. This gas stipend is a reasonable default
-    /// for 99% of cases and can be overridden with the three-argument version of this
-    /// function if necessary.
-    ///
-    /// If sending via the normal procedure fails, force sends the ETH by
-    /// creating a temporary contract which uses `SELFDESTRUCT` to force send the ETH.
+    /// @dev Force sends all the ETH in the current contract to `to`, with `GAS_STIPEND_NO_GRIEF`.
     function forceSafeTransferAllETH(address to) internal {
         // Manually inlined because the compiler doesn't inline functions with branches.
         /// @solidity memory-safe-assembly
         assembly {
-            // Transfer the ETH and check if it succeeded or not.
             if iszero(call(GAS_STIPEND_NO_GRIEF, to, selfbalance(), 0x00, 0x00, 0x00, 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
-                // We can directly use `SELFDESTRUCT` in the contract creation.
-                // Compatible with `SENDALL`: https://eips.ethereum.org/EIPS/eip-4758
                 if iszero(create(selfbalance(), 0x0b, 0x16)) {
                     // To coerce gas estimation to provide enough gas for the `create` above.
                     if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
@@ -198,39 +158,23 @@ library SafeTransferLib {
     }
 
     /// @dev Sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
-    /// The `gasStipend` can be set to a low enough value to prevent
-    /// storage writes or gas griefing.
-    ///
-    /// Simply use `gasleft()` for `gasStipend` if you don't need a gas stipend.
-    ///
-    /// Note: Does NOT revert upon failure.
-    /// Returns whether the transfer of ETH is successful instead.
     function trySafeTransferETH(address to, uint256 amount, uint256 gasStipend)
         internal
         returns (bool success)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Transfer the ETH and check if it succeeded or not.
             success := call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00)
         }
     }
 
-    /// @dev Sends all the ETH in the contract to `to`, with a `gasStipend`.
-    /// The `gasStipend` can be set to a low enough value to prevent
-    /// storage writes or gas griefing.
-    ///
-    /// Simply use `gasleft()` for `gasStipend` if you don't need a gas stipend.
-    ///
-    /// Note: Does NOT revert upon failure.
-    /// Returns whether the transfer of ETH is successful instead.
+    /// @dev Sends all the ETH in the current contract to `to`, with a `gasStipend`.
     function trySafeTransferAllETH(address to, uint256 gasStipend)
         internal
         returns (bool success)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Transfer the ETH and check if it succeeded or not.
             success := call(gasStipend, to, selfbalance(), 0x00, 0x00, 0x00, 0x00)
         }
     }
@@ -263,9 +207,7 @@ library SafeTransferLib {
                     call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
                 )
             ) {
-                // Store the function selector of `TransferFromFailed()`.
-                mstore(0x00, 0x7939f424)
-                // Revert with (offset, size).
+                mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
                 revert(0x1c, 0x04)
             }
 
@@ -297,9 +239,7 @@ library SafeTransferLib {
                     staticcall(gas(), token, 0x1c, 0x24, 0x60, 0x20)
                 )
             ) {
-                // Store the function selector of `TransferFromFailed()`.
-                mstore(0x00, 0x7939f424)
-                // Revert with (offset, size).
+                mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
                 revert(0x1c, 0x04)
             }
 
@@ -316,9 +256,7 @@ library SafeTransferLib {
                     call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
                 )
             ) {
-                // Store the function selector of `TransferFromFailed()`.
-                mstore(0x00, 0x7939f424)
-                // Revert with (offset, size).
+                mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
                 revert(0x1c, 0x04)
             }
 
@@ -345,9 +283,7 @@ library SafeTransferLib {
                     call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                 )
             ) {
-                // Store the function selector of `TransferFailed()`.
-                mstore(0x00, 0x90b8ec18)
-                // Revert with (offset, size).
+                mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
                 revert(0x1c, 0x04)
             }
             // Restore the part of the free memory pointer that was overwritten.
@@ -368,9 +304,7 @@ library SafeTransferLib {
                     staticcall(gas(), token, 0x1c, 0x24, 0x34, 0x20)
                 )
             ) {
-                // Store the function selector of `TransferFailed()`.
-                mstore(0x00, 0x90b8ec18)
-                // Revert with (offset, size).
+                mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
                 revert(0x1c, 0x04)
             }
 
@@ -388,9 +322,7 @@ library SafeTransferLib {
                     call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                 )
             ) {
-                // Store the function selector of `TransferFailed()`.
-                mstore(0x00, 0x90b8ec18)
-                // Revert with (offset, size).
+                mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
                 revert(0x1c, 0x04)
             }
             // Restore the part of the free memory pointer that was overwritten.
@@ -416,9 +348,7 @@ library SafeTransferLib {
                     call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                 )
             ) {
-                // Store the function selector of `ApproveFailed()`.
-                mstore(0x00, 0x3e3f8f73)
-                // Revert with (offset, size).
+                mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
                 revert(0x1c, 0x04)
             }
             // Restore the part of the free memory pointer that was overwritten.
@@ -458,9 +388,7 @@ library SafeTransferLib {
                         call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                     )
                 ) {
-                    // Store the function selector of `ApproveFailed()`.
-                    mstore(0x00, 0x3e3f8f73)
-                    // Revert with (offset, size).
+                    mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
                     revert(0x1c, 0x04)
                 }
             }

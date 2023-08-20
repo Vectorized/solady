@@ -115,6 +115,12 @@ contract SafeTransferLibTest is SoladyTest {
         assertTrue(success);
     }
 
+    function testTryTransferAllETH() public {
+        MockETHRecipient recipient = new MockETHRecipient(false, false);
+        bool success = SafeTransferLib.trySafeTransferAllETH(address(recipient), gasleft());
+        assertTrue(success);
+    }
+
     function testTryTransferETHWithNoStorageWrites() public {
         MockETHRecipient recipient = new MockETHRecipient(true, false);
 
