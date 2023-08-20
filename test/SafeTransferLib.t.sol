@@ -105,6 +105,10 @@ contract SafeTransferLibTest is SoladyTest {
         SafeTransferLib.safeTransferETH(address(0xBEEF), 1e18);
     }
 
+    function testTransferAllETH() public {
+        SafeTransferLib.safeTransferAllETH(address(0xBEEF));
+    }
+
     function testTryTransferETH() public {
         MockETHRecipient recipient = new MockETHRecipient(false, false);
         bool success = SafeTransferLib.trySafeTransferETH(address(recipient), 1e18, gasleft());
@@ -360,6 +364,11 @@ contract SafeTransferLibTest is SoladyTest {
         this.safeTransferETH(address(this), 1e18);
     }
 
+    function testTransferAllETHToContractWithoutFallbackReverts() public {
+        vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+        this.safeTransferAllETH(address(this));
+    }
+
     function testTransferFromWithMissingReturn(address from, address to, uint256 amount) public {
         verifySafeTransferFrom(address(missingReturn), from, to, amount, SUCCESS);
     }
@@ -457,6 +466,18 @@ contract SafeTransferLibTest is SoladyTest {
         SafeTransferLib.safeTransferETH(recipient, amount);
     }
 
+    function testTransferAllETH(address recipient) public {
+        // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
+        if (
+            recipient.code.length > 0 || uint256(uint160(recipient)) <= 18
+                || recipient == msg.sender
+        ) {
+            return;
+        }
+
+        SafeTransferLib.safeTransferAllETH(recipient);
+    }
+
     function testTransferWithReturnsFalseReverts(address to, uint256 amount) public {
         verifySafeTransfer(address(returnsFalse), to, amount, REVERTS_WITH_SELECTOR);
     }
@@ -534,6 +555,11 @@ contract SafeTransferLibTest is SoladyTest {
     function testTransferETHToContractWithoutFallbackReverts(uint256 amount) public {
         vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
         this.safeTransferETH(address(this), amount);
+    }
+
+    function testTransferAllETHToContractWithoutFallbackReverts(uint256) public {
+        vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+        this.safeTransferAllETH(address(this));
     }
 
     function verifySafeTransfer(address token, address to, uint256 amount, uint256 mode) public {
@@ -671,6 +697,10 @@ contract SafeTransferLibTest is SoladyTest {
 
     function safeTransferETH(address to, uint256 amount) public {
         SafeTransferLib.safeTransferETH(to, amount);
+    }
+
+    function safeTransferAllETH(address to) public {
+        SafeTransferLib.safeTransferAllETH(to);
     }
 
     function _generateGarbage() internal returns (bytes memory result) {
