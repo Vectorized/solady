@@ -61,6 +61,24 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Sends all of ETH to `to`.
+    /// Reverts upon failure.
+    ///
+    /// Note: This implementation does NOT protect against gas griefing.
+    /// Please use `forceSafeTransferETH` for gas griefing protection.
+    function safeTransferAllETH(address to) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Transfer all of ETH and check if it succeeded or not.
+            if iszero(call(gas(), to, selfbalance(), 0x00, 0x00, 0x00, 0x00)) {
+                // Store the function selector of `ETHTransferFailed()`.
+                mstore(0x00, 0xb12d13eb)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
     /// @dev Force sends `amount` (in wei) ETH to `to`, with a `gasStipend`.
     /// The `gasStipend` can be set to a low enough value to prevent
     /// storage writes or gas griefing.
