@@ -96,8 +96,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 if iszero(create(amount, 0x0b, 0x16)) {
-                    // To coerce gas estimation to provide enough gas for the `create` above.
-                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
+                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) } // For gas estimation.
                 }
             }
         }
@@ -112,8 +111,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 if iszero(create(selfbalance(), 0x0b, 0x16)) {
-                    // To coerce gas estimation to provide enough gas for the `create` above.
-                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
+                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) } // For gas estimation.
                 }
             }
         }
@@ -121,7 +119,6 @@ library SafeTransferLib {
 
     /// @dev Force sends `amount` (in wei) ETH to `to`, with `GAS_STIPEND_NO_GRIEF`.
     function forceSafeTransferETH(address to, uint256 amount) internal {
-        // Manually inlined because the compiler doesn't inline functions with branches.
         /// @solidity memory-safe-assembly
         assembly {
             if lt(selfbalance(), amount) {
@@ -133,8 +130,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 if iszero(create(amount, 0x0b, 0x16)) {
-                    // To coerce gas estimation to provide enough gas for the `create` above.
-                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
+                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) } // For gas estimation.
                 }
             }
         }
@@ -142,7 +138,6 @@ library SafeTransferLib {
 
     /// @dev Force sends all the ETH in the current contract to `to`, with `GAS_STIPEND_NO_GRIEF`.
     function forceSafeTransferAllETH(address to) internal {
-        // Manually inlined because the compiler doesn't inline functions with branches.
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(call(GAS_STIPEND_NO_GRIEF, to, selfbalance(), 0x00, 0x00, 0x00, 0x00)) {
@@ -150,8 +145,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 if iszero(create(selfbalance(), 0x0b, 0x16)) {
-                    // To coerce gas estimation to provide enough gas for the `create` above.
-                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) }
+                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) } // For gas estimation.
                 }
             }
         }
@@ -192,25 +186,20 @@ library SafeTransferLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-
             mstore(0x60, amount) // Store the `amount` argument.
             mstore(0x40, to) // Store the `to` argument.
             mstore(0x2c, shl(96, from)) // Store the `from` argument.
-            // Store the function selector of `transferFrom(address,address,uint256)`.
-            mstore(0x0c, 0x23b872dd000000000000000000000000)
-
+            mstore(0x0c, 0x23b872dd000000000000000000000000) // `transferFrom(address,address,uint256)`.
+            // Perform the transfer, reverting upon failure.
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
-                    // Set success to whether the call reverted, if not we check it either
-                    // returned exactly 1 (can't just be non-zero data), or had no return data.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())),
+                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
                     call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
                 )
             ) {
                 mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
                 revert(0x1c, 0x04)
             }
-
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
         }
@@ -228,11 +217,10 @@ library SafeTransferLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-
             mstore(0x40, to) // Store the `to` argument.
             mstore(0x2c, shl(96, from)) // Store the `from` argument.
-            // Store the function selector of `balanceOf(address)`.
-            mstore(0x0c, 0x70a08231000000000000000000000000)
+            mstore(0x0c, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
+            // Read the balance, reverting upon failure.
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
                     gt(returndatasize(), 0x1f), // At least 32 bytes returned.
@@ -242,24 +230,18 @@ library SafeTransferLib {
                 mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
                 revert(0x1c, 0x04)
             }
-
-            // Store the function selector of `transferFrom(address,address,uint256)`.
-            mstore(0x00, 0x23b872dd)
-            // The `amount` is already at 0x60. Load it for the function's return value.
-            amount := mload(0x60)
-
+            mstore(0x00, 0x23b872dd) // `transferFrom(address,address,uint256)`.
+            amount := mload(0x60) // The `amount` is already at 0x60. We'll need to return it.
+            // Perform the transfer, reverting upon failure.
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
-                    // Set success to whether the call reverted, if not we check it either
-                    // returned exactly 1 (can't just be non-zero data), or had no return data.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())),
+                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
                     call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
                 )
             ) {
                 mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
                 revert(0x1c, 0x04)
             }
-
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
         }
@@ -272,22 +254,18 @@ library SafeTransferLib {
         assembly {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
-            // Store the function selector of `transfer(address,uint256)`.
-            mstore(0x00, 0xa9059cbb000000000000000000000000)
-
+            mstore(0x00, 0xa9059cbb000000000000000000000000) // `transfer(address,uint256)`.
+            // Perform the transfer, reverting upon failure.
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
-                    // Set success to whether the call reverted, if not we check it either
-                    // returned exactly 1 (can't just be non-zero data), or had no return data.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())),
+                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
                     call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                 )
             ) {
                 mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that was overwritten.
-            mstore(0x34, 0)
+            mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
     }
 
@@ -298,6 +276,7 @@ library SafeTransferLib {
         assembly {
             mstore(0x00, 0x70a08231) // Store the function selector of `balanceOf(address)`.
             mstore(0x20, address()) // Store the address of the current contract.
+            // Read the balance, reverting upon failure.
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
                     gt(returndatasize(), 0x1f), // At least 32 bytes returned.
@@ -307,26 +286,20 @@ library SafeTransferLib {
                 mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
                 revert(0x1c, 0x04)
             }
-
             mstore(0x14, to) // Store the `to` argument.
-            // The `amount` is already at 0x34. Load it for the function's return value.
-            amount := mload(0x34)
-            // Store the function selector of `transfer(address,uint256)`.
-            mstore(0x00, 0xa9059cbb000000000000000000000000)
-
+            amount := mload(0x34) // The `amount` is already at 0x34. We'll need to return it.
+            mstore(0x00, 0xa9059cbb000000000000000000000000) // `transfer(address,uint256)`.
+            // Perform the transfer, reverting upon failure.
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
-                    // Set success to whether the call reverted, if not we check it either
-                    // returned exactly 1 (can't just be non-zero data), or had no return data.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())),
+                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
                     call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                 )
             ) {
                 mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that was overwritten.
-            mstore(0x34, 0)
+            mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
     }
 
@@ -337,22 +310,18 @@ library SafeTransferLib {
         assembly {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
-            // Store the function selector of `approve(address,uint256)`.
-            mstore(0x00, 0x095ea7b3000000000000000000000000)
-
+            mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
+            // Perform the approval, reverting upon failure.
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
-                    // Set success to whether the call reverted, if not we check it either
-                    // returned exactly 1 (can't just be non-zero data), or had no return data.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())),
+                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
                     call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                 )
             ) {
                 mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that was overwritten.
-            mstore(0x34, 0)
+            mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
     }
 
@@ -365,26 +334,22 @@ library SafeTransferLib {
         assembly {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
-            // Store the function selector of `approve(address,uint256)`.
-            mstore(0x00, 0x095ea7b3000000000000000000000000)
-
+            mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
+            // Perform the approval, retrying upon failure.
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
-                    // Set success to whether the call reverted, if not we check it either
-                    // returned exactly 1 (can't just be non-zero data), or had no return data.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())),
+                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
                     call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                 )
             ) {
                 mstore(0x34, 0) // Store 0 for the `amount`.
-                mstore(0x00, 0x095ea7b3000000000000000000000000) // Store the function selector.
-                // We can ignore the result of this call. Just need to check the next call.
-                pop(call(gas(), token, 0, 0x10, 0x44, 0x00, 0x00))
+                mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
+                pop(call(gas(), token, 0, 0x10, 0x44, 0x00, 0x00)) // Reset the approval.
                 mstore(0x34, amount) // Store back the original `amount`.
-
+                // Retry the approval, reverting upon failure.
                 if iszero(
                     and(
-                        or(eq(mload(0x00), 1), iszero(returndatasize())),
+                        or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
                         call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                     )
                 ) {
@@ -392,8 +357,7 @@ library SafeTransferLib {
                     revert(0x1c, 0x04)
                 }
             }
-            // Restore the part of the free memory pointer that was overwritten.
-            mstore(0x34, 0)
+            mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
     }
 
@@ -403,8 +367,7 @@ library SafeTransferLib {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x14, account) // Store the `account` argument.
-            // Store the function selector of `balanceOf(address)`.
-            mstore(0x00, 0x70a08231000000000000000000000000)
+            mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
             amount :=
                 mul(
                     mload(0x20),
