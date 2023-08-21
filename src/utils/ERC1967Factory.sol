@@ -75,7 +75,6 @@ contract ERC1967Factory {
 
     /// @dev Returns the admin of the proxy.
     function adminOf(address proxy) public view returns (address admin) {
-        /// @solidity memory-safe-assembly
         assembly {
             admin := sload(shl(96, proxy))
         }
@@ -84,7 +83,6 @@ contract ERC1967Factory {
     /// @dev Sets the admin of the proxy.
     /// The caller of this function must be the admin of the proxy on this factory.
     function changeAdmin(address proxy, address admin) public {
-        /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
             if iszero(eq(sload(shl(96, proxy)), caller())) {
@@ -115,7 +113,6 @@ contract ERC1967Factory {
         public
         payable
     {
-        /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
             if iszero(eq(sload(shl(96, proxy)), caller())) {
@@ -187,7 +184,6 @@ contract ERC1967Factory {
         bytes32 salt,
         bytes calldata data
     ) public payable returns (address proxy) {
-        /// @solidity memory-safe-assembly
         assembly {
             // If the salt does not start with the zero address or the caller.
             if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
@@ -207,7 +203,6 @@ contract ERC1967Factory {
         bytes calldata data
     ) internal returns (address proxy) {
         bytes32 m = _initCode();
-        /// @solidity memory-safe-assembly
         assembly {
             // Create the proxy.
             switch useSalt
@@ -248,7 +243,6 @@ contract ERC1967Factory {
     /// @dev Returns the address of the proxy deployed with `salt`.
     function predictDeterministicAddress(bytes32 salt) public view returns (address predicted) {
         bytes32 hash = initCodeHash();
-        /// @solidity memory-safe-assembly
         assembly {
             // Compute and store the bytecode hash.
             mstore8(0x00, 0xff) // Write the prefix.
@@ -265,7 +259,6 @@ contract ERC1967Factory {
     /// Used for mining vanity addresses with create2crunch.
     function initCodeHash() public view returns (bytes32 result) {
         bytes32 m = _initCode();
-        /// @solidity memory-safe-assembly
         assembly {
             result := keccak256(add(m, 0x13), 0x88)
         }
@@ -273,7 +266,6 @@ contract ERC1967Factory {
 
     /// @dev Returns a pointer to the initialization code of a proxy created via this factory.
     function _initCode() internal view returns (bytes32 m) {
-        /// @solidity memory-safe-assembly
         assembly {
             /**
              * -------------------------------------------------------------------------------------+
@@ -409,7 +401,6 @@ contract ERC1967Factory {
                 mstore(add(m, 0x14), address()) // 20
                 mstore(m, 0x607f3d8160093d39f33d3d3373) // 9 + 4
             }
-            mstore(0x40, add(m, 0xa0))// Allocate memory.
             // forgefmt: disable-end
         }
     }
@@ -420,7 +411,6 @@ contract ERC1967Factory {
 
     /// @dev Helper function to return an empty bytes calldata.
     function _emptyData() internal pure returns (bytes calldata data) {
-        /// @solidity memory-safe-assembly
         assembly {
             data.length := 0
         }
