@@ -34,26 +34,30 @@ library SignatureCheckerLib {
                 let m := mload(0x40)
                 let signatureLength := mload(signature)
                 if eq(signatureLength, 65) {
-                    mstore(m, hash)
-                    mstore(add(m, 0x20), byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(add(m, 0x40), mload(add(signature, 0x20))) // `r`.
-                    mstore(add(m, 0x60), mload(add(signature, 0x40))) // `s`.
-                    pop(
+                    mstore(0x00, hash)
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
+                    let t :=
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
                             1, // Address of `ecrecover`.
-                            m, // Start of input.
+                            0x00, // Start of input.
                             0x80, // Size of input.
-                            m, // Start of output.
+                            0x01, // Start of output.
                             0x20 // Size of output.
                         )
-                    )
                     // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if mul(eq(mload(m), signer), returndatasize()) {
+                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
                         isValid := 1
+                        mstore(0x60, 0) // Restore the zero slot.
+                        mstore(0x40, m) // Restore the free memory pointer.
                         break
                     }
                 }
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
+
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -100,25 +104,29 @@ library SignatureCheckerLib {
             for { signer := shr(96, shl(96, signer)) } signer {} {
                 let m := mload(0x40)
                 if eq(signature.length, 65) {
-                    mstore(m, hash)
-                    mstore(add(m, 0x20), byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-                    calldatacopy(add(m, 0x40), signature.offset, 0x40) // `r`, `s`.
-                    pop(
+                    mstore(0x00, hash)
+                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(0x40, signature.offset, 0x40) // `r`, `s`.
+                    let t :=
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
                             1, // Address of `ecrecover`.
-                            m, // Start of input.
+                            0x00, // Start of input.
                             0x80, // Size of input.
-                            m, // Start of output.
+                            0x01, // Start of output.
                             0x20 // Size of output.
                         )
-                    )
                     // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if mul(eq(mload(m), signer), returndatasize()) {
+                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
                         isValid := 1
+                        mstore(0x60, 0) // Restore the zero slot.
+                        mstore(0x40, m) // Restore the free memory pointer.
                         break
                     }
                 }
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
+
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -182,25 +190,29 @@ library SignatureCheckerLib {
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
                 let m := mload(0x40)
-                mstore(m, hash)
-                mstore(add(m, 0x20), and(v, 0xff)) // `v`.
-                mstore(add(m, 0x40), r) // `r`.
-                mstore(add(m, 0x60), s) // `s`.
-                pop(
+                mstore(0x00, hash)
+                mstore(0x20, and(v, 0xff)) // `v`.
+                mstore(0x40, r) // `r`.
+                mstore(0x60, s) // `s`.
+                let t :=
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
                         1, // Address of `ecrecover`.
-                        m, // Start of input.
+                        0x00, // Start of input.
                         0x80, // Size of input.
-                        m, // Start of output.
+                        0x01, // Start of output.
                         0x20 // Size of output.
                     )
-                )
                 // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                if mul(eq(mload(m), signer), returndatasize()) {
+                if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
                     isValid := 1
+                    mstore(0x60, 0) // Restore the zero slot.
+                    mstore(0x40, m) // Restore the free memory pointer.
                     break
                 }
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
+
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
