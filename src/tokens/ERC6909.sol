@@ -289,15 +289,9 @@ abstract contract ERC6909 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
-            log4(
-                0x00,
-                0x20,
-                _TRANSFER_EVENT_SIGNATURE,
-                shr(96, shl(96, from)),
-                shr(96, mload(0x40)),
-                mload(0x20)
-            )
+            mstore(0x20, amount)
+            // forgefmt: disable-next-line
+            log4(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, mload(0x40)), id)
             /// Update the free memory pointer with the cached value.
             mstore(0x40, m)
         }
@@ -372,6 +366,7 @@ abstract contract ERC6909 {
         _beforeTokenTransfer(address(0), to, id, amount);
         /// @solidity memory-safe-assembly
         assembly {
+            // Compute the total supply slot and load its value.
             mstore(0x0c, _ERC6909_MASTER_SLOT_SEED)
             mstore(0x00, id)
             let totalSupplySlot := keccak256(0x00, 0x2c)
@@ -425,7 +420,7 @@ abstract contract ERC6909 {
             sstore(fromBalanceSlot, sub(fromBalance, amount))
 
             // Compute totalSupply slot and load its value.
-            mstore(0x14, mload(0x00))
+            mstore(0x14, id)
             let totalSupplySlot := keccak256(0x14, 0x2c)
             // Subtract and store the updated total supply.
             sstore(totalSupplySlot, sub(sload(totalSupplySlot), amount))
