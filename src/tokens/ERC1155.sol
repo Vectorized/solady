@@ -321,8 +321,7 @@ abstract contract ERC1155 {
             }
             // Loop through all the `ids` and update the balances.
             {
-                let end := shl(5, ids.length)
-                for { let i := end } i {} {
+                for { let i := shl(5, ids.length) } i {} {
                     i := sub(i, 0x20)
                     let amount := calldataload(add(amounts.offset, i))
                     // Subtract and store the updated balance of `from`.
@@ -535,8 +534,7 @@ abstract contract ERC1155 {
             // Loop through all the `ids` and update the balances.
             {
                 mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, to_))
-                let end := shl(5, mload(ids))
-                for { let i := end } i { i := sub(i, 0x20) } {
+                for { let i := shl(5, mload(ids)) } i { i := sub(i, 0x20) } {
                     let amount := mload(add(amounts, i))
                     // Increase and store the updated balance of `to`.
                     {
