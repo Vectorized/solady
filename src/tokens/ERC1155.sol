@@ -163,9 +163,9 @@ abstract contract ERC1155 {
             mstore(0x00, operator)
             sstore(keccak256(0x0c, 0x34), isApproved)
             // Emit the {ApprovalForAll} event.
-            mstore(0x00, isApproved)
+            mstore(0x20, isApproved)
             // forgefmt: disable-next-line
-            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator)))
+            log3(0x20, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, mload(0x0c)))
         }
     }
 
@@ -226,13 +226,10 @@ abstract contract ERC1155 {
             {
                 mstore(0x20, toSlotSeed)
                 let toBalanceSlot := keccak256(0x00, 0x40)
-                let toBalanceBefore := sload(toBalanceSlot)
-                let toBalanceAfter := add(toBalanceBefore, amount)
-                if lt(toBalanceAfter, toBalanceBefore) {
-                    mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
-                    revert(0x1c, 0x04)
-                }
-                sstore(toBalanceSlot, toBalanceAfter)
+                // Add and store the updated balance of `to`.
+                // Will not overflow because the sum of all user balances
+                // cannot exceed the maximum uint256 value.
+                sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             }
             // Emit a {TransferSingle} event.
             mstore(0x20, amount)
@@ -340,13 +337,10 @@ abstract contract ERC1155 {
                     {
                         mstore(0x20, toSlotSeed)
                         let toBalanceSlot := keccak256(0x00, 0x40)
-                        let toBalanceBefore := sload(toBalanceSlot)
-                        let toBalanceAfter := add(toBalanceBefore, amount)
-                        if lt(toBalanceAfter, toBalanceBefore) {
-                            mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
-                            revert(0x1c, 0x04)
-                        }
-                        sstore(toBalanceSlot, toBalanceAfter)
+                        // Add and store the updated balance of `to`.
+                        // Will not overflow because the sum of all user balances
+                        // cannot exceed the maximum uint256 value.
+                        sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
                     }
                 }
             }
@@ -804,13 +798,10 @@ abstract contract ERC1155 {
             {
                 mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, to_))
                 let toBalanceSlot := keccak256(0x00, 0x40)
-                let toBalanceBefore := sload(toBalanceSlot)
-                let toBalanceAfter := add(toBalanceBefore, amount)
-                if lt(toBalanceAfter, toBalanceBefore) {
-                    mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
-                    revert(0x1c, 0x04)
-                }
-                sstore(toBalanceSlot, toBalanceAfter)
+                // Add and store the updated balance of `to`.
+                // Will not overflow because the sum of all user balances
+                // cannot exceed the maximum uint256 value.
+                sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             }
             // Emit a {TransferSingle} event.
             mstore(0x20, amount)
@@ -903,13 +894,10 @@ abstract contract ERC1155 {
                     {
                         mstore(0x20, toSlotSeed)
                         let toBalanceSlot := keccak256(0x00, 0x40)
-                        let toBalanceBefore := sload(toBalanceSlot)
-                        let toBalanceAfter := add(toBalanceBefore, amount)
-                        if lt(toBalanceAfter, toBalanceBefore) {
-                            mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
-                            revert(0x1c, 0x04)
-                        }
-                        sstore(toBalanceSlot, toBalanceAfter)
+                        // Add and store the updated balance of `to`.
+                        // Will not overflow because the sum of all user balances
+                        // cannot exceed the maximum uint256 value.
+                        sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
                     }
                 }
             }
