@@ -582,7 +582,7 @@ library LibClone {
             mstore(0x35, hash)
             mstore(0x01, shl(96, deployer))
             mstore(0x15, salt)
-            predicted := keccak256(0x00, 0x55)
+            predicted := shr(96, shl(96, keccak256(0x00, 0x55)))
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x35, 0)
         }
