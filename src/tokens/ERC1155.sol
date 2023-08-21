@@ -261,7 +261,6 @@ abstract contract ERC1155 {
                         returndatacopy(0x00, 0x00, returndatasize())
                         revert(0x00, returndatasize())
                     }
-                    mstore(m, 0)
                 }
                 // Load the returndata and compare it with the function selector.
                 if iszero(eq(mload(m), shl(224, 0xf23a6e61))) {
@@ -322,7 +321,8 @@ abstract contract ERC1155 {
             // Loop through all the `ids` and update the balances.
             {
                 let end := shl(5, ids.length)
-                for { let i := 0 } iszero(eq(i, end)) { i := add(i, 0x20) } {
+                for { let i := end } i {} {
+                    i := sub(i, 0x20)
                     let amount := calldataload(add(amounts.offset, i))
                     // Subtract and store the updated balance of `from`.
                     {
@@ -360,12 +360,9 @@ abstract contract ERC1155 {
                 calldatacopy(o, sub(ids.offset, 0x20), n)
                 // Copy the `amounts`.
                 mstore(add(m, 0x20), add(0x40, n))
-                o := add(o, n)
-                n := add(0x20, shl(5, amounts.length))
-                calldatacopy(o, sub(amounts.offset, 0x20), n)
-                n := sub(add(o, n), m)
+                calldatacopy(add(o, n), sub(amounts.offset, 0x20), n)
                 // Do the emit.
-                log4(m, n, _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, to)
+                log4(m, add(add(n, n), 0x40), _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, to)
             }
         }
         if (_useAfterTokenTransfer()) {
@@ -390,23 +387,18 @@ abstract contract ERC1155 {
                 // Copy the `amounts`.
                 let s := add(0xa0, n)
                 mstore(add(m, 0x80), s)
-                o := add(o, n)
-                n := add(0x20, shl(5, amounts.length))
-                calldatacopy(o, sub(amounts.offset, 0x20), n)
+                calldatacopy(add(o, n), sub(amounts.offset, 0x20), n)
                 // Copy the `data`.
                 mstore(add(m, 0xa0), add(s, n))
-                o := add(o, n)
-                n := add(0x20, data.length)
-                calldatacopy(o, sub(data.offset, 0x20), n)
-                n := sub(add(o, n), add(m, 0x1c))
+                calldatacopy(add(o, add(n, n)), sub(data.offset, 0x20), add(0x20, data.length))
+                let nAll := add(0xc4, add(data.length, add(n, n)))
                 // Revert if the call reverts.
-                if iszero(call(gas(), mload(0x00), 0, add(m, 0x1c), n, mload(0x40), 0x20)) {
+                if iszero(call(gas(), mload(0x00), 0, add(m, 0x1c), nAll, m, 0x20)) {
                     if returndatasize() {
                         // Bubble up the revert if the call reverts.
                         returndatacopy(0x00, 0x00, returndatasize())
                         revert(0x00, returndatasize())
                     }
-                    mstore(m, 0)
                 }
                 // Load the returndata and compare it with the function selector.
                 if iszero(eq(mload(m), shl(224, 0xbc197c81))) {
@@ -436,10 +428,11 @@ abstract contract ERC1155 {
             balances := mload(0x40)
             mstore(balances, ids.length)
             let o := add(balances, 0x20)
-            let end := shl(5, ids.length)
-            mstore(0x40, add(end, o))
+            let i := shl(5, ids.length)
+            mstore(0x40, add(i, o))
             // Loop through all the `ids` and load the balances.
-            for { let i := 0 } iszero(eq(i, end)) { i := add(i, 0x20) } {
+            for {} i {} {
+                i := sub(i, 0x20)
                 let owner := calldataload(add(owners.offset, i))
                 mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, shl(96, owner)))
                 mstore(0x00, calldataload(add(ids.offset, i)))
@@ -499,7 +492,6 @@ abstract contract ERC1155 {
                 sstore(toBalanceSlot, toBalanceAfter)
             }
             // Emit a {TransferSingle} event.
-            mstore(0x00, id)
             mstore(0x20, amount)
             log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), 0, shr(96, to_))
         }
@@ -543,8 +535,7 @@ abstract contract ERC1155 {
             {
                 mstore(0x20, or(_ERC1155_MASTER_SLOT_SEED, to_))
                 let end := shl(5, mload(ids))
-                for { let i := 0 } iszero(eq(i, end)) {} {
-                    i := add(i, 0x20)
+                for { let i := end } i { i := sub(i, 0x20) } {
                     let amount := mload(add(amounts, i))
                     // Increase and store the updated balance of `to`.
                     {
@@ -630,7 +621,6 @@ abstract contract ERC1155 {
                 sstore(fromBalanceSlot, sub(fromBalance, amount))
             }
             // Emit a {TransferSingle} event.
-            mstore(0x00, id)
             mstore(0x20, amount)
             log4(0x00, 0x40, _TRANSFER_SINGLE_EVENT_SIGNATURE, caller(), shr(96, from_), 0)
         }
@@ -687,7 +677,7 @@ abstract contract ERC1155 {
                 for { let i := 0 } iszero(eq(i, end)) {} {
                     i := add(i, 0x20)
                     let amount := mload(add(amounts, i))
-                    // Decrease and store the updated balance of `to`.
+                    // Decrease and store the updated balance of `from`.
                     {
                         mstore(0x00, mload(add(ids, i)))
                         let fromBalanceSlot := keccak256(0x00, 0x40)
@@ -1050,7 +1040,6 @@ abstract contract ERC1155 {
                     returndatacopy(0x00, 0x00, returndatasize())
                     revert(0x00, returndatasize())
                 }
-                mstore(m, 0)
             }
             // Load the returndata and compare it with the function selector.
             if iszero(eq(mload(m), shl(224, 0xf23a6e61))) {
@@ -1101,7 +1090,6 @@ abstract contract ERC1155 {
                     returndatacopy(0x00, 0x00, returndatasize())
                     revert(0x00, returndatasize())
                 }
-                mstore(m, 0)
             }
             // Load the returndata and compare it with the function selector.
             if iszero(eq(mload(m), shl(224, 0xbc197c81))) {
