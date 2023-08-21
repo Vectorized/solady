@@ -270,16 +270,16 @@ contract ERC6909Test is SoladyTest {
         assertEq(token.isOperator(owner, spender), approved);
     }
 
-    function testSetDecimals(uint256 id, uint8 decimal) public {
+    function testSetDecimals(uint256 id, uint8 decimal, bool flag) public {
         /// @solidity memory-safe-assembly
         assembly {
             decimal := or(shl(8, gas()), decimal)
         }
-        token.setDecimals(id, decimal);
-        if ((decimal & 255) == 0) {
-            assertEq(token.decimals(id), 18);
+        if (flag) {
+            token.setDecimals(id, decimal);
+            assertEq(token.decimals(id), (decimal & 255));
         } else {
-            assertEq(token.decimals(id), decimal);
+            assertEq(token.decimals(id), 18);
         }
     }
 

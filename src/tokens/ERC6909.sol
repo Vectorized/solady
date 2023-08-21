@@ -111,7 +111,7 @@ abstract contract ERC6909 {
     /// @dev Returns the decimals places of the given token `id`.
     ///
     /// Note: If decimals is not set by `_setDecimals` function than
-    ///       it will return by default `18`.
+    ///       it will return default `18`.
     function decimals(uint256 id) public view virtual returns (uint8 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -119,7 +119,7 @@ abstract contract ERC6909 {
             mstore(0x20, id)
             let decimalsSlot := keccak256(0x14, 0x2c)
             result := sload(decimalsSlot)
-            result := add(result, mul(iszero(result), 18))
+            result := xor(18, mul(shr(8, result), xor(18, and(result, 0xff))))
         }
     }
 
@@ -432,12 +432,13 @@ abstract contract ERC6909 {
     }
 
     /// @dev Set decimals place for the given `id`.
+    ///      and turn on 9th lsb as a flag.
     function _setDecimals(uint256 id, uint8 decimal) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, _ERC6909_MASTER_SLOT_SEED)
             mstore(0x20, id)
-            sstore(keccak256(0x14, 0x2c), and(0xff, decimal))
+            sstore(keccak256(0x14, 0x2c), or(0x100, and(0xff, decimal)))
         }
     }
 
