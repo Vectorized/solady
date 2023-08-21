@@ -17,9 +17,10 @@ pragma solidity ^0.8.4;
 /// please refer to 0age's ImmutableCreate2Factory deployment instructions at:
 /// https://github.com/ProjectOpenSea/seaport/blob/main/docs/Deployment.md
 ///
-/// Contract verification information:
-/// - Exact source code:
+/// Contract verification:
+/// - Source code:
 ///   https://github.com/Vectorized/solady/blob/5212e50fef1f2ff1b1b5e03a5d276a0d23c02713/src/utils/ERC1967Factory.sol
+///   (EXACT source code is required. Use the file at the commit instead of the latest copy.)
 /// - Optimization Enabled: Yes with 1000000 runs
 /// - Compiler Version: v0.8.19+commit.7dd6d404
 /// - Other Settings: default evmVersion, MIT license
