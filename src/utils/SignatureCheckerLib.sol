@@ -6,7 +6,10 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SignatureCheckerLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
 ///
-/// @dev Note: Unlike ECDSA signatures, contract signatures are revocable.
+/// @dev Note:
+/// - The `bytes memory signature` variants use the identity precompile (0x4)
+///   to copy memory internally.
+/// - Unlike ECDSA signatures, contract signatures are revocable.
 ///
 /// WARNING! Do NOT use signatures as unique identifiers.
 /// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
