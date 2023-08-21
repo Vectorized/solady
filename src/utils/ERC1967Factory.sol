@@ -62,7 +62,7 @@ contract ERC1967Factory {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // The admin slot for a `proxy` is simply `proxy`.
+    // The admin slot for a `proxy` is `shl(96, proxy)`.
 
     /// @dev The ERC-1967 storage slot for the implementation in the proxy.
     /// `uint256(keccak256("eip1967.proxy.implementation")) - 1`.
@@ -74,25 +74,25 @@ contract ERC1967Factory {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the admin of the proxy.
-    function adminOf(address proxy) external view returns (address admin) {
+    function adminOf(address proxy) public view returns (address admin) {
         /// @solidity memory-safe-assembly
         assembly {
-            admin := sload(proxy)
+            admin := sload(shl(96, proxy))
         }
     }
 
     /// @dev Sets the admin of the proxy.
     /// The caller of this function must be the admin of the proxy on this factory.
-    function changeAdmin(address proxy, address admin) external {
+    function changeAdmin(address proxy, address admin) public {
         /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
-            if iszero(eq(sload(proxy), caller())) {
+            if iszero(eq(sload(shl(96, proxy)), caller())) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
             // Store the admin for the proxy.
-            sstore(proxy, admin)
+            sstore(shl(96, proxy), admin)
             // Emit the {AdminChanged} event.
             log3(0, 0, _ADMIN_CHANGED_EVENT_SIGNATURE, proxy, admin)
         }
@@ -118,7 +118,7 @@ contract ERC1967Factory {
         /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
-            if iszero(eq(sload(proxy), caller())) {
+            if iszero(eq(sload(shl(96, proxy)), caller())) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
@@ -238,7 +238,7 @@ contract ERC1967Factory {
             // Store the admin for the proxy.
             mstore(0x0c, address())
             mstore(0x00, proxy)
-            sstore(proxy, admin)
+            sstore(shl(96, proxy), admin)
 
             // Emit the {Deployed} event.
             log4(0, 0, _DEPLOYED_EVENT_SIGNATURE, proxy, implementation, admin)
