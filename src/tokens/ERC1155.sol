@@ -7,9 +7,10 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC1155/ERC1155.sol)
 ///
 /// @dev Note:
-/// The ERC1155 standard allows for self-approvals.
-/// For performance, this implementation WILL NOT revert for such actions.
-/// Please add any checks with overrides if desired.
+/// - The ERC1155 standard allows for self-approvals.
+///   For performance, this implementation WILL NOT revert for such actions.
+///   Please add any checks with overrides if desired.
+/// - This implementation uses the identity precompile (0x4) to copy memory internally.
 abstract contract ERC1155 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
