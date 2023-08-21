@@ -104,8 +104,6 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             instance := create(0, 0x0c, 0x35)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -113,6 +111,8 @@ library LibClone {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x21, 0)
         }
     }
 
@@ -127,8 +127,6 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             instance := create2(0, 0x0c, 0x35, salt)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -136,6 +134,8 @@ library LibClone {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x21, 0)
         }
     }
 
@@ -234,8 +234,6 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             instance := create(0, 0x0e, 0x36)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -243,6 +241,8 @@ library LibClone {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x24, 0)
         }
     }
 
@@ -257,8 +257,6 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             instance := create2(0, 0x0e, 0x36, salt)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -266,6 +264,8 @@ library LibClone {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x24, 0)
         }
     }
 
@@ -300,6 +300,9 @@ library LibClone {
 
     /// @dev Deploys a minimal proxy with `implementation`,
     /// using immutable arguments encoded in `data`.
+    ///
+    /// Note: This implementation of CWIA differs from the original implementation.
+    /// If the calldata is empty, it will emit a `ReceiveETH(uint256)` event and skip the `DELEGATECALL`.
     function clone(address implementation, bytes memory data) internal returns (address instance) {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
@@ -309,6 +312,9 @@ library LibClone {
             let dataLength := mload(data)
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
+
+            // Do a out-of-gas revert if `dataLength` is more than 2 bytes (super unlikely).
+            returndatacopy(returndatasize(), returndatasize(), shr(16, dataLength))
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
@@ -434,6 +440,9 @@ library LibClone {
 
     /// @dev Deploys a deterministic clone of `implementation`,
     /// using immutable arguments encoded in `data`, with `salt`.
+    ///
+    /// Note: This implementation of CWIA differs from the original implementation.
+    /// If the calldata is empty, it will emit a `ReceiveETH(uint256)` event and skip the `DELEGATECALL`.
     function cloneDeterministic(address implementation, bytes memory data, bytes32 salt)
         internal
         returns (address instance)
@@ -446,6 +455,9 @@ library LibClone {
             let dataLength := mload(data)
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
+
+            // Do a out-of-gas revert if `dataLength` is more than 2 bytes (super unlikely).
+            returndatacopy(returndatasize(), returndatasize(), shr(16, dataLength))
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
