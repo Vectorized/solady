@@ -418,15 +418,14 @@ abstract contract ERC6909 {
 
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
-
+            // Emit the {Transfer} event.
+            mstore(0x00, amount)
+            log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, mload(0x20)), 0, id)
             // Compute totalSupply slot and load its value.
             mstore(0x14, id)
             let totalSupplySlot := keccak256(0x14, 0x2c)
             // Subtract and store the updated total supply.
             sstore(totalSupplySlot, sub(sload(totalSupplySlot), amount))
-            // Emit the {Transfer} event.
-            mstore(0x20, amount)
-            log4(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), 0, id)
         }
 
         _afterTokenTransfer(from, address(0), id, amount);
