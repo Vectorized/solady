@@ -673,9 +673,7 @@ abstract contract ERC1155 {
             }
             // Loop through all the `ids` and update the balances.
             {
-                let end := shl(5, mload(ids))
-                for { let i := 0 } iszero(eq(i, end)) {} {
-                    i := add(i, 0x20)
+                for { let i := shl(5, mload(ids)) } i { i := sub(i, 0x20) } {
                     let amount := mload(add(amounts, i))
                     // Decrease and store the updated balance of `from`.
                     {
@@ -888,9 +886,7 @@ abstract contract ERC1155 {
             }
             // Loop through all the `ids` and update the balances.
             {
-                let end := shl(5, mload(ids))
-                for { let i := 0 } iszero(eq(i, end)) {} {
-                    i := add(i, 0x20)
+                for { let i := shl(5, mload(ids)) } i { i := sub(i, 0x20) } {
                     let amount := mload(add(amounts, i))
                     // Subtract and store the updated balance of `from`.
                     {
