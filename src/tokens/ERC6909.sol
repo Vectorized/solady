@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Simple EIP-6909 implementation.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC20.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC6909.sol)
 ///
 /// @dev Note:
 /// The ERC6909 standard allows minting and transferring to and from the zero address,
