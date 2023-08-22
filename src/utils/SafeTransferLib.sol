@@ -96,7 +96,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 if iszero(create(amount, 0x0b, 0x16)) {
-                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) } // For gas estimation.
+                    returndatacopy(gas(), returndatasize(), shr(20, gas())) // For gas estimation.
                 }
             }
         }
@@ -111,7 +111,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 if iszero(create(selfbalance(), 0x0b, 0x16)) {
-                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) } // For gas estimation.
+                    returndatacopy(gas(), returndatasize(), shr(20, gas())) // For gas estimation.
                 }
             }
         }
@@ -130,7 +130,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 if iszero(create(amount, 0x0b, 0x16)) {
-                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) } // For gas estimation.
+                    returndatacopy(gas(), returndatasize(), shr(20, gas())) // For gas estimation.
                 }
             }
         }
@@ -145,7 +145,7 @@ library SafeTransferLib {
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
                 if iszero(create(selfbalance(), 0x0b, 0x16)) {
-                    if iszero(gt(gas(), 1000000)) { revert(0x00, 0x00) } // For gas estimation.
+                    returndatacopy(gas(), returndatasize(), shr(20, gas())) // For gas estimation.
                 }
             }
         }
