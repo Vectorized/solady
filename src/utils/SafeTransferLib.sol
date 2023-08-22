@@ -64,7 +64,7 @@ library SafeTransferLib {
     function safeTransferETH(address to, uint256 amount) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(call(gas(), to, amount, 0x00, 0x00, 0x00, 0x00)) {
+            if iszero(call(gas(), to, amount, gas(), 0x00, gas(), 0x00)) {
                 mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -76,7 +76,7 @@ library SafeTransferLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Transfer all the ETH and check if it succeeded or not.
-            if iszero(call(gas(), to, selfbalance(), 0x00, 0x00, 0x00, 0x00)) {
+            if iszero(call(gas(), to, selfbalance(), gas(), 0x00, gas(), 0x00)) {
                 mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -91,7 +91,7 @@ library SafeTransferLib {
                 mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
-            if iszero(call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00)) {
+            if iszero(call(gasStipend, to, amount, gas(), 0x00, gas(), 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
@@ -106,7 +106,7 @@ library SafeTransferLib {
     function forceSafeTransferAllETH(address to, uint256 gasStipend) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(call(gasStipend, to, selfbalance(), 0x00, 0x00, 0x00, 0x00)) {
+            if iszero(call(gasStipend, to, selfbalance(), gas(), 0x00, gas(), 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
@@ -125,7 +125,7 @@ library SafeTransferLib {
                 mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
-            if iszero(call(GAS_STIPEND_NO_GRIEF, to, amount, 0x00, 0x00, 0x00, 0x00)) {
+            if iszero(call(GAS_STIPEND_NO_GRIEF, to, amount, gas(), 0x00, gas(), 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
@@ -140,7 +140,7 @@ library SafeTransferLib {
     function forceSafeTransferAllETH(address to) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(call(GAS_STIPEND_NO_GRIEF, to, selfbalance(), 0x00, 0x00, 0x00, 0x00)) {
+            if iszero(call(GAS_STIPEND_NO_GRIEF, to, selfbalance(), gas(), 0x00, gas(), 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
@@ -158,7 +158,7 @@ library SafeTransferLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            success := call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00)
+            success := call(gasStipend, to, amount, gas(), 0x00, gas(), 0x00)
         }
     }
 
@@ -169,7 +169,7 @@ library SafeTransferLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            success := call(gasStipend, to, selfbalance(), 0x00, 0x00, 0x00, 0x00)
+            success := call(gasStipend, to, selfbalance(), gas(), 0x00, gas(), 0x00)
         }
     }
 
