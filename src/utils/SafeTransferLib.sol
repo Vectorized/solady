@@ -8,7 +8,7 @@ pragma solidity ^0.8.4;
 /// @dev Note:
 /// - For ETH transfers, please use `forceSafeTransferETH` for gas griefing protection.
 /// - For ERC20s, this implementation won't check that a token has code,
-/// responsibility is delegated to the caller.
+///   responsibility is delegated to the caller.
 library SafeTransferLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
