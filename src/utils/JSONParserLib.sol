@@ -324,7 +324,7 @@ library JSONParserLib {
 
             function skipDigits(p_, e_, _atLeastOne) -> _p {
                 for { _p := p_ } iszero(eq(_p, e_)) { _p := add(_p, 1) } {
-                    if iszero(and(shr(chr(_p), 0x3ff000000000000), 1)) { break }
+                    if iszero(and(shr(chr(_p), shl(48, 0x3ff)), 1)) { break }
                 }
                 if and(_atLeastOne, eq(_p, p_)) { fail() }
             }
@@ -332,15 +332,15 @@ library JSONParserLib {
             function parseNumber(s_, packed_, p_, e_) -> _item, _p {
                 _p := p_
                 if eq(byte(0, mload(_p)), 45) { _p := add(_p, 1) } // '-'.
-                if iszero(and(shr(chr(_p), 0x3ff000000000000), lt(_p, e_))) { fail() } // Not '0'..'9'.
+                if iszero(and(shr(chr(_p), shl(48, 0x3ff)), lt(_p, e_))) { fail() } // Not '0'..'9'.
                 let c_ := chr(_p)
                 _p := add(_p, 1)
                 if iszero(eq(c_, 48)) { _p := skipDigits(_p, e_, 0) } // Not '0'.
                 if and(lt(_p, e_), eq(chr(_p), 46)) { _p := skipDigits(add(_p, 1), e_, 1) }
-                if and(lt(_p, e_), and(shr(sub(chr(_p), 69), 0x100000001), 1)) {
-                    // 'E', 'e'.
+                // 'E', 'e'.
+                if and(lt(_p, e_), and(shr(chr(_p), shl(69, 0x100000001)), 1)) {
                     _p := add(_p, 1)
-                    _p := add(_p, or(lt(_p, e_), and(shr(sub(chr(_p), 43), 3), 1))) // '-', '+'.
+                    _p := add(_p, or(lt(_p, e_), and(shr(chr(_p), shl(43, 3)), 1))) // '-', '+'.
                     _p := skipDigits(_p, e_, 1)
                 }
                 _item := mallocItem(s_, packed_, p_, _p, _TYPE_NUMBER)
@@ -349,13 +349,15 @@ library JSONParserLib {
             function copyString(s_, o_, n_) -> _d {
                 _d := mload(0x40)
                 s_ := add(s_, o_)
-                for { let i_ := 0 } lt(i_, n_) {} {
-                    i_ := add(i_, 0x20)
+                let w_ := not(0x1f)
+                for { let i_ := and(add(n_, 0x1f), w_) } 1 {} {
                     mstore(add(_d, i_), mload(add(s_, i_)))
+                    i_ := add(i_, w_) // `sub(i_, 0x20)`.
+                    if iszero(i_) { break }
                 }
                 mstore(_d, n_) // Copy the length.
-                mstore(add(add(_d, 0x40), n_), 0) // Zeroize the last slot.
-                mstore(0x40, add(add(_d, 0x60), n_)) // Allocate memory.
+                mstore(add(add(_d, 0x20), n_), 0) // Zeroize the last slot.
+                mstore(0x40, add(add(_d, 0x40), n_)) // Allocate memory.
             }
 
             function value(item_) -> _v {
@@ -386,9 +388,12 @@ library JSONParserLib {
                         h_ := getPointer(mload(h_), _BITPOS_SIBLING)
                         o_ := add(o_, 0x20)
                     }
-                    let n_ := shr(5, sub(o_, add(_arr, 0x20)))
+                    let w_ := not(0x1f)
+                    let n_ := shr(5, add(w_, sub(o_, _arr)))
                     mstore(_arr, n_)
                     mstore(0x40, o_)
+                    packed_ := setPointer(packed_, _BITPOS_CHILD, _arr)
+                    mstore(item_, or(_BITMASK_CHILDREN_INITED, packed_))
                     // Reverse the array.
                     if iszero(lt(n_, 2)) {
                         let l_ := add(_arr, 0x20)
@@ -397,13 +402,11 @@ library JSONParserLib {
                             let t := mload(l_)
                             mstore(l_, mload(h_))
                             mstore(h_, t)
-                            h_ := sub(h_, 0x20)
+                            h_ := add(h_, w_)
                             l_ := add(l_, 0x20)
                             if iszero(lt(l_, h_)) { break }
                         }
                     }
-                    packed_ := setPointer(packed_, _BITPOS_CHILD, _arr)
-                    mstore(item_, or(_BITMASK_CHILDREN_INITED, packed_))
                 }
             }
 
