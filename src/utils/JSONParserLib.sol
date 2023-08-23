@@ -23,8 +23,8 @@ library JSONParserLib {
     uint256 private constant _BITMASK_KEY_INITED = 1 << 8;
     uint256 private constant _BITMASK_VALUE_INITED = 1 << 9;
     uint256 private constant _BITMASK_CHILDREN_INITED = 1 << 10;
-    uint256 private constant _BITMASK_IS_ARRAY_ITEM = 1 << 11;
-    uint256 private constant _BITMASK_IS_OBJECT_ITEM = 1 << 12;
+    uint256 private constant _BITMASK_PARENT_IS_ARRAY = 1 << 11;
+    uint256 private constant _BITMASK_PARENT_IS_OBJECT = 1 << 12;
     uint256 private constant _BITPOS_STRING = 32 * 7;
     uint256 private constant _BITPOS_KEY_LENGTH = 32 * 6;
     uint256 private constant _BITPOS_KEY = 32 * 5;
@@ -67,7 +67,7 @@ library JSONParserLib {
 
     function index(Item memory item) internal returns (uint256 result) {
         assembly {
-            if and(mload(item), _BITMASK_IS_ARRAY_ITEM) {
+            if and(mload(item), _BITMASK_PARENT_IS_ARRAY) {
                 result := and(_BITMASK_POINTER, shr(_BITPOS_KEY, mload(item)))
             }
         }
@@ -113,6 +113,14 @@ library JSONParserLib {
 
     function isNull(Item memory item) internal returns (bool result) {
         result = _isType(item, _TYPE_NULL);
+    }
+
+    function parentIsArray(Item memory item) internal returns (bool result) {
+        result = _hasFlagSet(item, _BITMASK_PARENT_IS_ARRAY);
+    }
+
+    function parentIsObject(Item memory item) internal returns (bool result) {
+        result = _hasFlagSet(item, _BITMASK_PARENT_IS_OBJECT);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -218,7 +226,7 @@ library JSONParserLib {
                     if eq(chr(_p), 93) { break } // ']'.
                     _item, _p := parseValue(s_, _item, _p, e_)
                     if _item {
-                        let d_ := or(mload(_item), _BITMASK_IS_ARRAY_ITEM)
+                        let d_ := or(mload(_item), _BITMASK_PARENT_IS_ARRAY)
                         mstore(_item, setPointer(d_, _BITPOS_KEY, j_))
                         j_ := add(j_, 1)
                     }
@@ -246,7 +254,7 @@ library JSONParserLib {
                     _p := add(_p, 1)
                     _item, _p := parseValue(s_, _item, _p, e_)
                     if iszero(_item) { _p := e_ }
-                    let d_ := or(_BITMASK_IS_OBJECT_ITEM, mload(_item))
+                    let d_ := or(_BITMASK_PARENT_IS_OBJECT, mload(_item))
                     d_ := setPointer(d_, _BITPOS_KEY_LENGTH, sub(pKeyEnd_, pKeyStart_))
                     mstore(_item, setPointer(d_, _BITPOS_KEY, sub(pKeyStart_, add(s_, 0x20))))
                     if lt(_p, e_) {
@@ -396,7 +404,7 @@ library JSONParserLib {
             case 1 {
                 // Get key.
                 result := 0x60
-                if and(mload(input), _BITMASK_IS_OBJECT_ITEM) {
+                if and(mload(input), _BITMASK_PARENT_IS_OBJECT) {
                     result := getString(input, _BITPOS_KEY, _BITPOS_KEY_LENGTH, _BITMASK_KEY_INITED)
                 }
             }
@@ -429,6 +437,12 @@ library JSONParserLib {
     function _isType(Item memory input, uint256 t) private returns (bool result) {
         assembly {
             result := eq(and(mload(input), _BITMASK_TYPE), t)
+        }
+    }
+
+    function _hasFlagSet(Item memory input, uint256 f) private returns (bool result) {
+        assembly {
+            result := iszero(iszero(and(mload(input), f)))
         }
     }
 }
