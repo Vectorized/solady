@@ -56,7 +56,7 @@ library JSONParserLib {
     uint256 private constant _BITPOS_VALUE_LENGTH = 32 * 4;
     uint256 private constant _BITPOS_VALUE = 32 * 3;
     uint256 private constant _BITPOS_CHILD = 32 * 2;
-    uint256 private constant _BITPOS_SIBLING = 32 * 1;
+    uint256 private constant _BITPOS_SIBLING_OR_PARENT = 32 * 1;
     uint256 private constant _BITMASK_POINTER = 0xffffffff;
     uint256 private constant _BITMASK_TYPE = 0xff;
     uint256 private constant _BITMASK_KEY_INITED = 1 << 8;
@@ -188,6 +188,14 @@ library JSONParserLib {
         result = _hasFlagSet(item, _BITMASK_PARENT_IS_OBJECT);
     }
 
+    /// @dev Returns the item's parent (if any).
+    function parent(Item memory item) internal pure returns (Item memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(shr(_BITPOS_SIBLING_OR_PARENT, mload(item)), _BITMASK_POINTER)
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -236,7 +244,8 @@ library JSONParserLib {
             }
 
             function parseValue(s_, b_, p_, e_) -> _item, _p {
-                let packed_ := setPointer(setPointer(0, _BITPOS_STRING, s_), _BITPOS_SIBLING, b_)
+                let packed_ := setPointer(0, _BITPOS_STRING, s_)
+                packed_ := setPointer(packed_, _BITPOS_SIBLING_OR_PARENT, b_)
                 _p := skipWhitespace(p_, e_)
                 if eq(_p, e_) { leave }
                 for { let c_ := chr(_p) } 1 {} {
@@ -420,8 +429,9 @@ library JSONParserLib {
             }
 
             function children(item_) -> _arr {
-                _arr := 0x60 // Initialize to the zero pointer.
+                _arr := 0x60
                 let packed_ := mload(item_)
+                if or(iszero(packed_), iszero(item_)) { leave }
                 let t_ := and(_BITMASK_TYPE, packed_)
                 if or(eq(t_, TYPE_ARRAY), eq(t_, TYPE_OBJECT)) {
                     if and(packed_, _BITMASK_CHILDREN_INITED) {
@@ -432,7 +442,10 @@ library JSONParserLib {
                     let o_ := add(_arr, 0x20)
                     for { let h_ := getPointer(packed_, _BITPOS_CHILD) } h_ {} {
                         mstore(o_, h_)
-                        h_ := getPointer(mload(h_), _BITPOS_SIBLING)
+                        let q_ := mload(h_)
+                        let y_ := getPointer(q_, _BITPOS_SIBLING_OR_PARENT)
+                        mstore(h_, setPointer(q_, _BITPOS_SIBLING_OR_PARENT, item_))
+                        h_ := y_
                         o_ := add(o_, 0x20)
                     }
                     let w_ := not(0x1f)
@@ -458,11 +471,9 @@ library JSONParserLib {
             }
 
             function getString(item_, bitpos_, bitposLength_, bitmaskInited_) -> _result {
+                _result := 0x60
                 let packed_ := mload(item_)
-                if or(iszero(item_), iszero(packed_)) {
-                    _result := 0x60
-                    leave
-                }
+                if or(iszero(item_), iszero(packed_)) { leave }
                 _result := getPointer(packed_, bitpos_)
                 if iszero(and(bitmaskInited_, packed_)) {
                     let s_ := getPointer(packed_, _BITPOS_STRING)

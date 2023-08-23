@@ -51,5 +51,6 @@ contract JSONParserLibTest is SoladyTest {
         }
         assertEq(item.getType(), JSONParserLib.TYPE_OBJECT);
         assertTrue(item.isObject());
+        console.log(item.children()[0].parent().value());
     }
 }
