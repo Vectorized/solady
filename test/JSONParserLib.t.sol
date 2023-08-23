@@ -10,7 +10,8 @@ contract JSONParserLibTest is SoladyTest {
     function testParseNumber() public {
         JSONParserLib.Item memory item;
         JSONParserLib.Item[] memory children;
-
+        assertEq(item.value(), "");
+        assertTrue(item.isUndefined());
         // console.log(JSONParserLib.parse("  true  ").value());
         // console.log(JSONParserLib.parse("  true").value());
         // console.log(JSONParserLib.parse("  false  ").value());

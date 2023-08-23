@@ -459,6 +459,10 @@ library JSONParserLib {
 
             function getString(item_, bitpos_, bitposLength_, bitmaskInited_) -> _result {
                 let packed_ := mload(item_)
+                if or(iszero(item_), iszero(packed_)) {
+                    _result := 0x60
+                    leave
+                }
                 _result := getPointer(packed_, bitpos_)
                 if iszero(and(bitmaskInited_, packed_)) {
                     let s_ := getPointer(packed_, _BITPOS_STRING)
