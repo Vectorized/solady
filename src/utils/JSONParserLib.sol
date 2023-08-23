@@ -23,12 +23,13 @@ library JSONParserLib {
     uint256 private constant _BITMASK_KEY_INITED = 1 << 8;
     uint256 private constant _BITMASK_VALUE_INITED = 1 << 9;
     uint256 private constant _BITMASK_CHILDREN_INITED = 1 << 10;
-    uint256 private constant _BITMASK_KEY_IS_INDEX = 1 << 11;
+    uint256 private constant _BITMASK_IS_ARRAY_ITEM = 1 << 11;
+    uint256 private constant _BITMASK_IS_OBJECT_ITEM = 1 << 12;
     uint256 private constant _BITPOS_STRING = 32 * 7;
-    uint256 private constant _BITPOS_KEY = 32 * 6;
-    uint256 private constant _BITPOS_KEY_LENGTH = 32 * 5;
-    uint256 private constant _BITPOS_VALUE = 32 * 4;
-    uint256 private constant _BITPOS_VALUE_LENGTH = 32 * 3;
+    uint256 private constant _BITPOS_KEY_LENGTH = 32 * 6;
+    uint256 private constant _BITPOS_KEY = 32 * 5;
+    uint256 private constant _BITPOS_VALUE_LENGTH = 32 * 4;
+    uint256 private constant _BITPOS_VALUE = 32 * 3;
     uint256 private constant _BITPOS_CHILD = 32 * 2;
     uint256 private constant _BITPOS_SIBLING = 32 * 1;
     uint256 private constant _BITMASK_POINTER = 0xffffffff;
@@ -51,49 +52,74 @@ library JSONParserLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function parse(string memory s) internal returns (Item memory result) {
-        bytes32 r = _workflow(_toInput(s), 1);
+        bytes32 r = _query(_toInput(s), 255);
         assembly {
             result := r
         }
     }
 
     function value(Item memory item) internal returns (string memory result) {
-        bytes32 r = _workflow(_toInput(item), 2);
+        bytes32 r = _query(_toInput(item), 0);
+        assembly {
+            result := r
+        }
+    }
+
+    function index(Item memory item) internal returns (uint256 result) {
+        assembly {
+            if and(mload(item), _BITMASK_IS_ARRAY_ITEM) {
+                result := and(_BITMASK_POINTER, shr(_BITPOS_KEY, mload(item)))
+            }
+        }
+    }
+
+    function key(Item memory item) internal returns (string memory result) {
+        bytes32 r = _query(_toInput(item), 1);
         assembly {
             result := r
         }
     }
 
     function children(Item memory item) internal returns (Item[] memory result) {
-        bytes32 r = _workflow(_toInput(item), 3);
+        bytes32 r = _query(_toInput(item), 3);
         assembly {
             result := r
         }
     }
 
-    function index(Item memory item) internal returns (uint256 result) {}
+    function isUndefined(Item memory item) internal returns (bool result) {
+        result = _isType(item, _TYPE_UNDEFINED);
+    }
 
-    function key(Item memory item) internal returns (string memory result) {}
+    function isArray(Item memory item) internal returns (bool result) {
+        result = _isType(item, _TYPE_ARRAY);
+    }
 
-    function isUndefined(Item memory item) internal returns (bool result) {}
+    function isObject(Item memory item) internal returns (bool result) {
+        result = _isType(item, _TYPE_OBJECT);
+    }
 
-    function isArray(Item memory item) internal returns (bool result) {}
+    function isNumber(Item memory item) internal returns (bool result) {
+        result = _isType(item, _TYPE_NUMBER);
+    }
 
-    function isObject(Item memory item) internal returns (bool result) {}
+    function isString(Item memory item) internal returns (bool result) {
+        result = _isType(item, _TYPE_STRING);
+    }
 
-    function isNumber(Item memory item) internal returns (bool result) {}
+    function isBool(Item memory item) internal returns (bool result) {
+        result = _isType(item, _TYPE_BOOL);
+    }
 
-    function isString(Item memory item) internal returns (bool result) {}
-
-    function isBool(Item memory item) internal returns (bool result) {}
-
-    function isNull(Item memory item) internal returns (bool result) {}
+    function isNull(Item memory item) internal returns (bool result) {
+        result = _isType(item, _TYPE_NULL);
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _workflow(bytes32 input, uint256 mode) private returns (bytes32 result) {
+    function _query(bytes32 input, uint256 mode) private returns (bytes32 result) {
         assembly {
             function fail() {
                 mstore(0x00, 0x10182796)
@@ -111,6 +137,7 @@ library JSONParserLib {
             }
 
             function setPointer(packed_, bitpos_, p_) -> _packed {
+                returndatacopy(gas(), returndatasize(), gt(p_, _BITMASK_POINTER))
                 _packed := or(and(not(shl(bitpos_, _BITMASK_POINTER)), packed_), shl(bitpos_, p_))
             }
 
@@ -132,42 +159,54 @@ library JSONParserLib {
                 _p := skipWhitespace(p_, e_)
                 if eq(_p, e_) { leave }
                 let c_ := chr(_p)
-                if and(shr(sub(c_, 45), 8185), 1) {
-                    // Number.
-                    _item, _p := parseNumber(s_, packed_, _p, e_)
-                }
-                if eq(c_, 91) {
-                    // Array.
-                    _item, _p := parseArray(s_, packed_, _p, e_)
-                }
-                if eq(c_, 123) { // Object.
-                }
-                if eq(c_, 34) {
-                    // String.
-                    _item, _p := parseString(s_, packed_, _p, e_)
-                }
-                if iszero(gt(add(_p, 4), e_)) {
-                    let pStart_ := _p
-                    let w_ := shr(224, mload(_p))
-                    if eq(w_, 0x74727565) {
-                        // true.
-                        _p := add(_p, 4)
-                        _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_BOOL)
+                for {} 1 {} {
+                    if and(shr(sub(c_, 45), 8185), 1) {
+                        // Number.
+                        _item, _p := parseNumber(s_, packed_, _p, e_)
+                        break
                     }
-                    if eq(w_, 0x6e756c6c) {
-                        // null.
-                        _p := add(_p, 4)
-                        _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_NULL)
+                    if eq(c_, 91) {
+                        // Array.
+                        _item, _p := parseArray(s_, packed_, _p, e_)
+                        break
                     }
-                }
-                if iszero(gt(add(_p, 5), e_)) {
-                    let pStart_ := _p
-                    let w_ := shr(216, mload(_p))
-                    if eq(w_, 0x66616c7365) {
-                        // false.
-                        _p := add(_p, 5)
-                        _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_BOOL)
+                    if eq(c_, 123) {
+                        // Object.
+                        _item, _p := parseObject(s_, packed_, _p, e_)
+                        break
                     }
+                    if eq(c_, 34) {
+                        // String.
+                        _item, _p := parseString(s_, packed_, _p, e_)
+                        break
+                    }
+                    if iszero(gt(add(_p, 4), e_)) {
+                        let pStart_ := _p
+                        let w_ := shr(224, mload(_p))
+                        if eq(w_, 0x74727565) {
+                            // true.
+                            _p := add(_p, 4)
+                            _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_BOOL)
+                            break
+                        }
+                        if eq(w_, 0x6e756c6c) {
+                            // null.
+                            _p := add(_p, 4)
+                            _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_NULL)
+                            break
+                        }
+                    }
+                    if iszero(gt(add(_p, 5), e_)) {
+                        let pStart_ := _p
+                        let w_ := shr(216, mload(_p))
+                        if eq(w_, 0x66616c7365) {
+                            // false.
+                            _p := add(_p, 5)
+                            _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_BOOL)
+                            break
+                        }
+                    }
+                    fail()
                 }
                 _p := skipWhitespace(_p, e_)
             }
@@ -179,10 +218,9 @@ library JSONParserLib {
                     if eq(chr(_p), 93) { break } // ']'.
                     _item, _p := parseValue(s_, _item, _p, e_)
                     if _item {
-                        let d_ := or(mload(_item), _BITMASK_KEY_IS_INDEX)
+                        let d_ := or(mload(_item), _BITMASK_IS_ARRAY_ITEM)
                         mstore(_item, setPointer(d_, _BITPOS_KEY, j_))
                         j_ := add(j_, 1)
-                        log2(0, 0, _LOG_UINT256_SELECTOR, j_)
                     }
                     if lt(_p, e_) {
                         let c_ := chr(_p)
@@ -196,9 +234,34 @@ library JSONParserLib {
                 _item := mallocItem(s_, packed_, p_, _p, _TYPE_ARRAY)
             }
 
-            function parseObject(s_, packed_, p_, e_) -> _item, _p {}
+            function parseObject(s_, packed_, p_, e_) -> _item, _p {
+                for { _p := add(p_, 1) } 1 { _p := add(_p, 1) } {
+                    if iszero(lt(_p, e_)) { fail() }
+                    if eq(chr(_p), 125) { break } // '}'.
+                    _p := skipWhitespace(_p, e_)
+                    let pKeyStart_ := _p
+                    let pKeyEnd_ := parseStringSub(s_, _item, _p, e_)
+                    _p := skipWhitespace(pKeyEnd_, e_)
+                    if iszero(and(lt(_p, e_), eq(chr(_p), 58))) { _p := e_ }
+                    _p := add(_p, 1)
+                    _item, _p := parseValue(s_, _item, _p, e_)
+                    if iszero(_item) { _p := e_ }
+                    let d_ := or(_BITMASK_IS_OBJECT_ITEM, mload(_item))
+                    d_ := setPointer(d_, _BITPOS_KEY_LENGTH, sub(pKeyEnd_, pKeyStart_))
+                    mstore(_item, setPointer(d_, _BITPOS_KEY, sub(pKeyStart_, add(s_, 0x20))))
+                    if lt(_p, e_) {
+                        let c_ := chr(_p)
+                        if eq(c_, 125) { break } // '}'.
+                        if eq(c_, 44) { continue } // ','.
+                    }
+                    _p := e_
+                }
+                _p := add(_p, 1)
+                packed_ := setPointer(packed_, _BITPOS_CHILD, _item)
+                _item := mallocItem(s_, packed_, p_, _p, _TYPE_OBJECT)
+            }
 
-            function parseString(s_, packed_, p_, e_) -> _item, _p {
+            function parseStringSub(s_, packed_, p_, e_) -> _p {
                 for { _p := add(p_, 1) } 1 {} {
                     if iszero(lt(_p, e_)) { fail() }
                     let c_ := chr(_p)
@@ -222,6 +285,10 @@ library JSONParserLib {
                     _p := e_
                 }
                 _p := add(_p, 1)
+            }
+
+            function parseString(s_, packed_, p_, e_) -> _item, _p {
+                _p := parseStringSub(s_, packed_, p_, e_)
                 _item := mallocItem(s_, packed_, p_, _p, _TYPE_STRING)
             }
 
@@ -310,28 +377,39 @@ library JSONParserLib {
                 }
             }
 
-            switch mode
-            case 1 {
-                let s := input
-                let p := add(s, 0x20)
-                let e := add(p, mload(s))
-                result, p := parseValue(s, 0, p, e)
-                if lt(p, e) { fail() }
+            function getString(item_, bitpos_, bitposLength_, bitmaskInited_) -> _result {
+                let packed_ := mload(item_)
+                _result := getPointer(packed_, bitpos_)
+                if iszero(and(bitmaskInited_, packed_)) {
+                    let s_ := getPointer(packed_, _BITPOS_STRING)
+                    let n := getPointer(packed_, bitposLength_)
+                    _result := copyString(s_, _result, n)
+                    mstore(item_, or(bitmaskInited_, setPointer(packed_, bitpos_, _result)))
+                }
             }
-            case 2 {
-                let packed := mload(input)
-                result := getPointer(packed, _BITPOS_VALUE)
-                if iszero(and(_BITMASK_VALUE_INITED, packed)) {
-                    let s := getPointer(packed, _BITPOS_STRING)
-                    let n := getPointer(packed, _BITPOS_VALUE_LENGTH)
-                    result := copyString(s, result, n)
-                    packed := setPointer(packed, _BITPOS_VALUE, result)
-                    mstore(s, or(_BITMASK_VALUE_INITED, packed))
+
+            switch mode
+            case 0 {
+                result :=
+                    getString(input, _BITPOS_VALUE, _BITPOS_VALUE_LENGTH, _BITMASK_VALUE_INITED)
+            }
+            case 1 {
+                // Get key.
+                result := 0x60
+                if and(mload(input), _BITMASK_IS_OBJECT_ITEM) {
+                    result := getString(input, _BITPOS_KEY, _BITPOS_KEY_LENGTH, _BITMASK_KEY_INITED)
                 }
             }
             case 3 {
                 // Get children.
                 result := children(input)
+            }
+            default {
+                let s := input
+                let p := add(s, 0x20)
+                let e := add(p, mload(s))
+                result, p := parseValue(s, 0, p, e)
+                if lt(p, e) { fail() }
             }
         }
     }
@@ -345,6 +423,12 @@ library JSONParserLib {
     function _toInput(Item memory input) private returns (bytes32 result) {
         assembly {
             result := input
+        }
+    }
+
+    function _isType(Item memory input, uint256 t) private returns (bool result) {
+        assembly {
+            result := eq(and(mload(input), _BITMASK_TYPE), t)
         }
     }
 }
