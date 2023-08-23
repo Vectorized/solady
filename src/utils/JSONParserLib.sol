@@ -51,6 +51,11 @@ library JSONParserLib {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Parses the JSON string `s`, and returns the root.
+    ///
+    /// Note: For efficiency, this function will NOT make a copy of `s`.
+    /// The parsed tree will contain offsets to `s`.
+    /// Do NOT pass in a string that will be modified later on.
     function parse(string memory s) internal returns (Item memory result) {
         bytes32 r = _query(_toInput(s), 255);
         assembly {
@@ -58,6 +63,12 @@ library JSONParserLib {
         }
     }
 
+    /// @dev Returns the string value of the item.
+    /// If the item's type is string, the returned string will be double-quoted.
+    ///
+    /// Note: This function lazily instantiates and caches the returned string.
+    /// For efficiency, only call this function on required items.
+    /// Do NOT modify the returned string.
     function value(Item memory item) internal returns (string memory result) {
         bytes32 r = _query(_toInput(item), 0);
         assembly {
@@ -65,6 +76,8 @@ library JSONParserLib {
         }
     }
 
+    /// @dev Returns the index of the item in the array.
+    /// It the item's parent is not an array, returns 0.
     function index(Item memory item) internal returns (uint256 result) {
         assembly {
             if and(mload(item), _BITMASK_PARENT_IS_ARRAY) {
@@ -73,6 +86,12 @@ library JSONParserLib {
         }
     }
 
+    /// @dev Returns the key of the item in the object.
+    /// It the item's parent is not an object, returns the empty string.
+    ///
+    /// Note: This function lazily instantiates and caches the returned string.
+    /// For efficiency, only call this function on required items.
+    /// Do NOT modify the returned string.
     function key(Item memory item) internal returns (string memory result) {
         bytes32 r = _query(_toInput(item), 1);
         assembly {
@@ -80,6 +99,12 @@ library JSONParserLib {
         }
     }
 
+    /// @dev Returns the key of the item in the object.
+    /// It the item's parent is not an object, returns the empty string.
+    ///
+    /// Note: This function lazily instantiates and caches the returned array.
+    /// For efficiency, only call this function on required items.
+    /// Do NOT modify the returned array.
     function children(Item memory item) internal returns (Item[] memory result) {
         bytes32 r = _query(_toInput(item), 3);
         assembly {
