@@ -225,8 +225,12 @@ library JSONParserLib {
 
             function mallocItem(s_, packed_, pStart_, pCurr_, type_) -> _item {
                 _item := mload(0x40)
-                packed_ := setPointer(packed_, _BITPOS_VALUE, sub(pStart_, add(s_, 0x20)))
-                packed_ := setPointer(packed_, _BITPOS_VALUE_LENGTH, sub(pCurr_, pStart_))
+                packed_ :=
+                    setPointer(
+                        setPointer(packed_, _BITPOS_VALUE, sub(pStart_, add(s_, 0x20))),
+                        _BITPOS_VALUE_LENGTH,
+                        sub(pCurr_, pStart_)
+                    )
                 mstore(_item, or(packed_, type_))
                 mstore(0x40, add(_item, 0x20))
             }
@@ -432,15 +436,15 @@ library JSONParserLib {
                         o_ := add(o_, 0x20)
                     }
                     let w_ := not(0x1f)
-                    let n_ := shr(5, add(w_, sub(o_, _arr)))
-                    mstore(_arr, n_)
+                    let n_ := add(w_, sub(o_, _arr))
+                    mstore(_arr, shr(5, n_))
                     mstore(0x40, o_)
                     packed_ := setPointer(packed_, _BITPOS_CHILD, _arr)
                     mstore(item_, or(_BITMASK_CHILDREN_INITED, packed_))
                     // Reverse the array.
-                    if iszero(lt(n_, 2)) {
+                    if iszero(lt(n_, 0x40)) {
                         let l_ := add(_arr, 0x20)
-                        let h_ := add(_arr, shl(5, n_))
+                        let h_ := add(_arr, n_)
                         for {} 1 {} {
                             let t := mload(l_)
                             mstore(l_, mload(h_))
