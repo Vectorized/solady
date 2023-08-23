@@ -187,8 +187,7 @@ library JSONParserLib {
             }
 
             function parseValue(s_, b_, p_, e_) -> _item, _p {
-                let packed_ := setPointer(0, _BITPOS_STRING, s_)
-                packed_ := setPointer(packed_, _BITPOS_SIBLING, b_)
+                let packed_ := setPointer(setPointer(0, _BITPOS_STRING, s_), _BITPOS_SIBLING, b_)
                 _p := skipWhitespace(p_, e_)
                 if eq(_p, e_) { leave }
                 let c_ := chr(_p)
