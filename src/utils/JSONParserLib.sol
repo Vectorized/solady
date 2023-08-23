@@ -165,7 +165,7 @@ library JSONParserLib {
 
             function skipWhitespace(p_, e_) -> _p {
                 for { _p := p_ } iszero(eq(_p, e_)) { _p := add(_p, 1) } {
-                    if iszero(and(shr(chr(_p), 4294977024), 1)) { break }
+                    if iszero(and(shr(chr(_p), 0x100002600), 1)) { break }
                 }
             }
 
@@ -193,37 +193,39 @@ library JSONParserLib {
                 if eq(_p, e_) { leave }
                 let c_ := chr(_p)
                 for {} 1 {} {
-                    if and(shr(sub(c_, 45), 8185), 1) {
-                        // Number.
+                    // If starts with any in '0123456789-'.
+                    if and(shr(sub(c_, 45), 0x1ff9), 1) {
                         _item, _p := parseNumber(s_, packed_, _p, e_)
                         break
                     }
+                    // If starts with '['.
                     if eq(c_, 91) {
-                        // Array.
                         _item, _p := parseArray(s_, packed_, _p, e_)
                         break
                     }
+                    // If starts with '{'.
                     if eq(c_, 123) {
-                        // Object.
                         _item, _p := parseObject(s_, packed_, _p, e_)
                         break
                     }
+                    // If starts with '"'.
                     if eq(c_, 34) {
-                        // String.
-                        _item, _p := parseString(s_, packed_, _p, e_)
+                        let pStart_ := _p
+                        _p := parseStringSub(s_, packed_, _p, e_)
+                        _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_STRING)
                         break
                     }
                     if iszero(gt(add(_p, 4), e_)) {
                         let pStart_ := _p
                         let w_ := shr(224, mload(_p))
+                        // 'true' in hex format.
                         if eq(w_, 0x74727565) {
-                            // true.
                             _p := add(_p, 4)
                             _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_BOOL)
                             break
                         }
+                        // 'null' in hex format.
                         if eq(w_, 0x6e756c6c) {
-                            // null.
                             _p := add(_p, 4)
                             _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_NULL)
                             break
@@ -232,8 +234,8 @@ library JSONParserLib {
                     if iszero(gt(add(_p, 5), e_)) {
                         let pStart_ := _p
                         let w_ := shr(216, mload(_p))
+                        // 'false' in hex format.
                         if eq(w_, 0x66616c7365) {
-                            // false.
                             _p := add(_p, 5)
                             _item := mallocItem(s_, packed_, pStart_, _p, _TYPE_BOOL)
                             break
@@ -296,38 +298,33 @@ library JSONParserLib {
 
             function parseStringSub(s_, packed_, p_, e_) -> _p {
                 for { _p := add(p_, 1) } 1 {} {
-                    if iszero(lt(_p, e_)) { fail() }
                     let c_ := chr(_p)
-                    if eq(c_, 34) { break } // '"'.
+                    if iszero(mul(lt(_p, e_), xor(c_, 34))) { break } // '"'.
+                    // Not '\'.
                     if iszero(eq(c_, 92)) {
-                        // Not '\'.
                         _p := add(_p, 1)
                         continue
                     }
                     c_ := chr(add(_p, 1))
+                    // 'u'.
                     if eq(c_, 117) {
-                        // 'u'.
                         _p := add(_p, 6)
                         continue
                     }
                     // '"', '\', '//', 'b', 'f', 'n', 'r', 't'.
-                    if and(shr(sub(c_, 34), 6120500844678689411047425), 1) {
+                    if and(shr(sub(c_, 34), 0x510110400000000002001), 1) {
                         _p := add(_p, 2)
                         continue
                     }
                     _p := e_
                 }
+                if iszero(lt(_p, e_)) { fail() }
                 _p := add(_p, 1)
-            }
-
-            function parseString(s_, packed_, p_, e_) -> _item, _p {
-                _p := parseStringSub(s_, packed_, p_, e_)
-                _item := mallocItem(s_, packed_, p_, _p, _TYPE_STRING)
             }
 
             function skipDigits(p_, e_, _atLeastOne) -> _p {
                 for { _p := p_ } iszero(eq(_p, e_)) { _p := add(_p, 1) } {
-                    if iszero(and(shr(sub(chr(_p), 48), 1023), 1)) { break }
+                    if iszero(and(shr(chr(_p), 0x3ff000000000000), 1)) { break }
                 }
                 if and(_atLeastOne, eq(_p, p_)) { fail() }
             }
@@ -335,12 +332,12 @@ library JSONParserLib {
             function parseNumber(s_, packed_, p_, e_) -> _item, _p {
                 _p := p_
                 if eq(byte(0, mload(_p)), 45) { _p := add(_p, 1) } // '-'.
-                if iszero(and(shr(sub(chr(_p), 48), 1023), lt(_p, e_))) { fail() } // Not '0'..'9'.
+                if iszero(and(shr(chr(_p), 0x3ff000000000000), lt(_p, e_))) { fail() } // Not '0'..'9'.
                 let c_ := chr(_p)
                 _p := add(_p, 1)
                 if iszero(eq(c_, 48)) { _p := skipDigits(_p, e_, 0) } // Not '0'.
                 if and(lt(_p, e_), eq(chr(_p), 46)) { _p := skipDigits(add(_p, 1), e_, 1) }
-                if and(lt(_p, e_), and(shr(sub(chr(_p), 69), 4294967297), 1)) {
+                if and(lt(_p, e_), and(shr(sub(chr(_p), 69), 0x100000001), 1)) {
                     // 'E', 'e'.
                     _p := add(_p, 1)
                     _p := add(_p, or(lt(_p, e_), and(shr(sub(chr(_p), 43), 3), 1))) // '-', '+'.
