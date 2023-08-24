@@ -271,7 +271,7 @@ library JSONParserLib {
                         break
                     }
                     // If starts with any in '0123456789-'.
-                    if and(shr(sub(c_, 45), 0x1ff9), 1) {
+                    if and(shr(c_, shl(45, 0x1ff9)), 1) {
                         _item, _pOut := parseNumber(s_, packed_, _pOut, end_)
                         break
                     }
