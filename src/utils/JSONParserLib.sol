@@ -8,7 +8,7 @@ library JSONParserLib {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Cannot parse the JSON string. It may be malformed.
+    /// @dev Cannot parse the malformed JSON string
     error ParsingFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -17,8 +17,9 @@ library JSONParserLib {
 
     // There are 6 types of variables in JSON (excluding undefined).
 
-    /// @dev For denoting that a item has not been initialized.
+    /// @dev For denoting that an item has not been initialized.
     /// A item returned from `parse` will never be of an undefined type.
+    /// Parsing a malformed JSON string will simply revert.
     uint8 internal constant TYPE_UNDEFINED = 0;
 
     /// @dev Type representing an array (e.g. `[1,2,3]`).
@@ -45,6 +46,7 @@ library JSONParserLib {
 
     /// @dev A pointer to a parsed JSON node.
     struct Item {
+        // Do NOT modify the `_data` directly.
         bytes32 _data;
     }
 
@@ -70,6 +72,8 @@ library JSONParserLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Parses the JSON string `s`, and returns the root.
+    ///
+    /// Reverts if `s` is not a valid JSON as specified in RFC 8259.
     ///
     /// Note: For efficiency, this function will NOT make a copy of `s`.
     /// The parsed tree will contain offsets to `s`.
@@ -213,11 +217,11 @@ library JSONParserLib {
                 _c := byte(0, mload(p_))
             }
 
-            function skipWhitespace(p_, e_) -> _p {
-                for { _p := p_ } 1 { _p := add(_p, 1) } {
+            function skipWhitespace(pIn_, end_) -> _pOut {
+                for { _pOut := pIn_ } 1 { _pOut := add(_pOut, 1) } {
                     // ' ', '\n', '\r', '\t'.
-                    if iszero(and(shr(chr(_p), 0x100002600), 1)) { leave }
-                    if eq(_p, e_) { leave }
+                    if iszero(and(shr(chr(_pOut), 0x100002600), 1)) { leave }
+                    if eq(_pOut, end_) { leave }
                 }
             }
 
@@ -243,193 +247,196 @@ library JSONParserLib {
                 mstore(0x40, add(_item, 0x20))
             }
 
-            function parseValue(s_, b_, p_, e_) -> _item, _p {
+            function parseValue(s_, sibling_, pIn_, end_) -> _item, _pOut {
                 let packed_ := setPointer(0, _BITPOS_STRING, s_)
-                packed_ := setPointer(packed_, _BITPOS_SIBLING_OR_PARENT, b_)
-                _p := skipWhitespace(p_, e_)
-                if eq(_p, e_) { leave }
-                for { let c_ := chr(_p) } 1 {} {
+                packed_ := setPointer(packed_, _BITPOS_SIBLING_OR_PARENT, sibling_)
+                _pOut := skipWhitespace(pIn_, end_)
+                if eq(_pOut, end_) { leave }
+                for { let c_ := chr(_pOut) } 1 {} {
                     // If starts with '"'.
                     if eq(c_, 34) {
-                        let pStart_ := _p
-                        _p := parseStringSub(s_, packed_, _p, e_)
-                        _item := mallocItem(s_, packed_, pStart_, _p, TYPE_STRING)
+                        let pStart_ := _pOut
+                        _pOut := parseStringSub(s_, packed_, _pOut, end_)
+                        _item := mallocItem(s_, packed_, pStart_, _pOut, TYPE_STRING)
                         break
                     }
                     // If starts with '['.
                     if eq(c_, 91) {
-                        _item, _p := parseArray(s_, packed_, _p, e_)
+                        _item, _pOut := parseArray(s_, packed_, _pOut, end_)
                         break
                     }
                     // If starts with '{'.
                     if eq(c_, 123) {
-                        _item, _p := parseObject(s_, packed_, _p, e_)
+                        _item, _pOut := parseObject(s_, packed_, _pOut, end_)
                         break
                     }
                     // If starts with any in '0123456789-'.
                     if and(shr(sub(c_, 45), 0x1ff9), 1) {
-                        _item, _p := parseNumber(s_, packed_, _p, e_)
+                        _item, _pOut := parseNumber(s_, packed_, _pOut, end_)
                         break
                     }
-                    if iszero(gt(add(_p, 4), e_)) {
-                        let pStart_ := _p
-                        let w_ := shr(224, mload(_p))
+                    if iszero(gt(add(_pOut, 4), end_)) {
+                        let pStart_ := _pOut
+                        let w_ := shr(224, mload(_pOut))
                         // 'true' in hex format.
                         if eq(w_, 0x74727565) {
-                            _p := add(_p, 4)
-                            _item := mallocItem(s_, packed_, pStart_, _p, TYPE_BOOLEAN)
+                            _pOut := add(_pOut, 4)
+                            _item := mallocItem(s_, packed_, pStart_, _pOut, TYPE_BOOLEAN)
                             break
                         }
                         // 'null' in hex format.
                         if eq(w_, 0x6e756c6c) {
-                            _p := add(_p, 4)
-                            _item := mallocItem(s_, packed_, pStart_, _p, TYPE_NULL)
+                            _pOut := add(_pOut, 4)
+                            _item := mallocItem(s_, packed_, pStart_, _pOut, TYPE_NULL)
                             break
                         }
                     }
-                    if iszero(gt(add(_p, 5), e_)) {
-                        let pStart_ := _p
-                        let w_ := shr(216, mload(_p))
+                    if iszero(gt(add(_pOut, 5), end_)) {
+                        let pStart_ := _pOut
+                        let w_ := shr(216, mload(_pOut))
                         // 'false' in hex format.
                         if eq(w_, 0x66616c7365) {
-                            _p := add(_p, 5)
-                            _item := mallocItem(s_, packed_, pStart_, _p, TYPE_BOOLEAN)
+                            _pOut := add(_pOut, 5)
+                            _item := mallocItem(s_, packed_, pStart_, _pOut, TYPE_BOOLEAN)
                             break
                         }
                     }
                     fail()
                 }
-                _p := skipWhitespace(_p, e_)
+                _pOut := skipWhitespace(_pOut, end_)
             }
 
-            function parseArray(s_, packed_, p_, e_) -> _item, _p {
+            function parseArray(s_, packed_, pIn_, end_) -> _item, _pOut {
                 let j_ := 0
-                for { _p := add(p_, 1) } 1 { _p := add(_p, 1) } {
-                    if iszero(lt(_p, e_)) { fail() }
-                    if eq(chr(_p), 93) { break } // ']'.
-                    _item, _p := parseValue(s_, _item, _p, e_)
+                for { _pOut := add(pIn_, 1) } 1 { _pOut := add(_pOut, 1) } {
+                    if iszero(lt(_pOut, end_)) { fail() }
+                    if eq(chr(_pOut), 93) { break } // ']'.
+                    _item, _pOut := parseValue(s_, _item, _pOut, end_)
                     if _item {
                         let d_ := or(mload(_item), _BITMASK_PARENT_IS_ARRAY)
                         mstore(_item, setPointer(d_, _BITPOS_KEY, j_))
                         j_ := add(j_, 1)
                     }
-                    if lt(_p, e_) {
-                        let c_ := chr(_p)
+                    if lt(_pOut, end_) {
+                        let c_ := chr(_pOut)
                         if eq(c_, 93) { break } // ']'.
                         if eq(c_, 44) { continue } // ','.
                     }
-                    _p := e_
+                    _pOut := end_
                 }
-                _p := add(_p, 1)
+                _pOut := add(_pOut, 1)
                 packed_ := setPointer(packed_, _BITPOS_CHILD, _item)
-                _item := mallocItem(s_, packed_, p_, _p, TYPE_ARRAY)
+                _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_ARRAY)
             }
 
-            function parseObject(s_, packed_, p_, e_) -> _item, _p {
-                for { _p := add(p_, 1) } 1 { _p := add(_p, 1) } {
-                    if iszero(lt(_p, e_)) { fail() }
-                    if eq(chr(_p), 125) { break } // '}'.
-                    _p := skipWhitespace(_p, e_)
-                    let pKeyStart_ := _p
-                    let pKeyEnd_ := parseStringSub(s_, _item, _p, e_)
-                    _p := skipWhitespace(pKeyEnd_, e_)
-                    if iszero(and(lt(_p, e_), eq(chr(_p), 58))) { _p := e_ }
-                    _p := add(_p, 1)
-                    _item, _p := parseValue(s_, _item, _p, e_)
-                    if iszero(_item) { _p := e_ }
+            function parseObject(s_, packed_, pIn_, end_) -> _item, _pOut {
+                for { _pOut := add(pIn_, 1) } 1 { _pOut := add(_pOut, 1) } {
+                    if iszero(lt(_pOut, end_)) { fail() }
+                    if eq(chr(_pOut), 125) { break } // '}'.
+                    _pOut := skipWhitespace(_pOut, end_)
+                    let pKeyStart_ := _pOut
+                    let pKeyEnd_ := parseStringSub(s_, _item, _pOut, end_)
+                    _pOut := skipWhitespace(pKeyEnd_, end_)
+                    if iszero(and(lt(_pOut, end_), eq(chr(_pOut), 58))) { _pOut := end_ }
+                    _pOut := add(_pOut, 1)
+                    _item, _pOut := parseValue(s_, _item, _pOut, end_)
+                    if iszero(_item) { _pOut := end_ }
                     let d_ := or(_BITMASK_PARENT_IS_OBJECT, mload(_item))
                     d_ := setPointer(d_, _BITPOS_KEY_LENGTH, sub(pKeyEnd_, pKeyStart_))
                     mstore(_item, setPointer(d_, _BITPOS_KEY, sub(pKeyStart_, add(s_, 0x20))))
-                    if lt(_p, e_) {
-                        let c_ := chr(_p)
+                    if lt(_pOut, end_) {
+                        let c_ := chr(_pOut)
                         if eq(c_, 125) { break } // '}'.
                         if eq(c_, 44) { continue } // ','.
                     }
-                    _p := e_
+                    _pOut := end_
                 }
-                _p := add(_p, 1)
+                _pOut := add(_pOut, 1)
                 packed_ := setPointer(packed_, _BITPOS_CHILD, _item)
-                _item := mallocItem(s_, packed_, p_, _p, TYPE_OBJECT)
+                _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_OBJECT)
             }
 
-            function parseStringSub(s_, packed_, p_, e_) -> _p {
-                for { _p := add(p_, 1) } 1 {} {
-                    let c_ := chr(_p)
-                    if iszero(mul(lt(_p, e_), xor(c_, 34))) { break } // '"'.
+            function parseStringSub(s_, packed_, pIn_, end_) -> _pOut {
+                for { _pOut := add(pIn_, 1) } 1 {} {
+                    let c_ := chr(_pOut)
+                    if iszero(mul(lt(_pOut, end_), xor(c_, 34))) { break } // '"'.
                     // Not '\'.
                     if iszero(eq(c_, 92)) {
-                        _p := add(_p, 1)
+                        _pOut := add(_pOut, 1)
                         continue
                     }
-                    c_ := chr(add(_p, 1))
+                    c_ := chr(add(_pOut, 1))
                     // 'u'.
                     if eq(c_, 117) {
-                        _p := add(_p, 6)
+                        _pOut := add(_pOut, 6)
                         continue
                     }
                     // '"', '\', '//', 'b', 'f', 'n', 'r', 't'.
                     if and(shr(sub(c_, 34), 0x510110400000000002001), 1) {
-                        _p := add(_p, 2)
+                        _pOut := add(_pOut, 2)
                         continue
                     }
-                    _p := e_
+                    _pOut := end_
                 }
-                if iszero(lt(_p, e_)) { fail() }
-                _p := add(_p, 1)
+                if iszero(lt(_pOut, end_)) { fail() }
+                _pOut := add(_pOut, 1)
             }
 
-            function skipDigits(p_, e_, _atLeastOne) -> _p {
-                for { _p := p_ } iszero(eq(_p, e_)) { _p := add(_p, 1) } {
-                    if iszero(and(shr(chr(_p), shl(48, 0x3ff)), 1)) { break }
+            function skip0To9s(pIn_, end_, atLeastOne_) -> _pOut {
+                for { _pOut := pIn_ } iszero(eq(_pOut, end_)) { _pOut := add(_pOut, 1) } {
+                    if iszero(and(shr(chr(_pOut), shl(48, 0x3ff)), 1)) { break } // Not '0'..'9'.
                 }
-                if and(_atLeastOne, eq(_p, p_)) { fail() }
+                if and(atLeastOne_, eq(pIn_, _pOut)) { fail() }
             }
 
-            function parseNumber(s_, packed_, p_, e_) -> _item, _p {
-                _p := p_
-                if eq(byte(0, mload(_p)), 45) { _p := add(_p, 1) } // '-'.
-                if iszero(and(shr(chr(_p), shl(48, 0x3ff)), lt(_p, e_))) { fail() } // Not '0'..'9'.
-                let c_ := chr(_p)
-                _p := add(_p, 1)
-                if iszero(eq(c_, 48)) { _p := skipDigits(_p, e_, 0) } // Not '0'.
-                if and(lt(_p, e_), eq(chr(_p), 46)) { _p := skipDigits(add(_p, 1), e_, 1) }
+            function parseNumber(s_, packed_, pIn_, end_) -> _item, _pOut {
+                _pOut := pIn_
+                if eq(byte(0, mload(_pOut)), 45) { _pOut := add(_pOut, 1) } // '-'.
+                if iszero(and(shr(chr(_pOut), shl(48, 0x3ff)), lt(_pOut, end_))) { fail() } // Not '0'..'9'.
+                let c_ := chr(_pOut)
+                _pOut := add(_pOut, 1)
+                if iszero(eq(c_, 48)) { _pOut := skip0To9s(_pOut, end_, 0) } // Not '0'.
+                // '.'.
+                if and(lt(_pOut, end_), eq(chr(_pOut), 46)) {
+                    _pOut := skip0To9s(add(_pOut, 1), end_, 1)
+                }
                 // 'E', 'e'.
-                if and(lt(_p, e_), and(shr(chr(_p), shl(69, 0x100000001)), 1)) {
-                    _p := add(_p, 1)
-                    _p := add(_p, or(lt(_p, e_), and(shr(chr(_p), shl(43, 3)), 1))) // '-', '+'.
-                    _p := skipDigits(_p, e_, 1)
+                if and(lt(_pOut, end_), and(shr(chr(_pOut), shl(69, 0x100000001)), 1)) {
+                    _pOut := add(_pOut, 1)
+                    _pOut := add(_pOut, and(shr(chr(_pOut), shl(43, 5)), lt(_pOut, end_))) // '+', '-'.
+                    _pOut := skip0To9s(_pOut, end_, 1)
                 }
-                _item := mallocItem(s_, packed_, p_, _p, TYPE_NUMBER)
+                _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_NUMBER)
             }
 
-            function copyString(s_, o_, n_) -> _d {
-                _d := mload(0x40)
-                s_ := add(s_, o_)
+            function copyString(s_, offset_, len_) -> _sCopy {
+                _sCopy := mload(0x40)
+                s_ := add(s_, offset_)
                 let w_ := not(0x1f)
-                for { let i_ := and(add(n_, 0x1f), w_) } 1 {} {
-                    mstore(add(_d, i_), mload(add(s_, i_)))
+                for { let i_ := and(add(len_, 0x1f), w_) } 1 {} {
+                    mstore(add(_sCopy, i_), mload(add(s_, i_)))
                     i_ := add(i_, w_) // `sub(i_, 0x20)`.
                     if iszero(i_) { break }
                 }
-                mstore(_d, n_) // Copy the length.
-                mstore(add(add(_d, 0x20), n_), 0) // Zeroize the last slot.
-                mstore(0x40, add(add(_d, 0x40), n_)) // Allocate memory.
+                mstore(_sCopy, len_) // Copy the length.
+                mstore(add(add(_sCopy, 0x20), len_), 0) // Zeroize the last slot.
+                mstore(0x40, add(add(_sCopy, 0x40), len_)) // Allocate memory.
             }
 
-            function value(item_) -> _v {
+            function value(item_) -> _value {
                 let packed_ := mload(item_)
-                _v := getPointer(packed_, _BITPOS_VALUE)
+                _value := getPointer(packed_, _BITPOS_VALUE) // The offset in the string.
                 if iszero(and(_BITMASK_VALUE_INITED, packed_)) {
                     let s_ := getPointer(packed_, _BITPOS_STRING)
-                    let n_ := getPointer(packed_, _BITPOS_VALUE_LENGTH)
-                    _v := copyString(s_, _v, n_)
-                    packed_ := setPointer(packed_, _BITPOS_VALUE, _v)
+                    let len_ := getPointer(packed_, _BITPOS_VALUE_LENGTH)
+                    _value := copyString(s_, _value, len_)
+                    packed_ := setPointer(packed_, _BITPOS_VALUE, _value)
                     mstore(s_, or(_BITMASK_VALUE_INITED, packed_))
                 }
             }
 
             function children(item_) -> _arr {
-                _arr := 0x60
+                _arr := 0x60 // Initialize to the zero pointer.
                 let packed_ := mload(item_)
                 if or(iszero(packed_), iszero(item_)) { leave }
                 let t_ := and(_BITMASK_TYPE, packed_)
@@ -456,22 +463,22 @@ library JSONParserLib {
                     mstore(item_, or(_BITMASK_CHILDREN_INITED, packed_))
                     // Reverse the array.
                     if iszero(lt(n_, 0x40)) {
-                        let l_ := add(_arr, 0x20)
-                        let h_ := add(_arr, n_)
+                        let lo_ := add(_arr, 0x20)
+                        let hi_ := add(_arr, n_)
                         for {} 1 {} {
-                            let t := mload(l_)
-                            mstore(l_, mload(h_))
-                            mstore(h_, t)
-                            h_ := add(h_, w_)
-                            l_ := add(l_, 0x20)
-                            if iszero(lt(l_, h_)) { break }
+                            let temp_ := mload(lo_)
+                            mstore(lo_, mload(hi_))
+                            mstore(hi_, temp_)
+                            hi_ := add(hi_, w_)
+                            lo_ := add(lo_, 0x20)
+                            if iszero(lt(lo_, hi_)) { break }
                         }
                     }
                 }
             }
 
             function getString(item_, bitpos_, bitposLength_, bitmaskInited_) -> _result {
-                _result := 0x60
+                _result := 0x60 // Initialize to the zero pointer.
                 let packed_ := mload(item_)
                 if or(iszero(item_), iszero(packed_)) { leave }
                 _result := getPointer(packed_, bitpos_)
@@ -484,21 +491,21 @@ library JSONParserLib {
             }
 
             switch mode
+            // Get value.
             case 0 {
                 result :=
                     getString(input, _BITPOS_VALUE, _BITPOS_VALUE_LENGTH, _BITMASK_VALUE_INITED)
             }
+            // Get key.
             case 1 {
-                // Get key.
-                result := 0x60
+                result := 0x60 // Initialize to the zero pointer.
                 if and(mload(input), _BITMASK_PARENT_IS_OBJECT) {
                     result := getString(input, _BITPOS_KEY, _BITPOS_KEY_LENGTH, _BITMASK_KEY_INITED)
                 }
             }
-            case 3 {
-                // Get children.
-                result := children(input)
-            }
+            // Get children.
+            case 3 { result := children(input) }
+            // Parse.
             default {
                 let s := input
                 let p := add(s, 0x20)

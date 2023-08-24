@@ -34,7 +34,9 @@ contract JSONParserLibTest is SoladyTest {
         // }
 
         // console.log(JSONParserLib.parse("  01234567890  ").value());
+        console.log(JSONParserLib.parse("  -1.234567890e+22  ").value());
         console.log(JSONParserLib.parse("  -1.234567890e-22  ").value());
+        console.log(JSONParserLib.parse("  -1.234567890e22  ").value());
         console.log(JSONParserLib.parse("  1234567890  ").value());
         console.log(JSONParserLib.parse("  123  ").value());
         console.log(JSONParserLib.parse("  1  ").value());
