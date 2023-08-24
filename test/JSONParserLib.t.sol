@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {JSONParserLib} from "../src/utils/JSONParserLib.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract JSONParserLibTest is SoladyTest {
     using JSONParserLib for *;
@@ -77,13 +78,9 @@ contract JSONParserLibTest is SoladyTest {
         vm.expectRevert(JSONParserLib.ParsingFailed.selector);
         this.parsedValue(striped);
         string memory s = striped;
-        for (uint256 i; i != 2; ++i) {
-            s = string(abi.encodePacked(" ", s));
+        for (uint256 i; i != 4; ++i) {
             vm.expectRevert(JSONParserLib.ParsingFailed.selector);
-            this.parsedValue(s);
-            s = string(abi.encodePacked(s, " "));
-            vm.expectRevert(JSONParserLib.ParsingFailed.selector);
-            this.parsedValue(s);
+            this.parsedValue(_padWhiteSpace(s, i));
         }
     }
 
@@ -109,27 +106,19 @@ contract JSONParserLibTest is SoladyTest {
     }
 
     function _checkParseNumber(string memory striped) internal {
-        _checkNumberWithoutParent(striped.parse(), striped);
+        _checkSoloNumber(striped.parse(), striped);
         string memory s = striped;
         for (uint256 i; i != 4; ++i) {
-            _checkNumberWithoutParent(_padWhiteSpace(s, i).parse(), striped);
+            _checkSoloNumber(_padWhiteSpace(s, i).parse(), striped);
         }
     }
 
-    function _checkNumberWithoutParent(JSONParserLib.Item memory item, string memory striped)
-        internal
-    {
+    function _checkSoloNumber(JSONParserLib.Item memory item, string memory striped) internal {
         for (uint256 i; i != 2; ++i) {
             assertEq(item.getType(), JSONParserLib.TYPE_NUMBER);
             assertEq(item.isNumber(), true);
-            assertEq(item.key(), "");
-            assertEq(item.index(), 0);
             assertEq(item.value(), striped);
-            assertEq(item.isUndefined(), false);
-            assertEq(item.parent().isUndefined(), true);
-            assertEq(item.parentIsArray(), false);
-            assertEq(item.parentIsObject(), false);
-            assertEq(item.children().length, 0);
+            _checkItemIsSolo(item);
         }
     }
 
@@ -140,27 +129,19 @@ contract JSONParserLibTest is SoladyTest {
     }
 
     function _checkParseEmptyArray(string memory striped) internal {
-        _checkEmptyArrayWithoutParent(striped.parse(), striped);
+        _checkSoloEmptyArray(striped.parse(), striped);
         string memory s = striped;
         for (uint256 i; i != 16; ++i) {
-            _checkEmptyArrayWithoutParent(_padWhiteSpace(s, i).parse(), striped);
+            _checkSoloEmptyArray(_padWhiteSpace(s, i).parse(), striped);
         }
     }
 
-    function _checkEmptyArrayWithoutParent(JSONParserLib.Item memory item, string memory striped)
-        internal
-    {
+    function _checkSoloEmptyArray(JSONParserLib.Item memory item, string memory striped) internal {
         for (uint256 i; i != 2; ++i) {
             assertEq(item.getType(), JSONParserLib.TYPE_ARRAY);
             assertEq(item.isArray(), true);
-            assertEq(item.key(), "");
-            assertEq(item.index(), 0);
             assertEq(item.value(), striped);
-            assertEq(item.isUndefined(), false);
-            assertEq(item.parent().isUndefined(), true);
-            assertEq(item.parentIsArray(), false);
-            assertEq(item.parentIsObject(), false);
-            assertEq(item.children().length, 0);
+            _checkItemIsSolo(item);
         }
     }
 
@@ -171,27 +152,21 @@ contract JSONParserLibTest is SoladyTest {
     }
 
     function _checkParseEmptyObject(string memory striped) internal {
-        _checkEmptyObjectWithoutParent(striped.parse(), striped);
+        _checkSoloEmptyObject(striped.parse(), striped);
         string memory s = striped;
         for (uint256 i; i != 16; ++i) {
-            _checkEmptyObjectWithoutParent(_padWhiteSpace(s, i).parse(), striped);
+            _checkSoloEmptyObject(_padWhiteSpace(s, i).parse(), striped);
         }
     }
 
-    function _checkEmptyObjectWithoutParent(JSONParserLib.Item memory item, string memory striped)
+    function _checkSoloEmptyObject(JSONParserLib.Item memory item, string memory striped)
         internal
     {
         for (uint256 i; i != 2; ++i) {
             assertEq(item.getType(), JSONParserLib.TYPE_OBJECT);
             assertEq(item.isObject(), true);
-            assertEq(item.key(), "");
-            assertEq(item.index(), 0);
             assertEq(item.value(), striped);
-            assertEq(item.isUndefined(), false);
-            assertEq(item.parent().isUndefined(), true);
-            assertEq(item.parentIsArray(), false);
-            assertEq(item.parentIsObject(), false);
-            assertEq(item.children().length, 0);
+            _checkItemIsSolo(item);
         }
     }
 
@@ -208,54 +183,125 @@ contract JSONParserLibTest is SoladyTest {
         }
     }
 
-    function testParseSimpleArrays() public {}
+    function testParseSimpleUintArray() public {
+        string memory s;
+        JSONParserLib.Item memory item;
 
-    function testParseNumber2() public {
-        // JSONParserLib.Item memory item;
-        // JSONParserLib.Item[] memory children;
-        // assertEq(item.value(), "");
-        // assertTrue(item.isUndefined());
-        // // console.log(".parse() true  ").value());
-        // // console.log(".parse() true").value());
-        // // console.log(".parse() false  ").value());
-        // // console.log(".parse() false").value());
-        // // console.log(".parse() null  ").value());
-        // // console.log(".parse() null").value());
+        for (uint256 k; k != 9; ++k) {
+            uint256 o = k == 0 ? 0 : 1 << (17 * k);
+            string memory p = _padWhiteSpace("", k);
+            for (uint256 j; j != 5; ++j) {
+                s = "[";
+                for (uint256 i; i != j; ++i) {
+                    string memory x = LibString.toString(o + i);
+                    if (i == 0) {
+                        s = string(abi.encodePacked(s, p, x));
+                    } else {
+                        s = string(abi.encodePacked(s, p, ",", p, x));
+                    }
+                }
+                s = string(abi.encodePacked(s, "]"));
+                item = s.parse();
+                assertEq(item.isArray(), true);
+                assertEq(item.children().length, j);
+                for (uint256 i; i != j; ++i) {
+                    string memory x = LibString.toString(o + i);
+                    assertEq(item.children()[i].value(), x);
+                    assertEq(item.children()[i].parent()._data, item._data);
+                    assertEq(item.children()[i].parentIsArray(), true);
+                }
+            }
+        }
+    }
 
-        // // item = '[.parse(),2,[3,4],[5,6],7,"hehe", true]');
-        // // children = item.children();
-        // // for (uint256 i; i < children.length; ++i) {
-        // //     console.log(children[i].index());
-        // //     // console.log(children[i].value());
-        // // }
+    function testParseSimpleArray() public {
+        string memory s = "[\"hehe\",12,\"haha\"]";
+        JSONParserLib.Item memory item = s.parse();
 
-        // // item = '{".parse()":"A","b"  :  "B"}');
-        // // children = item.children();
-        // // for (uint256 i; i < children.length; ++i) {
-        // //     console.log(children[i].key());
-        // //     console.log(children[i].value());
-        // // }
+        assertEq(item.isArray(), true);
+        assertEq(item.children().length, 3);
+        _checkItemHasNoParent(item);
 
-        // // console.log(".parse() 01234567890  ").value());
-        // console.log(".parse() -1.234567890e+22  ").value());
-        // console.log(".parse() -1.234567890e-22  ").value());
-        // console.log(".parse() -1.234567890e22  ").value());
-        // console.log(".parse() 1234567890  ").value());
-        // console.log(".parse() 123  ").value());
-        // console.log(".parse() 1  ").value());
-        // // console.log(".parse()   ").value());
+        assertEq(item.children()[0].value(), "\"hehe\"");
+        assertEq(item.children()[0].index(), 0);
+        assertEq(item.children()[0].getType(), JSONParserLib.TYPE_STRING);
+        assertEq(item.children()[0].key(), "");
+        assertEq(item.children()[0].parent()._data, item._data);
+        assertEq(item.children()[0].parentIsArray(), true);
 
-        // console.log('.parse()"aabbcc"  ').value());
+        assertEq(item.children()[1].value(), "12");
+        assertEq(item.children()[1].index(), 1);
+        assertEq(item.children()[1].key(), "");
+        assertEq(item.children()[1].getType(), JSONParserLib.TYPE_NUMBER);
+        assertEq(item.children()[1].parent()._data, item._data);
+        assertEq(item.children()[1].parentIsArray(), true);
 
-        // string memory s =
-        //     '{"animation_url":"","artist":"Daniel Allan","artwork":{"mimeType":"image/gif","uri":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","nft":null},"attributes":[{"trait_type":"Criteria","value":"Song Edition"}],"bpm":null,"credits":null,"description":"Criteria is an 8-track project between Daniel Allan and Reo Cragun.\n\nA fusion of electronic music and hip-hop - Criteria brings together the best of both worlds and is meant to bring web3 music to a wider audience.\n\nThe collection consists of 2500 editions with activations across Sound, Bonfire, OnCyber, Spinamp and Arpeggi.","duration":105,"external_url":"https://www.sound.xyz/danielallan/criteria","genre":"Pop","image":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","isrc":null,"key":null,"license":null,"locationCreated":null,"losslessAudio":"","lyrics":null,"mimeType":"audio/wave","nftSerialNumber":11,"name":"Criteria #11","originalReleaseDate":null,"project":null,"publisher":null,"recordLabel":null,"tags":null,"title":"Criteria","trackNumber":1,"version":"sound-edition-20220930","visualizer":null}';
-        // item = s.parse();
-        // children = item.children();
-        // for (uint256 i; i < children.length; ++i) {
-        //     console.log(children[i].key());
-        // }
-        // assertEq(item.getType(), JSONParserLib.TYPE_OBJECT);
-        // assertTrue(item.isObject());
-        // console.log(item.children()[0].parent().value());
+        assertEq(item.children()[2].value(), "\"haha\"");
+        assertEq(item.children()[2].index(), 2);
+        assertEq(item.children()[2].getType(), JSONParserLib.TYPE_STRING);
+        assertEq(item.children()[2].key(), "");
+        assertEq(item.children()[2].parent()._data, item._data);
+        assertEq(item.children()[2].parentIsArray(), true);
+    }
+
+    function testParseSpecials() public {
+        string memory s;
+        JSONParserLib.Item memory item;
+
+        for (uint256 k; k < 9; ++k) {
+            s = _padWhiteSpace("true", k);
+            item = s.parse();
+            assertEq(item.getType(), JSONParserLib.TYPE_BOOLEAN);
+            assertEq(item.isBoolean(), true);
+            assertEq(item.isNull(), false);
+            assertEq(item.value(), "true");
+            assertEq(item.parent().isUndefined(), true);
+            _checkItemIsSolo(item);
+
+            s = _padWhiteSpace("false", k);
+            item = s.parse();
+            assertEq(item.getType(), JSONParserLib.TYPE_BOOLEAN);
+            assertEq(item.isBoolean(), true);
+            assertEq(item.isNull(), false);
+            assertEq(item.value(), "false");
+            _checkItemIsSolo(item);
+
+            s = _padWhiteSpace("null", k);
+            item = s.parse();
+            assertEq(item.getType(), JSONParserLib.TYPE_NULL);
+            assertEq(item.isBoolean(), false);
+            assertEq(item.isNull(), true);
+            assertEq(item.value(), "null");
+            _checkItemIsSolo(item);
+        }
+
+        for (uint256 k; k != 4; ++k) {
+            if (k == 0) s = "[true,false,null]";
+            if (k == 1) s = "[ true , false , null ]";
+            if (k == 2) s = "{\"A\":true,\"B\":false,\"C\":null}";
+            if (k == 3) s = "{ \"A\" : true , \"B\" : false , \"C\" : null }";
+            item = s.parse();
+            assertEq(item.children()[0].getType(), JSONParserLib.TYPE_BOOLEAN);
+            assertEq(item.children()[0].value(), "true");
+            assertEq(item.children()[1].getType(), JSONParserLib.TYPE_BOOLEAN);
+            assertEq(item.children()[1].value(), "false");
+            assertEq(item.children()[2].getType(), JSONParserLib.TYPE_NULL);
+            assertEq(item.children()[2].value(), "null");
+        }
+    }
+
+    function _checkItemIsSolo(JSONParserLib.Item memory item) internal {
+        _checkItemHasNoParent(item);
+        assertEq(item.children().length, 0);
+    }
+
+    function _checkItemHasNoParent(JSONParserLib.Item memory item) internal {
+        assertEq(item.parent().isUndefined(), true);
+        assertEq(item.parent()._data, 0);
+        assertEq(item.key(), "");
+        assertEq(item.index(), 0);
+        assertEq(item.parentIsObject(), false);
+        assertEq(item.parentIsArray(), false);
+        assertEq(item.isUndefined(), false);
     }
 }
