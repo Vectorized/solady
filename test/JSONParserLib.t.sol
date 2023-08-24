@@ -324,10 +324,13 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.children()[0].children()[0].value(), "1");
         assertEq(item.children()[0].children()[1].value(), "2");
         assertEq(item.children()[0].children()[2].value(), '{"m": "M"}');
+        assertEq(item.children()[0].children()[2].children()[0].key(), '"m"');
         assertEq(item.children()[0].children()[2].children()[0].value(), '"M"');
 
         JSONParserLib.Item memory c = item.children()[0].children()[2].children()[0];
         assertEq(c.parent().parent().parent()._data, item._data);
+        assertEq(c.parent().parent().parent().value(), item.value());
+        assertEq(c.parent().parent().parent().parent().isUndefined(), true);
 
         assertEq(item.children()[1].key(), '"X"');
         assertEq(item.children()[1].index(), 0);
@@ -338,7 +341,9 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.children()[1].children()[1].key(), '"h"');
         assertEq(item.children()[1].children()[1].value(), "[true,false, null]");
         assertEq(item.children()[1].children()[1].children()[0].value(), "true");
+        assertEq(item.children()[1].children()[1].children()[0].isBoolean(), true);
         assertEq(item.children()[1].children()[1].children()[1].value(), "false");
+        assertEq(item.children()[1].children()[1].children()[1].isBoolean(), true);
         assertEq(item.children()[1].children()[1].children()[2].value(), "null");
         assertEq(item.children()[1].children()[1].children()[2].isNull(), true);
 
