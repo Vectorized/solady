@@ -310,13 +310,15 @@ library JSONParserLib {
                 let j_ := 0
                 for { _pOut := add(pIn_, 1) } 1 { _pOut := add(_pOut, 1) } {
                     if iszero(lt(_pOut, end_)) { fail() }
-                    if eq(chr(_pOut), 93) { break } // ']'.
-                    _item, _pOut := parseValue(s_, _item, _pOut, end_)
-                    if _item {
-                        let d_ := or(mload(_item), _BITMASK_PARENT_IS_ARRAY)
-                        mstore(_item, setPointer(d_, _BITPOS_KEY, j_))
-                        j_ := add(j_, 1)
+                    if iszero(_item) {
+                        _pOut := skipWhitespace(_pOut, end_)
+                        if eq(chr(_pOut), 93) { break } // ']'.
                     }
+                    _item, _pOut := parseValue(s_, _item, _pOut, end_)
+                    if iszero(_item) { _pOut := end_ }
+                    let d_ := or(mload(_item), _BITMASK_PARENT_IS_ARRAY)
+                    mstore(_item, setPointer(d_, _BITPOS_KEY, j_))
+                    j_ := add(j_, 1)
                     if lt(_pOut, end_) {
                         let c_ := chr(_pOut)
                         if eq(c_, 93) { break } // ']'.
@@ -332,7 +334,10 @@ library JSONParserLib {
             function parseObject(s_, packed_, pIn_, end_) -> _item, _pOut {
                 for { _pOut := add(pIn_, 1) } 1 { _pOut := add(_pOut, 1) } {
                     if iszero(lt(_pOut, end_)) { fail() }
-                    if eq(chr(_pOut), 125) { break } // '}'.
+                    if iszero(_item) {
+                        _pOut := skipWhitespace(_pOut, end_)
+                        if eq(chr(_pOut), 125) { break } // '}'.
+                    }
                     _pOut := skipWhitespace(_pOut, end_)
                     let pKeyStart_ := _pOut
                     let pKeyEnd_ := parseStringSub(s_, _item, _pOut, end_)
