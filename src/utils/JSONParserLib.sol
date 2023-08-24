@@ -71,6 +71,11 @@ library JSONParserLib {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // Note: String items will be double-quoted, JSON encoded.
+    // This is for efficiency purposes, to avoid decoding and re-encoding.
+    // If you need to concatenate the strings, simply trim off the double-quotes,
+    // concatenate, and add back the double-quotes.
+
     /// @dev Parses the JSON string `s`, and returns the root.
     ///
     /// Reverts if `s` is not a valid JSON as specified in RFC 8259.
@@ -87,7 +92,8 @@ library JSONParserLib {
     }
 
     /// @dev Returns the string value of the item.
-    /// If the item's type is string, the returned string will be double-quoted.
+    ///
+    /// If the item's type is string, the returned string will be double-quoted, JSON encoded.
     ///
     /// Note: This function lazily instantiates and caches the returned string.
     /// For efficiency, only call this function on required items.
@@ -112,7 +118,9 @@ library JSONParserLib {
     }
 
     /// @dev Returns the key of the item in the object.
-    /// It the item's parent is not an object, returns the empty string.
+    /// It the item's parent is not an object, returns an empty string.
+    ///
+    /// The returned string will be double-quoted, JSON encoded.
     ///
     /// Note: This function lazily instantiates and caches the returned string.
     /// For efficiency, only call this function on required items.
@@ -126,7 +134,7 @@ library JSONParserLib {
     }
 
     /// @dev Returns the key of the item in the object.
-    /// It the item's parent is not an object, returns the empty string.
+    /// It the item's parent is not an object, returns an empty array.
     ///
     /// Note: This function lazily instantiates and caches the returned array.
     /// For efficiency, only call this function on required items.
@@ -146,6 +154,8 @@ library JSONParserLib {
             result := and(mload(item), _BITMASK_TYPE)
         }
     }
+
+    /// Note: All types are mutually exclusive.
 
     /// @dev Returns whether the item is of type undefined.
     function isUndefined(Item memory item) internal pure returns (bool result) {
@@ -182,22 +192,24 @@ library JSONParserLib {
         result = _isType(item, TYPE_NULL);
     }
 
-    /// @dev Returns whether the item's parent (if any) is of type Array.
-    function parentIsArray(Item memory item) internal pure returns (bool result) {
-        result = _hasFlagSet(item, _BITMASK_PARENT_IS_ARRAY);
-    }
-
-    /// @dev Returns whether the item's parent (if any) is of type Object.
-    function parentIsObject(Item memory item) internal pure returns (bool result) {
-        result = _hasFlagSet(item, _BITMASK_PARENT_IS_OBJECT);
-    }
-
     /// @dev Returns the item's parent (if any).
     function parent(Item memory item) internal pure returns (Item memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := and(shr(_BITPOS_SIBLING_OR_PARENT, mload(item)), _BITMASK_POINTER)
         }
+    }
+
+    /// @dev Returns whether the item's parent (if any) is of type Array.
+    /// Use this over `parent().isArray()` for efficiency.
+    function parentIsArray(Item memory item) internal pure returns (bool result) {
+        result = _hasFlagSet(item, _BITMASK_PARENT_IS_ARRAY);
+    }
+
+    /// @dev Returns whether the item's parent (if any) is of type Object.
+    /// Use this over `parent().isObject()` for efficiency.
+    function parentIsObject(Item memory item) internal pure returns (bool result) {
+        result = _hasFlagSet(item, _BITMASK_PARENT_IS_OBJECT);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

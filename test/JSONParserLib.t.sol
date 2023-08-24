@@ -74,10 +74,10 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseReverts("0x");
     }
 
-    function _checkParseReverts(string memory striped) internal {
+    function _checkParseReverts(string memory trimmed) internal {
         vm.expectRevert(JSONParserLib.ParsingFailed.selector);
-        this.parsedValue(striped);
-        string memory s = striped;
+        this.parsedValue(trimmed);
+        string memory s = trimmed;
         for (uint256 i; i != 4; ++i) {
             vm.expectRevert(JSONParserLib.ParsingFailed.selector);
             this.parsedValue(_padWhiteSpace(s, i));
@@ -105,19 +105,19 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseNumber("1");
     }
 
-    function _checkParseNumber(string memory striped) internal {
-        _checkSoloNumber(striped.parse(), striped);
-        string memory s = striped;
+    function _checkParseNumber(string memory trimmed) internal {
+        _checkSoloNumber(trimmed.parse(), trimmed);
+        string memory s = trimmed;
         for (uint256 i; i != 4; ++i) {
-            _checkSoloNumber(_padWhiteSpace(s, i).parse(), striped);
+            _checkSoloNumber(_padWhiteSpace(s, i).parse(), trimmed);
         }
     }
 
-    function _checkSoloNumber(JSONParserLib.Item memory item, string memory striped) internal {
+    function _checkSoloNumber(JSONParserLib.Item memory item, string memory trimmed) internal {
         for (uint256 i; i != 2; ++i) {
             assertEq(item.getType(), JSONParserLib.TYPE_NUMBER);
             assertEq(item.isNumber(), true);
-            assertEq(item.value(), striped);
+            assertEq(item.value(), trimmed);
             _checkItemIsSolo(item);
         }
     }
@@ -128,19 +128,19 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseEmptyArray("[  ]");
     }
 
-    function _checkParseEmptyArray(string memory striped) internal {
-        _checkSoloEmptyArray(striped.parse(), striped);
-        string memory s = striped;
+    function _checkParseEmptyArray(string memory trimmed) internal {
+        _checkSoloEmptyArray(trimmed.parse(), trimmed);
+        string memory s = trimmed;
         for (uint256 i; i != 16; ++i) {
-            _checkSoloEmptyArray(_padWhiteSpace(s, i).parse(), striped);
+            _checkSoloEmptyArray(_padWhiteSpace(s, i).parse(), trimmed);
         }
     }
 
-    function _checkSoloEmptyArray(JSONParserLib.Item memory item, string memory striped) internal {
+    function _checkSoloEmptyArray(JSONParserLib.Item memory item, string memory trimmed) internal {
         for (uint256 i; i != 2; ++i) {
             assertEq(item.getType(), JSONParserLib.TYPE_ARRAY);
             assertEq(item.isArray(), true);
-            assertEq(item.value(), striped);
+            assertEq(item.value(), trimmed);
             _checkItemIsSolo(item);
         }
     }
@@ -151,21 +151,21 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseEmptyObject("{  }");
     }
 
-    function _checkParseEmptyObject(string memory striped) internal {
-        _checkSoloEmptyObject(striped.parse(), striped);
-        string memory s = striped;
+    function _checkParseEmptyObject(string memory trimmed) internal {
+        _checkSoloEmptyObject(trimmed.parse(), trimmed);
+        string memory s = trimmed;
         for (uint256 i; i != 16; ++i) {
-            _checkSoloEmptyObject(_padWhiteSpace(s, i).parse(), striped);
+            _checkSoloEmptyObject(_padWhiteSpace(s, i).parse(), trimmed);
         }
     }
 
-    function _checkSoloEmptyObject(JSONParserLib.Item memory item, string memory striped)
+    function _checkSoloEmptyObject(JSONParserLib.Item memory item, string memory trimmed)
         internal
     {
         for (uint256 i; i != 2; ++i) {
             assertEq(item.getType(), JSONParserLib.TYPE_OBJECT);
             assertEq(item.isObject(), true);
-            assertEq(item.value(), striped);
+            assertEq(item.value(), trimmed);
             _checkItemIsSolo(item);
         }
     }
@@ -281,12 +281,33 @@ contract JSONParserLibTest is SoladyTest {
             if (k == 2) s = "{\"A\":true,\"B\":false,\"C\":null}";
             if (k == 3) s = "{ \"A\" : true , \"B\" : false , \"C\" : null }";
             item = s.parse();
+            assertEq(item.children().length, 3);
             assertEq(item.children()[0].getType(), JSONParserLib.TYPE_BOOLEAN);
             assertEq(item.children()[0].value(), "true");
             assertEq(item.children()[1].getType(), JSONParserLib.TYPE_BOOLEAN);
             assertEq(item.children()[1].value(), "false");
             assertEq(item.children()[2].getType(), JSONParserLib.TYPE_NULL);
             assertEq(item.children()[2].value(), "null");
+            if (k == 0 || k == 1) {
+                for (uint256 i; i != 3; ++i) {
+                    assertEq(item.children()[i].parent()._data, item._data);
+                    assertEq(item.children()[i].parent().isArray(), true);
+                    assertEq(item.children()[i].parentIsArray(), true);
+                    assertEq(item.children()[i].index(), i);
+                    assertEq(item.children()[i].key(), "");
+                }
+            }
+            if (k == 2 || k == 3) {
+                for (uint256 i; i != 3; ++i) {
+                    assertEq(item.children()[i].parent()._data, item._data);
+                    assertEq(item.children()[i].parent().isObject(), true);
+                    assertEq(item.children()[i].parentIsObject(), true);
+                    assertEq(item.children()[i].index(), 0);
+                }
+                assertEq(item.children()[0].key(), "\"A\"");
+                assertEq(item.children()[1].key(), "\"B\"");
+                assertEq(item.children()[2].key(), "\"C\"");
+            }
         }
     }
 
