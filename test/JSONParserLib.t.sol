@@ -350,6 +350,9 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.children()[1].children()[2].key(), '""');
         assertEq(item.children()[1].children()[2].value(), "0");
         assertEq(item.children()[1].children()[2].children().length, 0);
+
+        assertEq("[[[[[[[]]]]]]]".parse().isArray(), true);
+        assertEq('[{"a":[[[{"z":"Z"}]]]}]'.parse().isArray(), true);
     }
 
     function _checkItemIsSolo(JSONParserLib.Item memory item) internal {
