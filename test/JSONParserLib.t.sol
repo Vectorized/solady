@@ -458,4 +458,52 @@ contract JSONParserLibTest is SoladyTest {
             '{"animation_url":"","artist":"Daniel Allan","artwork":{"mimeType":"image/gif","uri":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","nft":null},"attributes":[{"trait_type":"Criteria","value":"Song Edition"}],"bpm":null,"credits":null,"description":"Criteria is an 8-track project between Daniel Allan and Reo Cragun.\n\nA fusion of electronic music and hip-hop - Criteria brings together the best of both worlds and is meant to bring web3 music to a wider audience.\n\nThe collection consists of 2500 editions with activations across Sound, Bonfire, OnCyber, Spinamp and Arpeggi.","duration":105,"external_url":"https://www.sound.xyz/danielallan/criteria","genre":"Pop","image":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","isrc":null,"key":null,"license":null,"locationCreated":null,"losslessAudio":"","lyrics":null,"mimeType":"audio/wave","nftSerialNumber":11,"name":"Criteria #11","originalReleaseDate":null,"project":null,"publisher":null,"recordLabel":null,"tags":null,"title":"Criteria","trackNumber":1,"version":"sound-edition-20220930","visualizer":null}';
         assertEq(s.parse().isObject(), true);
     }
+
+    function testParseUint() public {
+        assertEq(this.parseUint("1"), 1);
+        assertEq(this.parseUint("123"), 123);
+        assertEq(this.parseUint("0123"), 123);
+        assertEq(this.parseUint("000123"), 123);
+        assertEq(this.parseUint("12345678901234567890"), 12345678901234567890);
+        assertEq(
+            this.parseUint(
+                "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+            ),
+            115792089237316195423570985008687907853269984665640564039457584007913129639935
+        );
+    }
+
+    function testParseInvalidUintReverts() public {
+        _checkParseInvalidUintReverts("");
+        _checkParseInvalidUintReverts("-");
+        _checkParseInvalidUintReverts("a");
+        _checkParseInvalidUintReverts(" ");
+        _checkParseInvalidUintReverts(" 123 ");
+        string memory s =
+            "1157920892373161954235709850086879078532699846656405640394575840079131296399";
+        for (uint256 i = 36; i <= 99; ++i) {
+            _checkParseInvalidUintReverts(string(abi.encodePacked(s, LibString.toString(i))));
+        }
+        _checkParseInvalidUintReverts(
+            "115792089237316195423570985008687907853269984665640564039457584007913129640035"
+        );
+        _checkParseInvalidUintReverts(
+            "215792089237316195423570985008687907853269984665640564039457584007913129639935"
+        );
+        _checkParseInvalidUintReverts(
+            "222222222222222222222222222222222222222222222222222222222222222222222222222222"
+        );
+        _checkParseInvalidUintReverts(
+            "1215792089237316195423570985008687907853269984665640564039457584007913129639935"
+        );
+    }
+
+    function _checkParseInvalidUintReverts(string memory s) internal {
+        vm.expectRevert(JSONParserLib.ParsingFailed.selector);
+        this.parseUint(s);
+    }
+
+    function parseUint(string memory s) public pure returns (uint256) {
+        return s.parseUint();
+    }
 }
