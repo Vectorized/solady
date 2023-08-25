@@ -102,7 +102,6 @@ library JSONParserLib {
     /// If the item's type is string, the returned string will be double-quoted, JSON encoded.
     ///
     /// Note: This function lazily instantiates and caches the returned string.
-    /// For efficiency, only call this function on required items.
     /// Do NOT modify the returned string.
     function value(Item memory item) internal pure returns (string memory result) {
         bytes32 r = _query(_toInput(item), 0);
@@ -117,9 +116,9 @@ library JSONParserLib {
     function index(Item memory item) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let packed := mload(item)
-            let t := iszero(iszero(and(packed, _BITMASK_PARENT_IS_ARRAY)))
-            result := mul(t, and(_BITMASK_POINTER, shr(_BITPOS_KEY, packed)))
+            if and(mload(item), _BITMASK_PARENT_IS_ARRAY) {
+                result := and(_BITMASK_POINTER, shr(_BITPOS_KEY, mload(item)))
+            }
         }
     }
 
@@ -128,7 +127,6 @@ library JSONParserLib {
     /// The returned string will be double-quoted, JSON encoded.
     ///
     /// Note: This function lazily instantiates and caches the returned string.
-    /// For efficiency, only call this function on required items.
     /// Do NOT modify the returned string.
     function key(Item memory item) internal pure returns (string memory result) {
         bytes32 r = _query(_toInput(item), 1);
@@ -139,16 +137,69 @@ library JSONParserLib {
     }
 
     /// @dev Returns the key of the item in the object.
-    /// It the item's parent is not an object, returns an empty array.
+    /// It the item is neither an array nor object, returns an empty array.
     ///
     /// Note: This function lazily instantiates and caches the returned array.
-    /// For efficiency, only call this function on required items.
     /// Do NOT modify the returned array.
     function children(Item memory item) internal pure returns (Item[] memory result) {
         bytes32 r = _query(_toInput(item), 3);
         /// @solidity memory-safe-assembly
         assembly {
             result := r
+        }
+    }
+
+    /// @dev Returns the number of children.
+    /// It the item is neither an array nor object, returns zero.
+    function size(Item memory item) internal pure returns (uint256 result) {
+        bytes32 r = _query(_toInput(item), 3);
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(r)
+        }
+    }
+
+    /// @dev Returns the item at index `i`.
+    /// If the item is not an array, the result's type will be undefined.
+    /// If there is no item with the index, the result's type will be undefined.
+    function at(Item memory item, uint256 i) internal pure returns (Item memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, result) // Free the default allocation. We'll allocate manually.
+        }
+        bytes32 r = _query(_toInput(item), 3);
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(add(add(r, 0x20), shl(5, i)))
+            if iszero(mul(lt(i, mload(r)), eq(and(mload(item), _BITMASK_TYPE), TYPE_ARRAY))) {
+                result := 0x60 // Reset to the zero pointer.
+            }
+        }
+    }
+
+    /// @dev Returns the item at key `k`.
+    /// The key MUST be double-quoted, JSON encoded. This is for performance reasons.
+    /// If the item is not an object, the result's type will be undefined.
+    /// If there is no item with the key, the result's type will be undefined.
+    /// If there are duplicate keys, the last item with the key will be returned.
+    function at(Item memory item, string memory k) internal pure returns (Item memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, result) // Free the default allocation. We'll allocate manually.
+            result := 0x60 // Initialize to the zero pointer.
+        }
+        unchecked {
+            if (isObject(item)) {
+                Item[] memory r = children(item);
+                bytes32 kHash = keccak256(bytes(k));
+                for (uint256 i = r.length << 5; i != 0; i -= 0x20) {
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        item := mload(add(r, i))
+                    }
+                    if (keccak256(bytes(key(item))) == kHash) return item;
+                }
+            }
         }
     }
 
@@ -197,12 +248,14 @@ library JSONParserLib {
         result = _isType(item, TYPE_NULL);
     }
 
-    /// @dev Returns the item's parent (if any).
+    /// @dev Returns the item's parent.
+    /// If the item does not have a parent, the result's type will be undefined.
     function parent(Item memory item) internal pure returns (Item memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, result) // Free the default allocation. We've already allocated.
             result := and(shr(_BITPOS_SIBLING_OR_PARENT, mload(item)), _BITMASK_POINTER)
+            if iszero(result) { result := 0x60 } // Reset to the zero pointer.
         }
     }
 

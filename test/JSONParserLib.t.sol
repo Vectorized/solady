@@ -203,12 +203,14 @@ contract JSONParserLibTest is SoladyTest {
                 s = string(abi.encodePacked(s, "]"));
                 item = s.parse();
                 assertEq(item.isArray(), true);
-                assertEq(item.children().length, j);
+                assertEq(item.size(), j);
                 for (uint256 i; i != j; ++i) {
                     string memory x = LibString.toString(o + i);
                     assertEq(item.children()[i].value(), x);
                     assertEq(item.children()[i].parent()._data, item._data);
                     assertEq(item.children()[i].parent().isArray(), true);
+                    assertEq(item.at(i)._data, item.children()[i]._data);
+                    assertEq(item.at(LibString.toString(i)).isUndefined(), true);
                 }
             }
         }
@@ -219,7 +221,7 @@ contract JSONParserLibTest is SoladyTest {
         JSONParserLib.Item memory item = s.parse();
 
         assertEq(item.isArray(), true);
-        assertEq(item.children().length, 3);
+        assertEq(item.size(), 3);
         _checkItemHasNoParent(item);
 
         assertEq(item.children()[0].value(), '"hehe"');
@@ -281,7 +283,7 @@ contract JSONParserLibTest is SoladyTest {
             if (k == 2) s = '{"A":true,"B":false,"C":null}';
             if (k == 3) s = '{ "A" : true , "B" : false , "C" : null }';
             item = s.parse();
-            assertEq(item.children().length, 3);
+            assertEq(item.size(), 3);
             assertEq(item.children()[0].getType(), JSONParserLib.TYPE_BOOLEAN);
             assertEq(item.children()[0].value(), "true");
             assertEq(item.children()[1].getType(), JSONParserLib.TYPE_BOOLEAN);
@@ -308,6 +310,21 @@ contract JSONParserLibTest is SoladyTest {
                 assertEq(item.children()[2].key(), '"C"');
             }
         }
+    }
+
+    function testParseObject() public {
+        string memory s;
+        JSONParserLib.Item memory item;
+
+        s = '{"b": "B", "_": "x", "hehe": "HEHE", "_": "y", "_": "z"}';
+        item = s.parse();
+
+        assertEq(item.size(), 5);
+        assertEq(item.at('"_"').value(), '"z"');
+        assertEq(item.at('"b"').value(), '"B"');
+        assertEq(item.at('"hehe"').value(), '"HEHE"');
+        assertEq(item.at('"m"').value(), "");
+        assertEq(item.at('"m"').isUndefined(), true);
     }
 
     function testParseRecursiveObject() public {
@@ -348,7 +365,7 @@ contract JSONParserLibTest is SoladyTest {
 
         assertEq(item.children()[1].children()[2].key(), '""');
         assertEq(item.children()[1].children()[2].value(), "0");
-        assertEq(item.children()[1].children()[2].children().length, 0);
+        assertEq(item.children()[1].children()[2].size(), 0);
 
         s = "[[[[[[[]]]]]]]";
         item = s.parse();
@@ -410,7 +427,7 @@ contract JSONParserLibTest is SoladyTest {
 
     function _checkItemIsSolo(JSONParserLib.Item memory item) internal {
         _checkItemHasNoParent(item);
-        assertEq(item.children().length, 0);
+        assertEq(item.size(), 0);
     }
 
     function _checkItemHasNoParent(JSONParserLib.Item memory item) internal {
