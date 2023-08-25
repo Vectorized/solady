@@ -11,6 +11,10 @@ pragma solidity ^0.8.4;
 /// minting and transferring zero tokens, as well as self-approvals.
 /// For performance, this implementation WILL NOT revert for such actions.
 /// Please add any checks with overrides if desired.
+///
+/// If you are overriding:
+/// - Check that the overridden function is actually used in the function you want to
+///   change the behavior of. Much of the code has been manually inlined for performance.
 abstract contract ERC20 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -355,7 +359,7 @@ abstract contract ERC20 {
     /*                          EIP-2612                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev For more performance, overwrite to return the constant value
+    /// @dev For more performance, override to return the constant value
     /// of `keccak256(bytes(name()))` if `name()` will never change.
     function _constantNameHash() internal view virtual returns (bytes32 result) {}
 
@@ -446,7 +450,7 @@ abstract contract ERC20 {
         }
     }
 
-    /// @dev Returns the EIP-712 domain separator.
+    /// @dev Returns the EIP-712 domain separator for the EIP-2612 permit.
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result) {
         bytes32 nameHash = _constantNameHash();
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
