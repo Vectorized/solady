@@ -367,6 +367,7 @@ library JSONParserLib {
                         }
                     }
                     fail()
+                    break
                 }
                 _pOut := skipWhitespace(_pOut, end_)
             }
@@ -465,6 +466,7 @@ library JSONParserLib {
                         continue
                     }
                     _pOut := end_
+                    break
                 }
                 if iszero(lt(_pOut, end_)) { fail() }
                 _pOut := add(_pOut, 1)
@@ -489,7 +491,7 @@ library JSONParserLib {
                     _pOut := skip0To9s(add(_pOut, 1), end_, 1)
                 }
                 // 'E', 'e'.
-                if and(lt(_pOut, end_), and(shr(chr(_pOut), shl(69, 0x100000001)), 1)) {
+                if and(shr(chr(_pOut), shl(69, 0x100000001)), lt(_pOut, end_)) {
                     _pOut := add(_pOut, 1)
                     _pOut := add(_pOut, and(shr(chr(_pOut), shl(43, 5)), lt(_pOut, end_))) // '+', '-'.
                     _pOut := skip0To9s(_pOut, end_, 1)
