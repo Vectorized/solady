@@ -196,8 +196,9 @@ library JSONParserLib {
         }
         unchecked {
             if (isObject(item)) {
-                Item[] memory r = children(item);
                 bytes32 kHash = keccak256(bytes(k));
+                Item[] memory r = children(item);
+                // We'll just do a linear search. The alternatives are very bloated.
                 for (uint256 i = r.length << 5; i != 0; i -= 0x20) {
                     /// @solidity memory-safe-assembly
                     assembly {

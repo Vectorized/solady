@@ -22,7 +22,9 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseReverts("[][]");
         _checkParseReverts("[],[]");
         _checkParseReverts("[1,2");
+        _checkParseReverts("1,2]");
         _checkParseReverts("[1");
+        _checkParseReverts("1]");
         _checkParseReverts("[1,");
         _checkParseReverts("{}{");
         _checkParseReverts("{}{}");
@@ -45,6 +47,8 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseReverts('{,"a":"A","b":"B"}');
         _checkParseReverts('{"a"::"A"}');
         _checkParseReverts('{"a","A"}');
+        _checkParseReverts("{1}");
+        _checkParseReverts("{:}");
     }
 
     function testParseInvalidNumberReverts() public {
@@ -70,6 +74,7 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseReverts("+123");
         _checkParseReverts(".123");
         _checkParseReverts("e123");
+        _checkParseReverts("1 e 1");
         _checkParseReverts("-1.e+0");
         _checkParseReverts("0x");
     }
@@ -100,6 +105,7 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseNumber("0.1");
         _checkParseNumber("0.123");
         _checkParseNumber("12345678901234567890123456789012345678901234567890");
+        _checkParseNumber("12345e12345678901234567890123456789012345678901234567890");
         _checkParseNumber("1234567890");
         _checkParseNumber("123");
         _checkParseNumber("1");
@@ -316,15 +322,19 @@ contract JSONParserLibTest is SoladyTest {
         string memory s;
         JSONParserLib.Item memory item;
 
-        s = '{"b": "B", "_": "x", "hehe": "HEHE", "_": "y", "_": "z"}';
+        s = '{"b": "B", "_": "x", "hehe": "HEHE", "_": "y", "v": 12345, "_": "z"}';
         item = s.parse();
 
-        assertEq(item.size(), 5);
+        assertEq(item.isObject(), true);
+        assertEq(item.size(), 6);
+
         for (uint256 i; i < item.size(); ++i) {
             assertEq(item.atIndex(i).isUndefined(), true);
+            assertEq(item.children()[i].parent()._data, item._data);
         }
         assertEq(item.atKey('"_"').value(), '"z"');
         assertEq(item.atKey('"b"').value(), '"B"');
+        assertEq(item.atKey('"v"').value(), "12345");
         assertEq(item.atKey('"hehe"').value(), '"HEHE"');
         assertEq(item.atKey('"m"').value(), "");
         assertEq(item.atKey('"m"').isUndefined(), true);
