@@ -77,8 +77,9 @@ library JSONParserLib {
     // concatenate, and add back the double-quotes.
 
     /// @dev Parses the JSON string `s`, and returns the root.
-    ///
     /// Reverts if `s` is not a valid JSON as specified in RFC 8259.
+    /// Object items will simply contain all their children, inclusive of repeated keys,
+    /// in the same order which they appear in the JSON string.
     ///
     /// Note: For efficiency, this function will NOT make a copy of `s`.
     /// The parsed tree will contain offsets to `s`.
@@ -92,7 +93,8 @@ library JSONParserLib {
     }
 
     /// @dev Returns the string value of the item.
-    ///
+    /// The returned string will have leading and trailing whitespace trimmed.
+    /// All inner whitespace will be preserved, exactly as it is in the original JSON string.
     /// If the item's type is string, the returned string will be double-quoted, JSON encoded.
     ///
     /// Note: This function lazily instantiates and caches the returned string.
@@ -119,7 +121,6 @@ library JSONParserLib {
 
     /// @dev Returns the key of the item in the object.
     /// It the item's parent is not an object, returns an empty string.
-    ///
     /// The returned string will be double-quoted, JSON encoded.
     ///
     /// Note: This function lazily instantiates and caches the returned string.
