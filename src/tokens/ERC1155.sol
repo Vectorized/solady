@@ -11,6 +11,12 @@ pragma solidity ^0.8.4;
 ///   For performance, this implementation WILL NOT revert for such actions.
 ///   Please add any checks with overrides if desired.
 /// - This implementation uses the identity precompile (0x4) to copy memory internally.
+///
+/// If you are overriding:
+/// - Make sure all variables written to storage are properly cleaned
+//    (e.g. the bool value for `isApprovedForAll` MUST be either 1 or 0 under the hood).
+/// - Check that the overridden function is actually used in the function you want to
+///   change the behavior of. Much of the code has been manually inlined for performance.
 abstract contract ERC1155 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
