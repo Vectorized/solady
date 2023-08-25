@@ -389,6 +389,7 @@ contract JSONParserLibTest is SoladyTest {
         for (uint256 k; k != 4; ++k) {
             item = _padWhiteSpace(s, k).parse();
             assertEq(item.value(), s);
+            assertEq(item.isString(), true);
             _checkItemIsSolo(item);
         }
     }

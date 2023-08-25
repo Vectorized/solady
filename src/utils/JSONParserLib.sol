@@ -367,9 +367,10 @@ library JSONParserLib {
                 _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_OBJECT)
             }
 
-            function checkStringHex(p_, o_) {
+            function checkStringU(p_, o_) {
+                // If not in '0123456789abcdefABCDEF', revert.
                 if iszero(and(shr(sub(chr(add(p_, o_)), 48), 0x7e0000007e03ff), 1)) { fail() }
-                if iszero(eq(o_, 5)) { checkStringHex(p_, add(o_, 1)) }
+                if iszero(eq(o_, 5)) { checkStringU(p_, add(o_, 1)) }
             }
 
             function parseStringSub(s_, packed_, pIn_, end_) -> _pOut {
@@ -382,15 +383,15 @@ library JSONParserLib {
                         continue
                     }
                     c_ := chr(add(_pOut, 1))
-                    // 'u'.
-                    if eq(c_, 117) {
-                        checkStringHex(_pOut, 2)
-                        _pOut := add(_pOut, 6)
-                        continue
-                    }
                     // '"', '\', '//', 'b', 'f', 'n', 'r', 't'.
                     if and(shr(sub(c_, 34), 0x510110400000000002001), 1) {
                         _pOut := add(_pOut, 2)
+                        continue
+                    }
+                    // 'u'.
+                    if eq(c_, 117) {
+                        checkStringU(_pOut, 2)
+                        _pOut := add(_pOut, 6)
                         continue
                     }
                     _pOut := end_
