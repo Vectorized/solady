@@ -71,19 +71,24 @@ library JSONParserLib {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: String items will be double-quoted, JSON encoded.
-    // This is for efficiency purposes, to avoid decoding and re-encoding.
-    // If you need to concatenate the strings, simply trim off the double-quotes,
-    // concatenate, and add back the double-quotes.
+    // Note:
+    // - An item is a node in the JSON tree.
+    // - The value of a string item WILL be double-quoted, JSON encoded.
+    // - We make a distinction between `index` and `key`.
+    //   - Items in arrays are located by `index` (uint256).
+    //   - Items in objects are located by `key` (string).
+    // - Keys are always strings, double-quoted, JSON encoded.
+    //
+    // These design choices are made to balance between efficiency and ease-of-use.
 
     /// @dev Parses the JSON string `s`, and returns the root.
     /// Reverts if `s` is not a valid JSON as specified in RFC 8259.
-    /// Object items will simply contain all their children, inclusive of repeated keys,
+    /// Object items WILL simply contain all their children, inclusive of repeated keys,
     /// in the same order which they appear in the JSON string.
     ///
-    /// Note: For efficiency, this function will NOT make a copy of `s`.
-    /// The parsed tree will contain offsets to `s`.
-    /// Do NOT pass in a string that will be modified later on.
+    /// Note: For efficiency, this function WILL NOT make a copy of `s`.
+    /// The parsed tree WILL contain offsets to `s`.
+    /// Do NOT pass in a string that WILL be modified later on.
     function parse(string memory s) internal pure returns (Item memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -97,9 +102,10 @@ library JSONParserLib {
     }
 
     /// @dev Returns the string value of the item.
-    /// The returned string will have leading and trailing whitespace trimmed.
-    /// All inner whitespace will be preserved, exactly as it is in the original JSON string.
-    /// If the item's type is string, the returned string will be double-quoted, JSON encoded.
+    /// This is its exact string representation in the original JSON string.
+    /// The returned string WILL have leading and trailing whitespace trimmed.
+    /// All inner whitespace WILL be preserved, exactly as it is in the original JSON string.
+    /// If the item's type is string, the returned string WILL be double-quoted, JSON encoded.
     ///
     /// Note: This function lazily instantiates and caches the returned string.
     /// Do NOT modify the returned string.
@@ -124,7 +130,7 @@ library JSONParserLib {
 
     /// @dev Returns the key of the item in the object.
     /// It the item's parent is not an object, returns an empty string.
-    /// The returned string will be double-quoted, JSON encoded.
+    /// The returned string WILL be double-quoted, JSON encoded.
     ///
     /// Note: This function lazily instantiates and caches the returned string.
     /// Do NOT modify the returned string.
@@ -160,9 +166,9 @@ library JSONParserLib {
     }
 
     /// @dev Returns the item at index `i`.
-    /// If the item is not an array, the result's type will be undefined.
-    /// If there is no item with the index, the result's type will be undefined.
-    function at(Item memory item, uint256 i) internal pure returns (Item memory result) {
+    /// If `item` is not an array, the result's type WILL be undefined.
+    /// If there is no item with the index, the result's type WILL be undefined.
+    function atIndex(Item memory item, uint256 i) internal pure returns (Item memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, result) // Free the default allocation. We'll allocate manually.
@@ -178,11 +184,11 @@ library JSONParserLib {
     }
 
     /// @dev Returns the item at key `k`.
-    /// The key MUST be double-quoted, JSON encoded. This is for performance reasons.
-    /// If the item is not an object, the result's type will be undefined.
-    /// If there is no item with the key, the result's type will be undefined.
-    /// If there are duplicate keys, the last item with the key will be returned.
-    function at(Item memory item, string memory k) internal pure returns (Item memory result) {
+    /// If `item` is not an object, the result's type WILL be undefined.
+    /// The key MUST be double-quoted, JSON encoded. This is for efficiency reasons.
+    /// For duplicated keys, the last item with the key WILL be returned.
+    /// If there is no item with the key, the result's type WILL be undefined.
+    function atKey(Item memory item, string memory k) internal pure returns (Item memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, result) // Free the default allocation. We'll allocate manually.

@@ -209,8 +209,8 @@ contract JSONParserLibTest is SoladyTest {
                     assertEq(item.children()[i].value(), x);
                     assertEq(item.children()[i].parent()._data, item._data);
                     assertEq(item.children()[i].parent().isArray(), true);
-                    assertEq(item.at(i)._data, item.children()[i]._data);
-                    assertEq(item.at(LibString.toString(i)).isUndefined(), true);
+                    assertEq(item.atIndex(i)._data, item.children()[i]._data);
+                    assertEq(item.atKey(LibString.toString(i)).isUndefined(), true);
                 }
             }
         }
@@ -320,11 +320,14 @@ contract JSONParserLibTest is SoladyTest {
         item = s.parse();
 
         assertEq(item.size(), 5);
-        assertEq(item.at('"_"').value(), '"z"');
-        assertEq(item.at('"b"').value(), '"B"');
-        assertEq(item.at('"hehe"').value(), '"HEHE"');
-        assertEq(item.at('"m"').value(), "");
-        assertEq(item.at('"m"').isUndefined(), true);
+        for (uint256 i; i < item.size(); ++i) {
+            assertEq(item.atIndex(i).isUndefined(), true);
+        }
+        assertEq(item.atKey('"_"').value(), '"z"');
+        assertEq(item.atKey('"b"').value(), '"B"');
+        assertEq(item.atKey('"hehe"').value(), '"HEHE"');
+        assertEq(item.atKey('"m"').value(), "");
+        assertEq(item.atKey('"m"').isUndefined(), true);
     }
 
     function testParseRecursiveObject() public {
