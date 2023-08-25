@@ -254,8 +254,8 @@ library JSONParserLib {
             }
 
             function parseValue(s_, sibling_, pIn_, end_) -> _item, _pOut {
-                let packed_ := setPointer(0, _BITPOS_STRING, s_)
-                packed_ := setPointer(packed_, _BITPOS_SIBLING_OR_PARENT, sibling_)
+                let packed_ :=
+                    setPointer(setPointer(0, _BITPOS_STRING, s_), _BITPOS_SIBLING_OR_PARENT, sibling_)
                 _pOut := skipWhitespace(pIn_, end_)
                 if eq(_pOut, end_) { leave }
                 for { let c_ := chr(_pOut) } 1 {} {
@@ -322,8 +322,10 @@ library JSONParserLib {
                     }
                     _item, _pOut := parseValue(s_, _item, _pOut, end_)
                     if iszero(_item) { _pOut := end_ }
-                    let d_ := or(mload(_item), _BITMASK_PARENT_IS_ARRAY)
-                    mstore(_item, setPointer(d_, _BITPOS_KEY, j_))
+                    mstore(
+                        _item,
+                        setPointer(or(mload(_item), _BITMASK_PARENT_IS_ARRAY), _BITPOS_KEY, j_)
+                    )
                     j_ := add(j_, 1)
                     if lt(_pOut, end_) {
                         let c_ := chr(_pOut)
@@ -352,9 +354,18 @@ library JSONParserLib {
                     _pOut := add(_pOut, 1)
                     _item, _pOut := parseValue(s_, _item, _pOut, end_)
                     if iszero(_item) { _pOut := end_ }
-                    let d_ := or(_BITMASK_PARENT_IS_OBJECT, mload(_item))
-                    d_ := setPointer(d_, _BITPOS_KEY_LENGTH, sub(pKeyEnd_, pKeyStart_))
-                    mstore(_item, setPointer(d_, _BITPOS_KEY, sub(pKeyStart_, add(s_, 0x20))))
+                    mstore(
+                        _item,
+                        setPointer(
+                            setPointer(
+                                or(_BITMASK_PARENT_IS_OBJECT, mload(_item)),
+                                _BITPOS_KEY_LENGTH,
+                                sub(pKeyEnd_, pKeyStart_)
+                            ),
+                            _BITPOS_KEY,
+                            sub(pKeyStart_, add(s_, 0x20))
+                        )
+                    )
                     if lt(_pOut, end_) {
                         let c_ := chr(_pOut)
                         if eq(c_, 125) { break } // '}'.
