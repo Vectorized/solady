@@ -359,6 +359,54 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.isObject(), true);
     }
 
+    function testParseString() public {
+        _checkParseString('""');
+        _checkParseString('"a"');
+        _checkParseString('"ab"');
+        _checkParseString('"\\""');
+        _checkParseString('"\\\\"');
+        _checkParseString('"\\/"');
+        _checkParseString('"\\b"');
+        _checkParseString('"\\f"');
+        _checkParseString('"\\n"');
+        _checkParseString('"\\r"');
+        _checkParseString('"\\t"');
+        _checkParseString('"\\u1234"');
+        _checkParseString('"\\uabcd"');
+        _checkParseString('"\\uABCD"');
+        _checkParseString('"\\uef00"');
+        _checkParseString('"\\u00EF"');
+        _checkParseString('"\\u1234 "');
+        _checkParseString('"\\uabcd "');
+        _checkParseString('"\\uABCD "');
+        _checkParseString('"\\uef00 "');
+        _checkParseString('"\\u00EF "');
+    }
+
+    function _checkParseString(string memory s) internal {
+        JSONParserLib.Item memory item;
+        assertEq(this.parsedValue(s), s);
+        for (uint256 k; k != 4; ++k) {
+            item = _padWhiteSpace(s, k).parse();
+            assertEq(item.value(), s);
+            _checkItemIsSolo(item);
+        }
+    }
+
+    function testParseInvalidStringReverts() public {
+        _checkParseReverts('"');
+        _checkParseReverts('"""');
+        _checkParseReverts('"\\"');
+        _checkParseReverts('"\\\\\\"');
+        _checkParseReverts('"\\u"');
+        _checkParseReverts('"\\u1"');
+        _checkParseReverts('"\\u12"');
+        _checkParseReverts('"\\u123"');
+        _checkParseReverts('"\\uxxxx"');
+        _checkParseReverts('"\\u012g"');
+        _checkParseReverts('"\\u1234');
+    }
+
     function _checkItemIsSolo(JSONParserLib.Item memory item) internal {
         _checkItemHasNoParent(item);
         assertEq(item.children().length, 0);

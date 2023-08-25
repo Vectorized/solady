@@ -367,6 +367,11 @@ library JSONParserLib {
                 _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_OBJECT)
             }
 
+            function checkStringHex(p_, o_) {
+                if iszero(and(shr(sub(chr(add(p_, o_)), 48), 0x7e0000007e03ff), 1)) { fail() }
+                if iszero(eq(o_, 5)) { checkStringHex(p_, add(o_, 1)) }
+            }
+
             function parseStringSub(s_, packed_, pIn_, end_) -> _pOut {
                 for { _pOut := add(pIn_, 1) } 1 {} {
                     let c_ := chr(_pOut)
@@ -379,6 +384,7 @@ library JSONParserLib {
                     c_ := chr(add(_pOut, 1))
                     // 'u'.
                     if eq(c_, 117) {
+                        checkStringHex(_pOut, 2)
                         _pOut := add(_pOut, 6)
                         continue
                     }
