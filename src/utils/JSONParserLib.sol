@@ -60,12 +60,12 @@ library JSONParserLib {
     uint256 private constant _BITPOS_CHILD = 32 * 2;
     uint256 private constant _BITPOS_SIBLING_OR_PARENT = 32 * 1;
     uint256 private constant _BITMASK_POINTER = 0xffffffff;
-    uint256 private constant _BITMASK_TYPE = 0xff;
-    uint256 private constant _BITMASK_KEY_INITED = 1 << 8;
-    uint256 private constant _BITMASK_VALUE_INITED = 1 << 9;
-    uint256 private constant _BITMASK_CHILDREN_INITED = 1 << 10;
-    uint256 private constant _BITMASK_PARENT_IS_ARRAY = 1 << 11;
-    uint256 private constant _BITMASK_PARENT_IS_OBJECT = 1 << 12;
+    uint256 private constant _BITMASK_TYPE = 7;
+    uint256 private constant _BITMASK_KEY_INITED = 1 << 3;
+    uint256 private constant _BITMASK_VALUE_INITED = 1 << 4;
+    uint256 private constant _BITMASK_CHILDREN_INITED = 1 << 5;
+    uint256 private constant _BITMASK_PARENT_IS_ARRAY = 1 << 6;
+    uint256 private constant _BITMASK_PARENT_IS_OBJECT = 1 << 7;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OPERATIONS                         */
@@ -451,7 +451,7 @@ library JSONParserLib {
                 let packed_ := mload(item_)
                 if or(iszero(packed_), iszero(item_)) { leave }
                 let t_ := and(_BITMASK_TYPE, packed_)
-                if or(eq(t_, TYPE_ARRAY), eq(t_, TYPE_OBJECT)) {
+                if iszero(gt(t_, TYPE_OBJECT)) {
                     if and(packed_, _BITMASK_CHILDREN_INITED) {
                         _arr := getPointer(packed_, _BITPOS_CHILD)
                         leave
