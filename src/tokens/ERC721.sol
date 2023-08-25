@@ -13,16 +13,14 @@ pragma solidity ^0.8.4;
 ///
 /// For performance, methods are made payable where permitted by the ERC721 standard.
 ///
-/// For performance, most of the code is manually duplicated and inlined.
-/// Overriding internal functions may not alter the functionality of external functions.
-/// Please check and override accordingly.
-///
 /// If you are overriding:
 /// - NEVER violate the ERC721 invariant:
 ///   the balance of an owner MUST be always be equal to their number of ownership slots.
 ///   The transfer functions do not have an underflow guard for user token balances.
 /// - Make sure all variables written to storage are properly cleaned
 //    (e.g. the bool value for `isApprovedForAll` MUST be either 1 or 0 under the hood).
+/// - Check that the overridden function is actually used in the function you want to
+///   change the behavior of. Much of the code has been manually inlined for performance.
 abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
