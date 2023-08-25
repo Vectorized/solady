@@ -208,7 +208,7 @@ contract JSONParserLibTest is SoladyTest {
                     string memory x = LibString.toString(o + i);
                     assertEq(item.children()[i].value(), x);
                     assertEq(item.children()[i].parent()._data, item._data);
-                    assertEq(item.children()[i].parentIsArray(), true);
+                    assertEq(item.children()[i].parent().isArray(), true);
                 }
             }
         }
@@ -227,21 +227,21 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.children()[0].getType(), JSONParserLib.TYPE_STRING);
         assertEq(item.children()[0].key(), "");
         assertEq(item.children()[0].parent()._data, item._data);
-        assertEq(item.children()[0].parentIsArray(), true);
+        assertEq(item.children()[0].parent().isArray(), true);
 
         assertEq(item.children()[1].value(), "12");
         assertEq(item.children()[1].index(), 1);
         assertEq(item.children()[1].key(), "");
         assertEq(item.children()[1].getType(), JSONParserLib.TYPE_NUMBER);
         assertEq(item.children()[1].parent()._data, item._data);
-        assertEq(item.children()[1].parentIsArray(), true);
+        assertEq(item.children()[1].parent().isArray(), true);
 
         assertEq(item.children()[2].value(), '"haha"');
         assertEq(item.children()[2].index(), 2);
         assertEq(item.children()[2].getType(), JSONParserLib.TYPE_STRING);
         assertEq(item.children()[2].key(), "");
         assertEq(item.children()[2].parent()._data, item._data);
-        assertEq(item.children()[2].parentIsArray(), true);
+        assertEq(item.children()[2].parent().isArray(), true);
     }
 
     function testParseSpecials() public {
@@ -292,7 +292,7 @@ contract JSONParserLibTest is SoladyTest {
                 for (uint256 i; i != 3; ++i) {
                     assertEq(item.children()[i].parent()._data, item._data);
                     assertEq(item.children()[i].parent().isArray(), true);
-                    assertEq(item.children()[i].parentIsArray(), true);
+                    assertEq(item.children()[i].parent().isArray(), true);
                     assertEq(item.children()[i].index(), i);
                     assertEq(item.children()[i].key(), "");
                 }
@@ -301,7 +301,6 @@ contract JSONParserLibTest is SoladyTest {
                 for (uint256 i; i != 3; ++i) {
                     assertEq(item.children()[i].parent()._data, item._data);
                     assertEq(item.children()[i].parent().isObject(), true);
-                    assertEq(item.children()[i].parentIsObject(), true);
                     assertEq(item.children()[i].index(), 0);
                 }
                 assertEq(item.children()[0].key(), '"A"');
@@ -370,8 +369,8 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.parent()._data, 0);
         assertEq(item.key(), "");
         assertEq(item.index(), 0);
-        assertEq(item.parentIsObject(), false);
-        assertEq(item.parentIsArray(), false);
+        assertEq(item.parent().isObject(), false);
+        assertEq(item.parent().isArray(), false);
         assertEq(item.isUndefined(), false);
     }
 }

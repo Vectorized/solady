@@ -85,6 +85,10 @@ library JSONParserLib {
     /// The parsed tree will contain offsets to `s`.
     /// Do NOT pass in a string that will be modified later on.
     function parse(string memory s) internal pure returns (Item memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, result) // Free the default allocation. We'll allocate manually.
+        }
         bytes32 r = _query(_toInput(s), 255);
         /// @solidity memory-safe-assembly
         assembly {
@@ -197,20 +201,9 @@ library JSONParserLib {
     function parent(Item memory item) internal pure returns (Item memory result) {
         /// @solidity memory-safe-assembly
         assembly {
+            mstore(0x40, result) // Free the default allocation. We've already allocated.
             result := and(shr(_BITPOS_SIBLING_OR_PARENT, mload(item)), _BITMASK_POINTER)
         }
-    }
-
-    /// @dev Returns whether the item's parent (if any) is of type Array.
-    /// Use this over `parent().isArray()` for efficiency.
-    function parentIsArray(Item memory item) internal pure returns (bool result) {
-        result = _hasFlagSet(item, _BITMASK_PARENT_IS_ARRAY);
-    }
-
-    /// @dev Returns whether the item's parent (if any) is of type Object.
-    /// Use this over `parent().isObject()` for efficiency.
-    function parentIsObject(Item memory item) internal pure returns (bool result) {
-        result = _hasFlagSet(item, _BITMASK_PARENT_IS_OBJECT);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -257,7 +250,7 @@ library JSONParserLib {
                         sub(pCurr_, pStart_)
                     )
                 mstore(_item, or(packed_, type_))
-                mstore(0x40, add(_item, 0x20))
+                mstore(0x40, add(_item, 0x20)) // Allocate memory.
             }
 
             function parseValue(s_, sibling_, pIn_, end_) -> _item, _pOut {
@@ -476,7 +469,7 @@ library JSONParserLib {
                     let w_ := not(0x1f)
                     let n_ := add(w_, sub(o_, _arr))
                     mstore(_arr, shr(5, n_))
-                    mstore(0x40, o_)
+                    mstore(0x40, o_) // Allocate memory.
                     packed_ := setPointer(packed_, _BITPOS_CHILD, _arr)
                     mstore(item_, or(_BITMASK_CHILDREN_INITED, packed_))
                     // Reverse the array.
@@ -555,14 +548,6 @@ library JSONParserLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := eq(and(mload(input), _BITMASK_TYPE), t)
-        }
-    }
-
-    /// @dev Returns whether the input has flag `f` set to true.
-    function _hasFlagSet(Item memory input, uint256 f) private pure returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := iszero(iszero(and(mload(input), f)))
         }
     }
 }
