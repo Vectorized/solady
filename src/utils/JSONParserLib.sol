@@ -68,18 +68,8 @@ library JSONParserLib {
     uint256 private constant _BITMASK_PARENT_IS_OBJECT = 1 << 7;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         OPERATIONS                         */
+    /*                   JSON PARSING OPERATION                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // Note:
-    // - An item is a node in the JSON tree.
-    // - The value of a string item WILL be double-quoted, JSON encoded.
-    // - We make a distinction between `index` and `key`.
-    //   - Items in arrays are located by `index` (uint256).
-    //   - Items in objects are located by `key` (string).
-    // - Keys are always strings, double-quoted, JSON encoded.
-    //
-    // These design choices are made to balance between efficiency and ease-of-use.
 
     /// @dev Parses the JSON string `s`, and returns the root.
     /// Reverts if `s` is not a valid JSON as specified in RFC 8259.
@@ -100,6 +90,20 @@ library JSONParserLib {
             result := r
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    JSON ITEM OPERATIONS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note:
+    // - An item is a node in the JSON tree.
+    // - The value of a string item WILL be double-quoted, JSON encoded.
+    // - We make a distinction between `index` and `key`.
+    //   - Items in arrays are located by `index` (uint256).
+    //   - Items in objects are located by `key` (string).
+    // - Keys are always strings, double-quoted, JSON encoded.
+    //
+    // These design choices are made to balance between efficiency and ease-of-use.
 
     /// @dev Returns the string value of the item.
     /// This is its exact string representation in the original JSON string.
@@ -266,6 +270,10 @@ library JSONParserLib {
         }
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     UTILITY FUNCTIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @dev Parses an unsigned integer from a string (in decimal, i.e. base 10).
     /// Reverts if `s` is not a valid uint256 string matching the RegEx `^[0-9]+$`,
     /// or if the parsed number is too big for a uint256.
@@ -288,6 +296,42 @@ library JSONParserLib {
                 revert(0x1c, 0x04)
             }
         }
+    }
+
+    /// @dev Parses a signed integer from a string (in decimal, i.e. base 10).
+    /// Reverts if `s` is not a valid int256 string matching the RegEx `^[+-]?[0-9]+$`,
+    /// or if the parsed number is too big for a int256.
+    function parseInt(string memory s) internal pure returns (int256 result) {
+        uint256 n = bytes(s).length;
+        uint256 sign;
+        bool isNegative;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if n {
+                let c := and(mload(add(s, 1)), 0xff)
+                isNegative := eq(c, 45)
+                if or(eq(c, 43), isNegative) {
+                    sign := c
+                    s := add(s, 1)
+                    mstore(s, sub(n, 1))
+                }
+                if and(iszero(sign), gt(sub(c, 48), 9)) { s := 0x60 }
+            }
+        }
+        uint256 x = parseUint(s);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if shr(255, x) {
+                mstore(0x00, 0x10182796) // `ParsingFailed()`.
+                revert(0x1c, 0x04)
+            }
+            if sign {
+                mstore(s, sign)
+                s := sub(s, 1)
+                mstore(s, n)
+            }
+        }
+        result = isNegative ? -int256(x) : int256(x);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

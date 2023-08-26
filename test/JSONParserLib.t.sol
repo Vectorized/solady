@@ -460,17 +460,15 @@ contract JSONParserLibTest is SoladyTest {
     }
 
     function testParseUint() public {
+        assertEq(this.parseUint("0"), 0);
         assertEq(this.parseUint("1"), 1);
         assertEq(this.parseUint("123"), 123);
         assertEq(this.parseUint("0123"), 123);
         assertEq(this.parseUint("000123"), 123);
         assertEq(this.parseUint("12345678901234567890"), 12345678901234567890);
-        assertEq(
-            this.parseUint(
-                "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-            ),
-            115792089237316195423570985008687907853269984665640564039457584007913129639935
-        );
+        string memory s;
+        s = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+        assertEq(this.parseUint(s), type(uint256).max);
     }
 
     function testParseInvalidUintReverts() public {
@@ -481,30 +479,23 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseInvalidUintReverts(" 123 ");
         _checkParseInvalidUintReverts("123:");
         _checkParseInvalidUintReverts(":");
-        _checkParseInvalidUintReverts(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639936"
-        );
-        _checkParseInvalidUintReverts(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639937"
-        );
-        _checkParseInvalidUintReverts(
-            "115792089237316195423570985008687907853269984665640564039457584007913129639999"
-        );
-        _checkParseInvalidUintReverts(
-            "115792089237316195423570985008687907853269984665640564039457584007913129640001"
-        );
-        _checkParseInvalidUintReverts(
-            "115792089237316195423570985008687907853269984665640564039457584007913129640035"
-        );
-        _checkParseInvalidUintReverts(
-            "215792089237316195423570985008687907853269984665640564039457584007913129639935"
-        );
-        _checkParseInvalidUintReverts(
-            "222222222222222222222222222222222222222222222222222222222222222222222222222222"
-        );
-        _checkParseInvalidUintReverts(
-            "1215792089237316195423570985008687907853269984665640564039457584007913129639935"
-        );
+        string memory s;
+        s = "115792089237316195423570985008687907853269984665640564039457584007913129639936";
+        _checkParseInvalidUintReverts(s);
+        s = "115792089237316195423570985008687907853269984665640564039457584007913129639937";
+        _checkParseInvalidUintReverts(s);
+        s = "115792089237316195423570985008687907853269984665640564039457584007913129639999";
+        _checkParseInvalidUintReverts(s);
+        s = "115792089237316195423570985008687907853269984665640564039457584007913129640001";
+        _checkParseInvalidUintReverts(s);
+        s = "115792089237316195423570985008687907853269984665640564039457584007913129640035";
+        _checkParseInvalidUintReverts(s);
+        s = "215792089237316195423570985008687907853269984665640564039457584007913129639935";
+        _checkParseInvalidUintReverts(s);
+        s = "222222222222222222222222222222222222222222222222222222222222222222222222222222";
+        _checkParseInvalidUintReverts(s);
+        s = "1215792089237316195423570985008687907853269984665640564039457584007913129639935";
+        _checkParseInvalidUintReverts(s);
     }
 
     function _checkParseInvalidUintReverts(string memory s) internal {
@@ -514,5 +505,58 @@ contract JSONParserLibTest is SoladyTest {
 
     function parseUint(string memory s) public pure returns (uint256) {
         return s.parseUint();
+    }
+
+    function testParseInt() public {
+        _checkParseInt("0", 0);
+        _checkParseInt("1", 1);
+        _checkParseInt("+1", 1);
+        _checkParseInt("+01", 1);
+        _checkParseInt("+001", 1);
+        _checkParseInt("+0", 0);
+        _checkParseInt("+1", 1);
+        _checkParseInt("+12", 12);
+        _checkParseInt("-12", -12);
+        string memory s;
+        s = "-57896044618658097711785492504343953926634992332820282019728792003956564819967";
+        _checkParseInt(s, -type(int256).max);
+        s = "+57896044618658097711785492504343953926634992332820282019728792003956564819967";
+        _checkParseInt(s, type(int256).max);
+        s = "57896044618658097711785492504343953926634992332820282019728792003956564819967";
+        _checkParseInt(s, type(int256).max);
+    }
+
+    function testParseInvalidIntReverts() public {
+        _checkParseInvalidIntReverts("");
+        _checkParseInvalidIntReverts("-");
+        _checkParseInvalidIntReverts("+");
+        _checkParseInvalidIntReverts("--");
+        _checkParseInvalidIntReverts("++");
+        _checkParseInvalidIntReverts("a");
+        _checkParseInvalidIntReverts(" ");
+        _checkParseInvalidIntReverts(" 123 ");
+        _checkParseInvalidIntReverts("123:");
+        _checkParseInvalidIntReverts(":");
+        _checkParseInvalidIntReverts(":123");
+        string memory s;
+        s = "-57896044618658097711785492504343953926634992332820282019728792003956564819968";
+        _checkParseInvalidIntReverts(s);
+        s = "+57896044618658097711785492504343953926634992332820282019728792003956564819968";
+        _checkParseInvalidIntReverts(s);
+    }
+
+    function _checkParseInt(string memory s, int256 x) internal {
+        bytes32 hashBefore = keccak256(bytes(s));
+        assertEq(this.parseInt(s), x);
+        assertEq(keccak256(bytes(s)), hashBefore);
+    }
+
+    function _checkParseInvalidIntReverts(string memory s) internal {
+        vm.expectRevert(JSONParserLib.ParsingFailed.selector);
+        this.parseInt(s);
+    }
+
+    function parseInt(string memory s) public pure returns (int256) {
+        return s.parseInt();
     }
 }
