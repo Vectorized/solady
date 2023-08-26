@@ -479,11 +479,20 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseInvalidUintReverts("a");
         _checkParseInvalidUintReverts(" ");
         _checkParseInvalidUintReverts(" 123 ");
-        string memory s =
-            "1157920892373161954235709850086879078532699846656405640394575840079131296399";
-        for (uint256 i = 36; i <= 99; ++i) {
-            _checkParseInvalidUintReverts(string(abi.encodePacked(s, LibString.toString(i))));
-        }
+        _checkParseInvalidUintReverts("123:");
+        _checkParseInvalidUintReverts(":");
+        _checkParseInvalidUintReverts(
+            "115792089237316195423570985008687907853269984665640564039457584007913129639936"
+        );
+        _checkParseInvalidUintReverts(
+            "115792089237316195423570985008687907853269984665640564039457584007913129639937"
+        );
+        _checkParseInvalidUintReverts(
+            "115792089237316195423570985008687907853269984665640564039457584007913129639999"
+        );
+        _checkParseInvalidUintReverts(
+            "115792089237316195423570985008687907853269984665640564039457584007913129640001"
+        );
         _checkParseInvalidUintReverts(
             "115792089237316195423570985008687907853269984665640564039457584007913129640035"
         );

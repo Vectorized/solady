@@ -267,26 +267,25 @@ library JSONParserLib {
     }
 
     /// @dev Parses an unsigned integer from a string (in decimal, i.e. base 10).
-    /// Reverts if `s` is not a valid uint256 string as per regex `^[0-9]+$`,
+    /// Reverts if `s` is not a valid uint256 string matching the RegEx `^[0-9]+$`,
     /// or if the parsed number is too big for a uint256.
     function parseUint(string memory s) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             let n := mload(s)
-            if iszero(n) {
-                mstore(0x00, 0x10182796) // `ParsingFailed()`.
-                revert(0x1c, 0x04)
-            }
             let preMulOverflowThres := div(not(0), 10)
-            for { let i := 0 } iszero(eq(i, n)) {} {
+            for { let i := 0 } 1 {} {
                 i := add(i, 1)
                 let digit := sub(and(mload(add(s, i)), 0xff), 48)
                 let mulOverflowed := gt(result, preMulOverflowThres)
                 let product := mul(10, result)
                 result := add(product, digit)
-                if or(or(mulOverflowed, lt(result, product)), gt(digit, 9)) {
-                    mstore(0x00, 0x10182796) // `ParsingFailed()`.
-                    revert(0x1c, 0x04)
-                }
+                n := mul(n, iszero(or(or(mulOverflowed, lt(result, product)), gt(digit, 9))))
+                if iszero(lt(i, n)) { break }
+            }
+            if iszero(n) {
+                mstore(0x00, 0x10182796) // `ParsingFailed()`.
+                revert(0x1c, 0x04)
             }
         }
     }
