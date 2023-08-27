@@ -90,7 +90,9 @@ contract JSONParserLibTest is SoladyTest {
     }
 
     function parsedValue(string memory s) public pure returns (string memory) {
-        return s.parse().value();
+        s = s.parse().value();
+        _checkMemory(s);
+        return s;
     }
 
     function testParseNumber() public {
@@ -340,6 +342,17 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.atKey('"m"').isUndefined(), true);
     }
 
+    function testParseValidObjectDoesNotRevert(string memory key, string memory value) public {
+        _limitStringLength(key);
+        _limitStringLength(value);
+        string memory s = string(
+            abi.encodePacked(
+                '{"', LibString.escapeJSON(key), '":"', LibString.escapeJSON(value), '"}'
+            )
+        );
+        this.parsedValue(s);
+    }
+
     function testParseRecursiveObject() public {
         string memory s;
         JSONParserLib.Item memory item;
@@ -582,9 +595,21 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(keccak256(bytes(this.decodeString('"\\uD83D\\ude00"'))), expectedHash); // Smiley emoji.
     }
 
-    function testDecodeEncodedStringDoesNotRevert(string memory s) public view {
+    function testDecodeEncodedStringDoesNotRevert(string memory s) public {
+        _limitStringLength(s);
         s = string(abi.encodePacked('"', LibString.escapeJSON(s), '"'));
         this.decodeString(s);
+    }
+
+    function _limitStringLength(string memory s) internal {
+        uint256 r = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let limit := 16
+            if eq(1, and(r, 3)) { limit := 80 }
+            let n := mload(s)
+            if gt(n, limit) { mstore(s, limit) }
+        }
     }
 
     function testDecodeInvalidStringReverts() public {
