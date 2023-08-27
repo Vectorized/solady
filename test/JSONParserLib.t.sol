@@ -603,28 +603,4 @@ contract JSONParserLibTest is SoladyTest {
     function decodeString(string memory s) public pure returns (string memory) {
         return JSONParserLib.decodeString(s);
     }
-
-    function testCodePointAsUTF8Differential(uint256 c) public {
-        uint256 a;
-        uint256 b;
-        /// @solidity memory-safe-assembly
-        assembly {
-            a := shl(240, or(0xc080, or(and(0x1f00, shl(2, c)), and(0x3f, c))))
-            mstore8(0, or(0xc0, and(0x1f, shr(6, c))))
-            mstore8(1, or(0x80, and(0x3f, c)))
-            mstore(0x02, 0)
-            b := mload(0x00)
-        }
-        assertEq(a, b);
-        /// @solidity memory-safe-assembly
-        assembly {
-            // forgefmt: disable-next-item
-            a := shl(232, or(0xe08080, or(shl(4, and(0xf000, c)), or(and(0x3f00, shl(2, c)), and(0x3f, c)))))
-            mstore8(0, shr(12, c))
-            mstore8(1, shr(6, c))
-            mstore8(2, c)
-            b := shl(232, or(0xe08080, and(0x0f3f3f, shr(232, mload(0x00)))))
-        }
-        assertEq(a, b);
-    }
 }
