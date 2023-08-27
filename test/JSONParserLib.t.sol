@@ -411,6 +411,9 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseString('"01234567890123456789012345678901"');
         _checkParseString('"012345678901234567890123456789012"');
         _checkParseString('"0123456789012345678901234567890123"');
+        _checkParseString('"  d"');
+        _checkParseString('"d  "');
+        _checkParseString('"  d  "');
         _checkParseString('"\\""');
         _checkParseString('"\\\\"');
         _checkParseString('"\\/"');
@@ -419,6 +422,7 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseString('"\\n"');
         _checkParseString('"\\r"');
         _checkParseString('"\\t"');
+        _checkParseString('"  \\u1234 \\"\\"\\\\ \\b\\f \\n\\r "');
         _checkParseString('"\\u1234"');
         _checkParseString('"\\uabcd"');
         _checkParseString('"\\uABCD"');
@@ -446,6 +450,11 @@ contract JSONParserLibTest is SoladyTest {
     function testParseInvalidStringReverts() public {
         _checkParseReverts('"');
         _checkParseReverts('"""');
+        _checkParseReverts('""""');
+        _checkParseReverts('"""""');
+        _checkParseReverts('"abc" "');
+        _checkParseReverts('"abc" ""');
+        _checkParseReverts('"abc""abc"');
         _checkParseReverts('"\\"');
         _checkParseReverts('"\\\\\\"');
         _checkParseReverts('"\\u"');
@@ -605,6 +614,7 @@ contract JSONParserLibTest is SoladyTest {
         _limitStringLength(s);
         s = string(abi.encodePacked('"', LibString.escapeJSON(s), '"'));
         this.decodeString(s);
+        assertEq(this.parsedValue(s), s);
     }
 
     function _limitStringLength(string memory s) internal {
