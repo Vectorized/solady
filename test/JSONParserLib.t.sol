@@ -582,6 +582,11 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(keccak256(bytes(this.decodeString('"\\uD83D\\ude00"'))), expectedHash); // Smiley emoji.
     }
 
+    function testDecodeEncodedStringDoesNotRevert(string memory s) public view {
+        s = string(abi.encodePacked('"', LibString.escapeJSON(s), '"'));
+        this.decodeString(s);
+    }
+
     function testDecodeInvalidStringReverts() public {
         _checkDecodeInvalidStringReverts("");
         _checkDecodeInvalidStringReverts('"');
