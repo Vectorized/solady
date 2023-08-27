@@ -406,6 +406,11 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseString('""');
         _checkParseString('"a"');
         _checkParseString('"ab"');
+        _checkParseString('"012345678901234567890123456789"');
+        _checkParseString('"0123456789012345678901234567890"');
+        _checkParseString('"01234567890123456789012345678901"');
+        _checkParseString('"012345678901234567890123456789012"');
+        _checkParseString('"0123456789012345678901234567890123"');
         _checkParseString('"\\""');
         _checkParseString('"\\\\"');
         _checkParseString('"\\/"');
@@ -433,6 +438,7 @@ contract JSONParserLibTest is SoladyTest {
             item = _padWhiteSpace(s, k).parse();
             assertEq(item.value(), s);
             assertEq(item.isString(), true);
+            assertEq(item.value(), s);
             _checkItemIsSolo(item);
         }
     }
@@ -638,6 +644,12 @@ contract JSONParserLibTest is SoladyTest {
         returns (string memory)
     {
         return JSONParserLib.decodeString(s);
+    }
+
+    function testParseUint(uint256 x) public {
+        string memory s = LibString.toString(x);
+        assertEq(this.parsedValue(s), s);
+        assertEq(this.parseUint(s), x);
     }
 
     modifier miniBrutalizeMemory() {

@@ -659,7 +659,7 @@ library JSONParserLib {
 
             function parseNumber(s_, packed_, pIn_, end_) -> _item, _pOut {
                 _pOut := pIn_
-                if eq(byte(0, mload(_pOut)), 45) { _pOut := add(_pOut, 1) } // '-'.
+                if eq(chr(_pOut), 45) { _pOut := add(_pOut, 1) } // '-'.
                 if iszero(and(shr(chr(_pOut), shl(48, 0x3ff)), 1)) { fail() } // Not '0'..'9'.
                 let c_ := chr(_pOut)
                 _pOut := add(_pOut, 1)
