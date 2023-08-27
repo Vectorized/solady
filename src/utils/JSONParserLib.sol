@@ -52,13 +52,13 @@ library JSONParserLib {
 
     // Private constants for packing `_data`.
 
-    uint256 private constant _BITPOS_STRING = 32 * 7;
-    uint256 private constant _BITPOS_KEY_LENGTH = 32 * 6;
-    uint256 private constant _BITPOS_KEY = 32 * 5;
-    uint256 private constant _BITPOS_VALUE_LENGTH = 32 * 4;
-    uint256 private constant _BITPOS_VALUE = 32 * 3;
-    uint256 private constant _BITPOS_CHILD = 32 * 2;
-    uint256 private constant _BITPOS_SIBLING_OR_PARENT = 32 * 1;
+    uint256 private constant _BITPOS_STRING = 32 * 7 - 8;
+    uint256 private constant _BITPOS_KEY_LENGTH = 32 * 6 - 8;
+    uint256 private constant _BITPOS_KEY = 32 * 5 - 8;
+    uint256 private constant _BITPOS_VALUE_LENGTH = 32 * 4 - 8;
+    uint256 private constant _BITPOS_VALUE = 32 * 3 - 8;
+    uint256 private constant _BITPOS_CHILD = 32 * 2 - 8;
+    uint256 private constant _BITPOS_SIBLING_OR_PARENT = 32 * 1 - 8;
     uint256 private constant _BITMASK_POINTER = 0xffffffff;
     uint256 private constant _BITMASK_TYPE = 7;
     uint256 private constant _BITMASK_KEY_INITED = 1 << 3;
@@ -82,7 +82,7 @@ library JSONParserLib {
     function parse(string memory s) internal pure returns (Item memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x40, result) // Free the default allocation. We'll allocate manually.
+            mstore(0x40, result) // We will use our own allocation instead.
         }
         bytes32 r = _query(_toInput(s), 255);
         /// @solidity memory-safe-assembly
@@ -469,7 +469,6 @@ library JSONParserLib {
                 for { _pOut := pIn_ } 1 { _pOut := add(_pOut, 1) } {
                     // ' ', '\n', '\r', '\t'.
                     if iszero(and(shr(chr(_pOut), 0x100002600), 1)) { leave }
-                    if eq(_pOut, end_) { leave }
                 }
             }
 
@@ -496,10 +495,9 @@ library JSONParserLib {
             }
 
             function parseValue(s_, sibling_, pIn_, end_) -> _item, _pOut {
-                let packed_ :=
-                    setPointer(setPointer(0, _BITPOS_STRING, s_), _BITPOS_SIBLING_OR_PARENT, sibling_)
+                let packed_ := setPointer(mload(0x00), _BITPOS_SIBLING_OR_PARENT, sibling_)
                 _pOut := skipWhitespace(pIn_, end_)
-                if eq(_pOut, end_) { leave }
+                if iszero(lt(_pOut, end_)) { leave }
                 for { let c_ := chr(_pOut) } 1 {} {
                     // If starts with '"'.
                     if eq(c_, 34) {
@@ -570,11 +568,9 @@ library JSONParserLib {
                         setPointer(or(mload(_item), _BITMASK_PARENT_IS_ARRAY), _BITPOS_KEY, j_)
                     )
                     j_ := add(j_, 1)
-                    if lt(_pOut, end_) {
-                        let c_ := chr(_pOut)
-                        if eq(c_, 93) { break } // ']'.
-                        if eq(c_, 44) { continue } // ','.
-                    }
+                    let c_ := chr(_pOut)
+                    if eq(c_, 93) { break } // ']'.
+                    if eq(c_, 44) { continue } // ','.
                     _pOut := end_
                 }
                 _pOut := add(_pOut, 1)
@@ -593,7 +589,7 @@ library JSONParserLib {
                     let pKeyStart_ := _pOut
                     let pKeyEnd_ := parseStringSub(s_, _item, _pOut, end_)
                     _pOut := skipWhitespace(pKeyEnd_, end_)
-                    if iszero(and(lt(_pOut, end_), eq(chr(_pOut), 58))) { _pOut := end_ }
+                    if iszero(eq(chr(_pOut), 58)) { _pOut := end_ } // Not ':'.
                     _pOut := add(_pOut, 1)
                     _item, _pOut := parseValue(s_, _item, _pOut, end_)
                     if iszero(_item) { _pOut := end_ }
@@ -609,11 +605,9 @@ library JSONParserLib {
                             sub(pKeyStart_, add(s_, 0x20))
                         )
                     )
-                    if lt(_pOut, end_) {
-                        let c_ := chr(_pOut)
-                        if eq(c_, 125) { break } // '}'.
-                        if eq(c_, 44) { continue } // ','.
-                    }
+                    let c_ := chr(_pOut)
+                    if eq(c_, 125) { break } // '}'.
+                    if eq(c_, 44) { continue } // ','.
                     _pOut := end_
                 }
                 _pOut := add(_pOut, 1)
@@ -628,9 +622,10 @@ library JSONParserLib {
             }
 
             function parseStringSub(s_, packed_, pIn_, end_) -> _pOut {
+                if iszero(lt(pIn_, end_)) { fail() }
                 for { _pOut := add(pIn_, 1) } 1 {} {
                     let c_ := chr(_pOut)
-                    if iszero(mul(lt(_pOut, end_), xor(c_, 34))) { break } // '"'.
+                    if eq(c_, 34) { break } // '"'.
                     // Not '\'.
                     if iszero(eq(c_, 92)) {
                         _pOut := add(_pOut, 1)
@@ -656,7 +651,7 @@ library JSONParserLib {
             }
 
             function skip0To9s(pIn_, end_, atLeastOne_) -> _pOut {
-                for { _pOut := pIn_ } iszero(eq(_pOut, end_)) { _pOut := add(_pOut, 1) } {
+                for { _pOut := pIn_ } 1 { _pOut := add(_pOut, 1) } {
                     if iszero(lt(sub(chr(_pOut), 48), 10)) { break } // Not '0'..'9'.
                 }
                 if and(atLeastOne_, eq(pIn_, _pOut)) { fail() }
@@ -665,18 +660,16 @@ library JSONParserLib {
             function parseNumber(s_, packed_, pIn_, end_) -> _item, _pOut {
                 _pOut := pIn_
                 if eq(byte(0, mload(_pOut)), 45) { _pOut := add(_pOut, 1) } // '-'.
-                if iszero(and(shr(chr(_pOut), shl(48, 0x3ff)), lt(_pOut, end_))) { fail() } // Not '0'..'9'.
+                if iszero(and(shr(chr(_pOut), shl(48, 0x3ff)), 1)) { fail() } // Not '0'..'9'.
                 let c_ := chr(_pOut)
                 _pOut := add(_pOut, 1)
                 if iszero(eq(c_, 48)) { _pOut := skip0To9s(_pOut, end_, 0) } // Not '0'.
                 // '.'.
-                if and(lt(_pOut, end_), eq(chr(_pOut), 46)) {
-                    _pOut := skip0To9s(add(_pOut, 1), end_, 1)
-                }
+                if eq(chr(_pOut), 46) { _pOut := skip0To9s(add(_pOut, 1), end_, 1) }
                 // 'E', 'e'.
-                if and(shr(chr(_pOut), shl(69, 0x100000001)), lt(_pOut, end_)) {
+                if and(shr(chr(_pOut), shl(69, 0x100000001)), 1) {
                     _pOut := add(_pOut, 1)
-                    _pOut := add(_pOut, and(shr(chr(_pOut), shl(43, 5)), lt(_pOut, end_))) // '+', '-'.
+                    _pOut := add(_pOut, and(shr(chr(_pOut), shl(43, 5)), 1)) // '+', '-'.
                     _pOut := skip0To9s(_pOut, end_, 1)
                 }
                 _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_NUMBER)
@@ -780,10 +773,16 @@ library JSONParserLib {
             case 3 { result := children(input) }
             // Parse.
             default {
-                let s := input
-                let p := add(s, 0x20)
-                let e := add(p, mload(s))
-                result, p := parseValue(s, 0, p, e)
+                let p := add(input, 0x20)
+                let e := add(p, mload(input))
+                if iszero(eq(p, e)) {
+                    let c := chr(e)
+                    mstore8(e, 34) // Place a '"' at the end to speed up parsing.
+                    mstore(0x00, setPointer(0, _BITPOS_STRING, input))
+                    mstore8(0x00, 34) // So that `mallocItem` will still preserve '"' at the end.
+                    result, p := parseValue(input, 0, p, e)
+                    mstore8(e, c) // Restore the original char at the end.
+                }
                 if or(lt(p, e), iszero(result)) { fail() }
             }
         }
