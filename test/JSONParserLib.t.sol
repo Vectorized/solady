@@ -559,4 +559,48 @@ contract JSONParserLibTest is SoladyTest {
     function parseInt(string memory s) public pure returns (int256) {
         return s.parseInt();
     }
+
+    function testDecodeString() public {
+        assertEq(this.decodeString('""'), "");
+        assertEq(this.decodeString('"abc"'), "abc");
+        assertEq(this.decodeString('" abc  "'), " abc  ");
+        assertEq(this.decodeString('"\\""'), '"');
+        assertEq(this.decodeString('"\\/"'), "/");
+        assertEq(this.decodeString('"\\\\"'), "\\");
+        assertEq(this.decodeString('"\\b"'), hex"08");
+        assertEq(this.decodeString('"\\f"'), hex"0c");
+        assertEq(this.decodeString('"\\n"'), "\n");
+        assertEq(this.decodeString('"\\r"'), "\r");
+        assertEq(this.decodeString('"\\t"'), "\t");
+        assertEq(this.decodeString('"\\u0020"'), " ");
+        bytes32 expectedHash;
+        expectedHash = 0x40b2b6558413427ef2da03b1452640d701458e0ce57114db6b7423ae3b5fe857;
+        assertEq(keccak256(bytes(this.decodeString('"\\u039e"'))), expectedHash); // Greek uppercase Xi.
+        expectedHash = 0xecab436111d5a82d983bd4630c03c83f424d2a2dd8465c31fd950b9ec8d005fb;
+        assertEq(keccak256(bytes(this.decodeString('"\\u2661"'))), expectedHash); // Heart.
+        expectedHash = 0x367c272ea502ac6e9f085c1baddc52d0ac0224f1b7d1e8621202620efa3ba084;
+        assertEq(keccak256(bytes(this.decodeString('"\\uD83D\\ude00"'))), expectedHash); // Smiley emoji.
+    }
+
+    function testDecodeInvalidStringReverts() public {
+        _checkDecodeInvalidStringReverts("");
+        _checkDecodeInvalidStringReverts('"');
+        _checkDecodeInvalidStringReverts(' "" ');
+        _checkDecodeInvalidStringReverts(' ""');
+        _checkDecodeInvalidStringReverts('"" ');
+        _checkDecodeInvalidStringReverts('"\\z"');
+        _checkDecodeInvalidStringReverts('"\\u"');
+        _checkDecodeInvalidStringReverts('"\\u1"');
+        _checkDecodeInvalidStringReverts('"\\u111"');
+        _checkDecodeInvalidStringReverts('"\\uxxxx"');
+    }
+
+    function _checkDecodeInvalidStringReverts(string memory s) internal {
+        vm.expectRevert(JSONParserLib.ParsingFailed.selector);
+        this.decodeString(s);
+    }
+
+    function decodeString(string memory s) public pure returns (string memory) {
+        return JSONParserLib.decodeString(s);
+    }
 }

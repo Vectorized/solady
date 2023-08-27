@@ -334,6 +334,120 @@ library JSONParserLib {
         result = isNegative ? -int256(x) : int256(x);
     }
 
+    /// @dev Decodes a JSON encoded string.
+    /// The string MUST be double-quoted, JSON encoded.
+    /// Reverts if the string is invalid.
+    /// As you can see, it's pretty complex for a deceptively simple looking task.
+    function decodeString(string memory s) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function fail() {
+                mstore(0x00, 0x10182796) // `ParsingFailed()`.
+                revert(0x1c, 0x04)
+            }
+
+            function decodeUnicodeEscapeSequence(pIn_, end_) -> _unicode, _pOut {
+                _pOut := add(pIn_, 4)
+                let b_ := iszero(gt(_pOut, end_))
+                let t_ := mload(pIn_) // Load the whole word.
+                for { let i_ := 0 } iszero(eq(i_, 4)) { i_ := add(i_, 1) } {
+                    let c_ := sub(byte(i_, t_), 48)
+                    if iszero(and(shr(c_, 35465847073801215), b_)) { fail() } // Not hexadecimal.
+                    c_ := sub(c_, add(mul(gt(c_, 16), 7), shl(5, gt(c_, 48))))
+                    _unicode := add(shl(4, _unicode), c_)
+                }
+            }
+
+            function decodeUnicodeCodePoint(pIn_, end_) -> _unicode, _pOut {
+                _unicode, _pOut := decodeUnicodeEscapeSequence(pIn_, end_)
+                if iszero(or(lt(_unicode, 0xd800), gt(_unicode, 0xdbff))) {
+                    let t_ := mload(_pOut) // Load the whole word.
+                    end_ := mul(end_, eq(shr(240, t_), 0x5c75)) // Fail if not starting with '\\u'.
+                    t_, _pOut := decodeUnicodeEscapeSequence(add(_pOut, 2), end_)
+                    _unicode := add(0x10000, add(shl(10, and(0x3ff, _unicode)), and(0x3ff, t_)))
+                }
+            }
+
+            function appendCodePointAsUTF8(pIn_, c_) -> _pOut {
+                if iszero(gt(c_, 0x7f)) {
+                    mstore8(pIn_, c_)
+                    _pOut := add(pIn_, 1)
+                    leave
+                }
+                if iszero(gt(c_, 0x7FF)) {
+                    mstore8(add(pIn_, 0), or(0xC0, and(0x1f, shr(6, c_))))
+                    mstore8(add(pIn_, 1), or(0x80, and(0x3f, c_)))
+                    _pOut := add(pIn_, 2)
+                    leave
+                }
+                if iszero(gt(c_, 0xFFFF)) {
+                    mstore8(0x1d, shr(12, c_))
+                    mstore8(0x1e, shr(6, c_))
+                    mstore8(0x1f, c_)
+                    mstore(pIn_, shl(232, or(0xe08080, and(0x0f3f3f, mload(0x00)))))
+                    _pOut := add(pIn_, 3)
+                    leave
+                }
+                if iszero(gt(c_, 0x10FFFF)) {
+                    mstore8(0x1c, shr(18, c_))
+                    mstore8(0x1d, shr(12, c_))
+                    mstore8(0x1e, shr(6, c_))
+                    mstore8(0x1f, c_)
+                    mstore(pIn_, shl(224, or(0xf0808080, and(0x073f3f3f, mload(0x00)))))
+                    _pOut := add(pIn_, 4)
+                }
+            }
+
+            function chr(p_) -> _c {
+                _c := byte(0, mload(p_))
+            }
+
+            let out := add(mload(0x40), 0x20)
+            let n := mload(s)
+            let end := add(add(s, n), 0x1f)
+            if iszero(and(gt(n, 1), and(eq(chr(add(s, 0x20)), 34), eq(chr(end), 34)))) { fail() }
+            for { let curr := add(s, 0x21) } iszero(eq(curr, end)) {} {
+                let c := chr(curr)
+                curr := add(curr, 1)
+                if eq(c, 34) { fail() } // '"'.
+                // Not '\\'.
+                if iszero(eq(c, 92)) {
+                    mstore8(out, c)
+                    out := add(out, 1)
+                    continue
+                }
+                if eq(curr, end) { fail() }
+                let escape := chr(curr)
+                curr := add(curr, 1)
+                // '"', '/', '\\'.
+                if and(shr(sub(escape, 34), 0x400000000002001), 1) {
+                    mstore8(out, escape)
+                    out := add(out, 1)
+                    continue
+                }
+                // `{'b':'\b', 'f':'\f', 'n':'\n', 'r':'\r', 't':'\t'}`.
+                let cc := byte(sub(escape, 85), 0x080000000c000000000000000a0000000d0009)
+                if cc {
+                    mstore8(out, cc)
+                    out := add(out, 1)
+                    continue
+                }
+                // 'u'.
+                if eq(escape, 117) {
+                    escape, curr := decodeUnicodeCodePoint(curr, end)
+                    out := appendCodePointAsUTF8(out, escape)
+                    continue
+                }
+                fail()
+                break
+            }
+            mstore(out, 0) // Zeroize the last slot.
+            result := mload(0x40)
+            mstore(result, sub(out, add(result, 0x20))) // Store the length.
+            mstore(0x40, add(out, 0x20)) // Allocate the memory.
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
