@@ -623,6 +623,7 @@ contract JSONParserLibTest is SoladyTest {
         _checkDecodeInvalidStringReverts('"\\u1"');
         _checkDecodeInvalidStringReverts('"\\u111"');
         _checkDecodeInvalidStringReverts('"\\uxxxx"');
+        _checkDecodeInvalidStringReverts('"\\uD83D"'); // Only half of a Smiley emoji.
     }
 
     function _checkDecodeInvalidStringReverts(string memory s) internal {
