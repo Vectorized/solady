@@ -89,7 +89,7 @@ contract JSONParserLibTest is SoladyTest {
         }
     }
 
-    function parsedValue(string memory s) public pure returns (string memory) {
+    function parsedValue(string memory s) public view miniBrutalizeMemory returns (string memory) {
         s = s.parse().value();
         _checkMemory(s);
         return s;
@@ -254,7 +254,7 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.children()[2].parent().isArray(), true);
     }
 
-    function testParseSpecials() public {
+    function testParseSpecials() public miniBrutalizeMemory {
         string memory s;
         JSONParserLib.Item memory item;
 
@@ -353,7 +353,7 @@ contract JSONParserLibTest is SoladyTest {
         this.parsedValue(s);
     }
 
-    function testParseRecursiveObject() public {
+    function testParseRecursiveObject() public miniBrutalizeMemory {
         string memory s;
         JSONParserLib.Item memory item;
 
@@ -516,7 +516,7 @@ contract JSONParserLibTest is SoladyTest {
         this.parseUint(s);
     }
 
-    function parseUint(string memory s) public pure returns (uint256) {
+    function parseUint(string memory s) public view miniBrutalizeMemory returns (uint256) {
         return s.parseUint();
     }
 
@@ -569,7 +569,7 @@ contract JSONParserLibTest is SoladyTest {
         this.parseInt(s);
     }
 
-    function parseInt(string memory s) public pure returns (int256) {
+    function parseInt(string memory s) public view miniBrutalizeMemory returns (int256) {
         return s.parseInt();
     }
 
@@ -631,7 +631,23 @@ contract JSONParserLibTest is SoladyTest {
         this.decodeString(s);
     }
 
-    function decodeString(string memory s) public pure returns (string memory) {
+    function decodeString(string memory s)
+        public
+        view
+        miniBrutalizeMemory
+        returns (string memory)
+    {
         return JSONParserLib.decodeString(s);
+    }
+
+    modifier miniBrutalizeMemory() {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, gas())
+            mstore(0x00, keccak256(0x00, 0x20))
+            mstore(0x20, not(mload(0x00)))
+            codecopy(mload(0x40), 0, codesize())
+        }
+        _;
     }
 }
