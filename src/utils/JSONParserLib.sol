@@ -374,21 +374,19 @@ library JSONParserLib {
                     _pOut := add(pIn_, 1)
                     leave
                 }
-                if iszero(gt(c_, 0x7FF)) {
-                    mstore8(add(pIn_, 0), or(0xC0, and(0x1f, shr(6, c_))))
-                    mstore8(add(pIn_, 1), or(0x80, and(0x3f, c_)))
+                if iszero(gt(c_, 0x7ff)) {
+                    mstore(pIn_, shl(240, or(0xc080, or(and(0x1f00, shl(2, c_)), and(0x3f, c_)))))
                     _pOut := add(pIn_, 2)
                     leave
                 }
-                if iszero(gt(c_, 0xFFFF)) {
-                    mstore8(0x1d, shr(12, c_))
-                    mstore8(0x1e, shr(6, c_))
-                    mstore8(0x1f, c_)
-                    mstore(pIn_, shl(232, or(0xe08080, and(0x0f3f3f, mload(0x00)))))
+                if iszero(gt(c_, 0xffff)) {
+                    // forgefmt: disable-next-item
+                    mstore(pIn_, shl(232, or(0xe08080, or(shl(4, and(0xf000, c_)),
+                        or(and(0x3f00, shl(2, c_)), and(0x3f, c_))))))
                     _pOut := add(pIn_, 3)
                     leave
                 }
-                if iszero(gt(c_, 0x10FFFF)) {
+                if iszero(gt(c_, 0x10ffff)) {
                     mstore8(0x1c, shr(18, c_))
                     mstore8(0x1d, shr(12, c_))
                     mstore8(0x1e, shr(6, c_))
