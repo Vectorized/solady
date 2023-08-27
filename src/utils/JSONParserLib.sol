@@ -409,34 +409,38 @@ library JSONParserLib {
             for { let curr := add(s, 0x21) } iszero(eq(curr, end)) {} {
                 let c := chr(curr)
                 curr := add(curr, 1)
-                if eq(c, 34) { fail() } // '"'.
                 // Not '\\'.
                 if iszero(eq(c, 92)) {
-                    mstore8(out, c)
-                    out := add(out, 1)
-                    continue
+                    // Not '"'.
+                    if iszero(eq(c, 34)) {
+                        mstore8(out, c)
+                        out := add(out, 1)
+                        continue
+                    }
+                    curr := end
                 }
-                if eq(curr, end) { fail() }
-                let escape := chr(curr)
-                curr := add(curr, 1)
-                // '"', '/', '\\'.
-                if and(shr(sub(escape, 34), 0x400000000002001), 1) {
-                    mstore8(out, escape)
-                    out := add(out, 1)
-                    continue
-                }
-                // `{'b':'\b', 'f':'\f', 'n':'\n', 'r':'\r', 't':'\t'}`.
-                let cc := byte(sub(escape, 85), 0x080000000c000000000000000a0000000d0009)
-                if cc {
-                    mstore8(out, cc)
-                    out := add(out, 1)
-                    continue
-                }
-                // 'u'.
-                if eq(escape, 117) {
-                    escape, curr := decodeUnicodeCodePoint(curr, end)
-                    out := appendCodePointAsUTF8(out, escape)
-                    continue
+                if iszero(eq(curr, end)) {
+                    let escape := chr(curr)
+                    curr := add(curr, 1)
+                    // '"', '/', '\\'.
+                    if and(shr(sub(escape, 34), 0x400000000002001), 1) {
+                        mstore8(out, escape)
+                        out := add(out, 1)
+                        continue
+                    }
+                    // 'u'.
+                    if eq(escape, 117) {
+                        escape, curr := decodeUnicodeCodePoint(curr, end)
+                        out := appendCodePointAsUTF8(out, escape)
+                        continue
+                    }
+                    // `{'b':'\b', 'f':'\f', 'n':'\n', 'r':'\r', 't':'\t'}`.
+                    escape := byte(sub(escape, 85), 0x080000000c000000000000000a0000000d0009)
+                    if escape {
+                        mstore8(out, escape)
+                        out := add(out, 1)
+                        continue
+                    }
                 }
                 fail()
                 break
