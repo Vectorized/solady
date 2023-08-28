@@ -8,7 +8,7 @@ library JSONParserLib {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Cannot parse the malformed JSON string
+    /// @dev The input is invalid.
     error ParsingFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -19,7 +19,7 @@ library JSONParserLib {
 
     /// @dev For denoting that an item has not been initialized.
     /// A item returned from `parse` will never be of an undefined type.
-    /// Parsing a malformed JSON string will simply revert.
+    /// Parsing a invalid JSON string will simply revert.
     uint8 internal constant TYPE_UNDEFINED = 0;
 
     /// @dev Type representing an array (e.g. `[1,2,3]`).
@@ -315,7 +315,7 @@ library JSONParserLib {
                     s := add(s, 1)
                     mstore(s, sub(n, 1))
                 }
-                if and(iszero(sign), gt(sub(c, 48), 9)) { s := 0x60 }
+                if iszero(or(sign, lt(sub(c, 48), 10))) { s := 0x60 }
             }
         }
         uint256 x = parseUint(s);
@@ -401,7 +401,9 @@ library JSONParserLib {
             let out := add(mload(0x40), 0x20)
             let n := mload(s)
             let end := add(add(s, n), 0x1f)
-            if iszero(and(gt(n, 1), and(eq(chr(add(s, 0x20)), 34), eq(chr(end), 34)))) { fail() }
+            if iszero(and(gt(n, 1), eq(0x2222, or(and(0xff00, mload(add(s, 2))), chr(end))))) {
+                fail()
+            }
             for { let curr := add(s, 0x21) } iszero(eq(curr, end)) {} {
                 let c := chr(curr)
                 curr := add(curr, 1)
