@@ -722,22 +722,21 @@ library JSONParserLib {
                         h_ := y_
                         o_ := add(o_, 0x20)
                     }
-                    let w_ := not(0x1f)
-                    let n_ := add(w_, sub(o_, _arr))
+                    let n_ := sub(o_, add(_arr, 0x20))
                     mstore(_arr, shr(5, n_))
                     mstore(0x40, o_) // Allocate memory.
                     packed_ := setPointer(packed_, _BITPOS_CHILD, _arr)
                     mstore(item_, or(_BITMASK_CHILDREN_INITED, packed_))
                     // Reverse the array.
                     if iszero(lt(n_, 0x40)) {
-                        let lo_ := add(_arr, 0x20)
                         let hi_ := add(_arr, n_)
+                        let lo_ := add(_arr, 0x20)
                         for {} 1 {} {
                             let temp_ := mload(lo_)
                             mstore(lo_, mload(hi_))
                             mstore(hi_, temp_)
-                            hi_ := add(hi_, w_)
                             lo_ := add(lo_, 0x20)
+                            hi_ := sub(hi_, 0x20)
                             if iszero(lt(lo_, hi_)) { break }
                         }
                     }
