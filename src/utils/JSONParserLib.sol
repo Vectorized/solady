@@ -398,12 +398,12 @@ library JSONParserLib {
                 _c := byte(0, mload(p_))
             }
 
-            let out := add(mload(0x40), 0x20)
             let n := mload(s)
             let end := add(add(s, n), 0x1f)
             if iszero(and(gt(n, 1), eq(0x2222, or(and(0xff00, mload(add(s, 2))), chr(end))))) {
-                fail()
+                fail() // Fail if not double-quoted.
             }
+            let out := add(mload(0x40), 0x20)
             for { let curr := add(s, 0x21) } iszero(eq(curr, end)) {} {
                 let c := chr(curr)
                 curr := add(curr, 1)
