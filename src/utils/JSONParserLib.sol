@@ -706,12 +706,11 @@ library JSONParserLib {
             function children(item_) -> _arr {
                 _arr := 0x60 // Initialize to the zero pointer.
                 let packed_ := mload(item_)
-                if or(iszero(packed_), iszero(item_)) { leave }
-                let t_ := and(_BITMASK_TYPE, packed_)
-                if iszero(gt(t_, TYPE_OBJECT)) {
+                for {} iszero(gt(and(_BITMASK_TYPE, packed_), TYPE_OBJECT)) {} {
+                    if or(iszero(packed_), iszero(item_)) { break }
                     if and(packed_, _BITMASK_CHILDREN_INITED) {
                         _arr := getPointer(packed_, _BITPOS_CHILD)
-                        leave
+                        break
                     }
                     _arr := mload(0x40)
                     let o_ := add(_arr, 0x20)
@@ -742,6 +741,7 @@ library JSONParserLib {
                             if iszero(lt(lo_, hi_)) { break }
                         }
                     }
+                    break
                 }
             }
 
