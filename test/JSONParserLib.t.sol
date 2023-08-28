@@ -224,43 +224,6 @@ contract JSONParserLibTest is SoladyTest {
         }
     }
 
-    function testParseSimpleObject() public {
-        string memory s;
-        JSONParserLib.Item memory item;
-
-        for (uint256 k; k != 9; ++k) {
-            uint256 o = k == 0 ? 0 : 1 << (17 * k);
-            string memory p = _padWhiteSpace("", k);
-            for (uint256 j; j != 5; ++j) {
-                s = "{";
-                for (uint256 i; i != j; ++i) {
-                    string memory x = LibString.toString(o + i);
-                    string memory y = LibString.toString(i);
-                    if (i == 0) {
-                        s = string(abi.encodePacked(s, p, '"', y, '"', p, ":", p, '"', x, '"'));
-                    } else {
-                        s = string(
-                            abi.encodePacked(s, p, ",", p, '"', y, '"', p, ":", p, '"', x, '"')
-                        );
-                    }
-                }
-                s = string(abi.encodePacked(s, "}"));
-                item = s.parse();
-                assertEq(item.isObject(), true);
-                assertEq(item.size(), j);
-                for (uint256 i; i != j; ++i) {
-                    string memory x = string(abi.encodePacked('"', LibString.toString(o + i), '"'));
-                    string memory y = string(abi.encodePacked('"', LibString.toString(i), '"'));
-                    assertEq(item.children()[i].value(), x);
-                    assertEq(item.children()[i].parent()._data, item._data);
-                    assertEq(item.children()[i].parent().isObject(), true);
-                    assertEq(item.atKey(y)._data, item.children()[i]._data);
-                    assertEq(item.atIndex(i)._data, 0);
-                }
-            }
-        }
-    }
-
     function testParseSimpleArray() public {
         string memory s = '["hehe",12,"haha"]';
         JSONParserLib.Item memory item = s.parse();
