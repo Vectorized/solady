@@ -152,6 +152,13 @@ contract LibZipTest is SoladyTest {
         assertEq(LibZip.cdCompress(data), expected);
     }
 
+    function testCdDecompressOnInvalidInput() public {
+        bytes memory data = hex"ffffffff00ff";
+        bytes memory expected =
+            hex"0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+        bytes memory decompressed = LibZip.cdDecompress(data);
+    }
+
     function testDecompressWontRevert(bytes memory data) public brutalizeMemory {
         data = LibZip.cdDecompress(data);
         bytes memory compressed = LibZip.cdCompress(data);

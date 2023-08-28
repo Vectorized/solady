@@ -188,7 +188,7 @@
      */
     LibZip.cdDecompress = function(data) {
         data = hexString(data);
-        var o = "0x", i = 0, c, s;
+        var o = "0x", i = 0, j, c, s;
 
         while (i < data.length) {
             c = ((i < 4 * 2) * 0xff) ^ parseByte(data, i);
@@ -197,7 +197,7 @@
                 c = ((i < 4 * 2) * 0xff) ^ parseByte(data, i);
                 s = (c & 0x7f) + 1;
                 i += 2;
-                while (s--) o += byteToString((c >> 7) * 0xff);
+                for (j = 0; j < s; ++j) o += byteToString((c >> 7 && j < 32) * 0xff);
                 continue;
             }
             o += byteToString(c);

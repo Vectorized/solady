@@ -103,6 +103,12 @@ test("LibZip: Calldata compress", function() {
     assertEq(solady.LibZip.cdCompress(data), expected);
 });
 
+test("LibZip: Calldata decompress on invalid input", function() {
+    var data = "0xffffffff00ff";
+    var expected = "0x0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    assertEq(solady.LibZip.cdDecompress(data), expected);
+});
+
 test("ERC1967Factory: ABI and address", function() {
     function hashFnv32a(s) {
         var h = 0x811c9dc5;
