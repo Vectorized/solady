@@ -41,6 +41,10 @@ library SSTORE2 {
             // Add 1 to data size since we are prefixing it with a STOP opcode.
             let dataSize := add(originalDataLength, DATA_OFFSET)
 
+            // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
+
             /**
              * ------------------------------------------------------------------------------+
              * Opcode      | Mnemonic        | Stack                   | Memory              |
@@ -93,6 +97,10 @@ library SSTORE2 {
             let originalDataLength := mload(data)
             let dataSize := add(originalDataLength, DATA_OFFSET)
 
+            // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
+
             mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
 
             // Deploy a new contract with the generated creation code.
@@ -118,6 +126,10 @@ library SSTORE2 {
         assembly {
             let originalDataLength := mload(data)
             let dataSize := add(originalDataLength, DATA_OFFSET)
+
+            // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
 
             mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
 
