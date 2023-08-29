@@ -169,4 +169,32 @@ contract SSTORE2Test is SoladyTest {
         address pointer = SSTORE2.write(testBytes);
         assertEq(pointer.code, deterministicPointer.code);
     }
+
+    function testWriteWithTooBigDataReverts() public {
+        bytes memory data = _dummyData(0xfffe);
+        address pointer = this.write(data);
+        assertEq(SSTORE2.read(pointer), data);
+        vm.expectRevert();
+        pointer = this.write(_dummyData(0xffff));
+    }
+
+    function write(bytes memory data) public returns (address) {
+        return SSTORE2.write(data);
+    }
+
+    function _dummyData(uint256 n) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, n)
+            mstore(0x00, n)
+            mstore(0x20, 1)
+            mstore(add(0x20, result), keccak256(0x00, 0x40))
+            mstore(0x20, 2)
+            mstore(add(add(0x20, result), n), keccak256(0x00, 0x40))
+            mstore(0x20, 3)
+            mstore(add(result, n), keccak256(0x00, 0x40))
+            mstore(0x40, add(add(0x20, result), n))
+        }
+    }
 }
