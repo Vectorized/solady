@@ -250,13 +250,18 @@ contract ERC6909Test is SoladyTest {
         _setOperator(owner, spender, approved);
     }
 
-    function testMintTotalSupplyOverFlowReverts(address to, uint256 id, uint256 amount) public {
-        token.mint(to, id, amount);
-        assertEq(token.totalSupply(id), amount);
+    function testMintTotalSupplyOverFlowReverts(
+        address to,
+        uint256 id,
+        uint256 amount0,
+        uint256 amount1
+    ) public {
+        token.mint(to, id, amount0);
+        assertEq(token.totalSupply(id), amount0);
 
-        if (amount != 0) {
+        if (type(uint256).max - amount0 < amount1) {
             vm.expectRevert(ERC6909.TotalSupplyOverflow.selector);
-            token.mint(to, id, type(uint256).max);
+            token.mint(to, id, amount1);
         }
     }
 
@@ -351,10 +356,18 @@ contract ERC6909Test is SoladyTest {
         bool success;
     }
 
+    function testDirectSetOperator() public {
+        _directSetOperator(address(1), address(2), true);
+    }
+
+    function testDirectApprove() public {
+        _directApprove(address(1), address(2), 1, 123);
+    }
+
     function testDirectFunctions(uint256) public {
         _TestTemps memory t;
         t.id = _random();
-        t.by = _random() % 32 == 0 ? address(0) : _randomAddress();
+        t.by = _random() % 16 == 0 ? address(0) : _randomAddress();
         t.from = _randomAddress();
         t.to = _randomAddress();
 
@@ -392,7 +405,16 @@ contract ERC6909Test is SoladyTest {
                 }
             }
 
-            token.directTransferFrom(t.by, t.from, t.to, t.id, t.amount);
+            if (t.by == address(0) && _random() % 4 == 0) {
+                vm.prank(t.from);
+                token.transfer(t.to, t.id, t.amount);
+            } else if (t.by != address(0) && _random() % 4 == 0) {
+                vm.prank(t.by);
+                token.transferFrom(t.from, t.to, t.id, t.amount);
+            } else {
+                token.directTransferFrom(t.by, t.from, t.to, t.id, t.amount);
+            }
+
             if (t.by == address(0) || t.isOperator || t.allowance == type(uint256).max) {
                 assertEq(token.allowance(t.from, t.by, t.id), t.allowance);
             }

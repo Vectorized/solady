@@ -315,14 +315,14 @@ abstract contract ERC6909 {
         /// @solidity memory-safe-assembly
         assembly {
             // Convert `approved` to `0` or `1`.
-            approved := iszero(iszero(approved))
+            let approvedCleaned := iszero(iszero(approved))
             // Compute the operator slot and store the approved.
             mstore(0x20, _ERC6909_MASTER_SLOT_SEED)
             mstore(0x14, caller())
             mstore(0x00, operator)
-            sstore(keccak256(0x0c, 0x34), approved)
+            sstore(keccak256(0x0c, 0x34), approvedCleaned)
             // Emit the {OperatorSet} event.
-            mstore(0x20, approved)
+            mstore(0x20, approvedCleaned)
             log3(0x20, 0x20, _OPERATOR_SET_EVENT_SIGNATURE, caller(), shr(96, mload(0x0c)))
         }
         return true;
@@ -394,7 +394,7 @@ abstract contract ERC6909 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x34, mload(0x00))
+                mstore(0x34, id)
                 mstore(0x00, shl(96, 0xf6deaa04)) // `InsufficientBalance(address,uint256)`.
                 revert(0x10, 0x44)
             }
@@ -513,14 +513,14 @@ abstract contract ERC6909 {
         /// @solidity memory-safe-assembly
         assembly {
             // Convert `approved` to `0` or `1`.
-            approved := iszero(iszero(approved))
+            let approvedCleaned := iszero(iszero(approved))
             // Compute the operator slot and store the approved.
             mstore(0x20, _ERC6909_MASTER_SLOT_SEED)
             mstore(0x14, owner)
             mstore(0x00, operator)
-            sstore(keccak256(0x0c, 0x34), approved)
+            sstore(keccak256(0x0c, 0x34), approvedCleaned)
             // Emit the {OperatorSet} event.
-            mstore(0x20, approved)
+            mstore(0x20, approvedCleaned)
             // forgefmt: disable-next-line
             log3(0x20, 0x20, _OPERATOR_SET_EVENT_SIGNATURE, shr(96, shl(96, owner)), shr(96, mload(0x0c)))
         }
