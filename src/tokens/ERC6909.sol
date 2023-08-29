@@ -45,7 +45,7 @@ abstract contract ERC6909 {
         0x9ed053bb818ff08b8353cd46f78db1f0799f31c9e4458fdb425c10eccd2efc44;
 
     /// @dev `keccak256(bytes("OperatorSet(address,address,bool)"))`.
-    uint256 private constant _OPERATORSET_EVENT_SIGNATURE =
+    uint256 private constant _OPERATOR_SET_EVENT_SIGNATURE =
         0xceb576d9f15e4e200fdb5096d64d5dfd667e16def20c1eefd14256d8e3faa267;
 
     /// @dev `keccak256(bytes("Approval(address,address,uint256,uint256)"))`.
@@ -108,19 +108,11 @@ abstract contract ERC6909 {
     /// @dev Returns the token collection symbol.
     function symbol() public view virtual returns (string memory);
 
-    /// @dev Returns the decimals places of the given token `id`.
+    /// @dev Returns 18 decimal places by default.
     ///
-    /// Note: If decimals is not set by `_setDecimals` function than
-    ///       it will return default `18`.
-    function decimals(uint256 id) public view virtual returns (uint8 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, _ERC6909_MASTER_SLOT_SEED)
-            mstore(0x20, id)
-            let decimalsSlot := keccak256(0x14, 0x2c)
-            result := sload(decimalsSlot)
-            result := xor(18, mul(shr(8, result), xor(18, and(result, 0xff))))
-        }
+    /// Note: If you want custom decimal place override this function with `_getDecimals`.
+    function decimals(uint256 /*id*/ ) public view virtual returns (uint8) {
+        return 18;
     }
 
     /// @dev Returns the Uniform Resource Identifier (URI) for token `id`.
@@ -161,15 +153,13 @@ abstract contract ERC6909 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            /// Cache the free memory pointer.
-            let m := mload(0x40)
-            mstore(0x40, _ERC6909_MASTER_SLOT_SEED)
-            mstore(0x34, owner)
-            mstore(0x20, spender)
-            mstore(0x0c, id)
-            amount := sload(keccak256(0x0c, 0x54))
-            /// Update the free memory pointer with the cached value.
-            mstore(0x40, m)
+            mstore(0x34, _ERC6909_MASTER_SLOT_SEED)
+            mstore(0x28, owner)
+            mstore(0x14, spender)
+            mstore(0x00, id)
+            amount := sload(keccak256(0x00, 0x54))
+            // Restore the part of the free-memory-pointer that was overwritten.
+            mstore(0x34, 0x00)
         }
     }
 
@@ -242,58 +232,56 @@ abstract contract ERC6909 {
         _beforeTokenTransfer(from, to, id, amount);
         /// @solidity memory-safe-assembly
         assembly {
-            /// Cache the free memory pointer.
-            let m := mload(0x40)
             // Compute the operator slot and load its value.
-            mstore(0x40, _ERC6909_MASTER_SLOT_SEED)
-            mstore(0x34, from)
-            mstore(0x20, caller())
+            mstore(0x34, _ERC6909_MASTER_SLOT_SEED)
+            mstore(0x28, from)
+            mstore(0x14, caller())
 
             // check the caller is operator
-            if iszero(sload(keccak256(0x2c, 0x34))) {
+            if iszero(sload(keccak256(0x20, 0x34))) {
                 // Compute the allowance slot and load its value.
-                mstore(0x0c, id)
-                let allowanceSlot := keccak256(0x0c, 0x54)
+                mstore(0x00, id)
+                let allowanceSlot := keccak256(0x00, 0x54)
                 let allowance_ := sload(allowanceSlot)
                 // If the allowance is not the maximum uint256 value.
                 if add(allowance_, 1) {
                     // Revert if the amount to be transferred exceeds the allowance.
                     if gt(amount, allowance_) {
-                        mstore(0x40, mload(0x0c))
-                        mstore(0x0c, shl(96, 0x731555bd)) // `InsufficientPermission(address,uint256)`.
-                        revert(0x1c, 0x44)
+                        mstore(0x34, mload(0x00))
+                        mstore(0x00, shl(96, 0x731555bd)) // `InsufficientPermission(address,uint256)`.
+                        revert(0x10, 0x44)
                     }
                     // Subtract and store the updated allowance.
                     sstore(allowanceSlot, sub(allowance_, amount))
                 }
             }
             // Compute the balance slot and load its value.
-            mstore(0x20, id)
-            let fromBalanceSlot := keccak256(0x20, 0x40)
+            mstore(0x14, id)
+            let fromBalanceSlot := keccak256(0x14, 0x40)
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x54, id)
-                mstore(0x20, shl(96, 0xf6deaa04)) // `InsufficientBalance(address,uint256)`.
-                revert(0x30, 0x44)
+                mstore(0x48, id)
+                mstore(0x14, shl(96, 0xf6deaa04)) // `InsufficientBalance(address,uint256)`.
+                revert(0x24, 0x44)
             }
 
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
             // Compute the balance slot of `to`.
-            mstore(0x34, to)
-            mstore(0x20, id)
-            let toBalanceSlot := keccak256(0x20, 0x40)
+            mstore(0x28, to)
+            mstore(0x14, id)
+            let toBalanceSlot := keccak256(0x14, 0x40)
             // Add and store the updated balance of `to`.
             // Will not overflow because the sum of all user balances
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x20, amount)
+            mstore(0x00, amount)
             // forgefmt: disable-next-line
-            log4(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, mload(0x40)), id)
+            log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, mload(0x34)), id)
             /// Update the free memory pointer with the cached value.
-            mstore(0x40, m)
+            mstore(0x34, 0x00)
         }
         _afterTokenTransfer(from, to, id, amount);
         return true;
@@ -305,20 +293,18 @@ abstract contract ERC6909 {
     function approve(address spender, uint256 id, uint256 amount) public virtual returns (bool) {
         /// @solidity memory-safe-assembly
         assembly {
-            /// Cache the free memory pointer.
-            let m := mload(0x40)
             // Compute the allowance slot and store the amount.
-            mstore(0x40, _ERC6909_MASTER_SLOT_SEED)
-            mstore(0x34, caller())
-            mstore(0x20, spender)
-            mstore(0x0c, id)
-            sstore(keccak256(0x0c, 0x54), amount)
+            mstore(0x34, _ERC6909_MASTER_SLOT_SEED)
+            mstore(0x28, caller())
+            mstore(0x14, spender)
+            mstore(0x00, id)
+            sstore(keccak256(0x00, 0x54), amount)
 
             // Emit the {Approval} event.
             mstore(0x00, amount)
-            log4(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)), id)
+            log4(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x20)), id)
             /// Update the free memory pointer with the cached value.
-            mstore(0x40, m)
+            mstore(0x34, 0x00)
         }
         return true;
     }
@@ -339,7 +325,7 @@ abstract contract ERC6909 {
 
             // Emit the {OperatorSet} event.
             mstore(0x20, approved)
-            log3(0x20, 0x20, _OPERATORSET_EVENT_SIGNATURE, caller(), shr(96, mload(0x0c)))
+            log3(0x20, 0x20, _OPERATOR_SET_EVENT_SIGNATURE, caller(), shr(96, mload(0x0c)))
         }
         return true;
     }
@@ -432,13 +418,23 @@ abstract contract ERC6909 {
     }
 
     /// @dev Set decimals place for the given `id`.
-    ///      and turn on 9th lsb as a flag.
     function _setDecimals(uint256 id, uint8 decimal) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, _ERC6909_MASTER_SLOT_SEED)
             mstore(0x20, id)
-            sstore(keccak256(0x14, 0x2c), or(0x100, and(0xff, decimal)))
+            sstore(keccak256(0x14, 0x2c), and(0xff, decimal))
+        }
+    }
+
+    /// @dev Return decimals place for the given `id` is
+    ///      set by `_setDecimal` function.
+    function _getDecimals(uint256 id) internal view virtual returns (uint8 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, _ERC6909_MASTER_SLOT_SEED)
+            mstore(0x20, id)
+            result := sload(keccak256(0x14, 0x2c))
         }
     }
 

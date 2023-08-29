@@ -40,10 +40,6 @@ contract MockERC6909 is ERC6909 {
         _burn(_brutalized(from), id, amount);
     }
 
-    function setDecimals(uint256 id, uint8 decimal) public virtual {
-        _setDecimals(id, decimal);
-    }
-
     function approve(address spender, uint256 id, uint256 amount)
         public
         virtual
@@ -80,5 +76,27 @@ contract MockERC6909 is ERC6909 {
         assembly {
             result := or(a, shl(160, gas()))
         }
+    }
+}
+
+contract MockERC6909CustomDecimals is ERC6909 {
+    function name() public view virtual override returns (string memory) {
+        return "Solady";
+    }
+
+    function symbol() public view virtual override returns (string memory) {
+        return "SLY";
+    }
+
+    function tokenURI(uint256 id) public view virtual override returns (string memory) {
+        return string(abi.encodePacked("http://solady.org/", LibString.toString(id)));
+    }
+
+    function setDecimals(uint256 id, uint8 decimal) public virtual {
+        _setDecimals(id, decimal);
+    }
+
+    function decimals(uint256 id) public view virtual override returns (uint8) {
+        return _getDecimals(id);
     }
 }
