@@ -333,12 +333,40 @@ contract LibCloneTest is SoladyTest, Clone {
 
     function testCloneWithImmutableArgsRevertsIfDataTooBig() public {
         uint256 n = 0xff9b;
-        bytes memory data = new bytes(n);
+        bytes memory data = _dummyData(n);
 
-        address clone = this.cloneDeterministic(address(this), new bytes(n), bytes32(gasleft()));
+        address clone = this.cloneDeterministic(address(this), data, bytes32(gasleft()));
         _shouldBehaveLikeClone(clone, 1);
+        // assertEq(LibCloneTest(clone).dataHash(), keccak256(data));
 
         vm.expectRevert();
-        this.cloneDeterministic(address(this), new bytes(n + 1), bytes32(gasleft()));
+        this.cloneDeterministic(address(this), _dummyData(n + 1), bytes32(gasleft()));
+    }
+
+    function dataHash() public pure returns (bytes32 result) {
+        uint256 offset = _getImmutableArgsOffset();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let n := sub(calldatasize(), offset)
+            calldatacopy(m, offset, n)
+            result := keccak256(m, n)
+        }
+    }
+
+    function _dummyData(uint256 n) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, n)
+            mstore(0x00, n)
+            mstore(0x20, 1)
+            mstore(add(0x20, result), keccak256(0x00, 0x40))
+            mstore(0x20, 2)
+            mstore(add(add(0x20, result), n), keccak256(0x00, 0x40))
+            mstore(0x20, 3)
+            mstore(add(result, n), keccak256(0x00, 0x40))
+            mstore(0x40, add(add(0x20, result), n))
+        }
     }
 }
