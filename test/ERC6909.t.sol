@@ -75,8 +75,7 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, 1, 1e18);
 
-        vm.prank(from);
-        token.approve(address(this), 1, 1e18);
+        _approve(from, address(this), 1, 1e18);
 
         vm.expectEmit(true, true, true, true);
         emit Transfer(from, address(0xBEEF), 1, 1e18);
@@ -94,8 +93,7 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, 1, 1e18);
 
-        vm.prank(from);
-        token.approve(address(this), 1, type(uint256).max);
+        _approve(from, address(this), 1, type(uint256).max);
 
         vm.expectEmit(true, true, true, true);
         emit Transfer(from, address(0xBEEF), 1, 1e18);
@@ -113,8 +111,7 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, 1, 1e18);
 
-        vm.prank(from);
-        token.setOperator(address(this), true);
+        _setOperator(from, address(this), true);
 
         vm.expectEmit(true, true, true, true);
         emit Transfer(from, address(0xBEEF), 1, 1e18);
@@ -147,9 +144,7 @@ contract ERC6909Test is SoladyTest {
 
     function testTransferInsufficientBalanceReverts() public {
         token.mint(address(this), 1, 0.9e18);
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, address(this), 1)
-        );
+        _expectInsufficientBalanceRevert(address(this), 1);
         token.transfer(address(0xBEEF), 1, 1e18);
     }
 
@@ -158,12 +153,9 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, 1, 1e18);
 
-        vm.prank(from);
-        token.approve(address(this), 1, 0.9e18);
+        _approve(from, address(this), 1, 0.9e18);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, address(this), 1)
-        );
+        _expectInsufficientPermissionRevert(address(this), 1);
         token.transferFrom(from, address(0xBEEF), 1, 1e18);
     }
 
@@ -172,10 +164,9 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, 1, 0.9e18);
 
-        vm.prank(from);
-        token.approve(address(this), 1, 1e18);
+        _approve(from, address(this), 1, 1e18);
 
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, from, 1));
+        _expectInsufficientBalanceRevert(from, 1);
         token.transferFrom(from, address(0xBEEF), 1, 1e18);
     }
 
@@ -201,9 +192,7 @@ contract ERC6909Test is SoladyTest {
     }
 
     function testApprove(address to, uint256 id, uint256 amount) public {
-        assertTrue(token.approve(to, id, amount));
-
-        assertEq(token.allowance(address(this), to, id), amount);
+        _approve(address(this), to, id, amount);
     }
 
     function testTransfer(address to, uint256 id, uint256 amount) public {
@@ -235,8 +224,7 @@ contract ERC6909Test is SoladyTest {
         token.mint(from, id, amount);
         assertEq(token.balanceOf(from, id), amount);
 
-        vm.prank(from);
-        token.approve(spender, id, approval);
+        _approve(from, spender, id, approval);
 
         vm.expectEmit(true, true, true, true);
         emit Transfer(from, to, id, amount);
@@ -259,12 +247,7 @@ contract ERC6909Test is SoladyTest {
     }
 
     function testSetOperator(address owner, address spender, bool approved) public {
-        vm.expectEmit(true, true, true, true);
-        emit OperatorSet(owner, spender, approved);
-        vm.prank(owner);
-        assertTrue(token.setOperator(spender, approved));
-
-        assertEq(token.isOperator(owner, spender), approved);
+        _setOperator(owner, spender, approved);
     }
 
     function testMintTotalSupplyOverFlowReverts(address to, uint256 id, uint256 amount) public {
@@ -287,7 +270,8 @@ contract ERC6909Test is SoladyTest {
         burnAmount = _bound(burnAmount, mintAmount + 1, type(uint256).max);
 
         token.mint(to, id, mintAmount);
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, to, id));
+
+        _expectInsufficientBalanceRevert(to, id);
         token.burn(to, id, burnAmount);
     }
 
@@ -301,9 +285,8 @@ contract ERC6909Test is SoladyTest {
         sendAmount = _bound(sendAmount, mintAmount + 1, type(uint256).max);
 
         token.mint(address(this), id, mintAmount);
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, address(this), id)
-        );
+
+        _expectInsufficientBalanceRevert(address(this), id);
         token.transfer(to, id, sendAmount);
     }
 
@@ -320,12 +303,9 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, amount, id);
 
-        vm.prank(from);
-        token.approve(address(this), id, approval);
+        _approve(from, address(this), id, approval);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, address(this), id)
-        );
+        _expectInsufficientPermissionRevert(address(this), id);
         token.transferFrom(from, to, id, amount);
     }
 
@@ -342,10 +322,9 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, id, mintAmount);
 
-        vm.prank(from);
-        token.approve(address(this), id, sendAmount);
+        _approve(from, address(this), id, sendAmount);
 
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, from, id));
+        _expectInsufficientBalanceRevert(from, id);
         token.transferFrom(from, to, id, sendAmount);
     }
 
@@ -356,9 +335,7 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, id, amount);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, address(this), id)
-        );
+        _expectInsufficientPermissionRevert(address(this), id);
         token.transferFrom(from, to, id, amount);
     }
 
@@ -371,57 +348,89 @@ contract ERC6909Test is SoladyTest {
         address by;
         address from;
         address to;
-        bool sufficientPermission;
         bool success;
     }
 
     function testDirectFunctions(uint256) public {
         _TestTemps memory t;
         t.id = _random();
-        t.allowance = _random();
-        t.balance = _random();
-        t.amount = _random();
-        t.isOperator = _random() % 2 == 0;
-        t.by = _randomAddress();
+        t.by = _random() % 32 == 0 ? address(0) : _randomAddress();
         t.from = _randomAddress();
-        while (t.to == t.from) t.to = _randomAddress();
+        t.to = _randomAddress();
 
-        token.mint(t.from, t.id, t.balance);
-        _directSetOperator(t.from, t.by, t.isOperator);
-        _directApprove(t.from, t.by, t.id, t.allowance);
+        for (uint256 q; q != 2; ++q) {
+            t.success = false;
+            t.allowance = _random();
+            t.balance = _random();
+            t.amount = _random();
+            t.isOperator = _random() % 4 == 0;
+            t.id ^= 1;
 
-        t.sufficientPermission = t.by == address(0) || t.isOperator || t.allowance >= t.amount;
-        if (t.balance >= t.amount) {
-            if (t.sufficientPermission) {
-                t.success = true;
-                vm.expectEmit(true, true, true, true);
-                emit Transfer(t.from, t.to, t.id, t.amount);
+            assertEq(token.totalSupply(t.id), 0);
+            token.mint(t.from, t.id, t.balance);
+            if (_random() % 2 == 0) {
+                _directSetOperator(t.from, t.by, t.isOperator);
+                _directApprove(t.from, t.by, t.id, t.allowance);
             } else {
-                vm.expectRevert(
-                    abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, t.by, t.id)
-                );
+                _setOperator(t.from, t.by, t.isOperator);
+                _directApprove(t.from, t.by, t.id, t.allowance);
             }
-        } else {
-            if (t.sufficientPermission) {
-                vm.expectRevert(
-                    abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, t.from, t.id)
-                );
+
+            if (t.balance >= t.amount) {
+                if (t.by == address(0) || t.isOperator || t.allowance >= t.amount) {
+                    t.success = true;
+                    vm.expectEmit(true, true, true, true);
+                    emit Transfer(t.from, t.to, t.id, t.amount);
+                } else {
+                    _expectInsufficientPermissionRevert(t.by, t.id);
+                }
             } else {
-                vm.expectRevert(
-                    abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, t.by, t.id)
-                );
+                if (t.by == address(0) || t.isOperator || t.allowance >= t.amount) {
+                    _expectInsufficientBalanceRevert(t.from, t.id);
+                } else {
+                    _expectInsufficientPermissionRevert(t.by, t.id);
+                }
             }
-        }
 
-        token.directTransferFrom(t.by, t.from, t.to, t.id, t.amount);
-        if (t.isOperator || t.by == address(0) || t.allowance == type(uint256).max) {
-            assertEq(token.allowance(t.from, t.by, t.id), t.allowance);
-        }
+            token.directTransferFrom(t.by, t.from, t.to, t.id, t.amount);
+            if (t.by == address(0) || t.isOperator || t.allowance == type(uint256).max) {
+                assertEq(token.allowance(t.from, t.by, t.id), t.allowance);
+            }
 
-        if (t.success) {
-            assertEq(token.balanceOf(t.from, t.id), t.balance - t.amount);
-            assertEq(token.balanceOf(t.to, t.id), t.amount);
+            if (t.success) {
+                if (t.to == t.from) {
+                    assertEq(token.balanceOf(t.to, t.id), t.balance);
+                } else {
+                    assertEq(token.balanceOf(t.from, t.id), t.balance - t.amount);
+                    assertEq(token.balanceOf(t.to, t.id), t.amount);
+                }
+            }
+            assertEq(token.totalSupply(t.id), t.balance);
         }
+    }
+
+    function _expectInsufficientBalanceRevert(address owner, uint256 id) internal {
+        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, owner, id));
+    }
+
+    function _expectInsufficientPermissionRevert(address by, uint256 id) internal {
+        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
+    }
+
+    function _approve(address owner, address spender, uint256 id, uint256 amount) internal {
+        vm.prank(owner);
+        vm.expectEmit(true, true, true, true);
+        emit Approval(owner, spender, id, amount);
+        token.approve(spender, id, amount);
+        assertEq(token.allowance(owner, spender, id), amount);
+    }
+
+    function _setOperator(address owner, address operator, bool approved) internal {
+        vm.prank(owner);
+        vm.expectEmit(true, true, true, true);
+        emit OperatorSet(owner, operator, approved);
+        token.directSetOperator(owner, operator, approved);
+        assertEq(token.isOperator(owner, operator), approved);
     }
 
     function _directApprove(address owner, address spender, uint256 id, uint256 amount) internal {
