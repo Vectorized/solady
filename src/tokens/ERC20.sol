@@ -13,6 +13,8 @@ pragma solidity ^0.8.4;
 /// Please add any checks with overrides if desired.
 ///
 /// If you are overriding:
+/// - NEVER violate the ERC20 invariant:
+///   the total sum of all balances must be equal to `totalSupply()`.
 /// - Check that the overridden function is actually used in the function you want to
 ///   change the behavior of. Much of the code has been manually inlined for performance.
 abstract contract ERC20 {
