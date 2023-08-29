@@ -42,6 +42,7 @@ library SSTORE2 {
             let dataSize := add(originalDataLength, DATA_OFFSET)
 
             // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+            // The actual EVM limit may be smaller and may change over time.
             returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
 
             /**
@@ -97,6 +98,7 @@ library SSTORE2 {
             let dataSize := add(originalDataLength, DATA_OFFSET)
 
             // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+            // The actual EVM limit may be smaller and may change over time.
             returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
 
             mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
@@ -126,6 +128,7 @@ library SSTORE2 {
             let dataSize := add(originalDataLength, DATA_OFFSET)
 
             // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+            // The actual EVM limit may be smaller and may change over time.
             returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
 
             mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
