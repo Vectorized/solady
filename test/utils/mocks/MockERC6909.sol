@@ -9,27 +9,17 @@ import {LibString} from "../../../src/utils/LibString.sol";
 contract MockERC6909 is ERC6909 {
     error TokenDoesNotExist();
 
-    string name_;
-    string symbol_;
-    string baseURI_;
-
-    constructor(string memory _name, string memory _symbol, string memory _baseURI) {
-        name_ = _name;
-        symbol_ = _symbol;
-        baseURI_ = _baseURI;
-    }
-
     function name() public view virtual override returns (string memory) {
-        return name_;
+        return "Solady Token";
     }
 
     function symbol() public view virtual override returns (string memory) {
-        return symbol_;
+        return "ST";
     }
 
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
         if (totalSupply(id) == 0) revert TokenDoesNotExist();
-        return string(abi.encodePacked(baseURI_, LibString.toString(id)));
+        return string(abi.encodePacked("http://solady.org/", LibString.toString(id)));
     }
 
     function mint(address to, uint256 id, uint256 amount) public payable virtual {
@@ -78,6 +68,30 @@ contract MockERC6909 is ERC6909 {
         returns (bool)
     {
         return super.transferFrom(_brutalized(from), _brutalized(to), id, amount);
+    }
+
+    function directTransferFrom(address by, address from, address to, uint256 id, uint256 amount)
+        public
+        payable
+        virtual
+    {
+        _transfer(_brutalized(by), _brutalized(from), _brutalized(to), id, amount);
+    }
+
+    function directSetOperator(address owner, address operator, bool approved)
+        public
+        payable
+        virtual
+    {
+        _setOperator(owner, operator, approved);
+    }
+
+    function directApprove(address owner, address spender, uint256 id, uint256 amount)
+        public
+        payable
+        virtual
+    {
+        _approve(owner, spender, id, amount);
     }
 
     function _brutalized(address a) internal view returns (address result) {

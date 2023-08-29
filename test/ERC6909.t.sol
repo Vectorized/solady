@@ -17,12 +17,12 @@ contract ERC6909Test is SoladyTest {
     );
 
     function setUp() public {
-        token = new MockERC6909("Solady Token", "SDT", "http://solady.org/");
+        token = new MockERC6909();
     }
 
     function testMetadata() public {
         assertEq(token.name(), "Solady Token");
-        assertEq(token.symbol(), "SDT");
+        assertEq(token.symbol(), "ST");
     }
 
     function testMint() public {
@@ -360,5 +360,62 @@ contract ERC6909Test is SoladyTest {
             abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, address(this), id)
         );
         token.transferFrom(from, to, id, amount);
+    }
+
+    function testDirectTransferFrom(address from, address to, uint256 id, uint256 amount) public {
+        token.mint(from, id, amount);
+
+        uint256 r = _random() % 5;
+
+        if (r == 0) {
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(from, to, id, amount);
+            token.directTransferFrom(address(0), from, to, id, amount);
+            assertEq(token.balanceOf(to, id), amount);
+            return;
+        }
+
+        if (r == 1) {
+            address by = _randomNonZeroAddress();
+            vm.expectEmit(true, true, true, true);
+            emit OperatorSet(from, by, true);
+            token.directSetOperator(from, by, true);
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(from, to, id, amount);
+            token.directTransferFrom(by, from, to, id, amount);
+            assertEq(token.balanceOf(to, id), amount);
+        }
+
+        if (r == 2) {
+            address by = _randomNonZeroAddress();
+            vm.expectEmit(true, true, true, true);
+            emit Approval(from, by, id, amount);
+            token.directApprove(from, by, id, amount);
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(from, to, id, amount);
+            token.directTransferFrom(by, from, to, id, amount);
+            assertEq(token.balanceOf(to, id), amount);
+        }
+
+        if (r == 3 && amount > 0) {
+            address by = _randomNonZeroAddress();
+            vm.expectEmit(true, true, true, true);
+            emit OperatorSet(from, by, true);
+            token.directSetOperator(from, by, true);
+            vm.expectEmit(true, true, true, true);
+            emit OperatorSet(from, by, false);
+            token.directSetOperator(from, by, false);
+            vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
+            token.directTransferFrom(by, from, to, id, amount);
+        }
+
+        if (r == 4 && amount > 0) {
+            address by = _randomNonZeroAddress();
+            vm.expectEmit(true, true, true, true);
+            emit Approval(from, by, id, amount - 1);
+            token.directApprove(from, by, id, amount - 1);
+            vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
+            token.directTransferFrom(by, from, to, id, amount);
+        }
     }
 }

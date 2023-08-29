@@ -243,7 +243,7 @@ abstract contract ERC6909 {
                 if add(allowance_, 1) {
                     // Revert if the amount to be transferred exceeds the allowance.
                     if gt(amount, allowance_) {
-                        mstore(0x34, mload(0x00))
+                        mstore(0x34, id)
                         mstore(0x00, shl(96, 0x731555bd)) // `InsufficientPermission(address,uint256)`.
                         revert(0x10, 0x44)
                     }
@@ -282,7 +282,7 @@ abstract contract ERC6909 {
         return true;
     }
 
-    /// @dev Sets `amount` as the allowance of `spender` over the caller tokens for the given `id`.
+    /// @dev Sets `amount` as the allowance of `spender` for the caller for token `id`.
     ///
     /// Emits a {Approval} event.
     function approve(address spender, uint256 id, uint256 amount)
@@ -308,10 +308,10 @@ abstract contract ERC6909 {
         return true;
     }
 
-    ///  @dev Set or revoke operator status for `spender` for the caller based on the `approved`.
+    ///  @dev Set or revoke operator status for `operator` for the caller based on the `approved`.
     ///
     /// Emits {OperatorSet} event.
-    function setOperator(address spender, bool approved) public payable virtual returns (bool) {
+    function setOperator(address operator, bool approved) public payable virtual returns (bool) {
         /// @solidity memory-safe-assembly
         assembly {
             // Convert `approved` to `0` or `1`.
@@ -319,7 +319,7 @@ abstract contract ERC6909 {
             // Compute the operator slot and store the approved.
             mstore(0x20, _ERC6909_MASTER_SLOT_SEED)
             mstore(0x14, caller())
-            mstore(0x00, spender)
+            mstore(0x00, operator)
             sstore(keccak256(0x0c, 0x34), approved)
             // Emit the {OperatorSet} event.
             mstore(0x20, approved)
@@ -407,6 +407,123 @@ abstract contract ERC6909 {
             log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, mload(0x20)), 0, id)
         }
         _afterTokenTransfer(from, address(0), id, amount);
+    }
+
+    /// @dev Transfers `amount` of token `id` from `from` to `to`.
+    ///
+    /// Note: Does not update the allowance if it is the maximum uint256 value.
+    ///
+    /// Requirements:
+    /// - `from` must at least have `amount` of token `id`.
+    /// - If `by` is not the zero address,
+    ///   it must have at least `amount` of allowance to transfer the
+    ///   tokens of `from` or approved as an operator.
+    ///
+    /// Emits a {Transfer} event.
+    function _transfer(address by, address from, address to, uint256 id, uint256 amount)
+        internal
+        virtual
+    {
+        _beforeTokenTransfer(from, to, id, amount);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the operator slot and load its value.
+            mstore(0x34, _ERC6909_MASTER_SLOT_SEED)
+            mstore(0x28, from)
+            // If `by` is not the zero address.
+            if shl(96, by) {
+                mstore(0x14, by)
+                // Check if the `by` is an operator.
+                if iszero(sload(keccak256(0x20, 0x34))) {
+                    // Compute the allowance slot and load its value.
+                    mstore(0x00, id)
+                    let allowanceSlot := keccak256(0x00, 0x54)
+                    let allowance_ := sload(allowanceSlot)
+                    // If the allowance is not the maximum uint256 value.
+                    if add(allowance_, 1) {
+                        // Revert if the amount to be transferred exceeds the allowance.
+                        if gt(amount, allowance_) {
+                            mstore(0x34, id)
+                            mstore(0x00, shl(96, 0x731555bd)) // `InsufficientPermission(address,uint256)`.
+                            revert(0x10, 0x44)
+                        }
+                        // Subtract and store the updated allowance.
+                        sstore(allowanceSlot, sub(allowance_, amount))
+                    }
+                }
+            }
+            // Compute the balance slot and load its value.
+            mstore(0x14, id)
+            let fromBalanceSlot := keccak256(0x14, 0x40)
+            let fromBalance := sload(fromBalanceSlot)
+            // Revert if insufficient balance.
+            if gt(amount, fromBalance) {
+                mstore(0x48, id)
+                mstore(0x14, shl(96, 0xf6deaa04)) // `InsufficientBalance(address,uint256)`.
+                revert(0x24, 0x44)
+            }
+            // Subtract and store the updated balance.
+            sstore(fromBalanceSlot, sub(fromBalance, amount))
+            // Compute the balance slot of `to`.
+            mstore(0x28, to)
+            mstore(0x14, id)
+            let toBalanceSlot := keccak256(0x14, 0x40)
+            // Add and store the updated balance of `to`.
+            // Will not overflow because the sum of all user balances
+            // cannot exceed the maximum uint256 value.
+            sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
+            // Emit the {Transfer} event.
+            mstore(0x00, amount)
+            // forgefmt: disable-next-line
+            log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, mload(0x34)), id)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x34, 0x00)
+        }
+        _afterTokenTransfer(from, to, id, amount);
+    }
+
+    /// @dev Sets `amount` as the allowance of `spender` for `owner` for token `id`.
+    ///
+    /// Emits a {Approval} event.
+    function _approve(address owner, address spender, uint256 id, uint256 amount)
+        internal
+        virtual
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the allowance slot and store the amount.
+            mstore(0x34, _ERC6909_MASTER_SLOT_SEED)
+            mstore(0x28, owner)
+            mstore(0x14, spender)
+            mstore(0x00, id)
+            sstore(keccak256(0x00, 0x54), amount)
+            // Emit the {Approval} event.
+            mstore(0x00, amount)
+            // forgefmt: disable-next-line
+            log4(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, shr(96, mload(0x34)), shr(96, mload(0x20)), id)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x34, 0x00)
+        }
+    }
+
+    ///  @dev Set or revoke operator status for `operator` for `owner` based on the `approved`.
+    ///
+    /// Emits {OperatorSet} event.
+    function _setOperator(address owner, address operator, bool approved) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Convert `approved` to `0` or `1`.
+            approved := iszero(iszero(approved))
+            // Compute the operator slot and store the approved.
+            mstore(0x20, _ERC6909_MASTER_SLOT_SEED)
+            mstore(0x14, owner)
+            mstore(0x00, operator)
+            sstore(keccak256(0x0c, 0x34), approved)
+            // Emit the {OperatorSet} event.
+            mstore(0x20, approved)
+            // forgefmt: disable-next-line
+            log3(0x20, 0x20, _OPERATOR_SET_EVENT_SIGNATURE, shr(96, shl(96, owner)), shr(96, mload(0x0c)))
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
