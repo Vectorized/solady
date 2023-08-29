@@ -28,20 +28,21 @@ contract MockERC6909 is ERC6909 {
     }
 
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
-        if (!_exists(id)) revert TokenDoesNotExist();
+        if (totalSupply(id) == 0) revert TokenDoesNotExist();
         return string(abi.encodePacked(baseURI_, LibString.toString(id)));
     }
 
-    function mint(address to, uint256 id, uint256 amount) public virtual {
+    function mint(address to, uint256 id, uint256 amount) public payable virtual {
         _mint(_brutalized(to), id, amount);
     }
 
-    function burn(address from, uint256 id, uint256 amount) public virtual {
+    function burn(address from, uint256 id, uint256 amount) public payable virtual {
         _burn(_brutalized(from), id, amount);
     }
 
     function approve(address spender, uint256 id, uint256 amount)
         public
+        payable
         virtual
         override
         returns (bool)
@@ -49,12 +50,19 @@ contract MockERC6909 is ERC6909 {
         return super.approve(_brutalized(spender), id, amount);
     }
 
-    function setOperator(address owner, bool approved) public virtual override returns (bool) {
+    function setOperator(address owner, bool approved)
+        public
+        payable
+        virtual
+        override
+        returns (bool)
+    {
         return super.setOperator(_brutalized(owner), approved);
     }
 
     function transfer(address to, uint256 id, uint256 amount)
         public
+        payable
         virtual
         override
         returns (bool)
@@ -64,6 +72,7 @@ contract MockERC6909 is ERC6909 {
 
     function transferFrom(address from, address to, uint256 id, uint256 amount)
         public
+        payable
         virtual
         override
         returns (bool)
@@ -76,27 +85,5 @@ contract MockERC6909 is ERC6909 {
         assembly {
             result := or(a, shl(160, gas()))
         }
-    }
-}
-
-contract MockERC6909CustomDecimals is ERC6909 {
-    function name() public view virtual override returns (string memory) {
-        return "Solady";
-    }
-
-    function symbol() public view virtual override returns (string memory) {
-        return "SLY";
-    }
-
-    function tokenURI(uint256 id) public view virtual override returns (string memory) {
-        return string(abi.encodePacked("http://solady.org/", LibString.toString(id)));
-    }
-
-    function setDecimals(uint256 id, uint8 decimal) public virtual {
-        _setDecimals(id, decimal);
-    }
-
-    function decimals(uint256 id) public view virtual override returns (uint8) {
-        return _getDecimals(id);
     }
 }

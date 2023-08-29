@@ -3,16 +3,12 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 
-import {ERC6909, MockERC6909, MockERC6909CustomDecimals} from "./utils/mocks/MockERC6909.sol";
+import {ERC6909, MockERC6909} from "./utils/mocks/MockERC6909.sol";
 
 contract ERC6909Test is SoladyTest {
     MockERC6909 token;
 
-    MockERC6909CustomDecimals tokenD;
-
-    event Transfer(
-        address indexed sender, address indexed receiver, uint256 indexed id, uint256 amount
-    );
+    event Transfer(address indexed from, address indexed to, uint256 indexed id, uint256 amount);
 
     event OperatorSet(address indexed owner, address indexed spender, bool approved);
 
@@ -22,7 +18,6 @@ contract ERC6909Test is SoladyTest {
 
     function setUp() public {
         token = new MockERC6909("Solady Token", "SDT", "http://solady.org/");
-        tokenD = new MockERC6909CustomDecimals();
     }
 
     function testMetadata() public {
@@ -270,19 +265,6 @@ contract ERC6909Test is SoladyTest {
         assertTrue(token.setOperator(spender, approved));
 
         assertEq(token.isOperator(owner, spender), approved);
-    }
-
-    function testSetDecimals(uint256 id, uint8 decimal, bool flag) public {
-        /// @solidity memory-safe-assembly
-        assembly {
-            decimal := or(shl(8, gas()), decimal)
-        }
-        if (flag) {
-            tokenD.setDecimals(id, decimal);
-            assertEq(tokenD.decimals(id), (decimal & 255));
-        } else {
-            assertEq(token.decimals(id), 18);
-        }
     }
 
     function testMintTotalSupplyOverFlowReverts(address to, uint256 id, uint256 amount) public {
