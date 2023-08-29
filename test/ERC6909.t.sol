@@ -362,17 +362,16 @@ contract ERC6909Test is SoladyTest {
         token.transferFrom(from, to, id, amount);
     }
 
-    function testDirectTransferFrom(address from, address to, uint256 id, uint256 amount) public {
+    function testDirectFunctions(address from, address to, uint256 id, uint256 amount) public {
         token.mint(from, id, amount);
 
-        uint256 r = _random() % 5;
+        uint256 r = _random() % 8;
 
         if (r == 0) {
             vm.expectEmit(true, true, true, true);
             emit Transfer(from, to, id, amount);
             token.directTransferFrom(address(0), from, to, id, amount);
             assertEq(token.balanceOf(to, id), amount);
-            return;
         }
 
         if (r == 1) {
@@ -402,9 +401,11 @@ contract ERC6909Test is SoladyTest {
             vm.expectEmit(true, true, true, true);
             emit OperatorSet(from, by, true);
             token.directSetOperator(from, by, true);
+            assertEq(token.isOperator(from, by), true);
             vm.expectEmit(true, true, true, true);
             emit OperatorSet(from, by, false);
             token.directSetOperator(from, by, false);
+            assertEq(token.isOperator(from, by), false);
             vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
             token.directTransferFrom(by, from, to, id, amount);
         }
@@ -416,6 +417,45 @@ contract ERC6909Test is SoladyTest {
             token.directApprove(from, by, id, amount - 1);
             vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
             token.directTransferFrom(by, from, to, id, amount);
+        }
+
+        if (r == 5 && amount != type(uint256).max && amount > 256 && from != to) {
+            address by = _randomNonZeroAddress();
+            vm.expectEmit(true, true, true, true);
+            emit Approval(from, by, id, amount);
+            token.directApprove(from, by, id, amount);
+            assertEq(token.allowance(from, by, id), amount);
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(from, to, id, amount / 2);
+            token.directTransferFrom(by, from, to, id, amount / 2);
+            assertEq(token.balanceOf(to, id), amount / 2);
+            assertEq(token.balanceOf(from, id), amount - amount / 2);
+            assertEq(token.allowance(from, by, id), amount - amount / 2);
+        }
+
+        if (r == 6) {
+            address by = _randomNonZeroAddress();
+            vm.expectEmit(true, true, true, true);
+            emit Approval(from, by, id, type(uint256).max);
+            token.directApprove(from, by, id, type(uint256).max);
+            emit Transfer(from, to, id, amount);
+            token.directTransferFrom(by, from, to, id, amount);
+            assertEq(token.allowance(from, by, id), type(uint256).max);
+        }
+
+        if (r == 7) {
+            address by = _randomNonZeroAddress();
+            vm.expectEmit(true, true, true, true);
+            emit OperatorSet(from, by, true);
+            token.directSetOperator(from, by, true);
+            vm.expectEmit(true, true, true, true);
+            emit Approval(from, by, id, amount);
+            token.directApprove(from, by, id, amount);
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(from, to, id, amount);
+            token.directTransferFrom(by, from, to, id, amount);
+            assertEq(token.balanceOf(to, id), amount);
+            assertEq(token.allowance(from, by, id), amount);
         }
     }
 }
