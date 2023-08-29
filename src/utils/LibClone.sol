@@ -313,7 +313,7 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            // Do a out-of-gas revert if `extraLength` is more than 2 bytes (super unlikely).
+            // Do a out-of-gas revert if `extraLength` is more than 2 bytes.
             returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xfffd))
 
             // +2 bytes for telling how much data there is appended to the call.
@@ -456,7 +456,7 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            // Do a out-of-gas revert if `extraLength` is more than 2 bytes (super unlikely).
+            // Do a out-of-gas revert if `extraLength` is more than 2 bytes.
             returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xfffd))
 
             // +2 bytes for telling how much data there is appended to the call.
@@ -518,7 +518,7 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            // Do a out-of-gas revert if `extraLength` is more than 2 bytes (super unlikely).
+            // Do a out-of-gas revert if `extraLength` is more than 2 bytes.
             returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xfffd))
 
             // +2 bytes for telling how much data there is appended to the call.
