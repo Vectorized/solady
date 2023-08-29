@@ -367,91 +367,88 @@ contract ERC6909Test is SoladyTest {
 
         if (r == 0) {
             token.mint(from, id, amount);
-            vm.expectEmit(true, true, true, true);
-            emit Transfer(from, to, id, amount);
-            token.directTransferFrom(address(0), from, to, id, amount);
+            _directTransferFrom(address(0), from, to, id, amount, true);
             assertEq(token.balanceOf(to, id), amount);
         } else if (r == 1) {
             token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
-            vm.expectEmit(true, true, true, true);
-            emit OperatorSet(from, by, true);
-            token.directSetOperator(from, by, true);
-            vm.expectEmit(true, true, true, true);
-            emit Transfer(from, to, id, amount);
-            token.directTransferFrom(by, from, to, id, amount);
+            _directSetOperator(from, by, true);
+            _directTransferFrom(by, from, to, id, amount, true);
             assertEq(token.balanceOf(to, id), amount);
         } else if (r == 2) {
             token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
-            vm.expectEmit(true, true, true, true);
-            emit Approval(from, by, id, amount);
-            token.directApprove(from, by, id, amount);
-            vm.expectEmit(true, true, true, true);
-            emit Transfer(from, to, id, amount);
-            token.directTransferFrom(by, from, to, id, amount);
+            _directApprove(from, by, id, amount);
+            _directTransferFrom(by, from, to, id, amount, true);
             assertEq(token.balanceOf(to, id), amount);
         } else if (r == 3) {
             while (amount == 0) amount = _random();
             token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
-            vm.expectEmit(true, true, true, true);
-            emit OperatorSet(from, by, true);
-            token.directSetOperator(from, by, true);
-            assertEq(token.isOperator(from, by), true);
-            vm.expectEmit(true, true, true, true);
-            emit OperatorSet(from, by, false);
-            token.directSetOperator(from, by, false);
-            assertEq(token.isOperator(from, by), false);
-            vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
-            token.directTransferFrom(by, from, to, id, amount);
+            _directSetOperator(from, by, true);
+            _directSetOperator(from, by, false);
+            _directTransferFrom(by, from, to, id, amount, false);
         } else if (r == 4) {
             while (amount == 0) amount = _random();
             token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
-            vm.expectEmit(true, true, true, true);
-            emit Approval(from, by, id, amount - 1);
-            token.directApprove(from, by, id, amount - 1);
-            vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
-            token.directTransferFrom(by, from, to, id, amount);
+            _directApprove(from, by, id, amount - 1);
+            _directTransferFrom(by, from, to, id, amount, false);
         } else if (r == 5) {
             while (from == to) to = _randomNonZeroAddress();
             while (!(amount != type(uint256).max && amount > 1)) amount = _random();
             token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
-            vm.expectEmit(true, true, true, true);
-            emit Approval(from, by, id, amount);
-            token.directApprove(from, by, id, amount);
-            assertEq(token.allowance(from, by, id), amount);
-            vm.expectEmit(true, true, true, true);
-            emit Transfer(from, to, id, amount / 2);
-            token.directTransferFrom(by, from, to, id, amount / 2);
+            _directApprove(from, by, id, amount);
+            _directTransferFrom(by, from, to, id, amount / 2, true);
             assertEq(token.balanceOf(to, id), amount / 2);
             assertEq(token.balanceOf(from, id), amount - amount / 2);
             assertEq(token.allowance(from, by, id), amount - amount / 2);
         } else if (r == 6) {
             token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
-            vm.expectEmit(true, true, true, true);
-            emit Approval(from, by, id, type(uint256).max);
-            token.directApprove(from, by, id, type(uint256).max);
-            emit Transfer(from, to, id, amount);
-            token.directTransferFrom(by, from, to, id, amount);
+            _directApprove(from, by, id, type(uint256).max);
+            _directTransferFrom(by, from, to, id, amount, true);
             assertEq(token.allowance(from, by, id), type(uint256).max);
         } else if (r == 7) {
             token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
-            vm.expectEmit(true, true, true, true);
-            emit OperatorSet(from, by, true);
-            token.directSetOperator(from, by, true);
-            vm.expectEmit(true, true, true, true);
-            emit Approval(from, by, id, amount);
-            token.directApprove(from, by, id, amount);
-            vm.expectEmit(true, true, true, true);
-            emit Transfer(from, to, id, amount);
-            token.directTransferFrom(by, from, to, id, amount);
+            _directSetOperator(from, by, true);
+            _directApprove(from, by, id, amount);
+            _directTransferFrom(by, from, to, id, amount, true);
             assertEq(token.balanceOf(to, id), amount);
             assertEq(token.allowance(from, by, id), amount);
         }
+    }
+
+    function _directApprove(address owner, address spender, uint256 id, uint256 amount) internal {
+        vm.expectEmit(true, true, true, true);
+        emit Approval(owner, spender, id, amount);
+        token.directApprove(owner, spender, id, amount);
+        assertEq(token.allowance(owner, spender, id), amount);
+    }
+
+    function _directSetOperator(address owner, address operator, bool approved) internal {
+        vm.expectEmit(true, true, true, true);
+        emit OperatorSet(owner, operator, approved);
+        token.directSetOperator(owner, operator, approved);
+        assertEq(token.isOperator(owner, operator), approved);
+    }
+
+    function _directTransferFrom(
+        address by,
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bool success
+    ) internal {
+        if (success) {
+            vm.expectEmit(true, true, true, true);
+            emit Transfer(from, to, id, amount);
+        } else {
+            vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
+        }
+        token.directTransferFrom(by, from, to, id, amount);
     }
 }
