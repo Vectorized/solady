@@ -182,7 +182,7 @@ abstract contract ERC721 {
             mstore(0x00, id)
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
             let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
-            if iszero(shr(96, shl(96, sload(ownershipSlot)))) {
+            if iszero(shl(96, sload(ownershipSlot))) {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
                 revert(0x1c, 0x04)
             }
