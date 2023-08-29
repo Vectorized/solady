@@ -118,7 +118,7 @@ library MerkleProofLib {
                 }
 
                 // The required final proof offset if `flagsLength` is not zero, otherwise zero.
-                let proofEnd := mul(iszero(iszero(flagsLength)), add(proof, shl(5, proofLength)))
+                let proofEnd := add(proof, shl(5, proofLength))
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
                 let hashesFront := mload(0x40)
@@ -216,8 +216,7 @@ library MerkleProofLib {
                 }
 
                 // The required final proof offset if `flagsLength` is not zero, otherwise zero.
-                let proofEnd :=
-                    mul(iszero(iszero(flags.length)), add(proof.offset, shl(5, proof.length)))
+                let proofEnd := add(proof.offset, shl(5, proof.length))
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
                 let hashesFront := mload(0x40)
