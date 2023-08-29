@@ -82,6 +82,8 @@ library MerkleProofLib {
     ///   will always return false.
     /// - The sum of the lengths of `proof` and `leaves` must never overflow.
     /// - Any non-zero word in the `flags` array is treated as true.
+    /// - The memory offset of `proof` must be be non-zero
+    ///   (i.e. `proof` is not pointing to the scratch space).
     function verifyMultiProof(
         bytes32[] memory proof,
         bytes32 root,
@@ -184,6 +186,8 @@ library MerkleProofLib {
     /// - Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`
     ///   will always return false.
     /// - Any non-zero word in the `flags` array is treated as true.
+    /// - The calldata offset of `proof` must be non-zero
+    ///   (i.e. `proof` is from a regular Solidity function with a 4-byte selector).
     function verifyMultiProofCalldata(
         bytes32[] calldata proof,
         bytes32 root,
@@ -268,7 +272,7 @@ library MerkleProofLib {
                         // Checks if the last value in the queue is same as the root.
                         eq(mload(sub(hashesBack, 0x20)), root),
                         // And whether all the proofs are used, if required.
-                        or(iszero(proofEnd), eq(proofEnd, proof.offset))
+                        eq(proofEnd, proof.offset)
                     )
                 break
             }
