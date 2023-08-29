@@ -9,6 +9,14 @@ pragma solidity ^0.8.4;
 /// minting and transferring zero tokens, as well as self-approvals.
 /// For performance, this implementation WILL NOT revert for such actions.
 /// Please add any checks with overrides if desired.
+///
+/// If you are overriding:
+/// - NEVER violate the ERC6909 invariant:
+///   the total sum of all balances for any token `id` must be equal to `totalSupply(id)`.
+/// - Make sure all variables written to storage are properly cleaned
+//    (e.g. the bool value for `isOperator` MUST be either 1 or 0 under the hood).
+/// - Check that the overridden function is actually used in the function you want to
+///   change the behavior of. Much of the code has been manually inlined for performance.
 abstract contract ERC6909 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -308,7 +316,7 @@ abstract contract ERC6909 {
         return true;
     }
 
-    ///  @dev Set or revoke operator status for `operator` for the caller based on the `approved`.
+    ///  @dev Sets whether `operator` is approved to manage the tokens of the caller.
     ///
     /// Emits {OperatorSet} event.
     function setOperator(address operator, bool approved) public payable virtual returns (bool) {
@@ -506,7 +514,7 @@ abstract contract ERC6909 {
         }
     }
 
-    ///  @dev Set or revoke operator status for `operator` for `owner` based on the `approved`.
+    ///  @dev Sets whether `operator` is approved to manage the tokens of `owner`.
     ///
     /// Emits {OperatorSet} event.
     function _setOperator(address owner, address operator, bool approved) internal virtual {
