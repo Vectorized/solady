@@ -313,8 +313,9 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            // Do a out-of-gas revert if `extraLength` is more than 2 bytes.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xfffd))
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x62 = 0xff9b.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xff9b))
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
@@ -456,8 +457,9 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            // Do a out-of-gas revert if `extraLength` is more than 2 bytes.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xfffd))
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x62 = 0xff9b.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xff9b))
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
@@ -518,8 +520,9 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            // Do a out-of-gas revert if `extraLength` is more than 2 bytes.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xfffd))
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x62 = 0xff9b.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xff9b))
 
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)

@@ -184,7 +184,7 @@ contract LibCloneTest is SoladyTest, Clone {
         uint256[] memory argUint256Array,
         uint64 argUint64,
         uint8 argUint8
-    ) public brutalizeMemory {
+    ) public {
         bytes memory data =
             abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
         LibCloneTest clone = LibCloneTest(LibClone.clone(address(this), data));
@@ -220,7 +220,7 @@ contract LibCloneTest is SoladyTest, Clone {
         uint64 argUint64,
         uint8 argUint8,
         uint256 deposit
-    ) public brutalizeMemory {
+    ) public {
         bytes memory data;
         bytes32 salt;
 
@@ -329,5 +329,16 @@ contract LibCloneTest is SoladyTest, Clone {
         assembly {
             result := or(a, shl(160, gas()))
         }
+    }
+
+    function testCloneWithImmutableArgsRevertsIfDataTooBig() public {
+        uint256 n = 0xff9b;
+        bytes memory data = new bytes(n);
+
+        address clone = this.cloneDeterministic(address(this), new bytes(n), bytes32(gasleft()));
+        _shouldBehaveLikeClone(clone, 1);
+
+        vm.expectRevert();
+        this.cloneDeterministic(address(this), new bytes(n + 1), bytes32(gasleft()));
     }
 }
