@@ -2,7 +2,7 @@
 
 [![NPM][npm-shield]][npm-url]
 [![CI][ci-shield]][ci-url]
-[![MIT License][license-shield]][license-url]
+[![Solidity][solidity-shield]][solidity-ci-url]
 
 Gas optimized Solidity snippets.
 
@@ -127,5 +127,5 @@ This repository is inspired by or directly modified from many sources, primarily
 [ci-shield]: https://img.shields.io/github/actions/workflow/status/vectorized/solady/ci.yml?branch=main&label=build
 [ci-url]: https://github.com/vectorized/solady/actions/workflows/ci.yml
 
-[license-shield]: https://img.shields.io/badge/License-MIT-green.svg
-[license-url]: https://github.com/vectorized/solady/blob/main/LICENSE.txt
+[solidity-shield]: https://img.shields.io/badge/solidity-%3E=0.8.4%20%3C=0.8.21-blue
+[solidity-ci-url]: https://github.com/Vectorized/solady/actions/workflows/ci-all-via-ir.yml
