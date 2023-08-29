@@ -363,18 +363,16 @@ contract ERC6909Test is SoladyTest {
     }
 
     function testDirectFunctions(address from, address to, uint256 id, uint256 amount) public {
-        token.mint(from, id, amount);
-
         uint256 r = _random() % 8;
 
         if (r == 0) {
+            token.mint(from, id, amount);
             vm.expectEmit(true, true, true, true);
             emit Transfer(from, to, id, amount);
             token.directTransferFrom(address(0), from, to, id, amount);
             assertEq(token.balanceOf(to, id), amount);
-        }
-
-        if (r == 1) {
+        } else if (r == 1) {
+            token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
             vm.expectEmit(true, true, true, true);
             emit OperatorSet(from, by, true);
@@ -383,9 +381,8 @@ contract ERC6909Test is SoladyTest {
             emit Transfer(from, to, id, amount);
             token.directTransferFrom(by, from, to, id, amount);
             assertEq(token.balanceOf(to, id), amount);
-        }
-
-        if (r == 2) {
+        } else if (r == 2) {
+            token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
             vm.expectEmit(true, true, true, true);
             emit Approval(from, by, id, amount);
@@ -394,9 +391,9 @@ contract ERC6909Test is SoladyTest {
             emit Transfer(from, to, id, amount);
             token.directTransferFrom(by, from, to, id, amount);
             assertEq(token.balanceOf(to, id), amount);
-        }
-
-        if (r == 3 && amount > 0) {
+        } else if (r == 3) {
+            while (amount == 0) amount = _random();
+            token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
             vm.expectEmit(true, true, true, true);
             emit OperatorSet(from, by, true);
@@ -408,18 +405,19 @@ contract ERC6909Test is SoladyTest {
             assertEq(token.isOperator(from, by), false);
             vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
             token.directTransferFrom(by, from, to, id, amount);
-        }
-
-        if (r == 4 && amount > 0) {
+        } else if (r == 4) {
+            while (amount == 0) amount = _random();
+            token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
             vm.expectEmit(true, true, true, true);
             emit Approval(from, by, id, amount - 1);
             token.directApprove(from, by, id, amount - 1);
             vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
             token.directTransferFrom(by, from, to, id, amount);
-        }
-
-        if (r == 5 && amount != type(uint256).max && amount > 256 && from != to) {
+        } else if (r == 5) {
+            while (from == to) to = _randomNonZeroAddress();
+            while (!(amount != type(uint256).max && amount > 1)) amount = _random();
+            token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
             vm.expectEmit(true, true, true, true);
             emit Approval(from, by, id, amount);
@@ -431,9 +429,8 @@ contract ERC6909Test is SoladyTest {
             assertEq(token.balanceOf(to, id), amount / 2);
             assertEq(token.balanceOf(from, id), amount - amount / 2);
             assertEq(token.allowance(from, by, id), amount - amount / 2);
-        }
-
-        if (r == 6) {
+        } else if (r == 6) {
+            token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
             vm.expectEmit(true, true, true, true);
             emit Approval(from, by, id, type(uint256).max);
@@ -441,9 +438,8 @@ contract ERC6909Test is SoladyTest {
             emit Transfer(from, to, id, amount);
             token.directTransferFrom(by, from, to, id, amount);
             assertEq(token.allowance(from, by, id), type(uint256).max);
-        }
-
-        if (r == 7) {
+        } else if (r == 7) {
+            token.mint(from, id, amount);
             address by = _randomNonZeroAddress();
             vm.expectEmit(true, true, true, true);
             emit OperatorSet(from, by, true);

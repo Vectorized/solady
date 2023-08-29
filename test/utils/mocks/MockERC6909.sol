@@ -47,6 +47,10 @@ contract MockERC6909 is ERC6909 {
         override
         returns (bool)
     {
+        /// @solidity memory-safe-assembly
+        assembly {
+            approved := mul(gas(), approved)
+        }
         return super.setOperator(_brutalized(owner), approved);
     }
 
@@ -83,6 +87,10 @@ contract MockERC6909 is ERC6909 {
         payable
         virtual
     {
+        /// @solidity memory-safe-assembly
+        assembly {
+            approved := mul(gas(), approved)
+        }
         _setOperator(owner, operator, approved);
     }
 
