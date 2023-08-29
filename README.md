@@ -37,6 +37,7 @@ tokens
 ├─ ERC721 — "Simple ERC721 implementation with storage hitchhiking"
 ├─ ERC2981 — "Simple ERC2981 NFT Royalty Standard implementation"
 ├─ ERC1155 — "Simple ERC1155 implementation"
+├─ ERC6909 — "Simple EIP-6909 minimal multi-token implementation"
 utils
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
@@ -44,6 +45,7 @@ utils
 ├─ EIP712 — "Contract for EIP-712 typed structured data hashing and signing"
 ├─ ERC1967Factory — "Factory for deploying and managing ERC1967 proxy contracts"
 ├─ ERC1967FactoryConstants — "The address and bytecode of the canonical ERC1967Factory"
+├─ JSONParserLib — "Library for parsing JSONs"
 ├─ LibSort — "Library for efficient sorting of memory arrays"
 ├─ LibPRNG — "Library for generating pseudorandom numbers"
 ├─ Base64 — "Library for Base64 encoding and decoding"
