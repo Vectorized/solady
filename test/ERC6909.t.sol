@@ -362,62 +362,65 @@ contract ERC6909Test is SoladyTest {
         token.transferFrom(from, to, id, amount);
     }
 
-    function testDirectFunctions(address from, address to, uint256 id, uint256 amount) public {
-        uint256 r = _random() % 8;
+    struct _TestTemps {
+        uint256 id;
+        uint256 allowance;
+        bool isOperator;
+        uint256 balance;
+        uint256 amount;
+        address by;
+        address from;
+        address to;
+        bool sufficientPermission;
+        bool success;
+    }
 
-        if (r == 0) {
-            token.mint(from, id, amount);
-            _directTransferFrom(address(0), from, to, id, amount, true);
-            assertEq(token.balanceOf(to, id), amount);
-        } else if (r == 1) {
-            token.mint(from, id, amount);
-            address by = _randomNonZeroAddress();
-            _directSetOperator(from, by, true);
-            _directTransferFrom(by, from, to, id, amount, true);
-            assertEq(token.balanceOf(to, id), amount);
-        } else if (r == 2) {
-            token.mint(from, id, amount);
-            address by = _randomNonZeroAddress();
-            _directApprove(from, by, id, amount);
-            _directTransferFrom(by, from, to, id, amount, true);
-            assertEq(token.balanceOf(to, id), amount);
-        } else if (r == 3) {
-            while (amount == 0) amount = _random();
-            token.mint(from, id, amount);
-            address by = _randomNonZeroAddress();
-            _directSetOperator(from, by, true);
-            _directSetOperator(from, by, false);
-            _directTransferFrom(by, from, to, id, amount, false);
-        } else if (r == 4) {
-            while (amount == 0) amount = _random();
-            token.mint(from, id, amount);
-            address by = _randomNonZeroAddress();
-            _directApprove(from, by, id, amount - 1);
-            _directTransferFrom(by, from, to, id, amount, false);
-        } else if (r == 5) {
-            while (from == to) to = _randomNonZeroAddress();
-            while (!(amount != type(uint256).max && amount > 1)) amount = _random();
-            token.mint(from, id, amount);
-            address by = _randomNonZeroAddress();
-            _directApprove(from, by, id, amount);
-            _directTransferFrom(by, from, to, id, amount / 2, true);
-            assertEq(token.balanceOf(to, id), amount / 2);
-            assertEq(token.balanceOf(from, id), amount - amount / 2);
-            assertEq(token.allowance(from, by, id), amount - amount / 2);
-        } else if (r == 6) {
-            token.mint(from, id, amount);
-            address by = _randomNonZeroAddress();
-            _directApprove(from, by, id, type(uint256).max);
-            _directTransferFrom(by, from, to, id, amount, true);
-            assertEq(token.allowance(from, by, id), type(uint256).max);
-        } else if (r == 7) {
-            token.mint(from, id, amount);
-            address by = _randomNonZeroAddress();
-            _directSetOperator(from, by, true);
-            _directApprove(from, by, id, amount);
-            _directTransferFrom(by, from, to, id, amount, true);
-            assertEq(token.balanceOf(to, id), amount);
-            assertEq(token.allowance(from, by, id), amount);
+    function testDirectFunctions(uint256) public {
+        _TestTemps memory t;
+        t.id = _random();
+        t.allowance = _random();
+        t.balance = _random();
+        t.amount = _random();
+        t.isOperator = _random() % 2 == 0;
+        t.by = _randomAddress();
+        t.from = _randomAddress();
+        while (t.to == t.from) t.to = _randomAddress();
+
+        token.mint(t.from, t.id, t.balance);
+        _directSetOperator(t.from, t.by, t.isOperator);
+        _directApprove(t.from, t.by, t.id, t.allowance);
+
+        t.sufficientPermission = t.by == address(0) || t.isOperator || t.allowance >= t.amount;
+        if (t.balance >= t.amount) {
+            if (t.sufficientPermission) {
+                t.success = true;
+                vm.expectEmit(true, true, true, true);
+                emit Transfer(t.from, t.to, t.id, t.amount);
+            } else {
+                vm.expectRevert(
+                    abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, t.by, t.id)
+                );
+            }
+        } else {
+            if (t.sufficientPermission) {
+                vm.expectRevert(
+                    abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, t.from, t.id)
+                );
+            } else {
+                vm.expectRevert(
+                    abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, t.by, t.id)
+                );
+            }
+        }
+
+        token.directTransferFrom(t.by, t.from, t.to, t.id, t.amount);
+        if (t.isOperator || t.by == address(0) || t.allowance == type(uint256).max) {
+            assertEq(token.allowance(t.from, t.by, t.id), t.allowance);
+        }
+
+        if (t.success) {
+            assertEq(token.balanceOf(t.from, t.id), t.balance - t.amount);
+            assertEq(token.balanceOf(t.to, t.id), t.amount);
         }
     }
 
@@ -433,22 +436,5 @@ contract ERC6909Test is SoladyTest {
         emit OperatorSet(owner, operator, approved);
         token.directSetOperator(owner, operator, approved);
         assertEq(token.isOperator(owner, operator), approved);
-    }
-
-    function _directTransferFrom(
-        address by,
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bool success
-    ) internal {
-        if (success) {
-            vm.expectEmit(true, true, true, true);
-            emit Transfer(from, to, id, amount);
-        } else {
-            vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
-        }
-        token.directTransferFrom(by, from, to, id, amount);
     }
 }
