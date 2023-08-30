@@ -226,6 +226,70 @@ contract LibStringTest is SoladyTest {
         );
     }
 
+    function testReverseString() public {
+        // reverse empty string
+        string memory s1 = "";
+        LibString.reverse(s1);
+        assertEq(s1, "");
+
+        // reverse one byte string
+        s1 = "1";
+        LibString.reverse(s1);
+        assertEq(s1, "1");
+
+        // reverse the milady
+        s1 = "milady";
+        LibString.reverse(s1);
+        assertEq(s1, "ydalim");
+    }
+
+    function testCopyString() public {
+        string memory s1 = "milady";
+
+        string memory s2 = LibString.copy(s1);
+
+        //update string s1
+        LibString.reverse(s1);
+
+        assertEq(s2, "milady");
+    }
+
+    function testReverseString(string memory str) public {
+        string memory c = LibString.copy(str);
+
+        LibString.reverse(str);
+        LibString.reverse(str);
+
+        assertEq(c, str);
+    }
+
+    function testReverseStringDiffirential(string memory str) public {
+        string memory c = LibString.copy(str);
+
+        // reverse the string
+        LibString.reverse(str);
+
+        // length of string
+        uint256 len;
+
+        assembly {
+            len := mload(str)
+        }
+
+        unchecked {
+            uint256 j = len;
+            for (uint256 i = 0; i < len; ++i) {
+                // compare character by character
+                assertEq(LibString.slice(c, i, i + 1), LibString.slice(str, j - 1, j));
+                j--;
+            }
+        }
+    }
+
+    function testCopyString(string memory str) public {
+        assertEq(LibString.copy(str), str);
+    }
+
     function testToMinimalHexStringNoPrefixZeroRightPadded(uint256 x) public pure {
         _checkMemory(LibString.toMinimalHexStringNoPrefix(x));
     }

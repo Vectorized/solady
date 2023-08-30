@@ -831,6 +831,39 @@ library LibString {
         }
     }
 
+    /// @dev Reverse string of `data`.
+    function reverse(string memory data) internal pure {
+        assembly {
+            if gt(mload(data), 1) {
+                for {
+                    let start := add(data, 1)
+                    let end := add(data, mload(data))
+                } 1 {} {
+                    let temp := mload(end)
+                    mstore8(add(end, 0x1f), mload(start))
+                    mstore8(add(start, 0x1f), temp)
+                    start := add(start, 1)
+                    end := sub(end, 1)
+                    if iszero(lt(start, end)) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Retruns new string of deep copy of `data`.
+    function copy(string memory data) internal view returns (string memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let size := add(0x20, mload(data))
+            // Copy the `data` over.
+            pop(staticcall(gas(), 4, data, size, result, size))
+
+            // update the free memory pointer
+            mstore(0x40, add(result, size))
+        }
+    }
+
     /// @dev Returns a concatenated string of `a` and `b`.
     /// Cheaper than `string.concat()` and does not de-align the free memory pointer.
     function concat(string memory a, string memory b)
