@@ -1,6 +1,7 @@
 name: ci - Woke
 
-on: [push]
+on:
+  workflow_dispatch:
 
 jobs:
   tests:
