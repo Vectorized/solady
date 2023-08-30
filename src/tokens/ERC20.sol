@@ -440,7 +440,7 @@ abstract contract ERC20 {
                 revert(0x1c, 0x04)
             }
             // Increment and store the updated nonce.
-            sstore(nonceSlot, add(nonceValue, t)) // `t` is 1 iff ecrecover succeeds.
+            sstore(nonceSlot, add(nonceValue, t)) // `t` is 1 if ecrecover succeeds.
             // Compute the allowance slot and store the value.
             // The `owner` is already at slot 0x20.
             mstore(0x40, or(shl(160, _ALLOWANCE_SLOT_SEED), spender))
