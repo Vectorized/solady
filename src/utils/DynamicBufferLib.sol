@@ -6,15 +6,6 @@ pragma solidity ^0.8.4;
 /// @author Modified from cozyco (https://github.com/samkingco/cozyco/blob/main/contracts/utils/DynamicBuffer.sol)
 library DynamicBufferLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // Some random prime number to multiply `capacity`, so that
-    // we know that the `capacity` is for a dynamic buffer.
-    // Selected to be larger than any memory pointer realistically.
-    uint256 private constant _PRIME = 1621250193422201;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -49,9 +40,7 @@ library DynamicBufferLib {
                 mstore(data, sub(i, n))
             }
         }
-        if (grow) {
-            result = append(buffer, data);
-        }
+        if (grow) result = append(buffer, data);
     }
 
     /// @dev Appends `data` to `buffer`.
