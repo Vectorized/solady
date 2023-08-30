@@ -58,6 +58,7 @@ library SignatureCheckerLib {
                 mstore(0x60, 0) // Restore the zero slot.
                 mstore(0x40, m) // Restore the free memory pointer.
 
+                mstore(0x00, 1)
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -68,7 +69,7 @@ library SignatureCheckerLib {
                 // forgefmt: disable-next-item
                 isValid := and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x1f), f),
+                    eq(mload(0x00), f),
                     // Whether the staticcall does not revert.
                     // This must be placed at the end of the `and` clause,
                     // as the arguments are evaluated from right to left.
@@ -77,7 +78,7 @@ library SignatureCheckerLib {
                         signer, // The `signer` address.
                         m, // Offset of calldata in memory.
                         add(signatureLength, 0x64), // Length of calldata in memory.
-                        0x1f, // Offset of returndata.
+                        0x00, // Offset of returndata.
                         0x20 // Length of returndata to write.
                     )
                 )
@@ -123,6 +124,7 @@ library SignatureCheckerLib {
                 mstore(0x60, 0) // Restore the zero slot.
                 mstore(0x40, m) // Restore the free memory pointer.
 
+                mstore(0x00, 1)
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -133,7 +135,7 @@ library SignatureCheckerLib {
                 // forgefmt: disable-next-item
                 isValid := and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x1f), f),
+                    eq(mload(0x00), f),
                     // Whether the staticcall does not revert.
                     // This must be placed at the end of the `and` clause,
                     // as the arguments are evaluated from right to left.
@@ -142,7 +144,7 @@ library SignatureCheckerLib {
                         signer, // The `signer` address.
                         m, // Offset of calldata in memory.
                         add(signature.length, 0x64), // Length of calldata in memory.
-                        0x1f, // Offset of returndata.
+                        0x00, // Offset of returndata.
                         0x20 // Length of returndata to write.
                     )
                 )
@@ -205,6 +207,7 @@ library SignatureCheckerLib {
                 mstore(0x60, 0) // Restore the zero slot.
                 mstore(0x40, m) // Restore the free memory pointer.
 
+                mstore(0x00, 1)
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -216,7 +219,7 @@ library SignatureCheckerLib {
                 // forgefmt: disable-next-item
                 isValid := and(
                     // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x1f), f),
+                    eq(mload(0x00), f),
                     // Whether the staticcall does not revert.
                     // This must be placed at the end of the `and` clause,
                     // as the arguments are evaluated from right to left.
@@ -225,7 +228,7 @@ library SignatureCheckerLib {
                         signer, // The `signer` address.
                         m, // Offset of calldata in memory.
                         0xa5, // Length of calldata in memory.
-                        0x1f, // Offset of returndata.
+                        0x00, // Offset of returndata.
                         0x20 // Length of returndata to write.
                     )
                 )
@@ -247,7 +250,7 @@ library SignatureCheckerLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, 0) // Zeroize slot 0x00.
+            mstore(0x00, 1)
             let m := mload(0x40)
             let signatureLength := mload(signature)
             let f := shl(224, 0x1626ba7e)
@@ -285,7 +288,7 @@ library SignatureCheckerLib {
     ) internal view returns (bool isValid) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, 0) // Zeroize slot 0x00.
+            mstore(0x00, 1)
             let m := mload(0x40)
             let f := shl(224, 0x1626ba7e)
             mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
@@ -339,7 +342,7 @@ library SignatureCheckerLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, 0) // Zeroize slot 0x00.
+            mstore(0x00, 1)
             let m := mload(0x40)
             let f := shl(224, 0x1626ba7e)
             mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
