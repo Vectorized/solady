@@ -126,8 +126,10 @@ contract DynamicBufferLibTest is SoladyTest {
         _checkSamePointers(bufferA, bufferB);
         bufferA = bufferB.append("0", "1", "2", "3", "4", "5", "6");
         _checkSamePointers(bufferA, bufferB);
-        assertEq(bufferA.data, "010120123012340123450123456");
-        assertEq(bufferB.data, "010120123012340123450123456");
+        bufferA = bufferB.append("0", "1", "2", "3", "4", "5", "6", "7");
+        _checkSamePointers(bufferA, bufferB);
+        assertEq(bufferA.data, "01012012301234012345012345601234567");
+        assertEq(bufferB.data, "01012012301234012345012345601234567");
     }
 
     function _checkSamePointers(

@@ -135,7 +135,7 @@ library DynamicBufferLib {
         result = append(append(buffer, data0), data1);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2` to `buffer`.
+    /// @dev Appends `data0` .. `data2` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -147,7 +147,7 @@ library DynamicBufferLib {
         result = append(append(append(buffer, data0), data1), data2);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2`, `data3` to `buffer`.
+    /// @dev Appends `data0` .. `data3` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -160,7 +160,7 @@ library DynamicBufferLib {
         result = append(append(append(append(buffer, data0), data1), data2), data3);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2`, `data3`, `data4` to `buffer`.
+    /// @dev Appends `data0` .. `data4` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -171,11 +171,10 @@ library DynamicBufferLib {
         bytes memory data4
     ) internal pure returns (DynamicBuffer memory result) {
         _deallocate(result);
-        // forgefmt: disable-next-line
         result = append(append(append(append(append(buffer, data0), data1), data2), data3), data4);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2`, `data3`, `data4`, `data5` to `buffer`.
+    /// @dev Appends `data0` .. `data5` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -187,11 +186,11 @@ library DynamicBufferLib {
         bytes memory data5
     ) internal pure returns (DynamicBuffer memory result) {
         _deallocate(result);
-        // forgefmt: disable-next-line
-        result = append(append(append(append(append(append(buffer, data0), data1), data2), data3), data4), data5);
+        result = append(append(append(append(buffer, data0), data1), data2), data3);
+        result = append(append(result, data4), data5);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6` to `buffer`.
+    /// @dev Appends `data0` .. `data6` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -204,8 +203,26 @@ library DynamicBufferLib {
         bytes memory data6
     ) internal pure returns (DynamicBuffer memory result) {
         _deallocate(result);
-        // forgefmt: disable-next-line
-        result = append(append(append(append(append(append(append(buffer, data0), data1), data2), data3), data4), data5), data6);
+        result = append(append(append(append(buffer, data0), data1), data2), data3);
+        result = append(append(append(result, data4), data5), data6);
+    }
+
+    /// @dev Appends `data0` .. `data7` to `buffer`.
+    /// Returns the same buffer, so that it can be used for function chaining.
+    function append(
+        DynamicBuffer memory buffer,
+        bytes memory data0,
+        bytes memory data1,
+        bytes memory data2,
+        bytes memory data3,
+        bytes memory data4,
+        bytes memory data5,
+        bytes memory data6,
+        bytes memory data7
+    ) internal pure returns (DynamicBuffer memory result) {
+        _deallocate(result);
+        result = append(append(append(append(buffer, data0), data1), data2), data3);
+        result = append(append(append(append(result, data4), data5), data6), data7);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
