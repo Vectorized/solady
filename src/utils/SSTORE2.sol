@@ -41,10 +41,6 @@ library SSTORE2 {
             // Add 1 to data size since we are prefixing it with a STOP opcode.
             let dataSize := add(originalDataLength, DATA_OFFSET)
 
-            // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
-            // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
-
             /**
              * ------------------------------------------------------------------------------+
              * Opcode      | Mnemonic        | Stack                   | Memory              |
@@ -62,9 +58,11 @@ library SSTORE2 {
              * Also PUSH2 is used since max contract size cap is 24,576 bytes which is less than 2 ** 16.
              */
             mstore(
-                data,
+                // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+                // The actual EVM limit may be smaller and may change over time.
+                add(data, gt(dataSize, 0xffff)),
                 or(
-                    0x61000080600a3d393df300,
+                    0xfd61000080600a3d393df300,
                     // Left shift `dataSize` by 64 so that it lines up with the 0000 after PUSH2.
                     shl(0x40, dataSize)
                 )
@@ -97,11 +95,12 @@ library SSTORE2 {
             let originalDataLength := mload(data)
             let dataSize := add(originalDataLength, DATA_OFFSET)
 
-            // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
-            // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
-
-            mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
+            mstore(
+                // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+                // The actual EVM limit may be smaller and may change over time.
+                add(data, gt(dataSize, 0xffff)),
+                or(0xfd61000080600a3d393df300, shl(0x40, dataSize))
+            )
 
             // Deploy a new contract with the generated creation code.
             pointer := create2(0, add(data, 0x15), add(dataSize, 0xa), salt)
