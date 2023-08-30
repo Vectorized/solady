@@ -850,7 +850,7 @@ library LibString {
         }
     }
 
-    /// @dev Retruns new string of deep copy of `data`.
+    /// @dev Returns new string of deep copy of `data`.
     function copy(string memory data) internal view returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
