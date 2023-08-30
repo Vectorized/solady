@@ -3,15 +3,45 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract DynamicBufferLibTest is SoladyTest {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
+
+    function testDynamicBufferReserve(uint256) public {
+        _misalignFreeMemoryPointer();
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        buffer.reserve(_random() % 1024);
+        unchecked {
+            for (uint256 i; i < 20; ++i) {
+                buffer.append(bytes(LibString.toString(i)));
+            }
+            buffer.reserve(_random() % 2048);
+            for (uint256 i; i < 20; ++i) {
+                buffer.append(bytes(LibString.toString(1 << i)));
+            }
+        }
+        bytes memory expected;
+        unchecked {
+            for (uint256 i; i < 20; ++i) {
+                expected = abi.encodePacked(expected, bytes(LibString.toString(i)));
+            }
+            for (uint256 i; i < 20; ++i) {
+                expected = abi.encodePacked(expected, bytes(LibString.toString(1 << i)));
+            }
+        }
+        assertEq(buffer.data, expected);
+    }
 
     function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {
         _boundInputs(inputs);
 
         _misalignFreeMemoryPointer();
         DynamicBufferLib.DynamicBuffer memory buffer;
+        if (_random() % 4 == 0) {
+            buffer.reserve(_random() % 1024);
+        }
+
         unchecked {
             uint256 expectedLength;
             uint256 start;
@@ -35,6 +65,9 @@ contract DynamicBufferLibTest is SoladyTest {
                     mstore(0x40, add(corruptCheckSlot, 0x20))
                 }
                 buffer.append(inputs[i]);
+                if (_random() % 8 == 0 && expectedLength != 0) {
+                    buffer.reserve(_random() % (expectedLength * 2));
+                }
                 assertEq(buffer.data.length, expectedLength);
                 _checkMemory(buffer.data);
                 bool isCorrupted;
