@@ -8,35 +8,70 @@ import {LibString} from "../src/utils/LibString.sol";
 contract DynamicBufferLibTest is SoladyTest {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
-    function testDynamicBufferReserve(uint256) public {
-        _misalignFreeMemoryPointer();
-        DynamicBufferLib.DynamicBuffer memory buffer;
-        buffer.reserve(_random() % 1024);
+    function testDynamicBuffer(uint256) public brutalizeMemory {
         unchecked {
-            for (uint256 i; i < 20; ++i) {
-                buffer.append(bytes(LibString.toString(i)));
+            if (_random() % 8 == 0) _misalignFreeMemoryPointer();
+            DynamicBufferLib.DynamicBuffer memory bufferA;
+            DynamicBufferLib.DynamicBuffer memory bufferB;
+            if (_random() % 8 == 0) bufferA.reserve(_random() % 1024);
+            if (_random() % 8 == 0) bufferB.reserve(_random() % 1024);
+            uint256 mode;
+            uint256 r = _random() % 3;
+
+            if (r == 0) {
+                for (uint256 i; i != 20; ++i) {
+                    bytes memory s = bytes(LibString.toString(i > 10 ? 1 << i : i));
+                    if (_random() % 8 == 0) bufferA.reserve(_random() % 2048);
+                    bufferA.append(s);
+                }
+                for (uint256 i; i != 20; ++i) {
+                    bytes memory s = bytes(LibString.toString(i > 10 ? 1 << i : i));
+                    if (_random() % 8 == 0) bufferB.reserve(_random() % 2048);
+                    bufferB.append(s);
+                }
+            } else if (r == 1) {
+                for (uint256 i; i != 20; ++i) {
+                    bytes memory s = bytes(LibString.toString(i > 10 ? 1 << i : i));
+                    if (_random() % 8 == 0) bufferB.reserve(_random() % 2048);
+                    bufferB.append(s);
+                }
+                for (uint256 i; i != 20; ++i) {
+                    bytes memory s = bytes(LibString.toString(i > 10 ? 1 << i : i));
+                    if (_random() % 8 == 0) bufferA.reserve(_random() % 2048);
+                    bufferA.append(s);
+                }
+            } else {
+                for (uint256 i; i != 20; ++i) {
+                    bytes memory s = bytes(LibString.toString(i > 10 ? 1 << i : i));
+                    if (_random() % 8 == 0) mode ^= 1;
+                    if (mode == 0) {
+                        if (_random() % 8 == 0) bufferA.reserve(_random() % 2048);
+                        bufferA.append(s);
+                        if (_random() % 8 == 0) bufferB.reserve(_random() % 2048);
+                        bufferB.append(s);
+                    } else {
+                        if (_random() % 8 == 0) bufferB.reserve(_random() % 2048);
+                        bufferB.append(s);
+                        if (_random() % 8 == 0) bufferA.reserve(_random() % 2048);
+                        bufferA.append(s);
+                    }
+                }
             }
-            buffer.reserve(_random() % 2048);
-            for (uint256 i; i < 20; ++i) {
-                buffer.append(bytes(LibString.toString(1 << i)));
+
+            bytes memory expected;
+            for (uint256 i; i != 20; ++i) {
+                bytes memory s = bytes(LibString.toString(i > 10 ? 1 << i : i));
+                expected = abi.encodePacked(expected, s);
             }
+            assertEq(bufferA.data, expected);
+            assertEq(bufferB.data, expected);
         }
-        bytes memory expected;
-        unchecked {
-            for (uint256 i; i < 20; ++i) {
-                expected = abi.encodePacked(expected, bytes(LibString.toString(i)));
-            }
-            for (uint256 i; i < 20; ++i) {
-                expected = abi.encodePacked(expected, bytes(LibString.toString(1 << i)));
-            }
-        }
-        assertEq(buffer.data, expected);
     }
 
     function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {
         _boundInputs(inputs);
 
-        _misalignFreeMemoryPointer();
+        if (_random() % 8 == 0) _misalignFreeMemoryPointer();
         DynamicBufferLib.DynamicBuffer memory buffer;
         if (_random() % 4 == 0) {
             buffer.reserve(_random() % 1024);
