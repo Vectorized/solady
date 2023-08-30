@@ -186,8 +186,8 @@ library DynamicBufferLib {
         bytes memory data5
     ) internal pure returns (DynamicBuffer memory result) {
         _deallocate(result);
-        result = append(append(append(append(buffer, data0), data1), data2), data3);
-        result = append(append(result, data4), data5);
+        result = append(append(append(buffer, data0), data1), data2);
+        result = append(append(append(result, data3), data4), data5);
     }
 
     /// @dev Appends `data0` .. `data6` to `buffer`.
@@ -203,26 +203,8 @@ library DynamicBufferLib {
         bytes memory data6
     ) internal pure returns (DynamicBuffer memory result) {
         _deallocate(result);
-        result = append(append(append(append(buffer, data0), data1), data2), data3);
-        result = append(append(append(result, data4), data5), data6);
-    }
-
-    /// @dev Appends `data0` .. `data7` to `buffer`.
-    /// Returns the same buffer, so that it can be used for function chaining.
-    function append(
-        DynamicBuffer memory buffer,
-        bytes memory data0,
-        bytes memory data1,
-        bytes memory data2,
-        bytes memory data3,
-        bytes memory data4,
-        bytes memory data5,
-        bytes memory data6,
-        bytes memory data7
-    ) internal pure returns (DynamicBuffer memory result) {
-        _deallocate(result);
-        result = append(append(append(append(buffer, data0), data1), data2), data3);
-        result = append(append(append(append(result, data4), data5), data6), data7);
+        result = append(append(append(buffer, data0), data1), data2);
+        result = append(append(append(append(result, data3), data4), data5), data6);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
