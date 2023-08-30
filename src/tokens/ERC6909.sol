@@ -93,7 +93,7 @@ abstract contract ERC6909 {
     ///     mstore(0x34, ownerSlotSeed)
     ///     mstore(0x14, spender)
     ///     mstore(0x00, id)
-    ///     let allowanceSlot := keccak256(0x0c, 0x54)
+    ///     let allowanceSlot := keccak256(0x00, 0x54)
     /// ```
     uint256 private constant _ERC6909_MASTER_SLOT_SEED = 0xedcaa89a82293940;
 
