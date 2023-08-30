@@ -313,10 +313,6 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x62 = 0xff9b.
-            // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xff9b))
-
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
             // The `creationSize` is `extraLength + 108`
@@ -414,8 +410,10 @@ library LibClone {
                 sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
             )
             mstore(
-                sub(data, 0x5a),
-                or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f)
+                // Do a out-of-gas revert if `extraLength` is too big. 0xffff - 0x62 + 0x01 = 0xff9e.
+                // The actual EVM limit may be smaller and may change over time.
+                sub(data, add(0x59, lt(extraLength, 0xff9e))),
+                or(shl(0x78, add(extraLength, 0x62)), 0xfd6100003d81600a3d39f336602c57343d527f)
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
@@ -457,10 +455,6 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
-            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x62 = 0xff9b.
-            // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xff9b))
-
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
 
@@ -478,8 +472,10 @@ library LibClone {
                 sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
             )
             mstore(
-                sub(data, 0x5a),
-                or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f)
+                // Do a out-of-gas revert if `extraLength` is too big. 0xffff - 0x62 + 0x01 = 0xff9e.
+                // The actual EVM limit may be smaller and may change over time.
+                sub(data, add(0x59, lt(extraLength, 0xff9e))),
+                or(shl(0x78, add(extraLength, 0x62)), 0xfd6100003d81600a3d39f336602c57343d527f)
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
