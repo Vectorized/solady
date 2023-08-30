@@ -337,21 +337,14 @@ contract LibCloneTest is SoladyTest, Clone {
 
         address clone = this.cloneDeterministic(address(this), data, bytes32(gasleft()));
         _shouldBehaveLikeClone(clone, 1);
-        // assertEq(LibCloneTest(clone).dataHash(), keccak256(data));
+        assertEq(LibCloneTest(clone).argBytesHash(), keccak256(data));
 
         vm.expectRevert();
         this.cloneDeterministic(address(this), _dummyData(n + 1), bytes32(gasleft()));
     }
 
-    function dataHash() public pure returns (bytes32 result) {
-        uint256 offset = _getImmutableArgsOffset();
-        /// @solidity memory-safe-assembly
-        assembly {
-            let m := mload(0x40)
-            let n := sub(calldatasize(), offset)
-            calldatacopy(m, offset, n)
-            result := keccak256(m, n)
-        }
+    function argBytesHash() public pure returns (bytes32) {
+        return keccak256(_getArgBytes());
     }
 
     function _dummyData(uint256 n) internal pure returns (bytes memory result) {
