@@ -45,13 +45,13 @@ library SSTORE2 {
              * ------------------------------------------------------------------------------+
              * Opcode      | Mnemonic        | Stack                   | Memory              |
              * ------------------------------------------------------------------------------|
-             * 61 codeSize | PUSH2 codeSize  | codeSize                |                     |
-             * 80          | DUP1            | codeSize codeSize       |                     |
-             * 60 0xa      | PUSH1 0xa       | 0xa codeSize codeSize   |                     |
-             * 3D          | RETURNDATASIZE  | 0 0xa codeSize codeSize |                     |
-             * 39          | CODECOPY        | codeSize                | [0..codeSize): code |
-             * 3D          | RETURNDATASIZE  | 0 codeSize              | [0..codeSize): code |
-             * F3          | RETURN          |                         | [0..codeSize): code |
+             * 61 dataSize | PUSH2 dataSize  | dataSize                |                     |
+             * 80          | DUP1            | dataSize dataSize       |                     |
+             * 60 0xa      | PUSH1 0xa       | 0xa dataSize dataSize   |                     |
+             * 3D          | RETURNDATASIZE  | 0 0xa dataSize dataSize |                     |
+             * 39          | CODECOPY        | dataSize                | [0..dataSize): code |
+             * 3D          | RETURNDATASIZE  | 0 dataSize              | [0..dataSize): code |
+             * F3          | RETURN          |                         | [0..dataSize): code |
              * 00          | STOP            |                         |                     |
              * ------------------------------------------------------------------------------+
              * @dev Prefix the bytecode with a STOP opcode to ensure it cannot be called.
@@ -61,11 +61,8 @@ library SSTORE2 {
                 // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
                 // The actual EVM limit may be smaller and may change over time.
                 add(data, gt(dataSize, 0xffff)),
-                or(
-                    0xfd61000080600a3d393df300,
-                    // Left shift `dataSize` by 64 so that it lines up with the 0000 after PUSH2.
-                    shl(0x40, dataSize)
-                )
+                // Left shift `dataSize` by 64 so that it lines up with the 0000 after PUSH2.
+                or(0xfd61000080600a3d393df300, shl(0x40, dataSize))
             )
 
             // Deploy a new contract with the generated creation code.
@@ -99,6 +96,7 @@ library SSTORE2 {
                 // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
                 // The actual EVM limit may be smaller and may change over time.
                 add(data, gt(dataSize, 0xffff)),
+                // Left shift `dataSize` by 64 so that it lines up with the 0000 after PUSH2.
                 or(0xfd61000080600a3d393df300, shl(0x40, dataSize))
             )
 
@@ -128,7 +126,7 @@ library SSTORE2 {
 
             // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
             // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataSize, 0xffff))
+            returndatacopy(returndatasize(), returndatasize(), shr(16, dataSize))
 
             mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
 
