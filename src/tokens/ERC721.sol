@@ -7,13 +7,10 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC721/ERC721.sol)
 ///
 /// @dev Note:
-/// The ERC721 standard allows for self-approvals.
-/// For performance, this implementation WILL NOT revert for such actions.
-/// Please add any checks with overrides if desired.
-///
-/// For performance, methods are made payable where permitted by the ERC721 standard.
-///
-/// @dev Note:
+/// - The ERC721 standard allows for self-approvals.
+///   For performance, this implementation WILL NOT revert for such actions.
+///   Please add any checks with overrides if desired.
+/// - For performance, methods are made payable where permitted by the ERC721 standard.
 /// - The `safeTransfer` functions use the identity precompile (0x4)
 ///   to copy memory internally.
 ///
