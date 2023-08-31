@@ -7,12 +7,10 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol)
 ///
 /// @dev Note:
-/// The ERC20 standard allows minting and transferring to and from the zero address,
-/// minting and transferring zero tokens, as well as self-approvals.
-/// For performance, this implementation WILL NOT revert for such actions.
-/// Please add any checks with overrides if desired.
-///
-/// @dev Note:
+/// - The ERC20 standard allows minting and transferring to and from the zero address,
+///   minting and transferring zero tokens, as well as self-approvals.
+///   For performance, this implementation WILL NOT revert for such actions.
+///   Please add any checks with overrides if desired.
 /// - The `permit` function use the ecrecover precompile (0x1).
 ///
 /// If you are overriding:
