@@ -155,6 +155,7 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic clone of `implementation`,
     /// with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(address implementation, bytes32 salt, address deployer)
         internal
         pure
@@ -285,6 +286,7 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic PUSH0 clone of `implementation`,
     /// with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress_PUSH0(
         address implementation,
         bytes32 salt,
@@ -556,6 +558,7 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic clone of
     /// `implementation` using immutable arguments encoded in `data`, with `salt`, by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(
         address implementation,
         bytes memory data,
@@ -572,6 +575,7 @@ library LibClone {
 
     /// @dev Returns the address when a contract with initialization code hash,
     /// `hash`, is deployed with `salt`, by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(bytes32 hash, bytes32 salt, address deployer)
         internal
         pure
