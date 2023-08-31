@@ -249,6 +249,9 @@ contract ERC1967Factory {
             mstore(0x35, hash)
             mstore(0x01, shl(96, address()))
             mstore(0x15, salt)
+            // Note: `predicted` has dirty upper 96 bits. We won't clean it here
+            // as it will be automatically cleaned when it is copied into the returndata.
+            // Please clean as needed if used in other inline assembly blocks.
             predicted := keccak256(0x00, 0x55)
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x35, 0)
