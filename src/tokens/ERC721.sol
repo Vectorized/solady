@@ -13,6 +13,10 @@ pragma solidity ^0.8.4;
 ///
 /// For performance, methods are made payable where permitted by the ERC721 standard.
 ///
+/// @dev Note:
+/// - The `safeTransfer` functions use the identity precompile (0x4)
+///   to copy memory internally.
+///
 /// If you are overriding:
 /// - NEVER violate the ERC721 invariant:
 ///   the balance of an owner MUST be always be equal to their number of ownership slots.
