@@ -12,6 +12,9 @@ pragma solidity ^0.8.4;
 /// For performance, this implementation WILL NOT revert for such actions.
 /// Please add any checks with overrides if desired.
 ///
+/// @dev Note:
+/// - The `permit` function use the ecrecover precompile (0x1).
+///
 /// If you are overriding:
 /// - NEVER violate the ERC20 invariant:
 ///   the total sum of all balances must be equal to `totalSupply()`.
