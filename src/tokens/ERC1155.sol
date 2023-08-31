@@ -10,7 +10,8 @@ pragma solidity ^0.8.4;
 /// - The ERC1155 standard allows for self-approvals.
 ///   For performance, this implementation WILL NOT revert for such actions.
 ///   Please add any checks with overrides if desired.
-/// - This implementation uses the identity precompile (0x4) to copy memory internally.
+/// - The transfer functions use the identity precompile (0x4)
+///   to copy memory internally.
 ///
 /// If you are overriding:
 /// - Make sure all variables written to storage are properly cleaned
