@@ -20,15 +20,40 @@ library DynamicBufferLib {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Reserves at least `minimum` amount of contiguous memory.
+    function reserve(DynamicBuffer memory buffer, uint256 minimum)
+        internal
+        pure
+        returns (DynamicBuffer memory result)
+    {
+        _deallocate(result);
+        bytes memory data;
+        bool grow;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(mload(buffer))
+            grow := gt(minimum, n)
+            if grow {
+                let i := 0x80
+                for {} lt(i, minimum) { i := shl(1, i) } {}
+                data := 0x00
+                mstore(data, sub(i, n))
+            }
+        }
+        if (grow) result = append(buffer, data);
+    }
+
     /// @dev Appends `data` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(DynamicBuffer memory buffer, bytes memory data)
         internal
         pure
-        returns (DynamicBuffer memory)
+        returns (DynamicBuffer memory result)
     {
+        _deallocate(result);
         /// @solidity memory-safe-assembly
         assembly {
+            result := buffer
             if mload(data) {
                 let w := not(0x1f)
                 let bufferData := mload(buffer)
@@ -79,6 +104,10 @@ library DynamicBufferLib {
                     mstore(add(bufferData, w), mul(prime, newCapacity))
                     break
                 }
+                if iszero(gt(data, 0x60)) {
+                    mstore(data, 0)
+                    newBufferDataLength := bufferDataLength
+                }
                 // Initialize `output` to the next empty position in `bufferData`.
                 let output := add(bufferData, bufferDataLength)
                 // Copy `data` one word at a time, backwards.
@@ -93,7 +122,6 @@ library DynamicBufferLib {
                 mstore(bufferData, newBufferDataLength)
             }
         }
-        return buffer;
     }
 
     /// @dev Appends `data0`, `data1` to `buffer`.
@@ -101,23 +129,25 @@ library DynamicBufferLib {
     function append(DynamicBuffer memory buffer, bytes memory data0, bytes memory data1)
         internal
         pure
-        returns (DynamicBuffer memory)
+        returns (DynamicBuffer memory result)
     {
-        return append(append(buffer, data0), data1);
+        _deallocate(result);
+        result = append(append(buffer, data0), data1);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2` to `buffer`.
+    /// @dev Appends `data0` .. `data2` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
         bytes memory data0,
         bytes memory data1,
         bytes memory data2
-    ) internal pure returns (DynamicBuffer memory) {
-        return append(append(append(buffer, data0), data1), data2);
+    ) internal pure returns (DynamicBuffer memory result) {
+        _deallocate(result);
+        result = append(append(append(buffer, data0), data1), data2);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2`, `data3` to `buffer`.
+    /// @dev Appends `data0` .. `data3` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -125,11 +155,12 @@ library DynamicBufferLib {
         bytes memory data1,
         bytes memory data2,
         bytes memory data3
-    ) internal pure returns (DynamicBuffer memory) {
-        return append(append(append(append(buffer, data0), data1), data2), data3);
+    ) internal pure returns (DynamicBuffer memory result) {
+        _deallocate(result);
+        result = append(append(append(append(buffer, data0), data1), data2), data3);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2`, `data3`, `data4` to `buffer`.
+    /// @dev Appends `data0` .. `data4` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -138,12 +169,12 @@ library DynamicBufferLib {
         bytes memory data2,
         bytes memory data3,
         bytes memory data4
-    ) internal pure returns (DynamicBuffer memory) {
-        append(append(append(append(buffer, data0), data1), data2), data3);
-        return append(buffer, data4);
+    ) internal pure returns (DynamicBuffer memory result) {
+        _deallocate(result);
+        result = append(append(append(append(append(buffer, data0), data1), data2), data3), data4);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2`, `data3`, `data4`, `data5` to `buffer`.
+    /// @dev Appends `data0` .. `data5` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -153,12 +184,13 @@ library DynamicBufferLib {
         bytes memory data3,
         bytes memory data4,
         bytes memory data5
-    ) internal pure returns (DynamicBuffer memory) {
-        append(append(append(append(buffer, data0), data1), data2), data3);
-        return append(append(buffer, data4), data5);
+    ) internal pure returns (DynamicBuffer memory result) {
+        _deallocate(result);
+        result = append(append(append(buffer, data0), data1), data2);
+        result = append(append(append(result, data3), data4), data5);
     }
 
-    /// @dev Appends `data0`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6` to `buffer`.
+    /// @dev Appends `data0` .. `data6` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(
         DynamicBuffer memory buffer,
@@ -169,8 +201,21 @@ library DynamicBufferLib {
         bytes memory data4,
         bytes memory data5,
         bytes memory data6
-    ) internal pure returns (DynamicBuffer memory) {
-        append(append(append(append(buffer, data0), data1), data2), data3);
-        return append(append(append(buffer, data4), data5), data6);
+    ) internal pure returns (DynamicBuffer memory result) {
+        _deallocate(result);
+        result = append(append(append(buffer, data0), data1), data2);
+        result = append(append(append(append(result, data3), data4), data5), data6);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Helper for deallocating a automatically allocated `buffer` pointer.
+    function _deallocate(DynamicBuffer memory result) private pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, result) // Deallocate, as we have already allocated.
+        }
     }
 }

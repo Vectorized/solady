@@ -7,11 +7,93 @@ import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
 contract DynamicBufferLibTest is SoladyTest {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
+    function testDynamicBuffer(uint256) public brutalizeMemory {
+        unchecked {
+            if (_random() % 8 == 0) _misalignFreeMemoryPointer();
+            DynamicBufferLib.DynamicBuffer memory bufferA;
+            DynamicBufferLib.DynamicBuffer memory bufferB;
+            uint256 z = _bound(_random(), 32, 4096);
+            if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+            if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+            uint256 r = _random() % 3;
+            uint256 o = _bound(_random(), 0, 32);
+            uint256 n = _bound(_random(), 5, _random() % 8 == 0 ? 64 : 8);
+            z = z + z;
+
+            if (r == 0) {
+                for (uint256 i; i != n; ++i) {
+                    if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+                    bufferA.append(_generateRandomBytes(i + o, i + z));
+                }
+                for (uint256 i; i != n; ++i) {
+                    if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+                    bufferB.append(_generateRandomBytes(i + o, i + z));
+                }
+            } else if (r == 1) {
+                for (uint256 i; i != n; ++i) {
+                    if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+                    bufferB.append(_generateRandomBytes(i + o, i + z));
+                }
+                for (uint256 i; i != n; ++i) {
+                    if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+                    bufferA.append(_generateRandomBytes(i + o, i + z));
+                }
+            } else {
+                uint256 mode;
+                for (uint256 i; i != n; ++i) {
+                    if (_random() % 8 == 0) mode ^= 1;
+                    if (mode == 0) {
+                        if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+                        bufferA.append(_generateRandomBytes(i + o, i + z));
+                        if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+                        bufferB.append(_generateRandomBytes(i + o, i + z));
+                    } else {
+                        if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+                        bufferB.append(_generateRandomBytes(i + o, i + z));
+                        if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+                        bufferA.append(_generateRandomBytes(i + o, i + z));
+                    }
+                }
+            }
+
+            bytes memory expected;
+            for (uint256 i; i != n; ++i) {
+                expected = bytes.concat(expected, _generateRandomBytes(i + o, i + z));
+            }
+            assertEq(bufferA.data, expected);
+            assertEq(bufferB.data, expected);
+        }
+    }
+
+    function _generateRandomBytes(uint256 n, uint256 seed)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if n {
+                result := mload(0x40)
+                mstore(result, n)
+                mstore(0x00, seed)
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(0x20, i)
+                    mstore(add(add(result, 0x20), i), keccak256(0x00, 0x40))
+                }
+                mstore(0x40, add(add(result, 0x20), n))
+            }
+        }
+    }
+
     function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {
         _boundInputs(inputs);
 
-        _misalignFreeMemoryPointer();
+        if ((randomness >> 16) % 8 == 0) _misalignFreeMemoryPointer();
         DynamicBufferLib.DynamicBuffer memory buffer;
+        if ((randomness >> 32) % 4 == 0) {
+            buffer.reserve((randomness >> 128) % 1024);
+        }
+
         unchecked {
             uint256 expectedLength;
             uint256 start;
@@ -35,6 +117,9 @@ contract DynamicBufferLibTest is SoladyTest {
                     mstore(0x40, add(corruptCheckSlot, 0x20))
                 }
                 buffer.append(inputs[i]);
+                if ((randomness >> 48) % 8 == 0 && expectedLength != 0) {
+                    buffer.reserve((randomness >> 160) % (expectedLength * 2));
+                }
                 assertEq(buffer.data.length, expectedLength);
                 _checkMemory(buffer.data);
                 bool isCorrupted;
