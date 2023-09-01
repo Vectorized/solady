@@ -263,6 +263,11 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.children()[2].key(), "");
         assertEq(item.children()[2].parent()._data, item._data);
         assertEq(item.children()[2].parent().isArray(), true);
+
+        assertEq(item.at(0)._data, item.children()[0]._data);
+        assertEq(item.at(1)._data, item.children()[1]._data);
+        assertEq(item.at(2)._data, item.children()[2]._data);
+        assertEq(item.at(3)._data, 0);
     }
 
     function testParseSpecials() public miniBrutalizeMemory {
