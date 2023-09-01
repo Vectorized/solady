@@ -1013,8 +1013,7 @@ library LibString {
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
-            let n := sub(32, shr(3, r))
-            result := and(eq(mload(a), n), eq(shr(r, mload(add(0x20, a))), shr(r, b)))
+            result := gt(eq(mload(a), sub(32, shr(3, r))), shr(r, xor(b, mload(add(a, 0x20)))))
         }
     }
 

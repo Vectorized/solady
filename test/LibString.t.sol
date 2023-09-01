@@ -1025,7 +1025,7 @@ contract LibStringTest is SoladyTest {
 
     function checkIsSN(string memory s) public pure returns (bool) {
         // You can try replacing it with
-        // `return keccak256(bytes(s)) == keccak256("sn")`
+        // `return keccak256(bytes(s)) == keccak256("sn");`
         // and see the bytecode size increase.
         // This demonstrates that `eqs` does the compile time magic.
         return LibString.eqs(s, "sn");
