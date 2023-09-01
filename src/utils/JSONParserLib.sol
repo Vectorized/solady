@@ -667,13 +667,13 @@ library JSONParserLib {
                 let c_ := chr(_pOut)
                 _pOut := add(_pOut, 1)
                 if iszero(eq(c_, 48)) { _pOut := skip0To9s(_pOut, end_, 0) } // Not '0'.
-                // '.'.
-                if eq(chr(_pOut), 46) { _pOut := skip0To9s(add(_pOut, 1), end_, 1) }
-                // 'E', 'e'.
+                if eq(chr(_pOut), 46) { _pOut := skip0To9s(add(_pOut, 1), end_, 1) } // '.'.
                 let t_ := mload(_pOut)
+                // 'E', 'e'.
                 if or(eq(byte(0, t_), 69), eq(byte(0, t_), 101)) {
-                    let u_ := and(shr(sub(byte(1, t_), 43), 5), 1) // '+', '-'.
-                    _pOut := skip0To9s(add(u_, add(_pOut, 1)), end_, 1)
+                    // forgefmt: disable-next-item
+                    _pOut := skip0To9s(add(byte(sub(byte(1, t_), 14), 0x010001), // '+', '-'.
+                        add(_pOut, 1)), end_, 1)
                 }
                 _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_NUMBER)
             }
