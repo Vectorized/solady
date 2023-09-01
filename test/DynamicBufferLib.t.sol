@@ -17,18 +17,18 @@ contract DynamicBufferLibTest is SoladyTest {
         if (_random() & 1 == 0) buffer.clear();
         assertEq(buffer.data.length, 0);
         assertEq(emptyBytes.length, 0);
-        buffer.clear().append(b0);
+        buffer.clear().p(b0);
         assertEq(buffer.data, b0);
         assertEq(emptyBytes.length, 0);
         uint256 n0 = _bound(_random(), 0, 1024);
         uint256 n1 = _bound(_random(), 0, 4096);
-        buffer.reserve(n0).append(b1).clear().reserve(n1);
+        buffer.reserve(n0).p(b1).clear().reserve(n1);
         assertEq(buffer.data.length, 0);
         assertEq(emptyBytes.length, 0);
-        buffer.append(b1);
+        buffer.p(b1);
         assertEq(buffer.data, b1);
         assertEq(emptyBytes.length, 0);
-        buffer.append(b0);
+        buffer.p(b0);
         assertEq(buffer.data, abi.encodePacked(b1, b0));
         assertEq(emptyBytes.length, 0);
         buffer.clear();
@@ -50,20 +50,20 @@ contract DynamicBufferLibTest is SoladyTest {
             if (r == 0) {
                 for (uint256 i; i != n; ++i) {
                     if (_random() % 8 == 0) bufferA.reserve(_random() % z);
-                    bufferA.append(_generateRandomBytes(i + o, i + z));
+                    bufferA.p(_generateRandomBytes(i + o, i + z));
                 }
                 for (uint256 i; i != n; ++i) {
                     if (_random() % 8 == 0) bufferB.reserve(_random() % z);
-                    bufferB.append(_generateRandomBytes(i + o, i + z));
+                    bufferB.p(_generateRandomBytes(i + o, i + z));
                 }
             } else if (r == 1) {
                 for (uint256 i; i != n; ++i) {
                     if (_random() % 8 == 0) bufferB.reserve(_random() % z);
-                    bufferB.append(_generateRandomBytes(i + o, i + z));
+                    bufferB.p(_generateRandomBytes(i + o, i + z));
                 }
                 for (uint256 i; i != n; ++i) {
                     if (_random() % 8 == 0) bufferA.reserve(_random() % z);
-                    bufferA.append(_generateRandomBytes(i + o, i + z));
+                    bufferA.p(_generateRandomBytes(i + o, i + z));
                 }
             } else {
                 uint256 mode;
@@ -71,14 +71,14 @@ contract DynamicBufferLibTest is SoladyTest {
                     if (_random() % 8 == 0) mode ^= 1;
                     if (mode == 0) {
                         if (_random() % 8 == 0) bufferA.reserve(_random() % z);
-                        bufferA.append(_generateRandomBytes(i + o, i + z));
+                        bufferA.p(_generateRandomBytes(i + o, i + z));
                         if (_random() % 8 == 0) bufferB.reserve(_random() % z);
-                        bufferB.append(_generateRandomBytes(i + o, i + z));
+                        bufferB.p(_generateRandomBytes(i + o, i + z));
                     } else {
                         if (_random() % 8 == 0) bufferB.reserve(_random() % z);
-                        bufferB.append(_generateRandomBytes(i + o, i + z));
+                        bufferB.p(_generateRandomBytes(i + o, i + z));
                         if (_random() % 8 == 0) bufferA.reserve(_random() % z);
-                        bufferA.append(_generateRandomBytes(i + o, i + z));
+                        bufferA.p(_generateRandomBytes(i + o, i + z));
                     }
                 }
             }
@@ -134,7 +134,7 @@ contract DynamicBufferLibTest is SoladyTest {
             for (uint256 i = start; i < inputs.length; ++i) {
                 expectedLength += inputs[i].length;
                 // Manually store the randomness in the next free memory word,
-                // and then check if append will corrupt it
+                // and then check if p will corrupt it
                 // (in the case of insufficient memory allocation).
                 uint256 corruptCheckSlot;
                 /// @solidity memory-safe-assembly
@@ -143,7 +143,7 @@ contract DynamicBufferLibTest is SoladyTest {
                     mstore(corruptCheckSlot, randomness)
                     mstore(0x40, add(corruptCheckSlot, 0x20))
                 }
-                buffer.append(inputs[i]);
+                buffer.p(inputs[i]);
                 if ((randomness >> 48) % 8 == 0 && expectedLength != 0) {
                     buffer.reserve((randomness >> 160) % (expectedLength * 2));
                 }
@@ -184,7 +184,7 @@ contract DynamicBufferLibTest is SoladyTest {
         (bytes[] memory chunks, bytes32 joinedHash) = _getChunks();
         unchecked {
             for (uint256 i; i < chunks.length; ++i) {
-                buffer.append(chunks[i]);
+                buffer.p(chunks[i]);
             }
         }
         assertEq(keccak256(buffer.data), joinedHash);
@@ -193,17 +193,17 @@ contract DynamicBufferLibTest is SoladyTest {
     function testDynamicBufferChaining() public {
         DynamicBufferLib.DynamicBuffer memory bufferA;
         DynamicBufferLib.DynamicBuffer memory bufferB;
-        bufferA = bufferB.append("0", "1");
+        bufferA = bufferB.p("0", "1");
         _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2");
+        bufferA = bufferB.p("0", "1", "2");
         _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2", "3");
+        bufferA = bufferB.p("0", "1", "2", "3");
         _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2", "3", "4");
+        bufferA = bufferB.p("0", "1", "2", "3", "4");
         _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2", "3", "4", "5");
+        bufferA = bufferB.p("0", "1", "2", "3", "4", "5");
         _checkSamePointers(bufferA, bufferB);
-        bufferA = bufferB.append("0", "1", "2", "3", "4", "5", "6");
+        bufferA = bufferB.p("0", "1", "2", "3", "4", "5", "6");
         _checkSamePointers(bufferA, bufferB);
         assertEq(bufferA.data, "010120123012340123450123456");
         assertEq(bufferB.data, "010120123012340123450123456");
