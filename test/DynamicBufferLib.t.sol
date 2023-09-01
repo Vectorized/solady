@@ -7,31 +7,31 @@ import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
 contract DynamicBufferLibTest is SoladyTest {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
-    function testClear() public {
+    function testClear(uint256) public {
         DynamicBufferLib.DynamicBuffer memory buffer;
-        for (uint256 q; q != 4; ++q) {
-            bytes memory b0 = _generateRandomBytes(128, q);
-            bytes memory b1 = _generateRandomBytes(256, q + 1);
-            bytes memory emptyBytes;
-            assertEq(buffer.data.length, 0);
-            assertEq(emptyBytes.length, 0);
-            if (q & 1 == 0) buffer.clear();
-            assertEq(buffer.data.length, 0);
-            assertEq(emptyBytes.length, 0);
-            buffer.append(b0);
-            assertEq(buffer.data, b0);
-            assertEq(emptyBytes.length, 0);
-            buffer.clear();
-            assertEq(buffer.data.length, 0);
-            assertEq(emptyBytes.length, 0);
-            buffer.append(b1);
-            assertEq(buffer.data, b1);
-            assertEq(emptyBytes.length, 0);
-            buffer.append(b0);
-            assertEq(buffer.data, abi.encodePacked(b1, b0));
-            assertEq(emptyBytes.length, 0);
-            buffer.clear();
-        }
+        bytes memory b0 = _generateRandomBytes(128, _random());
+        bytes memory b1 = _generateRandomBytes(256, _random());
+        bytes memory emptyBytes;
+        assertEq(buffer.data.length, 0);
+        assertEq(emptyBytes.length, 0);
+        if (_random() & 1 == 0) buffer.clear();
+        assertEq(buffer.data.length, 0);
+        assertEq(emptyBytes.length, 0);
+        buffer.clear().append(b0);
+        assertEq(buffer.data, b0);
+        assertEq(emptyBytes.length, 0);
+        uint256 n0 = _bound(_random(), 0, 1024);
+        uint256 n1 = _bound(_random(), 0, 4096);
+        buffer.reserve(n0).append(b1).clear().reserve(n1);
+        assertEq(buffer.data.length, 0);
+        assertEq(emptyBytes.length, 0);
+        buffer.append(b1);
+        assertEq(buffer.data, b1);
+        assertEq(emptyBytes.length, 0);
+        buffer.append(b0);
+        assertEq(buffer.data, abi.encodePacked(b1, b0));
+        assertEq(emptyBytes.length, 0);
+        buffer.clear();
     }
 
     function testDynamicBuffer(uint256) public brutalizeMemory {
