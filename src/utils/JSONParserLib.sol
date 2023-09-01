@@ -475,30 +475,27 @@ library JSONParserLib {
                 }
             }
 
-            function setPointer(packed_, bitpos_, p_) -> _packed {
+            function setP(packed_, bitpos_, p_) -> _packed {
                 // Perform an out-of-gas revert if `p_` exceeds `_BITMASK_POINTER`.
                 returndatacopy(returndatasize(), returndatasize(), gt(p_, _BITMASK_POINTER))
                 _packed := or(and(not(shl(bitpos_, _BITMASK_POINTER)), packed_), shl(bitpos_, p_))
             }
 
-            function getPointer(packed_, bitpos_) -> _p {
+            function getP(packed_, bitpos_) -> _p {
                 _p := and(_BITMASK_POINTER, shr(bitpos_, packed_))
             }
 
             function mallocItem(s_, packed_, pStart_, pCurr_, type_) -> _item {
                 _item := mload(0x40)
-                packed_ :=
-                    setPointer(
-                        setPointer(packed_, _BITPOS_VALUE, sub(pStart_, add(s_, 0x20))),
-                        _BITPOS_VALUE_LENGTH,
-                        sub(pCurr_, pStart_)
-                    )
+                // forgefmt: disable-next-item
+                packed_ := setP(setP(packed_, _BITPOS_VALUE, sub(pStart_, add(s_, 0x20))),
+                    _BITPOS_VALUE_LENGTH, sub(pCurr_, pStart_))
                 mstore(_item, or(packed_, type_))
                 mstore(0x40, add(_item, 0x20)) // Allocate memory.
             }
 
             function parseValue(s_, sibling_, pIn_, end_) -> _item, _pOut {
-                let packed_ := setPointer(mload(0x00), _BITPOS_SIBLING_OR_PARENT, sibling_)
+                let packed_ := setP(mload(0x00), _BITPOS_SIBLING_OR_PARENT, sibling_)
                 _pOut := skipWhitespace(pIn_, end_)
                 if iszero(lt(_pOut, end_)) { leave }
                 for { let c_ := chr(_pOut) } 1 {} {
@@ -565,19 +562,19 @@ library JSONParserLib {
                         if eq(chr(_pOut), 93) { break } // ']'.
                     }
                     _item, _pOut := parseValue(s_, _item, _pOut, end_)
-                    if iszero(_item) { _pOut := end_ }
-                    mstore(
-                        _item,
-                        setPointer(or(mload(_item), _BITMASK_PARENT_IS_ARRAY), _BITPOS_KEY, j_)
-                    )
-                    j_ := add(j_, 1)
-                    let c_ := chr(_pOut)
-                    if eq(c_, 93) { break } // ']'.
-                    if eq(c_, 44) { continue } // ','.
+                    if _item {
+                        // forgefmt: disable-next-item
+                        mstore(_item, setP(or(_BITMASK_PARENT_IS_ARRAY, mload(_item)),
+                            _BITPOS_KEY, j_))
+                        j_ := add(j_, 1)
+                        let c_ := chr(_pOut)
+                        if eq(c_, 93) { break } // ']'.
+                        if eq(c_, 44) { continue } // ','.
+                    }
                     _pOut := end_
                 }
                 _pOut := add(_pOut, 1)
-                packed_ := setPointer(packed_, _BITPOS_CHILD, _item)
+                packed_ := setP(packed_, _BITPOS_CHILD, _item)
                 _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_ARRAY)
             }
 
@@ -592,29 +589,23 @@ library JSONParserLib {
                     let pKeyStart_ := _pOut
                     let pKeyEnd_ := parseStringSub(s_, _item, _pOut, end_)
                     _pOut := skipWhitespace(pKeyEnd_, end_)
-                    if iszero(eq(chr(_pOut), 58)) { _pOut := end_ } // Not ':'.
-                    _pOut := add(_pOut, 1)
-                    _item, _pOut := parseValue(s_, _item, _pOut, end_)
-                    if iszero(_item) { _pOut := end_ }
-                    mstore(
-                        _item,
-                        setPointer(
-                            setPointer(
-                                or(_BITMASK_PARENT_IS_OBJECT, mload(_item)),
-                                _BITPOS_KEY_LENGTH,
-                                sub(pKeyEnd_, pKeyStart_)
-                            ),
-                            _BITPOS_KEY,
-                            sub(pKeyStart_, add(s_, 0x20))
-                        )
-                    )
-                    let c_ := chr(_pOut)
-                    if eq(c_, 125) { break } // '}'.
-                    if eq(c_, 44) { continue } // ','.
+                    // If ':'.
+                    if eq(chr(_pOut), 58) {
+                        _item, _pOut := parseValue(s_, _item, add(_pOut, 1), end_)
+                        if _item {
+                            // forgefmt: disable-next-item
+                            mstore(_item, setP(setP(or(_BITMASK_PARENT_IS_OBJECT, mload(_item)),
+                                _BITPOS_KEY_LENGTH, sub(pKeyEnd_, pKeyStart_)),
+                                    _BITPOS_KEY, sub(pKeyStart_, add(s_, 0x20))))
+                            let c_ := chr(_pOut)
+                            if eq(c_, 125) { break } // '}'.
+                            if eq(c_, 44) { continue } // ','.
+                        }
+                    }
                     _pOut := end_
                 }
                 _pOut := add(_pOut, 1)
-                packed_ := setPointer(packed_, _BITPOS_CHILD, _item)
+                packed_ := setP(packed_, _BITPOS_CHILD, _item)
                 _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_OBJECT)
             }
 
@@ -694,12 +685,11 @@ library JSONParserLib {
 
             function value(item_) -> _value {
                 let packed_ := mload(item_)
-                _value := getPointer(packed_, _BITPOS_VALUE) // The offset in the string.
+                _value := getP(packed_, _BITPOS_VALUE) // The offset in the string.
                 if iszero(and(_BITMASK_VALUE_INITED, packed_)) {
-                    let s_ := getPointer(packed_, _BITPOS_STRING)
-                    let len_ := getPointer(packed_, _BITPOS_VALUE_LENGTH)
-                    _value := copyString(s_, _value, len_)
-                    packed_ := setPointer(packed_, _BITPOS_VALUE, _value)
+                    let s_ := getP(packed_, _BITPOS_STRING)
+                    _value := copyString(s_, _value, getP(packed_, _BITPOS_VALUE_LENGTH))
+                    packed_ := setP(packed_, _BITPOS_VALUE, _value)
                     mstore(s_, or(_BITMASK_VALUE_INITED, packed_))
                 }
             }
@@ -710,16 +700,16 @@ library JSONParserLib {
                 for {} iszero(gt(and(_BITMASK_TYPE, packed_), TYPE_OBJECT)) {} {
                     if or(iszero(packed_), iszero(item_)) { break }
                     if and(packed_, _BITMASK_CHILDREN_INITED) {
-                        _arr := getPointer(packed_, _BITPOS_CHILD)
+                        _arr := getP(packed_, _BITPOS_CHILD)
                         break
                     }
                     _arr := mload(0x40)
                     let o_ := add(_arr, 0x20)
-                    for { let h_ := getPointer(packed_, _BITPOS_CHILD) } h_ {} {
+                    for { let h_ := getP(packed_, _BITPOS_CHILD) } h_ {} {
                         mstore(o_, h_)
                         let q_ := mload(h_)
-                        let y_ := getPointer(q_, _BITPOS_SIBLING_OR_PARENT)
-                        mstore(h_, setPointer(q_, _BITPOS_SIBLING_OR_PARENT, item_))
+                        let y_ := getP(q_, _BITPOS_SIBLING_OR_PARENT)
+                        mstore(h_, setP(q_, _BITPOS_SIBLING_OR_PARENT, item_))
                         h_ := y_
                         o_ := add(o_, 0x20)
                     }
@@ -727,7 +717,7 @@ library JSONParserLib {
                     let n_ := add(w_, sub(o_, _arr))
                     mstore(_arr, shr(5, n_))
                     mstore(0x40, o_) // Allocate memory.
-                    packed_ := setPointer(packed_, _BITPOS_CHILD, _arr)
+                    packed_ := setP(packed_, _BITPOS_CHILD, _arr)
                     mstore(item_, or(_BITMASK_CHILDREN_INITED, packed_))
                     // Reverse the array.
                     if iszero(lt(n_, 0x40)) {
@@ -750,12 +740,11 @@ library JSONParserLib {
                 _result := 0x60 // Initialize to the zero pointer.
                 let packed_ := mload(item_)
                 if or(iszero(item_), iszero(packed_)) { leave }
-                _result := getPointer(packed_, bitpos_)
+                _result := getP(packed_, bitpos_)
                 if iszero(and(bitmaskInited_, packed_)) {
-                    let s_ := getPointer(packed_, _BITPOS_STRING)
-                    let n := getPointer(packed_, bitposLength_)
-                    _result := copyString(s_, _result, n)
-                    mstore(item_, or(bitmaskInited_, setPointer(packed_, bitpos_, _result)))
+                    let s_ := getP(packed_, _BITPOS_STRING)
+                    _result := copyString(s_, _result, getP(packed_, bitposLength_))
+                    mstore(item_, or(bitmaskInited_, setP(packed_, bitpos_, _result)))
                 }
             }
 
@@ -781,7 +770,7 @@ library JSONParserLib {
                 if iszero(eq(p, e)) {
                     let c := chr(e)
                     mstore8(e, 34) // Place a '"' at the end to speed up parsing.
-                    mstore(0x00, setPointer(0, _BITPOS_STRING, input))
+                    mstore(0x00, setP(0, _BITPOS_STRING, input))
                     mstore8(0x00, 34) // So that `mallocItem` will still preserve '"' at the end.
                     result, p := parseValue(input, 0, p, e)
                     mstore8(e, c) // Restore the original char at the end.
