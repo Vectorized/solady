@@ -263,6 +263,11 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.children()[2].key(), "");
         assertEq(item.children()[2].parent()._data, item._data);
         assertEq(item.children()[2].parent().isArray(), true);
+
+        assertEq(item.at(0)._data, item.children()[0]._data);
+        assertEq(item.at(1)._data, item.children()[1]._data);
+        assertEq(item.at(2)._data, item.children()[2]._data);
+        assertEq(item.at(3)._data, 0);
     }
 
     function testParseSpecials() public miniBrutalizeMemory {
@@ -494,8 +499,11 @@ contract JSONParserLibTest is SoladyTest {
 
     function testParseGas() public {
         string memory s =
-            '{"animation_url":"","artist":"Daniel Allan","artwork":{"mimeType":"image/gif","uri":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","nft":null},"attributes":[{"trait_type":"Criteria","value":"Song Edition"}],"bpm":null,"credits":null,"description":"Criteria is an 8-track project between Daniel Allan and Reo Cragun.\n\nA fusion of electronic music and hip-hop - Criteria brings together the best of both worlds and is meant to bring web3 music to a wider audience.\n\nThe collection consists of 2500 editions with activations across Sound, Bonfire, OnCyber, Spinamp and Arpeggi.","duration":105,"external_url":"https://www.sound.xyz/danielallan/criteria","genre":"Pop","image":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","isrc":null,"key":null,"license":null,"locationCreated":null,"losslessAudio":"","lyrics":null,"mimeType":"audio/wave","nftSerialNumber":11,"name":"Criteria #11","originalReleaseDate":null,"project":null,"publisher":null,"recordLabel":null,"tags":null,"title":"Criteria","trackNumber":1,"version":"sound-edition-20220930","visualizer":null}';
-        assertEq(s.parse().isObject(), true);
+            '{"animation_url":"","artist":"Daniel Allan","artwork":{"mimeType":"image/gif","uri":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","nft":null},"attributes":[{"trait_type":"Criteria","value":"Song Edition"}],"bpm":null,"credits":null,"description":"Criteria is an 8-track project between Daniel Allan and Reo Cragun.\\n\\nA fusion of electronic music and hip-hop - Criteria brings together the best of both worlds and is meant to bring web3 music to a wider audience.\\n\\nThe collection consists of 2500 editions with activations across Sound, Bonfire, OnCyber, Spinamp and Arpeggi.","duration":105,"external_url":"https://www.sound.xyz/danielallan/criteria","genre":"Pop","image":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","isrc":null,"key":null,"license":null,"locationCreated":null,"losslessAudio":"","lyrics":null,"mimeType":"audio/wave","nftSerialNumber":11,"name":"Criteria #11","originalReleaseDate":null,"project":null,"publisher":null,"recordLabel":null,"tags":null,"title":"Criteria","trackNumber":1,"version":"sound-edition-20220930","visualizer":null}';
+        JSONParserLib.Item memory item = s.parse();
+        assertEq(item.isObject(), true);
+        bytes32 expectedHash = 0x6c3276c7005f50c82624fb28f9748f0fb6f0b364234e4823178f964315b41567;
+        assertEq(keccak256(bytes(item.at('"description"').value())), expectedHash);
     }
 
     function testParseUint() public {
