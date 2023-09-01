@@ -915,16 +915,15 @@ library LibString {
     function escapeHTML(string memory s) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            for {
-                let end := add(s, mload(s))
-                result := add(mload(0x40), 0x20)
-                // Store the bytes of the packed offsets and strides into the scratch space.
-                // `packed = (stride << 5) | offset`. Max offset is 20. Max stride is 6.
-                mstore(0x1f, 0x900094)
-                mstore(0x08, 0xc0000000a6ab)
-                // Store "&quot;&amp;&#39;&lt;&gt;" into the scratch space.
-                mstore(0x00, shl(64, 0x2671756f743b26616d703b262333393b266c743b2667743b))
-            } iszero(eq(s, end)) {} {
+            let end := add(s, mload(s))
+            result := add(mload(0x40), 0x20)
+            // Store the bytes of the packed offsets and strides into the scratch space.
+            // `packed = (stride << 5) | offset`. Max offset is 20. Max stride is 6.
+            mstore(0x1f, 0x900094)
+            mstore(0x08, 0xc0000000a6ab)
+            // Store "&quot;&amp;&#39;&lt;&gt;" into the scratch space.
+            mstore(0x00, shl(64, 0x2671756f743b26616d703b262333393b266c743b2667743b))
+            for {} iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 // Not in `["\"","'","&","<",">"]`.
@@ -946,20 +945,28 @@ library LibString {
     }
 
     /// @dev Escapes the string to be used within double-quotes in a JSON.
-    function escapeJSON(string memory s) internal pure returns (string memory result) {
+    /// If `addDoubleQuotes` is true, the result will be enclosed in double-quotes.
+    function escapeJSON(string memory s, bool addDoubleQuotes)
+        internal
+        pure
+        returns (string memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            for {
-                let end := add(s, mload(s))
-                result := add(mload(0x40), 0x20)
-                // Store "\\u0000" in scratch space.
-                // Store "0123456789abcdef" in scratch space.
-                // Also, store `{0x08:"b", 0x09:"t", 0x0a:"n", 0x0c:"f", 0x0d:"r"}`.
-                // into the scratch space.
-                mstore(0x15, 0x5c75303030303031323334353637383961626364656662746e006672)
-                // Bitmask for detecting `["\"","\\"]`.
-                let e := or(shl(0x22, 1), shl(0x5c, 1))
-            } iszero(eq(s, end)) {} {
+            let end := add(s, mload(s))
+            result := add(mload(0x40), 0x20)
+            if addDoubleQuotes {
+                mstore8(result, 34)
+                result := add(1, result)
+            }
+            // Store "\\u0000" in scratch space.
+            // Store "0123456789abcdef" in scratch space.
+            // Also, store `{0x08:"b", 0x09:"t", 0x0a:"n", 0x0c:"f", 0x0d:"r"}`.
+            // into the scratch space.
+            mstore(0x15, 0x5c75303030303031323334353637383961626364656662746e006672)
+            // Bitmask for detecting `["\"","\\"]`.
+            let e := or(shl(0x22, 1), shl(0x5c, 1))
+            for {} iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 if iszero(lt(c, 0x20)) {
@@ -986,12 +993,21 @@ library LibString {
                 mstore8(add(result, 1), mload(add(c, 8)))
                 result := add(result, 2)
             }
+            if addDoubleQuotes {
+                mstore8(result, 34)
+                result := add(1, result)
+            }
             let last := result
             mstore(last, 0) // Zeroize the slot after the string.
             result := mload(0x40)
             mstore(result, sub(last, add(result, 0x20))) // Store the length.
             mstore(0x40, add(last, 0x20)) // Allocate the memory.
         }
+    }
+
+    /// @dev Escapes the string to be used within double-quotes in a JSON.
+    function escapeJSON(string memory s) internal pure returns (string memory result) {
+        result = escapeJSON(s, false);
     }
 
     /// @dev Returns whether `a` equals `b`.
