@@ -39,15 +39,22 @@ library DynamicBufferLib {
                 data := 0x00
                 mstore(data, sub(i, n))
             }
+            result := buffer
         }
-        if (grow) result = append(buffer, data);
+        if (grow) result = append(result, data);
     }
 
     /// @dev Clears the buffer without deallocating the memory.
-    function clear(DynamicBuffer memory buffer) internal pure {
+    function clear(DynamicBuffer memory buffer)
+        internal
+        pure
+        returns (DynamicBuffer memory result)
+    {
+        _deallocate(result);
         /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(buffer), 0)
+            result := buffer
         }
     }
 
