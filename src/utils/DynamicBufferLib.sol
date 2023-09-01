@@ -43,6 +43,14 @@ library DynamicBufferLib {
         if (grow) result = append(buffer, data);
     }
 
+    /// @dev Clears the buffer without deallocating the memory.
+    function clear(DynamicBuffer memory buffer) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(mload(buffer), 0)
+        }
+    }
+
     /// @dev Appends `data` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function append(DynamicBuffer memory buffer, bytes memory data)
