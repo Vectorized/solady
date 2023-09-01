@@ -688,8 +688,7 @@ library JSONParserLib {
                 _value := getP(packed_, _BITPOS_VALUE) // The offset in the string.
                 if iszero(and(_BITMASK_VALUE_INITED, packed_)) {
                     let s_ := getP(packed_, _BITPOS_STRING)
-                    let len_ := getP(packed_, _BITPOS_VALUE_LENGTH)
-                    _value := copyString(s_, _value, len_)
+                    _value := copyString(s_, _value, getP(packed_, _BITPOS_VALUE_LENGTH))
                     packed_ := setP(packed_, _BITPOS_VALUE, _value)
                     mstore(s_, or(_BITMASK_VALUE_INITED, packed_))
                 }
@@ -744,8 +743,7 @@ library JSONParserLib {
                 _result := getP(packed_, bitpos_)
                 if iszero(and(bitmaskInited_, packed_)) {
                     let s_ := getP(packed_, _BITPOS_STRING)
-                    let n := getP(packed_, bitposLength_)
-                    _result := copyString(s_, _result, n)
+                    _result := copyString(s_, _result, getP(packed_, bitposLength_))
                     mstore(item_, or(bitmaskInited_, setP(packed_, bitpos_, _result)))
                 }
             }
