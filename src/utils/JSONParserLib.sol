@@ -670,10 +670,10 @@ library JSONParserLib {
                 // '.'.
                 if eq(chr(_pOut), 46) { _pOut := skip0To9s(add(_pOut, 1), end_, 1) }
                 // 'E', 'e'.
-                if and(shr(sub(chr(_pOut), 69), 0x100000001), 1) {
-                    _pOut := add(_pOut, 1)
-                    _pOut := add(_pOut, and(shr(chr(_pOut), shl(43, 5)), 1)) // '+', '-'.
-                    _pOut := skip0To9s(_pOut, end_, 1)
+                let t_ := mload(_pOut)
+                if or(eq(byte(0, t_), 69), eq(byte(0, t_), 101)) {
+                    let u_ := and(shr(sub(byte(1, t_), 43), 5), 1) // '+', '-'.
+                    _pOut := skip0To9s(add(u_, add(_pOut, 1)), end_, 1)
                 }
                 _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_NUMBER)
             }
