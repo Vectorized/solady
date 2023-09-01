@@ -1023,6 +1023,31 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.eq(a, b), keccak256(bytes(a)) == keccak256(bytes(b)));
     }
 
+    function checkIsSN(string memory s) public pure returns (bool) {
+        // You can try replacing it with
+        // `return keccak256(bytes(s)) == keccak256("sn")`
+        // and see the bytecode size increase.
+        // This demonstrates that `eqs` does the compile time magic.
+        return LibString.eqs(s, "sn");
+    }
+
+    function testStringEqs() public {
+        assertTrue(LibString.eqs("", ""));
+        assertTrue(LibString.eqs("1", "1"));
+        assertTrue(LibString.eqs("Hello", "Hello"));
+        assertTrue(
+            LibString.eqs("12345678901234567890123456789012", "12345678901234567890123456789012")
+        );
+
+        assertFalse(LibString.eqs("", "x"));
+        assertFalse(LibString.eqs("1", "2"));
+        assertFalse(LibString.eqs("Hello", "Hehe"));
+        assertFalse(LibString.eqs("12345678901234567890123456789012", ""));
+
+        assertTrue(checkIsSN("sn"));
+        assertFalse(checkIsSN("x"));
+    }
+
     function testStringPackAndUnpackOneDifferential(string memory a) public brutalizeMemory {
         a = LibString.slice(a, 0);
         bytes32 packed = LibString.packOne(a);

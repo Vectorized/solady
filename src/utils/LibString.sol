@@ -996,8 +996,26 @@ library LibString {
 
     /// @dev Returns whether `a` equals `b`.
     function eq(string memory a, string memory b) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := eq(keccak256(add(a, 0x20), mload(a)), keccak256(add(b, 0x20), mload(b)))
+        }
+    }
+
+    /// @dev Returns whether `a` equals `b`. For short strings up to 32 bytes.
+    function eqs(string memory a, bytes32 b) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // These should be evaluated on compile time, as far as possible.
+            let r := shl(8, iszero(b))
+            let x := and(b, add(not(b), 1))
+            r := or(r, shl(7, lt(0xffffffffffffffffffffffffffffffff, x)))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            r := or(r, shl(4, lt(0xffff, shr(r, x))))
+            r := or(r, shl(3, lt(0xff, shr(r, x))))
+            let n := shr(3, sub(256, r))
+            result := and(eq(mload(a), n), eq(shr(r, mload(add(0x20, a))), shr(r, b)))
         }
     }
 
