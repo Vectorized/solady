@@ -7,6 +7,33 @@ import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
 contract DynamicBufferLibTest is SoladyTest {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
+    function testClear() public {
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        for (uint256 q; q != 4; ++q) {
+            bytes memory b0 = _generateRandomBytes(128, q);
+            bytes memory b1 = _generateRandomBytes(256, q + 1);
+            bytes memory emptyBytes;
+            assertEq(buffer.data.length, 0);
+            assertEq(emptyBytes.length, 0);
+            if (q & 1 == 0) buffer.clear();
+            assertEq(buffer.data.length, 0);
+            assertEq(emptyBytes.length, 0);
+            buffer.append(b0);
+            assertEq(buffer.data, b0);
+            assertEq(emptyBytes.length, 0);
+            buffer.clear();
+            assertEq(buffer.data.length, 0);
+            assertEq(emptyBytes.length, 0);
+            buffer.append(b1);
+            assertEq(buffer.data, b1);
+            assertEq(emptyBytes.length, 0);
+            buffer.append(b0);
+            assertEq(buffer.data, abi.encodePacked(b1, b0));
+            assertEq(emptyBytes.length, 0);
+            buffer.clear();
+        }
+    }
+
     function testDynamicBuffer(uint256) public brutalizeMemory {
         unchecked {
             if (_random() % 8 == 0) _misalignFreeMemoryPointer();
