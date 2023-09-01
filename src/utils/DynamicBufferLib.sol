@@ -27,21 +27,21 @@ library DynamicBufferLib {
         returns (DynamicBuffer memory result)
     {
         _deallocate(result);
-        bytes memory data;
-        bool grow;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let n := mload(mload(buffer))
-            grow := gt(minimum, n)
-            if grow {
-                let i := 0x80
-                for {} lt(i, minimum) { i := shl(1, i) } {}
+        result = buffer;
+        uint256 n = buffer.data.length;
+        if (minimum > n) {
+            uint256 i = 0x40;
+            do {
+                i = i << 1;
+            } while (i < minimum);
+            bytes memory data;
+            /// @solidity memory-safe-assembly
+            assembly {
                 data := 0x00
                 mstore(data, sub(i, n))
             }
-            result := buffer
+            result = p(result, data);
         }
-        if (grow) result = p(result, data);
     }
 
     /// @dev Clears the buffer without deallocating the memory.
