@@ -1028,12 +1028,15 @@ contract LibStringTest is SoladyTest {
         // `return keccak256(bytes(s)) == keccak256("sn");`
         // and see the bytecode size increase.
         // This demonstrates that `eqs` does the compile time magic.
+        // Note that `s` must be in memory, not calldata.
         return LibString.eqs(s, "sn");
     }
 
     function testStringEqs() public {
         assertTrue(LibString.eqs("", ""));
         assertTrue(LibString.eqs("1", "1"));
+        assertTrue(LibString.eqs("12", "12"));
+        assertTrue(LibString.eqs("123", "123"));
         assertTrue(LibString.eqs("Hello", "Hello"));
         assertTrue(
             LibString.eqs("12345678901234567890123456789012", "12345678901234567890123456789012")

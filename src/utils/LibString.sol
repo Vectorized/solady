@@ -1008,8 +1008,8 @@ library LibString {
         assembly {
             // These should be evaluated on compile time, as far as possible.
             let x := and(b, add(not(b), 1))
-            let r := or(shl(8, iszero(b)), shl(7, lt(0xffffffffffffffffffffffffffffffff, x)))
-            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            let r := or(shl(8, iszero(b)), shl(7, iszero(iszero(shr(128, x)))))
+            r := or(r, shl(6, iszero(iszero(shr(64, shr(r, x))))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
