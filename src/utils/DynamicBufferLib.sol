@@ -66,75 +66,71 @@ library DynamicBufferLib {
         returns (DynamicBuffer memory result)
     {
         _deallocate(result);
+        result = buffer;
+        if (data.length == 0) return result;
         /// @solidity memory-safe-assembly
         assembly {
-            result := buffer
-            if mload(data) {
-                let w := not(0x1f)
-                let bufData := mload(buffer)
-                let bufDataLen := mload(bufData)
-                let newBufDataLen := add(mload(data), bufDataLen)
-                // Some random prime number to multiply `cap`, so that
-                // we know that the `cap` is for a dynamic buffer.
-                // Selected to be larger than any memory pointer realistically.
-                let prime := 1621250193422201
-                let cap := mload(add(bufData, w)) // `mload(sub(bufData, 0x20))`.
-                // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
-                cap := mul(div(cap, prime), iszero(mod(cap, prime)))
+            let w := not(0x1f)
+            let bufData := mload(buffer)
+            let bufDataLen := mload(bufData)
+            let newBufDataLen := add(mload(data), bufDataLen)
+            // Some random prime number to multiply `cap`, so that
+            // we know that the `cap` is for a dynamic buffer.
+            // Selected to be larger than any memory pointer realistically.
+            let prime := 1621250193422201
+            let cap := mload(add(bufData, w)) // `mload(sub(bufData, 0x20))`.
+            // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
+            cap := mul(div(cap, prime), iszero(mod(cap, prime)))
 
-                // Expand / Reallocate memory if required.
-                // Note that we need to allocate an extra word for the length, and
-                // and another extra word as a safety word (giving a total of 0x40 bytes).
-                // Without the safety word, the backwards copying can cause a buffer overflow.
-                for {} iszero(lt(newBufDataLen, cap)) {} {
-                    // Approximately double the capacity to ensure more than enough space.
-                    let newCap := and(add(cap, add(or(cap, newBufDataLen), 0x20)), w)
-
-                    // If the memory is discontiguous, we have to reallocate.
-                    if or(xor(mload(0x40), add(bufData, add(0x40, cap))), eq(bufData, 0x60)) {
-                        // Set the `newBufferData` to point to the word after `cap`.
-                        let newBufferData := add(mload(0x40), 0x20)
-                        // Reallocate the memory.
-                        mstore(0x40, add(newBufferData, add(0x40, newCap)))
-                        // Store the `newBufferData`.
-                        mstore(buffer, newBufferData)
-                        // Copy `bufData` one word at a time, backwards.
-                        for { let o := and(add(bufDataLen, 0x20), w) } 1 {} {
-                            mstore(add(newBufferData, o), mload(add(bufData, o)))
-                            o := add(o, w) // `sub(o, 0x20)`.
-                            if iszero(o) { break }
-                        }
-                        // Store the `cap * prime` in the word before the `length`.
-                        mstore(add(newBufferData, w), mul(prime, newCap))
-                        // Assign `newBufferData` to `bufData`.
-                        bufData := newBufferData
-                        break
-                    }
-                    // Otherwise, we can expand the memory.
+            // Expand / Reallocate memory if required.
+            // Note that we need to allocate an extra word for the length, and
+            // and another extra word as a safety word (giving a total of 0x40 bytes).
+            // Without the safety word, the backwards copying can cause a buffer overflow.
+            for {} iszero(lt(newBufDataLen, cap)) {} {
+                // Approximately double the capacity to ensure more than enough space.
+                let newCap := and(add(cap, add(or(cap, newBufDataLen), 0x20)), w)
+                // If the memory is contiguous, we can simply expand it.
+                if iszero(or(xor(mload(0x40), add(bufData, add(0x40, cap))), eq(bufData, 0x60))) {
                     mstore(0x40, add(bufData, add(0x40, newCap)))
                     // Store the `cap * prime` in the word before the `length`.
                     mstore(add(bufData, w), mul(prime, newCap))
                     break
                 }
-                // If it's a reserve operation.
-                switch data
-                case 0 { newBufDataLen := bufDataLen }
-                default {
-                    // Initialize `output` to the next empty position in `bufData`.
-                    let output := add(bufData, bufDataLen)
-                    // Copy `data` one word at a time, backwards.
-                    for { let o := and(add(mload(data), 0x20), w) } 1 {} {
-                        mstore(add(output, o), mload(add(data, o)))
-                        o := add(o, w) // `sub(o, 0x20)`.
-                        if iszero(o) { break }
-                    }
+                // Set the `newBufferData` to point to the word after `cap`.
+                let newBufferData := add(mload(0x40), 0x20)
+                // Reallocate the memory.
+                mstore(0x40, add(newBufferData, add(0x40, newCap)))
+                // Store the `newBufferData`.
+                mstore(buffer, newBufferData)
+                // Copy `bufData` one word at a time, backwards.
+                for { let o := and(add(bufDataLen, 0x20), w) } 1 {} {
+                    mstore(add(newBufferData, o), mload(add(bufData, o)))
+                    o := add(o, w) // `sub(o, 0x20)`.
+                    if iszero(o) { break }
                 }
-
-                // Zeroize the word after the buffer.
-                mstore(add(add(bufData, 0x20), newBufDataLen), 0)
-                // Store the `newBufDataLen`.
-                mstore(bufData, newBufDataLen)
+                // Store the `cap * prime` in the word before the `length`.
+                mstore(add(newBufferData, w), mul(prime, newCap))
+                // Assign `newBufferData` to `bufData`.
+                bufData := newBufferData
+                break
             }
+            // If it's a reserve operation, set the variables to skip the appending.
+            if iszero(data) {
+                mstore(data, 0)
+                newBufDataLen := bufDataLen
+            }
+            // Initialize `output` to the next empty position in `bufData`.
+            let output := add(bufData, bufDataLen)
+            // Copy `data` one word at a time, backwards.
+            for { let o := and(add(mload(data), 0x20), w) } 1 {} {
+                mstore(add(output, o), mload(add(data, o)))
+                o := add(o, w) // `sub(o, 0x20)`.
+                if iszero(o) { break }
+            }
+            // Zeroize the word after the buffer.
+            mstore(add(add(bufData, 0x20), newBufDataLen), 0)
+            // Store the `newBufDataLen`.
+            mstore(bufData, newBufDataLen)
         }
     }
 
