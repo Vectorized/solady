@@ -50,7 +50,7 @@ contract DynamicBufferLibTest is SoladyTest {
 
     function testDynamicBufferReserveFromEmpty2() public {
         DynamicBufferLib.DynamicBuffer memory buffer;
-        DynamicBufferLib.DynamicBuffer memory spacer;
+        _incrementFreeMemoryPointer();
         buffer.reserve(0x200);
         uint256 m = _freeMemoryPointer();
         buffer.reserve(0x200);
@@ -59,20 +59,27 @@ contract DynamicBufferLibTest is SoladyTest {
         assertEq(_freeMemoryPointer(), m);
     }
 
-    function testDynamicBufferReserveFromEmpty3(uint8 n, uint16 r, uint256 t) public {
+    function testDynamicBufferReserveFromEmptyr(bytes calldata b, uint256 t) public {
         DynamicBufferLib.DynamicBuffer memory buffer;
-        if (t & 1 == 0) {
-            DynamicBufferLib.DynamicBuffer memory spacer;
-        }
-        if (t & 2 == 0) {
-            buffer.p(_generateRandomBytes(n, 1));
-        }
+        if (t & 1 == 0) _incrementFreeMemoryPointer();
+        if (t & 2 == 0) buffer.p(_generateRandomBytes((t >> 32) & 0xff, 1));
+        if (t & 4 == 0) buffer.p(b);
+        assertTrue(_freeMemoryPointer() < 0xffffff);
+        uint256 r = t >> 240;
         buffer.reserve(r);
+        assertTrue(_freeMemoryPointer() < 0xffffff);
         uint256 m = _freeMemoryPointer();
         buffer.reserve(r);
         assertEq(_freeMemoryPointer(), m);
         buffer.reserve(r);
         assertEq(_freeMemoryPointer(), m);
+    }
+
+    function _incrementFreeMemoryPointer() internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, add(mload(0x40), 0x20))
+        }
     }
 
     function _freeMemoryPointer() internal pure returns (uint256 m) {
