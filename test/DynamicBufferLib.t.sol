@@ -59,7 +59,7 @@ contract DynamicBufferLibTest is SoladyTest {
         assertEq(_freeMemoryPointer(), m);
     }
 
-    function testDynamicBufferReserveFromEmptyr(bytes calldata b, uint256 t) public {
+    function testDynamicBufferReserveFromEmpty3(bytes calldata b, uint256 t) public {
         DynamicBufferLib.DynamicBuffer memory buffer;
         if (t & 1 == 0) _incrementFreeMemoryPointer();
         if (t & 2 == 0) buffer.p(_generateRandomBytes((t >> 32) & 0xff, 1));
@@ -86,6 +86,17 @@ contract DynamicBufferLibTest is SoladyTest {
         /// @solidity memory-safe-assembly
         assembly {
             m := mload(0x40)
+        }
+    }
+
+    function _bufferLocation(DynamicBufferLib.DynamicBuffer memory buffer)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(buffer)
         }
     }
 
@@ -167,60 +178,79 @@ contract DynamicBufferLibTest is SoladyTest {
         }
     }
 
-    function testDynamicBuffer(bytes[] memory inputs, uint256 randomness) public brutalizeMemory {
+    function testDynamicBuffer(bytes[] memory inputs, uint256 t) public brutalizeMemory {
         _boundInputs(inputs);
 
-        if ((randomness >> 16) % 8 == 0) _misalignFreeMemoryPointer();
-        DynamicBufferLib.DynamicBuffer memory buffer;
-        if ((randomness >> 32) % 4 == 0) {
-            buffer.reserve((randomness >> 128) % 1024);
-        }
-
-        unchecked {
-            uint256 expectedLength;
-            uint256 start;
-            if (randomness & 1 == 0) {
-                if (inputs.length > 0) {
-                    expectedLength = inputs[0].length;
-                    buffer.data = inputs[0];
-                    start = 1;
-                }
-            }
-            for (uint256 i = start; i < inputs.length; ++i) {
-                expectedLength += inputs[i].length;
-                // Manually store the randomness in the next free memory word,
-                // and then check if p will corrupt it
-                // (in the case of insufficient memory allocation).
-                uint256 corruptCheckSlot;
-                /// @solidity memory-safe-assembly
-                assembly {
-                    corruptCheckSlot := mload(0x40)
-                    mstore(corruptCheckSlot, randomness)
-                    mstore(0x40, add(corruptCheckSlot, 0x20))
-                }
-                buffer.p(inputs[i]);
-                if ((randomness >> 48) % 8 == 0 && expectedLength != 0) {
-                    buffer.reserve((randomness >> 160) % (expectedLength * 2));
-                }
-                assertEq(buffer.data.length, expectedLength);
-                _checkMemory(buffer.data);
-                bool isCorrupted;
-                /// @solidity memory-safe-assembly
-                assembly {
-                    isCorrupted := iszero(eq(randomness, mload(corruptCheckSlot)))
-                }
-                assertFalse(isCorrupted);
-            }
-        }
-
-        bytes memory expectedResult;
-        unchecked {
+        if ((t >> 128) & 1 == 0) {
+            bytes memory first = _generateRandomBytes((t & 0xff | 1), t);
+            bytes memory expectedResult = first;
             for (uint256 i; i < inputs.length; ++i) {
                 expectedResult = bytes.concat(expectedResult, inputs[i]);
             }
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            buffer.p(first);
+            uint256 location = _bufferLocation(buffer);
+            for (uint256 i; i < inputs.length; ++i) {
+                buffer.p(inputs[i]);
+                assertEq(_bufferLocation(buffer), location);
+            }
+            _checkMemory(buffer.data);
+            assertEq(buffer.data, expectedResult);
         }
 
-        assertEq(keccak256(buffer.data), keccak256(expectedResult));
+        if ((t >> 129) & 1 == 0) {
+            if ((t >> 16) % 8 == 0) _misalignFreeMemoryPointer();
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            if ((t >> 32) % 4 == 0) {
+                buffer.reserve((t >> 128) % 1024);
+            }
+
+            unchecked {
+                uint256 expectedLength;
+                uint256 start;
+                if (t & 1 == 0) {
+                    if (inputs.length > 0) {
+                        expectedLength = inputs[0].length;
+                        buffer.data = inputs[0];
+                        start = 1;
+                    }
+                }
+                for (uint256 i = start; i < inputs.length; ++i) {
+                    expectedLength += inputs[i].length;
+                    // Manually store the t in the next free memory word,
+                    // and then check if p will corrupt it
+                    // (in the case of insufficient memory allocation).
+                    uint256 corruptCheckSlot;
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        corruptCheckSlot := mload(0x40)
+                        mstore(corruptCheckSlot, t)
+                        mstore(0x40, add(corruptCheckSlot, 0x20))
+                    }
+                    buffer.p(inputs[i]);
+                    if ((t >> 48) % 8 == 0 && expectedLength != 0) {
+                        buffer.reserve((t >> 160) % (expectedLength * 2));
+                    }
+                    assertEq(buffer.data.length, expectedLength);
+                    _checkMemory(buffer.data);
+                    bool isCorrupted;
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        isCorrupted := iszero(eq(t, mload(corruptCheckSlot)))
+                    }
+                    assertFalse(isCorrupted);
+                }
+            }
+
+            bytes memory expectedResult;
+            unchecked {
+                for (uint256 i; i < inputs.length; ++i) {
+                    expectedResult = bytes.concat(expectedResult, inputs[i]);
+                }
+            }
+
+            assertEq(keccak256(buffer.data), keccak256(expectedResult));
+        }
     }
 
     function testJoinWithConcat() public {
@@ -307,7 +337,7 @@ contract DynamicBufferLibTest is SoladyTest {
                 bytes memory x = inputs[i];
                 /// @solidity memory-safe-assembly
                 assembly {
-                    if gt(mload(x), 300) { mstore(x, 300) }
+                    if gt(mload(x), 128) { mstore(x, 128) }
                 }
             }
         }

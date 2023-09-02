@@ -114,7 +114,7 @@ library DynamicBufferLib {
                 bufData := newBufferData
                 break
             }
-            // If it's a reserve operation.
+            // If it's a reserve operation, set the variables to skip the appending.
             if iszero(data) {
                 mstore(data, 0)
                 newBufDataLen := bufDataLen
