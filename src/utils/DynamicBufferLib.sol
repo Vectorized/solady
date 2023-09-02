@@ -71,70 +71,69 @@ library DynamicBufferLib {
             result := buffer
             if mload(data) {
                 let w := not(0x1f)
-                let bufferData := mload(buffer)
-                let bufferDataLength := mload(bufferData)
-                let newBufferDataLength := add(mload(data), bufferDataLength)
-                // Some random prime number to multiply `capacity`, so that
-                // we know that the `capacity` is for a dynamic buffer.
+                let bufData := mload(buffer)
+                let bufDataLen := mload(bufData)
+                let newBufDataLen := add(mload(data), bufDataLen)
+                // Some random prime number to multiply `cap`, so that
+                // we know that the `cap` is for a dynamic buffer.
                 // Selected to be larger than any memory pointer realistically.
                 let prime := 1621250193422201
-                let capacity := mload(add(bufferData, w)) // `mload(sub(bufferData, 0x20))`.
-
-                // Extract `capacity`, initializing it to zero if it is not a multiple of `prime`.
-                capacity := mul(div(capacity, prime), iszero(mod(capacity, prime)))
+                let cap := mload(add(bufData, w)) // `mload(sub(bufData, 0x20))`.
+                // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
+                cap := mul(div(cap, prime), iszero(mod(cap, prime)))
 
                 // Expand / Reallocate memory if required.
                 // Note that we need to allocate an extra word for the length, and
                 // and another extra word as a safety word (giving a total of 0x40 bytes).
                 // Without the safety word, the backwards copying can cause a buffer overflow.
-                for {} iszero(lt(newBufferDataLength, capacity)) {} {
-                    // Set `newCapacity` to `(2 * capacity + 0x20) / 0x20 * 0x20`,
-                    // ensuring more than enough space.
-                    let newCapacity :=
-                        and(add(capacity, add(or(capacity, newBufferDataLength), 0x20)), w)
+                for {} iszero(lt(newBufDataLen, cap)) {} {
+                    // Approximately double the capacity to ensure more than enough space.
+                    let newCap := and(add(cap, add(or(cap, newBufDataLen), 0x20)), w)
 
                     // If the memory is discontiguous, we have to reallocate.
-                    if iszero(eq(mload(0x40), add(bufferData, add(0x40, capacity)))) {
-                        // Set the `newBufferData` to point to the word after capacity.
+                    if or(xor(mload(0x40), add(bufData, add(0x40, cap))), eq(bufData, 0x60)) {
+                        // Set the `newBufferData` to point to the word after `cap`.
                         let newBufferData := add(mload(0x40), 0x20)
                         // Reallocate the memory.
-                        mstore(0x40, add(newBufferData, add(0x40, newCapacity)))
+                        mstore(0x40, add(newBufferData, add(0x40, newCap)))
                         // Store the `newBufferData`.
                         mstore(buffer, newBufferData)
-                        // Copy `bufferData` one word at a time, backwards.
-                        for { let o := and(add(bufferDataLength, 0x20), w) } 1 {} {
-                            mstore(add(newBufferData, o), mload(add(bufferData, o)))
+                        // Copy `bufData` one word at a time, backwards.
+                        for { let o := and(add(bufDataLen, 0x20), w) } 1 {} {
+                            mstore(add(newBufferData, o), mload(add(bufData, o)))
                             o := add(o, w) // `sub(o, 0x20)`.
                             if iszero(o) { break }
                         }
-                        // Store the `capacity * prime` in the word before the `length`.
-                        mstore(add(newBufferData, w), mul(prime, newCapacity))
-                        // Assign `newBufferData` to `bufferData`.
-                        bufferData := newBufferData
+                        // Store the `cap * prime` in the word before the `length`.
+                        mstore(add(newBufferData, w), mul(prime, newCap))
+                        // Assign `newBufferData` to `bufData`.
+                        bufData := newBufferData
                         break
                     }
                     // Otherwise, we can expand the memory.
-                    mstore(0x40, add(bufferData, add(0x40, newCapacity)))
-                    // Store the `capacity * prime` in the word before the `length`.
-                    mstore(add(bufferData, w), mul(prime, newCapacity))
+                    mstore(0x40, add(bufData, add(0x40, newCap)))
+                    // Store the `cap * prime` in the word before the `length`.
+                    mstore(add(bufData, w), mul(prime, newCap))
                     break
                 }
-                if iszero(gt(data, 0x60)) {
-                    mstore(data, 0)
-                    newBufferDataLength := bufferDataLength
+                // If it's a reserve operation.
+                switch data
+                case 0 { newBufDataLen := bufDataLen }
+                default {
+                    // Initialize `output` to the next empty position in `bufData`.
+                    let output := add(bufData, bufDataLen)
+                    // Copy `data` one word at a time, backwards.
+                    for { let o := and(add(mload(data), 0x20), w) } 1 {} {
+                        mstore(add(output, o), mload(add(data, o)))
+                        o := add(o, w) // `sub(o, 0x20)`.
+                        if iszero(o) { break }
+                    }
                 }
-                // Initialize `output` to the next empty position in `bufferData`.
-                let output := add(bufferData, bufferDataLength)
-                // Copy `data` one word at a time, backwards.
-                for { let o := and(add(mload(data), 0x20), w) } 1 {} {
-                    mstore(add(output, o), mload(add(data, o)))
-                    o := add(o, w) // `sub(o, 0x20)`.
-                    if iszero(o) { break }
-                }
+
                 // Zeroize the word after the buffer.
-                mstore(add(add(bufferData, 0x20), newBufferDataLength), 0)
-                // Store the `newBufferDataLength`.
-                mstore(bufferData, newBufferDataLength)
+                mstore(add(add(bufData, 0x20), newBufDataLen), 0)
+                // Store the `newBufDataLen`.
+                mstore(bufData, newBufDataLen)
             }
         }
     }

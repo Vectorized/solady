@@ -34,6 +34,54 @@ contract DynamicBufferLibTest is SoladyTest {
         buffer.clear();
     }
 
+    function testDynamicBufferReserveFromEmpty() public {
+        uint256 m = _freeMemoryPointer();
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        assertEq(_freeMemoryPointer(), m + 0x20);
+        buffer.reserve(0x200);
+        assertTrue(_freeMemoryPointer() > m + 0x20);
+        assertTrue(_freeMemoryPointer() < 0xffff);
+        m = _freeMemoryPointer();
+        buffer.reserve(0x200);
+        assertEq(_freeMemoryPointer(), m);
+        buffer.reserve(0x200);
+        assertEq(_freeMemoryPointer(), m);
+    }
+
+    function testDynamicBufferReserveFromEmpty2() public {
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        DynamicBufferLib.DynamicBuffer memory spacer;
+        buffer.reserve(0x200);
+        uint256 m = _freeMemoryPointer();
+        buffer.reserve(0x200);
+        assertEq(_freeMemoryPointer(), m);
+        buffer.reserve(0x200);
+        assertEq(_freeMemoryPointer(), m);
+    }
+
+    function testDynamicBufferReserveFromEmpty3(uint8 n, uint16 r, uint256 t) public {
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        if (t & 1 == 0) {
+            DynamicBufferLib.DynamicBuffer memory spacer;
+        }
+        if (t & 2 == 0) {
+            buffer.p(_generateRandomBytes(n, 1));
+        }
+        buffer.reserve(r);
+        uint256 m = _freeMemoryPointer();
+        buffer.reserve(r);
+        assertEq(_freeMemoryPointer(), m);
+        buffer.reserve(r);
+        assertEq(_freeMemoryPointer(), m);
+    }
+
+    function _freeMemoryPointer() internal pure returns (uint256 m) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            m := mload(0x40)
+        }
+    }
+
     function testDynamicBuffer(uint256) public brutalizeMemory {
         unchecked {
             if (_random() % 8 == 0) _misalignFreeMemoryPointer();
