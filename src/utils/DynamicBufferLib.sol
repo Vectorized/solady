@@ -117,7 +117,7 @@ library DynamicBufferLib {
             }
             // If it's a reserve operation, set the variables to skip the appending.
             if iszero(data) {
-                mstore(data, 0)
+                mstore(data, data)
                 newBufDataLen := bufDataLen
             }
             // Copy `data` one word at a time, backwards.
