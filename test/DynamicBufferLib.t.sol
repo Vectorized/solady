@@ -181,6 +181,7 @@ contract DynamicBufferLibTest is SoladyTest {
     function testDynamicBuffer(bytes[] memory inputs, uint256 t) public brutalizeMemory {
         _boundInputs(inputs);
 
+        uint256 sharedLocation;
         if ((t >> 128) & 1 == 0) {
             bytes memory first = _generateRandomBytes((t & 0xff | 1), t);
             bytes memory expectedResult = first;
@@ -193,14 +194,22 @@ contract DynamicBufferLibTest is SoladyTest {
             for (uint256 i; i < inputs.length; ++i) {
                 buffer.p(inputs[i]);
                 assertEq(_bufferLocation(buffer), location);
+                _checkMemory(buffer.data);
             }
-            _checkMemory(buffer.data);
             assertEq(buffer.data, expectedResult);
+            sharedLocation = _bufferLocation(buffer);
         }
 
         if ((t >> 129) & 1 == 0) {
             if ((t >> 16) % 8 == 0) _misalignFreeMemoryPointer();
             DynamicBufferLib.DynamicBuffer memory buffer;
+            if ((t >> 130) & 1 == 0 && sharedLocation != 0) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    mstore(buffer, sharedLocation)
+                }
+                buffer.clear();
+            }
             if ((t >> 32) % 4 == 0) {
                 buffer.reserve((t >> 128) % 1024);
             }
