@@ -190,6 +190,8 @@ library JSONParserLib {
     /// @dev Returns the item at key `k` for (object).
     /// If `item` is not an object, the result's type WILL be undefined.
     /// The key MUST be double-quoted, JSON encoded. This is for efficiency reasons.
+    /// - Correct : `item.at('"k"')`.
+    /// - Wrong   : `item.at("k")`.
     /// For duplicated keys, the last item with the key WILL be returned.
     /// If there is no item with the key, the result's type WILL be undefined.
     function at(Item memory item, string memory k) internal pure returns (Item memory result) {
@@ -353,7 +355,7 @@ library JSONParserLib {
                 let t_ := mload(pIn_) // Load the whole word.
                 for { let i_ := 0 } iszero(eq(i_, 4)) { i_ := add(i_, 1) } {
                     let c_ := sub(byte(i_, t_), 48)
-                    if iszero(and(shr(c_, 35465847073801215), b_)) { fail() } // Not hexadecimal.
+                    if iszero(and(shr(c_, 0x7e0000007e03ff), b_)) { fail() } // Not hexadecimal.
                     c_ := sub(c_, add(mul(gt(c_, 16), 7), shl(5, gt(c_, 48))))
                     _unicode := add(shl(4, _unicode), c_)
                 }
@@ -470,8 +472,7 @@ library JSONParserLib {
 
             function skipWhitespace(pIn_, end_) -> _pOut {
                 for { _pOut := pIn_ } 1 { _pOut := add(_pOut, 1) } {
-                    // ' ', '\n', '\r', '\t'.
-                    if iszero(and(shr(chr(_pOut), 0x100002600), 1)) { leave }
+                    if iszero(and(shr(chr(_pOut), 0x100002600), 1)) { leave } // Not in ' \n\r\t'.
                 }
             }
 
