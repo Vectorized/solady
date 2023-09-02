@@ -82,7 +82,7 @@ audits — "Audit reports"
 
 ## Contributing
 
-This repository serves as a laboratory for cutting edge snippets that may be merged into [Solmate](https://github.com/rari-capital/solmate).
+This repository serves as a laboratory for cutting edge snippets that may be merged into [Solmate](https://github.com/transmissions11/solmate).
 
 Feel free to make a pull request.
 
@@ -114,7 +114,7 @@ Please always check and test for compatibility accordingly.
 
 This repository is inspired by or directly modified from many sources, primarily:
 
-- [Solmate](https://github.com/rari-capital/solmate)
+- [Solmate](https://github.com/transmissions11/solmate)
 - [OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-contracts)
 - [ERC721A](https://github.com/chiru-labs/ERC721A)
 - [Zolidity](https://github.com/z0r0z/zolidity)
