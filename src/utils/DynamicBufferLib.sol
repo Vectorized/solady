@@ -31,9 +31,7 @@ library DynamicBufferLib {
         uint256 n = buffer.data.length;
         if (minimum > n) {
             uint256 i = 0x40;
-            do {
-                i = i << 1;
-            } while (i < minimum);
+            do {} while ((i <<= 1) < minimum);
             bytes memory data;
             /// @solidity memory-safe-assembly
             assembly {
@@ -54,8 +52,8 @@ library DynamicBufferLib {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(buffer), 0)
-            result := buffer
         }
+        result = buffer;
     }
 
     /// @dev Appends `data` to `buffer`.
@@ -87,7 +85,7 @@ library DynamicBufferLib {
             // and another extra word as a safety word (giving a total of 0x40 bytes).
             // Without the safety word, the backwards copying can cause a buffer overflow.
             for {} iszero(lt(newBufDataLen, cap)) {} {
-                // Approximately double the capacity to ensure more than enough space.
+                // Approximately more than double the capacity to ensure more than enough space.
                 let newCap := and(add(cap, add(or(cap, newBufDataLen), 0x20)), w)
                 // If the memory is contiguous, we can simply expand it.
                 if iszero(or(xor(mload(0x40), add(bufData, add(0x40, cap))), eq(bufData, 0x60))) {
@@ -119,11 +117,9 @@ library DynamicBufferLib {
                 mstore(data, 0)
                 newBufDataLen := bufDataLen
             }
-            // Initialize `output` to the next empty position in `bufData`.
-            let output := add(bufData, bufDataLen)
             // Copy `data` one word at a time, backwards.
             for { let o := and(add(mload(data), 0x20), w) } 1 {} {
-                mstore(add(output, o), mload(add(data, o)))
+                mstore(add(add(bufData, bufDataLen), o), mload(add(data, o)))
                 o := add(o, w) // `sub(o, 0x20)`.
                 if iszero(o) { break }
             }
