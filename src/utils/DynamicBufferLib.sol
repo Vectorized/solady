@@ -56,6 +56,12 @@ library DynamicBufferLib {
         result = buffer;
     }
 
+    /// @dev Returns a string pointing to the underlying bytes data.
+    /// Note: The string WILL change if the buffer is updated.
+    function s(DynamicBuffer memory buffer) internal pure returns (string memory) {
+        return string(buffer.data);
+    }
+
     /// @dev Appends `data` to `buffer`.
     /// Returns the same buffer, so that it can be used for function chaining.
     function p(DynamicBuffer memory buffer, bytes memory data)
@@ -89,32 +95,29 @@ library DynamicBufferLib {
                 let newCap := and(add(cap, add(or(cap, newBufDataLen), 0x20)), w)
                 // If the memory is contiguous, we can simply expand it.
                 if iszero(or(xor(mload(0x40), add(bufData, add(0x40, cap))), eq(bufData, 0x60))) {
-                    mstore(0x40, add(bufData, add(0x40, newCap)))
-                    // Store the `cap * prime` in the word before the `length`.
+                    // Store `cap * prime` in the word before the length.
                     mstore(add(bufData, w), mul(prime, newCap))
+                    mstore(0x40, add(bufData, add(0x40, newCap))) // Expand the memory allocation.
                     break
                 }
-                // Set the `newBufferData` to point to the word after `cap`.
-                let newBufferData := add(mload(0x40), 0x20)
-                // Reallocate the memory.
-                mstore(0x40, add(newBufferData, add(0x40, newCap)))
-                // Store the `newBufferData`.
-                mstore(buffer, newBufferData)
+                // Set the `newBufData` to point to the word after `cap`.
+                let newBufData := add(mload(0x40), 0x20)
+                mstore(0x40, add(newBufData, add(0x40, newCap))) // Reallocate the memory.
+                mstore(buffer, newBufData) // Store the `newBufData`.
                 // Copy `bufData` one word at a time, backwards.
                 for { let o := and(add(bufDataLen, 0x20), w) } 1 {} {
-                    mstore(add(newBufferData, o), mload(add(bufData, o)))
+                    mstore(add(newBufData, o), mload(add(bufData, o)))
                     o := add(o, w) // `sub(o, 0x20)`.
                     if iszero(o) { break }
                 }
-                // Store the `cap * prime` in the word before the `length`.
-                mstore(add(newBufferData, w), mul(prime, newCap))
-                // Assign `newBufferData` to `bufData`.
-                bufData := newBufferData
+                // Store `cap * prime` in the word before the length.
+                mstore(add(newBufData, w), mul(prime, newCap))
+                bufData := newBufData // Assign `newBufData` to `bufData`.
                 break
             }
             // If it's a reserve operation, set the variables to skip the appending.
             if iszero(data) {
-                mstore(data, 0)
+                mstore(data, data)
                 newBufDataLen := bufDataLen
             }
             // Copy `data` one word at a time, backwards.
@@ -123,10 +126,8 @@ library DynamicBufferLib {
                 o := add(o, w) // `sub(o, 0x20)`.
                 if iszero(o) { break }
             }
-            // Zeroize the word after the buffer.
-            mstore(add(add(bufData, 0x20), newBufDataLen), 0)
-            // Store the `newBufDataLen`.
-            mstore(bufData, newBufDataLen)
+            mstore(add(add(bufData, 0x20), newBufDataLen), 0) // Zeroize the word after the buffer.
+            mstore(bufData, newBufDataLen) // Store the length.
         }
     }
 
