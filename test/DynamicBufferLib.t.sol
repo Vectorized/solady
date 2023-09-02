@@ -102,48 +102,48 @@ contract DynamicBufferLibTest is SoladyTest {
 
     function testDynamicBuffer(uint256) public brutalizeMemory {
         unchecked {
-            if (_random() % 8 == 0) _misalignFreeMemoryPointer();
+            if (_random() & 7 == 0) _misalignFreeMemoryPointer();
             DynamicBufferLib.DynamicBuffer memory bufferA;
             DynamicBufferLib.DynamicBuffer memory bufferB;
             uint256 z = _bound(_random(), 32, 4096);
-            if (_random() % 8 == 0) bufferA.reserve(_random() % z);
-            if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+            if (_random() & 7 == 0) bufferA.reserve(_random() % z);
+            if (_random() & 7 == 0) bufferB.reserve(_random() % z);
             uint256 r = _random() % 3;
             uint256 o = _bound(_random(), 0, 32);
-            uint256 n = _bound(_random(), 5, _random() % 8 == 0 ? 64 : 8);
+            uint256 n = _bound(_random(), 5, _random() & 7 == 0 ? 64 : 8);
             z = z + z;
 
             if (r == 0) {
                 for (uint256 i; i != n; ++i) {
-                    if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+                    if (_random() & 7 == 0) bufferA.reserve(_random() % z);
                     bufferA.p(_generateRandomBytes(i + o, i + z));
                 }
                 for (uint256 i; i != n; ++i) {
-                    if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+                    if (_random() & 7 == 0) bufferB.reserve(_random() % z);
                     bufferB.p(_generateRandomBytes(i + o, i + z));
                 }
             } else if (r == 1) {
                 for (uint256 i; i != n; ++i) {
-                    if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+                    if (_random() & 7 == 0) bufferB.reserve(_random() % z);
                     bufferB.p(_generateRandomBytes(i + o, i + z));
                 }
                 for (uint256 i; i != n; ++i) {
-                    if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+                    if (_random() & 7 == 0) bufferA.reserve(_random() % z);
                     bufferA.p(_generateRandomBytes(i + o, i + z));
                 }
             } else {
                 uint256 mode;
                 for (uint256 i; i != n; ++i) {
-                    if (_random() % 8 == 0) mode ^= 1;
+                    if (_random() & 7 == 0) mode ^= 1;
                     if (mode == 0) {
-                        if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+                        if (_random() & 7 == 0) bufferA.reserve(_random() % z);
                         bufferA.p(_generateRandomBytes(i + o, i + z));
-                        if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+                        if (_random() & 7 == 0) bufferB.reserve(_random() % z);
                         bufferB.p(_generateRandomBytes(i + o, i + z));
                     } else {
-                        if (_random() % 8 == 0) bufferB.reserve(_random() % z);
+                        if (_random() & 7 == 0) bufferB.reserve(_random() % z);
                         bufferB.p(_generateRandomBytes(i + o, i + z));
-                        if (_random() % 8 == 0) bufferA.reserve(_random() % z);
+                        if (_random() & 7 == 0) bufferA.reserve(_random() % z);
                         bufferA.p(_generateRandomBytes(i + o, i + z));
                     }
                 }
@@ -201,8 +201,9 @@ contract DynamicBufferLibTest is SoladyTest {
         }
 
         if ((t >> 129) & 1 == 0) {
-            if ((t >> 16) % 8 == 0) _misalignFreeMemoryPointer();
+            if ((t >> 16) & 7 == 0) _misalignFreeMemoryPointer();
             DynamicBufferLib.DynamicBuffer memory buffer;
+            if ((t >> 160) & 3 == 0) _incrementFreeMemoryPointer();
             if ((t >> 130) & 1 == 0 && sharedLocation != 0) {
                 /// @solidity memory-safe-assembly
                 assembly {
@@ -210,7 +211,8 @@ contract DynamicBufferLibTest is SoladyTest {
                 }
                 buffer.clear();
             }
-            if ((t >> 32) % 4 == 0) {
+            if ((t >> 162) & 3 == 0) _incrementFreeMemoryPointer();
+            if ((t >> 32) & 3 == 0) {
                 buffer.reserve((t >> 128) % 1024);
             }
 
@@ -237,7 +239,7 @@ contract DynamicBufferLibTest is SoladyTest {
                         mstore(0x40, add(corruptCheckSlot, 0x20))
                     }
                     buffer.p(inputs[i]);
-                    if ((t >> 48) % 8 == 0 && expectedLength != 0) {
+                    if ((t >> 48) & 7 == 0 && expectedLength != 0) {
                         buffer.reserve((t >> 160) % (expectedLength * 2));
                     }
                     assertEq(buffer.data.length, expectedLength);
