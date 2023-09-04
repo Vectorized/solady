@@ -61,11 +61,11 @@ library JSONParserLib {
     uint256 private constant _BITPOS_SIBLING_OR_PARENT = 32 * 1 - 8;
     uint256 private constant _BITMASK_POINTER = 0xffffffff;
     uint256 private constant _BITMASK_TYPE = 7;
-    uint256 private constant _BITMASK_KEY_INITED = 1 << 3;
-    uint256 private constant _BITMASK_VALUE_INITED = 1 << 4;
-    uint256 private constant _BITMASK_CHILDREN_INITED = 1 << 5;
-    uint256 private constant _BITMASK_PARENT_IS_ARRAY = 1 << 6;
-    uint256 private constant _BITMASK_PARENT_IS_OBJECT = 1 << 7;
+    uint256 private constant _KEY_INITED = 1 << 3;
+    uint256 private constant _VALUE_INITED = 1 << 4;
+    uint256 private constant _CHILDREN_INITED = 1 << 5;
+    uint256 private constant _PARENT_IS_ARRAY = 1 << 6;
+    uint256 private constant _PARENT_IS_OBJECT = 1 << 7;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   JSON PARSING OPERATION                   */
@@ -126,7 +126,7 @@ library JSONParserLib {
     function index(Item memory item) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            if and(mload(item), _BITMASK_PARENT_IS_ARRAY) {
+            if and(mload(item), _PARENT_IS_ARRAY) {
                 result := and(_BITMASK_POINTER, shr(_BITPOS_KEY, mload(item)))
             }
         }
@@ -139,7 +139,7 @@ library JSONParserLib {
     /// Note: This function lazily instantiates and caches the returned string.
     /// Do NOT modify the returned string.
     function key(Item memory item) internal pure returns (string memory result) {
-        if (item._data & _BITMASK_PARENT_IS_OBJECT != 0) {
+        if (item._data & _PARENT_IS_OBJECT != 0) {
             bytes32 r = _query(_toInput(item), 1);
             /// @solidity memory-safe-assembly
             assembly {
@@ -228,7 +228,7 @@ library JSONParserLib {
 
     /// @dev Returns whether the item is of type undefined.
     function isUndefined(Item memory item) internal pure returns (bool result) {
-        result = item._data & _BITMASK_TYPE == 0;
+        result = item._data & _BITMASK_TYPE == TYPE_UNDEFINED;
     }
 
     /// @dev Returns whether the item is of type array.
@@ -306,7 +306,7 @@ library JSONParserLib {
     function parseInt(string memory s) internal pure returns (int256 result) {
         uint256 n = bytes(s).length;
         uint256 sign;
-        bool isNegative;
+        uint256 isNegative;
         /// @solidity memory-safe-assembly
         assembly {
             if n {
@@ -332,8 +332,8 @@ library JSONParserLib {
                 s := sub(s, 1)
                 mstore(s, n)
             }
+            result := xor(x, mul(xor(x, add(not(x), 1)), isNegative))
         }
-        result = isNegative ? -int256(x) : int256(x);
     }
 
     /// @dev Decodes a JSON encoded string.
@@ -564,7 +564,7 @@ library JSONParserLib {
                     _item, _pOut := parseValue(s_, _item, _pOut, end_)
                     if _item {
                         // forgefmt: disable-next-item
-                        mstore(_item, setP(or(_BITMASK_PARENT_IS_ARRAY, mload(_item)),
+                        mstore(_item, setP(or(_PARENT_IS_ARRAY, mload(_item)),
                             _BITPOS_KEY, j_))
                         j_ := add(j_, 1)
                         let c_ := chr(_pOut)
@@ -594,7 +594,7 @@ library JSONParserLib {
                         _item, _pOut := parseValue(s_, _item, add(_pOut, 1), end_)
                         if _item {
                             // forgefmt: disable-next-item
-                            mstore(_item, setP(setP(or(_BITMASK_PARENT_IS_OBJECT, mload(_item)),
+                            mstore(_item, setP(setP(or(_PARENT_IS_OBJECT, mload(_item)),
                                 _BITPOS_KEY_LENGTH, sub(pKeyEnd_, pKeyStart_)),
                                     _BITPOS_KEY, sub(pKeyStart_, add(s_, 0x20))))
                             let c_ := chr(_pOut)
@@ -669,7 +669,7 @@ library JSONParserLib {
                 _item := mallocItem(s_, packed_, pIn_, _pOut, TYPE_NUMBER)
             }
 
-            function copyString(s_, offset_, len_) -> _sCopy {
+            function copyStr(s_, offset_, len_) -> _sCopy {
                 _sCopy := mload(0x40)
                 s_ := add(s_, offset_)
                 let w_ := not(0x1f)
@@ -686,11 +686,11 @@ library JSONParserLib {
             function value(item_) -> _value {
                 let packed_ := mload(item_)
                 _value := getP(packed_, _BITPOS_VALUE) // The offset in the string.
-                if iszero(and(_BITMASK_VALUE_INITED, packed_)) {
+                if iszero(and(_VALUE_INITED, packed_)) {
                     let s_ := getP(packed_, _BITPOS_STRING)
-                    _value := copyString(s_, _value, getP(packed_, _BITPOS_VALUE_LENGTH))
+                    _value := copyStr(s_, _value, getP(packed_, _BITPOS_VALUE_LENGTH))
                     packed_ := setP(packed_, _BITPOS_VALUE, _value)
-                    mstore(s_, or(_BITMASK_VALUE_INITED, packed_))
+                    mstore(s_, or(_VALUE_INITED, packed_))
                 }
             }
 
@@ -699,7 +699,7 @@ library JSONParserLib {
                 let packed_ := mload(item_)
                 for {} iszero(gt(and(_BITMASK_TYPE, packed_), TYPE_OBJECT)) {} {
                     if or(iszero(packed_), iszero(item_)) { break }
-                    if and(packed_, _BITMASK_CHILDREN_INITED) {
+                    if and(packed_, _CHILDREN_INITED) {
                         _arr := getP(packed_, _BITPOS_CHILD)
                         break
                     }
@@ -718,7 +718,7 @@ library JSONParserLib {
                     mstore(_arr, shr(5, n_))
                     mstore(0x40, o_) // Allocate memory.
                     packed_ := setP(packed_, _BITPOS_CHILD, _arr)
-                    mstore(item_, or(_BITMASK_CHILDREN_INITED, packed_))
+                    mstore(item_, or(_CHILDREN_INITED, packed_))
                     // Reverse the array.
                     if iszero(lt(n_, 0x40)) {
                         let lo_ := add(_arr, 0x20)
@@ -736,28 +736,23 @@ library JSONParserLib {
                 }
             }
 
-            function getString(item_, bitpos_, bitposLength_, bitmaskInited_) -> _result {
+            function getStr(item_, bitpos_, bitposLength_, bitmaskInited_) -> _result {
                 _result := 0x60 // Initialize to the zero pointer.
                 let packed_ := mload(item_)
                 if or(iszero(item_), iszero(packed_)) { leave }
                 _result := getP(packed_, bitpos_)
                 if iszero(and(bitmaskInited_, packed_)) {
                     let s_ := getP(packed_, _BITPOS_STRING)
-                    _result := copyString(s_, _result, getP(packed_, bitposLength_))
+                    _result := copyStr(s_, _result, getP(packed_, bitposLength_))
                     mstore(item_, or(bitmaskInited_, setP(packed_, bitpos_, _result)))
                 }
             }
 
             switch mode
             // Get value.
-            case 0 {
-                result :=
-                    getString(input, _BITPOS_VALUE, _BITPOS_VALUE_LENGTH, _BITMASK_VALUE_INITED)
-            }
+            case 0 { result := getStr(input, _BITPOS_VALUE, _BITPOS_VALUE_LENGTH, _VALUE_INITED) }
             // Get key.
-            case 1 {
-                result := getString(input, _BITPOS_KEY, _BITPOS_KEY_LENGTH, _BITMASK_KEY_INITED)
-            }
+            case 1 { result := getStr(input, _BITPOS_KEY, _BITPOS_KEY_LENGTH, _KEY_INITED) }
             // Get children.
             case 3 { result := children(input) }
             // Parse.
