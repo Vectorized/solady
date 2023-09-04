@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {JSONParserLib} from "../src/utils/JSONParserLib.sol";
 import {LibString} from "../src/utils/LibString.sol";
+import {Base64} from "../src/utils/Base64.sol";
 
 contract JSONParserLibTest is SoladyTest {
     using JSONParserLib for *;
@@ -679,6 +680,23 @@ contract JSONParserLibTest is SoladyTest {
         string memory s = LibString.toString(x);
         assertEq(this.parsedValue(s), s);
         assertEq(this.parseUint(s), x);
+    }
+
+    function testParseJWTGas() public {
+        string memory jwt =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+        string[] memory jwtSplitted = LibString.split(jwt, ".");
+        JSONParserLib.Item memory header =
+            JSONParserLib.parse(string(Base64.decode(jwtSplitted[0])));
+        JSONParserLib.Item memory payload =
+            JSONParserLib.parse(string(Base64.decode(jwtSplitted[1])));
+        assertEq(jwtSplitted.length, 3);
+        assertEq(jwtSplitted[2], "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
+        assertEq(header.at('"alg"').value(), '"HS256"');
+        assertEq(header.at('"typ"').value(), '"JWT"');
+        assertEq(payload.at('"sub"').value(), '"1234567890"');
+        assertEq(payload.at('"name"').value(), '"John Doe"');
+        assertEq(payload.at('"iat"').value(), "1516239022");
     }
 
     modifier miniBrutalizeMemory() {
