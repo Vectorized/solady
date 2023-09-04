@@ -306,7 +306,7 @@ library JSONParserLib {
     function parseInt(string memory s) internal pure returns (int256 result) {
         uint256 n = bytes(s).length;
         uint256 sign;
-        bool isNegative;
+        uint256 isNegative;
         /// @solidity memory-safe-assembly
         assembly {
             if n {
