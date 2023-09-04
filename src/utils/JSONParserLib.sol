@@ -47,7 +47,7 @@ library JSONParserLib {
     /// @dev A pointer to a parsed JSON node.
     struct Item {
         // Do NOT modify the `_data` directly.
-        bytes32 _data;
+        uint256 _data;
     }
 
     // Private constants for packing `_data`.
@@ -139,10 +139,12 @@ library JSONParserLib {
     /// Note: This function lazily instantiates and caches the returned string.
     /// Do NOT modify the returned string.
     function key(Item memory item) internal pure returns (string memory result) {
-        bytes32 r = _query(_toInput(item), 1);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := r
+        if (item._data & _BITMASK_PARENT_IS_OBJECT != 0) {
+            bytes32 r = _query(_toInput(item), 1);
+            /// @solidity memory-safe-assembly
+            assembly {
+                result := r
+            }
         }
     }
 
@@ -181,7 +183,7 @@ library JSONParserLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(add(add(r, 0x20), shl(5, i)))
-            if iszero(mul(lt(i, mload(r)), eq(and(mload(item), _BITMASK_TYPE), TYPE_ARRAY))) {
+            if iszero(and(lt(i, mload(r)), eq(and(mload(item), _BITMASK_TYPE), TYPE_ARRAY))) {
                 result := 0x60 // Reset to the zero pointer.
             }
         }
@@ -219,47 +221,44 @@ library JSONParserLib {
 
     /// @dev Returns the item's type.
     function getType(Item memory item) internal pure returns (uint8 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := and(mload(item), _BITMASK_TYPE)
-        }
+        result = uint8(item._data & _BITMASK_TYPE);
     }
 
     /// Note: All types are mutually exclusive.
 
     /// @dev Returns whether the item is of type undefined.
     function isUndefined(Item memory item) internal pure returns (bool result) {
-        result = _isType(item, TYPE_UNDEFINED);
+        result = item._data & _BITMASK_TYPE == 0;
     }
 
     /// @dev Returns whether the item is of type array.
     function isArray(Item memory item) internal pure returns (bool result) {
-        result = _isType(item, TYPE_ARRAY);
+        result = item._data & _BITMASK_TYPE == TYPE_ARRAY;
     }
 
     /// @dev Returns whether the item is of type object.
     function isObject(Item memory item) internal pure returns (bool result) {
-        result = _isType(item, TYPE_OBJECT);
+        result = item._data & _BITMASK_TYPE == TYPE_OBJECT;
     }
 
     /// @dev Returns whether the item is of type number.
     function isNumber(Item memory item) internal pure returns (bool result) {
-        result = _isType(item, TYPE_NUMBER);
+        result = item._data & _BITMASK_TYPE == TYPE_NUMBER;
     }
 
     /// @dev Returns whether the item is of type string.
     function isString(Item memory item) internal pure returns (bool result) {
-        result = _isType(item, TYPE_STRING);
+        result = item._data & _BITMASK_TYPE == TYPE_STRING;
     }
 
     /// @dev Returns whether the item is of type boolean.
     function isBoolean(Item memory item) internal pure returns (bool result) {
-        result = _isType(item, TYPE_BOOLEAN);
+        result = item._data & _BITMASK_TYPE == TYPE_BOOLEAN;
     }
 
     /// @dev Returns whether the item is of type null.
     function isNull(Item memory item) internal pure returns (bool result) {
-        result = _isType(item, TYPE_NULL);
+        result = item._data & _BITMASK_TYPE == TYPE_NULL;
     }
 
     /// @dev Returns the item's parent.
@@ -757,10 +756,7 @@ library JSONParserLib {
             }
             // Get key.
             case 1 {
-                result := 0x60 // Initialize to the zero pointer.
-                if and(mload(input), _BITMASK_PARENT_IS_OBJECT) {
-                    result := getString(input, _BITPOS_KEY, _BITPOS_KEY_LENGTH, _BITMASK_KEY_INITED)
-                }
+                result := getString(input, _BITPOS_KEY, _BITPOS_KEY_LENGTH, _BITMASK_KEY_INITED)
             }
             // Get children.
             case 3 { result := children(input) }
@@ -794,14 +790,6 @@ library JSONParserLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := input
-        }
-    }
-
-    /// @dev Returns whether the input is of type `t`.
-    function _isType(Item memory input, uint256 t) private pure returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := eq(and(mload(input), _BITMASK_TYPE), t)
         }
     }
 }
