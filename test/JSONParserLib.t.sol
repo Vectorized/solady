@@ -696,7 +696,7 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(header.at('"typ"').value(), '"JWT"');
         assertEq(payload.at('"sub"').value(), '"1234567890"');
         assertEq(payload.at('"name"').value(), '"John Doe"');
-        assertEq(payload.at('"iat"').value(), "1516239022");
+        assertEq(JSONParserLib.parseUint(payload.at('"iat"').value()), 1516239022);
     }
 
     modifier miniBrutalizeMemory() {
