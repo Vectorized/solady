@@ -228,7 +228,7 @@ library JSONParserLib {
 
     /// @dev Returns whether the item is of type undefined.
     function isUndefined(Item memory item) internal pure returns (bool result) {
-        result = item._data & _BITMASK_TYPE == 0;
+        result = item._data & _BITMASK_TYPE == TYPE_UNDEFINED;
     }
 
     /// @dev Returns whether the item is of type array.
