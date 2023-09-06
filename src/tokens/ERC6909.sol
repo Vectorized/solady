@@ -22,11 +22,11 @@ abstract contract ERC6909 {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Insufficient balance of the specified `owner` for `id` token.
-    error InsufficientBalance(address owner, uint256 id);
+    /// @dev Insufficient balance.
+    error InsufficientBalance();
 
-    /// @dev Insufficient permission for the specified `spender` for `id` token.
-    error InsufficientPermission(address spender, uint256 id);
+    /// @dev Insufficient permission to perform the action.
+    error InsufficientPermission();
 
     /// @dev The total supply has overflowed.
     error TotalSupplyOverflow();
@@ -196,9 +196,8 @@ abstract contract ERC6909 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x34, id)
-                mstore(0x00, shl(96, 0xf6deaa04)) // `InsufficientBalance(address,uint256)`.
-                revert(0x10, 0x44)
+                mstore(0x00, 0xf4d678b8) // `InsufficientBalance()`.
+                revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
@@ -251,9 +250,8 @@ abstract contract ERC6909 {
                 if add(allowance_, 1) {
                     // Revert if the amount to be transferred exceeds the allowance.
                     if gt(amount, allowance_) {
-                        mstore(0x34, id)
-                        mstore(0x00, shl(96, 0x731555bd)) // `InsufficientPermission(address,uint256)`.
-                        revert(0x10, 0x44)
+                        mstore(0x00, 0xdeda9030) // `InsufficientPermission()`.
+                        revert(0x1c, 0x04)
                     }
                     // Subtract and store the updated allowance.
                     sstore(allowanceSlot, sub(allowance_, amount))
@@ -265,9 +263,8 @@ abstract contract ERC6909 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x48, id)
-                mstore(0x14, shl(96, 0xf6deaa04)) // `InsufficientBalance(address,uint256)`.
-                revert(0x24, 0x44)
+                mstore(0x00, 0xf4d678b8) // `InsufficientBalance()`.
+                revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
@@ -402,9 +399,8 @@ abstract contract ERC6909 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x34, id)
-                mstore(0x00, shl(96, 0xf6deaa04)) // `InsufficientBalance(address,uint256)`.
-                revert(0x10, 0x44)
+                mstore(0x00, 0xf4d678b8) // `InsufficientBalance()`.
+                revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
@@ -451,9 +447,8 @@ abstract contract ERC6909 {
                     if add(allowance_, 1) {
                         // Revert if the amount to be transferred exceeds the allowance.
                         if gt(amount, allowance_) {
-                            mstore(0x34, id)
-                            mstore(0x00, shl(96, 0x731555bd)) // `InsufficientPermission(address,uint256)`.
-                            revert(0x10, 0x44)
+                            mstore(0x00, 0xdeda9030) // `InsufficientPermission()`.
+                            revert(0x1c, 0x04)
                         }
                         // Subtract and store the updated allowance.
                         sstore(allowanceSlot, sub(allowance_, amount))
@@ -466,9 +461,8 @@ abstract contract ERC6909 {
             let fromBalance := sload(fromBalanceSlot)
             // Revert if insufficient balance.
             if gt(amount, fromBalance) {
-                mstore(0x48, id)
-                mstore(0x14, shl(96, 0xf6deaa04)) // `InsufficientBalance(address,uint256)`.
-                revert(0x24, 0x44)
+                mstore(0x00, 0xf4d678b8) // `InsufficientBalance()`.
+                revert(0x1c, 0x04)
             }
             // Subtract and store the updated balance.
             sstore(fromBalanceSlot, sub(fromBalance, amount))
