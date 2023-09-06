@@ -39,9 +39,6 @@ library FixedPointMathLib {
     /// @dev The output is undefined, as the input is less-than-or-equal to zero.
     error LnWadUndefined();
 
-    /// @dev The output is undefined, as the input is zero.
-    error Log2Undefined();
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -599,16 +596,10 @@ library FixedPointMathLib {
 
     /// @dev Returns the log2 of `x`.
     /// Equivalent to computing the index of the most significant bit (MSB) of `x`.
+    /// Returns 0 if `x` is zero.
     function log2(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(x) {
-                // Store the function selector of `Log2Undefined()`.
-                mstore(0x00, 0x5be3aa5c)
-                // Revert with (offset, size).
-                revert(0x1c, 0x04)
-            }
-
             r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
             r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
@@ -629,13 +620,74 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the log2 of `x`, rounded up.
+    /// Returns 0 if `x` is zero.
     function log2Up(uint256 x) internal pure returns (uint256 r) {
-        unchecked {
-            uint256 isNotPo2;
-            assembly {
-                isNotPo2 := iszero(iszero(and(x, sub(x, 1))))
+        r = log2(x);
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := add(r, lt(shl(r, 1), x))
+        }
+    }
+
+    /// @dev Returns the log10 of `x`.
+    /// Returns 0 if `x` is zero.
+    function log10(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(x, 100000000000000000000000000000000000000)) {
+                x := div(x, 100000000000000000000000000000000000000)
+                r := add(r, 38)
             }
-            return log2(x) + isNotPo2;
+            if iszero(lt(x, 10000000000000000000)) {
+                x := div(x, 10000000000000000000)
+                r := add(r, 19)
+            }
+            if iszero(lt(x, 10000000000)) {
+                x := div(x, 10000000000)
+                r := add(r, 10)
+            }
+            if iszero(lt(x, 100000)) {
+                x := div(x, 100000)
+                r := add(r, 5)
+            }
+            if iszero(lt(x, 1000)) {
+                x := div(x, 1000)
+                r := add(r, 3)
+            }
+            r := add(r, add(gt(x, 9), gt(x, 99)))
+        }
+    }
+
+    /// @dev Returns the log10 of `x`, rounded up.
+    /// Returns 0 if `x` is zero.
+    function log10Up(uint256 x) internal pure returns (uint256 r) {
+        r = log10(x);
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := add(r, lt(exp(10, r), x))
+        }
+    }
+
+    /// @dev Returns the log256 of `x`.
+    /// Returns 0 if `x` is zero.
+    function log256(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            r := or(r, shl(4, lt(0xffff, shr(r, x))))
+            r := or(shr(3, r), lt(0xff, shr(r, x)))
+        }
+    }
+
+    /// @dev Returns the log256 of `x`, rounded up.
+    /// Returns 0 if `x` is zero.
+    function log256Up(uint256 x) internal pure returns (uint256 r) {
+        r = log256(x);
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := add(r, lt(shl(shl(3, r), 1), x))
         }
     }
 
