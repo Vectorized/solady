@@ -390,10 +390,8 @@ library JSONParserLib {
                     leave
                 }
                 mstore8(0x1c, shr(18, c_))
-                if iszero(gt(c_, 0x10ffff)) {
-                    mstore(pIn_, shl(224, or(0xf0808080, and(0x073f3f3f, mload(0x00)))))
-                    _pOut := add(pIn_, 4)
-                }
+                mstore(pIn_, shl(224, or(0xf0808080, and(0x073f3f3f, mload(0x00)))))
+                _pOut := add(pIn_, shl(2, lt(c_, 0x110000)))
             }
 
             function chr(p_) -> _c {
@@ -762,8 +760,8 @@ library JSONParserLib {
                 if iszero(eq(p, e)) {
                     let c := chr(e)
                     mstore8(e, 34) // Place a '"' at the end to speed up parsing.
-                    mstore(0x00, setP(0, _BITPOS_STRING, input))
-                    mstore8(0x00, 34) // So that `mallocItem` will still preserve '"' at the end.
+                    // The `34 << 248` makes `mallocItem` preserve '"' at the end.
+                    mstore(0x00, setP(shl(248, 34), _BITPOS_STRING, input))
                     result, p := parseValue(input, 0, p, e)
                     mstore8(e, c) // Restore the original char at the end.
                 }
