@@ -632,6 +632,7 @@ library FixedPointMathLib {
     /// @dev Returns the log10 of `x`.
     /// Returns 0 if `x` is zero.
     function log10(uint256 x) internal pure returns (uint256 r) {
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(x, 100000000000000000000000000000000000000)) {
                 x := div(x, 100000000000000000000000000000000000000)
