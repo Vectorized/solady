@@ -13,7 +13,6 @@ library LibBit {
     /// Returns the index of the most significant bit of `x`,
     /// counting from the least significant bit position.
     /// If `x` is zero, returns 256.
-    /// Equivalent to `log2(x)`, but without reverting for the zero case.
     function fls(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
