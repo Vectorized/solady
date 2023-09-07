@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {JSONParserLib} from "../src/utils/JSONParserLib.sol";
 import {LibString} from "../src/utils/LibString.sol";
+import {Base64} from "../src/utils/Base64.sol";
 
 contract JSONParserLibTest is SoladyTest {
     using JSONParserLib for *;
@@ -217,11 +218,22 @@ contract JSONParserLibTest is SoladyTest {
                     assertEq(item.children()[i].value(), x);
                     assertEq(item.children()[i].parent()._data, item._data);
                     assertEq(item.children()[i].parent().isArray(), true);
-                    assertEq(item.atIndex(i)._data, item.children()[i]._data);
-                    assertEq(item.atKey(LibString.toString(i))._data, 0);
+                    assertEq(item.at(i)._data, item.children()[i]._data);
+                    assertEq(item.at(LibString.toString(i))._data, 0);
                 }
             }
         }
+    }
+
+    function testEmptyItem() public {
+        JSONParserLib.Item memory item;
+        assertEq(item.value(), "");
+        assertEq(item.isUndefined(), true);
+        assertEq(item.parent().isUndefined(), true);
+        assertEq(item.parent().parent().isUndefined(), true);
+        assertEq(item.key(), "");
+        assertEq(item.at(0).isUndefined(), true);
+        assertEq(item.at(0).at(0).isUndefined(), true);
     }
 
     function testParseSimpleArray() public {
@@ -252,6 +264,11 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.children()[2].key(), "");
         assertEq(item.children()[2].parent()._data, item._data);
         assertEq(item.children()[2].parent().isArray(), true);
+
+        assertEq(item.at(0)._data, item.children()[0]._data);
+        assertEq(item.at(1)._data, item.children()[1]._data);
+        assertEq(item.at(2)._data, item.children()[2]._data);
+        assertEq(item.at(3)._data, 0);
     }
 
     function testParseSpecials() public miniBrutalizeMemory {
@@ -331,15 +348,15 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(item.size(), 6);
 
         for (uint256 i; i < item.size(); ++i) {
-            assertEq(item.atIndex(i).isUndefined(), true);
+            assertEq(item.at(i).isUndefined(), true);
             assertEq(item.children()[i].parent()._data, item._data);
         }
-        assertEq(item.atKey('"_"').value(), '"z"');
-        assertEq(item.atKey('"b"').value(), '"B"');
-        assertEq(item.atKey('"v"').value(), "12345");
-        assertEq(item.atKey('"hehe"').value(), '"HEHE"');
-        assertEq(item.atKey('"m"').value(), "");
-        assertEq(item.atKey('"m"').isUndefined(), true);
+        assertEq(item.at('"_"').value(), '"z"');
+        assertEq(item.at('"b"').value(), '"B"');
+        assertEq(item.at('"v"').value(), "12345");
+        assertEq(item.at('"hehe"').value(), '"HEHE"');
+        assertEq(item.at('"m"').value(), "");
+        assertEq(item.at('"m"').isUndefined(), true);
     }
 
     function testParseValidObjectDoesNotRevert(string memory key, string memory value) public {
@@ -483,8 +500,11 @@ contract JSONParserLibTest is SoladyTest {
 
     function testParseGas() public {
         string memory s =
-            '{"animation_url":"","artist":"Daniel Allan","artwork":{"mimeType":"image/gif","uri":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","nft":null},"attributes":[{"trait_type":"Criteria","value":"Song Edition"}],"bpm":null,"credits":null,"description":"Criteria is an 8-track project between Daniel Allan and Reo Cragun.\n\nA fusion of electronic music and hip-hop - Criteria brings together the best of both worlds and is meant to bring web3 music to a wider audience.\n\nThe collection consists of 2500 editions with activations across Sound, Bonfire, OnCyber, Spinamp and Arpeggi.","duration":105,"external_url":"https://www.sound.xyz/danielallan/criteria","genre":"Pop","image":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","isrc":null,"key":null,"license":null,"locationCreated":null,"losslessAudio":"","lyrics":null,"mimeType":"audio/wave","nftSerialNumber":11,"name":"Criteria #11","originalReleaseDate":null,"project":null,"publisher":null,"recordLabel":null,"tags":null,"title":"Criteria","trackNumber":1,"version":"sound-edition-20220930","visualizer":null}';
-        assertEq(s.parse().isObject(), true);
+            '{"animation_url":"","artist":"Daniel Allan","artwork":{"mimeType":"image/gif","uri":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","nft":null},"attributes":[{"trait_type":"Criteria","value":"Song Edition"}],"bpm":null,"credits":null,"description":"Criteria is an 8-track project between Daniel Allan and Reo Cragun.\\n\\nA fusion of electronic music and hip-hop - Criteria brings together the best of both worlds and is meant to bring web3 music to a wider audience.\\n\\nThe collection consists of 2500 editions with activations across Sound, Bonfire, OnCyber, Spinamp and Arpeggi.","duration":105,"external_url":"https://www.sound.xyz/danielallan/criteria","genre":"Pop","image":"ar://J5NZ-e2NUcQj1OuuhpTjAKtdW_nqwnwo5FypF_a6dE4","isrc":null,"key":null,"license":null,"locationCreated":null,"losslessAudio":"","lyrics":null,"mimeType":"audio/wave","nftSerialNumber":11,"name":"Criteria #11","originalReleaseDate":null,"project":null,"publisher":null,"recordLabel":null,"tags":null,"title":"Criteria","trackNumber":1,"version":"sound-edition-20220930","visualizer":null}';
+        JSONParserLib.Item memory item = s.parse();
+        assertEq(item.isObject(), true);
+        bytes32 expectedHash = 0x6c3276c7005f50c82624fb28f9748f0fb6f0b364234e4823178f964315b41567;
+        assertEq(keccak256(bytes(item.at('"description"').value())), expectedHash);
     }
 
     function testParseUint() public {
@@ -660,6 +680,23 @@ contract JSONParserLibTest is SoladyTest {
         string memory s = LibString.toString(x);
         assertEq(this.parsedValue(s), s);
         assertEq(this.parseUint(s), x);
+    }
+
+    function testParseJWTGas() public {
+        string memory jwt =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+        string[] memory jwtSplitted = LibString.split(jwt, ".");
+        JSONParserLib.Item memory header =
+            JSONParserLib.parse(string(Base64.decode(jwtSplitted[0])));
+        JSONParserLib.Item memory payload =
+            JSONParserLib.parse(string(Base64.decode(jwtSplitted[1])));
+        assertEq(jwtSplitted.length, 3);
+        assertEq(jwtSplitted[2], "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
+        assertEq(header.at('"alg"').value(), '"HS256"');
+        assertEq(header.at('"typ"').value(), '"JWT"');
+        assertEq(payload.at('"sub"').value(), '"1234567890"');
+        assertEq(payload.at('"name"').value(), '"John Doe"');
+        assertEq(JSONParserLib.parseUint(payload.at('"iat"').value()), 1516239022);
     }
 
     modifier miniBrutalizeMemory() {
