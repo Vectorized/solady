@@ -158,61 +158,6 @@ abstract contract ERC20 {
         return true;
     }
 
-    /// @dev Atomically increases the allowance granted to `spender` by the caller.
-    ///
-    /// Emits a {Approval} event.
-    function increaseAllowance(address spender, uint256 difference) public virtual returns (bool) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the allowance slot and load its value.
-            mstore(0x20, spender)
-            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
-            mstore(0x00, caller())
-            let allowanceSlot := keccak256(0x0c, 0x34)
-            let allowanceBefore := sload(allowanceSlot)
-            // Add to the allowance.
-            let allowanceAfter := add(allowanceBefore, difference)
-            // Revert upon overflow.
-            if lt(allowanceAfter, allowanceBefore) {
-                mstore(0x00, 0xf9067066) // `AllowanceOverflow()`.
-                revert(0x1c, 0x04)
-            }
-            // Store the updated allowance.
-            sstore(allowanceSlot, allowanceAfter)
-            // Emit the {Approval} event.
-            mstore(0x00, allowanceAfter)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
-        }
-        return true;
-    }
-
-    /// @dev Atomically decreases the allowance granted to `spender` by the caller.
-    ///
-    /// Emits a {Approval} event.
-    function decreaseAllowance(address spender, uint256 difference) public virtual returns (bool) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the allowance slot and load its value.
-            mstore(0x20, spender)
-            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
-            mstore(0x00, caller())
-            let allowanceSlot := keccak256(0x0c, 0x34)
-            let allowanceBefore := sload(allowanceSlot)
-            // Revert if will underflow.
-            if lt(allowanceBefore, difference) {
-                mstore(0x00, 0x8301ab38) // `AllowanceUnderflow()`.
-                revert(0x1c, 0x04)
-            }
-            // Subtract and store the updated allowance.
-            let allowanceAfter := sub(allowanceBefore, difference)
-            sstore(allowanceSlot, allowanceAfter)
-            // Emit the {Approval} event.
-            mstore(0x00, allowanceAfter)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
-        }
-        return true;
-    }
-
     /// @dev Transfer `amount` tokens from the caller to `to`.
     ///
     /// Requirements:

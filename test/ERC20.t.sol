@@ -140,58 +140,6 @@ contract ERC20Test is SoladyTest {
         token.mint(address(this), 1);
     }
 
-    function testIncreaseAllowance(uint256 difference0, uint256 difference1) public {
-        uint256 expected;
-        (address spender,) = _randomSigner();
-        (address owner,) = _randomSigner();
-
-        expected += difference0;
-        vm.expectEmit(true, true, true, true);
-        emit Approval(owner, spender, expected);
-        vm.prank(owner);
-        token.increaseAllowance(spender, difference0);
-        assertEq(token.allowance(owner, spender), expected);
-
-        if (type(uint256).max - difference1 < difference0) {
-            vm.expectRevert(ERC20.AllowanceOverflow.selector);
-            vm.prank(owner);
-            token.increaseAllowance(spender, difference1);
-        } else {
-            expected += difference1;
-            vm.prank(owner);
-            vm.expectEmit(true, true, true, true);
-            emit Approval(owner, spender, expected);
-            token.increaseAllowance(spender, difference1);
-            assertEq(token.allowance(owner, spender), expected);
-        }
-    }
-
-    function testDecreaseAllowance(uint256 difference0, uint256 difference1) public {
-        uint256 expected = type(uint256).max;
-        (address spender,) = _randomSigner();
-        (address owner,) = _randomSigner();
-        vm.prank(owner);
-        token.approve(spender, expected);
-
-        expected -= difference0;
-        vm.prank(owner);
-        token.decreaseAllowance(spender, difference0);
-        assertEq(token.allowance(owner, spender), expected);
-
-        if (difference1 > expected) {
-            vm.expectRevert(ERC20.AllowanceUnderflow.selector);
-            vm.prank(owner);
-            token.decreaseAllowance(spender, difference1);
-        } else {
-            expected -= difference1;
-            vm.prank(owner);
-            vm.expectEmit(true, true, true, true);
-            emit Approval(owner, spender, expected);
-            token.decreaseAllowance(spender, difference1);
-            assertEq(token.allowance(owner, spender), expected);
-        }
-    }
-
     function testTransferInsufficientBalanceReverts() public {
         token.mint(address(this), 0.9e18);
         vm.expectRevert(ERC20.InsufficientBalance.selector);
