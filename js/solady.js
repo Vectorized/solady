@@ -48,7 +48,7 @@
     // See: https://github.com/vectorized/solady/blob/main/src/utils/LibZip.sol
 
     /**
-     * LibZip functions.
+     * FastLZ and calldata compression / decompression functions.
      * @namespace
      * @alias module:solady.LibZip
      */
@@ -229,7 +229,7 @@
 
     /**
      * Canonical address of Solady's ERC1967Factory.
-     * @type {String}
+     * @type {string}
      */
     ERC1967Factory.address = "0x0000000000006396FF2a80c067f99B3d2Ab4Df24";
 
