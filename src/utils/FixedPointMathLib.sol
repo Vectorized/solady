@@ -638,9 +638,9 @@ library FixedPointMathLib {
                 x := div(x, 100000000000000000000000000000000000000)
                 r := 38
             }
-            if iszero(lt(x, 10000000000000000000)) {
-                x := div(x, 10000000000000000000)
-                r := add(r, 19)
+            if iszero(lt(x, 100000000000000000000)) {
+                x := div(x, 100000000000000000000)
+                r := add(r, 20)
             }
             if iszero(lt(x, 10000000000)) {
                 x := div(x, 10000000000)
@@ -650,11 +650,7 @@ library FixedPointMathLib {
                 x := div(x, 100000)
                 r := add(r, 5)
             }
-            if iszero(lt(x, 1000)) {
-                x := div(x, 1000)
-                r := add(r, 3)
-            }
-            r := add(r, add(gt(x, 9), gt(x, 99)))
+            r := add(r, add(gt(x, 9), add(gt(x, 99), add(gt(x, 999), gt(x, 9999)))))
         }
     }
 
