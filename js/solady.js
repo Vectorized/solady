@@ -18,6 +18,8 @@
  * - `ERC1967Factory`
  *   - `address`: Canonical address of Solady's ERC1967Factory.
  *   - `abi`: ABI of Solady's ERC1967Factory.
+ *
+ * @module solady
  */
 (function(global, factory) {
 
@@ -45,6 +47,11 @@
 
     // See: https://github.com/vectorized/solady/blob/main/src/utils/LibZip.sol
 
+    /**
+     * LibZip functions.
+     * @namespace
+     * @alias module:solady.LibZip
+     */
     var LibZip = {};
 
     solady.LibZip = LibZip;
@@ -211,6 +218,11 @@
 
     // See: https://github.com/vectorized/solady/blob/main/src/utils/ERC1967Factory.sol
 
+    /**
+     * ERC1967Factory canonical address and abi.
+     * @namespace
+     * @alias module:solady.ERC1967Factory
+     */
     var ERC1967Factory = {};
 
     solady.ERC1967Factory = ERC1967Factory;
