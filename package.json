@@ -9,6 +9,7 @@
   ],
   "main": "js/solady.js",
   "module": "js/solady.js",
+  "types": "js/solady.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vectorized/solady.git"
