@@ -1,11 +1,11 @@
 {
   "name": "solady",
   "license": "MIT",
-  "version": "0.0.120",
+  "version": "0.0.121",
   "description": "Optimized Solidity snippets.",
   "files": [
     "src/**/*.sol",
-    "js/**/*.js"
+    "js/**/*"
   ],
   "main": "js/solady.js",
   "module": "js/solady.js",
