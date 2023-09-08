@@ -197,6 +197,23 @@ contract ERC20Test is SoladyTest {
         assertEq(token.allowance(address(this), to), amount);
     }
 
+    function testChangeAllowance(address to, uint256 amount0, uint256 amount1, uint256 amount2)
+        public
+    {
+        testApprove(to, amount0);
+
+        vm.expectEmit(true, true, true, true);
+        emit Approval(address(this), to, amount1);
+        token.changeAllowance(to, amount0, amount1);
+
+        assertEq(token.allowance(address(this), to), amount1);
+
+        if (amount2 != amount1) {
+            vm.expectRevert(ERC20.AllowanceMismatch.selector);
+        }
+        token.changeAllowance(to, amount2, amount0);
+    }
+
     function testTransfer(address to, uint256 amount) public {
         token.mint(address(this), amount);
 

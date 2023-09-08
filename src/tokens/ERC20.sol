@@ -31,6 +31,9 @@ abstract contract ERC20 {
     /// @dev Insufficient allowance.
     error InsufficientAllowance();
 
+    /// @dev The current amount is different.
+    error AllowanceMismatch();
+
     /// @dev The permit is invalid.
     error InvalidPermit();
 
@@ -151,6 +154,32 @@ abstract contract ERC20 {
             mstore(0x0c, _ALLOWANCE_SLOT_SEED)
             mstore(0x00, caller())
             sstore(keccak256(0x0c, 0x34), amount)
+            // Emit the {Approval} event.
+            mstore(0x00, amount)
+            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
+        }
+        return true;
+    }
+
+    /// @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+    /// Reverts if the initial approved amount is not `currentAmount`.
+    function changeAllowance(address spender, uint256 currentAmount, uint256 amount)
+        public
+        virtual
+        returns (bool)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the allowance slot and store the amount.
+            mstore(0x20, spender)
+            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
+            mstore(0x00, caller())
+            let allowanceSlot := keccak256(0x0c, 0x34)
+            if iszero(eq(sload(allowanceSlot), currentAmount)) {
+                mstore(0x00, 0xc00e0cb1) // `AllowanceMismatch()`.
+                revert(0x1c, 0x04)
+            }
+            sstore(allowanceSlot, amount)
             // Emit the {Approval} event.
             mstore(0x00, amount)
             log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
