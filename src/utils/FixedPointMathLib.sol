@@ -213,19 +213,10 @@ library FixedPointMathLib {
                 k := shl(7, lt(0xffffffffffffffffffffffffffffffff, v))
                 k := or(k, shl(6, lt(0xffffffffffffffff, shr(k, v))))
                 k := or(k, shl(5, lt(0xffffffff, shr(k, v))))
-
-                // For the remaining 32 bits, use a De Bruijn lookup.
-                // See: https://graphics.stanford.edu/~seander/bithacks.html
-                v := shr(k, v)
-                v := or(v, shr(1, v))
-                v := or(v, shr(2, v))
-                v := or(v, shr(4, v))
-                v := or(v, shr(8, v))
-                v := or(v, shr(16, v))
-
-                // forgefmt: disable-next-item
-                k := sub(or(k, byte(shr(251, mul(v, shl(224, 0x07c4acdd))),
-                    0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f)), 96)
+                k := or(k, shl(4, lt(0xffff, shr(k, v))))
+                k := or(k, shl(3, lt(0xff, shr(k, v))))
+                k := or(k, shl(2, lt(0xf, shr(k, v))))
+                k := sub(or(k, byte(shr(k, v), hex"00000101020202020303030303030303")), 96)
             }
 
             // Reduce range of x to (1, 2) * 2**96
@@ -602,19 +593,10 @@ library FixedPointMathLib {
             r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
             r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
-
-            // For the remaining 32 bits, use a De Bruijn lookup.
-            // See: https://graphics.stanford.edu/~seander/bithacks.html
-            x := shr(r, x)
-            x := or(x, shr(1, x))
-            x := or(x, shr(2, x))
-            x := or(x, shr(4, x))
-            x := or(x, shr(8, x))
-            x := or(x, shr(16, x))
-
-            // forgefmt: disable-next-item
-            r := or(r, byte(shr(251, mul(x, shl(224, 0x07c4acdd))),
-                0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f))
+            r := or(r, shl(4, lt(0xffff, shr(r, x))))
+            r := or(r, shl(3, lt(0xff, shr(r, x))))
+            r := or(r, shl(2, lt(0xf, shr(r, x))))
+            r := or(r, byte(shr(r, x), hex"00000101020202020303030303030303"))
         }
     }
 
