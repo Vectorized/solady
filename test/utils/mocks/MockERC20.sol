@@ -9,11 +9,17 @@ contract MockERC20 is ERC20 {
     string internal _name;
     string internal _symbol;
     uint8 internal _decimals;
+    bytes32 internal immutable _nameHash;
 
     constructor(string memory name_, string memory symbol_, uint8 decimals_) {
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals_;
+        _nameHash = keccak256(bytes(name_));
+    }
+
+    function _constantNameHash() internal view virtual override returns (bytes32) {
+        return _nameHash;
     }
 
     function name() public view virtual override returns (string memory) {
