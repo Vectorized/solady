@@ -290,8 +290,7 @@ library FixedPointMathLib {
                     break       
                 }
 
-                // Make sure the result is less than `2**256`.
-                // Also prevents `d == 0`.
+                // Make sure the result is less than `2**256`. Also prevents `d == 0`.
                 if iszero(gt(d, prod1)) {
                     mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                     revert(0x1c, 0x04)
@@ -409,33 +408,24 @@ library FixedPointMathLib {
     function rpow(uint256 x, uint256 y, uint256 b) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // `0 ** 0 = 1`. Otherwise, `0 ** n = 0`.
-            z := mul(b, iszero(y))
+            z := mul(b, iszero(y)) // `0 ** 0 = 1`. Otherwise, `0 ** n = 0`.
             if x {
-                // `z = isEven(y) ? scale : x`
-                z := xor(b, mul(xor(b, x), and(y, 1)))
-                // Divide `b` by 2.
-                let half := shr(1, b)
+                z := xor(b, mul(xor(b, x), and(y, 1))) // `z = isEven(y) ? scale : x`
+                let half := shr(1, b) // Divide `b` by 2.
                 // Divide `y` by 2 every iteration.
                 for { y := shr(1, y) } y { y := shr(1, y) } {
-                    // Store x squared.
-                    let xx := mul(x, x)
-                    // Round to the nearest number.
-                    let xxRound := add(xx, half)
-                    // Revert if `xx + half` overflowed,
-                    // or if `x ** 2` overflows.
+                    let xx := mul(x, x) // Store x squared.
+                    let xxRound := add(xx, half) // Round to the nearest number.
+                    // Revert if `xx + half` overflowed, or if `x ** 2` overflows.
                     if or(lt(xxRound, xx), shr(128, x)) {
                         mstore(0x00, 0x49f7642b) // `RPowOverflow()`.
                         revert(0x1c, 0x04)
                     }
-                    // Set `x` to scaled `xxRound`.
-                    x := div(xxRound, b)
+                    x := div(xxRound, b) // Set `x` to scaled `xxRound`.
                     // If `y` is odd:
                     if and(y, 1) {
-                        // Compute `z * x`.
-                        let zx := mul(z, x)
-                        // Round to the nearest number.
-                        let zxRound := add(zx, half)
+                        let zx := mul(z, x) // Compute `z * x`.
+                        let zxRound := add(zx, half) // Round to the nearest number.
                         // If `z * x` overflowed or `zx + half` overflowed:
                         if or(xor(div(zx, x), z), lt(zxRound, zx)) {
                             // Revert if `x` is non-zero.
@@ -462,9 +452,8 @@ library FixedPointMathLib {
             // This segment is to get a reasonable initial estimate for the Babylonian method. With a bad
             // start, the correct # of bits increases ~linearly each iteration instead of ~quadratically.
 
-            // Let `y = x / 2**r`.
-            // We check `y >= 2**(k + 8)` but shift right by `k` bits
-            // each branch to ensure that if `x >= 256`, then `y >= 256`.
+            // Let `y = x / 2**r`. We check `y >= 2**(k + 8)`
+            // but shift right by `k` bits to ensure that if `x >= 256`, then `y >= 256`.
             let r := shl(7, lt(0xffffffffffffffffffffffffffffffffff, x))
             r := or(r, shl(6, lt(0xffffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffffff, shr(r, x))))
