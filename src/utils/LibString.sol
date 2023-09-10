@@ -915,16 +915,15 @@ library LibString {
     function escapeHTML(string memory s) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            for {
-                let end := add(s, mload(s))
-                result := add(mload(0x40), 0x20)
-                // Store the bytes of the packed offsets and strides into the scratch space.
-                // `packed = (stride << 5) | offset`. Max offset is 20. Max stride is 6.
-                mstore(0x1f, 0x900094)
-                mstore(0x08, 0xc0000000a6ab)
-                // Store "&quot;&amp;&#39;&lt;&gt;" into the scratch space.
-                mstore(0x00, shl(64, 0x2671756f743b26616d703b262333393b266c743b2667743b))
-            } iszero(eq(s, end)) {} {
+            let end := add(s, mload(s))
+            result := add(mload(0x40), 0x20)
+            // Store the bytes of the packed offsets and strides into the scratch space.
+            // `packed = (stride << 5) | offset`. Max offset is 20. Max stride is 6.
+            mstore(0x1f, 0x900094)
+            mstore(0x08, 0xc0000000a6ab)
+            // Store "&quot;&amp;&#39;&lt;&gt;" into the scratch space.
+            mstore(0x00, shl(64, 0x2671756f743b26616d703b262333393b266c743b2667743b))
+            for {} iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 // Not in `["\"","'","&","<",">"]`.
@@ -946,20 +945,28 @@ library LibString {
     }
 
     /// @dev Escapes the string to be used within double-quotes in a JSON.
-    function escapeJSON(string memory s) internal pure returns (string memory result) {
+    /// If `addDoubleQuotes` is true, the result will be enclosed in double-quotes.
+    function escapeJSON(string memory s, bool addDoubleQuotes)
+        internal
+        pure
+        returns (string memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            for {
-                let end := add(s, mload(s))
-                result := add(mload(0x40), 0x20)
-                // Store "\\u0000" in scratch space.
-                // Store "0123456789abcdef" in scratch space.
-                // Also, store `{0x08:"b", 0x09:"t", 0x0a:"n", 0x0c:"f", 0x0d:"r"}`.
-                // into the scratch space.
-                mstore(0x15, 0x5c75303030303031323334353637383961626364656662746e006672)
-                // Bitmask for detecting `["\"","\\"]`.
-                let e := or(shl(0x22, 1), shl(0x5c, 1))
-            } iszero(eq(s, end)) {} {
+            let end := add(s, mload(s))
+            result := add(mload(0x40), 0x20)
+            if addDoubleQuotes {
+                mstore8(result, 34)
+                result := add(1, result)
+            }
+            // Store "\\u0000" in scratch space.
+            // Store "0123456789abcdef" in scratch space.
+            // Also, store `{0x08:"b", 0x09:"t", 0x0a:"n", 0x0c:"f", 0x0d:"r"}`.
+            // into the scratch space.
+            mstore(0x15, 0x5c75303030303031323334353637383961626364656662746e006672)
+            // Bitmask for detecting `["\"","\\"]`.
+            let e := or(shl(0x22, 1), shl(0x5c, 1))
+            for {} iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 if iszero(lt(c, 0x20)) {
@@ -986,6 +993,10 @@ library LibString {
                 mstore8(add(result, 1), mload(add(c, 8)))
                 result := add(result, 2)
             }
+            if addDoubleQuotes {
+                mstore8(result, 34)
+                result := add(1, result)
+            }
             let last := result
             mstore(last, 0) // Zeroize the slot after the string.
             result := mload(0x40)
@@ -994,10 +1005,31 @@ library LibString {
         }
     }
 
+    /// @dev Escapes the string to be used within double-quotes in a JSON.
+    function escapeJSON(string memory s) internal pure returns (string memory result) {
+        result = escapeJSON(s, false);
+    }
+
     /// @dev Returns whether `a` equals `b`.
     function eq(string memory a, string memory b) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := eq(keccak256(add(a, 0x20), mload(a)), keccak256(add(b, 0x20), mload(b)))
+        }
+    }
+
+    /// @dev Returns whether `a` equals `b`. For short strings up to 32 bytes.
+    function eqs(string memory a, bytes32 b) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // These should be evaluated on compile time, as far as possible.
+            let x := and(b, add(not(b), 1))
+            let r := or(shl(8, iszero(b)), shl(7, iszero(iszero(shr(128, x)))))
+            r := or(r, shl(6, iszero(iszero(shr(64, shr(r, x))))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            r := or(r, shl(4, lt(0xffff, shr(r, x))))
+            r := or(r, shl(3, lt(0xff, shr(r, x))))
+            result := gt(eq(mload(a), sub(32, shr(3, r))), shr(r, xor(b, mload(add(a, 0x20)))))
         }
     }
 

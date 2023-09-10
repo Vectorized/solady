@@ -991,15 +991,21 @@ contract LibStringTest is SoladyTest {
     }
 
     function testStringEscapeJSON() public {
-        assertEq(LibString.escapeJSON(""), "");
-        assertEq(LibString.escapeJSON("abc"), "abc");
-        assertEq(LibString.escapeJSON('abc"_123'), 'abc\\"_123');
-        assertEq(LibString.escapeJSON("abc\\_123"), "abc\\\\_123");
-        assertEq(LibString.escapeJSON("abc\x08_123"), "abc\\b_123");
-        assertEq(LibString.escapeJSON("abc\x0c_123"), "abc\\f_123");
-        assertEq(LibString.escapeJSON("abc\n_123"), "abc\\n_123");
-        assertEq(LibString.escapeJSON("abc\r_123"), "abc\\r_123");
-        assertEq(LibString.escapeJSON("abc\t_123"), "abc\\t_123");
+        _checkStringEscapeJSON("", "");
+        _checkStringEscapeJSON("abc", "abc");
+        _checkStringEscapeJSON('abc"_123', 'abc\\"_123');
+        _checkStringEscapeJSON("abc\\_123", "abc\\\\_123");
+        _checkStringEscapeJSON("abc\x08_123", "abc\\b_123");
+        _checkStringEscapeJSON("abc\x0c_123", "abc\\f_123");
+        _checkStringEscapeJSON("abc\n_123", "abc\\n_123");
+        _checkStringEscapeJSON("abc\r_123", "abc\\r_123");
+        _checkStringEscapeJSON("abc\t_123", "abc\\t_123");
+    }
+
+    function _checkStringEscapeJSON(string memory s, string memory expected) internal {
+        assertEq(LibString.escapeJSON(s), expected);
+        assertEq(LibString.escapeJSON(s, false), expected);
+        assertEq(LibString.escapeJSON(s, true), string(bytes.concat('"', bytes(expected), '"')));
     }
 
     function testStringEscapeJSONHexEncode() public brutalizeMemory {
@@ -1021,6 +1027,34 @@ contract LibStringTest is SoladyTest {
 
     function testStringEq(string memory a, string memory b) public {
         assertEq(LibString.eq(a, b), keccak256(bytes(a)) == keccak256(bytes(b)));
+    }
+
+    function checkIsSN(string memory s) public pure returns (bool) {
+        // You can try replacing it with
+        // `return keccak256(bytes(s)) == keccak256("sn");`
+        // and see the bytecode size increase.
+        // This demonstrates that `eqs` does the compile time magic.
+        // Note that `s` must be in memory, not calldata.
+        return LibString.eqs(s, "sn");
+    }
+
+    function testStringEqs() public {
+        assertTrue(LibString.eqs("", ""));
+        assertTrue(LibString.eqs("1", "1"));
+        assertTrue(LibString.eqs("12", "12"));
+        assertTrue(LibString.eqs("123", "123"));
+        assertTrue(LibString.eqs("Hello", "Hello"));
+        assertTrue(
+            LibString.eqs("12345678901234567890123456789012", "12345678901234567890123456789012")
+        );
+
+        assertFalse(LibString.eqs("", "x"));
+        assertFalse(LibString.eqs("1", "2"));
+        assertFalse(LibString.eqs("Hello", "Hehe"));
+        assertFalse(LibString.eqs("12345678901234567890123456789012", ""));
+
+        assertTrue(checkIsSN("sn"));
+        assertFalse(checkIsSN("x"));
     }
 
     function testStringPackAndUnpackOneDifferential(string memory a) public brutalizeMemory {
