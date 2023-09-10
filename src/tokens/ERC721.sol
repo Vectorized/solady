@@ -7,18 +7,21 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC721/ERC721.sol)
 ///
 /// @dev Note:
-/// The ERC721 standard allows for self-approvals.
-/// For performance, this implementation WILL NOT revert for such actions.
-/// Please add any checks with overrides if desired.
+/// - The ERC721 standard allows for self-approvals.
+///   For performance, this implementation WILL NOT revert for such actions.
+///   Please add any checks with overrides if desired.
+/// - For performance, methods are made payable where permitted by the ERC721 standard.
+/// - The `safeTransfer` functions use the identity precompile (0x4)
+///   to copy memory internally.
 ///
-/// For performance, methods are made payable where permitted by the ERC721 standard.
-///
-/// For performance, most of the code is manually duplicated and inlined.
-/// Overriding internal functions may not alter the functionality of external functions.
-/// Please check and override accordingly.
-///
-/// Please take care when overriding to never violate the ERC721 invariant:
-/// the balance of an owner must be always be equal to their number of ownership slots.
+/// If you are overriding:
+/// - NEVER violate the ERC721 invariant:
+///   the balance of an owner MUST be always be equal to their number of ownership slots.
+///   The transfer functions do not have an underflow guard for user token balances.
+/// - Make sure all variables written to storage are properly cleaned
+//    (e.g. the bool value for `isApprovedForAll` MUST be either 1 or 0 under the hood).
+/// - Check that the overridden function is actually used in the function you want to
+///   change the behavior of. Much of the code has been manually inlined for performance.
 abstract contract ERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -180,7 +183,7 @@ abstract contract ERC721 {
             mstore(0x00, id)
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
             let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
-            if iszero(shr(96, shl(96, sload(ownershipSlot)))) {
+            if iszero(shl(96, sload(ownershipSlot))) {
                 mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
                 revert(0x1c, 0x04)
             }
@@ -362,7 +365,7 @@ abstract contract ERC721 {
         assembly {
             mstore(0x00, id)
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            result := shl(96, sload(add(id, add(id, keccak256(0x00, 0x20)))))
+            result := iszero(iszero(shl(96, sload(add(id, add(id, keccak256(0x00, 0x20)))))))
         }
     }
 
@@ -877,7 +880,6 @@ abstract contract ERC721 {
                     returndatacopy(0x00, 0x00, returndatasize())
                     revert(0x00, returndatasize())
                 }
-                mstore(m, 0)
             }
             // Load the returndata and compare it.
             if iszero(eq(mload(m), shl(224, onERC721ReceivedSelector))) {
