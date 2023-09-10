@@ -259,6 +259,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLog2() public {
+        assertEq(FixedPointMathLib.log2(0), 0);
         assertEq(FixedPointMathLib.log2(2), 1);
         assertEq(FixedPointMathLib.log2(4), 2);
         assertEq(FixedPointMathLib.log2(1024), 10);
@@ -271,12 +272,8 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
-    function testLog2RevertsForZero() public {
-        vm.expectRevert(FixedPointMathLib.Log2Undefined.selector);
-        FixedPointMathLib.log2(0);
-    }
-
     function testLog2Up() public {
+        assertEq(FixedPointMathLib.log2Up(0), 0);
         assertEq(FixedPointMathLib.log2Up(1), 0);
         assertEq(FixedPointMathLib.log2Up(2), 1);
         assertEq(FixedPointMathLib.log2Up(2 + 1), 2);
@@ -294,11 +291,6 @@ contract FixedPointMathLibTest is SoladyTest {
             assertEq(FixedPointMathLib.log2Up((1 << i)), i);
             assertEq(FixedPointMathLib.log2Up((1 << i) + 1), i + 1);
         }
-    }
-
-    function testLog2UpRevertsForZero() public {
-        vm.expectRevert(FixedPointMathLib.Log2Undefined.selector);
-        FixedPointMathLib.log2Up(0);
     }
 
     function testAvg() public {
@@ -913,5 +905,78 @@ contract FixedPointMathLibTest is SoladyTest {
             z := mulmod(x, y, denominator)
         }
         assertEq(FixedPointMathLib.rawMulMod(x, y, denominator), z);
+    }
+
+    function testLog10() public {
+        assertEq(FixedPointMathLib.log10(0), 0);
+        assertEq(FixedPointMathLib.log10(1), 0);
+        assertEq(FixedPointMathLib.log10(type(uint256).max), 77);
+        unchecked {
+            for (uint256 i = 1; i <= 77; ++i) {
+                uint256 x = 10 ** i;
+                assertEq(FixedPointMathLib.log10(x), i);
+                assertEq(FixedPointMathLib.log10(x - 1), i - 1);
+                assertEq(FixedPointMathLib.log10(x + 1), i);
+            }
+        }
+    }
+
+    function testLog10(uint256 i, uint256 j) public {
+        i = _bound(i, 0, 77);
+        uint256 low = 10 ** i;
+        uint256 high = i == 77 ? type(uint256).max : (10 ** (i + 1)) - 1;
+        uint256 x = _bound(j, low, high);
+        assertEq(FixedPointMathLib.log10(x), i);
+    }
+
+    function testLog10Up() public {
+        assertEq(FixedPointMathLib.log10Up(0), 0);
+        assertEq(FixedPointMathLib.log10Up(1), 0);
+        assertEq(FixedPointMathLib.log10Up(9), 1);
+        assertEq(FixedPointMathLib.log10Up(10), 1);
+        assertEq(FixedPointMathLib.log10Up(99), 2);
+        assertEq(FixedPointMathLib.log10Up(100), 2);
+        assertEq(FixedPointMathLib.log10Up(999), 3);
+        assertEq(FixedPointMathLib.log10Up(1000), 3);
+        assertEq(FixedPointMathLib.log10Up(10 ** 77), 77);
+        assertEq(FixedPointMathLib.log10Up(10 ** 77 + 1), 78);
+        assertEq(FixedPointMathLib.log10Up(type(uint256).max), 78);
+    }
+
+    function testLog256() public {
+        assertEq(FixedPointMathLib.log256(0), 0);
+        assertEq(FixedPointMathLib.log256(1), 0);
+        assertEq(FixedPointMathLib.log256(256), 1);
+        assertEq(FixedPointMathLib.log256(type(uint256).max), 31);
+        unchecked {
+            for (uint256 i = 1; i <= 31; ++i) {
+                uint256 x = 256 ** i;
+                assertEq(FixedPointMathLib.log256(x), i);
+                assertEq(FixedPointMathLib.log256(x - 1), i - 1);
+                assertEq(FixedPointMathLib.log256(x + 1), i);
+            }
+        }
+    }
+
+    function testLog256(uint256 i, uint256 j) public {
+        i = _bound(i, 0, 31);
+        uint256 low = 256 ** i;
+        uint256 high = i == 31 ? type(uint256).max : (256 ** (i + 1)) - 1;
+        uint256 x = _bound(j, low, high);
+        assertEq(FixedPointMathLib.log256(x), i);
+    }
+
+    function testLog256Up() public {
+        assertEq(FixedPointMathLib.log256Up(0), 0);
+        assertEq(FixedPointMathLib.log256Up(0x01), 0);
+        assertEq(FixedPointMathLib.log256Up(0x02), 1);
+        assertEq(FixedPointMathLib.log256Up(0xff), 1);
+        assertEq(FixedPointMathLib.log256Up(0x0100), 1);
+        assertEq(FixedPointMathLib.log256Up(0x0101), 2);
+        assertEq(FixedPointMathLib.log256Up(0xffff), 2);
+        assertEq(FixedPointMathLib.log256Up(0x010000), 2);
+        assertEq(FixedPointMathLib.log256Up(0x010001), 3);
+        assertEq(FixedPointMathLib.log256Up(type(uint256).max - 1), 32);
+        assertEq(FixedPointMathLib.log256Up(type(uint256).max), 32);
     }
 }

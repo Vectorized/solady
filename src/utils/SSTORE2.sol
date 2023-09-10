@@ -139,6 +139,7 @@ library SSTORE2 {
 
     /// @dev Returns the address of the storage contract for `data`
     /// deployed with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(bytes memory data, bytes32 salt, address deployer)
         internal
         pure
