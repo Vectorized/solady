@@ -76,6 +76,14 @@ library MerkleProofLib {
 
     /// @dev Returns whether all `leaves` exist in the Merkle tree with `root`,
     /// given `proof` and `flags`.
+    ///
+    /// Note:
+    /// - Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`
+    ///   will always return false.
+    /// - The sum of the lengths of `proof` and `leaves` must never overflow.
+    /// - Any non-zero word in the `flags` array is treated as true.
+    /// - The memory offset of `proof` must be be non-zero
+    ///   (i.e. `proof` is not pointing to the scratch space).
     function verifyMultiProof(
         bytes32[] memory proof,
         bytes32 root,
@@ -112,7 +120,7 @@ library MerkleProofLib {
                 }
 
                 // The required final proof offset if `flagsLength` is not zero, otherwise zero.
-                let proofEnd := mul(iszero(iszero(flagsLength)), add(proof, shl(5, proofLength)))
+                let proofEnd := add(proof, shl(5, proofLength))
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
                 let hashesFront := mload(0x40)
@@ -163,8 +171,8 @@ library MerkleProofLib {
                     and(
                         // Checks if the last value in the queue is same as the root.
                         eq(mload(sub(hashesBack, 0x20)), root),
-                        // And whether all the proofs are used, if required (i.e. `proofEnd != 0`).
-                        or(iszero(proofEnd), eq(proofEnd, proof))
+                        // And whether all the proofs are used, if required.
+                        eq(proofEnd, proof)
                     )
                 break
             }
@@ -173,6 +181,13 @@ library MerkleProofLib {
 
     /// @dev Returns whether all `leaves` exist in the Merkle tree with `root`,
     /// given `proof` and `flags`.
+    ///
+    /// Note:
+    /// - Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`
+    ///   will always return false.
+    /// - Any non-zero word in the `flags` array is treated as true.
+    /// - The calldata offset of `proof` must be non-zero
+    ///   (i.e. `proof` is from a regular Solidity function with a 4-byte selector).
     function verifyMultiProofCalldata(
         bytes32[] calldata proof,
         bytes32 root,
@@ -205,8 +220,7 @@ library MerkleProofLib {
                 }
 
                 // The required final proof offset if `flagsLength` is not zero, otherwise zero.
-                let proofEnd :=
-                    mul(iszero(iszero(flags.length)), add(proof.offset, shl(5, proof.length)))
+                let proofEnd := add(proof.offset, shl(5, proof.length))
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
                 let hashesFront := mload(0x40)
@@ -257,8 +271,8 @@ library MerkleProofLib {
                     and(
                         // Checks if the last value in the queue is same as the root.
                         eq(mload(sub(hashesBack, 0x20)), root),
-                        // And whether all the proofs are used, if required (i.e. `proofEnd != 0`).
-                        or(iszero(proofEnd), eq(proofEnd, proof.offset))
+                        // And whether all the proofs are used, if required.
+                        eq(proofEnd, proof.offset)
                     )
                 break
             }
