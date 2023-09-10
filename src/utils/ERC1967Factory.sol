@@ -231,8 +231,6 @@ contract ERC1967Factory {
             }
 
             // Store the admin for the proxy.
-            mstore(0x0c, address())
-            mstore(0x00, proxy)
             sstore(shl(96, proxy), admin)
 
             // Emit the {Deployed} event.
