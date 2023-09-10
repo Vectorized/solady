@@ -39,7 +39,7 @@ contract LibZipTest is SoladyTest {
             uint256 n = _random() % 16 + 1;
             uint256 c = _random();
             for (uint256 i; i < n; ++i) {
-                buffer.append((c >> i) & 1 == 0 ? r : data);
+                buffer.p((c >> i) & 1 == 0 ? r : data);
             }
             return buffer.data;
         }

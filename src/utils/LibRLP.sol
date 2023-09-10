@@ -24,6 +24,8 @@ library LibRLP {
     /// This is for performance, as exceeding the range is extremely impractical.
     /// It is the user's responsibility to ensure that the nonce is valid
     /// (e.g. no dirty bits after packing / unpacking).
+    ///
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function computeAddress(address deployer, uint256 nonce)
         internal
         pure
