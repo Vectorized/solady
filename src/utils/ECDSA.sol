@@ -6,6 +6,9 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/ECDSA.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol)
 ///
+/// @dev Note:
+/// - The recovery functions use the ecrecover precompile (0x1).
+///
 /// WARNING! Do NOT use signatures as unique identifiers.
 /// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
 /// This implementation does NOT check if a signature is non-malleable.

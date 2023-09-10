@@ -144,7 +144,7 @@ contract ERC6909Test is SoladyTest {
 
     function testTransferInsufficientBalanceReverts() public {
         token.mint(address(this), 1, 0.9e18);
-        _expectInsufficientBalanceRevert(address(this), 1);
+        _expectInsufficientBalanceRevert();
         token.transfer(address(0xBEEF), 1, 1e18);
     }
 
@@ -155,7 +155,7 @@ contract ERC6909Test is SoladyTest {
 
         _approve(from, address(this), 1, 0.9e18);
 
-        _expectInsufficientPermissionRevert(address(this), 1);
+        _expectInsufficientPermissionRevert();
         token.transferFrom(from, address(0xBEEF), 1, 1e18);
     }
 
@@ -166,7 +166,7 @@ contract ERC6909Test is SoladyTest {
 
         _approve(from, address(this), 1, 1e18);
 
-        _expectInsufficientBalanceRevert(from, 1);
+        _expectInsufficientBalanceRevert();
         token.transferFrom(from, address(0xBEEF), 1, 1e18);
     }
 
@@ -276,7 +276,7 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(to, id, mintAmount);
 
-        _expectInsufficientBalanceRevert(to, id);
+        _expectInsufficientBalanceRevert();
         token.burn(to, id, burnAmount);
     }
 
@@ -291,7 +291,7 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(address(this), id, mintAmount);
 
-        _expectInsufficientBalanceRevert(address(this), id);
+        _expectInsufficientBalanceRevert();
         token.transfer(to, id, sendAmount);
     }
 
@@ -310,7 +310,7 @@ contract ERC6909Test is SoladyTest {
 
         _approve(from, address(this), id, approval);
 
-        _expectInsufficientPermissionRevert(address(this), id);
+        _expectInsufficientPermissionRevert();
         token.transferFrom(from, to, id, amount);
     }
 
@@ -329,7 +329,7 @@ contract ERC6909Test is SoladyTest {
 
         _approve(from, address(this), id, sendAmount);
 
-        _expectInsufficientBalanceRevert(from, id);
+        _expectInsufficientBalanceRevert();
         token.transferFrom(from, to, id, sendAmount);
     }
 
@@ -340,7 +340,7 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, id, amount);
 
-        _expectInsufficientPermissionRevert(address(this), id);
+        _expectInsufficientPermissionRevert();
         token.transferFrom(from, to, id, amount);
     }
 
@@ -395,13 +395,13 @@ contract ERC6909Test is SoladyTest {
                     vm.expectEmit(true, true, true, true);
                     emit Transfer(t.from, t.to, t.id, t.amount);
                 } else {
-                    _expectInsufficientPermissionRevert(t.by, t.id);
+                    _expectInsufficientPermissionRevert();
                 }
             } else {
                 if (t.by == address(0) || t.isOperator || t.allowance >= t.amount) {
-                    _expectInsufficientBalanceRevert(t.from, t.id);
+                    _expectInsufficientBalanceRevert();
                 } else {
-                    _expectInsufficientPermissionRevert(t.by, t.id);
+                    _expectInsufficientPermissionRevert();
                 }
             }
 
@@ -431,12 +431,12 @@ contract ERC6909Test is SoladyTest {
         }
     }
 
-    function _expectInsufficientBalanceRevert(address owner, uint256 id) internal {
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientBalance.selector, owner, id));
+    function _expectInsufficientBalanceRevert() internal {
+        vm.expectRevert(ERC6909.InsufficientBalance.selector);
     }
 
-    function _expectInsufficientPermissionRevert(address by, uint256 id) internal {
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.InsufficientPermission.selector, by, id));
+    function _expectInsufficientPermissionRevert() internal {
+        vm.expectRevert(ERC6909.InsufficientPermission.selector);
     }
 
     function _approve(address owner, address spender, uint256 id, uint256 amount) internal {

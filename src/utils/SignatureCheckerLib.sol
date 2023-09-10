@@ -6,7 +6,11 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SignatureCheckerLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
 ///
-/// @dev Note: Unlike ECDSA signatures, contract signatures are revocable.
+/// @dev Note:
+/// - The signature checking functions use the ecrecover precompile (0x1).
+/// - The `bytes memory signature` variants use the identity precompile (0x4)
+///   to copy memory internally.
+/// - Unlike ECDSA signatures, contract signatures are revocable.
 ///
 /// WARNING! Do NOT use signatures as unique identifiers.
 /// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
@@ -29,43 +33,43 @@ library SignatureCheckerLib {
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
                 let m := mload(0x40)
-                let signatureLength := mload(signature)
-                if eq(signatureLength, 65) {
-                    mstore(m, hash)
-                    mstore(add(m, 0x20), byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(add(m, 0x40), mload(add(signature, 0x20))) // `r`.
-                    mstore(add(m, 0x60), mload(add(signature, 0x40))) // `s`.
-                    pop(
+                if eq(mload(signature), 65) {
+                    mstore(0x00, hash)
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
+                    let t :=
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
                             1, // Address of `ecrecover`.
-                            m, // Start of input.
+                            0x00, // Start of input.
                             0x80, // Size of input.
-                            m, // Start of output.
+                            0x01, // Start of output.
                             0x20 // Size of output.
                         )
-                    )
                     // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if mul(eq(mload(m), signer), returndatasize()) {
+                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
                         isValid := 1
+                        mstore(0x60, 0) // Restore the zero slot.
+                        mstore(0x40, m) // Restore the free memory pointer.
                         break
                     }
                 }
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
+
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
-                mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+                let d := add(m, 0x24)
+                mstore(d, 0x40) // The offset of the `signature` in the calldata.
                 // Copy the `signature` over.
-                let n := add(0x20, signatureLength)
+                let n := add(0x20, mload(signature))
                 pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
                 // forgefmt: disable-next-item
                 isValid := and(
-                    and(
-                        // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                        eq(mload(0x00), f),
-                        // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                        eq(returndatasize(), 0x20)
-                    ),
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(d), f),
                     // Whether the staticcall does not revert.
                     // This must be placed at the end of the `and` clause,
                     // as the arguments are evaluated from right to left.
@@ -73,8 +77,8 @@ library SignatureCheckerLib {
                         gas(), // Remaining gas.
                         signer, // The `signer` address.
                         m, // Offset of calldata in memory.
-                        add(signatureLength, 0x64), // Length of calldata in memory.
-                        0x00, // Offset of returndata.
+                        add(returndatasize(), 0x44), // Length of calldata in memory.
+                        d, // Offset of returndata.
                         0x20 // Length of returndata to write.
                     )
                 )
@@ -97,40 +101,41 @@ library SignatureCheckerLib {
             for { signer := shr(96, shl(96, signer)) } signer {} {
                 let m := mload(0x40)
                 if eq(signature.length, 65) {
-                    mstore(m, hash)
-                    mstore(add(m, 0x20), byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-                    calldatacopy(add(m, 0x40), signature.offset, 0x40) // `r`, `s`.
-                    pop(
+                    mstore(0x00, hash)
+                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(0x40, signature.offset, 0x40) // `r`, `s`.
+                    let t :=
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
                             1, // Address of `ecrecover`.
-                            m, // Start of input.
+                            0x00, // Start of input.
                             0x80, // Size of input.
-                            m, // Start of output.
+                            0x01, // Start of output.
                             0x20 // Size of output.
                         )
-                    )
                     // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if mul(eq(mload(m), signer), returndatasize()) {
+                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
                         isValid := 1
+                        mstore(0x60, 0) // Restore the zero slot.
+                        mstore(0x40, m) // Restore the free memory pointer.
                         break
                     }
                 }
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
+
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
-                mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+                let d := add(m, 0x24)
+                mstore(d, 0x40) // The offset of the `signature` in the calldata.
                 mstore(add(m, 0x44), signature.length)
                 // Copy the `signature` over.
                 calldatacopy(add(m, 0x64), signature.offset, signature.length)
                 // forgefmt: disable-next-item
                 isValid := and(
-                    and(
-                        // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                        eq(mload(0x00), f),
-                        // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                        eq(returndatasize(), 0x20)
-                    ),
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(d), f),
                     // Whether the staticcall does not revert.
                     // This must be placed at the end of the `and` clause,
                     // as the arguments are evaluated from right to left.
@@ -139,7 +144,7 @@ library SignatureCheckerLib {
                         signer, // The `signer` address.
                         m, // Offset of calldata in memory.
                         add(signature.length, 0x64), // Length of calldata in memory.
-                        0x00, // Offset of returndata.
+                        d, // Offset of returndata.
                         0x20 // Length of returndata to write.
                     )
                 )
@@ -156,14 +161,62 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        uint8 v;
-        bytes32 s;
         /// @solidity memory-safe-assembly
         assembly {
-            s := shr(1, shl(1, vs))
-            v := add(shr(255, vs), 27)
+            // Clean the upper 96 bits of `signer` in case they are dirty.
+            for { signer := shr(96, shl(96, signer)) } signer {} {
+                let m := mload(0x40)
+                mstore(0x00, hash)
+                mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                mstore(0x40, r) // `r`.
+                mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                let t :=
+                    staticcall(
+                        gas(), // Amount of gas left for the transaction.
+                        1, // Address of `ecrecover`.
+                        0x00, // Start of input.
+                        0x80, // Size of input.
+                        0x01, // Start of output.
+                        0x20 // Size of output.
+                    )
+                // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+                if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
+                    isValid := 1
+                    mstore(0x60, 0) // Restore the zero slot.
+                    mstore(0x40, m) // Restore the free memory pointer.
+                    break
+                }
+
+                let f := shl(224, 0x1626ba7e)
+                mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+                mstore(add(m, 0x04), hash)
+                let d := add(m, 0x24)
+                mstore(d, 0x40) // The offset of the `signature` in the calldata.
+                mstore(add(m, 0x44), 65) // Length of the signature.
+                mstore(add(m, 0x64), r) // `r`.
+                mstore(add(m, 0x84), mload(0x60)) // `s`.
+                mstore8(add(m, 0xa4), mload(0x20)) // `v`.
+                // forgefmt: disable-next-item
+                isValid := and(
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(d), f),
+                    // Whether the staticcall does not revert.
+                    // This must be placed at the end of the `and` clause,
+                    // as the arguments are evaluated from right to left.
+                    staticcall(
+                        gas(), // Remaining gas.
+                        signer, // The `signer` address.
+                        m, // Offset of calldata in memory.
+                        0xa5, // Length of calldata in memory.
+                        d, // Offset of returndata.
+                        0x20 // Length of returndata to write.
+                    )
+                )
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
+                break
+            }
         }
-        isValid = isValidSignatureNow(signer, hash, v, r, s);
     }
 
     /// @dev Returns whether the signature (`v`, `r`, `s`) is valid for `signer` and `hash`.
@@ -179,41 +232,40 @@ library SignatureCheckerLib {
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
                 let m := mload(0x40)
-                mstore(m, hash)
-                mstore(add(m, 0x20), and(v, 0xff)) // `v`.
-                mstore(add(m, 0x40), r) // `r`.
-                mstore(add(m, 0x60), s) // `s`.
-                pop(
+                mstore(0x00, hash)
+                mstore(0x20, and(v, 0xff)) // `v`.
+                mstore(0x40, r) // `r`.
+                mstore(0x60, s) // `s`.
+                let t :=
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
                         1, // Address of `ecrecover`.
-                        m, // Start of input.
+                        0x00, // Start of input.
                         0x80, // Size of input.
-                        m, // Start of output.
+                        0x01, // Start of output.
                         0x20 // Size of output.
                     )
-                )
                 // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                if mul(eq(mload(m), signer), returndatasize()) {
+                if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
                     isValid := 1
+                    mstore(0x60, 0) // Restore the zero slot.
+                    mstore(0x40, m) // Restore the free memory pointer.
                     break
                 }
+
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
-                mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+                let d := add(m, 0x24)
+                mstore(d, 0x40) // The offset of the `signature` in the calldata.
                 mstore(add(m, 0x44), 65) // Length of the signature.
                 mstore(add(m, 0x64), r) // `r`.
                 mstore(add(m, 0x84), s) // `s`.
                 mstore8(add(m, 0xa4), v) // `v`.
                 // forgefmt: disable-next-item
                 isValid := and(
-                    and(
-                        // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                        eq(mload(0x00), f),
-                        // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                        eq(returndatasize(), 0x20)
-                    ),
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(d), f),
                     // Whether the staticcall does not revert.
                     // This must be placed at the end of the `and` clause,
                     // as the arguments are evaluated from right to left.
@@ -222,10 +274,12 @@ library SignatureCheckerLib {
                         signer, // The `signer` address.
                         m, // Offset of calldata in memory.
                         0xa5, // Length of calldata in memory.
-                        0x00, // Offset of returndata.
+                        d, // Offset of returndata.
                         0x20 // Length of returndata to write.
                     )
                 )
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
                 break
             }
         }
@@ -245,22 +299,18 @@ library SignatureCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            let signatureLength := mload(signature)
             let f := shl(224, 0x1626ba7e)
             mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             mstore(add(m, 0x04), hash)
-            mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+            let d := add(m, 0x24)
+            mstore(d, 0x40) // The offset of the `signature` in the calldata.
             // Copy the `signature` over.
-            let n := add(0x20, signatureLength)
+            let n := add(0x20, mload(signature))
             pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
             // forgefmt: disable-next-item
             isValid := and(
-                and(
-                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x00), f),
-                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                    eq(returndatasize(), 0x20)
-                ),
+                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                eq(mload(d), f),
                 // Whether the staticcall does not revert.
                 // This must be placed at the end of the `and` clause,
                 // as the arguments are evaluated from right to left.
@@ -268,8 +318,8 @@ library SignatureCheckerLib {
                     gas(), // Remaining gas.
                     signer, // The `signer` address.
                     m, // Offset of calldata in memory.
-                    add(signatureLength, 0x64), // Length of calldata in memory.
-                    0x00, // Offset of returndata.
+                    add(returndatasize(), 0x44), // Length of calldata in memory.
+                    d, // Offset of returndata.
                     0x20 // Length of returndata to write.
                 )
             )
@@ -289,18 +339,15 @@ library SignatureCheckerLib {
             let f := shl(224, 0x1626ba7e)
             mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             mstore(add(m, 0x04), hash)
-            mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+            let d := add(m, 0x24)
+            mstore(d, 0x40) // The offset of the `signature` in the calldata.
             mstore(add(m, 0x44), signature.length)
             // Copy the `signature` over.
             calldatacopy(add(m, 0x64), signature.offset, signature.length)
             // forgefmt: disable-next-item
             isValid := and(
-                and(
-                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x00), f),
-                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                    eq(returndatasize(), 0x20)
-                ),
+                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                eq(mload(d), f),
                 // Whether the staticcall does not revert.
                 // This must be placed at the end of the `and` clause,
                 // as the arguments are evaluated from right to left.
@@ -309,7 +356,7 @@ library SignatureCheckerLib {
                     signer, // The `signer` address.
                     m, // Offset of calldata in memory.
                     add(signature.length, 0x64), // Length of calldata in memory.
-                    0x00, // Offset of returndata.
+                    d, // Offset of returndata.
                     0x20 // Length of returndata to write.
                 )
             )
@@ -323,14 +370,35 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        uint8 v;
-        bytes32 s;
         /// @solidity memory-safe-assembly
         assembly {
-            s := shr(1, shl(1, vs))
-            v := add(shr(255, vs), 27)
+            let m := mload(0x40)
+            let f := shl(224, 0x1626ba7e)
+            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            mstore(add(m, 0x04), hash)
+            let d := add(m, 0x24)
+            mstore(d, 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x44), 65) // Length of the signature.
+            mstore(add(m, 0x64), r) // `r`.
+            mstore(add(m, 0x84), shr(1, shl(1, vs))) // `s`.
+            mstore8(add(m, 0xa4), add(shr(255, vs), 27)) // `v`.
+            // forgefmt: disable-next-item
+            isValid := and(
+                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                eq(mload(d), f),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    signer, // The `signer` address.
+                    m, // Offset of calldata in memory.
+                    0xa5, // Length of calldata in memory.
+                    d, // Offset of returndata.
+                    0x20 // Length of returndata to write.
+                )
+            )
         }
-        isValid = isValidERC1271SignatureNow(signer, hash, v, r, s);
     }
 
     /// @dev Returns whether the signature (`v`, `r`, `s`) is valid for `hash`
@@ -346,19 +414,16 @@ library SignatureCheckerLib {
             let f := shl(224, 0x1626ba7e)
             mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
             mstore(add(m, 0x04), hash)
-            mstore(add(m, 0x24), 0x40) // The offset of the `signature` in the calldata.
+            let d := add(m, 0x24)
+            mstore(d, 0x40) // The offset of the `signature` in the calldata.
             mstore(add(m, 0x44), 65) // Length of the signature.
             mstore(add(m, 0x64), r) // `r`.
             mstore(add(m, 0x84), s) // `s`.
             mstore8(add(m, 0xa4), v) // `v`.
             // forgefmt: disable-next-item
             isValid := and(
-                and(
-                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(0x00), f),
-                    // Whether the returndata is exactly 0x20 bytes (1 word) long.
-                    eq(returndatasize(), 0x20)
-                ),
+                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                eq(mload(d), f),
                 // Whether the staticcall does not revert.
                 // This must be placed at the end of the `and` clause,
                 // as the arguments are evaluated from right to left.
@@ -367,7 +432,7 @@ library SignatureCheckerLib {
                     signer, // The `signer` address.
                     m, // Offset of calldata in memory.
                     0xa5, // Length of calldata in memory.
-                    0x00, // Offset of returndata.
+                    d, // Offset of returndata.
                     0x20 // Length of returndata to write.
                 )
             )
