@@ -62,12 +62,7 @@ contract ERC1967Factory {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // The admin slot for a `proxy` is given by:
-    // ```
-    //     mstore(0x0c, address())
-    //     mstore(0x00, proxy)
-    //     let adminSlot := keccak256(0x0c, 0x20)
-    // ```
+    // The admin slot for a `proxy` is `shl(96, proxy)`.
 
     /// @dev The ERC-1967 storage slot for the implementation in the proxy.
     /// `uint256(keccak256("eip1967.proxy.implementation")) - 1`.
@@ -80,29 +75,22 @@ contract ERC1967Factory {
 
     /// @dev Returns the admin of the proxy.
     function adminOf(address proxy) public view returns (address admin) {
-        /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x0c, address())
-            mstore(0x00, proxy)
-            admin := sload(keccak256(0x0c, 0x20))
+            admin := sload(shl(96, proxy))
         }
     }
 
     /// @dev Sets the admin of the proxy.
     /// The caller of this function must be the admin of the proxy on this factory.
     function changeAdmin(address proxy, address admin) public {
-        /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
-            mstore(0x0c, address())
-            mstore(0x00, proxy)
-            let adminSlot := keccak256(0x0c, 0x20)
-            if iszero(eq(sload(adminSlot), caller())) {
+            if iszero(eq(sload(shl(96, proxy)), caller())) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
             // Store the admin for the proxy.
-            sstore(adminSlot, admin)
+            sstore(shl(96, proxy), admin)
             // Emit the {AdminChanged} event.
             log3(0, 0, _ADMIN_CHANGED_EVENT_SIGNATURE, proxy, admin)
         }
@@ -125,12 +113,9 @@ contract ERC1967Factory {
         public
         payable
     {
-        /// @solidity memory-safe-assembly
         assembly {
             // Check if the caller is the admin of the proxy.
-            mstore(0x0c, address())
-            mstore(0x00, proxy)
-            if iszero(eq(sload(keccak256(0x0c, 0x20)), caller())) {
+            if iszero(eq(sload(shl(96, proxy)), caller())) {
                 mstore(0x00, _UNAUTHORIZED_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
@@ -199,7 +184,6 @@ contract ERC1967Factory {
         bytes32 salt,
         bytes calldata data
     ) public payable returns (address proxy) {
-        /// @solidity memory-safe-assembly
         assembly {
             // If the salt does not start with the zero address or the caller.
             if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
@@ -218,13 +202,12 @@ contract ERC1967Factory {
         bool useSalt,
         bytes calldata data
     ) internal returns (address proxy) {
-        bytes memory m = _initCode();
-        /// @solidity memory-safe-assembly
+        bytes32 m = _initCode();
         assembly {
             // Create the proxy.
             switch useSalt
-            case 0 { proxy := create(0, add(m, 0x13), 0x89) }
-            default { proxy := create2(0, add(m, 0x13), 0x89, salt) }
+            case 0 { proxy := create(0, add(m, 0x13), 0x88) }
+            default { proxy := create2(0, add(m, 0x13), 0x88, salt) }
             // Revert if the creation fails.
             if iszero(proxy) {
                 mstore(0x00, _DEPLOYMENT_FAILED_ERROR_SELECTOR)
@@ -248,9 +231,7 @@ contract ERC1967Factory {
             }
 
             // Store the admin for the proxy.
-            mstore(0x0c, address())
-            mstore(0x00, proxy)
-            sstore(keccak256(0x0c, 0x20), admin)
+            sstore(shl(96, proxy), admin)
 
             // Emit the {Deployed} event.
             log4(0, 0, _DEPLOYED_EVENT_SIGNATURE, proxy, implementation, admin)
@@ -260,13 +241,15 @@ contract ERC1967Factory {
     /// @dev Returns the address of the proxy deployed with `salt`.
     function predictDeterministicAddress(bytes32 salt) public view returns (address predicted) {
         bytes32 hash = initCodeHash();
-        /// @solidity memory-safe-assembly
         assembly {
             // Compute and store the bytecode hash.
             mstore8(0x00, 0xff) // Write the prefix.
             mstore(0x35, hash)
             mstore(0x01, shl(96, address()))
             mstore(0x15, salt)
+            // Note: `predicted` has dirty upper 96 bits. We won't clean it here
+            // as it will be automatically cleaned when it is copied into the returndata.
+            // Please clean as needed if used in other inline assembly blocks.
             predicted := keccak256(0x00, 0x55)
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x35, 0)
@@ -276,16 +259,14 @@ contract ERC1967Factory {
     /// @dev Returns the initialization code hash of the proxy.
     /// Used for mining vanity addresses with create2crunch.
     function initCodeHash() public view returns (bytes32 result) {
-        bytes memory m = _initCode();
-        /// @solidity memory-safe-assembly
+        bytes32 m = _initCode();
         assembly {
-            result := keccak256(add(m, 0x13), 0x89)
+            result := keccak256(add(m, 0x13), 0x88)
         }
     }
 
-    /// @dev Returns the initialization code of a proxy created via this factory.
-    function _initCode() internal view returns (bytes memory m) {
-        /// @solidity memory-safe-assembly
+    /// @dev Returns a pointer to the initialization code of a proxy created via this factory.
+    function _initCode() internal view returns (bytes32 m) {
         assembly {
             /**
              * -------------------------------------------------------------------------------------+
@@ -327,8 +308,8 @@ contract ERC1967Factory {
              * 36          | CALLDATASIZE   | cds 0 0             | [0..calldatasize): calldata     |
              * 3d          | RETURNDATASIZE | 0 cds 0 0           | [0..calldatasize): calldata     |
              * 7f slot     | PUSH32 slot    | s 0 cds 0 0         | [0..calldatasize): calldata     |
-             * 54          | SLOAD          | i cds 0 0           | [0..calldatasize): calldata     |
-             * 5a          | GAS            | g i cds 0 0         | [0..calldatasize): calldata     |
+             * 54          | SLOAD          | i 0 cds 0 0         | [0..calldatasize): calldata     |
+             * 5a          | GAS            | g i 0 cds 0 0       | [0..calldatasize): calldata     |
              * f4          | DELEGATECALL   | succ                | [0..calldatasize): calldata     |
              *                                                                                      |
              * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -380,8 +361,8 @@ contract ERC1967Factory {
              * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::::::: |
              * 3d          | RETURNDATASIZE | 0 t 0 0             | [0..t): extra calldata          |
              * 3d          | RETURNDATASIZE | 0 0 t 0 0           | [0..t): extra calldata          |
-             * 35          | CALLDATALOAD   | i t 0 0             | [0..t): extra calldata          |
-             * 5a          | GAS            | g i t 0 0           | [0..t): extra calldata          |
+             * 35          | CALLDATALOAD   | i 0 t 0 0           | [0..t): extra calldata          |
+             * 5a          | GAS            | g i 0 t 0 0         | [0..t): extra calldata          |
              * f4          | DELEGATECALL   | succ                | [0..t): extra calldata          |
              *                                                                                      |
              * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -431,7 +412,6 @@ contract ERC1967Factory {
 
     /// @dev Helper function to return an empty bytes calldata.
     function _emptyData() internal pure returns (bytes calldata data) {
-        /// @solidity memory-safe-assembly
         assembly {
             data.length := 0
         }

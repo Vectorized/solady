@@ -17,8 +17,13 @@ pragma solidity ^0.8.4;
 /// please refer to 0age's ImmutableCreate2Factory deployment instructions at:
 /// https://github.com/ProjectOpenSea/seaport/blob/main/docs/Deployment.md
 ///
-/// Contract verification can be done either via command line or block explorers like Etherscan.
-/// The simplest and most reliable way is via block explorer with single file input.
+/// Contract verification:
+/// - Source code:
+///   https://github.com/Vectorized/solady/blob/5212e50fef1f2ff1b1b5e03a5d276a0d23c02713/src/utils/ERC1967Factory.sol
+///   (The EXACT source code is required. Use the file at the commit instead of the latest copy.)
+/// - Optimization Enabled: Yes with 1000000 runs
+/// - Compiler Version: v0.8.19+commit.7dd6d404
+/// - Other Settings: default evmVersion, MIT license
 library ERC1967FactoryConstants {
     /// @dev The canonical ERC1967Factory address for EVM chains.
     address internal constant ADDRESS = 0x0000000000006396FF2a80c067f99B3d2Ab4Df24;
