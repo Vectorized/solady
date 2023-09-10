@@ -216,7 +216,7 @@ library FixedPointMathLib {
                 k := or(k, shl(4, lt(0xffff, shr(k, v))))
                 k := or(k, shl(3, lt(0xff, shr(k, v))))
                 k := or(k, shl(2, lt(0xf, shr(k, v))))
-                k := sub(or(k, byte(shr(k, v), shl(128, 0x00000101020202020303030303030303))), 96)
+                k := sub(or(k, byte(shr(k, v), hex"00000101020202020303030303030303")), 96)
             }
 
             // Reduce range of x to (1, 2) * 2**96
@@ -596,7 +596,7 @@ library FixedPointMathLib {
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
             r := or(r, shl(2, lt(0xf, shr(r, x))))
-            r := or(r, byte(shr(r, x), shl(128, 0x00000101020202020303030303030303)))
+            r := or(r, byte(shr(r, x), hex"00000101020202020303030303030303"))
         }
     }
 

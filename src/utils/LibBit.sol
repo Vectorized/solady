@@ -24,7 +24,7 @@ library LibBit {
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
             r := or(r, shl(2, lt(0xf, shr(r, x))))
-            r := or(r, byte(shr(r, x), shl(128, 0x00000101020202020303030303030303)))
+            r := or(r, byte(shr(r, x), hex"00000101020202020303030303030303"))
         }
     }
 
@@ -42,7 +42,7 @@ library LibBit {
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
             r := or(r, shl(2, lt(0xf, shr(r, x))))
-            r := sub(t, or(r, byte(shr(r, x), shl(128, 0x00000101020202020303030303030303))))
+            r := sub(t, or(r, byte(shr(r, x), hex"00000101020202020303030303030303")))
         }
     }
 
@@ -66,7 +66,7 @@ library LibBit {
 
             // For the remaining 32 bits, use a De Bruijn lookup.
             // forgefmt: disable-next-item
-            r := or(r, byte(shr(251, mul(shr(r, x), shl(224, 0x077cb531))), 
+            r := or(r, byte(shr(251, mul(shr(r, x), hex"077cb531")),
                 0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09))
         }
     }
