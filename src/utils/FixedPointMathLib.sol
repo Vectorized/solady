@@ -56,9 +56,7 @@ library FixedPointMathLib {
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
             if mul(y, gt(x, div(not(0), y))) {
-                // Store the function selector of `MulWadFailed()`.
-                mstore(0x00, 0xbac65e5b)
-                // Revert with (offset, size).
+                mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
                 revert(0x1c, 0x04)
             }
             z := div(mul(x, y), WAD)
@@ -71,9 +69,7 @@ library FixedPointMathLib {
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
             if mul(y, gt(x, div(not(0), y))) {
-                // Store the function selector of `MulWadFailed()`.
-                mstore(0x00, 0xbac65e5b)
-                // Revert with (offset, size).
+                mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
                 revert(0x1c, 0x04)
             }
             z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
@@ -86,9 +82,7 @@ library FixedPointMathLib {
         assembly {
             // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
             if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
-                // Store the function selector of `DivWadFailed()`.
-                mstore(0x00, 0x7c5f487d)
-                // Revert with (offset, size).
+                mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
                 revert(0x1c, 0x04)
             }
             z := div(mul(x, WAD), y)
@@ -101,9 +95,7 @@ library FixedPointMathLib {
         assembly {
             // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
             if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
-                // Store the function selector of `DivWadFailed()`.
-                mstore(0x00, 0x7c5f487d)
-                // Revert with (offset, size).
+                mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
                 revert(0x1c, 0x04)
             }
             z := add(iszero(iszero(mod(mul(x, WAD), y))), div(mul(x, WAD), y))
@@ -129,9 +121,7 @@ library FixedPointMathLib {
                 // When the result is > (2**255 - 1) / 1e18 we can not represent it as an
                 // int. This happens when x >= floor(log((2**255 - 1) / 1e18) * 1e18) ~ 135.
                 if iszero(slt(x, 135305999368893231589)) {
-                    // Store the function selector of `ExpOverflow()`.
-                    mstore(0x00, 0xa37bfec9)
-                    // Revert with (offset, size).
+                    mstore(0x00, 0xa37bfec9) // `ExpOverflow()`.
                     revert(0x1c, 0x04)
                 }
             }
@@ -193,9 +183,7 @@ library FixedPointMathLib {
             /// @solidity memory-safe-assembly
             assembly {
                 if iszero(sgt(x, 0)) {
-                    // Store the function selector of `LnWadUndefined()`.
-                    mstore(0x00, 0x1615e638)
-                    // Revert with (offset, size).
+                    mstore(0x00, 0x1615e638) // `LnWadUndefined()`.
                     revert(0x1c, 0x04)
                 }
             }
@@ -209,20 +197,18 @@ library FixedPointMathLib {
             int256 k;
             /// @solidity memory-safe-assembly
             assembly {
-                let v := x
-                k := shl(7, lt(0xffffffffffffffffffffffffffffffff, v))
-                k := or(k, shl(6, lt(0xffffffffffffffff, shr(k, v))))
-                k := or(k, shl(5, lt(0xffffffff, shr(k, v))))
-                k := or(k, shl(4, lt(0xffff, shr(k, v))))
-                k := or(k, shl(3, lt(0xff, shr(k, v))))
-                k := or(k, shl(2, lt(0xf, shr(k, v))))
-                k := sub(or(k, byte(shr(k, v), hex"00000101020202020303030303030303")), 96)
+                k := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+                k := or(k, shl(6, lt(0xffffffffffffffff, shr(k, x))))
+                k := or(k, shl(5, lt(0xffffffff, shr(k, x))))
+                k := or(k, shl(4, lt(0xffff, shr(k, x))))
+                k := or(k, shl(3, lt(0xff, shr(k, x))))
+                k := or(k, shl(2, lt(0xf, shr(k, x))))
+                k := sub(or(k, byte(shr(k, x), hex"00000101020202020303030303030303")), 96)
             }
 
             // Reduce range of x to (1, 2) * 2**96
             // ln(2^k * x) = k * ln(2) + ln(x)
-            x <<= uint256(159 - k);
-            x = int256(uint256(x) >> 159);
+            x = int256(uint256(x << uint256(159 - k)) >> 159);
 
             // Evaluate using a (8, 8)-term rational approximation.
             // p is made monic, we will multiply by a scale factor later.
@@ -297,27 +283,20 @@ library FixedPointMathLib {
                 // Handle non-overflow cases, 256 by 256 division.
                 if iszero(prod1) {
                     if iszero(d) {
-                        // Store the function selector of `FullMulDivFailed()`.
-                        mstore(0x00, 0xae47f702)
-                        // Revert with (offset, size).
+                        mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                         revert(0x1c, 0x04)
                     }
                     result := div(prod0, d)
                     break       
                 }
 
-                // Make sure the result is less than `2**256`.
-                // Also prevents `d == 0`.
+                // Make sure the result is less than `2**256`. Also prevents `d == 0`.
                 if iszero(gt(d, prod1)) {
-                    // Store the function selector of `FullMulDivFailed()`.
-                    mstore(0x00, 0xae47f702)
-                    // Revert with (offset, size).
+                    mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                     revert(0x1c, 0x04)
                 }
 
-                ///////////////////////////////////////////////
-                // 512 by 256 division.
-                ///////////////////////////////////////////////
+                /*------------------- 512 by 256 division --------------------*/
 
                 // Make division exact by subtracting the remainder from `[prod1 prod0]`.
                 // Compute remainder using mulmod.
@@ -367,9 +346,7 @@ library FixedPointMathLib {
         assembly {
             if mulmod(x, y, d) {
                 if iszero(add(result, 1)) {
-                    // Store the function selector of `FullMulDivFailed()`.
-                    mstore(0x00, 0xae47f702)
-                    // Revert with (offset, size).
+                    mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                     revert(0x1c, 0x04)
                 }
                 result := add(result, 1)
@@ -384,9 +361,7 @@ library FixedPointMathLib {
         assembly {
             // Equivalent to require(d != 0 && (y == 0 || x <= type(uint256).max / y))
             if iszero(mul(d, iszero(mul(y, gt(x, div(not(0), y)))))) {
-                // Store the function selector of `MulDivFailed()`.
-                mstore(0x00, 0xad251c27)
-                // Revert with (offset, size).
+                mstore(0x00, 0xad251c27) // `MulDivFailed()`.
                 revert(0x1c, 0x04)
             }
             z := div(mul(x, y), d)
@@ -400,9 +375,7 @@ library FixedPointMathLib {
         assembly {
             // Equivalent to require(d != 0 && (y == 0 || x <= type(uint256).max / y))
             if iszero(mul(d, iszero(mul(y, gt(x, div(not(0), y)))))) {
-                // Store the function selector of `MulDivFailed()`.
-                mstore(0x00, 0xad251c27)
-                // Revert with (offset, size).
+                mstore(0x00, 0xad251c27) // `MulDivFailed()`.
                 revert(0x1c, 0x04)
             }
             z := add(iszero(iszero(mod(mul(x, y), d))), div(mul(x, y), d))
@@ -415,9 +388,7 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(d) {
-                // Store the function selector of `DivFailed()`.
-                mstore(0x00, 0x65244e4e)
-                // Revert with (offset, size).
+                mstore(0x00, 0x65244e4e) // `DivFailed()`.
                 revert(0x1c, 0x04)
             }
             z := add(iszero(iszero(mod(x, d))), div(x, d))
@@ -437,42 +408,29 @@ library FixedPointMathLib {
     function rpow(uint256 x, uint256 y, uint256 b) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // `0 ** 0 = 1`. Otherwise, `0 ** n = 0`.
-            z := mul(b, iszero(y))
+            z := mul(b, iszero(y)) // `0 ** 0 = 1`. Otherwise, `0 ** n = 0`.
             if x {
-                // `z = isEven(y) ? scale : x`
-                z := xor(b, mul(xor(b, x), and(y, 1)))
-                // Divide `b` by 2.
-                let half := shr(1, b)
+                z := xor(b, mul(xor(b, x), and(y, 1))) // `z = isEven(y) ? scale : x`
+                let half := shr(1, b) // Divide `b` by 2.
                 // Divide `y` by 2 every iteration.
                 for { y := shr(1, y) } y { y := shr(1, y) } {
-                    // Store x squared.
-                    let xx := mul(x, x)
-                    // Round to the nearest number.
-                    let xxRound := add(xx, half)
-                    // Revert if `xx + half` overflowed,
-                    // or if `x ** 2` overflows.
+                    let xx := mul(x, x) // Store x squared.
+                    let xxRound := add(xx, half) // Round to the nearest number.
+                    // Revert if `xx + half` overflowed, or if `x ** 2` overflows.
                     if or(lt(xxRound, xx), shr(128, x)) {
-                        // Store the function selector of `RPowOverflow()`.
-                        mstore(0x00, 0x49f7642b)
-                        // Revert with (offset, size).
+                        mstore(0x00, 0x49f7642b) // `RPowOverflow()`.
                         revert(0x1c, 0x04)
                     }
-                    // Set `x` to scaled `xxRound`.
-                    x := div(xxRound, b)
+                    x := div(xxRound, b) // Set `x` to scaled `xxRound`.
                     // If `y` is odd:
                     if and(y, 1) {
-                        // Compute `z * x`.
-                        let zx := mul(z, x)
-                        // Round to the nearest number.
-                        let zxRound := add(zx, half)
+                        let zx := mul(z, x) // Compute `z * x`.
+                        let zxRound := add(zx, half) // Round to the nearest number.
                         // If `z * x` overflowed or `zx + half` overflowed:
                         if or(xor(div(zx, x), z), lt(zxRound, zx)) {
                             // Revert if `x` is non-zero.
                             if iszero(iszero(x)) {
-                                // Store the function selector of `RPowOverflow()`.
-                                mstore(0x00, 0x49f7642b)
-                                // Revert with (offset, size).
+                                mstore(0x00, 0x49f7642b) // `RPowOverflow()`.
                                 revert(0x1c, 0x04)
                             }
                         }
@@ -494,9 +452,8 @@ library FixedPointMathLib {
             // This segment is to get a reasonable initial estimate for the Babylonian method. With a bad
             // start, the correct # of bits increases ~linearly each iteration instead of ~quadratically.
 
-            // Let `y = x / 2**r`.
-            // We check `y >= 2**(k + 8)` but shift right by `k` bits
-            // each branch to ensure that if `x >= 256`, then `y >= 256`.
+            // Let `y = x / 2**r`. We check `y >= 2**(k + 8)`
+            // but shift right by `k` bits to ensure that if `x >= 256`, then `y >= 256`.
             let r := shl(7, lt(0xffffffffffffffffffffffffffffffffff, x))
             r := or(r, shl(6, lt(0xffffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffffff, shr(r, x))))
@@ -535,8 +492,6 @@ library FixedPointMathLib {
             // If `x+1` is a perfect square, the Babylonian method cycles between
             // `floor(sqrt(x))` and `ceil(sqrt(x))`. This statement ensures we return floor.
             // See: https://en.wikipedia.org/wiki/Integer_square_root#Using_only_integer_division
-            // Since the ceil is rare, we save gas on the assignment and repeat division in the rare case.
-            // If you don't care whether the floor or ceil square root is returned, you can remove this statement.
             z := sub(z, lt(div(x, z), z))
         }
     }
@@ -572,9 +527,7 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(x, 58)) {
-                // Store the function selector of `FactorialOverflow()`.
-                mstore(0x00, 0xaba0f2a2)
-                // Revert with (offset, size).
+                mstore(0x00, 0xaba0f2a2) // `FactorialOverflow()`.
                 revert(0x1c, 0x04)
             }
             for { result := 1 } x {} {
