@@ -57,24 +57,6 @@ contract MockERC20 is ERC20 {
         return super.transferFrom(_brutalized(from), _brutalized(to), amount);
     }
 
-    function increaseAllowance(address spender, uint256 difference)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        return super.increaseAllowance(_brutalized(spender), difference);
-    }
-
-    function decreaseAllowance(address spender, uint256 difference)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        return super.decreaseAllowance(_brutalized(spender), difference);
-    }
-
     function _brutalized(address a) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
