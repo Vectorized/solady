@@ -219,7 +219,7 @@
     // See: https://github.com/vectorized/solady/blob/main/src/utils/ERC1967Factory.sol
 
     /**
-     * ERC1967Factory canonical address and abi.
+     * ERC1967Factory canonical address and ABI.
      * @namespace
      * @alias module:solady.ERC1967Factory
      */

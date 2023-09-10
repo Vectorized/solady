@@ -6,6 +6,21 @@ pragma solidity ^0.8.4;
 /// @author Adapted from clones with immutable args by zefram.eth, Saw-mon & Natalie
 /// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
 abstract contract Clone {
+    /// @dev Reads all of the immutable args.
+    function _getArgBytes() internal pure returns (bytes memory arg) {
+        uint256 offset = _getImmutableArgsOffset();
+        /// @solidity memory-safe-assembly
+        assembly {
+            arg := mload(0x40)
+            let length := sub(calldatasize(), add(2, offset)) // 2 bytes are used for the length.
+            mstore(arg, length) // Store the length.
+            calldatacopy(add(arg, 0x20), offset, length)
+            let o := add(add(arg, 0x20), length)
+            mstore(o, 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(o, 0x20)) // Allocate the memory.
+        }
+    }
+
     /// @dev Reads an immutable arg with type bytes.
     function _getArgBytes(uint256 argOffset, uint256 length)
         internal

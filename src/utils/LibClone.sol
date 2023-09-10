@@ -104,8 +104,6 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             instance := create(0, 0x0c, 0x35)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -113,6 +111,8 @@ library LibClone {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x21, 0)
         }
     }
 
@@ -127,8 +127,6 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             instance := create2(0, 0x0c, 0x35, salt)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -136,6 +134,8 @@ library LibClone {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x21, 0)
         }
     }
 
@@ -155,6 +155,7 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic clone of `implementation`,
     /// with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(address implementation, bytes32 salt, address deployer)
         internal
         pure
@@ -234,8 +235,6 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             instance := create(0, 0x0e, 0x36)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -243,6 +242,8 @@ library LibClone {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x24, 0)
         }
     }
 
@@ -257,8 +258,6 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             instance := create2(0, 0x0e, 0x36, salt)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -266,6 +265,8 @@ library LibClone {
                 // Revert with (offset, size).
                 revert(0x1c, 0x04)
             }
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x24, 0)
         }
     }
 
@@ -285,6 +286,7 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic PUSH0 clone of `implementation`,
     /// with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress_PUSH0(
         address implementation,
         bytes32 salt,
@@ -300,6 +302,9 @@ library LibClone {
 
     /// @dev Deploys a minimal proxy with `implementation`,
     /// using immutable arguments encoded in `data`.
+    ///
+    /// Note: This implementation of CWIA differs from the original implementation.
+    /// If the calldata is empty, it will emit a `ReceiveETH(uint256)` event and skip the `DELEGATECALL`.
     function clone(address implementation, bytes memory data) internal returns (address instance) {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
@@ -407,8 +412,10 @@ library LibClone {
                 sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
             )
             mstore(
-                sub(data, 0x5a),
-                or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f)
+                // Do a out-of-gas revert if `extraLength` is too big. 0xffff - 0x62 + 0x01 = 0xff9e.
+                // The actual EVM limit may be smaller and may change over time.
+                sub(data, add(0x59, lt(extraLength, 0xff9e))),
+                or(shl(0x78, add(extraLength, 0x62)), 0xfd6100003d81600a3d39f336602c57343d527f)
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
@@ -434,6 +441,9 @@ library LibClone {
 
     /// @dev Deploys a deterministic clone of `implementation`,
     /// using immutable arguments encoded in `data`, with `salt`.
+    ///
+    /// Note: This implementation of CWIA differs from the original implementation.
+    /// If the calldata is empty, it will emit a `ReceiveETH(uint256)` event and skip the `DELEGATECALL`.
     function cloneDeterministic(address implementation, bytes memory data, bytes32 salt)
         internal
         returns (address instance)
@@ -464,8 +474,10 @@ library LibClone {
                 sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
             )
             mstore(
-                sub(data, 0x5a),
-                or(shl(0x78, add(extraLength, 0x62)), 0x6100003d81600a3d39f336602c57343d527f)
+                // Do a out-of-gas revert if `extraLength` is too big. 0xffff - 0x62 + 0x01 = 0xff9e.
+                // The actual EVM limit may be smaller and may change over time.
+                sub(data, add(0x59, lt(extraLength, 0xff9e))),
+                or(shl(0x78, add(extraLength, 0x62)), 0xfd6100003d81600a3d39f336602c57343d527f)
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
@@ -506,6 +518,10 @@ library LibClone {
             let dataEnd := add(add(data, 0x20), dataLength)
             let mAfter1 := mload(dataEnd)
 
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x62 = 0xff9b.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xff9b))
+
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
 
@@ -542,6 +558,7 @@ library LibClone {
 
     /// @dev Returns the address of the deterministic clone of
     /// `implementation` using immutable arguments encoded in `data`, with `salt`, by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(
         address implementation,
         bytes memory data,
@@ -558,6 +575,7 @@ library LibClone {
 
     /// @dev Returns the address when a contract with initialization code hash,
     /// `hash`, is deployed with `salt`, by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(bytes32 hash, bytes32 salt, address deployer)
         internal
         pure

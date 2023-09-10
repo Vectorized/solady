@@ -15,16 +15,6 @@ contract LibCloneTest is SoladyTest, Clone {
 
     mapping(bytes32 => bool) saltIsUsed;
 
-    function setUp() public {
-        // Mini test to check if `_thisBrutalized()` returns a word with brutalized upper 96 bits.
-        address t = _thisBrutalized();
-        /// @solidity memory-safe-assembly
-        assembly {
-            if iszero(shr(160, t)) { revert(0, 0) }
-        }
-        value += 1;
-    }
-
     function setValue(uint256 value_) public {
         value = value_;
     }
@@ -77,7 +67,7 @@ contract LibCloneTest is SoladyTest, Clone {
     }
 
     function testClone(uint256 value_) public {
-        address clone = LibClone.clone(_thisBrutalized());
+        address clone = LibClone.clone(address(this));
         _shouldBehaveLikeClone(clone, value_);
     }
 
@@ -88,29 +78,28 @@ contract LibCloneTest is SoladyTest, Clone {
     function testCloneDeterministic(uint256 value_, bytes32 salt) public {
         if (saltIsUsed[salt]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
-            this.cloneDeterministic(_thisBrutalized(), salt);
+            this.cloneDeterministic(address(this), salt);
             return;
         }
 
-        address clone = this.cloneDeterministic(_thisBrutalized(), salt);
+        address clone = this.cloneDeterministic(address(this), salt);
         saltIsUsed[salt] = true;
 
         _shouldBehaveLikeClone(clone, value_);
 
-        address predicted =
-            LibClone.predictDeterministicAddress(_thisBrutalized(), salt, _thisBrutalized());
+        address predicted = LibClone.predictDeterministicAddress(address(this), salt, address(this));
         assertEq(clone, predicted);
     }
 
     function cloneDeterministic(address implementation, bytes32 salt) external returns (address) {
-        return LibClone.cloneDeterministic(implementation, salt);
+        return LibClone.cloneDeterministic(_brutalized(implementation), salt);
     }
 
     function cloneDeterministic(address implementation, bytes calldata data, bytes32 salt)
         external
         returns (address)
     {
-        return LibClone.cloneDeterministic(implementation, data, salt);
+        return LibClone.cloneDeterministic(_brutalized(implementation), data, salt);
     }
 
     function testCloneDeterministicRevertsIfAddressAlreadyUsed() public {
@@ -195,10 +184,10 @@ contract LibCloneTest is SoladyTest, Clone {
         uint256[] memory argUint256Array,
         uint64 argUint64,
         uint8 argUint8
-    ) public brutalizeMemory {
+    ) public {
         bytes memory data =
             abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
-        LibCloneTest clone = LibCloneTest(LibClone.clone(_thisBrutalized(), data));
+        LibCloneTest clone = LibCloneTest(LibClone.clone(address(this), data));
         _shouldBehaveLikeClone(address(clone), value_);
 
         // For avoiding stack too deep. Also, no risk of overflow.
@@ -231,7 +220,7 @@ contract LibCloneTest is SoladyTest, Clone {
         uint64 argUint64,
         uint8 argUint8,
         uint256 deposit
-    ) public brutalizeMemory {
+    ) public {
         bytes memory data;
         bytes32 salt;
 
@@ -254,7 +243,7 @@ contract LibCloneTest is SoladyTest, Clone {
             bytes32 saltKey = keccak256(abi.encode(data, salt));
             if (saltIsUsed[saltKey]) {
                 vm.expectRevert(LibClone.DeploymentFailed.selector);
-                LibCloneTest(this.cloneDeterministic(_thisBrutalized(), data, salt));
+                LibCloneTest(this.cloneDeterministic(address(this), data, salt));
                 return;
             }
             saltIsUsed[saltKey] = true;
@@ -262,7 +251,7 @@ contract LibCloneTest is SoladyTest, Clone {
 
         bytes32 dataHashBefore = keccak256(data);
 
-        LibCloneTest clone = LibCloneTest(this.cloneDeterministic(_thisBrutalized(), data, salt));
+        LibCloneTest clone = LibCloneTest(this.cloneDeterministic(address(this), data, salt));
         // Check that memory management is done properly.
         assertEq(keccak256(data), dataHashBefore);
 
@@ -290,9 +279,8 @@ contract LibCloneTest is SoladyTest, Clone {
         }
 
         {
-            address predicted = LibClone.predictDeterministicAddress(
-                _thisBrutalized(), data, salt, _thisBrutalized()
-            );
+            address predicted =
+                LibClone.predictDeterministicAddress(address(this), data, salt, address(this));
             assertEq(address(clone), predicted);
         }
 
@@ -336,10 +324,42 @@ contract LibCloneTest is SoladyTest, Clone {
         LibClone.checkStartsWithCaller(salt);
     }
 
-    function _thisBrutalized() internal view returns (address result) {
+    function _brutalized(address a) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(shl(160, add(timestamp(), 123456789)), address())
+            result := or(a, shl(160, gas()))
+        }
+    }
+
+    function testCloneWithImmutableArgsRevertsIfDataTooBig() public {
+        uint256 n = 0xff9b;
+        bytes memory data = _dummyData(n);
+
+        address clone = this.cloneDeterministic(address(this), data, bytes32(gasleft()));
+        _shouldBehaveLikeClone(clone, 1);
+        assertEq(LibCloneTest(clone).argBytesHash(), keccak256(data));
+
+        vm.expectRevert();
+        this.cloneDeterministic(address(this), _dummyData(n + 1), bytes32(gasleft()));
+    }
+
+    function argBytesHash() public pure returns (bytes32) {
+        return keccak256(_getArgBytes());
+    }
+
+    function _dummyData(uint256 n) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, n)
+            mstore(0x00, n)
+            mstore(0x20, 1)
+            mstore(add(0x20, result), keccak256(0x00, 0x40))
+            mstore(0x20, 2)
+            mstore(add(add(0x20, result), n), keccak256(0x00, 0x40))
+            mstore(0x20, 3)
+            mstore(add(result, n), keccak256(0x00, 0x40))
+            mstore(0x40, add(add(0x20, result), n))
         }
     }
 }
