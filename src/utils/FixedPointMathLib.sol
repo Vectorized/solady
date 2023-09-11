@@ -266,7 +266,6 @@ library FixedPointMathLib {
     function fullMulDiv(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
             for {} 1 {} {
                 // 512-bit multiply `[prod1 prod0] = x * y`.
                 // Compute the product mod `2**256` and mod `2**256 - 1`
@@ -287,7 +286,7 @@ library FixedPointMathLib {
                         revert(0x1c, 0x04)
                     }
                     result := div(prod0, d)
-                    break       
+                    break
                 }
 
                 // Make sure the result is less than `2**256`. Also prevents `d == 0`.
@@ -345,11 +344,11 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             if mulmod(x, y, d) {
-                if iszero(add(result, 1)) {
+                result := add(result, 1)
+                if iszero(result) {
                     mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                     revert(0x1c, 0x04)
                 }
-                result := add(result, 1)
             }
         }
     }
@@ -434,8 +433,7 @@ library FixedPointMathLib {
                                 revert(0x1c, 0x04)
                             }
                         }
-                        // Return properly scaled `zxRound`.
-                        z := div(zxRound, b)
+                        z := div(zxRound, b) // Return properly scaled `zxRound`.
                     }
                 }
             }
@@ -530,10 +528,7 @@ library FixedPointMathLib {
                 mstore(0x00, 0xaba0f2a2) // `FactorialOverflow()`.
                 revert(0x1c, 0x04)
             }
-            for { result := 1 } x {} {
-                result := mul(result, x)
-                x := sub(x, 1)
-            }
+            for { result := 1 } x { x := sub(x, 1) } { result := mul(result, x) }
         }
     }
 
@@ -639,8 +634,7 @@ library FixedPointMathLib {
     function abs(int256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            let mask := sub(0, shr(255, x))
-            z := xor(mask, add(mask, x))
+            z := xor(sub(0, shr(255, x)), add(sub(0, shr(255, x)), x))
         }
     }
 
@@ -648,8 +642,7 @@ library FixedPointMathLib {
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            let a := sub(y, x)
-            z := xor(a, mul(xor(a, sub(x, y)), sgt(x, y)))
+            z := xor(mul(xor(sub(y, x), sub(x, y)), sgt(x, y)), sub(y, x))
         }
     }
 
@@ -691,19 +684,26 @@ library FixedPointMathLib {
         pure
         returns (uint256 z)
     {
-        z = min(max(x, minValue), maxValue);
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := xor(x, mul(xor(x, minValue), gt(minValue, x)))
+            z := xor(z, mul(xor(z, maxValue), lt(maxValue, z)))
+        }
     }
 
     /// @dev Returns `x`, bounded to `minValue` and `maxValue`.
     function clamp(int256 x, int256 minValue, int256 maxValue) internal pure returns (int256 z) {
-        z = min(max(x, minValue), maxValue);
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := xor(x, mul(xor(x, minValue), sgt(minValue, x)))
+            z := xor(z, mul(xor(z, maxValue), slt(maxValue, z)))
+        }
     }
 
     /// @dev Returns greatest common divisor of `x` and `y`.
     function gcd(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
             for { z := x } y {} {
                 let t := y
                 y := mod(z, y)
