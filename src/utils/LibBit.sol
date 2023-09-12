@@ -16,9 +16,7 @@ library LibBit {
     function fls(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            r := shl(8, iszero(x))
-
-            r := or(r, shl(7, lt(0xffffffffffffffffffffffffffffffff, x)))
+            r := or(shl(8, iszero(x)), shl(7, lt(0xffffffffffffffffffffffffffffffff, x)))
             r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
@@ -34,15 +32,15 @@ library LibBit {
     function clz(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            let t := add(iszero(x), 255)
-
             r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
             r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
             r := or(r, shl(2, lt(0xf, shr(r, x))))
-            r := sub(t, or(r, byte(shr(r, x), hex"00000101020202020303030303030303")))
+            // forgefmt: disable-next-item
+            r := add(iszero(x), xor(255,
+                or(r, byte(shr(r, x), hex"00000101020202020303030303030303"))))
         }
     }
 
@@ -55,18 +53,16 @@ library LibBit {
     function ffs(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            r := shl(8, iszero(x))
-
             // Isolate the least significant bit.
-            x := and(x, add(not(x), 1))
+            let b := and(x, add(not(x), 1))
 
-            r := or(r, shl(7, lt(0xffffffffffffffffffffffffffffffff, x)))
-            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
-            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            r := or(shl(8, iszero(x)), shl(7, lt(0xffffffffffffffffffffffffffffffff, b)))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, b))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, b))))
 
             // For the remaining 32 bits, use a De Bruijn lookup.
             // forgefmt: disable-next-item
-            r := or(r, byte(and(div(0xd76453e0, shr(r, x)), 0x1f),
+            r := or(r, byte(and(div(0xd76453e0, shr(r, b)), 0x1f),
                 0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
         }
     }
