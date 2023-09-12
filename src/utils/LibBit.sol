@@ -66,8 +66,8 @@ library LibBit {
 
             // For the remaining 32 bits, use a De Bruijn lookup.
             // forgefmt: disable-next-item
-            r := or(r, byte(shr(251, mul(shr(r, x), hex"077cb531")),
-                0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09))
+            r := or(r, byte(and(div(0xd76453e0, shr(r, x)), 0x1f),
+                0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
         }
     }
 
