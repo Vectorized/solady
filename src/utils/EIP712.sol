@@ -35,34 +35,30 @@ abstract contract EIP712 {
     /// or if the chain id changes due to a hard fork,
     /// the domain separator will be seamlessly calculated on-the-fly.
     constructor() {
-        if (_domainNameAndVersionMayChange()) {
-            _cachedThis = address(0);
-            _cachedChainId = 0;
-            _cachedNameHash = bytes32(0);
-            _cachedVersionHash = bytes32(0);
-            _cachedDomainSeparator = bytes32(0);
-            return;
-        }
-
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
 
-        (string memory name, string memory version) = _domainNameAndVersion();
-        bytes32 nameHash = keccak256(bytes(name));
-        bytes32 versionHash = keccak256(bytes(version));
+        string memory name;
+        string memory version;
+        if (!_domainNameAndVersionMayChange()) (name, version) = _domainNameAndVersion();
+        bytes32 nameHash = _domainNameAndVersionMayChange() ? bytes32(0) : keccak256(bytes(name));
+        bytes32 versionHash =
+            _domainNameAndVersionMayChange() ? bytes32(0) : keccak256(bytes(version));
         _cachedNameHash = nameHash;
         _cachedVersionHash = versionHash;
 
         bytes32 separator;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let m := mload(0x40) // Load the free memory pointer.
-            mstore(m, _DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), nameHash)
-            mstore(add(m, 0x40), versionHash)
-            mstore(add(m, 0x60), chainid())
-            mstore(add(m, 0x80), address())
-            separator := keccak256(m, 0xa0)
+        if (!_domainNameAndVersionMayChange()) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                let m := mload(0x40) // Load the free memory pointer.
+                mstore(m, _DOMAIN_TYPEHASH)
+                mstore(add(m, 0x20), nameHash)
+                mstore(add(m, 0x40), versionHash)
+                mstore(add(m, 0x60), chainid())
+                mstore(add(m, 0x80), address())
+                separator := keccak256(m, 0xa0)
+            }
         }
         _cachedDomainSeparator = separator;
     }
