@@ -35,6 +35,15 @@ abstract contract EIP712 {
     /// or if the chain id changes due to a hard fork,
     /// the domain separator will be seamlessly calculated on-the-fly.
     constructor() {
+        if (_domainNameAndVersionMayChange()) {
+            _cachedThis = address(0);
+            _cachedChainId = 0;
+            _cachedNameHash = bytes32(0);
+            _cachedVersionHash = bytes32(0);
+            _cachedDomainSeparator = bytes32(0);
+            return;
+        }
+
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
 
@@ -76,7 +85,7 @@ abstract contract EIP712 {
     /// ```
     ///
     /// Note: If the returned result may change after the contract has been deployed,
-    /// please override `_domainNameAndVersionMayChange()` to return true.
+    /// you must override `_domainNameAndVersionMayChange()` to return true.
     function _domainNameAndVersion()
         internal
         view
@@ -86,9 +95,7 @@ abstract contract EIP712 {
     /// @dev Returns if `_domainNameAndVersion()` may change
     /// after the contract has been deployed (i.e. after the constructor).
     /// Default: false.
-    function _domainNameAndVersionMayChange() internal pure virtual returns (bool) {
-        return false;
-    }
+    function _domainNameAndVersionMayChange() internal pure virtual returns (bool result) {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
@@ -170,8 +177,8 @@ abstract contract EIP712 {
 
     /// @dev Returns the EIP-712 domain separator.
     function _buildDomainSeparator() private view returns (bytes32 separator) {
-        bytes32 nameHash = _cachedNameHash;
-        bytes32 versionHash = _cachedVersionHash;
+        bytes32 nameHash;
+        bytes32 versionHash;
         if (_domainNameAndVersionMayChange()) {
             (string memory name, string memory version) = _domainNameAndVersion();
             nameHash = keccak256(bytes(name));

@@ -3,15 +3,20 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {MockEIP712} from "./utils/mocks/MockEIP712.sol";
+import {MockEIP712Dynamic} from "./utils/mocks/MockEIP712Dynamic.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
 contract EIP712Test is SoladyTest {
     MockEIP712 mock;
     MockEIP712 mockClone;
+    MockEIP712Dynamic mockDynamic;
+    MockEIP712Dynamic mockDynamicClone;
 
     function setUp() public {
         mock = new MockEIP712();
         mockClone = MockEIP712(LibClone.clone(address(mock)));
+        mockDynamic = new MockEIP712Dynamic("Milady", "1");
+        mockDynamicClone = MockEIP712Dynamic(LibClone.clone(address(mockDynamic)));
     }
 
     function testHashTypedData() public {
@@ -20,6 +25,14 @@ contract EIP712Test is SoladyTest {
 
     function testHashTypedDataOnClone() public {
         _testHashTypedDataOnClone(mockClone);
+    }
+
+    function testHashTypedDataOnDynamic() public {
+        _testHashTypedDataOnClone(MockEIP712(address(mockDynamic)));
+    }
+
+    function testHashTypedDataOnCloneDynamic() public {
+        _testHashTypedDataOnClone(MockEIP712(address(mockDynamicClone)));
     }
 
     function testHashTypedDataWithChaindIdChange() public {
@@ -32,6 +45,18 @@ contract EIP712Test is SoladyTest {
         _testHashTypedDataOnClone(mockClone);
         vm.chainId(32123);
         _testHashTypedDataOnClone(mockClone);
+    }
+
+    function testHashTypedDataOnDynamicWithChaindIdChange() public {
+        _testHashTypedDataOnClone(MockEIP712(address(mockDynamic)));
+        vm.chainId(32123);
+        _testHashTypedDataOnClone(MockEIP712(address(mockDynamic)));
+    }
+
+    function testHashTypedDataOnCloneDynamicWithChaindIdChange() public {
+        _testHashTypedDataOnClone(MockEIP712(address(mockDynamicClone)));
+        vm.chainId(32123);
+        _testHashTypedDataOnClone(MockEIP712(address(mockDynamicClone)));
     }
 
     function _testHashTypedDataOnClone(MockEIP712 mockToTest) internal {
