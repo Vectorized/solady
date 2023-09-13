@@ -35,6 +35,8 @@ abstract contract EIP712 {
     /// or if the chain id changes due to a hard fork,
     /// the domain separator will be seamlessly calculated on-the-fly.
     constructor() {
+        if (_domainNameAndVersionMayChange()) return;
+
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
 
@@ -74,11 +76,21 @@ abstract contract EIP712 {
     ///         version = "1";
     ///     }
     /// ```
+    ///
+    /// Note: If the returned result may change after the contract has been deployed,
+    /// please override `_domainNameAndVersionMayChange()` to return true.
     function _domainNameAndVersion()
         internal
-        pure
+        view
         virtual
         returns (string memory name, string memory version);
+
+    /// @dev Returns if `_domainNameAndVersion()` may change
+    /// after the contract has been deployed (i.e. after the constructor).
+    /// Default: false.
+    function _domainNameAndVersionMayChange() internal pure virtual returns (bool) {
+        return false;
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
@@ -86,9 +98,11 @@ abstract contract EIP712 {
 
     /// @dev Returns the EIP-712 domain separator.
     function _domainSeparator() internal view virtual returns (bytes32 separator) {
-        separator = _cachedDomainSeparator;
-        if (_cachedDomainSeparatorInvalidated()) {
+        if (_domainNameAndVersionMayChange()) {
             separator = _buildDomainSeparator();
+        } else {
+            separator = _cachedDomainSeparator;
+            if (_cachedDomainSeparatorInvalidated()) separator = _buildDomainSeparator();
         }
     }
 
@@ -106,9 +120,12 @@ abstract contract EIP712 {
     ///     address signer = ECDSA.recover(digest, signature);
     /// ```
     function _hashTypedData(bytes32 structHash) internal view virtual returns (bytes32 digest) {
-        bytes32 separator = _cachedDomainSeparator;
-        if (_cachedDomainSeparatorInvalidated()) {
+        bytes32 separator;
+        if (_domainNameAndVersionMayChange()) {
             separator = _buildDomainSeparator();
+        } else {
+            separator = _cachedDomainSeparator;
+            if (_cachedDomainSeparatorInvalidated()) separator = _buildDomainSeparator();
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -157,6 +174,14 @@ abstract contract EIP712 {
     function _buildDomainSeparator() private view returns (bytes32 separator) {
         bytes32 nameHash = _cachedNameHash;
         bytes32 versionHash = _cachedVersionHash;
+        if (_domainNameAndVersionMayChange()) {
+            (string memory name, string memory version) = _domainNameAndVersion();
+            nameHash = keccak256(bytes(name));
+            versionHash = keccak256(bytes(version));
+        } else {
+            nameHash = _cachedNameHash;
+            versionHash = _cachedVersionHash;
+        }
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Load the free memory pointer.
