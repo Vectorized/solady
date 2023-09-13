@@ -35,8 +35,6 @@ abstract contract EIP712 {
     /// or if the chain id changes due to a hard fork,
     /// the domain separator will be seamlessly calculated on-the-fly.
     constructor() {
-        if (_domainNameAndVersionMayChange()) return;
-
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
 
