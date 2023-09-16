@@ -5,7 +5,8 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/EIP712.sol)
 /// @author Modified from Solbase (https://github.com/Sol-DAO/solbase/blob/main/src/utils/EIP712.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/EIP712.sol)
-/// Note, this implementation:
+///
+/// @dev Note, this implementation:
 /// - Uses `address(this)` for the `verifyingContract` field.
 /// - Does NOT use the optional EIP-712 salt.
 /// - Does NOT use any EIP-712 extensions.
