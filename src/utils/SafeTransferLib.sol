@@ -6,7 +6,7 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SafeTransferLib.sol)
 ///
 /// @dev Note:
-/// - For ETH transfers, please use `forceSafeTransferETH` for gas griefing protection.
+/// - For ETH transfers, please use `forceSafeTransferETH` for DoS protection.
 /// - For ERC20s, this implementation won't check that a token has code,
 ///   responsibility is delegated to the caller.
 library SafeTransferLib {
@@ -41,7 +41,7 @@ library SafeTransferLib {
     /*                       ETH OPERATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // If gas griefing protection is needed, please use the force variants.
+    // If the ETH transfer MUST succeed with a reasonable gas budget, use the force variants.
     //
     // The regular variants:
     // - Forwards all remaining gas to the target.
