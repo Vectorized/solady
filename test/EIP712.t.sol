@@ -100,20 +100,43 @@ contract EIP712Test is SoladyTest {
         _testDomainSeparator(mockClone);
     }
 
-    function _testDomainSeparator(MockEIP712 mockToTest) internal {
+    function testDomainSeparatorOnDynamicWithChainIdChange() public {
+        _testDomainSeparator(MockEIP712(address(mockDynamic)));
+        vm.chainId(32123);
+        _testDomainSeparator(MockEIP712(address(mockDynamic)));
+        mockDynamic.setDomainNameAndVersion("Remilio", "2");
+        _testDomainSeparator(MockEIP712(address(mockDynamic)), "Remilio", "2");
+    }
+
+    function testDomainSeparatorOnCloneDynamicWithChainIdChange() public {
+        mockDynamicClone.setDomainNameAndVersion("Milady", "1");
+        _testDomainSeparator(MockEIP712(address(mockDynamicClone)));
+        vm.chainId(32123);
+        _testDomainSeparator(MockEIP712(address(mockDynamicClone)));
+        mockDynamicClone.setDomainNameAndVersion("Remilio", "2");
+        _testDomainSeparator(MockEIP712(address(mockDynamicClone)), "Remilio", "2");
+    }
+
+    function _testDomainSeparator(MockEIP712 mockToTest, bytes memory name, bytes memory version)
+        internal
+    {
         bytes32 expectedDomainSeparator = keccak256(
             abi.encode(
                 keccak256(
                     "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
                 ),
-                keccak256("Milady"),
-                keccak256("1"),
+                keccak256(name),
+                keccak256(version),
                 block.chainid,
                 address(mockToTest)
             )
         );
 
         assertEq(mockToTest.DOMAIN_SEPARATOR(), expectedDomainSeparator);
+    }
+
+    function _testDomainSeparator(MockEIP712 mockToTest) internal {
+        _testDomainSeparator(mockToTest, "Milady", "1");
     }
 
     function testEIP5267() public {

@@ -14,6 +14,11 @@ contract MockEIP712Dynamic is EIP712 {
         _version = version;
     }
 
+    function setDomainNameAndVersion(string memory name, string memory version) public {
+        _name = name;
+        _version = version;
+    }
+
     function _domainNameAndVersion()
         internal
         view
