@@ -38,22 +38,27 @@ abstract contract EIP712 {
         _cachedThis = address(this);
         _cachedChainId = block.chainid;
 
-        (string memory name, string memory version) = _domainNameAndVersion();
-        bytes32 nameHash = keccak256(bytes(name));
-        bytes32 versionHash = keccak256(bytes(version));
+        string memory name;
+        string memory version;
+        if (!_domainNameAndVersionMayChange()) (name, version) = _domainNameAndVersion();
+        bytes32 nameHash = _domainNameAndVersionMayChange() ? bytes32(0) : keccak256(bytes(name));
+        bytes32 versionHash =
+            _domainNameAndVersionMayChange() ? bytes32(0) : keccak256(bytes(version));
         _cachedNameHash = nameHash;
         _cachedVersionHash = versionHash;
 
         bytes32 separator;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let m := mload(0x40) // Load the free memory pointer.
-            mstore(m, _DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), nameHash)
-            mstore(add(m, 0x40), versionHash)
-            mstore(add(m, 0x60), chainid())
-            mstore(add(m, 0x80), address())
-            separator := keccak256(m, 0xa0)
+        if (!_domainNameAndVersionMayChange()) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                let m := mload(0x40) // Load the free memory pointer.
+                mstore(m, _DOMAIN_TYPEHASH)
+                mstore(add(m, 0x20), nameHash)
+                mstore(add(m, 0x40), versionHash)
+                mstore(add(m, 0x60), chainid())
+                mstore(add(m, 0x80), address())
+                separator := keccak256(m, 0xa0)
+            }
         }
         _cachedDomainSeparator = separator;
     }
@@ -74,11 +79,19 @@ abstract contract EIP712 {
     ///         version = "1";
     ///     }
     /// ```
+    ///
+    /// Note: If the returned result may change after the contract has been deployed,
+    /// you must override `_domainNameAndVersionMayChange()` to return true.
     function _domainNameAndVersion()
         internal
-        pure
+        view
         virtual
         returns (string memory name, string memory version);
+
+    /// @dev Returns if `_domainNameAndVersion()` may change
+    /// after the contract has been deployed (i.e. after the constructor).
+    /// Default: false.
+    function _domainNameAndVersionMayChange() internal pure virtual returns (bool result) {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
@@ -86,9 +99,11 @@ abstract contract EIP712 {
 
     /// @dev Returns the EIP-712 domain separator.
     function _domainSeparator() internal view virtual returns (bytes32 separator) {
-        separator = _cachedDomainSeparator;
-        if (_cachedDomainSeparatorInvalidated()) {
+        if (_domainNameAndVersionMayChange()) {
             separator = _buildDomainSeparator();
+        } else {
+            separator = _cachedDomainSeparator;
+            if (_cachedDomainSeparatorInvalidated()) separator = _buildDomainSeparator();
         }
     }
 
@@ -106,9 +121,12 @@ abstract contract EIP712 {
     ///     address signer = ECDSA.recover(digest, signature);
     /// ```
     function _hashTypedData(bytes32 structHash) internal view virtual returns (bytes32 digest) {
-        bytes32 separator = _cachedDomainSeparator;
-        if (_cachedDomainSeparatorInvalidated()) {
+        bytes32 separator;
+        if (_domainNameAndVersionMayChange()) {
             separator = _buildDomainSeparator();
+        } else {
+            separator = _cachedDomainSeparator;
+            if (_cachedDomainSeparatorInvalidated()) separator = _buildDomainSeparator();
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -155,8 +173,16 @@ abstract contract EIP712 {
 
     /// @dev Returns the EIP-712 domain separator.
     function _buildDomainSeparator() private view returns (bytes32 separator) {
-        bytes32 nameHash = _cachedNameHash;
-        bytes32 versionHash = _cachedVersionHash;
+        bytes32 nameHash;
+        bytes32 versionHash;
+        if (_domainNameAndVersionMayChange()) {
+            (string memory name, string memory version) = _domainNameAndVersion();
+            nameHash = keccak256(bytes(name));
+            versionHash = keccak256(bytes(version));
+        } else {
+            nameHash = _cachedNameHash;
+            versionHash = _cachedVersionHash;
+        }
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Load the free memory pointer.
