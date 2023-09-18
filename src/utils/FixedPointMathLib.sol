@@ -536,13 +536,16 @@ library FixedPointMathLib {
     /// @dev Returns the cube root of `x`.
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
+            z = 1;
             if (x >= (type(uint256).max / 10 ** 36) * 10 ** 18) {
-                z = cbrt(x) * 10 ** 12;
+                z = 10 ** 12;
             } else if (x >= type(uint256).max / 10 ** 36) {
-                z = cbrt(x * 10 ** 18) * 10 ** 6;
+                z = 10 ** 6;
+                x *= 10 ** 18;
             } else {
-                z = cbrt(x * 10 ** 36);
+                x *= 10 ** 36;
             }
+            z *= cbrt(x);
         }
     }
 
