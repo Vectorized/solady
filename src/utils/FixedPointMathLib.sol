@@ -523,11 +523,13 @@ library FixedPointMathLib {
     /// @dev Returns the square root of `x`.
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
+            z = 1;
             if (x >= type(uint256).max / 10 ** 36) {
-                z = sqrt(x) * 10 ** 9;
+                z = 10 ** 9;
             } else {
-                z = sqrt(x * 10 ** 18);
+                x *= 10 ** 18;
             }
+            z *= sqrt(x);
         }
     }
 
