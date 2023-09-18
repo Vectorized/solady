@@ -520,30 +520,30 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the square root of `x`.
+    /// @dev Returns the square root of `x`, denominated in `WAD`.
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
-            z = 1;
-            if (x >= type(uint256).max / 10 ** 36) {
-                z = 10 ** 9;
-            } else {
+            z = 10 ** 9;
+            if (x <= type(uint256).max / 10 ** 36 - 1) {
                 x *= 10 ** 18;
+                z = 1;
             }
             z *= sqrt(x);
         }
     }
 
-    /// @dev Returns the cube root of `x`.
+    /// @dev Returns the cube root of `x`, denominated in `WAD`.
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
-            z = 1;
-            if (x >= (type(uint256).max / 10 ** 36) * 10 ** 18) {
-                z = 10 ** 12;
-            } else if (x >= type(uint256).max / 10 ** 36) {
-                z = 10 ** 6;
-                x *= 10 ** 18;
-            } else {
-                x *= 10 ** 36;
+            z = 10 ** 12;
+            if (x <= (type(uint256).max / 10 ** 36) * 10 ** 18 - 1) {
+                if (x >= type(uint256).max / 10 ** 36) {
+                    x *= 10 ** 18;
+                    z = 10 ** 6;
+                } else {
+                    x *= 10 ** 36;
+                    z = 1;
+                }
             }
             z *= cbrt(x);
         }
