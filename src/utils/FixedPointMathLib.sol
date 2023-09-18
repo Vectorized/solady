@@ -520,6 +520,30 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns the square root of `x`.
+    function sqrtWad(uint256 x) internal pure returns (uint256 z) {
+        unchecked {
+            if (x >= type(uint256).max / 10 ** 36) {
+                z = sqrt(x) * 10 ** 9;
+            } else {
+                z = sqrt(x * 10 ** 18);
+            }
+        }
+    }
+
+    /// @dev Returns the cube root of `x`.
+    function cbrtWad(uint256 x) internal pure returns (uint256 z) {
+        unchecked {
+            if (x >= (type(uint256).max / 10 ** 36) * 10 ** 18) {
+                z = cbrt(x) * 10 ** 12;
+            } else if (x >= type(uint256).max / 10 ** 36) {
+                z = cbrt(x * 10 ** 18) * 10 ** 6;
+            } else {
+                z = cbrt(x * 10 ** 36);
+            }
+        }
+    }
+
     /// @dev Returns the factorial of `x`.
     function factorial(uint256 x) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
