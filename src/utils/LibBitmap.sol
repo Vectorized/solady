@@ -55,19 +55,16 @@ library LibBitmap {
     function toggle(Bitmap storage bitmap, uint256 index) internal returns (bool newIsSet) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, shr(8, index))
             mstore(0x20, bitmap.slot)
+            mstore(0x00, shr(8, index))
             let storageSlot := keccak256(0x00, 0x40)
             let shift := and(index, 0xff)
-            let storageValue := sload(storageSlot)
-
-            let mask := shl(shift, 1)
-            storageValue := xor(storageValue, mask)
+            let storageValue := xor(sload(storageSlot), shl(shift, 1))
             // It makes sense to return the `newIsSet`,
             // as it allow us to skip an additional warm `sload`,
             // and it costs minimal gas (about 15),
             // which may be optimized away if the returned value is unused.
-            newIsSet := iszero(iszero(and(storageValue, mask)))
+            newIsSet := and(1, shr(shift, storageValue))
             sstore(storageSlot, storageValue)
         }
     }
@@ -81,7 +78,6 @@ library LibBitmap {
             let storageSlot := keccak256(0x00, 0x40)
             let storageValue := sload(storageSlot)
             let shift := and(index, 0xff)
-
             sstore(
                 storageSlot,
                 // Unsets the bit at `shift` via `and`, then sets its new value via `or`.
@@ -183,12 +179,12 @@ library LibBitmap {
             mstore(0x20, bitmap.slot)
             let offset := and(0xff, not(before)) // `256 - (255 & before) - 1`.
             bucketBits := shr(offset, shl(offset, sload(keccak256(0x00, 0x40))))
-            if iszero(bucketBits) {
-                for {} bucket {} {
+            if iszero(or(bucketBits, iszero(bucket))) {
+                for {} 1 {} {
                     bucket := add(bucket, setBitIndex) // `sub(bucket, 1)`.
                     mstore(0x00, bucket)
                     bucketBits := sload(keccak256(0x00, 0x40))
-                    if bucketBits { break }
+                    if or(bucketBits, iszero(bucket)) { break }
                 }
             }
         }
