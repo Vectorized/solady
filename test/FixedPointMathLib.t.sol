@@ -238,6 +238,28 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
+    function testSqrtWad() public {
+        assertEq(FixedPointMathLib.sqrtWad(0), 0);
+        assertEq(FixedPointMathLib.sqrtWad(1), 10 ** 9);
+        assertEq(FixedPointMathLib.sqrtWad(2), 1414213562);
+        assertEq(FixedPointMathLib.sqrtWad(4), 2000000000);
+        assertEq(FixedPointMathLib.sqrtWad(8), 2828427124);
+        assertEq(FixedPointMathLib.sqrtWad(16), 4000000000);
+        assertEq(FixedPointMathLib.sqrtWad(32), 5656854249);
+        assertEq(FixedPointMathLib.sqrtWad(64), 8000000000);
+        assertEq(FixedPointMathLib.sqrtWad(10 ** 18), 10 ** 18);
+        assertEq(FixedPointMathLib.sqrtWad(4 * 10 ** 18), 2 * 10 ** 18);
+        assertEq(FixedPointMathLib.sqrtWad(type(uint8).max), 15968719422);
+        assertEq(FixedPointMathLib.sqrtWad(type(uint16).max), 255998046867);
+        assertEq(FixedPointMathLib.sqrtWad(type(uint32).max), 65535999992370);
+        assertEq(FixedPointMathLib.sqrtWad(type(uint64).max), 4294967295999999999);
+        assertEq(FixedPointMathLib.sqrtWad(type(uint128).max), 18446744073709551615999999999);
+        assertEq(
+            FixedPointMathLib.sqrtWad(type(uint256).max),
+            340282366920938463463374607431768211455000000000
+        );
+    }
+
     function testCbrt() public {
         assertEq(FixedPointMathLib.cbrt(0), 0);
         assertEq(FixedPointMathLib.cbrt(1), 1);
@@ -256,6 +278,28 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.cbrt(type(uint64).max), 2642245);
         assertEq(FixedPointMathLib.cbrt(type(uint128).max), 6981463658331);
         assertEq(FixedPointMathLib.cbrt(type(uint256).max), 48740834812604276470692694);
+    }
+
+    function testCbrtWad() public {
+        assertEq(FixedPointMathLib.cbrtWad(0), 0);
+        assertEq(FixedPointMathLib.cbrtWad(1), 10 ** 12);
+        assertEq(FixedPointMathLib.cbrtWad(2), 1259921049894);
+        assertEq(FixedPointMathLib.cbrtWad(3), 1442249570307);
+        assertEq(FixedPointMathLib.cbrtWad(9), 2080083823051);
+        assertEq(FixedPointMathLib.cbrtWad(27), 3000000000000);
+        assertEq(FixedPointMathLib.cbrtWad(80), 4308869380063);
+        assertEq(FixedPointMathLib.cbrtWad(81), 4326748710922);
+        assertEq(FixedPointMathLib.cbrtWad(10 ** 18), 10 ** 18);
+        assertEq(FixedPointMathLib.cbrtWad(8 * 10 ** 18), 2 * 10 ** 18);
+        assertEq(FixedPointMathLib.cbrtWad(9 * 10 ** 18), 2080083823051904114);
+        assertEq(FixedPointMathLib.cbrtWad(type(uint8).max), 6341325705384);
+        assertEq(FixedPointMathLib.cbrtWad(type(uint16).max), 40317268530317);
+        assertEq(FixedPointMathLib.cbrtWad(type(uint32).max), 1625498677089280);
+        assertEq(FixedPointMathLib.cbrtWad(type(uint64).max), 2642245949629133047);
+        assertEq(FixedPointMathLib.cbrtWad(type(uint128).max), 6981463658331559092288464);
+        assertEq(
+            FixedPointMathLib.cbrtWad(type(uint256).max), 48740834812604276470692694000000000000
+        );
     }
 
     function testLog2() public {
@@ -600,6 +644,13 @@ contract FixedPointMathLibTest is SoladyTest {
         assertTrue(root * root * root <= x && next * next * next > x);
     }
 
+    function testCbrtWad(uint256 x) public {
+        uint256 result = FixedPointMathLib.cbrtWad(x);
+        uint256 floor = FixedPointMathLib.cbrt(x);
+        assertTrue(result >= floor * 10 ** 12 && result <= (floor + 1) * 10 ** 12);
+        assertEq(result / 10 ** 12, floor);
+    }
+
     function testCbrtBack(uint256 x) public {
         unchecked {
             x = _bound(x, 0, 48740834812604276470692694);
@@ -620,6 +671,13 @@ contract FixedPointMathLibTest is SoladyTest {
         }
 
         assertTrue(root * root <= x && next * next > x);
+    }
+
+    function testSqrtWad(uint256 x) public {
+        uint256 result = FixedPointMathLib.sqrtWad(x);
+        uint256 floor = FixedPointMathLib.sqrt(x);
+        assertTrue(result >= floor * 10 ** 9 && result <= (floor + 1) * 10 ** 9);
+        assertEq(result / 10 ** 9, floor);
     }
 
     function testSqrtBack(uint256 x) public {
