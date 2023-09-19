@@ -1,12 +1,15 @@
 name: ci
 
-on: [push]
+on:
+  push:
+    paths:
+      - '**.sol'
 
 jobs:
   tests:
     name: Forge Testing
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         profile: [via-ir,min-solc,min-solc-via-ir,intense,solc-past-versions-0,solc-past-versions-1,post-shanghai,post-shanghai-via-ir]
