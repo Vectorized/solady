@@ -267,54 +267,44 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             for {} 1 {} {
-                // 512-bit multiply `[prod1 prod0] = x * y`.
+                // 512-bit multiply `[p1 p0] = x * y`.
                 // Compute the product mod `2**256` and mod `2**256 - 1`
                 // then use the Chinese Remainder Theorem to reconstruct
                 // the 512 bit result. The result is stored in two 256
-                // variables such that `product = prod1 * 2**256 + prod0`.
+                // variables such that `product = p1 * 2**256 + p0`.
 
                 // Least significant 256 bits of the product.
-                let prod0 := mul(x, y)
+                let p0 := mul(x, y)
                 let mm := mulmod(x, y, not(0))
                 // Most significant 256 bits of the product.
-                let prod1 := sub(mm, add(prod0, lt(mm, prod0)))
+                let p1 := sub(mm, add(p0, lt(mm, p0)))
 
                 // Handle non-overflow cases, 256 by 256 division.
-                if iszero(prod1) {
+                if iszero(p1) {
                     if iszero(d) {
                         mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                         revert(0x1c, 0x04)
                     }
-                    result := div(prod0, d)
+                    result := div(p0, d)
                     break
                 }
 
                 // Make sure the result is less than `2**256`. Also prevents `d == 0`.
-                if iszero(gt(d, prod1)) {
+                if iszero(gt(d, p1)) {
                     mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                     revert(0x1c, 0x04)
                 }
 
                 /*------------------- 512 by 256 division --------------------*/
 
-                // Make division exact by subtracting the remainder from `[prod1 prod0]`.
+                // Make division exact by subtracting the remainder from `[p1 p0]`.
                 // Compute remainder using mulmod.
-                let remainder := mulmod(x, y, d)
-                // Subtract 256 bit number from 512 bit number.
-                prod1 := sub(prod1, gt(remainder, prod0))
-                prod0 := sub(prod0, remainder)
-                // Factor powers of two out of `d`.
-                // Compute largest power of two divisor of `d`.
+                let r := mulmod(x, y, d)
+                // `t` is the least significant bit of `d`.
                 // Always greater or equal to 1.
-                let twos := and(d, sub(0, d))
-                // Divide d by power of two.
-                d := div(d, twos)
-                // Divide [prod1 prod0] by the factors of two.
-                prod0 := div(prod0, twos)
-                // Shift in bits from `prod1` into `prod0`. For this we need
-                // to flip `twos` such that it is `2**256 / twos`.
-                // If `twos` is zero, then it becomes one.
-                prod0 := or(prod0, mul(prod1, add(div(sub(0, twos), twos), 1)))
+                let t := and(d, sub(0, d))
+                // Divide `d` by `t`, which is a power of two.
+                d := div(d, t)
                 // Invert `d mod 2**256`
                 // Now that `d` is an odd number, it has an inverse
                 // modulo `2**256` such that `d * inv = 1 mod 2**256`.
@@ -329,7 +319,15 @@ library FixedPointMathLib {
                 inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**32
                 inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**64
                 inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**128
-                result := mul(prod0, mul(inv, sub(2, mul(d, inv)))) // inverse mod 2**256
+                result :=
+                    mul(
+                        // Divide [p1 p0] by the factors of two.
+                        // Shift in bits from `p1` into `p0`. For this we need
+                        // to flip `t` such that it is `2**256 / t`.
+                        or(mul(sub(p1, gt(r, p0)), add(div(sub(0, t), t), 1)), div(sub(p0, r), t)),
+                        // inverse mod 2**256
+                        mul(inv, sub(2, mul(d, inv)))
+                    )
                 break
             }
         }
