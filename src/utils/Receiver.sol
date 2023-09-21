@@ -10,21 +10,18 @@ contract Receiver {
 
             // `keccak256("onERC721Received(address,address,uint256,bytes)")`.
             if eq(shiftedSig, 0x150b7a02) {
-                // Equivalent to ERC721_RECEIVED
                 mstore(0x00, shl(224, shiftedSig))
                 return(0x00, 0x20)
             }
 
             // `keccak256("onERC1155Received(address,address,uint256,uint256,bytes)")`.
             if eq(shiftedSig, 0xf23a6e61) {
-                // Equivalent to ERC1155_RECEIVED
                 mstore(0x00, shl(224, shiftedSig))
                 return(0x00, 0x20)
             }
 
             // `keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"`.
             if eq(shiftedSig, 0xbc197c81) {
-                // Equivalent to ERC1155_BATCH_RECEIVED
                 mstore(0x00, shl(224, shiftedSig))
                 return(0x00, 0x20)
             }
