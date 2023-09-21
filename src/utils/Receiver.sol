@@ -10,8 +10,8 @@ contract Receiver {
 
             // `keccak256("onERC721Received(address,address,uint256,bytes)")`.
             if eq(shiftedSig, 0x150b7a02) {
-                mstore(0x00, shl(224, shiftedSig))
-                return(0x00, 0x20)
+                mstore(0x20, shiftedSig)
+                return(0x3c, 0x20)
             }
 
             // `keccak256("onERC1155Received(address,address,uint256,uint256,bytes)")`.
