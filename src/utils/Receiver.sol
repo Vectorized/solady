@@ -17,23 +17,10 @@ abstract contract Receiver {
         /// @solidity memory-safe-assembly
         assembly {
             let s := shr(224, calldataload(0))
-            // `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`.
-            if eq(s, 0x150b7a02) {
+            if or(or(eq(s, 0x150b7a02), eq(s, 0xf23a6e61)), eq(s, 0xbc197c81)) {
                 mstore(0x20, s)
                 return(0x3c, 0x20)
             }
-            // `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes))")`.
-            if eq(s, 0xf23a6e61) {
-                mstore(0x20, s)
-                return(0x3c, 0x20)
-            }
-            // `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes))"`.
-            if eq(s, 0xbc197c81) {
-                mstore(0x20, s)
-                return(0x3c, 0x20)
-            }
-            // Revert if no token callback selector matched.
-            revert(0, 0)
         }
     }
 }

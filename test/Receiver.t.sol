@@ -40,9 +40,4 @@ contract ReceiverTest is SoladyTest {
         vm.prank(alice);
         erc1155.safeBatchTransferFrom(alice, address(receiver), ids, amts, "");
     }
-
-    function testFailOnNoMatchingSelector() public {
-        (bool success,) = address(receiver).call("");
-        assertFalse(success);
-    }
 }
