@@ -13,11 +13,23 @@ abstract contract Receiver {
     receive() external payable virtual {}
 
     /// @dev Fallback function for handling ERC721 and ERC1155 `safeTransferFrom()` callbacks.
+    /// @dev Fallback function for handling ERC721 and ERC1155 `safeTransferFrom()` callbacks.
     fallback() external virtual {
         /// @solidity memory-safe-assembly
         assembly {
             let s := shr(224, calldataload(0))
-            if or(or(eq(s, 0x150b7a02), eq(s, 0xf23a6e61)), eq(s, 0xbc197c81)) {
+            // `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`.
+            if eq(s, 0x150b7a02) {
+                mstore(0x20, s)
+                return(0x3c, 0x20)
+            }
+            // `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes))")`.
+            if eq(s, 0xf23a6e61) {
+                mstore(0x20, s)
+                return(0x3c, 0x20)
+            }
+            // `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes))"`.
+            if eq(s, 0xbc197c81) {
                 mstore(0x20, s)
                 return(0x3c, 0x20)
             }
