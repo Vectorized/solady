@@ -13,7 +13,6 @@ abstract contract Receiver {
     receive() external payable virtual {}
 
     /// @dev Fallback function for handling ERC721 and ERC1155 `safeTransferFrom()` callbacks.
-    /// @dev Fallback function for handling ERC721 and ERC1155 `safeTransferFrom()` callbacks.
     fallback() external virtual {
         /// @solidity memory-safe-assembly
         assembly {
