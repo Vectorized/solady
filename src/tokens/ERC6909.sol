@@ -36,7 +36,9 @@ abstract contract ERC6909 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Emitted when `amount` tokens is transferred from `from` to `to` for `id` token.
-    event Transfer(address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount);
+    event Transfer(
+        address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount
+    );
 
     /// @dev Emitted when `owner` enables or disables `operator` to manage all of their tokens.
     event OperatorSet(address indexed owner, address indexed operator, bool approved);
