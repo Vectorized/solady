@@ -36,7 +36,9 @@ abstract contract ERC6909 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Emitted when `amount` tokens is transferred from `from` to `to` for `id` token.
-    event Transfer(address indexed from, address indexed to, uint256 indexed id, uint256 amount);
+    event Transfer(
+        address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount
+    );
 
     /// @dev Emitted when `owner` enables or disables `operator` to manage all of their tokens.
     event OperatorSet(address indexed owner, address indexed operator, bool approved);
@@ -46,9 +48,9 @@ abstract contract ERC6909 {
         address indexed owner, address indexed spender, uint256 indexed id, uint256 amount
     );
 
-    /// @dev `keccak256(bytes("Transfer(address,address,uint256,uint256)"))`.
+    /// @dev `keccak256(bytes("Transfer(address,address,address,uint256,uint256)"))`.
     uint256 private constant _TRANSFER_EVENT_SIGNATURE =
-        0x9ed053bb818ff08b8353cd46f78db1f0799f31c9e4458fdb425c10eccd2efc44;
+        0x1b3d7edb2e9c0b0e7c525b20aaaef0f5940d2ed71663c7d39266ecafac728859;
 
     /// @dev `keccak256(bytes("OperatorSet(address,address,bool)"))`.
     uint256 private constant _OPERATOR_SET_EVENT_SIGNATURE =
@@ -210,8 +212,9 @@ abstract contract ERC6909 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
-            log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, caller(), shr(96, mload(0x20)), id)
+            mstore(0x00, caller())
+            mstore(0x20, amount)
+            log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, caller(), shr(96, shl(96, to)), id)
         }
         _afterTokenTransfer(msg.sender, to, id, amount);
         return true;
@@ -277,9 +280,10 @@ abstract contract ERC6909 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
+            mstore(0x00, caller())
+            mstore(0x20, amount)
             // forgefmt: disable-next-line
-            log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, mload(0x34)), id)
+            log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, shl(96, to)), id)
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x34, 0x00)
         }
@@ -375,8 +379,9 @@ abstract contract ERC6909 {
             // Add and store the updated balance
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
-            log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, 0, shr(96, mload(0x20)), id)
+            mstore(0x00, caller())
+            mstore(0x20, amount)
+            log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, 0, shr(96, shl(96, to)), id)
         }
         _afterTokenTransfer(address(0), to, id, amount);
     }
@@ -407,8 +412,9 @@ abstract contract ERC6909 {
             // Subtract and store the updated total supply.
             sstore(totalSupplySlot, sub(sload(totalSupplySlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
-            log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, mload(0x20)), 0, id)
+            mstore(0x00, caller())
+            mstore(0x20, amount)
+            log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), 0, id)
         }
         _afterTokenTransfer(from, address(0), id, amount);
     }
@@ -475,9 +481,10 @@ abstract contract ERC6909 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, amount)
+            mstore(0x00, caller())
+            mstore(0x20, amount)
             // forgefmt: disable-next-line
-            log4(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, mload(0x34)), id)
+            log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, shl(96, to)), id)
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x34, 0x00)
         }

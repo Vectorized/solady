@@ -8,7 +8,9 @@ import {ERC6909, MockERC6909} from "./utils/mocks/MockERC6909.sol";
 contract ERC6909Test is SoladyTest {
     MockERC6909 token;
 
-    event Transfer(address indexed from, address indexed to, uint256 indexed id, uint256 amount);
+    event Transfer(
+        address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount
+    );
 
     event OperatorSet(address indexed owner, address indexed spender, bool approved);
 
@@ -27,7 +29,7 @@ contract ERC6909Test is SoladyTest {
 
     function testMint() public {
         vm.expectEmit(true, true, true, true);
-        emit Transfer(address(0), address(0xBEEF), 1, 1e18);
+        emit Transfer(address(this), address(0), address(0xBEEF), 1, 1e18);
 
         token.mint(address(0xBEEF), 1, 1e18);
         assertEq(token.totalSupply(1), 1e18);
@@ -42,7 +44,7 @@ contract ERC6909Test is SoladyTest {
         token.mint(address(0xBEEF), 1, 1e18);
 
         vm.expectEmit(true, true, true, true);
-        emit Transfer(address(0xBEEF), address(0), 1, 0.9e18);
+        emit Transfer(address(this), address(0xBEEF), address(0), 1, 0.9e18);
         token.burn(address(0xBEEF), 1, 0.9e18);
 
         assertEq(token.totalSupply(1), 1e18 - 0.9e18);
@@ -63,7 +65,7 @@ contract ERC6909Test is SoladyTest {
         assertEq(token.balanceOf(address(this), 1), 1e18);
 
         vm.expectEmit(true, true, true, true);
-        emit Transfer(address(this), address(0xBEEF), 1, 1e18);
+        emit Transfer(address(this), address(this), address(0xBEEF), 1, 1e18);
         assertTrue(token.transfer(address(0xBEEF), 1, 1e18));
         assertEq(token.totalSupply(1), 1e18);
         assertEq(token.balanceOf(address(this), 1), 0);
@@ -78,7 +80,7 @@ contract ERC6909Test is SoladyTest {
         _approve(from, address(this), 1, 1e18);
 
         vm.expectEmit(true, true, true, true);
-        emit Transfer(from, address(0xBEEF), 1, 1e18);
+        emit Transfer(address(this), from, address(0xBEEF), 1, 1e18);
         assertTrue(token.transferFrom(from, address(0xBEEF), 1, 1e18));
         assertEq(token.totalSupply(1), 1e18);
 
@@ -96,7 +98,7 @@ contract ERC6909Test is SoladyTest {
         _approve(from, address(this), 1, type(uint256).max);
 
         vm.expectEmit(true, true, true, true);
-        emit Transfer(from, address(0xBEEF), 1, 1e18);
+        emit Transfer(address(this), from, address(0xBEEF), 1, 1e18);
         assertTrue(token.transferFrom(from, address(0xBEEF), 1, 1e18));
         assertEq(token.totalSupply(1), 1e18);
 
@@ -114,7 +116,7 @@ contract ERC6909Test is SoladyTest {
         _setOperator(from, address(this), true);
 
         vm.expectEmit(true, true, true, true);
-        emit Transfer(from, address(0xBEEF), 1, 1e18);
+        emit Transfer(address(this), from, address(0xBEEF), 1, 1e18);
         assertTrue(token.transferFrom(from, address(0xBEEF), 1, 1e18));
         assertEq(token.totalSupply(1), 1e18);
 
@@ -172,7 +174,7 @@ contract ERC6909Test is SoladyTest {
 
     function testMint(address to, uint256 id, uint256 amount) public {
         vm.expectEmit(true, true, true, true);
-        emit Transfer(address(0), to, id, amount);
+        emit Transfer(address(this), address(0), to, id, amount);
         token.mint(to, id, amount);
 
         assertEq(token.totalSupply(id), amount);
@@ -184,7 +186,7 @@ contract ERC6909Test is SoladyTest {
 
         token.mint(from, id, mintAmount);
         vm.expectEmit(true, true, true, true);
-        emit Transfer(from, address(0), id, burnAmount);
+        emit Transfer(address(this), from, address(0), id, burnAmount);
         token.burn(from, id, burnAmount);
 
         assertEq(token.totalSupply(id), mintAmount - burnAmount);
@@ -199,7 +201,7 @@ contract ERC6909Test is SoladyTest {
         token.mint(address(this), id, amount);
 
         vm.expectEmit(true, true, true, true);
-        emit Transfer(address(this), to, id, amount);
+        emit Transfer(address(this), address(this), to, id, amount);
         assertTrue(token.transfer(to, id, amount));
         assertEq(token.totalSupply(id), amount);
 
@@ -227,7 +229,7 @@ contract ERC6909Test is SoladyTest {
         _approve(from, spender, id, approval);
 
         vm.expectEmit(true, true, true, true);
-        emit Transfer(from, to, id, amount);
+        emit Transfer(spender, from, to, id, amount);
         vm.prank(spender);
         assertTrue(token.transferFrom(from, to, id, amount));
         assertEq(token.totalSupply(id), amount);
@@ -392,8 +394,6 @@ contract ERC6909Test is SoladyTest {
             if (t.balance >= t.amount) {
                 if (t.by == address(0) || t.isOperator || t.allowance >= t.amount) {
                     t.success = true;
-                    vm.expectEmit(true, true, true, true);
-                    emit Transfer(t.from, t.to, t.id, t.amount);
                 } else {
                     _expectInsufficientPermissionRevert();
                 }
@@ -406,12 +406,24 @@ contract ERC6909Test is SoladyTest {
             }
 
             if (t.by == address(0) && _random() % 4 == 0) {
+                if (t.success) {
+                    vm.expectEmit(true, true, true, true);
+                    emit Transfer(t.from, t.from, t.to, t.id, t.amount);
+                }
                 vm.prank(t.from);
                 token.transfer(t.to, t.id, t.amount);
             } else if (t.by != address(0) && _random() % 4 == 0) {
+                if (t.success) {
+                    vm.expectEmit(true, true, true, true);
+                    emit Transfer(t.by, t.from, t.to, t.id, t.amount);
+                }
                 vm.prank(t.by);
                 token.transferFrom(t.from, t.to, t.id, t.amount);
             } else {
+                if (t.success) {
+                    vm.expectEmit(true, true, true, true);
+                    emit Transfer(address(this), t.from, t.to, t.id, t.amount);
+                }
                 token.directTransferFrom(t.by, t.from, t.to, t.id, t.amount);
             }
 
