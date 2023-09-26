@@ -48,7 +48,7 @@ abstract contract ERC6909 {
         address indexed owner, address indexed spender, uint256 indexed id, uint256 amount
     );
 
-    /// @dev `keccak256(bytes("Transfer(address,address(thisaddress,address,uint256,uint256)"))`.
+    /// @dev `keccak256(bytes("Transfer(address,address,address,uint256,uint256)"))`.
     uint256 private constant _TRANSFER_EVENT_SIGNATURE =
         0x1b3d7edb2e9c0b0e7c525b20aaaef0f5940d2ed71663c7d39266ecafac728859;
 
@@ -481,7 +481,7 @@ abstract contract ERC6909 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, shr(96, shl(96, by)))
+            mstore(0x00, caller())
             mstore(0x20, amount)
             // forgefmt: disable-next-line
             log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, shl(96, to)), id)
