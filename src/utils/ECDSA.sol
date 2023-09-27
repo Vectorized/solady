@@ -45,7 +45,7 @@ library ECDSA {
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        eq(mload(signature), 65), // Address of `ecrecover`.
+                        1, // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -83,7 +83,7 @@ library ECDSA {
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        eq(signature.length, 65), // Address of `ecrecover`.
+                        1, // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -200,7 +200,7 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    eq(mload(signature), 65), // Address of `ecrecover`.
+                    1, // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
@@ -234,7 +234,7 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    eq(signature.length, 65), // Address of `ecrecover`.
+                    1, // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
