@@ -37,7 +37,6 @@ library ECDSA {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            let signatureLength := mload(signature)
             mstore(0x00, hash)
             mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
             mstore(0x40, mload(add(signature, 0x20))) // `r`.
@@ -46,7 +45,7 @@ library ECDSA {
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        eq(signatureLength, 65), // Address of `ecrecover`.
+                        eq(mload(signature), 65), // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -194,7 +193,6 @@ library ECDSA {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            let signatureLength := mload(signature)
             mstore(0x00, hash)
             mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
             mstore(0x40, mload(add(signature, 0x20))) // `r`.
@@ -202,7 +200,7 @@ library ECDSA {
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    eq(signatureLength, 65), // Address of `ecrecover`.
+                    eq(mload(signature), 65), // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
