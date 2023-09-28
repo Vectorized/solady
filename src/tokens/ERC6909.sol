@@ -37,7 +37,7 @@ abstract contract ERC6909 {
 
     /// @dev Emitted when `amount` tokens is transferred from `from` to `to` for `id` token.
     event Transfer(
-        address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount
+        address by, address indexed from, address indexed to, uint256 indexed id, uint256 amount
     );
 
     /// @dev Emitted when `owner` enables or disables `operator` to manage all of their tokens.
@@ -481,7 +481,7 @@ abstract contract ERC6909 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, caller())
+            mstore(0x00, shr(96, shl(96, by)))
             mstore(0x20, amount)
             // forgefmt: disable-next-line
             log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, shl(96, to)), id)
