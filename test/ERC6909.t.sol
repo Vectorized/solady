@@ -9,7 +9,7 @@ contract ERC6909Test is SoladyTest {
     MockERC6909 token;
 
     event Transfer(
-        address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount
+        address by, address indexed from, address indexed to, uint256 indexed id, uint256 amount
     );
 
     event OperatorSet(address indexed owner, address indexed spender, bool approved);
@@ -422,7 +422,7 @@ contract ERC6909Test is SoladyTest {
             } else {
                 if (t.success) {
                     vm.expectEmit(true, true, true, true);
-                    emit Transfer(address(this), t.from, t.to, t.id, t.amount);
+                    emit Transfer(t.by, t.from, t.to, t.id, t.amount);
                 }
                 token.directTransferFrom(t.by, t.from, t.to, t.id, t.amount);
             }
