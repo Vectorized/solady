@@ -485,14 +485,7 @@ abstract contract ERC6909 {
             mstore(0x00, and(bitmaskAddress, by))
             mstore(0x20, amount)
             // forgefmt: disable-next-line
-            log4(
-                0x00,
-                0x40,
-                _TRANSFER_EVENT_SIGNATURE,
-                and(bitmaskAddress, from),
-                and(bitmaskAddress, to),
-                id
-            )
+            log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, and(bitmaskAddress, from), and(bitmaskAddress, to), id)
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x34, 0x00)
         }
