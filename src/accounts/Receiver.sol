@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Universal transfer callback receiver using fallback returns of selector calldata.
-/// @author Solady (https://github.com/Vectorized/solady/blob/main/src/utils/Receiver.sol)
+/// @author Solady (https://github.com/Vectorized/solady/blob/main/src/accounts/Receiver.sol)
 ///
 /// @dev Note:
 /// - Handles all ERC721 and ERC1155 token safety callbacks.

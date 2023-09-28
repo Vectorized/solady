@@ -246,7 +246,7 @@ ERC6909Test:testBurn(address,uint256,uint256,uint256) (runs: 256, μ: 61497, ~: 
 ERC6909Test:testBurnInsufficientBalanceReverts(address,uint256,uint256,uint256) (runs: 256, μ: 56175, ~: 57223)
 ERC6909Test:testDecimals() (gas: 5632)
 ERC6909Test:testDirectApprove() (gas: 36623)
-ERC6909Test:testDirectFunctions(uint256) (runs: 256, μ: 251218, ~: 249823)
+ERC6909Test:testDirectFunctions(uint256) (runs: 256, μ: 251206, ~: 249847)
 ERC6909Test:testDirectSetOperator() (gas: 35947)
 ERC6909Test:testDirectTransfer() (gas: 83569)
 ERC6909Test:testInfiniteApproveTransferFrom() (gas: 101047)

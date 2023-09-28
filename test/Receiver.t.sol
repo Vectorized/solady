@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {Receiver} from "../src/utils/Receiver.sol";
+import {Receiver} from "../src/accounts/Receiver.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
 import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
 import {MockReceiver} from "./utils/mocks/MockReceiver.sol";
