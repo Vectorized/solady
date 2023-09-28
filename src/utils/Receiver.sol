@@ -6,7 +6,6 @@ pragma solidity ^0.8.4;
 ///
 /// @dev Note:
 /// - Handles all ERC721 and ERC1155 token safety callbacks.
-/// - Future-proofed for any selector-based callback check.
 /// - Collapses function table gas overhead and code size.
 abstract contract Receiver {
     /// @dev Accepts ether (ETH).
@@ -19,9 +18,24 @@ abstract contract Receiver {
     fallback() external virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            // Shift and load the calldata `msg.sig`.
-            mstore(0x20, shr(224, calldataload(0)))
-            return(0x3C, 0x20) // Return `msg.sig`.
+            // Shift to the calldata `msg.sig`.
+            // Compare with token magic values.
+            let s := shr(224, calldataload(0))
+            // `onERC721Received`.
+            if eq(s, 0x150b7a02) {
+                mstore(0x20, s) // Load into memory slot.
+                return(0x3c, 0x20) // Return `msg.sig`.
+            }
+            // `onERC1155Received`.
+            if eq(s, 0xf23a6e61) {
+                mstore(0x20, s) // Load into memory slot.
+                return(0x3c, 0x20) // Return `msg.sig`.
+            }
+            // `onERC1155BatchReceived`.
+            if eq(s, 0xbc197c81) {
+                mstore(0x20, s) // Load into memory slot.
+                return(0x3c, 0x20) // Return `msg.sig`.
+            }
         }
     }
 }
