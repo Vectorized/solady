@@ -35,7 +35,7 @@ abstract contract ERC6909 {
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Emitted when `amount` tokens is transferred from `from` to `to` for `id` token.
+    /// @dev Emitted when `by` transfers `amount` of token `id` from `from` to `to`.
     event Transfer(
         address by, address indexed from, address indexed to, uint256 indexed id, uint256 amount
     );
@@ -437,11 +437,12 @@ abstract contract ERC6909 {
         _beforeTokenTransfer(from, to, id, amount);
         /// @solidity memory-safe-assembly
         assembly {
+            let bitmaskAddress := 0xffffffffffffffffffffffffffffffffffffffff
             // Compute the operator slot and load its value.
             mstore(0x34, _ERC6909_MASTER_SLOT_SEED)
             mstore(0x28, from)
             // If `by` is not the zero address.
-            if shl(96, by) {
+            if and(bitmaskAddress, by) {
                 mstore(0x14, by)
                 // Check if the `by` is an operator.
                 if iszero(sload(keccak256(0x20, 0x34))) {
@@ -481,10 +482,10 @@ abstract contract ERC6909 {
             // cannot exceed the maximum uint256 value.
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
-            mstore(0x00, shr(96, shl(96, by)))
+            mstore(0x00, and(bitmaskAddress, by))
             mstore(0x20, amount)
             // forgefmt: disable-next-line
-            log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), shr(96, shl(96, to)), id)
+            log4(0x00, 0x40, _TRANSFER_EVENT_SIGNATURE, and(bitmaskAddress, from), and(bitmaskAddress, to), id)
             // Restore the part of the free memory pointer that has been overwritten.
             mstore(0x34, 0x00)
         }
