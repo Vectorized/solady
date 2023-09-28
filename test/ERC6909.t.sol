@@ -366,6 +366,13 @@ contract ERC6909Test is SoladyTest {
         _directApprove(address(1), address(2), 1, 123);
     }
 
+    function testDirectTransfer() public {
+        token.mint(address(2), 1, 1);
+        vm.prank(address(2));
+        token.approve(address(1), 1, 1);
+        token.directTransferFrom(address(1), address(2), address(3), 1, 1);
+    }
+
     function testDirectFunctions(uint256) public {
         _TestTemps memory t;
         t.id = _random();
