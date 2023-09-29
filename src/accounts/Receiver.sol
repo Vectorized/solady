@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Universal transfer callback receiver using fallback returns of selector calldata.
+/// @notice Receiver mixin for ETH and safe-transferred ERC721 and ERC1155 tokens.
 /// @author Solady (https://github.com/Vectorized/solady/blob/main/src/accounts/Receiver.sol)
 ///
 /// @dev Note:
