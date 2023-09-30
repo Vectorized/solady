@@ -7,6 +7,7 @@ pragma solidity ^0.8.4;
 /// @dev Note:
 /// - Handles all ERC721 and ERC1155 token safety callbacks.
 /// - Collapses function table gas overhead and code size.
+/// - Utilizes fallback so unknown calldata will pass on.
 abstract contract Receiver {
     /// @dev Accepts ether (ETH).
     /// Override to reject ETH
