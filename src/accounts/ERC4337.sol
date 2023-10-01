@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 // import {Receiver} from "./Receiver.sol";
+import {LibZip} from "../utils/LibZip.sol";
 
 /// @notice Simple ERC4337 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC4337.sol)
@@ -43,51 +44,78 @@ abstract contract ERC4337Account { /*is Receiver*/
     /*                     INTERNAL FUNCTIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Fetches 'clones with immutable arguments' owner hashed.
-    function _getOwner() internal view virtual returns (bytes32 o) {
+    /// @dev Fetches 'clones with immutable arguments' user as hash.
+    /// This implementation is opinionated to single-user-ownership.
+    /// Contract accounts can be set to divide operational concerns.
+    function _getUser() internal pure virtual returns (bytes32 user) {
         /// @solidity memory-safe-assembly
         assembly {
-            o :=
+            user :=
                 calldataload(
-                    add(sub(calldatasize(), shr(240, calldataload(sub(calldatasize(), 2)))), 0x20)
+                    add(sub(calldatasize(), shr(0xF0, calldataload(sub(calldatasize(), 0x2)))), 0x20)
                 )
         }
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                   PUBLIC READ FUNCTIONs                    */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @dev Returns the canonical ERC4337 entry point contract.
     /// Override this function to return a different entry point.
-    function entryPoint() public pure virtual returns (address) {
+    function _entryPoint() internal pure virtual returns (address) {
         return _ENTRY_POINT;
-    }
-
-    /// @dev Returns the owner of this account's operations.
-    /// Override this function to return a different owner.
-    function owner() public view virtual returns (address) {
-        return address(uint160(uint256(_getOwner())));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*            VALIDATE USER SIGNATURE FUNCTION                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev ERC1271 contract signature validation logic.
+    /// @dev Validates the user signature via ERC1271 contract method.
     function isValidSignature(bytes32 hash, bytes calldata signature)
         public
         view
         virtual
         returns (bytes4 isValid)
     {
-        bytes32 user = _getOwner(); // Pull operation owner onto stack.
+        bytes32 user = _getUser(); // Pull operation owner onto stack.
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, hash)
-            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
-            if eq(user, mload(staticcall(gas(), 1, 0, 0x80, 0x01, 0x20))) { isValid := 0x1626ba7e }
+            let m := mload(0x40)
+            if eq(signature.length, 65) {
+                mstore(0x00, hash)
+                mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+                if eq(user, mload(staticcall(gas(), 1, 0, 0x80, 0x01, 0x20))) {
+                    mstore(0x60, 0) // Restore the zero slot.
+                    mstore(0x40, m) // Restore the free memory pointer.
+                    mstore(0x20, 0x1626ba7e) // Store magic value.
+                    return(0x3C, 0x20) // Return magic value.
+                }
+            }
+            mstore(0x60, 0) // Restore the zero slot.
+            mstore(0x40, m) // Restore the free memory pointer.
+
+            let f := shl(224, 0x1626ba7e)
+            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            mstore(add(m, 0x04), hash)
+            let d := add(m, 0x24)
+            mstore(d, 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x44), signature.length)
+            // Copy the `signature` over.
+            calldatacopy(add(m, 0x64), signature.offset, signature.length)
+            // forgefmt: disable-next-item
+            if and(
+                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                eq(mload(d), f),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    user, // The `user` signer address.
+                    m, // Offset of calldata in memory.
+                    add(signature.length, 0x64), // Length of calldata in memory.
+                    d, // Offset of returndata.
+                    0x20 // Length of returndata to write.
+                )
+            ) { isValid := 0x1626ba7e }
         }
     }
 
@@ -114,9 +142,9 @@ abstract contract ERC4337Account { /*is Receiver*/
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) public payable virtual returns (uint256 validationData) {
-        bytes calldata signature = userOp.signature; // Memo signature.
-        address entryPt = entryPoint(); // Pull entry point onto stack.
-        bytes32 user = _getOwner(); // Pull operation owner onto stack.
+        bytes calldata signature = userOp.signature; // Memo the user signature.
+        address entryPt = _entryPoint(); // Pull the entry point onto stack.
+        bytes32 user = _getUser(); // Pull the user onto stack.
         /// @solidity memory-safe-assembly
         assembly {
             // If the caller is not the entry point, revert.
@@ -125,14 +153,43 @@ abstract contract ERC4337Account { /*is Receiver*/
                 revert(0x1c, 0x04)
             }
             let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x00, userOpHash)
-            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
-            // If recovered public key is not the owner, return number 1.
-            if xor(user, mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))) {
-                validationData := _SIG_VALIDATION_FAILED
+            if eq(signature.length, 65) {
+                mstore(0x00, userOpHash)
+                mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+                // If the recovered public key is not the user, return number 1.
+                if xor(user, mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))) {
+                    validationData := _SIG_VALIDATION_FAILED
+                }
             }
+            mstore(0x60, 0) // Restore the zero slot.
             mstore(0x40, m) // Restore the free memory pointer.
+
+            let f := shl(224, 0x1626ba7e)
+            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+            mstore(add(m, 0x04), userOpHash)
+            let d := add(m, 0x24)
+            mstore(d, 0x40) // The offset of the `signature` in the calldata.
+            mstore(add(m, 0x44), signature.length)
+            // Copy the `signature` over.
+            calldatacopy(add(m, 0x64), signature.offset, signature.length)
+            // forgefmt: disable-next-item
+            if iszero(and(
+                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                eq(mload(d), f),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    user, // The `user` signer address.
+                    m, // Offset of calldata in memory.
+                    add(signature.length, 0x64), // Length of calldata in memory.
+                    d, // Offset of returndata.
+                    0x20 // Length of returndata to write.
+                )
+            )) { validationData := _SIG_VALIDATION_FAILED }
+
             // Refund the entry point if any relayer gas owed.
             if gt(missingAccountFunds, 0) {
                 pop(call(gas(), caller(), missingAccountFunds, 0x00, 0x00, 0x00, 0x00))
@@ -144,10 +201,10 @@ abstract contract ERC4337Account { /*is Receiver*/
     /*             EXECUTE USER OPERATION FUNCTION                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Execute call operation from this account. Only the owner or entry point may call.
+    /// @dev Execute call operation from this account. Only the user or entry point may call.
     function execute(address to, uint256 value, bytes calldata data) public payable virtual {
-        address entryPt = entryPoint(); // Pull entry point onto stack.
-        bytes32 user = _getOwner(); // Pull operation owner onto stack.
+        address entryPt = _entryPoint(); // Pull the entry point onto stack.
+        bytes32 user = _getUser(); // Pull the user onto stack.
         /// @solidity memory-safe-assembly
         assembly {
             // If the caller is neither entry point nor user, revert.
@@ -161,5 +218,16 @@ abstract contract ERC4337Account { /*is Receiver*/
             if iszero(success) { revert(0x00, returndatasize()) }
             return(0x00, returndatasize())
         }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      FALLBACK FUNCTION                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Handle token callbacks in Receiver
+    /// and then LibZip for data compression.
+    fallback() external /*override*/ virtual {
+        //super.fallback();
+        LibZip.cdFallback();
     }
 }
