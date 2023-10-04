@@ -85,7 +85,7 @@ abstract contract Pausable {
     function _checkNotPaused() internal view virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            // If the caller is not the stored owner, revert.
+            // If the `pausedSlot` value is in `_PAUSED_STATE`, revert.
             if eq(sload(not(_PAUSED_SLOT_NOT)), _PAUSED_STATE) {
                 mstore(0x00, 0xd93c0665) // `EnforcedPause()`.
                 revert(0x1c, 0x04)
@@ -97,7 +97,7 @@ abstract contract Pausable {
     function _checkPaused() internal view virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            // If the caller is not the stored owner, revert.
+            // If the `pausedSlot` value is not in `_PAUSED_STATE`, revert.
             if iszero(eq(sload(not(_PAUSED_SLOT_NOT)), _PAUSED_STATE)) {
                 mstore(0x00, 0x8dfc202b) // `ExpectedPause()`.
                 revert(0x1c, 0x04)
@@ -121,13 +121,13 @@ abstract contract Pausable {
     /*                         MODIFIERS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Marks a function as only callable by the owner.
+    /// @dev Marks a function as only callable if the contract is paused.
     modifier whenPaused() virtual {
         _checkPaused();
         _;
     }
 
-    /// @dev Marks a function as only callable by the owner.
+    /// @dev Marks a function as only callable if the contract is not paused.
     modifier whenNotPaused() virtual {
         _checkNotPaused();
         _;
