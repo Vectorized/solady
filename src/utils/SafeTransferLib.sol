@@ -134,10 +134,8 @@ library SafeTransferLib {
     function forceSafeTransferAllETH(address to) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-line
-            if iszero(
-                call(GAS_STIPEND_NO_GRIEF, to, selfbalance(), codesize(), 0x00, codesize(), 0x00)
-            ) {
+            // forgefmt: disable-next-item
+            if iszero(call(GAS_STIPEND_NO_GRIEF, to, selfbalance(), codesize(), 0x00, codesize(), 0x00)) {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
