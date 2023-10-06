@@ -234,9 +234,8 @@ abstract contract ERC721 {
             sstore(keccak256(0x0c, 0x30), isApproved)
             // Emit the {ApprovalForAll} event.
             mstore(0x00, isApproved)
-            log3(
-                0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator))
-            )
+            // forgefmt: disable-next-item
+            log3(0x00, 0x20, _APPROVAL_FOR_ALL_EVENT_SIGNATURE, caller(), shr(96, shl(96, operator)))
         }
     }
 
@@ -311,7 +310,7 @@ abstract contract ERC721 {
                 sstore(toBalanceSlot, toBalanceSlotPacked)
             }
             // Emit the {Transfer} event.
-            log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
+            log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
         }
         _afterTokenTransfer(from, to, id);
     }
@@ -486,7 +485,7 @@ abstract contract ERC721 {
                 sstore(balanceSlot, balanceSlotPacked)
             }
             // Emit the {Transfer} event.
-            log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, 0, to, id)
+            log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, 0, to, id)
         }
         _afterTokenTransfer(address(0), to, id);
     }
@@ -571,7 +570,7 @@ abstract contract ERC721 {
                 sstore(balanceSlot, sub(sload(balanceSlot), 1))
             }
             // Emit the {Transfer} event.
-            log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, owner, 0, id)
+            log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, owner, 0, id)
         }
         _afterTokenTransfer(owner, address(0), id);
     }
@@ -668,7 +667,7 @@ abstract contract ERC721 {
             // Sets `account` as the approved account to manage `id`.
             sstore(add(1, ownershipSlot), account)
             // Emit the {Approval} event.
-            log4(0x00, 0x00, _APPROVAL_EVENT_SIGNATURE, owner, account, id)
+            log4(codesize(), 0x00, _APPROVAL_EVENT_SIGNATURE, owner, account, id)
         }
     }
 
@@ -777,7 +776,7 @@ abstract contract ERC721 {
                 sstore(toBalanceSlot, toBalanceSlotPacked)
             }
             // Emit the {Transfer} event.
-            log4(0x00, 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
+            log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
         }
         _afterTokenTransfer(from, to, id);
     }
