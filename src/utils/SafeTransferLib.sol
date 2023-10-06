@@ -337,7 +337,7 @@ library SafeTransferLib {
             ) {
                 mstore(0x34, 0) // Store 0 for the `amount`.
                 mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
-                pop(call(gas(), token, 0, 0x10, 0x44, 0x00, 0x00)) // Reset the approval.
+                pop(call(gas(), token, 0, 0x10, 0x44, codesize(), 0x00)) // Reset the approval.
                 mstore(0x34, amount) // Store back the original `amount`.
                 // Retry the approval, reverting upon failure.
                 if iszero(
