@@ -132,11 +132,15 @@ contract LibCloneTest is SoladyTest, Clone {
 
         _shouldBehaveLikeClone(clone, value_);
 
-        address predicted = LibClone.predictDeterministicAddressERC1967(address(this), salt, address(this));
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967(address(this), salt, address(this));
         assertEq(clone, predicted);
     }
 
-    function deployDeterministicERC1967(address implementation, bytes32 salt) external returns (address) {
+    function deployDeterministicERC1967(address implementation, bytes32 salt)
+        external
+        returns (address)
+    {
         return LibClone.deployDeterministicERC1967(_brutalized(implementation), salt);
     }
 
