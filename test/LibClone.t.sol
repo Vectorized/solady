@@ -15,6 +15,9 @@ contract LibCloneTest is SoladyTest, Clone {
 
     mapping(bytes32 => bool) saltIsUsed;
 
+    bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
+        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+
     function setValue(uint256 value_) public {
         value = value_;
     }
@@ -66,6 +69,18 @@ contract LibCloneTest is SoladyTest, Clone {
         LibCloneTest(clone).revertWithError();
     }
 
+    function testDeployERC1967(uint256 value_) public {
+        address clone = LibClone.deployERC1967(address(this));
+        _shouldBehaveLikeClone(clone, value_);
+        assertEq(
+            vm.load(clone, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
+        );
+    }
+
+    function testDeployERC1967() public {
+        testDeployERC1967(1);
+    }
+
     function testClone(uint256 value_) public {
         address clone = LibClone.clone(address(this));
         _shouldBehaveLikeClone(clone, value_);
@@ -109,6 +124,43 @@ contract LibCloneTest is SoladyTest, Clone {
 
     function testCloneDeterministic() public {
         testCloneDeterministic(1, keccak256("b"));
+    }
+
+    function testDeployDeterministicERC1967(uint256 value_, bytes32 salt) public {
+        if (saltIsUsed[salt]) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            this.deployDeterministicERC1967(address(this), salt);
+            return;
+        }
+
+        address clone = this.deployDeterministicERC1967(address(this), salt);
+        saltIsUsed[salt] = true;
+
+        _shouldBehaveLikeClone(clone, value_);
+
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967(address(this), salt, address(this));
+        assertEq(clone, predicted);
+
+        assertEq(
+            vm.load(clone, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
+        );
+    }
+
+    function deployDeterministicERC1967(address implementation, bytes32 salt)
+        external
+        returns (address)
+    {
+        return LibClone.deployDeterministicERC1967(_brutalized(implementation), salt);
+    }
+
+    function testDeployDeterministicERC1967RevertsIfAddressAlreadyUsed() public {
+        testDeployDeterministicERC1967(1, keccak256("a"));
+        testDeployDeterministicERC1967(1, keccak256("a"));
+    }
+
+    function testDeployDeterministicERC1967() public {
+        testDeployDeterministicERC1967(1, keccak256("b"));
     }
 
     function getArgBytes(uint256 argOffset, uint256 length) public pure returns (bytes memory) {
@@ -341,6 +393,17 @@ contract LibCloneTest is SoladyTest, Clone {
 
         vm.expectRevert();
         this.cloneDeterministic(address(this), _dummyData(n + 1), bytes32(gasleft()));
+    }
+
+    function testInitialDeposit() public {
+        vm.deal(address(this), 1 ether);
+        address t = address(this);
+        assertEq(LibClone.clone(123, t).balance, 123);
+        assertEq(LibClone.cloneDeterministic(123, t, bytes32(gasleft())).balance, 123);
+        assertEq(LibClone.clone(123, t, "").balance, 123);
+        assertEq(LibClone.cloneDeterministic(123, t, "", bytes32(gasleft())).balance, 123);
+        assertEq(LibClone.deployERC1967(123, t).balance, 123);
+        assertEq(LibClone.deployDeterministicERC1967(123, t, bytes32(gasleft())).balance, 123);
     }
 
     function argBytesHash() public pure returns (bytes32) {
