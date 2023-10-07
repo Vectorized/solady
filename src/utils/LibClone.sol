@@ -643,7 +643,7 @@ library LibClone {
              * ----------------------------------------------------------------------------|
              * RUNTIME (57 bytes)                                                          |
              * ----------------------------------------------------------------------------|
-             * Opcode     | Mnemonic       | Stack            | Memory                     |
+             * Opcode  | Mnemonic       | Stack                  | Memory                  |
              * ----------------------------------------------------------------------------|
              *                                                                             |
              * ::: keep some values in stack ::::::::::::::::::::::::::::::::::::::::::::: |
@@ -661,7 +661,7 @@ library LibClone {
              * ::: delegate call to the implementation contract :::::::::::::::::::::::::: |
              * 36      | CALLDATASIZE   | cds 0 0 0 0            | [0..cds): calldata      |
              * 3d      | RETURNDATASIZE | 0 cds 0 0 0 0          | [0..cds): calldata      |
-             * 7F slot | PUSH32 slot    | slot 0 cds 0 0 0 0     | [0..cds): calldata      |
+             * 7f slot | PUSH32 slot    | slot 0 cds 0 0 0 0     | [0..cds): calldata      |
              * 54      | SLOAD          | addr 0 cds 0 0 0 0     | [0..cds): calldata      |
              * 5a      | GAS            | gas addr 0 cds 0 0 0 0 | [0..cds): calldata      |
              * f4      | DELEGATECALL   | success 0 0            | [0..cds): calldata      |

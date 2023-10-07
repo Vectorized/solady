@@ -385,6 +385,17 @@ contract LibCloneTest is SoladyTest, Clone {
         this.cloneDeterministic(address(this), _dummyData(n + 1), bytes32(gasleft()));
     }
 
+    function testInitialDeposit() public {
+        vm.deal(address(this), 1 ether);
+        address t = address(this);
+        assertEq(LibClone.clone(123, t).balance, 123);
+        assertEq(LibClone.cloneDeterministic(123, t, bytes32(gasleft())).balance, 123);
+        assertEq(LibClone.clone(123, t, "").balance, 123);
+        assertEq(LibClone.cloneDeterministic(123, t, "", bytes32(gasleft())).balance, 123);
+        assertEq(LibClone.deployERC1967(123, t).balance, 123);
+        assertEq(LibClone.deployDeterministicERC1967(123, t, bytes32(gasleft())).balance, 123);
+    }
+
     function argBytesHash() public pure returns (bytes32) {
         return keccak256(_getArgBytes());
     }
