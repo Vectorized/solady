@@ -543,10 +543,8 @@ library LibClone {
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
 
-            // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606057fd5bf3)
-            // Write the address of the implementation.
-            mstore(sub(data, 0x0d), implementation)
+            mstore(data, 0x5af43d3d93803e606057fd5bf3) // Write the bytecode before the data.
+            mstore(sub(data, 0x0d), implementation) // Write the address of the implementation.
             // Write the rest of the bytecode.
             mstore(
                 sub(data, 0x21),
