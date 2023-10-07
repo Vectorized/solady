@@ -581,74 +581,73 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             /**
-             * ---------------------------------------------------------------------------------+
-             * CREATION (34 bytes)                                                              |
-             * ---------------------------------------------------------------------------------|
-             * Opcode     | Mnemonic       | Stack            | Memory                          |
-             * ---------------------------------------------------------------------------------|
-             * 60 runSize | PUSH1 runSize  | r                |                                 |
-             * 3d         | RETURNDATASIZE | 0 r              |                                 |
-             * 81         | DUP2           | r 0 r            |                                 |
-             * 60 offset  | PUSH1 offset   | o r 0 r          |                                 |
-             * 3d         | RETURNDATASIZE | 0 o r 0 r        |                                 |
-             * 39         | CODECOPY       | 0 r              | [0..runSize): runtime code      |
-             * 73 impl    | PUSH20 impl    | impl 0 r         | [0..runSize): runtime code      |
-             * 60 slotPos | PUSH1 slotPos  | slotPos impl 0 r | [0..runSize): runtime code      |
-             * 51         | MLOAD          | slot impl 0 r    | [0..runSize): runtime code      |
-             * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
-             * f3         | RETURN         |                  | [0..runSize): runtime code      |
-             * ---------------------------------------------------------------------------------|
-             * RUNTIME (62 bytes)                                                               |
-             * ---------------------------------------------------------------------------------|
-             * Opcode     | Mnemonic       | Stack            | Memory                          |
-             * ---------------------------------------------------------------------------------|
-             *                                                                                  |
-             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 36         | CALLDATASIZE   | cds 0 0          |                                 |
-             * 3d         | RETURNDATASIZE | 0 cds 0 0        |                                 |
-             * 3d         | RETURNDATASIZE | 0 0 cds 0 0      |                                 |
-             * 37         | CALLDATACOPY   | 0 0              | [0..calldatasize): calldata     |
-             *                                                                                  |
-             * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | 0                |                                 |
-             * 3d         | RETURNDATASIZE | 0 0              |                                 |
-             * 36         | CALLDATASIZE   | cds 0 0          | [0..calldatasize): calldata     |
-             * 3d         | RETURNDATASIZE | 0 cds 0 0        | [0..calldatasize): calldata     |
-             * 7f slot    | PUSH32 slot    | s 0 cds 0 0      | [0..calldatasize): calldata     |
-             * 54         | SLOAD          | i 0 cds 0 0      | [0..calldatasize): calldata     |
-             * 5a         | GAS            | g i 0 cds 0 0    | [0..calldatasize): calldata     |
-             * f4         | DELEGATECALL   | succ             | [0..calldatasize): calldata     |
-             *                                                                                  |
-             * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | rds succ         | [0..calldatasize): calldata     |
-             * 60 0x00    | PUSH1 0x00     | 0 rds succ       | [0..calldatasize): calldata     |
-             * 80         | DUP1           | 0 0 rds succ     | [0..calldatasize): calldata     |
-             * 3e         | RETURNDATACOPY | succ             | [0..returndatasize): returndata |
-             *                                                                                  |
-             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::: |
-             * 60 0x39    | PUSH1 0x39     | dest succ        | [0..returndatasize): returndata |
-             * 57         | JUMPI          |                  | [0..returndatasize): returndata |
-             *                                                                                  |
-             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
-             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
-             * fd         | REVERT         |                  | [0..returndatasize): returndata |
-             *                                                                                  |
-             * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::: |
-             * 5b         | JUMPDEST       |                  | [0..returndatasize): returndata |
-             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
-             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
-             * f3         | RETURN         |                  | [0..returndatasize): returndata |
-             * ---------------------------------------------------------------------------------+
+             * ----------------------------------------------------------------------------+
+             * CREATION (34 bytes)                                                         |
+             * ----------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                     |
+             * ----------------------------------------------------------------------------|
+             * 60 runSize | PUSH1 runSize  | r                |                            |
+             * 3d         | RETURNDATASIZE | 0 r              |                            |
+             * 81         | DUP2           | r 0 r            |                            |
+             * 60 offset  | PUSH1 offset   | o r 0 r          |                            |
+             * 3d         | RETURNDATASIZE | 0 o r 0 r        |                            |
+             * 39         | CODECOPY       | 0 r              | [0..runSize): runtime code |
+             * 73 impl    | PUSH20 impl    | impl 0 r         | [0..runSize): runtime code |
+             * 60 slotPos | PUSH1 slotPos  | slotPos impl 0 r | [0..runSize): runtime code |
+             * 51         | MLOAD          | slot impl 0 r    | [0..runSize): runtime code |
+             * 55         | SSTORE         | 0 r              | [0..runSize): runtime code |
+             * f3         | RETURN         |                  | [0..runSize): runtime code |
+             * ----------------------------------------------------------------------------|
+             * RUNTIME (57 bytes)                                                          |
+             * ----------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                     |
+             * ----------------------------------------------------------------------------|
+             *                                                                             |
+             * ::: keep some values in stack ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d      | RETURNDATASIZE | 0                      |                         |
+             * 3d      | RETURNDATASIZE | 0 0                    |                         |
+             * 3d      | RETURNDATASIZE | 0 0 0                  |                         |
+             * 3d      | RETURNDATASIZE | 0 0 0 0                |                         |
+             *                                                                             |
+             * ::: copy calldata to memory ::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36      | CALLDATASIZE   | cds 0 0 0 0            |                         |
+             * 3d      | RETURNDATASIZE | 0 cds 0 0 0 0          |                         |
+             * 3d      | RETURNDATASIZE | 0 0 cds 0 0 0 0        |                         |
+             * 37      | CALLDATACOPY   | 0 0 0 0                | [0..cds): calldata      |
+             *                                                                             |
+             * ::: delegate call to the implementation contract :::::::::::::::::::::::::: |
+             * 36      | CALLDATASIZE   | cds 0 0 0 0            | [0..cds): calldata      |
+             * 3d      | RETURNDATASIZE | 0 cds 0 0 0 0          | [0..cds): calldata      |
+             * 7F slot | PUSH32 slot    | slot 0 cds 0 0 0 0     | [0..cds): calldata      |
+             * 54      | SLOAD          | addr 0 cds 0 0 0 0     | [0..cds): calldata      |
+             * 5a      | GAS            | gas addr 0 cds 0 0 0 0 | [0..cds): calldata      |
+             * f4      | DELEGATECALL   | success 0 0            | [0..cds): calldata      |
+             *                                                                             |
+             * ::: copy return data to memory :::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d      | RETURNDATASIZE | rds success 0 0        | [0..cds): calldata      |
+             * 3d      | RETURNDATASIZE | rds rds success 0 0    | [0..cds): calldata      |
+             * 93      | SWAP4          | 0 rds success 0 rds    | [0..cds): calldata      |
+             * 80      | DUP1           | 0 0 rds success 0 rds  | [0..cds): calldata      |
+             * 3e      | RETURNDATACOPY | success 0 rds          | [0..rds): returndata    |
+             *                                                                             |
+             * 60 0x37 | PUSH1 0x37     | 0x37 success 0 rds     | [0..rds): returndata    |
+             * 57      | JUMPI          | 0 rds                  | [0..rds): returndata    |
+             *                                                                             |
+             * ::: revert :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * fd      | REVERT         |                        | [0..rds): returndata    |
+             *                                                                             |
+             * ::: return :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b      | JUMPDEST       | 0 rds                  | [0..rds): returndata    |
+             * f3      | RETURN         |                        | [0..rds): returndata    |
+             * ----------------------------------------------------------------------------+
              */
 
             let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x60, 0x3735a920a3ca505d382bbc545af43d6000803e610039573d6000fd5b3d6000f3)
-            mstore(0x40, 0x55f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc)
-            mstore(0x20, 0x600951)
-            mstore(0x1d, implementation)
-            mstore(0x09, 0x60623d8160343d3973)
-            instance := create(0, 0x20, 0x60)
+            mstore(0x60, 0xb98dca3e2076cc3735a920a3ca505d382bbc545af43d3d93803e603757fd5bf3)
+            mstore(0x40, 0x600b5155f33d3d3d3d363d3d37363d7f360894a13ba1a3210667c828492d)
+            mstore(0x22, implementation)
+            mstore(0x0e, 0x60393d8160223d3973)
+            instance := create(0, 0x25, 0x5b)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -668,12 +667,11 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x60, 0x3735a920a3ca505d382bbc545af43d6000803e610039573d6000fd5b3d6000f3)
-            mstore(0x40, 0x55f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc)
-            mstore(0x20, 0x600951)
-            mstore(0x1d, implementation)
-            mstore(0x09, 0x60623d8160343d3973)
-            instance := create2(0, 0x20, 0x60, salt)
+            mstore(0x60, 0xb98dca3e2076cc3735a920a3ca505d382bbc545af43d3d93803e603757fd5bf3)
+            mstore(0x40, 0x600b5155f33d3d3d3d363d3d37363d7f360894a13ba1a3210667c828492d)
+            mstore(0x22, implementation)
+            mstore(0x0e, 0x60393d8160223d3973)
+            instance := create2(0, 0x25, 0x5b, salt)
             // If `instance` is zero, revert.
             if iszero(instance) {
                 // Store the function selector of `DeploymentFailed()`.
@@ -692,12 +690,11 @@ library LibClone {
     function initCodeHashERC1967(address implementation) internal pure returns (bytes32 hash) {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x60, 0x3735a920a3ca505d382bbc545af43d6000803e610039573d6000fd5b3d6000f3)
-            mstore(0x40, 0x55f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc)
-            mstore(0x20, 0x600951)
-            mstore(0x1d, implementation)
-            mstore(0x09, 0x60623d8160343d3973)
-            hash := keccak256(0x20, 0x60)
+            mstore(0x60, 0xb98dca3e2076cc3735a920a3ca505d382bbc545af43d3d93803e603757fd5bf3)
+            mstore(0x40, 0x600b5155f33d3d3d3d363d3d37363d7f360894a13ba1a3210667c828492d)
+            mstore(0x22, implementation)
+            mstore(0x0e, 0x60393d8160223d3973)
+            hash := keccak256(0x25, 0x5b)
             mstore(0x40, m) // Restore the free memory pointer.
             mstore(0x60, 0) // Restore the zero slot.
         }
