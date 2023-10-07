@@ -716,6 +716,7 @@ library LibClone {
     /// using immutable arguments encoded in `data`.
     /// Used for mining vanity addresses with create2crunch.
     function initCodeHashERC1967(address implementation) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
