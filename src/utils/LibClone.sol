@@ -27,7 +27,8 @@ pragma solidity ^0.8.4;
 /// composability. The minimal proxy implementation does not offer this feature.
 ///
 /// @dev Minimal ERC1967 proxy:
-/// An minimal ERC1967 proxy, intended to be used with UUPSUpgradeable.
+/// An minimal ERC1967 proxy, intended to be upgraded with UUPS.
+/// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -610,6 +611,7 @@ library LibClone {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Note: The ERC1967 proxy here is intended to upgraded with UUPS.
+    // This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
 
     /// @dev Deploys a minimal ERC1967 proxy with `implementation`.
     function deployERC1967(address implementation) internal returns (address instance) {
