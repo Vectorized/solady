@@ -114,13 +114,11 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             instance := create(value, 0x0c, 0x35)
-            // If `instance` is zero, revert.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -143,13 +141,11 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             instance := create2(value, 0x0c, 0x35, salt)
-            // If `instance` is zero, revert.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -162,8 +158,7 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             hash := keccak256(0x0c, 0x35)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -257,13 +252,11 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             instance := create(value, 0x0e, 0x36)
-            // If `instance` is zero, revert.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
+            mstore(0x24, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -286,13 +279,11 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             instance := create2(value, 0x0e, 0x36, salt)
-            // If `instance` is zero, revert.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
+            mstore(0x24, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -305,8 +296,7 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             hash := keccak256(0x0e, 0x36)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
+            mstore(0x24, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -431,10 +421,9 @@ library LibClone {
              * f3       | RETURN         |                          | [0..rds): returndata                        |
              * ---------------------------------------------------------------------------------------------------+
              */
-            // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606057fd5bf3)
-            // Write the address of the implementation.
-            mstore(sub(data, 0x0d), implementation)
+
+            mstore(data, 0x5af43d3d93803e606057fd5bf3) // Write the bytecode before the data.
+            mstore(sub(data, 0x0d), implementation) // Write the address of the implementation.
             // Write the rest of the bytecode.
             mstore(
                 sub(data, 0x21),
@@ -452,10 +441,7 @@ library LibClone {
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
-            // Create the instance.
             instance := create(value, sub(data, 0x4c), add(extraLength, 0x6c))
-
-            // If `instance` is zero, revert.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
@@ -499,10 +485,8 @@ library LibClone {
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
 
-            // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606057fd5bf3)
-            // Write the address of the implementation.
-            mstore(sub(data, 0x0d), implementation)
+            mstore(data, 0x5af43d3d93803e606057fd5bf3) // Write the bytecode before the data.
+            mstore(sub(data, 0x0d), implementation) // Write the address of the implementation.
             // Write the rest of the bytecode.
             mstore(
                 sub(data, 0x21),
@@ -520,10 +504,7 @@ library LibClone {
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
-            // Create the instance.
             instance := create2(value, sub(data, 0x4c), add(extraLength, 0x6c), salt)
-
-            // If `instance` is zero, revert.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
@@ -581,7 +562,6 @@ library LibClone {
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
-            // Compute and store the bytecode hash.
             hash := keccak256(sub(data, 0x4c), add(extraLength, 0x6c))
 
             // Restore the overwritten memory surrounding `data`.
@@ -694,7 +674,6 @@ library LibClone {
             mstore(0x1e, implementation)
             mstore(0x0a, 0x603d3d8160223d3973)
             instance := create(value, 0x21, 0x5f)
-            // If `instance` is zero, revert.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
@@ -726,7 +705,6 @@ library LibClone {
             mstore(0x1e, implementation)
             mstore(0x0a, 0x603d3d8160223d3973)
             instance := create2(value, 0x21, 0x5f, salt)
-            // If `instance` is zero, revert.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
@@ -785,8 +763,7 @@ library LibClone {
             mstore(0x01, shl(96, deployer))
             mstore(0x15, salt)
             predicted := keccak256(0x00, 0x55)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x35, 0)
+            mstore(0x35, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
