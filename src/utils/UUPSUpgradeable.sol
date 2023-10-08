@@ -63,7 +63,7 @@ abstract contract UUPSUpgradeable {
 
     /// @dev Upgrades the implementation of th proxy to `newImplementation`.
     /// The caller of this function must be `_authorizeUpgrade`.
-    function _upgradeTo(address newImplementation) internal virtual{
+    function _upgradeTo(address newImplementation) internal virtual {
         _authorizeUpgrade(newImplementation);
         /// @solidity memory-safe-assembly
         assembly {
