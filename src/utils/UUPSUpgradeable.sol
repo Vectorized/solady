@@ -5,8 +5,8 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/UUPSUpgradeable.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/utils/UUPSUpgradeable.sol)
 
-/// @dev Etherscan explorer is only last 20 bytes of ERC1967 storage slot, So
-///     `upgradeTo` and `upgradeToAndCall` doesn't clean upper dirty bits.
+/// @dev Etherscan explorer is only check last 20 bytes of ERC1967 storage slot,
+///      So `upgradeTo` and `upgradeToAndCall` doesn't clean upper dirty bits.
 abstract contract UUPSUpgradeable {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
