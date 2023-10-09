@@ -32,4 +32,22 @@ contract MockUUPSImplementation is UUPSUpgradeable {
     function setValue(uint256 val_) public {
         value = val_;
     }
+
+    function upgradeToAndCall(address newImplemenation, bytes calldata data)
+        public
+        payable
+        override
+    {
+        super.upgradeToAndCall(_brutalized(newImplemenation), data);
+    }
+
+    function upgradeTo(address newImplemenation) public override {
+        super.upgradeTo(_brutalized(newImplemenation));
+    }
+
+    function _brutalized(address a) private pure returns (address result) {
+        assembly {
+            result := or(a, shl(160, 0x0123456789abcdeffedcba98))
+        }
+    }
 }

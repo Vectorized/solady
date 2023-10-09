@@ -96,6 +96,9 @@ abstract contract UUPSUpgradeable {
         _authorizeUpgrade();
         /// @solidity memory-safe-assembly
         assembly {
+            // cleaning address upper dirty bits
+            newImplementation := and(newImplementation, 0xffffffffffffffffffffffffffffffffffffffff)
+
             mstore(0x01, 0x52d1902d) // bytes4(keccak256("proxiableUUID()"))
 
             // Upgraded contract must return `_ERC1967_IMPLEMENTATION_SLOT`

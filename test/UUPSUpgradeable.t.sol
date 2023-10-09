@@ -25,7 +25,7 @@ contract UUPSUpgradeableTest is SoladyTest {
         MockUUPSImplementation impl2 = new MockUUPSImplementation();
         vm.expectEmit(true, false, false, true);
         emit Upgraded(address(impl2));
-        MockUUPSImplementation(proxy).upgradeTo(_brutalized(address(impl2)));
+        MockUUPSImplementation(proxy).upgradeTo(address(impl2));
     }
 
     function testUpgradeToRevertWithUnauthorized() public {
@@ -44,7 +44,7 @@ contract UUPSUpgradeableTest is SoladyTest {
         bytes memory data = abi.encodeWithSignature("setValue(uint256)", 5);
         vm.expectEmit(true, false, false, true);
         emit Upgraded(address(impl2));
-        MockUUPSImplementation(proxy).upgradeToAndCall(_brutalized(address(impl2)), data);
+        MockUUPSImplementation(proxy).upgradeToAndCall(address(impl2), data);
         assertEq(MockUUPSImplementation(proxy).value(), 5);
     }
 
@@ -59,18 +59,12 @@ contract UUPSUpgradeableTest is SoladyTest {
         vm.expectRevert(
             abi.encodeWithSelector(MockUUPSImplementation.CustomError.selector, address(this))
         );
-        MockUUPSImplementation(proxy).upgradeToAndCall(_brutalized(address(impl2)), data);
+        MockUUPSImplementation(proxy).upgradeToAndCall(address(impl2), data);
     }
 
     function testUpgradeToAndCallRevertWithUnauthorized() public {
         vm.prank(address(0xBEEF));
         vm.expectRevert(MockUUPSImplementation.Unauthorized.selector);
         MockUUPSImplementation(proxy).upgradeToAndCall(address(0xABCD), "");
-    }
-
-    function _brutalized(address a) private view returns (address result) {
-        assembly {
-            result := or(a, shl(160, gas()))
-        }
     }
 }
