@@ -876,8 +876,8 @@ abstract contract ERC721 {
             if iszero(call(gas(), to, 0, add(m, 0x1c), add(n, 0xa4), m, 0x20)) {
                 if returndatasize() {
                     // Bubble up the revert if the call reverts.
-                    returndatacopy(0x00, 0x00, returndatasize())
-                    revert(0x00, returndatasize())
+                    returndatacopy(m, 0x00, returndatasize())
+                    revert(m, returndatasize())
                 }
             }
             // Load the returndata and compare it.
