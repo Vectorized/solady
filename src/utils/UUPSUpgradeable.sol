@@ -57,6 +57,7 @@ abstract contract UUPSUpgradeable {
     }
 
     /// @dev Upgrades the proxy's implementation to `newImplementation`.
+    /// Emits a {Upgraded} event.
     function upgradeTo(address newImplementation) public payable virtual {
         _authorizeUpgrade(newImplementation);
         bytes32 s = proxiableUUID();
@@ -69,13 +70,14 @@ abstract contract UUPSUpgradeable {
                 mstore(0x01, 0x55299b49) // `UpgradeFailed()`.
                 revert(0x1d, 0x04)
             }
-            sstore(s, newImplementation) // Updates the implementation.
             // Emit the {Upgraded} event.
             log2(codesize(), 0x00, _UPGRADED_EVENT_SIGNATURE, newImplementation)
+            sstore(s, newImplementation) // Updates the implementation.
         }
     }
 
     /// @dev Upgrades the proxy's implementation to `newImplementation`.
+    /// Emits a {Upgraded} event.
     function upgradeToAndCall(address newImplementation, bytes calldata data)
         public
         payable
@@ -87,8 +89,9 @@ abstract contract UUPSUpgradeable {
             // Forwards the `data` to `newImplementation` via delegatecall.
             calldatacopy(0x00, data.offset, data.length)
             if iszero(delegatecall(gas(), newImplementation, 0x00, data.length, codesize(), 0x00)) {
-                returndatacopy(0x00, 0x00, returndatasize())
-                revert(0x00, returndatasize())
+                // Bubble up the revert if the call reverts.
+                returndatacopy(mload(0x40), 0x00, returndatasize())
+                revert(mload(0x40), returndatasize())
             }
         }
     }
