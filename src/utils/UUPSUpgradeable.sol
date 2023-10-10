@@ -58,11 +58,11 @@ abstract contract UUPSUpgradeable {
     /// @dev Upgrades the proxy's implementation to `newImplementation`.
     function upgradeTo(address newImplementation) public payable virtual {
         _authorizeUpgrade(newImplementation);
+        bytes32 s = proxiableUUID();
         /// @solidity memory-safe-assembly
         assembly {
             newImplementation := shr(96, shl(96, newImplementation)) // Clears upper 96 bits.
             mstore(0x01, 0x52d1902d) // "proxiableUUID()".
-            let s := _ERC1967_IMPLEMENTATION_SLOT
             // Check if `newImplementation` implements `proxiableUUID` correctly.
             if iszero(eq(mload(staticcall(gas(), newImplementation, 0x1d, 0x04, 0x01, 0x20)), s)) {
                 mstore(0x01, 0x55299b49) // `UpgradeFailed()`.
