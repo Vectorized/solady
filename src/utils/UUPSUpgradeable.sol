@@ -7,9 +7,10 @@ pragma solidity ^0.8.4;
 /// (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/utils/UUPSUpgradeable.sol)
 ///
 /// Note:
-/// - This implementation is intended to be used with ERC1967 proxies,
+/// - This implementation is intended to be used with ERC1967 proxies.
 /// See: `LibClone.deployERC1967` and related functions.
-/// - This implementation is not compatible with legacy OpenZeppelin proxies.
+/// - This implementation is NOT compatible with legacy OpenZeppelin proxies
+/// which do not store the implementation at `_ERC1967_IMPLEMENTATION_SLOT`.
 abstract contract UUPSUpgradeable {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
