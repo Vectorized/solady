@@ -56,6 +56,7 @@ utils
 ├─ LibZip — "Library for compressing and decompressing bytes"
 ├─ Clone — "Class with helper read functions for clone with immutable args"
 ├─ LibClone — "Minimal proxy library"
+├─ UUPSUpgradeable — "UUPS proxy mixin"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
 ├─ LibBitmap — "Library for storage of packed booleans"
 ├─ LibMap — "Library for storage of packed unsigned integers"
