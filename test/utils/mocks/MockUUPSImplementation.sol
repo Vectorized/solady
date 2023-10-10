@@ -23,7 +23,7 @@ contract MockUUPSImplementation is UUPSUpgradeable {
         _;
     }
 
-    function _authorizeUpgrade() internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     function revertWithError() public view {
         revert CustomError(owner);
@@ -41,7 +41,7 @@ contract MockUUPSImplementation is UUPSUpgradeable {
         super.upgradeToAndCall(_brutalized(newImplemenation), data);
     }
 
-    function upgradeTo(address newImplemenation) public override {
+    function upgradeTo(address newImplemenation) public payable override {
         super.upgradeTo(_brutalized(newImplemenation));
     }
 

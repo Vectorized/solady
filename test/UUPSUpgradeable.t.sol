@@ -13,6 +13,11 @@ contract UUPSUpgradeableTest is SoladyTest {
 
     address proxy;
 
+    bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
+        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+
+    event Upgraded(address indexed implementation);
+
     function setUp() public {
         impl1 = new MockUUPSImplementation();
         proxy = LibClone.deployERC1967(address(impl1));
@@ -21,20 +26,11 @@ contract UUPSUpgradeableTest is SoladyTest {
 
     function testUpgradeTo() public {
         MockUUPSImplementation impl2 = new MockUUPSImplementation();
+        vm.expectEmit(true, true, true, true);
+        emit Upgraded(address(impl2));
         MockUUPSImplementation(proxy).upgradeTo(address(impl2));
-        assertEq(
-            address(
-                uint160(
-                    uint256(
-                        vm.load(
-                            proxy,
-                            0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
-                        )
-                    )
-                )
-            ),
-            address(impl2)
-        );
+        bytes32 v = vm.load(proxy, _ERC1967_IMPLEMENTATION_SLOT);
+        assertEq(address(uint160(uint256(v))), address(impl2));
     }
 
     function testUpgradeToRevertWithUnauthorized() public {
@@ -52,19 +48,8 @@ contract UUPSUpgradeableTest is SoladyTest {
         MockUUPSImplementation impl2 = new MockUUPSImplementation();
         bytes memory data = abi.encodeWithSignature("setValue(uint256)", 5);
         MockUUPSImplementation(proxy).upgradeToAndCall(address(impl2), data);
-        assertEq(
-            address(
-                uint160(
-                    uint256(
-                        vm.load(
-                            proxy,
-                            0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
-                        )
-                    )
-                )
-            ),
-            address(impl2)
-        );
+        bytes32 v = vm.load(proxy, _ERC1967_IMPLEMENTATION_SLOT);
+        assertEq(address(uint160(uint256(v))), address(impl2));
         assertEq(MockUUPSImplementation(proxy).value(), 5);
     }
 

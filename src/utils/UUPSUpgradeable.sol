@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice An upgradeability mechanism designed for UUPS pattern.
+/// @notice UUPS proxy mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/UUPSUpgradeable.sol)
-/// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/utils/UUPSUpgradeable.sol)
-
-/// @dev Etherscan explorer is only check last 20 bytes of ERC1967 storage slot,
-///      So `upgradeTo` and `upgradeToAndCall` doesn't clean upper dirty bits.
+/// @author Modified from OpenZeppelin
+/// (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/utils/UUPSUpgradeable.sol)
+///
+/// Note:
+/// - This implementation is intended to be used with ERC1967 proxies,
+/// See: `LibClone.deployERC1967` and related functions.
+/// - This implementation is not compatible with legacy OpenZeppelin proxies.
 abstract contract UUPSUpgradeable {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -14,6 +17,17 @@ abstract contract UUPSUpgradeable {
 
     /// @dev The upgrade failed.
     error UpgradeFailed();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Emitted when the proxy's implementation is upgraded.
+    event Upgraded(address indexed implementation);
+
+    /// @dev `keccak256(bytes("Upgraded(address)"))`.
+    uint256 private constant _UPGRADED_EVENT_SIGNATURE =
+        0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -25,79 +39,56 @@ abstract contract UUPSUpgradeable {
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       UUPS Functions                       */
+    /*                      UUPS OPERATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Function must be authorized msg.sender for upgrade contract.
-    function _authorizeUpgrade() internal virtual;
+    /// @dev Please override this function to check if `msg.sender` is authorized
+    /// to upgrade the proxy to `newImplementation`, reverting if not.
+    /// ```
+    ///     function _authorizeUpgrade(address) internal override onlyOwner {}
+    /// ```
+    function _authorizeUpgrade(address newImplementation) internal virtual;
 
-    /// @dev Implementation of the ERC1822 {proxiableUUID} function.
-    /// @dev This returns the storage slot used by the implementation.
-    function proxiableUUID() external pure returns (bytes32) {
+    /// @dev Returns the storage slot used by the implementation,
+    /// as specified in [ERC1822](https://eips.ethereum.org/EIPS/eip-1822).
+    function proxiableUUID() public pure virtual returns (bytes32) {
         return _ERC1967_IMPLEMENTATION_SLOT;
     }
 
-    /// @dev Upgrades the implementation of th proxy to `newImplementation`.
-    /// Then, delegate calls to newImplementation with abi encoded `data`.
-    /// The caller of this function must be pass `_authorizeUpgrade`.
+    /// @dev Upgrades the proxy's implementation to `newImplementation`.
+    function upgradeTo(address newImplementation) public payable virtual {
+        _authorizeUpgrade(newImplementation);
+        /// @solidity memory-safe-assembly
+        assembly {
+            newImplementation := shr(96, shl(96, newImplementation)) // Clears upper 96 bits.
+            mstore(0x01, 0x52d1902d) // "proxiableUUID()".
+            let s := _ERC1967_IMPLEMENTATION_SLOT
+            // Check if `newImplementation` implements `proxiableUUID` correctly.
+            if iszero(eq(mload(staticcall(gas(), newImplementation, 0x1d, 0x04, 0x01, 0x20)), s)) {
+                mstore(0x01, 0x55299b49) // `UpgradeFailed()`.
+                revert(0x1d, 0x04)
+            }
+            sstore(s, newImplementation) // Updates the implementation.
+            // Emit the {Upgraded} event.
+            log2(codesize(), 0x00, _UPGRADED_EVENT_SIGNATURE, newImplementation)
+        }
+    }
+
+    /// @dev Upgrades the proxy's implementation to `newImplementation`.
     function upgradeToAndCall(address newImplementation, bytes calldata data)
         public
         payable
         virtual
     {
-        _authorizeUpgrade();
+        upgradeTo(newImplementation);
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x01, 0x52d1902d) // bytes4(keccak256("proxiableUUID()"))
-
-            // Upgraded contract must return `_ERC1967_IMPLEMENTATION_SLOT`
-            if iszero(
-                eq(
-                    mload(staticcall(gas(), newImplementation, 0x1d, 0x04, 0x01, 0x20)),
-                    _ERC1967_IMPLEMENTATION_SLOT
-                )
-            ) {
-                mstore(0x01, 0x55299b49) // `UpgradeFailed()`.
-                revert(0x1d, 0x04)
-            }
-
-            // copy calldata into memory
+            // Forwards the `data` to `newImplementation` via delegatecall.
             calldatacopy(0x00, data.offset, data.length)
-
-            // delegate call to `newImplementation` and revert upon failed
             if iszero(delegatecall(gas(), newImplementation, 0x00, data.length, codesize(), 0x00)) {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
-
-            // update the new implementation address to `_ERC1967_IMPLEMENTATION_SLOT`.
-            sstore(_ERC1967_IMPLEMENTATION_SLOT, newImplementation)
-            returndatacopy(0x00, 0x00, returndatasize())
-            return(0x00, returndatasize())
-        }
-    }
-
-    /// @dev Upgrades the implementation of th proxy to `newImplementation`.
-    /// The caller of this function must be pass `_authorizeUpgrade`.
-    function upgradeTo(address newImplementation) public virtual {
-        _authorizeUpgrade();
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x01, 0x52d1902d) // bytes4(keccak256("proxiableUUID()"))
-
-            // Upgraded contract must return `_ERC1967_IMPLEMENTATION_SLOT`
-            if iszero(
-                eq(
-                    mload(staticcall(gas(), newImplementation, 0x1d, 0x04, 0x01, 0x20)),
-                    _ERC1967_IMPLEMENTATION_SLOT
-                )
-            ) {
-                mstore(0x01, 0x55299b49) // `UpgradeFailed()`.
-                revert(0x1d, 0x04)
-            }
-
-            // update the new implementation address to `_ERC1967_IMPLEMENTATION_SLOT`.
-            sstore(_ERC1967_IMPLEMENTATION_SLOT, newImplementation)
         }
     }
 }
