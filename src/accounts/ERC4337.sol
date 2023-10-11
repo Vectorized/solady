@@ -278,7 +278,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /// @dev Withdraw ETH from the account's deposit on the EntryPoint.
-    function withdrawDepositTo(address to, uint256 amount) public virtual onlyOwner {
+    function withdrawDepositTo(address to, uint256 amount) public payable virtual onlyOwner {
         address ep = entryPoint();
         /// @solidity memory-safe-assembly
         assembly {
