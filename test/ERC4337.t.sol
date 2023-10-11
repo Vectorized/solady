@@ -156,6 +156,24 @@ contract ERC4337Test is SoladyTest {
         assertEq(targets[1].balance, 0);
     }
 
+    function testDelegateExecute() public {
+        vm.deal(address(account), 1 ether);
+        account.initialize(address(this));
+
+        address delegate = address(new Target());
+
+        bytes memory data;
+        data = account.delegateExecute(delegate, abi.encodeWithSignature("datahash()"));
+        assertEq(abi.decode(data, (bytes32)), bytes32(0));
+        assertEq(vm.load(address(account), bytes32(0)), bytes32(0));
+        data = abi.encodeWithSignature("setDataHash(bytes)", _randomBytes(111));
+        data = account.delegateExecute(delegate, data);
+        assertEq(data, "");
+        data = account.delegateExecute(delegate, abi.encodeWithSignature("datahash()"));
+        assertEq(abi.decode(data, (bytes32)), keccak256(_randomBytes(111)));
+        assertEq(vm.load(address(account), bytes32(0)), keccak256(_randomBytes(111)));
+    }
+
     function testDepositFunctions() public {
         vm.deal(address(account), 1 ether);
         account.initialize(address(this));
