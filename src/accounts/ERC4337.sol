@@ -10,6 +10,10 @@ import {ECDSA} from "../utils/ECDSA.sol";
 /// @notice Simple ERC4337 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC4337.sol)
 /// @author Infinitism (https://github.com/eth-infinitism/account-abstraction/blob/develop/contracts/samples/SimpleAccount.sol)
+///
+/// Recommended usage:
+/// 1. Deploy the ERC4337 as an implementation contract, and verify it on Etherscan.
+/// 2. Create a simple factory that uses `LibClone.deployERC1967` to clone the implementation,
 contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -103,7 +107,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         /// @solidity memory-safe-assembly
         assembly {
             if missingAccountFunds {
-                // Ignore failure (its EntryPoint's job to verify, not account).
+                // Ignore failure (its EntryPoint's job to verify, not the account's).
                 pop(call(not(0), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))
             }
         }
@@ -232,7 +236,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
 
     /// @dev Handle token callbacks. If no token callback is triggered,
     /// use `LibZip.cdFallback` for generalized calldata decompression.
-    fallback() external virtual override receiverFallback {
+    fallback() external virtual override(Receiver) receiverFallback {
         LibZip.cdFallback();
     }
 }
