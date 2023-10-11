@@ -6,6 +6,7 @@ import {Ownable} from "../auth/Ownable.sol";
 import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
 import {LibZip} from "../utils/LibZip.sol";
 import {ECDSA} from "../utils/ECDSA.sol";
+import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 
 /// @notice Simple ERC4337 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC4337.sol)
@@ -71,15 +72,16 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         virtual
         returns (uint256 validationData)
     {
-        bool sigFailed = owner()
-            != ECDSA.recoverCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature);
+        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
+            owner(), ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature
+        );
         /// @solidity memory-safe-assembly
         assembly {
             // Returns 0 if the recovered address matches the owner.
             // Else returns 1, which is equivalent to:
-            // `(sigFailed ? 1 : 0) | (uint256(validUntil) << 160) | (uint256(validAfter) << (160 + 48))`
+            // `(!success ? 1 : 0) | (uint256(validUntil) << 160) | (uint256(validAfter) << (160 + 48))`
             // where `validUntil` is 0 (indefinite) and `validAfter` is 0.
-            validationData := iszero(iszero(sigFailed))
+            validationData := iszero(success)
         }
     }
 
