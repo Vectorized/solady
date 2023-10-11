@@ -16,7 +16,7 @@ abstract contract Receiver {
     fallback() external virtual receiverFallback {}
 
     /// @dev Modifier for the fallback function to handle token callbacks.
-    modifier receiverFallback() {
+    modifier receiverFallback() virtual {
         /// @solidity memory-safe-assembly
         assembly {
             // Shift to the calldata `msg.sig`.
