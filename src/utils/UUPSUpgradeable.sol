@@ -87,11 +87,12 @@ abstract contract UUPSUpgradeable {
         /// @solidity memory-safe-assembly
         assembly {
             // Forwards the `data` to `newImplementation` via delegatecall.
-            calldatacopy(0x00, data.offset, data.length)
-            if iszero(delegatecall(gas(), newImplementation, 0x00, data.length, codesize(), 0x00)) {
+            let m := mload(0x40)
+            calldatacopy(m, data.offset, data.length)
+            if iszero(delegatecall(gas(), newImplementation, m, data.length, codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
-                returndatacopy(mload(0x40), 0x00, returndatasize())
-                revert(mload(0x40), returndatasize())
+                returndatacopy(m, 0x00, returndatasize())
+                revert(m, returndatasize())
             }
         }
     }
