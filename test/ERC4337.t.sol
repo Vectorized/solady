@@ -89,6 +89,10 @@ contract ERC4337Test is SoladyTest {
         assertEq(Target(target).datahash(), keccak256(data));
         assertEq(target.balance, 123);
 
+        vm.prank(_randomNonZeroAddress());
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        account.execute(target, 123, abi.encodeWithSignature("setDataHash(bytes)", data));
+
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", data));
         account.execute(target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data));
     }

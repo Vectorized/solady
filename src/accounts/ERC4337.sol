@@ -15,7 +15,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The ERC4337 user operation struct.
+    /// @dev The ERC4337 UserOperation struct.
     struct UserOperation {
         address sender;
         uint256 nonce;
@@ -47,6 +47,16 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        ENTRY POINT                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the canonical ERC4337 EntryPoint contract.
+    /// Override this function to return a different EntryPoint.
+    function entryPoint() public pure virtual returns (address) {
+        return 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   VALIDATION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -56,8 +66,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         virtual
         returns (uint256 validationData)
     {
-        bytes32 hash = ECDSA.toEthSignedMessageHash(userOpHash);
-        bool sigFailed = owner() != ECDSA.recoverCalldata(hash, userOp.signature);
+        bool sigFailed = owner()
+            != ECDSA.recoverCalldata(ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature);
         /// @solidity memory-safe-assembly
         assembly {
             // Returns 0 if the recovered address matches the owner.
@@ -71,7 +81,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /// @dev Override to validate the nonce of the UserOperation.
     /// This method may validate the nonce requirement of this account.
     /// e.g.
-    /// To limit the nonce to use sequenced UserOps only (no "out of order" UserOps):
+    /// To limit the nonce to use sequenced UserOperations only (no "out of order" UserOperations):
     ///      `require(nonce < type(uint64).max)`
     /// For a hypothetical account that *requires* the nonce to be out-of-order:
     ///      `require(nonce & type(uint64).max == 0)`
@@ -82,12 +92,12 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         nonce = nonce; // Silence unused variable warning.
     }
 
-    /// @dev Sends to the entrypoint (msg.sender) the missing funds for this transaction.
+    /// @dev Sends to the EntryPoint (`msg.sender`) the missing funds for this transaction.
     /// subclass MAY override this method for better funds management
-    /// (e.g. send to the entryPoint more than the minimum required, so that in future transactions
+    /// (e.g. send to the EntryPoint more than the minimum required, so that in future transactions
     /// it will not be required to send again)
     ///
-    /// `missingAccountFunds` is the minimum value this method should send the entrypoint,
+    /// `missingAccountFunds` is the minimum value this method should send the EntryPoint,
     /// which MAY be zero, in case there is enough deposit, or the userOp has a paymaster.
     function _payPrefund(uint256 missingAccountFunds) internal virtual {
         /// @solidity memory-safe-assembly
@@ -102,6 +112,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /// @dev Validates the signature and nonce.
     /// The EntryPoint will make the call to the recipient only if
     /// this validation call returns successfully.
+    ///
     /// Signature failure should be reported by returning 1 (see: `_validateSignature`).
     /// This allows making a "simulation call" without a valid signature.
     /// Other failures (e.g. nonce mismatch, or invalid signature format)
@@ -110,21 +121,21 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         UserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) public virtual onlyEntryPointOrOwner returns (uint256 validationData) {
+    ) public payable virtual onlyEntryPoint returns (uint256 validationData) {
         validationData = _validateSignature(userOp, userOpHash);
         _validateNonce(userOp.nonce);
         _payPrefund(missingAccountFunds);
     }
 
+    /// @dev Requires that the caller is the EntryPoint.
+    modifier onlyEntryPoint() virtual {
+        if (msg.sender != entryPoint()) revert Unauthorized();
+        _;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     ACCOUNT OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Returns the canonical ERC4337 entry point contract.
-    /// Override this function to return a different entry point.
-    function entryPoint() public pure virtual returns (address) {
-        return 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
-    }
 
     /// @dev Execute a call operation from this account.
     function execute(address target, uint256 value, bytes calldata data)
@@ -156,7 +167,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
             // forgefmt: disable-next-item
             if iszero(and(eq(targets.length, data.length),
                 or(iszero(values.length), eq(values.length, data.length)))) {
-                mstore(0x00, 0x3b800a46) // "ArrayLengthsMismatch()".
+                mstore(0x00, 0x3b800a46) // `ArrayLengthsMismatch()`.
                 revert(0x1c, 0x04)
             }
             let m := mload(0x40)
@@ -189,13 +200,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /// @dev Requires that the caller is the EntryPoint, or the owner, or the contract itself.
-    function _checkEntryPointOrOwner() internal virtual {
-        if (msg.sender != entryPoint()) _checkOwner();
-    }
-
-    /// @dev Guards a function with `_checkEntryPointOrOwner`.
     modifier onlyEntryPointOrOwner() virtual {
-        _checkEntryPointOrOwner();
+        if (msg.sender != entryPoint()) _checkOwner();
         _;
     }
 
@@ -213,9 +219,9 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Make `Ownable` prevent double-initialization.
-    function _guardInitializeOwner() internal pure virtual override returns (bool guard) {
-        guard = true;
+    /// @dev To prevent double-initialization.
+    function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
+        return true;
     }
 
     /// @dev To ensure that only the owner can upgrade the implementation.
