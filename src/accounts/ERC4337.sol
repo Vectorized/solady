@@ -15,7 +15,7 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// Recommended usage:
 /// 1. Deploy the ERC4337 as an implementation contract, and verify it on Etherscan.
 /// 2. Create a simple factory that uses `LibClone.deployERC1967` or
-///    `LibClone.deployDeterministicERC1967` to clone the implementation,
+///    `LibClone.deployDeterministicERC1967` to clone the implementation.
 contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -100,7 +100,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /// @dev Sends to the EntryPoint (`msg.sender`) the missing funds for this transaction.
-    /// subclass MAY override this method for better funds management
+    /// Subclass MAY override this method for better funds management.
     /// (e.g. send to the EntryPoint more than the minimum required, so that in future transactions
     /// it will not be required to send again)
     ///
@@ -110,7 +110,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         /// @solidity memory-safe-assembly
         assembly {
             if missingAccountFunds {
-                // Ignore failure (its EntryPoint's job to verify, not the account's).
+                // Ignore failure (it's EntryPoint's job to verify, not the account's).
                 pop(call(gas(), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))
             }
         }
@@ -211,7 +211,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Requires that the caller is the EntryPoint, or the owner, or the contract itself.
+    /// @dev Requires that the caller is the EntryPoint, the owner, or the contract itself.
     modifier onlyEntryPointOrOwner() virtual {
         if (msg.sender != entryPoint()) _checkOwner();
         _;
