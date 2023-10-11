@@ -33,6 +33,18 @@ contract MockEntryPoint {
         (bool success,) = payable(to).call{value: amount}("");
         require(success);
     }
+
+    function validateUserOp(
+        address account,
+        ERC4337.UserOperation memory userOp,
+        bytes32 userOpHash,
+        uint256 missingAccountFunds
+    ) public payable returns (uint256 validationData) {
+        validationData =
+            ERC4337(payable(account)).validateUserOp(userOp, userOpHash, missingAccountFunds);
+    }
+
+    receive() external payable {}
 }
 
 contract ERC4337Test is SoladyTest {
@@ -181,6 +193,48 @@ contract ERC4337Test is SoladyTest {
         account.withdrawDepositTo(to, 12);
         assertEq(to.balance, 12);
         assertEq(account.getDeposit(), 123 - 12);
+    }
+
+    struct _TestTemps {
+        bytes32 userOpHash;
+        address signer;
+        uint256 privateKey;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+        uint256 missingAccountFunds;
+    }
+
+    function testValidateUserOp() public {
+        _TestTemps memory t;
+        t.userOpHash = keccak256("123");
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, ECDSA.toEthSignedMessageHash(t.userOpHash));
+        t.missingAccountFunds = 456;
+        vm.deal(address(account), 1 ether);
+        assertEq(address(account).balance, 1 ether);
+
+        account.initialize(t.signer);
+
+        vm.etch(account.entryPoint(), address(new MockEntryPoint()).code);
+        MockEntryPoint ep = MockEntryPoint(payable(account.entryPoint()));
+
+        ERC4337.UserOperation memory userOp;
+        // Success returns 0.
+        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
+        assertEq(
+            ep.validateUserOp(address(account), userOp, t.userOpHash, t.missingAccountFunds), 0
+        );
+        assertEq(address(ep).balance, t.missingAccountFunds);
+        // Failure returns 1.
+        userOp.signature = abi.encodePacked(t.r, bytes32(uint256(t.s) ^ 1), t.v);
+        assertEq(
+            ep.validateUserOp(address(account), userOp, t.userOpHash, t.missingAccountFunds), 1
+        );
+        assertEq(address(ep).balance, t.missingAccountFunds * 2);
+        // Not entry point reverts.
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        account.validateUserOp(userOp, t.userOpHash, t.missingAccountFunds);
     }
 
     function testETHReceived() public {
