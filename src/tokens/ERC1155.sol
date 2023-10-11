@@ -266,8 +266,8 @@ abstract contract ERC1155 {
                 if iszero(call(gas(), to, 0, add(m, 0x1c), add(0xc4, data.length), m, 0x20)) {
                     if returndatasize() {
                         // Bubble up the revert if the call reverts.
-                        returndatacopy(0x00, 0x00, returndatasize())
-                        revert(0x00, returndatasize())
+                        returndatacopy(m, 0x00, returndatasize())
+                        revert(m, returndatasize())
                     }
                 }
                 // Load the returndata and compare it with the function selector.
@@ -403,8 +403,8 @@ abstract contract ERC1155 {
                 if iszero(call(gas(), mload(0x00), 0, add(m, 0x1c), nAll, m, 0x20)) {
                     if returndatasize() {
                         // Bubble up the revert if the call reverts.
-                        returndatacopy(0x00, 0x00, returndatasize())
-                        revert(0x00, returndatasize())
+                        returndatacopy(m, 0x00, returndatasize())
+                        revert(m, returndatasize())
                     }
                 }
                 // Load the returndata and compare it with the function selector.
@@ -1039,8 +1039,8 @@ abstract contract ERC1155 {
             if iszero(call(gas(), to, 0, add(m, 0x1c), add(0xc4, n), m, 0x20)) {
                 if returndatasize() {
                     // Bubble up the revert if the call reverts.
-                    returndatacopy(0x00, 0x00, returndatasize())
-                    revert(0x00, returndatasize())
+                    returndatacopy(m, 0x00, returndatasize())
+                    revert(m, returndatasize())
                 }
             }
             // Load the returndata and compare it with the function selector.
@@ -1089,8 +1089,8 @@ abstract contract ERC1155 {
             if iszero(call(gas(), to, 0, add(m, 0x1c), n, m, 0x20)) {
                 if returndatasize() {
                     // Bubble up the revert if the call reverts.
-                    returndatacopy(0x00, 0x00, returndatasize())
-                    revert(0x00, returndatasize())
+                    returndatacopy(m, 0x00, returndatasize())
+                    revert(m, returndatasize())
                 }
             }
             // Load the returndata and compare it with the function selector.
