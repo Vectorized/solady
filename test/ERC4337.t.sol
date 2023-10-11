@@ -21,6 +21,20 @@ contract Target {
     }
 }
 
+contract MockEntryPoint {
+    mapping(address => uint256) public balanceOf;
+
+    function depositTo(address to) public payable {
+        balanceOf[to] += msg.value;
+    }
+
+    function withdrawTo(address to, uint256 amount) public payable {
+        balanceOf[msg.sender] -= amount;
+        (bool success,) = payable(to).call{value: amount}("");
+        require(success);
+    }
+}
+
 contract ERC4337Test is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
@@ -154,7 +168,20 @@ contract ERC4337Test is SoladyTest {
         assertEq(targets[1].balance, 0);
     }
 
-    function testValidateUserOp() public {}
+    function testDepositFunctions() public {
+        vm.deal(address(account), 1 ether);
+        account.initialize(address(this));
+
+        vm.etch(account.entryPoint(), address(new MockEntryPoint()).code);
+        assertEq(account.getDeposit(), 0);
+        account.addDeposit{value: 123}();
+        assertEq(account.getDeposit(), 123);
+        address to = _randomNonZeroAddress();
+        assertEq(to.balance, 0);
+        account.withdrawDepositTo(to, 12);
+        assertEq(to.balance, 12);
+        assertEq(account.getDeposit(), 123 - 12);
+    }
 
     function testETHReceived() public {
         payable(address(account)).transfer(1 ether);
