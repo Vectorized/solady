@@ -119,6 +119,15 @@ contract ERC4337Test is SoladyTest {
         assertEq(targets[0].balance, 123);
         assertEq(targets[1].balance, 456);
 
+        vm.expectRevert(ERC4337.ArrayLengthsMismatch.selector);
+        account.executeBatch(targets, new uint256[](1), data);
+
+        vm.expectRevert(ERC4337.ArrayLengthsMismatch.selector);
+        account.executeBatch(targets, values, new bytes[](3));
+
+        account.executeBatch(new address[](0), new uint256[](0), new bytes[](0));
+        account.executeBatch(new address[](1), new uint256[](1), new bytes[](1));
+
         data[1] = abi.encodeWithSignature("revertWithTargetError(bytes)", _randomBytes(111));
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", _randomBytes(111)));
         account.executeBatch(targets, values, data);

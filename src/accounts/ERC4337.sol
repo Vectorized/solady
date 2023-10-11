@@ -41,7 +41,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*                        INITIALIZER                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Initializes the owner. Can only be called once.
+    /// @dev Initializes the account with the owner. Can only be called once.
     function initialize(address newOwner) public virtual {
         _initializeOwner(newOwner);
     }
@@ -170,31 +170,34 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                 mstore(0x00, 0x3b800a46) // `ArrayLengthsMismatch()`.
                 revert(0x1c, 0x04)
             }
-            let m := mload(0x40)
             let end := add(targets.offset, shl(5, targets.length))
-            // If `values.length` is zero, abuse out-of-bounds calldataload to get zero for values.
-            let valuesOffsetDiff :=
-                or(shl(128, iszero(values.length)), sub(values.offset, targets.offset))
-            let dataOffsetDiff := sub(data.offset, targets.offset)
-            for {} iszero(eq(targets.offset, end)) {} {
-                let o := add(data.offset, calldataload(add(targets.offset, dataOffsetDiff)))
-                calldatacopy(m, add(o, 0x20), calldataload(o))
-                if iszero(
-                    call(
-                        gas(), // Gas remaining.
-                        calldataload(targets.offset), // Target.
-                        calldataload(add(targets.offset, valuesOffsetDiff)), // Value.
-                        m, // Start of input calldata.
-                        calldataload(o), // Length of input calldata.
-                        codesize(), // We will use `returndatasize` instead.
-                        0x00 // We will use `returndatasize` instead.
-                    )
-                ) {
-                    // Bubble up the revert if the delegatecall reverts.
-                    returndatacopy(m, 0x00, returndatasize())
-                    revert(m, returndatasize())
+            if iszero(eq(targets.offset, end)) {
+                let m := mload(0x40)
+                // If `values` is empty, abuse out-of-bounds calldataload to get zero for values.
+                let valuesOffsetDiff :=
+                    or(shl(128, iszero(values.length)), sub(values.offset, targets.offset))
+                let dataOffsetDiff := sub(data.offset, targets.offset)
+                for {} 1 {} {
+                    let o := add(data.offset, calldataload(add(targets.offset, dataOffsetDiff)))
+                    calldatacopy(m, add(o, 0x20), calldataload(o))
+                    if iszero(
+                        call(
+                            gas(), // Gas remaining.
+                            calldataload(targets.offset), // Target.
+                            calldataload(add(targets.offset, valuesOffsetDiff)), // Value.
+                            m, // Start of input calldata.
+                            calldataload(o), // Length of input calldata.
+                            codesize(), // We will use `returndatasize` instead.
+                            0x00 // We will use `returndatasize` instead.
+                        )
+                    ) {
+                        // Bubble up the revert if the delegatecall reverts.
+                        returndatacopy(m, 0x00, returndatasize())
+                        revert(m, returndatasize())
+                    }
+                    targets.offset := add(targets.offset, 0x20)
+                    if eq(targets.offset, end) { break }
                 }
-                targets.offset := add(targets.offset, 0x20)
             }
         }
     }
