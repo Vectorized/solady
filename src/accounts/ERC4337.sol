@@ -211,6 +211,31 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
+    /// @dev Executes `data` using the bytecode of `delegate` with the current account.
+    function delegateExecute(address delegate, bytes calldata data)
+        public
+        payable
+        virtual
+        onlyEntryPointOrOwner
+        returns (bytes memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Forwards the `data` to `delegate` via delegatecall.
+            result := mload(0x40)
+            calldatacopy(result, data.offset, data.length)
+            if iszero(delegatecall(gas(), delegate, result, data.length, codesize(), 0x00)) {
+                // Bubble up the revert if the call reverts.
+                returndatacopy(result, 0x00, returndatasize())
+                revert(result, returndatasize())
+            }
+            mstore(result, returndatasize())
+            let o := add(result, 0x20)
+            returndatacopy(o, 0x00, returndatasize())
+            mstore(0x40, add(o, returndatasize()))
+        }
+    }
+
     /// @dev Requires that the caller is the EntryPoint, the owner, or the contract itself.
     modifier onlyEntryPointOrOwner() virtual {
         if (msg.sender != entryPoint()) _checkOwner();
