@@ -19,21 +19,11 @@ abstract contract Receiver {
     modifier receiverFallback() virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            // Shift to the calldata `msg.sig`.
-            // Compare with token magic values.
             let s := shr(224, calldataload(0))
-            // `onERC721Received`.
-            if eq(s, 0x150b7a02) {
-                mstore(0x20, s) // Load into memory slot.
-                return(0x3c, 0x20) // Return `msg.sig`.
-            }
-            // `onERC1155Received`.
-            if eq(s, 0xf23a6e61) {
-                mstore(0x20, s) // Load into memory slot.
-                return(0x3c, 0x20) // Return `msg.sig`.
-            }
-            // `onERC1155BatchReceived`.
-            if eq(s, 0xbc197c81) {
+            // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
+            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
+            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+            if or(eq(s, 0x150b7a02), or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81))) {
                 mstore(0x20, s) // Load into memory slot.
                 return(0x3c, 0x20) // Return `msg.sig`.
             }
