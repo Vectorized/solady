@@ -223,9 +223,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         assembly {
             mstore(0x20, address()) // Store the `to` argument.
             mstore(0x00, 0x70a08231) // `balanceOf(address)`.
-            if iszero(
-                and(gt(returndatasize(), 0x1f), staticcall(gas(), ep, 0x1c, 0x24, 0x00, 0x20))
-            ) {
+            // forgefmt: disable-next-item
+            if iszero(and(gt(returndatasize(), 0x1f), staticcall(gas(), ep, 0x1c, 0x24, 0x00, 0x20))) {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }
@@ -240,11 +239,10 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         assembly {
             mstore(0x20, address()) // Store the `to` argument.
             mstore(0x00, 0xb760faf9) // `depositTo(address)`.
-            if iszero(call(gas(), ep, callvalue(), 0x1c, 0x24, codesize(), 0x00)) {
-                if iszero(extcodesize(ep)) {
-                    returndatacopy(mload(0x40), 0x00, returndatasize())
-                    revert(mload(0x40), returndatasize())
-                }
+            // forgefmt: disable-next-item
+            if iszero(mul(extcodesize(ep), call(gas(), ep, callvalue(), 0x1c, 0x24, codesize(), 0x00))) {
+                returndatacopy(mload(0x40), 0x00, returndatasize())
+                revert(mload(0x40), returndatasize())
             }
         }
     }
@@ -257,11 +255,9 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-            if iszero(call(gas(), ep, 0, 0x10, 0x44, codesize(), 0x00)) {
-                if iszero(extcodesize(ep)) {
-                    returndatacopy(mload(0x40), 0x00, returndatasize())
-                    revert(mload(0x40), returndatasize())
-                }
+            if iszero(mul(extcodesize(ep), call(gas(), ep, 0, 0x10, 0x44, codesize(), 0x00))) {
+                returndatacopy(mload(0x40), 0x00, returndatasize())
+                revert(mload(0x40), returndatasize())
             }
         }
     }
