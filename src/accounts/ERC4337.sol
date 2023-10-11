@@ -13,7 +13,8 @@ import {ECDSA} from "../utils/ECDSA.sol";
 ///
 /// Recommended usage:
 /// 1. Deploy the ERC4337 as an implementation contract, and verify it on Etherscan.
-/// 2. Create a simple factory that uses `LibClone.deployERC1967` to clone the implementation,
+/// 2. Create a simple factory that uses `LibClone.deployERC1967` or
+///    `LibClone.deployDeterministicERC1967` to clone the implementation,
 contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -247,7 +248,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Withdraw ETH from the account's deposit.
+    /// @dev Withdraw ETH from the account's deposit on the EntryPoint.
     function withdrawDepositTo(address to, uint256 amount) public virtual onlyOwner {
         address ep = entryPoint();
         /// @solidity memory-safe-assembly
