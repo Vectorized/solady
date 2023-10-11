@@ -154,6 +154,8 @@ contract ERC4337Test is SoladyTest {
         assertEq(targets[1].balance, 0);
     }
 
+    function testValidateUserOp() public {}
+
     function testETHReceived() public {
         payable(address(account)).transfer(1 ether);
     }
