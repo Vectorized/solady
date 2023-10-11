@@ -6,6 +6,7 @@ pragma solidity ^0.8.4;
 /// @author Minimal proxy by 0age (https://github.com/0age)
 /// @author Clones with immutable args by wighawag, zefram.eth, Saw-mon & Natalie
 /// (https://github.com/Saw-mon-and-Natalie/clones-with-immutable-args)
+/// @author Minimal ERC1967 proxy by jtriley-eth (https://github.com/jtriley-eth/minimum-viable-proxy)
 ///
 /// @dev Minimal proxy:
 /// Although the sw0nt pattern saves 5 gas over the erc-1167 pattern during runtime,
@@ -24,6 +25,10 @@ pragma solidity ^0.8.4;
 /// `ReceiveETH(uint256)` event. This skips the `DELEGATECALL` when there is no calldata,
 /// enabling us to accept hard gas-capped `sends` & `transfers` for maximum backwards
 /// composability. The minimal proxy implementation does not offer this feature.
+///
+/// @dev Minimal ERC1967 proxy:
+/// An minimal ERC1967 proxy, intended to be upgraded with UUPS.
+/// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -41,6 +46,11 @@ library LibClone {
 
     /// @dev Deploys a clone of `implementation`.
     function clone(address implementation) internal returns (address instance) {
+        instance = clone(0, implementation);
+    }
+
+    /// @dev Deploys a clone of `implementation`.
+    function clone(uint256 value, address implementation) internal returns (address instance) {
         /// @solidity memory-safe-assembly
         assembly {
             /**
@@ -103,16 +113,12 @@ library LibClone {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
-            instance := create(0, 0x0c, 0x35)
-            // If `instance` is zero, revert.
+            instance := create(value, 0x0c, 0x35)
             if iszero(instance) {
-                // Store the function selector of `DeploymentFailed()`.
-                mstore(0x00, 0x30116425)
-                // Revert with (offset, size).
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -121,21 +127,25 @@ library LibClone {
         internal
         returns (address instance)
     {
+        instance = cloneDeterministic(0, implementation, salt);
+    }
+
+    /// @dev Deploys a deterministic clone of `implementation` with `salt`.
+    function cloneDeterministic(uint256 value, address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
-            instance := create2(0, 0x0c, 0x35, salt)
-            // If `instance` is zero, revert.
+            instance := create2(value, 0x0c, 0x35, salt)
             if iszero(instance) {
-                // Store the function selector of `DeploymentFailed()`.
-                mstore(0x00, 0x30116425)
-                // Revert with (offset, size).
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -148,8 +158,7 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             hash := keccak256(0x0c, 0x35)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x21, 0)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -171,6 +180,14 @@ library LibClone {
 
     /// @dev Deploys a PUSH0 clone of `implementation`.
     function clone_PUSH0(address implementation) internal returns (address instance) {
+        instance = clone_PUSH0(0, implementation);
+    }
+
+    /// @dev Deploys a PUSH0 clone of `implementation`.
+    function clone_PUSH0(uint256 value, address implementation)
+        internal
+        returns (address instance)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             /**
@@ -234,16 +251,12 @@ library LibClone {
             mstore(0x24, 0x5af43d5f5f3e6029573d5ffd5b3d5ff3) // 16
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
-            instance := create(0, 0x0e, 0x36)
-            // If `instance` is zero, revert.
+            instance := create(value, 0x0e, 0x36)
             if iszero(instance) {
-                // Store the function selector of `DeploymentFailed()`.
-                mstore(0x00, 0x30116425)
-                // Revert with (offset, size).
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
+            mstore(0x24, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -252,21 +265,25 @@ library LibClone {
         internal
         returns (address instance)
     {
+        instance = cloneDeterministic_PUSH0(0, implementation, salt);
+    }
+
+    /// @dev Deploys a deterministic PUSH0 clone of `implementation` with `salt`.
+    function cloneDeterministic_PUSH0(uint256 value, address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x24, 0x5af43d5f5f3e6029573d5ffd5b3d5ff3) // 16
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
-            instance := create2(0, 0x0e, 0x36, salt)
-            // If `instance` is zero, revert.
+            instance := create2(value, 0x0e, 0x36, salt)
             if iszero(instance) {
-                // Store the function selector of `DeploymentFailed()`.
-                mstore(0x00, 0x30116425)
-                // Revert with (offset, size).
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
+            mstore(0x24, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -279,8 +296,7 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             hash := keccak256(0x0e, 0x36)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x24, 0)
+            mstore(0x24, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -300,12 +316,19 @@ library LibClone {
     /*           CLONES WITH IMMUTABLE ARGS OPERATIONS            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Deploys a minimal proxy with `implementation`,
-    /// using immutable arguments encoded in `data`.
-    ///
-    /// Note: This implementation of CWIA differs from the original implementation.
-    /// If the calldata is empty, it will emit a `ReceiveETH(uint256)` event and skip the `DELEGATECALL`.
+    // Note: This implementation of CWIA differs from the original implementation.
+    // If the calldata is empty, it will emit a `ReceiveETH(uint256)` event and skip the `DELEGATECALL`.
+
+    /// @dev Deploys a clone of `implementation` with immutable arguments encoded in `data`.
     function clone(address implementation, bytes memory data) internal returns (address instance) {
+        instance = clone(0, implementation, data);
+    }
+
+    /// @dev Deploys a clone of `implementation` with immutable arguments encoded in `data`.
+    function clone(uint256 value, address implementation, bytes memory data)
+        internal
+        returns (address instance)
+    {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
@@ -398,10 +421,9 @@ library LibClone {
              * f3       | RETURN         |                          | [0..rds): returndata                        |
              * ---------------------------------------------------------------------------------------------------+
              */
-            // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606057fd5bf3)
-            // Write the address of the implementation.
-            mstore(sub(data, 0x0d), implementation)
+
+            mstore(data, 0x5af43d3d93803e606057fd5bf3) // Write the bytecode before the data.
+            mstore(sub(data, 0x0d), implementation) // Write the address of the implementation.
             // Write the rest of the bytecode.
             mstore(
                 sub(data, 0x21),
@@ -419,14 +441,9 @@ library LibClone {
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
-            // Create the instance.
-            instance := create(0, sub(data, 0x4c), add(extraLength, 0x6c))
-
-            // If `instance` is zero, revert.
+            instance := create(value, sub(data, 0x4c), add(extraLength, 0x6c))
             if iszero(instance) {
-                // Store the function selector of `DeploymentFailed()`.
-                mstore(0x00, 0x30116425)
-                // Revert with (offset, size).
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
 
@@ -439,15 +456,23 @@ library LibClone {
         }
     }
 
-    /// @dev Deploys a deterministic clone of `implementation`,
-    /// using immutable arguments encoded in `data`, with `salt`.
-    ///
-    /// Note: This implementation of CWIA differs from the original implementation.
-    /// If the calldata is empty, it will emit a `ReceiveETH(uint256)` event and skip the `DELEGATECALL`.
+    /// @dev Deploys a deterministic clone of `implementation`
+    /// with immutable arguments encoded in `data` and `salt`.
     function cloneDeterministic(address implementation, bytes memory data, bytes32 salt)
         internal
         returns (address instance)
     {
+        instance = cloneDeterministic(0, implementation, data, salt);
+    }
+
+    /// @dev Deploys a deterministic clone of `implementation`
+    /// with immutable arguments encoded in `data` and `salt`.
+    function cloneDeterministic(
+        uint256 value,
+        address implementation,
+        bytes memory data,
+        bytes32 salt
+    ) internal returns (address instance) {
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
             let mBefore3 := mload(sub(data, 0x60))
@@ -460,10 +485,8 @@ library LibClone {
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
 
-            // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606057fd5bf3)
-            // Write the address of the implementation.
-            mstore(sub(data, 0x0d), implementation)
+            mstore(data, 0x5af43d3d93803e606057fd5bf3) // Write the bytecode before the data.
+            mstore(sub(data, 0x0d), implementation) // Write the address of the implementation.
             // Write the rest of the bytecode.
             mstore(
                 sub(data, 0x21),
@@ -481,14 +504,9 @@ library LibClone {
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
-            // Create the instance.
-            instance := create2(0, sub(data, 0x4c), add(extraLength, 0x6c), salt)
-
-            // If `instance` is zero, revert.
+            instance := create2(value, sub(data, 0x4c), add(extraLength, 0x6c), salt)
             if iszero(instance) {
-                // Store the function selector of `DeploymentFailed()`.
-                mstore(0x00, 0x30116425)
-                // Revert with (offset, size).
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
 
@@ -525,10 +543,8 @@ library LibClone {
             // +2 bytes for telling how much data there is appended to the call.
             let extraLength := add(dataLength, 2)
 
-            // Write the bytecode before the data.
-            mstore(data, 0x5af43d3d93803e606057fd5bf3)
-            // Write the address of the implementation.
-            mstore(sub(data, 0x0d), implementation)
+            mstore(data, 0x5af43d3d93803e606057fd5bf3) // Write the bytecode before the data.
+            mstore(sub(data, 0x0d), implementation) // Write the address of the implementation.
             // Write the rest of the bytecode.
             mstore(
                 sub(data, 0x21),
@@ -544,7 +560,6 @@ library LibClone {
             )
             mstore(dataEnd, shl(0xf0, extraLength))
 
-            // Compute and store the bytecode hash.
             hash := keccak256(sub(data, 0x4c), add(extraLength, 0x6c))
 
             // Restore the overwritten memory surrounding `data`.
@@ -570,6 +585,164 @@ library LibClone {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              MINIMAL ERC1967 PROXY OPERATIONS              */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note: The ERC1967 proxy here is intended to upgraded with UUPS.
+    // This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
+
+    /// @dev Deploys a minimal ERC1967 proxy with `implementation`.
+    function deployERC1967(address implementation) internal returns (address instance) {
+        instance = deployERC1967(0, implementation);
+    }
+
+    /// @dev Deploys a minimal ERC1967 proxy with `implementation`.
+    function deployERC1967(uint256 value, address implementation)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            /**
+             * ---------------------------------------------------------------------------------+
+             * CREATION (34 bytes)                                                              |
+             * ---------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                          |
+             * ---------------------------------------------------------------------------------|
+             * 60 runSize | PUSH1 runSize  | r                |                                 |
+             * 3d         | RETURNDATASIZE | 0 r              |                                 |
+             * 81         | DUP2           | r 0 r            |                                 |
+             * 60 offset  | PUSH1 offset   | o r 0 r          |                                 |
+             * 3d         | RETURNDATASIZE | 0 o r 0 r        |                                 |
+             * 39         | CODECOPY       | 0 r              | [0..runSize): runtime code      |
+             * 73 impl    | PUSH20 impl    | impl 0 r         | [0..runSize): runtime code      |
+             * 60 slotPos | PUSH1 slotPos  | slotPos impl 0 r | [0..runSize): runtime code      |
+             * 51         | MLOAD          | slot impl 0 r    | [0..runSize): runtime code      |
+             * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
+             * f3         | RETURN         |                  | [0..runSize): runtime code      |
+             * ---------------------------------------------------------------------------------|
+             * RUNTIME (62 bytes)                                                               |
+             * ---------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                          |
+             * ---------------------------------------------------------------------------------|
+             *                                                                                  |
+             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36         | CALLDATASIZE   | cds              |                                 |
+             * 3d         | RETURNDATASIZE | 0 cds            |                                 |
+             * 3d         | RETURNDATASIZE | 0 0 cds          |                                 |
+             * 37         | CALLDATACOPY   |                  | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | 0                |                                 |
+             * 3d         | RETURNDATASIZE | 0 0              |                                 |
+             * 36         | CALLDATASIZE   | cds 0 0          | [0..calldatasize): calldata     |
+             * 3d         | RETURNDATASIZE | 0 cds 0 0        | [0..calldatasize): calldata     |
+             * 7f slot    | PUSH32 slot    | s 0 cds 0 0      | [0..calldatasize): calldata     |
+             * 54         | SLOAD          | i 0 cds 0 0      | [0..calldatasize): calldata     |
+             * 5a         | GAS            | g i 0 cds 0 0    | [0..calldatasize): calldata     |
+             * f4         | DELEGATECALL   | succ             | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | rds succ         | [0..calldatasize): calldata     |
+             * 60 0x00    | PUSH1 0x00     | 0 rds succ       | [0..calldatasize): calldata     |
+             * 80         | DUP1           | 0 0 rds succ     | [0..calldatasize): calldata     |
+             * 3e         | RETURNDATACOPY | succ             | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::: |
+             * 60 0x38    | PUSH1 0x38     | dest succ        | [0..returndatasize): returndata |
+             * 57         | JUMPI          |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
+             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
+             * fd         | REVERT         |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b         | JUMPDEST       |                  | [0..returndatasize): returndata |
+             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
+             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
+             * f3         | RETURN         |                  | [0..returndatasize): returndata |
+             * ---------------------------------------------------------------------------------+
+             */
+
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
+            mstore(0x40, 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
+            mstore(0x20, 0x6009)
+            mstore(0x1e, implementation)
+            mstore(0x0a, 0x603d3d8160223d3973)
+            instance := create(value, 0x21, 0x5f)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
+    function deployDeterministicERC1967(address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        instance = deployDeterministicERC1967(0, implementation, salt);
+    }
+
+    /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
+    function deployDeterministicERC1967(uint256 value, address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
+            mstore(0x40, 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
+            mstore(0x20, 0x6009)
+            mstore(0x1e, implementation)
+            mstore(0x0a, 0x603d3d8160223d3973)
+            instance := create2(value, 0x21, 0x5f, salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the clone of `implementation`
+    /// using immutable arguments encoded in `data`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHashERC1967(address implementation) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
+            mstore(0x40, 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
+            mstore(0x20, 0x6009)
+            mstore(0x1e, implementation)
+            mstore(0x0a, 0x603d3d8160223d3973)
+            hash := keccak256(0x21, 0x5f)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Returns the address of the deterministic clone of
+    /// `implementation` using immutable arguments encoded in `data`, with `salt`, by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
+    function predictDeterministicAddressERC1967(
+        address implementation,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        bytes32 hash = initCodeHashERC1967(implementation);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      OTHER OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -589,8 +762,7 @@ library LibClone {
             mstore(0x01, shl(96, deployer))
             mstore(0x15, salt)
             predicted := keccak256(0x00, 0x55)
-            // Restore the part of the free memory pointer that has been overwritten.
-            mstore(0x35, 0)
+            mstore(0x35, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -600,9 +772,7 @@ library LibClone {
         assembly {
             // If the salt does not start with the zero address or the caller.
             if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
-                // Store the function selector of `SaltDoesNotStartWithCaller()`.
-                mstore(0x00, 0x2f634836)
-                // Revert with (offset, size).
+                mstore(0x00, 0x2f634836) // `SaltDoesNotStartWithCaller()`.
                 revert(0x1c, 0x04)
             }
         }

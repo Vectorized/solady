@@ -36,14 +36,14 @@ abstract contract Multicallable {
             for {} 1 {} {
                 // The offset of the current bytes in the calldata.
                 let o := add(data.offset, mload(results))
-                let memPtr := add(resultsOffset, 0x40)
+                let m := add(resultsOffset, 0x40)
                 // Copy the current bytes from calldata to the memory.
                 calldatacopy(
-                    memPtr,
+                    m,
                     add(o, 0x20), // The offset of the current bytes' bytes.
                     calldataload(o) // The length of the current bytes.
                 )
-                if iszero(delegatecall(gas(), address(), memPtr, calldataload(o), 0x00, 0x00)) {
+                if iszero(delegatecall(gas(), address(), m, calldataload(o), codesize(), 0x00)) {
                     // Bubble up the revert if the delegatecall reverts.
                     returndatacopy(0x00, 0x00, returndatasize())
                     revert(0x00, returndatasize())
@@ -52,8 +52,8 @@ abstract contract Multicallable {
                 mstore(results, resultsOffset)
                 results := add(results, 0x20)
                 // Append the `returndatasize()`, and the return data.
-                mstore(memPtr, returndatasize())
-                returndatacopy(add(memPtr, 0x20), 0x00, returndatasize())
+                mstore(m, returndatasize())
+                returndatacopy(add(m, 0x20), 0x00, returndatasize())
                 // Advance the `resultsOffset` by `returndatasize() + 0x20`,
                 // rounded up to the next multiple of 32.
                 resultsOffset :=

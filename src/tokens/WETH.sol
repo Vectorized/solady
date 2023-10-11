@@ -75,7 +75,7 @@ contract WETH is ERC20 {
             mstore(0x00, amount)
             log2(0x00, 0x20, _WITHDRAWAL_EVENT_SIGNATURE, caller())
             // Transfer the ETH and check if it succeeded or not.
-            if iszero(call(gas(), caller(), amount, gas(), 0x00, gas(), 0x00)) {
+            if iszero(call(gas(), caller(), amount, codesize(), 0x00, codesize(), 0x00)) {
                 mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
