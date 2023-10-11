@@ -134,7 +134,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     ACCOUNT OPERATIONS                     */
+    /*                 CALL EXECUTION OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Execute a call operation from this account.
@@ -229,10 +229,6 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
 
     /// @dev To ensure that only the owner can upgrade the implementation.
     function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyOwner {}
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      FALLBACK FUNCTION                     */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Handle token callbacks. If no token callback is triggered,
     /// use `LibZip.cdFallback` for generalized calldata decompression.
