@@ -1,31 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-// import {Receiver} from "./Receiver.sol";
+import {Receiver} from "./Receiver.sol";
+import {Ownable} from "../auth/Ownable.sol";
+import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
 import {LibZip} from "../utils/LibZip.sol";
+import {ECDSA} from "../utils/ECDSA.sol";
 
 /// @notice Simple ERC4337 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC4337.sol)
 /// @author Infinitism (https://github.com/eth-infinitism/account-abstraction/blob/develop/contracts/samples/SimpleAccount.sol)
-abstract contract ERC4337Account { /*is Receiver*/
+contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
+    /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The caller is not authorized to call the function.
-    error Unauthorized();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STORAGE                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Canonical ERC4337 entry point contract. May be updated through overrides.
-    address internal constant _ENTRY_POINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
-
-    /// @dev If signature recovery fails return number 1.
-    uint256 internal constant _SIG_VALIDATION_FAILED = 1;
-
-    /// @dev Op structure.
+    /// @dev The ERC4337 user operation struct.
     struct UserOperation {
         address sender;
         uint256 nonce;
@@ -41,193 +31,203 @@ abstract contract ERC4337Account { /*is Receiver*/
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     INTERNAL FUNCTIONS                     */
+    /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Fetches 'clones with immutable arguments' user as hash.
-    /// This implementation is opinionated to single-user-ownership.
-    /// Contract accounts can be set to divide operational concerns.
-    function _getUser() internal pure virtual returns (bytes32 user) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            user :=
-                calldataload(
-                    add(sub(calldatasize(), shr(0xF0, calldataload(sub(calldatasize(), 0x2)))), 0x20)
-                )
-        }
-    }
+    /// @dev The lengths of the input arrays are not the same.
+    error ArrayLengthsMismatch();
 
-    /// @dev Returns the canonical ERC4337 entry point contract.
-    /// Override this function to return a different entry point.
-    function _entryPoint() internal pure virtual returns (address) {
-        return _ENTRY_POINT;
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        INITIALIZER                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Initializes the owner. Can only be called once.
+    function initialize(address newOwner) public virtual {
+        _initializeOwner(newOwner);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*            VALIDATE USER SIGNATURE FUNCTION                */
+    /*                   VALIDATION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Validates the user signature via ERC1271 contract method.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        public
-        view
+    /// @dev Validate `userOp.signature` for the `userOpHash`.
+    function _validateSignature(UserOperation calldata userOp, bytes32 userOpHash)
+        internal
         virtual
-        returns (bytes4 isValid)
+        returns (uint256 validationData)
     {
-        bytes32 user = _getUser(); // Pull operation owner onto stack.
+        bytes32 hash = ECDSA.toEthSignedMessageHash(userOpHash);
+        bool sigFailed = owner() != ECDSA.recoverCalldata(hash, userOp.signature);
         /// @solidity memory-safe-assembly
         assembly {
-            let m := mload(0x40)
-            if eq(signature.length, 65) {
-                mstore(0x00, hash)
-                mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-                calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
-                if eq(user, mload(staticcall(gas(), 1, 0, 0x80, 0x01, 0x20))) {
-                    mstore(0x60, 0) // Restore the zero slot.
-                    mstore(0x40, m) // Restore the free memory pointer.
-                    mstore(0x20, 0x1626ba7e) // Store magic value.
-                    return(0x3C, 0x20) // Return magic value.
-                }
-            }
-            mstore(0x60, 0) // Restore the zero slot.
-            mstore(0x40, m) // Restore the free memory pointer.
-
-            let f := shl(224, 0x1626ba7e)
-            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-            mstore(add(m, 0x04), hash)
-            let d := add(m, 0x24)
-            mstore(d, 0x40) // The offset of the `signature` in the calldata.
-            mstore(add(m, 0x44), signature.length)
-            // Copy the `signature` over.
-            calldatacopy(add(m, 0x64), signature.offset, signature.length)
-            // forgefmt: disable-next-item
-            if and(
-                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                eq(mload(d), f),
-                // Whether the staticcall does not revert.
-                // This must be placed at the end of the `and` clause,
-                // as the arguments are evaluated from right to left.
-                staticcall(
-                    gas(), // Remaining gas.
-                    user, // The `user` signer address.
-                    m, // Offset of calldata in memory.
-                    add(signature.length, 0x64), // Length of calldata in memory.
-                    d, // Offset of returndata.
-                    0x20 // Length of returndata to write.
-                )
-            ) { isValid := 0x1626ba7e }
+            // Returns 0 if the recovered address matches the owner.
+            // Else returns 1, which is equivalent to:
+            // `(sigFailed ? 1 : 0) | (uint256(validUntil) << 160) | (uint256(validAfter) << (160 + 48))`.
+            // where `validUntil` and `validAfter` are 0.
+            validationData := iszero(iszero(sigFailed))
         }
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*            VALIDATE USER OPERATION FUNCTION                */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /// @dev Override to validate the nonce of the UserOperation.
+    /// This method may validate the nonce requirement of this account.
+    /// e.g.
+    /// To limit the nonce to use sequenced UserOps only (no "out of order" UserOps):
+    ///      `require(nonce < type(uint64).max)`
+    /// For a hypothetical account that *requires* the nonce to be out-of-order:
+    ///      `require(nonce & type(uint64).max == 0)`
+    ///
+    /// The actual nonce uniqueness is managed by the EntryPoint, and thus no other
+    /// action is needed by the account itself.
+    function _validateNonce(uint256 nonce) internal virtual {
+        nonce = nonce; // Silence unused variable warning.
+    }
 
-    /// @dev Validates a user signature for execute operation.
-    /// Entry point will proceed only if validation succeeds.
-    /// Signature failure returns `_SIG_VALIDATION_FAILED`.
-    /// Other failures (e.g., nonce mismatch) will revert.
+    /// @dev Sends to the entrypoint (msg.sender) the missing funds for this transaction.
+    /// subclass MAY override this method for better funds management
+    /// (e.g. send to the entryPoint more than the minimum required, so that in future transactions
+    /// it will not be required to send again)
     ///
-    /// Params:
-    /// - userOp: Operation for user execution.
-    /// - userOpHash: Hashed user operation.
-    /// - missingAccountFunds: Relay funds.
-    ///
-    /// Returns:
-    /// - validationData: `0` on success.
-    /// `_SIG_VALIDATION_FAILED` on fail.
-    /// Override to customize validation.
+    /// `missingAccountFunds` is the minimum value this method should send the entrypoint,
+    /// which MAY be zero, in case there is enough deposit, or the userOp has a paymaster.
+    function _payPrefund(uint256 missingAccountFunds) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if missingAccountFunds {
+                // Ignore failure (its EntryPoint's job to verify, not account).
+                pop(call(not(0), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))
+            }
+        }
+    }
+
+    /// @dev Validates the signature and nonce.
+    /// The EntryPoint will make the call to the recipient only if
+    /// this validation call returns successfully.
+    /// Signature failure should be reported by returning 1 (see: `_validateSignature`).
+    /// This allows making a "simulation call" without a valid signature.
+    /// Other failures (e.g. nonce mismatch, or invalid signature format)
+    /// should still revert to signal failure.
     function validateUserOp(
         UserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
-    ) public payable virtual returns (uint256 validationData) {
-        bytes calldata signature = userOp.signature; // Memo the user signature.
-        address entryPt = _entryPoint(); // Pull the entry point onto stack.
-        bytes32 user = _getUser(); // Pull the user onto stack.
-        /// @solidity memory-safe-assembly
-        assembly {
-            // If the caller is not the entry point, revert.
-            if xor(caller(), entryPt) {
-                mstore(0x00, 0x82b42900) // `Unauthorized()`.
-                revert(0x1c, 0x04)
-            }
-            let m := mload(0x40) // Cache the free memory pointer.
-            if eq(signature.length, 65) {
-                mstore(0x00, userOpHash)
-                mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-                calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
-                // If the recovered public key is not the user, return number 1.
-                if xor(user, mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))) {
-                    validationData := _SIG_VALIDATION_FAILED
-                }
-            }
-            mstore(0x60, 0) // Restore the zero slot.
-            mstore(0x40, m) // Restore the free memory pointer.
-
-            let f := shl(224, 0x1626ba7e)
-            mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-            mstore(add(m, 0x04), userOpHash)
-            let d := add(m, 0x24)
-            mstore(d, 0x40) // The offset of the `signature` in the calldata.
-            mstore(add(m, 0x44), signature.length)
-            // Copy the `signature` over.
-            calldatacopy(add(m, 0x64), signature.offset, signature.length)
-            // forgefmt: disable-next-item
-            if iszero(and(
-                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                eq(mload(d), f),
-                // Whether the staticcall does not revert.
-                // This must be placed at the end of the `and` clause,
-                // as the arguments are evaluated from right to left.
-                staticcall(
-                    gas(), // Remaining gas.
-                    user, // The `user` signer address.
-                    m, // Offset of calldata in memory.
-                    add(signature.length, 0x64), // Length of calldata in memory.
-                    d, // Offset of returndata.
-                    0x20 // Length of returndata to write.
-                )
-            )) { validationData := _SIG_VALIDATION_FAILED }
-
-            // Refund the entry point if any relayer gas owed.
-            if gt(missingAccountFunds, 0) {
-                pop(call(gas(), caller(), missingAccountFunds, 0x00, 0x00, 0x00, 0x00))
-            }
-        }
+    ) public virtual onlyEntryPointOrOwner returns (uint256 validationData) {
+        validationData = _validateSignature(userOp, userOpHash);
+        _validateNonce(userOp.nonce);
+        _payPrefund(missingAccountFunds);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*             EXECUTE USER OPERATION FUNCTION                */
+    /*                     ACCOUNT OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Execute call operation from this account. Only the user or entry point may call.
-    function execute(address to, uint256 value, bytes calldata data) public payable virtual {
-        address entryPt = _entryPoint(); // Pull the entry point onto stack.
-        bytes32 user = _getUser(); // Pull the user onto stack.
+    /// @dev Returns the canonical ERC4337 entry point contract.
+    /// Override this function to return a different entry point.
+    function entryPoint() public pure virtual returns (address) {
+        return 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+    }
+
+    /// @dev Execute a call operation from this account.
+    function execute(address target, uint256 value, bytes calldata data)
+        public
+        payable
+        virtual
+        onlyEntryPointOrOwner
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            // If the caller is neither entry point nor user, revert.
-            if and(xor(caller(), entryPt), xor(caller(), user)) {
-                mstore(0x00, 0x82b42900) // `Unauthorized()`.
-                revert(0x1c, 0x04)
+            let m := mload(0x40)
+            calldatacopy(m, data.offset, data.length)
+            if iszero(call(gas(), target, value, m, data.length, codesize(), 0x00)) {
+                // Bubble up the revert if the delegatecall reverts.
+                returndatacopy(m, 0x00, returndatasize())
+                revert(m, returndatasize())
             }
-            calldatacopy(0, data.offset, data.length)
-            let success := call(gas(), to, value, 0x00, data.length, 0x00, 0x00)
-            returndatacopy(0x00, 0x00, returndatasize())
-            if iszero(success) { revert(0x00, returndatasize()) }
-            return(0x00, returndatasize())
         }
     }
+
+    /// @dev Execute a sequence of call operations from this account.
+    function executeBatch(
+        address[] calldata targets,
+        uint256[] calldata values,
+        bytes[] calldata data
+    ) public payable virtual onlyEntryPointOrOwner {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // forgefmt: disable-next-item
+            if iszero(and(eq(targets.length, data.length),
+                or(iszero(values.length), eq(values.length, data.length)))) {
+                mstore(0x00, 0x3b800a46) // "ArrayLengthsMismatch()".
+                revert(0x1c, 0x04)
+            }
+            let m := mload(0x40)
+            let end := add(targets.offset, shl(5, targets.length))
+            // If `values.length` is zero, abuse out-of-bounds calldataload to get zero for values.
+            let valuesOffsetDiff :=
+                or(shl(128, iszero(values.length)), sub(values.offset, targets.offset))
+            let dataOffsetDiff := sub(data.offset, targets.offset)
+            for {} iszero(eq(targets.offset, end)) {} {
+                let o := add(data.offset, calldataload(add(targets.offset, dataOffsetDiff)))
+                calldatacopy(m, add(o, 0x20), calldataload(o))
+                if iszero(
+                    call(
+                        gas(), // Gas remaining.
+                        calldataload(targets.offset), // Target.
+                        calldataload(add(targets.offset, valuesOffsetDiff)), // Value.
+                        m, // Start of input calldata.
+                        calldataload(o), // Length of input calldata.
+                        codesize(), // We will use `returndatasize` instead.
+                        0x00 // We will use `returndatasize` instead.
+                    )
+                ) {
+                    // Bubble up the revert if the delegatecall reverts.
+                    returndatacopy(m, 0x00, returndatasize())
+                    revert(m, returndatasize())
+                }
+                targets.offset := add(targets.offset, 0x20)
+            }
+        }
+    }
+
+    /// @dev Requires that the caller is the EntryPoint, or the owner, or the contract itself.
+    function _checkEntryPointOrOwner() internal virtual {
+        if (msg.sender != entryPoint()) _checkOwner();
+    }
+
+    /// @dev Guards a function with `_checkEntryPointOrOwner`.
+    modifier onlyEntryPointOrOwner() virtual {
+        _checkEntryPointOrOwner();
+        _;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         OVERRIDES                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Requires that the caller is the owner or the contract itself.
+    /// This override affects the `onlyOwner` modifier.
+    function _checkOwner() internal view virtual override(Ownable) {
+        // Check that the caller is either the owner.
+        if (msg.sender != owner()) {
+            // Or the contract itself, such as when called via `execute`.
+            if (msg.sender != address(this)) revert Unauthorized();
+        }
+    }
+
+    /// @dev Make `Ownable` prevent double-initialization.
+    function _guardInitializeOwner() internal pure virtual override returns (bool guard) {
+        guard = true;
+    }
+
+    /// @dev To ensure that only the owner can upgrade the implementation.
+    function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyOwner {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      FALLBACK FUNCTION                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Handle token callbacks in Receiver
-    /// and then LibZip for data compression.
-    fallback() external /*override*/ virtual {
-        //super.fallback();
+    /// @dev Handle token callbacks. If no token callback is triggered,
+    /// use `LibZip.cdFallback` for generalized calldata decompression.
+    fallback() external virtual override receiverFallback {
         LibZip.cdFallback();
     }
 }

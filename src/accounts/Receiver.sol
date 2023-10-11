@@ -9,14 +9,14 @@ pragma solidity ^0.8.4;
 /// - Collapses function table gas overhead and code size.
 /// - Utilizes fallback so unknown calldata will pass on.
 abstract contract Receiver {
-    /// @dev Accepts ether (ETH).
-    /// Override to reject ETH
-    /// or add custom logic.
+    /// @dev For receiving ETH.
     receive() external payable virtual {}
 
-    /// @dev Unified fallback function.
-    /// Override to reject or specify.
-    fallback() external virtual {
+    /// @dev Fallback function with the `receiverFallback` modifier.
+    fallback() external virtual receiverFallback {}
+
+    /// @dev Modifier for the fallback function to handle token callbacks.
+    modifier receiverFallback() {
         /// @solidity memory-safe-assembly
         assembly {
             // Shift to the calldata `msg.sig`.
@@ -38,5 +38,6 @@ abstract contract Receiver {
                 return(0x3c, 0x20) // Return `msg.sig`.
             }
         }
+        _;
     }
 }
