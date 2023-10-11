@@ -2,7 +2,9 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {Ownable, UUPSUpgradeable, LibZip, ECDSA, ERC4337} from "../src/accounts/ERC4337.sol";
+import {Ownable, ECDSA} from "../src/accounts/ERC4337.sol";
+import {ERC4337, MockERC4337} from "./utils/mocks/MockERC4337.sol";
+import {MockEntryPoint} from "./utils/mocks/MockEntryPoint.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
 import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
@@ -21,39 +23,13 @@ contract Target {
     }
 }
 
-contract MockEntryPoint {
-    mapping(address => uint256) public balanceOf;
-
-    function depositTo(address to) public payable {
-        balanceOf[to] += msg.value;
-    }
-
-    function withdrawTo(address to, uint256 amount) public payable {
-        balanceOf[msg.sender] -= amount;
-        (bool success,) = payable(to).call{value: amount}("");
-        require(success);
-    }
-
-    function validateUserOp(
-        address account,
-        ERC4337.UserOperation memory userOp,
-        bytes32 userOpHash,
-        uint256 missingAccountFunds
-    ) public payable returns (uint256 validationData) {
-        validationData =
-            ERC4337(payable(account)).validateUserOp(userOp, userOpHash, missingAccountFunds);
-    }
-
-    receive() external payable {}
-}
-
 contract ERC4337Test is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
     ERC4337 account;
 
     function setUp() public {
-        account = new ERC4337();
+        account = ERC4337(new MockERC4337());
     }
 
     function testInitializer() public {
