@@ -27,6 +27,8 @@ npm install solady
 The Solidity smart contracts are located in the `src` directory.
 
 ```ml
+accounts
+├─ Receiver — "Receiver mixin for ETH and safe-transferred ERC721 and ERC1155 tokens"
 auth
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
