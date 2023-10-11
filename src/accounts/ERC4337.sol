@@ -109,7 +109,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         assembly {
             if missingAccountFunds {
                 // Ignore failure (its EntryPoint's job to verify, not the account's).
-                pop(call(not(0), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))
+                pop(call(gas(), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))
             }
         }
     }
