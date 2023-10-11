@@ -39,7 +39,7 @@ contract LibCloneTest is SoladyTest, Clone {
         }
     }
 
-    function _canReceiveETHCorectly(address clone, uint256 deposit) internal {
+    function _canReceiveETHCorrectly(address clone, uint256 deposit) internal {
         deposit = deposit % 1 ether;
 
         vm.deal(address(this), deposit * 2);
@@ -308,7 +308,7 @@ contract LibCloneTest is SoladyTest, Clone {
         assertEq(keccak256(data), dataHashBefore);
 
         _shouldBehaveLikeClone(address(clone), argUint256);
-        _canReceiveETHCorectly(address(clone), deposit);
+        _canReceiveETHCorrectly(address(clone), deposit);
 
         // For avoiding stack too deep. Also, no risk of overflow.
         unchecked {

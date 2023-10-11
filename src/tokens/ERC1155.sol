@@ -949,7 +949,7 @@ abstract contract ERC1155 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Override this function to return true if `_beforeTokenTransfer` is used.
-    /// The is to help the compiler avoid producing dead bytecode.
+    /// This is to help the compiler avoid producing dead bytecode.
     function _useBeforeTokenTransfer() internal view virtual returns (bool) {
         return false;
     }
@@ -968,7 +968,7 @@ abstract contract ERC1155 {
     ) internal virtual {}
 
     /// @dev Override this function to return true if `_afterTokenTransfer` is used.
-    /// The is to help the compiler avoid producing dead bytecode.
+    /// This is to help the compiler avoid producing dead bytecode.
     function _useAfterTokenTransfer() internal view virtual returns (bool) {
         return false;
     }
@@ -991,7 +991,7 @@ abstract contract ERC1155 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Helper for calling the `_afterTokenTransfer` hook.
-    /// The is to help the compiler avoid producing dead bytecode.
+    /// This is to help the compiler avoid producing dead bytecode.
     function _afterTokenTransferCalldata(
         address from,
         address to,
