@@ -77,8 +77,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         assembly {
             // Returns 0 if the recovered address matches the owner.
             // Else returns 1, which is equivalent to:
-            // `(sigFailed ? 1 : 0) | (uint256(validUntil) << 160) | (uint256(validAfter) << (160 + 48))`.
-            // where `validUntil` and `validAfter` are 0.
+            // `(sigFailed ? 1 : 0) | (uint256(validUntil) << 160) | (uint256(validAfter) << (160 + 48))`
+            // where `validUntil` is 0 (indefinite) and `validAfter` is 0.
             validationData := iszero(iszero(sigFailed))
         }
     }
@@ -162,6 +162,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /// @dev Execute a sequence of call operations from this account.
+    /// For efficiency, the `values` can be an empty array,
+    /// if not the same length as `targets` and `data`.
     function executeBatch(
         address[] calldata targets,
         uint256[] calldata values,
@@ -270,9 +272,9 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /// @dev Requires that the caller is the owner or the contract itself.
     /// This override affects the `onlyOwner` modifier.
     function _checkOwner() internal view virtual override(Ownable) {
-        // Check that the caller is either the owner.
+        // Check that the caller is the owner,
         if (msg.sender != owner()) {
-            // Or the contract itself, such as when called via `execute`.
+            // or the contract itself (e.g. when called via `execute`).
             if (msg.sender != address(this)) revert Unauthorized();
         }
     }
