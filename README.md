@@ -29,6 +29,7 @@ The Solidity smart contracts are located in the `src` directory.
 ```ml
 accounts
 ├─ Receiver — "Receiver mixin for ETH and safe-transferred ERC721 and ERC1155 tokens"
+├─ ERC4337 — "Simple ERC4337 account implementation"
 auth
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
