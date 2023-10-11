@@ -154,7 +154,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
             let m := mload(0x40)
             calldatacopy(m, data.offset, data.length)
             if iszero(call(gas(), target, value, m, data.length, codesize(), 0x00)) {
-                // Bubble up the revert if the delegatecall reverts.
+                // Bubble up the revert if the call reverts.
                 returndatacopy(m, 0x00, returndatasize())
                 revert(m, returndatasize())
             }
@@ -198,7 +198,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                             0x00 // We will use `returndatasize` instead.
                         )
                     ) {
-                        // Bubble up the revert if the delegatecall reverts.
+                        // Bubble up the revert if the call reverts.
                         returndatacopy(m, 0x00, returndatasize())
                         revert(m, returndatasize())
                     }
