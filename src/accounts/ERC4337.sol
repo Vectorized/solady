@@ -205,8 +205,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                 mstore(add(i, r), m) // Append `m` into `results`.
                 mstore(m, returndatasize()) // Store the length,
                 returndatacopy(add(m, 0x20), 0x00, returndatasize()) // and copy the returndata.
-                // Advance `m` to the next multiple of 32.
-                m := and(add(add(m, returndatasize()), 0x3f), not(0x1f))
+                m := add(add(m, 0x20), returndatasize()) // Advance `m`.
             }
             mstore(0x40, m) // Allocate the memory.
         }

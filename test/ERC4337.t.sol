@@ -31,10 +31,12 @@ contract Target {
 contract ERC4337Test is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    ERC4337 account;
+    address accountImplementation;
+    MockERC4337 account;
 
     function setUp() public {
-        account = ERC4337(new MockERC4337());
+        accountImplementation = address(new MockERC4337());
+        account = MockERC4337(payable(LibClone.deployERC1967(accountImplementation)));
     }
 
     function testInitializer() public {
@@ -65,7 +67,7 @@ contract ERC4337Test is SoladyTest {
         account.initialize(address(this));
         assertEq(account.owner(), address(0));
 
-        account = new ERC4337();
+        account = MockERC4337(payable(LibClone.deployERC1967(accountImplementation)));
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), address(0));
         account.initialize(address(0));
@@ -75,7 +77,7 @@ contract ERC4337Test is SoladyTest {
         account.initialize(address(this));
         assertEq(account.owner(), address(0));
 
-        account = new ERC4337();
+        account = MockERC4337(payable(LibClone.deployERC1967(accountImplementation)));
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), address(1));
         account.initialize(address(1));
@@ -144,7 +146,7 @@ contract ERC4337Test is SoladyTest {
 
             bytes[] memory results;
             if (_random() & 1 == 0) {
-                results = MockERC4337(payable(account)).executeBatch(_random(), calls);
+                results = account.executeBatch(_random(), calls);
             } else {
                 results = account.executeBatch(calls);
             }
@@ -237,7 +239,8 @@ contract ERC4337Test is SoladyTest {
     }
 
     function testETHReceived() public {
-        payable(address(account)).transfer(1 ether);
+        (bool success,) = address(account).call{value: 1 ether}("");
+        assertTrue(success);
     }
 
     function testOnERC721Received() public {
