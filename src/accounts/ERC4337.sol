@@ -140,6 +140,20 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         _;
     }
 
+    /// @dev Validates the signature with ERC1271 return.
+    function isValidSignature(bytes32 hash, bytes calldata signature)
+        public
+        view
+        returns (bytes4)
+    {
+        if (
+            SignatureCheckerLib.isValidERC1271SignatureNowCalldata(
+                owner(), ECDSA.toEthSignedMessageHash(hash), signature
+            )
+        ) return 0x1626ba7e;
+        return 0xffffffff;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
