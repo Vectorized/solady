@@ -79,7 +79,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         assembly {
             // Returns 0 if the recovered address matches the owner.
             // Else returns 1, which is equivalent to:
-            // `(!success ? 1 : 0) | (uint256(validUntil) << 160) | (uint256(validAfter) << (160 + 48))`
+            // `(success ? 0 : 1) | (uint256(validUntil) << 160) | (uint256(validAfter) << (160 + 48))`
             // where `validUntil` is 0 (indefinite) and `validAfter` is 0.
             validationData := iszero(success)
         }
@@ -236,7 +236,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Requires that the caller is the EntryPoint, the owner, or the contract itself.
+    /// @dev Requires that the caller is the EntryPoint, the owner, or the account itself.
     modifier onlyEntryPointOrOwner() virtual {
         if (msg.sender != entryPoint()) _checkOwner();
         _;
@@ -296,12 +296,12 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*                         OVERRIDES                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Requires that the caller is the owner or the contract itself.
+    /// @dev Requires that the caller is the owner or the account itself.
     /// This override affects the `onlyOwner` modifier.
     function _checkOwner() internal view virtual override(Ownable) {
         // Check that the caller is the owner,
         if (msg.sender != owner()) {
-            // or the contract itself (e.g. when called via `execute`).
+            // or the account itself (e.g. when called via `execute`).
             if (msg.sender != address(this)) revert Unauthorized();
         }
     }
