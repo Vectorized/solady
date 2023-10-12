@@ -194,11 +194,11 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         assembly {
             results := mload(0x40)
             mstore(results, calls.length)
-            let r := sub(add(0x20, results), calls.offset)
-            let m := add(add(0x20, results), shl(5, calls.length))
-            let end := add(calls.offset, shl(5, calls.length))
-            for { let i := calls.offset } iszero(eq(i, end)) { i := add(i, 0x20) } {
-                let e := add(calls.offset, calldataload(i))
+            let r := add(0x20, results)
+            let m := add(r, shl(5, calls.length))
+            calldatacopy(r, calls.offset, shl(5, calls.length))
+            for { let end := m } iszero(eq(r, end)) { r := add(r, 0x20) } {
+                let e := add(calls.offset, mload(r))
                 let o := add(e, calldataload(add(e, 0x40)))
                 calldatacopy(m, add(o, 0x20), calldataload(o))
                 if iszero(
@@ -216,7 +216,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                     returndatacopy(m, 0x00, returndatasize())
                     revert(m, returndatasize())
                 }
-                mstore(add(i, r), m) // Append `m` into `results`.
+                mstore(r, m) // Append `m` into `results`.
                 mstore(m, returndatasize()) // Store the length,
                 returndatacopy(add(m, 0x20), 0x00, returndatasize()) // and copy the returndata.
                 m := add(add(m, 0x20), returndatasize()) // Advance `m`.
