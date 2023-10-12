@@ -144,16 +144,15 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     function isValidSignature(bytes32 hash, bytes calldata signature)
         public
         view
-        returns (bytes4)
+        returns (bytes4 result)
     {
-        if (
-            SignatureCheckerLib.isValidSignatureNowCalldata(
-                owner(), ECDSA.toEthSignedMessageHash(hash), signature
-            )
-        ) {
-            return 0x1626ba7e;
+        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
+            owner(), ECDSA.toEthSignedMessageHash(hash), signature
+        );
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
         }
-        return 0xffffffff;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
