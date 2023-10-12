@@ -36,12 +36,12 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         bytes signature;
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev The lengths of the input arrays are not the same.
-    error ArrayLengthsMismatch();
+    /// @dev Execution struct for the `executeBatch` function.
+    struct Execution {
+        address target;
+        uint256 value;
+        bytes data;
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        INITIALIZER                         */
@@ -150,64 +150,65 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         payable
         virtual
         onlyEntryPointOrOwner
+        returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let m := mload(0x40)
-            calldatacopy(m, data.offset, data.length)
-            if iszero(call(gas(), target, value, m, data.length, codesize(), 0x00)) {
+            result := mload(0x40)
+            calldatacopy(result, data.offset, data.length)
+            if iszero(call(gas(), target, value, result, data.length, codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
-                returndatacopy(m, 0x00, returndatasize())
-                revert(m, returndatasize())
+                returndatacopy(result, 0x00, returndatasize())
+                revert(result, returndatasize())
             }
+            mstore(result, returndatasize()) // Store the length.
+            let o := add(result, 0x20)
+            returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
+            mstore(0x40, add(o, returndatasize())) // Allocate the memory.
         }
     }
 
     /// @dev Execute a sequence of call operations from this account.
-    /// For efficiency, the `values` can be an empty array,
-    /// if not the same length as `targets` and `data`.
-    function executeBatch(
-        address[] calldata targets,
-        uint256[] calldata values,
-        bytes[] calldata data
-    ) public payable virtual onlyEntryPointOrOwner {
+    function executeBatch(Execution[] calldata executions)
+        public
+        payable
+        virtual
+        onlyEntryPointOrOwner
+        returns (bytes[] memory results)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
-            if iszero(and(eq(targets.length, data.length),
-                or(iszero(values.length), eq(values.length, data.length)))) {
-                mstore(0x00, 0x3b800a46) // `ArrayLengthsMismatch()`.
-                revert(0x1c, 0x04)
-            }
-            let end := add(targets.offset, shl(5, targets.length))
-            if iszero(eq(targets.offset, end)) {
-                let m := mload(0x40)
-                // If `values` is empty, abuse out-of-bounds calldataload to get zero for values.
-                let valuesOffsetDiff :=
-                    or(mul(calldatasize(), iszero(values.length)), sub(values.offset, targets.offset))
-                let dataOffsetDiff := sub(data.offset, targets.offset)
-                for {} 1 {} {
-                    let o := add(data.offset, calldataload(add(targets.offset, dataOffsetDiff)))
-                    calldatacopy(m, add(o, 0x20), calldataload(o))
-                    if iszero(
-                        call(
-                            gas(), // Gas remaining.
-                            calldataload(targets.offset), // Target.
-                            calldataload(add(targets.offset, valuesOffsetDiff)), // Value.
-                            m, // Start of input calldata.
-                            calldataload(o), // Length of input calldata.
-                            codesize(), // We will use `returndatasize` instead.
-                            0x00 // We will use `returndatasize` instead.
-                        )
-                    ) {
-                        // Bubble up the revert if the call reverts.
-                        returndatacopy(m, 0x00, returndatasize())
-                        revert(m, returndatasize())
-                    }
-                    targets.offset := add(targets.offset, 0x20)
-                    if eq(targets.offset, end) { break }
+            results := mload(0x40)
+            mstore(results, executions.length)
+            let r := sub(add(0x20, results), executions.offset)
+            let m := add(add(0x20, results), shl(5, executions.length))
+            let end := add(executions.offset, shl(5, executions.length))
+            for { let i := executions.offset } iszero(eq(i, end)) { i := add(i, 0x20) } {
+                let e := add(executions.offset, calldataload(i))
+                let o := add(e, calldataload(add(e, 0x40)))
+                calldatacopy(m, add(o, 0x20), calldataload(o))
+                if iszero(
+                    call(
+                        gas(), // Gas remaining.
+                        calldataload(e), // Target.
+                        calldataload(add(e, 0x20)), // Value.
+                        m, // Start of input calldata.
+                        calldataload(o), // Length of input calldata.
+                        codesize(), // We will use `returndatasize` instead.
+                        0x00 // We will use `returndatasize` instead.
+                    )
+                ) {
+                    // Bubble up the revert if the call reverts.
+                    returndatacopy(m, 0x00, returndatasize())
+                    revert(m, returndatasize())
                 }
+                mstore(add(i, r), m) // Append `m` into `results`.
+                mstore(m, returndatasize()) // Store the length,
+                returndatacopy(add(m, 0x20), 0x00, returndatasize()) // and copy the returndata.
+                // Advance `m` to the next multiple of 32.
+                m := and(add(add(m, returndatasize()), 0x3f), not(0x1f))
             }
+            mstore(0x40, m) // Allocate the memory.
         }
     }
 

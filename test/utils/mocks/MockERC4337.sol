@@ -11,8 +11,23 @@ contract MockERC4337 is ERC4337 {
     }
 
     function _brutalized(address a) private pure returns (address result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := or(a, shl(160, 0x0123456789abcdeffedcba98))
         }
+    }
+
+    function executeBatch(uint256 filler, Execution[] calldata executions)
+        public
+        payable
+        virtual
+        onlyEntryPointOrOwner
+        returns (bytes[] memory results)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, add(mload(0x40), mod(filler, 0x40)))
+        }
+        return super.executeBatch(executions);
     }
 }

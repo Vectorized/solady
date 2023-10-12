@@ -8,6 +8,7 @@ import {MockEntryPoint} from "./utils/mocks/MockEntryPoint.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
 import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract Target {
     error TargetError(bytes data);
@@ -16,9 +17,10 @@ contract Target {
 
     bytes public data;
 
-    function setData(bytes memory data_) public payable {
+    function setData(bytes memory data_) public payable returns (bytes memory) {
         data = data_;
         datahash = keccak256(data_);
+        return data_;
     }
 
     function revertWithTargetError(bytes memory data_) public payable {
@@ -106,36 +108,25 @@ contract ERC4337Test is SoladyTest {
         vm.deal(address(account), 1 ether);
         account.initialize(address(this));
 
-        address[] memory targets = new address[](2);
-        targets[0] = address(new Target());
-        targets[1] = address(new Target());
+        ERC4337.Execution[] memory executions = new ERC4337.Execution[](2);
+        executions[0].target = address(new Target());
+        executions[1].target = address(new Target());
+        executions[0].value = 123;
+        executions[1].value = 456;
+        executions[0].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
+        executions[1].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
 
-        uint256[] memory values = new uint256[](2);
-        values[0] = 123;
-        values[1] = 456;
+        // console.log(LibString.toHexString(abi.encode(executions)));
+        account.executeBatch(executions);
+        assertEq(Target(executions[0].target).datahash(), keccak256(_randomBytes(111)));
+        assertEq(Target(executions[1].target).datahash(), keccak256(_randomBytes(222)));
+        assertEq(executions[0].target.balance, 123);
+        assertEq(executions[1].target.balance, 456);
 
-        bytes[] memory data = new bytes[](2);
-        data[0] = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
-        data[1] = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
-
-        account.executeBatch(targets, values, data);
-        assertEq(Target(targets[0]).datahash(), keccak256(_randomBytes(111)));
-        assertEq(Target(targets[1]).datahash(), keccak256(_randomBytes(222)));
-        assertEq(targets[0].balance, 123);
-        assertEq(targets[1].balance, 456);
-
-        vm.expectRevert(ERC4337.ArrayLengthsMismatch.selector);
-        account.executeBatch(targets, new uint256[](1), data);
-
-        vm.expectRevert(ERC4337.ArrayLengthsMismatch.selector);
-        account.executeBatch(targets, values, new bytes[](3));
-
-        account.executeBatch(new address[](0), new uint256[](0), new bytes[](0));
-        account.executeBatch(new address[](1), new uint256[](1), new bytes[](1));
-
-        data[1] = abi.encodeWithSignature("revertWithTargetError(bytes)", _randomBytes(111));
+        executions[1].data =
+            abi.encodeWithSignature("revertWithTargetError(bytes)", _randomBytes(111));
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", _randomBytes(111)));
-        account.executeBatch(targets, values, data);
+        account.executeBatch(executions);
     }
 
     function testExecuteBatch(uint256 r) public {
@@ -144,66 +135,34 @@ contract ERC4337Test is SoladyTest {
 
         unchecked {
             uint256 n = r & 3;
-            address[] memory targets = new address[](n);
-            uint256[] memory values = new uint256[](n);
-            bytes[] memory data = new bytes[](n);
+            ERC4337.Execution[] memory executions = new ERC4337.Execution[](n);
 
             for (uint256 i; i != n; ++i) {
                 uint256 v = _random() & 0xff;
-                targets[i] = address(new Target());
-                values[i] = v;
-                data[i] = abi.encodeWithSignature("setData(bytes)", _randomBytes(v));
+                executions[i].target = address(new Target());
+                executions[i].value = v;
+                executions[i].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(v));
             }
 
-            account.executeBatch(targets, values, data);
+            bytes[] memory results;
+            if (_random() & 1 == 0) {
+                results = MockERC4337(payable(account)).executeBatch(_random(), executions);
+            } else {
+                results = account.executeBatch(executions);
+            }
 
+            assertEq(results.length, n);
             for (uint256 i; i != n; ++i) {
-                uint256 v = values[i];
-                assertEq(Target(targets[i]).datahash(), keccak256(_randomBytes(v)));
-                assertEq(targets[i].balance, v);
+                uint256 v = executions[i].value;
+                assertEq(Target(executions[i].target).datahash(), keccak256(_randomBytes(v)));
+                assertEq(executions[i].target.balance, v);
+                assertEq(abi.decode(results[i], (bytes)), _randomBytes(v));
             }
         }
     }
 
-    function testExecuteBatchWithZeroValues() public {
-        vm.deal(address(account), 1 ether);
-        account.initialize(address(this));
-
-        address[] memory targets = new address[](2);
-        targets[0] = address(new Target());
-        targets[1] = address(new Target());
-
-        uint256[] memory values;
-
-        bytes[] memory data = new bytes[](2);
-        data[0] = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
-        data[1] = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
-
-        account.executeBatch(targets, values, data);
-        assertEq(Target(targets[0]).datahash(), keccak256(_randomBytes(111)));
-        assertEq(Target(targets[1]).datahash(), keccak256(_randomBytes(222)));
-        assertEq(targets[0].balance, 0);
-        assertEq(targets[1].balance, 0);
-    }
-
     function testDelegateExecute() public {
-        vm.deal(address(account), 1 ether);
-        account.initialize(address(this));
-
-        address delegate = address(new Target());
-
-        bytes memory data;
-        data = account.delegateExecute(delegate, abi.encodeWithSignature("datahash()"));
-        assertEq(abi.decode(data, (bytes32)), bytes32(0));
-        assertEq(vm.load(address(account), bytes32(0)), bytes32(0));
-        data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
-        data = account.delegateExecute(delegate, data);
-        assertEq(data, "");
-        data = account.delegateExecute(delegate, abi.encodeWithSignature("datahash()"));
-        assertEq(abi.decode(data, (bytes32)), keccak256(_randomBytes(111)));
-        assertEq(vm.load(address(account), bytes32(0)), keccak256(_randomBytes(111)));
-        data = account.delegateExecute(delegate, abi.encodeWithSignature("data()"));
-        assertEq(abi.decode(data, (bytes)), _randomBytes(111));
+        testDelegateExecute(123);
     }
 
     function testDelegateExecute(uint256 r) public {
@@ -215,8 +174,7 @@ contract ERC4337Test is SoladyTest {
         bytes memory data;
         data = abi.encodeWithSignature("setData(bytes)", _randomBytes(r));
         data = account.delegateExecute(delegate, data);
-        assertEq(data, "");
-
+        assertEq(abi.decode(data, (bytes)), _randomBytes(r));
         data = account.delegateExecute(delegate, abi.encodeWithSignature("datahash()"));
         assertEq(abi.decode(data, (bytes32)), keccak256(_randomBytes(r)));
         data = account.delegateExecute(delegate, abi.encodeWithSignature("data()"));
