@@ -14,12 +14,15 @@ contract Target {
 
     bytes32 public datahash;
 
-    function setDataHash(bytes memory data) public payable {
-        datahash = keccak256(data);
+    bytes public data;
+
+    function setData(bytes memory data_) public payable {
+        data = data_;
+        datahash = keccak256(data_);
     }
 
-    function revertWithTargetError(bytes memory data) public payable {
-        revert TargetError(data);
+    function revertWithTargetError(bytes memory data_) public payable {
+        revert TargetError(data_);
     }
 }
 
@@ -87,13 +90,13 @@ contract ERC4337Test is SoladyTest {
 
         address target = address(new Target());
         bytes memory data = _randomBytes(111);
-        account.execute(target, 123, abi.encodeWithSignature("setDataHash(bytes)", data));
+        account.execute(target, 123, abi.encodeWithSignature("setData(bytes)", data));
         assertEq(Target(target).datahash(), keccak256(data));
         assertEq(target.balance, 123);
 
         vm.prank(_randomNonZeroAddress());
         vm.expectRevert(Ownable.Unauthorized.selector);
-        account.execute(target, 123, abi.encodeWithSignature("setDataHash(bytes)", data));
+        account.execute(target, 123, abi.encodeWithSignature("setData(bytes)", data));
 
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", data));
         account.execute(target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data));
@@ -112,8 +115,8 @@ contract ERC4337Test is SoladyTest {
         values[1] = 456;
 
         bytes[] memory data = new bytes[](2);
-        data[0] = abi.encodeWithSignature("setDataHash(bytes)", _randomBytes(111));
-        data[1] = abi.encodeWithSignature("setDataHash(bytes)", _randomBytes(222));
+        data[0] = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
+        data[1] = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
 
         account.executeBatch(targets, values, data);
         assertEq(Target(targets[0]).datahash(), keccak256(_randomBytes(111)));
@@ -135,6 +138,33 @@ contract ERC4337Test is SoladyTest {
         account.executeBatch(targets, values, data);
     }
 
+    function testExecuteBatch(uint256 r) public {
+        vm.deal(address(account), 1 ether);
+        account.initialize(address(this));
+
+        unchecked {
+            uint256 n = r & 3;
+            address[] memory targets = new address[](n);
+            uint256[] memory values = new uint256[](n);
+            bytes[] memory data = new bytes[](n);
+
+            for (uint256 i; i != n; ++i) {
+                uint256 v = _random() & 0xff;
+                targets[i] = address(new Target());
+                values[i] = v;
+                data[i] = abi.encodeWithSignature("setData(bytes)", _randomBytes(v));
+            }
+
+            account.executeBatch(targets, values, data);
+
+            for (uint256 i; i != n; ++i) {
+                uint256 v = values[i];
+                assertEq(Target(targets[i]).datahash(), keccak256(_randomBytes(v)));
+                assertEq(targets[i].balance, v);
+            }
+        }
+    }
+
     function testExecuteBatchWithZeroValues() public {
         vm.deal(address(account), 1 ether);
         account.initialize(address(this));
@@ -146,8 +176,8 @@ contract ERC4337Test is SoladyTest {
         uint256[] memory values;
 
         bytes[] memory data = new bytes[](2);
-        data[0] = abi.encodeWithSignature("setDataHash(bytes)", _randomBytes(111));
-        data[1] = abi.encodeWithSignature("setDataHash(bytes)", _randomBytes(222));
+        data[0] = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
+        data[1] = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
 
         account.executeBatch(targets, values, data);
         assertEq(Target(targets[0]).datahash(), keccak256(_randomBytes(111)));
@@ -166,12 +196,31 @@ contract ERC4337Test is SoladyTest {
         data = account.delegateExecute(delegate, abi.encodeWithSignature("datahash()"));
         assertEq(abi.decode(data, (bytes32)), bytes32(0));
         assertEq(vm.load(address(account), bytes32(0)), bytes32(0));
-        data = abi.encodeWithSignature("setDataHash(bytes)", _randomBytes(111));
+        data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
         data = account.delegateExecute(delegate, data);
         assertEq(data, "");
         data = account.delegateExecute(delegate, abi.encodeWithSignature("datahash()"));
         assertEq(abi.decode(data, (bytes32)), keccak256(_randomBytes(111)));
         assertEq(vm.load(address(account), bytes32(0)), keccak256(_randomBytes(111)));
+        data = account.delegateExecute(delegate, abi.encodeWithSignature("data()"));
+        assertEq(abi.decode(data, (bytes)), _randomBytes(111));
+    }
+
+    function testDelegateExecute(uint256 r) public {
+        vm.deal(address(account), 1 ether);
+        account.initialize(address(this));
+
+        address delegate = address(new Target());
+
+        bytes memory data;
+        data = abi.encodeWithSignature("setData(bytes)", _randomBytes(r));
+        data = account.delegateExecute(delegate, data);
+        assertEq(data, "");
+
+        data = account.delegateExecute(delegate, abi.encodeWithSignature("datahash()"));
+        assertEq(abi.decode(data, (bytes32)), keccak256(_randomBytes(r)));
+        data = account.delegateExecute(delegate, abi.encodeWithSignature("data()"));
+        assertEq(abi.decode(data, (bytes)), _randomBytes(r));
     }
 
     function testDepositFunctions() public {
@@ -267,12 +316,10 @@ contract ERC4337Test is SoladyTest {
         assembly {
             result := mload(0x40)
             mstore(0x00, seed)
-            let n := add(0x0f, and(keccak256(0x00, 0x20), 0xff))
+            let r := keccak256(0x00, 0x20)
+            let n := add(0x0f, and(r, 0x7f))
             mstore(result, n)
-            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
-                mstore(0x20, i)
-                mstore(add(i, add(result, 0x20)), keccak256(0x00, 0x40))
-            }
+            codecopy(add(result, 0x20), byte(1, r), add(n, 0x40))
             mstore(0x40, add(add(result, 0x40), n))
         }
     }
