@@ -306,7 +306,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev To prevent double-initialization.
+    /// @dev Make Ownable prevent double-initialization.
     function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
         return true;
     }
@@ -316,6 +316,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
 
     /// @dev Handle token callbacks. If no token callback is triggered,
     /// use `LibZip.cdFallback` for generalized calldata decompression.
+    /// If you don't need either, re-override this function.
     fallback() external virtual override(Receiver) receiverFallback {
         LibZip.cdFallback();
     }
