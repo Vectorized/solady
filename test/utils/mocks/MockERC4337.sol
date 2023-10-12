@@ -17,7 +17,7 @@ contract MockERC4337 is ERC4337 {
         }
     }
 
-    function executeBatch(uint256 filler, Execution[] calldata executions)
+    function executeBatch(uint256 filler, Call[] calldata calls)
         public
         payable
         virtual
@@ -28,6 +28,6 @@ contract MockERC4337 is ERC4337 {
         assembly {
             mstore(0x40, add(mload(0x40), mod(filler, 0x40)))
         }
-        return super.executeBatch(executions);
+        return super.executeBatch(calls);
     }
 }

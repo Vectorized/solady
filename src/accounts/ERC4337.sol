@@ -36,8 +36,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         bytes signature;
     }
 
-    /// @dev Execution struct for the `executeBatch` function.
-    struct Execution {
+    /// @dev Call struct for the `executeBatch` function.
+    struct Call {
         address target;
         uint256 value;
         bytes data;
@@ -144,7 +144,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Execute a call operation from this account.
+    /// @dev Execute a call from this account.
     function execute(address target, uint256 value, bytes calldata data)
         public
         payable
@@ -168,8 +168,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Execute a sequence of call operations from this account.
-    function executeBatch(Execution[] calldata executions)
+    /// @dev Execute a sequence of calls from this account.
+    function executeBatch(Call[] calldata calls)
         public
         payable
         virtual
@@ -179,12 +179,12 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         /// @solidity memory-safe-assembly
         assembly {
             results := mload(0x40)
-            mstore(results, executions.length)
-            let r := sub(add(0x20, results), executions.offset)
-            let m := add(add(0x20, results), shl(5, executions.length))
-            let end := add(executions.offset, shl(5, executions.length))
-            for { let i := executions.offset } iszero(eq(i, end)) { i := add(i, 0x20) } {
-                let e := add(executions.offset, calldataload(i))
+            mstore(results, calls.length)
+            let r := sub(add(0x20, results), calls.offset)
+            let m := add(add(0x20, results), shl(5, calls.length))
+            let end := add(calls.offset, shl(5, calls.length))
+            for { let i := calls.offset } iszero(eq(i, end)) { i := add(i, 0x20) } {
+                let e := add(calls.offset, calldataload(i))
                 let o := add(e, calldataload(add(e, 0x40)))
                 calldatacopy(m, add(o, 0x20), calldataload(o))
                 if iszero(
@@ -212,7 +212,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Executes `data` using the bytecode of `delegate` with the current account.
+    /// @dev Executes a delegatecall with `delegate` on this account.
     function delegateExecute(address delegate, bytes calldata data)
         public
         payable

@@ -108,25 +108,23 @@ contract ERC4337Test is SoladyTest {
         vm.deal(address(account), 1 ether);
         account.initialize(address(this));
 
-        ERC4337.Execution[] memory executions = new ERC4337.Execution[](2);
-        executions[0].target = address(new Target());
-        executions[1].target = address(new Target());
-        executions[0].value = 123;
-        executions[1].value = 456;
-        executions[0].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
-        executions[1].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
+        ERC4337.Call[] memory calls = new ERC4337.Call[](2);
+        calls[0].target = address(new Target());
+        calls[1].target = address(new Target());
+        calls[0].value = 123;
+        calls[1].value = 456;
+        calls[0].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
+        calls[1].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
 
-        // console.log(LibString.toHexString(abi.encode(executions)));
-        account.executeBatch(executions);
-        assertEq(Target(executions[0].target).datahash(), keccak256(_randomBytes(111)));
-        assertEq(Target(executions[1].target).datahash(), keccak256(_randomBytes(222)));
-        assertEq(executions[0].target.balance, 123);
-        assertEq(executions[1].target.balance, 456);
+        account.executeBatch(calls);
+        assertEq(Target(calls[0].target).datahash(), keccak256(_randomBytes(111)));
+        assertEq(Target(calls[1].target).datahash(), keccak256(_randomBytes(222)));
+        assertEq(calls[0].target.balance, 123);
+        assertEq(calls[1].target.balance, 456);
 
-        executions[1].data =
-            abi.encodeWithSignature("revertWithTargetError(bytes)", _randomBytes(111));
+        calls[1].data = abi.encodeWithSignature("revertWithTargetError(bytes)", _randomBytes(111));
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", _randomBytes(111)));
-        account.executeBatch(executions);
+        account.executeBatch(calls);
     }
 
     function testExecuteBatch(uint256 r) public {
@@ -135,27 +133,27 @@ contract ERC4337Test is SoladyTest {
 
         unchecked {
             uint256 n = r & 3;
-            ERC4337.Execution[] memory executions = new ERC4337.Execution[](n);
+            ERC4337.Call[] memory calls = new ERC4337.Call[](n);
 
             for (uint256 i; i != n; ++i) {
                 uint256 v = _random() & 0xff;
-                executions[i].target = address(new Target());
-                executions[i].value = v;
-                executions[i].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(v));
+                calls[i].target = address(new Target());
+                calls[i].value = v;
+                calls[i].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(v));
             }
 
             bytes[] memory results;
             if (_random() & 1 == 0) {
-                results = MockERC4337(payable(account)).executeBatch(_random(), executions);
+                results = MockERC4337(payable(account)).executeBatch(_random(), calls);
             } else {
-                results = account.executeBatch(executions);
+                results = account.executeBatch(calls);
             }
 
             assertEq(results.length, n);
             for (uint256 i; i != n; ++i) {
-                uint256 v = executions[i].value;
-                assertEq(Target(executions[i].target).datahash(), keccak256(_randomBytes(v)));
-                assertEq(executions[i].target.balance, v);
+                uint256 v = calls[i].value;
+                assertEq(Target(calls[i].target).datahash(), keccak256(_randomBytes(v)));
+                assertEq(calls[i].target.balance, v);
                 assertEq(abi.decode(results[i], (bytes)), _randomBytes(v));
             }
         }
