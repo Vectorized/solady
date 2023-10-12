@@ -273,13 +273,15 @@ contract ERC4337Test is SoladyTest {
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
         assembly {
-            result := mload(0x40)
             mstore(0x00, seed)
             let r := keccak256(0x00, 0x20)
-            let n := add(0x0f, and(r, 0x7f))
-            mstore(result, n)
-            codecopy(add(result, 0x20), byte(1, r), add(n, 0x40))
-            mstore(0x40, add(add(result, 0x40), n))
+            if lt(byte(2, r), 0x20) {
+                result := mload(0x40)
+                let n := and(r, 0x7f)
+                mstore(result, n)
+                codecopy(add(result, 0x20), byte(1, r), add(n, 0x40))
+                mstore(0x40, add(add(result, 0x40), n))
+            }
         }
     }
 }
