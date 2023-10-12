@@ -153,6 +153,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         );
         /// @solidity memory-safe-assembly
         assembly {
+            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
             result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
         }
     }
