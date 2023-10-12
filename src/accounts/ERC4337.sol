@@ -21,7 +21,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The ERC4337 UserOperation struct.
+    /// @dev The ERC4337 user operation (userOp) struct.
     struct UserOperation {
         address sender;
         uint256 nonce;
@@ -66,6 +66,48 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*                   VALIDATION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Validates the signature and nonce.
+    /// The EntryPoint will make the call to the recipient only if
+    /// this validation call returns successfully.
+    ///
+    /// Signature failure should be reported by returning 1 (see: `_validateSignature`).
+    /// This allows making a "simulation call" without a valid signature.
+    /// Other failures (e.g. nonce mismatch, or invalid signature format)
+    /// should still revert to signal failure.
+    function validateUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 missingAccountFunds
+    )
+        public
+        payable
+        virtual
+        onlyEntryPoint
+        payPrefund(missingAccountFunds)
+        returns (uint256 validationData)
+    {
+        validationData = _validateSignature(userOp, userOpHash);
+        _validateNonce(userOp.nonce);
+    }
+
+    /// @dev Validates the signature with ERC1271 return.
+    /// So that this account can be also be used as a signer.
+    function isValidSignature(bytes32 hash, bytes calldata signature)
+        public
+        view
+        virtual
+        returns (bytes4 result)
+    {
+        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
+            owner(), ECDSA.toEthSignedMessageHash(hash), signature
+        );
+        /// @solidity memory-safe-assembly
+        assembly {
+            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
+            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
+        }
+    }
+
     /// @dev Validate `userOp.signature` for the `userOpHash`.
     function _validateSignature(UserOperation calldata userOp, bytes32 userOpHash)
         internal
@@ -85,10 +127,10 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Override to validate the nonce of the UserOperation.
+    /// @dev Override to validate the nonce of the userOp.
     /// This method may validate the nonce requirement of this account.
     /// e.g.
-    /// To limit the nonce to use sequenced UserOperations only (no "out of order" UserOperations):
+    /// To limit the nonce to use sequenced userOps only (no "out of order" userOps):
     ///      `require(nonce < type(uint64).max)`
     /// For a hypothetical account that *requires* the nonce to be out-of-order:
     ///      `require(nonce & type(uint64).max == 0)`
@@ -99,14 +141,15 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         nonce = nonce; // Silence unused variable warning.
     }
 
-    /// @dev Sends to the EntryPoint (`msg.sender`) the missing funds for this transaction.
-    /// Subclass MAY override this method for better funds management.
+    /// @dev Sends to the EntryPoint (i.e. `msg.sender`) the missing funds for this transaction.
+    /// Subclass MAY override this modifier for better funds management.
     /// (e.g. send to the EntryPoint more than the minimum required, so that in future transactions
     /// it will not be required to send again)
     ///
-    /// `missingAccountFunds` is the minimum value this method should send the EntryPoint,
+    /// `missingAccountFunds` is the minimum value this modifier should send the EntryPoint,
     /// which MAY be zero, in case there is enough deposit, or the userOp has a paymaster.
-    function _payPrefund(uint256 missingAccountFunds) internal virtual {
+    modifier payPrefund(uint256 missingAccountFunds) virtual {
+        _;
         /// @solidity memory-safe-assembly
         assembly {
             if missingAccountFunds {
@@ -116,46 +159,10 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Validates the signature and nonce.
-    /// The EntryPoint will make the call to the recipient only if
-    /// this validation call returns successfully.
-    ///
-    /// Signature failure should be reported by returning 1 (see: `_validateSignature`).
-    /// This allows making a "simulation call" without a valid signature.
-    /// Other failures (e.g. nonce mismatch, or invalid signature format)
-    /// should still revert to signal failure.
-    function validateUserOp(
-        UserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 missingAccountFunds
-    ) public payable virtual onlyEntryPoint returns (uint256 validationData) {
-        validationData = _validateSignature(userOp, userOpHash);
-        _validateNonce(userOp.nonce);
-        _payPrefund(missingAccountFunds);
-    }
-
     /// @dev Requires that the caller is the EntryPoint.
     modifier onlyEntryPoint() virtual {
         if (msg.sender != entryPoint()) revert Unauthorized();
         _;
-    }
-
-    /// @dev Validates the signature with ERC1271 return.
-    /// So that this account can be also be used as a signer.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        public
-        view
-        virtual
-        returns (bytes4 result)
-    {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), ECDSA.toEthSignedMessageHash(hash), signature
-        );
-        /// @solidity memory-safe-assembly
-        assembly {
-            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
-            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
-        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
