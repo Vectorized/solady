@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {Ownable, ECDSA} from "../src/accounts/ERC4337.sol";
+import {Ownable, SignatureCheckerLib} from "../src/accounts/ERC4337.sol";
 import {ERC4337, MockERC4337} from "./utils/mocks/MockERC4337.sol";
 import {MockEntryPoint} from "./utils/mocks/MockEntryPoint.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
@@ -211,7 +211,8 @@ contract ERC4337Test is SoladyTest {
         _TestTemps memory t;
         t.userOpHash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) = vm.sign(t.privateKey, ECDSA.toEthSignedMessageHash(t.userOpHash));
+        (t.v, t.r, t.s) =
+            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
         t.missingAccountFunds = 456;
         vm.deal(address(account), 1 ether);
         assertEq(address(account).balance, 1 ether);
@@ -243,7 +244,8 @@ contract ERC4337Test is SoladyTest {
         _TestTemps memory t;
         t.userOpHash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) = vm.sign(t.privateKey, ECDSA.toEthSignedMessageHash(t.userOpHash));
+        (t.v, t.r, t.s) =
+            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
 
         account.initialize(t.signer);
 
@@ -257,7 +259,8 @@ contract ERC4337Test is SoladyTest {
         _TestTemps memory t;
         t.userOpHash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) = vm.sign(t.privateKey, ECDSA.toEthSignedMessageHash(t.userOpHash));
+        (t.v, t.r, t.s) =
+            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
 
         MockERC1271Wallet wrappedSigner = new MockERC1271Wallet(t.signer);
         account.initialize(address(wrappedSigner));

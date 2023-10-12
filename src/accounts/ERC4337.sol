@@ -5,7 +5,6 @@ import {Receiver} from "./Receiver.sol";
 import {Ownable} from "../auth/Ownable.sol";
 import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
 import {LibZip} from "../utils/LibZip.sol";
-import {ECDSA} from "../utils/ECDSA.sol";
 import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 
 /// @notice Simple ERC4337 account implementation.
@@ -99,7 +98,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         returns (bytes4 result)
     {
         bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), ECDSA.toEthSignedMessageHash(hash), signature
+            owner(), SignatureCheckerLib.toEthSignedMessageHash(hash), signature
         );
         /// @solidity memory-safe-assembly
         assembly {
@@ -115,7 +114,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         returns (uint256 validationData)
     {
         bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature
+            owner(), SignatureCheckerLib.toEthSignedMessageHash(userOpHash), userOp.signature
         );
         /// @solidity memory-safe-assembly
         assembly {

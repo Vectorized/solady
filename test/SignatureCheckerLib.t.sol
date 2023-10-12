@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {SignatureCheckerLib} from "../src/utils/SignatureCheckerLib.sol";
+import {ECDSA} from "../src/utils/ECDSA.sol";
 import {MockERC1271Wallet} from "./utils/mocks/MockERC1271Wallet.sol";
 import {MockERC1271Malicious} from "./utils/mocks/MockERC1271Malicious.sol";
 
@@ -318,5 +319,15 @@ contract SignatureCheckerLibTest is SoladyTest {
                 address(1), bytes32(0), SignatureCheckerLib.emptySignature()
             )
         );
+    }
+
+    function testToEthSignedMessageHashDifferential(bytes32 hash) public {
+        assertEq(
+            SignatureCheckerLib.toEthSignedMessageHash(hash), ECDSA.toEthSignedMessageHash(hash)
+        );
+    }
+
+    function testToEthSignedMessageHashDifferential(bytes memory s) public {
+        assertEq(SignatureCheckerLib.toEthSignedMessageHash(s), ECDSA.toEthSignedMessageHash(s));
     }
 }
