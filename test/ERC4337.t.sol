@@ -7,6 +7,7 @@ import {ERC4337, MockERC4337} from "./utils/mocks/MockERC4337.sol";
 import {MockEntryPoint} from "./utils/mocks/MockEntryPoint.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
 import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
+import {MockERC1271Wallet} from "./utils/mocks/MockERC1271Wallet.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
@@ -236,6 +237,35 @@ contract ERC4337Test is SoladyTest {
         // Not entry point reverts.
         vm.expectRevert(Ownable.Unauthorized.selector);
         account.validateUserOp(userOp, t.userOpHash, t.missingAccountFunds);
+    }
+
+    function testIsValidSignature() public {
+        _TestTemps memory t;
+        t.userOpHash = keccak256("123");
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, ECDSA.toEthSignedMessageHash(t.userOpHash));
+
+        account.initialize(t.signer);
+
+        ERC4337.UserOperation memory userOp;
+        // Success returns `0x1626ba7e`.
+        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
+        assert(account.isValidSignature(t.userOpHash, userOp.signature) == 0x1626ba7e);
+    }
+
+    function testIsValidSignatureWrapped() public {
+        _TestTemps memory t;
+        t.userOpHash = keccak256("123");
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, ECDSA.toEthSignedMessageHash(t.userOpHash));
+
+        MockERC1271Wallet wrappedSigner = new MockERC1271Wallet(t.signer);
+        account.initialize(address(wrappedSigner));
+
+        ERC4337.UserOperation memory userOp;
+        // Success returns `0x1626ba7e`.
+        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
+        assert(account.isValidSignature(t.userOpHash, userOp.signature) == 0x1626ba7e);
     }
 
     function testETHReceived() public {
