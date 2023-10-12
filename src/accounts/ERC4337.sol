@@ -147,10 +147,12 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         returns (bytes4)
     {
         if (
-            SignatureCheckerLib.isValidERC1271SignatureNowCalldata(
+            SignatureCheckerLib.isValidSignatureNowCalldata(
                 owner(), ECDSA.toEthSignedMessageHash(hash), signature
             )
-        ) return 0x1626ba7e;
+        ) {
+            return 0x1626ba7e;
+        }
         return 0xffffffff;
     }
 
