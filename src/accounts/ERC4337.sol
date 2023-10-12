@@ -141,9 +141,11 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /// @dev Validates the signature with ERC1271 return.
+    /// So that this account can be also be used as a signer.
     function isValidSignature(bytes32 hash, bytes calldata signature)
         public
         view
+        virtual
         returns (bytes4 result)
     {
         bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
@@ -321,12 +323,12 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Make Ownable prevent double-initialization.
+    /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
     function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
         return true;
     }
 
-    /// @dev To ensure that only the owner can upgrade the implementation.
+    /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
     function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyOwner {}
 
     /// @dev Handle token callbacks. If no token callback is triggered,
