@@ -48,7 +48,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Initializes the account with the owner. Can only be called once.
-    function initialize(address newOwner) public virtual {
+    function initialize(address newOwner) public payable virtual {
         _initializeOwner(newOwner);
     }
 
