@@ -184,7 +184,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                 let m := mload(0x40)
                 // If `values` is empty, abuse out-of-bounds calldataload to get zero for values.
                 let valuesOffsetDiff :=
-                    or(shl(128, iszero(values.length)), sub(values.offset, targets.offset))
+                    or(mul(calldatasize(), iszero(values.length)), sub(values.offset, targets.offset))
                 let dataOffsetDiff := sub(data.offset, targets.offset)
                 for {} 1 {} {
                     let o := add(data.offset, calldataload(add(targets.offset, dataOffsetDiff)))
