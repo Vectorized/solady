@@ -245,6 +245,20 @@ contract ERC4337Test is SoladyTest {
         (t.signer, t.privateKey) = _randomSigner();
         (t.v, t.r, t.s) = vm.sign(t.privateKey, ECDSA.toEthSignedMessageHash(t.userOpHash));
 
+        account.initialize(t.signer);
+
+        ERC4337.UserOperation memory userOp;
+        // Success returns `0x1626ba7e`.
+        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
+        assert(account.isValidSignature(t.userOpHash, userOp.signature) == 0x1626ba7e);
+    }
+
+    function testIsValidSignatureWrapped() public {
+        _TestTemps memory t;
+        t.userOpHash = keccak256("123");
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, ECDSA.toEthSignedMessageHash(t.userOpHash));
+
         MockERC1271Wallet wrappedSigner = new MockERC1271Wallet(t.signer);
         account.initialize(address(wrappedSigner));
 
