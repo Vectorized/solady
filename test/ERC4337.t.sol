@@ -27,6 +27,13 @@ contract Target {
     function revertWithTargetError(bytes memory data_) public payable {
         revert TargetError(data_);
     }
+
+    function changeOwnerSlotValue(bool change) public payable {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if change { sstore(not(0x8b78c6d8), 0x112233) }
+        }
+    }
 }
 
 contract ERC4337Test is SoladyTest {
@@ -182,6 +189,21 @@ contract ERC4337Test is SoladyTest {
         assertEq(abi.decode(data, (bytes)), _randomBytes(r));
     }
 
+    function testDelegateExecuteRevertsIfOwnerSlotValueChanged() public {
+        account.initialize(address(this));
+
+        address delegate = address(new Target());
+
+        bytes memory data;
+        data = abi.encodeWithSignature("changeOwnerSlotValue(bool)", false);
+        account.delegateExecute(delegate, data);
+        vm.expectRevert();
+        data = abi.encodeWithSignature("changeOwnerSlotValue(bool)", true);
+        account.delegateExecute(delegate, data);
+        data = abi.encodeWithSignature("changeOwnerSlotValue(bool)", false);
+        account.delegateExecute(delegate, data);
+    }
+
     function testDepositFunctions() public {
         vm.deal(address(account), 1 ether);
         account.initialize(address(this));
@@ -305,6 +327,7 @@ contract ERC4337Test is SoladyTest {
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, seed)
             let r := keccak256(0x00, 0x20)

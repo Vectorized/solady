@@ -157,6 +157,14 @@ abstract contract Ownable {
         }
     }
 
+    /// @dev Returns the raw storage value of the owner slot.
+    function _ownerSlotValue() internal view virtual returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := sload(not(_OWNER_SLOT_NOT))
+        }
+    }
+
     /// @dev Returns how long a two-step ownership handover is valid for in seconds.
     /// Override to return a different value if needed.
     /// Made internal to conserve bytecode. Wrap it in a public function if needed.

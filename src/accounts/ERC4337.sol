@@ -241,6 +241,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         payable
         virtual
         onlyEntryPointOrOwner
+        delegateGuard
         returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
@@ -258,6 +259,13 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
             returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
             mstore(0x40, add(o, returndatasize())) // Allocate the memory.
         }
+    }
+
+    /// @dev Guard to ensure that the owner slot's value isn't changed after delegatecall.
+    modifier delegateGuard() virtual {
+        bytes32 ownerSlotValue = _ownerSlotValue();
+        _;
+        require(_ownerSlotValue() == ownerSlotValue);
     }
 
     /// @dev Requires that the caller is the EntryPoint, the owner, or the account itself.
