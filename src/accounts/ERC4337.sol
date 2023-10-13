@@ -211,17 +211,9 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                 let e := add(calls.offset, mload(r))
                 let o := add(e, calldataload(add(e, 0x40)))
                 calldatacopy(m, add(o, 0x20), calldataload(o))
-                if iszero(
-                    call(
-                        gas(), // Gas remaining.
-                        calldataload(e), // Target.
-                        calldataload(add(e, 0x20)), // Value.
-                        m, // Start of input calldata.
-                        calldataload(o), // Length of input calldata.
-                        codesize(), // We will use `returndatasize` instead.
-                        0x00 // We will use `returndatasize` instead.
-                    )
-                ) {
+                // forgefmt: disable-next-item
+                if iszero(call(gas(), calldataload(e), calldataload(add(e, 0x20)),
+                    m, calldataload(o), codesize(), 0x00)) {
                     // Bubble up the revert if the call reverts.
                     returndatacopy(m, 0x00, returndatasize())
                     revert(m, returndatasize())
@@ -329,14 +321,11 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*                         OVERRIDES                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Requires that the caller is the owner or the account itself.
+    /// @dev Requires that the caller is the owner, or the account itself.
     /// This override affects the `onlyOwner` modifier.
     function _checkOwner() internal view virtual override(Ownable) {
-        // Check that the caller is the owner,
-        if (msg.sender != owner()) {
-            // or the account itself (e.g. when called via `execute`).
-            if (msg.sender != address(this)) revert Unauthorized();
-        }
+        // Check that the caller is the owner, or the account itself (e.g. via `execute`).
+        if (msg.sender != owner()) if (msg.sender != address(this)) revert Unauthorized();
     }
 
     /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
