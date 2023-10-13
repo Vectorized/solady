@@ -262,6 +262,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /// @dev Guard to ensure that the owner slot's value isn't changed after delegatecall.
+    /// You can override this modifier to ensure the sanctity of other storage slots too.
     modifier delegateGuard() virtual {
         bytes32 ownerSlotValue = _ownerSlotValue();
         _;
