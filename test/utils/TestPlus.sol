@@ -143,8 +143,8 @@ contract TestPlus {
         } while (result == address(0));
     }
 
-    /// @dev Rounds up the free memory pointer the the next word boundary.
-    /// Sometimes, some Solidity operations causes the free memory pointer to be misaligned.
+    /// @dev Rounds up the free memory pointer to the next word boundary.
+    /// Sometimes, some Solidity operations cause the free memory pointer to be misaligned.
     function _roundUpFreeMemoryPointer() internal pure {
         // To prevent a solidity 0.8.13 bug.
         // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
