@@ -314,6 +314,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }
+            mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
     }
 
