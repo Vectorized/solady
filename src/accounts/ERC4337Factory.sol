@@ -3,14 +3,14 @@ pragma solidity ^0.8.4;
 
 import {LibClone} from "../utils/LibClone.sol";
 
-/// @notice Simple ERC4337 account implementation.
+/// @notice Simple ERC4337 account factory implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC4337Factory.sol)
 ///
 /// Note:
 /// - Unlike the ERC1967Factory, this factory does NOT store any admin info on the factory itself.
 ///   The deployed ERC4337 accounts are minimal ERC1967 proxies to a ERC4337 implementation.
 /// - This factory does not contain any logic for upgrading the ERC4337 accounts.
-///   Upgrading is to be done via UUPS logic on the accounts themselves.
+///   Upgrading must be done via UUPS logic on the accounts themselves.
 contract ERC4337Factory {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         IMMUTABLES                         */
