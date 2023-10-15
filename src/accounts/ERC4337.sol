@@ -2,9 +2,9 @@
 pragma solidity ^0.8.4;
 
 import {Receiver} from "./Receiver.sol";
+import {LibZip} from "../utils/LibZip.sol";
 import {Ownable} from "../auth/Ownable.sol";
 import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
-import {LibZip} from "../utils/LibZip.sol";
 import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 
 /// @notice Simple ERC4337 account implementation.
@@ -322,10 +322,9 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*                         OVERRIDES                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Requires that the caller is the owner, or the account itself.
+    /// @dev Requires that the caller is the owner or the account itself.
     /// This override affects the `onlyOwner` modifier.
     function _checkOwner() internal view virtual override(Ownable) {
-        // Check that the caller is the owner, or the account itself (e.g. via `execute`).
         if (msg.sender != owner()) if (msg.sender != address(this)) revert Unauthorized();
     }
 
