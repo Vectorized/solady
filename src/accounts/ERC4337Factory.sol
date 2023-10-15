@@ -72,17 +72,4 @@ contract ERC4337Factory {
             }
         }
     }
-
-    /// @dev Calls `account` with calldata `data`.
-    function _call(address account, bytes calldata data) internal virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let m := mload(0x40)
-            calldatacopy(m, data.offset, data.length)
-            if iszero(call(gas(), account, 0, m, data.length, codesize(), 0x00)) {
-                returndatacopy(m, 0x00, returndatasize())
-                revert(m, returndatasize())
-            }
-        }
-    }
 }
