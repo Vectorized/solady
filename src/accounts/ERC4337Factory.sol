@@ -38,17 +38,6 @@ contract ERC4337Factory {
         _initialize(account, owner);
     }
 
-    /// @dev Deploys an ERC4337 account and returns its address.
-    function deployAndCall(address owner, bytes calldata data)
-        public
-        payable
-        virtual
-        returns (address account)
-    {
-        account = deploy(owner);
-        _call(account, data);
-    }
-
     /// @dev Deploys an ERC4337 account with `salt` and returns its deterministic address.
     function deployDeterministic(address owner, bytes32 salt)
         public
@@ -59,17 +48,6 @@ contract ERC4337Factory {
         LibClone.checkStartsWithCaller(salt);
         account = LibClone.deployDeterministicERC1967(msg.value, implementation, salt);
         _initialize(account, owner);
-    }
-
-    /// @dev Deploys an ERC4337 account with `salt` and returns its deterministic address.
-    function deployDeterministicAndCall(address owner, bytes32 salt, bytes calldata data)
-        public
-        payable
-        virtual
-        returns (address account)
-    {
-        account = deployDeterministic(owner, salt);
-        _call(account, data);
     }
 
     /// @dev Returns the initialization code hash of the ERC4337 account (a minimal ERC1967 proxy).
