@@ -88,7 +88,7 @@ contract ERC4337Factory {
         assembly {
             mstore(0x14, owner) // Store the `owner` argument.
             mstore(0x00, 0xc4d66de8000000000000000000000000) // `initialize(address)`.
-            if iszero(call(gas(), account, 0, 0x1c, 0x24, codesize(), 0x00)) {
+            if iszero(call(gas(), account, 0, 0x10, 0x24, codesize(), 0x00)) {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }
