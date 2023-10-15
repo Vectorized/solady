@@ -90,7 +90,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /// @dev Validates the signature with ERC1271 return.
-    /// So that this account can be also be used as a signer.
+    /// So this account can also be used as a signer.
     function isValidSignature(bytes32 hash, bytes calldata signature)
         public
         view
