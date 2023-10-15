@@ -588,7 +588,7 @@ library LibClone {
     /*              MINIMAL ERC1967 PROXY OPERATIONS              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: The ERC1967 proxy here is intended to upgraded with UUPS.
+    // Note: The ERC1967 proxy here is intended to be upgraded with UUPS.
     // This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
 
     /// @dev Deploys a minimal ERC1967 proxy with `implementation`.
