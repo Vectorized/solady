@@ -39,12 +39,12 @@ contract Target {
 contract ERC4337Test is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    address accountImplementation;
+    address erc4337;
     MockERC4337 account;
 
     function setUp() public {
-        accountImplementation = address(new MockERC4337());
-        account = MockERC4337(payable(LibClone.deployERC1967(accountImplementation)));
+        erc4337 = address(new MockERC4337());
+        account = MockERC4337(payable(LibClone.deployERC1967(erc4337)));
     }
 
     function testInitializer() public {
@@ -75,7 +75,7 @@ contract ERC4337Test is SoladyTest {
         account.initialize(address(this));
         assertEq(account.owner(), address(0));
 
-        account = MockERC4337(payable(LibClone.deployERC1967(accountImplementation)));
+        account = MockERC4337(payable(LibClone.deployERC1967(erc4337)));
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), address(0));
         account.initialize(address(0));
@@ -85,7 +85,7 @@ contract ERC4337Test is SoladyTest {
         account.initialize(address(this));
         assertEq(account.owner(), address(0));
 
-        account = MockERC4337(payable(LibClone.deployERC1967(accountImplementation)));
+        account = MockERC4337(payable(LibClone.deployERC1967(erc4337)));
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), address(1));
         account.initialize(address(1));
