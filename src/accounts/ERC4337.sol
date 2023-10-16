@@ -258,7 +258,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     modifier storageGuard() virtual {
         bytes32 ownerSlotValue = _ownerSlotValue();
         _;
-        require(_ownerSlotValue() == ownerSlotValue);
+        assert(_ownerSlotValue() == ownerSlotValue);
     }
 
     /// @dev Requires that the caller is the EntryPoint, the owner, or the account itself.
