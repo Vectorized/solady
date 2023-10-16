@@ -78,7 +78,7 @@ contract ERC4337FactoryTest is SoladyTest {
         vm.prank(owner);
         if (_random() % 8 == 0) {
             t.salt = keccak256(abi.encode(_random()));
-            vm.expectRevert(LibClone.SaltDoesNotStartWithCaller.selector);
+            vm.expectRevert(LibClone.SaltDoesNotStartWith.selector);
             t.proxy = factory.deployDeterministic{value: t.msgValue}(owner, t.salt);
             return;
         } else {

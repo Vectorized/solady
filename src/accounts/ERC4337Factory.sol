@@ -45,7 +45,7 @@ contract ERC4337Factory {
         virtual
         returns (address account)
     {
-        LibClone.checkStartsWithCaller(salt);
+        LibClone.checkStartsWith(salt, owner);
         account = LibClone.deployDeterministicERC1967(msg.value, implementation, salt);
         _initialize(account, owner);
     }

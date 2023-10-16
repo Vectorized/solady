@@ -37,8 +37,8 @@ library LibClone {
     /// @dev Unable to deploy the clone.
     error DeploymentFailed();
 
-    /// @dev The salt must start with either the zero address or the caller.
-    error SaltDoesNotStartWithCaller();
+    /// @dev The salt must start with either the zero address or `by`.
+    error SaltDoesNotStartWith();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  MINIMAL PROXY OPERATIONS                  */
@@ -766,13 +766,13 @@ library LibClone {
         }
     }
 
-    /// @dev Reverts if `salt` does not start with either the zero address or the caller.
-    function checkStartsWithCaller(bytes32 salt) internal view {
+    /// @dev Requires that `salt` starts with either the zero address or `by`.
+    function checkStartsWith(bytes32 salt, address by) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
-            // If the salt does not start with the zero address or the caller.
-            if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
-                mstore(0x00, 0x2f634836) // `SaltDoesNotStartWithCaller()`.
+            // If the salt does not start with the zero address or `by`.
+            if iszero(or(iszero(shr(96, salt)), eq(shr(96, shl(96, by)), shr(96, salt)))) {
+                mstore(0x00, 0x0c4549ef) // `SaltDoesNotStartWith()`.
                 revert(0x1c, 0x04)
             }
         }
