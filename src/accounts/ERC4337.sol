@@ -268,6 +268,31 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 DIRECT STORAGE OPERATIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the raw storage value at `storageSlot`.
+    function storageLoad(bytes32 storageSlot) public view virtual returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := sload(storageSlot)
+        }
+    }
+
+    /// @dev Writes the raw storage value at `storageSlot`.
+    function storageStore(bytes32 storageSlot, bytes32 storageValue)
+        public
+        virtual
+        onlyEntryPointOrOwner
+        storageGuard
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            sstore(storageSlot, storageValue)
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     DEPOSIT OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
