@@ -326,6 +326,19 @@ contract ERC4337Test is SoladyTest {
         erc1155.safeBatchTransferFrom(alice, address(account), ids, amts, "");
     }
 
+    function testDirectStorage() public {
+        bytes32 storageSlot = bytes32(uint256(123));
+        bytes32 storageValue = bytes32(uint256(456));
+
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        account.storageStore(storageSlot, storageValue);
+
+        account.initialize(address(this));
+        assertEq(account.storageLoad(storageSlot), bytes32(0));
+        account.storageStore(storageSlot, storageValue);
+        assertEq(account.storageLoad(storageSlot), storageValue);
+    }
+
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {

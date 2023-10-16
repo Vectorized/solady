@@ -282,6 +282,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /// @dev Writes the raw storage value at `storageSlot`.
     function storageStore(bytes32 storageSlot, bytes32 storageValue)
         public
+        payable
         virtual
         onlyEntryPointOrOwner
         storageGuard
