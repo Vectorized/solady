@@ -28,5 +28,7 @@ contract MockEntryPoint {
             ERC4337(payable(account)).validateUserOp(userOp, userOpHash, missingAccountFunds);
     }
 
-    receive() external payable {}
+    receive() external payable {
+        depositTo(msg.sender);
+    }
 }
