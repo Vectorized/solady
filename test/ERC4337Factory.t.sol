@@ -7,11 +7,15 @@ import {ERC4337Factory} from "../src/accounts/ERC4337Factory.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
 contract ERC4337FactoryTest is SoladyTest {
+    address internal constant _ENTRY_POINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+
     ERC4337Factory factory;
 
     MockERC4337 erc4337;
 
     function setUp() public {
+        // Etch something onto `_ENTRY_POINT` such that we can deploy the account implementation.
+        vm.etch(_ENTRY_POINT, hex"00");
         erc4337 = new MockERC4337();
         factory = new ERC4337Factory(address(erc4337));
     }

@@ -39,10 +39,15 @@ contract Target {
 contract ERC4337Test is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
+    address internal constant _ENTRY_POINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+
     address erc4337;
+
     MockERC4337 account;
 
     function setUp() public {
+        // Etch something onto `_ENTRY_POINT` such that we can deploy the account implementation.
+        vm.etch(_ENTRY_POINT, hex"00");
         erc4337 = address(new MockERC4337());
         account = MockERC4337(payable(LibClone.deployERC1967(erc4337)));
     }
