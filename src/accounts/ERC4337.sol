@@ -305,7 +305,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
             mstore(0x14, address()) // Store the `account` argument.
             mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
             result :=
-                mul(
+                mul( // Returns 0 if the EntryPoint does not exist.
                     mload(0x20),
                     and( // The arguments of `and` are evaluated from right to left.
                         gt(returndatasize(), 0x1f), // At least 32 bytes returned.
@@ -320,9 +320,11 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         address ep = entryPoint();
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00)) {
-                mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
-                revert(0x1c, 0x04)
+            // The EntryPoint has accounting logic in the `receive()` function.
+            // forgefmt: disable-next-item
+            if iszero(mul(extcodesize(ep), 
+                call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
+                revert(codesize(), 0x00) // For gas estimation.
             }
         }
     }
