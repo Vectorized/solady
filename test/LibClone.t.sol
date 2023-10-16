@@ -358,22 +358,21 @@ contract LibCloneTest is SoladyTest, Clone {
         );
     }
 
-    function testStartsWithCaller(uint256) public {
+    function testStartsWith(uint256) public {
         uint256 noise = _random() >> 160;
-        this.checkStartsWithCaller(bytes32(noise));
+        this.checkStartsWith(bytes32(noise), address(0));
 
-        uint256 r = _random();
-        address randomCaller = address(uint160(r));
-        if (randomCaller == msg.sender) return;
-        if (randomCaller == address(0)) return;
-        vm.expectRevert(LibClone.SaltDoesNotStartWithCaller.selector);
-        this.checkStartsWithCaller(bytes32((r << 96) | noise));
+        address by = _randomNonZeroAddress();
+        this.checkStartsWith(bytes32((uint256(uint160(by)) << 96) | noise), by);
 
-        this.checkStartsWithCaller(bytes32((uint256(uint160(address(this))) << 96) | noise));
+        address notBy;
+        while (by == notBy) notBy = _randomNonZeroAddress();
+        vm.expectRevert(LibClone.SaltDoesNotStartWith.selector);
+        this.checkStartsWith(bytes32((uint256(uint160(by)) << 96) | noise), notBy);
     }
 
-    function checkStartsWithCaller(bytes32 salt) public view {
-        LibClone.checkStartsWithCaller(salt);
+    function checkStartsWith(bytes32 salt, address by) public view {
+        LibClone.checkStartsWith(salt, _brutalized(by));
     }
 
     function _brutalized(address a) internal view returns (address result) {
