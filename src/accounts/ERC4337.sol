@@ -233,7 +233,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         payable
         virtual
         onlyEntryPointOrOwner
-        delegateGuard
+        storageGuard
         returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
@@ -253,9 +253,9 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Guard to ensure that the owner slot's value isn't changed after delegatecall.
+    /// @dev Guard to ensure that the owner slot's value isn't changed by the function.
     /// You can override this modifier to ensure the sanctity of other storage slots too.
-    modifier delegateGuard() virtual {
+    modifier storageGuard() virtual {
         bytes32 ownerSlotValue = _ownerSlotValue();
         _;
         require(_ownerSlotValue() == ownerSlotValue);
