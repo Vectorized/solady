@@ -318,12 +318,9 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         address ep = entryPoint();
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, address()) // Store the `to` argument.
-            mstore(0x00, 0xb760faf9) // `depositTo(address)`.
-            // forgefmt: disable-next-item
-            if iszero(mul(extcodesize(ep), call(gas(), ep, callvalue(), 0x1c, 0x24, codesize(), 0x00))) {
-                returndatacopy(mload(0x40), 0x00, returndatasize())
-                revert(mload(0x40), returndatasize())
+            if iszero(call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00)) {
+                mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                revert(0x1c, 0x04)
             }
         }
     }
