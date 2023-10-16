@@ -47,12 +47,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor() payable {
-        address ep = entryPoint();
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Requires that the EntryPoint has been deployed.
-            returndatacopy(returndatasize(), returndatasize(), iszero(extcodesize(ep)))
-        }
+        require(entryPoint().code.length != 0);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
