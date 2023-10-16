@@ -302,14 +302,16 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         address ep = entryPoint();
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, address()) // Store the `to` argument.
-            mstore(0x00, 0x70a08231) // `balanceOf(address)`.
-            // forgefmt: disable-next-item
-            if iszero(and(gt(returndatasize(), 0x1f), staticcall(gas(), ep, 0x1c, 0x24, 0x00, 0x20))) {
-                returndatacopy(mload(0x40), 0x00, returndatasize())
-                revert(mload(0x40), returndatasize())
-            }
-            result := mload(0x00)
+            mstore(0x14, address()) // Store the `account` argument.
+            mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
+            result :=
+                mul(
+                    mload(0x20),
+                    and( // The arguments of `and` are evaluated from right to left.
+                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                        staticcall(gas(), ep, 0x10, 0x24, 0x20, 0x20)
+                    )
+                )
         }
     }
 
