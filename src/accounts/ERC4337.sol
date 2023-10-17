@@ -260,8 +260,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         bytes32 ownerSlotValue = _ownerSlotValue();
         bytes32 implementationSlotValue = _implementationSlotValue();
         _;
-        assert(_implementationSlotValue() == implementationSlotValue);
-        assert(_ownerSlotValue() == ownerSlotValue);
+        assert(implementationSlotValue == _implementationSlotValue());
+        assert(ownerSlotValue == _ownerSlotValue());
     }
 
     /// @dev Requires that the caller is the EntryPoint, the owner, or the account itself.
