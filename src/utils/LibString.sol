@@ -899,6 +899,25 @@ library LibString {
         }
     }
 
+    /// @dev Returns a string from a small bytes32 string.
+    function fromSmallString(bytes32 smallString) internal pure returns (string memory result) {
+        if (smallString == bytes32(0)) return result;
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let n
+            for {} 1 {} {
+                n := add(n, 1)
+                if iszero(byte(n, smallString)) { break } // Scan for '\0'.
+            }
+            mstore(result, n)
+            let o := add(result, 0x20)
+            mstore(o, smallString)
+            mstore(add(o, n), 0)
+            mstore(0x40, add(result, 0x40))
+        }
+    }
+
     /// @dev Returns a lowercased copy of the string.
     /// WARNING! This function is only compatible with 7-bit ASCII strings.
     function lower(string memory subject) internal pure returns (string memory result) {

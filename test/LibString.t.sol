@@ -1222,6 +1222,13 @@ contract LibStringTest is SoladyTest {
         assertEq(_upperOriginal("`az}"), "`AZ}");
     }
 
+    function fromSmallString() public {
+        assertEq(LibString.fromSmallString(bytes32("")), "");
+        assertEq(LibString.fromSmallString(bytes32("a")), "a");
+        assertEq(LibString.fromSmallString(bytes32("abc")), "abc");
+        assertEq(LibString.fromSmallString(bytes32("Hello world!")), "Hello world!");
+    }
+
     function _lowerOriginal(string memory subject) internal pure returns (string memory result) {
         unchecked {
             uint256 n = bytes(subject).length;
