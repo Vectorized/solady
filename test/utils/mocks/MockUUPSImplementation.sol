@@ -38,6 +38,7 @@ contract MockUUPSImplementation is UUPSUpgradeable {
     }
 
     function _brutalized(address a) private pure returns (address result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := or(a, shl(160, 0x0123456789abcdeffedcba98))
         }
