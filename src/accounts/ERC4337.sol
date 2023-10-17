@@ -43,14 +43,6 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        CONSTRUCTOR                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    constructor() payable {
-        require(entryPoint().code.length != 0);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        INITIALIZER                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -65,7 +57,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
 
     /// @dev Returns the canonical ERC4337 EntryPoint contract.
     /// Override this function to return a different EntryPoint.
-    function entryPoint() public pure virtual returns (address) {
+    function entryPoint() public view virtual returns (address) {
         return 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
     }
 
@@ -313,7 +305,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
             mstore(0x14, address()) // Store the `account` argument.
             mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
             result :=
-                mul(
+                mul( // Returns 0 if the EntryPoint does not exist.
                     mload(0x20),
                     and( // The arguments of `and` are evaluated from right to left.
                         gt(returndatasize(), 0x1f), // At least 32 bytes returned.
@@ -329,7 +321,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         /// @solidity memory-safe-assembly
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
-            if iszero(call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00)) {
+            // forgefmt: disable-next-item
+            if iszero(mul(extcodesize(ep), call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
                 revert(codesize(), 0x00) // For gas estimation.
             }
         }
@@ -343,7 +336,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-            if iszero(call(gas(), ep, 0, 0x10, 0x44, codesize(), 0x00)) {
+            if iszero(mul(extcodesize(ep), call(gas(), ep, 0, 0x10, 0x44, codesize(), 0x00))) {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }
