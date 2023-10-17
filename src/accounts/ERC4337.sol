@@ -253,11 +253,14 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Guard to ensure that the owner slot's value isn't changed by the function.
+    /// @dev Guard to ensure that the owner slot's and implementation slot's values
+    /// aren't changed by the function.
     /// You can override this modifier to ensure the sanctity of other storage slots too.
     modifier storageGuard() virtual {
         bytes32 ownerSlotValue = _ownerSlotValue();
+        bytes32 implementationSlotValue = _implementationSlotValue();
         _;
+        assert(_implementationSlotValue() == implementationSlotValue);
         assert(_ownerSlotValue() == ownerSlotValue);
     }
 
