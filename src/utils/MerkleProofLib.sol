@@ -82,7 +82,7 @@ library MerkleProofLib {
     ///   will always return false.
     /// - The sum of the lengths of `proof` and `leaves` must never overflow.
     /// - Any non-zero word in the `flags` array is treated as true.
-    /// - The memory offset of `proof` must be be non-zero
+    /// - The memory offset of `proof` must be non-zero
     ///   (i.e. `proof` is not pointing to the scratch space).
     function verifyMultiProof(
         bytes32[] memory proof,
