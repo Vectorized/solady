@@ -11,7 +11,7 @@ pragma solidity ^0.8.4;
 ///   minting and transferring zero tokens, as well as self-approvals.
 ///   For performance, this implementation WILL NOT revert for such actions.
 ///   Please add any checks with overrides if desired.
-/// - The `permit` function use the ecrecover precompile (0x1).
+/// - The `permit` function uses the ecrecover precompile (0x1).
 ///
 /// If you are overriding:
 /// - NEVER violate the ERC20 invariant:
@@ -314,7 +314,7 @@ abstract contract ERC20 {
         if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
         /// @solidity memory-safe-assembly
         assembly {
-            // Revert if the block timestamp greater than `deadline`.
+            // Revert if the block timestamp is greater than `deadline`.
             if gt(timestamp(), deadline) {
                 mstore(0x00, 0x1a15a3cc) // `PermitExpired()`.
                 revert(0x1c, 0x04)
@@ -350,7 +350,7 @@ abstract contract ERC20 {
             mstore(0x60, s)
             let t := staticcall(gas(), 1, 0, 0x80, 0x20, 0x20)
             // If the ecrecover fails, the returndatasize will be 0x00,
-            // `owner` will be be checked if it equals the hash at 0x00,
+            // `owner` will be checked if it equals the hash at 0x00,
             // which evaluates to false (i.e. 0), and we will revert.
             // If the ecrecover succeeds, the returndatasize will be 0x20,
             // `owner` will be compared against the returned address at 0x20.

@@ -16,7 +16,7 @@ pragma solidity ^0.8.4;
 ///
 /// If you are overriding:
 /// - NEVER violate the ERC721 invariant:
-///   the balance of an owner MUST be always be equal to their number of ownership slots.
+///   the balance of an owner MUST always be equal to their number of ownership slots.
 ///   The transfer functions do not have an underflow guard for user token balances.
 /// - Make sure all variables written to storage are properly cleaned
 //    (e.g. the bool value for `isApprovedForAll` MUST be either 1 or 0 under the hood).
