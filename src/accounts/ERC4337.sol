@@ -273,7 +273,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                     eq(implementationSlotValue, sload(_ERC1967_IMPLEMENTATION_SLOT)),
                     eq(ownerSlotValue, sload(_OWNER_SLOT))
                 )
-            ) { revert(codesize(), codesize()) }
+            ) { revert(codesize(), 0x00) }
         }
     }
 
@@ -315,7 +315,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         /// @solidity memory-safe-assembly
         assembly {
             if or(eq(storageSlot, _OWNER_SLOT), eq(storageSlot, _ERC1967_IMPLEMENTATION_SLOT)) {
-                revert(codesize(), codesize())
+                revert(codesize(), 0x00)
             }
         }
         _;
@@ -351,7 +351,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
             // The EntryPoint has balance accounting logic in the `receive()` function.
             // forgefmt: disable-next-item
             if iszero(mul(extcodesize(ep), call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
-                revert(codesize(), codesize()) // For gas estimation.
+                revert(codesize(), 0x00) // For gas estimation.
             }
         }
     }
