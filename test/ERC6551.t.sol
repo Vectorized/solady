@@ -34,8 +34,23 @@ contract ERC6551Test is SoladyTest {
 
     MockERC6551 account;
 
+    MockERC721 token;
+
     function setUp() public {
         erc6551 = address(new MockERC6551());
         account = MockERC6551(payable(LibClone.deployERC1967(erc6551)));
+        token = new MockERC721();
+    }
+
+    function testInitializer() public {
+        token.mint(address(this), 1);
+
+        account.initialize(block.chainid, address(token), 1);
+        assertEq(account.owner(), address(this));
+
+        (uint256 chainId, address tokenContract, uint256 tokenId) = account.token();
+        assertEq(chainId, block.chainid);
+        assertEq(tokenContract, address(token));
+        assertEq(tokenId, 1);
     }
 }
