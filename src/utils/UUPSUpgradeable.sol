@@ -96,13 +96,4 @@ abstract contract UUPSUpgradeable {
             }
         }
     }
-
-    /// @dev Returns the implementation slot value.
-    function _implementationSlotValue() internal virtual returns (bytes32 result) {
-        bytes32 s = proxiableUUID();
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := sload(s)
-        }
-    }
 }
