@@ -369,7 +369,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /// @dev Handle token callbacks. If no token callback is triggered,
     /// use `LibZip.cdFallback` for generalized calldata decompression.
     /// If you don't need either, re-override this function.
-    fallback() external virtual override(Receiver) receiverFallback {
+    fallback() external payable virtual override(Receiver) receiverFallback {
         LibZip.cdFallback();
     }
 }

@@ -13,7 +13,7 @@ abstract contract Receiver {
     receive() external payable virtual {}
 
     /// @dev Fallback function with the `receiverFallback` modifier.
-    fallback() external virtual receiverFallback {}
+    fallback() external payable virtual receiverFallback {}
 
     /// @dev Modifier for the fallback function to handle token callbacks.
     modifier receiverFallback() virtual {
