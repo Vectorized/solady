@@ -105,6 +105,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     /*                        AUTH                                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns the owner of the tokenId to which this account is bound.
     function owner() public view virtual returns (address result) {
         (, address tokenContract, uint256 tokenId) = token();
 
@@ -123,8 +124,9 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         }
     }
 
+    /// @dev Requires that the caller is the owner or the account itself.
     modifier onlyOwner() virtual {
-        if (msg.sender != owner()) revert Unauthorized();
+        if (msg.sender != owner()) if (msg.sender != address(this)) revert Unauthorized();
         _;
     }
 
@@ -227,8 +229,4 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     fallback() external payable virtual override(Receiver) receiverFallback {
         LibZip.cdFallback();
     }
-}
-
-interface IERC721 {
-    function ownerOf(uint256) external view returns (address);
 }
