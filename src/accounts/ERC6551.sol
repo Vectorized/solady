@@ -41,6 +41,8 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     address internal _tokenContract;
     uint256 internal _tokenId;
 
+    uint256 internal _state;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        INITIALIZER                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -78,7 +80,18 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
 
     /// @dev Returns a value that SHOULD be modified each time the account changes state.
     /// @return The current account state.
-    function state() public view virtual returns (uint256) {}
+    function state() public view virtual returns (uint256) {
+        return _state;
+    }
+
+    // @dev Override to change the state of the account.
+    /// This method may validate the state requirements of this account,
+    /// but by default, follows the ordinary increment pattern of nonce.
+    function _changeState() internal virtual {
+        unchecked {
+            ++_state;
+        }
+    }
 
     /// @dev Returns a magic value indicating whether a given signer is authorized to act on behalf of the account.
     /// MUST return the bytes4 magic value `0x523e3260 `if the given signer is valid.
@@ -177,7 +190,9 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
             let o := add(result, 0x20)
             returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
             mstore(0x40, add(o, returndatasize())) // Allocate the memory.
+                //mstore(_state.slot, add(mload(_state.slot), 1))
         }
+        _changeState();
     }
 
     /// @dev Execute a sequence of calls from this account.
@@ -214,6 +229,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
             }
             mstore(0x40, m) // Allocate the memory.
         }
+        _changeState();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

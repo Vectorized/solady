@@ -71,6 +71,9 @@ contract ERC6551Test is SoladyTest {
 
         address target = address(new Target());
         bytes memory data = _randomBytes(111);
+
+        assertEq(account.state(), 0);
+
         account.execute(target, 123, abi.encodeWithSignature("setData(bytes)", data));
         assertEq(Target(target).datahash(), keccak256(data));
         assertEq(target.balance, 123);
@@ -81,6 +84,8 @@ contract ERC6551Test is SoladyTest {
 
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", data));
         account.execute(target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data));
+
+        assertEq(account.state(), 1);
     }
 
     function testExecuteBatch() public {
@@ -96,6 +101,8 @@ contract ERC6551Test is SoladyTest {
         calls[0].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
         calls[1].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
 
+        assertEq(account.state(), 0);
+
         account.executeBatch(calls);
         assertEq(Target(calls[0].target).datahash(), keccak256(_randomBytes(111)));
         assertEq(Target(calls[1].target).datahash(), keccak256(_randomBytes(222)));
@@ -105,12 +112,16 @@ contract ERC6551Test is SoladyTest {
         calls[1].data = abi.encodeWithSignature("revertWithTargetError(bytes)", _randomBytes(111));
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", _randomBytes(111)));
         account.executeBatch(calls);
+
+        assertEq(account.state(), 1);
     }
 
     function testExecuteBatch(uint256 r) public {
         vm.deal(address(account), 1 ether);
         token.mint(address(this), 1);
         account.initialize(block.chainid, address(token), 1);
+
+        assertEq(account.state(), 0);
 
         unchecked {
             uint256 n = r & 3;
@@ -138,6 +149,8 @@ contract ERC6551Test is SoladyTest {
                 assertEq(abi.decode(results[i], (bytes)), _randomBytes(v));
             }
         }
+
+        assertEq(account.state(), 1);
     }
 
     function testCdFallback() public {
