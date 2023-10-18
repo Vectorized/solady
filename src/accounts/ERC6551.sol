@@ -51,11 +51,11 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         payable
         virtual
     {
-        assert(tokenContract == address(0));
+        assert(_tokenContract == address(0));
         _chainId = chainId;
         _tokenContract = tokenContract;
         _tokenId = tokenId;
-        assert(tokenContract != address(0));
+        assert(_tokenContract != address(0));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
