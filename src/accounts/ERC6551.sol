@@ -107,7 +107,20 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
 
     function owner() public view virtual returns (address result) {
         (, address tokenContract, uint256 tokenId) = token();
-        result = IERC721(tokenContract).ownerOf(tokenId);
+
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x14, tokenId) // Store the `tokenId` argument.
+            mstore(0x00, 0x6352211e000000000000000000000000) // `ownerOf(uint256)`.
+            result :=
+                mul(
+                    mload(0x20),
+                    and( // The arguments of `and` are evaluated from right to left.
+                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                        staticcall(gas(), tokenContract, 0x10, 0x24, 0x20, 0x20)
+                    )
+                )
+        }
     }
 
     modifier onlyOwner() virtual {
