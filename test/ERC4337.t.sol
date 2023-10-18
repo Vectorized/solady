@@ -10,6 +10,7 @@ import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
 import {MockERC1271Wallet} from "./utils/mocks/MockERC1271Wallet.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {LibString} from "../src/utils/LibString.sol";
+import {LibZip} from "../src/utils/LibZip.sol";
 
 contract Target {
     error TargetError(bytes data);
@@ -222,6 +223,37 @@ contract ERC4337Test is SoladyTest {
         account.withdrawDepositTo(to, 12);
         assertEq(to.balance, 12);
         assertEq(account.getDeposit(), 123 - 12);
+    }
+
+    function testCdFallback() public {
+        vm.deal(address(account), 1 ether);
+        account.initialize(address(this));
+
+        vm.etch(account.entryPoint(), address(new MockEntryPoint()).code);
+        assertEq(account.getDeposit(), 0);
+
+        bytes memory data = LibZip.cdCompress(abi.encodeWithSignature("addDeposit()"));
+        (bool success,) = address(account).call{value: 123}(data);
+        assertTrue(success);
+        assertEq(account.getDeposit(), 123);
+
+        ERC4337.Call[] memory calls = new ERC4337.Call[](2);
+        calls[0].target = address(new Target());
+        calls[1].target = address(new Target());
+        calls[0].value = 123;
+        calls[1].value = 456;
+        calls[0].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
+        calls[1].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
+
+        data = LibZip.cdCompress(
+            abi.encodeWithSignature("executeBatch((address,uint256,bytes)[])", calls)
+        );
+        (success,) = address(account).call(data);
+        assertTrue(success);
+        assertEq(Target(calls[0].target).datahash(), keccak256(_randomBytes(111)));
+        assertEq(Target(calls[1].target).datahash(), keccak256(_randomBytes(222)));
+        assertEq(calls[0].target.balance, 123);
+        assertEq(calls[1].target.balance, 456);
     }
 
     struct _TestTemps {
