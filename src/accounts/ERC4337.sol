@@ -13,8 +13,9 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 ///
 /// Recommended usage:
 /// 1. Deploy the ERC4337 as an implementation contract, and verify it on Etherscan.
-/// 2. Create a simple factory that uses `LibClone.deployERC1967` or
+/// 2. Create a factory that uses `LibClone.deployERC1967` or
 ///    `LibClone.deployDeterministicERC1967` to clone the implementation.
+///    See: `ERC4337Factory.sol`.
 contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -89,8 +90,8 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         _validateNonce(userOp.nonce);
     }
 
-    /// @dev Validates the signature with ERC1271 return.
-    /// So this account can also be used as a signer.
+    /// @dev Validates the signature with ERC1271 return,
+    /// so that this account can also be used as a signer.
     function isValidSignature(bytes32 hash, bytes calldata signature)
         public
         view
@@ -220,14 +221,15 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
                 }
                 mstore(r, m) // Append `m` into `results`.
                 mstore(m, returndatasize()) // Store the length,
-                returndatacopy(add(m, 0x20), 0x00, returndatasize()) // and copy the returndata.
-                m := add(add(m, 0x20), returndatasize()) // Advance `m`.
+                let p := add(m, 0x20)
+                returndatacopy(p, 0x00, returndatasize()) // and copy the returndata.
+                m := add(p, returndatasize()) // Advance `m`.
             }
             mstore(0x40, m) // Allocate the memory.
         }
     }
 
-    /// @dev Executes a delegatecall with `delegate` on this account.
+    /// @dev Execute a delegatecall with `delegate` on this account.
     function delegateExecute(address delegate, bytes calldata data)
         public
         payable
@@ -238,9 +240,9 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Forwards the `data` to `delegate` via delegatecall.
             result := mload(0x40)
             calldatacopy(result, data.offset, data.length)
+            // Forwards the `data` to `delegate` via delegatecall.
             if iszero(delegatecall(gas(), delegate, result, data.length, codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
@@ -253,8 +255,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         }
     }
 
-    /// @dev Guard to ensure that the owner slot's and implementation slot's values
-    /// aren't changed by the function.
+    /// @dev Ensures that the owner and implementation slots' values aren't changed.
     /// You can override this modifier to ensure the sanctity of other storage slots too.
     modifier storageGuard() virtual {
         bytes32 ownerSlotValue = _ownerSlotValue();
@@ -305,14 +306,14 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         address ep = entryPoint();
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x14, address()) // Store the `account` argument.
-            mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
+            mstore(0x20, address()) // Store the `account` argument.
+            mstore(0x00, 0x70a08231) // `balanceOf(address)`.
             result :=
                 mul( // Returns 0 if the EntryPoint does not exist.
                     mload(0x20),
                     and( // The arguments of `and` are evaluated from right to left.
                         gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), ep, 0x10, 0x24, 0x20, 0x20)
+                        staticcall(gas(), ep, 0x1c, 0x24, 0x20, 0x20)
                     )
                 )
         }
