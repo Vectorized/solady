@@ -60,12 +60,14 @@ abstract contract Ownable {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The owner slot is given by: `not(_OWNER_SLOT_NOT)`.
+    /// @dev The owner slot is given by:
+    /// `bytes32(~uint256(uint32(bytes4(keccak256("_OWNER_SLOT_NOT")))))`.
     /// It is intentionally chosen to be a high value
     /// to avoid collision with lower slots.
     /// The choice of manual storage layout is to enable compatibility
     /// with both regular and upgradeable contracts.
-    uint256 private constant _OWNER_SLOT_NOT = 0x8b78c6d8;
+    bytes32 internal constant _OWNER_SLOT =
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff74873927;
 
     /// The ownership handover slot of `newOwner` is given by:
     /// ```
@@ -93,7 +95,7 @@ abstract contract Ownable {
         if (_guardInitializeOwner()) {
             /// @solidity memory-safe-assembly
             assembly {
-                let ownerSlot := not(_OWNER_SLOT_NOT)
+                let ownerSlot := _OWNER_SLOT
                 if sload(ownerSlot) {
                     mstore(0x00, 0x0dc149f0) // "AlreadyInitialized()".
                     revert(0x1c, 0x04)
@@ -111,7 +113,7 @@ abstract contract Ownable {
                 // Clean the upper 96 bits.
                 newOwner := shr(96, shl(96, newOwner))
                 // Store the new value.
-                sstore(not(_OWNER_SLOT_NOT), newOwner)
+                sstore(_OWNER_SLOT, newOwner)
                 // Emit the {OwnershipTransferred} event.
                 log3(0, 0, _OWNERSHIP_TRANSFERRED_EVENT_SIGNATURE, 0, newOwner)
             }
@@ -123,7 +125,7 @@ abstract contract Ownable {
         if (_guardInitializeOwner()) {
             /// @solidity memory-safe-assembly
             assembly {
-                let ownerSlot := not(_OWNER_SLOT_NOT)
+                let ownerSlot := _OWNER_SLOT
                 // Clean the upper 96 bits.
                 newOwner := shr(96, shl(96, newOwner))
                 // Emit the {OwnershipTransferred} event.
@@ -134,7 +136,7 @@ abstract contract Ownable {
         } else {
             /// @solidity memory-safe-assembly
             assembly {
-                let ownerSlot := not(_OWNER_SLOT_NOT)
+                let ownerSlot := _OWNER_SLOT
                 // Clean the upper 96 bits.
                 newOwner := shr(96, shl(96, newOwner))
                 // Emit the {OwnershipTransferred} event.
@@ -150,18 +152,10 @@ abstract contract Ownable {
         /// @solidity memory-safe-assembly
         assembly {
             // If the caller is not the stored owner, revert.
-            if iszero(eq(caller(), sload(not(_OWNER_SLOT_NOT)))) {
+            if iszero(eq(caller(), sload(_OWNER_SLOT))) {
                 mstore(0x00, 0x82b42900) // `Unauthorized()`.
                 revert(0x1c, 0x04)
             }
-        }
-    }
-
-    /// @dev Returns the raw storage value of the owner slot.
-    function _ownerSlotValue() internal view virtual returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := sload(not(_OWNER_SLOT_NOT))
         }
     }
 
@@ -251,7 +245,7 @@ abstract contract Ownable {
     function owner() public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := sload(not(_OWNER_SLOT_NOT))
+            result := sload(_OWNER_SLOT)
         }
     }
 
