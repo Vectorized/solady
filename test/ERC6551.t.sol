@@ -2,12 +2,14 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {SignatureCheckerLib} from "../src/accounts/ERC6551.sol";
-import {ERC6551, MockERC6551} from "./utils/mocks/MockERC6551.sol";
+import {SignatureCheckerLib} from "../src/utils/SignatureCheckerLib.sol";
+import {ERC6551Proxy} from "../src/accounts/ERC6551Proxy.sol";
+import {ERC6551, MockERC6551, MockERC6551V2} from "./utils/mocks/MockERC6551.sol";
 import {MockERC6551Registry} from "./utils/mocks/MockERC6551Registry.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
 import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
 import {LibZip} from "../src/utils/LibZip.sol";
+import {LibClone} from "../src/utils/LibClone.sol";
 
 contract Target {
     error TargetError(bytes data);
@@ -28,13 +30,16 @@ contract Target {
 }
 
 contract ERC6551Test is SoladyTest {
-    MockERC6551Registry private _registry;
+    MockERC6551Registry internal _registry;
 
-    address private _erc6551;
+    address internal _erc6551;
 
-    address private _erc721;
+    address internal _erc721;
 
-    mapping(uint256 => bool) private _minted;
+    mapping(uint256 => bool) internal _minted;
+
+    bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
+        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     struct _TestTemps {
         address owner;
@@ -64,7 +69,8 @@ contract ERC6551Test is SoladyTest {
         MockERC721(_erc721).mint(t.owner, t.tokenId);
         t.chainId = block.chainid;
         t.salt = bytes32(_random());
-        address account = _registry.createAccount(_erc6551, t.salt, t.chainId, _erc721, t.tokenId);
+        address proxy = address(new ERC6551Proxy(_erc6551));
+        address account = _registry.createAccount(proxy, t.salt, t.chainId, _erc721, t.tokenId);
         t.account = MockERC6551(payable(account));
     }
 
@@ -253,16 +259,21 @@ contract ERC6551Test is SoladyTest {
 
     function testUpgrade() public {
         _TestTemps memory t = _testTemps();
-        address anotherImplementation = address(new MockERC6551());
+        address anotherImplementation = address(new MockERC6551V2());
         vm.expectRevert(ERC6551.Unauthorized.selector);
         t.account.upgradeTo(anotherImplementation);
         assertEq(t.account.state(), 0);
+        assertEq(t.account.version(), "1");
+
         vm.prank(t.owner);
         t.account.upgradeTo(anotherImplementation);
         assertEq(t.account.state(), 1);
+        assertEq(t.account.version(), "2");
+
         vm.prank(t.owner);
         t.account.upgradeTo(_erc6551);
         assertEq(t.account.state(), 2);
+        assertEq(t.account.version(), "1");
     }
 
     function testSupportsInterface() public {

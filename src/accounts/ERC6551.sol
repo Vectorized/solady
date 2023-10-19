@@ -9,6 +9,10 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// @notice Simple ERC6551 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC6551.sol)
 /// @author ERC6551 team (https://github.com/erc6551/reference/blob/main/src/examples/upgradeable/ERC6551AccountUpgradeable.sol)
+///
+/// Recommended usage:
+/// 1. Deploy the ERC6551 as an implementation contract, and verify it on Etherscan.
+/// 2. Use the canonical ERC6551Registry, which is a factory, to clone the implementation
 contract ERC6551 is UUPSUpgradeable, Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -38,7 +42,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The 6551 state slot is given by:
+    /// @dev The ERC6551 state slot is given by:
     /// `bytes32(~uint256(uint32(bytes4(keccak256("_ERC6551_STATE_SLOT_NOT")))))`.
     /// It is intentionally chosen to be a high value
     /// to avoid collision with lower slots.
@@ -120,6 +124,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     /*                      STATE OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns the current value of the state counter.
     function state() public view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
