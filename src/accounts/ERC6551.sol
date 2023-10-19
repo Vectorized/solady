@@ -265,16 +265,16 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                     revert(0x1c, 0x04)
                 }
                 mstore(0x60, 0xfc0c546a) // `token()`.
-                for {} extcodesize(currentOwner) {} {
+                for {} 1 {} {
                     if iszero(
                         and(
                             gt(returndatasize(), 0x5f),
                             staticcall(gas(), currentOwner, 0x7c, 0x04, 0x00, 0x60)
                         )
                     ) { break }
+                    // `tokenId` is already at 0x40.
                     let t := mload(0x20) // `tokenContract`.
                     mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                    // `tokenId` is already at 0x40.
                     currentOwner :=
                         mul(
                             mload(0x20),

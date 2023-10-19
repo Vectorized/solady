@@ -7,6 +7,7 @@ import {ERC6551, MockERC6551} from "./utils/mocks/MockERC6551.sol";
 import {MockERC6551Registry} from "./utils/mocks/MockERC6551Registry.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
 import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
+import {LibZip} from "../src/utils/LibZip.sol";
 
 contract Target {
     error TargetError(bytes data);
@@ -27,7 +28,7 @@ contract Target {
 }
 
 contract ERC6551Test is SoladyTest {
-    address private _registry;
+    MockERC6551Registry private _registry;
 
     address private _erc6551;
 
@@ -36,44 +37,34 @@ contract ERC6551Test is SoladyTest {
     mapping(uint256 => bool) private _minted;
 
     struct _TestTemps {
-        MockERC6551Registry registry;
-        address erc6551;
         address owner;
         uint256 chainId;
-        MockERC721 tokenContract;
         uint256 tokenId;
         bytes32 salt;
         MockERC6551 account;
+        address signer;
+        uint256 privateKey;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
     }
 
-    function _deploy() internal {
-        if (_registry == address(0)) {
-            _registry = address(new MockERC6551Registry());
-        }
-        if (_erc6551 == address(0)) {
-            _erc6551 = address(new MockERC6551());
-        }
-        if (_erc721 == address(0)) {
-            _erc721 = address(new MockERC721());
-        }
+    function setUp() public {
+        _registry = new MockERC6551Registry();
+        _erc6551 = address(new MockERC6551());
+        _erc721 = address(new MockERC721());
     }
 
     function _testTemps() internal returns (_TestTemps memory t) {
-        _deploy();
-        t.registry = MockERC6551Registry(_registry);
-        t.erc6551 = address(_erc6551);
         t.owner = _randomNonZeroAddress();
-        t.tokenContract = MockERC721(_erc721);
         do {
             t.tokenId = _random();
             _minted[t.tokenId] = true;
         } while (_minted[t.tokenId] == false);
-        t.tokenContract.mint(t.owner, t.tokenId);
+        MockERC721(_erc721).mint(t.owner, t.tokenId);
         t.chainId = block.chainid;
         t.salt = bytes32(_random());
-        address account = t.registry.createAccount(
-            t.erc6551, t.salt, t.chainId, address(t.tokenContract), t.tokenId
-        );
+        address account = _registry.createAccount(_erc6551, t.salt, t.chainId, _erc721, t.tokenId);
         t.account = MockERC6551(payable(account));
     }
 
@@ -81,44 +72,45 @@ contract ERC6551Test is SoladyTest {
         _TestTemps memory t = _testTemps();
         (uint256 chainId, address tokenContract, uint256 tokenId) = t.account.token();
         assertEq(chainId, t.chainId);
-        assertEq(tokenContract, address(t.tokenContract));
+        assertEq(tokenContract, _erc721);
         assertEq(tokenId, t.tokenId);
         address owner = t.account.owner();
         assertEq(owner, t.owner);
         if (_random() % 8 == 0) {
             vm.prank(owner);
             address newOnwer = _randomNonZeroAddress();
-            t.tokenContract.transferFrom(owner, newOnwer, t.tokenId);
+            MockERC721(_erc721).transferFrom(owner, newOnwer, t.tokenId);
             assertEq(t.account.owner(), newOnwer);
         }
     }
 
     function testOnERC721ReceivedCycles() public {
         unchecked {
-            uint256 n = 15;
+            uint256 n = 8;
             _TestTemps[] memory t = new _TestTemps[](n);
             for (uint256 i; i != n; ++i) {
                 t[i] = _testTemps();
                 if (i != 0) {
                     vm.prank(t[i].owner);
-                    t[i].tokenContract.safeTransferFrom(
+                    MockERC721(_erc721).safeTransferFrom(
                         t[i].owner, address(t[i - 1].account), t[i].tokenId
                     );
                     t[i].owner = address(t[i - 1].account);
                 }
             }
-
-            vm.prank(t[0].owner);
-            vm.expectRevert(ERC6551.SelfOwnDetected.selector);
-            t[0].tokenContract.safeTransferFrom(t[0].owner, address(t[0].account), t[0].tokenId);
-
-            vm.prank(t[0].owner);
-            vm.expectRevert(ERC6551.SelfOwnDetected.selector);
-            t[0].tokenContract.safeTransferFrom(t[0].owner, address(t[n - 1].account), t[0].tokenId);
+            for (uint256 i; i != n; ++i) {
+                for (uint256 j = i; j != n; ++j) {
+                    vm.prank(t[i].owner);
+                    vm.expectRevert(ERC6551.SelfOwnDetected.selector);
+                    MockERC721(_erc721).safeTransferFrom(
+                        t[i].owner, address(t[j].account), t[i].tokenId
+                    );
+                }
+            }
 
             _TestTemps memory u = _testTemps();
             vm.prank(u.owner);
-            u.tokenContract.safeTransferFrom(u.owner, address(t[n - 1].account), u.tokenId);
+            MockERC721(_erc721).safeTransferFrom(u.owner, address(t[n - 1].account), u.tokenId);
         }
     }
 
@@ -179,6 +171,12 @@ contract ERC6551Test is SoladyTest {
             target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data), 0
         );
 
+        vm.prank(t.owner);
+        vm.expectRevert(ERC6551.OperationNotSupported.selector);
+        t.account.execute(
+            target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data), 1
+        );
+
         assertEq(t.account.state(), 1);
     }
 
@@ -207,6 +205,10 @@ contract ERC6551Test is SoladyTest {
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", _randomBytes(111)));
         vm.prank(t.owner);
         t.account.executeBatch(calls, 0);
+
+        vm.prank(t.owner);
+        vm.expectRevert(ERC6551.OperationNotSupported.selector);
+        t.account.executeBatch(calls, 1);
 
         assertEq(t.account.state(), 1);
     }
@@ -259,8 +261,58 @@ contract ERC6551Test is SoladyTest {
         t.account.upgradeTo(anotherImplementation);
         assertEq(t.account.state(), 1);
         vm.prank(t.owner);
-        t.account.upgradeTo(t.erc6551);
+        t.account.upgradeTo(_erc6551);
         assertEq(t.account.state(), 2);
+    }
+
+    function testSupportsInterface() public {
+        _TestTemps memory t = _testTemps();
+        assertTrue(t.account.supportsInterface(0x01ffc9a7));
+        assertTrue(t.account.supportsInterface(0x6faff5f1));
+        assertTrue(t.account.supportsInterface(0x74420f4c));
+        assertFalse(t.account.supportsInterface(0x00000001));
+    }
+
+    function testCdFallback() public {
+        _TestTemps memory t = _testTemps();
+        vm.deal(t.owner, 1 ether);
+
+        ERC6551.Call[] memory calls = new ERC6551.Call[](2);
+        calls[0].target = address(new Target());
+        calls[1].target = address(new Target());
+        calls[0].value = 123;
+        calls[1].value = 456;
+        calls[0].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
+        calls[1].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
+
+        bytes memory data = LibZip.cdCompress(
+            abi.encodeWithSignature("executeBatch((address,uint256,bytes)[],uint8)", calls, 0)
+        );
+        vm.prank(t.owner);
+        (bool success,) = address(t.account).call{value: 1 ether}(data);
+        assertTrue(success);
+        assertEq(Target(calls[0].target).datahash(), keccak256(_randomBytes(111)));
+        assertEq(Target(calls[1].target).datahash(), keccak256(_randomBytes(222)));
+        assertEq(calls[0].target.balance, 123);
+        assertEq(calls[1].target.balance, 456);
+    }
+
+    function testIsValidSignature() public {
+        _TestTemps memory t = _testTemps();
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) =
+            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(keccak256("123")));
+
+        vm.prank(t.owner);
+        MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
+
+        // Success returns `0x1626ba7e`.
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
+        assert(
+            t.account.isValidSignature(
+                SignatureCheckerLib.toEthSignedMessageHash(keccak256("123")), signature
+            ) == 0x1626ba7e
+        );
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
