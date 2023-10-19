@@ -10,7 +10,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The default implementation.
-    address public immutable defaultImplementation;
+    address internal immutable _defaultImplementation;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -25,35 +25,25 @@ contract ERC6551Proxy {
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    constructor(address erc6551) {
-        defaultImplementation = erc6551;
+    constructor(address defaultImplementation) payable {
+        _defaultImplementation = defaultImplementation;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          FALLBACK                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    receive() external payable virtual {
-        _fallback();
-    }
-
-    fallback() external payable virtual {
-        _fallback();
-    }
-
-    function _fallback() internal {
-        address d = defaultImplementation;
+    fallback() external payable {
+        address d = _defaultImplementation;
         assembly {
-            let delegate := sload(_ERC1967_IMPLEMENTATION_SLOT)
-            delegate := or(delegate, mul(d, iszero(shl(96, delegate))))
-            calldatacopy(0x00, 0x00, calldatasize())
+            calldatacopy(returndatasize(), returndatasize(), calldatasize())
+            let s := sload(_ERC1967_IMPLEMENTATION_SLOT)
             // Forwards the `data` to `delegate` via delegatecall.
-            if iszero(delegatecall(gas(), delegate, 0x00, calldatasize(), codesize(), 0x00)) {
-                // Bubble up the revert if the call reverts.
-                returndatacopy(0x00, 0x00, returndatasize())
-                revert(0x00, returndatasize())
-            }
+            // forgefmt: disable-next-item
+            s := delegatecall(gas(), or(s, mul(d, iszero(shl(96, s)))),
+                returndatasize(), calldatasize(), codesize(), returndatasize())
             returndatacopy(0x00, 0x00, returndatasize())
+            if iszero(s) { revert(0x00, returndatasize()) }
             return(0x00, returndatasize())
         }
     }
