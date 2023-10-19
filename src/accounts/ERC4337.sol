@@ -98,9 +98,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         virtual
         returns (bytes4 result)
     {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), SignatureCheckerLib.toEthSignedMessageHash(hash), signature
-        );
+        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(owner(), hash, signature);
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
@@ -235,7 +233,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         payable
         virtual
         onlyEntryPointOrOwner
-        storageGuard
+        delegateExecuteGuard
         returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
@@ -257,12 +255,24 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
 
     /// @dev Ensures that the owner and implementation slots' values aren't changed.
     /// You can override this modifier to ensure the sanctity of other storage slots too.
-    modifier storageGuard() virtual {
-        bytes32 ownerSlotValue = _ownerSlotValue();
-        bytes32 implementationSlotValue = _implementationSlotValue();
+    modifier delegateExecuteGuard() virtual {
+        bytes32 ownerSlotValue;
+        bytes32 implementationSlotValue;
+        /// @solidity memory-safe-assembly
+        assembly {
+            implementationSlotValue := sload(_ERC1967_IMPLEMENTATION_SLOT)
+            ownerSlotValue := sload(_OWNER_SLOT)
+        }
         _;
-        assert(implementationSlotValue == _implementationSlotValue());
-        assert(ownerSlotValue == _ownerSlotValue());
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(
+                and(
+                    eq(implementationSlotValue, sload(_ERC1967_IMPLEMENTATION_SLOT)),
+                    eq(ownerSlotValue, sload(_OWNER_SLOT))
+                )
+            ) { revert(codesize(), 0x00) }
+        }
     }
 
     /// @dev Requires that the caller is the EntryPoint, the owner, or the account itself.
@@ -289,12 +299,24 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         payable
         virtual
         onlyEntryPointOrOwner
-        storageGuard
+        storageStoreGuard(storageSlot)
     {
         /// @solidity memory-safe-assembly
         assembly {
             sstore(storageSlot, storageValue)
         }
+    }
+
+    /// @dev Ensures that the `storageSlot` is not prohibited for direct storage writes.
+    /// You can override this modifier to ensure the sanctity of other storage slots too.
+    modifier storageStoreGuard(bytes32 storageSlot) virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if or(eq(storageSlot, _OWNER_SLOT), eq(storageSlot, _ERC1967_IMPLEMENTATION_SLOT)) {
+                revert(codesize(), 0x00)
+            }
+        }
+        _;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -311,7 +311,11 @@ contract ERC4337Test is SoladyTest {
         ERC4337.UserOperation memory userOp;
         // Success returns `0x1626ba7e`.
         userOp.signature = abi.encodePacked(t.r, t.s, t.v);
-        assert(account.isValidSignature(t.userOpHash, userOp.signature) == 0x1626ba7e);
+        assert(
+            account.isValidSignature(
+                SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash), userOp.signature
+            ) == 0x1626ba7e
+        );
     }
 
     function testIsValidSignatureWrapped() public {
@@ -327,7 +331,11 @@ contract ERC4337Test is SoladyTest {
         ERC4337.UserOperation memory userOp;
         // Success returns `0x1626ba7e`.
         userOp.signature = abi.encodePacked(t.r, t.s, t.v);
-        assert(account.isValidSignature(t.userOpHash, userOp.signature) == 0x1626ba7e);
+        assert(
+            account.isValidSignature(
+                SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash), userOp.signature
+            ) == 0x1626ba7e
+        );
     }
 
     function testETHReceived() public {
