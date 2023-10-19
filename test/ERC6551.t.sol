@@ -10,6 +10,7 @@ import {MockERC721} from "./utils/mocks/MockERC721.sol";
 import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
 import {LibZip} from "../src/utils/LibZip.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract Target {
     error TargetError(bytes data);
@@ -36,6 +37,8 @@ contract ERC6551Test is SoladyTest {
 
     address internal _erc721;
 
+    address internal _proxy;
+
     mapping(uint256 => bool) internal _minted;
 
     bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
@@ -58,6 +61,7 @@ contract ERC6551Test is SoladyTest {
         _registry = new MockERC6551Registry();
         _erc6551 = address(new MockERC6551());
         _erc721 = address(new MockERC721());
+        _proxy = address(new ERC6551Proxy(_erc6551));
     }
 
     function _testTemps() internal returns (_TestTemps memory t) {
@@ -69,9 +73,12 @@ contract ERC6551Test is SoladyTest {
         MockERC721(_erc721).mint(t.owner, t.tokenId);
         t.chainId = block.chainid;
         t.salt = bytes32(_random());
-        address proxy = address(new ERC6551Proxy(_erc6551));
-        address account = _registry.createAccount(proxy, t.salt, t.chainId, _erc721, t.tokenId);
+        address account = _registry.createAccount(_proxy, t.salt, t.chainId, _erc721, t.tokenId);
         t.account = MockERC6551(payable(account));
+    }
+
+    function testDeployERC6551Proxy() public {
+        console.log(LibString.toHexString(address(new ERC6551Proxy(_erc6551)).code));
     }
 
     function testDeployERC6551(uint256) public {
