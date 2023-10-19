@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {SignatureCheckerLib} from "../src/accounts/ERC6551.sol";
 import {ERC6551, MockERC6551} from "./utils/mocks/MockERC6551.sol";
-import {IERC6551Registry, MockERC6551Registry} from "./utils/mocks/MockERC6551Registry.sol";
+import {MockERC6551Registry} from "./utils/mocks/MockERC6551Registry.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
 import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
 
@@ -36,7 +36,7 @@ contract ERC6551Test is SoladyTest {
     mapping(uint256 => bool) private _minted;
 
     struct _TestTemps {
-        IERC6551Registry registry;
+        MockERC6551Registry registry;
         address erc6551;
         address owner;
         uint256 chainId;
@@ -60,7 +60,7 @@ contract ERC6551Test is SoladyTest {
 
     function _testTemps() internal returns (_TestTemps memory t) {
         _deploy();
-        t.registry = IERC6551Registry(_registry);
+        t.registry = MockERC6551Registry(_registry);
         t.erc6551 = address(_erc6551);
         t.owner = _randomNonZeroAddress();
         t.tokenContract = MockERC721(_erc721);
