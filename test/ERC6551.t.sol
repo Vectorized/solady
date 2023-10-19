@@ -249,6 +249,20 @@ contract ERC6551Test is SoladyTest {
         assertEq(t.account.state(), 1);
     }
 
+    function testUpgrade() public {
+        _TestTemps memory t = _testTemps();
+        address anotherImplementation = address(new MockERC6551());
+        vm.expectRevert(ERC6551.Unauthorized.selector);
+        t.account.upgradeTo(anotherImplementation);
+        assertEq(t.account.state(), 0);
+        vm.prank(t.owner);
+        t.account.upgradeTo(anotherImplementation);
+        assertEq(t.account.state(), 1);
+        vm.prank(t.owner);
+        t.account.upgradeTo(t.erc6551);
+        assertEq(t.account.state(), 2);
+    }
+
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {

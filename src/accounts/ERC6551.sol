@@ -110,7 +110,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         return signer == owner();
     }
 
-    /// @dev Requires that the caller is a valid signer (i.e. the onwer), or the contract itself.
+    /// @dev Requires that the caller is a valid signer (i.e. the owner), or the contract itself.
     modifier onlyValidSigner() virtual {
         if (!_isValidSigner(msg.sender)) if (msg.sender != address(this)) revert Unauthorized();
         _;
@@ -213,6 +213,22 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERC165                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns true if this contract implements the interface defined by `interfaceId`.
+    /// See: https://eips.ethereum.org/EIPS/eip-165
+    /// This function call must use less than 30000 gas.
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := shr(224, interfaceId)
+            // ERC165: 0x01ffc9a7, ERC6551: 0x6faff5f1, ERC6551Executable: 0x74420f4c.
+            result := or(or(eq(s, 0x01ffc9a7), eq(s, 0x6faff5f1)), eq(s, 0x74420f4c))
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OVERRIDES                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -232,12 +248,6 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         /// @solidity memory-safe-assembly
         assembly {
             s := shr(224, calldataload(0))
-            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
-            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
-            if or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81)) {
-                mstore(0x20, s) // Load into memory slot.
-                return(0x3c, 0x20) // Return `msg.sig`.
-            }
         }
         // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
         if (s == 0x150b7a02) {
@@ -278,6 +288,15 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                 }
                 mstore(0x40, s) // Load into memory slot.
                 return(0x5c, 0x20) // Return `msg.sig`.
+            }
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
+            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+            if or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81)) {
+                mstore(0x20, s) // Load into memory slot.
+                return(0x3c, 0x20) // Return `msg.sig`.
             }
         }
         _;
