@@ -278,34 +278,35 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                     _result := and(eq(chainId_, chainid()), _result)
                     _result := or(eq(currentOwner_, address()), _result)
                 }
-                if selfOwn(currentOwner, chainId, tokenContract, tokenId) {
-                    mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
-                    revert(0x1c, 0x04)
-                }
-                mstore(0x60, 0xfc0c546a) // `token()`.
-                for {} 1 {} {
-                    if iszero(
-                        and(
-                            gt(returndatasize(), 0x5f),
-                            staticcall(gas(), currentOwner, 0x7c, 0x04, 0x00, 0x60)
-                        )
-                    ) { break }
-                    // `tokenId` is already at 0x40.
-                    let t := mload(0x20) // `tokenContract`.
-                    mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                    currentOwner :=
-                        mul(
-                            mload(0x20),
+                if iszero(selfOwn(currentOwner, chainId, tokenContract, tokenId)) {
+                    mstore(0x60, 0xfc0c546a) // `token()`.
+                    for {} 1 {} {
+                        if iszero(
                             and(
-                                gt(returndatasize(), 0x1f), staticcall(gas(), t, 0x3c, 0x24, 0x20, 0x20)
+                                gt(returndatasize(), 0x5f),
+                                staticcall(gas(), currentOwner, 0x7c, 0x04, 0x00, 0x60)
                             )
-                        )
-                    if iszero(selfOwn(currentOwner, mload(0x00), t, mload(0x40))) { continue }
-                    mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
-                    revert(0x1c, 0x04)
+                        ) {
+                            mstore(0x40, s) // Load into memory slot.
+                            return(0x5c, 0x20) // Return `msg.sig`.
+                        }
+                        // `tokenId` is already at 0x40.
+                        let t := mload(0x20) // `tokenContract`.
+                        mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
+                        currentOwner :=
+                            mul(
+                                mload(0x20),
+                                and(
+                                    gt(returndatasize(), 0x1f),
+                                    staticcall(gas(), t, 0x3c, 0x24, 0x20, 0x20)
+                                )
+                            )
+                        if iszero(selfOwn(currentOwner, mload(0x00), t, mload(0x40))) { continue }
+                        break
+                    }
                 }
-                mstore(0x40, s) // Load into memory slot.
-                return(0x5c, 0x20) // Return `msg.sig`.
+                mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
+                revert(0x1c, 0x04)
             }
         }
         /// @solidity memory-safe-assembly
