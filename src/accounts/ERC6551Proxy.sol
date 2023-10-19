@@ -10,7 +10,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The default implementation.
-    address internal immutable _defaultImplementation;
+    uint256 internal immutable _defaultImplementation;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -26,22 +26,27 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(address defaultImplementation) payable {
-        _defaultImplementation = defaultImplementation;
+        _defaultImplementation = uint256(uint160(defaultImplementation));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          FALLBACK                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev A very optimized proxy fallback function.
+    /// Runtime gas cost is very near the optimal bytecode proxy (about 15 gas more).
     fallback() external payable {
-        address d = _defaultImplementation;
         assembly {
             mstore(0x40, returndatasize())
             calldatacopy(returndatasize(), returndatasize(), calldatasize())
+        }
+        uint256 d = _defaultImplementation;
+        assembly {
             let s := sload(_ERC1967_IMPLEMENTATION_SLOT)
+            d := or(shr(s, d), s)
             // Forwards the `data` to `delegate` via delegatecall.
             // forgefmt: disable-next-item
-            if iszero(delegatecall(gas(), or(s, mul(iszero(s), d)),
+            if iszero(delegatecall(gas(), d,
                 returndatasize(), calldatasize(), codesize(), returndatasize())) { 
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize()) 
