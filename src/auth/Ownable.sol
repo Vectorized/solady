@@ -25,7 +25,7 @@ abstract contract Ownable {
     /// @dev The `pendingOwner` does not have a valid handover request.
     error NoHandoverRequest();
 
-    /// @dev Cannot double initialize.
+    /// @dev Cannot double-initialize.
     error AlreadyInitialized();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -97,7 +97,7 @@ abstract contract Ownable {
             assembly {
                 let ownerSlot := _OWNER_SLOT
                 if sload(ownerSlot) {
-                    mstore(0x00, 0x0dc149f0) // "AlreadyInitialized()".
+                    mstore(0x00, 0x0dc149f0) // `AlreadyInitialized()`.
                     revert(0x1c, 0x04)
                 }
                 // Clean the upper 96 bits.

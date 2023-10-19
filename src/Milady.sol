@@ -4,6 +4,8 @@ pragma solidity ^0.8.4;
 import "./accounts/Receiver.sol";
 import "./accounts/ERC4337.sol";
 import "./accounts/ERC4337Factory.sol";
+import "./accounts/ERC6551.sol";
+import "./accounts/ERC6551Proxy.sol";
 import "./auth/Ownable.sol";
 import "./auth/OwnableRoles.sol";
 import "./tokens/WETH.sol";
