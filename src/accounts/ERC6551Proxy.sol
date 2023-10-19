@@ -43,7 +43,7 @@ contract ERC6551Proxy {
         uint256 d = _defaultImplementation;
         assembly {
             let s := sload(_ERC1967_IMPLEMENTATION_SLOT)
-            d := or(shr(s, d), s)
+            d := or(shr(shl(96, s), d), s)
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), d,
                 returndatasize(), calldatasize(), codesize(), returndatasize())) { 

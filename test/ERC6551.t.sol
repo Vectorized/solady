@@ -333,6 +333,16 @@ contract ERC6551Test is SoladyTest {
         );
     }
 
+    function testERC6551ProxyDefaultAddressTrick(uint256 d, uint256 s) public {
+        address computed;
+        assembly {
+            computed := or(shr(shl(96, s), d), s)
+        }
+        assertEq(
+            computed, address(uint160(s)) == address(0) ? address(uint160(d)) : address(uint160(s))
+        );
+    }
+
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
