@@ -266,13 +266,14 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                     tokenId := mload(0x40)
                     mstore(0x20, tokenId) // Store the `tokenId` parameter.
                     mstore(0x00, 0x6352211e) // `ownerOf(uint256)`.
-                    currentOwner := mul(
-                        mload(0x20),
-                        and(
-                            gt(returndatasize(), 0x1f),
-                            staticcall(gas(), mload(0x20), 0x1c, 0x24, 0x20, 0x20)
+                    currentOwner :=
+                        mul(
+                            mload(0x20),
+                            and(
+                                gt(returndatasize(), 0x1f),
+                                staticcall(gas(), mload(0x20), 0x1c, 0x24, 0x20, 0x20)
+                            )
                         )
-                    )
                     if or(eq(currentOwner, address()), selfOwn(chainId, tokenContract, tokenId)) {
                         mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
                         revert(0x1c, 0x04)
