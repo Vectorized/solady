@@ -8,20 +8,8 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 
 /// @notice Simple ERC6551 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC6551.sol)
-///
-/// Recommended usage:
-/// 1. Deploy the ERC6551 as an implementation contract, and verify it on Etherscan.
-/// 2. Create a factory that uses `LibClone.deployERC1967` or
-///    `LibClone.deployDeterministicERC1967` to clone the implementation.
-///    See: `ERC6551Factory.sol`.
+/// @author ERC6551 team (https://github.com/erc6551/reference/blob/main/src/examples/upgradeable/ERC6551AccountUpgradeable.sol)
 contract ERC6551 is UUPSUpgradeable, Receiver {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev The caller is not authorized to call the function.
-    error Unauthorized();
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -34,118 +22,72 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STORAGE                           */
+    /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    uint256 internal _chainId;
-    address internal _tokenContract;
-    uint256 internal _tokenId;
+    /// @dev The caller is not authorized to call the function.
+    error Unauthorized();
 
-    uint256 internal _state;
+    /// @dev The operation is not supported.
+    error OperationNotSupported();
+
+    /// @dev Self ownership detected.
+    error SelfOwnDetected();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        INITIALIZER                         */
+    /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Initializes the account with the token. Can only be called once.
-    function initialize(uint256 chainId, address tokenContract, uint256 tokenId)
-        public
-        payable
-        virtual
-    {
-        assert(_tokenContract == address(0));
-        _chainId = chainId;
-        _tokenContract = tokenContract;
-        _tokenId = tokenId;
-        assert(_tokenContract != address(0));
-    }
+    /// @dev The 6551 state slot is given by:
+    /// `bytes32(~uint256(uint32(bytes4(keccak256("_ERC6551_STATE_SLOT_NOT")))))`.
+    /// It is intentionally chosen to be a high value
+    /// to avoid collision with lower slots.
+    /// The choice of manual storage layout is to enable compatibility
+    /// with both regular and upgradeable contracts.
+    uint256 internal constant _ERC6551_STATE_SLOT =
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffb919c7a5;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        ERC6551                             */
+    /*              TOKEN-BOUND OWNERSHIP OPERATIONS              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the identifier of the non-fungible token which owns the account.
-    /// The return value of this function MUST be constant - it MUST NOT change
-    /// over time.
+    /// @dev Returns the token-bound information.
     function token()
         public
         view
         virtual
         returns (uint256 chainId, address tokenContract, uint256 tokenId)
     {
-        chainId = _chainId;
-        tokenContract = _tokenContract;
-        tokenId = _tokenId;
-    }
-
-    /// @dev Returns a value that SHOULD be modified each time the account changes state.
-    /// @return The current account state.
-    function state() public view virtual returns (uint256) {
-        return _state;
-    }
-
-    // @dev Override to change the state of the account.
-    /// This method may validate the state requirements of this account,
-    /// but by default, follows the ordinary increment pattern of nonce.
-    function _changeState() internal virtual {
-        unchecked {
-            ++_state;
-        }
-    }
-
-    /// @dev Returns a magic value indicating whether a given signer is authorized to act on behalf of the account.
-    /// MUST return the bytes4 magic value `0x523e3260 `if the given signer is valid.
-    /// By default, the holder of the non-fungible token the account is bound to MUST be considered a valid
-    /// signer.
-    ///
-    /// Accounts MAY implement additional authorization logic which invalidates the holder as a
-    /// signer or grants signing permissions to other non-holder accounts
-    function isValidSigner(address signer, bytes calldata)
-        public
-        view
-        virtual
-        returns (bytes4 result)
-    {
-        bool success = signer == owner();
         /// @solidity memory-safe-assembly
         assembly {
-            // `success ? bytes4(keccak256("isValidSigner(address,bytes)")) : 0xffffffff`.
-            result := shl(224, or(0x523e3260, sub(0, iszero(success))))
+            let m := mload(0x40) // Cache the free memory pointer.
+            extcodecopy(address(), 0x00, 0x4d, 0x60)
+            chainId := mload(0x00)
+            tokenContract := mload(0x20) // Upper 96 bits will be clean.
+            tokenId := mload(0x40)
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        AUTH                                */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Returns the owner of the tokenId to which this account is bound.
+    /// @dev Returns the owner of the contract.
     function owner() public view virtual returns (address result) {
-        (, address tokenContract, uint256 tokenId) = token();
-
+        (uint256 chainId, address tokenContract, uint256 tokenId) = token();
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x14, tokenId) // Store the `tokenId` argument.
-            mstore(0x00, 0x6352211e000000000000000000000000) // `ownerOf(uint256)`.
-            result :=
-                mul(
-                    mload(0x20),
-                    and( // The arguments of `and` are evaluated from right to left.
-                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), tokenContract, 0x10, 0x24, 0x20, 0x20)
+            if eq(chainId, chainid()) {
+                mstore(0x20, tokenId) // Store the `tokenId` parameter.
+                mstore(0x00, 0x6352211e) // `ownerOf(uint256)`.
+                result :=
+                    mul( // Returns `address(0)` on failure or if contract does not exist.
+                        mload(0x20),
+                        and(
+                            gt(returndatasize(), 0x1f),
+                            staticcall(gas(), tokenContract, 0x1c, 0x24, 0x20, 0x20)
+                        )
                     )
-                )
+            }
         }
     }
-
-    /// @dev Requires that the caller is the owner or the account itself.
-    modifier onlyOwner() virtual {
-        if (msg.sender != owner()) if (msg.sender != address(this)) revert Unauthorized();
-        _;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        ERC1271                             */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Validates the signature with ERC1271 return,
     /// so that this account can also be used as a signer.
@@ -155,9 +97,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         virtual
         returns (bytes4 result)
     {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), SignatureCheckerLib.toEthSignedMessageHash(hash), signature
-        );
+        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(owner(), hash, signature);
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
@@ -165,16 +105,51 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         }
     }
 
+    /// @dev Returns if `signer` is an authorized signer.
+    function _isValidSigner(address signer) internal view virtual returns (bool) {
+        return signer == owner();
+    }
+
+    /// @dev Requires that the caller is a valid signer (i.e. the onwer), or the contract itself.
+    modifier onlyValidSigner() virtual {
+        if (!_isValidSigner(msg.sender)) if (msg.sender != address(this)) revert Unauthorized();
+        _;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      STATE OPERATIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function state() public view virtual returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := sload(_ERC6551_STATE_SLOT)
+        }
+    }
+
+    /// @dev Increments the state counter. This modifier is required for every
+    /// public / external function that may modify storage or emit events.
+    modifier incrementState() virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := _ERC6551_STATE_SLOT
+            sstore(s, add(1, sload(s)))
+        }
+        _;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Execute a call from this account.
-    function execute(address target, uint256 value, bytes calldata data)
+    function execute(address target, uint256 value, bytes calldata data, uint8 operation)
         public
         payable
         virtual
-        onlyOwner
+        onlyValidSigner
+        onlyValidExecuteOperation(operation)
+        incrementState
         returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
@@ -190,17 +165,17 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
             let o := add(result, 0x20)
             returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
             mstore(0x40, add(o, returndatasize())) // Allocate the memory.
-                //mstore(_state.slot, add(mload(_state.slot), 1))
         }
-        _changeState();
     }
 
     /// @dev Execute a sequence of calls from this account.
-    function executeBatch(Call[] calldata calls)
+    function executeBatch(Call[] calldata calls, uint8 operation)
         public
         payable
         virtual
-        onlyOwner
+        onlyValidSigner
+        onlyValidExecuteOperation(operation)
+        incrementState
         returns (bytes[] memory results)
     {
         /// @solidity memory-safe-assembly
@@ -229,7 +204,12 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
             }
             mstore(0x40, m) // Allocate the memory.
         }
-        _changeState();
+    }
+
+    /// @dev Requires that the execute `operation` is supported.
+    modifier onlyValidExecuteOperation(uint8 operation) virtual {
+        if (operation != 0) revert OperationNotSupported();
+        _;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -237,7 +217,73 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
-    function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyOwner {}
+    function _authorizeUpgrade(address)
+        internal
+        virtual
+        override(UUPSUpgradeable)
+        onlyValidSigner
+        incrementState
+    {}
+
+    /// @dev For handling token callbacks.
+    /// Safe-transferred ERC721 tokens will trigger a bounded ownership cycle check.
+    modifier receiverFallback() override(Receiver) {
+        uint256 s;
+        /// @solidity memory-safe-assembly
+        assembly {
+            s := shr(224, calldataload(0))
+            // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
+            // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
+            if or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81)) {
+                mstore(0x20, s) // Load into memory slot.
+                return(0x3c, 0x20) // Return `msg.sig`.
+            }
+        }
+        // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
+        if (s == 0x150b7a02) {
+            (uint256 chainId, address tokenContract, uint256 tokenId) = token();
+            (address currentOwner) = owner();
+            /// @solidity memory-safe-assembly
+            assembly {
+                function selfOwn(chainId_, tokenContract_, tokenId_) -> _result {
+                    _result := and(eq(tokenContract_, caller()), eq(tokenId_, calldataload(0x44)))
+                    _result := and(eq(chainId_, chainid()), _result)
+                }
+                if or(eq(currentOwner, address()), selfOwn(chainId, tokenContract, tokenId)) {
+                    mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
+                    revert(0x1c, 0x04)
+                }
+                for {} extcodesize(currentOwner) {} {
+                    mstore(0x00, 0xfc0c546a) // `token()`.
+                    if iszero(
+                        and(
+                            gt(returndatasize(), 0x5f),
+                            staticcall(gas(), currentOwner, 0x1c, 0x00, 0x00, 0x60)
+                        )
+                    ) { break }
+                    chainId := mload(0x00)
+                    tokenContract := mload(0x20)
+                    tokenId := mload(0x40)
+                    mstore(0x20, tokenId) // Store the `tokenId` parameter.
+                    mstore(0x00, 0x6352211e) // `ownerOf(uint256)`.
+                    currentOwner := mul(
+                        mload(0x20),
+                        and(
+                            gt(returndatasize(), 0x1f),
+                            staticcall(gas(), mload(0x20), 0x1c, 0x24, 0x20, 0x20)
+                        )
+                    )
+                    if or(eq(currentOwner, address()), selfOwn(chainId, tokenContract, tokenId)) {
+                        mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
+                        revert(0x1c, 0x04)
+                    }
+                }
+                mstore(0x00, shl(224, s)) // Load into memory slot.
+                return(0x00, 0x20) // Return `msg.sig`.
+            }
+        }
+        _;
+    }
 
     /// @dev Handle token callbacks. If no token callback is triggered,
     /// use `LibZip.cdFallback` for generalized calldata decompression.

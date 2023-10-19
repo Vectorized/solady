@@ -13,17 +13,16 @@ contract MockERC6551 is ERC6551 {
         }
     }
 
-    function executeBatch(uint256 filler, Call[] calldata calls)
+    function executeBatch(uint256 filler, Call[] calldata calls, uint8 operation)
         public
         payable
         virtual
-        onlyOwner
         returns (bytes[] memory results)
     {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, add(mload(0x40), mod(filler, 0x40)))
         }
-        return super.executeBatch(calls);
+        return super.executeBatch(calls, operation);
     }
 }
