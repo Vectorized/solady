@@ -245,42 +245,39 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
             (address currentOwner) = owner();
             /// @solidity memory-safe-assembly
             assembly {
-                function selfOwn(chainId_, tokenContract_, tokenId_) -> _result {
+                function selfOwn(currentOwner_, chainId_, tokenContract_, tokenId_) -> _result {
                     _result := and(eq(tokenContract_, caller()), eq(tokenId_, calldataload(0x44)))
                     _result := and(eq(chainId_, chainid()), _result)
+                    _result := or(eq(currentOwner_, address()), _result)
                 }
-                if or(eq(currentOwner, address()), selfOwn(chainId, tokenContract, tokenId)) {
+                if selfOwn(currentOwner, chainId, tokenContract, tokenId) {
                     mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
                     revert(0x1c, 0x04)
                 }
+                mstore(0x60, 0xfc0c546a) // `token()`.
                 for {} extcodesize(currentOwner) {} {
-                    mstore(0x00, 0xfc0c546a) // `token()`.
                     if iszero(
                         and(
                             gt(returndatasize(), 0x5f),
-                            staticcall(gas(), currentOwner, 0x1c, 0x00, 0x00, 0x60)
+                            staticcall(gas(), currentOwner, 0x7c, 0x04, 0x00, 0x60)
                         )
                     ) { break }
-                    chainId := mload(0x00)
-                    tokenContract := mload(0x20)
-                    tokenId := mload(0x40)
-                    mstore(0x20, tokenId) // Store the `tokenId` parameter.
-                    mstore(0x00, 0x6352211e) // `ownerOf(uint256)`.
+                    let t := mload(0x20) // `tokenContract`.
+                    mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
+                    // `tokenId` is already at 0x40.
                     currentOwner :=
                         mul(
                             mload(0x20),
                             and(
-                                gt(returndatasize(), 0x1f),
-                                staticcall(gas(), mload(0x20), 0x1c, 0x24, 0x20, 0x20)
+                                gt(returndatasize(), 0x1f), staticcall(gas(), t, 0x3c, 0x24, 0x20, 0x20)
                             )
                         )
-                    if or(eq(currentOwner, address()), selfOwn(chainId, tokenContract, tokenId)) {
-                        mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
-                        revert(0x1c, 0x04)
-                    }
+                    if iszero(selfOwn(currentOwner, mload(0x00), t, mload(0x40))) { continue }
+                    mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
+                    revert(0x1c, 0x04)
                 }
-                mstore(0x00, shl(224, s)) // Load into memory slot.
-                return(0x00, 0x20) // Return `msg.sig`.
+                mstore(0x40, s) // Load into memory slot.
+                return(0x5c, 0x20) // Return `msg.sig`.
             }
         }
         _;
