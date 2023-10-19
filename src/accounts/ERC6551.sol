@@ -19,6 +19,13 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// 1. Deploy the ERC6551 as an implementation contract, and verify it on Etherscan.
 /// 2. Deploy the ERC6551Proxy pointing to the implementation, and verify it on Etherscan.
 /// 3. Use the canonical ERC6551Registry to deploy a clone to the ERC6551Proxy.
+///
+/// Note:
+/// - ERC6551 accounts are not compatible with ERC4337
+///   (at least not without crazy hacks)
+///   due to storage access limitations during UserOp validation.
+/// - Please refer to the official [ERC6551](https://github.com/erc6551/reference) reference
+///   for latest updates on the standard, and canonical registry information.
 contract ERC6551 is UUPSUpgradeable, Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
