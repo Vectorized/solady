@@ -34,7 +34,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev A very optimized proxy fallback function.
-    /// Runtime gas cost is very near the optimal bytecode proxy (about 15 gas more).
+    /// Runtime gas cost is very near the optimal bytecode proxy (maybe about 15 gas more).
     fallback() external payable {
         assembly {
             mstore(0x40, returndatasize())
@@ -44,7 +44,6 @@ contract ERC6551Proxy {
         assembly {
             let s := sload(_ERC1967_IMPLEMENTATION_SLOT)
             d := or(shr(s, d), s)
-            // Forwards the `data` to `delegate` via delegatecall.
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), d,
                 returndatasize(), calldatasize(), codesize(), returndatasize())) { 

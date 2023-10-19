@@ -10,7 +10,12 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC6551.sol)
 /// @author ERC6551 team (https://github.com/erc6551/reference/blob/main/src/examples/upgradeable/ERC6551AccountUpgradeable.sol)
 ///
-/// Recommended usage:
+/// Recommended usage (regular):
+/// 1. Deploy the ERC6551 as an implementation contract, and verify it on Etherscan.
+/// 2. Use the canonical ERC6551Registry to deploy a clone to the ERC6551 implementation.
+///    The UUPSUpgradeable functions will simply become no-ops.
+///
+/// Recommended usage (upgradeable):
 /// 1. Deploy the ERC6551 as an implementation contract, and verify it on Etherscan.
 /// 2. Deploy the ERC6551Proxy pointing to the implementation, and verify it on Etherscan.
 /// 3. Use the canonical ERC6551Registry to deploy a clone to the ERC6551Proxy.
