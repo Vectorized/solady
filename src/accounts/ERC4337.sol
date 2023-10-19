@@ -98,9 +98,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         virtual
         returns (bytes4 result)
     {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), SignatureCheckerLib.toEthSignedMessageHash(hash), signature
-        );
+        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(owner(), hash, signature);
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
