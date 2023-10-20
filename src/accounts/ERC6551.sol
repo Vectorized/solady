@@ -90,10 +90,21 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     function owner() public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            extcodecopy(address(), 0x00, 0x6D, 0x40)
-            let tokenContract := mload(0x00) // Upper 96 bits will be clean.
-            mstore(0x00, 0x6352211e) // `ownerOf(uint256)`. `tokenId` is in next slot.
-            if staticcall(gas(), tokenContract, 0x1c, 0x24, 0x20, 0x20) { result := mload(0x20) }
+            let m := mload(0x40) // Cache the free memory pointer.
+            extcodecopy(address(), 0x00, 0x4d, 0x60)
+            let chainId := mload(0x00)
+            let tokenContract := mload(0x20) // Upper 96 bits will be clean.
+            // `tokenId` is already at 0x40.
+            mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
+            result :=
+                mul(
+                    mload(0x20),
+                    and(
+                        and(eq(chainId, chainid()), gt(returndatasize(), 0x1f)),
+                        staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
+                    )
+                )
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -253,22 +264,29 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     /// @dev For handling token callbacks.
     /// Safe-transferred ERC721 tokens will trigger a bounded ownership cycle check.
     modifier receiverFallback() override(Receiver) {
-        uint256 s;
         /// @solidity memory-safe-assembly
         assembly {
-            s := shr(224, calldataload(0))
-        }
-        // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
-        if (s == 0x150b7a02) {
-            (uint256 chainId, address tokenContract, uint256 tokenId) = token();
-            (address currentOwner) = owner();
-            /// @solidity memory-safe-assembly
-            assembly {
-                function selfOwn(currentOwner_, chainId_, tokenContract_, tokenId_) -> _result {
-                    _result := and(eq(tokenContract_, caller()), eq(tokenId_, calldataload(0x44)))
-                    _result := and(eq(chainId_, chainid()), _result)
-                    _result := or(eq(currentOwner_, address()), _result)
-                }
+            function selfOwn(currentOwner_, chainId_, tokenContract_, tokenId_) -> _result {
+                _result := and(eq(tokenContract_, caller()), eq(tokenId_, calldataload(0x44)))
+                _result := and(eq(chainId_, chainid()), _result)
+                _result := or(eq(currentOwner_, address()), _result)
+            }
+            let s := shr(224, calldataload(0))
+            // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
+            if eq(s, 0x150b7a02) {
+                extcodecopy(address(), 0x00, 0x4d, 0x60)
+                let chainId := mload(0x00)
+                let tokenContract := mload(0x20) // Upper 96 bits will be clean.
+                let tokenId := mload(0x40)
+                mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
+                let currentOwner :=
+                    mul(
+                        mload(0x20),
+                        and(
+                            and(eq(chainId, chainid()), gt(returndatasize(), 0x1f)),
+                            staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
+                        )
+                    )
                 if iszero(selfOwn(currentOwner, chainId, tokenContract, tokenId)) {
                     mstore(0x60, 0xfc0c546a) // `token()`.
                     for {} 1 {} {
@@ -299,9 +317,6 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                 mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
                 revert(0x1c, 0x04)
             }
-        }
-        /// @solidity memory-safe-assembly
-        assembly {
             // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
             // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
             if or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81)) {
