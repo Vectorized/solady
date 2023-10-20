@@ -37,17 +37,17 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     fallback() external payable {
-        assembly {
-            mstore(0x40, returndatasize())
-        }
         uint256 d = _defaultImplementation;
         assembly {
-            let implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
-            if iszero(shl(96, implementation)) {
-                implementation := d
-                sstore(_ERC1967_IMPLEMENTATION_SLOT, implementation)
-            }
+            mstore(0x40, returndatasize())
             calldatacopy(returndatasize(), returndatasize(), calldatasize())
+            let implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+            // If the implementation is zero, initialize it to the default.
+            // This is required for Etherscan proxy detection.
+            if iszero(implementation) {
+                sstore(_ERC1967_IMPLEMENTATION_SLOT, d)
+                implementation := d
+            }
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), implementation,
                 returndatasize(), calldatasize(), codesize(), returndatasize())) { 
