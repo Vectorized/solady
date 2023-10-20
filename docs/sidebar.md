@@ -27,7 +27,7 @@
   - [ERC1967FactoryConstants](./utils/erc1967factoryconstants.md)
   - [JSONParserLib](./utils/jsonparserlib.md)
   - [LibSort](./utils/libsort.md)
-  - [LibPRNG](./utils//libprng.md)
+  - [LibPRNG](./utils/libprng.md)
   - [Base64](./utils/base64.md)
   - [SSTORE2](./utils/sstore2.md)
   - [CREATE3](./utils/create3.md)
