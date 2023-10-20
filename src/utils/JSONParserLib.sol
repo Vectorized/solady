@@ -337,21 +337,18 @@ library JSONParserLib {
     }
 
     /// @dev Parses an unsigned integer from a string (in hexadecimal, i.e. base 16).
-    /// Reverts if `s` is not a valid uint256 string matching the RegEx `^(0[xX])?[0-9a-fA-F]+$`,
-    /// or if the parsed number is too big for a uint256.
+    /// Reverts if `s` is not a valid uint256 hex string matching the RegEx
+    /// `^(0[xX])?[0-9a-fA-F]+$`, or if the parsed number is too big for a uint256.
     function parseUintFromHex(string memory s) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             let n := mload(s)
-            // Skip two hex digits if starts with '0x' or '0X'.
-            let p := and(0xffff, mload(add(s, 2)))
-            let i := shl(1, and(gt(n, 1), or(eq(p, 0x3078), eq(p, 0x3058))))
-            for {} 1 {} {
+            let p := and(0xffff, mload(add(s, 2))) // Skip two if starts with '0x' or '0X'.
+            for { let i := shl(1, and(gt(n, 1), or(eq(p, 0x3078), eq(p, 0x3058)))) } 1 {} {
                 i := add(i, 1)
                 let c := sub(and(mload(add(s, i)), 0xff), 48)
                 n := mul(n, and(shr(c, 0x7e0000007e03ff), iszero(shr(252, result))))
-                c := sub(c, add(mul(gt(c, 16), 7), shl(5, gt(c, 48))))
-                result := add(shl(4, result), c)
+                result := add(shl(4, result), sub(c, add(mul(gt(c, 16), 7), shl(5, gt(c, 48)))))
                 if iszero(lt(i, n)) { break }
             }
             if iszero(n) {
