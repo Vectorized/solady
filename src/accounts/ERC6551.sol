@@ -17,8 +17,11 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 ///
 /// Recommended usage (upgradeable):
 /// 1. Deploy the ERC6551 as an implementation contract, and verify it on Etherscan.
-/// 2. Deploy the ERC6551Proxy pointing to the implementation, and verify it on Etherscan.
+/// 2. Deploy the ERC6551Proxy pointing to the implementation. Verification optional.
 /// 3. Use the canonical ERC6551Registry to deploy a clone to the ERC6551Proxy.
+///    Afterwards, send 0 ETH to the clone to initialize it's proxy implementation slot,
+///    and then you can use Etherscan's proxy detection on it
+///    to show the "Read as Proxy" and "Write as Proxy" tabs.
 ///
 /// Note:
 /// - ERC6551 accounts are not compatible with ERC4337

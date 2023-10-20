@@ -4,6 +4,9 @@ pragma solidity ^0.8.4;
 /// @notice Simple ERC6551 account proxy implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC6551Proxy.sol)
 /// @author ERC6551 team (https://github.com/erc6551/reference/blob/main/src/examples/upgradeable/ERC6551AccountProxy.sol)
+///
+/// Note: This proxy is specially developed for use with ERC6551 upgradeable accounts,
+/// such that it can show the "Read as Proxy" and "Write as Proxy" tabs on Etherscan.
 contract ERC6551Proxy {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         IMMUTABLES                         */
@@ -33,19 +36,20 @@ contract ERC6551Proxy {
     /*                          FALLBACK                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev A very optimized proxy fallback function.
-    /// Runtime gas cost is very near the optimal bytecode proxy (maybe about 15 gas more).
     fallback() external payable {
         assembly {
             mstore(0x40, returndatasize())
         }
         uint256 d = _defaultImplementation;
         assembly {
-            let s := sload(_ERC1967_IMPLEMENTATION_SLOT)
-            d := or(shr(shl(96, s), d), s)
+            let implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+            if iszero(shl(96, implementation)) {
+                implementation := d
+                sstore(_ERC1967_IMPLEMENTATION_SLOT, implementation)
+            }
             calldatacopy(returndatasize(), returndatasize(), calldatasize())
             // forgefmt: disable-next-item
-            if iszero(delegatecall(gas(), d,
+            if iszero(delegatecall(gas(), implementation,
                 returndatasize(), calldatasize(), codesize(), returndatasize())) { 
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize()) 
