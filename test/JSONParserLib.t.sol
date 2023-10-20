@@ -507,6 +507,82 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(keccak256(bytes(item.at('"description"').value())), expectedHash);
     }
 
+    function testParseUintFromHex() public {
+        unchecked {
+            for (uint256 i; i != 9; ++i) {
+                _checkParseUintFromHex(LibString.toString(i), i);
+            }
+        }
+        _checkParseUintFromHex("a", 0xa);
+        _checkParseUintFromHex("f", 0xf);
+        _checkParseUintFromHex("ff", 0xff);
+        _checkParseUintFromHex("fff", 0xfff);
+        _checkParseUintFromHex(
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", type(uint256).max
+        );
+        _checkParseUintFromHex(
+            "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+        );
+        _checkParseUintFromHex(
+            "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        );
+        _checkParseUintFromHex(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        );
+    }
+
+    function _checkParseUintFromHex(string memory s, uint256 x) internal {
+        _checkParseUintFromHexSub(LibString.lower(s), x);
+        _checkParseUintFromHexSub(LibString.upper(s), x);
+    }
+
+    function _checkParseUintFromHexSub(string memory s, uint256 x) internal {
+        assertEq(this.parseUintFromHex(s), x);
+        assertEq(this.parseUintFromHex(LibString.concat("0x", s)), x);
+        assertEq(this.parseUintFromHex(LibString.concat("0x0", s)), x);
+        assertEq(this.parseUintFromHex(LibString.concat("0X00", s)), x);
+        assertEq(this.parseUintFromHex(LibString.concat("0x000", s)), x);
+        assertEq(this.parseUintFromHex(LibString.concat("0X", s)), x);
+        assertEq(this.parseUintFromHex(LibString.concat("0", s)), x);
+        assertEq(this.parseUintFromHex(LibString.concat("00", s)), x);
+        assertEq(this.parseUintFromHex(LibString.concat("000", s)), x);
+    }
+
+    function parseUintFromHex(string memory s) public pure returns (uint256) {
+        return s.parseUintFromHex();
+    }
+
+    function testParseInvalidUintFromHexReverts() public {
+        _checkParseInvalidUintFromHexReverts("");
+        _checkParseInvalidUintFromHexReverts("+");
+        _checkParseInvalidUintFromHexReverts(" 0");
+        _checkParseInvalidUintFromHexReverts("0 ");
+        _checkParseInvalidUintFromHexReverts(" 12");
+        _checkParseInvalidUintFromHexReverts("00x12");
+        _checkParseInvalidUintFromHexReverts(" 0x12");
+        _checkParseInvalidUintFromHexReverts("-0x12");
+        _checkParseInvalidUintFromHexReverts("0x123g");
+        _checkParseInvalidUintFromHexReverts("123g");
+        _checkParseInvalidUintFromHexReverts("z");
+        _checkParseInvalidUintFromHexReverts(
+            "1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+        _checkParseInvalidUintFromHexReverts(
+            "10000000000000000000000000000000000000000000000000000000000000000"
+        );
+        _checkParseInvalidUintFromHexReverts(
+            "ff0000000000000000000000000000000000000000000000000000000000000000"
+        );
+    }
+
+    function _checkParseInvalidUintFromHexReverts(string memory s) internal {
+        vm.expectRevert(JSONParserLib.ParsingFailed.selector);
+        this.parseUintFromHex(s);
+    }
+
     function testParseUint() public {
         assertEq(this.parseUint("0"), 0);
         assertEq(this.parseUint("1"), 1);
