@@ -1,0 +1,3 @@
+# LibString
+
+Under construction

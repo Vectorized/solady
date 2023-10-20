@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Solady Documentation</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<link rel="icon" href="assets/img/favicon.png">
+<meta property="og:title" content="Solady Documentation">
+<meta property="og:description" content="Gas optimized Solidity snippets.">
+<meta property="og:image" content="https://vectorized.github.io/solady/assets/img/preview.png">
+<meta property="og:image:url"  content="https://vectorized.github.io/solady/assets/img/preview.png">
+<meta property="twitter:image" content="https://vectorized.github.io/solady/assets/img/preview.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="1200">
+<meta property="og:image:alt" content="Solady Documentation">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital@0;1&&family=Overpass+Mono:wght@700&family=Overpass:ital,wght@0,400;0,600;0,700&display=swap" rel="stylesheet"> 
+<link rel="stylesheet" href="//unpkg.com/docsify-themeable@0.8.6/dist/css/theme-simple.css" crossorigin="anonymous"/>
+<link rel="stylesheet" href="assets/fontello/css/fontello.css"/>
+<style type="text/css">
+/* !important attributes are for consistency in dark theme */
+:root {
+	--theme-hue: 210;
+	--theme-saturation: 50%;
+	--theme-lightness: 40%;
+	--theme-color: #369 !important;
+	--darkreader-text--sidebar-toggle-icon-color: #887 !important;
+	--code-font-family: "JetBrains Mono", Inconsolata, Consolas, Menlo, Monaco, "Andale Mono WT", "Andale Mono", "Lucida Console", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+	--base-font-family: Overpass, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	--darkreader-text--sidebar-nav-link-color: #ccc !important;
+	--darkreader-text--sidebar-nav-strong-color: #ccc !important;
+	--sidebar-nav-pagelink-background-image--loaded: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11.2' height='7' viewBox='0 0 11.2 7'%3E%3Cpath d='M1.5 1.5l4.1 4 4.1-4' stroke-width='1.5' stroke='rgb%2851,102,153%29' fill='none' stroke-linecap='square' stroke-linejoin='miter' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+	--sidebar-nav-pagelink-background-image--active: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11.2' height='7' viewBox='0 0 11.2 7'%3E%3Cpath d='M1.5 1.5l4.1 4 4.1-4' stroke-width='1.5' stroke='rgb%2851,102,153%29' fill='none' stroke-linecap='square' stroke-linejoin='miter' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+	--sidebar-nav-pagelink-background-image--collapse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='11.2' viewBox='0 0 7 11.2'%3E%3Cpath d='M1.5 1.5l4 4.1 -4 4.1' stroke-width='1.5' stroke='rgb%2851,102,153%29' fill='none' stroke-linecap='square' stroke-linejoin='miter' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+	--search-input-background-image: url("data:image/svg+xml,%3Csvg height='20px' width='20px' viewBox='0 0 24 24' fill='none' stroke='rgba%28128,128,128,0.6%29' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10.5' cy='10.5' r='7.5' vector-effect='non-scaling-stroke'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='15.8' y2='15.8' vector-effect='non-scaling-stroke'%3E%3C/line%3E%3C/svg%3E");
+}
+.clear-button.show svg circle {
+	fill: rgba(128,128,128,0.5) !important;
+}
+.sidebar .search input:focus  {
+	box-shadow: none !important;
+}
+html, body, main {
+	border-width: 0 !important;
+}
+.sidebar .search .input-wrap:hover {
+	transition: 0.2s border-color;
+	border-color: rgba(51,102,153,0.7);
+}
+.sidebar .search .input-wrap.focus {
+	border-color: rgba(51,102,153,0.7);
+	box-shadow: 0 0 3px 1px rgba(51,102,153,0.3);
+}
+.sidebar-nav > ul > li > ul > li > ul > li > a {
+	font-weight: 600 !important;
+}
+.sidebar-nav > ul > li > ul > li > ul > li > a::before {
+	display: none !important;
+}
+.sidebar > h1 .app-name-link svg {
+	fill: rgba(0,0,0,0.78);
+}
+.sidebar > h1 .app-name-link:hover svg {
+	filter: drop-shadow(2px 0 rgba(0, 255, 255, 0.5)) drop-shadow(-2px 0 rgba(255, 0, 0, 0.5));
+}
+.sidebar > h1.app-name {
+	margin-bottom: -1rem;
+}
+.sidebar > h1.app-name svg {
+	margin-left: -8px;
+}
+.sidebar {
+	background: #eeedeb;
+}
+.sidebar-toggle .sidebar-toggle-button {
+	background: #e4e3e1;
+	background: rgba(200, 200, 200, 0.5);
+	backdrop-filter: blur(5px);
+	-webkit-backdrop-filter: blur(5px);
+}
+.markdown-section h3 {
+	font-family : "Overpass Mono";
+	font-weight: 700;
+}
+.markdown-section h2 {
+	font-weight: 600;
+}
+.markdown-section h4, .markdown-section h5, .markdown-section h6 { 
+	font-weight: 700;
+}
+.markdown-section h1, .markdown-section h2, .markdown-section h3, .markdown-section h4, .markdown-section h5, .markdown-section h6 {
+	overflow-x: auto;
+	color: #000;
+}
+#theme {
+	text-align: justify;
+	margin-bottom: -8px;
+}
+#theme .choice {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+	display: inline-block;
+	width: 33%;
+	cursor: pointer;
+	text-align: center;
+}
+#theme .choice:hover, #theme .choice.active {
+	transition: 0.2s color;
+	color: var(--theme-color);
+}
+#theme .choice .icon {
+	font-size: 1.3em;
+	margin: -3px 0 -5px 0;
+}
+#theme .choice .text {
+	font-size: 0.6em;
+	font-weight: 600;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+}
+@media (max-width: 767px) {
+	.markdown-section {
+		padding: 3.8em 24px !important;
+	}
+	.sidebar-nav {
+		padding-bottom: 5em;
+	}
+	.sidebar > h1.app-name {
+		margin-top: 1.6rem;
+		margin-bottom: -0.9rem;
+	}
+	.sidebar-toggle .sidebar-toggle-button {
+		top: 11px !important;
+	}
+}
+
+.s0cial {
+	font-size: 0.88em;
+	margin-top: 1px;
+	margin-bottom: 1px;
+}
+.s0cial i:before {
+	font-size: 1.5em;
+	margin-right: 10px;
+	transform: translateY(2px);
+}
+.copyright {
+	font-size: 0.7em;
+	text-align: center;
+	margin-top: 23px;
+	margin-left: -22px;
+	opacity: 0.6;
+}
+</style>
+<link rel="stylesheet" href="assets/css/prism-theme.css"/>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/javascript">
+var logo = '<svg width="170px" height="66px" viewBox="0 0 1700 660" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M1673 11Q1683 14 1688 22 1689 22 1689 23 1690 32 1686 37 1680 44 1676 55 1671 66 1661 94 1652 122 1634 202 1599 391 1590 489 1582 587 1582 592L1581 593Q1581 594 1580 594 1568 610 1553 623 1552 625 1550 626 1549 626 1547 627 1544 625 1541 624 1538 622 1536 620 1534 618 1533 616 1533 616 1533 615 1533 614 1533 614 1538 529 1551 428L1551 427Q1559 369 1570 304L1573 289 1576 260Q1556 251 1541 237 1527 222 1512 207 1498 192 1484 176 1471 159 1458 143 1444 127 1431 111 1431 111 1430 110 1417 94 1405 76 1405 75 1404 74 1400 69 1397 64 1397 64 1397 63 1410 46 1425 32 1428 29 1429 27 1431 26 1431 26 1432 26 1433 27L1434 27Q1443 32 1450 37 1461 43 1470 48 1493 60 1510 64 1519 66 1526 67 1526 67 1526 67 1527 67 1529 68 1537 72 1540 80 1541 80 1541 81 1536 90 1527 97 1522 102 1517 106 1513 111 1508 116 1520 132 1534 148 1541 156 1548 164 1559 175 1570 186 1575 191 1581 196 1584 199 1587 202 1589 200 1590 197 1592 184 1595 172 1600 147 1606 124 1612 101 1620 79 1626 63 1633 48 1633 47 1634 47 1649 32 1664 18 1668 14 1673 11M1333 165Q1321 161 1309 157 1304 155 1300 154 1292 152 1289 152 1290 160 1291 165 1295 189 1298 216 1300 229 1300 245 1300 248 1300 252 1301 281 1300 310 1298 337 1292 361 1290 368 1289 372 1302 362 1311 354 1321 346 1333 336 1345 325 1360 311 1375 296 1388 280 1397 270 1405 259 1409 253 1412 248 1416 240 1418 233 1421 223 1418 213 1418 212 1417 211 1411 201 1386 188 1368 178 1338 167L1333 165M1453 165Q1463 173 1467 186 1470 196 1469 206L1467 217Q1467 217 1467 217 1466 218 1466 220L1462 229Q1460 234 1458 238 1458 238 1457 239L1456 241Q1446 258 1434 273 1421 289 1406 304 1392 319 1377 334 1370 342 1362 349 1347 363 1331 377 1315 391 1306 399 1296 407 1286 416 1276 425 1266 433 1255 442 1250 444 1249 444 1249 443 1237 436 1229 426 1235 409 1240 392 1241 389 1241 385 1247 361 1250 335 1252 315 1252 293 1253 262 1250 236 1247 209 1242 184 1241 178 1240 171 1239 161 1236 154 1224 163 1210 170 1210 171 1209 171 1192 183 1174 195 1157 207 1141 221 1126 235 1111 249L1111 249 1111 250 1180 454Q1181 457 1181 462 1173 470 1167 475 1162 480 1157 485 1152 490 1144 495 1140 494 1138 491 1122 478 1106 464 1102 461 1098 457 1082 444 1066 430 1051 417 1035 404 1031 401 1026 398 1013 388 998 378 998 378 998 378 998 378 998 378 997 377 996 376L994 375Q993 374 992 374L992 374Q992 374 992 374 991 374 991 374 991 374 991 374 990 375 989 376 975 391 960 406 945 421 931 436 924 444 919 454 917 459 913 463 898 478 883 492 873 486 868 477 866 472 867 465 871 444 878 425 879 421 880 418 888 396 895 374 903 352 911 330 912 327 912 325 912 324 912 323 905 319 898 315 898 315 898 315 898 316 898 317 898 320 896 322 894 324 891 327 876 341 863 357 862 358 862 359 861 362 858 363 853 367 847 370 832 380 818 392 802 406 788 420 773 435 759 451 756 455 752 459 738 475 724 490 720 494 715 496 714 496 714 495 704 489 698 481 703 458 705 433 705 424 704 419 700 426 697 429 694 433 689 440 684 446 670 460 656 473 634 480 633 481 631 481 629 482 627 483 618 485 604 485 591 484 579 481 566 478 559 475 552 472 544 468 537 465 525 457 519 453 514 449 497 436 486 418 486 418 486 418 476 404 468 388 468 388 468 388 462 376 461 372 459 368 458 365 458 365 457 365 454 369 450 373 427 376 406 382 394 385 383 388 359 395 336 401 330 403 324 404 311 406 301 411 310 421 319 431 332 447 346 463 360 479 373 496 385 512 397 530 409 548 417 569 419 572 419 574 419 577 419 578 419 580 419 581 419 581 419 582 419 582 419 583 419 584 418 584 406 596 394 609 390 613 385 615 382 615 381 614 380 614 380 614 379 614 379 614L379 614Q364 607 349 600 330 592 311 584 277 570 242 557 226 551 210 546 200 542 190 539L180 536Q123 611 79 645 77 647 74 648 72 648 69 645 65 641 63 637 62 636 61 634 61 633 62 633 82 613 102 591 127 562 152 528 152 527 151 527 141 525 131 522 91 513 49 511 38 510 28 510 24 510 21 510 20 510 20 509 20 509 20 509 16 505 13 502 12 500 11 500 10 498 11 495 11 494 12 493L26 475Q36 465 46 455 48 454 49 452 65 439 85 428 94 423 106 419 127 412 149 404 161 401 172 397 192 391 213 387 201 369 190 350 179 332 168 313 160 298 153 284 142 264 134 243 126 222 120 198 118 186 117 168 117 151 121 133 134 117 149 102 151 100 153 98 160 90 175 90 179 90 182 92 244 128 271 192 272 193 272 194 296 258 290 323 288 343 282 364 282 367 282 370 305 364 329 358 353 352 376 346 399 340 422 332 431 329 442 328 445 328 449 328 449 328 450 328 450 327 450 327 449 315 451 304 452 295 454 286 456 279 459 273 471 248 496 231 507 225 519 219 522 219 525 218 544 218 556 224 570 231 581 242 596 227 611 213 614 211 616 209 632 195 647 181 663 168 680 155 696 142 713 129 715 127 718 126 727 133 734 142 734 143 735 143 739 168 742 194 744 207 746 220 747 226 748 235 748 241 748 248 751 275 752 304 753 331 753 362 753 386 753 411 753 411 754 412 768 397 783 382 798 368 814 354 829 340 846 327 862 315 880 306 881 306 882 306 867 298 853 289 848 287 844 284 842 283 839 282 828 277 824 266 826 257 832 252 844 242 856 231 870 230 880 225 884 223 889 221 909 211 928 201 932 199 936 198 944 194 951 190 953 189 956 188 964 166 971 144 978 122 986 100 988 95 990 89 992 84 993 79 993 78 993 77 1008 63 1023 48 1024 48 1024 47 1027 44 1030 43 1039 48 1045 58L1075 147Q1083 144 1090 142L1112 137Q1115 136 1118 135 1119 135 1120 135 1122 134 1124 134 1124 134 1124 134L1125 134Q1148 129 1173 124 1173 124 1174 124 1164 123 1155 122 1137 121 1118 121 1107 121 1097 121 1091 116 1086 109 1086 109 1086 109 1089 100 1097 94 1104 87 1110 80 1116 74 1120 73 1121 73 1122 73 1128 73 1134 73 1193 75 1249 87L1260 89Q1291 96 1322 106 1355 116 1387 130L1426 149Q1442 156 1453 165M948 346 948 346Q947 346 947 346 945 351 944 356 944 357 943 357 935 379 928 401 928 401 928 400 928 400 929 400L929 400Q945 385 962 368 964 365 966 362 968 361 969 360L969 359 969 359 969 359Q968 359 968 359 968 359 968 359 965 356 961 353 957 350 952 348 952 348 951 347 951 347 950 347 950 347 950 347 949 346 948 346M943 233Q942 233 941 234 920 243 901 253 901 253 901 253 915 262 930 271 930 271 930 270 936 251 943 233M665 395Q664 382 660 370 659 364 656 359 646 340 634 322 622 304 606 292 606 306 603 316 602 319 602 322 601 324 600 326L600 327Q597 335 592 342 587 350 580 358 572 365 565 371 556 378 548 379 538 378 534 366 534 366 534 366 534 365 534 365L542 356Q547 351 553 344 560 331 557 310 557 307 556 303 555 297 552 293 546 284 537 277 536 277 536 276 535 276 535 276 529 271 522 268 519 267 515 267 510 265 504 266 500 276 499 286 493 329 526 377 529 382 534 389 538 395 542 399 542 399 543 400 543 400 543 400 547 404 558 412 569 421 583 427 598 433 611 434 625 435 641 434 654 433 663 427 667 413 665 395M694 212Q694 211 694 210 693 196 689 186 674 198 659 210 642 223 627 237 626 239 627 240 643 250 655 262 670 277 681 295 693 313 704 332 705 327 705 320 703 292 700 265 698 238 694 212M1028 333Q1042 343 1050 349 1058 355 1073 367 1088 378 1105 392 1102 382 1098 372 1097 369 1096 365 1089 342 1084 329 1079 316 1077 309 1074 302 1068 289 1063 296 1057 301 1057 302 1056 302 1042 317 1028 333M1060 260Q1057 251 1053 241 1046 219 1037 198 1033 199 1026 201 1018 203 1009 207 1000 210 990 215 985 230 981 246 974 269 967 291 967 292 968 293 970 294 971 295 988 307 1007 319 1018 305 1031 293 1045 278 1060 260M1017 132Q1016 132 1016 132 1011 149 1005 166 1005 167 1005 167 1006 169 1010 168 1018 164 1027 161 1027 160 1027 160 1022 145 1017 132M1161 170Q1160 169 1156 170 1152 170 1150 171 1142 172 1137 173 1111 178 1089 185L1088 184 1101 223 1105 220Q1107 218 1109 216 1119 206 1129 197 1145 183 1161 170M175 196Q177 201 179 206 188 226 197 247 206 268 216 287 226 306 233 316 239 326 240 328 241 329 243 332 245 326 245 320 245 298 242 279 237 254 230 232 223 210 211 192 200 174 184 160 181 157 178 155 169 148 168 148 168 148 168 149 166 161 169 175 170 183 173 191L175 196Q175 196 175 196M214 434Q215 433 216 432L216 432 217 430 212 431Q208 432 203 433 176 440 150 448 127 455 105 463 104 463 103 463L128 469Q131 470 134 470 138 471 142 472L150 474Q165 478 182 482L184 482Q199 459 214 434M257 445Q254 441 250 438 245 446 239 454 228 471 216 486 216 487 215 487 215 488 215 489 215 489 215 489 215 489 215 489L213 492 221 495Q223 495 225 496 228 497 231 498L257 507Q292 518 316 528L317 528Q321 530 325 531 329 533 334 535 333 534 333 534 322 522 312 509 298 492 284 477 271 461 257 445"/></svg>';
+window.$docsify = {
+	name: logo,
+	repo: 'https://github.com/chiru-labs/Solady',
+	coverpage: false, 
+	homepage: 'overview.md',
+	loadSidebar: 'sidebar.md',
+	auto2top: true,
+	maxLevel: 3,
+	subMaxLevel: 3,
+	search: {
+		depth: 3,
+		noData: 'No results!',
+		placeholder: 'Search...'
+	},
+	themeable: {
+		readyTransition : false,
+		responsiveTables: true
+	}
+}
+</script>
+<script src="//unpkg.com/docsify@4.12.2/lib/docsify.min.js"></script>
+<script src="//unpkg.com/docsify-themeable@0.8.6"></script>
+<script src="//unpkg.com/docsify@4.12.2/lib/plugins/search.js"></script>
+<script src="//unpkg.com/darkreader@4.9.34"></script>
+<script type="text/javascript">
+(function () {
+	var smoothScroll = function (scrollFrom, scrollTo, duration) {
+		var timePassed = 0, step = 15, interval, tick = function () {
+			if (timePassed >= duration) {
+				window.scrollTo(0, scrollTo);
+				clearInterval(interval);
+			} else {
+				window.scrollTo(0, scrollFrom + ~~((scrollTo - scrollFrom) * (timePassed / duration)));
+			}
+			timePassed += step;
+		};
+		tick();
+		interval = setInterval(tick, step);
+	}, t, r, y, clickCallback = function (e) {
+		for (t = e.target; t; t = t.parentElement) {
+			if ((t.tagName.toUpperCase() == 'A') && 
+				(r = t.getAttribute('href')) && 
+				(r = (''+r).match('#(.*)')) &&
+				(window.location.hash == r[0]) &&
+				(r = r[0].match(/\?id=(.+?)$/)) &&
+				(t = document.querySelector('#'+r[1].toLowerCase()))
+			) {
+				y = t.getBoundingClientRect().top, yo = window.pageYOffset;
+				smoothScroll(yo, y + yo, 300);
+				return;	
+			}
+		}
+	};
+	document.addEventListener('click', clickCallback);
+})();
+// Solidity syntax highlighting via Prism. 
+Prism.languages.solidity=Prism.languages.extend("clike",{"class-name":{pattern:/(\b(?:contract|enum|interface|library|new|struct|using)\s+)(?!\d)[\w$]+/,lookbehind:!0},keyword:/\b(?:_|anonymous|as|assembly|assert|break|calldata|case|constant|constructor|continue|contract|default|delete|do|else|emit|enum|event|external|for|function|if|import|indexed|inherited|interface|internal|is|let|library|mapping|memory|modifier|new|payable|pragma|private|public|pure|require|returns?|revert|selfdestruct|solidity|storage|struct|suicide|switch|this|throw|using|var|view|while)\b/,operator:/=>|->|:=|=:|\*\*|\+\+|--|\|\||&&|<<=?|>>=?|[-+*/%^&|<>!=]=?|[~?]/}),Prism.languages.insertBefore("solidity","keyword",{builtin:/\b(?:address|bool|byte|u?int(?:8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?|string|bytes(?:[1-9]|[12]\d|3[0-2])?)\b/}),Prism.languages.insertBefore("solidity","number",{version:{pattern:/([<>]=?|\^)\d+\.\d+\.\d+\b/,lookbehind:!0,alias:"number"}}),Prism.languages.sol=Prism.languages.solidity;
+// Dark mode via darkreader.
+var exponentialWait = function (callback, startDelay, multiplier) {
+	var delay = startDelay || 30;
+	var waiter = function () {
+		if (!callback()) {
+			delay *= (multiplier || 2);
+			setTimeout(waiter, delay);
+		}
+	};
+	waiter();
+};
+var setupTheme = function () {
+	DarkReader.setFetchMethod(window.fetch);
+	var lsThemeKey = 'solady_theme';
+	var getLsTheme = function () { 
+		return window.localStorage.getItem(lsThemeKey) 
+	};
+	var setLsTheme = function (name) { 
+		window.localStorage.setItem(lsThemeKey, name) 
+	};
+	var drSettings = { 
+		brightness: 100, 
+		contrast: 100, 
+		sepia: 0 
+	};
+	var getChoiceEl = function (name) {
+		return document.querySelector('#theme .choice[name=' + name + ']');
+	};
+	var currentTheme = 0;
+	var getChoiceEls = function () {
+		return document.querySelectorAll('#theme .choice');
+	};
+	var setElActive = function (el, active) {
+		if (!el) return;
+		if (active) {
+			el.className += ' active';	
+		} else {
+			el.className = el.className.replace(/\s+active\s*/, '');
+		}
+	};
+	var setOnlyChoiceActive = function (name) {
+		var a = getChoiceEls();
+		for (var i = 0; i < a.length; ++i) {
+			setElActive(a[i], 0);
+		}
+		setElActive(getChoiceEl(name), 1);
+	};
+	var themeActivate = function (name, forceRefresh) {
+		setOnlyChoiceActive(name);
+		if (currentTheme == name && !forceRefresh) return;
+		if (name == 'light') DarkReader.disable();
+		if (name == 'auto') DarkReader.auto(drSettings);
+		if (name == 'dark') DarkReader.enable(drSettings);
+		setLsTheme(currentTheme = name);
+	};
+	var reloadTheme = function (forceRefresh) { 
+		themeActivate(getLsTheme() || 'auto', forceRefresh);
+	};
+	var delayedReloadTheme = function () {
+		setTimeout(function () {
+			exponentialWait(function () {
+				if (document.querySelector('.markdown-section h1')) {
+					setTimeout(function () { reloadTheme(1) }, 60);
+					return true;
+				}
+			});
+		}, 800);
+	};
+	var reloadChoices = function () {
+		var setClick = function (name) {
+			getChoiceEl(name).onclick = function () { 
+				themeActivate(name);
+				delayedReloadTheme();
+			};	
+		};
+		setClick('light');
+		setClick('auto');
+		setClick('dark');
+		reloadTheme();
+	};
+	exponentialWait(function () {
+		if (getChoiceEls().length > 0) {
+			reloadChoices();
+			setInterval(function () {
+				if (!document.querySelector('#theme .choice').onclick) 
+					reloadChoices();
+			}, 500);
+			delayedReloadTheme();
+			return true;
+		}
+	});
+	reloadTheme();
+};
+if (window.fetch) {
+	setupTheme();
+}
+exponentialWait(function () {
+	var searchInput = document.querySelector('.sidebar .search input');
+	if (searchInput) {
+		var searchInputWrap = document.querySelector('.sidebar .search .input-wrap');
+		searchInput.addEventListener('focus', function () {
+			searchInputWrap.className += ' focus';
+		});
+		searchInput.addEventListener('blur', function () {
+			searchInputWrap.className = searchInputWrap.className.replace(/\s+focus\s*/, '');
+		});	
+		return true;
+	}
+});
+</script>
+</body>
+</html>
