@@ -92,17 +92,19 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             extcodecopy(address(), 0x00, 0x4d, 0x60)
-            let tokenContract := mload(0x20)
-            // `tokenId` is already at 0x40.
-            mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-            result :=
-                mul(
-                    mload(0x20),
-                    and(
-                        and(eq(mload(0x00), chainid()), gt(returndatasize(), 0x1f)),
-                        staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
+            if eq(mload(0x00), chainid()) {
+                let tokenContract := mload(0x20)
+                // `tokenId` is already at 0x40.
+                mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
+                result :=
+                    mul(
+                        mload(0x20),
+                        and(
+                            gt(returndatasize(), 0x1f),
+                            staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
+                        )
                     )
-                )
+            }
             mstore(0x40, m) // Restore the free memory pointer.
         }
     }
@@ -277,14 +279,17 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                 let tokenContract := mload(0x20)
                 // `tokenId` is already at 0x40.
                 mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                let currentOwner :=
-                    mul(
-                        mload(0x20),
-                        and(
-                            and(eq(mload(0x00), chainid()), gt(returndatasize(), 0x1f)),
-                            staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
+                let currentOwner := 0
+                if eq(mload(0x00), chainid()) {
+                    currentOwner :=
+                        mul(
+                            mload(0x20),
+                            and(
+                                gt(returndatasize(), 0x1f),
+                                staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
+                            )
                         )
-                    )
+                }
                 if iszero(selfOwn(currentOwner, mload(0x00), tokenContract, mload(0x40))) {
                     mstore(0x60, 0xfc0c546a) // `token()`.
                     for {} 1 {} {
