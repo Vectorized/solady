@@ -88,21 +88,12 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
 
     /// @dev Returns the owner of the contract.
     function owner() public view virtual returns (address result) {
-        (uint256 chainId, address tokenContract, uint256 tokenId) = token();
         /// @solidity memory-safe-assembly
         assembly {
-            if eq(chainId, chainid()) {
-                mstore(0x20, tokenId) // Store the `tokenId` parameter.
-                mstore(0x00, 0x6352211e) // `ownerOf(uint256)`.
-                result :=
-                    mul( // Returns `address(0)` on failure or if contract does not exist.
-                        mload(0x20),
-                        and(
-                            gt(returndatasize(), 0x1f),
-                            staticcall(gas(), tokenContract, 0x1c, 0x24, 0x20, 0x20)
-                        )
-                    )
-            }
+            extcodecopy(address(), 0x00, 0x6D, 0x40)
+            let tokenContract := mload(0x00) // Upper 96 bits will be clean.
+            mstore(0x00, 0x6352211e) // `ownerOf(uint256)`. `tokenId` is in next slot.
+            if staticcall(gas(), tokenContract, 0x1c, 0x24, 0x20, 0x20) { result := mload(0x20) }
         }
     }
 
