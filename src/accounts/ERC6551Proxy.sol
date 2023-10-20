@@ -10,7 +10,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The default implementation.
-    address internal immutable _defaultImplementation;
+    uint256 internal immutable _defaultImplementation;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -26,7 +26,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(address defaultImplementation) payable {
-        _defaultImplementation = defaultImplementation;
+        _defaultImplementation = uint256(uint160(defaultImplementation));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -39,7 +39,7 @@ contract ERC6551Proxy {
         assembly {
             mstore(0x40, returndatasize())
         }
-        address d = _defaultImplementation;
+        uint256 d = _defaultImplementation;
         assembly {
             let s := sload(_ERC1967_IMPLEMENTATION_SLOT)
             d := or(shr(shl(96, s), d), s)
