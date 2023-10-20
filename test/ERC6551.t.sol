@@ -75,6 +75,10 @@ contract ERC6551Test is SoladyTest {
         t.salt = bytes32(_random());
         address account = _registry.createAccount(_proxy, t.salt, t.chainId, _erc721, t.tokenId);
         t.account = MockERC6551(payable(account));
+        (bool success,) = account.call("");
+        assertTrue(success);
+        bytes32 implementationSlotValue = bytes32(uint256(uint160(_erc6551)));
+        assertEq(vm.load(account, _ERC1967_IMPLEMENTATION_SLOT), implementationSlotValue);
     }
 
     function testDeployERC6551Proxy() public {
