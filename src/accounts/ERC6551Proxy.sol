@@ -38,12 +38,12 @@ contract ERC6551Proxy {
     fallback() external payable {
         assembly {
             mstore(0x40, returndatasize())
-            calldatacopy(returndatasize(), returndatasize(), calldatasize())
         }
         uint256 d = _defaultImplementation;
         assembly {
             let s := sload(_ERC1967_IMPLEMENTATION_SLOT)
             d := or(shr(shl(96, s), d), s)
+            calldatacopy(returndatasize(), returndatasize(), calldatasize())
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), d,
                 returndatasize(), calldatasize(), codesize(), returndatasize())) { 

@@ -236,6 +236,14 @@ contract ERC4337Test is SoladyTest {
         (bool success,) = address(account).call{value: 123}(data);
         assertTrue(success);
         assertEq(account.getDeposit(), 123);
+    }
+
+    function testCdFallback2() public {
+        vm.deal(address(account), 1 ether);
+        account.initialize(address(this));
+
+        vm.etch(account.entryPoint(), address(new MockEntryPoint()).code);
+        assertEq(account.getDeposit(), 0);
 
         ERC4337.Call[] memory calls = new ERC4337.Call[](2);
         calls[0].target = address(new Target());
@@ -245,10 +253,10 @@ contract ERC4337Test is SoladyTest {
         calls[0].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
         calls[1].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
 
-        data = LibZip.cdCompress(
+        bytes memory data = LibZip.cdCompress(
             abi.encodeWithSignature("executeBatch((address,uint256,bytes)[])", calls)
         );
-        (success,) = address(account).call(data);
+        (bool success,) = address(account).call(data);
         assertTrue(success);
         assertEq(Target(calls[0].target).datahash(), keccak256(_randomBytes(111)));
         assertEq(Target(calls[1].target).datahash(), keccak256(_randomBytes(222)));
