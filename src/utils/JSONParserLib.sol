@@ -336,6 +336,28 @@ library JSONParserLib {
         }
     }
 
+    /// @dev Parses an unsigned integer from a string (in hexadecimal, i.e. base 16).
+    /// Reverts if `s` is not a valid uint256 hex string matching the RegEx
+    /// `^(0[xX])?[0-9a-fA-F]+$`, or if the parsed number is too big for a uint256.
+    function parseUintFromHex(string memory s) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(s)
+            let p := and(0xffff, mload(add(s, 2))) // Skip two if starts with '0x' or '0X'.
+            for { let i := shl(1, and(gt(n, 1), or(eq(p, 0x3078), eq(p, 0x3058)))) } 1 {} {
+                i := add(i, 1)
+                let c := sub(and(mload(add(s, i)), 0xff), 48)
+                n := mul(n, and(shr(c, 0x7e0000007e03ff), iszero(shr(252, result))))
+                result := add(shl(4, result), sub(c, add(mul(gt(c, 16), 7), shl(5, gt(c, 48)))))
+                if iszero(lt(i, n)) { break }
+            }
+            if iszero(n) {
+                mstore(0x00, 0x10182796) // `ParsingFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
     /// @dev Decodes a JSON encoded string.
     /// The string MUST be double-quoted, JSON encoded.
     /// Reverts if the string is invalid.
