@@ -92,15 +92,14 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             extcodecopy(address(), 0x00, 0x4d, 0x60)
-            let chainId := mload(0x00)
-            let tokenContract := mload(0x20) // Upper 96 bits will be clean.
+            let tokenContract := mload(0x20)
             // `tokenId` is already at 0x40.
             mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
             result :=
                 mul(
                     mload(0x20),
                     and(
-                        and(eq(chainId, chainid()), gt(returndatasize(), 0x1f)),
+                        and(eq(mload(0x00), chainid()), gt(returndatasize(), 0x1f)),
                         staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
                     )
                 )
@@ -275,19 +274,18 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
             // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
             if eq(s, 0x150b7a02) {
                 extcodecopy(address(), 0x00, 0x4d, 0x60)
-                let chainId := mload(0x00)
-                let tokenContract := mload(0x20) // Upper 96 bits will be clean.
-                let tokenId := mload(0x40)
+                let tokenContract := mload(0x20)
+                // `tokenId` is already at 0x40.
                 mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
                 let currentOwner :=
                     mul(
                         mload(0x20),
                         and(
-                            and(eq(chainId, chainid()), gt(returndatasize(), 0x1f)),
+                            and(eq(mload(0x00), chainid()), gt(returndatasize(), 0x1f)),
                             staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
                         )
                     )
-                if iszero(selfOwn(currentOwner, chainId, tokenContract, tokenId)) {
+                if iszero(selfOwn(currentOwner, mload(0x00), tokenContract, mload(0x40))) {
                     mstore(0x60, 0xfc0c546a) // `token()`.
                     for {} 1 {} {
                         if iszero(
@@ -299,8 +297,8 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                             mstore(0x40, s) // Load into memory slot.
                             return(0x5c, 0x20) // Return `msg.sig`.
                         }
-                        // `tokenId` is already at 0x40.
                         let t := mload(0x20) // `tokenContract`.
+                        // `tokenId` is already at 0x40.
                         mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
                         currentOwner :=
                             mul(
