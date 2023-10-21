@@ -27,9 +27,9 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// Note:
 /// - ERC6551 accounts are not compatible with ERC4337
 ///   (at least not without crazy hacks)
-///   due to storage access limitations during UserOp validation.
+///   due to storage access limitations during ERC4337 UserOp validation.
 /// - Please refer to the official [ERC6551](https://github.com/erc6551/reference) reference
-///   for latest updates on the standard, and canonical registry information.
+///   for latest updates on the ERC6551 standard, as well as canonical registry information.
 contract ERC6551 is UUPSUpgradeable, Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
