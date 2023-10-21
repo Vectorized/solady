@@ -346,9 +346,13 @@ library JSONParserLib {
             let p := and(0xffff, mload(add(s, 2))) // Skip two if starts with '0x' or '0X'.
             for { let i := shl(1, and(gt(n, 1), or(eq(p, 0x3078), eq(p, 0x3058)))) } 1 {} {
                 i := add(i, 1)
-                let c := sub(and(mload(add(s, i)), 0xff), 48)
-                n := mul(n, and(shr(c, 0x7e0000007e03ff), iszero(shr(252, result))))
-                result := add(shl(4, result), sub(c, add(mul(gt(c, 16), 7), shl(5, gt(c, 48)))))
+                let c :=
+                    byte(
+                        and(0x1f, shr(and(mload(add(s, i)), 0xff), 0x3e4088843e41bac000000000000)),
+                        0x3010a071000000b0104040208000c05090d060e0f
+                    )
+                n := mul(n, iszero(or(iszero(c), shr(252, result))))
+                result := add(shl(4, result), sub(c, 1))
                 if iszero(lt(i, n)) { break }
             }
             if iszero(n) {
