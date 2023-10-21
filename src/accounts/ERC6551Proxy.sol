@@ -39,13 +39,13 @@ contract ERC6551Proxy {
     fallback() external payable {
         uint256 d = _defaultImplementation;
         assembly {
-            mstore(0x40, returndatasize())
+            mstore(0x40, returndatasize()) // Some optimization trick.
             calldatacopy(returndatasize(), returndatasize(), calldatasize())
             let implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
             // If the implementation is zero, initialize it to the default.
             // This is required for Etherscan proxy detection.
             if iszero(implementation) {
-                // Only initialize it if there is no calldata, so that staticcalls to
+                // Only initialize it if there is empty calldata, so that staticcalls to
                 // read-only functions will not cause a revert before initialization.
                 // Some users may be fine without Etherscan proxy detection and thus may
                 // choose to not initialize the ERC1967 implementation slot.
