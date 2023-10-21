@@ -1,14 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Simple ERC6551 account proxy implementation.
+/// @notice Relay proxy for upgradeable ERC6551 accounts.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC6551Proxy.sol)
 /// @author ERC6551 team (https://github.com/erc6551/reference/blob/main/src/examples/upgradeable/ERC6551AccountProxy.sol)
 ///
-/// Note: This proxy is specially developed for use with upgradeable ERC6551 accounts,
-/// so that it can correctly reveal the "Read as Proxy" and "Write as Proxy" tabs on Etherscan.
-/// After using the registry to deploy a ERC6551 clone pointing to this proxy,
+/// Note: This relay proxy is required for upgradeable ERC6551 accounts.
+///
+/// ERC6551 clone -> ERC6551Proxy (relay) -> ERC6551 account implementation.
+///
+/// This relay proxy also allows for correctly revealing the
+/// "Read as Proxy" and "Write as Proxy" tabs on Etherscan.
+///
+/// After using the registry to deploy a ERC6551 clone pointing to this relay proxy,
 /// users must send 0 ETH to the clone before clicking on "Is this a proxy?" on Etherscan.
+/// Verification of this relay proxy on Etherscan is optional.
 contract ERC6551Proxy {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         IMMUTABLES                         */

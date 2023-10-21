@@ -32,7 +32,7 @@ accounts
 ├─ ERC4337 — "Simple ERC4337 account implementation"
 ├─ ERC4337Factory — "Simple ERC4337 account factory implementation"
 ├─ ERC6551 — "Simple ERC6551 account implementation"
-├─ ERC6551Proxy — "Simple ERC6551 account proxy implementation"
+├─ ERC6551Proxy — "Relay proxy for upgradeable ERC6551 accounts"
 auth
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
