@@ -44,27 +44,26 @@ contract ERC6551Proxy {
     /*                          FALLBACK                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    fallback() external payable {
+    fallback() external payable virtual {
         uint256 d = _defaultImplementation;
         assembly {
             mstore(0x40, returndatasize()) // Some optimization trick.
             calldatacopy(returndatasize(), returndatasize(), calldatasize())
             let implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
             // If the implementation is zero, initialize it to the default.
-            // This is required for Etherscan proxy detection.
             if iszero(implementation) {
-                // Only initialize it if there is empty calldata, so that staticcalls to
-                // read-only functions will not cause a revert before initialization.
+                implementation := d
+                // Only initialize if the calldatasize is zero, so that staticcalls to
+                // functions (which will have 4-byte function selectors) won't revert.
                 // Some users may be fine without Etherscan proxy detection and thus may
                 // choose to not initialize the ERC1967 implementation slot.
                 if iszero(calldatasize()) { sstore(_ERC1967_IMPLEMENTATION_SLOT, d) }
-                implementation := d
             }
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), implementation,
                 returndatasize(), calldatasize(), codesize(), returndatasize())) {
                 returndatacopy(0x00, 0x00, returndatasize())
-                revert(0x00, returndatasize()) 
+                revert(0x00, returndatasize())
             }
             returndatacopy(0x00, 0x00, returndatasize())
             return(0x00, returndatasize())
