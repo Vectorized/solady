@@ -45,12 +45,16 @@ contract ERC6551Proxy {
             // If the implementation is zero, initialize it to the default.
             // This is required for Etherscan proxy detection.
             if iszero(implementation) {
-                sstore(_ERC1967_IMPLEMENTATION_SLOT, d)
+                // Only initialize it if there is no calldata, so that staticcalls to
+                // read-only functions will not cause a revert before initialization.
+                // Some users may be fine without Etherscan proxy detection and thus may
+                // choose to not initialize the ERC1967 implementation slot.
+                if iszero(calldatasize()) { sstore(_ERC1967_IMPLEMENTATION_SLOT, d) }
                 implementation := d
             }
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), implementation,
-                returndatasize(), calldatasize(), codesize(), returndatasize())) { 
+                returndatasize(), calldatasize(), codesize(), returndatasize())) {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize()) 
             }

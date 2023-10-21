@@ -75,14 +75,18 @@ contract ERC6551Test is SoladyTest {
         t.salt = bytes32(_random());
         address account = _registry.createAccount(_proxy, t.salt, t.chainId, _erc721, t.tokenId);
         t.account = MockERC6551(payable(account));
-        (bool success,) = account.call("");
-        assertTrue(success);
-        bytes32 implementationSlotValue = bytes32(uint256(uint160(_erc6551)));
-        assertEq(vm.load(account, _ERC1967_IMPLEMENTATION_SLOT), implementationSlotValue);
     }
 
     function testDeployERC6551Proxy() public {
         console.log(LibString.toHexString(address(new ERC6551Proxy(_erc6551)).code));
+    }
+
+    function testInitializeERC6551ProxyImplementation() public {
+        address account = address(_testTemps().account);
+        (bool success,) = account.call("");
+        assertTrue(success);
+        bytes32 implementationSlotValue = bytes32(uint256(uint160(_erc6551)));
+        assertEq(vm.load(account, _ERC1967_IMPLEMENTATION_SLOT), implementationSlotValue);
     }
 
     function testDeployERC6551(uint256) public {
@@ -334,16 +338,6 @@ contract ERC6551Test is SoladyTest {
             t.account.isValidSignature(
                 SignatureCheckerLib.toEthSignedMessageHash(keccak256("123")), signature
             ) == 0x1626ba7e
-        );
-    }
-
-    function testERC6551ProxyDefaultAddressTrick(uint256 d, uint256 s) public {
-        address computed;
-        assembly {
-            computed := or(shr(shl(96, s), d), s)
-        }
-        assertEq(
-            computed, address(uint160(s)) == address(0) ? address(uint160(d)) : address(uint160(s))
         );
     }
 
