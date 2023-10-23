@@ -17,22 +17,32 @@ Solady's ERC20 token implementation is an opinionated and highly optimized imple
 
 - The `permit` function uses the ecrecover precompile (0x1).
 
-## Installation
+## Example usage
 
 ### Foundry
 
+1. Create a new [foundry](https://github.com/foundry-rs/foundry) repository and navigate to the root folder.
+
 ```bash
-$ curl -L https://foundry.paradigm.xyz | bash
-$ foundryup
-$ forge init <project name>
+$ forge init <name of project>
+$ cd <name of project>
+```
+
+2. Install the Solady library
+
+```bash
 $ forge install vectorized/solady
 ```
 
-## How to use
+3. Create a file called `MyToken.sol` in the `<project name>/src` folder.
 
-In the `<project name>/src` folder, create a file called `MyToken.sol` and copy the following code into it.
-
+```bash
+$ touch src/MyToken.sol
 ```
+
+4. Copy the following implementation into the `MyToken.sol` file.
+
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
