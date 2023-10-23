@@ -59,7 +59,13 @@ contract MyToken is ERC20 {
 }
 ```
 
-## Functions
+## Gas Benchmarks
+
+TODO
+
+## API Reference
+
+### Functions
 
 | Name                                  | Description                                                                                                        |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -77,7 +83,7 @@ contract MyToken is ERC20 {
 
 ---
 
-### name
+#### name
 
 Returns the name of the token.
 
@@ -85,10 +91,103 @@ Returns the name of the token.
 function name() public view virtual returns (string memory)
 ```
 
-### Parameter(s)
+##### Parameter(s)
 
 - None
 
-### Return Value(s)
+##### Return Value(s)
 
 - The name of the token.
+
+---
+
+#### symbol
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### decimals
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### totalSupply
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### balanceOf
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### allowance
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### approve
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### transfer
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### transferFrom
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### permit
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### DOMAIN_SEPERATOR
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+### Errors
+
+| Name | Description | Selector |
+| --- | --- | --- |
+| TotalSupplyOverflow | Thrown when the total supply has overflowed. | `0xe5cfe957`|
+| AllowanceOverflow | Thrown when the allowance has overflowed. | `0xf9067066` |
+| AllowanceUnderflow | Thrown when the allowance has underflowed. | `0x8301ab38` |
+| InsufficientBalance | Thrown when there is insufficient balance. | `0xf4d678b8` |
+| InvalidPermit | Thrown when the permit is invalid. | `0xddafbaef` |
+| PermitExpired | Thrown when the permit has expired. | `0x1a15a3cc` |
