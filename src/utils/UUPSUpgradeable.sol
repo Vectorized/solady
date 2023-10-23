@@ -19,6 +19,16 @@ abstract contract UUPSUpgradeable {
     /// @dev The upgrade failed.
     error UpgradeFailed();
 
+    /// @dev The call is from an unauthorized call context.
+    error UnauthorizedCallContext();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         IMMUTABLES                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev For checking if the context is a delegate call.
+    uint256 private immutable __self = uint256(uint160(address(this)));
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -52,19 +62,25 @@ abstract contract UUPSUpgradeable {
 
     /// @dev Returns the storage slot used by the implementation,
     /// as specified in [ERC1822](https://eips.ethereum.org/EIPS/eip-1822).
-    function proxiableUUID() public pure virtual returns (bytes32) {
+    ///
+    /// Note: The `notDelegated` modifier prevents accidental upgrades to
+    /// an implementation that is a proxy contract.
+    function proxiableUUID() public view virtual notDelegated returns (bytes32) {
+        // This function must always return `_ERC1967_IMPLEMENTATION_SLOT` to be standard compliant.
         return _ERC1967_IMPLEMENTATION_SLOT;
     }
 
     /// @dev Upgrades the proxy's implementation to `newImplementation`.
     /// Emits a {Upgraded} event.
-    function upgradeTo(address newImplementation) public payable virtual {
+    ///
+    /// Note: The `onlyProxy` modifier prevents accidental calling on the implementation.
+    function upgradeTo(address newImplementation) public payable virtual onlyProxy {
         _authorizeUpgrade(newImplementation);
-        bytes32 s = proxiableUUID();
         /// @solidity memory-safe-assembly
         assembly {
             newImplementation := shr(96, shl(96, newImplementation)) // Clears upper 96 bits.
             mstore(0x01, 0x52d1902d) // `proxiableUUID()`.
+            let s := _ERC1967_IMPLEMENTATION_SLOT
             // Check if `newImplementation` implements `proxiableUUID` correctly.
             if iszero(eq(mload(staticcall(gas(), newImplementation, 0x1d, 0x04, 0x01, 0x20)), s)) {
                 mstore(0x01, 0x55299b49) // `UpgradeFailed()`.
@@ -78,6 +94,9 @@ abstract contract UUPSUpgradeable {
 
     /// @dev Upgrades the proxy's implementation to `newImplementation`.
     /// Emits a {Upgraded} event.
+    ///
+    /// Note: This function calls `upgradeTo` internally,
+    /// followed by a delegatecall to `newImplementation`.
     function upgradeToAndCall(address newImplementation, bytes calldata data)
         public
         payable
@@ -95,5 +114,35 @@ abstract contract UUPSUpgradeable {
                 revert(m, returndatasize())
             }
         }
+    }
+
+    /// @dev Requires that the execution is performed through a proxy.
+    modifier onlyProxy() {
+        uint256 s = __self;
+        /// @solidity memory-safe-assembly
+        assembly {
+            // To enable use cases where the default implementation is in the bytecode,
+            // we don't require that the proxy address must match the value
+            // stored in the implementation slot (see: ERC6551Proxy).
+            if eq(s, address()) {
+                mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
+                revert(0x1c, 0x04)
+            }
+        }
+        _;
+    }
+
+    /// @dev Requires that the execution is NOT performed via delegatecall.
+    /// This is the opposite of `onlyProxy`.
+    modifier notDelegated() {
+        uint256 s = __self;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(eq(s, address())) {
+                mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
+                revert(0x1c, 0x04)
+            }
+        }
+        _;
     }
 }
