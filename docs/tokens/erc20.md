@@ -4,9 +4,9 @@ Source: [`tokens/ERC20.sol`](https://github.com/Vectorized/solady/blob/main/src/
 
 Solady's ERC20 token implementation is an opinionated and highly optimized implementation of the [ERC20 standard](https://eips.ethereum.org/EIPS/eip-20). It also inherits the [ERC2612 standard](https://eips.ethereum.org/EIPS/eip-2612) which enables permit-based approvals.
 
-## Important things to note
+## Things to note
 
-1. The ERC20 standard does not impose any restriction on the addresses and amounts used. As such, this implementation **WILL NOT** revert for the following:
+- The ERC20 standard does not impose any restriction on the addresses and amounts used. As such, this implementation **WILL NOT** revert for the following:
 
     - mint to the zero address
     - transfer to and from the zero address
@@ -15,7 +15,7 @@ Solady's ERC20 token implementation is an opinionated and highly optimized imple
 
     If any of these functionalities are required, please override the relevant functions and add your checks.
 
-2. The `permit` function uses the ecrecover precompile (0x1).
+- The `permit` function uses the ecrecover precompile (0x1).
 
 ## Installation
 
