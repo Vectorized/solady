@@ -183,11 +183,11 @@ function name() public view virtual returns (string memory)
 
 ### Errors
 
-| Name | Description | Selector |
-| --- | --- | --- |
-| TotalSupplyOverflow | Thrown when the total supply has overflowed. | `0xe5cfe957`|
-| AllowanceOverflow | Thrown when the allowance has overflowed. | `0xf9067066` |
-| AllowanceUnderflow | Thrown when the allowance has underflowed. | `0x8301ab38` |
-| InsufficientBalance | Thrown when there is insufficient balance. | `0xf4d678b8` |
-| InvalidPermit | Thrown when the permit is invalid. | `0xddafbaef` |
-| PermitExpired | Thrown when the permit has expired. | `0x1a15a3cc` |
+| Name                | Description                                  | Selector     |
+| ------------------- | -------------------------------------------- | ------------ |
+| TotalSupplyOverflow | Thrown when the total supply has overflowed. | `0xe5cfe957` |
+| AllowanceOverflow   | Thrown when the allowance has overflowed.    | `0xf9067066` |
+| AllowanceUnderflow  | Thrown when the allowance has underflowed.   | `0x8301ab38` |
+| InsufficientBalance | Thrown when there is insufficient balance.   | `0xf4d678b8` |
+| InvalidPermit       | Thrown when the permit is invalid.           | `0xddafbaef` |
+| PermitExpired       | Thrown when the permit has expired.          | `0x1a15a3cc` |
