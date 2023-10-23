@@ -272,7 +272,7 @@ contract ERC6551Test is SoladyTest {
         assertEq(t.account.state(), 1);
     }
 
-    function testUpgrade() public {
+    function testUpgradeUUU() public {
         _TestTemps memory t = _testTemps();
         address anotherImplementation = address(new MockERC6551V2());
         vm.expectRevert(ERC6551.Unauthorized.selector);

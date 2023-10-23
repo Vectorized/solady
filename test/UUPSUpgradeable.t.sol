@@ -7,8 +7,6 @@ import {LibClone} from "../src/utils/LibClone.sol";
 import {MockUUPSImplementation} from "../test/utils/mocks/MockUUPSImplementation.sol";
 
 contract UUPSUpgradeableTest is SoladyTest {
-    error UpgradeFailed();
-
     MockUUPSImplementation impl1;
 
     address proxy;
@@ -22,6 +20,17 @@ contract UUPSUpgradeableTest is SoladyTest {
         impl1 = new MockUUPSImplementation();
         proxy = LibClone.deployERC1967(address(impl1));
         MockUUPSImplementation(proxy).initialize(address(this));
+    }
+
+    function testNotDelegatedGuard() public {
+        assertEq(impl1.proxiableUUID(), _ERC1967_IMPLEMENTATION_SLOT);
+        vm.expectRevert(UUPSUpgradeable.UnauthorizedCallContext.selector);
+        MockUUPSImplementation(proxy).proxiableUUID();
+    }
+
+    function testOnlyProxyGuard() public {
+        vm.expectRevert(UUPSUpgradeable.UnauthorizedCallContext.selector);
+        impl1.upgradeTo(address(1));
     }
 
     function testUpgradeTo() public {
@@ -40,7 +49,7 @@ contract UUPSUpgradeableTest is SoladyTest {
     }
 
     function testUpgradeToRevertWithUpgradeFailed() public {
-        vm.expectRevert(UpgradeFailed.selector);
+        vm.expectRevert(UUPSUpgradeable.UpgradeFailed.selector);
         MockUUPSImplementation(proxy).upgradeTo(address(0xABCD));
     }
 
@@ -54,7 +63,7 @@ contract UUPSUpgradeableTest is SoladyTest {
     }
 
     function testUpgradeToAndCallRevertWithUpgradeFailed() public {
-        vm.expectRevert(UpgradeFailed.selector);
+        vm.expectRevert(UUPSUpgradeable.UpgradeFailed.selector);
         MockUUPSImplementation(proxy).upgradeToAndCall(address(0xABCD), "");
     }
 
