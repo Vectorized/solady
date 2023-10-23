@@ -66,7 +66,7 @@ abstract contract UUPSUpgradeable {
     /// Note: The `notDelegated` modifier prevents accidental upgrades to
     /// an implementation that is a proxy contract.
     function proxiableUUID() public view virtual notDelegated returns (bytes32) {
-        // This function must always return `_ERC1967_IMPLEMENTATION_SLOT` to be standard compliant.
+        // This function must always return `_ERC1967_IMPLEMENTATION_SLOT` to comply with ERC1967.
         return _ERC1967_IMPLEMENTATION_SLOT;
     }
 
@@ -121,9 +121,9 @@ abstract contract UUPSUpgradeable {
         uint256 s = __self;
         /// @solidity memory-safe-assembly
         assembly {
-            // To enable use cases where the default implementation is in the bytecode,
-            // we don't require that the proxy address must match the value
-            // stored in the implementation slot (see: ERC6551Proxy).
+            // To enable use cases with an immutable default implementation in the bytecode,
+            // (see: ERC6551Proxy), we don't require that the proxy address must match the
+            // value stored in the implementation slot, which may not be initialized.
             if eq(s, address()) {
                 mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
                 revert(0x1c, 0x04)
