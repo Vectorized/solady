@@ -448,7 +448,7 @@ library JSONParserLib {
                     let escape := chr(curr)
                     curr := add(curr, 1)
                     // '"', '/', '\\'.
-                    if and(shr(sub(escape, 34), 0x400000000002001), 1) {
+                    if and(shr(escape, 0x100000000000800400000000), 1) {
                         mstore8(out, escape)
                         out := add(out, 1)
                         continue
@@ -686,7 +686,7 @@ library JSONParserLib {
                 if eq(chr(_pOut), 46) { _pOut := skip0To9s(add(_pOut, 1), end_, 1) } // '.'.
                 let t_ := mload(_pOut)
                 // 'E', 'e'.
-                if or(eq(byte(0, t_), 69), eq(byte(0, t_), 101)) {
+                if eq(or(0x20, byte(0, t_)), 101) {
                     // forgefmt: disable-next-item
                     _pOut := skip0To9s(add(byte(sub(byte(1, t_), 14), 0x010001), // '+', '-'.
                         add(_pOut, 1)), end_, 1)
