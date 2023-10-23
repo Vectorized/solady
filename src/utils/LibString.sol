@@ -900,12 +900,13 @@ library LibString {
     }
 
     /// @dev Returns a string from a small bytes32 string.
+    /// `smallString` must be null terminated, or behavior will be undefined.
     function fromSmallString(bytes32 smallString) internal pure returns (string memory result) {
         if (smallString == bytes32(0)) return result;
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            let n
+            let n := 0
             for {} 1 {} {
                 n := add(n, 1)
                 if iszero(byte(n, smallString)) { break } // Scan for '\0'.
@@ -1037,7 +1038,8 @@ library LibString {
         }
     }
 
-    /// @dev Returns whether `a` equals `b`. For short strings up to 32 bytes.
+    /// @dev Returns whether `a` equals `b`. For small strings up to 32 bytes.
+    /// `b` must be null terminated, or behavior will be undefined.
     function eqs(string memory a, bytes32 b) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -1072,7 +1074,7 @@ library LibString {
 
     /// @dev Unpacks a string packed using {packOne}.
     /// Returns the empty string if `packed` is `bytes32(0)`.
-    /// If `packed` is not an output of {packOne}, the output behaviour is undefined.
+    /// If `packed` is not an output of {packOne}, the output behavior is undefined.
     function unpackOne(bytes32 packed) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -1113,7 +1115,7 @@ library LibString {
 
     /// @dev Unpacks strings packed using {packTwo}.
     /// Returns the empty strings if `packed` is `bytes32(0)`.
-    /// If `packed` is not an output of {packTwo}, the output behaviour is undefined.
+    /// If `packed` is not an output of {packTwo}, the output behavior is undefined.
     function unpackTwo(bytes32 packed)
         internal
         pure
