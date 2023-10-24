@@ -271,32 +271,35 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     modifier receiverFallback() override(Receiver) {
         /// @solidity memory-safe-assembly
         assembly {
-            function selfOwn(currentOwner_, chainId_, tokenContract_, tokenId_) -> _result {
-                _result := and(eq(tokenContract_, caller()), eq(tokenId_, calldataload(0x44)))
-                _result := and(eq(chainId_, chainid()), _result)
-                _result := or(eq(currentOwner_, address()), _result)
-            }
             let s := shr(224, calldataload(0))
             // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
             if eq(s, 0x150b7a02) {
-                extcodecopy(address(), 0x00, 0x4d, 0x60)
-                let tokenContract := mload(0x20)
-                // `tokenId` is already at 0x40.
-                mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                let currentOwner := 0
-                if eq(mload(0x00), chainid()) {
-                    currentOwner :=
-                        mul(
-                            mload(0x20),
+                extcodecopy(address(), 0x00, 0x4d, 0x60) // `chainId`, `tokenContract`, `tokenId`.
+                mstore(0x60, 0xfc0c546a) // `token()`.
+                for {} 1 {} {
+                    let tokenContract := mload(0x20)
+                    // `tokenId` is already at 0x40.
+                    mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
+                    let currentOwner := 0
+                    if eq(mload(0x00), chainid()) {
+                        currentOwner :=
+                            mul(
+                                mload(0x20),
+                                and(
+                                    gt(returndatasize(), 0x1f),
+                                    staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
+                                )
+                            )
+                    }
+                    if iszero(
+                        or(
+                            eq(currentOwner, address()),
                             and(
-                                gt(returndatasize(), 0x1f),
-                                staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
+                                and(eq(mload(0x00), chainid()), eq(tokenContract, caller())),
+                                eq(mload(0x40), calldataload(0x44)) // `tokenId`.
                             )
                         )
-                }
-                if iszero(selfOwn(currentOwner, mload(0x00), tokenContract, mload(0x40))) {
-                    mstore(0x60, 0xfc0c546a) // `token()`.
-                    for {} 1 {} {
+                    ) {
                         if iszero(
                             and(
                                 gt(returndatasize(), 0x5f),
@@ -306,23 +309,11 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                             mstore(0x40, s) // Load into memory slot.
                             return(0x5c, 0x20) // Return `msg.sig`.
                         }
-                        let t := mload(0x20) // `tokenContract`.
-                        // `tokenId` is already at 0x40.
-                        mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                        currentOwner :=
-                            mul(
-                                mload(0x20),
-                                and(
-                                    gt(returndatasize(), 0x1f),
-                                    staticcall(gas(), t, 0x3c, 0x24, 0x20, 0x20)
-                                )
-                            )
-                        if iszero(selfOwn(currentOwner, mload(0x00), t, mload(0x40))) { continue }
-                        break
+                        continue
                     }
+                    mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
+                    revert(0x1c, 0x04)
                 }
-                mstore(0x00, 0xaed146d3) // `SelfOwnDetected()`.
-                revert(0x1c, 0x04)
             }
             // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
             // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
