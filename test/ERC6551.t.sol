@@ -135,6 +135,31 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
+    function testOnERC721ReceivedCyclesWithDifferentChainIds(uint256) public {
+        unchecked {
+            uint256 n = 3;
+            _TestTemps[] memory t = new _TestTemps[](n);
+            uint256 i;
+            for (; i != n; ++i) {
+                vm.chainId(i);
+                t[i] = _testTemps();
+                if (i != 0) {
+                    vm.prank(t[i].owner);
+                    MockERC721(_erc721).safeTransferFrom(
+                        t[i].owner, address(t[i - 1].account), t[i].tokenId
+                    );
+                    t[i].owner = address(t[i - 1].account);
+                }
+            }
+            vm.chainId(_random() % n);
+            i = _random() % n;
+            uint256 j = _random() % n;
+            while (j == i) j = _random() % n;
+            vm.prank(t[i].owner);
+            MockERC721(_erc721).safeTransferFrom(t[i].owner, address(t[j].account), t[i].tokenId);
+        }
+    }
+
     function testOnERC721Received() public {
         _TestTemps memory t = _testTemps();
         address alice = _randomNonZeroAddress();
