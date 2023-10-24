@@ -271,7 +271,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     modifier receiverFallback() override(Receiver) {
         /// @solidity memory-safe-assembly
         assembly {
-            let s := shr(224, calldataload(0))
+            let s := shr(224, calldataload(0x00))
             // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.
             if eq(s, 0x150b7a02) {
                 extcodecopy(address(), 0x00, 0x4d, 0x60) // `chainId`, `tokenContract`, `tokenId`.
@@ -280,23 +280,21 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                     let tokenContract := mload(0x20)
                     // `tokenId` is already at 0x40.
                     mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                    let currentOwner := 0
-                    if eq(mload(0x00), chainid()) {
-                        currentOwner :=
-                            mul(
-                                mload(0x20),
-                                and(
-                                    gt(returndatasize(), 0x1f),
-                                    staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
-                                )
+                    let chainsEq := eq(mload(0x00), chainid())
+                    let currentOwner :=
+                        mul(
+                            mload(0x20),
+                            and(
+                                and(gt(returndatasize(), 0x1f), chainsEq),
+                                staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
                             )
-                    }
+                        )
                     if iszero(
                         or(
                             eq(currentOwner, address()),
                             and(
-                                and(eq(mload(0x00), chainid()), eq(tokenContract, caller())),
-                                eq(mload(0x40), calldataload(0x44)) // `tokenId`.
+                                and(chainsEq, eq(tokenContract, caller())),
+                                eq(mload(0x40), calldataload(0x44))
                             )
                         )
                     ) {
@@ -306,7 +304,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
                                 staticcall(gas(), currentOwner, 0x7c, 0x04, 0x00, 0x60)
                             )
                         ) {
-                            mstore(0x40, s) // Load into memory slot.
+                            mstore(0x40, s) // Store `msg.sig`.
                             return(0x5c, 0x20) // Return `msg.sig`.
                         }
                         continue
@@ -318,7 +316,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
             // 0xf23a6e61: `onERC1155Received(address,address,uint256,uint256,bytes)`.
             // 0xbc197c81: `onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)`.
             if or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81)) {
-                mstore(0x20, s) // Load into memory slot.
+                mstore(0x20, s) // Store `msg.sig`.
                 return(0x3c, 0x20) // Return `msg.sig`.
             }
         }
