@@ -267,7 +267,7 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
     {}
 
     /// @dev For handling token callbacks.
-    /// Safe-transferred ERC721 tokens will trigger a bounded ownership cycle check.
+    /// Safe-transferred ERC721 tokens will trigger a ownership cycle check.
     modifier receiverFallback() override(Receiver) {
         /// @solidity memory-safe-assembly
         assembly {
