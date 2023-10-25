@@ -117,7 +117,7 @@ library CREATE3 {
         }
     }
 
-    /// @dev Returns the deterministic address for `salt`.
+    /// @dev Returns the deterministic address for `salt` with `deployer`.
     function getDeployed(bytes32 salt, address deployer) internal pure returns (address deployed) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -144,5 +144,10 @@ library CREATE3 {
 
             deployed := keccak256(0x1e, 0x17)
         }
+    }
+
+    /// @dev Returns the deterministic address for `salt`.
+    function getDeployed(bytes32 salt) internal view returns (address deployed) {
+        deployed = getDeployed(salt, address(this));
     }
 }

@@ -21,7 +21,7 @@ contract CREATE3Test is SoladyTest {
             )
         );
 
-        assertEq(address(deployed), CREATE3, address(this).getDeployed(salt));
+        assertEq(address(deployed), CREATE3.getDeployed(salt));
 
         assertEq(deployed.name(), "Mock Token");
         assertEq(deployed.symbol(), "MOCK");
@@ -30,7 +30,7 @@ contract CREATE3Test is SoladyTest {
 
     function testDeployedUpperBitsSafeForPlainSolidity() public {
         bytes32 salt = keccak256(bytes("A salt!"));
-        address deployed = CREATE3.getDeployed(salt, address(this));
+        address deployed = CREATE3.getDeployed(salt);
         uint256 someNumber = 123456789;
         uint256 packed = (someNumber << 160) | uint160(deployed);
         uint256 someNumberUnpacked = packed >> 160;
@@ -67,7 +67,7 @@ contract CREATE3Test is SoladyTest {
             )
         );
 
-        assertEq(address(deployed), CREATE3.getDeployed(salt, address(this)));
+        assertEq(address(deployed), CREATE3.getDeployed(salt));
 
         assertEq(deployed.name(), name);
         assertEq(deployed.symbol(), symbol);
