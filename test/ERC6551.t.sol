@@ -65,8 +65,8 @@ contract ERC6551Test is SoladyTest {
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
         while (true) {
             tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
-            bytes memory mintData = abi.encodeWithSignature("mint(address,uint256)", owner, tokenId);
-            (bool success,) = _erc721.call(mintData);
+            (bool success,) =
+                _erc721.call(abi.encodeWithSignature("mint(address,uint256)", owner, tokenId));
             if (success) return tokenId;
         }
     }
