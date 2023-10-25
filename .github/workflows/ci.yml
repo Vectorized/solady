@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '**.sol'
+      - '**.yml'
 
 jobs:
   tests:
@@ -31,12 +32,12 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "post-shanghai" ] && 
-            forge test --use 0.8.21 --evm-version "shanghai"
+            forge test --use 0.8.22 --evm-version "shanghai"
           ) ||
           ( [ "${{ matrix.profile }}" = "post-shanghai-via-ir" ] && 
-            forge test --use 0.8.21 --evm-version "shanghai" --via-ir
+            forge test --use 0.8.22 --evm-version "shanghai" --via-ir
           ) ||
-          ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] && 
+          ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
             forge test --use 0.8.5 &&
             forge test --use 0.8.6 &&
             forge test --use 0.8.7 &&
@@ -46,7 +47,7 @@ jobs:
             forge test --use 0.8.11 &&
             forge test --use 0.8.12
           ) ||
-          ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] &&            
+          ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] &&
             forge test --use 0.8.13 &&
             forge test --use 0.8.14 &&
             forge test --use 0.8.15 &&
@@ -54,7 +55,8 @@ jobs:
             forge test --use 0.8.17 &&
             forge test --use 0.8.18 &&
             forge test --use 0.8.19 &&
-            forge test --use 0.8.20
+            forge test --use 0.8.20 &&
+            forge test --use 0.8.21
           ) ||
           FOUNDRY_PROFILE=${{ matrix.profile }} forge test
 
