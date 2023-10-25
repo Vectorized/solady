@@ -392,6 +392,53 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.storageLoad(storageSlot), storageValue);
     }
 
+    function testOwnerRecovery() public {
+        ERC4337.UserOperation memory userOp;
+
+        userOp.sender = address(account);
+        userOp.nonce = 4337;
+
+        // `bob` is set as recovery.
+        address bob = address(0xb);
+        userOp.callData = abi.encodeWithSelector(
+            ERC4337.execute.selector,
+            address(account),
+            0,
+            abi.encodeWithSelector(Ownable.completeOwnershipHandover.selector, bob)
+        );
+
+        // `bob` must accept recovery.
+        // IRL this would follow need.
+        vm.prank(bob);
+        account.requestOwnershipHandover();
+
+        _TestTemps memory t;
+        t.userOpHash = keccak256(abi.encode(userOp));
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) =
+            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
+
+        t.missingAccountFunds = 456;
+        vm.deal(address(account), 1 ether);
+
+        account.initialize(t.signer);
+        assertEq(account.owner(), t.signer);
+
+        vm.etch(account.entryPoint(), address(new MockEntryPoint()).code);
+        MockEntryPoint ep = MockEntryPoint(payable(account.entryPoint()));
+
+        // Success returns 0.
+        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
+        assertEq(
+            ep.validateUserOp(address(account), userOp, t.userOpHash, t.missingAccountFunds), 0
+        );
+        // Check recovery to `bob`.
+        vm.prank(address(ep));
+        (bool success,) = address(account).call(userOp.callData);
+        assertTrue(success);
+        assertEq(account.owner(), bob);
+    }
+
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
