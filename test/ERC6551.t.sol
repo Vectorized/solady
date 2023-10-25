@@ -39,8 +39,6 @@ contract ERC6551Test is SoladyTest {
 
     address internal _proxy;
 
-    mapping(uint256 => bool) internal _minted;
-
     bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
@@ -66,11 +64,13 @@ contract ERC6551Test is SoladyTest {
 
     function _testTemps() internal returns (_TestTemps memory t) {
         t.owner = _randomNonZeroAddress();
-        do {
-            t.tokenId = _random();
-            _minted[t.tokenId] = true;
-        } while (_minted[t.tokenId] == false);
-        MockERC721(_erc721).mint(t.owner, t.tokenId);
+        while (true) {
+            t.tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
+            bytes memory mintData =
+                abi.encodeWithSignature("mint(address,uint256)", t.owner, t.tokenId);
+            (bool success,) = _erc721.call(mintData);
+            if (success) break;
+        }
         t.chainId = block.chainid;
         t.salt = bytes32(_random());
         address account = _registry.createAccount(_proxy, t.salt, t.chainId, _erc721, t.tokenId);
