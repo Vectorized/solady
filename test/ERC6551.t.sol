@@ -62,15 +62,18 @@ contract ERC6551Test is SoladyTest {
         _proxy = address(new ERC6551Proxy(_erc6551));
     }
 
+    function _testTempsMint(address owner) internal returns (uint256 tokenId) {
+        while (true) {
+            tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
+            bytes memory mintData = abi.encodeWithSignature("mint(address,uint256)", owner, tokenId);
+            (bool success,) = _erc721.call(mintData);
+            if (success) return tokenId;
+        }
+    }
+
     function _testTemps() internal returns (_TestTemps memory t) {
         t.owner = _randomNonZeroAddress();
-        while (true) {
-            t.tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
-            bytes memory mintData =
-                abi.encodeWithSignature("mint(address,uint256)", t.owner, t.tokenId);
-            (bool success,) = _erc721.call(mintData);
-            if (success) break;
-        }
+        t.tokenId = _testTempsMint(t.owner);
         t.chainId = block.chainid;
         t.salt = bytes32(_random());
         address account = _registry.createAccount(_proxy, t.salt, t.chainId, _erc721, t.tokenId);
