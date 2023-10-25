@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '**.sol'
+      - '**.yml'
 
 jobs:
   tests:
