@@ -39,8 +39,6 @@ contract ERC6551Test is SoladyTest {
 
     address internal _proxy;
 
-    mapping(uint256 => bool) internal _minted;
-
     bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
@@ -64,13 +62,18 @@ contract ERC6551Test is SoladyTest {
         _proxy = address(new ERC6551Proxy(_erc6551));
     }
 
+    function _testTempsMint(address owner) internal returns (uint256 tokenId) {
+        while (true) {
+            tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
+            (bool success,) =
+                _erc721.call(abi.encodeWithSignature("mint(address,uint256)", owner, tokenId));
+            if (success) return tokenId;
+        }
+    }
+
     function _testTemps() internal returns (_TestTemps memory t) {
         t.owner = _randomNonZeroAddress();
-        do {
-            t.tokenId = _random();
-            _minted[t.tokenId] = true;
-        } while (_minted[t.tokenId] == false);
-        MockERC721(_erc721).mint(t.owner, t.tokenId);
+        t.tokenId = _testTempsMint(t.owner);
         t.chainId = block.chainid;
         t.salt = bytes32(_random());
         address account = _registry.createAccount(_proxy, t.salt, t.chainId, _erc721, t.tokenId);
@@ -132,6 +135,31 @@ contract ERC6551Test is SoladyTest {
             _TestTemps memory u = _testTemps();
             vm.prank(u.owner);
             MockERC721(_erc721).safeTransferFrom(u.owner, address(t[n - 1].account), u.tokenId);
+        }
+    }
+
+    function testOnERC721ReceivedCyclesWithDifferentChainIds(uint256) public {
+        _TestTemps[] memory t = new _TestTemps[](3);
+        unchecked {
+            for (uint256 i; i != 3; ++i) {
+                vm.chainId(i);
+                t[i] = _testTemps();
+                if (i != 0) {
+                    vm.prank(t[i].owner);
+                    MockERC721(_erc721).safeTransferFrom(
+                        t[i].owner, address(t[i - 1].account), t[i].tokenId
+                    );
+                    t[i].owner = address(t[i - 1].account);
+                }
+            }
+        }
+        unchecked {
+            vm.chainId(_random() % 3);
+            uint256 i = _random() % 3;
+            uint256 j = _random() % 3;
+            while (j == i) j = _random() % 3;
+            vm.prank(t[i].owner);
+            MockERC721(_erc721).safeTransferFrom(t[i].owner, address(t[j].account), t[i].tokenId);
         }
     }
 
@@ -272,7 +300,7 @@ contract ERC6551Test is SoladyTest {
         assertEq(t.account.state(), 1);
     }
 
-    function testUpgradeUUU() public {
+    function testUpgrade() public {
         _TestTemps memory t = _testTemps();
         address anotherImplementation = address(new MockERC6551V2());
         vm.expectRevert(ERC6551.Unauthorized.selector);
