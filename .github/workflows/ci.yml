@@ -26,9 +26,6 @@ jobs:
       - name: Install Dependencies
         run: forge install
 
-      - name: Run Lint Check
-        run: forge fmt --check
-
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "post-shanghai" ] && 
@@ -57,8 +54,10 @@ jobs:
             forge test --use 0.8.19 &&
             forge test --use 0.8.20 &&
             forge test --use 0.8.21
-          ) ||
-          FOUNDRY_PROFILE=${{ matrix.profile }} forge test
+          ) || (
+            forge fmt --check &&
+            FOUNDRY_PROFILE=${{ matrix.profile }} forge test
+          )
 
   codespell:
     runs-on: ${{ matrix.os }}
