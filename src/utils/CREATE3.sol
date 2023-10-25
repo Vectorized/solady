@@ -118,13 +118,13 @@ library CREATE3 {
     }
 
     /// @dev Returns the deterministic address for `salt`.
-    function getDeployed(bytes32 salt) internal view returns (address deployed) {
+    function getDeployed(bytes32 salt, address deployer) internal pure returns (address deployed) {
         /// @solidity memory-safe-assembly
         assembly {
             // Cache the free memory pointer.
             let m := mload(0x40)
-            // Store `address(this)`.
-            mstore(0x00, address())
+            // Store `deployer`.
+            mstore(0x00, deployer)
             // Store the prefix.
             mstore8(0x0b, 0xff)
             // Store the salt.
