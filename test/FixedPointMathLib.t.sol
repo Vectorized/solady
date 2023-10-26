@@ -316,6 +316,48 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
+    function testLog2Differential(uint256 x) public {
+        assertEq(FixedPointMathLib.log2(x), _log2Original(x));
+    }
+
+    function _log2Original(uint256 value) internal pure returns (uint256) {
+        uint256 result = 0;
+        unchecked {
+            if (value >> 128 > 0) {
+                value >>= 128;
+                result += 128;
+            }
+            if (value >> 64 > 0) {
+                value >>= 64;
+                result += 64;
+            }
+            if (value >> 32 > 0) {
+                value >>= 32;
+                result += 32;
+            }
+            if (value >> 16 > 0) {
+                value >>= 16;
+                result += 16;
+            }
+            if (value >> 8 > 0) {
+                value >>= 8;
+                result += 8;
+            }
+            if (value >> 4 > 0) {
+                value >>= 4;
+                result += 4;
+            }
+            if (value >> 2 > 0) {
+                value >>= 2;
+                result += 2;
+            }
+            if (value >> 1 > 0) {
+                result += 1;
+            }
+        }
+        return result;
+    }
+
     function testLog2Up() public {
         assertEq(FixedPointMathLib.log2Up(0), 0);
         assertEq(FixedPointMathLib.log2Up(1), 0);
