@@ -202,8 +202,9 @@ library FixedPointMathLib {
                 k := or(k, shl(5, lt(0xffffffff, shr(k, x))))
                 k := or(k, shl(4, lt(0xffff, shr(k, x))))
                 k := or(k, shl(3, lt(0xff, shr(k, x))))
-                k := or(k, shl(2, lt(0xf, shr(k, x))))
-                k := sub(or(k, byte(shr(k, x), hex"00000101020202020303030303030303")), 96)
+                // forgefmt: disable-next-item
+                k := sub(or(k, byte(and(0x1f, shr(shr(k, x), 0x8421084210842108cc6318c6db6d54be)),
+                    0x0706060506020504060203020504030106050205030304010505030400000000)), 96)
             }
 
             // Reduce range of x to (1, 2) * 2**96
@@ -570,8 +571,9 @@ library FixedPointMathLib {
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
-            r := or(r, shl(2, lt(0xf, shr(r, x))))
-            r := or(r, byte(shr(r, x), hex"00000101020202020303030303030303"))
+            // forgefmt: disable-next-item
+            r := or(r, byte(and(0x1f, shr(shr(r, x), 0x8421084210842108cc6318c6db6d54be)),
+                0x0706060506020504060203020504030106050205030304010505030400000000))
         }
     }
 
