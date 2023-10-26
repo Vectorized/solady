@@ -570,8 +570,14 @@ library FixedPointMathLib {
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
-            r := or(r, shl(2, lt(0xf, shr(r, x))))
-            r := or(r, byte(shr(r, x), hex"00000101020202020303030303030303"))
+            r :=
+                or(
+                    r,
+                    byte(
+                        and(0x1f, shr(shr(r, x), 0xc30c30c30c30c30cfcfcfcf924928add)),
+                        0x706030604030605030403020602000506030405030202010605ca0105000505
+                    )
+                )
         }
     }
 
