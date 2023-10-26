@@ -202,8 +202,9 @@ library FixedPointMathLib {
                 k := or(k, shl(5, lt(0xffffffff, shr(k, x))))
                 k := or(k, shl(4, lt(0xffff, shr(k, x))))
                 k := or(k, shl(3, lt(0xff, shr(k, x))))
-                k := or(k, shl(2, lt(0xf, shr(k, x))))
-                k := sub(or(k, byte(shr(k, x), hex"00000101020202020303030303030303")), 96)
+                // forgefmt: disable-next-item
+                k := sub(or(k, byte(and(0x1f, shr(shr(k, x), 0xc30c30c30c30c30cfcfcfcf924928add)),
+                    0x706030604030605030403020602000506030405030202010605ca0105000505)), 96)
             }
 
             // Reduce range of x to (1, 2) * 2**96
