@@ -193,23 +193,23 @@ library FixedPointMathLib {
             // ln(x * C) = ln(x) + ln(C), we can simply do nothing here
             // and add ln(2**96 / 10**18) at the end.
 
-            // Compute k = log2(x) - 96.
-            int256 k;
+            // Compute k = log2(x) - 96, t = 159 - k = 255 - log2(x) = 255 ^ log2(x).
+            int256 t;
             /// @solidity memory-safe-assembly
             assembly {
-                k := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
-                k := or(k, shl(6, lt(0xffffffffffffffff, shr(k, x))))
-                k := or(k, shl(5, lt(0xffffffff, shr(k, x))))
-                k := or(k, shl(4, lt(0xffff, shr(k, x))))
-                k := or(k, shl(3, lt(0xff, shr(k, x))))
+                t := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+                t := or(t, shl(6, lt(0xffffffffffffffff, shr(t, x))))
+                t := or(t, shl(5, lt(0xffffffff, shr(t, x))))
+                t := or(t, shl(4, lt(0xffff, shr(t, x))))
+                t := or(t, shl(3, lt(0xff, shr(t, x))))
                 // forgefmt: disable-next-item
-                k := sub(or(k, byte(and(0x1f, shr(shr(k, x), 0x8421084210842108cc6318c6db6d54be)),
-                    0x0706060506020504060203020504030106050205030304010505030400000000)), 96)
+                t := xor(t, byte(and(0x1f, shr(shr(t, x), 0x8421084210842108cc6318c6db6d54be)),
+                    0xf8f9f9faf9fdfafbf9fdfcfdfafbfcfef9fafdfafcfcfbfefafafcfbffffffff))
             }
 
             // Reduce range of x to (1, 2) * 2**96
             // ln(2^k * x) = k * ln(2) + ln(x)
-            x = int256(uint256(x << uint256(159 - k)) >> 159);
+            x = int256(uint256(x << uint256(t)) >> 159);
 
             // Evaluate using a (8, 8)-term rational approximation.
             // p is made monic, we will multiply by a scale factor later.
@@ -249,7 +249,7 @@ library FixedPointMathLib {
             // mul s * 5e18 * 2**96, base is now 5**18 * 2**192
             r *= 1677202110996718588342820967067443963516166;
             // add ln(2) * k * 5e18 * 2**192
-            r += 16597577552685614221487285958193947469193820559219878177908093499208371 * k;
+            r += 16597577552685614221487285958193947469193820559219878177908093499208371 * (159 - t);
             // add ln(2**96 / 10**18) * 5e18 * 2**192
             r += 600920179829731861736702779321621459595472258049074101567377883020018308;
             // base conversion: mul 2**18 / 2**192
