@@ -22,8 +22,8 @@ library LibBit {
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
             // forgefmt: disable-next-item
-            r := or(r, byte(and(0x1f, shr(shr(r, x), 0xc30c30c30c30c30cfcfcfcf924928add)),
-                0x706030604030605030403020602000506030405030202010605ca0105000505))
+            r := or(r, byte(and(0x1f, shr(shr(r, x), 0x8421084210842108cc6318c6db6d54be)),
+                0x706060506020504060203020504030106050205030304010505030400000000))
         }
     }
 
@@ -40,8 +40,8 @@ library LibBit {
             r := or(r, shl(3, lt(0xff, shr(r, x))))
             // forgefmt: disable-next-item
             r := add(iszero(x), xor(255,
-                or(r, byte(and(0x1f, shr(shr(r, x), 0xc30c30c30c30c30cfcfcfcf924928add)),
-                0x706030604030605030403020602000506030405030202010605ca0105000505))))
+                or(r, byte(and(0x1f, shr(shr(r, x), 0x8421084210842108cc6318c6db6d54be)),
+                0x706060506020504060203020504030106050205030304010505030400000000))))
         }
     }
 
