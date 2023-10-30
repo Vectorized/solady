@@ -30,4 +30,22 @@ contract MockERC4337 is ERC4337 {
         }
         return super.executeBatch(calls);
     }
+
+    function _domainNameAndVersion()
+        internal
+        pure
+        override
+        returns (string memory name, string memory version)
+    {
+        name = "Milady";
+        version = "1";
+    }
+
+    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
+        return _hashTypedData(structHash);
+    }
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
+    }
 }
