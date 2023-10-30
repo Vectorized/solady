@@ -266,6 +266,7 @@ contract ERC4337Test is SoladyTest {
 
     struct _TestTemps {
         bytes32 userOpHash;
+        bytes32 hash;
         address signer;
         uint256 privateKey;
         uint8 v;
@@ -309,41 +310,45 @@ contract ERC4337Test is SoladyTest {
 
     function testIsValidSignature() public {
         _TestTemps memory t;
-        t.userOpHash = keccak256("123");
+        t.hash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, _toERC1271Hash(t.hash));
 
         account.initialize(t.signer);
 
-        ERC4337.UserOperation memory userOp;
-        // Success returns `0x1626ba7e`.
-        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
-        assert(
-            account.isValidSignature(
-                SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash), userOp.signature
-            ) == 0x1626ba7e
+        assertEq(
+            account.isValidSignature(t.hash, abi.encodePacked(t.r, t.s, t.v)), bytes4(0x1626ba7e)
         );
     }
 
     function testIsValidSignatureWrapped() public {
         _TestTemps memory t;
-        t.userOpHash = keccak256("123");
+        t.hash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, _toERC1271Hash(t.hash));
 
         MockERC1271Wallet wrappedSigner = new MockERC1271Wallet(t.signer);
         account.initialize(address(wrappedSigner));
 
-        ERC4337.UserOperation memory userOp;
-        // Success returns `0x1626ba7e`.
-        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
-        assert(
-            account.isValidSignature(
-                SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash), userOp.signature
-            ) == 0x1626ba7e
+        assertEq(
+            account.isValidSignature(t.hash, abi.encodePacked(t.r, t.s, t.v)), bytes4(0x1626ba7e)
         );
+    }
+
+    function _toERC1271Hash(bytes32 hash) internal view returns (bytes32) {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256("Milady"),
+                keccak256("1"),
+                block.chainid,
+                address(account)
+            )
+        );
+        bytes32 structHash = keccak256(abi.encode(keccak256("ERC1271(bytes32 hash)"), hash));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     }
 
     function testETHReceived() public {

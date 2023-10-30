@@ -306,17 +306,17 @@ contract ERC6551Test is SoladyTest {
         vm.expectRevert(ERC6551.Unauthorized.selector);
         t.account.upgradeTo(anotherImplementation);
         assertEq(t.account.state(), 0);
-        assertEq(t.account.version(), "1");
+        assertEq(t.account.mockId(), "1");
 
         vm.prank(t.owner);
         t.account.upgradeTo(anotherImplementation);
         assertEq(t.account.state(), 1);
-        assertEq(t.account.version(), "2");
+        assertEq(t.account.mockId(), "2");
 
         vm.prank(t.owner);
         t.account.upgradeTo(_erc6551);
         assertEq(t.account.state(), 2);
-        assertEq(t.account.version(), "1");
+        assertEq(t.account.mockId(), "1");
     }
 
     function testSupportsInterface() public {
@@ -355,18 +355,32 @@ contract ERC6551Test is SoladyTest {
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
         (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(keccak256("123")));
+            vm.sign(t.privateKey, _toERC1271Hash(address(t.account), keccak256("123")));
 
         vm.prank(t.owner);
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
 
         // Success returns `0x1626ba7e`.
-        bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
-        assert(
-            t.account.isValidSignature(
-                SignatureCheckerLib.toEthSignedMessageHash(keccak256("123")), signature
-            ) == 0x1626ba7e
+        assertEq(
+            t.account.isValidSignature(keccak256("123"), abi.encodePacked(t.r, t.s, t.v)),
+            bytes4(0x1626ba7e)
         );
+    }
+
+    function _toERC1271Hash(address account, bytes32 hash) internal view returns (bytes32) {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256("Milady"),
+                keccak256("1"),
+                block.chainid,
+                address(account)
+            )
+        );
+        bytes32 structHash = keccak256(abi.encode(keccak256("ERC1271(bytes32 hash)"), hash));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
