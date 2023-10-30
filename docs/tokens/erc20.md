@@ -239,9 +239,24 @@ function approve(address spender, uint256 amount) public virtual returns (bool)
 
 #### transfer
 
+Transfer `amount` tokens from the caller to `to`.
+
+```solidity
+function transfer(address to, uint256 amount) public virtual returns (bool)
+```
+
 ##### Parameter(s)
 
+- `to`: The address `to` receive the tokens.
+- `amount`: The `amount` of tokens to transfer from the caller.
+
 ##### Return Value(s)
+
+- `true` if `amount` of tokens are transferred from the caller to `to` successfully.
+
+##### Note(s)
+
+- Emits the `Transfer` event if `amount` of tokens are transferred from the caller to `to` successfully.
 
 ---
 
