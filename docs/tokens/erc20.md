@@ -263,17 +263,50 @@ function transfer(address to, uint256 amount) public virtual returns (bool)
 
 #### transferFrom
 
+Transfers `amount` tokens from `from` to `to`.
+
+```solidity
+transferFrom(address from, address to, uint256 amount) public virtual returns (bool)
+```
+
 ##### Parameter(s)
 
+- `from`: The address to transfer the tokens from.
+- `to`: The address to transfer the tokens to.
+- `amount`: The amount of tokens to be transferred.
+
 ##### Return Value(s)
+
+- `true` if `amount` of tokens are transferred from `from` to `to`.
+
+##### Note(s)
+
+- Emits the `Transfer` event if `amount` of tokens are transferred from `from` to `to` successfully.
+- Does not update caller's allowance if allowance is `type(uint256).max`.
+- Reverts with `InsufficientAllowance` error if the caller does not have enough allowance.
+- Reverts with `InsufficientBalance` error if `from` does not have enough tokens.
 
 ---
 
 #### nonces
 
+Returns the current nonce for `owner`.
+
+```solidity
+function nonces(address owner) public view virtual returns (uint256 result)
+```
+
 ##### Parameter(s)
 
+- `owner`: The address to query the nonce of.
+
 ##### Return Value(s)
+
+- `result`: The current nonce of the `owner`.
+
+##### Note(s)
+
+- This value is used to compute the signature for [EIP-2612 permit](https://eips.ethereum.org/EIPS/eip-2612).
 
 ---
 
