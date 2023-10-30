@@ -26,6 +26,23 @@ contract MockERC6551 is ERC6551 {
         return super.executeBatch(calls, operation);
     }
 
+    function _domainNameAndVersion()
+        internal
+        pure
+        override
+        returns (string memory, string memory)
+    {
+        return ("Milady", "1");
+    }
+
+    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
+        return _hashTypedData(structHash);
+    }
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
+    }
+
     function version() public pure virtual returns (string memory) {
         return "1";
     }

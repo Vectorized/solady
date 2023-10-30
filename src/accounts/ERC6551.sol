@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Receiver} from "./Receiver.sol";
+import {EIP712} from "../utils/EIP712.sol";
 import {LibZip} from "../utils/LibZip.sol";
 import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
 import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
@@ -30,7 +31,16 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 ///   due to storage access limitations during ERC4337 UserOp validation.
 /// - Please refer to the official [ERC6551](https://github.com/erc6551/reference) reference
 ///   for latest updates on the ERC6551 standard, as well as canonical registry information.
-contract ERC6551 is UUPSUpgradeable, Receiver {
+abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev For EIP-712 signature digest calculation for the `isValidSignature` function
+    /// `keccak256("ERC1271(bytes32 hash)")`.
+    bytes32 internal constant _ERC1271_TYPEHASH =
+        0xa8a2dd35d9cd06a6840564d73aaec58914552a61a261b195d690488142842417;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -121,12 +131,30 @@ contract ERC6551 is UUPSUpgradeable, Receiver {
         virtual
         returns (bytes4 result)
     {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(owner(), hash, signature);
+        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
+            owner(), _computeIsValidSignatureDigest(hash), signature
+        );
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
             result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
         }
+    }
+
+    /// @dev Returns the EIP-712 digest for `ERC1271(bytes hash)`.
+    function _computeIsValidSignatureDigest(bytes32 hash)
+        internal
+        view
+        virtual
+        returns (bytes32 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, _ERC1271_TYPEHASH)
+            mstore(0x20, hash)
+            result := keccak256(0x00, 0x40)
+        }
+        result = _hashTypedData(result);
     }
 
     /// @dev Returns if `signer` is an authorized signer.

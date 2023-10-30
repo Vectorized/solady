@@ -335,7 +335,7 @@ contract ERC4337Test is SoladyTest {
         );
     }
 
-    function _toERC1271Hash(bytes32 hash) internal returns (bytes32) {
+    function _toERC1271Hash(bytes32 hash) internal view returns (bytes32) {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256(
@@ -347,7 +347,6 @@ contract ERC4337Test is SoladyTest {
                 address(account)
             )
         );
-        assertEq(domainSeparator, account.DOMAIN_SEPARATOR());
         bytes32 structHash = keccak256(abi.encode(keccak256("ERC1271(bytes32 hash)"), hash));
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     }

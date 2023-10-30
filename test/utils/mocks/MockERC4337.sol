@@ -35,10 +35,9 @@ contract MockERC4337 is ERC4337 {
         internal
         pure
         override
-        returns (string memory name, string memory version)
+        returns (string memory, string memory)
     {
-        name = "Milady";
-        version = "1";
+        return ("Milady", "1");
     }
 
     function hashTypedData(bytes32 structHash) external view returns (bytes32) {
