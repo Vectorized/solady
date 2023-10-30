@@ -312,9 +312,32 @@ function nonces(address owner) public view virtual returns (uint256 result)
 
 #### permit
 
+Sets `value` as the allowance of `spender` over the tokens of `owner`, authorized by a signed approval by `owner`.
+
+```solidity
+function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual
+```
+
 ##### Parameter(s)
 
+- `owner`: The owner of the tokens.
+- `spender`: The spender of the tokens.
+- `value`: The amount to set as spender's allowance.
+- `deadline`: The deadline of the signature.
+- `v`: The v component of the signature.
+- `r`: The r component of the signature.
+- `s`: The s component of the signature.
+
 ##### Return Value(s)
+
+- None
+
+##### Note(s)
+
+- Emits the `Approval` event if `spender`'s allowance is updated successfully.
+- `owner`'s nonce will be incremented by 1 if `permit` is successful.
+- Reverts with `PermitExpired` error if the current timestamp is greater than `deadline`.
+- Reverts with `InvalidPermit` error if the address recovered does not match the `owner`.
 
 ---
 
