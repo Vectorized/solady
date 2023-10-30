@@ -257,6 +257,7 @@ function transfer(address to, uint256 amount) public virtual returns (bool)
 ##### Note(s)
 
 - Emits the `Transfer` event if `amount` of tokens are transferred from the caller to `to` successfully.
+- Reverts with the `InsufficientBalance` error if caller does not have enough tokens.
 
 ---
 
