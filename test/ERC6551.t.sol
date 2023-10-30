@@ -306,17 +306,17 @@ contract ERC6551Test is SoladyTest {
         vm.expectRevert(ERC6551.Unauthorized.selector);
         t.account.upgradeTo(anotherImplementation);
         assertEq(t.account.state(), 0);
-        assertEq(t.account.version(), "1");
+        assertEq(t.account.mockId(), "1");
 
         vm.prank(t.owner);
         t.account.upgradeTo(anotherImplementation);
         assertEq(t.account.state(), 1);
-        assertEq(t.account.version(), "2");
+        assertEq(t.account.mockId(), "2");
 
         vm.prank(t.owner);
         t.account.upgradeTo(_erc6551);
         assertEq(t.account.state(), 2);
-        assertEq(t.account.version(), "1");
+        assertEq(t.account.mockId(), "1");
     }
 
     function testSupportsInterface() public {

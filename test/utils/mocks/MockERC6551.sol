@@ -43,13 +43,13 @@ contract MockERC6551 is ERC6551 {
         return _domainSeparator();
     }
 
-    function version() public pure virtual returns (string memory) {
+    function mockId() public pure virtual returns (string memory) {
         return "1";
     }
 }
 
 contract MockERC6551V2 is MockERC6551 {
-    function version() public pure virtual override(MockERC6551) returns (string memory) {
+    function mockId() public pure virtual override(MockERC6551) returns (string memory) {
         return "2";
     }
 }
