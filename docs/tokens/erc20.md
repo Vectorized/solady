@@ -72,7 +72,7 @@ TODO
 | [totalSupply](#totalsupply)           | The amount of tokens in existence.                                                                                 |
 | [balanceOf](#balanceof)               | The amount of tokens owned by `owner`.                                                                             |
 | [allowance](#allowance)               | The amount of tokens that `spender` can spend on behalf of `owner`.                                                |
-| [approve](#approve)                   | Sets the allowance of `spender` over the caller's tokens to `amount`.                                              |
+| [approve](#approve)                   | Sets `amount` as the allowance of `spender` over the caller's tokens.                                              |
 | [transfer](#transfer)                 | Transfer `amount` tokens from the caller to `to`.                                                                  |
 | [transferFrom](#transferfrom)         | Transfers `amount` tokens from `from` to `to`.                                                                     |
 | [nonces](#nonces)         | The current nonce for `owner`.                                                                     |
@@ -216,9 +216,24 @@ function allowance(address owner, address spender) public view virtual returns (
 
 #### approve
 
+Sets `amount` as the allowance of `spender` over the caller's tokens.
+
+```solidity
+function approve(address spender, uint256 amount) public virtual returns (bool)
+```
+
 ##### Parameter(s)
 
+- `spender`: The `spender` of the tokens.
+- `amount`: The `amount` to set as `spender`'s allowance.
+
 ##### Return Value(s)
+
+- `true` if `spender`'s allowance is updated successfully.
+
+##### Note(s)
+
+- Emits the `Approval` event if `spender`'s allowance is updated successfully.
 
 ---
 
