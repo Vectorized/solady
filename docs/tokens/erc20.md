@@ -171,17 +171,46 @@ function totalSupply() public view virtual returns (uint256 result)
 
 #### balanceOf
 
+Returns the amount of tokens owned by `owner`.
+
+```solidity
+function balanceOf(address owner) public view virtual returns (uint256 result)
+```
+
 ##### Parameter(s)
 
+- None
+
 ##### Return Value(s)
+
+- `result`: The amount of tokens owned by `owner`.
+
+##### Note(s)
+
+- None
 
 ---
 
 #### allowance
 
+Returns the amount of tokens that `spender` can spend on behalf of `owner`.
+
+```solidity
+function allowance(address owner, address spender) public view virtual returns (uint256 result)
+```
+
 ##### Parameter(s)
 
+- `owner`: The `owner` of the tokens.
+- `spender`: The `spender` of the tokens.
+
 ##### Return Value(s)
+
+- `result`: The amount of tokens that `spender` can spend on behalf of `owner`.
+
+##### Note(s)
+
+- None
 
 ---
 
