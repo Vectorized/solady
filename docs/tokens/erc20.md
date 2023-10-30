@@ -68,7 +68,7 @@ TODO
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | [name](#name)                         | The name of the token.                                                                                             |
 | [symbol](#symbol)                     | The symbol of the token.                                                                                           |
-| [decimals](#decimals)                 | The decimal place of the token.                                                                                  |
+| [decimals](#decimals)                 | The number of decimals of the token.                                                                                  |
 | [totalSupply](#totalsupply)           | The amount of tokens in existence.                                                                                 |
 | [balanceOf](#balanceof)               | The amount of tokens owned by `owner`.                                                                             |
 | [allowance](#allowance)               | The amount of tokens that `spender` can spend on behalf of `owner`.                                                |
@@ -99,7 +99,7 @@ function name() public view virtual returns (string memory)
 
 ##### Note(s)
 
-- Must be overridden or the contract will not compile.
+- Must override or the contract will not compile.
 
 ---
 
@@ -121,13 +121,13 @@ function symbol() public view virtual returns (string memory)
 
 ##### Note(s)
 
-- Must be overridden or the contract will not compile.
+- Must override or the contract will not compile.
 
 ---
 
 #### decimals
 
-Returns the decimal place of the token.
+Returns the number of decimals of the token.
 
 ```solidity
 function decimals() public view virtual returns (uint8)
@@ -139,7 +139,7 @@ function decimals() public view virtual returns (uint8)
 
 ##### Return Value(s)
 
-- The decimal place of the token.
+- The number of decimals of the token.
 
 ##### Note(s)
 
@@ -179,7 +179,7 @@ function balanceOf(address owner) public view virtual returns (uint256 result)
 
 ##### Parameter(s)
 
-- None
+- `owner`: The address to query the token balance of.
 
 ##### Return Value(s)
 
@@ -201,8 +201,8 @@ function allowance(address owner, address spender) public view virtual returns (
 
 ##### Parameter(s)
 
-- `owner`: The `owner` of the tokens.
-- `spender`: The `spender` of the tokens.
+- `owner`: The owner of the tokens.
+- `spender`: The spender of the tokens.
 
 ##### Return Value(s)
 
@@ -224,8 +224,8 @@ function approve(address spender, uint256 amount) public virtual returns (bool)
 
 ##### Parameter(s)
 
-- `spender`: The `spender` of the tokens.
-- `amount`: The `amount` to set as `spender`'s allowance.
+- `spender`: The spender of the tokens.
+- `amount`: The amount to set as spender's allowance.
 
 ##### Return Value(s)
 
@@ -247,12 +247,12 @@ function transfer(address to, uint256 amount) public virtual returns (bool)
 
 ##### Parameter(s)
 
-- `to`: The address `to` receive the tokens.
-- `amount`: The `amount` of tokens to transfer from the caller.
+- `to`: The address to receive the tokens.
+- `amount`: The amount of tokens to transfer from the caller.
 
 ##### Return Value(s)
 
-- `true` if `amount` of tokens are transferred from the caller to `to` successfully.
+- `true` if `amount` tokens are transferred from the caller to `to` successfully.
 
 ##### Note(s)
 
