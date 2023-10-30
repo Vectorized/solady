@@ -11,8 +11,7 @@ Solady's ERC20 token implementation is an opinionated and highly optimized imple
     - transfer to and from the zero address
     - transfer zero tokens
     - self approvals
-- If any of these functionalities are required, please override the relevant functions and add your checks.
-- Every function can be overridden with the `override` keyword if a different implementation is required.
+- Every function can be overridden with the `override` keyword if a custom implementation is required.
 - The `permit` function uses the ecrecover precompile (0x1).
 
 ## Example usage
@@ -69,7 +68,7 @@ TODO
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | [name](#name)                         | The name of the token.                                                                                             |
 | [symbol](#symbol)                     | The symbol of the token.                                                                                           |
-| [decimals](#decimals)                 | The decimal places of the token.                                                                                  |
+| [decimals](#decimals)                 | The decimal place of the token.                                                                                  |
 | [totalSupply](#totalsupply)           | The amount of tokens in existence.                                                                                 |
 | [balanceOf](#balanceof)               | The amount of tokens owned by `owner`.                                                                             |
 | [allowance](#allowance)               | The amount of tokens that `spender` can spend on behalf of `owner`.                                                |
@@ -98,9 +97,9 @@ function name() public view virtual returns (string memory)
 
 - The name of the token.
 
-##### Notes
+##### Note(s)
 
-- Must be overridden or the code will not compile.
+- Must be overridden or the contract will not compile.
 
 ---
 
@@ -120,15 +119,15 @@ function symbol() public view virtual returns (string memory)
 
 - The symbol of the token.
 
-##### Notes
+##### Note(s)
 
-- Must be overridden or the code will not compile.
+- Must be overridden or the contract will not compile.
 
 ---
 
 #### decimals
 
-Returns the decimal places of the token.
+Returns the decimal place of the token.
 
 ```solidity
 function decimals() public view virtual returns (uint8)
@@ -140,11 +139,11 @@ function decimals() public view virtual returns (uint8)
 
 ##### Return Value(s)
 
-- The decimal places of the token.
+- The decimal place of the token.
 
-##### Extras
+##### Note(s)
 
- - Override if your token requires less than 18 decimals. 
+- None
 
 ---
 
@@ -162,7 +161,11 @@ function totalSupply() public view virtual returns (uint256 result)
 
 ##### Return Value(s)
 
-- The number of tokens in existence.
+- `result`: The number of tokens in existence.
+
+##### Note(s)
+
+- None
 
 ---
 
