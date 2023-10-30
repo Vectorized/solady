@@ -7,14 +7,12 @@ Solady's ERC20 token implementation is an opinionated and highly optimized imple
 ## Things to note
 
 - The ERC20 standard does not impose any restriction on the addresses and amounts used. As such, this implementation **WILL NOT** revert for the following:
-
     - mint to the zero address
     - transfer to and from the zero address
     - transfer zero tokens
     - self approvals
-
-    If any of these functionalities are required, please override the relevant functions and add your checks.
-
+- If any of these functionalities are required, please override the relevant functions and add your checks.
+- Every function can be overridden with the `override` keyword if a different implementation is required.
 - The `permit` function uses the ecrecover precompile (0x1).
 
 ## Example usage
@@ -71,13 +69,14 @@ TODO
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | [name](#name)                         | The name of the token.                                                                                             |
 | [symbol](#symbol)                     | The symbol of the token.                                                                                           |
-| [decimals](#decimals)                 | The decimals places of the token.                                                                                  |
+| [decimals](#decimals)                 | The decimal places of the token.                                                                                  |
 | [totalSupply](#totalsupply)           | The amount of tokens in existence.                                                                                 |
 | [balanceOf](#balanceof)               | The amount of tokens owned by `owner`.                                                                             |
 | [allowance](#allowance)               | The amount of tokens that `spender` can spend on behalf of `owner`.                                                |
 | [approve](#approve)                   | Sets the allowance of `spender` over the caller's tokens to `amount`.                                              |
 | [transfer](#transfer)                 | Transfer `amount` tokens from the caller to `to`.                                                                  |
 | [transferFrom](#transferfrom)         | Transfers `amount` tokens from `from` to `to`.                                                                     |
+| [nonces](#nonces)         | The current nonce for `owner`.                                                                     |
 | [permit](#permit)                     | Sets `value` as the allowance of `spender` over the tokens of `owner`, authorized by a signed approval by `owner`. |
 | [DOMAIN_SEPARATOR](#domain_seperator) | The EIP-712 domain separator for the EIP-2612 permit.                                                              |
 
@@ -99,29 +98,71 @@ function name() public view virtual returns (string memory)
 
 - The name of the token.
 
+##### Notes
+
+- Must be overridden or the code will not compile.
+
 ---
 
 #### symbol
 
+Returns the symbol of the token.
+
+```solidity
+function symbol() public view virtual returns (string memory)
+```
+
 ##### Parameter(s)
 
+- None
+
 ##### Return Value(s)
+
+- The symbol of the token.
+
+##### Notes
+
+- Must be overridden or the code will not compile.
 
 ---
 
 #### decimals
 
+Returns the decimal places of the token.
+
+```solidity
+function decimals() public view virtual returns (uint8)
+```
+
 ##### Parameter(s)
 
+- None
+
 ##### Return Value(s)
+
+- The decimal places of the token.
+
+##### Extras
+
+ - Override if your token requires less than 18 decimals. 
 
 ---
 
 #### totalSupply
 
+Returns the amount of tokens in existence.
+
+```solidity
+function totalSupply() public view virtual returns (uint256 result)
+```
+
 ##### Parameter(s)
 
+- None
+
 ##### Return Value(s)
+
+- The number of tokens in existence.
 
 ---
 
@@ -158,6 +199,14 @@ function name() public view virtual returns (string memory)
 ---
 
 #### transferFrom
+
+##### Parameter(s)
+
+##### Return Value(s)
+
+---
+
+#### nonces
 
 ##### Parameter(s)
 
