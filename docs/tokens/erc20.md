@@ -343,9 +343,23 @@ function permit(address owner, address spender, uint256 value, uint256 deadline,
 
 #### DOMAIN_SEPERATOR
 
+Returns the EIP-712 domain separator for the EIP-2612 permit.
+
+```solidity
+function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result)
+```
+
 ##### Parameter(s)
 
+- None
+
 ##### Return Value(s)
+
+- The EIP-712 domain separator for the EIP-2612 permit.
+
+##### Note(s)
+
+- None
 
 ---
 
