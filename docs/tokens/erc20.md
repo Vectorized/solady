@@ -68,14 +68,14 @@ TODO
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | [name](#name)                         | The name of the token.                                                                                             |
 | [symbol](#symbol)                     | The symbol of the token.                                                                                           |
-| [decimals](#decimals)                 | The number of decimals of the token.                                                                                  |
+| [decimals](#decimals)                 | The number of decimals of the token.                                                                               |
 | [totalSupply](#totalsupply)           | The amount of tokens in existence.                                                                                 |
 | [balanceOf](#balanceof)               | The amount of tokens owned by `owner`.                                                                             |
 | [allowance](#allowance)               | The amount of tokens that `spender` can spend on behalf of `owner`.                                                |
 | [approve](#approve)                   | Sets `amount` as the allowance of `spender` over the caller's tokens.                                              |
 | [transfer](#transfer)                 | Transfer `amount` tokens from the caller to `to`.                                                                  |
 | [transferFrom](#transferfrom)         | Transfers `amount` tokens from `from` to `to`.                                                                     |
-| [nonces](#nonces)         | The current nonce for `owner`.                                                                     |
+| [nonces](#nonces)                     | The current nonce for `owner`.                                                                                     |
 | [permit](#permit)                     | Sets `value` as the allowance of `spender` over the tokens of `owner`, authorized by a signed approval by `owner`. |
 | [DOMAIN_SEPARATOR](#domain_seperator) | The EIP-712 domain separator for the EIP-2612 permit.                                                              |
 
@@ -373,3 +373,10 @@ function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result)
 | InsufficientBalance | Thrown when there is insufficient balance.   | `0xf4d678b8` |
 | InvalidPermit       | Thrown when the permit is invalid.           | `0xddafbaef` |
 | PermitExpired       | Thrown when the permit has expired.          | `0x1a15a3cc` |
+
+### Events
+
+| Name                              | Description                              | Hash                                                                 |
+| --------------------------------- | ---------------------------------------- | -------------------------------------------------------------------- |
+| Transfer(address,address,uint256) | Emitted when tokens are transferred. | `0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef` |
+| Approval(address,address,uint256) | Emitted when allowances are updated. | `0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925` |
