@@ -123,7 +123,8 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     ///             child: X
     ///         }))
     ///     )
-    /// ``` where `||` denotes the concatenation operator for bytes.
+    /// ```
+    /// where `||` denotes the concatenation operator for bytes.
     /// The signature will be `r || s || v || PARENT_TYPEHASH || childHash || DOMAIN_SEP_B`.
     ///
     /// For the `eth_personal_sign` workflow, `childHash` is not needed
@@ -135,8 +136,11 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     ///             child: X
     ///         }))
     ///     )
-    /// ``` where `||` denotes the concatenation operator for bytes.
+    /// ```
+    /// where `||` denotes the concatenation operator for bytes.
     /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0) || bytes32(anything)`.
+    ///
+    /// See: https://github.com/junomonster/nested-eip-712 for demo and frontend typescript code.
     ///
     /// The `hash` parameter is `X` in the pseudocode.
     function _isValidSignatureWithNestedEIP712(bytes32 hash, bytes calldata signature)
