@@ -22,7 +22,7 @@ abstract contract ERC1271 is EIP712 {
     /// prevent signature replays when a single EOA owns multiple smart contract accounts,
     /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
     ///
-    /// In pseudocode, the final hash for the nested EIP-712 workflow will be:
+    /// For the nested EIP-712 workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
@@ -34,7 +34,7 @@ abstract contract ERC1271 is EIP712 {
     /// where `||` denotes the concatenation operator for bytes.
     /// The signature will be `r || s || v || PARENT_TYPEHASH || child || DOMAIN_SEP_B`.
     ///
-    /// The `child` and `DOMAIN_SEP_B` will be used verify if `childHash` is indeed correct.
+    /// The `child` and `DOMAIN_SEP_B` will be used to verify if `childHash` is indeed correct.
     ///
     /// For the `personal_sign` workflow, the final hash will be:
     /// ```
