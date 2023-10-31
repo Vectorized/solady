@@ -116,11 +116,11 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     ///
     /// In pseudocode, the nested EIP-712 approach can be expressed as:
     /// ```
-    ///     hash = hashStruct(originalStruct)
+    ///     X = hashStruct(originalStruct)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
-    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hash),
-    ///             child: hash
+    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || X),
+    ///             child: X
     ///         }))
     ///     )
     /// ``` where `||` denotes the concatenation operator for bytes.
@@ -129,14 +129,16 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /// For the `eth_personal_sign` workflow, `childHash` is not needed
     /// as there is no `DOMAIN_SEP_B`, and thus the hash is expressed as:
     /// ```
-    ///     hash = hashStruct(originalStruct)
+    ///     X = hashStruct(originalStruct)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
-    ///             child: hash
+    ///             child: X
     ///         }))
     ///     )
     /// ``` where `||` denotes the concatenation operator for bytes.
     /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0) || bytes32(anything)`.
+    ///
+    /// The `hash` parameter is `X` in the pseudocode.
     function _isValidSignatureWithNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
