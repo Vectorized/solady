@@ -78,11 +78,11 @@ abstract contract ERC1271 is EIP712 {
                     let m := mload(0x40) // Cache the free memory pointer.
                     mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                     mstore(0x20, calldataload(add(o, 0x40))) // Store the `DOMAIN_SEP_B`
-                    mstore(0x40, child) // Store the `child`.
+                    mstore(0x40, child) // Store the child's structHash.
                     childHashMismatch := xor(keccak256(0x1e, 0x42), hash) // Non-zero if mismatch.
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
-                    // The `child` is already at 0x40.
+                    // The child's structHash is already at 0x40.
                     hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
                     mstore(0x40, m) // Restore the free memory pointer.
                 }
