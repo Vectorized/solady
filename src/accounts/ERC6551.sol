@@ -152,7 +152,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
     /// For the `personal_sign` workflow, the `childHash` and `DOMAIN_SEP_B` will not be needed
     /// and thus the final hash will be expressed as:
     /// ```
-    ///     X = ethPersonalSign(someBytes)
+    ///     X = personalSign(someBytes)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
     ///             child: X
