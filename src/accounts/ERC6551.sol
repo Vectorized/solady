@@ -130,14 +130,13 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
         }
     }
 
-    /// @dev Returns if the `signature` is valid with the nested EIP-712 approach.
-    /// The nested EIP-712 approach helps prevent the signature replay attack vector
-    /// if a single EOA owns multiple smart contract accounts, while still enabling
-    /// wallet UIs (e.g. Metamask) to show the EIP-712 values.
-    /// Frontends should use `implementsNestedEIP712` to detect if the `signature`
-    /// should be computed with nested EIP-712, or just regular plain old EIP-712.
+    /// @dev Returns if the `signature` is valid.
     ///
-    /// In pseudocode, the nested EIP-712 approach can be expressed as:
+    /// This method uses the nested EIP-712 approach to prevent signature replays
+    /// when a single EOA owns multiple smart contract accounts, while still enabling
+    /// wallet UIs (e.g. Metamask) to show the EIP-712 values.
+    ///
+    /// In pseudocode, the final hash for the nested EIP-712 workflow will be expressed as:
     /// ```
     ///     X = hashStruct(originalStruct)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
@@ -150,10 +149,10 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
     /// where `||` denotes the concatenation operator for bytes.
     /// The signature will be `r || s || v || PARENT_TYPEHASH || childHash || DOMAIN_SEP_B`.
     ///
-    /// For the `eth_personal_sign` workflow, `childHash` is not needed
-    /// as there is no `DOMAIN_SEP_B`, and thus the hash is expressed as:
+    /// For the `personal_sign` workflow, the `childHash` and `DOMAIN_SEP_B` will not be needed
+    /// and thus the final hash will be expressed as:
     /// ```
-    ///     X = hashStruct(originalStruct)
+    ///     X = ethPersonalSign(someBytes)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
     ///             child: X
@@ -165,7 +164,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
     ///
     /// See: https://github.com/junomonster/nested-eip-712 for demo and frontend typescript code.
     ///
-    /// The `hash` parameter is `X` in the pseudocode.
+    /// The `hash` parameter is denoted as `X` in the pseudocode above.
     function _isValidSignatureWithNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -185,7 +184,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
             let o := add(signature.offset, signature.length)
             let childHash := calldataload(add(o, 0x20))
             switch childHash
-            // `eth_personal_sign` workflow.
+            // `personal_sign` workflow.
             case 0 {
                 mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                 mstore(0x20, hash) // Store the `child`.
