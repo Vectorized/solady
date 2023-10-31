@@ -136,45 +136,75 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
     /// wallet UIs (e.g. Metamask) to show the EIP-712 values.
     /// Frontends should use `implementsNestedEIP712` to detect if the `signature`
     /// should be computed with nested EIP-712, or just regular plain old EIP-712.
+    ///
     /// In pseudocode, the nested EIP-712 approach can be expressed as:
     /// ```
-    ///     X = hashStruct(originalStruct)
+    ///     hash = hashStruct(originalStruct)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
-    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || X),
-    ///             child: X
+    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hash),
+    ///             child: hash
     ///         }))
     ///     )
     /// ``` where `||` denotes the concatenation operator for bytes.
+    /// The signature will be `r || s || v || PARENT_TYPEHASH || childHash || DOMAIN_SEP_B`.
+    ///
+    /// For the `eth_personal_sign` workflow, `childHash` is not needed
+    /// as there is no `DOMAIN_SEP_B`, and thus the hash is expressed as:
+    /// ```
+    ///     hash = hashStruct(originalStruct)
+    ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
+    ///         hashStruct(Parent({
+    ///             child: hash
+    ///         }))
+    ///     )
+    /// ``` where `||` denotes the concatenation operator for bytes.
+    /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0) || bytes32(anything)`.
     function _isValidSignatureWithNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
         virtual
         returns (bool result)
     {
-        if (signature.length < 0x40) return result;
+        if (signature.length < 0x60) return result;
+        bool childHashMatches;
         /// @solidity memory-safe-assembly
         assembly {
-            // Truncate the `signature.length` by 2 words (64 bytes).
-            // A nested EIP-712 ECDSA signature will contain 65 + 64 bytes.
+            // Truncate the `signature.length` by 3 words (96 bytes).
+            // A nested EIP-712 ECDSA signature will contain 65 + 96 bytes.
+            // The third last word is `DOMAIN_SEP_B`.
             // The second last word is the `PARENT_TYPEHASH`.
             // The last word is the `childHash`.
-            signature.length := sub(signature.length, 0x40)
-            let m := mload(0x40) // Cache the free memory pointer.
-            // Copy the `PARENT_TYPEHASH` and `childHash`.
-            calldatacopy(0x00, add(signature.offset, signature.length), 0x40)
-            mstore(0x40, hash) // Store the `child`.
-            hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
-            mstore(0x40, m) // Restore the free memory pointer.
+            signature.length := sub(signature.length, 0x60)
+            let o := add(signature.offset, signature.length)
+            let childHash := calldataload(add(o, 0x20))
+            switch childHash
+            // `eth_personal_sign` workflow.
+            case 0 {
+                childHashMatches := 1
+                mstore(0x00, calldataload(o)) // Copy the `PARENT_TYPEHASH`.
+                mstore(0x20, hash) // Store the `child`.
+                hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
+            }
+            // Nested EIP-712 workflow.
+            default {
+                let m := mload(0x40) // Cache the free memory pointer.
+                let domainSepB := calldataload(add(o, 0x40))
+                mstore(0x00, 0x1901)
+                mstore(0x20, calldataload(add(o, 0x40))) // Copy the `DOMAIN_SEP_B`
+                mstore(0x40, hash) // Store the `child`.
+                childHashMatches := eq(keccak256(0x1e, 0x42), childHash)
+                mstore(0x00, calldataload(o)) // Copy the `PARENT_TYPEHASH`.
+                mstore(0x20, childHash)
+                hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
+                mstore(0x40, m) // Restore the free memory pointer.
+            }
         }
-        result = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), _hashTypedData(hash), signature
-        );
-    }
-
-    /// @dev For frontends to detect if the account uses the nested EIP-712 approach.
-    function implementsNestedEIP712() public view virtual returns (bytes4) {
-        return 0xa64f005d; // Function selector of `implementsNestedEIP712()`.
+        if (childHashMatches) {
+            result = SignatureCheckerLib.isValidSignatureNowCalldata(
+                owner(), _hashTypedData(hash), signature
+            );
+        }
     }
 
     /// @dev Returns if `signer` is an authorized signer.

@@ -45,6 +45,10 @@ contract ERC6551Test is SoladyTest {
     bytes32 internal constant _PARENT_TYPEHASH =
         0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
 
+    // By right, this should be a proper domain separator, but I'm lazy.
+    bytes32 internal constant _DOMAIN_SEP_B =
+        0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
+
     bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
@@ -368,14 +372,9 @@ contract ERC6551Test is SoladyTest {
 
         bytes32 hash = keccak256("123");
         bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _toChildHash(hash));
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _toChildHash(hash), _DOMAIN_SEP_B);
         // Success returns `0x1626ba7e`.
         assertEq(t.account.isValidSignature(hash, signature), bytes4(0x1626ba7e));
-    }
-
-    function testImplementsNestedEIP712() public {
-        _TestTemps memory t = _testTemps();
-        assertEq(t.account.implementsNestedEIP712(), bytes4(keccak256("implementsNestedEIP712()")));
     }
 
     function _toERC1271Hash(address account, bytes32 child) internal view returns (bytes32) {
@@ -396,8 +395,7 @@ contract ERC6551Test is SoladyTest {
     }
 
     function _toChildHash(bytes32 child) internal pure returns (bytes32) {
-        // By right, this should be a proper EIP-712 hash. But I'm lazy.
-        return keccak256(abi.encodePacked(child));
+        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, child));
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
