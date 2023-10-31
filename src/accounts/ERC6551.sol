@@ -150,9 +150,9 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
         internal
         view
         virtual
-        returns (bool)
+        returns (bool result)
     {
-        if (signature.length < 0x40) return false;
+        if (signature.length < 0x40) return result;
         /// @solidity memory-safe-assembly
         assembly {
             // Truncate the `signature.length` by 2 words.
@@ -166,7 +166,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
             hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        return SignatureCheckerLib.isValidSignatureNowCalldata(
+        result = SignatureCheckerLib.isValidSignatureNowCalldata(
             owner(), _hashTypedData(hash), signature
         );
     }
