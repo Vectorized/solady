@@ -250,7 +250,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         incrementState
     {}
 
-    /// @dev Uses the `onwer` as the ERC1271 signer.
+    /// @dev Uses the `owner` as the ERC1271 signer.
     function _erc1271Signer() internal view virtual override(ERC1271) returns (address) {
         return owner();
     }
