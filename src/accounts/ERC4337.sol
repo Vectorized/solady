@@ -150,7 +150,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
         returns (bool result)
     {
         if (signature.length < 0x60) return result;
-        bool childHashMatches;
+        uint256 childHashMismatch;
         /// @solidity memory-safe-assembly
         assembly {
             // Truncate the `signature.length` by 3 words (96 bytes).
@@ -164,26 +164,24 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
             switch childHash
             // `eth_personal_sign` workflow.
             case 0 {
-                childHashMatches := 1
-                mstore(0x00, calldataload(o)) // Copy the `PARENT_TYPEHASH`.
+                mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                 mstore(0x20, hash) // Store the `child`.
                 hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
             }
             // Nested EIP-712 workflow.
             default {
                 let m := mload(0x40) // Cache the free memory pointer.
-                let domainSepB := calldataload(add(o, 0x40))
-                mstore(0x00, 0x1901)
-                mstore(0x20, calldataload(add(o, 0x40))) // Copy the `DOMAIN_SEP_B`
+                mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
+                mstore(0x20, calldataload(add(o, 0x40))) // Store the `DOMAIN_SEP_B`
                 mstore(0x40, hash) // Store the `child`.
-                childHashMatches := eq(keccak256(0x1e, 0x42), childHash)
-                mstore(0x00, calldataload(o)) // Copy the `PARENT_TYPEHASH`.
-                mstore(0x20, childHash)
+                childHashMismatch := xor(keccak256(0x1e, 0x42), childHash)
+                mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
+                mstore(0x20, childHash) // Store the `childHash`.
                 hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
                 mstore(0x40, m) // Restore the free memory pointer.
             }
         }
-        if (childHashMatches) {
+        if (childHashMismatch == 0) {
             result = SignatureCheckerLib.isValidSignatureNowCalldata(
                 owner(), _hashTypedData(hash), signature
             );
