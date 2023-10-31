@@ -113,7 +113,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /// when a single EOA owns multiple smart contract accounts, while still enabling
     /// wallet UIs (e.g. Metamask) to show the EIP-712 values.
     ///
-    /// In pseudocode, the final hash for the nested EIP-712 workflow will be expressed as:
+    /// In pseudocode, the final hash for the nested EIP-712 workflow will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
@@ -125,7 +125,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /// where `||` denotes the concatenation operator for bytes.
     /// The signature will be `r || s || v || PARENT_TYPEHASH || child || DOMAIN_SEP_B`.
     ///
-    /// For the `personal_sign` workflow, the final hash will be expressed as:
+    /// For the `personal_sign` workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
