@@ -117,10 +117,10 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /// ```
     ///     X = hashStruct(originalStruct)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
-    ///         hashStruct({
+    ///         hashStruct(Parent({
     ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || X),
     ///             child: X
-    ///         })
+    ///         }))
     ///     )
     /// ``` where `||` denotes the concatenation operator for bytes.
     function _isValidSignatureWithNestedEIP712(bytes32 hash, bytes calldata signature)
