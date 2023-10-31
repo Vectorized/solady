@@ -132,7 +132,8 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
         if (signature.length < 0x40) return result;
         /// @solidity memory-safe-assembly
         assembly {
-            // Truncate the `signature.length` by 2 words.
+            // Truncate the `signature.length` by 2 words (64 bytes).
+            // A nested EIP-712 ECDSA signature will contain 65 + 64 bytes.
             // The second last word is the `PARENT_TYPEHASH`.
             // The last word is the `childHash`.
             signature.length := sub(signature.length, 0x40)
