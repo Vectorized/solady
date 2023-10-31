@@ -115,24 +115,21 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     ///
     /// In pseudocode, the final hash for the nested EIP-712 workflow will be expressed as:
     /// ```
-    ///     X = hashStruct(originalStruct)
-    ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
+    ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
-    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || X),
-    ///             child: X
+    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
+    ///             child: hashStruct(originalStruct)
     ///         }))
     ///     )
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
-    /// The signature will be `r || s || v || PARENT_TYPEHASH || childHash || DOMAIN_SEP_B`.
+    /// The signature will be `r || s || v || PARENT_TYPEHASH || child || DOMAIN_SEP_B`.
     ///
-    /// For the `personal_sign` workflow, the `childHash` and `DOMAIN_SEP_B` will not be needed
-    /// and thus the final hash will be expressed as:
+    /// For the `personal_sign` workflow, the final hash will be expressed as:
     /// ```
-    ///     X = personalSign(someBytes)
-    ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
+    ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
-    ///             child: X
+    ///             childHash: personalSign(someBytes)
     ///         }))
     ///     )
     /// ```
@@ -140,8 +137,6 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0) || bytes32(anything)`.
     ///
     /// See: https://github.com/junomonster/nested-eip-712 for demo and frontend typescript code.
-    ///
-    /// The `hash` parameter is denoted as `X` in the pseudocode above.
     function _isValidSignatureWithNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -154,17 +149,14 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
         assembly {
             // Truncate the `signature.length` by 3 words (96 bytes).
             // A nested EIP-712 ECDSA signature will contain 65 + 96 bytes.
-            // The third last word is `DOMAIN_SEP_B`.
-            // The second last word is the `PARENT_TYPEHASH`.
-            // The last word is the `childHash`.
             signature.length := sub(signature.length, 0x60)
             let o := add(signature.offset, signature.length)
-            let childHash := calldataload(add(o, 0x20))
-            switch childHash
+            let child := calldataload(add(o, 0x20))
+            switch child
             // `personal_sign` workflow.
             case 0 {
                 mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
-                mstore(0x20, hash) // Store the `child`.
+                mstore(0x20, hash) // Store the `childHash`.
                 hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
             }
             // Nested EIP-712 workflow.
@@ -172,10 +164,11 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
                 let m := mload(0x40) // Cache the free memory pointer.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                 mstore(0x20, calldataload(add(o, 0x40))) // Store the `DOMAIN_SEP_B`
-                mstore(0x40, hash) // Store the `child`.
-                childHashMismatch := xor(keccak256(0x1e, 0x42), childHash)
+                mstore(0x40, child) // Store the `child`.
+                childHashMismatch := xor(keccak256(0x1e, 0x42), hash)
                 mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
-                mstore(0x20, childHash) // Store the `childHash`.
+                mstore(0x20, hash) // Store the `childHash`.
+                // The `child` is already at 0x40.
                 hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
                 mstore(0x40, m) // Restore the free memory pointer.
             }

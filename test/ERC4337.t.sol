@@ -327,8 +327,8 @@ contract ERC4337Test is SoladyTest {
         account.initialize(t.signer);
 
         bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _toChildHash(t.hash), _DOMAIN_SEP_B);
-        assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, t.hash, _DOMAIN_SEP_B);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
     }
 
     function testIsValidSignaturePersonalSign() public {
@@ -354,8 +354,8 @@ contract ERC4337Test is SoladyTest {
         account.initialize(address(wrappedSigner));
 
         bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _toChildHash(t.hash), _DOMAIN_SEP_B);
-        assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, t.hash, _DOMAIN_SEP_B);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
     }
 
     function _toERC1271Hash(bytes32 child) internal view returns (bytes32) {
@@ -379,7 +379,7 @@ contract ERC4337Test is SoladyTest {
         return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, child));
     }
 
-    function _toERC1271HashPersonalSign(bytes32 child) internal view returns (bytes32) {
+    function _toERC1271HashPersonalSign(bytes32 childHash) internal view returns (bytes32) {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256(
@@ -391,7 +391,7 @@ contract ERC4337Test is SoladyTest {
                 address(account)
             )
         );
-        bytes32 parentStructHash = keccak256(abi.encode(_PARENT_TYPEHASH, child));
+        bytes32 parentStructHash = keccak256(abi.encode(_PARENT_TYPEHASH, childHash));
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
     }
 
