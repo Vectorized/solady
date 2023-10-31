@@ -114,7 +114,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /// Frontends should use `implementsNestedEIP712` to detect if the `signature`
     /// should be computed with nested EIP-712, or just regular plain old EIP-712.
     ///
-    /// In pseudocode, the nested EIP-712 approach can be expressed as:
+    /// The final hash for the nested EIP-712 approach can be expressed as:
     /// ```
     ///     X = hashStruct(originalStruct)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
@@ -130,7 +130,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /// For the `eth_personal_sign` workflow, `childHash` is not needed
     /// as there is no `DOMAIN_SEP_B`, and thus the hash is expressed as:
     /// ```
-    ///     X = hashStruct(originalStruct)
+    ///     X = ethPersonalSign(someBytes)
     ///     hash = keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
     ///             child: X
@@ -142,7 +142,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     ///
     /// See: https://github.com/junomonster/nested-eip-712 for demo and frontend typescript code.
     ///
-    /// The `hash` parameter is `X` in the pseudocode.
+    /// The `hash` parameter is `X` in the pseudocode above.
     function _isValidSignatureWithNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
