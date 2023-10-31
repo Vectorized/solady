@@ -40,6 +40,12 @@ contract Target {
 contract ERC4337Test is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
+    // By right, this should be the keccak256 of some long-ass string:
+    // (e.g. `keccak256("Parent(bytes32 childHash,Mail child)Mail(Person from,Person to,string contents)Person(string name,address wallet)")`).
+    // But I'm lazy and will use something randomish here.
+    bytes32 internal constant _PARENT_TYPEHASH =
+        0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
+
     address internal constant _ENTRY_POINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 
     address erc4337;
@@ -316,9 +322,9 @@ contract ERC4337Test is SoladyTest {
 
         account.initialize(t.signer);
 
-        assertEq(
-            account.isValidSignature(t.hash, abi.encodePacked(t.r, t.s, t.v)), bytes4(0x1626ba7e)
-        );
+        bytes memory signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _toChildHash(t.hash));
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
     }
 
     function testIsValidSignatureWrapped() public {
@@ -330,12 +336,16 @@ contract ERC4337Test is SoladyTest {
         MockERC1271Wallet wrappedSigner = new MockERC1271Wallet(t.signer);
         account.initialize(address(wrappedSigner));
 
-        assertEq(
-            account.isValidSignature(t.hash, abi.encodePacked(t.r, t.s, t.v)), bytes4(0x1626ba7e)
-        );
+        bytes memory signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _toChildHash(t.hash));
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
     }
 
-    function _toERC1271Hash(bytes32 hash) internal view returns (bytes32) {
+    function testImplementsNestedEIP712() public {
+        assertEq(account.implementsNestedEIP712(), bytes4(keccak256("implementsNestedEIP712()")));
+    }
+
+    function _toERC1271Hash(bytes32 child) internal view returns (bytes32) {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256(
@@ -347,8 +357,14 @@ contract ERC4337Test is SoladyTest {
                 address(account)
             )
         );
-        bytes32 structHash = keccak256(abi.encode(keccak256("ERC1271(bytes32 hash)"), hash));
-        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        bytes32 parentStructHash =
+            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
+    }
+
+    function _toChildHash(bytes32 child) internal pure returns (bytes32) {
+        // By right, this should be a proper EIP-712 hash. But I'm lazy.
+        return keccak256(abi.encodePacked(child));
     }
 
     function testETHReceived() public {

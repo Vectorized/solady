@@ -19,15 +19,6 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 ///    See: `ERC4337Factory.sol`.
 abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev For EIP-712 signature digest calculation for the `isValidSignature` function
-    /// `keccak256("ERC1271(bytes32 hash)")`.
-    bytes32 internal constant _ERC1271_TYPEHASH =
-        0xa8a2dd35d9cd06a6840564d73aaec58914552a61a261b195d690488142842417;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -108,9 +99,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
         virtual
         returns (bytes4 result)
     {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), _computeIsValidSignatureDigest(hash), signature
-        );
+        bool success = _isValidSignatureWithNestedEIP712(hash, signature);
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
@@ -118,20 +107,35 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
         }
     }
 
-    /// @dev Returns the EIP-712 digest for `ERC1271(bytes hash)`.
-    function _computeIsValidSignatureDigest(bytes32 hash)
+    /// @dev Returns if the `signature` is valid with the nested EIP-712 approach.
+    function _isValidSignatureWithNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
         virtual
-        returns (bytes32 result)
+        returns (bool)
     {
+        if (signature.length < 0x40) return false;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, _ERC1271_TYPEHASH)
-            mstore(0x20, hash)
-            result := keccak256(0x00, 0x40)
+            // Truncate the `signature.length` by 2 words.
+            // The second last word is the `PARENT_TYPEHASH`.
+            // The last word is the `childHash`.
+            signature.length := sub(signature.length, 0x40)
+            let m := mload(0x40) // Cache the free memory pointer.
+            // Copy the `PARENT_TYPEHASH` and `childHash`.
+            calldatacopy(0x00, add(signature.offset, signature.length), 0x40)
+            mstore(0x40, hash) // Store the `child`.
+            hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
-        result = _hashTypedData(result);
+        return SignatureCheckerLib.isValidSignatureNowCalldata(
+            owner(), _hashTypedData(hash), signature
+        );
+    }
+
+    /// @dev For frontends to detect if the account uses the nested EIP-712 approach.
+    function implementsNestedEIP712() public view virtual returns (bytes4) {
+        return 0xa64f005d; // Function selector of `implementsNestedEIP712()`.
     }
 
     /// @dev Validate `userOp.signature` for the `userOpHash`.
