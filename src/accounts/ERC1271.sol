@@ -18,9 +18,9 @@ abstract contract ERC1271 is EIP712 {
     /// @dev Validates the signature with ERC1271 return,
     /// so that this account can also be used as a signer.
     ///
-    /// This method uses the nested EIP-712 approach to prevent signature replays
-    /// when a single EOA owns multiple smart contract accounts, while still enabling
-    /// wallet UIs (e.g. Metamask) to show the EIP-712 values.
+    /// This implementation uses ECDSA recovery. It also uses a nested EIP-712 approach to
+    /// prevent signature replays when a single EOA owns multiple smart contract accounts,
+    /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
     ///
     /// In pseudocode, the final hash for the nested EIP-712 workflow will be:
     /// ```
@@ -34,6 +34,8 @@ abstract contract ERC1271 is EIP712 {
     /// where `||` denotes the concatenation operator for bytes.
     /// The signature will be `r || s || v || PARENT_TYPEHASH || child || DOMAIN_SEP_B`.
     ///
+    /// The `child` and `DOMAIN_SEP_B` will be used verify if `childHash` is indeed correct.
+    ///
     /// For the `personal_sign` workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
@@ -46,6 +48,8 @@ abstract contract ERC1271 is EIP712 {
     /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0) || bytes32(anything)`.
     ///
     /// See: https://github.com/junomonster/nested-eip-712 for demo and frontend typescript code.
+    ///
+    /// The `hash` parameter is the `childHash`.
     function isValidSignature(bytes32 hash, bytes calldata signature)
         public
         view
@@ -58,7 +62,7 @@ abstract contract ERC1271 is EIP712 {
             /// @solidity memory-safe-assembly
             assembly {
                 // Truncate the `signature.length` by 3 words (96 bytes).
-                // A nested EIP-712 ECDSA signature will contain 65 + 96 bytes.
+                // For ECDSA, the `signature` will have 65 + 96 bytes.
                 signature.length := sub(signature.length, 0x60)
                 let o := add(signature.offset, signature.length)
                 let child := calldataload(add(o, 0x20))
@@ -75,7 +79,7 @@ abstract contract ERC1271 is EIP712 {
                     mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                     mstore(0x20, calldataload(add(o, 0x40))) // Store the `DOMAIN_SEP_B`
                     mstore(0x40, child) // Store the `child`.
-                    childHashMismatch := xor(keccak256(0x1e, 0x42), hash)
+                    childHashMismatch := xor(keccak256(0x1e, 0x42), hash) // Non-zero if mismatch.
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
                     // The `child` is already at 0x40.
