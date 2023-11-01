@@ -62,8 +62,8 @@ abstract contract ERC1271 is EIP712 {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             let o := add(signature.offset, sub(signature.length, 0x60))
+            calldatacopy(0x00, o, 0x60) // Store the `DOMAIN_SEP_B` and child's structHash.
             mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
-            calldatacopy(0x20, add(o, 0x20), 0x40) // Store the `DOMAIN_SEP_B` and child's structHash.
             for {} 1 {} {
                 // If the reconstructed childHash matches, and the signature is at least 96 bytes long,
                 // use the nested EIP-712 workflow.
