@@ -67,7 +67,7 @@ abstract contract ERC1271 is EIP712 {
             for {} 1 {} {
                 // If the reconstructed childHash matches, and the signature is at least 96 bytes long,
                 // use the nested EIP-712 workflow.
-                if gt(eq(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60)) {
+                if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
                     // Truncate the `signature.length` by 3 words (96 bytes).
                     signature.length := sub(signature.length, 0x60)
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
@@ -76,19 +76,13 @@ abstract contract ERC1271 is EIP712 {
                     hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
                     break
                 }
-                // Else if the signature is at least 32 bytes long, use the `personal_sign` workflow.
-                if iszero(lt(signature.length, 0x20)) {
-                    // Truncate the `signature.length` by 1 word (32 bytes).
-                    signature.length := sub(signature.length, 0x20)
-                    mstore(0x00, mload(0x40)) // Store the `PARENT_TYPEHASH`, which is at 0x40.
-                    mstore(0x20, hash) // Store the `childHash`.
-                    hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
-                    break
-                }
-                // Otherwise, just set the hash to something else.
-                mstore(0x00, address()) // Include the account in the hash, just in case.
-                mstore(0x20, hash)
-                hash := keccak256(0x00, 0x40)
+                // Else, use the `personal_sign` workflow.
+                // Truncate the `signature.length` by 1 word (32 bytes), until zero.
+                signature.length := mul(gt(signature.length, 0x20), sub(signature.length, 0x20))
+                // The `PARENT_TYPEHASH`, is at 0x40.
+                mstore(0x60, hash) // Store the `childHash`.
+                hash := keccak256(0x40, 0x40) // Compute the parent's structHash.
+                mstore(0x60, 0) // Restore the zero pointer.
                 break
             }
             mstore(0x40, m) // Restore the free memory pointer.
