@@ -8,9 +8,19 @@ pragma solidity ^0.8.4;
 ///
 /// @dev Note:
 /// - The recovery functions use the ecrecover precompile (0x1).
+/// - As of Solady version 0.0.68, the `recover` variants will revert upon recovery failure.
+///   This is for more safety by default.
+///   Use the `tryRecover` variants if you need to get the zero address back
+///   upon recovery failure instead.
+/// - As of Solady version 0.0.134, all `bytes signature` variants accept both
+///   regular 65-byte `(r, s, v)` and EIP-2098 `(r, sv)` short form signatures.
+///   See: https://eips.ethereum.org/EIPS/eip-2098
+///   This is for calldata efficiency on smart accounts prevalent on L2s.
 ///
-/// WARNING! Do NOT use signatures as unique identifiers.
-/// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
+/// WARNING! Do NOT use signatures as unique identifiers:
+/// - Use a nonce in the digest to prevent replay attacks on the same contract.
+/// - Use EIP-712 for the digest to prevent replay attacks across different chains and contracts.
+///   EIP-712 also enables readable signing of typed data for better user safety.
 /// This implementation does NOT check if a signature is non-malleable.
 library ECDSA {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -24,29 +34,34 @@ library ECDSA {
     /*                    RECOVERY OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: as of Solady version 0.0.68, these functions will
-    // revert upon recovery failure for more safety by default.
-
-    /// @dev Recovers the signer's address from a message digest `hash`,
-    /// and the `signature`.
-    ///
-    /// This function does NOT accept EIP-2098 short form signatures.
-    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
-    /// short form signatures instead.
+    /// @dev Recovers the signer's address from a message digest `hash`, and the `signature`.
     function recover(bytes32 hash, bytes memory signature) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             let m := mload(0x40) // Cache the free memory pointer.
-            let signatureLength := mload(signature)
-            mstore(0x00, hash)
-            mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-            mstore(0x40, mload(add(signature, 0x20))) // `r`.
-            mstore(0x60, mload(add(signature, 0x40))) // `s`.
+            for {} 1 {} {
+                mstore(0x00, hash)
+                mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                if eq(mload(signature), 64) {
+                    let vs := mload(add(signature, 0x40))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                if eq(mload(signature), 65) {
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
+                    break
+                }
+                result := 0
+                break
+            }
             result :=
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        eq(signatureLength, 65), // Address of `ecrecover`.
+                        result, // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -63,12 +78,7 @@ library ECDSA {
         }
     }
 
-    /// @dev Recovers the signer's address from a message digest `hash`,
-    /// and the `signature`.
-    ///
-    /// This function does NOT accept EIP-2098 short form signatures.
-    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
-    /// short form signatures instead.
+    /// @dev Recovers the signer's address from a message digest `hash`, and the `signature`.
     function recoverCalldata(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -76,15 +86,30 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
-            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+            for {} 1 {} {
+                if eq(signature.length, 64) {
+                    let vs := calldataload(add(signature.offset, 0x20))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x40, calldataload(signature.offset)) // `r`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                if eq(signature.length, 65) {
+                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+                    break
+                }
+                result := 0
+                break
+            }
             result :=
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        eq(signature.length, 65), // Address of `ecrecover`.
+                        result, // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -103,9 +128,6 @@ library ECDSA {
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the EIP-2098 short form signature defined by `r` and `vs`.
-    ///
-    /// This function only accepts EIP-2098 short form signatures.
-    /// See: https://eips.ethereum.org/EIPS/eip-2098
     function recover(bytes32 hash, bytes32 r, bytes32 vs) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -180,12 +202,7 @@ library ECDSA {
     // It is critical that the returned address is NEVER compared against
     // a zero address (e.g. an uninitialized address variable).
 
-    /// @dev Recovers the signer's address from a message digest `hash`,
-    /// and the `signature`.
-    ///
-    /// This function does NOT accept EIP-2098 short form signatures.
-    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
-    /// short form signatures instead.
+    /// @dev Recovers the signer's address from a message digest `hash`, and the `signature`.
     function tryRecover(bytes32 hash, bytes memory signature)
         internal
         view
@@ -193,16 +210,29 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             let m := mload(0x40) // Cache the free memory pointer.
-            let signatureLength := mload(signature)
-            mstore(0x00, hash)
-            mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-            mstore(0x40, mload(add(signature, 0x20))) // `r`.
-            mstore(0x60, mload(add(signature, 0x40))) // `s`.
+            for {} 1 {} {
+                mstore(0x00, hash)
+                mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                if eq(mload(signature), 64) {
+                    let vs := mload(add(signature, 0x40))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                if eq(mload(signature), 65) {
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
+                    break
+                }
+                result := 0
+                break
+            }
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    eq(signatureLength, 65), // Address of `ecrecover`.
+                    result, // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
@@ -216,12 +246,7 @@ library ECDSA {
         }
     }
 
-    /// @dev Recovers the signer's address from a message digest `hash`,
-    /// and the `signature`.
-    ///
-    /// This function does NOT accept EIP-2098 short form signatures.
-    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
-    /// short form signatures instead.
+    /// @dev Recovers the signer's address from a message digest `hash`, and the `signature`.
     function tryRecoverCalldata(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -229,14 +254,29 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
-            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+            for {} 1 {} {
+                if eq(signature.length, 64) {
+                    let vs := calldataload(add(signature.offset, 0x20))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x40, calldataload(signature.offset)) // `r`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                if eq(signature.length, 65) {
+                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+                    break
+                }
+                result := 0
+                break
+            }
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    eq(signature.length, 65), // Address of `ecrecover`.
+                    result, // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
@@ -252,9 +292,6 @@ library ECDSA {
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the EIP-2098 short form signature defined by `r` and `vs`.
-    ///
-    /// This function only accepts EIP-2098 short form signatures.
-    /// See: https://eips.ethereum.org/EIPS/eip-2098
     function tryRecover(bytes32 hash, bytes32 r, bytes32 vs)
         internal
         view
