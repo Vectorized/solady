@@ -32,9 +32,9 @@ abstract contract ERC1271 is EIP712 {
     ///     )
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
-    /// The signature will be `r || s || v || PARENT_TYPEHASH || child || DOMAIN_SEP_B`.
+    /// The signature will be `r || s || v || PARENT_TYPEHASH || DOMAIN_SEP_B || child`.
     ///
-    /// The `child` and `DOMAIN_SEP_B` will be used to verify if `childHash` is indeed correct.
+    /// The `DOMAIN_SEP_B` and `child` will be used to verify if `childHash` is indeed correct.
     ///
     /// For the `personal_sign` workflow, the final hash will be:
     /// ```
@@ -47,7 +47,8 @@ abstract contract ERC1271 is EIP712 {
     /// where `||` denotes the concatenation operator for bytes.
     /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0) || bytes32(anything)`.
     ///
-    /// See: https://github.com/junomonster/nested-eip-712 for demo and frontend typescript code.
+    /// For demo and typescript code, see:
+    /// https://github.com/junomonster/nested-eip-712
     ///
     /// The `hash` parameter is the `childHash`.
     function isValidSignature(bytes32 hash, bytes calldata signature)
@@ -62,29 +63,27 @@ abstract contract ERC1271 is EIP712 {
             /// @solidity memory-safe-assembly
             assembly {
                 // Truncate the `signature.length` by 3 words (96 bytes).
-                // For ECDSA, the `signature` will have 65 + 96 bytes.
                 signature.length := sub(signature.length, 0x60)
                 let o := add(signature.offset, signature.length)
-                let child := calldataload(add(o, 0x20))
-                switch child
-                // `personal_sign` workflow.
-                case 0 {
+                for {} 1 {} {
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
-                    hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
-                }
-                // Nested EIP-712 workflow.
-                default {
+                    let domainSepB := calldataload(add(o, 0x20))
+                    // `personal_sign` workflow.
+                    if iszero(domainSepB) {
+                        hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
+                        break
+                    }
                     let m := mload(0x40) // Cache the free memory pointer.
-                    mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
-                    mstore(0x20, calldataload(add(o, 0x40))) // Store the `DOMAIN_SEP_B`
-                    mstore(0x40, child) // Store the child's structHash.
-                    childHashMismatch := xor(keccak256(0x1e, 0x42), hash) // Non-zero if mismatch.
-                    mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
-                    mstore(0x20, hash) // Store the `childHash`.
-                    // The child's structHash is already at 0x40.
+                    let childHash := hash
+                    mstore(0x40, calldataload(add(o, 0x40))) // Store the child's structHash.
                     hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
+                    mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
+                    mstore(0x20, domainSepB) // Store the `DOMAIN_SEP_B`
+                    // The child's structHash is already at 0x40.
+                    childHashMismatch := xor(keccak256(0x1e, 0x42), childHash)
                     mstore(0x40, m) // Restore the free memory pointer.
+                    break
                 }
             }
             if (childHashMismatch == 0) {

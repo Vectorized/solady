@@ -372,7 +372,7 @@ contract ERC6551Test is SoladyTest {
 
         bytes32 hash = keccak256("123");
         bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, hash, _DOMAIN_SEP_B);
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, hash);
         // Success returns `0x1626ba7e`.
         assertEq(t.account.isValidSignature(_toChildHash(hash), signature), bytes4(0x1626ba7e));
     }

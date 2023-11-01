@@ -327,7 +327,7 @@ contract ERC4337Test is SoladyTest {
         account.initialize(t.signer);
 
         bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, t.hash, _DOMAIN_SEP_B);
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
         assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
     }
 
@@ -354,7 +354,7 @@ contract ERC4337Test is SoladyTest {
         account.initialize(address(wrappedSigner));
 
         bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, t.hash, _DOMAIN_SEP_B);
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
         assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
     }
 
