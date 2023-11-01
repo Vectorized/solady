@@ -43,15 +43,15 @@ library ECDSA {
             for {} 1 {} {
                 mstore(0x00, hash)
                 mstore(0x40, mload(add(signature, 0x20))) // `r`.
-                if eq(mload(signature), 65) {
-                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
-                    break
-                }
                 if eq(mload(signature), 64) {
                     let vs := mload(add(signature, 0x40))
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                if eq(mload(signature), 65) {
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
                     break
                 }
                 result := 0
@@ -90,16 +90,16 @@ library ECDSA {
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
             for {} 1 {} {
-                if eq(signature.length, 65) {
-                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-                    calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
-                    break
-                }
                 if eq(signature.length, 64) {
                     let vs := calldataload(add(signature.offset, 0x20))
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x40, calldataload(signature.offset)) // `r`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                if eq(signature.length, 65) {
+                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
                     break
                 }
                 result := 0
@@ -215,15 +215,15 @@ library ECDSA {
             for {} 1 {} {
                 mstore(0x00, hash)
                 mstore(0x40, mload(add(signature, 0x20))) // `r`.
-                if eq(mload(signature), 65) {
-                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
-                    break
-                }
                 if eq(mload(signature), 64) {
                     let vs := mload(add(signature, 0x40))
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                if eq(mload(signature), 65) {
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
                     break
                 }
                 result := 0
@@ -258,16 +258,16 @@ library ECDSA {
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
             for {} 1 {} {
-                if eq(signature.length, 65) {
-                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-                    calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
-                    break
-                }
                 if eq(signature.length, 64) {
                     let vs := calldataload(add(signature.offset, 0x20))
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x40, calldataload(signature.offset)) // `r`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                if eq(signature.length, 65) {
+                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
                     break
                 }
                 result := 0
