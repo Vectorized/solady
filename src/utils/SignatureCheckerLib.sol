@@ -11,9 +11,15 @@ pragma solidity ^0.8.4;
 /// - The `bytes memory signature` variants use the identity precompile (0x4)
 ///   to copy memory internally.
 /// - Unlike ECDSA signatures, contract signatures are revocable.
+/// - As of Solady version 0.0.134, all `bytes signature` variants accept both
+///   regular 65-byte `(r, s, v)` and EIP-2098 `(r, sv)` short form signatures.
+///   See: https://eips.ethereum.org/EIPS/eip-2098
+///   This is for calldata efficiency on smart accounts prevalent on L2s.
 ///
-/// WARNING! Do NOT use signatures as unique identifiers.
-/// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
+/// WARNING! Do NOT use signatures as unique identifiers:
+/// - Use a nonce in the digest to prevent replay attacks on the same contract.
+/// - Use EIP-712 for the digest to prevent replay attacks across different chains and contracts.
+///   EIP-712 also enables readable signing of typed data for better user safety.
 /// This implementation does NOT check if a signature is non-malleable.
 library SignatureCheckerLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -332,8 +338,7 @@ library SignatureCheckerLib {
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns whether `signature` is valid for `hash`
-    /// for an ERC1271 `signer` contract.
+    /// @dev Returns whether `signature` is valid for `hash` for an ERC1271 `signer` contract.
     function isValidERC1271SignatureNow(address signer, bytes32 hash, bytes memory signature)
         internal
         view
@@ -369,8 +374,7 @@ library SignatureCheckerLib {
         }
     }
 
-    /// @dev Returns whether `signature` is valid for `hash`
-    /// for an ERC1271 `signer` contract.
+    /// @dev Returns whether `signature` is valid for `hash` for an ERC1271 `signer` contract.
     function isValidERC1271SignatureNowCalldata(
         address signer,
         bytes32 hash,

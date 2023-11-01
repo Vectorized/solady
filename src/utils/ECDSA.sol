@@ -9,16 +9,18 @@ pragma solidity ^0.8.4;
 /// @dev Note:
 /// - The recovery functions use the ecrecover precompile (0x1).
 /// - As of Solady version 0.0.68, the `recover` variants will revert upon recovery failure.
-///   This is for more safety by default. 
+///   This is for more safety by default.
 ///   Use the `tryRecover` variants if you need to get the zero address back
 ///   upon recovery failure instead.
 /// - As of Solady version 0.0.134, all `bytes signature` variants accept both
 ///   regular 65-byte `(r, s, v)` and EIP-2098 `(r, sv)` short form signatures.
 ///   See: https://eips.ethereum.org/EIPS/eip-2098
 ///   This is for calldata efficiency on smart accounts prevalent on L2s.
-/// 
-/// WARNING! Do NOT use signatures as unique identifiers.
-/// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
+///
+/// WARNING! Do NOT use signatures as unique identifiers:
+/// - Use a nonce in the digest to prevent replay attacks on the same contract.
+/// - Use EIP-712 for the digest to prevent replay attacks across different chains and contracts.
+///   EIP-712 also enables readable signing of typed data for better user safety.
 /// This implementation does NOT check if a signature is non-malleable.
 library ECDSA {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
