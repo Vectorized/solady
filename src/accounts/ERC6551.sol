@@ -2,10 +2,9 @@
 pragma solidity ^0.8.4;
 
 import {Receiver} from "./Receiver.sol";
-import {EIP712} from "../utils/EIP712.sol";
+import {ERC1271} from "./ERC1271.sol";
 import {LibZip} from "../utils/LibZip.sol";
 import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
-import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 
 /// @notice Simple ERC6551 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC6551.sol)
@@ -31,16 +30,7 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 ///   due to storage access limitations during ERC4337 UserOp validation.
 /// - Please refer to the official [ERC6551](https://github.com/erc6551/reference) reference
 ///   for latest updates on the ERC6551 standard, as well as canonical registry information.
-abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev For EIP-712 signature digest calculation for the `isValidSignature` function
-    /// `keccak256("ERC1271(bytes32 hash)")`.
-    bytes32 internal constant _ERC1271_TYPEHASH =
-        0xa8a2dd35d9cd06a6840564d73aaec58914552a61a261b195d690488142842417;
-
+abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -121,40 +111,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-    }
-
-    /// @dev Validates the signature with ERC1271 return,
-    /// so that this account can also be used as a signer.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        public
-        view
-        virtual
-        returns (bytes4 result)
-    {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), _computeIsValidSignatureDigest(hash), signature
-        );
-        /// @solidity memory-safe-assembly
-        assembly {
-            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
-            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
-        }
-    }
-
-    /// @dev Returns the EIP-712 digest for `ERC1271(bytes hash)`.
-    function _computeIsValidSignatureDigest(bytes32 hash)
-        internal
-        view
-        virtual
-        returns (bytes32 result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, _ERC1271_TYPEHASH)
-            mstore(0x20, hash)
-            result := keccak256(0x00, 0x40)
-        }
-        result = _hashTypedData(result);
     }
 
     /// @dev Returns if `signer` is an authorized signer.
@@ -293,6 +249,11 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, EIP712 {
         onlyValidSigner
         incrementState
     {}
+
+    /// @dev Uses the `owner` as the ERC1271 signer.
+    function _erc1271Signer() internal view virtual override(ERC1271) returns (address) {
+        return owner();
+    }
 
     /// @dev For handling token callbacks.
     /// Safe-transferred ERC721 tokens will trigger a ownership cycle check.

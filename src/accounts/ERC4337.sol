@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Receiver} from "./Receiver.sol";
+import {ERC1271} from "./ERC1271.sol";
 import {EIP712} from "../utils/EIP712.sol";
 import {LibZip} from "../utils/LibZip.sol";
 import {Ownable} from "../auth/Ownable.sol";
@@ -17,16 +18,7 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// 2. Create a factory that uses `LibClone.deployERC1967` or
 ///    `LibClone.deployDeterministicERC1967` to clone the implementation.
 ///    See: `ERC4337Factory.sol`.
-abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev For EIP-712 signature digest calculation for the `isValidSignature` function
-    /// `keccak256("ERC1271(bytes32 hash)")`.
-    bytes32 internal constant _ERC1271_TYPEHASH =
-        0xa8a2dd35d9cd06a6840564d73aaec58914552a61a261b195d690488142842417;
-
+abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -98,40 +90,6 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     {
         validationData = _validateSignature(userOp, userOpHash);
         _validateNonce(userOp.nonce);
-    }
-
-    /// @dev Validates the signature with ERC1271 return,
-    /// so that this account can also be used as a signer.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        public
-        view
-        virtual
-        returns (bytes4 result)
-    {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), _computeIsValidSignatureDigest(hash), signature
-        );
-        /// @solidity memory-safe-assembly
-        assembly {
-            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
-            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
-        }
-    }
-
-    /// @dev Returns the EIP-712 digest for `ERC1271(bytes hash)`.
-    function _computeIsValidSignatureDigest(bytes32 hash)
-        internal
-        view
-        virtual
-        returns (bytes32 result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, _ERC1271_TYPEHASH)
-            mstore(0x20, hash)
-            result := keccak256(0x00, 0x40)
-        }
-        result = _hashTypedData(result);
     }
 
     /// @dev Validate `userOp.signature` for the `userOpHash`.
@@ -411,6 +369,11 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, EIP712 {
     /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
     function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
         return true;
+    }
+
+    /// @dev Uses the `owner` as the ERC1271 signer.
+    function _erc1271Signer() internal view virtual override(ERC1271) returns (address) {
+        return owner();
     }
 
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
