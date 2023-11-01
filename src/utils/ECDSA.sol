@@ -8,7 +8,15 @@ pragma solidity ^0.8.4;
 ///
 /// @dev Note:
 /// - The recovery functions use the ecrecover precompile (0x1).
-///
+/// - As of Solady version 0.0.68, the `recover` variants will revert upon recovery failure.
+///   This is for more safety by default. 
+///   Use the `tryRecover` variants if you need to get the zero address back
+///   upon recovery failure instead.
+/// - As of Solady version 0.0.134, all `bytes signature` variants accept both
+///   regular 65-byte `(r, s, v)` and EIP-2098 `(r, sv)` short form signatures.
+///   See: https://eips.ethereum.org/EIPS/eip-2098
+///   This is for calldata efficiency on smart accounts prevalent on L2s.
+/// 
 /// WARNING! Do NOT use signatures as unique identifiers.
 /// Please use EIP712 with a nonce included in the digest to prevent replay attacks.
 /// This implementation does NOT check if a signature is non-malleable.
@@ -24,15 +32,7 @@ library ECDSA {
     /*                    RECOVERY OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: as of Solady version 0.0.68, these functions will
-    // revert upon recovery failure for more safety by default.
-
-    /// @dev Recovers the signer's address from a message digest `hash`,
-    /// and the `signature`.
-    ///
-    /// This function does NOT accept EIP-2098 short form signatures.
-    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
-    /// short form signatures instead.
+    /// @dev Recovers the signer's address from a message digest `hash`, and the `signature`.
     function recover(bytes32 hash, bytes memory signature) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -76,12 +76,7 @@ library ECDSA {
         }
     }
 
-    /// @dev Recovers the signer's address from a message digest `hash`,
-    /// and the `signature`.
-    ///
-    /// This function does NOT accept EIP-2098 short form signatures.
-    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
-    /// short form signatures instead.
+    /// @dev Recovers the signer's address from a message digest `hash`, and the `signature`.
     function recoverCalldata(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -131,9 +126,6 @@ library ECDSA {
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the EIP-2098 short form signature defined by `r` and `vs`.
-    ///
-    /// This function only accepts EIP-2098 short form signatures.
-    /// See: https://eips.ethereum.org/EIPS/eip-2098
     function recover(bytes32 hash, bytes32 r, bytes32 vs) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -208,12 +200,7 @@ library ECDSA {
     // It is critical that the returned address is NEVER compared against
     // a zero address (e.g. an uninitialized address variable).
 
-    /// @dev Recovers the signer's address from a message digest `hash`,
-    /// and the `signature`.
-    ///
-    /// This function does NOT accept EIP-2098 short form signatures.
-    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
-    /// short form signatures instead.
+    /// @dev Recovers the signer's address from a message digest `hash`, and the `signature`.
     function tryRecover(bytes32 hash, bytes memory signature)
         internal
         view
@@ -257,12 +244,7 @@ library ECDSA {
         }
     }
 
-    /// @dev Recovers the signer's address from a message digest `hash`,
-    /// and the `signature`.
-    ///
-    /// This function does NOT accept EIP-2098 short form signatures.
-    /// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
-    /// short form signatures instead.
+    /// @dev Recovers the signer's address from a message digest `hash`, and the `signature`.
     function tryRecoverCalldata(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -308,9 +290,6 @@ library ECDSA {
 
     /// @dev Recovers the signer's address from a message digest `hash`,
     /// and the EIP-2098 short form signature defined by `r` and `vs`.
-    ///
-    /// This function only accepts EIP-2098 short form signatures.
-    /// See: https://eips.ethereum.org/EIPS/eip-2098
     function tryRecover(bytes32 hash, bytes32 r, bytes32 vs)
         internal
         view
