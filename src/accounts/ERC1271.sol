@@ -48,7 +48,8 @@ abstract contract ERC1271 is EIP712 {
     /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0)`.
     ///
     /// For demo and typescript code, see:
-    /// https://github.com/junomonster/nested-eip-712
+    /// - https://github.com/junomonster/nested-eip-712
+    /// - https://github.com/frangio/eip712-wrapper-for-eip1271
     ///
     /// The `hash` parameter is the `childHash`.
     function isValidSignature(bytes32 hash, bytes calldata signature)
