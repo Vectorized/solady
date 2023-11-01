@@ -331,13 +331,8 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
 
         unchecked {
-            signature = abi.encodePacked(
-                t.r,
-                uint256(t.s) | uint256(t.v - 27) << 255,
-                _PARENT_TYPEHASH,
-                _DOMAIN_SEP_B,
-                t.hash
-            );
+            uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
+            signature = abi.encodePacked(t.r, vs, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
             assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
         }
 
@@ -378,8 +373,8 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
 
         unchecked {
-            signature =
-                abi.encodePacked(t.r, uint256(t.s) | uint256(t.v - 27) << 255, _PARENT_TYPEHASH);
+            uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
+            signature = abi.encodePacked(t.r, vs, _PARENT_TYPEHASH);
             assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
         }
 
