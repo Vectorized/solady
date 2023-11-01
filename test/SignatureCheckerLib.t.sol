@@ -123,6 +123,10 @@ contract SignatureCheckerLibTest is SoladyTest {
                 vs := or(shl(255, sub(v, 27)), s)
             }
             assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, r, vs), true);
+            assertEq(
+                SignatureCheckerLib.isValidSignatureNow(signer, digest, abi.encode(r, vs)), true
+            );
+            assertEq(this.isValidSignatureNowCalldata(signer, digest, abi.encode(r, vs)), true);
         }
 
         if (_random() % 8 == 0) {
@@ -132,6 +136,10 @@ contract SignatureCheckerLibTest is SoladyTest {
                 vsc := or(shl(255, xor(1, sub(v, 27))), s)
             }
             assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, r, vsc), false);
+            assertEq(
+                SignatureCheckerLib.isValidSignatureNow(signer, digest, abi.encode(r, vsc)), false
+            );
+            assertEq(this.isValidSignatureNowCalldata(signer, digest, abi.encode(r, vsc)), false);
         }
 
         if (_random() % 8 == 0 && r != bytes32(0) && s != bytes32(0)) {
