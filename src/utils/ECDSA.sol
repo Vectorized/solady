@@ -36,17 +36,30 @@ library ECDSA {
     function recover(bytes32 hash, bytes memory signature) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             let m := mload(0x40) // Cache the free memory pointer.
-            let signatureLength := mload(signature)
-            mstore(0x00, hash)
-            mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-            mstore(0x40, mload(add(signature, 0x20))) // `r`.
-            mstore(0x60, mload(add(signature, 0x40))) // `s`.
+            for {} 1 {} {
+                mstore(0x00, hash)
+                mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                if eq(mload(signature), 65) {
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
+                    break
+                }
+                if eq(mload(signature), 64) {
+                    let vs := mload(add(signature, 0x40))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                result := 0
+                break
+            }
             result :=
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        eq(signatureLength, 65), // Address of `ecrecover`.
+                        result, // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -76,15 +89,30 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
-            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+            for {} 1 {} {
+                if eq(signature.length, 65) {
+                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+                    break
+                }
+                if eq(signature.length, 64) {
+                    let vs := calldataload(add(signature.offset, 0x20))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x40, calldataload(signature.offset)) // `r`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                result := 0
+                break
+            }
             result :=
                 mload(
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        eq(signature.length, 65), // Address of `ecrecover`.
+                        result, // Address of `ecrecover`.
                         0x00, // Start of input.
                         0x80, // Size of input.
                         0x01, // Start of output.
@@ -193,16 +221,29 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             let m := mload(0x40) // Cache the free memory pointer.
-            let signatureLength := mload(signature)
-            mstore(0x00, hash)
-            mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-            mstore(0x40, mload(add(signature, 0x20))) // `r`.
-            mstore(0x60, mload(add(signature, 0x40))) // `s`.
+            for {} 1 {} {
+                mstore(0x00, hash)
+                mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                if eq(mload(signature), 65) {
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
+                    break
+                }
+                if eq(mload(signature), 64) {
+                    let vs := mload(add(signature, 0x40))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                result := 0
+                break
+            }
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    eq(signatureLength, 65), // Address of `ecrecover`.
+                    result, // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.
@@ -229,14 +270,29 @@ library ECDSA {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, hash)
-            mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-            calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+            for {} 1 {} {
+                if eq(signature.length, 65) {
+                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                    calldatacopy(0x40, signature.offset, 0x40) // Copy `r` and `s`.
+                    break
+                }
+                if eq(signature.length, 64) {
+                    let vs := calldataload(add(signature.offset, 0x20))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x40, calldataload(signature.offset)) // `r`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    break
+                }
+                result := 0
+                break
+            }
             pop(
                 staticcall(
                     gas(), // Amount of gas left for the transaction.
-                    eq(signature.length, 65), // Address of `ecrecover`.
+                    result, // Address of `ecrecover`.
                     0x00, // Start of input.
                     0x80, // Size of input.
                     0x40, // Start of output.

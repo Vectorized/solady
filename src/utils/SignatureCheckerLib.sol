@@ -33,11 +33,32 @@ library SignatureCheckerLib {
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
                 let m := mload(0x40)
+                mstore(0x00, hash)
+                mstore(0x40, mload(add(signature, 0x20))) // `r`.
                 if eq(mload(signature), 65) {
-                    mstore(0x00, hash)
                     mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x40, mload(add(signature, 0x20))) // `r`.
                     mstore(0x60, mload(add(signature, 0x40))) // `s`.
+                    let t :=
+                        staticcall(
+                            gas(), // Amount of gas left for the transaction.
+                            1, // Address of `ecrecover`.
+                            0x00, // Start of input.
+                            0x80, // Size of input.
+                            0x01, // Start of output.
+                            0x20 // Size of output.
+                        )
+                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
+                        isValid := 1
+                        mstore(0x60, 0) // Restore the zero slot.
+                        mstore(0x40, m) // Restore the free memory pointer.
+                        break
+                    }
+                }
+                if eq(mload(signature), 64) {
+                    let vs := mload(add(signature, 0x40))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
                     let t :=
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
@@ -100,10 +121,32 @@ library SignatureCheckerLib {
             // Clean the upper 96 bits of `signer` in case they are dirty.
             for { signer := shr(96, shl(96, signer)) } signer {} {
                 let m := mload(0x40)
+                mstore(0x00, hash)
                 if eq(signature.length, 65) {
-                    mstore(0x00, hash)
                     mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
                     calldatacopy(0x40, signature.offset, 0x40) // `r`, `s`.
+                    let t :=
+                        staticcall(
+                            gas(), // Amount of gas left for the transaction.
+                            1, // Address of `ecrecover`.
+                            0x00, // Start of input.
+                            0x80, // Size of input.
+                            0x01, // Start of output.
+                            0x20 // Size of output.
+                        )
+                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
+                        isValid := 1
+                        mstore(0x60, 0) // Restore the zero slot.
+                        mstore(0x40, m) // Restore the free memory pointer.
+                        break
+                    }
+                }
+                if eq(signature.length, 64) {
+                    let vs := calldataload(add(signature.offset, 0x20))
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x40, calldataload(signature.offset)) // `r`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
                     let t :=
                         staticcall(
                             gas(), // Amount of gas left for the transaction.
