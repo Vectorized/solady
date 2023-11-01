@@ -45,7 +45,7 @@ abstract contract ERC1271 is EIP712 {
     ///     )
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
-    /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0)`.
+    /// The signature will be `r || s || v || PARENT_TYPEHASH`.
     ///
     /// For demo and typescript code, see:
     /// - https://github.com/junomonster/nested-eip-712
@@ -67,7 +67,7 @@ abstract contract ERC1271 is EIP712 {
             for {} 1 {} {
                 // If the reconstructed childHash matches, and the signature is at least 96 bytes long,
                 // use the nested EIP-712 workflow.
-                if and(eq(keccak256(0x1e, 0x42), hash), iszero(lt(signature.length, 0x60))) {
+                if gt(eq(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60)) {
                     // Truncate the `signature.length` by 3 words (96 bytes).
                     signature.length := sub(signature.length, 0x60)
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
@@ -78,15 +78,15 @@ abstract contract ERC1271 is EIP712 {
                 }
                 // Else if the signature is at least 32 bytes long, use the `personal_sign` workflow.
                 if iszero(lt(signature.length, 0x20)) {
-                    // Truncate the `signature.length` by 1 words (32 bytes).
+                    // Truncate the `signature.length` by 1 word (32 bytes).
                     signature.length := sub(signature.length, 0x20)
-                    mstore(0x00, calldataload(add(o, 0x40))) // Store the `PARENT_TYPEHASH`.
+                    mstore(0x00, mload(0x40)) // Store the `PARENT_TYPEHASH`, which is at 0x40.
                     mstore(0x20, hash) // Store the `childHash`.
                     hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
                     break
                 }
-                // Else, just set the hash to something else that will fail the signature check.
-                mstore(0x00, address())
+                // Otherwise, just set the hash to something else.
+                mstore(0x00, address()) // Include the account in the hash, just in case.
                 mstore(0x20, hash)
                 hash := keccak256(0x00, 0x40)
                 break
