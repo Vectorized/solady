@@ -79,7 +79,7 @@ abstract contract ERC1271 is EIP712 {
                 // Else, use the `personal_sign` workflow.
                 // Truncate the `signature.length` by 1 word (32 bytes), until zero.
                 signature.length := mul(gt(signature.length, 0x20), sub(signature.length, 0x20))
-                // The `PARENT_TYPEHASH`, is at 0x40.
+                // The `PARENT_TYPEHASH` is already at 0x40.
                 mstore(0x60, hash) // Store the `childHash`.
                 hash := keccak256(0x40, 0x40) // Compute the parent's structHash.
                 mstore(0x60, 0) // Restore the zero pointer.
