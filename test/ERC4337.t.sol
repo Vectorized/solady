@@ -330,6 +330,17 @@ contract ERC4337Test is SoladyTest {
             abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
         assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
 
+        unchecked {
+            signature = abi.encodePacked(
+                t.r,
+                uint256(t.s) | uint256(t.v - 27) << 255,
+                _PARENT_TYPEHASH,
+                _DOMAIN_SEP_B,
+                t.hash
+            );
+            assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
+        }
+
         signature =
             abi.encodePacked(t.r, t.s, t.v, uint256(_PARENT_TYPEHASH) ^ 1, _DOMAIN_SEP_B, t.hash);
         assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0xffffffff));
@@ -365,6 +376,18 @@ contract ERC4337Test is SoladyTest {
 
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH);
         assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
+
+        unchecked {
+            signature =
+                abi.encodePacked(t.r, uint256(t.s) | uint256(t.v - 27) << 255, _PARENT_TYPEHASH);
+            assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
+        }
+
+        signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH, _DOMAIN_SEP_B);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
 
         signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH);
         assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
