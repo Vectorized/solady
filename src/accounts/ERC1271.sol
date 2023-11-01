@@ -51,6 +51,11 @@ abstract contract ERC1271 is EIP712 {
     /// - https://github.com/junomonster/nested-eip-712
     /// - https://github.com/frangio/eip712-wrapper-for-eip1271
     ///
+    /// Of course, if you are a wallet app maker and can update your app's UI at will,
+    /// you can choose a more minimalistic signature scheme like
+    /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
+    /// All these are just for widespead out-of-the-box compatibility with other wallet apps.
+    ///
     /// The `hash` parameter is the `childHash`.
     function isValidSignature(bytes32 hash, bytes calldata signature)
         public
@@ -62,11 +67,11 @@ abstract contract ERC1271 is EIP712 {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             let o := add(signature.offset, sub(signature.length, 0x60))
-            calldatacopy(0x00, o, 0x60) // Store the `DOMAIN_SEP_B` and child's structHash.
-            mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
+            calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child's structHash.
+            mstore(0x00, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x00.
             for {} 1 {} {
-                // If the reconstructed childHash matches, and the signature is at least 96 bytes long,
-                // use the nested EIP-712 workflow.
+                // Use the nested EIP-712 workflow if the reconstructed childHash matches,
+                // and the signature is at least 96 bytes long.
                 if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
                     // Truncate the `signature.length` by 3 words (96 bytes).
                     signature.length := sub(signature.length, 0x60)
