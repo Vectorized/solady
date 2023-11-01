@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import {EIP712} from "../utils/EIP712.sol";
 import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 
-/// @notice ERC1271 mixin.
+/// @notice ERC1271 mixin with nested EIP-712 approach.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC1271.sol)
 abstract contract ERC1271 is EIP712 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
