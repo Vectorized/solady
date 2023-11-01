@@ -45,7 +45,7 @@ abstract contract ERC1271 is EIP712 {
     ///     )
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
-    /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0) || bytes32(anything)`.
+    /// The signature will be `r || s || v || PARENT_TYPEHASH || bytes32(0)`.
     ///
     /// For demo and typescript code, see:
     /// https://github.com/junomonster/nested-eip-712
@@ -57,41 +57,44 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bytes4 result)
     {
-        bool success;
-        if (signature.length >= 0x60) {
-            uint256 childHashMismatch;
-            /// @solidity memory-safe-assembly
-            assembly {
-                // Truncate the `signature.length` by 3 words (96 bytes).
-                signature.length := sub(signature.length, 0x60)
-                let o := add(signature.offset, signature.length)
-                for {} 1 {} {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            let o := add(signature.offset, sub(signature.length, 0x60))
+            mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
+            calldatacopy(0x20, add(o, 0x20), 0x40) // Store the `DOMAIN_SEP_B` and child's structHash.
+            for {} 1 {} {
+                // If the reconstructed childHash matches, and the signature is at least 96 bytes long,
+                // use the nested EIP-712 workflow.
+                if and(eq(keccak256(0x1e, 0x42), hash), iszero(lt(signature.length, 0x60))) {
+                    // Truncate the `signature.length` by 3 words (96 bytes).
+                    signature.length := sub(signature.length, 0x60)
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
-                    let domainSepB := calldataload(add(o, 0x20))
-                    // `personal_sign` workflow.
-                    if iszero(domainSepB) {
-                        hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
-                        break
-                    }
-                    let m := mload(0x40) // Cache the free memory pointer.
-                    let childHash := hash
-                    mstore(0x40, calldataload(add(o, 0x40))) // Store the child's structHash.
-                    hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
-                    mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
-                    mstore(0x20, domainSepB) // Store the `DOMAIN_SEP_B`
                     // The child's structHash is already at 0x40.
-                    childHashMismatch := xor(keccak256(0x1e, 0x42), childHash)
-                    mstore(0x40, m) // Restore the free memory pointer.
+                    hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
                     break
                 }
+                // Else if the signature is at least 32 bytes long, use the `personal_sign` workflow.
+                if iszero(lt(signature.length, 0x20)) {
+                    // Truncate the `signature.length` by 1 words (32 bytes).
+                    signature.length := sub(signature.length, 0x20)
+                    mstore(0x00, calldataload(add(o, 0x40))) // Store the `PARENT_TYPEHASH`.
+                    mstore(0x20, hash) // Store the `childHash`.
+                    hash := keccak256(0x00, 0x40) // Compute the parent's structHash.
+                    break
+                }
+                // Else, just set the hash to something else that will fail the signature check.
+                mstore(0x00, address())
+                mstore(0x20, hash)
+                hash := keccak256(0x00, 0x40)
+                break
             }
-            if (childHashMismatch == 0) {
-                success = SignatureCheckerLib.isValidSignatureNowCalldata(
-                    _erc1271Signer(), _hashTypedData(hash), signature
-                );
-            }
+            mstore(0x40, m) // Restore the free memory pointer.
         }
+        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
+            _erc1271Signer(), _hashTypedData(hash), signature
+        );
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.

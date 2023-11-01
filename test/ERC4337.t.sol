@@ -329,6 +329,30 @@ contract ERC4337Test is SoladyTest {
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
         assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
+
+        signature =
+            abi.encodePacked(t.r, t.s, t.v, uint256(_PARENT_TYPEHASH) ^ 1, _DOMAIN_SEP_B, t.hash);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0xffffffff));
+
+        signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, uint256(_DOMAIN_SEP_B) ^ 1, t.hash);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0xffffffff));
+
+        signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, uint256(t.hash) ^ 1);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = "";
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
     }
 
     function testIsValidSignaturePersonalSign() public {
@@ -339,9 +363,17 @@ contract ERC4337Test is SoladyTest {
 
         account.initialize(t.signer);
 
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, bytes32(0), bytes32(_random()));
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH);
         assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
+
+        signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = "";
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
     }
 
     function testIsValidSignatureWrapped() public {
