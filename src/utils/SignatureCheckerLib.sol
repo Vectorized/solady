@@ -12,7 +12,7 @@ pragma solidity ^0.8.4;
 ///   to copy memory internally.
 /// - Unlike ECDSA signatures, contract signatures are revocable.
 /// - As of Solady version 0.0.134, all `bytes signature` variants accept both
-///   regular 65-byte `(r, s, v)` and EIP-2098 `(r, sv)` short form signatures.
+///   regular 65-byte `(r, s, v)` and EIP-2098 `(r, vs)` short form signatures.
 ///   See: https://eips.ethereum.org/EIPS/eip-2098
 ///   This is for calldata efficiency on smart accounts prevalent on L2s.
 ///

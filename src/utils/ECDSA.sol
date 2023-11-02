@@ -13,7 +13,7 @@ pragma solidity ^0.8.4;
 ///   Use the `tryRecover` variants if you need to get the zero address back
 ///   upon recovery failure instead.
 /// - As of Solady version 0.0.134, all `bytes signature` variants accept both
-///   regular 65-byte `(r, s, v)` and EIP-2098 `(r, sv)` short form signatures.
+///   regular 65-byte `(r, s, v)` and EIP-2098 `(r, vs)` short form signatures.
 ///   See: https://eips.ethereum.org/EIPS/eip-2098
 ///   This is for calldata efficiency on smart accounts prevalent on L2s.
 ///
