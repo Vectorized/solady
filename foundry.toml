@@ -19,25 +19,3 @@ line_length = 100 # While we allow up to 120, we lint at 100 for readability.
 
 [profile.default.fuzz]
 runs = 256
-
-[profile.intense.fuzz]
-runs = 5_000
-
-[profile.via-ir]
-via_ir = true
-
-[profile.via-ir.fuzz]
-runs = 1_000
-
-[profile.min-solc]
-solc_version = "0.8.4"
-
-[profile.min-solc.fuzz]
-runs = 1_000
-
-[profile.min-solc-via-ir]
-via_ir = true
-solc_version = "0.8.4"
-
-[profile.min-solc-via-ir.fuzz]
-runs = 1_000
