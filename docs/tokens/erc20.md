@@ -355,7 +355,7 @@ function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result)
 
 ##### Return Value(s)
 
-- The EIP-712 domain separator for the EIP-2612 permit.
+- `result`: The EIP-712 domain separator for the EIP-2612 permit.
 
 ##### Note(s)
 
