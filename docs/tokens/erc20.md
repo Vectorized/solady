@@ -58,7 +58,20 @@ contract MyToken is ERC20 {
 
 ## Gas Benchmarks
 
-TODO
+| Function name    | [Solady](https://github.com/Vectorized/solady/blob/main/src/tokens/ERC20.sol) | [OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Permit.sol) |
+| ---------------- | ------ | ------------ |
+| DOMAIN_SEPERATOR | 488    | 386          |
+| allowance        | 700    | 814          |
+| approve          | 24403  | 24762        |
+| burn             | 2141   | 2439         |
+| decimals         | 222    | 222          |
+| mint             | 24649  | 24978        |
+| name             | 494    | 3241         |
+| nonces           | 555    | 616          |
+| permit           | 50437  | 51478        |
+| symbol           | 542    | 3306         |
+| transfer         | 2235   | 2613         |
+| transferFrom     | 2577   | 3295         |
 
 ## API Reference
 
