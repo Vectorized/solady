@@ -21,7 +21,7 @@ abstract contract EIP712 {
     bytes32 internal constant _DOMAIN_TYPEHASH =
         0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
-    address private immutable _cachedThis;
+    uint256 private immutable _cachedThis;
     uint256 private immutable _cachedChainId;
     bytes32 private immutable _cachedNameHash;
     bytes32 private immutable _cachedVersionHash;
@@ -36,7 +36,7 @@ abstract contract EIP712 {
     /// or if the chain id changes due to a hard fork,
     /// the domain separator will be seamlessly calculated on-the-fly.
     constructor() {
-        _cachedThis = address(this);
+        _cachedThis = uint256(uint160(address(this)));
         _cachedChainId = block.chainid;
 
         string memory name;
@@ -122,18 +122,18 @@ abstract contract EIP712 {
     ///     address signer = ECDSA.recover(digest, signature);
     /// ```
     function _hashTypedData(bytes32 structHash) internal view virtual returns (bytes32 digest) {
-        bytes32 separator;
+        // We will use `digest` to store the domain separator to save a bit of gas.
         if (_domainNameAndVersionMayChange()) {
-            separator = _buildDomainSeparator();
+            digest = _buildDomainSeparator();
         } else {
-            separator = _cachedDomainSeparator;
-            if (_cachedDomainSeparatorInvalidated()) separator = _buildDomainSeparator();
+            digest = _cachedDomainSeparator;
+            if (_cachedDomainSeparatorInvalidated()) digest = _buildDomainSeparator();
         }
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the digest.
             mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
-            mstore(0x1a, separator) // Store the domain separator.
+            mstore(0x1a, digest) // Store the domain separator.
             mstore(0x3a, structHash) // Store the struct hash.
             digest := keccak256(0x18, 0x42)
             // Restore the part of the free memory slot that was overwritten.
@@ -174,21 +174,21 @@ abstract contract EIP712 {
 
     /// @dev Returns the EIP-712 domain separator.
     function _buildDomainSeparator() private view returns (bytes32 separator) {
-        bytes32 nameHash;
+        // We will use `separator` to store the name hash to save a bit of gas.
         bytes32 versionHash;
         if (_domainNameAndVersionMayChange()) {
             (string memory name, string memory version) = _domainNameAndVersion();
-            nameHash = keccak256(bytes(name));
+            separator = keccak256(bytes(name));
             versionHash = keccak256(bytes(version));
         } else {
-            nameHash = _cachedNameHash;
+            separator = _cachedNameHash;
             versionHash = _cachedVersionHash;
         }
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Load the free memory pointer.
             mstore(m, _DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), nameHash)
+            mstore(add(m, 0x20), separator) // Name hash.
             mstore(add(m, 0x40), versionHash)
             mstore(add(m, 0x60), chainid())
             mstore(add(m, 0x80), address())
@@ -199,7 +199,7 @@ abstract contract EIP712 {
     /// @dev Returns if the cached domain separator has been invalidated.
     function _cachedDomainSeparatorInvalidated() private view returns (bool result) {
         uint256 cachedChainId = _cachedChainId;
-        address cachedThis = _cachedThis;
+        uint256 cachedThis = _cachedThis;
         /// @solidity memory-safe-assembly
         assembly {
             result := iszero(and(eq(chainid(), cachedChainId), eq(address(), cachedThis)))
