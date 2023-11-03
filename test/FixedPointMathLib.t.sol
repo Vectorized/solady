@@ -1100,7 +1100,14 @@ contract FixedPointMathLibTest is SoladyTest {
         _testSci(10 ** 77, 1, 77);
         _testSci(2 * (10 ** 76), 2, 76);
         _testSci(9 * (10 ** 76), 9, 76);
-        testSci(12345);
+        unchecked {
+            for (uint256 i; i < 32; ++i) {
+                testSci(11 + i * i * 100);
+            }
+            for (uint256 i; i < 500; ++i) {
+                _testSci(0, 0, 0);
+            }
+        }
     }
 
     function testSci(uint256 a) public {
