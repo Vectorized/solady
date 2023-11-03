@@ -648,43 +648,39 @@ library FixedPointMathLib {
     /// @dev Returns the scientific notation format `mantissa * 10 ** exponent` of `x`.
     /// Useful for compressing prices (e.g. using 25 bit mantissa and 7 bit exponent).
     function sci(uint256 x) internal pure returns (uint256 mantissa, uint256 exponent) {
-        if (x == 0) return (mantissa, exponent);
         /// @solidity memory-safe-assembly
         assembly {
-            let m := 10000000000
-            // `x` won't be too big in practice most of the time. `1 << 66` is about 73 ETH.
-            if shr(66, x) {
-                let mm := mul(m, m)
-                if iszero(mod(x, mul(mm, mm))) {
-                    x := div(x, mul(mm, mm))
-                    exponent := 40
+            mantissa := x
+            if mantissa {
+                if iszero(mod(mantissa, 100000000000000000000000000000000000000)) {
+                    mantissa := div(mantissa, 100000000000000000000000000000000000000)
+                    exponent := 38
                 }
-                if iszero(mod(x, mm)) {
-                    x := div(x, mm)
+                if iszero(mod(mantissa, 100000000000000000000)) {
+                    mantissa := div(mantissa, 100000000000000000000)
                     exponent := add(exponent, 20)
                 }
+                if iszero(mod(mantissa, 10000000000)) {
+                    mantissa := div(mantissa, 10000000000)
+                    exponent := add(exponent, 10)
+                }
+                if iszero(mod(mantissa, 100000)) {
+                    mantissa := div(mantissa, 100000)
+                    exponent := add(exponent, 5)
+                }
+                if iszero(mod(mantissa, 100)) {
+                    mantissa := div(mantissa, 100)
+                    exponent := add(exponent, 2)
+                }
+                if iszero(mod(mantissa, 100)) {
+                    mantissa := div(mantissa, 100)
+                    exponent := add(exponent, 2)
+                }
+                if iszero(mod(mantissa, 10)) {
+                    mantissa := div(mantissa, 10)
+                    exponent := add(exponent, 1)
+                }
             }
-            if iszero(mod(x, m)) {
-                x := div(x, m)
-                exponent := add(exponent, 10)
-            }
-            if iszero(mod(x, 100000)) {
-                x := div(x, 100000)
-                exponent := add(exponent, 5)
-            }
-            if iszero(mod(x, 1000)) {
-                x := div(x, 1000)
-                exponent := add(exponent, 3)
-            }
-            if iszero(mod(x, 100)) {
-                x := div(x, 100)
-                exponent := add(exponent, 2)
-            }
-            if iszero(mod(x, 10)) {
-                x := div(x, 10)
-                exponent := add(exponent, 1)
-            }
-            mantissa := x
         }
     }
 
