@@ -81,7 +81,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         bytes32 userOpHash,
         uint256 missingAccountFunds
     )
-        public
+        external
         payable
         virtual
         onlyEntryPoint
