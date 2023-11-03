@@ -696,22 +696,21 @@ library FixedPointMathLib {
     ///     uint32 packed = SafeCastLib.toUint32(FixedPointMathLib.packSci(777 ether));
     /// ```
     function packSci(uint256 x) internal pure returns (uint256 packed) {
-        (uint256 mantissa, uint256 exponent) = sci(x);
+        (x, packed) = sci(x); // Reuse for `mantissa` and `exponent`.
         /// @solidity memory-safe-assembly
         assembly {
-            if shr(249, mantissa) {
+            if shr(249, x) {
                 mstore(0x00, 0xce30380c) // `MantissaOverflow()`.
                 revert(0x1c, 0x04)
             }
-            packed := or(shl(7, mantissa), exponent)
+            packed := or(shl(7, x), packed)
         }
     }
 
     /// @dev Convenience function for unpacking a packed number from `packSci`.
     function unpackSci(uint256 packed) internal pure returns (uint256 unpacked) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            unpacked := mul(shr(7, packed), exp(10, and(packed, 0x7f)))
+        unchecked {
+            unpacked = (packed >> 7) * 10 ** (packed & 0x7f);
         }
     }
 
