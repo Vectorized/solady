@@ -1130,12 +1130,16 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
-    function testSciExponentWellBehaved(uint256 x) public {
+    function testSci2(uint256 x) public {
         unchecked {
             (uint256 mantissa, uint256 exponent) = FixedPointMathLib.sci(x);
             assertEq(x % 10 ** exponent, 0);
             if (x != 0) {
-                assertGt(x % 10 ** (exponent + 1), 0);
+                assertTrue(x % 10 ** (exponent + 1) > 0);
+                assertTrue(mantissa % 10 != 0);
+            } else {
+                assertEq(mantissa, 0);
+                assertEq(exponent, 0);
             }
         }
     }
