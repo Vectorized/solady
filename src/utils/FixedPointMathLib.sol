@@ -18,6 +18,9 @@ library FixedPointMathLib {
     /// @dev The operation failed, due to an overflow.
     error RPowOverflow();
 
+    /// @dev The mantissa is too big to fit.
+    error MantissaOverflow();
+
     /// @dev The operation failed, due to an multiplication overflow.
     error MulWadFailed();
 
@@ -681,6 +684,34 @@ library FixedPointMathLib {
                     exponent := add(exponent, 1)
                 }
             }
+        }
+    }
+
+    /// @dev Convenience function for packing `x` into a smaller number using `sci`.
+    /// The `mantissa` will be in bits [7..255] (the upper 249 bits).
+    /// The `exponent` will be in bits [0..6] (the lower 7 bits).
+    /// Use `SafeCastLib` to safely ensure that the `packed` number is small
+    /// enough to fit in the desired unsigned integer type:
+    /// ```
+    ///     uint32 packed = SafeCastLib.toUint32(FixedPointMathLib.packSci(777 ether));
+    /// ```
+    function packSci(uint256 x) internal pure returns (uint256 packed) {
+        (uint256 mantissa, uint256 exponent) = sci(x);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if shr(249, mantissa) {
+                mstore(0x00, 0xce30380c) // `MantissaOverflow()`.
+                revert(0x1c, 0x04)
+            }
+            packed := or(shl(7, mantissa), exponent)
+        }
+    }
+
+    /// @dev Convenience function for unpacking a packed number from `packSci`.
+    function unpackSci(uint256 packed) internal pure returns (uint256 unpacked) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            unpacked := mul(shr(7, packed), exp(10, and(packed, 0x7f)))
         }
     }
 
