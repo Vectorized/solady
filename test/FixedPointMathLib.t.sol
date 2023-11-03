@@ -1079,4 +1079,49 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.log256Up(type(uint256).max - 1), 32);
         assertEq(FixedPointMathLib.log256Up(type(uint256).max), 32);
     }
+
+    function testSci() public {
+        _testSci(0, 0, 0);
+        _testSci(1, 1, 0);
+        _testSci(13, 13, 0);
+        _testSci(130, 13, 1);
+        _testSci(1300, 13, 2);
+        unchecked {
+            uint256 a = 103;
+            uint256 exponent = 0;
+            uint256 m = 1;
+            uint256 n = 78 - FixedPointMathLib.log10Up(a);
+            for (uint256 i; i < n; ++i) {
+                _testSci(a * m, a, exponent);
+                exponent += 1;
+                m *= 10;
+            }
+        }
+        _testSci(10 ** 77, 1, 77);
+        _testSci(2 * (10 ** 76), 2, 76);
+        _testSci(9 * (10 ** 76), 9, 76);
+        testSci(12345);
+    }
+
+    function testSci(uint256 a) public {
+        unchecked {
+            while (a % 10 == 0) a = _random();
+            uint256 exponent = 0;
+            uint256 m = 1;
+            uint256 n = 78 - FixedPointMathLib.log10Up(a);
+            for (uint256 i; i < n; ++i) {
+                _testSci(a * m, a, exponent);
+                uint256 x = a * 10 ** exponent;
+                assertEq(x, a * m);
+                exponent += 1;
+                m *= 10;
+            }
+        }
+    }
+
+    function _testSci(uint256 x, uint256 expectedMantissa, uint256 expectedExponent) internal {
+        (uint256 mantissa, uint256 exponent) = FixedPointMathLib.sci(x);
+        assertEq(mantissa, expectedMantissa);
+        assertEq(exponent, expectedExponent);
+    }
 }
