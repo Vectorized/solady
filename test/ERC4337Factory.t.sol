@@ -49,6 +49,25 @@ contract ERC4337FactoryTest is SoladyTest {
         assertEq(expectedInstance, instanceA);
     }
 
+    function testCreateAccountRepeatedDeployment2() public {
+        address owner = _randomNonZeroAddress();
+        bytes32 salt =
+            bytes32((_random() & uint256(type(uint96).max)) | (uint256(uint160(owner)) << 96));
+        address expectedInstance = factory.getAddress(salt);
+        address notOwner = _randomNonZeroAddress();
+        while (owner == notOwner) notOwner = _randomNonZeroAddress();
+        vm.expectRevert(LibClone.SaltDoesNotStartWith.selector);
+        factory.createAccount{value: 123}(notOwner, salt);
+        address instanceA = factory.createAccount{value: 123}(owner, salt);
+        assertEq(instanceA.balance, 123);
+        vm.expectRevert(LibClone.SaltDoesNotStartWith.selector);
+        factory.createAccount{value: 123}(notOwner, salt);
+        assertEq(factory.createAccount{value: 456}(owner, salt), instanceA);
+        assertEq(factory.createAccount(owner, salt), instanceA);
+        assertEq(instanceA.balance, 123 + 456);
+        assertEq(expectedInstance, instanceA);
+    }
+
     function _checkImplementationSlot(address proxy, address implementation_) internal {
         bytes32 slot = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
         assertEq(vm.load(proxy, slot), bytes32(uint256(uint160(implementation_))));
