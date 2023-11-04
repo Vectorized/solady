@@ -685,7 +685,7 @@ library LibClone {
     }
 
     /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
-    /// This method won't revert if the proxy is already deployed.
+    /// Note: This method won't revert if the proxy is already deployed (ERC4337 factory convention).
     function deployDeterministicERC1967(address implementation, bytes32 salt)
         internal
         returns (bool alreadyDeployed, address instance)
@@ -694,7 +694,7 @@ library LibClone {
     }
 
     /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
-    /// This method won't revert if the proxy is already deployed.
+    /// Note: This method won't revert if the proxy is already deployed (ERC4337 factory convention).
     function deployDeterministicERC1967(uint256 value, address implementation, bytes32 salt)
         internal
         returns (bool alreadyDeployed, address instance)
@@ -708,9 +708,9 @@ library LibClone {
             mstore(0x1e, implementation)
             mstore(0x0a, 0x603d3d8160223d3973)
             // Compute and store the bytecode hash.
-            mstore8(m, 0xff) // Write the prefix.
             mstore(add(m, 0x35), keccak256(0x21, 0x5f))
-            mstore(add(m, 0x01), shl(96, address()))
+            mstore(m, shl(88, address()))
+            mstore8(m, 0xff) // Write the prefix.
             mstore(add(m, 0x15), salt)
             instance := keccak256(m, 0x55)
             for {} 1 {} {
@@ -722,13 +722,12 @@ library LibClone {
                     }
                     break
                 }
-                if value {
-                    if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
-                        mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
-                        revert(0x1c, 0x04)
-                    }
-                }
                 alreadyDeployed := 1
+                if iszero(value) { break }
+                if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
                 break
             }
             mstore(0x40, m) // Restore the free memory pointer.
