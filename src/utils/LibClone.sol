@@ -685,7 +685,7 @@ library LibClone {
     }
 
     /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
-    /// Note: This method won't revert if the proxy is already deployed (for ERC4337 factory).
+    /// Note: This method won't revert if the proxy is already deployed (ERC4337 factory convention).
     function deployDeterministicERC1967(address implementation, bytes32 salt)
         internal
         returns (bool alreadyDeployed, address instance)
@@ -694,7 +694,7 @@ library LibClone {
     }
 
     /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
-    /// Note: This method won't revert if the proxy is already deployed (for ERC4337 factory).
+    /// Note: This method won't revert if the proxy is already deployed (ERC4337 factory convention).
     function deployDeterministicERC1967(uint256 value, address implementation, bytes32 salt)
         internal
         returns (bool alreadyDeployed, address instance)
