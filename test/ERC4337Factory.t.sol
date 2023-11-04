@@ -41,15 +41,15 @@ contract ERC4337FactoryTest is SoladyTest {
     function testCreateAccountRepeatedDeployment() public {
         bytes32 salt = bytes32(_random() & uint256(type(uint96).max));
         address expectedInstance = factory.getAddress(salt);
-        address instanceA = factory.createAccount{value: 123}(address(0xABCD), salt);
-        assertEq(instanceA.balance, 123);
-        assertEq(factory.createAccount{value: 456}(address(0xABCD), salt), instanceA);
-        assertEq(factory.createAccount(address(0xABCD), salt), instanceA);
-        assertEq(instanceA.balance, 123 + 456);
-        assertEq(expectedInstance, instanceA);
+        address instance = factory.createAccount{value: 123}(address(0xABCD), salt);
+        assertEq(instance.balance, 123);
+        assertEq(factory.createAccount{value: 456}(address(0xABCD), salt), instance);
+        assertEq(factory.createAccount(address(0xABCD), salt), instance);
+        assertEq(instance.balance, 123 + 456);
+        assertEq(expectedInstance, instance);
     }
 
-    function testCreateAccountRepeatedDeployment2() public {
+    function testCreateAccountRepeatedDeployment(uint256) public {
         address owner = _randomNonZeroAddress();
         bytes32 salt =
             bytes32((_random() & uint256(type(uint96).max)) | (uint256(uint160(owner)) << 96));
@@ -58,14 +58,14 @@ contract ERC4337FactoryTest is SoladyTest {
         while (owner == notOwner) notOwner = _randomNonZeroAddress();
         vm.expectRevert(LibClone.SaltDoesNotStartWith.selector);
         factory.createAccount{value: 123}(notOwner, salt);
-        address instanceA = factory.createAccount{value: 123}(owner, salt);
-        assertEq(instanceA.balance, 123);
+        address instance = factory.createAccount{value: 123}(owner, salt);
+        assertEq(instance.balance, 123);
         vm.expectRevert(LibClone.SaltDoesNotStartWith.selector);
         factory.createAccount{value: 123}(notOwner, salt);
-        assertEq(factory.createAccount{value: 456}(owner, salt), instanceA);
-        assertEq(factory.createAccount(owner, salt), instanceA);
-        assertEq(instanceA.balance, 123 + 456);
-        assertEq(expectedInstance, instanceA);
+        assertEq(factory.createAccount{value: 456}(owner, salt), instance);
+        assertEq(factory.createAccount(owner, salt), instance);
+        assertEq(instance.balance, 123 + 456);
+        assertEq(expectedInstance, instance);
     }
 
     function _checkImplementationSlot(address proxy, address implementation_) internal {
