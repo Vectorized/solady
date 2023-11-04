@@ -36,7 +36,7 @@ contract ERC4337Factory {
 
     /// @dev Deploys an ERC4337 account with `salt` and returns its deterministic address.
     /// If the account is already deployed, it will simply return its address.
-    /// Any `msg.value` will simply be forwarded to the account, irregardless.
+    /// Any `msg.value` will simply be forwarded to the account, regardless.
     function createAccount(address owner, bytes32 salt) public payable virtual returns (address) {
         // Constructor data is optional, and is omitted for easier Etherscan verification.
         (bool alreadyDeployed, address account) =
