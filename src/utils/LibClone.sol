@@ -40,6 +40,9 @@ library LibClone {
     /// @dev The salt must start with either the zero address or `by`.
     error SaltDoesNotStartWith();
 
+    /// @dev The ETH transfer has failed.
+    error ETHTransferFailed();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  MINIMAL PROXY OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -682,17 +685,19 @@ library LibClone {
     }
 
     /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
+    /// This method won't revert if the proxy is already deployed.
     function deployDeterministicERC1967(address implementation, bytes32 salt)
         internal
-        returns (address instance)
+        returns (bool alreadyDeployed, address instance)
     {
-        instance = deployDeterministicERC1967(0, implementation, salt);
+        return deployDeterministicERC1967(0, implementation, salt);
     }
 
     /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
+    /// This method won't revert if the proxy is already deployed.
     function deployDeterministicERC1967(uint256 value, address implementation, bytes32 salt)
         internal
-        returns (address instance)
+        returns (bool alreadyDeployed, address instance)
     {
         /// @solidity memory-safe-assembly
         assembly {
@@ -702,10 +707,29 @@ library LibClone {
             mstore(0x20, 0x6009)
             mstore(0x1e, implementation)
             mstore(0x0a, 0x603d3d8160223d3973)
-            instance := create2(value, 0x21, 0x5f, salt)
-            if iszero(instance) {
-                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
-                revert(0x1c, 0x04)
+            // Compute and store the bytecode hash.
+            mstore8(m, 0xff) // Write the prefix.
+            mstore(add(m, 0x35), keccak256(0x21, 0x5f))
+            mstore(add(m, 0x01), shl(96, address()))
+            mstore(add(m, 0x15), salt)
+            instance := keccak256(m, 0x55)
+            for {} 1 {} {
+                if iszero(extcodesize(instance)) {
+                    instance := create2(value, 0x21, 0x5f, salt)
+                    if iszero(instance) {
+                        mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    break
+                }
+                if value {
+                    if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                        mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                }
+                alreadyDeployed := 1
+                break
             }
             mstore(0x40, m) // Restore the free memory pointer.
             mstore(0x60, 0) // Restore the zero slot.
