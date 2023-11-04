@@ -38,6 +38,7 @@ contract ERC4337Factory {
     /// If the account is already deployed, it will simply return its address.
     /// Any `msg.value` will simply be forwarded to the account, regardless.
     function createAccount(address owner, bytes32 salt) public payable virtual returns (address) {
+        // Check that the salt is tied to the owner if required, regardless.
         LibClone.checkStartsWith(salt, owner);
         // Constructor data is optional, and is omitted for easier Etherscan verification.
         (bool alreadyDeployed, address account) =
