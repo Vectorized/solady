@@ -655,25 +655,25 @@ library FixedPointMathLib {
         assembly {
             mantissa := x
             if mantissa {
-                if iszero(mod(mantissa, 100000000000000000000000000000000000000)) {
-                    mantissa := div(mantissa, 100000000000000000000000000000000000000)
-                    exponent := 38
+                if iszero(mod(mantissa, 1000000000000000000000000000000000)) {
+                    mantissa := div(mantissa, 1000000000000000000000000000000000)
+                    exponent := 33
                 }
-                if iszero(mod(mantissa, 100000000000000000000)) {
-                    mantissa := div(mantissa, 100000000000000000000)
-                    exponent := add(exponent, 20)
+                if iszero(mod(mantissa, 10000000000000000000)) {
+                    mantissa := div(mantissa, 10000000000000000000)
+                    exponent := add(exponent, 19)
                 }
-                if iszero(mod(mantissa, 10000000000)) {
-                    mantissa := div(mantissa, 10000000000)
-                    exponent := add(exponent, 10)
+                if iszero(mod(mantissa, 1000000000000)) {
+                    mantissa := div(mantissa, 1000000000000)
+                    exponent := add(exponent, 12)
                 }
-                if iszero(mod(mantissa, 100000)) {
-                    mantissa := div(mantissa, 100000)
-                    exponent := add(exponent, 5)
+                if iszero(mod(mantissa, 1000000)) {
+                    mantissa := div(mantissa, 1000000)
+                    exponent := add(exponent, 6)
                 }
-                if iszero(mod(mantissa, 100)) {
-                    mantissa := div(mantissa, 100)
-                    exponent := add(exponent, 2)
+                if iszero(mod(mantissa, 10000)) {
+                    mantissa := div(mantissa, 10000)
+                    exponent := add(exponent, 4)
                 }
                 if iszero(mod(mantissa, 100)) {
                     mantissa := div(mantissa, 100)
