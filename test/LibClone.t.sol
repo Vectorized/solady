@@ -149,9 +149,9 @@ contract LibCloneTest is SoladyTest, Clone {
 
     function deployDeterministicERC1967(address implementation, bytes32 salt)
         external
-        returns (address instance)
+        returns (address)
     {
-        (, instance) = LibClone.deployDeterministicERC1967(_brutalized(implementation), salt);
+        return LibClone.deployDeterministicERC1967(_brutalized(implementation), salt);
     }
 
     function testDeployDeterministicERC1967() public {
@@ -397,8 +397,7 @@ contract LibCloneTest is SoladyTest, Clone {
         assertEq(LibClone.clone(123, t, "").balance, 123);
         assertEq(LibClone.cloneDeterministic(123, t, "", bytes32(gasleft())).balance, 123);
         assertEq(LibClone.deployERC1967(123, t).balance, 123);
-        (, address instance) = LibClone.deployDeterministicERC1967(123, t, bytes32(gasleft()));
-        assertEq(instance.balance, 123);
+        assertEq(LibClone.deployDeterministicERC1967(123, t, bytes32(gasleft())).balance, 123);
     }
 
     function argBytesHash() public pure returns (bytes32) {
