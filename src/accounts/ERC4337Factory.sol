@@ -12,6 +12,8 @@ import {LibClone} from "../utils/LibClone.sol";
 ///   The proxy bytecode does NOT contain any upgrading logic.
 /// - This factory does NOT contain any logic for upgrading the ERC4337 accounts.
 ///   Upgrading must be done via UUPS logic on the accounts themselves.
+/// - The ERC4337 standard expects the factory to use deterministic deployment.
+///   As such, this factory does not include any non-deterministic deployment methods.
 contract ERC4337Factory {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         IMMUTABLES                         */
@@ -32,44 +34,37 @@ contract ERC4337Factory {
     /*                      DEPLOY FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Deploys an ERC4337 account and returns its address.
-    function deploy(address owner) public payable virtual returns (address account) {
-        account = LibClone.deployERC1967(msg.value, implementation);
-        _initialize(account, owner);
+    /// @dev Deploys an ERC4337 account with `salt` and returns its deterministic address.
+    /// If the account is already deployed, it will simply return its address.
+    /// Any `msg.value` will simply be forwarded to the account, regardless.
+    function createAccount(address owner, bytes32 salt) public payable virtual returns (address) {
+        // Constructor data is optional, and is omitted for easier Etherscan verification.
+        (bool alreadyDeployed, address account) =
+            LibClone.deployDeterministicERC1967(msg.value, implementation, salt);
+
+        if (!alreadyDeployed) {
+            LibClone.checkStartsWith(salt, owner);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x14, owner) // Store the `owner` argument.
+                mstore(0x00, 0xc4d66de8000000000000000000000000) // `initialize(address)`.
+                if iszero(call(gas(), account, 0, 0x10, 0x24, codesize(), 0x00)) {
+                    returndatacopy(mload(0x40), 0x00, returndatasize())
+                    revert(mload(0x40), returndatasize())
+                }
+            }
+        }
+        return account;
     }
 
-    /// @dev Deploys an ERC4337 account with `salt` and returns its deterministic address.
-    function deployDeterministic(address owner, bytes32 salt)
-        public
-        payable
-        virtual
-        returns (address account)
-    {
-        LibClone.checkStartsWith(salt, owner);
-        account = LibClone.deployDeterministicERC1967(msg.value, implementation, salt);
-        _initialize(account, owner);
+    /// @dev Returns the deterministic address of the account created via `createAccount`.
+    function getAddress(bytes32 salt) public view virtual returns (address) {
+        return LibClone.predictDeterministicAddressERC1967(implementation, salt, address(this));
     }
 
     /// @dev Returns the initialization code hash of the ERC4337 account (a minimal ERC1967 proxy).
     /// Used for mining vanity addresses with create2crunch.
-    function initCodeHash() public view virtual returns (bytes32 result) {
-        result = LibClone.initCodeHashERC1967(implementation);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      INTERNAL HELPERS                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Calls `account.initialize(address owner)`.
-    function _initialize(address account, address owner) internal virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x14, owner) // Store the `owner` argument.
-            mstore(0x00, 0xc4d66de8000000000000000000000000) // `initialize(address)`.
-            if iszero(call(gas(), account, 0, 0x10, 0x24, codesize(), 0x00)) {
-                returndatacopy(mload(0x40), 0x00, returndatasize())
-                revert(mload(0x40), returndatasize())
-            }
-        }
+    function initCodeHash() public view virtual returns (bytes32) {
+        return LibClone.initCodeHashERC1967(implementation);
     }
 }
