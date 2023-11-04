@@ -685,17 +685,50 @@ library LibClone {
     }
 
     /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
-    /// Note: This method won't revert if the proxy is already deployed (ERC4337 factory convention).
     function deployDeterministicERC1967(address implementation, bytes32 salt)
         internal
-        returns (bool alreadyDeployed, address instance)
+        returns (address instance)
     {
-        return deployDeterministicERC1967(0, implementation, salt);
+        instance = deployDeterministicERC1967(0, implementation, salt);
     }
 
     /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
-    /// Note: This method won't revert if the proxy is already deployed (ERC4337 factory convention).
     function deployDeterministicERC1967(uint256 value, address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
+            mstore(0x40, 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
+            mstore(0x20, 0x6009)
+            mstore(0x1e, implementation)
+            mstore(0x0a, 0x603d3d8160223d3973)
+            instance := create2(value, 0x21, 0x5f, salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Creates a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967(address implementation, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        return createDeterministicERC1967(0, implementation, salt);
+    }
+
+    /// @dev Creates a deterministic minimal ERC1967 proxy with `implementation` and `salt`.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967(uint256 value, address implementation, bytes32 salt)
         internal
         returns (bool alreadyDeployed, address instance)
     {
