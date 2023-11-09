@@ -263,20 +263,23 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `W0(x)`, denominated in `WAD`.
+    /// @dev Returns `W_0(x)`, denominated in `WAD`.
+    /// See: https://en.wikipedia.org/wiki/Lambert_W_function
+    /// a.k.a. Product log function. This is an approximation of the principal branch.
+    /// Most efficient for small positive inputs in [0 .. 3367879441171442322].
     function lambertW0Wad(int256 x) internal pure returns (int256 r) {
         unchecked {
             r = x;
-            if (x <= -367879441171442322) revert OutOfDomain();
+            if (r <= -367879441171442322) revert OutOfDomain();
             uint256 iters = 10;
-            if (x <= 0x1ffffffffffff) {
-                if (-367879441171443 <= x) {
+            if (r <= 0x1ffffffffffff) {
+                if (-367879441171443 <= r) {
                     iters = 1;
-                } else if (x <= -0x3ffffffffffffff) {
+                } else if (r <= -0x3ffffffffffffff) {
                     iters = 32;
                 }
-            } else if (x <= 3367879441171442322) {
-                uint256 l = log2(uint256(x));
+            } else if (r <= 3367879441171442322) {
+                uint256 l = log2(uint256(r));
                 r = int256(1 << l);
                 /// @solidity memory-safe-assembly
                 assembly {
@@ -284,7 +287,7 @@ library FixedPointMathLib {
                 }
             } else {
                 // `lnWad` consumes around 585 gas.
-                r = lnWad(x);
+                r = lnWad(r);
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023327688128188132, r);
