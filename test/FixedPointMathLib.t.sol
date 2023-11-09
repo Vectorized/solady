@@ -65,6 +65,10 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.lambertW0Wad(-367879441171442321), -999999999741585709);
         // These are exact values.
         assertEq(
+            FixedPointMathLib.lambertW0Wad(0x7fffffffffffffffffffffffffffffffffff),
+            53690283108733387465
+        );
+        assertEq(
             FixedPointMathLib.lambertW0Wad(0xfffffffffffffffffffffffffffffffffff),
             51649591321425477661
         );

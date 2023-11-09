@@ -285,7 +285,7 @@ library FixedPointMathLib {
                 r = lnWad(x);
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
-                    r = r - ll + rawSDiv(ll * 1023380179879158171, r);
+                    r = r - ll + rawSDiv(ll * 1023327688128188132, r);
                 }
             }
             int256 prev = type(int256).max;
