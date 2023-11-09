@@ -85,7 +85,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadForPositiveNumbers(int256 a) public {
-        if (a <= 0) return;
+        while (a <= 0) a = int256(_random());
         int256 w = FixedPointMathLib.lambertW0Wad(a);
         assertTrue(w <= a);
         unchecked {
@@ -121,7 +121,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
-        if (t <= -36787944117144232) return;
+        while (t <= -36787944117144232) t = int256(_random());
         unchecked {
             for (int256 i = -10; i <= 10; ++i) {
                 testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
