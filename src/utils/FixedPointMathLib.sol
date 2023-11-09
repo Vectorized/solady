@@ -279,23 +279,24 @@ library FixedPointMathLib {
                 r = int256(1 << log2(uint256(x)));
                 /// @solidity memory-safe-assembly
                 assembly {
-                    iters := add(2, slt(0xffffffffffffff, x))
+                    iters := add(3, slt(0xffffffffffffff, x))
                 }
             } else {
                 r = lnWad(x);
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
-                    r = r - ll + rawSDiv(ll * 1050000000000000000, r);
+                    r = r - ll + rawSDiv(ll * 1023380179879158171, r);
                 }
             }
             int256 prev = type(int256).max;
             int256 wad = int256(WAD);
             int256 minusXMulWad = -x * wad;
+            // For values near to zero, we will only need 1 to 4 Halley's iterations.
             do {
                 int256 e = expWad(r);
                 int256 t = r + wad;
-                int256 numer = r * e + minusXMulWad;
-                r -= rawSDiv(numer * wad, e * t - rawSDiv((t + wad) * numer, t + t));
+                int256 s = r * e + minusXMulWad;
+                r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
                 if (r >= prev) break;
                 prev = r;
             } while (--iters != 0);

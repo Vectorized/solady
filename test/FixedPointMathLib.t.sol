@@ -54,28 +54,68 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.lambertW0Wad(2), 2);
         assertEq(FixedPointMathLib.lambertW0Wad(3), 2);
         assertEq(FixedPointMathLib.lambertW0Wad(131071), 131070);
-        assertEq(FixedPointMathLib.lambertW0Wad(-3678794411715), -3678807945318);
         assertEq(FixedPointMathLib.lambertW0Wad(17179869183), 17179868887);
         assertEq(FixedPointMathLib.lambertW0Wad(281474976710655), 281395781982528);
         assertEq(FixedPointMathLib.lambertW0Wad(562949953421311), 562633308112667);
-        assertEq(FixedPointMathLib.lambertW0Wad(562949953421311), 562633308112667);
-        assertEq(
-            FixedPointMathLib.lambertW0Wad(
-                57896044618658097711785492504343953926634992332820282019728792003956564819967
-            ),
-            130436543918023942809
-        );
-        assertEq(FixedPointMathLib.lambertW0Wad(2361183241434822606847), 5978712844468804878);
-        assertEq(FixedPointMathLib.lambertW0Wad(1000000000000000000), 567143290409783873);
-        assertEq(FixedPointMathLib.lambertW0Wad(151115727451828646838271), 9658013267990184319);
         assertEq(FixedPointMathLib.lambertW0Wad(1125899906842623), 1124634392838165);
-        assertEq(
-            FixedPointMathLib.lambertW0Wad(2923003274661805836407369665432566039311865085951),
-            65963149330634349835
-        );
+        assertEq(FixedPointMathLib.lambertW0Wad(1000000000000000000), 567143290409783873);
+        assertEq(FixedPointMathLib.lambertW0Wad(2361183241434822606847), 5978712844468804878);
+        assertEq(FixedPointMathLib.lambertW0Wad(151115727451828646838271), 9658013267990184319);
+        assertEq(FixedPointMathLib.lambertW0Wad(-3678794411715), -3678807945318);
         assertEq(FixedPointMathLib.lambertW0Wad(-367879441171442321), -999999999741585709);
+        // These are exact values.
+        assertEq(
+            FixedPointMathLib.lambertW0Wad(0xfffffffffffffffffffffffffffffffffff),
+            51649591321425477661
+        );
+        assertEq(
+            FixedPointMathLib.lambertW0Wad(0xffffffffffffffffffffffffffffffff), 43503466806167642613
+        );
+        assertEq(FixedPointMathLib.lambertW0Wad(0xffffffffffffffffffffffffff), 27332691623220201135);
+        assertEq(FixedPointMathLib.lambertW0Wad(0xfffffffffffffffffffffffff), 24662886826087826761);
+    }
+
+    function testLambertW0WadRevertForOutOfDomain() public {
         vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
         FixedPointMathLib.lambertW0Wad(-367879441171442322);
+    }
+
+    function testLambertW0WadForPositiveNumbers(int256 a) public {
+        if (a <= 0) return;
+        int256 w = FixedPointMathLib.lambertW0Wad(a);
+        assertTrue(w <= a);
+        unchecked {
+            if (a >= 2718281828459045235) {
+                int256 l = FixedPointMathLib.lnWad(a);
+                assertGt(l, 0);
+                int256 ll = FixedPointMathLib.lnWad(l);
+                int256 wad = 10 ** 18;
+                // By right, it should be `w + 1`, but since we are using an approximation,
+                // we need to give it a bit of leeway.
+                assertLt(l - ll + (ll * wad) / (2 * l), w + 2);
+                assertLt(
+                    w, l - ll + (ll * wad * 2718281828459045235) / (l * 1718281828459045235) + 1
+                );
+            }
+        }
+    }
+
+    function testLambertW0WadMonotonicallyIncreasing() public {
+        _testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
+        _testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
+        _testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
+        _testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
+        _testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
+        _testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
+        _testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
+    }
+
+    function _testLambertW0WadMonotonicallyIncreasingAround(int256 t) internal {
+        unchecked {
+            for (int256 i = -10; i <= 10; ++i) {
+                testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
+            }
+        }
     }
 
     function testLambertW0WadMonotonicallyIncreasing(int256 a, int256 b) public {
