@@ -276,12 +276,14 @@ library FixedPointMathLib {
                     iters = 32;
                 }
             } else if (x <= 3367879441171442322) {
-                r = int256(1 << log2(uint256(x)));
+                uint256 l = log2(uint256(x));
+                r = int256(1 << l);
                 /// @solidity memory-safe-assembly
                 assembly {
-                    iters := add(3, slt(0xffffffffffffff, x))
+                    iters := add(2, shl(1, lt(56, l)))
                 }
             } else {
+                // `lnWad` consumes around 585 gas.
                 r = lnWad(x);
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
@@ -292,6 +294,7 @@ library FixedPointMathLib {
             int256 wad = int256(WAD);
             int256 minusXMulWad = -x * wad;
             // For values near to zero, we will only need 1 to 4 Halley's iterations.
+            // `expWad` consumes around 411 gas, so it's pretty efficient.
             do {
                 int256 e = expWad(r);
                 int256 t = r + wad;

@@ -105,16 +105,22 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasing() public {
-        _testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
-        _testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
-        _testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
-        _testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
-        _testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
-        _testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
-        _testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
+        testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
+        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
+        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
+        testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
+        testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
+        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
+        testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
+        unchecked {
+            for (uint256 i = 32; i < 64; ++i) {
+                testLambertW0WadMonotonicallyIncreasingAround(int256((1 << i) - 1));
+            }
+        }
     }
 
-    function _testLambertW0WadMonotonicallyIncreasingAround(int256 t) internal {
+    function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
+        if (t <= -36787944117144232) return;
         unchecked {
             for (int256 i = -10; i <= 10; ++i) {
                 testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
@@ -131,6 +137,57 @@ contract FixedPointMathLibTest is SoladyTest {
             a = t;
         }
         assertTrue(FixedPointMathLib.lambertW0Wad(a) <= FixedPointMathLib.lambertW0Wad(b));
+    }
+
+    function testLambertW0WadDifferential(int256 x) public {
+        if (x <= -367879441171442322) return;
+        if (_random() % 2 == 0) {
+            x = int256(_bound(uint256(x), 0xffffffff, 3367879441171442322 + 1));
+        }
+        assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
+    }
+
+    function _lambertW0WadOriginal(int256 x) internal pure returns (int256 r) {
+        unchecked {
+            r = x;
+            if (x <= -367879441171442322) revert FixedPointMathLib.OutOfDomain();
+            uint256 iters = 10;
+            if (x <= 0x1ffffffffffff) {
+                if (-367879441171443 <= x) {
+                    iters = 1;
+                } else if (x <= -0x3ffffffffffffff) {
+                    iters = 32;
+                }
+            } else if (x <= 3367879441171442322) {
+                r = int256(1 << FixedPointMathLib.log2(uint256(x)));
+                /// @solidity memory-safe-assembly
+                assembly {
+                    iters := add(3, lt(0xffffffffffffff, x))
+                }
+            } else {
+                r = FixedPointMathLib.lnWad(x);
+                if (x >= 0xfffffffffffffffffffffffff) {
+                    int256 ll = FixedPointMathLib.lnWad(r);
+                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023327688128188132, r);
+                }
+            }
+            int256 prev = type(int256).max;
+            int256 wad = int256(1000000000000000000);
+            int256 minusXMulWad = -x * wad;
+            do {
+                int256 e = FixedPointMathLib.expWad(r);
+                int256 t = r + wad;
+                int256 s = r * e + minusXMulWad;
+                int256 d = e * t - FixedPointMathLib.rawSDiv((t + wad) * s, t + t);
+                r -= FixedPointMathLib.rawSDiv(s * wad, d);
+                if (r >= prev) break;
+                prev = r;
+            } while (--iters != 0);
+            /// @solidity memory-safe-assembly
+            assembly {
+                r := sub(r, sgt(r, 2))
+            }
+        }
     }
 
     function testMulWad() public {
