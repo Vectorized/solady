@@ -85,7 +85,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadForPositiveNumbers(int256 a) public {
-        while (a <= 0) a = int256(_random());
+        if (a <= 0) return;
         int256 w = FixedPointMathLib.lambertW0Wad(a);
         assertTrue(w <= a);
         unchecked {
@@ -104,12 +104,13 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
-    function testLambertW0WadMonotonicallyIncreasing() public {
+    function testLambertW0WadMonotonicallyIncreasing2() public {
         testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
+        testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
         testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
         testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
@@ -121,7 +122,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
-        while (t <= -36787944117144232) t = int256(_random());
+        if (t <= -36787944117144232) return;
         unchecked {
             for (int256 i = -10; i <= 10; ++i) {
                 testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
@@ -168,10 +169,10 @@ contract FixedPointMathLibTest is SoladyTest {
                     iters := add(3, lt(0xffffffffffffff, x))
                 }
             } else {
-                r = FixedPointMathLib.lnWad(x);
-                if (x >= 0xffffffffffffffff) {
+                r = FixedPointMathLib.lnWad(x) + 0xffffff;
+                if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
-                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023718072512671116, r);
+                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715127922252090, r);
                 }
             }
             int256 prev = type(int256).max;

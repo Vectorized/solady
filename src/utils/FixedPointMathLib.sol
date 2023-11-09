@@ -292,10 +292,10 @@ library FixedPointMathLib {
                 }
             } else {
                 // `lnWad` consumes around 585 gas.
-                r = lnWad(r);
-                if (x >= 0xffffffffffffffff) {
+                r = lnWad(r) + 0xffffff;
+                if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
-                    r = r - ll + rawSDiv(ll * 1023718072512671116, r);
+                    r = r - ll + rawSDiv(ll * 1023715127922252090, r);
                 }
             }
             int256 prev = type(int256).max;
