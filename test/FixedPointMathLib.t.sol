@@ -48,6 +48,47 @@ contract FixedPointMathLibTest is SoladyTest {
         // Relative error: 5.653904247484822e-21
     }
 
+    function testLambertW0Wad() public {
+        assertEq(FixedPointMathLib.lambertW0Wad(0), 0);
+        assertEq(FixedPointMathLib.lambertW0Wad(1), 1);
+        assertEq(FixedPointMathLib.lambertW0Wad(2), 2);
+        assertEq(FixedPointMathLib.lambertW0Wad(3), 2);
+        assertEq(FixedPointMathLib.lambertW0Wad(131071), 131070);
+        assertEq(FixedPointMathLib.lambertW0Wad(-3678794411715), -3678807945318);
+        assertEq(FixedPointMathLib.lambertW0Wad(17179869183), 17179868887);
+        assertEq(FixedPointMathLib.lambertW0Wad(281474976710655), 281395781982528);
+        assertEq(FixedPointMathLib.lambertW0Wad(562949953421311), 562633308112667);
+        assertEq(FixedPointMathLib.lambertW0Wad(562949953421311), 562633308112667);
+        assertEq(
+            FixedPointMathLib.lambertW0Wad(
+                57896044618658097711785492504343953926634992332820282019728792003956564819967
+            ),
+            130436543918023942809
+        );
+        assertEq(FixedPointMathLib.lambertW0Wad(2361183241434822606847), 5978712844468804878);
+        assertEq(FixedPointMathLib.lambertW0Wad(1000000000000000000), 567143290409783873);
+        assertEq(FixedPointMathLib.lambertW0Wad(151115727451828646838271), 9658013267990184319);
+        assertEq(FixedPointMathLib.lambertW0Wad(1125899906842623), 1124634392838165);
+        assertEq(
+            FixedPointMathLib.lambertW0Wad(2923003274661805836407369665432566039311865085951),
+            65963149330634349835
+        );
+        assertEq(FixedPointMathLib.lambertW0Wad(-367879441171442321), -999999999741585709);
+        vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
+        FixedPointMathLib.lambertW0Wad(-367879441171442322);
+    }
+
+    function testLambertW0WadMonotonicallyIncreasing(int256 a, int256 b) public {
+        while (a <= -367879441171442322) a = int256(_random());
+        while (b <= -367879441171442322) b = int256(_random());
+        if (a > b) {
+            int256 t = b;
+            b = a;
+            a = t;
+        }
+        assertTrue(FixedPointMathLib.lambertW0Wad(a) <= FixedPointMathLib.lambertW0Wad(b));
+    }
+
     function testMulWad() public {
         assertEq(FixedPointMathLib.mulWad(2.5e18, 0.5e18), 1.25e18);
         assertEq(FixedPointMathLib.mulWad(3e18, 1e18), 3e18);

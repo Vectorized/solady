@@ -42,6 +42,9 @@ library FixedPointMathLib {
     /// @dev The output is undefined, as the input is less-than-or-equal to zero.
     error LnWadUndefined();
 
+    /// @dev The input outside the acceptable domain.
+    error OutOfDomain();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -257,6 +260,49 @@ library FixedPointMathLib {
             r += 600920179829731861736702779321621459595472258049074101567377883020018308;
             // base conversion: mul 2**18 / 2**192
             r >>= 174;
+        }
+    }
+
+    /// @dev Returns `W0(x)`, denominated in `WAD`.
+    function lambertW0Wad(int256 x) internal pure returns (int256 r) {
+        unchecked {
+            r = x;
+            if (x <= -367879441171442322) revert OutOfDomain();
+            uint256 iters = 10;
+            if (x <= 0x1ffffffffffff) {
+                if (-367879441171443 <= x) {
+                    iters = 1;
+                } else if (x <= -0x3ffffffffffffff) {
+                    iters = 32;
+                }
+            } else if (x <= 3367879441171442322) {
+                r = int256(1 << log2(uint256(x)));
+                /// @solidity memory-safe-assembly
+                assembly {
+                    iters := add(2, slt(0xffffffffffffff, x))
+                }
+            } else {
+                r = lnWad(x);
+                if (x >= 0xfffffffffffffffffffffffff) {
+                    int256 ll = lnWad(r);
+                    r = r - ll + rawSDiv(ll * 1050000000000000000, r);
+                }
+            }
+            int256 prev = type(int256).max;
+            int256 wad = int256(WAD);
+            int256 minusXMulWad = -x * wad;
+            do {
+                int256 e = expWad(r);
+                int256 t = r + wad;
+                int256 numer = r * e + minusXMulWad;
+                r -= rawSDiv(numer * wad, e * t - rawSDiv((t + wad) * numer, t + t));
+                if (r >= prev) break;
+                prev = r;
+            } while (--iters != 0);
+            /// @solidity memory-safe-assembly
+            assembly {
+                r := sub(r, sgt(r, 2))
+            }
         }
     }
 
