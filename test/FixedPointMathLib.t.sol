@@ -109,6 +109,7 @@ contract FixedPointMathLibTest is SoladyTest {
         testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
+        testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
         testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
         testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
@@ -136,7 +137,9 @@ contract FixedPointMathLibTest is SoladyTest {
             b = a;
             a = t;
         }
-        assertTrue(FixedPointMathLib.lambertW0Wad(a) <= FixedPointMathLib.lambertW0Wad(b));
+        unchecked {
+            assertLt(FixedPointMathLib.lambertW0Wad(a), FixedPointMathLib.lambertW0Wad(b) + 1);
+        }
     }
 
     function testLambertW0WadDifferential(int256 x) public {
@@ -166,9 +169,9 @@ contract FixedPointMathLibTest is SoladyTest {
                 }
             } else {
                 r = FixedPointMathLib.lnWad(x);
-                if (x >= 0xfffffffffffffffffffffffff) {
+                if (x >= 0xffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
-                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023327688128188132, r);
+                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023718072512671116, r);
                 }
             }
             int256 prev = type(int256).max;
