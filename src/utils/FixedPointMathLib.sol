@@ -279,11 +279,16 @@ library FixedPointMathLib {
                     iters = 32;
                 }
             } else if (r <= 3367879441171442322) {
-                uint256 l = log2(uint256(r));
-                r = int256(1 << l);
                 /// @solidity memory-safe-assembly
                 assembly {
+                    // We can inline log2 for more performance, since the range is small.
+                    let v := shr(49, r)
+                    let l := shl(3, lt(0xff, v))
+                    // forgefmt: disable-next-item
+                    l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
+                        0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
                     iters := add(2, shl(1, lt(56, l)))
+                    r := shl(l, 1)
                 }
             } else {
                 // `lnWad` consumes around 585 gas.
