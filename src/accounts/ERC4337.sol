@@ -2,12 +2,10 @@
 pragma solidity ^0.8.4;
 
 import {Receiver} from "./Receiver.sol";
-import {ERC1271} from "./ERC1271.sol";
-import {EIP712} from "../utils/EIP712.sol";
 import {LibZip} from "../utils/LibZip.sol";
 import {Ownable} from "../auth/Ownable.sol";
 import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
-import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
+import {SignatureCheckerLib, ERC1271} from "../accounts/ERC1271.sol";
 
 /// @notice Simple ERC4337 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC4337.sol)
