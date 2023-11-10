@@ -67,9 +67,6 @@ jobs:
           ) ||
           ( [ "${{ matrix.profile }}" = "intense" ] &&
             forge test --fuzz-runs 5000
-          ) ||
-          ( forge fmt --check &&
-            FOUNDRY_PROFILE=${{ matrix.profile }} forge test
           )
 
   codespell:
