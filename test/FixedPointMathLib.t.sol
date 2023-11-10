@@ -172,7 +172,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 r = FixedPointMathLib.lnWad(x) + 0xffffff;
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
-                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715127922252090, r);
+                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
                 }
             }
             int256 prev = type(int256).max;
