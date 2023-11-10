@@ -213,7 +213,7 @@ library FixedPointMathLib {
             // Evaluate using a (8, 8)-term rational approximation.
             // `p` is made monic, we will multiply by a scale factor later.
             // forgefmt: disable-next-item
-            let p := sub( // We need to do this to avoid stack-too-deep for via-ir.
+            let p := sub( // This heavily nested expression is to avoid stack-too-deep for via-ir.
                 shr(96, mul(add(43456485725739037958740375743393,
                 shr(96, mul(add(24828157081833163892658089445524,
                 shr(96, mul(add(3273285459638523848632254066296,
