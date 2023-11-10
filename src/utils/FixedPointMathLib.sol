@@ -118,21 +118,21 @@ library FixedPointMathLib {
     /// @dev Returns `exp(x)`, denominated in `WAD`.
     function expWad(int256 x) internal pure returns (int256 r) {
         unchecked {
-            // When the result is < 0.5 we return zero. This happens when
-            // x <= floor(log(0.5e18) * 1e18) ~ -42e18
+            // When the result is less than 0.5 we return zero.
+            // This happens when `x <= floor(log(0.5e18) * 1e18) ≈ -42e18`.
             if (x <= -42139678854452767551) return r;
 
             /// @solidity memory-safe-assembly
             assembly {
-                // When the result is > (2**255 - 1) / 1e18 we can not represent it as an
-                // int. This happens when x >= floor(log((2**255 - 1) / 1e18) * 1e18) ~ 135.
+                // When the result is greater than `(2**255 - 1) / 1e18` we can not represent it as
+                // an int. This happens when `x >= floor(log((2**255 - 1) / 1e18) * 1e18) ≈ 135`.
                 if iszero(slt(x, 135305999368893231589)) {
                     mstore(0x00, 0xa37bfec9) // `ExpOverflow()`.
                     revert(0x1c, 0x04)
                 }
             }
 
-            // x is now in the range (-42, 136) * 1e18. Convert to (-42, 136) * 2**96
+            // `x` is now in the range `(-42, 136) * 1e18`. Convert to `(-42, 136) * 2**96`
             // for more intermediate precision and a binary basis. This base conversion
             // is a multiplication by 1e18 / 2**96 = 5**18 / 2**78.
             x = (x << 78) / 5 ** 18;
@@ -143,17 +143,17 @@ library FixedPointMathLib {
             int256 k = ((x << 96) / 54916777467707473351141471128 + 2 ** 95) >> 96;
             x = x - k * 54916777467707473351141471128;
 
-            // k is in the range [-61, 195].
+            // `k` is in the range `[-61, 195]`.
 
             // Evaluate using a (6, 7)-term rational approximation.
-            // p is made monic, we'll multiply by a scale factor later.
+            // `p` is made monic, we'll multiply by a scale factor later.
             int256 y = x + 1346386616545796478920950773328;
             y = ((y * x) >> 96) + 57155421227552351082224309758442;
             int256 p = y + x - 94201549194550492254356042504812;
             p = ((p * y) >> 96) + 28719021644029726153956944680412240;
             p = p * x + (4385272521454847904659076985693276 << 96);
 
-            // We leave p in 2**192 basis so we don't need to scale it back up for the division.
+            // We leave `p` in `2**192` basis so we don't need to scale it back up for the division.
             int256 q = x - 2855989394907223263936484059900;
             q = ((q * x) >> 96) + 50020603652535783019961831881945;
             q = ((q * x) >> 96) - 533845033583426703283633433725380;
@@ -165,17 +165,17 @@ library FixedPointMathLib {
             assembly {
                 // Div in assembly because solidity adds a zero check despite the unchecked.
                 // The q polynomial won't have zeros in the domain as all its roots are complex.
-                // No scaling is necessary because p is already 2**96 too large.
+                // No scaling is necessary because p is already `2**96` too large.
                 r := sdiv(p, q)
             }
 
-            // r should be in the range (0.09, 0.25) * 2**96.
+            // r should be in the range `(0.09, 0.25) * 2**96`.
 
             // We now need to multiply r by:
-            // * the scale factor s = ~6.031367120.
-            // * the 2**k factor from the range reduction.
-            // * the 1e18 / 2**96 factor for base conversion.
-            // We do this all at once, with an intermediate result in 2**213
+            // - The scale factor `s ≈ 6.031367120`.
+            // - The `2**k` factor from the range reduction.
+            // - The `1e18 / 2**96` factor for base conversion.
+            // We do this all at once, with an intermediate result in `2**213`
             // basis, so the final right shift is always by a positive amount.
             r = int256(
                 (uint256(r) * 3822833074963236453042738258902158003155416615667) >> uint256(195 - k)
@@ -191,12 +191,12 @@ library FixedPointMathLib {
                 mstore(0x00, 0x1615e638) // `LnWadUndefined()`.
                 revert(0x1c, 0x04)
             }
-            // We want to convert x from 10**18 fixed point to 2**96 fixed point.
-            // We do this by multiplying by 2**96 / 10**18. But since
-            // ln(x * C) = ln(x) + ln(C), we can simply do nothing here
-            // and add ln(2**96 / 10**18) at the end.
+            // We want to convert `x` from `10**18` fixed point to `2**96` fixed point.
+            // We do this by multiplying by `2**96 / 10**18`. But since
+            // `ln(x * C) = ln(x) + ln(C)`, we can simply do nothing here
+            // and add `ln(2**96 / 10**18)` at the end.
 
-            // Compute k = log2(x) - 96, t = 159 - k = 255 - log2(x) = 255 ^ log2(x).
+            // Compute `k = log2(x) - 96`, `t = 159 - k = 255 - log2(x) = 255 ^ log2(x)`.
             let t := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
             t := or(t, shl(6, lt(0xffffffffffffffff, shr(t, x))))
             t := or(t, shl(5, lt(0xffffffff, shr(t, x))))
@@ -211,9 +211,9 @@ library FixedPointMathLib {
             x := shr(159, shl(t, x))
 
             // Evaluate using a (8, 8)-term rational approximation.
-            // p is made monic, we will multiply by a scale factor later.
+            // `p` is made monic, we will multiply by a scale factor later.
             // forgefmt: disable-next-item
-            let p := sub( // We need to do this to avoid stack-too-deep for via-ir.
+            let p := sub( // This heavily nested expression is to avoid stack-too-deep for via-ir.
                 shr(96, mul(add(43456485725739037958740375743393,
                 shr(96, mul(add(24828157081833163892658089445524,
                 shr(96, mul(add(3273285459638523848632254066296,
@@ -222,43 +222,43 @@ library FixedPointMathLib {
             p := sub(shr(96, mul(p, x)), 14706773417378608786704636184526)
             p := sub(mul(p, x), shl(96, 795164235651350426258249787498))
 
-            // We leave p in 2**192 basis so we don't need to scale it back up for the division.
-            // q is monic by convention.
+            // We leave `p` in `2**192` basis so we don't need to scale it back up for the division.
+            // `q` is monic by convention.
             let q := add(5573035233440673466300451813936, x)
-            q := add(71694874799317883764090561454958, shr(96, mul(q, x)))
-            q := add(283447036172924575727196451306956, shr(96, mul(q, x)))
-            q := add(401686690394027663651624208769553, shr(96, mul(q, x)))
-            q := add(204048457590392012362485061816622, shr(96, mul(q, x)))
-            q := add(31853899698501571402653359427138, shr(96, mul(q, x)))
-            q := add(909429971244387300277376558375, shr(96, mul(q, x)))
+            q := add(71694874799317883764090561454958, shr(96, mul(x, q)))
+            q := add(283447036172924575727196451306956, shr(96, mul(x, q)))
+            q := add(401686690394027663651624208769553, shr(96, mul(x, q)))
+            q := add(204048457590392012362485061816622, shr(96, mul(x, q)))
+            q := add(31853899698501571402653359427138, shr(96, mul(x, q)))
+            q := add(909429971244387300277376558375, shr(96, mul(x, q)))
 
-            // r is in the range (0, 0.125) * 2**96
+            // `r` is in the range `(0, 0.125) * 2**96`.
 
             // Finalization, we need to:
-            // - multiply by the scale factor s = 5.549…
-            // - add ln(2**96 / 10**18)
-            // - add k * ln(2)
-            // - multiply by 10**18 / 2**96 = 5**18 >> 78
+            // - Multiply by the scale factor `s = 5.549…`.
+            // - Add `ln(2**96 / 10**18)`.
+            // - Add `k * ln(2)`.
+            // - Multiply by `10**18 / 2**96 = 5**18 >> 78`.
 
             // The q polynomial is known not to have zeros in the domain.
-            // No scaling required because p is already 2**96 too large.
+            // No scaling required because p is already `2**96` too large.
             r := sdiv(p, q)
-            // mul s * 5e18 * 2**96, base is now 5**18 * 2**192
+            // Multiply by the scaling factor: `s * 5e18 * 2**96`, base is now `5**18 * 2**192`.
             r := mul(1677202110996718588342820967067443963516166, r)
-            // add ln(2) * k * 5e18 * 2**192
+            // Add `ln(2) * k * 5e18 * 2**192`.
             // forgefmt: disable-next-item
             r := add(mul(16597577552685614221487285958193947469193820559219878177908093499208371, sub(159, t)), r)
-            // add ln(2**96 / 10**18) * 5e18 * 2**192
+            // Add `ln(2**96 / 10**18) * 5e18 * 2**192`.
             r := add(600920179829731861736702779321621459595472258049074101567377883020018308, r)
+            // Base conversion: mul `2**18 / 2**192`.
+            r := sar(174, r)
         }
-        // base conversion: mul 2**18 / 2**192
-        r >>= 174;
     }
 
     /// @dev Returns `W_0(x)`, denominated in `WAD`.
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
-    /// Most efficient for small positive inputs in [0 .. 3367879441171442322].
+    /// Most efficient for small positive inputs in the range `[0, 3367879441171442322]`.
     function lambertW0Wad(int256 x) internal pure returns (int256 r) {
         unchecked {
             r = x;
@@ -273,7 +273,7 @@ library FixedPointMathLib {
             } else if (r <= 3367879441171442322) {
                 /// @solidity memory-safe-assembly
                 assembly {
-                    // We can inline log2 for more performance, since the range is small.
+                    // Inline log2 for more performance, since the range is small.
                     let v := shr(49, r)
                     let l := shl(3, lt(0xff, v))
                     // forgefmt: disable-next-item
@@ -283,6 +283,8 @@ library FixedPointMathLib {
                     r := shl(l, 1)
                 }
             } else {
+                // Approximate with `ln(x) + a - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+                // Where `a` and `b` are chosen for a good starting point.
                 r = 0xffffff + lnWad(r); // `lnWad` consumes around 585 gas.
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
