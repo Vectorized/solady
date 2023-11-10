@@ -279,13 +279,13 @@ library FixedPointMathLib {
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    iters := add(2, shl(1, lt(55, l)))
+                    iters := add(2, shl(1, lt(54, l)))
                     r := shl(l, 1)
                 }
             } else {
                 // Approximate with `ln(x) + a - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
                 // Where `a` and `b` are chosen for a good starting point.
-                r = 0xffffffff + lnWad(r); // `lnWad` consumes around 585 gas.
+                r = 0xfffffffff + lnWad(r); // `lnWad` consumes around 585 gas.
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);

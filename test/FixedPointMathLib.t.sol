@@ -73,7 +73,7 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testLambertW0WadReversForOutOfDomain() public {
         FixedPointMathLib.lambertW0Wad(-367879441171442322 + 1);
-        for (int256 i = 0; i <= 10; ++i) {
+        for (int i = 0; i <= 10; ++i) {
             vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
             FixedPointMathLib.lambertW0Wad(-367879441171442322 - i);
         }
@@ -106,16 +106,19 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasing2() public {
-        testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
-        testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
-        testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
-        testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
-        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
+        this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
+        this.testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
+        this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
+        this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
+        this.testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
@@ -169,7 +172,7 @@ contract FixedPointMathLibTest is SoladyTest {
                     iters := add(3, lt(0xffffffffffffff, x))
                 }
             } else {
-                r = 0xffffffff + FixedPointMathLib.lnWad(x);
+                r = 0xfffffffff + FixedPointMathLib.lnWad(x);
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
