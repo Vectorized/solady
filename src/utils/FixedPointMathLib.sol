@@ -279,16 +279,18 @@ library FixedPointMathLib {
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := shl(l, 1)
+                    r := or(shl(l, 1), 0xffffffff)
                     iters := byte(sub(l, 32), 0x020202030303030304040405050709)
                 }
             } else {
                 // Approximate with `ln(x|a) - ln(ln(x|a)) + b * ln(ln(x|a)) / ln(x|a)`.
                 // Where `a` and `b` are chosen for a good starting point.
-                r = lnWad(r | 0xffffffff); // `lnWad` consumes around 585 gas.
+                r = lnWad(r); // `lnWad` consumes around 585 gas.
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);
+                } else if (x <= 0xfffffffffffffffff) {
+                    r <<= 1;
                 }
             }
             int256 prev = type(int256).max;
