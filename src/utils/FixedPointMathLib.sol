@@ -42,6 +42,9 @@ library FixedPointMathLib {
     /// @dev The output is undefined, as the input is less-than-or-equal to zero.
     error LnWadUndefined();
 
+    /// @dev The input outside the acceptable domain.
+    error OutOfDomain();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -182,81 +185,127 @@ library FixedPointMathLib {
 
     /// @dev Returns `ln(x)`, denominated in `WAD`.
     function lnWad(int256 x) internal pure returns (int256 r) {
-        unchecked {
-            /// @solidity memory-safe-assembly
-            assembly {
-                if iszero(sgt(x, 0)) {
-                    mstore(0x00, 0x1615e638) // `LnWadUndefined()`.
-                    revert(0x1c, 0x04)
-                }
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(sgt(x, 0)) {
+                mstore(0x00, 0x1615e638) // `LnWadUndefined()`.
+                revert(0x1c, 0x04)
             }
-
             // We want to convert x from 10**18 fixed point to 2**96 fixed point.
             // We do this by multiplying by 2**96 / 10**18. But since
             // ln(x * C) = ln(x) + ln(C), we can simply do nothing here
             // and add ln(2**96 / 10**18) at the end.
 
             // Compute k = log2(x) - 96, t = 159 - k = 255 - log2(x) = 255 ^ log2(x).
-            int256 t;
-            /// @solidity memory-safe-assembly
-            assembly {
-                t := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
-                t := or(t, shl(6, lt(0xffffffffffffffff, shr(t, x))))
-                t := or(t, shl(5, lt(0xffffffff, shr(t, x))))
-                t := or(t, shl(4, lt(0xffff, shr(t, x))))
-                t := or(t, shl(3, lt(0xff, shr(t, x))))
-                // forgefmt: disable-next-item
-                t := xor(t, byte(and(0x1f, shr(shr(t, x), 0x8421084210842108cc6318c6db6d54be)),
-                    0xf8f9f9faf9fdfafbf9fdfcfdfafbfcfef9fafdfafcfcfbfefafafcfbffffffff))
-            }
+            let t := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            t := or(t, shl(6, lt(0xffffffffffffffff, shr(t, x))))
+            t := or(t, shl(5, lt(0xffffffff, shr(t, x))))
+            t := or(t, shl(4, lt(0xffff, shr(t, x))))
+            t := or(t, shl(3, lt(0xff, shr(t, x))))
+            // forgefmt: disable-next-item
+            t := xor(t, byte(and(0x1f, shr(shr(t, x), 0x8421084210842108cc6318c6db6d54be)),
+                0xf8f9f9faf9fdfafbf9fdfcfdfafbfcfef9fafdfafcfcfbfefafafcfbffffffff))
 
             // Reduce range of x to (1, 2) * 2**96
             // ln(2^k * x) = k * ln(2) + ln(x)
-            x = int256(uint256(x << uint256(t)) >> 159);
+            x := shr(159, shl(t, x))
 
             // Evaluate using a (8, 8)-term rational approximation.
             // p is made monic, we will multiply by a scale factor later.
-            int256 p = x + 3273285459638523848632254066296;
-            p = ((p * x) >> 96) + 24828157081833163892658089445524;
-            p = ((p * x) >> 96) + 43456485725739037958740375743393;
-            p = ((p * x) >> 96) - 11111509109440967052023855526967;
-            p = ((p * x) >> 96) - 45023709667254063763336534515857;
-            p = ((p * x) >> 96) - 14706773417378608786704636184526;
-            p = p * x - (795164235651350426258249787498 << 96);
+            // forgefmt: disable-next-item
+            let p := sub( // We need to do this to avoid stack-too-deep for via-ir.
+                shr(96, mul(add(43456485725739037958740375743393,
+                shr(96, mul(add(24828157081833163892658089445524,
+                shr(96, mul(add(3273285459638523848632254066296,
+                    x), x))), x))), x)), 11111509109440967052023855526967)
+            p := sub(shr(96, mul(p, x)), 45023709667254063763336534515857)
+            p := sub(shr(96, mul(p, x)), 14706773417378608786704636184526)
+            p := sub(mul(p, x), shl(96, 795164235651350426258249787498))
 
             // We leave p in 2**192 basis so we don't need to scale it back up for the division.
             // q is monic by convention.
-            int256 q = x + 5573035233440673466300451813936;
-            q = ((q * x) >> 96) + 71694874799317883764090561454958;
-            q = ((q * x) >> 96) + 283447036172924575727196451306956;
-            q = ((q * x) >> 96) + 401686690394027663651624208769553;
-            q = ((q * x) >> 96) + 204048457590392012362485061816622;
-            q = ((q * x) >> 96) + 31853899698501571402653359427138;
-            q = ((q * x) >> 96) + 909429971244387300277376558375;
-            /// @solidity memory-safe-assembly
-            assembly {
-                // Div in assembly because solidity adds a zero check despite the unchecked.
-                // The q polynomial is known not to have zeros in the domain.
-                // No scaling required because p is already 2**96 too large.
-                r := sdiv(p, q)
-            }
+            let q := add(5573035233440673466300451813936, x)
+            q := add(71694874799317883764090561454958, shr(96, mul(q, x)))
+            q := add(283447036172924575727196451306956, shr(96, mul(q, x)))
+            q := add(401686690394027663651624208769553, shr(96, mul(q, x)))
+            q := add(204048457590392012362485061816622, shr(96, mul(q, x)))
+            q := add(31853899698501571402653359427138, shr(96, mul(q, x)))
+            q := add(909429971244387300277376558375, shr(96, mul(q, x)))
 
             // r is in the range (0, 0.125) * 2**96
 
             // Finalization, we need to:
-            // * multiply by the scale factor s = 5.549…
-            // * add ln(2**96 / 10**18)
-            // * add k * ln(2)
-            // * multiply by 10**18 / 2**96 = 5**18 >> 78
+            // - multiply by the scale factor s = 5.549…
+            // - add ln(2**96 / 10**18)
+            // - add k * ln(2)
+            // - multiply by 10**18 / 2**96 = 5**18 >> 78
 
+            // The q polynomial is known not to have zeros in the domain.
+            // No scaling required because p is already 2**96 too large.
+            r := sdiv(p, q)
             // mul s * 5e18 * 2**96, base is now 5**18 * 2**192
-            r *= 1677202110996718588342820967067443963516166;
+            r := mul(1677202110996718588342820967067443963516166, r)
             // add ln(2) * k * 5e18 * 2**192
-            r += 16597577552685614221487285958193947469193820559219878177908093499208371 * (159 - t);
+            // forgefmt: disable-next-item
+            r := add(mul(16597577552685614221487285958193947469193820559219878177908093499208371, sub(159, t)), r)
             // add ln(2**96 / 10**18) * 5e18 * 2**192
-            r += 600920179829731861736702779321621459595472258049074101567377883020018308;
-            // base conversion: mul 2**18 / 2**192
-            r >>= 174;
+            r := add(600920179829731861736702779321621459595472258049074101567377883020018308, r)
+        }
+        // base conversion: mul 2**18 / 2**192
+        r >>= 174;
+    }
+
+    /// @dev Returns `W_0(x)`, denominated in `WAD`.
+    /// See: https://en.wikipedia.org/wiki/Lambert_W_function
+    /// a.k.a. Product log function. This is an approximation of the principal branch.
+    /// Most efficient for small positive inputs in [0 .. 3367879441171442322].
+    function lambertW0Wad(int256 x) internal pure returns (int256 r) {
+        unchecked {
+            r = x;
+            if (r <= -367879441171442322) revert OutOfDomain();
+            uint256 iters = 10;
+            if (r <= 0x1ffffffffffff) {
+                if (-367879441171443 <= r) {
+                    iters = 1;
+                } else if (r <= -0x3ffffffffffffff) {
+                    iters = 32;
+                }
+            } else if (r <= 3367879441171442322) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    // We can inline log2 for more performance, since the range is small.
+                    let v := shr(49, r)
+                    let l := shl(3, lt(0xff, v))
+                    // forgefmt: disable-next-item
+                    l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
+                        0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
+                    iters := add(2, shl(1, lt(55, l)))
+                    r := shl(l, 1)
+                }
+            } else {
+                r = 0xffffff + lnWad(r); // `lnWad` consumes around 585 gas.
+                if (x >= 0xfffffffffffffffffffffffff) {
+                    int256 ll = lnWad(r);
+                    r = r - ll + rawSDiv(ll * 1023715086476318099, r);
+                }
+            }
+            int256 prev = type(int256).max;
+            int256 wad = int256(WAD);
+            int256 minusXMulWad = -x * wad;
+            // For values near to zero, we will only need 1 to 4 Halley's iterations.
+            // `expWad` consumes around 411 gas, so it's pretty efficient.
+            do {
+                int256 e = expWad(r);
+                int256 t = r + wad;
+                int256 s = r * e + minusXMulWad;
+                r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
+                if (r >= prev) break;
+                prev = r;
+            } while (--iters != 0);
+            /// @solidity memory-safe-assembly
+            assembly {
+                r := sub(r, sgt(r, 2))
+            }
         }
     }
 
