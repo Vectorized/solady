@@ -290,7 +290,7 @@ library FixedPointMathLib {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);
                 } else if (x <= 0xfffffffffffffffff) {
-                    r <<= 1;
+                    r = (r << 1) | 0xffffffff;
                 }
             }
             int256 prev = type(int256).max;

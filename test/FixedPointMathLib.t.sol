@@ -111,6 +111,7 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
+        this.testLambertW0WadMonotonicallyIncreasingAround(56740644568147233721);
         this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
         this.testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
         this.testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
@@ -128,6 +129,7 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
         this.testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
         this.testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8479885548030859774);
         this.testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
         this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
         this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
