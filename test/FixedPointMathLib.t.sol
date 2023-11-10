@@ -111,6 +111,7 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
+        this.testLambertW0WadMonotonicallyIncreasingAround(99877590385471769634);
         this.testLambertW0WadMonotonicallyIncreasingAround(56740644568147233721);
         this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
         this.testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
@@ -128,6 +129,7 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
         this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
         this.testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8711541955259745339);
         this.testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
         this.testLambertW0WadMonotonicallyIncreasingAround(8479885548030859774);
         this.testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
@@ -136,6 +138,11 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
+    }
+
+    function testLambertW0WadMonotonicallyIncreasingAround2(uint256 t) public {
+        t = _bound(t, 3367879441171442322, 103244449106500225500);
+        this.testLambertW0WadMonotonicallyIncreasingAround(int256(t));
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
@@ -192,7 +199,7 @@ contract FixedPointMathLibTest is SoladyTest {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
                 } else if (x <= 0xfffffffffffffffff) {
-                    r <<= 1;
+                    r = (r << 1) | 0xfffffffffff;
                 }
             }
             int256 prev = type(int256).max;
