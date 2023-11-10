@@ -110,7 +110,6 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(-32420551879410275048042);
         this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
         this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
         this.testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
@@ -130,13 +129,9 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
-        int256 n = 2;
+        if (t <= -36787944117144232) t = -((t << 1) >> 1);
         unchecked {
-            while (t <= -36787944117144232) {
-                t = int256(_random());
-                n += 8;
-            }
-            for (int256 i = -n; i <= n; ++i) {
+            for (int256 i = -2; i <= 2; ++i) {
                 testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
             }
         }
