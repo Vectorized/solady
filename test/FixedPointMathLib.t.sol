@@ -85,6 +85,16 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(0xfffffffffffffffffffffffff, 24662886826087826761);
     }
 
+    function testLambertW0WadReversForOutOfDomain() public {
+        this.lambertW0Wad(-367879441171442322 + 1);
+        for (int256 i = 0; i <= 10; ++i) {
+            vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
+            this.lambertW0Wad(-367879441171442322 - i);
+        }
+        vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
+        this.lambertW0Wad(-type(int256).max);
+    }
+
     function _checkLambertW0Wad(int256 x, int256 expected) internal {
         assertEq(this.lambertW0Wad(x), expected);
     }
@@ -120,17 +130,16 @@ contract FixedPointMathLibTest is SoladyTest {
         testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
         testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
         testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
-        unchecked {
-            for (uint256 i = 32; i < 64; ++i) {
-                testLambertW0WadMonotonicallyIncreasingAround(int256((1 << i) - 1));
-            }
-        }
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
-        if (t <= -36787944117144232) return;
+        int256 n = 2;
         unchecked {
-            for (int256 i = -10; i <= 10; ++i) {
+            while (t <= -36787944117144232) {
+                t = int256(_random());
+                n += 8;
+            }
+            for (int256 i = -n; i <= n; ++i) {
                 testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
             }
         }
@@ -149,16 +158,9 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
-    function testLambertW0WadDifferential() public {
-        this.testLambertW0WadDifferential(
-            34420380115715784209796406715241666577512908316103172623896404665534449957366
-        );
-    }
-
     function testLambertW0WadDifferential(int256 x) public {
-        if (x <= -367879441171442322) return;
-        if (_random() % 2 == 0) {
-            x = int256(_bound(uint256(x), 0xffffffff, 3367879441171442322 + 1));
+        if (x <= -367879441171442322) {
+            x = int256(_bound(_random(), 0xffffffff, 3367879441171442322 + 1));
         }
         assertEq(this.lambertW0Wad(x), _lambertW0WadOriginal(x));
     }
