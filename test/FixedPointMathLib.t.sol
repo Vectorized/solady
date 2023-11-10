@@ -138,8 +138,8 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasing(int256 a, int256 b) public {
-        while (a <= -367879441171442322) a = int256(_random());
-        while (b <= -367879441171442322) b = int256(_random());
+        while (a <= -367879441171442322) a = -((a << 1) >> 1);
+        while (b <= -367879441171442322) b = -((b << 1) >> 1);
         if (a > b) {
             int256 t = b;
             b = a;
