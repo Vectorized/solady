@@ -173,7 +173,7 @@ contract FixedPointMathLibTest is SoladyTest {
                     iters := add(3, lt(0xffffffffffffff, x))
                 }
             } else {
-                r = 0xfffffffffffff + FixedPointMathLib.lnWad(x);
+                r = 0xffffffffffffff + FixedPointMathLib.lnWad(x);
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
