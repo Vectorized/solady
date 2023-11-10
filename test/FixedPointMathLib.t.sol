@@ -173,11 +173,12 @@ contract FixedPointMathLibTest is SoladyTest {
                 }
             } else if (x <= 0xffffffffffffffff) {
                 uint256 l = FixedPointMathLib.log2(uint256(x));
+                r = int256(1 << l);
                 /// @solidity memory-safe-assembly
                 assembly {
-                    r := shl(l, 1)
-                    if iszero(gt(x, 3367879441171442322)) { iters := add(2, shl(1, lt(54, l))) }
+                    iters := byte(sub(l, 32), 0x020202030303030304040405050709)
                 }
+                require(iters != 0);
             } else {
                 r = FixedPointMathLib.lnWad(x | 0xffffffff);
                 if (x >= 0xfffffffffffffffffffffffff) {
