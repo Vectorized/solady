@@ -113,6 +113,7 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
         this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
         this.testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
+        this.testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
         this.testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
         this.testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
         this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
