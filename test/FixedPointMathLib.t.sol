@@ -48,20 +48,6 @@ contract FixedPointMathLibTest is SoladyTest {
         // Relative error: 5.653904247484822e-21
     }
 
-    function lambertW0Wad(int256) public pure returns (int256) {
-        int256 x;
-        /// @solidity memory-safe-assembly
-        assembly {
-            x := calldataload(4)
-        }
-        x = FixedPointMathLib.lambertW0Wad(x);
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, x)
-            return(0x00, 0x20)
-        }
-    }
-
     function testLambertW0Wad() public {
         _checkLambertW0Wad(0, 0);
         _checkLambertW0Wad(1, 1);
@@ -86,22 +72,22 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadReversForOutOfDomain() public {
-        this.lambertW0Wad(-367879441171442322 + 1);
+        FixedPointMathLib.lambertW0Wad(-367879441171442322 + 1);
         for (int256 i = 0; i <= 10; ++i) {
             vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
-            this.lambertW0Wad(-367879441171442322 - i);
+            FixedPointMathLib.lambertW0Wad(-367879441171442322 - i);
         }
         vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
-        this.lambertW0Wad(-type(int256).max);
+        FixedPointMathLib.lambertW0Wad(-type(int256).max);
     }
 
     function _checkLambertW0Wad(int256 x, int256 expected) internal {
-        assertEq(this.lambertW0Wad(x), expected);
+        assertEq(FixedPointMathLib.lambertW0Wad(x), expected);
     }
 
     function testLambertW0WadForPositiveNumbers(int256 a) public {
         if (a <= 0) return;
-        int256 w = this.lambertW0Wad(a);
+        int256 w = FixedPointMathLib.lambertW0Wad(a);
         assertTrue(w <= a);
         unchecked {
             if (a >= 2718281828459045235) {
@@ -154,7 +140,7 @@ contract FixedPointMathLibTest is SoladyTest {
             a = t;
         }
         unchecked {
-            assertLt(this.lambertW0Wad(a), this.lambertW0Wad(b) + 1);
+            assertLt(FixedPointMathLib.lambertW0Wad(a), FixedPointMathLib.lambertW0Wad(b) + 1);
         }
     }
 
@@ -162,7 +148,7 @@ contract FixedPointMathLibTest is SoladyTest {
         if (x <= -367879441171442322) {
             x = int256(_bound(_random(), 0xffffffff, 3367879441171442322 + 1));
         }
-        assertEq(this.lambertW0Wad(x), _lambertW0WadOriginal(x));
+        assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
     }
 
     function _lambertW0WadOriginal(int256 x) internal pure returns (int256 r) {
