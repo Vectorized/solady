@@ -270,7 +270,7 @@ library FixedPointMathLib {
                 } else if (r <= -0x3ffffffffffffff) {
                     iters = 32;
                 }
-            } else if (r <= 3367879441171442322) {
+            } else if (r <= 0xffffffffffffffff) {
                 /// @solidity memory-safe-assembly
                 assembly {
                     // Inline log2 for more performance, since the range is small.
@@ -279,8 +279,8 @@ library FixedPointMathLib {
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    iters := add(2, shl(1, lt(54, l)))
                     r := shl(l, 1)
+                    if iszero(gt(x, 3367879441171442322)) { iters := add(2, shl(1, lt(54, l))) }
                 }
             } else {
                 // Approximate with `ln(x|a) - ln(ln(x|a)) + b * ln(ln(x|a)) / ln(x|a)`.

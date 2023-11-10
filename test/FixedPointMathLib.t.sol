@@ -110,13 +110,16 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(-32420551879410275048042);
         this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
         this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
         this.testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
         this.testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
         this.testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
         this.testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
         this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
         this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
         this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
         this.testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
@@ -168,11 +171,12 @@ contract FixedPointMathLibTest is SoladyTest {
                 } else if (x <= -0x3ffffffffffffff) {
                     iters = 32;
                 }
-            } else if (x <= 3367879441171442322) {
-                r = int256(1 << FixedPointMathLib.log2(uint256(x)));
+            } else if (x <= 0xffffffffffffffff) {
+                uint256 l = FixedPointMathLib.log2(uint256(x));
                 /// @solidity memory-safe-assembly
                 assembly {
-                    iters := add(3, lt(0xffffffffffffff, x))
+                    r := shl(l, 1)
+                    if iszero(gt(x, 3367879441171442322)) { iters := add(2, shl(1, lt(54, l))) }
                 }
             } else {
                 r = FixedPointMathLib.lnWad(x | 0xffffffff);
