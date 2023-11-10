@@ -73,7 +73,7 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testLambertW0WadReversForOutOfDomain() public {
         FixedPointMathLib.lambertW0Wad(-367879441171442322 + 1);
-        for (int i = 0; i <= 10; ++i) {
+        for (int256 i = 0; i <= 10; ++i) {
             vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
             FixedPointMathLib.lambertW0Wad(-367879441171442322 - i);
         }
