@@ -117,10 +117,12 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(20348862445068325113);
         this.testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
         this.testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
+        this.testLambertW0WadMonotonicallyIncreasingAround(11584319147630401009);
         this.testLambertW0WadMonotonicallyIncreasingAround(9076751962189838509);
         this.testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
         this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
         this.testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
         this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
         this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
         this.testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
@@ -170,7 +172,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 }
             } else if (x <= 0xffffffffffffffff) {
                 uint256 l = FixedPointMathLib.log2(uint256(x));
-                r = int256((1 << l) | 0xffffffff);
+                r = int256((1 << l) | 0xffffffffff);
                 /// @solidity memory-safe-assembly
                 assembly {
                     iters := byte(sub(l, 32), 0x020202030303030304040405050709)
