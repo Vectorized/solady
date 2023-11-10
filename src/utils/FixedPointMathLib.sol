@@ -279,7 +279,7 @@ library FixedPointMathLib {
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := or(shl(l, 1), 0xffffffffff)
+                    r := or(shl(l, 1), 0xfffffffffff)
                     iters := byte(sub(l, 32), 0x020202030303030304040405050709)
                 }
             } else {
