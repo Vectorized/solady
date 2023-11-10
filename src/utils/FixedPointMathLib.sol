@@ -285,7 +285,7 @@ library FixedPointMathLib {
             } else {
                 // Approximate with `ln(x) + a - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
                 // Where `a` and `b` are chosen for a good starting point.
-                r = 0xfffffffff + lnWad(r); // `lnWad` consumes around 585 gas.
+                r = 0xfffffffffffff + lnWad(r); // `lnWad` consumes around 585 gas.
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);

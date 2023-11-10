@@ -113,6 +113,7 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
         this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
         this.testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
+        this.testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
         this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
         this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
         this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
@@ -172,7 +173,7 @@ contract FixedPointMathLibTest is SoladyTest {
                     iters := add(3, lt(0xffffffffffffff, x))
                 }
             } else {
-                r = 0xfffffffff + FixedPointMathLib.lnWad(x);
+                r = 0xfffffffffffff + FixedPointMathLib.lnWad(x);
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
