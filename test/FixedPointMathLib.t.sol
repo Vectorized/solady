@@ -138,8 +138,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint256 t) public {
-        // t = _bound(t, 3367879441171442322, 103244449106500225500);
-        t = _bound(t, 0x1ffffffffffff + 1, 0xffffffffffffffff);
+        t = _bound(t, 0x1ffffffffffff + 1, 0xffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(int256(t));
     }
 
