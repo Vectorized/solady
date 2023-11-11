@@ -259,6 +259,10 @@ library FixedPointMathLib {
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
     /// Most efficient for small positive inputs in the range `[0, 3367879441171442322]`.
+    ///
+    /// Note: This is an approximation that uses Halley's method with `expWad`.
+    /// While the ground truth is monotonically increasing, this implementation sometimes
+    /// returns a `W_0(x)` that is 1 less than `W_0(x-1)` due to convergence quirks.
     function lambertW0Wad(int256 x) internal pure returns (int256 r) {
         unchecked {
             r = x;
@@ -279,8 +283,8 @@ library FixedPointMathLib {
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := shl(l, 1)
-                    iters := byte(sub(l, 32), 0x020202030303030304040405050709)
+                    r := shr(gt(l, 62), shr(gt(l, 60), shl(l, 1)))
+                    iters := byte(sub(l, 32), 0x020202020303030304040405040505)
                 }
             } else {
                 // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
@@ -300,7 +304,6 @@ library FixedPointMathLib {
                 int256 e = expWad(r);
                 int256 t = r + wad;
                 int256 s = r * e + negXMulWad;
-                // `W_0(x - 1) <= W_0(x) + 1`, due to the nature of Halley's method.
                 r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
                 if (r >= prev) break;
                 prev = r;

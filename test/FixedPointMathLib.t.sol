@@ -186,10 +186,10 @@ contract FixedPointMathLibTest is SoladyTest {
                 }
             } else if (x <= 0xffffffffffffffff) {
                 uint256 l = FixedPointMathLib.log2(uint256(x));
-                r = int256(1 << l);
                 /// @solidity memory-safe-assembly
                 assembly {
-                    iters := byte(sub(l, 32), 0x020202030303030304040405050709)
+                    r := shr(gt(l, 62), shr(gt(l, 60), shl(l, 1)))
+                    iters := byte(sub(l, 32), 0x020202020303030304040405040505)
                 }
                 require(iters != 0);
             } else {
