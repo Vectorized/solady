@@ -266,13 +266,13 @@ library FixedPointMathLib {
     function lambertW0Wad(int256 x) internal pure returns (int256 r) {
         unchecked {
             r = x;
-            if (r <= -367879441171442322) revert OutOfDomain();
+            if (r <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
             uint256 iters = 10;
             if (r <= 0x1ffffffffffff) {
                 if (-367879441171443 <= r) {
-                    iters = 1;
+                    iters = 1; // Inputs near zero only take one step to converge.
                 } else if (r <= -0x3ffffffffffffff) {
-                    iters = 32;
+                    iters = 32; // Inputs near `-1/e` take very long to converge.
                 }
             } else if (r <= 0xffffffffffffffff) {
                 /// @solidity memory-safe-assembly
@@ -298,8 +298,8 @@ library FixedPointMathLib {
             int256 prev = type(int256).max;
             int256 wad = int256(WAD);
             int256 negXMulWad = -x * wad;
-            // For values near to zero, we will only need 1 to 4 Halley's iterations.
-            // `expWad` consumes around 411 gas, so it's pretty efficient.
+            // For small values, we will only need 1 to 5 Halley's iterations.
+            // `expWad` consumes around 411 gas, so it's still quite efficient overall.
             do {
                 int256 e = expWad(r);
                 int256 t = r + wad;
