@@ -294,13 +294,12 @@ library FixedPointMathLib {
             int256 prev = type(int256).max;
             int256 wad = int256(WAD);
             int256 negXMulWad = -x * wad;
-            int256 s;
             // For values near to zero, we will only need 1 to 4 Halley's iterations.
             // `expWad` consumes around 411 gas, so it's pretty efficient.
             do {
                 int256 e = expWad(r);
                 int256 t = r + wad;
-                s = r * e + negXMulWad;
+                int256 s = r * e + negXMulWad;
                 // `W_0(x - 1) <= W_0(x) + 1`, due to the nature of Halley's method.
                 r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
                 if (r >= prev) break;
