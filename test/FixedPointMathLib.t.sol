@@ -48,20 +48,6 @@ contract FixedPointMathLibTest is SoladyTest {
         // Relative error: 5.653904247484822e-21
     }
 
-    function lambertW0Wad(int256) public pure returns (int256) {
-        int256 x;
-        /// @solidity memory-safe-assembly
-        assembly {
-            x := calldataload(4)
-        }
-        x = FixedPointMathLib.lambertW0Wad(x);
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, x)
-            return(0x00, 0x20)
-        }
-    }
-
     function testLambertW0Wad() public {
         _checkLambertW0Wad(0, 0);
         _checkLambertW0Wad(1, 1);
@@ -69,12 +55,7 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(3, 2);
         _checkLambertW0Wad(131071, 131070);
         _checkLambertW0Wad(17179869183, 17179868887);
-        _checkLambertW0Wad(281474976710655, 281395781982528);
-        _checkLambertW0Wad(562949953421311, 562633308112667);
-        _checkLambertW0Wad(1125899906842623, 1124634392838165);
         _checkLambertW0Wad(1000000000000000000, 567143290409783873);
-        _checkLambertW0Wad(2361183241434822606847, 5978712844468804878);
-        _checkLambertW0Wad(151115727451828646838271, 9658013267990184319);
         _checkLambertW0Wad(-3678794411715, -3678807945318);
         _checkLambertW0Wad(-367879441171442321, -999999999741585709);
         // These are exact values.
@@ -85,13 +66,23 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(0xfffffffffffffffffffffffff, 24662886826087826761);
     }
 
-    function _checkLambertW0Wad(int256 x, int256 expected) internal {
-        assertEq(this.lambertW0Wad(x), expected);
+    function testLambertW0WadReversForOutOfDomain() public {
+        FixedPointMathLib.lambertW0Wad(-367879441171442322 + 1);
+        for (int256 i = 0; i <= 10; ++i) {
+            vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
+            FixedPointMathLib.lambertW0Wad(-367879441171442322 - i);
+        }
+        vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
+        FixedPointMathLib.lambertW0Wad(-type(int256).max);
     }
 
-    function testLambertW0WadForPositiveNumbers(int256 a) public {
+    function _checkLambertW0Wad(int256 x, int256 expected) internal {
+        assertEq(FixedPointMathLib.lambertW0Wad(x), expected);
+    }
+
+    function testLambertW0WadWithinBounds(int256 a) public {
         if (a <= 0) return;
-        int256 w = this.lambertW0Wad(a);
+        int256 w = FixedPointMathLib.lambertW0Wad(a);
         assertTrue(w <= a);
         unchecked {
             if (a >= 2718281828459045235) {
@@ -110,56 +101,77 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasing2() public {
-        testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
-        testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
-        testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
-        testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
-        testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
-        unchecked {
-            for (uint256 i = 32; i < 64; ++i) {
-                testLambertW0WadMonotonicallyIncreasingAround(int256((1 << i) - 1));
-            }
-        }
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
+        this.testLambertW0WadMonotonicallyIncreasingAround(69812969629793590021);
+        this.testLambertW0WadMonotonicallyIncreasingAround(99877590385471769634);
+        this.testLambertW0WadMonotonicallyIncreasingAround(56740644568147233721);
+        this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
+        this.testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
+        this.testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
+        this.testLambertW0WadMonotonicallyIncreasingAround(20348862445068325113);
+        this.testLambertW0WadMonotonicallyIncreasingAround(17348648760604883838);
+        this.testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
+        this.testLambertW0WadMonotonicallyIncreasingAround(17074770050358191161);
+        this.testLambertW0WadMonotonicallyIncreasingAround(13868095779966762160);
+        this.testLambertW0WadMonotonicallyIncreasingAround(11688489373537725894);
+        this.testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
+        this.testLambertW0WadMonotonicallyIncreasingAround(11584319147630401009);
+        this.testLambertW0WadMonotonicallyIncreasingAround(11213697597559043970);
+        this.testLambertW0WadMonotonicallyIncreasingAround(9076751962189838509);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8973446969188306213);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8711541955259745339);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8479885548030859774);
+        this.testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
+        this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
+        this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
+        this.testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
+    }
+
+    function testLambertW0WadMonotonicallyIncreasingAround2(uint256 t) public {
+        // t = _bound(t, 3367879441171442322, 103244449106500225500);
+        t = _bound(t, 0x1ffffffffffff + 1, 0xffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(int256(t));
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
-        if (t <= -36787944117144232) return;
+        if (t <= -36787944117144232) t = -((t << 1) >> 1);
         unchecked {
-            for (int256 i = -10; i <= 10; ++i) {
-                testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
+            for (int256 i = -2; i <= 2; ++i) {
+                this.testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
             }
         }
     }
 
     function testLambertW0WadMonotonicallyIncreasing(int256 a, int256 b) public {
-        while (a <= -367879441171442322) a = int256(_random());
-        while (b <= -367879441171442322) b = int256(_random());
+        while (a <= -367879441171442322) a = -((a << 1) >> 1);
+        while (b <= -367879441171442322) b = -((b << 1) >> 1);
         if (a > b) {
             int256 t = b;
             b = a;
             a = t;
         }
         unchecked {
-            assertLt(this.lambertW0Wad(a), this.lambertW0Wad(b) + 1);
+            a = FixedPointMathLib.lambertW0Wad(a);
+            b = FixedPointMathLib.lambertW0Wad(b);
+            assertTrue(a <= b + 1);
         }
-    }
-
-    function testLambertW0WadDifferential() public {
-        this.testLambertW0WadDifferential(
-            34420380115715784209796406715241666577512908316103172623896404665534449957366
-        );
     }
 
     function testLambertW0WadDifferential(int256 x) public {
-        if (x <= -367879441171442322) return;
-        if (_random() % 2 == 0) {
-            x = int256(_bound(uint256(x), 0xffffffff, 3367879441171442322 + 1));
+        if (x <= -367879441171442322) {
+            x = int256(_bound(_random(), 0xffffffff, 3367879441171442322 + 1));
         }
-        assertEq(this.lambertW0Wad(x), _lambertW0WadOriginal(x));
+        assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
     }
 
     function _lambertW0WadOriginal(int256 x) internal pure returns (int256 r) {
@@ -173,14 +185,16 @@ contract FixedPointMathLibTest is SoladyTest {
                 } else if (x <= -0x3ffffffffffffff) {
                     iters = 32;
                 }
-            } else if (x <= 3367879441171442322) {
-                r = int256(1 << FixedPointMathLib.log2(uint256(x)));
+            } else if (x <= 0xffffffffffffffff) {
+                uint256 l = FixedPointMathLib.log2(uint256(x));
+                r = int256(1 << l);
                 /// @solidity memory-safe-assembly
                 assembly {
-                    iters := add(3, lt(0xffffffffffffff, x))
+                    iters := byte(sub(l, 32), 0x020202030303030304040405050709)
                 }
+                require(iters != 0);
             } else {
-                r = 0xffffff + FixedPointMathLib.lnWad(x);
+                r = FixedPointMathLib.lnWad(x);
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);

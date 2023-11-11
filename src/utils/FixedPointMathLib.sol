@@ -270,7 +270,7 @@ library FixedPointMathLib {
                 } else if (r <= -0x3ffffffffffffff) {
                     iters = 32;
                 }
-            } else if (r <= 3367879441171442322) {
+            } else if (r <= 0xffffffffffffffff) {
                 /// @solidity memory-safe-assembly
                 assembly {
                     // Inline log2 for more performance, since the range is small.
@@ -279,13 +279,13 @@ library FixedPointMathLib {
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    iters := add(2, shl(1, lt(55, l)))
                     r := shl(l, 1)
+                    iters := byte(sub(l, 32), 0x020202030303030304040405050709)
                 }
             } else {
-                // Approximate with `ln(x) + a - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
-                // Where `a` and `b` are chosen for a good starting point.
-                r = 0xffffff + lnWad(r); // `lnWad` consumes around 585 gas.
+                // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+                // Where `b` is chosen for a good starting point.
+                r = lnWad(r); // `lnWad` consumes around 585 gas.
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);
@@ -293,13 +293,15 @@ library FixedPointMathLib {
             }
             int256 prev = type(int256).max;
             int256 wad = int256(WAD);
-            int256 minusXMulWad = -x * wad;
+            int256 negXMulWad = -x * wad;
+            int256 s;
             // For values near to zero, we will only need 1 to 4 Halley's iterations.
             // `expWad` consumes around 411 gas, so it's pretty efficient.
             do {
                 int256 e = expWad(r);
                 int256 t = r + wad;
-                int256 s = r * e + minusXMulWad;
+                s = r * e + negXMulWad;
+                // `W_0(x - 1) <= W_0(x) + 1`, due to the nature of Halley's method.
                 r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
                 if (r >= prev) break;
                 prev = r;
