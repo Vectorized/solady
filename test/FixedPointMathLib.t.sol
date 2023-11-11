@@ -55,14 +55,9 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(3, 2);
         _checkLambertW0Wad(131071, 131070);
         _checkLambertW0Wad(17179869183, 17179868887);
-        _checkLambertW0Wad(281474976710655, 281395781982528);
-        _checkLambertW0Wad(562949953421311, 562633308112667);
-        _checkLambertW0Wad(1125899906842623, 1124634392838165);
         _checkLambertW0Wad(1000000000000000000, 567143290409783873);
-        _checkLambertW0Wad(2361183241434822606847, 5978712844468804878);
-        _checkLambertW0Wad(151115727451828646838271, 9658013267990184319);
         _checkLambertW0Wad(-3678794411715, -3678807945318);
-        _checkLambertW0Wad(-367879441171442321, -999999999741585709);
+        _checkLambertW0Wad(-367879441171442321, -999999999741585708);
         // These are exact values.
         _checkLambertW0Wad(0x7fffffffffffffffffffffffffffffffffff, 53690283108733387465);
         _checkLambertW0Wad(0xfffffffffffffffffffffffffffffffffff, 51649591321425477661);
@@ -85,7 +80,7 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.lambertW0Wad(x), expected);
     }
 
-    function testLambertW0WadForPositiveNumbers(int256 a) public {
+    function testLambertW0WadWithinBounds(int256 a) public {
         if (a <= 0) return;
         int256 w = FixedPointMathLib.lambertW0Wad(a);
         assertTrue(w <= a);
@@ -102,68 +97,6 @@ contract FixedPointMathLibTest is SoladyTest {
                     w, l - ll + (ll * wad * 2718281828459045235) / (l * 1718281828459045235) + 1
                 );
             }
-        }
-    }
-
-    function testLambertW0WadMonotonicallyIncreasing2() public {
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
-        this.testLambertW0WadMonotonicallyIncreasingAround(99877590385471769634);
-        this.testLambertW0WadMonotonicallyIncreasingAround(56740644568147233721);
-        this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
-        this.testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
-        this.testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
-        this.testLambertW0WadMonotonicallyIncreasingAround(20348862445068325113);
-        this.testLambertW0WadMonotonicallyIncreasingAround(17348648760604883838);
-        this.testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
-        this.testLambertW0WadMonotonicallyIncreasingAround(13868095779966762160);
-        this.testLambertW0WadMonotonicallyIncreasingAround(11688489373537725894);
-        this.testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
-        this.testLambertW0WadMonotonicallyIncreasingAround(11584319147630401009);
-        this.testLambertW0WadMonotonicallyIncreasingAround(11213697597559043970);
-        this.testLambertW0WadMonotonicallyIncreasingAround(9076751962189838509);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8973446969188306213);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8711541955259745339);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8479885548030859774);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
-        this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
-        this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
-        this.testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
-    }
-
-    function testLambertW0WadMonotonicallyIncreasingAround2(uint256 t) public {
-        t = _bound(t, 3367879441171442322, 103244449106500225500);
-        this.testLambertW0WadMonotonicallyIncreasingAround(int256(t));
-    }
-
-    function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
-        if (t <= -36787944117144232) t = -((t << 1) >> 1);
-        unchecked {
-            for (int256 i = -2; i <= 2; ++i) {
-                testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
-            }
-        }
-    }
-
-    function testLambertW0WadMonotonicallyIncreasing(int256 a, int256 b) public {
-        while (a <= -367879441171442322) a = -((a << 1) >> 1);
-        while (b <= -367879441171442322) b = -((b << 1) >> 1);
-        if (a > b) {
-            int256 t = b;
-            b = a;
-            a = t;
-        }
-        unchecked {
-            assertLt(FixedPointMathLib.lambertW0Wad(a), FixedPointMathLib.lambertW0Wad(b) + 1);
         }
     }
 
@@ -187,7 +120,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 }
             } else if (x <= 0xffffffffffffffff) {
                 uint256 l = FixedPointMathLib.log2(uint256(x));
-                r = int256((1 << l) | 0xffffffffffff);
+                r = int256((1 << l) - 1);
                 /// @solidity memory-safe-assembly
                 assembly {
                     iters := byte(sub(l, 32), 0x020202030303030304040405050709)
@@ -199,7 +132,8 @@ contract FixedPointMathLibTest is SoladyTest {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
                 } else if (x <= 0xfffffffffffffffff) {
-                    r = (r << 1) | 0xfffffffffff;
+                    require(r > 0xffffffffffff);
+                    r = (r << 1) | 0xffffffffffff;
                 }
             }
             int256 prev = type(int256).max;

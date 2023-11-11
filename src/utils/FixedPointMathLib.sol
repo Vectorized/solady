@@ -279,29 +279,27 @@ library FixedPointMathLib {
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := or(shl(l, 1), 0xffffffffffff)
+                    r := shl(l, 1)
                     iters := byte(sub(l, 32), 0x020202030303030304040405050709)
                 }
             } else {
-                // Approximate with `ln(x|a) - ln(ln(x|a)) + b * ln(ln(x|a)) / ln(x|a)`.
-                // Where `a` and `b` are chosen for a good starting point.
-                r = lnWad(r | 0xffffffff); // `lnWad` consumes around 585 gas.
+                // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+                // Where `b` is chosen for a good starting point.
+                r = lnWad(r); // `lnWad` consumes around 585 gas.
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);
-                } else if (x <= 0xfffffffffffffffff) {
-                    r = (r << 1) | 0xfffffffffff;
                 }
             }
             int256 prev = type(int256).max;
             int256 wad = int256(WAD);
-            int256 minusXMulWad = -x * wad;
+            int256 negXMulWad = -x * wad;
             // For values near to zero, we will only need 1 to 4 Halley's iterations.
             // `expWad` consumes around 411 gas, so it's pretty efficient.
             do {
                 int256 e = expWad(r);
                 int256 t = r + wad;
-                int256 s = r * e + minusXMulWad;
+                int256 s = r * e + negXMulWad;
                 r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
                 if (r >= prev) break;
                 prev = r;
