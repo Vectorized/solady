@@ -55,16 +55,16 @@ contract FixedPointMathLibTest is SoladyTest {
     // I somehow can't get it to reproduce the approximation constants for `lnWad`.
     // Let me know if you can get the code to reproduce the approximation constants for `lnWad`.
 
-    function testLambertW0Wad() public {
+    function testLambertW0WadKnownValues() public {
         _checkLambertW0Wad(0, 0);
         _checkLambertW0Wad(1, 1);
         _checkLambertW0Wad(2, 2);
         _checkLambertW0Wad(3, 2);
         _checkLambertW0Wad(131071, 131070);
         _checkLambertW0Wad(17179869183, 17179868887);
-        _checkLambertW0Wad(1000000000000000000, 567143290409783872);
+        _checkLambertW0Wad(1000000000000000000, 567143290409783873);
         _checkLambertW0Wad(-3678794411715, -3678807945318);
-        _checkLambertW0Wad(-367879441171442321, -999999999741585709);
+        _checkLambertW0Wad(-367879441171442321, -999999999741585708);
         // These are exact values.
         _checkLambertW0Wad(0x7fffffffffffffffffffffffffffffffffff, 53690283108733387465);
         _checkLambertW0Wad(0xfffffffffffffffffffffffffffffffffff, 51649591321425477661);
@@ -177,7 +177,7 @@ contract FixedPointMathLibTest is SoladyTest {
             // To test strictly, change the following to: `assertTrue(a <= b)`.
             // You may need to run at more than million fuzz runs to encounter a counterexample
             // for `assertTrue(a <= b)`.
-            assertTrue(a <= b + 1);
+            assertTrue(a <= b);
         }
     }
 
@@ -220,12 +220,71 @@ contract FixedPointMathLibTest is SoladyTest {
             int256 prev = type(int256).max;
             int256 wad = int256(1000000000000000000);
             int256 minusXMulWad = -x * wad;
+            int256 c;
             do {
                 int256 e = FixedPointMathLib.expWad(r);
                 int256 t = r + wad;
                 int256 s = r * e + minusXMulWad;
-                int256 d = e * t - FixedPointMathLib.rawSDiv((t + wad) * s, t + t);
+                int256 d = e * t - (c = FixedPointMathLib.rawSDiv((t + wad) * s, t + t));
                 r -= FixedPointMathLib.rawSDiv(s * wad, d);
+                if (r >= prev) break;
+                prev = r;
+            } while (--iters != 0);
+            /// @solidity memory-safe-assembly
+            assembly {
+                r := add(sub(r, sgt(r, 2)), and(slt(c, 0), gt(x, 0)))
+            }
+        }
+    }
+
+    function _testLambertW0WadDebug() public {
+        // this.testLambertW0WadMonotonicallyIncreasingAround(11658601096987766642);
+        this.lambertW0WadDebug(11658601096987766644);
+        this.lambertW0WadDebug(11658601096987766645);
+        this.lambertW0WadDebug(11658601096987766646);
+    }
+
+    event LogInt(string name, int256 value);
+
+    function lambertW0WadDebug(int256 x) public returns (int256 r) {
+        unchecked {
+            r = x;
+            if (x <= -367879441171442322) revert FixedPointMathLib.OutOfDomain();
+            uint256 iters = 10;
+            if (x <= 0x1ffffffffffff) {
+                if (-0x4000000000000 <= x) {
+                    iters = 1;
+                } else if (x <= -0x3ffffffffffffff) {
+                    iters = 32;
+                }
+            } else if (x <= 0xffffffffffffffff) {
+                uint256 l = FixedPointMathLib.log2(uint256(x));
+                /// @solidity memory-safe-assembly
+                assembly {
+                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
+                    iters := add(4, gt(l, 53))
+                }
+                require(iters != 0);
+            } else {
+                r = FixedPointMathLib.lnWad(x);
+                if (x >= 0xfffffffffffffffffffffffff) {
+                    int256 ll = FixedPointMathLib.lnWad(r);
+                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
+                }
+            }
+            int256 prev = type(int256).max;
+            int256 wad = int256(1000000000000000000);
+            int256 minusXMulWad = -x * wad;
+            do {
+                int256 e = FixedPointMathLib.expWad(r);
+                int256 t = r + wad;
+                int256 s = r * e + minusXMulWad;
+                emit LogInt("s", s);
+                int256 c = FixedPointMathLib.rawSDiv((t + wad) * s, t + t);
+                emit LogInt("c", c);
+                int256 d = FixedPointMathLib.rawSDiv(s * wad, e * t - c);
+                emit LogInt("d", d);
+                r -= d;
                 if (r >= prev) break;
                 prev = r;
             } while (--iters != 0);

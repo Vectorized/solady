@@ -284,7 +284,7 @@ library FixedPointMathLib {
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
                     r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                    iters := add(3, gt(l, 53))
+                    iters := add(3, shl(1, gt(l, 53)))
                 }
             } else {
                 // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
@@ -298,19 +298,20 @@ library FixedPointMathLib {
             int256 prev = type(int256).max;
             int256 wad = int256(WAD);
             int256 negXMulWad = -x * wad;
+            int256 c;
             // For small values, we will only need 1 to 5 Halley's iterations.
             // `expWad` consumes around 411 gas, so it's still quite efficient overall.
             do {
                 int256 e = expWad(r);
                 int256 t = r + wad;
                 int256 s = r * e + negXMulWad;
-                r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
+                r -= rawSDiv(s * wad, e * t - (c = rawSDiv((t + wad) * s, t + t)));
                 if (r >= prev) break;
                 prev = r;
             } while (--iters != 0);
             /// @solidity memory-safe-assembly
             assembly {
-                r := sub(r, sgt(r, 2))
+                r := add(sub(r, sgt(r, 2)), and(slt(c, 0), gt(x, 0)))
             }
         }
     }
