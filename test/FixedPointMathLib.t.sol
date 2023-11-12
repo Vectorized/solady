@@ -48,6 +48,13 @@ contract FixedPointMathLibTest is SoladyTest {
         // Relative error: 5.653904247484822e-21
     }
 
+    // Notes on lambertW0Wad:
+    //
+    // If you want to attempt finding a better approximation, look at
+    // https://github.com/recmo/experiment-solexp/blob/main/approximate_mpmath.ipynb
+    // I somehow can't get it to reproduce the approximation constants for `lnWad`.
+    // Let me know if you can get the code to reproduce the approximation constants for `lnWad`.
+
     function testLambertW0Wad() public {
         _checkLambertW0Wad(0, 0);
         _checkLambertW0Wad(1, 1);
@@ -90,8 +97,8 @@ contract FixedPointMathLibTest is SoladyTest {
                 assertGt(l, 0);
                 int256 ll = FixedPointMathLib.lnWad(l);
                 int256 wad = 10 ** 18;
-                // By right, it should be `w + 1`, but since we are using an approximation,
-                // we need to give it a bit of leeway.
+                // By right, it should be `w + 1`.
+                // But our approximation isn't perfect. Could be due to Halley's method.
                 assertLt(l - ll + (ll * wad) / (2 * l), w + 2);
                 assertLt(
                     w, l - ll + (ll * wad * 2718281828459045235) / (l * 1718281828459045235) + 1
@@ -101,6 +108,8 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasing2() public {
+        // These are some problematic values gathered over the attempts.
+        // Some might not be problematic now.
         this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
@@ -138,6 +147,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint256 t) public {
+        // Bound the number into the problematic range to speed up getting a counterexample..
         t = _bound(t, 0x1ffffffffffff + 1, 0xffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(int256(t));
     }
@@ -162,14 +172,22 @@ contract FixedPointMathLibTest is SoladyTest {
         unchecked {
             a = FixedPointMathLib.lambertW0Wad(a);
             b = FixedPointMathLib.lambertW0Wad(b);
+            // `assertTrue(a <= b + 1)` passes a billion fuzz runs.
+            // The plus 1 is there because Halley's method sometimes overshoots.
+            // To test strictly, change the following to: `assertTrue(a <= b)`.
+            // You may need to run at more than million fuzz runs to encounter a counterexample
+            // for `assertTrue(a <= b)`.
             assertTrue(a <= b + 1);
         }
     }
 
     function testLambertW0WadDifferential(int256 x) public {
+        // If `x` is outside the domain, bound it back so as to not waste fuzz compute.
         if (x <= -367879441171442322) {
             x = int256(_bound(_random(), 0xffffffff, 3367879441171442322 + 1));
         }
+        // We differential fuzz so that we can be sure that
+        // some of the assembly tricks are equivalent.
         assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
     }
 
