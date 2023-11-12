@@ -48,6 +48,13 @@ contract FixedPointMathLibTest is SoladyTest {
         // Relative error: 5.653904247484822e-21
     }
 
+    // Notes on lambertW0Wad:
+    //
+    // If you want to attempt finding a better approximation, look at
+    // https://github.com/recmo/experiment-solexp/blob/main/approximate_mpmath.ipynb
+    // I somehow can't get it to reproduce the approximation constants for `lnWad`.
+    // Let me know if you can get the code to reproduce the approximation constants for `lnWad`.
+
     function testLambertW0Wad() public {
         _checkLambertW0Wad(0, 0);
         _checkLambertW0Wad(1, 1);
@@ -90,8 +97,8 @@ contract FixedPointMathLibTest is SoladyTest {
                 assertGt(l, 0);
                 int256 ll = FixedPointMathLib.lnWad(l);
                 int256 wad = 10 ** 18;
-                // By right, it should be `w + 1`, but since we are using an approximation,
-                // we need to give it a bit of leeway.
+                // By right, it should be `w + 1`.
+                // But our approximation isn't perfect. Could be due to Halley's method.
                 assertLt(l - ll + (ll * wad) / (2 * l), w + 2);
                 assertLt(
                     w, l - ll + (ll * wad * 2718281828459045235) / (l * 1718281828459045235) + 1
