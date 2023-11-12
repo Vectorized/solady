@@ -207,7 +207,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 /// @solidity memory-safe-assembly
                 assembly {
                     r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                    iters := add(3, shl(1, gt(l, 53)))
+                    iters := add(3, add(gt(l, 53), gt(l, 61)))
                 }
                 require(iters != 0);
             } else {
@@ -220,19 +220,20 @@ contract FixedPointMathLibTest is SoladyTest {
             int256 prev = type(int256).max;
             int256 wad = int256(1000000000000000000);
             int256 minusXMulWad = -x * wad;
-            int256 c;
+            int256 s;
             do {
                 int256 e = FixedPointMathLib.expWad(r);
                 int256 t = r + wad;
-                int256 s = r * e + minusXMulWad;
-                int256 d = e * t - (c = FixedPointMathLib.rawSDiv((t + wad) * s, t + t));
-                r -= FixedPointMathLib.rawSDiv(s * wad, d);
+                s = r * e + minusXMulWad;
+                r -= FixedPointMathLib.rawSDiv(
+                    s * wad, e * t - FixedPointMathLib.rawSDiv((t + wad) * s, t + t)
+                );
                 if (r >= prev) break;
                 prev = r;
             } while (--iters != 0);
             /// @solidity memory-safe-assembly
             assembly {
-                r := add(sub(r, sgt(r, 2)), and(slt(c, 0), gt(x, 0)))
+                r := add(sub(r, sgt(r, 2)), and(slt(s, 0), gt(x, 0)))
             }
         }
     }
