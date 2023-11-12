@@ -283,8 +283,8 @@ library FixedPointMathLib {
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := shr(gt(l, 62), shr(gt(l, 60), shl(l, 1)))
-                    iters := byte(sub(l, 32), 0x020202020303030304040405040505)
+                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
+                    iters := add(3, gt(l, 53))
                 }
             } else {
                 // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
