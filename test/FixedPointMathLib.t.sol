@@ -179,12 +179,12 @@ contract FixedPointMathLibTest is SoladyTest {
             if (x <= -367879441171442322) revert FixedPointMathLib.OutOfDomain();
             uint256 iters = 10;
             if (x <= 0x1ffffffffffff) {
-                if (-367879441171443 <= x) {
+                if (-0x4000000000000 <= x) {
                     iters = 1;
                 } else if (x <= -0x3ffffffffffffff) {
                     iters = 32;
                 }
-            } else if (x <= 0xffffffffffffffff) {
+            } else if (r >> 64 == 0) {
                 uint256 l = FixedPointMathLib.log2(uint256(x));
                 /// @solidity memory-safe-assembly
                 assembly {
@@ -194,7 +194,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 require(iters != 0);
             } else {
                 r = FixedPointMathLib.lnWad(x);
-                if (x >= 0xfffffffffffffffffffffffff) {
+                if (x >> 100 != 0) {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
                 }

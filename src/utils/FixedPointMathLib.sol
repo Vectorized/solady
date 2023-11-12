@@ -269,12 +269,12 @@ library FixedPointMathLib {
             if (r <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
             uint256 iters = 10;
             if (r <= 0x1ffffffffffff) {
-                if (-367879441171443 <= r) {
+                if (-0x4000000000000 <= r) {
                     iters = 1; // Inputs near zero only take one step to converge.
-                } else if (r <= -0x3ffffffffffffff) {
+                } else if (r <= -0x4ffffffffffffff) {
                     iters = 32; // Inputs near `-1/e` take very long to converge.
                 }
-            } else if (r <= 0xffffffffffffffff) {
+            } else if (r >> 64 == 0) {
                 /// @solidity memory-safe-assembly
                 assembly {
                     // Inline log2 for more performance, since the range is small.
@@ -290,7 +290,7 @@ library FixedPointMathLib {
                 // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
                 // Where `b` is chosen for a good starting point.
                 r = lnWad(r); // `lnWad` consumes around 585 gas.
-                if (x >= 0xfffffffffffffffffffffffff) {
+                if (x >> 100 != 0) {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);
                 }
