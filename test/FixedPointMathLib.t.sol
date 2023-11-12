@@ -62,7 +62,7 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(3, 2);
         _checkLambertW0Wad(131071, 131070);
         _checkLambertW0Wad(17179869183, 17179868887);
-        _checkLambertW0Wad(1000000000000000000, 567143290409783873);
+        _checkLambertW0Wad(1000000000000000000, 567143290409783872);
         _checkLambertW0Wad(-3678794411715, -3678807945318);
         _checkLambertW0Wad(-367879441171442321, -999999999741585709);
         // These are exact values.
