@@ -101,6 +101,8 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasing2() public {
+        // These are some problematic values gathered over the attempts.
+        // Some might not be problematic now.
         this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
@@ -138,6 +140,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint256 t) public {
+        // Bound the number into the problematic range to speed up getting a counterexample..
         t = _bound(t, 0x1ffffffffffff + 1, 0xffffffffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(int256(t));
     }
@@ -162,14 +165,22 @@ contract FixedPointMathLibTest is SoladyTest {
         unchecked {
             a = FixedPointMathLib.lambertW0Wad(a);
             b = FixedPointMathLib.lambertW0Wad(b);
+            // `assertTrue(a <= b + 1)` passes a billion fuzz runs.
+            // The plus 1 is there because Halley's method sometimes overshoots.
+            // To test strictly, change the following to: `assertTrue(a <= b)`.
+            // You may need to run at more than million fuzz runs to encounter a counterexample
+            // for `assertTrue(a <= b)`.
             assertTrue(a <= b + 1);
         }
     }
 
     function testLambertW0WadDifferential(int256 x) public {
+        // If `x` is outside the domain, bound it back so as to not waste fuzz compute.
         if (x <= -367879441171442322) {
             x = int256(_bound(_random(), 0xffffffff, 3367879441171442322 + 1));
         }
+        // We differential fuzz so that we can be sure that
+        // some of the assembly tricks are equivalent.
         assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
     }
 
