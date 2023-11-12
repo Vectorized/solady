@@ -141,6 +141,7 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
         this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
         this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
+        this.testLambertW0WadMonotonicallyIncreasingAround(3500617418449437693);
         this.testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
         this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
         this.testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
@@ -207,7 +208,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 /// @solidity memory-safe-assembly
                 assembly {
                     r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                    iters := add(3, add(gt(l, 53), gt(l, 61)))
+                    iters := add(3, add(gt(l, 53), gt(l, 60)))
                 }
                 require(iters != 0);
             } else {
