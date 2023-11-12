@@ -207,7 +207,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 /// @solidity memory-safe-assembly
                 assembly {
                     r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                    iters := add(3, gt(l, 53))
+                    iters := add(3, shl(1, gt(l, 53)))
                 }
                 require(iters != 0);
             } else {
