@@ -179,7 +179,7 @@ contract FixedPointMathLibTest is SoladyTest {
             if (x <= -367879441171442322) revert FixedPointMathLib.OutOfDomain();
             uint256 iters = 10;
             if (x <= 0x1ffffffffffff) {
-                if (-367879441171443 <= x) {
+                if (-0x4000000000000 <= x) {
                     iters = 1;
                 } else if (x <= -0x3ffffffffffffff) {
                     iters = 32;
