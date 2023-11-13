@@ -240,7 +240,6 @@ contract FixedPointMathLibTest is SoladyTest {
                     r := sdiv(shl(l, 7), byte(sub(l, 36), 0x0303030303030303040506080c131e30518cf3))
                     iters := add(3, add(gt(l, 53), gt(l, 60)))
                 }
-                require(iters != 0);
             } else {
                 r = FixedPointMathLib.lnWad(x);
                 if (x >= 0xfffffffffffffffffffffffff) {
