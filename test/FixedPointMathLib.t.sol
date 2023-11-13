@@ -237,7 +237,7 @@ contract FixedPointMathLibTest is SoladyTest {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
                 } else if (x >> 68 == 0) {
-                    r |= 0xffffffff;
+                    r |= 0xffffffffff;
                 }
             }
             int256 prev = type(int256).max;
@@ -294,6 +294,8 @@ contract FixedPointMathLibTest is SoladyTest {
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
+                } else if (x >> 68 == 0) {
+                    r |= 0xffffffffff;
                 }
             }
             int256 prev = type(int256).max;
