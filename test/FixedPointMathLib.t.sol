@@ -150,6 +150,12 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
     }
 
+    function testLambertW0WadMonotonicallyIncreasingAround3(uint256 t) public {
+        // Bound the number into the problematic range to speed up getting a counterexample..
+        t = _bound(t, 0xffffffffffffffff, 0xffffffffffffffffff);
+        this.testLambertW0WadMonotonicallyIncreasingAround(int256(t));
+    }
+
     function testLambertW0WadMonotonicallyIncreasingAround2(uint256 t) public {
         // Bound the number into the problematic range to speed up getting a counterexample..
         t = _bound(t, 0x1ffffffffffff + 1, 0xffffffffffffffffffff);
