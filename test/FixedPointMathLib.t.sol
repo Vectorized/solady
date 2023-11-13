@@ -64,7 +64,7 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(17179869183, 17179868887);
         _checkLambertW0Wad(1000000000000000000, 567143290409783873);
         _checkLambertW0Wad(-3678794411715, -3678807945318);
-        _checkLambertW0Wad(-367879441171442321, -999999999741585708);
+        _checkLambertW0Wad(-367879441171442321, -999999999741585709);
         // These are exact values.
         _checkLambertW0Wad(0x7fffffffffffffffffffffffffffffffffff, 53690283108733387465);
         _checkLambertW0Wad(0xfffffffffffffffffffffffffffffffffff, 51649591321425477661);
@@ -236,7 +236,7 @@ contract FixedPointMathLibTest is SoladyTest {
             } while (--iters != 0);
             /// @solidity memory-safe-assembly
             assembly {
-                r := add(sub(r, sgt(r, 2)), and(slt(s, 0), gt(x, 0)))
+                r := add(sub(r, sgt(r, 2)), and(slt(s, 0), sgt(x, 0)))
             }
         }
     }

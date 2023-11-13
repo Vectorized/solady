@@ -311,7 +311,7 @@ library FixedPointMathLib {
             } while (--iters != 0);
             /// @solidity memory-safe-assembly
             assembly {
-                r := add(sub(r, sgt(r, 2)), and(slt(s, 0), gt(x, 0)))
+                r := add(sub(r, sgt(r, 2)), and(slt(s, 0), sgt(x, 0)))
             }
         }
     }
