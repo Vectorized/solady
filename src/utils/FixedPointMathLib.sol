@@ -274,16 +274,16 @@ library FixedPointMathLib {
                 } else if (r <= -0x4ffffffffffffff) {
                     iters = 32; // Inputs near `-1/e` take very long to converge.
                 }
-            } else if (r >> 64 == 0) {
+            } else if (r >> 68 == 0) {
                 /// @solidity memory-safe-assembly
                 assembly {
                     // Inline log2 for more performance, since the range is small.
                     let v := shr(49, r)
-                    let l := shl(3, lt(0xff, v))
+                    let l := shl(3, add(lt(0xffff, v), lt(0xff, v)))
                     // forgefmt: disable-next-item
                     l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                         0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
+                    r := sdiv(shl(l, 7), byte(sub(l, 36), 0x0303030303030303040506080c131e30518cf3))
                     iters := add(3, add(gt(l, 53), gt(l, 60)))
                 }
             } else {
@@ -293,8 +293,6 @@ library FixedPointMathLib {
                 if (x >> 100 != 0) {
                     int256 ll = lnWad(r);
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);
-                } else if (x >> 68 == 0) {
-                    r |= 0xffffffffffff;
                 }
             }
             int256 prev = type(int256).max;

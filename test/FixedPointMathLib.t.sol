@@ -162,6 +162,9 @@ contract FixedPointMathLibTest is SoladyTest {
         this.testLambertW0WadMonotonicallyIncreasingAround(105001539494612978118);
         this.testLambertW0WadMonotonicallyIncreasingAround(46292144464583511918);
         this.testLambertW0WadMonotonicallyIncreasingAround(38472943889347317924);
+        this.testLambertW0WadMonotonicallyIncreasingAround(82659125265108585522);
+        this.testLambertW0WadMonotonicallyIncreasingAround(135941107746119678298);
+        this.testLambertW0WadMonotonicallyIncreasingAround(78294376906779797031);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround3(uint256 t) public {
@@ -230,11 +233,11 @@ contract FixedPointMathLibTest is SoladyTest {
                 } else if (x <= -0x3ffffffffffffff) {
                     iters = 32;
                 }
-            } else if (x <= 0xffffffffffffffff) {
+            } else if (x <= 0xfffffffffffffffff) {
                 uint256 l = FixedPointMathLib.log2(uint256(x));
                 /// @solidity memory-safe-assembly
                 assembly {
-                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
+                    r := sdiv(shl(l, 7), byte(sub(l, 36), 0x0303030303030303040506080c131e30518cf3))
                     iters := add(3, add(gt(l, 53), gt(l, 60)))
                 }
                 require(iters != 0);
@@ -243,8 +246,6 @@ contract FixedPointMathLibTest is SoladyTest {
                 if (x >= 0xfffffffffffffffffffffffff) {
                     int256 ll = FixedPointMathLib.lnWad(r);
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
-                } else if (x >> 68 == 0) {
-                    r |= 0xffffffffffff;
                 }
             }
             int256 prev = type(int256).max;
