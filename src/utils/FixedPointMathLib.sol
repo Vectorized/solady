@@ -299,9 +299,9 @@ library FixedPointMathLib {
         int256 s;
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
-        // For small values, we will only need 1 to 5 Halley's iterations.
-        // `expWad` consumes around 411 gas, so it's still quite efficient overall.
         if (!useNewton) {
+            // For small values, we will only need 1 to 5 Halley's iterations.
+            // `expWad` consumes around 411 gas, so it's still quite efficient overall.
             do {
                 int256 e = expWad(r);
                 /// @solidity memory-safe-assembly
@@ -316,6 +316,8 @@ library FixedPointMathLib {
                 p = r;
             } while (iters != 0);
         } else {
+            // If `x` is too big, we have to use Newton's method instead,
+            // so that intermediate values won't overflow.
             do {
                 int256 e = expWad(r);
                 /// @solidity memory-safe-assembly
