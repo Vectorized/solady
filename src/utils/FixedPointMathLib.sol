@@ -262,54 +262,76 @@ library FixedPointMathLib {
     ///
     /// Note: This is an approximation that uses Halley's method with `expWad`.
     function lambertW0Wad(int256 x) internal pure returns (int256 r) {
-        unchecked {
-            if ((r = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-            uint256 iters = 10;
-            if (r <= 0x1ffffffffffff) {
-                if (-0x4000000000000 <= r) {
-                    iters = 1; // Inputs near zero only take one step to converge.
-                } else if (r <= -0x4ffffffffffffff) {
-                    iters = 32; // Inputs near `-1/e` take very long to converge.
-                }
-            } else if (r >> 68 == 0) {
-                /// @solidity memory-safe-assembly
-                assembly {
-                    // Inline log2 for more performance, since the range is small.
-                    let v := shr(49, r)
-                    let l := shl(3, add(lt(0xffff, v), lt(0xff, v)))
-                    // forgefmt: disable-next-item
-                    l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
-                        0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := sdiv(shl(l, 7), byte(sub(l, 36), 0x0303030303030303040506080c131e30518cf3))
-                    iters := add(3, add(gt(l, 53), gt(l, 60)))
-                }
-            } else {
-                // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
-                // Where `b` is chosen for a good starting point.
-                r = lnWad(r); // `lnWad` consumes around 585 gas.
-                if (x >> 100 != 0) {
-                    int256 ll = lnWad(r);
-                    r = r - ll + rawSDiv(ll * 1023715086476318099, r);
-                }
+        if ((r = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
+        uint256 iters = 10;
+        bool useNewton;
+        if (r <= 0x1ffffffffffff) {
+            if (-0x4000000000000 <= r) {
+                iters = 1; // Inputs near zero only take one step to converge.
+            } else if (r <= -0x4ffffffffffffff) {
+                iters = 32; // Inputs near `-1/e` take very long to converge.
             }
-            int256 s;
-            int256 prev = 0xffffffffffffffffff;
-            int256 wad = int256(WAD);
-            int256 negXMulWad = -x * wad;
-            // For small values, we will only need 1 to 5 Halley's iterations.
-            // `expWad` consumes around 411 gas, so it's still quite efficient overall.
-            do {
-                int256 e = expWad(r);
-                int256 t = r + wad;
-                s = r * e + negXMulWad;
-                r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
-                if (r >= prev) break;
-                prev = r;
-            } while (--iters != 0);
+        } else if (r >> 68 == 0) {
             /// @solidity memory-safe-assembly
             assembly {
-                r := add(sub(r, sgt(r, 2)), and(slt(s, 0), sgt(x, 0)))
+                // Inline log2 for more performance, since the range is small.
+                let v := shr(49, r)
+                let l := shl(3, add(lt(0xffff, v), lt(0xff, v)))
+                // forgefmt: disable-next-item
+                l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
+                    0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
+                r := sdiv(shl(l, 7), byte(sub(l, 36), 0x0303030303030303040506080c131e30518cf3))
+                iters := add(3, add(gt(l, 53), gt(l, 60)))
             }
+        } else {
+            // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+            // Where `b` is chosen for a good starting point.
+            r = lnWad(r); // `lnWad` consumes around 585 gas.
+            if (x >> 100 != 0) {
+                int256 ll = lnWad(r);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    r := add(sub(r, ll), sdiv(mul(ll, 1023715086476318099), r))
+                    useNewton := shr(143, x)
+                }
+            }
+        }
+        int256 s;
+        int256 p = 0xffffffffffffffffff;
+        int256 wad = int256(WAD);
+        // For small values, we will only need 1 to 5 Halley's iterations.
+        // `expWad` consumes around 411 gas, so it's still quite efficient overall.
+        if (!useNewton) {
+            do {
+                int256 e = expWad(r);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let t := add(r, wad)
+                    s := sub(mul(r, e), mul(x, wad))
+                    // forgefmt: disable-next-item
+                    r := sub(r, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
+                    iters := sub(iters, 1)
+                }
+                if (p <= r) break;
+                p = r;
+            } while (iters != 0);
+        } else {
+            do {
+                int256 e = expWad(r);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let t := mul(r, div(e, wad))
+                    s := sub(t, x)
+                    r := sub(r, sdiv(s, div(add(e, t), wad)))
+                    iters := sub(iters, 1)
+                }
+                if (p <= r) break;
+                p = r;
+            } while (iters != 0);
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := add(sub(r, sgt(r, 2)), and(slt(s, 0), sgt(x, 0)))
         }
     }
 

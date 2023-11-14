@@ -74,11 +74,13 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(-3678794411715, -3678807945318);
         _checkLambertW0Wad(_LAMBERT_W0_MIN, -999999999741585709);
         // These are exact values.
-        _checkLambertW0Wad(0x7fffffffffffffffffffffffffffffffffff, 53690283108733387465);
-        _checkLambertW0Wad(0xfffffffffffffffffffffffffffffffffff, 51649591321425477661);
-        _checkLambertW0Wad(0xffffffffffffffffffffffffffffffff, 43503466806167642613);
-        _checkLambertW0Wad(0xffffffffffffffffffffffffff, 27332691623220201135);
-        _checkLambertW0Wad(0xfffffffffffffffffffffffff, 24662886826087826761);
+        _checkLambertW0Wad(2 ** 255 - 1, 130435123404408416612);
+        _checkLambertW0Wad(2 ** 144 - 1, 54370834448115730535);
+        _checkLambertW0Wad(2 ** 143 - 1, 53690283108733387465);
+        _checkLambertW0Wad(2 ** 140 - 1, 51649591321425477661);
+        _checkLambertW0Wad(2 ** 128 - 1, 43503466806167642613);
+        _checkLambertW0Wad(2 ** 104 - 1, 27332691623220201135);
+        _checkLambertW0Wad(2 ** 100 - 1, 24662886826087826761);
     }
 
     function testLambertW0WadRevertsForOutOfDomain() public {
@@ -267,19 +269,34 @@ contract FixedPointMathLibTest is SoladyTest {
                     r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
                 }
             }
-            int256 prev = type(int256).max;
-            int256 minusXMulWad = -x * _WAD;
             int256 s;
-            do {
-                int256 e = FixedPointMathLib.expWad(r);
-                int256 t = r + _WAD;
-                s = r * e + minusXMulWad;
-                r -= FixedPointMathLib.rawSDiv(
-                    s * _WAD, e * t - FixedPointMathLib.rawSDiv((t + _WAD) * s, t + t)
-                );
-                if (r >= prev) break;
-                prev = r;
-            } while (--iters != 0);
+            int256 prev = 0xffffffffffffffffff;
+            int256 wad = _WAD;
+            // For small values, we will only need 1 to 5 Halley's iterations.
+            // `expWad` consumes around 411 gas, so it's still quite efficient overall.
+            if (x < 1 << 143) {
+                int256 negXMulWad = -x * wad;
+                do {
+                    int256 e = FixedPointMathLib.expWad(r);
+                    int256 t = r + wad;
+                    s = r * e + negXMulWad;
+                    r -= FixedPointMathLib.rawSDiv(
+                        s * wad, e * t - FixedPointMathLib.rawSDiv((t + wad) * s, t + t)
+                    );
+                    if (r >= prev) break;
+                    prev = r;
+                } while (--iters != 0);
+            } else {
+                do {
+                    uint256 e = uint256(FixedPointMathLib.expWad(r));
+                    uint256 t = uint256(r) * FixedPointMathLib.rawDiv(e, uint256(wad));
+                    s = int256(t - uint256(x));
+                    t = FixedPointMathLib.rawDiv(e + t, uint256(wad));
+                    r -= FixedPointMathLib.rawSDiv(s, int256(t));
+                    if (r >= prev) break;
+                    prev = r;
+                } while (--iters != 0);
+            }
             /// @solidity memory-safe-assembly
             assembly {
                 r := add(sub(r, sgt(r, 2)), and(slt(s, 0), sgt(x, 0)))
