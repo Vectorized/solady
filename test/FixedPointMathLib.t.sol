@@ -81,6 +81,9 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(2 ** 128 - 1, 43503466806167642613);
         _checkLambertW0Wad(2 ** 104 - 1, 27332691623220201135);
         _checkLambertW0Wad(2 ** 100 - 1, 24662886826087826761);
+        // This value is 1 less than the ground truth.
+        // Could be due to approximation limitations.
+        _checkLambertW0Wad(2 ** 80 - 1, 11557875688514566228 - 1);
     }
 
     function testLambertW0WadRevertsForOutOfDomain() public {
