@@ -258,60 +258,99 @@ library FixedPointMathLib {
     /// @dev Returns `W_0(x)`, denominated in `WAD`.
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
-    /// Most efficient for small positive inputs in the range `[0, 3367879441171442322]`.
-    ///
-    /// Note: This is an approximation that uses Halley's method with `expWad`.
-    /// While the ground truth is monotonically increasing, this implementation sometimes
-    /// returns a `W_0(x)` that is 1 less than `W_0(x-1)` due to convergence quirks.
-    function lambertW0Wad(int256 x) internal pure returns (int256 r) {
-        unchecked {
-            r = x;
-            if (r <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-            uint256 iters = 10;
-            if (r <= 0x1ffffffffffff) {
-                if (-0x4000000000000 <= r) {
-                    iters = 1; // Inputs near zero only take one step to converge.
-                } else if (r <= -0x4ffffffffffffff) {
-                    iters = 32; // Inputs near `-1/e` take very long to converge.
-                }
-            } else if (r >> 64 == 0) {
-                /// @solidity memory-safe-assembly
-                assembly {
-                    // Inline log2 for more performance, since the range is small.
-                    let v := shr(49, r)
-                    let l := shl(3, lt(0xff, v))
-                    // forgefmt: disable-next-item
-                    l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
-                        0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                    iters := add(3, gt(l, 53))
-                }
-            } else {
-                // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
-                // Where `b` is chosen for a good starting point.
-                r = lnWad(r); // `lnWad` consumes around 585 gas.
-                if (x >> 100 != 0) {
-                    int256 ll = lnWad(r);
-                    r = r - ll + rawSDiv(ll * 1023715086476318099, r);
-                }
+    /// Most efficient for small inputs in the range `[-2**50, 2**64)`.
+    function lambertW0Wad(int256 x) internal pure returns (int256 w) {
+        if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
+        uint256 iters = 10;
+        if (w <= 0x1ffffffffffff) {
+            if (-0x4000000000000 <= w) {
+                iters = 1; // Inputs near zero only take one step to converge.
+            } else if (w <= -0x4ffffffffffffff) {
+                iters = 32; // Inputs near `-1/e` take very long to converge.
             }
-            int256 prev = type(int256).max;
-            int256 wad = int256(WAD);
-            int256 negXMulWad = -x * wad;
-            // For small values, we will only need 1 to 5 Halley's iterations.
-            // `expWad` consumes around 411 gas, so it's still quite efficient overall.
-            do {
-                int256 e = expWad(r);
-                int256 t = r + wad;
-                int256 s = r * e + negXMulWad;
-                r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
-                if (r >= prev) break;
-                prev = r;
-            } while (--iters != 0);
+        } else if (w >> 64 == 0) {
             /// @solidity memory-safe-assembly
             assembly {
-                r := sub(r, sgt(r, 2))
+                // Inline log2 for more performance, since the range is small.
+                let v := shr(49, w)
+                let l := shl(3, lt(0xff, v))
+                // forgefmt: disable-next-item
+                l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
+                    0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
+                // The initial values are chosen for performance and monotonicity.
+                w := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
+                iters := add(3, add(gt(l, 53), gt(l, 60)))
             }
+        } else {
+            // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+            // Where `b` is chosen for a good starting point.
+            w = lnWad(w);
+            // The `[2**64, 2**72)` range sometimes give off-by-1 errors during Halley's.
+            // If the intermediate variables look sus, max with `W_0(x-1)` to force monotonicity.
+            if (x >> 72 == 0) {
+                (int256 r, int256 s) = _w0Halley(x, w, iters);
+                if (s < r) {
+                    unchecked {
+                        (w,) = _w0Halley(x - 1, w, iters);
+                    }
+                    if (w > r) r = w;
+                }
+                return r;
+            }
+            if (x >> 100 != 0) {
+                int256 ll = lnWad(w);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
+                }
+                if (x >> 143 != 0) return _w0Newton(x, w, iters);
+            }
+        }
+        (w,) = _w0Halley(x, w, iters);
+    }
+
+    /// @dev Halley's method workflow for `lambertW0Wad`.
+    function _w0Halley(int256 x, int256 w, uint256 i) private pure returns (int256 r, int256 s) {
+        int256 p = 0xffffffffffffffffff;
+        int256 wad = int256(WAD);
+        // For small values, we will only need 1 to 5 Halley's iterations.
+        do {
+            int256 e = expWad(w);
+            /// @solidity memory-safe-assembly
+            assembly {
+                let t := add(w, wad)
+                s := sub(mul(w, e), mul(x, wad))
+                w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
+                i := sub(i, 1)
+            }
+            if (p <= w) break;
+            p = w;
+        } while (i != 0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
+        }
+    }
+
+    /// @dev Newton's method workflow for `lambertW0Wad`.
+    function _w0Newton(int256 x, int256 w, uint256 i) private pure returns (int256 r) {
+        int256 p = 0xffffffffffffffffff;
+        int256 wad = int256(WAD);
+        // If `x` is big, use Newton's so that intermediate values won't overflow.
+        do {
+            int256 e = expWad(w);
+            /// @solidity memory-safe-assembly
+            assembly {
+                let t := mul(w, div(e, wad))
+                w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
+                i := sub(i, 1)
+            }
+            if (p <= w) break;
+            p = w;
+        } while (i != 0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := sub(w, sgt(w, 2))
         }
     }
 
