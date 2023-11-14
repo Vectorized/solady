@@ -219,6 +219,15 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
+    function testLambertW0WadTrick(int256 r) public {
+        bool g = -0x4000000000000 <= r;
+        bool d;
+        assembly {
+            d := slt(not(r), 0x3ffffffffffff)
+        }
+        assertEq(g, d);
+    }
+
     function _boundLambertW0WadInput(int256 x) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {

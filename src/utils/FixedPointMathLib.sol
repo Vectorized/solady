@@ -258,15 +258,12 @@ library FixedPointMathLib {
     /// @dev Returns `W_0(x)`, denominated in `WAD`.
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
-    /// Most efficient for small positive inputs in the range `[0, 3367879441171442322]`.
+    /// Most efficient for small inputs in the range `[-2**50, 2**68)`.
     ///
     /// Note: This is an approximation that uses Halley's method with `expWad`.
-    /// While the ground truth is monotonically increasing, this implementation sometimes
-    /// returns a `W_0(x)` that is 1 less than `W_0(x-1)` due to convergence quirks.
     function lambertW0Wad(int256 x) internal pure returns (int256 r) {
         unchecked {
-            r = x;
-            if (r <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
+            if ((r = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
             uint256 iters = 10;
             if (r <= 0x1ffffffffffff) {
                 if (-0x4000000000000 <= r) {
@@ -295,10 +292,10 @@ library FixedPointMathLib {
                     r = r - ll + rawSDiv(ll * 1023715086476318099, r);
                 }
             }
-            int256 prev = type(int256).max;
+            int256 s;
+            int256 prev = 0xffffffffffffffffff;
             int256 wad = int256(WAD);
             int256 negXMulWad = -x * wad;
-            int256 s;
             // For small values, we will only need 1 to 5 Halley's iterations.
             // `expWad` consumes around 411 gas, so it's still quite efficient overall.
             do {
