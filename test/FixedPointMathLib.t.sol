@@ -208,6 +208,7 @@ contract FixedPointMathLibTest is SoladyTest {
         testLambertW0WadMonotonicallyIncreasingAround(65787690658056786099);
         testLambertW0WadMonotonicallyIncreasingAround(121954299871224955690);
         testLambertW0WadMonotonicallyIncreasingAround(103596893383482745277);
+        testLambertW0WadMonotonicallyIncreasingAround(755356612457558823505);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
@@ -277,7 +278,7 @@ contract FixedPointMathLibTest is SoladyTest {
             // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
             // Where `b` is chosen for a good starting point.
             w = FixedPointMathLib.lnWad(w); // `lnWad` consumes around 585 gas.
-            if (x < 2 ** 69) {
+            if (x < 2 ** 72) {
                 return FixedPointMathLib.max(
                     _lambertW0WadHalley(x - 1, w, iters), _lambertW0WadHalley(x, w, iters)
                 );

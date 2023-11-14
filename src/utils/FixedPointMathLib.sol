@@ -285,9 +285,9 @@ library FixedPointMathLib {
             // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
             // Where `b` is chosen for a good starting point.
             w = lnWad(w); // `lnWad` consumes around 585 gas.
-            // The `[2**64, 2**69)` range sometimes give off-by-1 errors during Halley's.
+            // The `[2**64, 2**72)` range sometimes give off-by-1 errors during Halley's.
             // If the intermediate variables look sus, max with `W_0(x-1)` to force monotonicity.
-            if (x >> 69 == 0) {
+            if (x >> 72 == 0) {
                 (int256 r, int256 s) = _w0Halley(x, w, iters);
                 if (s < r) {
                     unchecked {
