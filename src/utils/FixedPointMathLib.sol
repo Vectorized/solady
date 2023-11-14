@@ -258,7 +258,7 @@ library FixedPointMathLib {
     /// @dev Returns `W_0(x)`, denominated in `WAD`.
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
-    /// Most efficient for small inputs in the range `[-2**50, 2**68)`.
+    /// Most efficient for small inputs in the range `[-2**50, 2**64)`.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
         uint256 iters = 10;
@@ -285,10 +285,9 @@ library FixedPointMathLib {
             // Where `b` is chosen for a good starting point.
             w = lnWad(w); // `lnWad` consumes around 585 gas.
             unchecked {
-                if (x >> 69 == 0) {
-                    return
-                        max(_lambertW0WadHalley(x - 1, w, iters), _lambertW0WadHalley(x, w, iters));
-                }
+                // The `[2**64, 2**69)` causes off-by-1 errors during Halley's.
+                // Use `max` to ensure that the result is strictly monotonically increasing.
+                if (x >> 69 == 0) return max(_w0Halley(x - 1, w, iters), _w0Halley(x, w, iters));
             }
             if (x >> 100 != 0) {
                 int256 ll = lnWad(w);
@@ -296,18 +295,14 @@ library FixedPointMathLib {
                 assembly {
                     w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
                 }
-                if (x >> 143 != 0) return _lambertW0WadNewton(x, w, iters);
+                if (x >> 143 != 0) return _w0Newton(x, w, iters);
             }
         }
-        w = _lambertW0WadHalley(x, w, iters);
+        w = _w0Halley(x, w, iters);
     }
 
     /// @dev Halley's method workflow for `lambertW0Wad`.
-    function _lambertW0WadHalley(int256 x, int256 w, uint256 iters)
-        private
-        pure
-        returns (int256 r)
-    {
+    function _w0Halley(int256 x, int256 w, uint256 iters) private pure returns (int256 r) {
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
         // For small values, we will only need 1 to 5 Halley's iterations.
@@ -331,11 +326,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Newton's method workflow for `lambertW0Wad`.
-    function _lambertW0WadNewton(int256 x, int256 w, uint256 iters)
-        private
-        pure
-        returns (int256 r)
-    {
+    function _w0Newton(int256 x, int256 w, uint256 iters) private pure returns (int256 r) {
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
         // If `x` is too big, we have to use Newton's method instead,
