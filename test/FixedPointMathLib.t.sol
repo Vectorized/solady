@@ -56,7 +56,7 @@ contract FixedPointMathLibTest is SoladyTest {
     // Let me know if you can get the code to reproduce the approximation constants for `lnWad`.
 
     event TestingLambertW0WadMonotonicallyIncreasing(
-        int256 a, int256 b, int256 w0a, int256 w0b, bool success
+        int256 a, int256 b, int256 w0a, int256 w0b, bool success, uint256 gasPerCall
     );
 
     int256 internal constant _LAMBERT_W0_MIN = -367879441171442321;
@@ -233,10 +233,12 @@ contract FixedPointMathLibTest is SoladyTest {
             a = t;
         }
         unchecked {
+            uint256 gasBefore = gasleft();
             int256 w0a = FixedPointMathLib.lambertW0Wad(a);
             int256 w0b = FixedPointMathLib.lambertW0Wad(b);
             bool success = w0a <= w0b;
-            emit TestingLambertW0WadMonotonicallyIncreasing(a, b, w0a, w0b, success);
+            uint256 g = gasBefore - gasleft();
+            emit TestingLambertW0WadMonotonicallyIncreasing(a, b, w0a, w0b, success, g);
             assertTrue(success);
         }
     }

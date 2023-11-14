@@ -277,6 +277,7 @@ library FixedPointMathLib {
                 // forgefmt: disable-next-item
                 l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                     0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
+                // The initial values are chosen for performance and monotonicity.
                 w := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
                 iters := add(3, add(gt(l, 53), gt(l, 60)))
             }
@@ -284,10 +285,17 @@ library FixedPointMathLib {
             // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
             // Where `b` is chosen for a good starting point.
             w = lnWad(w); // `lnWad` consumes around 585 gas.
-            unchecked {
-                // The `[2**64, 2**69)` causes off-by-1 errors during Halley's.
-                // Use `max` to ensure that the result is strictly monotonically increasing.
-                if (x >> 69 == 0) return max(_w0Halley(x - 1, w, iters), _w0Halley(x, w, iters));
+            if (x >> 69 == 0) {
+                (int256 r, int256 s) = _w0Halley(x, w, iters);
+                // The `[2**64, 2**69)` causes off-by-1 errors during Halley's. If the intermediate
+                // variables look problematic, max it with the `W_0(x-1)` to guarantee monotonicity.
+                if (s < r) {
+                    unchecked {
+                        (w,) = _w0Halley(x - 1, w, iters);
+                    }
+                    if (w > r) r = w;
+                }
+                return r;
             }
             if (x >> 100 != 0) {
                 int256 ll = lnWad(w);
@@ -298,11 +306,15 @@ library FixedPointMathLib {
                 if (x >> 143 != 0) return _w0Newton(x, w, iters);
             }
         }
-        w = _w0Halley(x, w, iters);
+        (w,) = _w0Halley(x, w, iters);
     }
 
     /// @dev Halley's method workflow for `lambertW0Wad`.
-    function _w0Halley(int256 x, int256 w, uint256 iters) private pure returns (int256 r) {
+    function _w0Halley(int256 x, int256 w, uint256 iters)
+        private
+        pure
+        returns (int256 r, int256 s)
+    {
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
         // For small values, we will only need 1 to 5 Halley's iterations.
@@ -312,8 +324,8 @@ library FixedPointMathLib {
             /// @solidity memory-safe-assembly
             assembly {
                 let t := add(w, wad)
-                r := sub(mul(w, e), mul(x, wad))
-                w := sub(w, sdiv(mul(r, wad), sub(mul(e, t), sdiv(mul(add(t, wad), r), add(t, t)))))
+                s := sub(mul(w, e), mul(x, wad))
+                w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
                 iters := sub(iters, 1)
             }
             if (p <= w) break;
@@ -321,7 +333,7 @@ library FixedPointMathLib {
         } while (iters != 0);
         /// @solidity memory-safe-assembly
         assembly {
-            r := add(sub(w, sgt(w, 2)), and(slt(r, 0), sgt(x, 0)))
+            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
         }
     }
 
