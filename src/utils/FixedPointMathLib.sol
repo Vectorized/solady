@@ -288,7 +288,7 @@ library FixedPointMathLib {
             if (x >> 69 == 0) {
                 (int256 r, int256 s) = _w0Halley(x, w, iters);
                 // The `[2**64, 2**69)` causes off-by-1 errors during Halley's. If the intermediate
-                // variables look problematic, max it with the `W_0(x-1)` to guarantee monotonicity.
+                // variables look problematic, max it with the `W_0(x-1)` to force monotonicity.
                 if (s < r) {
                     unchecked {
                         (w,) = _w0Halley(x - 1, w, iters);
