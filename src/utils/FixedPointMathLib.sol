@@ -308,7 +308,6 @@ library FixedPointMathLib {
         pure
         returns (int256 r)
     {
-        int256 s;
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
         // For small values, we will only need 1 to 5 Halley's iterations.
@@ -318,8 +317,8 @@ library FixedPointMathLib {
             /// @solidity memory-safe-assembly
             assembly {
                 let t := add(w, wad)
-                s := sub(mul(w, e), mul(x, wad))
-                w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
+                r := sub(mul(w, e), mul(x, wad))
+                w := sub(w, sdiv(mul(r, wad), sub(mul(e, t), sdiv(mul(add(t, wad), r), add(t, t)))))
                 iters := sub(iters, 1)
             }
             if (p <= w) break;
@@ -327,7 +326,7 @@ library FixedPointMathLib {
         } while (iters != 0);
         /// @solidity memory-safe-assembly
         assembly {
-            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
+            r := add(sub(w, sgt(w, 2)), and(slt(r, 0), sgt(x, 0)))
         }
     }
 
@@ -337,7 +336,6 @@ library FixedPointMathLib {
         pure
         returns (int256 r)
     {
-        int256 s;
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
         // If `x` is too big, we have to use Newton's method instead,
@@ -347,8 +345,7 @@ library FixedPointMathLib {
             /// @solidity memory-safe-assembly
             assembly {
                 let t := mul(w, div(e, wad))
-                s := sub(t, x)
-                w := sub(w, sdiv(s, div(add(e, t), wad)))
+                w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
                 iters := sub(iters, 1)
             }
             if (p <= w) break;
@@ -356,7 +353,7 @@ library FixedPointMathLib {
         } while (iters != 0);
         /// @solidity memory-safe-assembly
         assembly {
-            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
+            r := sub(w, sgt(w, 2))
         }
     }
 
