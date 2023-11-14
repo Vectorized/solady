@@ -188,6 +188,26 @@ contract FixedPointMathLibTest is SoladyTest {
         testLambertW0WadMonotonicallyIncreasingAround(82659125265108585522);
         testLambertW0WadMonotonicallyIncreasingAround(135941107746119678298);
         testLambertW0WadMonotonicallyIncreasingAround(78294376906779797031);
+        testLambertW0WadMonotonicallyIncreasingAround(70280180027152795157);
+        testLambertW0WadMonotonicallyIncreasingAround(202863391028488265326);
+        testLambertW0WadMonotonicallyIncreasingAround(95253558155557495381);
+        testLambertW0WadMonotonicallyIncreasingAround(572031817482874123579);
+        testLambertW0WadMonotonicallyIncreasingAround(223625771938354140210);
+        testLambertW0WadMonotonicallyIncreasingAround(108667763352448220860);
+        testLambertW0WadMonotonicallyIncreasingAround(49870125785792029293);
+        testLambertW0WadMonotonicallyIncreasingAround(131385083607922139239);
+        testLambertW0WadMonotonicallyIncreasingAround(62085876560509502150);
+        testLambertW0WadMonotonicallyIncreasingAround(28027344077939143261);
+        testLambertW0WadMonotonicallyIncreasingAround(69516313996950380967);
+        testLambertW0WadMonotonicallyIncreasingAround(100584436279124460033);
+        testLambertW0WadMonotonicallyIncreasingAround(28027344077939143261);
+        testLambertW0WadMonotonicallyIncreasingAround(100584436279124460033);
+        testLambertW0WadMonotonicallyIncreasingAround(112865022110747472548);
+        testLambertW0WadMonotonicallyIncreasingAround(21270986456709960509);
+        testLambertW0WadMonotonicallyIncreasingAround(140379927573199315828);
+        testLambertW0WadMonotonicallyIncreasingAround(65787690658056786099);
+        testLambertW0WadMonotonicallyIncreasingAround(121954299871224955690);
+        testLambertW0WadMonotonicallyIncreasingAround(103596893383482745277);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
@@ -235,7 +255,110 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
     }
 
-    function _lambertW0WadOriginal(int256 x) internal pure returns (int256 r) {
+    function _lambertW0WadOriginal(int256 x) internal pure returns (int256 w) {
+        if ((w = x) <= -367879441171442322) revert FixedPointMathLib.OutOfDomain(); // `x` less than `-1/e`.
+        uint256 iters = 10;
+        if (w <= 0x1ffffffffffff) {
+            if (-0x4000000000000 <= w) {
+                iters = 1; // Inputs near zero only take one step to converge.
+            } else if (w <= -0x4ffffffffffffff) {
+                iters = 32; // Inputs near `-1/e` take very long to converge.
+            }
+        } else if (w >> 64 == 0) {
+            uint256 l = FixedPointMathLib.log2(uint256(w));
+            /// @solidity memory-safe-assembly
+            assembly {
+                w := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
+                iters := add(3, add(gt(l, 53), gt(l, 60)))
+            }
+        } else {
+            // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+            // Where `b` is chosen for a good starting point.
+            w = FixedPointMathLib.lnWad(w); // `lnWad` consumes around 585 gas.
+            if (x < 2 ** 69) {
+                return FixedPointMathLib.max(
+                    _lambertW0WadHalley(x - 1, w, iters), _lambertW0WadHalley(x, w, iters)
+                );
+            }
+            if (x >> 100 != 0) {
+                int256 ll = FixedPointMathLib.lnWad(w);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
+                }
+                if (x >> 143 != 0) return _lambertW0WadNewton(x, w, iters);
+            }
+        }
+        w = _lambertW0WadHalley(x, w, iters);
+    }
+
+    function _lambertW0WadHalley(int256 x, int256 w, uint256 iters)
+        private
+        pure
+        returns (int256 r)
+    {
+        int256 s;
+        int256 p = 0xffffffffffffffffff;
+        int256 wad = int256(_WAD);
+        // For small values, we will only need 1 to 5 Halley's iterations.
+        // `expWad` consumes around 411 gas, so it's still quite efficient overall.
+        do {
+            int256 e = FixedPointMathLib.expWad(w);
+            /// @solidity memory-safe-assembly
+            assembly {
+                let t := add(w, wad)
+                s := sub(mul(w, e), mul(x, wad))
+                w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
+                iters := sub(iters, 1)
+            }
+            if (p <= w) break;
+            p = w;
+        } while (iters != 0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
+        }
+    }
+
+    function _lambertW0WadNewton(int256 x, int256 w, uint256 iters)
+        private
+        pure
+        returns (int256 r)
+    {
+        int256 s;
+        int256 p = 0xffffffffffffffffff;
+        int256 wad = int256(_WAD);
+        // If `x` is too big, we have to use Newton's method instead,
+        // so that intermediate values won't overflow.
+        do {
+            int256 e = FixedPointMathLib.expWad(w);
+            /// @solidity memory-safe-assembly
+            assembly {
+                let t := mul(w, div(e, wad))
+                s := sub(t, x)
+                w := sub(w, sdiv(s, div(add(e, t), wad)))
+                iters := sub(iters, 1)
+            }
+            if (p <= w) break;
+            p = w;
+        } while (iters != 0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
+        }
+    }
+
+    function testLambertW0WadDebug() public {
+        this.lambertW0WadDebug(572031817482874123579);
+        this.lambertW0WadDebug(572031817482874123580);
+        this.lambertW0WadDebug(572031817482874123581);
+        this.lambertW0WadDebug(572031817482874123582);
+        this.lambertW0WadDebug(572031817482874123583);
+    }
+
+    event LogInt(string name, int256 value);
+
+    function lambertW0WadDebug(int256 x) public returns (int256 r) {
         unchecked {
             r = x;
             if (x <= _LAMBERT_W0_MIN) revert FixedPointMathLib.OutOfDomain();
@@ -246,11 +369,11 @@ contract FixedPointMathLibTest is SoladyTest {
                 } else if (x <= -0x3ffffffffffffff) {
                     iters = 32;
                 }
-            } else if (x <= 2 ** 68 - 1) {
+            } else if (x <= 2 ** 64 - 1) {
                 uint256 l = FixedPointMathLib.log2(uint256(x));
                 /// @solidity memory-safe-assembly
                 assembly {
-                    r := sdiv(shl(l, 7), byte(sub(l, 36), 0x0303030303030303040506080c131e30518cf3))
+                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
                     iters := add(3, add(gt(l, 53), gt(l, 60)))
                 }
             } else {
@@ -269,11 +392,18 @@ contract FixedPointMathLibTest is SoladyTest {
                 int256 negXMulWad = -x * wad;
                 do {
                     int256 e = FixedPointMathLib.expWad(r);
+                    emit LogInt("e", e);
                     int256 t = r + wad;
                     s = r * e + negXMulWad;
-                    r -= FixedPointMathLib.rawSDiv(
-                        s * wad, e * t - FixedPointMathLib.rawSDiv((t + wad) * s, t + t)
-                    );
+                    int256 c = FixedPointMathLib.rawSDiv((t + wad) * s, t + t);
+                    int256 d =
+                        FixedPointMathLib.rawSDiv(s, FixedPointMathLib.rawSDiv(e * t - c, wad));
+                    r -= d;
+                    emit LogInt("prev", prev);
+                    emit LogInt("d", d);
+                    emit LogInt("r", r);
+                    emit LogInt("c", c);
+                    emit LogInt("s", s);
                     if (r >= prev) break;
                     prev = r;
                 } while (--iters != 0);
@@ -290,7 +420,7 @@ contract FixedPointMathLibTest is SoladyTest {
             }
             /// @solidity memory-safe-assembly
             assembly {
-                r := add(sub(r, sgt(r, 2)), and(slt(s, 0), sgt(x, 0)))
+                r := add(sub(r, sgt(r, 2)), and(slt(s, r), sgt(x, 0)))
             }
         }
     }
