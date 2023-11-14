@@ -284,7 +284,7 @@ library FixedPointMathLib {
         } else {
             // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
             // Where `b` is chosen for a good starting point.
-            w = lnWad(w); // `lnWad` consumes around 585 gas.
+            w = lnWad(w);
             // The `[2**64, 2**72)` range sometimes give off-by-1 errors during Halley's.
             // If the intermediate variables look sus, max with `W_0(x-1)` to force monotonicity.
             if (x >> 72 == 0) {
@@ -310,15 +310,10 @@ library FixedPointMathLib {
     }
 
     /// @dev Halley's method workflow for `lambertW0Wad`.
-    function _w0Halley(int256 x, int256 w, uint256 iters)
-        private
-        pure
-        returns (int256 r, int256 s)
-    {
+    function _w0Halley(int256 x, int256 w, uint256 i) private pure returns (int256 r, int256 s) {
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
         // For small values, we will only need 1 to 5 Halley's iterations.
-        // `expWad` consumes around 411 gas, so it's still quite efficient overall.
         do {
             int256 e = expWad(w);
             /// @solidity memory-safe-assembly
@@ -326,11 +321,11 @@ library FixedPointMathLib {
                 let t := add(w, wad)
                 s := sub(mul(w, e), mul(x, wad))
                 w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
-                iters := sub(iters, 1)
+                i := sub(i, 1)
             }
             if (p <= w) break;
             p = w;
-        } while (iters != 0);
+        } while (i != 0);
         /// @solidity memory-safe-assembly
         assembly {
             r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
@@ -338,22 +333,21 @@ library FixedPointMathLib {
     }
 
     /// @dev Newton's method workflow for `lambertW0Wad`.
-    function _w0Newton(int256 x, int256 w, uint256 iters) private pure returns (int256 r) {
+    function _w0Newton(int256 x, int256 w, uint256 i) private pure returns (int256 r) {
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
-        // If `x` is too big, we have to use Newton's method instead,
-        // so that intermediate values won't overflow.
+        // If `x` is big, use Newton's so that intermediate values won't overflow.
         do {
             int256 e = expWad(w);
             /// @solidity memory-safe-assembly
             assembly {
                 let t := mul(w, div(e, wad))
                 w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
-                iters := sub(iters, 1)
+                i := sub(i, 1)
             }
             if (p <= w) break;
             p = w;
-        } while (iters != 0);
+        } while (i != 0);
         /// @solidity memory-safe-assembly
         assembly {
             r := sub(w, sgt(w, 2))
