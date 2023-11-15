@@ -311,7 +311,7 @@ library FixedPointMathLib {
         unchecked {
             r = w;
             uint256 n = i;
-            int256 p = 0xffffffffffffffffff;
+            int256 p = x;
             int256 wad = int256(WAD);
             int256 s;
             do {
@@ -337,7 +337,7 @@ library FixedPointMathLib {
 
     /// @dev Newton's method workflow for `lambertW0Wad`.
     function _w0Newton(int256 x, int256 w, uint256 i) private pure returns (int256 r) {
-        int256 p = 0xffffffffffffffffff;
+        int256 p = x;
         int256 wad = int256(WAD);
         // If `x` is big, use Newton's so that intermediate values won't overflow.
         do {
