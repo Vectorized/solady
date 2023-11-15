@@ -213,6 +213,8 @@ contract FixedPointMathLibTest is SoladyTest {
         testLambertW0WadMonotonicallyIncreasingAround(121954299871224955690);
         testLambertW0WadMonotonicallyIncreasingAround(103596893383482745277);
         testLambertW0WadMonotonicallyIncreasingAround(755356612457558823505);
+        testLambertW0WadMonotonicallyIncreasingAround(8928690996912420508);
+        testLambertW0WadMonotonicallyIncreasingAround(8929082721938651242);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
@@ -330,7 +332,7 @@ contract FixedPointMathLibTest is SoladyTest {
         } while (i != 0);
         /// @solidity memory-safe-assembly
         assembly {
-            r := sub(w, sgt(w, 2))
+            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, wad)))
         }
     }
 
