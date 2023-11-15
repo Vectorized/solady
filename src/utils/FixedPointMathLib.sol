@@ -268,7 +268,7 @@ library FixedPointMathLib {
             } else if (w <= -0x4ffffffffffffff) {
                 iters = 32; // Inputs near `-1/e` take very long to converge.
             }
-        } else if (w >> 64 == 0) {
+        } else if (w >> 63 == 0) {
             /// @solidity memory-safe-assembly
             assembly {
                 // Inline log2 for more performance, since the range is small.
@@ -278,7 +278,7 @@ library FixedPointMathLib {
                 l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                     0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
                 // The initial values are chosen for performance and monotonicity.
-                w := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
+                w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
                 iters := add(3, add(gt(l, 53), gt(l, 60)))
             }
         } else {
