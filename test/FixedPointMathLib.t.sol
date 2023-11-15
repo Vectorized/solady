@@ -200,37 +200,37 @@ contract FixedPointMathLibTest is SoladyTest {
     function testLambertW0WadMonotonicallyIncreasing2() public {
         // These are some problematic values gathered over the attempts.
         // Some might not be problematic now.
-        testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
-        testLambertW0WadMonotonicallyIncreasingAround(69812969629793590021);
-        testLambertW0WadMonotonicallyIncreasingAround(99877590385471769634);
-        testLambertW0WadMonotonicallyIncreasingAround(56740644568147233721);
-        testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
-        testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
-        testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
-        testLambertW0WadMonotonicallyIncreasingAround(20348862445068325113);
-        testLambertW0WadMonotonicallyIncreasingAround(17348648760604883838);
-        testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
-        testLambertW0WadMonotonicallyIncreasingAround(17074770050358191161);
-        testLambertW0WadMonotonicallyIncreasingAround(13868095779966762160);
-        testLambertW0WadMonotonicallyIncreasingAround(11688489373537725894);
-        testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
-        testLambertW0WadMonotonicallyIncreasingAround(11584319147630401009);
-        testLambertW0WadMonotonicallyIncreasingAround(11213697597559043970);
-        testLambertW0WadMonotonicallyIncreasingAround(9076751962189838509);
-        testLambertW0WadMonotonicallyIncreasingAround(8973446969188306213);
-        testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
-        testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
-        testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
-        testLambertW0WadMonotonicallyIncreasingAround(8711541955259745339);
-        testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
-        testLambertW0WadMonotonicallyIncreasingAround(8479885548030859774);
-        testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
-        testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
-        testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
-        testLambertW0WadMonotonicallyIncreasingAround(3500617418449437693);
-        testLambertW0WadMonotonicallyIncreasingAround(3382790108905325582);
-        testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
-        testLambertW0WadMonotonicallyIncreasingAround(3337741605687612091);
+        testLambertW0WadMonotonicallyIncreasingAround(0x598cdf77327d789dc);
+        testLambertW0WadMonotonicallyIncreasingAround(0x3c8d97dfe4afb1b05);
+        testLambertW0WadMonotonicallyIncreasingAround(0x56a147b480c03cc22);
+        testLambertW0WadMonotonicallyIncreasingAround(0x3136f439c231d0bb9);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2ae7cff17ef2469a1);
+        testLambertW0WadMonotonicallyIncreasingAround(0x1de668fd7afcf61cc);
+        testLambertW0WadMonotonicallyIncreasingAround(0x15024b2a35f2cdd95);
+        testLambertW0WadMonotonicallyIncreasingAround(0x11a65ae94b59590f9);
+        testLambertW0WadMonotonicallyIncreasingAround(0xf0c2c82174dffb7e);
+        testLambertW0WadMonotonicallyIncreasingAround(0xed3e56938cb11626);
+        testLambertW0WadMonotonicallyIncreasingAround(0xecf5c4e511142439);
+        testLambertW0WadMonotonicallyIncreasingAround(0xc0755fa2b4033cb0);
+        testLambertW0WadMonotonicallyIncreasingAround(0xa235db282ea4edc6);
+        testLambertW0WadMonotonicallyIncreasingAround(0x9ff2ec5c26eec112);
+        testLambertW0WadMonotonicallyIncreasingAround(0xa0c3c4e36f4415f1);
+        testLambertW0WadMonotonicallyIncreasingAround(0x9b9f0e8d61287782);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7df719d1a4a7b8ad);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7c881679a1464d25);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7bec47487071495a);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7be31c75fc717f9f);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7bbb4e0716eeca53);
+        testLambertW0WadMonotonicallyIncreasingAround(0x78e59d40a92b443b);
+        testLambertW0WadMonotonicallyIncreasingAround(0x77658c4ad3af717d);
+        testLambertW0WadMonotonicallyIncreasingAround(0x75ae9afa425919fe);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7526092d05bef41f);
+        testLambertW0WadMonotonicallyIncreasingAround(0x52896fe82be03dfe);
+        testLambertW0WadMonotonicallyIncreasingAround(0x4f05b0ddf3b71a19);
+        testLambertW0WadMonotonicallyIncreasingAround(0x3094b0feb93943fd);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2ef215ae6701c40e);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2ebd1c82095d6a92);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2e520a4e670d52bb);
         testLambertW0WadMonotonicallyIncreasingAround(0xfc2f004412e5ce69);
         testLambertW0WadMonotonicallyIncreasingAround(0x158bc0b201103a7fc);
         testLambertW0WadMonotonicallyIncreasingAround(0x39280df60945c436b);
@@ -270,9 +270,14 @@ contract FixedPointMathLibTest is SoladyTest {
         testLambertW0WadMonotonicallyIncreasingAround(0x7bea796d633b386a);
         testLambertW0WadMonotonicallyIncreasingAround(0x2ef215ae6701c40f);
         testLambertW0WadMonotonicallyIncreasingAround(0x1240541334cfadd81);
-        testLambertW0WadMonotonicallyIncreasingAround(0x381298f7aa53edfe0);
-        testLambertW0WadMonotonicallyIncreasingAround(0x313386f14a7f95af9);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2a79eccb3d5f4faaed);
         testLambertW0WadMonotonicallyIncreasingAround(0x7470d50c23bfd30e0);
+        testLambertW0WadMonotonicallyIncreasingAround(0x313386f14a7f95af9);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2a60f3b64c57088e9);
+        testLambertW0WadMonotonicallyIncreasingAround(0x381298f7aa53edfe0);
+        testLambertW0WadMonotonicallyIncreasingAround(0x5cbfac5d7a1770806);
+        testLambertW0WadMonotonicallyIncreasingAround(0x19e46d1b5e6aba57e);
+        testLambertW0WadMonotonicallyIncreasingAround(0x19ff86906ae47c70a);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
