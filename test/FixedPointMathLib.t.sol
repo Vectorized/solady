@@ -70,7 +70,7 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(3, 2);
         _checkLambertW0Wad(131071, 131070);
         _checkLambertW0Wad(17179869183, 17179868887);
-        _checkLambertW0Wad(1000000000000000000, 567143290409783873);
+        _checkLambertW0Wad(1000000000000000000, 567143290409783872);
         _checkLambertW0Wad(-3678794411715, -3678807945318);
         _checkLambertW0Wad(_LAMBERT_W0_MIN, -999999999741585709);
         // These are exact values.
@@ -255,6 +255,10 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
+    function testLambertW0WadDifferential() public {
+        this.testLambertW0WadDifferential(29882774027058266484);
+    }
+
     function testLambertW0WadDifferential(int256 x) public {
         if (x < _LAMBERT_W0_MIN) x = _boundLambertW0WadInput(x);
         // We differential fuzz so that we can be sure that
@@ -326,7 +330,7 @@ contract FixedPointMathLibTest is SoladyTest {
         } while (i != 0);
         /// @solidity memory-safe-assembly
         assembly {
-            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
+            r := sub(w, sgt(w, 2))
         }
     }
 
