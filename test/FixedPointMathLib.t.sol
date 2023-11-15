@@ -4,37 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
-library TestArrayLib {
-    struct IntArray {
-        uint256 n;
-        int256[] x;
-    }
-
-    struct UintArray {
-        uint256 n;
-        uint256[] x;
-    }
-
-    function p(UintArray memory a, uint256 x) internal pure returns (UintArray memory) {
-        if (a.n == 0) a.x = new uint256[](256);
-        unchecked {
-            a.x[a.n++] = x;
-            return a;
-        }
-    }
-
-    function p(IntArray memory a, int256 x) internal pure returns (IntArray memory) {
-        if (a.n == 0) a.x = new int256[](256);
-        unchecked {
-            a.x[a.n++] = x;
-            return a;
-        }
-    }
-}
-
 contract FixedPointMathLibTest is SoladyTest {
-    using TestArrayLib for *;
-
     function testExpWad() public {
         assertEq(FixedPointMathLib.expWad(-42139678854452767551), 0);
 
@@ -91,6 +61,7 @@ contract FixedPointMathLibTest is SoladyTest {
 
     event LogUint(string name, uint256 value);
 
+    int256 internal constant _ONE_DIV_EXP = 367879441171442321;
     int256 internal constant _LAMBERT_W0_MIN = -367879441171442321;
     int256 internal constant _EXP = 2718281828459045235;
     int256 internal constant _WAD = 10 ** 18;
@@ -107,22 +78,55 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(_LAMBERT_W0_MIN, -999999999741585709);
         // These are exact values.
         _checkLambertW0Wad(2 ** 255 - 1, 130435123404408416612);
+        _checkLambertW0Wad(2 ** 254 - 1, 129747263755102316133);
         _checkLambertW0Wad(2 ** 144 - 1, 54370834448115730535);
         _checkLambertW0Wad(2 ** 143 - 1, 53690283108733387465);
         _checkLambertW0Wad(2 ** 140 - 1, 51649591321425477661);
         _checkLambertW0Wad(2 ** 128 - 1, 43503466806167642613);
         _checkLambertW0Wad(2 ** 104 - 1, 27332691623220201135);
         _checkLambertW0Wad(2 ** 100 - 1, 24662886826087826761);
-        // This value is 1 less than the ground truth.
+        _checkLambertW0Wad(2 ** 71 - 1, 5978712844468804878);
+        _checkLambertW0Wad(2 ** 70 - 1, 5389346779005776683);
+        _checkLambertW0Wad(2 ** 69 - 1, 4809939316762921936);
+        _checkLambertW0Wad(2 ** 68 - 1, 4242357480017482271);
+        _checkLambertW0Wad(2 ** 67 - 1, 3688979548845126287);
+        _checkLambertW0Wad(2 ** 66 - 1, 3152869312105232629);
+        _checkLambertW0Wad(2 ** 65 - 1, 2638010157689274059);
+        _checkLambertW0Wad(2 ** 64 - 1, 2149604165721149566);
+        _checkLambertW0Wad(2 ** 63 - 1, 1694407549795038335);
+        _checkLambertW0Wad(2 ** 62 - 1, 1280973323147500590);
+        _checkLambertW0Wad(2 ** 61 - 1, 919438481612859603);
+        _checkLambertW0Wad(2 ** 60 - 1, 620128202996354327);
+        _checkLambertW0Wad(2 ** 59 - 1, 390213425026895126);
+        _checkLambertW0Wad(2 ** 58 - 1, 229193491169149614);
+        _checkLambertW0Wad(2 ** 57 - 1, 126935310044982397);
+        _checkLambertW0Wad(2 ** 56 - 1, 67363429834711483);
+        _checkLambertW0Wad(2 ** 55 - 1, 34796675828817814);
+        _checkLambertW0Wad(2 ** 54 - 1, 17698377658513340);
+        _checkLambertW0Wad(2 ** 53 - 1, 8927148493627578);
+        _checkLambertW0Wad(2 ** 52 - 1, 4483453146102402);
+        _checkLambertW0Wad(2 ** 51 - 1, 2246746269994097);
+        _checkLambertW0Wad(2 ** 50 - 1, 1124634392838166);
+        _checkLambertW0Wad(2 ** 49 - 1, 562633308112667);
+        _checkLambertW0Wad(2 ** 48 - 1, 281395781982528);
+        _checkLambertW0Wad(2 ** 47 - 1, 140717685495042);
+        _checkLambertW0Wad(2 ** 46 - 1, 70363792940114);
+        _checkLambertW0Wad(2 ** 45 - 1, 35183134214121);
+        _checkLambertW0Wad(2 ** 44 - 1, 17591876567571);
+        _checkLambertW0Wad(2 ** 43 - 1, 8796015651975);
+        _checkLambertW0Wad(2 ** 42 - 1, 4398027168417);
+        _checkLambertW0Wad(2 ** 41 - 1, 2199018419863);
+        // These expected values are 1 less than the ground truth.
         // Could be due to approximation limitations.
         _checkLambertW0Wad(2 ** 80 - 1, 11557875688514566228 - 1);
+        _checkLambertW0Wad(2 ** 72 - 1, 6576554370186862926 - 1);
     }
 
     function testLambertW0WadRevertsForOutOfDomain() public {
-        FixedPointMathLib.lambertW0Wad(-367879441171442322 + 1);
+        FixedPointMathLib.lambertW0Wad(_LAMBERT_W0_MIN);
         for (int256 i = 0; i <= 10; ++i) {
             vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
-            FixedPointMathLib.lambertW0Wad(-367879441171442322 - i);
+            FixedPointMathLib.lambertW0Wad(_LAMBERT_W0_MIN - 1 - i);
         }
         vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
         FixedPointMathLib.lambertW0Wad(-type(int256).max);
@@ -132,13 +136,13 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.lambertW0Wad(x), expected);
     }
 
-    function testLambertW0WadWithinBounds(int256 a) public {
-        if (a <= 0) a = _boundLambertW0WadInput(a);
-        int256 w = FixedPointMathLib.lambertW0Wad(a);
-        assertTrue(w <= a);
+    function testLambertW0WadWithinBounds(int256 x) public {
+        if (x <= 0) x = _boundLambertW0WadInput(x);
+        int256 w = FixedPointMathLib.lambertW0Wad(x);
+        assertTrue(w <= x);
         unchecked {
-            if (a > _EXP) {
-                int256 l = FixedPointMathLib.lnWad(a);
+            if (x > _EXP) {
+                int256 l = FixedPointMathLib.lnWad(x);
                 assertGt(l, 0);
                 int256 ll = FixedPointMathLib.lnWad(l);
                 int256 q = ll * _WAD;
@@ -151,6 +155,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLambertW0WadWithinBounds() public {
+        testLambertW0WadWithinBounds(_EXP - 1);
         testLambertW0WadWithinBounds(_EXP);
         testLambertW0WadWithinBounds(_EXP + 1);
         testLambertW0WadWithinBounds(type(int256).max);
@@ -174,36 +179,78 @@ contract FixedPointMathLibTest is SoladyTest {
     function testLambertW0WadMonotonicallyIncreasing2() public {
         // These are some problematic values gathered over the attempts.
         // Some might not be problematic now.
-        TestArrayLib.IntArray memory a;
-        a.p(11213697597559043970);
-        a.p(11584319147630401009).p(103244449106500225500).p(69812969629793590021);
-        a.p(9076751962189838509).p(99877590385471769634).p(8929590537618540890);
-        a.p(8973446969188306213).p(56740644568147233721).p(49466692885392157089);
-        a.p(8927010179450503071).p(34472398554284384716).p(24221681110651559317);
-        a.p(8711541955259745339).p(20348862445068325113).p(17348648760604883838);
-        a.p(8603436916168159613).p(8441444640527152159).p(8915805679666514515);
-        a.p(8479885548030859774).p(17095196427265578534).p(17074770050358191161);
-        a.p(5947407825878662654).p(13868095779966762160).p(11525534276928848146);
-        a.p(5694151771202984473).p(11688489373537725894).p(3500617418449437693);
-        a.p(3382790108905325582).p(3367879441171442322).p(3337741605687612091);
-        a.p(0xfc2f004412e5ce69).p(0x158bc0b201103a7fc).p(0x39280df60945c436b);
-        a.p(0x47256e5d374b35f74).p(0x2b9568ffb08c155a4).p(0x1b60b07806956f34d);
-        a.p(0x21902755d1eee824c).p(0x6e15c8a6ee6e4fca4).p(0x5b13067d92d8e49c6);
-        a.p(0x2826ebc1fce90cf6e).p(0x215eb5aa1041510a4).p(0x47b20347b57504c32);
-        a.p(0x75e8fd53f8c90f95a).p(0x43e8d80f9af282627).p(0x3cf555b5fd4f20615);
-        a.p(0xaff4b8b52f8355e6e).p(0x529e89e77ae046255).p(0x1f0289433f07cbf53b);
-        a.p(0xc1f6e56c2001d9432).p(0x5e4117305c6e33ebc).p(0x2b416472dce2ea26d);
-        a.p(0x71f55956ef3326067).p(0x35d9d57c965eb82c6).p(0x184f520f19335f25d);
-        a.p(0x3c4bb8f445abe21a7).p(0x573e3b3e06e208201).p(0x184f520f19335f25d);
-        a.p(0x573e3b3e06e208201).p(0x61e511ba00db632a4).p(0x12731b97bde57933d);
-        a.p(0x69c74b5975fd4832a).p(0x59db219a7048121bd).p(0x28f2adc4fab331d251);
-        a.p(0x7be91527cc31769c).p(0x7bea796d633b386a).p(0x390fcd4186ac250b3);
-        a.p(0x2ef215ae6701c40f).p(0x1240541334cfadd81).p(0x79c29b05cf39be374);
-        unchecked {
-            for (uint256 i; i != a.n; ++i) {
-                testLambertW0WadMonotonicallyIncreasingAround(a.x[i]);
-            }
-        }
+        testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
+        testLambertW0WadMonotonicallyIncreasingAround(69812969629793590021);
+        testLambertW0WadMonotonicallyIncreasingAround(99877590385471769634);
+        testLambertW0WadMonotonicallyIncreasingAround(56740644568147233721);
+        testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
+        testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
+        testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
+        testLambertW0WadMonotonicallyIncreasingAround(20348862445068325113);
+        testLambertW0WadMonotonicallyIncreasingAround(17348648760604883838);
+        testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
+        testLambertW0WadMonotonicallyIncreasingAround(17074770050358191161);
+        testLambertW0WadMonotonicallyIncreasingAround(13868095779966762160);
+        testLambertW0WadMonotonicallyIncreasingAround(11688489373537725894);
+        testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
+        testLambertW0WadMonotonicallyIncreasingAround(11584319147630401009);
+        testLambertW0WadMonotonicallyIncreasingAround(11213697597559043970);
+        testLambertW0WadMonotonicallyIncreasingAround(9076751962189838509);
+        testLambertW0WadMonotonicallyIncreasingAround(8973446969188306213);
+        testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
+        testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
+        testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
+        testLambertW0WadMonotonicallyIncreasingAround(8711541955259745339);
+        testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
+        testLambertW0WadMonotonicallyIncreasingAround(8479885548030859774);
+        testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
+        testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
+        testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
+        testLambertW0WadMonotonicallyIncreasingAround(3500617418449437693);
+        testLambertW0WadMonotonicallyIncreasingAround(3382790108905325582);
+        testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
+        testLambertW0WadMonotonicallyIncreasingAround(3337741605687612091);
+        testLambertW0WadMonotonicallyIncreasingAround(0xfc2f004412e5ce69);
+        testLambertW0WadMonotonicallyIncreasingAround(0x158bc0b201103a7fc);
+        testLambertW0WadMonotonicallyIncreasingAround(0x39280df60945c436b);
+        testLambertW0WadMonotonicallyIncreasingAround(0x47256e5d374b35f74);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2b9568ffb08c155a4);
+        testLambertW0WadMonotonicallyIncreasingAround(0x1b60b07806956f34d);
+        testLambertW0WadMonotonicallyIncreasingAround(0x21902755d1eee824c);
+        testLambertW0WadMonotonicallyIncreasingAround(0x6e15c8a6ee6e4fca4);
+        testLambertW0WadMonotonicallyIncreasingAround(0x5b13067d92d8e49c6);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2826ebc1fce90cf6e);
+        testLambertW0WadMonotonicallyIncreasingAround(0x215eb5aa1041510a4);
+        testLambertW0WadMonotonicallyIncreasingAround(0x47b20347b57504c32);
+        testLambertW0WadMonotonicallyIncreasingAround(0x75e8fd53f8c90f95a);
+        testLambertW0WadMonotonicallyIncreasingAround(0x43e8d80f9af282627);
+        testLambertW0WadMonotonicallyIncreasingAround(0x3cf555b5fd4f20615);
+        testLambertW0WadMonotonicallyIncreasingAround(0xaff4b8b52f8355e6e);
+        testLambertW0WadMonotonicallyIncreasingAround(0x529e89e77ae046255);
+        testLambertW0WadMonotonicallyIncreasingAround(0x1f0289433f07cbf53b);
+        testLambertW0WadMonotonicallyIncreasingAround(0xc1f6e56c2001d9432);
+        testLambertW0WadMonotonicallyIncreasingAround(0x5e4117305c6e33ebc);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2b416472dce2ea26d);
+        testLambertW0WadMonotonicallyIncreasingAround(0x71f55956ef3326067);
+        testLambertW0WadMonotonicallyIncreasingAround(0x35d9d57c965eb82c6);
+        testLambertW0WadMonotonicallyIncreasingAround(0x184f520f19335f25d);
+        testLambertW0WadMonotonicallyIncreasingAround(0x3c4bb8f445abe21a7);
+        testLambertW0WadMonotonicallyIncreasingAround(0x573e3b3e06e208201);
+        testLambertW0WadMonotonicallyIncreasingAround(0x184f520f19335f25d);
+        testLambertW0WadMonotonicallyIncreasingAround(0x573e3b3e06e208201);
+        testLambertW0WadMonotonicallyIncreasingAround(0x61e511ba00db632a4);
+        testLambertW0WadMonotonicallyIncreasingAround(0x12731b97bde57933d);
+        testLambertW0WadMonotonicallyIncreasingAround(0x79c29b05cf39be374);
+        testLambertW0WadMonotonicallyIncreasingAround(0x390fcd4186ac250b3);
+        testLambertW0WadMonotonicallyIncreasingAround(0x69c74b5975fd4832a);
+        testLambertW0WadMonotonicallyIncreasingAround(0x59db219a7048121bd);
+        testLambertW0WadMonotonicallyIncreasingAround(0x28f2adc4fab331d251);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7be91527cc31769c);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7bea796d633b386a);
+        testLambertW0WadMonotonicallyIncreasingAround(0x2ef215ae6701c40f);
+        testLambertW0WadMonotonicallyIncreasingAround(0x1240541334cfadd81);
+        testLambertW0WadMonotonicallyIncreasingAround(0x381298f7aa53edfe0);
+        testLambertW0WadMonotonicallyIncreasingAround(0x313386f14a7f95af9);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
@@ -240,7 +287,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 emit LogUint("log2(b)", FixedPointMathLib.log2(uint256(b)));
                 emit LogUint("log2(w0a)", FixedPointMathLib.log2(uint256(w0a)));
                 emit LogUint("log2(w0b)", FixedPointMathLib.log2(uint256(w0b)));
-                revert();
+                assertTrue(success);
             }
         }
     }
