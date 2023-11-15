@@ -313,7 +313,6 @@ library FixedPointMathLib {
     function _w0Halley(int256 x, int256 w, uint256 i) private pure returns (int256 r, int256 s) {
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(WAD);
-        // For small values, we will only need 1 to 5 Halley's iterations.
         do {
             int256 e = expWad(w);
             /// @solidity memory-safe-assembly
