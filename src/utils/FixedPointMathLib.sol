@@ -290,9 +290,9 @@ library FixedPointMathLib {
             if (x >> 72 == 0) {
                 unchecked {
                     w = (w * 7169921902066644360) >> 63;
-                    (int256 r, int256 s) = _w0Halley(x, w, iters);
+                    (int256 r, int256 s) = _w0Halley(x, w, 4);
                     if (s < r) {
-                        (w,) = _w0Halley(x - 1, w, iters);
+                        (w,) = _w0Halley(x - 1, w, 4);
                         if (w > r) r = w;
                     }
                     return r;
