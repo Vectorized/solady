@@ -287,8 +287,8 @@ library FixedPointMathLib {
             w = lnWad(w);
             // The `[2**63, 2**72)` range sometimes give off-by-1 errors during Halley's.
             // If the intermediate variables look sus, max with `W_0(x-1)` to force monotonicity.
-            unchecked {
-                if (x >> 72 == 0) {
+            if (x >> 72 == 0) {
+                unchecked {
                     w = (w * 7169921902066644360) >> 63;
                     (int256 r, int256 s) = _w0Halley(x, w, iters);
                     if (s < r) {
@@ -297,8 +297,7 @@ library FixedPointMathLib {
                     }
                     return r;
                 }
-            }
-            if (x >> 100 != 0) {
+            } else {
                 int256 ll = lnWad(w);
                 /// @solidity memory-safe-assembly
                 assembly {
