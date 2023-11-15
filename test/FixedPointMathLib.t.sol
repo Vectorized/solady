@@ -4,7 +4,37 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
+library TestArrayLib {
+    struct IntArray {
+        uint256 n;
+        int256[] x;
+    }
+
+    struct UintArray {
+        uint256 n;
+        uint256[] x;
+    }
+
+    function p(UintArray memory a, uint256 x) internal pure returns (UintArray memory) {
+        if (a.n == 0) a.x = new uint256[](256);
+        unchecked {
+            a.x[a.n++] = x;
+            return a;
+        }
+    }
+
+    function p(IntArray memory a, int256 x) internal pure returns (IntArray memory) {
+        if (a.n == 0) a.x = new int256[](256);
+        unchecked {
+            a.x[a.n++] = x;
+            return a;
+        }
+    }
+}
+
 contract FixedPointMathLibTest is SoladyTest {
+    using TestArrayLib for *;
+
     function testExpWad() public {
         assertEq(FixedPointMathLib.expWad(-42139678854452767551), 0);
 
@@ -58,6 +88,8 @@ contract FixedPointMathLibTest is SoladyTest {
     event TestingLambertW0WadMonotonicallyIncreasing(
         int256 a, int256 b, int256 w0a, int256 w0b, bool success, uint256 gasPerCall
     );
+
+    event LogUint(string name, uint256 value);
 
     int256 internal constant _LAMBERT_W0_MIN = -367879441171442321;
     int256 internal constant _EXP = 2718281828459045235;
@@ -142,81 +174,36 @@ contract FixedPointMathLibTest is SoladyTest {
     function testLambertW0WadMonotonicallyIncreasing2() public {
         // These are some problematic values gathered over the attempts.
         // Some might not be problematic now.
-        testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
-        testLambertW0WadMonotonicallyIncreasingAround(69812969629793590021);
-        testLambertW0WadMonotonicallyIncreasingAround(99877590385471769634);
-        testLambertW0WadMonotonicallyIncreasingAround(56740644568147233721);
-        testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
-        testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
-        testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
-        testLambertW0WadMonotonicallyIncreasingAround(20348862445068325113);
-        testLambertW0WadMonotonicallyIncreasingAround(17348648760604883838);
-        testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
-        testLambertW0WadMonotonicallyIncreasingAround(17074770050358191161);
-        testLambertW0WadMonotonicallyIncreasingAround(13868095779966762160);
-        testLambertW0WadMonotonicallyIncreasingAround(11688489373537725894);
-        testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
-        testLambertW0WadMonotonicallyIncreasingAround(11584319147630401009);
-        testLambertW0WadMonotonicallyIncreasingAround(11213697597559043970);
-        testLambertW0WadMonotonicallyIncreasingAround(9076751962189838509);
-        testLambertW0WadMonotonicallyIncreasingAround(8973446969188306213);
-        testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
-        testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
-        testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
-        testLambertW0WadMonotonicallyIncreasingAround(8711541955259745339);
-        testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
-        testLambertW0WadMonotonicallyIncreasingAround(8479885548030859774);
-        testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
-        testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
-        testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
-        testLambertW0WadMonotonicallyIncreasingAround(3500617418449437693);
-        testLambertW0WadMonotonicallyIncreasingAround(3382790108905325582);
-        testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
-        testLambertW0WadMonotonicallyIncreasingAround(3337741605687612091);
-    }
-
-    function testLambertW0WadMonotonicallyIncreasing3() public {
-        // These are some problematic values gathered over the attempts.
-        // Some might not be problematic now.
-        testLambertW0WadMonotonicallyIncreasingAround(18171743313838067305);
-        testLambertW0WadMonotonicallyIncreasingAround(24840741877021124604);
-        testLambertW0WadMonotonicallyIncreasingAround(65896915353584026475);
-        testLambertW0WadMonotonicallyIncreasingAround(82026001559517880180);
-        testLambertW0WadMonotonicallyIncreasingAround(50248508200779339172);
-        testLambertW0WadMonotonicallyIncreasingAround(31564330661460767565);
-        testLambertW0WadMonotonicallyIncreasingAround(38695619991132078668);
-        testLambertW0WadMonotonicallyIncreasingAround(126919471007573277860);
-        testLambertW0WadMonotonicallyIncreasingAround(105001539494612978118);
-        testLambertW0WadMonotonicallyIncreasingAround(46292144464583511918);
-        testLambertW0WadMonotonicallyIncreasingAround(38472943889347317924);
-        testLambertW0WadMonotonicallyIncreasingAround(82659125265108585522);
-        testLambertW0WadMonotonicallyIncreasingAround(135941107746119678298);
-        testLambertW0WadMonotonicallyIncreasingAround(78294376906779797031);
-        testLambertW0WadMonotonicallyIncreasingAround(70280180027152795157);
-        testLambertW0WadMonotonicallyIncreasingAround(202863391028488265326);
-        testLambertW0WadMonotonicallyIncreasingAround(95253558155557495381);
-        testLambertW0WadMonotonicallyIncreasingAround(572031817482874123579);
-        testLambertW0WadMonotonicallyIncreasingAround(223625771938354140210);
-        testLambertW0WadMonotonicallyIncreasingAround(108667763352448220860);
-        testLambertW0WadMonotonicallyIncreasingAround(49870125785792029293);
-        testLambertW0WadMonotonicallyIncreasingAround(131385083607922139239);
-        testLambertW0WadMonotonicallyIncreasingAround(62085876560509502150);
-        testLambertW0WadMonotonicallyIncreasingAround(28027344077939143261);
-        testLambertW0WadMonotonicallyIncreasingAround(69516313996950380967);
-        testLambertW0WadMonotonicallyIncreasingAround(100584436279124460033);
-        testLambertW0WadMonotonicallyIncreasingAround(28027344077939143261);
-        testLambertW0WadMonotonicallyIncreasingAround(100584436279124460033);
-        testLambertW0WadMonotonicallyIncreasingAround(112865022110747472548);
-        testLambertW0WadMonotonicallyIncreasingAround(21270986456709960509);
-        testLambertW0WadMonotonicallyIncreasingAround(140379927573199315828);
-        testLambertW0WadMonotonicallyIncreasingAround(65787690658056786099);
-        testLambertW0WadMonotonicallyIncreasingAround(121954299871224955690);
-        testLambertW0WadMonotonicallyIncreasingAround(103596893383482745277);
-        testLambertW0WadMonotonicallyIncreasingAround(755356612457558823505);
-        testLambertW0WadMonotonicallyIncreasingAround(8928690996912420508);
-        testLambertW0WadMonotonicallyIncreasingAround(8929082721938651242);
-        testLambertW0WadMonotonicallyIncreasingAround(3382790108905325583);
-        testLambertW0WadMonotonicallyIncreasingAround(21042296522549157249);
+        TestArrayLib.IntArray memory a;
+        a.p(11213697597559043970);
+        a.p(11584319147630401009).p(103244449106500225500).p(69812969629793590021);
+        a.p(9076751962189838509).p(99877590385471769634).p(8929590537618540890);
+        a.p(8973446969188306213).p(56740644568147233721).p(49466692885392157089);
+        a.p(8927010179450503071).p(34472398554284384716).p(24221681110651559317);
+        a.p(8711541955259745339).p(20348862445068325113).p(17348648760604883838);
+        a.p(8603436916168159613).p(8441444640527152159).p(8915805679666514515);
+        a.p(8479885548030859774).p(17095196427265578534).p(17074770050358191161);
+        a.p(5947407825878662654).p(13868095779966762160).p(11525534276928848146);
+        a.p(5694151771202984473).p(11688489373537725894).p(3500617418449437693);
+        a.p(3382790108905325582).p(3367879441171442322).p(3337741605687612091);
+        a.p(0xfc2f004412e5ce69).p(0x158bc0b201103a7fc).p(0x39280df60945c436b);
+        a.p(0x47256e5d374b35f74).p(0x2b9568ffb08c155a4).p(0x1b60b07806956f34d);
+        a.p(0x21902755d1eee824c).p(0x6e15c8a6ee6e4fca4).p(0x5b13067d92d8e49c6);
+        a.p(0x2826ebc1fce90cf6e).p(0x215eb5aa1041510a4).p(0x47b20347b57504c32);
+        a.p(0x75e8fd53f8c90f95a).p(0x43e8d80f9af282627).p(0x3cf555b5fd4f20615);
+        a.p(0xaff4b8b52f8355e6e).p(0x529e89e77ae046255).p(0x1f0289433f07cbf53b);
+        a.p(0xc1f6e56c2001d9432).p(0x5e4117305c6e33ebc).p(0x2b416472dce2ea26d);
+        a.p(0x71f55956ef3326067).p(0x35d9d57c965eb82c6).p(0x184f520f19335f25d);
+        a.p(0x3c4bb8f445abe21a7).p(0x573e3b3e06e208201).p(0x184f520f19335f25d);
+        a.p(0x573e3b3e06e208201).p(0x61e511ba00db632a4).p(0x12731b97bde57933d);
+        a.p(0x69c74b5975fd4832a).p(0x59db219a7048121bd).p(0x28f2adc4fab331d251);
+        a.p(0x7be91527cc31769c).p(0x7bea796d633b386a).p(0x390fcd4186ac250b3);
+        a.p(0x2ef215ae6701c40f).p(0x1240541334cfadd81).p(0x79c29b05cf39be374);
+        unchecked {
+            for (uint256 i; i != a.n; ++i) {
+                testLambertW0WadMonotonicallyIncreasingAround(a.x[i]);
+            }
+        }
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
@@ -248,7 +235,13 @@ contract FixedPointMathLibTest is SoladyTest {
             bool success = w0a <= w0b;
             uint256 g = gasBefore - gasleft();
             emit TestingLambertW0WadMonotonicallyIncreasing(a, b, w0a, w0b, success, g);
-            assertTrue(success);
+            if (!success) {
+                emit LogUint("log2(a)", FixedPointMathLib.log2(uint256(a)));
+                emit LogUint("log2(b)", FixedPointMathLib.log2(uint256(b)));
+                emit LogUint("log2(w0a)", FixedPointMathLib.log2(uint256(w0a)));
+                emit LogUint("log2(w0b)", FixedPointMathLib.log2(uint256(w0b)));
+                revert();
+            }
         }
     }
 
@@ -256,196 +249,6 @@ contract FixedPointMathLibTest is SoladyTest {
         /// @solidity memory-safe-assembly
         assembly {
             result := shr(1, shl(1, not(x)))
-        }
-    }
-
-    function testLambertW0WadDifferential() public {
-        this.testLambertW0WadDifferential(29882774027058266484);
-    }
-
-    function testLambertW0WadDifferential(int256 x) public {
-        if (x < _LAMBERT_W0_MIN) x = _boundLambertW0WadInput(x);
-        // We differential fuzz so that we can be sure that
-        // some of the assembly tricks are equivalent.
-        assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
-    }
-
-    /// @dev Returns `W_0(x)`, denominated in `WAD`.
-    /// See: https://en.wikipedia.org/wiki/Lambert_W_function
-    /// a.k.a. Product log function. This is an approximation of the principal branch.
-    /// Most efficient for small inputs in the range `[-2**50, 2**63)`.
-    function _lambertW0WadOriginal(int256 x) internal pure returns (int256 w) {
-        if ((w = x) <= -367879441171442322) revert FixedPointMathLib.OutOfDomain(); // `x` less than `-1/e`.
-        uint256 i = 4; // Number of iterations.
-        uint256 c; // Whether we need to check the previous value to force monotonicity.
-        if (w <= 0x1ffffffffffff) {
-            if (-0x4000000000000 <= w) {
-                i = 1; // Inputs near zero only take one step to converge.
-            } else if (w <= -0x3ffffffffffffff) {
-                i = 32; // Inputs near `-1/e` take very long to converge.
-            }
-        } else if (w >> 63 == 0) {
-            /// @solidity memory-safe-assembly
-            assembly {
-                // Inline log2 for more performance, since the range is small.
-                let v := shr(49, w)
-                let l := shl(3, lt(0xff, v))
-                // forgefmt: disable-next-item
-                l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
-                    0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                // The initial values are chosen for performance and monotonicity.
-                w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
-                i := add(3, gt(l, 53))
-                c := gt(l, 60)
-            }
-        } else {
-            // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
-            // Where `b` is chosen for a good starting point.
-            w = FixedPointMathLib.lnWad(w);
-            // The `[2**63, 2**72)` range sometimes give off-by-1 errors during Halley's.
-            // If the intermediate variables look sus, max with `W_0(x-1)` to force monotonicity.
-            if (x >> 72 == 0) {
-                unchecked {
-                    w = (w * 7169921902066644360) >> 63;
-                }
-                c = 1;
-            } else {
-                int256 ll = FixedPointMathLib.lnWad(w);
-                /// @solidity memory-safe-assembly
-                assembly {
-                    w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
-                }
-                if (x >> 143 != 0) return _w0Newton(x, w, i);
-            }
-        }
-        return _w0Halley(x, w, i, c);
-    }
-
-    /// @dev Halley's method workflow for `lambertW0Wad`.
-    function _w0Halley(int256 x, int256 w, uint256 i, uint256 c) private pure returns (int256 r) {
-        unchecked {
-            r = w;
-            uint256 n = i;
-            int256 p = 0xffffffffffffffffff;
-            int256 wad = int256(_WAD);
-            int256 s;
-            do {
-                int256 e = FixedPointMathLib.expWad(r);
-                /// @solidity memory-safe-assembly
-                assembly {
-                    let t := add(r, wad)
-                    s := sub(mul(r, e), mul(x, wad))
-                    // forgefmt: disable-next-item
-                    r := sub(r, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
-                }
-                if (p <= r) break;
-                p = r;
-            } while (--i != 0);
-            /// @solidity memory-safe-assembly
-            assembly {
-                r := sub(r, sgt(r, 2))
-                c := and(c, slt(s, r))
-            }
-            if (c != 0) if ((w = _w0Halley(x - 1, w, n, 0)) >= r) r = w;
-        }
-    }
-
-    /// @dev Newton's method workflow for `lambertW0Wad`.
-    function _w0Newton(int256 x, int256 w, uint256 i) private pure returns (int256 r) {
-        int256 p = 0xffffffffffffffffff;
-        int256 wad = int256(_WAD);
-        // If `x` is big, use Newton's so that intermediate values won't overflow.
-        do {
-            int256 e = FixedPointMathLib.expWad(w);
-            /// @solidity memory-safe-assembly
-            assembly {
-                let t := mul(w, div(e, wad))
-                w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
-                i := sub(i, 1)
-            }
-            if (p <= w) break;
-            p = w;
-        } while (i != 0);
-        /// @solidity memory-safe-assembly
-        assembly {
-            r := sub(w, sgt(w, 2))
-        }
-    }
-
-    function testLambertW0WadDebug() public {
-        this.lambertW0WadDebug(572031817482874123579);
-        this.lambertW0WadDebug(572031817482874123580);
-        this.lambertW0WadDebug(572031817482874123581);
-        this.lambertW0WadDebug(572031817482874123582);
-        this.lambertW0WadDebug(572031817482874123583);
-    }
-
-    event LogInt(string name, int256 value);
-
-    function lambertW0WadDebug(int256 x) public returns (int256 r) {
-        unchecked {
-            r = x;
-            if (x <= _LAMBERT_W0_MIN) revert FixedPointMathLib.OutOfDomain();
-            uint256 iters = 10;
-            if (x <= 0x1ffffffffffff) {
-                if (-0x4000000000000 <= x) {
-                    iters = 1;
-                } else if (x <= -0x3ffffffffffffff) {
-                    iters = 32;
-                }
-            } else if (x <= 2 ** 64 - 1) {
-                uint256 l = FixedPointMathLib.log2(uint256(x));
-                /// @solidity memory-safe-assembly
-                assembly {
-                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                    iters := add(3, add(gt(l, 53), gt(l, 60)))
-                }
-            } else {
-                r = FixedPointMathLib.lnWad(x);
-                if (x >= 2 ** 100 - 1) {
-                    int256 ll = FixedPointMathLib.lnWad(r);
-                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
-                }
-            }
-            int256 s;
-            int256 prev = 0xffffffffffffffffff;
-            int256 wad = _WAD;
-            // For small values, we will only need 1 to 5 Halley's iterations.
-            // `expWad` consumes around 411 gas, so it's still quite efficient overall.
-            if (x < 1 << 143) {
-                int256 negXMulWad = -x * wad;
-                do {
-                    int256 e = FixedPointMathLib.expWad(r);
-                    emit LogInt("e", e);
-                    int256 t = r + wad;
-                    s = r * e + negXMulWad;
-                    int256 c = FixedPointMathLib.rawSDiv((t + wad) * s, t + t);
-                    int256 d =
-                        FixedPointMathLib.rawSDiv(s, FixedPointMathLib.rawSDiv(e * t - c, wad));
-                    r -= d;
-                    emit LogInt("prev", prev);
-                    emit LogInt("d", d);
-                    emit LogInt("r", r);
-                    emit LogInt("c", c);
-                    emit LogInt("s", s);
-                    if (r >= prev) break;
-                    prev = r;
-                } while (--iters != 0);
-            } else {
-                do {
-                    uint256 e = uint256(FixedPointMathLib.expWad(r));
-                    uint256 t = uint256(r) * FixedPointMathLib.rawDiv(e, uint256(wad));
-                    s = int256(t - uint256(x));
-                    t = FixedPointMathLib.rawDiv(e + t, uint256(wad));
-                    r -= FixedPointMathLib.rawSDiv(s, int256(t));
-                    if (r >= prev) break;
-                    prev = r;
-                } while (--iters != 0);
-            }
-            /// @solidity memory-safe-assembly
-            assembly {
-                r := add(sub(r, sgt(r, 2)), and(slt(s, r), sgt(x, 0)))
-            }
         }
     }
 
