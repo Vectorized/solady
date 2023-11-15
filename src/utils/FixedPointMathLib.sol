@@ -310,7 +310,7 @@ library FixedPointMathLib {
             int256 p = x;
             int256 wad = int256(WAD);
             int256 s;
-            uint256 j = i;
+            uint256 j;
             do {
                 int256 e = expWad(r);
                 /// @solidity memory-safe-assembly
@@ -322,13 +322,12 @@ library FixedPointMathLib {
                 }
                 if (p <= r) break;
                 p = r;
-            } while (--j != 0);
+            } while (++j != i);
             /// @solidity memory-safe-assembly
             assembly {
                 r := sub(r, sgt(r, 2))
-                c := and(c, slt(s, r))
             }
-            if (c != 0) if ((w = _w0Halley(x - 1, w, i, 0)) >= r) r = w;
+            if (c != 0) if (s < r) if ((w = _w0Halley(x - 1, w, i, 0)) >= r) r = w;
         }
     }
 
