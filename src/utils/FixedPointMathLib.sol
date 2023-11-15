@@ -279,7 +279,7 @@ library FixedPointMathLib {
                     0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
                 // The initial values are chosen for performance and monotonicity.
                 w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
-                iters := add(3, add(gt(l, 53), gt(l, 60)))
+                iters := add(3, gt(l, 53))
             }
         } else {
             // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
