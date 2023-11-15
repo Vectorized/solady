@@ -278,7 +278,6 @@ library FixedPointMathLib {
                 // forgefmt: disable-next-item
                 l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                     0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                // The initial values are chosen for performance and monotonicity.
                 w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
                 i := add(3, gt(l, 53))
                 c := gt(l, 60)
@@ -287,8 +286,6 @@ library FixedPointMathLib {
             // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
             // Where `b` is chosen for a good starting point.
             w = lnWad(w);
-            // The `[2**63, 2**72)` range sometimes give off-by-1 errors during Halley's.
-            // If the intermediate variables look sus, max with `W_0(x-1)` to force monotonicity.
             if (x >> 72 == 0) {
                 unchecked {
                     w = (w * 7169921902066644360) >> 63;
@@ -310,10 +307,10 @@ library FixedPointMathLib {
     function _w0Halley(int256 x, int256 w, uint256 i, uint256 c) private pure returns (int256 r) {
         unchecked {
             r = w;
-            uint256 n = i;
             int256 p = x;
             int256 wad = int256(WAD);
             int256 s;
+            uint256 j = i;
             do {
                 int256 e = expWad(r);
                 /// @solidity memory-safe-assembly
@@ -325,13 +322,13 @@ library FixedPointMathLib {
                 }
                 if (p <= r) break;
                 p = r;
-            } while (--i != 0);
+            } while (--j != 0);
             /// @solidity memory-safe-assembly
             assembly {
                 r := sub(r, sgt(r, 2))
                 c := and(c, slt(s, r))
             }
-            if (c != 0) if ((w = _w0Halley(x - 1, w, n, 0)) >= r) r = w;
+            if (c != 0) if ((w = _w0Halley(x - 1, w, i, 0)) >= r) r = w;
         }
     }
 
