@@ -70,7 +70,7 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(3, 2);
         _checkLambertW0Wad(131071, 131070);
         _checkLambertW0Wad(17179869183, 17179868887);
-        _checkLambertW0Wad(1000000000000000000, 567143290409783873);
+        _checkLambertW0Wad(1000000000000000000, 567143290409783872);
         _checkLambertW0Wad(-3678794411715, -3678807945318);
         _checkLambertW0Wad(_LAMBERT_W0_MIN, -999999999741585709);
         // These are exact values.
@@ -178,6 +178,7 @@ contract FixedPointMathLibTest is SoladyTest {
     function testLambertW0WadMonotonicallyIncreasing3() public {
         // These are some problematic values gathered over the attempts.
         // Some might not be problematic now.
+        testLambertW0WadMonotonicallyIncreasingAround(18171743313838067305);
         testLambertW0WadMonotonicallyIncreasingAround(24840741877021124604);
         testLambertW0WadMonotonicallyIncreasingAround(65896915353584026475);
         testLambertW0WadMonotonicallyIncreasingAround(82026001559517880180);
@@ -212,6 +213,10 @@ contract FixedPointMathLibTest is SoladyTest {
         testLambertW0WadMonotonicallyIncreasingAround(121954299871224955690);
         testLambertW0WadMonotonicallyIncreasingAround(103596893383482745277);
         testLambertW0WadMonotonicallyIncreasingAround(755356612457558823505);
+        testLambertW0WadMonotonicallyIncreasingAround(8928690996912420508);
+        testLambertW0WadMonotonicallyIncreasingAround(8929082721938651242);
+        testLambertW0WadMonotonicallyIncreasingAround(3382790108905325583);
+        testLambertW0WadMonotonicallyIncreasingAround(21042296522549157249);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
@@ -254,6 +259,10 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
+    function testLambertW0WadDifferential() public {
+        this.testLambertW0WadDifferential(29882774027058266484);
+    }
+
     function testLambertW0WadDifferential(int256 x) public {
         if (x < _LAMBERT_W0_MIN) x = _boundLambertW0WadInput(x);
         // We differential fuzz so that we can be sure that
@@ -261,96 +270,105 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
     }
 
+    /// @dev Returns `W_0(x)`, denominated in `WAD`.
+    /// See: https://en.wikipedia.org/wiki/Lambert_W_function
+    /// a.k.a. Product log function. This is an approximation of the principal branch.
+    /// Most efficient for small inputs in the range `[-2**50, 2**63)`.
     function _lambertW0WadOriginal(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert FixedPointMathLib.OutOfDomain(); // `x` less than `-1/e`.
-        uint256 iters = 10;
+        uint256 i = 4; // Number of iterations.
+        uint256 c; // Whether we need to check the previous value to force monotonicity.
         if (w <= 0x1ffffffffffff) {
             if (-0x4000000000000 <= w) {
-                iters = 1; // Inputs near zero only take one step to converge.
-            } else if (w <= -0x4ffffffffffffff) {
-                iters = 32; // Inputs near `-1/e` take very long to converge.
+                i = 1; // Inputs near zero only take one step to converge.
+            } else if (w <= -0x3ffffffffffffff) {
+                i = 32; // Inputs near `-1/e` take very long to converge.
             }
-        } else if (w >> 64 == 0) {
-            uint256 l = FixedPointMathLib.log2(uint256(w));
+        } else if (w >> 63 == 0) {
             /// @solidity memory-safe-assembly
             assembly {
-                w := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                iters := add(3, add(gt(l, 53), gt(l, 60)))
+                // Inline log2 for more performance, since the range is small.
+                let v := shr(49, w)
+                let l := shl(3, lt(0xff, v))
+                // forgefmt: disable-next-item
+                l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
+                    0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
+                // The initial values are chosen for performance and monotonicity.
+                w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
+                i := add(3, gt(l, 53))
+                c := gt(l, 60)
             }
         } else {
             // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
             // Where `b` is chosen for a good starting point.
-            w = FixedPointMathLib.lnWad(w); // `lnWad` consumes around 585 gas.
-            if (x < 2 ** 72) {
-                return FixedPointMathLib.max(
-                    _lambertW0WadHalley(x - 1, w, iters), _lambertW0WadHalley(x, w, iters)
-                );
-            }
-            if (x >> 100 != 0) {
+            w = FixedPointMathLib.lnWad(w);
+            // The `[2**63, 2**72)` range sometimes give off-by-1 errors during Halley's.
+            // If the intermediate variables look sus, max with `W_0(x-1)` to force monotonicity.
+            if (x >> 72 == 0) {
+                unchecked {
+                    w = (w * 7169921902066644360) >> 63;
+                }
+                c = 1;
+            } else {
                 int256 ll = FixedPointMathLib.lnWad(w);
                 /// @solidity memory-safe-assembly
                 assembly {
                     w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
                 }
-                if (x >> 143 != 0) return _lambertW0WadNewton(x, w, iters);
+                if (x >> 143 != 0) return _w0Newton(x, w, i);
             }
         }
-        w = _lambertW0WadHalley(x, w, iters);
+        return _w0Halley(x, w, i, c);
     }
 
-    function _lambertW0WadHalley(int256 x, int256 w, uint256 iters)
-        private
-        pure
-        returns (int256 r)
-    {
-        int256 s;
-        int256 p = 0xffffffffffffffffff;
-        int256 wad = int256(_WAD);
-        // For small values, we will only need 1 to 5 Halley's iterations.
-        // `expWad` consumes around 411 gas, so it's still quite efficient overall.
-        do {
-            int256 e = FixedPointMathLib.expWad(w);
+    /// @dev Halley's method workflow for `lambertW0Wad`.
+    function _w0Halley(int256 x, int256 w, uint256 i, uint256 c) private pure returns (int256 r) {
+        unchecked {
+            r = w;
+            uint256 n = i;
+            int256 p = 0xffffffffffffffffff;
+            int256 wad = int256(_WAD);
+            int256 s;
+            do {
+                int256 e = FixedPointMathLib.expWad(r);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let t := add(r, wad)
+                    s := sub(mul(r, e), mul(x, wad))
+                    // forgefmt: disable-next-item
+                    r := sub(r, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
+                }
+                if (p <= r) break;
+                p = r;
+            } while (--i != 0);
             /// @solidity memory-safe-assembly
             assembly {
-                let t := add(w, wad)
-                s := sub(mul(w, e), mul(x, wad))
-                w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
-                iters := sub(iters, 1)
+                r := sub(r, sgt(r, 2))
+                c := and(c, slt(s, r))
             }
-            if (p <= w) break;
-            p = w;
-        } while (iters != 0);
-        /// @solidity memory-safe-assembly
-        assembly {
-            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
+            if (c != 0) if ((w = _w0Halley(x - 1, w, n, 0)) >= r) r = w;
         }
     }
 
-    function _lambertW0WadNewton(int256 x, int256 w, uint256 iters)
-        private
-        pure
-        returns (int256 r)
-    {
-        int256 s;
+    /// @dev Newton's method workflow for `lambertW0Wad`.
+    function _w0Newton(int256 x, int256 w, uint256 i) private pure returns (int256 r) {
         int256 p = 0xffffffffffffffffff;
         int256 wad = int256(_WAD);
-        // If `x` is too big, we have to use Newton's method instead,
-        // so that intermediate values won't overflow.
+        // If `x` is big, use Newton's so that intermediate values won't overflow.
         do {
             int256 e = FixedPointMathLib.expWad(w);
             /// @solidity memory-safe-assembly
             assembly {
                 let t := mul(w, div(e, wad))
-                s := sub(t, x)
-                w := sub(w, sdiv(s, div(add(e, t), wad)))
-                iters := sub(iters, 1)
+                w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
+                i := sub(i, 1)
             }
             if (p <= w) break;
             p = w;
-        } while (iters != 0);
+        } while (i != 0);
         /// @solidity memory-safe-assembly
         assembly {
-            r := add(sub(w, sgt(w, 2)), and(slt(s, 0), sgt(x, 0)))
+            r := sub(w, sgt(w, 2))
         }
     }
 
