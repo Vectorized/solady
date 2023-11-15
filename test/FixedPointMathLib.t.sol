@@ -136,6 +136,27 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.lambertW0Wad(x), expected);
     }
 
+    function testLambertW0WadAccuracy() public {
+        testLambertW0WadAccuracy(uint184(int184(_testLamberW0WadAccuracyThres())));
+        testLambertW0WadAccuracy(2 ** 184 - 1);
+    }
+
+    function testLambertW0WadAccuracy(uint184 a) public {
+        int256 x = int256(int184(a));
+        if (x >= _testLamberW0WadAccuracyThres()) {
+            int256 l = FixedPointMathLib.lnWad(x);
+            int256 r = x * l / _WAD;
+            int256 w = FixedPointMathLib.lambertW0Wad(r);
+            assertLt(FixedPointMathLib.abs(l - w), 0xff);
+        }
+    }
+
+    function _testLamberW0WadAccuracyThres() internal pure returns (int256) {
+        unchecked {
+            return _ONE_DIV_EXP + _ONE_DIV_EXP * 0.01 ether / 1 ether;
+        }
+    }
+
     function testLambertW0WadWithinBounds(int256 x) public {
         if (x <= 0) x = _boundLambertW0WadInput(x);
         int256 w = FixedPointMathLib.lambertW0Wad(x);
@@ -251,6 +272,7 @@ contract FixedPointMathLibTest is SoladyTest {
         testLambertW0WadMonotonicallyIncreasingAround(0x1240541334cfadd81);
         testLambertW0WadMonotonicallyIncreasingAround(0x381298f7aa53edfe0);
         testLambertW0WadMonotonicallyIncreasingAround(0x313386f14a7f95af9);
+        testLambertW0WadMonotonicallyIncreasingAround(0x7470d50c23bfd30e0);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
