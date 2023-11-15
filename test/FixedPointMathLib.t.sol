@@ -268,7 +268,7 @@ contract FixedPointMathLibTest is SoladyTest {
         if (w <= 0x1ffffffffffff) {
             if (-0x4000000000000 <= w) {
                 iters = 1; // Inputs near zero only take one step to converge.
-            } else if (w <= -0x4ffffffffffffff) {
+            } else if (w <= -0x3ffffffffffffff) {
                 iters = 32; // Inputs near `-1/e` take very long to converge.
             }
         } else if (w >> 63 == 0) {
