@@ -258,7 +258,7 @@ library FixedPointMathLib {
     /// @dev Returns `W_0(x)`, denominated in `WAD`.
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
-    /// Most efficient for small inputs in the range `[-2**50, 2**64)`.
+    /// Most efficient for small inputs in the range `[-2**50, 2**63)`.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
         uint256 iters = 10;
