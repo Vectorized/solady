@@ -261,7 +261,7 @@ library FixedPointMathLib {
     /// Most efficient for small inputs in the range `[-2**50, 2**63)`.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-        uint256 iters = 10;
+        uint256 iters = 4;
         if (w <= 0x1ffffffffffff) {
             if (-0x4000000000000 <= w) {
                 iters = 1; // Inputs near zero only take one step to converge.
@@ -290,9 +290,9 @@ library FixedPointMathLib {
             if (x >> 72 == 0) {
                 unchecked {
                     w = (w * 7169921902066644360) >> 63;
-                    (int256 r, int256 s) = _w0Halley(x, w, 4);
+                    (int256 r, int256 s) = _w0Halley(x, w, iters);
                     if (s < r) {
-                        (w,) = _w0Halley(x - 1, w, 4);
+                        (w,) = _w0Halley(x - 1, w, iters);
                         if (w > r) r = w;
                     }
                     return r;

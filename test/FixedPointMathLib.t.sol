@@ -264,7 +264,7 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function _lambertW0WadOriginal(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert FixedPointMathLib.OutOfDomain(); // `x` less than `-1/e`.
-        uint256 iters = 10;
+        uint256 iters = 4;
         if (w <= 0x1ffffffffffff) {
             if (-0x4000000000000 <= w) {
                 iters = 1; // Inputs near zero only take one step to converge.
