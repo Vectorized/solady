@@ -285,15 +285,16 @@ contract FixedPointMathLibTest is SoladyTest {
             w = FixedPointMathLib.lnWad(w);
             // The `[2**63, 2**72)` range sometimes give off-by-1 errors during Halley's.
             // If the intermediate variables look sus, max with `W_0(x-1)` to force monotonicity.
-            if (x >> 72 == 0) {
-                (int256 r, int256 s) = _w0Halley(x, w, iters);
-                if (s < r) {
-                    unchecked {
+            unchecked {
+                if (x >> 72 == 0) {
+                    w = (w * 7169921902066644360) >> 63;
+                    (int256 r, int256 s) = _w0Halley(x, w, iters);
+                    if (s < r) {
                         (w,) = _w0Halley(x - 1, w, iters);
+                        if (w > r) r = w;
                     }
-                    if (w > r) r = w;
+                    return r;
                 }
-                return r;
             }
             if (x >> 100 != 0) {
                 int256 ll = FixedPointMathLib.lnWad(w);
