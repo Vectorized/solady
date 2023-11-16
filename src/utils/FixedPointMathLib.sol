@@ -286,19 +286,13 @@ library FixedPointMathLib {
             // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
             // Where `b` is chosen for a good starting point.
             w = lnWad(w);
-            if (x >> 72 == 0) {
-                unchecked {
-                    w = (w * 7169921902066644360) >> 63;
-                }
-                c = 3;
-            } else {
-                int256 ll = lnWad(w);
-                /// @solidity memory-safe-assembly
-                assembly {
-                    w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
-                }
-                if (x >> 143 != 0) return _w0Newton(x, w, i);
+            int256 ll = lnWad(w);
+            /// @solidity memory-safe-assembly
+            assembly {
+                w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
             }
+            if (x >> 72 == 0) c = 2;
+            else if (x >> 143 != 0) return _w0Newton(x, w, i);
         }
         return _w0Halley(x, w, i, c);
     }
@@ -327,12 +321,7 @@ library FixedPointMathLib {
             assembly {
                 r := sub(r, sgt(r, 2))
             }
-            if (c != 0) {
-                if (r >> 1 >= s) {
-                    if (c >= 2) w = (lnWad(x - 1) * 7169921902066644360) >> 63;
-                    if ((w = _w0Halley(x - 1, w, i, c - 1)) >= r) r = w;
-                }
-            }
+            if (c != 0) if (r >> 1 >= s) if ((w = _w0Halley(x - 1, w, i, c - 1)) >= r) r = w;
         }
     }
 
