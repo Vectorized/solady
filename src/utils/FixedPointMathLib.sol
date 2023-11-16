@@ -291,8 +291,9 @@ library FixedPointMathLib {
             assembly {
                 w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
             }
-            if (x >> 72 == 0) c = 2;
+            if (x >> 68 == 0) c = 2;
             else if (x >> 143 != 0) return _w0Newton(x, w, i);
+            else if (x >> 140 == 0) i = 3;
         }
         return _w0Halley(x, w, i, c);
     }
