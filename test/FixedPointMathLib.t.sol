@@ -56,10 +56,11 @@ contract FixedPointMathLibTest is SoladyTest {
     // Let me know if you can get the code to reproduce the approximation constants for `lnWad`.
 
     event TestingLambertW0WadMonotonicallyIncreasing(
-        int256 a, int256 b, int256 w0a, int256 w0b, bool success, uint256 gasPerCall
+        int256 a, int256 b, int256 w0a, int256 w0b, bool success, uint256 gasUsed
     );
 
     event LogUint(string name, uint256 value);
+    event LogInt(string name, int256 value);
 
     int256 internal constant _ONE_DIV_EXP = 367879441171442321;
     int256 internal constant _LAMBERT_W0_MIN = -367879441171442321;
@@ -133,7 +134,14 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function _checkLambertW0Wad(int256 x, int256 expected) internal {
-        assertEq(FixedPointMathLib.lambertW0Wad(x), expected);
+        unchecked {
+            uint256 gasBefore = gasleft();
+            int256 w = FixedPointMathLib.lambertW0Wad(x);
+            uint256 gasUsed = gasBefore - gasleft();
+            emit LogInt("x", x);
+            emit LogUint("gasUsed", gasUsed);
+            assertEq(w, expected);
+        }
     }
 
     function testLambertW0WadAccuracy() public {
@@ -305,10 +313,10 @@ contract FixedPointMathLibTest is SoladyTest {
         unchecked {
             uint256 gasBefore = gasleft();
             int256 w0a = FixedPointMathLib.lambertW0Wad(a);
+            uint256 gasUsed = gasBefore - gasleft();
             int256 w0b = FixedPointMathLib.lambertW0Wad(b);
             bool success = w0a <= w0b;
-            uint256 g = gasBefore - gasleft();
-            emit TestingLambertW0WadMonotonicallyIncreasing(a, b, w0a, w0b, success, g);
+            emit TestingLambertW0WadMonotonicallyIncreasing(a, b, w0a, w0b, success, gasUsed);
             if (!success) {
                 emit LogUint("log2(a)", FixedPointMathLib.log2(uint256(a)));
                 emit LogUint("log2(b)", FixedPointMathLib.log2(uint256(b)));
