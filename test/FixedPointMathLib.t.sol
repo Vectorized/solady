@@ -290,6 +290,39 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
         testLambertW0WadMonotonicallyIncreasingAround(int256(uint256(t)));
+        if (t & 0xff == 0xab && 0xffffffff <= t && t <= 0xfffffffffffffff) {
+            int256 x;
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x20, 0)
+                calldatacopy(0x00, 0x00, 0x24)
+                x := and(keccak256(0x00, 0x40), 0xffffffffffffffffff)
+            }
+            do {
+                testLambertW0WadMonotonicallyIncreasingAround(x);
+                x >>= 1;
+            } while (x >= 0x1ffffffffffff);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x20, 1)
+                calldatacopy(0x00, 0x00, 0x24)
+                x := and(keccak256(0x00, 0x40), 0xffffffffffffffffff)
+            }
+            do {
+                testLambertW0WadMonotonicallyIncreasingAround(x);
+                x >>= 1;
+            } while (x >= 0xfffffffffffffff);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x20, 2)
+                calldatacopy(0x00, 0x00, 0x24)
+                x := and(keccak256(0x00, 0x40), 0xfffffffffffffffff)
+            }
+            do {
+                testLambertW0WadMonotonicallyIncreasingAround(x);
+                x >>= 1;
+            } while (x >= 0xffffffffffffffff);
+        }
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
