@@ -261,8 +261,8 @@ library FixedPointMathLib {
     /// Most efficient for small inputs in the range `[-2**50, 2**63)`.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-        uint256 i = 4; // Number of iterations.
         uint256 c; // Whether we need to check the previous value to force monotonicity.
+        uint256 i = 4; // Number of iterations.
         if (w <= 0x1ffffffffffff) {
             if (-0x4000000000000 <= w) {
                 i = 1; // Inputs near zero only take one step to converge.
@@ -290,7 +290,7 @@ library FixedPointMathLib {
                 unchecked {
                     w = (w * 7169921902066644360) >> 63;
                 }
-                c = 1;
+                c = 2;
             } else {
                 int256 ll = lnWad(w);
                 /// @solidity memory-safe-assembly
@@ -307,9 +307,9 @@ library FixedPointMathLib {
     function _w0Halley(int256 x, int256 w, uint256 i, uint256 c) private pure returns (int256 r) {
         unchecked {
             r = w;
+            int256 s;
             int256 p = x;
             int256 wad = int256(WAD);
-            int256 s;
             uint256 j;
             do {
                 int256 e = expWad(r);
@@ -327,7 +327,7 @@ library FixedPointMathLib {
             assembly {
                 r := sub(r, sgt(r, 2))
             }
-            if (c != 0) if (s < r) if ((w = _w0Halley(x - 1, w, i, 0)) >= r) r = w;
+            if (c != 0) if (r >= s) if ((w = _w0Halley(x - 1, w, i, c - 1)) >= r) r = w;
         }
     }
 
