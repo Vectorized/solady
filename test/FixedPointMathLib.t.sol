@@ -312,6 +312,12 @@ contract FixedPointMathLibTest is SoladyTest {
         _testLambertW0WadMonoAround(0x99337fa75e803139);
         _testLambertW0WadMonoAround(0x6fa0a50fcb8a95b97e);
         _testLambertW0WadMonoAround(0xa117a195e06c3fd531);
+        _testLambertW0WadMonoAround(0x305da7073093bd8a07);
+    }
+
+    function testLambertW0WadMonoDebug() public {
+        // _testLambertW0WadMonoAround(0x305da7073093bd8a07);
+        // testLambertW0WadMonotonicallyIncreasingAround2(161635903305117127269741483);
     }
 
     function _testLambertW0WadMonoAround(int256 x) internal {
