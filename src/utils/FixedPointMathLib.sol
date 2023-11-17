@@ -284,10 +284,10 @@ library FixedPointMathLib {
             }
         } else {
             w = _w0Start(w);
-            if (x >> 75 == 0) c = 3;
+            if (x >> 75 == 0) c = 5;
             else if (x >> 143 != 0) return _w0Newton(x, w, i);
         }
-        return _w0Halley(x, w, i, c);
+        return _w0Halley(x, w, i, c, x);
     }
 
     /// @dev Approximates the starting point of `lambertW0Wad` for medium to big inputs.
@@ -301,7 +301,11 @@ library FixedPointMathLib {
     }
 
     /// @dev Halley's method workflow for `lambertW0Wad`.
-    function _w0Halley(int256 x, int256 w, uint256 i, uint256 c) private pure returns (int256 r) {
+    function _w0Halley(int256 x, int256 w, uint256 i, uint256 c, int256 q)
+        private
+        pure
+        returns (int256 r)
+    {
         // forgefmt: disable-next-item
         unchecked {
             r = w;
@@ -324,9 +328,9 @@ library FixedPointMathLib {
             assembly {
                 r := sub(r, sgt(r, 2))
             }
-            if (c != 0) if (r >> 1 >= s) {
+            if (c != 0) if (r >> 1 >= s) if (r <= q) {
                 if (x >> 63 != 0) w = _w0Start(x - 1);
-                if ((w = _w0Halley(x - 1, w, i, c - 1)) >= r) r = w;
+                r = _w0Halley(x - 1, w, i, c - 1, r);
             }
         }
     }
