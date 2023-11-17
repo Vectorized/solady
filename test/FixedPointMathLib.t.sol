@@ -324,7 +324,7 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testLambertW0WadMonoDebug() public {
         unchecked {
-            for (int256 i; i < 20; ++i) {
+            for (int256 i = -9; i <= 9; ++i) {
                 _testLambertW0WadMonoAround(0x658acb00d525f3d345 + i);
             }
         }
