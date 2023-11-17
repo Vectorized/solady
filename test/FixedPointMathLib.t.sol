@@ -297,7 +297,6 @@ contract FixedPointMathLibTest is SoladyTest {
         _testLambertW0WadMonoAround(0x59db219a7048121bd);
         _testLambertW0WadMonoAround(0x28f2adc4fab331d251);
         _testLambertW0WadMonoAround(0x7be91527cc31769c);
-        _testLambertW0WadMonoAround(0x7bea796d633b386a);
         _testLambertW0WadMonoAround(0x2ef215ae6701c40f);
         _testLambertW0WadMonoAround(0x1240541334cfadd81);
         _testLambertW0WadMonoAround(0x2a79eccb3d5f4faaed);
@@ -313,6 +312,10 @@ contract FixedPointMathLibTest is SoladyTest {
         _testLambertW0WadMonoAround(0x6fa0a50fcb8a95b97e);
         _testLambertW0WadMonoAround(0xa117a195e06c3fd531);
         _testLambertW0WadMonoAround(0x305da7073093bd8a07);
+        _testLambertW0WadMonoAround(0x98582b07fd3c6b64);
+        _testLambertW0WadMonoAround(0x1e824d2a367d9ce65);
+        _testLambertW0WadMonoAround(0x7bea796d633b386a);
+        _testLambertW0WadMonoAround(0x2fff5c38c6b2a2cd);
     }
 
     function testLambertW0WadMonoDebug() public {
