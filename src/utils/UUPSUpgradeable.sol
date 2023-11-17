@@ -95,8 +95,8 @@ abstract contract UUPSUpgradeable {
             log2(codesize(), 0x00, _UPGRADED_EVENT_SIGNATURE, newImplementation)
             sstore(s, newImplementation) // Updates the implementation.
 
-            // Calls `newImplementation` if `data` is non-empty.
-            if iszero(iszero(data.length)) {
+            // Perform a delegatecall to `newImplementation` if `data` is non-empty.
+            if data.length {
                 // Forwards the `data` to `newImplementation` via delegatecall.
                 let m := mload(0x40)
                 calldatacopy(m, data.offset, data.length)
