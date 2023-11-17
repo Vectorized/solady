@@ -328,7 +328,7 @@ library FixedPointMathLib {
             assembly {
                 r := sub(r, sgt(r, 2))
             }
-            if (c != 0) if (r >> 1 >= s) if (r <= q) {
+            if (c != 0) if (r >= s) if (r <= q) {
                 if (x-- >> 63 != 0) w = _w0Start(x);
                 r = _w0Halley(x, w, i, c - 1, r);
             }
