@@ -296,7 +296,7 @@ library FixedPointMathLib {
         r = lnWad(w = lnWad(w));
         /// @solidity memory-safe-assembly
         assembly {
-            r := add(sdiv(mul(r, 1023715080943999999), w), sub(w, r))
+            r := add(sdiv(mul(r, 1023715080943847266), w), sub(w, r))
         }
     }
 
