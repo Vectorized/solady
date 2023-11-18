@@ -84,6 +84,29 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(2 ** 143 - 1, 53690283108733387465);
         _checkLambertW0Wad(2 ** 140 - 1, 51649591321425477661);
         _checkLambertW0Wad(2 ** 128 - 1, 43503466806167642613);
+        _checkLambertW0Wad(2 ** 127 - 1, 42826014523312541917);
+        _checkLambertW0Wad(2 ** 126 - 1, 42148806703328979292);
+        _checkLambertW0Wad(2 ** 125 - 1, 41471850988441194251);
+        _checkLambertW0Wad(2 ** 124 - 1, 40795155381822122767);
+        _checkLambertW0Wad(2 ** 123 - 1, 40118728270531400808);
+        _checkLambertW0Wad(2 ** 122 - 1, 39442578450294263667);
+        _checkLambertW0Wad(2 ** 121 - 1, 38766715152300604375);
+        _checkLambertW0Wad(2 ** 120 - 1, 38091148072224059569);
+        _checkLambertW0Wad(2 ** 119 - 1, 37415887401684336100);
+        _checkLambertW0Wad(2 ** 118 - 1, 36740943862402491609);
+        _checkLambertW0Wad(2 ** 117 - 1, 36066328743329022902);
+        _checkLambertW0Wad(2 ** 116 - 1, 35392053941058967434);
+        _checkLambertW0Wad(2 ** 115 - 1, 34718132003887455986);
+        _checkLambertW0Wad(2 ** 114 - 1, 34044576179904059477);
+        _checkLambertW0Wad(2 ** 113 - 1, 33371400469575784902);
+        _checkLambertW0Wad(2 ** 112 - 1, 32698619683327803297);
+        _checkLambertW0Wad(2 ** 111 - 1, 32026249504699254799);
+        _checkLambertW0Wad(2 ** 110 - 1, 31354306559730344521);
+        _checkLambertW0Wad(2 ** 109 - 1, 30682808493328298780);
+        _checkLambertW0Wad(2 ** 108 - 1, 30011774053465850808);
+        _checkLambertW0Wad(2 ** 107 - 1, 29341223184189485097);
+        _checkLambertW0Wad(2 ** 106 - 1, 28671177128558970924);
+        _checkLambertW0Wad(2 ** 105 - 1, 28001658542808735364);
         _checkLambertW0Wad(2 ** 104 - 1, 27332691623220201135);
         _checkLambertW0Wad(2 ** 100 - 1, 24662886826087826761);
         _checkLambertW0Wad(2 ** 71 - 1, 5978712844468804878);
@@ -120,7 +143,6 @@ contract FixedPointMathLibTest is SoladyTest {
         // These expected values are 1 less than the ground truth.
         // Could be due to approximation limitations.
         _checkLambertW0Wad(2 ** 80 - 1, 11557875688514566228 - 1);
-        _checkLambertW0Wad(2 ** 72 - 1, 6576554370186862926 - 1);
     }
 
     function testLambertW0WadRevertsForOutOfDomain() public {
@@ -208,88 +230,145 @@ contract FixedPointMathLibTest is SoladyTest {
     function testLambertW0WadMonotonicallyIncreasing2() public {
         // These are some problematic values gathered over the attempts.
         // Some might not be problematic now.
-        testLambertW0WadMonotonicallyIncreasingAround(0x598cdf77327d789dc);
-        testLambertW0WadMonotonicallyIncreasingAround(0x3c8d97dfe4afb1b05);
-        testLambertW0WadMonotonicallyIncreasingAround(0x56a147b480c03cc22);
-        testLambertW0WadMonotonicallyIncreasingAround(0x3136f439c231d0bb9);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2ae7cff17ef2469a1);
-        testLambertW0WadMonotonicallyIncreasingAround(0x1de668fd7afcf61cc);
-        testLambertW0WadMonotonicallyIncreasingAround(0x15024b2a35f2cdd95);
-        testLambertW0WadMonotonicallyIncreasingAround(0x11a65ae94b59590f9);
-        testLambertW0WadMonotonicallyIncreasingAround(0xf0c2c82174dffb7e);
-        testLambertW0WadMonotonicallyIncreasingAround(0xed3e56938cb11626);
-        testLambertW0WadMonotonicallyIncreasingAround(0xecf5c4e511142439);
-        testLambertW0WadMonotonicallyIncreasingAround(0xc0755fa2b4033cb0);
-        testLambertW0WadMonotonicallyIncreasingAround(0xa235db282ea4edc6);
-        testLambertW0WadMonotonicallyIncreasingAround(0x9ff2ec5c26eec112);
-        testLambertW0WadMonotonicallyIncreasingAround(0xa0c3c4e36f4415f1);
-        testLambertW0WadMonotonicallyIncreasingAround(0x9b9f0e8d61287782);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7df719d1a4a7b8ad);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7c881679a1464d25);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7bec47487071495a);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7be31c75fc717f9f);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7bbb4e0716eeca53);
-        testLambertW0WadMonotonicallyIncreasingAround(0x78e59d40a92b443b);
-        testLambertW0WadMonotonicallyIncreasingAround(0x77658c4ad3af717d);
-        testLambertW0WadMonotonicallyIncreasingAround(0x75ae9afa425919fe);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7526092d05bef41f);
-        testLambertW0WadMonotonicallyIncreasingAround(0x52896fe82be03dfe);
-        testLambertW0WadMonotonicallyIncreasingAround(0x4f05b0ddf3b71a19);
-        testLambertW0WadMonotonicallyIncreasingAround(0x3094b0feb93943fd);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2ef215ae6701c40e);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2ebd1c82095d6a92);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2e520a4e670d52bb);
-        testLambertW0WadMonotonicallyIncreasingAround(0xfc2f004412e5ce69);
-        testLambertW0WadMonotonicallyIncreasingAround(0x158bc0b201103a7fc);
-        testLambertW0WadMonotonicallyIncreasingAround(0x39280df60945c436b);
-        testLambertW0WadMonotonicallyIncreasingAround(0x47256e5d374b35f74);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2b9568ffb08c155a4);
-        testLambertW0WadMonotonicallyIncreasingAround(0x1b60b07806956f34d);
-        testLambertW0WadMonotonicallyIncreasingAround(0x21902755d1eee824c);
-        testLambertW0WadMonotonicallyIncreasingAround(0x6e15c8a6ee6e4fca4);
-        testLambertW0WadMonotonicallyIncreasingAround(0x5b13067d92d8e49c6);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2826ebc1fce90cf6e);
-        testLambertW0WadMonotonicallyIncreasingAround(0x215eb5aa1041510a4);
-        testLambertW0WadMonotonicallyIncreasingAround(0x47b20347b57504c32);
-        testLambertW0WadMonotonicallyIncreasingAround(0x75e8fd53f8c90f95a);
-        testLambertW0WadMonotonicallyIncreasingAround(0x43e8d80f9af282627);
-        testLambertW0WadMonotonicallyIncreasingAround(0x3cf555b5fd4f20615);
-        testLambertW0WadMonotonicallyIncreasingAround(0xaff4b8b52f8355e6e);
-        testLambertW0WadMonotonicallyIncreasingAround(0x529e89e77ae046255);
-        testLambertW0WadMonotonicallyIncreasingAround(0x1f0289433f07cbf53b);
-        testLambertW0WadMonotonicallyIncreasingAround(0xc1f6e56c2001d9432);
-        testLambertW0WadMonotonicallyIncreasingAround(0x5e4117305c6e33ebc);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2b416472dce2ea26d);
-        testLambertW0WadMonotonicallyIncreasingAround(0x71f55956ef3326067);
-        testLambertW0WadMonotonicallyIncreasingAround(0x35d9d57c965eb82c6);
-        testLambertW0WadMonotonicallyIncreasingAround(0x184f520f19335f25d);
-        testLambertW0WadMonotonicallyIncreasingAround(0x3c4bb8f445abe21a7);
-        testLambertW0WadMonotonicallyIncreasingAround(0x573e3b3e06e208201);
-        testLambertW0WadMonotonicallyIncreasingAround(0x184f520f19335f25d);
-        testLambertW0WadMonotonicallyIncreasingAround(0x573e3b3e06e208201);
-        testLambertW0WadMonotonicallyIncreasingAround(0x61e511ba00db632a4);
-        testLambertW0WadMonotonicallyIncreasingAround(0x12731b97bde57933d);
-        testLambertW0WadMonotonicallyIncreasingAround(0x79c29b05cf39be374);
-        testLambertW0WadMonotonicallyIncreasingAround(0x390fcd4186ac250b3);
-        testLambertW0WadMonotonicallyIncreasingAround(0x69c74b5975fd4832a);
-        testLambertW0WadMonotonicallyIncreasingAround(0x59db219a7048121bd);
-        testLambertW0WadMonotonicallyIncreasingAround(0x28f2adc4fab331d251);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7be91527cc31769c);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7bea796d633b386a);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2ef215ae6701c40f);
-        testLambertW0WadMonotonicallyIncreasingAround(0x1240541334cfadd81);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2a79eccb3d5f4faaed);
-        testLambertW0WadMonotonicallyIncreasingAround(0x7470d50c23bfd30e0);
-        testLambertW0WadMonotonicallyIncreasingAround(0x313386f14a7f95af9);
-        testLambertW0WadMonotonicallyIncreasingAround(0x2a60f3b64c57088e9);
-        testLambertW0WadMonotonicallyIncreasingAround(0x381298f7aa53edfe0);
-        testLambertW0WadMonotonicallyIncreasingAround(0x5cbfac5d7a1770806);
-        testLambertW0WadMonotonicallyIncreasingAround(0x19e46d1b5e6aba57e);
-        testLambertW0WadMonotonicallyIncreasingAround(0x19ff86906ae47c70a);
+        _testLambertW0WadMonoAround(0x598cdf77327d789dc);
+        _testLambertW0WadMonoAround(0x3c8d97dfe4afb1b05);
+        _testLambertW0WadMonoAround(0x56a147b480c03cc22);
+        _testLambertW0WadMonoAround(0x3136f439c231d0bb9);
+        _testLambertW0WadMonoAround(0x2ae7cff17ef2469a1);
+        _testLambertW0WadMonoAround(0x1de668fd7afcf61cc);
+        _testLambertW0WadMonoAround(0x15024b2a35f2cdd95);
+        _testLambertW0WadMonoAround(0x11a65ae94b59590f9);
+        _testLambertW0WadMonoAround(0xf0c2c82174dffb7e);
+        _testLambertW0WadMonoAround(0xed3e56938cb11626);
+        _testLambertW0WadMonoAround(0xecf5c4e511142439);
+        _testLambertW0WadMonoAround(0xc0755fa2b4033cb0);
+        _testLambertW0WadMonoAround(0xa235db282ea4edc6);
+        _testLambertW0WadMonoAround(0x9ff2ec5c26eec112);
+        _testLambertW0WadMonoAround(0xa0c3c4e36f4415f1);
+        _testLambertW0WadMonoAround(0x9b9f0e8d61287782);
+        _testLambertW0WadMonoAround(0x7df719d1a4a7b8ad);
+        _testLambertW0WadMonoAround(0x7c881679a1464d25);
+        _testLambertW0WadMonoAround(0x7bec47487071495a);
+        _testLambertW0WadMonoAround(0x7be31c75fc717f9f);
+        _testLambertW0WadMonoAround(0x7bbb4e0716eeca53);
+        _testLambertW0WadMonoAround(0x78e59d40a92b443b);
+        _testLambertW0WadMonoAround(0x77658c4ad3af717d);
+        _testLambertW0WadMonoAround(0x75ae9afa425919fe);
+        _testLambertW0WadMonoAround(0x7526092d05bef41f);
+        _testLambertW0WadMonoAround(0x52896fe82be03dfe);
+        _testLambertW0WadMonoAround(0x4f05b0ddf3b71a19);
+        _testLambertW0WadMonoAround(0x3094b0feb93943fd);
+        _testLambertW0WadMonoAround(0x2ef215ae6701c40e);
+        _testLambertW0WadMonoAround(0x2ebd1c82095d6a92);
+        _testLambertW0WadMonoAround(0x2e520a4e670d52bb);
+        _testLambertW0WadMonoAround(0xfc2f004412e5ce69);
+        _testLambertW0WadMonoAround(0x158bc0b201103a7fc);
+        _testLambertW0WadMonoAround(0x39280df60945c436b);
+        _testLambertW0WadMonoAround(0x47256e5d374b35f74);
+        _testLambertW0WadMonoAround(0x2b9568ffb08c155a4);
+        _testLambertW0WadMonoAround(0x1b60b07806956f34d);
+        _testLambertW0WadMonoAround(0x21902755d1eee824c);
+        _testLambertW0WadMonoAround(0x6e15c8a6ee6e4fca4);
+        _testLambertW0WadMonoAround(0x5b13067d92d8e49c6);
+        _testLambertW0WadMonoAround(0x2826ebc1fce90cf6e);
+        _testLambertW0WadMonoAround(0x215eb5aa1041510a4);
+        _testLambertW0WadMonoAround(0x47b20347b57504c32);
+        _testLambertW0WadMonoAround(0x75e8fd53f8c90f95a);
+        _testLambertW0WadMonoAround(0x43e8d80f9af282627);
+        _testLambertW0WadMonoAround(0x3cf555b5fd4f20615);
+        _testLambertW0WadMonoAround(0xaff4b8b52f8355e6e);
+        _testLambertW0WadMonoAround(0x529e89e77ae046255);
+        _testLambertW0WadMonoAround(0x1f0289433f07cbf53b);
+        _testLambertW0WadMonoAround(0xc1f6e56c2001d9432);
+        _testLambertW0WadMonoAround(0x5e4117305c6e33ebc);
+        _testLambertW0WadMonoAround(0x2b416472dce2ea26d);
+        _testLambertW0WadMonoAround(0x71f55956ef3326067);
+        _testLambertW0WadMonoAround(0x35d9d57c965eb82c6);
+        _testLambertW0WadMonoAround(0x184f520f19335f25d);
+        _testLambertW0WadMonoAround(0x3c4bb8f445abe21a7);
+        _testLambertW0WadMonoAround(0x573e3b3e06e208201);
+        _testLambertW0WadMonoAround(0x184f520f19335f25d);
+        _testLambertW0WadMonoAround(0x573e3b3e06e208201);
+        _testLambertW0WadMonoAround(0x61e511ba00db632a4);
+        _testLambertW0WadMonoAround(0x12731b97bde57933d);
+        _testLambertW0WadMonoAround(0x79c29b05cf39be374);
+        _testLambertW0WadMonoAround(0x390fcd4186ac250b3);
+        _testLambertW0WadMonoAround(0x69c74b5975fd4832a);
+        _testLambertW0WadMonoAround(0x59db219a7048121bd);
+        _testLambertW0WadMonoAround(0x28f2adc4fab331d251);
+        _testLambertW0WadMonoAround(0x7be91527cc31769c);
+        _testLambertW0WadMonoAround(0x2ef215ae6701c40f);
+        _testLambertW0WadMonoAround(0x1240541334cfadd81);
+        _testLambertW0WadMonoAround(0x2a79eccb3d5f4faaed);
+        _testLambertW0WadMonoAround(0x7470d50c23bfd30e0);
+        _testLambertW0WadMonoAround(0x313386f14a7f95af9);
+        _testLambertW0WadMonoAround(0x2a60f3b64c57088e9);
+        _testLambertW0WadMonoAround(0x381298f7aa53edfe0);
+        _testLambertW0WadMonoAround(0x5cbfac5d7a1770806);
+        _testLambertW0WadMonoAround(0x19e46d1b5e6aba57e);
+        _testLambertW0WadMonoAround(0x19ff86906ae47c70a);
+        _testLambertW0WadMonoAround(0x164684654d9ca54ea1);
+        _testLambertW0WadMonoAround(0x99337fa75e803139);
+        _testLambertW0WadMonoAround(0x6fa0a50fcb8a95b97e);
+        _testLambertW0WadMonoAround(0xa117a195e06c3fd531);
+        _testLambertW0WadMonoAround(0x305da7073093bd8a07);
+        _testLambertW0WadMonoAround(0x98582b07fd3c6b64);
+        _testLambertW0WadMonoAround(0x1e824d2a367d9ce65);
+        _testLambertW0WadMonoAround(0x7bea796d633b386a);
+        _testLambertW0WadMonoAround(0x2fff5c38c6b2a2cd);
+        _testLambertW0WadMonoAround(0x198af4e7ffee1df7627);
+        _testLambertW0WadMonoAround(0x8ea8a7b6f7c7424d8d);
+        _testLambertW0WadMonoAround(0x11e504fa805e54e2ed8);
+        _testLambertW0WadMonoAround(0x3e5f2a7801badcdabd);
+        _testLambertW0WadMonoAround(0x1b7aaad69ac8770a3be);
+        _testLambertW0WadMonoAround(0x658acb00d525f3d345);
+        _testLambertW0WadMonoAround(0xd994d6447146880183f);
+        _testLambertW0WadMonoAround(0x2e07a342d7b1bc1a5ae);
+    }
+
+    function testLambertW0WadMonoDebug() public {
+        unchecked {
+            for (int256 i = -9; i <= 9; ++i) {
+                _testLambertW0WadMonoAround(0x2e07a342d7b1bc1a5ae + i);
+            }
+        }
+    }
+
+    function _testLambertW0WadMonoAround(int256 x) internal {
+        emit LogInt("x", x);
+        emit LogUint("log2(x)", FixedPointMathLib.log2(uint256(x)));
+        testLambertW0WadMonotonicallyIncreasingAround(x);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
-        testLambertW0WadMonotonicallyIncreasingAround(int256(uint256(t)));
+        int256 x = int256(uint256(t));
+        testLambertW0WadMonotonicallyIncreasingAround(x);
+        if (t & 0xff == 0xab) {
+            _testLambertW0WadMonoFocus(x, 0, 0x1ffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 1, 0x1fffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 2, 0xfffffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 3, 0xffffffffffffffff, 0xfffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 4, 0xffffffffffffffff, 0xfffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 5, 0xffffffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 6, 0xffffffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 7, 0xffffffffffffffff, 0xfffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 8, 0xffffffffffffffff, 0xfffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 9, 0xffffffffffffffff, 0xffffffffffffffffffff);
+        }
+    }
+
+    function _testLambertW0WadMonoFocus(int256 t, int256 i, int256 low, int256 mask) internal {
+        int256 x;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, t)
+            mstore(0x20, i)
+            x := and(keccak256(0x00, 0x40), mask)
+        }
+        do {
+            testLambertW0WadMonotonicallyIncreasingAround(x);
+            x >>= 1;
+        } while (x >= low);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {

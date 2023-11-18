@@ -283,28 +283,30 @@ library FixedPointMathLib {
                 c := gt(l, 60)
             }
         } else {
-            // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
-            // Where `b` is chosen for a good starting point.
-            w = lnWad(w);
-            if (x >> 72 == 0) {
-                unchecked {
-                    w = (w * 7169921902066644360) >> 63;
-                }
-                c = 2;
-            } else {
-                int256 ll = lnWad(w);
-                /// @solidity memory-safe-assembly
-                assembly {
-                    w := add(sub(w, ll), sdiv(mul(ll, 1023715086476318099), w))
-                }
-                if (x >> 143 != 0) return _w0Newton(x, w, i);
-            }
+            w = _w0Start(w);
+            if (x >> 80 == 0) c = 10;
+            else if (x >> 143 != 0) return _w0Newton(x, w, i);
         }
-        return _w0Halley(x, w, i, c);
+        return _w0Halley(x, w, i, c, x);
+    }
+
+    /// @dev Approximates the starting point of `lambertW0Wad` for medium to big inputs.
+    function _w0Start(int256 w) private pure returns (int256 r) {
+        // `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+        r = lnWad(w = lnWad(w));
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := add(sdiv(mul(r, 1023715080943999999), w), sub(w, r))
+        }
     }
 
     /// @dev Halley's method workflow for `lambertW0Wad`.
-    function _w0Halley(int256 x, int256 w, uint256 i, uint256 c) private pure returns (int256 r) {
+    function _w0Halley(int256 x, int256 w, uint256 i, uint256 c, int256 q)
+        private
+        pure
+        returns (int256 r)
+    {
+        // forgefmt: disable-next-item
         unchecked {
             r = w;
             int256 s;
@@ -317,7 +319,6 @@ library FixedPointMathLib {
                 assembly {
                     let t := add(r, wad)
                     s := sub(mul(r, e), mul(x, wad))
-                    // forgefmt: disable-next-item
                     r := sub(r, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
                 }
                 if (p <= r) break;
@@ -327,7 +328,10 @@ library FixedPointMathLib {
             assembly {
                 r := sub(r, sgt(r, 2))
             }
-            if (c != 0) if (r >= s) if ((w = _w0Halley(x - 1, w, i, c - 1)) >= r) r = w;
+            if (c != 0) if (r >= s) if (r <= q) {
+                if (x-- >> 63 != 0) w = _w0Start(x);
+                r = _w0Halley(x, w, i, c - 1, r);
+            }
         }
     }
 
