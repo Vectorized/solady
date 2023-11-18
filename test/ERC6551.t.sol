@@ -314,17 +314,17 @@ contract ERC6551Test is SoladyTest {
         _TestTemps memory t = _testTemps();
         address anotherImplementation = address(new MockERC6551V2());
         vm.expectRevert(ERC6551.Unauthorized.selector);
-        t.account.upgradeTo(anotherImplementation);
+        t.account.upgradeToAndCall(anotherImplementation, bytes(""));
         assertEq(t.account.state(), 0);
         assertEq(t.account.mockId(), "1");
 
         vm.prank(t.owner);
-        t.account.upgradeTo(anotherImplementation);
+        t.account.upgradeToAndCall(anotherImplementation, bytes(""));
         assertEq(t.account.state(), 1);
         assertEq(t.account.mockId(), "2");
 
         vm.prank(t.owner);
-        t.account.upgradeTo(_erc6551);
+        t.account.upgradeToAndCall(_erc6551, bytes(""));
         assertEq(t.account.state(), 2);
         assertEq(t.account.mockId(), "1");
     }
