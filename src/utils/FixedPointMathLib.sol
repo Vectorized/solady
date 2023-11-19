@@ -285,7 +285,7 @@ library FixedPointMathLib {
         } else {
             w = _w0Start(w);
             if (x >> 140 == 0) if (x >> 68 != 0) i = 3;
-            if (x >> 80 == 0) c = 10;
+            if (x >> 80 == 0) c = 63;
             else if (x >> 143 != 0) return _w0Newton(x, w, i);
         }
         return _w0Halley(x, w, i, c, x);
