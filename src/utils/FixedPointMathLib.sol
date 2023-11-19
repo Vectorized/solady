@@ -284,7 +284,8 @@ library FixedPointMathLib {
             }
         } else {
             w = _w0Start(w);
-            if (x >> 80 == 0) c = 10;
+            if (x >> 140 == 0) if (x >> 68 != 0) i = 3;
+            if (x >> 80 == 0) c = 63;
             else if (x >> 143 != 0) return _w0Newton(x, w, i);
         }
         return _w0Halley(x, w, i, c, x);
@@ -296,7 +297,7 @@ library FixedPointMathLib {
         r = lnWad(w = lnWad(w));
         /// @solidity memory-safe-assembly
         assembly {
-            r := add(sdiv(mul(r, 1023715080943999999), w), sub(w, r))
+            r := add(sdiv(mul(r, 1023715080943847266), w), sub(w, r))
         }
     }
 
