@@ -261,7 +261,7 @@ library FixedPointMathLib {
     /// Most efficient for small inputs in the range `[-2**50, 2**63)`.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-        uint256 c; // Whether we need to avoid
+        uint256 c; // Whether we need to avoid catastrophic cancellation.
         uint256 i = 4; // Number of iterations.
         if (w <= 0x1ffffffffffff) {
             if (-0x4000000000000 <= w) {
@@ -336,7 +336,7 @@ library FixedPointMathLib {
             assembly {
                 w := sub(w, sgt(w, 2))
             }
-            // For certain ranges of `x`, we'll use the quadratic-rate recursive formula of 
+            // For certain ranges of `x`, we'll use the quadratic-rate recursive formula of
             // R. Iacono and J.P. Boyd for the last iteration, to avoid catastrophic cancellation.
             if (c != 0) {
                 /// @solidity memory-safe-assembly
