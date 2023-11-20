@@ -214,23 +214,23 @@ library FixedPointMathLib {
             // `p` is made monic, we will multiply by a scale factor later.
             // forgefmt: disable-next-item
             let p := sub( // This heavily nested expression is to avoid stack-too-deep for via-ir.
-                shr(96, mul(add(43456485725739037958740375743393,
-                shr(96, mul(add(24828157081833163892658089445524,
-                shr(96, mul(add(3273285459638523848632254066296,
+                sar(96, mul(add(43456485725739037958740375743393,
+                sar(96, mul(add(24828157081833163892658089445524,
+                sar(96, mul(add(3273285459638523848632254066296,
                     x), x))), x))), x)), 11111509109440967052023855526967)
-            p := sub(shr(96, mul(p, x)), 45023709667254063763336534515857)
-            p := sub(shr(96, mul(p, x)), 14706773417378608786704636184526)
+            p := sub(sar(96, mul(p, x)), 45023709667254063763336534515857)
+            p := sub(sar(96, mul(p, x)), 14706773417378608786704636184526)
             p := sub(mul(p, x), shl(96, 795164235651350426258249787498))
 
             // We leave `p` in `2**192` basis so we don't need to scale it back up for the division.
             // `q` is monic by convention.
             let q := add(5573035233440673466300451813936, x)
-            q := add(71694874799317883764090561454958, shr(96, mul(x, q)))
-            q := add(283447036172924575727196451306956, shr(96, mul(x, q)))
-            q := add(401686690394027663651624208769553, shr(96, mul(x, q)))
-            q := add(204048457590392012362485061816622, shr(96, mul(x, q)))
-            q := add(31853899698501571402653359427138, shr(96, mul(x, q)))
-            q := add(909429971244387300277376558375, shr(96, mul(x, q)))
+            q := add(71694874799317883764090561454958, sar(96, mul(x, q)))
+            q := add(283447036172924575727196451306956, sar(96, mul(x, q)))
+            q := add(401686690394027663651624208769553, sar(96, mul(x, q)))
+            q := add(204048457590392012362485061816622, sar(96, mul(x, q)))
+            q := add(31853899698501571402653359427138, sar(96, mul(x, q)))
+            q := add(909429971244387300277376558375, sar(96, mul(x, q)))
 
             // `r` is in the range `(0, 0.125) * 2**96`.
 
