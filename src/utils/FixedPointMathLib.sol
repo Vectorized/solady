@@ -279,8 +279,8 @@ library FixedPointMathLib {
                 l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                     0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
                 w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
-                i := add(3, gt(l, 53))
                 c := gt(l, 60)
+                i := add(2, add(gt(l, 53), c))
             }
         } else {
             // `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
