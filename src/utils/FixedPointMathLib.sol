@@ -261,7 +261,7 @@ library FixedPointMathLib {
     /// Most efficient for small inputs in the range `[-2**50, 2**63)`.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-        uint256 c; // Whether we need to check the previous value to force monotonicity.
+        uint256 c; // Whether we need to avoid catastrophic cancellation.
         uint256 i = 4; // Number of iterations.
         if (w <= 0x1ffffffffffff) {
             if (-0x4000000000000 <= w) {
@@ -279,82 +279,75 @@ library FixedPointMathLib {
                 l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
                     0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
                 w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
-                i := add(3, gt(l, 53))
                 c := gt(l, 60)
+                i := add(2, add(gt(l, 53), c))
             }
         } else {
-            w = _w0Start(w);
-            if (x >> 140 == 0) if (x >> 68 != 0) i = 3;
-            if (x >> 80 == 0) c = 63;
-            else if (x >> 143 != 0) return _w0Newton(x, w, i);
+            // `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+            int256 ll = lnWad(w = lnWad(w));
+            /// @solidity memory-safe-assembly
+            assembly {
+                w := add(sdiv(mul(ll, 1023715080943847266), w), sub(w, ll))
+                i := add(3, iszero(shr(68, x)))
+            }
+            if (x >> 143 == 0) {
+                c = 1;
+            } else {
+                int256 p = x;
+                int256 wad = int256(WAD);
+                // If `x` is big, use Newton's so that intermediate values won't overflow.
+                do {
+                    int256 e = expWad(w);
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        let t := mul(w, div(e, wad))
+                        w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
+                        i := sub(i, 1)
+                    }
+                    if (p <= w) break;
+                    p = w;
+                } while (i != 0);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    w := sub(w, sgt(w, 2))
+                }
+                return w;
+            }
         }
-        return _w0Halley(x, w, i, c, x);
-    }
-
-    /// @dev Approximates the starting point of `lambertW0Wad` for medium to big inputs.
-    function _w0Start(int256 w) private pure returns (int256 r) {
-        // `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
-        r = lnWad(w = lnWad(w));
-        /// @solidity memory-safe-assembly
-        assembly {
-            r := add(sdiv(mul(r, 1023715080943847266), w), sub(w, r))
-        }
-    }
-
-    /// @dev Halley's method workflow for `lambertW0Wad`.
-    function _w0Halley(int256 x, int256 w, uint256 i, uint256 c, int256 q)
-        private
-        pure
-        returns (int256 r)
-    {
         // forgefmt: disable-next-item
         unchecked {
-            r = w;
             int256 s;
             int256 p = x;
             int256 wad = int256(WAD);
-            uint256 j;
+            // Otherwise, use Halley's for faster convergence.
             do {
-                int256 e = expWad(r);
+                int256 e = expWad(w);
                 /// @solidity memory-safe-assembly
                 assembly {
-                    let t := add(r, wad)
-                    s := sub(mul(r, e), mul(x, wad))
-                    r := sub(r, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
+                    let t := add(w, wad)
+                    s := sub(mul(w, e), mul(x, wad))
+                    w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
                 }
-                if (p <= r) break;
-                p = r;
-            } while (++j != i);
+                if (p <= w) break;
+                p = w;
+            } while (--i != c);
             /// @solidity memory-safe-assembly
             assembly {
-                r := sub(r, sgt(r, 2))
+                w := sub(w, sgt(w, 2))
             }
-            if (c != 0) if (r >= s) if (r <= q) {
-                if (x-- >> 63 != 0) w = _w0Start(x);
-                r = _w0Halley(x, w, i, c - 1, r);
+            // For certain ranges of `x`, we'll use the quadratic-rate recursive formula of
+            // R. Iacono and J.P. Boyd for the last iteration, to avoid catastrophic cancellation.
+            if (c != 0) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    x := sdiv(mul(x, wad), w)
+                }
+                x = (w * (wad + lnWad(x)));
+                /// @solidity memory-safe-assembly
+                assembly {
+                    w := sdiv(x, add(wad, w))
+                }
             }
-        }
-    }
-
-    /// @dev Newton's method workflow for `lambertW0Wad`.
-    function _w0Newton(int256 x, int256 w, uint256 i) private pure returns (int256 r) {
-        int256 p = x;
-        int256 wad = int256(WAD);
-        // If `x` is big, use Newton's so that intermediate values won't overflow.
-        do {
-            int256 e = expWad(w);
-            /// @solidity memory-safe-assembly
-            assembly {
-                let t := mul(w, div(e, wad))
-                w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
-                i := sub(i, 1)
-            }
-            if (p <= w) break;
-            p = w;
-        } while (i != 0);
-        /// @solidity memory-safe-assembly
-        assembly {
-            r := sub(w, sgt(w, 2))
         }
     }
 
