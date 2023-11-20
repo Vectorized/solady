@@ -253,6 +253,7 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(2 ** 83 - 1, 13483237095324880705);
         _checkLambertW0Wad(2 ** 82 - 1, 12839046125789215063);
         _checkLambertW0Wad(2 ** 81 - 1, 12197184781931118579);
+        _checkLambertW0Wad(2 ** 80 - 1, 11557875688514566228 - 1);
         _checkLambertW0Wad(2 ** 79 - 1, 10921373820226202580);
         _checkLambertW0Wad(2 ** 78 - 1, 10287972878516218499);
         _checkLambertW0Wad(2 ** 77 - 1, 9658013267990184319);
@@ -292,9 +293,39 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(2 ** 43 - 1, 8796015651975);
         _checkLambertW0Wad(2 ** 42 - 1, 4398027168417);
         _checkLambertW0Wad(2 ** 41 - 1, 2199018419863);
-        // These expected values are 1 less than the ground truth.
-        // Could be due to approximation limitations.
-        _checkLambertW0Wad(2 ** 80 - 1, 11557875688514566228 - 1);
+        _checkLambertW0Wad(2 ** 40 - 1, 1099510418851);
+        _checkLambertW0Wad(2 ** 39 - 1, 549755511655);
+        _checkLambertW0Wad(2 ** 38 - 1, 274877831385);
+        _checkLambertW0Wad(2 ** 37 - 1, 137438934581);
+        _checkLambertW0Wad(2 ** 36 - 1, 68719472012);
+        _checkLambertW0Wad(2 ** 35 - 1, 34359737186);
+        _checkLambertW0Wad(2 ** 34 - 1, 17179868887);
+        _checkLambertW0Wad(2 ** 33 - 1, 8589934517);
+        _checkLambertW0Wad(2 ** 32 - 1, 4294967276);
+        _checkLambertW0Wad(2 ** 31 - 1, 2147483642);
+        _checkLambertW0Wad(2 ** 30 - 1, 1073741821);
+        _checkLambertW0Wad(2 ** 29 - 1, 536870910);
+        _checkLambertW0Wad(2 ** 28 - 1, 268435454);
+        _checkLambertW0Wad(2 ** 27 - 1, 134217726);
+        _checkLambertW0Wad(2 ** 26 - 1, 67108862);
+        _checkLambertW0Wad(2 ** 25 - 1, 33554430);
+        _checkLambertW0Wad(2 ** 24 - 1, 16777214);
+        _checkLambertW0Wad(2 ** 23 - 1, 8388606);
+        _checkLambertW0Wad(2 ** 22 - 1, 4194302);
+        _checkLambertW0Wad(2 ** 21 - 1, 2097150);
+        _checkLambertW0Wad(2 ** 20 - 1, 1048574);
+        _checkLambertW0Wad(2 ** 19 - 1, 524286);
+        _checkLambertW0Wad(2 ** 18 - 1, 262142);
+        _checkLambertW0Wad(2 ** 17 - 1, 131070);
+        _checkLambertW0Wad(2 ** 16 - 1, 65534);
+        _checkLambertW0Wad(2 ** 15 - 1, 32766);
+        _checkLambertW0Wad(2 ** 14 - 1, 16382);
+        _checkLambertW0Wad(2 ** 13 - 1, 8190);
+        _checkLambertW0Wad(2 ** 12 - 1, 4094);
+        _checkLambertW0Wad(2 ** 11 - 1, 2046);
+        _checkLambertW0Wad(2 ** 10 - 1, 1022);
+        _checkLambertW0Wad(2 ** 9 - 1, 510);
+        _checkLambertW0Wad(2 ** 8 - 1, 254);
     }
 
     function testLambertW0WadRevertsForOutOfDomain() public {
