@@ -258,7 +258,6 @@ library FixedPointMathLib {
     /// @dev Returns `W_0(x)`, denominated in `WAD`.
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
-    /// Most efficient for small inputs in the range `[-2**50, 2**63)`.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
         if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
         uint256 c; // Whether we need to avoid catastrophic cancellation.
@@ -289,12 +288,11 @@ library FixedPointMathLib {
             assembly {
                 w := add(sdiv(mul(ll, 1023715080943847266), w), sub(w, ll))
                 i := add(3, iszero(shr(68, x)))
+                c := iszero(shr(143, x))
             }
-            if (x >> 143 == 0) {
-                c = 1;
-            } else {
-                int256 p = x;
+            if (c == 0) {
                 int256 wad = int256(WAD);
+                int256 p = x;
                 // If `x` is big, use Newton's so that intermediate values won't overflow.
                 do {
                     int256 e = expWad(w);
@@ -316,16 +314,14 @@ library FixedPointMathLib {
         }
         // forgefmt: disable-next-item
         unchecked {
-            int256 s;
-            int256 p = x;
             int256 wad = int256(WAD);
-            // Otherwise, use Halley's for faster convergence.
-            do {
+            int256 p = x;
+            do { // Otherwise, use Halley's for faster convergence.
                 int256 e = expWad(w);
                 /// @solidity memory-safe-assembly
                 assembly {
                     let t := add(w, wad)
-                    s := sub(mul(w, e), mul(x, wad))
+                    let s := sub(mul(w, e), mul(x, wad))
                     w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
                 }
                 if (p <= w) break;
