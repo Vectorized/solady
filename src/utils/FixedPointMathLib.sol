@@ -288,7 +288,7 @@ library FixedPointMathLib {
             /// @solidity memory-safe-assembly
             assembly {
                 w := add(sdiv(mul(ll, 1023715080943847266), w), sub(w, ll))
-                if iszero(shr(140, x)) { if shr(68, x) { i := 3 } }
+                i := add(3, iszero(shr(68, x)))
             }
             if (x >> 143 == 0) {
                 c = 1;
