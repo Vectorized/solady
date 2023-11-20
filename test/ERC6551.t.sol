@@ -39,7 +39,15 @@ contract ERC6551Test is SoladyTest {
 
     address internal _proxy;
 
-    mapping(uint256 => bool) internal _minted;
+    // By right, this should be the keccak256 of some long-ass string:
+    // (e.g. `keccak256("Parent(bytes32 childHash,Mail child)Mail(Person from,Person to,string contents)Person(string name,address wallet)")`).
+    // But I'm lazy and will use something randomish here.
+    bytes32 internal constant _PARENT_TYPEHASH =
+        0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
+
+    // By right, this should be a proper domain separator, but I'm lazy.
+    bytes32 internal constant _DOMAIN_SEP_B =
+        0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
     bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
@@ -64,13 +72,18 @@ contract ERC6551Test is SoladyTest {
         _proxy = address(new ERC6551Proxy(_erc6551));
     }
 
+    function _testTempsMint(address owner) internal returns (uint256 tokenId) {
+        while (true) {
+            tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
+            (bool success,) =
+                _erc721.call(abi.encodeWithSignature("mint(address,uint256)", owner, tokenId));
+            if (success) return tokenId;
+        }
+    }
+
     function _testTemps() internal returns (_TestTemps memory t) {
         t.owner = _randomNonZeroAddress();
-        do {
-            t.tokenId = _random();
-            _minted[t.tokenId] = true;
-        } while (_minted[t.tokenId] == false);
-        MockERC721(_erc721).mint(t.owner, t.tokenId);
+        t.tokenId = _testTempsMint(t.owner);
         t.chainId = block.chainid;
         t.salt = bytes32(_random());
         address account = _registry.createAccount(_proxy, t.salt, t.chainId, _erc721, t.tokenId);
@@ -132,6 +145,31 @@ contract ERC6551Test is SoladyTest {
             _TestTemps memory u = _testTemps();
             vm.prank(u.owner);
             MockERC721(_erc721).safeTransferFrom(u.owner, address(t[n - 1].account), u.tokenId);
+        }
+    }
+
+    function testOnERC721ReceivedCyclesWithDifferentChainIds(uint256) public {
+        _TestTemps[] memory t = new _TestTemps[](3);
+        unchecked {
+            for (uint256 i; i != 3; ++i) {
+                vm.chainId(i);
+                t[i] = _testTemps();
+                if (i != 0) {
+                    vm.prank(t[i].owner);
+                    MockERC721(_erc721).safeTransferFrom(
+                        t[i].owner, address(t[i - 1].account), t[i].tokenId
+                    );
+                    t[i].owner = address(t[i - 1].account);
+                }
+            }
+        }
+        unchecked {
+            vm.chainId(_random() % 3);
+            uint256 i = _random() % 3;
+            uint256 j = _random() % 3;
+            while (j == i) j = _random() % 3;
+            vm.prank(t[i].owner);
+            MockERC721(_erc721).safeTransferFrom(t[i].owner, address(t[j].account), t[i].tokenId);
         }
     }
 
@@ -272,23 +310,23 @@ contract ERC6551Test is SoladyTest {
         assertEq(t.account.state(), 1);
     }
 
-    function testUpgradeUUU() public {
+    function testUpgrade() public {
         _TestTemps memory t = _testTemps();
         address anotherImplementation = address(new MockERC6551V2());
         vm.expectRevert(ERC6551.Unauthorized.selector);
-        t.account.upgradeTo(anotherImplementation);
+        t.account.upgradeToAndCall(anotherImplementation, bytes(""));
         assertEq(t.account.state(), 0);
-        assertEq(t.account.version(), "1");
+        assertEq(t.account.mockId(), "1");
 
         vm.prank(t.owner);
-        t.account.upgradeTo(anotherImplementation);
+        t.account.upgradeToAndCall(anotherImplementation, bytes(""));
         assertEq(t.account.state(), 1);
-        assertEq(t.account.version(), "2");
+        assertEq(t.account.mockId(), "2");
 
         vm.prank(t.owner);
-        t.account.upgradeTo(_erc6551);
+        t.account.upgradeToAndCall(_erc6551, bytes(""));
         assertEq(t.account.state(), 2);
-        assertEq(t.account.version(), "1");
+        assertEq(t.account.mockId(), "1");
     }
 
     function testSupportsInterface() public {
@@ -327,18 +365,37 @@ contract ERC6551Test is SoladyTest {
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
         (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(keccak256("123")));
+            vm.sign(t.privateKey, _toERC1271Hash(address(t.account), keccak256("123")));
 
         vm.prank(t.owner);
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
 
+        bytes32 hash = keccak256("123");
+        bytes memory signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, hash);
         // Success returns `0x1626ba7e`.
-        bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
-        assert(
-            t.account.isValidSignature(
-                SignatureCheckerLib.toEthSignedMessageHash(keccak256("123")), signature
-            ) == 0x1626ba7e
+        assertEq(t.account.isValidSignature(_toChildHash(hash), signature), bytes4(0x1626ba7e));
+    }
+
+    function _toERC1271Hash(address account, bytes32 child) internal view returns (bytes32) {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256("Milady"),
+                keccak256("1"),
+                block.chainid,
+                address(account)
+            )
         );
+        bytes32 parentStructHash =
+            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
+    }
+
+    function _toChildHash(bytes32 child) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, child));
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {

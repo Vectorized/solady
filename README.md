@@ -29,6 +29,7 @@ The Solidity smart contracts are located in the `src` directory.
 ```ml
 accounts
 ├─ Receiver — "Receiver mixin for ETH and safe-transferred ERC721 and ERC1155 tokens"
+├─ ERC1271 — "ERC1271 mixin with nested EIP-712 approach"
 ├─ ERC4337 — "Simple ERC4337 account implementation"
 ├─ ERC4337Factory — "Simple ERC4337 account factory implementation"
 ├─ ERC6551 — "Simple ERC6551 account implementation"
@@ -134,5 +135,5 @@ This repository is inspired by or directly modified from many sources, primarily
 [ci-shield]: https://img.shields.io/github/actions/workflow/status/vectorized/solady/ci.yml?branch=main&label=build
 [ci-url]: https://github.com/vectorized/solady/actions/workflows/ci.yml
 
-[solidity-shield]: https://img.shields.io/badge/solidity-%3E=0.8.4%20%3C=0.8.21-aa6746
+[solidity-shield]: https://img.shields.io/badge/solidity-%3E=0.8.4%20%3C=0.8.22-aa6746
 [solidity-ci-url]: https://github.com/Vectorized/solady/actions/workflows/ci-all-via-ir.yml

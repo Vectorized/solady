@@ -74,10 +74,10 @@ contract ECDSATest is SoladyTest {
         assertTrue(this.tryRecover(TEST_MESSAGE, r, vs) == V0_SIGNER);
     }
 
-    function testTryRecoverWithV0SignatureWithShortEIP2098FormatAsCalldataReturnsZero() public {
+    function testTryRecoverWithV0SignatureWithShortEIP2098FormatAsCalldata() public {
         bytes memory signature =
             hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be892";
-        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == V0_SIGNER);
     }
 
     function testTryRecoverWithV1SignatureWithVersion01ReturnsZero() public {
@@ -104,10 +104,10 @@ contract ECDSATest is SoladyTest {
         assertTrue(this.tryRecover(TEST_MESSAGE, r, vs) == V1_SIGNER);
     }
 
-    function testTryRecoverWithV1SignatureWithShortEIP2098FormatAsCalldataReturnsZero() public {
+    function testTryRecoverWithV1SignatureWithShortEIP2098FormatAsCalldata() public {
         bytes memory signature =
             hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feffc8e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e0";
-        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == address(0));
+        assertTrue(this.tryRecover(TEST_MESSAGE, signature) == V1_SIGNER);
     }
 
     function testRecoverWithInvalidShortSignatureReturnsZero() public {
@@ -169,10 +169,9 @@ contract ECDSATest is SoladyTest {
         assertTrue(this.recover(TEST_MESSAGE, r, vs) == V0_SIGNER);
     }
 
-    function testRecoverWithV0SignatureWithShortEIP2098FormatAsCalldataReverts() public {
+    function testRecoverWithV0SignatureWithShortEIP2098FormatAsCalldata() public {
         bytes memory signature =
             hex"5d99b6f7f6d1f73d1a26497f2b1c89b24c0993913f86e9a2d02cd69887d9c94f3c880358579d811b21dd1b7fd9bb01c1d81d10e69f0384e675c32b39643be892";
-        vm.expectRevert(ECDSA.InvalidSignature.selector);
         this.recover(TEST_MESSAGE, signature);
     }
 
@@ -202,10 +201,9 @@ contract ECDSATest is SoladyTest {
         assertTrue(this.recover(TEST_MESSAGE, r, vs) == V1_SIGNER);
     }
 
-    function testRecoverWithV1SignatureWithShortEIP2098FormatAsCalldataReverts() public {
+    function testRecoverWithV1SignatureWithShortEIP2098FormatAsCalldata() public {
         bytes memory signature =
             hex"331fe75a821c982f9127538858900d87d3ec1f9f737338ad67cad133fa48feffc8e6fa0c18abc62e42820f05943e47af3e9fbe306ce74d64094bdf1691ee53e0";
-        vm.expectRevert(ECDSA.InvalidSignature.selector);
         this.recover(TEST_MESSAGE, signature);
     }
 

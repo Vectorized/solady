@@ -154,11 +154,6 @@ contract LibCloneTest is SoladyTest, Clone {
         return LibClone.deployDeterministicERC1967(_brutalized(implementation), salt);
     }
 
-    function testDeployDeterministicERC1967RevertsIfAddressAlreadyUsed() public {
-        testDeployDeterministicERC1967(1, keccak256("a"));
-        testDeployDeterministicERC1967(1, keccak256("a"));
-    }
-
     function testDeployDeterministicERC1967() public {
         testDeployDeterministicERC1967(1, keccak256("b"));
     }

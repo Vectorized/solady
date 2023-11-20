@@ -5,7 +5,7 @@ import {Receiver} from "./Receiver.sol";
 import {LibZip} from "../utils/LibZip.sol";
 import {Ownable} from "../auth/Ownable.sol";
 import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
-import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
+import {SignatureCheckerLib, ERC1271} from "../accounts/ERC1271.sol";
 
 /// @notice Simple ERC4337 account implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC4337.sol)
@@ -16,7 +16,7 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// 2. Create a factory that uses `LibClone.deployERC1967` or
 ///    `LibClone.deployDeterministicERC1967` to clone the implementation.
 ///    See: `ERC4337Factory.sol`.
-contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
+abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -79,7 +79,7 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
         bytes32 userOpHash,
         uint256 missingAccountFunds
     )
-        public
+        external
         payable
         virtual
         onlyEntryPoint
@@ -88,22 +88,6 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     {
         validationData = _validateSignature(userOp, userOpHash);
         _validateNonce(userOp.nonce);
-    }
-
-    /// @dev Validates the signature with ERC1271 return,
-    /// so that this account can also be used as a signer.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        public
-        view
-        virtual
-        returns (bytes4 result)
-    {
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(owner(), hash, signature);
-        /// @solidity memory-safe-assembly
-        assembly {
-            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
-            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
-        }
     }
 
     /// @dev Validate `userOp.signature` for the `userOpHash`.
@@ -383,6 +367,11 @@ contract ERC4337 is Ownable, UUPSUpgradeable, Receiver {
     /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
     function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
         return true;
+    }
+
+    /// @dev Uses the `owner` as the ERC1271 signer.
+    function _erc1271Signer() internal view virtual override(ERC1271) returns (address) {
+        return owner();
     }
 
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.

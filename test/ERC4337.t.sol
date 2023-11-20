@@ -40,6 +40,16 @@ contract Target {
 contract ERC4337Test is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
+    // By right, this should be the keccak256 of some long-ass string:
+    // (e.g. `keccak256("Parent(bytes32 childHash,Mail child)Mail(Person from,Person to,string contents)Person(string name,address wallet)")`).
+    // But I'm lazy and will use something randomish here.
+    bytes32 internal constant _PARENT_TYPEHASH =
+        0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
+
+    // By right, this should be a proper domain separator, but I'm lazy.
+    bytes32 internal constant _DOMAIN_SEP_B =
+        0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
+
     address internal constant _ENTRY_POINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 
     address erc4337;
@@ -266,6 +276,7 @@ contract ERC4337Test is SoladyTest {
 
     struct _TestTemps {
         bytes32 userOpHash;
+        bytes32 hash;
         address signer;
         uint256 privateKey;
         uint8 v;
@@ -309,41 +320,129 @@ contract ERC4337Test is SoladyTest {
 
     function testIsValidSignature() public {
         _TestTemps memory t;
-        t.userOpHash = keccak256("123");
+        t.hash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, _toERC1271Hash(t.hash));
 
         account.initialize(t.signer);
 
-        ERC4337.UserOperation memory userOp;
-        // Success returns `0x1626ba7e`.
-        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
-        assert(
-            account.isValidSignature(
-                SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash), userOp.signature
-            ) == 0x1626ba7e
-        );
+        bytes memory signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
+
+        unchecked {
+            uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
+            signature = abi.encodePacked(t.r, vs, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
+            assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
+        }
+
+        signature =
+            abi.encodePacked(t.r, t.s, t.v, uint256(_PARENT_TYPEHASH) ^ 1, _DOMAIN_SEP_B, t.hash);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0xffffffff));
+
+        signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, uint256(_DOMAIN_SEP_B) ^ 1, t.hash);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0xffffffff));
+
+        signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, uint256(t.hash) ^ 1);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = "";
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+    }
+
+    function testIsValidSignaturePersonalSign() public {
+        _TestTemps memory t;
+        t.hash = keccak256("123");
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, _toERC1271HashPersonalSign(t.hash));
+
+        account.initialize(t.signer);
+
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
+
+        unchecked {
+            uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
+            signature = abi.encodePacked(t.r, vs, _PARENT_TYPEHASH);
+            assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
+        }
+
+        signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH, _DOMAIN_SEP_B);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, t.s, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = abi.encodePacked(t.r, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        signature = "";
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
     }
 
     function testIsValidSignatureWrapped() public {
         _TestTemps memory t;
-        t.userOpHash = keccak256("123");
+        t.hash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, _toERC1271Hash(t.hash));
 
         MockERC1271Wallet wrappedSigner = new MockERC1271Wallet(t.signer);
         account.initialize(address(wrappedSigner));
 
-        ERC4337.UserOperation memory userOp;
-        // Success returns `0x1626ba7e`.
-        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
-        assert(
-            account.isValidSignature(
-                SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash), userOp.signature
-            ) == 0x1626ba7e
+        bytes memory signature =
+            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, t.hash);
+        assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
+    }
+
+    function _toERC1271Hash(bytes32 child) internal view returns (bytes32) {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256("Milady"),
+                keccak256("1"),
+                block.chainid,
+                address(account)
+            )
         );
+        bytes32 parentStructHash =
+            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
+    }
+
+    function _toChildHash(bytes32 child) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, child));
+    }
+
+    function _toERC1271HashPersonalSign(bytes32 childHash) internal view returns (bytes32) {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256("Milady"),
+                keccak256("1"),
+                block.chainid,
+                address(account)
+            )
+        );
+        bytes32 parentStructHash = keccak256(abi.encode(_PARENT_TYPEHASH, childHash));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
     }
 
     function testETHReceived() public {
@@ -390,6 +489,53 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.storageLoad(storageSlot), bytes32(0));
         account.storageStore(storageSlot, storageValue);
         assertEq(account.storageLoad(storageSlot), storageValue);
+    }
+
+    function testOwnerRecovery() public {
+        ERC4337.UserOperation memory userOp;
+
+        userOp.sender = address(account);
+        userOp.nonce = 4337;
+
+        // `bob` is set as recovery.
+        address bob = address(0xb);
+        userOp.callData = abi.encodeWithSelector(
+            ERC4337.execute.selector,
+            address(account),
+            0,
+            abi.encodeWithSelector(Ownable.completeOwnershipHandover.selector, bob)
+        );
+
+        // `bob` must accept recovery.
+        // IRL this would follow need.
+        vm.prank(bob);
+        account.requestOwnershipHandover();
+
+        _TestTemps memory t;
+        t.userOpHash = keccak256(abi.encode(userOp));
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) =
+            vm.sign(t.privateKey, SignatureCheckerLib.toEthSignedMessageHash(t.userOpHash));
+
+        t.missingAccountFunds = 456;
+        vm.deal(address(account), 1 ether);
+
+        account.initialize(t.signer);
+        assertEq(account.owner(), t.signer);
+
+        vm.etch(account.entryPoint(), address(new MockEntryPoint()).code);
+        MockEntryPoint ep = MockEntryPoint(payable(account.entryPoint()));
+
+        // Success returns 0.
+        userOp.signature = abi.encodePacked(t.r, t.s, t.v);
+        assertEq(
+            ep.validateUserOp(address(account), userOp, t.userOpHash, t.missingAccountFunds), 0
+        );
+        // Check recovery to `bob`.
+        vm.prank(address(ep));
+        (bool success,) = address(account).call(userOp.callData);
+        assertTrue(success);
+        assertEq(account.owner(), bob);
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
