@@ -319,7 +319,6 @@ library FixedPointMathLib {
             int256 s;
             int256 p = x;
             int256 wad = int256(WAD);
-            i -= c;
             // Otherwise, use Halley's for faster convergence.
             do {
                 int256 e = expWad(w);
@@ -331,7 +330,7 @@ library FixedPointMathLib {
                 }
                 if (p <= w) break;
                 p = w;
-            } while (--i != 0);
+            } while (--i != c);
             /// @solidity memory-safe-assembly
             assembly {
                 w := sub(w, sgt(w, 2))
