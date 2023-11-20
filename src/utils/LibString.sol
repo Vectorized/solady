@@ -598,6 +598,11 @@ library LibString {
         result = lastIndexOf(subject, search, uint256(int256(-1)));
     }
 
+    /// @dev Returns true if `search` is found in `subject`, false otherwise.
+    function contains(string memory subject, string memory search) internal pure returns (bool) {
+        return indexOf(subject, search) != NOT_FOUND;
+    }
+
     /// @dev Returns whether `subject` starts with `search`.
     function startsWith(string memory subject, string memory search)
         internal
