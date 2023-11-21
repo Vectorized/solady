@@ -18,7 +18,6 @@ contract MockERC6909 is ERC6909 {
     }
 
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
-        if (totalSupply(id) == 0) revert TokenDoesNotExist();
         return string(abi.encodePacked("http://solady.org/", LibString.toString(id)));
     }
 
