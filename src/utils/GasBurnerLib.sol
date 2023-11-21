@@ -12,13 +12,13 @@ library GasBurnerLib {
     function burn(uint256 x) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, or(1, x))
-            let n := mul(gt(x, 120), div(x, 88))
+            mstore(0x10, or(1, x))
+            let n := mul(gt(x, 120), div(x, 91))
             // We use keccak256 instead of blake2f precompile for better widespread compatibility.
             for { let i := 0 } iszero(eq(i, n)) { i := add(i, 1) } {
-                mstore(0x00, keccak256(0x10, 0x10)) // Yes.
+                mstore(0x10, keccak256(0x10, 0x10)) // Yes.
             }
-            if iszero(mload(0x00)) { invalid() }
+            if iszero(mload(0x10)) { invalid() }
         }
     }
 }
