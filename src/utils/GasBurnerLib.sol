@@ -6,7 +6,7 @@ pragma solidity ^0.8.4;
 library GasBurnerLib {
     /// @dev Burns about `x` amount of gas.
     /// Intended for Contract Secured Revenue (CSR).
-    /// For best results, pass in a admin-controlled dynamic value instead of a hardcoded one.
+    /// For best results, pass in an admin-controlled dynamic value instead of a hardcoded one.
     /// This is so that you can adjust your contract as needed depending on market conditions,
     /// and to give your users a leeway just in case.
     function burn(uint256 x) internal pure {

@@ -10,7 +10,7 @@ contract GasBurnerLibTest is SoladyTest {
             GasBurnerLib.burn(0);
             GasBurnerLib.burn(1);
             uint256 gasBefore = gasleft();
-            GasBurnerLib.burn(3000);
+            GasBurnerLib.burn(30000000);
             uint256 gasAfter = gasleft();
             console.log(gasBefore - gasAfter);
         }
