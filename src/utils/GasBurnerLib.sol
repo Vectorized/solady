@@ -4,11 +4,12 @@ pragma solidity ^0.8.4;
 /// @notice Library for burning gas without reverting.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/GasBurnerLib.sol)
 library GasBurnerLib {
-    /// @dev Burns about `x` amount of gas.
+    /// @dev Burns approximately `x` amount of gas.
     /// Intended for Contract Secured Revenue (CSR).
-    /// For best results, pass in an admin-controlled dynamic value instead of a hardcoded one.
+    ///
+    /// Recommendation: pass in an admin-controlled dynamic value instead of a hardcoded one.
     /// This is so that you can adjust your contract as needed depending on market conditions,
-    /// and to give your users a leeway just in case.
+    /// and to give you and your users a leeway in case the L2 chain change the rules.
     function burn(uint256 x) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
