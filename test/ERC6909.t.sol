@@ -263,12 +263,9 @@ contract ERC6909Test is SoladyTest {
         _setOperator(owner, spender, approved);
     }
 
-    function testMintOverMaxUintReverts(
-        address to,
-        uint256 id,
-        uint256 amount0,
-        uint256 amount1
-    ) public {
+    function testMintOverMaxUintReverts(address to, uint256 id, uint256 amount0, uint256 amount1)
+        public
+    {
         amount0 = _bound(amount0, 1, type(uint256).max);
         amount1 = _bound(amount1, type(uint256).max - amount0 + 1, type(uint256).max);
         token.mint(to, id, amount0);
