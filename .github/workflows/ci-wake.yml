@@ -1,0 +1,36 @@
+name: ci - Wake
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Wake Testing
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        profile: [via-ir-off, via-ir-on]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Wake
+        uses: Ackee-Blockchain/wake-setup-action@0.1.0
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Move Wake test files
+        run: mv ext/wake tests && mv tests/wake.toml .
+
+      - name: Generate pytypes with via-ir-on
+        if: ${{ matrix.profile }} == 'via-ir-on'
+        run: wake init pytypes --via-ir
+
+      - name: Generate pytypes with via-ir-off
+        if: ${{ matrix.profile }} == 'via-ir-off'
+        run: wake init pytypes --no-via-ir
+
+      - name: Run tests
+        run: wake test
