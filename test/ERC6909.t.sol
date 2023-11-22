@@ -32,7 +32,6 @@ contract ERC6909Test is SoladyTest {
         emit Transfer(address(this), address(0), address(0xBEEF), 1, 1e18);
 
         token.mint(address(0xBEEF), 1, 1e18);
-        assertEq(token.totalSupply(1), 1e18);
         assertEq(token.balanceOf(address(0xBEEF), 1), 1e18);
     }
 
@@ -47,7 +46,6 @@ contract ERC6909Test is SoladyTest {
         emit Transfer(address(this), address(0xBEEF), address(0), 1, 0.9e18);
         token.burn(address(0xBEEF), 1, 0.9e18);
 
-        assertEq(token.totalSupply(1), 1e18 - 0.9e18);
         assertEq(token.balanceOf(address(0xBEEF), 1), 0.1e18);
     }
 
@@ -67,7 +65,6 @@ contract ERC6909Test is SoladyTest {
         vm.expectEmit(true, true, true, true);
         emit Transfer(address(this), address(this), address(0xBEEF), 1, 1e18);
         assertTrue(token.transfer(address(0xBEEF), 1, 1e18));
-        assertEq(token.totalSupply(1), 1e18);
         assertEq(token.balanceOf(address(this), 1), 0);
         assertEq(token.balanceOf(address(0xBEEF), 1), 1e18);
     }
@@ -82,7 +79,6 @@ contract ERC6909Test is SoladyTest {
         vm.expectEmit(true, true, true, true);
         emit Transfer(address(this), from, address(0xBEEF), 1, 1e18);
         assertTrue(token.transferFrom(from, address(0xBEEF), 1, 1e18));
-        assertEq(token.totalSupply(1), 1e18);
 
         assertEq(token.allowance(from, address(this), 1), 0);
 
@@ -100,7 +96,6 @@ contract ERC6909Test is SoladyTest {
         vm.expectEmit(true, true, true, true);
         emit Transfer(address(this), from, address(0xBEEF), 1, 1e18);
         assertTrue(token.transferFrom(from, address(0xBEEF), 1, 1e18));
-        assertEq(token.totalSupply(1), 1e18);
 
         assertEq(token.allowance(from, address(this), 1), type(uint256).max);
 
@@ -118,7 +113,6 @@ contract ERC6909Test is SoladyTest {
         vm.expectEmit(true, true, true, true);
         emit Transfer(address(this), from, address(0xBEEF), 1, 1e18);
         assertTrue(token.transferFrom(from, address(0xBEEF), 1, 1e18));
-        assertEq(token.totalSupply(1), 1e18);
 
         assertEq(token.balanceOf(from, 1), 0);
         assertEq(token.balanceOf(address(0xBEEF), 1), 1e18);
@@ -140,8 +134,29 @@ contract ERC6909Test is SoladyTest {
 
     function testMintOverMaxUintReverts() public {
         token.mint(address(this), 1, type(uint256).max);
-        vm.expectRevert(ERC6909.TotalSupplyOverflow.selector);
+        vm.expectRevert(ERC6909.BalanceOverflow.selector);
         token.mint(address(this), 1, 1);
+    }
+
+    function testTransferOverMaxUintReverts() public {
+        token.mint(address(this), 1, type(uint256).max);
+        token.transfer(address(0xBEEF), 1, type(uint256).max);
+        token.mint(address(this), 1, 1);
+        vm.expectRevert(ERC6909.BalanceOverflow.selector);
+        token.transfer(address(0xBEEF), 1, 1);
+    }
+
+    function testTransferFromOverMaxUintReverts() public {
+        address from = address(0xABCD);
+
+        _approve(from, address(this), 1, type(uint256).max);
+
+        token.mint(from, 1, type(uint256).max);
+        token.transferFrom(from, address(0xBEEF), 1, type(uint256).max);
+
+        token.mint(from, 1, 1);
+        vm.expectRevert(ERC6909.BalanceOverflow.selector);
+        token.transferFrom(from, address(0xBEEF), 1, 1);
     }
 
     function testTransferInsufficientBalanceReverts() public {
@@ -177,7 +192,6 @@ contract ERC6909Test is SoladyTest {
         emit Transfer(address(this), address(0), to, id, amount);
         token.mint(to, id, amount);
 
-        assertEq(token.totalSupply(id), amount);
         assertEq(token.balanceOf(to, id), amount);
     }
 
@@ -189,7 +203,6 @@ contract ERC6909Test is SoladyTest {
         emit Transfer(address(this), from, address(0), id, burnAmount);
         token.burn(from, id, burnAmount);
 
-        assertEq(token.totalSupply(id), mintAmount - burnAmount);
         assertEq(token.balanceOf(from, id), mintAmount - burnAmount);
     }
 
@@ -203,7 +216,6 @@ contract ERC6909Test is SoladyTest {
         vm.expectEmit(true, true, true, true);
         emit Transfer(address(this), address(this), to, id, amount);
         assertTrue(token.transfer(to, id, amount));
-        assertEq(token.totalSupply(id), amount);
 
         if (address(this) == to) {
             assertEq(token.balanceOf(address(this), id), amount);
@@ -232,7 +244,6 @@ contract ERC6909Test is SoladyTest {
         emit Transfer(spender, from, to, id, amount);
         vm.prank(spender);
         assertTrue(token.transferFrom(from, to, id, amount));
-        assertEq(token.totalSupply(id), amount);
 
         if (approval == type(uint256).max) {
             assertEq(token.allowance(from, spender, id), approval);
@@ -252,19 +263,15 @@ contract ERC6909Test is SoladyTest {
         _setOperator(owner, spender, approved);
     }
 
-    function testMintTotalSupplyOverFlowReverts(
-        address to,
-        uint256 id,
-        uint256 amount0,
-        uint256 amount1
-    ) public {
+    function testMintOverMaxUintReverts(address to, uint256 id, uint256 amount0, uint256 amount1)
+        public
+    {
+        amount0 = _bound(amount0, 1, type(uint256).max);
+        amount1 = _bound(amount1, type(uint256).max - amount0 + 1, type(uint256).max);
         token.mint(to, id, amount0);
-        assertEq(token.totalSupply(id), amount0);
 
-        if (type(uint256).max - amount0 < amount1) {
-            vm.expectRevert(ERC6909.TotalSupplyOverflow.selector);
-            token.mint(to, id, amount1);
-        }
+        vm.expectRevert(ERC6909.BalanceOverflow.selector);
+        token.mint(to, id, amount1);
     }
 
     function testBurnInsufficientBalanceReverts(
@@ -282,6 +289,23 @@ contract ERC6909Test is SoladyTest {
         token.burn(to, id, burnAmount);
     }
 
+    function testTransferOverMaxUintReverts(
+        address to,
+        uint256 id,
+        uint256 amount0,
+        uint256 amount1
+    ) public {
+        amount0 = _bound(amount0, 1, type(uint256).max);
+        amount1 = _bound(amount1, type(uint256).max - amount0 + 1, type(uint256).max);
+
+        token.mint(address(this), id, amount0);
+        token.transfer(to, id, amount0);
+        token.mint(address(this), id, amount1);
+
+        vm.expectRevert(ERC6909.BalanceOverflow.selector);
+        token.transfer(to, id, amount1);
+    }
+
     function testTransferInsufficientBalanceReverts(
         address to,
         uint256 id,
@@ -295,6 +319,29 @@ contract ERC6909Test is SoladyTest {
 
         _expectInsufficientBalanceRevert();
         token.transfer(to, id, sendAmount);
+    }
+
+    function testTransferFromOverMaxUintReverts(
+        address to,
+        uint256 id,
+        uint256 amount0,
+        uint256 amount1
+    ) public {
+        amount0 = _bound(amount0, 1, type(uint256).max);
+        amount1 = _bound(amount1, type(uint256).max - amount0 + 1, type(uint256).max);
+
+        address from = address(0xABCD);
+
+        token.mint(from, id, amount0);
+        _approve(from, address(this), id, amount0);
+
+        token.transferFrom(from, to, id, amount0);
+
+        token.mint(from, id, amount1);
+        _approve(from, address(this), id, amount1);
+
+        vm.expectRevert(ERC6909.BalanceOverflow.selector);
+        token.transferFrom(from, to, id, amount1);
     }
 
     function testTransferFromInsufficientAllowanceReverts(
@@ -388,7 +435,6 @@ contract ERC6909Test is SoladyTest {
             t.isOperator = _random() % 4 == 0;
             t.id ^= 1;
 
-            assertEq(token.totalSupply(t.id), 0);
             token.mint(t.from, t.id, t.balance);
             if (_random() % 2 == 0) {
                 _directSetOperator(t.from, t.by, t.isOperator);
@@ -446,7 +492,6 @@ contract ERC6909Test is SoladyTest {
                     assertEq(token.balanceOf(t.to, t.id), t.amount);
                 }
             }
-            assertEq(token.totalSupply(t.id), t.balance);
         }
     }
 
