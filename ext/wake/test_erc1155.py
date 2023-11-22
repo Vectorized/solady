@@ -1,4 +1,4 @@
-from woke.testing import *
+from wake.testing import *
 from pytypes.tests.ERC1155Mock import ERC1155Mock, ERC1155ReceiverMock
 
 

@@ -3,8 +3,8 @@ from collections import defaultdict
 import random
 from typing import DefaultDict, Set
 
-from woke.testing import *
-from woke.testing.fuzzing import *
+from wake.testing import *
+from wake.testing.fuzzing import *
 from pytypes.tests.ERC1155Mock import ERC1155Mock
 
 
@@ -533,5 +533,4 @@ class ERC1155FuzzTest(FuzzTest):
 
 @default_chain.connect(accounts=20)
 def test_erc1155_fuzz():
-    default_chain.set_default_accounts(default_chain.accounts[0])
     ERC1155FuzzTest().run(1, 100)

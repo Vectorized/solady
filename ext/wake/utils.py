@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from woke.testing import keccak256
+from wake.testing import keccak256
 
 
 class MerkleTree:

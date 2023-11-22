@@ -1,8 +1,7 @@
 [compiler.solc]
-ignore_paths = ["node_modules", ".woke-build", "venv", "lib", "test"]
+exclude_paths = ["node_modules", "venv", ".venv", "lib", "script", "test"]
 include_paths = ["node_modules"]
 remappings = [
-    "ds-test/=lib/ds-test/src/",
     "forge-std/=test/utils/forge-std/",
 ]
 
@@ -11,8 +10,9 @@ enabled = true
 runs = 1000
 
 [detectors]
-exclude = ["unused-contract"]
-ignore_paths = ["node_modules", ".woke-build", "venv", "lib"]
+exclude = ["unused-contract", "unused-import"]
+ignore_paths = ["venv", ".venv", "test"]
+exclude_paths = ["node_modules", "lib", "script"]
 
 [testing]
 cmd = "anvil"

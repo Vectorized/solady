@@ -1,5 +1,5 @@
-from woke.testing import *
-from woke.testing.fuzzing import *
+from wake.testing import *
+from wake.testing.fuzzing import *
 from pytypes.tests.SignatureCheckerMock import SignatureCheckerMock, ERC1217SignatureChecker
 
 class SignatureCheckerFuzzTest(FuzzTest):
@@ -174,5 +174,4 @@ class SignatureCheckerFuzzTest(FuzzTest):
 
 @default_chain.connect()
 def test_signature_checker():
-    default_chain.set_default_accounts(default_chain.accounts[0])
     SignatureCheckerFuzzTest().run(10, 20)
