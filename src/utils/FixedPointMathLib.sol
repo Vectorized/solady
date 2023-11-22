@@ -214,23 +214,23 @@ library FixedPointMathLib {
             // `p` is made monic, we will multiply by a scale factor later.
             // forgefmt: disable-next-item
             let p := sub( // This heavily nested expression is to avoid stack-too-deep for via-ir.
-                shr(96, mul(add(43456485725739037958740375743393,
-                shr(96, mul(add(24828157081833163892658089445524,
-                shr(96, mul(add(3273285459638523848632254066296,
+                sar(96, mul(add(43456485725739037958740375743393,
+                sar(96, mul(add(24828157081833163892658089445524,
+                sar(96, mul(add(3273285459638523848632254066296,
                     x), x))), x))), x)), 11111509109440967052023855526967)
-            p := sub(shr(96, mul(p, x)), 45023709667254063763336534515857)
-            p := sub(shr(96, mul(p, x)), 14706773417378608786704636184526)
+            p := sub(sar(96, mul(p, x)), 45023709667254063763336534515857)
+            p := sub(sar(96, mul(p, x)), 14706773417378608786704636184526)
             p := sub(mul(p, x), shl(96, 795164235651350426258249787498))
 
             // We leave `p` in `2**192` basis so we don't need to scale it back up for the division.
             // `q` is monic by convention.
             let q := add(5573035233440673466300451813936, x)
-            q := add(71694874799317883764090561454958, shr(96, mul(x, q)))
-            q := add(283447036172924575727196451306956, shr(96, mul(x, q)))
-            q := add(401686690394027663651624208769553, shr(96, mul(x, q)))
-            q := add(204048457590392012362485061816622, shr(96, mul(x, q)))
-            q := add(31853899698501571402653359427138, shr(96, mul(x, q)))
-            q := add(909429971244387300277376558375, shr(96, mul(x, q)))
+            q := add(71694874799317883764090561454958, sar(96, mul(x, q)))
+            q := add(283447036172924575727196451306956, sar(96, mul(x, q)))
+            q := add(401686690394027663651624208769553, sar(96, mul(x, q)))
+            q := add(204048457590392012362485061816622, sar(96, mul(x, q)))
+            q := add(31853899698501571402653359427138, sar(96, mul(x, q)))
+            q := add(909429971244387300277376558375, sar(96, mul(x, q)))
 
             // `r` is in the range `(0, 0.125) * 2**96`.
 
@@ -258,59 +258,91 @@ library FixedPointMathLib {
     /// @dev Returns `W_0(x)`, denominated in `WAD`.
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
-    /// Most efficient for small positive inputs in the range `[0, 3367879441171442322]`.
-    ///
-    /// Note: This is an approximation that uses Halley's method with `expWad`.
-    /// While the ground truth is monotonically increasing, this implementation sometimes
-    /// returns a `W_0(x)` that is 1 less than `W_0(x-1)` due to convergence quirks.
-    function lambertW0Wad(int256 x) internal pure returns (int256 r) {
-        unchecked {
-            r = x;
-            if (r <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-            uint256 iters = 10;
-            if (r <= 0x1ffffffffffff) {
-                if (-0x4000000000000 <= r) {
-                    iters = 1; // Inputs near zero only take one step to converge.
-                } else if (r <= -0x4ffffffffffffff) {
-                    iters = 32; // Inputs near `-1/e` take very long to converge.
-                }
-            } else if (r >> 64 == 0) {
-                /// @solidity memory-safe-assembly
-                assembly {
-                    // Inline log2 for more performance, since the range is small.
-                    let v := shr(49, r)
-                    let l := shl(3, lt(0xff, v))
-                    // forgefmt: disable-next-item
-                    l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
-                        0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                    iters := add(3, gt(l, 53))
-                }
-            } else {
-                // Approximate with `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
-                // Where `b` is chosen for a good starting point.
-                r = lnWad(r); // `lnWad` consumes around 585 gas.
-                if (x >> 100 != 0) {
-                    int256 ll = lnWad(r);
-                    r = r - ll + rawSDiv(ll * 1023715086476318099, r);
-                }
+    function lambertW0Wad(int256 x) internal pure returns (int256 w) {
+        if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
+        uint256 c; // Whether we need to avoid catastrophic cancellation.
+        uint256 i = 4; // Number of iterations.
+        if (w <= 0x1ffffffffffff) {
+            if (-0x4000000000000 <= w) {
+                i = 1; // Inputs near zero only take one step to converge.
+            } else if (w <= -0x3ffffffffffffff) {
+                i = 32; // Inputs near `-1/e` take very long to converge.
             }
-            int256 prev = type(int256).max;
-            int256 wad = int256(WAD);
-            int256 negXMulWad = -x * wad;
-            // For small values, we will only need 1 to 5 Halley's iterations.
-            // `expWad` consumes around 411 gas, so it's still quite efficient overall.
-            do {
-                int256 e = expWad(r);
-                int256 t = r + wad;
-                int256 s = r * e + negXMulWad;
-                r -= rawSDiv(s * wad, e * t - rawSDiv((t + wad) * s, t + t));
-                if (r >= prev) break;
-                prev = r;
-            } while (--iters != 0);
+        } else if (w >> 63 == 0) {
             /// @solidity memory-safe-assembly
             assembly {
-                r := sub(r, sgt(r, 2))
+                // Inline log2 for more performance, since the range is small.
+                let v := shr(49, w)
+                let l := shl(3, lt(0xff, v))
+                // forgefmt: disable-next-item
+                l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
+                    0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
+                w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
+                c := gt(l, 60)
+                i := add(2, add(gt(l, 53), c))
+            }
+        } else {
+            // `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+            int256 ll = lnWad(w = lnWad(w));
+            /// @solidity memory-safe-assembly
+            assembly {
+                w := add(sdiv(mul(ll, 1023715080943847266), w), sub(w, ll))
+                i := add(3, iszero(shr(68, x)))
+                c := iszero(shr(143, x))
+            }
+            if (c == 0) {
+                int256 wad = int256(WAD);
+                int256 p = x;
+                // If `x` is big, use Newton's so that intermediate values won't overflow.
+                do {
+                    int256 e = expWad(w);
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        let t := mul(w, div(e, wad))
+                        w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
+                        i := sub(i, 1)
+                    }
+                    if (p <= w) break;
+                    p = w;
+                } while (i != 0);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    w := sub(w, sgt(w, 2))
+                }
+                return w;
+            }
+        }
+        // forgefmt: disable-next-item
+        unchecked {
+            int256 wad = int256(WAD);
+            int256 p = x;
+            do { // Otherwise, use Halley's for faster convergence.
+                int256 e = expWad(w);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let t := add(w, wad)
+                    let s := sub(mul(w, e), mul(x, wad))
+                    w := sub(w, sdiv(mul(s, wad), sub(mul(e, t), sdiv(mul(add(t, wad), s), add(t, t)))))
+                }
+                if (p <= w) break;
+                p = w;
+            } while (--i != c);
+            /// @solidity memory-safe-assembly
+            assembly {
+                w := sub(w, sgt(w, 2))
+            }
+            // For certain ranges of `x`, we'll use the quadratic-rate recursive formula of
+            // R. Iacono and J.P. Boyd for the last iteration, to avoid catastrophic cancellation.
+            if (c != 0) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    x := sdiv(mul(x, wad), w)
+                }
+                x = (w * (wad + lnWad(x)));
+                /// @solidity memory-safe-assembly
+                assembly {
+                    w := sdiv(x, add(wad, w))
+                }
             }
         }
     }

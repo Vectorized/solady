@@ -73,8 +73,13 @@ abstract contract UUPSUpgradeable {
     /// @dev Upgrades the proxy's implementation to `newImplementation`.
     /// Emits a {Upgraded} event.
     ///
-    /// Note: The `onlyProxy` modifier prevents accidental calling on the implementation.
-    function upgradeTo(address newImplementation) public payable virtual onlyProxy {
+    /// Note: Passing in empty `data` skips the delegatecall to `newImplementation`.
+    function upgradeToAndCall(address newImplementation, bytes calldata data)
+        public
+        payable
+        virtual
+        onlyProxy
+    {
         _authorizeUpgrade(newImplementation);
         /// @solidity memory-safe-assembly
         assembly {
@@ -89,29 +94,18 @@ abstract contract UUPSUpgradeable {
             // Emit the {Upgraded} event.
             log2(codesize(), 0x00, _UPGRADED_EVENT_SIGNATURE, newImplementation)
             sstore(s, newImplementation) // Updates the implementation.
-        }
-    }
 
-    /// @dev Upgrades the proxy's implementation to `newImplementation`.
-    /// Emits a {Upgraded} event.
-    ///
-    /// Note: This function calls `upgradeTo` internally,
-    /// followed by a delegatecall to `newImplementation`.
-    function upgradeToAndCall(address newImplementation, bytes calldata data)
-        public
-        payable
-        virtual
-    {
-        upgradeTo(newImplementation);
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Forwards the `data` to `newImplementation` via delegatecall.
-            let m := mload(0x40)
-            calldatacopy(m, data.offset, data.length)
-            if iszero(delegatecall(gas(), newImplementation, m, data.length, codesize(), 0x00)) {
-                // Bubble up the revert if the call reverts.
-                returndatacopy(m, 0x00, returndatasize())
-                revert(m, returndatasize())
+            // Perform a delegatecall to `newImplementation` if `data` is non-empty.
+            if data.length {
+                // Forwards the `data` to `newImplementation` via delegatecall.
+                let m := mload(0x40)
+                calldatacopy(m, data.offset, data.length)
+                if iszero(delegatecall(gas(), newImplementation, m, data.length, codesize(), 0x00))
+                {
+                    // Bubble up the revert if the call reverts.
+                    returndatacopy(m, 0x00, returndatasize())
+                    revert(m, returndatasize())
+                }
             }
         }
     }

@@ -55,7 +55,19 @@ contract FixedPointMathLibTest is SoladyTest {
     // I somehow can't get it to reproduce the approximation constants for `lnWad`.
     // Let me know if you can get the code to reproduce the approximation constants for `lnWad`.
 
-    function testLambertW0Wad() public {
+    event TestingLambertW0WadMonotonicallyIncreasing(
+        int256 a, int256 b, int256 w0a, int256 w0b, bool success, uint256 gasUsed
+    );
+
+    event LogUint(string name, uint256 value);
+    event LogInt(string name, int256 value);
+
+    int256 internal constant _ONE_DIV_EXP = 367879441171442321;
+    int256 internal constant _LAMBERT_W0_MIN = -367879441171442321;
+    int256 internal constant _EXP = 2718281828459045235;
+    int256 internal constant _WAD = 10 ** 18;
+
+    function testLambertW0WadKnownValues() public {
         _checkLambertW0Wad(0, 0);
         _checkLambertW0Wad(1, 1);
         _checkLambertW0Wad(2, 2);
@@ -64,45 +76,336 @@ contract FixedPointMathLibTest is SoladyTest {
         _checkLambertW0Wad(17179869183, 17179868887);
         _checkLambertW0Wad(1000000000000000000, 567143290409783872);
         _checkLambertW0Wad(-3678794411715, -3678807945318);
-        _checkLambertW0Wad(-367879441171442321, -999999999741585709);
+        _checkLambertW0Wad(_LAMBERT_W0_MIN, -999999999741585709);
         // These are exact values.
-        _checkLambertW0Wad(0x7fffffffffffffffffffffffffffffffffff, 53690283108733387465);
-        _checkLambertW0Wad(0xfffffffffffffffffffffffffffffffffff, 51649591321425477661);
-        _checkLambertW0Wad(0xffffffffffffffffffffffffffffffff, 43503466806167642613);
-        _checkLambertW0Wad(0xffffffffffffffffffffffffff, 27332691623220201135);
-        _checkLambertW0Wad(0xfffffffffffffffffffffffff, 24662886826087826761);
+        _checkLambertW0Wad(2 ** 255 - 1, 130435123404408416612);
+        _checkLambertW0Wad(2 ** 254 - 1, 129747263755102316133);
+        _checkLambertW0Wad(2 ** 253 - 1, 129059431996357330139);
+        _checkLambertW0Wad(2 ** 252 - 1, 128371628422812486425);
+        _checkLambertW0Wad(2 ** 251 - 1, 127683853333788079721);
+        _checkLambertW0Wad(2 ** 250 - 1, 126996107033385166927);
+        _checkLambertW0Wad(2 ** 249 - 1, 126308389830587715420);
+        _checkLambertW0Wad(2 ** 248 - 1, 125620702039367489656);
+        _checkLambertW0Wad(2 ** 247 - 1, 124933043978791764502);
+        _checkLambertW0Wad(2 ** 246 - 1, 124245415973133957088);
+        _checkLambertW0Wad(2 ** 245 - 1, 123557818351987272451);
+        _checkLambertW0Wad(2 ** 244 - 1, 122870251450381461880);
+        _checkLambertW0Wad(2 ** 243 - 1, 122182715608902796703);
+        _checkLambertW0Wad(2 ** 242 - 1, 121495211173817364188);
+        _checkLambertW0Wad(2 ** 241 - 1, 120807738497197796422);
+        _checkLambertW0Wad(2 ** 240 - 1, 120120297937053547320);
+        _checkLambertW0Wad(2 ** 239 - 1, 119432889857464837488);
+        _checkLambertW0Wad(2 ** 238 - 1, 118745514628720391363);
+        _checkLambertW0Wad(2 ** 237 - 1, 118058172627459096009);
+        _checkLambertW0Wad(2 ** 236 - 1, 117370864236815716134);
+        _checkLambertW0Wad(2 ** 235 - 1, 116683589846570805279);
+        _checkLambertW0Wad(2 ** 234 - 1, 115996349853304958814);
+        _checkLambertW0Wad(2 ** 233 - 1, 115309144660557560280);
+        _checkLambertW0Wad(2 ** 232 - 1, 114621974678990178815);
+        _checkLambertW0Wad(2 ** 231 - 1, 113934840326554781918);
+        _checkLambertW0Wad(2 ** 230 - 1, 113247742028666934564);
+        _checkLambertW0Wad(2 ** 229 - 1, 112560680218384162820);
+        _checkLambertW0Wad(2 ** 228 - 1, 111873655336589667598);
+        _checkLambertW0Wad(2 ** 227 - 1, 111186667832181581935);
+        _checkLambertW0Wad(2 ** 226 - 1, 110499718162267973459);
+        _checkLambertW0Wad(2 ** 225 - 1, 109812806792367802251);
+        _checkLambertW0Wad(2 ** 224 - 1, 109125934196618053331);
+        _checkLambertW0Wad(2 ** 223 - 1, 108439100857987272488);
+        _checkLambertW0Wad(2 ** 222 - 1, 107752307268495744067);
+        _checkLambertW0Wad(2 ** 221 - 1, 107065553929442559763);
+        _checkLambertW0Wad(2 ** 220 - 1, 106378841351639838444);
+        _checkLambertW0Wad(2 ** 219 - 1, 105692170055654368478);
+        _checkLambertW0Wad(2 ** 218 - 1, 105005540572056956171);
+        _checkLambertW0Wad(2 ** 217 - 1, 104318953441679776592);
+        _checkLambertW0Wad(2 ** 216 - 1, 103632409215882036434);
+        _checkLambertW0Wad(2 ** 215 - 1, 102945908456824272609);
+        _checkLambertW0Wad(2 ** 214 - 1, 102259451737751625038);
+        _checkLambertW0Wad(2 ** 213 - 1, 101573039643286437675);
+        _checkLambertW0Wad(2 ** 212 - 1, 100886672769730558166);
+        _checkLambertW0Wad(2 ** 211 - 1, 100200351725377723788);
+        _checkLambertW0Wad(2 ** 210 - 1, 99514077130836439501);
+        _checkLambertW0Wad(2 ** 209 - 1, 98827849619363773067);
+        _checkLambertW0Wad(2 ** 208 - 1, 98141669837210512407);
+        _checkLambertW0Wad(2 ** 207 - 1, 97455538443978151616);
+        _checkLambertW0Wad(2 ** 206 - 1, 96769456112988194563);
+        _checkLambertW0Wad(2 ** 205 - 1, 96083423531664288650);
+        _checkLambertW0Wad(2 ** 204 - 1, 95397441401927726359);
+        _checkLambertW0Wad(2 ** 203 - 1, 94711510440606878644);
+        _checkLambertW0Wad(2 ** 202 - 1, 94025631379861152095);
+        _checkLambertW0Wad(2 ** 201 - 1, 93339804967620091367);
+        _checkLambertW0Wad(2 ** 200 - 1, 92654031968038279517);
+        _checkLambertW0Wad(2 ** 199 - 1, 91968313161966721893);
+        _checkLambertW0Wad(2 ** 198 - 1, 91282649347441434152);
+        _checkLambertW0Wad(2 ** 197 - 1, 90597041340189991908);
+        _checkLambertW0Wad(2 ** 196 - 1, 89911489974156838659);
+        _checkLambertW0Wad(2 ** 195 - 1, 89225996102048190100);
+        _checkLambertW0Wad(2 ** 194 - 1, 88540560595897416858);
+        _checkLambertW0Wad(2 ** 193 - 1, 87855184347651834275);
+        _checkLambertW0Wad(2 ** 192 - 1, 87169868269781877263);
+        _checkLambertW0Wad(2 ** 191 - 1, 86484613295913690725);
+        _checkLambertW0Wad(2 ** 190 - 1, 85799420381486221653);
+        _checkLambertW0Wad(2 ** 189 - 1, 85114290504433958190);
+        _checkLambertW0Wad(2 ** 188 - 1, 84429224665896523735);
+        _checkLambertW0Wad(2 ** 187 - 1, 83744223890956400983);
+        _checkLambertW0Wad(2 ** 186 - 1, 83059289229406131801);
+        _checkLambertW0Wad(2 ** 185 - 1, 82374421756546414467);
+        _checkLambertW0Wad(2 ** 184 - 1, 81689622574016600237);
+        _checkLambertW0Wad(2 ** 183 - 1, 81004892810659176931);
+        _checkLambertW0Wad(2 ** 182 - 1, 80320233623419918558);
+        _checkLambertW0Wad(2 ** 181 - 1, 79635646198285477393);
+        _checkLambertW0Wad(2 ** 180 - 1, 78951131751260298782);
+        _checkLambertW0Wad(2 ** 179 - 1, 78266691529384849812);
+        _checkLambertW0Wad(2 ** 178 - 1, 77582326811797271395);
+        _checkLambertW0Wad(2 ** 177 - 1, 76898038910840689756);
+        _checkLambertW0Wad(2 ** 176 - 1, 76213829173218558571);
+        _checkLambertW0Wad(2 ** 175 - 1, 75529698981200547567);
+        _checkLambertW0Wad(2 ** 174 - 1, 74845649753881648207);
+        _checkLambertW0Wad(2 ** 173 - 1, 74161682948497332759);
+        _checkLambertW0Wad(2 ** 172 - 1, 73477800061797780656);
+        _checkLambertW0Wad(2 ** 171 - 1, 72794002631484376331);
+        _checkLambertW0Wad(2 ** 170 - 1, 72110292237711886966);
+        _checkLambertW0Wad(2 ** 169 - 1, 71426670504659947705);
+        _checkLambertW0Wad(2 ** 168 - 1, 70743139102177717275);
+        _checkLambertW0Wad(2 ** 167 - 1, 70059699747505819935);
+        _checkLambertW0Wad(2 ** 166 - 1, 69376354207079961679);
+        _checkLambertW0Wad(2 ** 165 - 1, 68693104298420901379);
+        _checkLambertW0Wad(2 ** 164 - 1, 68009951892115772747);
+        _checkLambertW0Wad(2 ** 163 - 1, 67326898913896092682);
+        _checkLambertW0Wad(2 ** 162 - 1, 66643947346818157796);
+        _checkLambertW0Wad(2 ** 161 - 1, 65961099233551926143);
+        _checkLambertW0Wad(2 ** 160 - 1, 65278356678784907905);
+        _checkLambertW0Wad(2 ** 159 - 1, 64595721851748049983);
+        _checkLambertW0Wad(2 ** 158 - 1, 63913196988871098107);
+        _checkLambertW0Wad(2 ** 157 - 1, 63230784396575459844);
+        _checkLambertW0Wad(2 ** 156 - 1, 62548486454213176429);
+        _checkLambertW0Wad(2 ** 155 - 1, 61866305617161244980);
+        _checkLambertW0Wad(2 ** 154 - 1, 61184244420081220067);
+        _checkLambertW0Wad(2 ** 153 - 1, 60502305480354769865);
+        _checkLambertW0Wad(2 ** 152 - 1, 59820491501706673077);
+        _checkLambertW0Wad(2 ** 151 - 1, 59138805278027624755);
+        _checkLambertW0Wad(2 ** 150 - 1, 58457249697410179101);
+        _checkLambertW0Wad(2 ** 149 - 1, 57775827746412203235);
+        _checkLambertW0Wad(2 ** 148 - 1, 57094542514563356374);
+        _checkLambertW0Wad(2 ** 147 - 1, 56413397199131353678);
+        _checkLambertW0Wad(2 ** 146 - 1, 55732395110166133991);
+        _checkLambertW0Wad(2 ** 145 - 1, 55051539675841537897);
+        _checkLambertW0Wad(2 ** 144 - 1, 54370834448115730535);
+        _checkLambertW0Wad(2 ** 143 - 1, 53690283108733387465);
+        _checkLambertW0Wad(2 ** 142 - 1, 53009889475594618649);
+        _checkLambertW0Wad(2 ** 141 - 1, 52329657509517754228);
+        _checkLambertW0Wad(2 ** 140 - 1, 51649591321425477661);
+        _checkLambertW0Wad(2 ** 139 - 1, 50969695179986390948);
+        _checkLambertW0Wad(2 ** 138 - 1, 50289973519746960243);
+        _checkLambertW0Wad(2 ** 137 - 1, 49610430949791948630);
+        _checkLambertW0Wad(2 ** 136 - 1, 48931072262974930811);
+        _checkLambertW0Wad(2 ** 135 - 1, 48251902445764340905);
+        _checkLambertW0Wad(2 ** 134 - 1, 47572926688754773801);
+        _checkLambertW0Wad(2 ** 133 - 1, 46894150397897992742);
+        _checkLambertW0Wad(2 ** 132 - 1, 46215579206513348095);
+        _checkLambertW0Wad(2 ** 131 - 1, 45537218988143149666);
+        _checkLambertW0Wad(2 ** 130 - 1, 44859075870325031417);
+        _checkLambertW0Wad(2 ** 129 - 1, 44181156249360587882);
+        _checkLambertW0Wad(2 ** 128 - 1, 43503466806167642613);
+        _checkLambertW0Wad(2 ** 127 - 1, 42826014523312541917);
+        _checkLambertW0Wad(2 ** 126 - 1, 42148806703328979292);
+        _checkLambertW0Wad(2 ** 125 - 1, 41471850988441194251);
+        _checkLambertW0Wad(2 ** 124 - 1, 40795155381822122767);
+        _checkLambertW0Wad(2 ** 123 - 1, 40118728270531400808);
+        _checkLambertW0Wad(2 ** 122 - 1, 39442578450294263667);
+        _checkLambertW0Wad(2 ** 121 - 1, 38766715152300604375);
+        _checkLambertW0Wad(2 ** 120 - 1, 38091148072224059569);
+        _checkLambertW0Wad(2 ** 119 - 1, 37415887401684336100);
+        _checkLambertW0Wad(2 ** 118 - 1, 36740943862402491609);
+        _checkLambertW0Wad(2 ** 117 - 1, 36066328743329022902);
+        _checkLambertW0Wad(2 ** 116 - 1, 35392053941058967434);
+        _checkLambertW0Wad(2 ** 115 - 1, 34718132003887455986);
+        _checkLambertW0Wad(2 ** 114 - 1, 34044576179904059477);
+        _checkLambertW0Wad(2 ** 113 - 1, 33371400469575784902);
+        _checkLambertW0Wad(2 ** 112 - 1, 32698619683327803297);
+        _checkLambertW0Wad(2 ** 111 - 1, 32026249504699254799);
+        _checkLambertW0Wad(2 ** 110 - 1, 31354306559730344521);
+        _checkLambertW0Wad(2 ** 109 - 1, 30682808493328298780);
+        _checkLambertW0Wad(2 ** 108 - 1, 30011774053465850808);
+        _checkLambertW0Wad(2 ** 107 - 1, 29341223184189485097);
+        _checkLambertW0Wad(2 ** 106 - 1, 28671177128558970924);
+        _checkLambertW0Wad(2 ** 105 - 1, 28001658542808735364);
+        _checkLambertW0Wad(2 ** 104 - 1, 27332691623220201135);
+        _checkLambertW0Wad(2 ** 103 - 1, 26664302247428250682);
+        _checkLambertW0Wad(2 ** 102 - 1, 25996518132161712657);
+        _checkLambertW0Wad(2 ** 101 - 1, 25329369009746106264);
+        _checkLambertW0Wad(2 ** 100 - 1, 24662886826087826761);
+        _checkLambertW0Wad(2 ** 99 - 1, 23997105963326166352);
+        _checkLambertW0Wad(2 ** 98 - 1, 23332063490900058530);
+        _checkLambertW0Wad(2 ** 97 - 1, 22667799449451523321);
+        _checkLambertW0Wad(2 ** 96 - 1, 22004357172804292983);
+        _checkLambertW0Wad(2 ** 95 - 1, 21341783654247925671);
+        _checkLambertW0Wad(2 ** 94 - 1, 20680129964567978803);
+        _checkLambertW0Wad(2 ** 93 - 1, 20019451730746615034);
+        _checkLambertW0Wad(2 ** 92 - 1, 19359809686086176343);
+        _checkLambertW0Wad(2 ** 91 - 1, 18701270304772358157);
+        _checkLambertW0Wad(2 ** 90 - 1, 18043906536712772323);
+        _checkLambertW0Wad(2 ** 89 - 1, 17387798662016868795);
+        _checkLambertW0Wad(2 ** 88 - 1, 16733035288929945451);
+        _checkLambertW0Wad(2 ** 87 - 1, 16079714524670107222);
+        _checkLambertW0Wad(2 ** 86 - 1, 15427945355807184379);
+        _checkLambertW0Wad(2 ** 85 - 1, 14777849284057868231);
+        _checkLambertW0Wad(2 ** 84 - 1, 14129562275318189632);
+        _checkLambertW0Wad(2 ** 83 - 1, 13483237095324880705);
+        _checkLambertW0Wad(2 ** 82 - 1, 12839046125789215063);
+        _checkLambertW0Wad(2 ** 81 - 1, 12197184781931118579);
+        _checkLambertW0Wad(2 ** 80 - 1, 11557875688514566228 - 1);
+        _checkLambertW0Wad(2 ** 79 - 1, 10921373820226202580);
+        _checkLambertW0Wad(2 ** 78 - 1, 10287972878516218499);
+        _checkLambertW0Wad(2 ** 77 - 1, 9658013267990184319);
+        _checkLambertW0Wad(2 ** 76 - 1, 9031892161491509531);
+        _checkLambertW0Wad(2 ** 75 - 1, 8410076319328428686);
+        _checkLambertW0Wad(2 ** 74 - 1, 7793118576966979948);
+        _checkLambertW0Wad(2 ** 73 - 1, 7181679269695846234);
+        _checkLambertW0Wad(2 ** 72 - 1, 6576554370186862926);
+        _checkLambertW0Wad(2 ** 71 - 1, 5978712844468804878);
+        _checkLambertW0Wad(2 ** 70 - 1, 5389346779005776683);
+        _checkLambertW0Wad(2 ** 69 - 1, 4809939316762921936);
+        _checkLambertW0Wad(2 ** 68 - 1, 4242357480017482271);
+        _checkLambertW0Wad(2 ** 67 - 1, 3688979548845126287);
+        _checkLambertW0Wad(2 ** 66 - 1, 3152869312105232629);
+        _checkLambertW0Wad(2 ** 65 - 1, 2638010157689274059);
+        _checkLambertW0Wad(2 ** 64 - 1, 2149604165721149566);
+        _checkLambertW0Wad(2 ** 63 - 1, 1694407549795038335);
+        _checkLambertW0Wad(2 ** 62 - 1, 1280973323147500590);
+        _checkLambertW0Wad(2 ** 61 - 1, 919438481612859603);
+        _checkLambertW0Wad(2 ** 60 - 1, 620128202996354327);
+        _checkLambertW0Wad(2 ** 59 - 1, 390213425026895126);
+        _checkLambertW0Wad(2 ** 58 - 1, 229193491169149614);
+        _checkLambertW0Wad(2 ** 57 - 1, 126935310044982397);
+        _checkLambertW0Wad(2 ** 56 - 1, 67363429834711483);
+        _checkLambertW0Wad(2 ** 55 - 1, 34796675828817814);
+        _checkLambertW0Wad(2 ** 54 - 1, 17698377658513340);
+        _checkLambertW0Wad(2 ** 53 - 1, 8927148493627578);
+        _checkLambertW0Wad(2 ** 52 - 1, 4483453146102402);
+        _checkLambertW0Wad(2 ** 51 - 1, 2246746269994097);
+        _checkLambertW0Wad(2 ** 50 - 1, 1124634392838166);
+        _checkLambertW0Wad(2 ** 49 - 1, 562633308112667);
+        _checkLambertW0Wad(2 ** 48 - 1, 281395781982528);
+        _checkLambertW0Wad(2 ** 47 - 1, 140717685495042);
+        _checkLambertW0Wad(2 ** 46 - 1, 70363792940114);
+        _checkLambertW0Wad(2 ** 45 - 1, 35183134214121);
+        _checkLambertW0Wad(2 ** 44 - 1, 17591876567571);
+        _checkLambertW0Wad(2 ** 43 - 1, 8796015651975);
+        _checkLambertW0Wad(2 ** 42 - 1, 4398027168417);
+        _checkLambertW0Wad(2 ** 41 - 1, 2199018419863);
+        _checkLambertW0Wad(2 ** 40 - 1, 1099510418851);
+        _checkLambertW0Wad(2 ** 39 - 1, 549755511655);
+        _checkLambertW0Wad(2 ** 38 - 1, 274877831385);
+        _checkLambertW0Wad(2 ** 37 - 1, 137438934581);
+        _checkLambertW0Wad(2 ** 36 - 1, 68719472012);
+        _checkLambertW0Wad(2 ** 35 - 1, 34359737186);
+        _checkLambertW0Wad(2 ** 34 - 1, 17179868887);
+        _checkLambertW0Wad(2 ** 33 - 1, 8589934517);
+        _checkLambertW0Wad(2 ** 32 - 1, 4294967276);
+        _checkLambertW0Wad(2 ** 31 - 1, 2147483642);
+        _checkLambertW0Wad(2 ** 30 - 1, 1073741821);
+        _checkLambertW0Wad(2 ** 29 - 1, 536870910);
+        _checkLambertW0Wad(2 ** 28 - 1, 268435454);
+        _checkLambertW0Wad(2 ** 27 - 1, 134217726);
+        _checkLambertW0Wad(2 ** 26 - 1, 67108862);
+        _checkLambertW0Wad(2 ** 25 - 1, 33554430);
+        _checkLambertW0Wad(2 ** 24 - 1, 16777214);
+        _checkLambertW0Wad(2 ** 23 - 1, 8388606);
+        _checkLambertW0Wad(2 ** 22 - 1, 4194302);
+        _checkLambertW0Wad(2 ** 21 - 1, 2097150);
+        _checkLambertW0Wad(2 ** 20 - 1, 1048574);
+        _checkLambertW0Wad(2 ** 19 - 1, 524286);
+        _checkLambertW0Wad(2 ** 18 - 1, 262142);
+        _checkLambertW0Wad(2 ** 17 - 1, 131070);
+        _checkLambertW0Wad(2 ** 16 - 1, 65534);
+        _checkLambertW0Wad(2 ** 15 - 1, 32766);
+        _checkLambertW0Wad(2 ** 14 - 1, 16382);
+        _checkLambertW0Wad(2 ** 13 - 1, 8190);
+        _checkLambertW0Wad(2 ** 12 - 1, 4094);
+        _checkLambertW0Wad(2 ** 11 - 1, 2046);
+        _checkLambertW0Wad(2 ** 10 - 1, 1022);
+        _checkLambertW0Wad(2 ** 9 - 1, 510);
+        _checkLambertW0Wad(2 ** 8 - 1, 254);
     }
 
-    function testLambertW0WadReversForOutOfDomain() public {
-        FixedPointMathLib.lambertW0Wad(-367879441171442322 + 1);
+    function testLambertW0WadRevertsForOutOfDomain() public {
+        FixedPointMathLib.lambertW0Wad(_LAMBERT_W0_MIN);
         for (int256 i = 0; i <= 10; ++i) {
             vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
-            FixedPointMathLib.lambertW0Wad(-367879441171442322 - i);
+            FixedPointMathLib.lambertW0Wad(_LAMBERT_W0_MIN - 1 - i);
         }
         vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
         FixedPointMathLib.lambertW0Wad(-type(int256).max);
     }
 
     function _checkLambertW0Wad(int256 x, int256 expected) internal {
-        assertEq(FixedPointMathLib.lambertW0Wad(x), expected);
+        unchecked {
+            uint256 gasBefore = gasleft();
+            int256 w = FixedPointMathLib.lambertW0Wad(x);
+            uint256 gasUsed = gasBefore - gasleft();
+            emit LogInt("x", x);
+            emit LogUint("gasUsed", gasUsed);
+            assertEq(w, expected);
+        }
     }
 
-    function testLambertW0WadWithinBounds(int256 a) public {
-        if (a <= 0) return;
-        int256 w = FixedPointMathLib.lambertW0Wad(a);
-        assertTrue(w <= a);
+    function testLambertW0WadAccuracy() public {
+        testLambertW0WadAccuracy(uint184(int184(_testLamberW0WadAccuracyThres())));
+        testLambertW0WadAccuracy(2 ** 184 - 1);
+    }
+
+    function testLambertW0WadAccuracy(uint184 a) public {
+        int256 x = int256(int184(a));
+        if (x >= _testLamberW0WadAccuracyThres()) {
+            int256 l = FixedPointMathLib.lnWad(x);
+            int256 r = x * l / _WAD;
+            int256 w = FixedPointMathLib.lambertW0Wad(r);
+            assertLt(FixedPointMathLib.abs(l - w), 0xff);
+        }
+    }
+
+    function _testLamberW0WadAccuracyThres() internal pure returns (int256) {
         unchecked {
-            if (a >= 2718281828459045235) {
-                int256 l = FixedPointMathLib.lnWad(a);
+            return _ONE_DIV_EXP + _ONE_DIV_EXP * 0.01 ether / 1 ether;
+        }
+    }
+
+    function testLambertW0WadWithinBounds(int256 x) public {
+        if (x <= 0) x = _boundLambertW0WadInput(x);
+        int256 w = FixedPointMathLib.lambertW0Wad(x);
+        assertTrue(w <= x);
+        unchecked {
+            if (x > _EXP) {
+                int256 l = FixedPointMathLib.lnWad(x);
                 assertGt(l, 0);
                 int256 ll = FixedPointMathLib.lnWad(l);
-                int256 wad = 10 ** 18;
-                // By right, it should be `w + 1`.
-                // But our approximation isn't perfect. Could be due to Halley's method.
-                assertLt(l - ll + (ll * wad) / (2 * l), w + 2);
-                assertLt(
-                    w, l - ll + (ll * wad * 2718281828459045235) / (l * 1718281828459045235) + 1
-                );
+                int256 q = ll * _WAD;
+                int256 lower = l - ll + q / (2 * l);
+                assertLt(lower, w + 1);
+                int256 upper = l - ll + (q * _EXP) / (l * (_EXP - _WAD)) + 1;
+                assertLt(w, upper);
+            }
+        }
+    }
+
+    function testLambertW0WadWithinBounds() public {
+        testLambertW0WadWithinBounds(_EXP - 1);
+        testLambertW0WadWithinBounds(_EXP);
+        testLambertW0WadWithinBounds(_EXP + 1);
+        testLambertW0WadWithinBounds(type(int256).max);
+    }
+
+    function testLambertW0WadMonotonicallyIncreasing() public {
+        unchecked {
+            for (uint256 i; i <= 256; ++i) {
+                uint256 x = 1 << i;
+                testLambertW0WadMonotonicallyIncreasingAround(int256(x));
+                testLambertW0WadMonotonicallyIncreasingAround(int256(x - 1));
+            }
+            for (uint256 i; i <= 57; ++i) {
+                uint256 x = 1 << i;
+                testLambertW0WadMonotonicallyIncreasingAround(-int256(x));
+                testLambertW0WadMonotonicallyIncreasingAround(-int256(x - 1));
             }
         }
     }
@@ -110,129 +413,186 @@ contract FixedPointMathLibTest is SoladyTest {
     function testLambertW0WadMonotonicallyIncreasing2() public {
         // These are some problematic values gathered over the attempts.
         // Some might not be problematic now.
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xfffffffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(103244449106500225500);
-        this.testLambertW0WadMonotonicallyIncreasingAround(69812969629793590021);
-        this.testLambertW0WadMonotonicallyIncreasingAround(99877590385471769634);
-        this.testLambertW0WadMonotonicallyIncreasingAround(56740644568147233721);
-        this.testLambertW0WadMonotonicallyIncreasingAround(49466692885392157089);
-        this.testLambertW0WadMonotonicallyIncreasingAround(34472398554284384716);
-        this.testLambertW0WadMonotonicallyIncreasingAround(24221681110651559317);
-        this.testLambertW0WadMonotonicallyIncreasingAround(20348862445068325113);
-        this.testLambertW0WadMonotonicallyIncreasingAround(17348648760604883838);
-        this.testLambertW0WadMonotonicallyIncreasingAround(17095196427265578534);
-        this.testLambertW0WadMonotonicallyIncreasingAround(17074770050358191161);
-        this.testLambertW0WadMonotonicallyIncreasingAround(13868095779966762160);
-        this.testLambertW0WadMonotonicallyIncreasingAround(11688489373537725894);
-        this.testLambertW0WadMonotonicallyIncreasingAround(11525534276928848146);
-        this.testLambertW0WadMonotonicallyIncreasingAround(11584319147630401009);
-        this.testLambertW0WadMonotonicallyIncreasingAround(11213697597559043970);
-        this.testLambertW0WadMonotonicallyIncreasingAround(9076751962189838509);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8973446969188306213);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8929590537618540890);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8927010179450503071);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8915805679666514515);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8711541955259745339);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8603436916168159613);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8479885548030859774);
-        this.testLambertW0WadMonotonicallyIncreasingAround(8441444640527152159);
-        this.testLambertW0WadMonotonicallyIncreasingAround(5947407825878662654);
-        this.testLambertW0WadMonotonicallyIncreasingAround(5694151771202984473);
-        this.testLambertW0WadMonotonicallyIncreasingAround(3367879441171442322);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0xffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(0x1ffffffffffff);
+        _testLambertW0WadMonoAround(0x598cdf77327d789dc);
+        _testLambertW0WadMonoAround(0x3c8d97dfe4afb1b05);
+        _testLambertW0WadMonoAround(0x56a147b480c03cc22);
+        _testLambertW0WadMonoAround(0x3136f439c231d0bb9);
+        _testLambertW0WadMonoAround(0x2ae7cff17ef2469a1);
+        _testLambertW0WadMonoAround(0x1de668fd7afcf61cc);
+        _testLambertW0WadMonoAround(0x15024b2a35f2cdd95);
+        _testLambertW0WadMonoAround(0x11a65ae94b59590f9);
+        _testLambertW0WadMonoAround(0xf0c2c82174dffb7e);
+        _testLambertW0WadMonoAround(0xed3e56938cb11626);
+        _testLambertW0WadMonoAround(0xecf5c4e511142439);
+        _testLambertW0WadMonoAround(0xc0755fa2b4033cb0);
+        _testLambertW0WadMonoAround(0xa235db282ea4edc6);
+        _testLambertW0WadMonoAround(0x9ff2ec5c26eec112);
+        _testLambertW0WadMonoAround(0xa0c3c4e36f4415f1);
+        _testLambertW0WadMonoAround(0x9b9f0e8d61287782);
+        _testLambertW0WadMonoAround(0x7df719d1a4a7b8ad);
+        _testLambertW0WadMonoAround(0x7c881679a1464d25);
+        _testLambertW0WadMonoAround(0x7bec47487071495a);
+        _testLambertW0WadMonoAround(0x7be31c75fc717f9f);
+        _testLambertW0WadMonoAround(0x7bbb4e0716eeca53);
+        _testLambertW0WadMonoAround(0x78e59d40a92b443b);
+        _testLambertW0WadMonoAround(0x77658c4ad3af717d);
+        _testLambertW0WadMonoAround(0x75ae9afa425919fe);
+        _testLambertW0WadMonoAround(0x7526092d05bef41f);
+        _testLambertW0WadMonoAround(0x52896fe82be03dfe);
+        _testLambertW0WadMonoAround(0x4f05b0ddf3b71a19);
+        _testLambertW0WadMonoAround(0x3094b0feb93943fd);
+        _testLambertW0WadMonoAround(0x2ef215ae6701c40e);
+        _testLambertW0WadMonoAround(0x2ebd1c82095d6a92);
+        _testLambertW0WadMonoAround(0x2e520a4e670d52bb);
+        _testLambertW0WadMonoAround(0xfc2f004412e5ce69);
+        _testLambertW0WadMonoAround(0x158bc0b201103a7fc);
+        _testLambertW0WadMonoAround(0x39280df60945c436b);
+        _testLambertW0WadMonoAround(0x47256e5d374b35f74);
+        _testLambertW0WadMonoAround(0x2b9568ffb08c155a4);
+        _testLambertW0WadMonoAround(0x1b60b07806956f34d);
+        _testLambertW0WadMonoAround(0x21902755d1eee824c);
+        _testLambertW0WadMonoAround(0x6e15c8a6ee6e4fca4);
+        _testLambertW0WadMonoAround(0x5b13067d92d8e49c6);
+        _testLambertW0WadMonoAround(0x2826ebc1fce90cf6e);
+        _testLambertW0WadMonoAround(0x215eb5aa1041510a4);
+        _testLambertW0WadMonoAround(0x47b20347b57504c32);
+        _testLambertW0WadMonoAround(0x75e8fd53f8c90f95a);
+        _testLambertW0WadMonoAround(0x43e8d80f9af282627);
+        _testLambertW0WadMonoAround(0x3cf555b5fd4f20615);
+        _testLambertW0WadMonoAround(0xaff4b8b52f8355e6e);
+        _testLambertW0WadMonoAround(0x529e89e77ae046255);
+        _testLambertW0WadMonoAround(0x1f0289433f07cbf53b);
+        _testLambertW0WadMonoAround(0xc1f6e56c2001d9432);
+        _testLambertW0WadMonoAround(0x5e4117305c6e33ebc);
+        _testLambertW0WadMonoAround(0x2b416472dce2ea26d);
+        _testLambertW0WadMonoAround(0x71f55956ef3326067);
+        _testLambertW0WadMonoAround(0x35d9d57c965eb82c6);
+        _testLambertW0WadMonoAround(0x184f520f19335f25d);
+        _testLambertW0WadMonoAround(0x3c4bb8f445abe21a7);
+        _testLambertW0WadMonoAround(0x573e3b3e06e208201);
+        _testLambertW0WadMonoAround(0x184f520f19335f25d);
+        _testLambertW0WadMonoAround(0x573e3b3e06e208201);
+        _testLambertW0WadMonoAround(0x61e511ba00db632a4);
+        _testLambertW0WadMonoAround(0x12731b97bde57933d);
+        _testLambertW0WadMonoAround(0x79c29b05cf39be374);
+        _testLambertW0WadMonoAround(0x390fcd4186ac250b3);
+        _testLambertW0WadMonoAround(0x69c74b5975fd4832a);
+        _testLambertW0WadMonoAround(0x59db219a7048121bd);
+        _testLambertW0WadMonoAround(0x28f2adc4fab331d251);
+        _testLambertW0WadMonoAround(0x7be91527cc31769c);
+        _testLambertW0WadMonoAround(0x2ef215ae6701c40f);
+        _testLambertW0WadMonoAround(0x1240541334cfadd81);
+        _testLambertW0WadMonoAround(0x2a79eccb3d5f4faaed);
+        _testLambertW0WadMonoAround(0x7470d50c23bfd30e0);
+        _testLambertW0WadMonoAround(0x313386f14a7f95af9);
+        _testLambertW0WadMonoAround(0x2a60f3b64c57088e9);
+        _testLambertW0WadMonoAround(0x381298f7aa53edfe0);
+        _testLambertW0WadMonoAround(0x5cbfac5d7a1770806);
+        _testLambertW0WadMonoAround(0x19e46d1b5e6aba57e);
+        _testLambertW0WadMonoAround(0x19ff86906ae47c70a);
+        _testLambertW0WadMonoAround(0x164684654d9ca54ea1);
+        _testLambertW0WadMonoAround(0x99337fa75e803139);
+        _testLambertW0WadMonoAround(0x6fa0a50fcb8a95b97e);
+        _testLambertW0WadMonoAround(0xa117a195e06c3fd531);
+        _testLambertW0WadMonoAround(0x305da7073093bd8a07);
+        _testLambertW0WadMonoAround(0x98582b07fd3c6b64);
+        _testLambertW0WadMonoAround(0x1e824d2a367d9ce65);
+        _testLambertW0WadMonoAround(0x7bea796d633b386a);
+        _testLambertW0WadMonoAround(0x2fff5c38c6b2a2cd);
+        _testLambertW0WadMonoAround(0x198af4e7ffee1df7627);
+        _testLambertW0WadMonoAround(0x8ea8a7b6f7c7424d8d);
+        _testLambertW0WadMonoAround(0x11e504fa805e54e2ed8);
+        _testLambertW0WadMonoAround(0x3e5f2a7801badcdabd);
+        _testLambertW0WadMonoAround(0x1b7aaad69ac8770a3be);
+        _testLambertW0WadMonoAround(0x658acb00d525f3d345);
+        _testLambertW0WadMonoAround(0xd994d6447146880183f);
+        _testLambertW0WadMonoAround(0x2e07a342d7b1bc1a5ae);
     }
 
-    function testLambertW0WadMonotonicallyIncreasingAround2(uint256 t) public {
-        // Bound the number into the problematic range to speed up getting a counterexample..
-        t = _bound(t, 0x1ffffffffffff + 1, 0xffffffffffffffffffff);
-        this.testLambertW0WadMonotonicallyIncreasingAround(int256(t));
+    function testLambertW0WadMonoDebug() public {
+        unchecked {
+            for (int256 i = -9; i <= 9; ++i) {
+                _testLambertW0WadMonoAround(0x2e07a342d7b1bc1a5ae + i);
+            }
+        }
+    }
+
+    function _testLambertW0WadMonoAround(int256 x) internal {
+        emit LogInt("x", x);
+        emit LogUint("log2(x)", FixedPointMathLib.log2(uint256(x)));
+        testLambertW0WadMonotonicallyIncreasingAround(x);
+    }
+
+    function testLambertW0WadMonotonicallyIncreasingAround2(uint96 t) public {
+        int256 x = int256(uint256(t));
+        testLambertW0WadMonotonicallyIncreasingAround(x);
+        if (t & 0xff == 0xab) {
+            _testLambertW0WadMonoFocus(x, 0, 0x1ffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 1, 0x1fffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 2, 0xfffffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 3, 0xffffffffffffffff, 0xfffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 4, 0xffffffffffffffff, 0xfffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 5, 0xffffffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 6, 0xffffffffffffffff, 0xffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 7, 0xffffffffffffffff, 0xfffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 8, 0xffffffffffffffff, 0xfffffffffffffffffff);
+            _testLambertW0WadMonoFocus(x, 9, 0xffffffffffffffff, 0xffffffffffffffffffff);
+        }
+    }
+
+    function _testLambertW0WadMonoFocus(int256 t, int256 i, int256 low, int256 mask) internal {
+        int256 x;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, t)
+            mstore(0x20, i)
+            x := and(keccak256(0x00, 0x40), mask)
+        }
+        do {
+            testLambertW0WadMonotonicallyIncreasingAround(x);
+            x >>= 1;
+        } while (x >= low);
     }
 
     function testLambertW0WadMonotonicallyIncreasingAround(int256 t) public {
-        if (t <= -36787944117144232) t = -((t << 1) >> 1);
+        if (t < _LAMBERT_W0_MIN) t = _boundLambertW0WadInput(t);
         unchecked {
-            for (int256 i = -2; i <= 2; ++i) {
-                this.testLambertW0WadMonotonicallyIncreasing(t + i, t + i + 1);
+            int256 end = t + 2;
+            for (int256 x = t - 2; x != end; ++x) {
+                testLambertW0WadMonotonicallyIncreasing(x, x + 1);
             }
         }
     }
 
     function testLambertW0WadMonotonicallyIncreasing(int256 a, int256 b) public {
-        while (a <= -367879441171442322) a = -((a << 1) >> 1);
-        while (b <= -367879441171442322) b = -((b << 1) >> 1);
+        if (a < _LAMBERT_W0_MIN) a = _boundLambertW0WadInput(a);
+        if (b < _LAMBERT_W0_MIN) b = _boundLambertW0WadInput(b);
         if (a > b) {
             int256 t = b;
             b = a;
             a = t;
         }
         unchecked {
-            a = FixedPointMathLib.lambertW0Wad(a);
-            b = FixedPointMathLib.lambertW0Wad(b);
-            // `assertTrue(a <= b + 1)` passes a billion fuzz runs.
-            // The plus 1 is there because Halley's method sometimes overshoots.
-            // To test strictly, change the following to: `assertTrue(a <= b)`.
-            // You may need to run at more than million fuzz runs to encounter a counterexample
-            // for `assertTrue(a <= b)`.
-            assertTrue(a <= b + 1);
+            uint256 gasBefore = gasleft();
+            int256 w0a = FixedPointMathLib.lambertW0Wad(a);
+            uint256 gasUsed = gasBefore - gasleft();
+            int256 w0b = FixedPointMathLib.lambertW0Wad(b);
+            bool success = w0a <= w0b;
+            emit TestingLambertW0WadMonotonicallyIncreasing(a, b, w0a, w0b, success, gasUsed);
+            if (!success) {
+                emit LogUint("log2(a)", FixedPointMathLib.log2(uint256(a)));
+                emit LogUint("log2(b)", FixedPointMathLib.log2(uint256(b)));
+                emit LogUint("log2(w0a)", FixedPointMathLib.log2(uint256(w0a)));
+                emit LogUint("log2(w0b)", FixedPointMathLib.log2(uint256(w0b)));
+                assertTrue(success);
+            }
         }
     }
 
-    function testLambertW0WadDifferential(int256 x) public {
-        // If `x` is outside the domain, bound it back so as to not waste fuzz compute.
-        if (x <= -367879441171442322) {
-            x = int256(_bound(_random(), 0xffffffff, 3367879441171442322 + 1));
-        }
-        // We differential fuzz so that we can be sure that
-        // some of the assembly tricks are equivalent.
-        assertEq(FixedPointMathLib.lambertW0Wad(x), _lambertW0WadOriginal(x));
-    }
-
-    function _lambertW0WadOriginal(int256 x) internal pure returns (int256 r) {
-        unchecked {
-            r = x;
-            if (x <= -367879441171442322) revert FixedPointMathLib.OutOfDomain();
-            uint256 iters = 10;
-            if (x <= 0x1ffffffffffff) {
-                if (-0x4000000000000 <= x) {
-                    iters = 1;
-                } else if (x <= -0x3ffffffffffffff) {
-                    iters = 32;
-                }
-            } else if (x <= 0xffffffffffffffff) {
-                uint256 l = FixedPointMathLib.log2(uint256(x));
-                /// @solidity memory-safe-assembly
-                assembly {
-                    r := sdiv(shl(l, 7), byte(sub(l, 32), 0x0303030303030303040506080c131e))
-                    iters := add(3, gt(l, 53))
-                }
-                require(iters != 0);
-            } else {
-                r = FixedPointMathLib.lnWad(x);
-                if (x >= 0xfffffffffffffffffffffffff) {
-                    int256 ll = FixedPointMathLib.lnWad(r);
-                    r = r - ll + FixedPointMathLib.rawSDiv(ll * 1023715086476318099, r);
-                }
-            }
-            int256 prev = type(int256).max;
-            int256 wad = int256(1000000000000000000);
-            int256 minusXMulWad = -x * wad;
-            do {
-                int256 e = FixedPointMathLib.expWad(r);
-                int256 t = r + wad;
-                int256 s = r * e + minusXMulWad;
-                int256 d = e * t - FixedPointMathLib.rawSDiv((t + wad) * s, t + t);
-                r -= FixedPointMathLib.rawSDiv(s * wad, d);
-                if (r >= prev) break;
-                prev = r;
-            } while (--iters != 0);
-            /// @solidity memory-safe-assembly
-            assembly {
-                r := sub(r, sgt(r, 2))
-            }
+    function _boundLambertW0WadInput(int256 x) internal pure returns (int256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := shr(1, shl(1, not(x)))
         }
     }
 

@@ -614,6 +614,26 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.lastIndexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
+    function testContains() public {
+        string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        assertEq(LibString.contains(subject, "a"), true);
+        assertEq(LibString.contains(subject, "abc"), true);
+        assertEq(LibString.contains(subject, "z"), true);
+        assertEq(LibString.contains(subject, "Z"), true);
+        assertEq(LibString.contains(subject, "az"), false);
+        assertEq(LibString.contains(subject, "aZ"), false);
+        assertEq(LibString.contains(subject, "Aa"), false);
+        assertEq(LibString.contains(subject, "Zz"), false);
+        assertEq(LibString.contains(subject, "abcZ"), false);
+        assertEq(LibString.contains(subject, "abcz"), false);
+        assertEq(LibString.contains(subject, "abcA"), false);
+        assertEq(LibString.contains(subject, "abcB"), false);
+        assertEq(LibString.contains(subject, "abcC"), false);
+        assertEq(LibString.contains(subject, ""), true);
+        assertEq(LibString.contains("", "abc"), false);
+        assertEq(LibString.contains("", ""), true);
+    }
+
     function testStringStartsWith(uint256) public brutalizeMemory {
         string memory filler = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString("abcdefghijklmnopqrstuvwxyz");
