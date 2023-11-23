@@ -333,8 +333,8 @@ abstract contract ERC6909 {
         /// @solidity memory-safe-assembly
         assembly {
             let s := shr(224, interfaceId)
-            // ERC165: 0x01ffc9a7, ERC6909: 0xb2e69f8a.
-            result := or(eq(s, 0x01ffc9a7), eq(s, 0xb2e69f8a))
+            // ERC165: 0x01ffc9a7, ERC6909: 0x0f632fb3.
+            result := or(eq(s, 0x01ffc9a7), eq(s, 0x0f632fb3))
         }
     }
 
