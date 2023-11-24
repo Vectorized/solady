@@ -337,7 +337,7 @@ contract ERC6909Test is SoladyTest {
 
         token.transferFrom(from, to, id, amount0);
 
-        if (to == from && type(uint256).max - amount0 < amount1) {
+        if (to == from) {
             vm.expectRevert(ERC6909.BalanceOverflow.selector);
             token.mint(from, id, amount1);
             return;
