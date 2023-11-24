@@ -337,6 +337,12 @@ contract ERC6909Test is SoladyTest {
 
         token.transferFrom(from, to, id, amount0);
 
+        if (to == from) {
+            vm.expectRevert(ERC6909.BalanceOverflow.selector);
+            token.mint(from, id, amount1);
+            return;
+        }
+
         token.mint(from, id, amount1);
         _approve(from, address(this), id, amount1);
 
