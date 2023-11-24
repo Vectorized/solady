@@ -5,7 +5,7 @@ pragma solidity ^0.8.4;
 /// @author shung (https://github.com/Shungy)
 library LEB128Lib {
     /// @dev Encodes `x` using unsigned LEB128 algorithm.
-    /// See: https://en.wikipedia.org/wiki/LEB128#Encode_unsigned_integer
+    /// See https://en.wikipedia.org/wiki/LEB128#Encode_unsigned_integer.
     function encode(uint256 x) internal pure returns (bytes memory result) {
         if (x == 0) return result = new bytes(1);
         /// @solidity memory-safe-assembly
@@ -32,7 +32,7 @@ library LEB128Lib {
     }
 
     /// @dev Encodes `x` using signed LEB128 algorithm.
-    /// See: https://en.wikipedia.org/wiki/LEB128#Encode_signed_integer
+    /// See https://en.wikipedia.org/wiki/LEB128#Encode_signed_integer.
     function encode(int256 x) internal pure returns (bytes memory result) {
         if (x == 0) return result = new bytes(1);
         /// @solidity memory-safe-assembly
@@ -60,7 +60,7 @@ library LEB128Lib {
     }
 
     /// @dev Decodes an unsigned LEB128 encoded value, starting from calldata `ptr`.
-    /// See: https://en.wikipedia.org/wiki/LEB128#Decode_unsigned_integer
+    /// See https://en.wikipedia.org/wiki/LEB128#Decode_unsigned_integer.
     /// Note: Anything overflowing 256 bits is truncated silently without a revert.
     /// Note: Superfluous zero padding can be used to inflate the length of the encoded data.
     function rawDecodeUint(uint256 ptr) internal pure returns (uint256 result, uint256 newPtr) {
@@ -77,7 +77,7 @@ library LEB128Lib {
     }
 
     /// @dev Decodes a signed LEB128 encoded value, starting from calldata `ptr`.
-    /// See: https://en.wikipedia.org/wiki/LEB128#Decode_signed_integer
+    /// See https://en.wikipedia.org/wiki/LEB128#Decode_signed_integer.
     /// Note: Same caveats as `rawDecodeUint` apply.
     function rawDecodeInt(uint256 ptr) internal pure returns (int256 result, uint256 newPtr) {
         /// @solidity memory-safe-assembly
