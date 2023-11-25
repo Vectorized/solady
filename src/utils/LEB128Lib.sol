@@ -70,7 +70,8 @@ library LEB128Lib {
                 let nextByte := byte(0, calldataload(ptr))
                 result := or(result, shl(shift, and(nextByte, 0x7f)))
                 ptr := add(ptr, 1)
-                if iszero(shr(7, nextByte)) { break }
+                if shr(7, nextByte) { continue }
+                break
             }
             newPtr := ptr
         }
@@ -87,12 +88,11 @@ library LEB128Lib {
                 result := or(result, shl(shift, and(nextByte, 0x7f)))
                 ptr := add(ptr, 1)
                 shift := add(shift, 7)
-                if iszero(shr(7, nextByte)) {
-                    if and(lt(shift, 256), iszero(iszero(and(nextByte, 0x40)))) {
-                        result := or(result, shl(shift, not(0)))
-                    }
-                    break
+                if shr(7, nextByte) { continue }
+                if and(lt(shift, 256), iszero(iszero(and(nextByte, 0x40)))) {
+                    result := or(result, shl(shift, not(0)))
                 }
+                break
             }
             newPtr := ptr
         }
@@ -108,7 +108,8 @@ library LEB128Lib {
                 let nextByte := byte(0, mload(ptr))
                 result := or(result, shl(shift, and(nextByte, 0x7f)))
                 ptr := add(ptr, 1)
-                if iszero(shr(7, nextByte)) { break }
+                if shr(7, nextByte) { continue }
+                break
             }
             newPtr := ptr
         }
@@ -125,12 +126,11 @@ library LEB128Lib {
                 result := or(result, shl(shift, and(nextByte, 0x7f)))
                 ptr := add(ptr, 1)
                 shift := add(shift, 7)
-                if iszero(shr(7, nextByte)) {
-                    if and(lt(shift, 256), iszero(iszero(and(nextByte, 0x40)))) {
-                        result := or(result, shl(shift, not(0)))
-                    }
-                    break
+                if shr(7, nextByte) { continue }
+                if and(lt(shift, 256), iszero(iszero(and(nextByte, 0x40)))) {
+                    result := or(result, shl(shift, not(0)))
                 }
+                break
             }
             newPtr := ptr
         }

@@ -74,16 +74,49 @@ contract LEB128LibTest is SoladyTest {
         return x == 0 ? 1 : FixedPointMathLib.divUp(LibBit.fls(deSigned) + 2, 7);
     }
 
-    function testUnsignedEncodeZero() public {
-        bytes memory encoded = LEB128Lib.encode(uint256(0));
-        assertEq(encoded.length, 1);
-        assertEq(encoded[0], 0x00);
+    function testSignedEncode() public {
+        assertEq(LEB128Lib.encode(int256(0)), hex"00");
+        assertEq(LEB128Lib.encode(int256(1)), hex"01");
+        assertEq(LEB128Lib.encode(int256(-1)), hex"7f");
+        assertEq(LEB128Lib.encode(int256(69)), hex"c500");
+        assertEq(LEB128Lib.encode(int256(-69)), hex"bb7f");
+        assertEq(LEB128Lib.encode(int256(420)), hex"a403");
+        assertEq(LEB128Lib.encode(int256(-420)), hex"dc7c");
+        assertEq(LEB128Lib.encode(int256(1 ether)), hex"808090bbbad6adf00d");
+        assertEq(LEB128Lib.encode(int256(-1 ether)), hex"8080f0c4c5a9d28f72");
+        assertEq(
+            LEB128Lib.encode(int256(type(int256).max - 1)),
+            hex"feffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff07"
+        );
+        assertEq(
+            LEB128Lib.encode(int256(type(int256).min + 1)),
+            hex"81808080808080808080808080808080808080808080808080808080808080808080808078"
+        );
+        assertEq(
+            LEB128Lib.encode(int256(type(int256).max)),
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff07"
+        );
+        assertEq(
+            LEB128Lib.encode(int256(type(int256).min)),
+            hex"80808080808080808080808080808080808080808080808080808080808080808080808078"
+        );
     }
 
-    function testSignedEncodeZero() public {
-        bytes memory encoded = LEB128Lib.encode(int256(0));
-        assertEq(encoded.length, 1);
-        assertEq(encoded[0], 0x00);
+    function testUnsignedEncode() public {
+        assertEq(LEB128Lib.encode(uint256(0)), hex"00");
+        assertEq(LEB128Lib.encode(uint256(1)), hex"01");
+        assertEq(LEB128Lib.encode(uint256(69)), hex"45");
+        assertEq(LEB128Lib.encode(uint256(420)), hex"a403");
+        assertEq(LEB128Lib.encode(uint256(666)), hex"9a05");
+        assertEq(LEB128Lib.encode(uint256(1 ether)), hex"808090bbbad6adf00d");
+        assertEq(
+            LEB128Lib.encode(type(uint256).max - 1),
+            hex"feffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0f"
+        );
+        assertEq(
+            LEB128Lib.encode(type(uint256).max),
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0f"
+        );
     }
 
     function testUnsignedEncodeLength(uint256 x) public {
@@ -159,7 +192,7 @@ contract LEB128LibTest is SoladyTest {
     }
 
     // No out of bounds revert for raw decoding methods.
-    function testNoRevertOnOutOfBoundsDecoding(uint256 x) public view {
+    function testNoRevertOnOutOfBoundsRawDecoding(uint256 x) public view {
         bytes memory uencoded = LEB128Lib.encode(x);
         bytes memory sencoded = LEB128Lib.encode(int256(x));
 
