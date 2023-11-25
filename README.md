@@ -64,6 +64,7 @@ utils
 ├─ Clone — "Class with helper read functions for clone with immutable args"
 ├─ LibClone — "Minimal proxy library"
 ├─ UUPSUpgradeable — "UUPS proxy mixin"
+├─ LEB128Lib — "Library to encode and decode values with LEB128 compression scheme"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
 ├─ LibBitmap — "Library for storage of packed booleans"
 ├─ LibMap — "Library for storage of packed unsigned integers"
@@ -103,13 +104,13 @@ This is **experimental software** and is provided on an "as is" and "as availabl
 
 We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
-While Solady has been heavily tested, there may be parts that may exhibit unexpected emergent behavior when used with other code, or may break in future Solidity versions.  
+While Solady has been heavily tested, there may be parts that may exhibit unexpected emergent behavior when used with other code, or may break in future Solidity versions.
 
-Please always include your own thorough tests when using Solady to make sure it works correctly with your code.  
+Please always include your own thorough tests when using Solady to make sure it works correctly with your code.
 
 ## Upgradability
 
-Most contracts in Solady are compatible with both upgradeable and non-upgradeable (i.e. regular) contracts. 
+Most contracts in Solady are compatible with both upgradeable and non-upgradeable (i.e. regular) contracts.
 
 Please call any required internal initialization methods accordingly.
 
