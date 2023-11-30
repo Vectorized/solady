@@ -27,10 +27,9 @@ broadcast
 lcov.info
 
 # Woke testing
-.woke-build
-.woke-logs
+.wake
 pytypes
 __pycache__/
 *.py[cod]
 .hypothesis/
-woke-coverage.cov
+wake-coverage.cov

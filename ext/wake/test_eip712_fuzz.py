@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 
 from eth_account._utils.structured_data.hashing import hash_message
-from woke.testing import *
-from woke.testing.fuzzing import *
+from wake.testing import *
+from wake.testing.fuzzing import *
 from pytypes.src.utils.ERC1967Factory import ERC1967Factory
 from pytypes.tests.EIP712Mock import EIP712Mock
 
@@ -61,5 +61,4 @@ class Eip712FuzzTest(FuzzTest):
 
 @default_chain.connect()
 def test_eip712_fuzz():
-    default_chain.set_default_accounts(default_chain.accounts[0])
     Eip712FuzzTest().run(10, 10)

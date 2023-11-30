@@ -1,7 +1,7 @@
 import random
 
-from woke.testing.fuzzing import *
-from woke.testing import *
+from wake.testing.fuzzing import *
+from wake.testing import *
 
 from pytypes.tests.ERC721Mock import ERC721Mock
 
@@ -360,6 +360,5 @@ class ERC721FuzzTest(FuzzTest):
 
 @default_chain.connect()
 def test_eip712_fuzz():
-    default_chain.set_default_accounts(default_chain.accounts[0])
     ERC721FuzzTest().run(30, 600)
 

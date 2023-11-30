@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 from eth_account._utils.structured_data.hashing import hash_message
-from woke.testing import *
+from wake.testing import *
 from pytypes.src.utils.ERC1967Factory import ERC1967Factory
 from pytypes.tests.EIP712Mock import EIP712Mock
 
@@ -28,7 +28,6 @@ mail = Mail(
 
 @default_chain.connect()
 def test_eip712():
-    default_chain.set_default_accounts(default_chain.accounts[0])
     signer = Account.new()
 
     eip712 = EIP712Mock.deploy()
@@ -56,7 +55,6 @@ def test_eip712():
 
 @default_chain.connect()
 def test_eip712_proxy():
-    default_chain.set_default_accounts(default_chain.accounts[0])
     signer = Account.new()
 
     proxy_factory = ERC1967Factory.deploy()
