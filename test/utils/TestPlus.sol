@@ -2,6 +2,11 @@
 pragma solidity ^0.8.4;
 
 contract TestPlus {
+    event LogString(string name, string value);
+    event LogBytes(string name, bytes value);
+    event LogUint(string name, uint256 value);
+    event LogInt(string name, int256 value);
+
     /// @dev `address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))`.
     address private constant _VM_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
 

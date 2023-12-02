@@ -59,9 +59,6 @@ contract FixedPointMathLibTest is SoladyTest {
         int256 a, int256 b, int256 w0a, int256 w0b, bool success, uint256 gasUsed
     );
 
-    event LogUint(string name, uint256 value);
-    event LogInt(string name, int256 value);
-
     int256 internal constant _ONE_DIV_EXP = 367879441171442321;
     int256 internal constant _LAMBERT_W0_MIN = -367879441171442321;
     int256 internal constant _EXP = 2718281828459045235;
