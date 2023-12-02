@@ -91,7 +91,7 @@ contract ERC6551Test is SoladyTest {
     }
 
     function testDeployERC6551Proxy() public {
-        console.log(LibString.toHexString(address(new ERC6551Proxy(_erc6551)).code));
+        emit LogBytes("ERC6551Proxy code", address(new ERC6551Proxy(_erc6551)).code);
     }
 
     function testInitializeERC6551ProxyImplementation() public {

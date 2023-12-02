@@ -227,7 +227,8 @@ contract ERC1967FactoryTest is SoladyTest {
         uint256 gasBefore = gasleft();
         uint256 storedValue = MockImplementation(proxy).getValue(t.key);
         unchecked {
-            console.log(gasBefore - gasleft());
+            uint256 gasUsed = gasBefore - gasleft();
+            emit LogUint("gasUsed", gasUsed);
         }
         assertEq(storedValue, t.value);
         assertEq(proxy.balance, t.msgValue);
