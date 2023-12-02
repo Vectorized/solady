@@ -243,10 +243,10 @@ library LibZip {
         }
     }
 
-    /// @dev To be called in the `receive` and `fallback` functions.
+    /// @dev To be called in the `fallback` function.
     /// ```
-    ///     receive() external payable { LibZip.cdFallback(); }
     ///     fallback() external payable { LibZip.cdFallback(); }
+    ///     receive() external payable {} // Silence compiler warning to add a `receive` function.
     /// ```
     /// For efficiency, this function will directly return the results, terminating the context.
     /// If called internally, it must be called at the end of the function.
