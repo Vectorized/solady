@@ -166,22 +166,16 @@ library LibPRNG {
                 mstore(0x20, 0)
                 _r := and(0x7fffffffffffffffffffffffffffffff, mload(0x00))
             }
-     
             function T(y_) -> _r {
-                let z_ := U()
-                if lt(z_, y_) { _r := add(1, T(z_)) }
-            }
-            function B(j_) -> _r {
-                for { let y_ := 0 } 1 {} {
-                    if iszero(and(1, shr(127, mload(0x00)))) { break }
+                for {} 1 {} {
                     let z_ := U()
-                    if iszero(lt(z_, xor(y_, mul(iszero(_r), xor(j_, y_))))) { break }
+                    if iszero(lt(z_, y_)) { break }
                     y_ := U()
-                    if iszero(lt(y_, j_)) { break }
-                    y_ := z_
-                    _r := add(_r, 1)
+                    if iszero(lt(y_, z_)) {
+                        _r := 1
+                        break
+                    }
                 }
-                _r := iszero(and(_r, 1))
             }
             mstore(0x20, 0)
             mstore(0x00, mload(prng)) // Put state into scratch space.
@@ -189,7 +183,7 @@ library LibPRNG {
                 let n := 0
                 for {} 1 { n := add(n, 1) } {
                     let y := U()
-                    if iszero(shr(126, y)) { if iszero(and(1, T(y))) { break } }
+                    if iszero(shr(126, y)) { if iszero(T(y)) { break } }
                 }
                 let k := 0
                 let k2 := 0
@@ -204,10 +198,23 @@ library LibPRNG {
                     if iszero(add(k, 1)) { break }
                     let y := U()
                     if iszero(lt(y, j)) { continue } 
-                    if iszero(and(1, T(y))) { break } 
+                    if iszero(T(y)) { break } 
                 }
                 if iszero(slt(h, 0)) { continue }
-                if iszero(B(j)) { continue }
+                n := 0
+                for { let y := 0 } 1 {} {
+                    let d := keccak256(0x00, 0x20)
+                    mstore(0x00, d)
+                    if iszero(and(1, shr(127, d))) { break }
+                    let z := shr(129, d)
+                    y := and(0x7fffffffffffffffffffffffffffffff, d)
+                    if iszero(lt(y, j)) { break }
+                    if iszero(lt(z, xor(y, mul(iszero(n), xor(j, y))))) { break }
+                    y := z
+                    n := add(n, 1)
+                }
+                mstore(0x20, 0)
+                if and(n, 1) { continue }
                 j := add(div(j, 170141183460469231901), mul(k, 1000000000000000000))
                 if iszero(and(1, shr(128, mload(0x00)))) { j := sub(0, j) }
                 result := j    
