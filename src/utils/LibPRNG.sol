@@ -150,4 +150,46 @@ library LibPRNG {
             }
         }
     }
+
+    /// @dev Returns a sample from the standard normal distribution denominated in `WAD`. 
+    function gaussianWad(PRNG memory prng) internal pure returns (int256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function uni() -> _r {
+                if iszero(mload(0x20)) {
+                    _r := keccak256(0x00, 0x20)
+                    mstore(0x00, _r)
+                    mstore(0x20, 1)
+                    _r := shr(129, _r)
+                    leave
+                }
+                mstore(0x20, 0)
+                _r := and(0x7fffffffffffffffffffffffffffffff, mload(0x00))
+            }
+            function T(y_) -> _r {
+                for {} 1 {} {
+                    let z_ := uni()
+                    if iszero(lt(z_, y_)) { break }
+                    y_ := uni()
+                    if iszero(lt(y_, z_)) {
+                        _r := 1
+                        break
+                    }
+                }
+            }
+            function B(j_) -> _r {
+                let y_ := 0
+                for {} 1 {} {
+                    if iszero(and(1, shr(127, mload(0x00)))) { break }
+                    let z_ := uni()
+                    if iszero(lt(z_, xor(y_, mul(iszero(_r), xor(j_, y_))))) { break }
+                    y_ := uni()
+                    if iszero(lt(y_, j_)) { break }
+                    y_ := z_
+                    _r := add(_r, 1)
+                }
+                _r := iszero(and(_r, 1))
+            }
+        }
+    }
 }
