@@ -166,16 +166,10 @@ library LibPRNG {
                 mstore(0x20, 0)
                 _r := and(0x7fffffffffffffffffffffffffffffff, mload(0x00))
             }
+     
             function T(y_) -> _r {
-                for {} 1 {} {
-                    let z_ := U()
-                    if iszero(lt(z_, y_)) { break }
-                    y_ := U()
-                    if iszero(lt(y_, z_)) {
-                        _r := 1
-                        break
-                    }
-                }
+                let z_ := U()
+                if lt(z_, y_) { _r := add(1, T(z_)) }
             }
             function B(j_) -> _r {
                 for { let y_ := 0 } 1 {} {
@@ -195,7 +189,7 @@ library LibPRNG {
                 let n := 0
                 for {} 1 { n := add(n, 1) } {
                     let y := U()
-                    if iszero(shr(126, y)) { if iszero(T(y)) { break } }
+                    if iszero(shr(126, y)) { if iszero(and(1, T(y))) { break } }
                 }
                 let k := 0
                 let k2 := 0
@@ -210,7 +204,7 @@ library LibPRNG {
                     if iszero(add(k, 1)) { break }
                     let y := U()
                     if iszero(lt(y, j)) { continue } 
-                    if iszero(T(y)) { break } 
+                    if iszero(and(1, T(y))) { break } 
                 }
                 if iszero(slt(h, 0)) { continue }
                 if iszero(B(j)) { continue }
