@@ -168,4 +168,17 @@ contract LibPRNGTest is SoladyTest {
             randomness := xor(state, shr(128, state))
         }
     }
+
+    function testGaussianWadGas() public {
+        LibPRNG.PRNG memory prng;
+        unchecked {
+            for (uint256 i; i != 256; ++i) {
+                uint256 gasBefore = gasleft();
+                int256 x = prng.gaussianWad();
+                uint256 gasUsed = gasBefore - gasleft();
+                emit LogInt("gaussianWad", x);    
+                emit LogUint("gasUsed", gasUsed);
+            }
+        }
+    }
 }

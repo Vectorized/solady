@@ -155,7 +155,7 @@ library LibPRNG {
     function gaussianWad(PRNG memory prng) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            function uni() -> _r {
+            function U() -> _r {
                 if iszero(mload(0x20)) {
                     _r := keccak256(0x00, 0x20)
                     mstore(0x00, _r)
@@ -168,9 +168,9 @@ library LibPRNG {
             }
             function T(y_) -> _r {
                 for {} 1 {} {
-                    let z_ := uni()
+                    let z_ := U()
                     if iszero(lt(z_, y_)) { break }
-                    y_ := uni()
+                    y_ := U()
                     if iszero(lt(y_, z_)) {
                         _r := 1
                         break
@@ -178,18 +178,48 @@ library LibPRNG {
                 }
             }
             function B(j_) -> _r {
-                let y_ := 0
-                for {} 1 {} {
+                for { let y_ := 0 } 1 {} {
                     if iszero(and(1, shr(127, mload(0x00)))) { break }
-                    let z_ := uni()
+                    let z_ := U()
                     if iszero(lt(z_, xor(y_, mul(iszero(_r), xor(j_, y_))))) { break }
-                    y_ := uni()
+                    y_ := U()
                     if iszero(lt(y_, j_)) { break }
                     y_ := z_
                     _r := add(_r, 1)
                 }
                 _r := iszero(and(_r, 1))
             }
+            mstore(0x20, 0)
+            mstore(0x00, mload(prng)) // Put state into scratch space.
+            for {} 1 {} {
+                let n := 0
+                for {} 1 { n := add(n, 1) } {
+                    let y := U()
+                    if iszero(shr(126, y)) { if iszero(T(y)) { break } }
+                }
+                let k := 0
+                let k2 := 0
+                for {} iszero(or(gt(k2, n), eq(n, k2))) { k := add(1, k) } {
+                    k2 := add(k2, add(add(k, k), 1))
+                }
+                if iszero(eq(n, k2)) { continue }
+                let j := U()
+                let h := k
+                for {} 1 {} {
+                    h := sub(k, 1)
+                    if iszero(add(k, 1)) { break }
+                    let y := U()
+                    if iszero(lt(y, j)) { continue } 
+                    if iszero(T(y)) { break } 
+                }
+                if iszero(slt(h, 0)) { continue }
+                if iszero(B(j)) { continue }
+                j := add(div(j, 170141183460469231901), mul(k, 1000000000000000000))
+                if iszero(and(1, shr(128, mload(0x00)))) { j := sub(0, j) }
+                result := j    
+                break
+            }
+            mstore(prng, mload(0x00)) // Restore state.
         }
     }
 }
