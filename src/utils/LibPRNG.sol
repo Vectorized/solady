@@ -177,18 +177,6 @@ library LibPRNG {
                     }
                 }
             }
-            function B(j_) -> _r {
-                for { let y_ := 0 } 1 {} {
-                    if iszero(and(1, shr(128, mload(0x00)))) { break }
-                    let z_ := U()
-                    if iszero(lt(z_, xor(y_, mul(iszero(_r), xor(j_, y_))))) { break }
-                    y_ := U()
-                    if iszero(lt(y_, j_)) { break }
-                    y_ := z_
-                    _r := add(_r, 1)
-                }
-                _r := iszero(and(_r, 1))
-            }
             mstore(0x20, 0)
             mstore(0x00, mload(prng)) // Put state into scratch space.
             for {} 1 {} {
@@ -213,7 +201,17 @@ library LibPRNG {
                     if iszero(T(y)) { break } 
                 }
                 if iszero(slt(h, 0)) { continue }
-                if iszero(B(j)) { continue }
+                let r := 0
+                for { let y := 0 } 1 {} {
+                    if iszero(and(1, shr(128, mload(0x00)))) { break }
+                    let z := U()
+                    if iszero(lt(z, xor(y, mul(iszero(r), xor(j, y))))) { break }
+                    y := U()
+                    if iszero(lt(y, j)) { break }
+                    y := z
+                    r := add(r, 1)
+                }
+                if and(r, 1) { continue }
                 j := add(div(j, 170141183460469231901), mul(k, 1000000000000000000))
                 if iszero(and(1, shr(127, mload(0x00)))) { j := sub(0, j) }
                 result := j    
