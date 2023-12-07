@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
-
+import "./FixedPointMathLib.sol";
 /// @notice Library for generating pseudorandom numbers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibPRNG.sol)
 library LibPRNG {
@@ -187,7 +187,7 @@ library LibPRNG {
                 }
                 let k := 0
                 let k2 := 0
-                for {} iszero(or(gt(k2, n), eq(n, k2))) { k := add(1, k) } {
+                for {} lt(k2, n) { k := add(1, k) } {
                     k2 := add(k2, add(add(k, k), 1))
                 }
                 if iszero(eq(n, k2)) { continue }
@@ -219,5 +219,27 @@ library LibPRNG {
             }
             mstore(prng, mload(0x00)) // Restore state.
         }
+    }
+
+    function gaussianWad2(PRNG memory prng) internal pure returns (int256 result) {
+        int u; 
+        int v; 
+        int s;
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} 1 {} {
+                let d := keccak256(prng, 0x20)
+                mstore(prng, d)
+                u := sub(div(shr(128, d), 170141183460469231731), 1000000000000000000)
+                v := sub(div(shr(128, shl(128, d)), 170141183460469231731), 1000000000000000000)
+                s := div(add(mul(u, u), mul(v, v)), 1000000000000000000)
+                if s { if lt(s, 1000000000000000000) { break } }
+            }
+        }
+        unchecked {
+            s = int(FixedPointMathLib.sqrtWad(uint256(-2000000000000000000 * FixedPointMathLib.lnWad(s) / s)));
+            result = (s * u) / 1000000000000000000;    
+        }
+
     }
 }
