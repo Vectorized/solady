@@ -40,7 +40,6 @@ import "./utils/LibZip.sol";
 import "./utils/MerkleProofLib.sol";
 import "./utils/MetadataReaderLib.sol";
 import "./utils/MinHeapLib.sol";
-import "./utils/Multicallable.sol";
 import "./utils/RedBlackTreeLib.sol";
 import "./utils/SSTORE2.sol";
 import "./utils/SafeCastLib.sol";

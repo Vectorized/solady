@@ -4,6 +4,14 @@ pragma solidity ^0.8.4;
 /// @notice Contract that enables a single call to call multiple methods on itself.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Multicallable.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
+///
+/// WARNING! Do NOT use this mixin with ERC-2771, Clones With Immutable Args,
+/// or any other pattern that appends extra data to the back of the calldata.
+/// For simplicity and performance reasons
+///
+/// Use https://github.com/Vectorized/multicaller instead:
+/// it allows propagation of `msg.sender` or signer without dangerous emergent effects.
+/// It is also way more flexible, allowing you to multicall across multiple contracts.
 abstract contract Multicallable {
     /// @dev Apply `DELEGATECALL` with the current contract to each calldata in `data`,
     /// and store the `abi.encode` formatted results of each `DELEGATECALL` into `results`.
