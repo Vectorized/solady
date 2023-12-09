@@ -113,7 +113,6 @@ library LibZip {
     function flzDecompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := 0
             let end := add(add(data, 0x20), mload(data))
             result := mload(0x40)
             let op := add(result, 0x20)
@@ -122,31 +121,29 @@ library LibZip {
                 let c := byte(0, w)
                 let t := shr(5, c)
                 if iszero(t) {
-                    mstore(add(op, n), mload(add(data, 1)))
+                    mstore(op, mload(add(data, 1)))
                     data := add(data, add(2, c))
-                    n := add(n, add(1, c))
+                    op := add(op, add(1, c))
                     continue
                 }
                 let g := eq(t, 7)
-                let l := add(2, xor(t, mul(g, xor(t, add(7, byte(1, w))))))
+                let l := add(2, xor(t, mul(g, xor(t, add(7, byte(1, w)))))) // M
                 for {
-                    let s := add(add(shl(8, and(0x1f, c)), byte(add(1, g), w)), 1)
-                    let r := add(op, sub(n, s))
-                    let o := add(op, n)
+                    let s := add(add(shl(8, and(0x1f, c)), byte(add(1, g), w)), 1) // R
+                    let r := sub(op, s)
                     let f := xor(s, mul(gt(s, 0x20), xor(s, 0x20)))
                     let j := 0
                 } 1 {} {
-                    mstore(add(o, j), mload(add(r, j)))
+                    mstore(add(op, j), mload(add(r, j)))
                     j := add(j, f)
                     if iszero(lt(j, l)) { break }
                 }
                 data := add(data, add(2, g))
-                n := add(n, l)
+                op := add(op, l)
             }
-            mstore(result, n) // Store the length.
-            let o := add(add(result, 0x20), n)
-            mstore(o, 0) // Zeroize the slot after the string.
-            mstore(0x40, add(o, 0x20)) // Allocate the memory.
+            mstore(result, sub(op, add(result, 0x20))) // Store the length.
+            mstore(op, 0) // Zeroize the slot after the string.
+            mstore(0x40, add(op, 0x20)) // Allocate the memory.
         }
     }
 
