@@ -299,11 +299,18 @@ contract ERC6909Test is SoladyTest {
         amount1 = _bound(amount1, type(uint256).max - amount0 + 1, type(uint256).max);
 
         token.mint(address(this), id, amount0);
+        if (to == address(this)) to = address(uint160(to) ^ 1);
         token.transfer(to, id, amount0);
         token.mint(address(this), id, amount1);
 
         vm.expectRevert(ERC6909.BalanceOverflow.selector);
         token.transfer(to, id, amount1);
+    }
+
+    function testZZZ() public {
+        this.testTransferOverMaxUintReverts(
+            0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496, 13167, 161, 160
+        );
     }
 
     function testTransferInsufficientBalanceReverts(
