@@ -9,8 +9,11 @@ library LibString {
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The `length` of the output is too small to contain all the hex digits.
+    /// @dev The length of the output is too small to contain all the hex digits.
     error HexLengthInsufficient();
+
+    /// @dev The length of the string is more than 32 bytes.
+    error TooBigForSmallString();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -141,9 +144,7 @@ library LibString {
             }
 
             if temp {
-                // Store the function selector of `HexLengthInsufficient()`.
-                mstore(0x00, 0x2194895a)
-                // Revert with (offset, size).
+                mstore(0x00, 0x2194895a) // `HexLengthInsufficient()`.
                 revert(0x1c, 0x04)
             }
 
@@ -907,20 +908,40 @@ library LibString {
     /// @dev Returns a string from a small bytes32 string.
     /// `smallString` must be null terminated, or behavior will be undefined.
     function fromSmallString(bytes32 smallString) internal pure returns (string memory result) {
-        if (smallString == bytes32(0)) return result;
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
             let n := 0
-            for {} 1 {} {
-                n := add(n, 1)
-                if iszero(byte(n, smallString)) { break } // Scan for '\0'.
-            }
+            for {} byte(n, smallString) { n := add(n, 1) } {} // Scan for '\0'.
             mstore(result, n)
             let o := add(result, 0x20)
             mstore(o, smallString)
             mstore(add(o, n), 0)
             mstore(0x40, add(result, 0x40))
+        }
+    }
+
+    /// @dev Returns the small string, with all bytes after the first null byte zeroized.
+    function normalizeSmallString(bytes32 smallString) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} byte(result, smallString) { result := add(result, 1) } {} // Scan for '\0'.
+            mstore(0x00, smallString)
+            mstore(result, 0x00)
+            result := mload(0x00)
+        }
+    }
+
+    /// @dev Returns the string as a null-terminated small string which fits in 32 bytes.
+    function toSmallString(string memory s) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(s)
+            if iszero(lt(result, 33)) {
+                mstore(0x00, 0xec92f9a3) // `TooBigForSmallString()`.
+                revert(0x1c, 0x04)
+            }
+            result := shl(shl(3, sub(32, result)), mload(add(s, result)))
         }
     }
 
