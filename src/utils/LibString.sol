@@ -906,27 +906,27 @@ library LibString {
     }
 
     /// @dev Returns a string from a small bytes32 string.
-    /// `smallString` must be null-terminated, or behavior will be undefined.
-    function fromSmallString(bytes32 smallString) internal pure returns (string memory result) {
+    /// `s` must be null-terminated, or behavior will be undefined.
+    function fromSmallString(bytes32 s) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
             let n := 0
-            for {} byte(n, smallString) { n := add(n, 1) } {} // Scan for '\0'.
+            for {} byte(n, s) { n := add(n, 1) } {} // Scan for '\0'.
             mstore(result, n)
             let o := add(result, 0x20)
-            mstore(o, smallString)
+            mstore(o, s)
             mstore(add(o, n), 0)
             mstore(0x40, add(result, 0x40))
         }
     }
 
     /// @dev Returns the small string, with all bytes after the first null byte zeroized.
-    function normalizeSmallString(bytes32 smallString) internal pure returns (bytes32 result) {
+    function normalizeSmallString(bytes32 s) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            for {} byte(result, smallString) { result := add(result, 1) } {} // Scan for '\0'.
-            mstore(0x00, smallString)
+            for {} byte(result, s) { result := add(result, 1) } {} // Scan for '\0'.
+            mstore(0x00, s)
             mstore(result, 0x00)
             result := mload(0x00)
         }
@@ -1065,7 +1065,7 @@ library LibString {
     }
 
     /// @dev Returns whether `a` equals `b`. For small strings up to 32 bytes.
-    /// `b` must be null terminated and normalized, or behavior will be undefined.
+    /// `b` must be null-terminated and normalized, or behavior will be undefined.
     /// See: `normalizeSmallString`.
     function eqs(string memory a, bytes32 b) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
