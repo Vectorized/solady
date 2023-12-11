@@ -906,7 +906,7 @@ library LibString {
     }
 
     /// @dev Returns a string from a small bytes32 string.
-    /// `smallString` must be null terminated, or behavior will be undefined.
+    /// `smallString` must be null-terminated, or behavior will be undefined.
     function fromSmallString(bytes32 smallString) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -932,7 +932,7 @@ library LibString {
         }
     }
 
-    /// @dev Returns the string as a null-terminated small string which fits in 32 bytes.
+    /// @dev Returns the string as a normalized null-terminated small string.
     function toSmallString(string memory s) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -1065,7 +1065,8 @@ library LibString {
     }
 
     /// @dev Returns whether `a` equals `b`. For small strings up to 32 bytes.
-    /// `b` must be null terminated, or behavior will be undefined.
+    /// `b` must be null terminated and normalized, or behavior will be undefined.
+    /// See: `normalizeSmallString`.
     function eqs(string memory a, bytes32 b) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {

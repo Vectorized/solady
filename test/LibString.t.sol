@@ -1272,7 +1272,9 @@ contract LibStringTest is SoladyTest {
 
     function testNormalizeSmallString(bytes32 x) public {
         string memory y = LibString.fromSmallString(x);
-        assertEq(LibString.toSmallString(y), LibString.normalizeSmallString(x));
+        bytes32 normalized = LibString.normalizeSmallString(x);
+        assertEq(LibString.toSmallString(y), normalized);
+        assertTrue(LibString.eqs(y, normalized));
     }
 
     function testToSmallString() public {
