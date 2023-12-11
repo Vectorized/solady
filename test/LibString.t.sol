@@ -1249,6 +1249,51 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.fromSmallString(bytes32("Hello world!")), "Hello world!");
     }
 
+    function testNormalizeSmallString() public {
+        bytes32 x;
+        bytes32 y;
+        assertEq(LibString.normalizeSmallString(x), y);
+        x = 0x1100000000000000000000000000000000000000000000000000000000000000;
+        y = 0x1100000000000000000000000000000000000000000000000000000000000000;
+        assertEq(LibString.normalizeSmallString(x), y);
+        x = 0x1100ff0000000000000000000000000000000000000000000000000000000000;
+        y = 0x1100000000000000000000000000000000000000000000000000000000000000;
+        assertEq(LibString.normalizeSmallString(x), y);
+        x = 0x1122ff0000000000000000000000000000000000000000000000000000000000;
+        y = 0x1122ff0000000000000000000000000000000000000000000000000000000000;
+        assertEq(LibString.normalizeSmallString(x), y);
+        x = 0x00000000000000000000000000000000000000000000000000000000000000ff;
+        y = 0x0000000000000000000000000000000000000000000000000000000000000000;
+        assertEq(LibString.normalizeSmallString(x), y);
+        x = 0x00ff0000000000000000000000000000000000000000000000000000000000ff;
+        y = 0x0000000000000000000000000000000000000000000000000000000000000000;
+        assertEq(LibString.normalizeSmallString(x), y);
+    }
+
+    function testNormalizeSmallString(bytes32 x) public {
+        string memory y = LibString.fromSmallString(x);
+        bytes32 normalized = LibString.normalizeSmallString(x);
+        assertEq(LibString.toSmallString(y), normalized);
+        assertTrue(LibString.eqs(y, normalized));
+    }
+
+    function testToSmallString() public {
+        assertEq(LibString.toSmallString(""), "");
+        assertEq(LibString.toSmallString("a"), "a");
+        assertEq(LibString.toSmallString("ab"), "ab");
+        assertEq(LibString.toSmallString("abc"), "abc");
+        assertEq(
+            LibString.toSmallString("1234567890123456789012345678901"),
+            "1234567890123456789012345678901"
+        );
+        assertEq(
+            LibString.toSmallString("12345678901234567890123456789012"),
+            "12345678901234567890123456789012"
+        );
+        vm.expectRevert(LibString.TooBigForSmallString.selector);
+        LibString.toSmallString("123456789012345678901234567890123");
+    }
+
     function _lowerOriginal(string memory subject) internal pure returns (string memory result) {
         unchecked {
             uint256 n = bytes(subject).length;
