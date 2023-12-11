@@ -69,6 +69,14 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Equivalent to `(x * y) / WAD` rounded down, but without overflow checks.
+    function rawMulWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := div(mul(x, y), WAD)
+        }
+    }
+
     /// @dev Equivalent to `(x * y) / WAD` rounded up.
     function mulWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
@@ -78,6 +86,14 @@ library FixedPointMathLib {
                 mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
                 revert(0x1c, 0x04)
             }
+            z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
+        }
+    }
+
+    /// @dev Equivalent to `(x * y) / WAD` rounded up, but without overflow checks.
+    function rawMulWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
             z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
         }
     }
@@ -95,6 +111,14 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Equivalent to `(x * WAD) / y` rounded down, but without overflow and divide by zero checks.
+    function rawDivWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := div(mul(x, WAD), y)
+        }
+    }
+
     /// @dev Equivalent to `(x * WAD) / y` rounded up.
     function divWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
@@ -104,6 +128,14 @@ library FixedPointMathLib {
                 mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
                 revert(0x1c, 0x04)
             }
+            z := add(iszero(iszero(mod(mul(x, WAD), y))), div(mul(x, WAD), y))
+        }
+    }
+
+    /// @dev Equivalent to `(x * WAD) / y` rounded up, but without overflow and divide by zero checks.
+    function rawDivWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
             z := add(iszero(iszero(mod(mul(x, WAD), y))), div(mul(x, WAD), y))
         }
     }
