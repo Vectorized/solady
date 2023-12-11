@@ -111,8 +111,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Equivalent to `(x * WAD) / y` rounded down,
-    /// but without overflow and divide by zero checks.
+    /// @dev Equivalent to `(x * WAD) / y` rounded down, but without overflow and divide by zero checks.
     function rawDivWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -133,8 +132,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Equivalent to `(x * WAD) / y` rounded up,
-    /// but without overflow and divide by zero checks.
+    /// @dev Equivalent to `(x * WAD) / y` rounded up, but without overflow and divide by zero checks.
     function rawDivWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
