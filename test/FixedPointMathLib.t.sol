@@ -379,7 +379,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 int256 q = ll * _WAD;
                 int256 lower = l - ll + q / (2 * l);
                 if (x > _EXP + 4) {
-                    assertLt(lower, w + 1);    
+                    assertLt(lower, w + 1);
                 } else {
                     assertLt(lower, w + 2);
                 }
@@ -392,9 +392,9 @@ contract FixedPointMathLibTest is SoladyTest {
     function testLambertW0WadWithinBounds() public {
         unchecked {
             for (int256 i = -10; i != 20; ++i) {
-                testLambertW0WadWithinBounds(_EXP + i);    
+                testLambertW0WadWithinBounds(_EXP + i);
             }
-            testLambertW0WadWithinBounds(type(int256).max);    
+            testLambertW0WadWithinBounds(type(int256).max);
         }
     }
 
