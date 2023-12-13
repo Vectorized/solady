@@ -291,63 +291,58 @@ library FixedPointMathLib {
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
-        if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-        uint256 c; // Whether we need to avoid catastrophic cancellation.
-        uint256 i = 4; // Number of iterations.
-        if (w <= 0x1ffffffffffff) {
-            if (-0x4000000000000 <= w) {
-                i = 1; // Inputs near zero only take one step to converge.
-            } else if (w <= -0x3ffffffffffffff) {
-                i = 32; // Inputs near `-1/e` take very long to converge.
-            }
-        } else if (w >> 63 == 0) {
-            /// @solidity memory-safe-assembly
-            assembly {
-                // Inline log2 for more performance, since the range is small.
-                let v := shr(49, w)
-                let l := shl(3, lt(0xff, v))
-                // forgefmt: disable-next-item
-                l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
-                    0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
-                w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
-                c := gt(l, 60)
-                i := add(2, add(gt(l, 53), c))
-            }
-        } else {
-            // `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
-            int256 ll = lnWad(w = lnWad(w));
-            /// @solidity memory-safe-assembly
-            assembly {
-                w := add(sdiv(mul(ll, 1023715080943847266), w), sub(w, ll))
-                i := add(3, iszero(shr(68, x)))
-                c := iszero(shr(143, x))
-            }
-            if (c == 0) {
-                int256 wad = int256(WAD);
-                int256 p = x;
-                // If `x` is big, use Newton's so that intermediate values won't overflow.
-                do {
-                    int256 e = expWad(w);
-                    /// @solidity memory-safe-assembly
-                    assembly {
-                        let t := mul(w, div(e, wad))
-                        w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
-                        i := sub(i, 1)
-                    }
-                    if (p <= w) break;
-                    p = w;
-                } while (i != 0);
-                /// @solidity memory-safe-assembly
-                assembly {
-                    w := sub(w, sgt(w, 2))
-                }
-                return w;
-            }
-        }
         // forgefmt: disable-next-item
         unchecked {
+            if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
             int256 wad = int256(WAD);
             int256 p = x;
+            uint256 c; // Whether we need to avoid catastrophic cancellation.
+            uint256 i = 4; // Number of iterations.
+            if (w <= 0x1ffffffffffff) {
+                if (-0x4000000000000 <= w) {
+                    i = 1; // Inputs near zero only take one step to converge.
+                } else if (w <= -0x3ffffffffffffff) {
+                    i = 32; // Inputs near `-1/e` take very long to converge.
+                }
+            } else if (w >> 63 == 0) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    // Inline log2 for more performance, since the range is small.
+                    let v := shr(49, w)
+                    let l := shl(3, lt(0xff, v))
+                    l := add(or(l, byte(and(0x1f, shr(shr(l, v), 0x8421084210842108cc6318c6db6d54be)),
+                        0x0706060506020504060203020504030106050205030304010505030400000000)), 49)
+                    w := sdiv(shl(l, 7), byte(sub(l, 31), 0x0303030303030303040506080c13))
+                    c := gt(l, 60)
+                    i := add(2, add(gt(l, 53), c))
+                }
+            } else {
+                int256 ll = lnWad(w = lnWad(w));
+                /// @solidity memory-safe-assembly
+                assembly {
+                    // `w = ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
+                    w := add(sdiv(mul(ll, 1023715080943847266), w), sub(w, ll))
+                    i := add(3, iszero(shr(68, x)))
+                    c := iszero(shr(143, x))
+                }
+                if (c == 0) {
+                    do { // If `x` is big, use Newton's so that intermediate values won't overflow.
+                        int256 e = expWad(w);
+                        /// @solidity memory-safe-assembly
+                        assembly {
+                            let t := mul(w, div(e, wad))
+                            w := sub(w, sdiv(sub(t, x), div(add(e, t), wad)))
+                        }
+                        if (p <= w) break;
+                        p = w;
+                    } while (--i != 0);
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        w := sub(w, sgt(w, 2))
+                    }
+                    return w;
+                }
+            }
             do { // Otherwise, use Halley's for faster convergence.
                 int256 e = expWad(w);
                 /// @solidity memory-safe-assembly
@@ -366,15 +361,15 @@ library FixedPointMathLib {
             // For certain ranges of `x`, we'll use the quadratic-rate recursive formula of
             // R. Iacono and J.P. Boyd for the last iteration, to avoid catastrophic cancellation.
             if (c != 0) {
+                int256 t = w | 1;
                 /// @solidity memory-safe-assembly
                 assembly {
-                    w := or(w, 1)
-                    x := sdiv(mul(x, wad), w)
+                    x := sdiv(mul(x, wad), t)
                 }
-                x = (w * (wad + lnWad(x)));
+                x = (t * (wad + lnWad(x)));
                 /// @solidity memory-safe-assembly
                 assembly {
-                    w := sdiv(x, add(wad, w))
+                    w := sdiv(x, add(wad, t))
                 }
             }
         }
