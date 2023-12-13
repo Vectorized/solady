@@ -368,6 +368,7 @@ library FixedPointMathLib {
             if (c != 0) {
                 /// @solidity memory-safe-assembly
                 assembly {
+                    w := or(w, 1)
                     x := sdiv(mul(x, wad), w)
                 }
                 x = (w * (wad + lnWad(x)));
