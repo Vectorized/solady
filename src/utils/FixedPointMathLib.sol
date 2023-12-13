@@ -317,10 +317,10 @@ library FixedPointMathLib {
                     i := add(2, add(gt(l, 53), c))
                 }
             } else {
-                // `ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
                 int256 ll = lnWad(w = lnWad(w));
                 /// @solidity memory-safe-assembly
                 assembly {
+                    // `w = ln(x) - ln(ln(x)) + b * ln(ln(x)) / ln(x)`.
                     w := add(sdiv(mul(ll, 1023715080943847266), w), sub(w, ll))
                     i := add(3, iszero(shr(68, x)))
                     c := iszero(shr(143, x))
