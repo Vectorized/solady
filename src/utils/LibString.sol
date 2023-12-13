@@ -4,6 +4,12 @@ pragma solidity ^0.8.4;
 /// @notice Library for converting numbers into strings and other string operations.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibString.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibString.sol)
+///
+/// Note:
+/// For performance and bytecode compactness, most of the string operations are restricted to
+/// byte strings (7-bit ASCII), except where otherwise specified.
+/// Usage of byte string operations on charsets with runes spanning two or more bytes
+/// can lead to undefined behavior.
 library LibString {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
@@ -404,8 +410,10 @@ library LibString {
     /*                   BYTE STRING OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // For performance and bytecode compactness, all indices of the following operations
-    // are byte (ASCII) offsets, not UTF character offsets.
+    // For performance and bytecode compactness, byte string operations are restricted
+    // to 7-bit ASCII strings. All offsets are byte offsets, not UTF character offsets.
+    // Usage of byte string operations on charsets with runes spanning two or more bytes
+    // can lead to undefined behavior.
 
     /// @dev Returns `subject` all occurrences of `search` replaced with `replacement`.
     function replace(string memory subject, string memory search, string memory replacement)
