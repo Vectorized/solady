@@ -366,15 +366,15 @@ library FixedPointMathLib {
             // For certain ranges of `x`, we'll use the quadratic-rate recursive formula of
             // R. Iacono and J.P. Boyd for the last iteration, to avoid catastrophic cancellation.
             if (c != 0) {
+                int256 t = w | 1;
                 /// @solidity memory-safe-assembly
                 assembly {
-                    w := or(w, 1)
-                    x := sdiv(mul(x, wad), w)
+                    x := sdiv(mul(x, wad), t)
                 }
-                x = (w * (wad + lnWad(x)));
+                x = (t * (wad + lnWad(x)));
                 /// @solidity memory-safe-assembly
                 assembly {
-                    w := sdiv(x, add(wad, w))
+                    w := sdiv(x, add(wad, t))
                 }
             }
         }
