@@ -6,7 +6,8 @@ import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
 contract FixedPointMathLibTest is SoladyTest {
     function testExpWad() public {
-        assertEq(FixedPointMathLib.expWad(-42139678854452767551), 0);
+        assertEq(FixedPointMathLib.expWad(-41446531673892822312), 1);
+        assertEq(FixedPointMathLib.expWad(-41446531673892822313), 0);
 
         assertEq(FixedPointMathLib.expWad(-3e18), 49787068367863942);
         assertEq(FixedPointMathLib.expWad(-2e18), 135335283236612691);
