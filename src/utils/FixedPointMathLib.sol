@@ -275,12 +275,12 @@ library FixedPointMathLib {
             // The q polynomial is known not to have zeros in the domain.
             // No scaling required because p is already `2**96` too large.
             r := sdiv(p, q)
-            // Multiply by the scaling factor: `s * 5e18 * 2**96`, base is now `5**18 * 2**192`.
+            // Multiply by the scaling factor: `s * 5**18 * 2**96`, base is now `5**18 * 2**192`.
             r := mul(1677202110996718588342820967067443963516166, r)
-            // Add `ln(2) * k * 5e18 * 2**192`.
+            // Add `ln(2) * k * 5**18 * 2**192`.
             // forgefmt: disable-next-item
             r := add(mul(16597577552685614221487285958193947469193820559219878177908093499208371, sub(159, t)), r)
-            // Add `ln(2**96 / 10**18) * 5e18 * 2**192`.
+            // Add `ln(2**96 / 10**18) * 5**18 * 2**192`.
             r := add(600920179829731861736702779321621459595472258049074101567377883020018308, r)
             // Base conversion: mul `2**18 / 2**192`.
             r := sar(174, r)
