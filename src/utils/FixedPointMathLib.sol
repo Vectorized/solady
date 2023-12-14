@@ -153,7 +153,7 @@ library FixedPointMathLib {
         unchecked {
             // When the result is less than 0.5 we return zero.
             // This happens when `x <= floor(log(0.5e18) * 1e18) ≈ -42e18`.
-            if (x <= -42139678854452767551) return r;
+            if (x <= -41446531673892822313) return r;
 
             /// @solidity memory-safe-assembly
             assembly {
