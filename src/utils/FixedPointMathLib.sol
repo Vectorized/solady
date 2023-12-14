@@ -395,10 +395,10 @@ library FixedPointMathLib {
                 // variables such that `product = p1 * 2**256 + p0`.
 
                 // Least significant 256 bits of the product.
-                let p0 := mul(x, y)
+                result := mul(x, y) // Temporarily use `result` as `p0` to save gas.
                 let mm := mulmod(x, y, not(0))
                 // Most significant 256 bits of the product.
-                let p1 := sub(mm, add(p0, lt(mm, p0)))
+                let p1 := sub(mm, add(result, lt(mm, result)))
 
                 // Handle non-overflow cases, 256 by 256 division.
                 if iszero(p1) {
@@ -406,7 +406,7 @@ library FixedPointMathLib {
                         mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                         revert(0x1c, 0x04)
                     }
-                    result := div(p0, d)
+                    result := div(result, d)
                     break
                 }
 
@@ -431,7 +431,7 @@ library FixedPointMathLib {
                 // modulo `2**256` such that `d * inv = 1 mod 2**256`.
                 // Compute the inverse by starting with a seed that is correct
                 // correct for four bits. That is, `d * inv = 1 mod 2**4`.
-                let inv := xor(mul(3, d), 2)
+                let inv := xor(2, mul(3, d))
                 // Now use Newton-Raphson iteration to improve the precision.
                 // Thanks to Hensel's lifting lemma, this also works in modular
                 // arithmetic, doubling the correct bits in each step.
@@ -445,7 +445,10 @@ library FixedPointMathLib {
                         // Divide [p1 p0] by the factors of two.
                         // Shift in bits from `p1` into `p0`. For this we need
                         // to flip `t` such that it is `2**256 / t`.
-                        or(mul(sub(p1, gt(r, p0)), add(div(sub(0, t), t), 1)), div(sub(p0, r), t)),
+                        or(
+                            mul(sub(p1, gt(r, result)), add(div(sub(0, t), t), 1)),
+                            div(sub(result, r), t)
+                        ),
                         // inverse mod 2**256
                         mul(inv, sub(2, mul(d, inv)))
                     )
