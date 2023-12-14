@@ -148,6 +148,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `exp(x)`, denominated in `WAD`.
+    /// Credit to Remco Bloemen under MIT license: https://2π.com/21/exp-ln
     function expWad(int256 x) internal pure returns (int256 r) {
         unchecked {
             // When the result is less than 0.5 we return zero.
@@ -216,6 +217,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `ln(x)`, denominated in `WAD`.
+    /// Credit to Remco Bloemen under MIT license: https://2π.com/21/exp-ln
     function lnWad(int256 x) internal pure returns (int256 r) {
         /// @solidity memory-safe-assembly
         assembly {
