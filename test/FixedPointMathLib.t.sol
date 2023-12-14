@@ -611,10 +611,6 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.mulWad(0, 0), 0);
     }
 
-    function testZZZ() public {
-        emit LogInt("X", FixedPointMathLib.lnWad(0.5e18));
-    }
-
     function testMulWadUp() public {
         assertEq(FixedPointMathLib.mulWadUp(2.5e18, 0.5e18), 1.25e18);
         assertEq(FixedPointMathLib.mulWadUp(3e18, 1e18), 3e18);
