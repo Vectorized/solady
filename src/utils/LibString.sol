@@ -1072,20 +1072,21 @@ library LibString {
         }
     }
 
-    /// @dev Returns whether `a` equals `b`. For small strings up to 32 bytes.
-    /// `b` must be null-terminated and normalized, or behavior will be undefined.
-    /// See: `normalizeSmallString`.
+    /// @dev Returns whether `a` equals `b`, where `b` is a null-terminated small string.
     function eqs(string memory a, bytes32 b) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
             // These should be evaluated on compile time, as far as possible.
-            let x := and(b, add(not(b), 1))
-            let r := or(shl(8, iszero(b)), shl(7, iszero(iszero(shr(128, x)))))
+            let m := not(shl(7, div(not(iszero(b)), 255))) // `0x7f7f ...`.
+            let x := not(or(m, or(b, add(m, and(b, m)))))
+            let r := shl(7, iszero(iszero(shr(128, x))))
             r := or(r, shl(6, iszero(iszero(shr(64, shr(r, x))))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
-            result := gt(eq(mload(a), sub(32, shr(3, r))), shr(r, xor(b, mload(add(a, 0x20)))))
+            // forgefmt: disable-next-item
+            result := gt(eq(mload(a), add(iszero(x), xor(31, shr(3, r)))),
+                xor(shr(add(8, r), b), shr(add(8, r), mload(add(a, 0x20)))))
         }
     }
 
