@@ -95,7 +95,7 @@ library LibBit {
         assembly {
             r := or(shl(128, x), shr(128, x))
             // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-            let m := or(shr(192, not(0)), shl(128, shr(192, not(0))))
+            let m := or(shr(192, not(0)), shl(128, shr(192, not(iszero(x)))))
             r := or(and(shr(64, r), m), shl(64, and(m, r)))
             m := xor(m, shl(32, m))
             r := or(and(shr(32, r), m), shl(32, and(m, r)))
