@@ -91,38 +91,29 @@ library LibBit {
 
     /// @dev Returns `x` reversed at the bit level.
     function reverseBits(uint256 x) internal pure returns (uint256 r) {
-        r = (x >> 128) | (x << 128);
-        // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-        x = ~toUint(x == 0) >> 192;
-        x |= x << 128;
-        r = (x & (r >> 64)) | ((x & r) << 64);
-        x ^= x << 32;
-        r = (x & (r >> 32)) | ((x & r) << 32);
-        x ^= x << 16;
-        r = (x & (r >> 16)) | ((x & r) << 16);
-        x ^= x << 8;
-        r = (x & (r >> 8)) | ((x & r) << 8);
-        x ^= x << 4;
-        r = (x & (r >> 4)) | ((x & r) << 4);
-        x ^= x << 2;
-        r = (x & (r >> 2)) | ((x & r) << 2);
-        x ^= x << 1;
-        r = (x & (r >> 1)) | ((x & r) << 1);
+        uint256 m0 = 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f;
+        uint256 m1 = m0 ^ (m0 << 2);
+        uint256 m2 = m1 ^ (m1 << 1);
+        r = reverseBytes(x);
+        r = (m2 & (r >> 1)) | ((m2 & r) << 1);
+        r = (m1 & (r >> 2)) | ((m1 & r) << 2);
+        r = (m0 & (r >> 4)) | ((m0 & r) << 4);
     }
 
     /// @dev Returns `x` reversed at the byte level.
     function reverseBytes(uint256 x) internal pure returns (uint256 r) {
-        r = (x << 128) | (x >> 128);
-        // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-        x = ~toUint(x == 0) >> 192;
-        x |= x << 128;
-        r = (x & (r >> 64)) | ((x & r) << 64);
-        x ^= x << 32;
-        r = (x & (r >> 32)) | ((x & r) << 32);
-        x ^= x << 16;
-        r = (x & (r >> 16)) | ((x & r) << 16);
-        x ^= x << 8;
-        r = (x & (r >> 8)) | ((x & r) << 8);
+        unchecked {
+            // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
+            uint256 m0 = 0x100000000000000000000000000000001 * (~toUint(x == 0) >> 192);
+            uint256 m1 = m0 ^ (m0 << 32);
+            uint256 m2 = m1 ^ (m1 << 16);
+            uint256 m3 = m2 ^ (m2 << 8);
+            r = (m3 & (x >> 8)) | ((m3 & x) << 8);
+            r = (m2 & (r >> 16)) | ((m2 & r) << 16);
+            r = (m1 & (r >> 32)) | ((m1 & r) << 32);
+            r = (m0 & (r >> 64)) | ((m0 & r) << 64);
+            r = (r >> 128) | (r << 128);
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
