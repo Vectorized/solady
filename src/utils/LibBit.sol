@@ -92,22 +92,22 @@ library LibBit {
     /// @dev Returns `x` reversed at the bit level.
     function reverseBits(uint256 x) internal pure returns (uint256 r) {
         unchecked {
-            r = (x >> 128) | (x << 128);
+            r = (x << 128) | (x >> 128);
             // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
             x = 0x100000000000000000000000000000001 * (~toUint(x == 0) >> 192);
-            r = (x & (r >> 64)) | ((x & r) << 64);
+            r = ((x & r) << 64) | (x & (r >> 64));
             x ^= x << 32;
-            r = (x & (r >> 32)) | ((x & r) << 32);
+            r = ((x & r) << 32) | (x & (r >> 32));
             x ^= x << 16;
-            r = (x & (r >> 16)) | ((x & r) << 16);
+            r = ((x & r) << 16) | (x & (r >> 16));
             x ^= x << 8;
-            r = (x & (r >> 8)) | ((x & r) << 8);
+            r = ((x & r) << 8) | (x & (r >> 8));
             x ^= x << 4;
-            r = (x & (r >> 4)) | ((x & r) << 4);
+            r = ((x & r) << 4) | (x & (r >> 4));
             x ^= x << 2;
-            r = (x & (r >> 2)) | ((x & r) << 2);
+            r = ((x & r) << 2) | (x & (r >> 2));
             x ^= x << 1;
-            r = (x & (r >> 1)) | ((x & r) << 1);
+            r = ((x & r) << 1) | (x & (r >> 1));
         }
     }
 
@@ -123,7 +123,7 @@ library LibBit {
             r = (m2 & (r >> 16)) | ((m2 & r) << 16);
             r = (m1 & (r >> 32)) | ((m1 & r) << 32);
             r = (m0 & (r >> 64)) | ((m0 & r) << 64);
-            r = (r << 128) | (r >> 128);
+            r = (r >> 128) | (r << 128);
         }
     }
 
