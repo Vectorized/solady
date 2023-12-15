@@ -109,15 +109,16 @@ library LibBit {
     function reverseBytes(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
+            r := or(shl(128, x), shr(128, x))
             // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-            let m := not(0)
-            r := x
-            for { let s := 128 } 1 {} {
-                m := xor(m, shl(s, m))
-                r := or(and(shr(s, r), m), and(shl(s, r), not(m)))
-                s := shr(1, s)
-                if eq(s, 4) { break }
-            }
+            let m := or(shr(192, not(0)), shl(128, shr(192, not(iszero(x)))))
+            r := or(and(shr(64, r), m), shl(64, and(m, r)))
+            m := xor(m, shl(32, m))
+            r := or(and(shr(32, r), m), shl(32, and(m, r)))
+            m := xor(m, shl(16, m))
+            r := or(and(shr(16, r), m), shl(16, and(m, r)))
+            m := xor(m, shl(8, m))
+            r := or(and(shr(8, r), m), shl(8, and(m, r)))
         }
     }
 
