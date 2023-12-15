@@ -91,42 +91,37 @@ library LibBit {
 
     /// @dev Returns `x` reversed at the bit level.
     function reverseBits(uint256 x) internal pure returns (uint256 r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r := or(shl(128, x), shr(128, x))
-            // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-            let m := or(shr(192, not(0)), shl(128, shr(192, not(iszero(x)))))
-            r := or(and(shr(64, r), m), shl(64, and(m, r)))
-            m := xor(m, shl(32, m))
-            r := or(and(shr(32, r), m), shl(32, and(m, r)))
-            m := xor(m, shl(16, m))
-            r := or(and(shr(16, r), m), shl(16, and(m, r)))
-            m := xor(m, shl(8, m))
-            r := or(and(shr(8, r), m), shl(8, and(m, r)))
-            m := xor(m, shl(4, m))
-            r := or(and(shr(4, r), m), shl(4, and(m, r)))
-            m := xor(m, shl(2, m))
-            r := or(and(shr(2, r), m), shl(2, and(m, r)))
-            m := xor(m, shl(1, m))
-            r := or(and(shr(1, r), m), shl(1, and(m, r)))
-        }
+        r = (x << 128) | (x >> 128);
+        // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
+        x = ~toUint(x == 0) >> 192;
+        x |= x << 128;
+        r = (x & (r >> 64)) | ((x & r) << 64);
+        x ^= x << 32;
+        r = (x & (r >> 32)) | ((x & r) << 32);
+        x ^= x << 16;
+        r = (x & (r >> 16)) | ((x & r) << 16);
+        x ^= x << 8;
+        r = (x & (r >> 8)) | ((x & r) << 8);
+        x ^= x << 4;
+        r = (x & (r >> 4)) | ((x & r) << 4);
+        x ^= x << 2;
+        r = (x & (r >> 2)) | ((x & r) << 2);
+        x ^= x << 1;
+        r = (x & (r >> 1)) | ((x & r) << 1);
     }
 
     /// @dev Returns `x` reversed at the byte level.
     function reverseBytes(uint256 x) internal pure returns (uint256 r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r := or(shl(128, x), shr(128, x))
-            // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-            let m := or(shr(192, not(0)), shl(128, shr(192, not(iszero(x)))))
-            r := or(and(shr(64, r), m), shl(64, and(m, r)))
-            m := xor(m, shl(32, m))
-            r := or(and(shr(32, r), m), shl(32, and(m, r)))
-            m := xor(m, shl(16, m))
-            r := or(and(shr(16, r), m), shl(16, and(m, r)))
-            m := xor(m, shl(8, m))
-            r := or(and(shr(8, r), m), shl(8, and(m, r)))
-        }
+        r = (x << 128) | (x >> 128);
+        // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
+        uint256 m = 0xffffffffffffffff | ((~toUint(x == 0) >> 192) << 128);
+        r = (m & (r >> 64)) | ((m & r) << 64);
+        m ^= m << 32;
+        r = (m & (r >> 32)) | ((m & r) << 32);
+        m ^= m << 16;
+        r = (m & (r >> 16)) | ((m & r) << 16);
+        m ^= m << 8;
+        r = (m & (r >> 8)) | ((m & r) << 8);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
