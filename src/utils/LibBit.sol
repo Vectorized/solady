@@ -91,7 +91,7 @@ library LibBit {
 
     /// @dev Returns `x` reversed at the bit level.
     function reverseBits(uint256 x) internal pure returns (uint256 r) {
-        r = (x << 128) | (x >> 128);
+        r = (x >> 128) | (x << 128);
         // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
         x = ~toUint(x == 0) >> 192;
         x |= x << 128;
@@ -114,14 +114,15 @@ library LibBit {
     function reverseBytes(uint256 x) internal pure returns (uint256 r) {
         r = (x << 128) | (x >> 128);
         // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-        uint256 m = 0xffffffffffffffff | ((~toUint(x == 0) >> 192) << 128);
-        r = (m & (r >> 64)) | ((m & r) << 64);
-        m ^= m << 32;
-        r = (m & (r >> 32)) | ((m & r) << 32);
-        m ^= m << 16;
-        r = (m & (r >> 16)) | ((m & r) << 16);
-        m ^= m << 8;
-        r = (m & (r >> 8)) | ((m & r) << 8);
+        x = ~toUint(x == 0) >> 192;
+        x |= x << 128;
+        r = (x & (r >> 64)) | ((x & r) << 64);
+        x ^= x << 32;
+        r = (x & (r >> 32)) | ((x & r) << 32);
+        x ^= x << 16;
+        r = (x & (r >> 16)) | ((x & r) << 16);
+        x ^= x << 8;
+        r = (x & (r >> 8)) | ((x & r) << 8);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
