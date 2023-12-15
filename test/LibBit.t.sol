@@ -179,6 +179,17 @@ contract LibBitTest is SoladyTest {
         assertEq(LibBit.rawToUint(b), z);
     }
 
+    function testReverseBits() public {
+        uint256 x = 0xf2e857a5b8e3fec9f9c60ae71ba63813c96741bc837169cf0f29f113ede5956f;
+        uint256 r = 0xf6a9a7b7c88f94f0f3968ec13d82e693c81c65d8e750639f937fc71da5ea174f;
+        assertEq(LibBit.reverseBits(x), r);
+        unchecked {
+            for (uint256 i; i < 256; ++i) {
+                assertEq(LibBit.reverseBits(1 << i), (1 << 255) >> i);
+            }
+        }
+    }
+
     function testReverseBitsDifferential(uint256 x) public {
         assertEq(LibBit.reverseBits(x), _reverseBitsOriginal(x));
     }
@@ -187,6 +198,17 @@ contract LibBitTest is SoladyTest {
         unchecked {
             for (uint256 i; i != 256; ++i) {
                 r = (r << 1) | ((x >> i) & 1);
+            }
+        }
+    }
+
+    function testReverseBytes() public {
+        uint256 x = 0x112233445566778899aa112233445566778899aa112233445566778899aa1122;
+        uint256 r = 0x2211aa998877665544332211aa998877665544332211aa998877665544332211;
+        assertEq(LibBit.reverseBytes(x), r);
+        unchecked {
+            for (uint256 i; i < 256; i += 8) {
+                assertEq(LibBit.reverseBytes(0xff << i), (0xff << 248) >> i);
             }
         }
     }

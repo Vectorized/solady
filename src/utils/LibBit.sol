@@ -91,34 +91,38 @@ library LibBit {
 
     /// @dev Returns `x` reversed at the bit level.
     function reverseBits(uint256 x) internal pure returns (uint256 r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Computing masks on-the-fly reduces bytecode size by about 500 bytes.
-            let m := not(0)
-            r := x
-            for { let s := 128 } 1 {} {
-                m := xor(m, shl(s, m))
-                r := or(and(shr(s, r), m), and(shl(s, r), not(m)))
-                s := shr(1, s)
-                if iszero(s) { break }
-            }
-        }
+        r = (x >> 128) | (x << 128);
+        // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
+        x = ~toUint(x == 0) >> 192;
+        x |= x << 128;
+        r = (x & (r >> 64)) | ((x & r) << 64);
+        x ^= x << 32;
+        r = (x & (r >> 32)) | ((x & r) << 32);
+        x ^= x << 16;
+        r = (x & (r >> 16)) | ((x & r) << 16);
+        x ^= x << 8;
+        r = (x & (r >> 8)) | ((x & r) << 8);
+        x ^= x << 4;
+        r = (x & (r >> 4)) | ((x & r) << 4);
+        x ^= x << 2;
+        r = (x & (r >> 2)) | ((x & r) << 2);
+        x ^= x << 1;
+        r = (x & (r >> 1)) | ((x & r) << 1);
     }
 
     /// @dev Returns `x` reversed at the byte level.
     function reverseBytes(uint256 x) internal pure returns (uint256 r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-            let m := not(0)
-            r := x
-            for { let s := 128 } 1 {} {
-                m := xor(m, shl(s, m))
-                r := or(and(shr(s, r), m), and(shl(s, r), not(m)))
-                s := shr(1, s)
-                if eq(s, 4) { break }
-            }
-        }
+        r = (x << 128) | (x >> 128);
+        // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
+        x = ~toUint(x == 0) >> 192;
+        x |= x << 128;
+        r = (x & (r >> 64)) | ((x & r) << 64);
+        x ^= x << 32;
+        r = (x & (r >> 32)) | ((x & r) << 32);
+        x ^= x << 16;
+        r = (x & (r >> 16)) | ((x & r) << 16);
+        x ^= x << 8;
+        r = (x & (r >> 8)) | ((x & r) << 8);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
