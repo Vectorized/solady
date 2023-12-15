@@ -1086,7 +1086,7 @@ library LibString {
             r := or(r, shl(3, lt(0xff, shr(r, x))))
             // forgefmt: disable-next-item
             result := gt(eq(mload(a), add(iszero(x), xor(31, shr(3, r)))),
-                xor(shr(add(1, r), b), shr(add(1, r), mload(add(a, 0x20)))))
+                xor(shr(add(8, r), b), shr(add(8, r), mload(add(a, 0x20)))))
         }
     }
 
