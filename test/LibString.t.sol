@@ -1068,6 +1068,10 @@ contract LibStringTest is SoladyTest {
             LibString.eqs("12345678901234567890123456789012", "12345678901234567890123456789012")
         );
 
+        assertTrue(LibString.eqs("", hex"0061"));
+        assertTrue(LibString.eqs("a", hex"610061"));
+        assertTrue(LibString.eqs("aa", hex"61610061"));
+
         assertFalse(LibString.eqs("", "x"));
         assertFalse(LibString.eqs("1", "2"));
         assertFalse(LibString.eqs("Hello", "Hehe"));
@@ -1275,6 +1279,7 @@ contract LibStringTest is SoladyTest {
         bytes32 normalized = LibString.normalizeSmallString(x);
         assertEq(LibString.toSmallString(y), normalized);
         assertTrue(LibString.eqs(y, normalized));
+        assertTrue(LibString.eqs(y, x));
     }
 
     function testToSmallString() public {
