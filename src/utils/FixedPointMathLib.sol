@@ -69,11 +69,43 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Equivalent to `(x * y) / WAD` rounded down.
+    function sMulWad(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Store x * y in z for now.
+            z := mul(x, y)
+
+            // Combined overflow check (`x == 0 || (x * y) / x == y`) and edge case check
+            // where x == -1 and y == type(int256).min, for y == -1 and x == min int256,
+            // the second overflow check will catch this.
+            // See: https://secure-contracts.com/learn_evm/arithmetic-checks.html#arithmetic-checks-for-int256-multiplication
+            // Combining into 1 expression saves gas as resulting bytecode will only have 1 `JUMPI`
+            // rather than 2.
+            // forgefmt: disable-next-item
+            if iszero(and(or(iszero(x), eq(sdiv(z, x), y)),
+                or(lt(x, not(0)), sgt(y, 0x8000000000000000000000000000000000000000000000000000000000000000)))) 
+            {
+                mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
+                revert(0x1c, 0x04)
+            }
+            z := sdiv(z, WAD)
+        }
+    }
+
     /// @dev Equivalent to `(x * y) / WAD` rounded down, but without overflow checks.
     function rawMulWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             z := div(mul(x, y), WAD)
+        }
+    }
+
+    /// @dev Equivalent to `(x * y) / WAD` rounded down, but without overflow checks.
+    function rawSMulWad(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sdiv(mul(x, y), WAD)
         }
     }
 
@@ -111,11 +143,34 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Equivalent to `(x * WAD) / y` rounded down.
+    function sDivWad(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Store x * WAD in z for now.
+            z := mul(x, WAD)
+            // Equivalent to require(y != 0 && ((x * WAD) / WAD == x))
+            if iszero(and(iszero(iszero(y)), eq(sdiv(z, WAD), x))) {
+                mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
+                revert(0x1c, 0x04)
+            }
+            z := sdiv(mul(x, WAD), y)
+        }
+    }
+
     /// @dev Equivalent to `(x * WAD) / y` rounded down, but without overflow and divide by zero checks.
     function rawDivWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             z := div(mul(x, WAD), y)
+        }
+    }
+
+    /// @dev Equivalent to `(x * WAD) / y` rounded down, but without overflow and divide by zero checks.
+    function rawSDivWad(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sdiv(mul(x, WAD), y)
         }
     }
 
