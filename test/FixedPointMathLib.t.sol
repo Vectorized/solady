@@ -619,6 +619,19 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.sMulWad(-0.5e18, -10e18), 5e18);
     }
 
+    function testSMulWadOverflowTrickDifferential(int256 x, int256 y) public {
+        unchecked {
+            bool c;
+            int256 z;
+            /// @solidity memory-safe-assembly
+            assembly {
+                z := mul(x, y)
+                c := iszero(gt(or(iszero(x), eq(sdiv(z, x), y)), lt(not(x), eq(y, shl(255, 1)))))
+            }
+            assertEq(c, !((x == 0 || z / x == y) && (x != -1 || y != type(int256).min)));
+        }
+    }
+
     function testSMulWadEdgeCases() public {
         assertEq(FixedPointMathLib.sMulWad(1e18, type(int256).max / 1e18), type(int256).max / 1e18);
         assertEq(FixedPointMathLib.sMulWad(-1e18, type(int256).min / 2e18), type(int256).max / 2e18);
@@ -1074,6 +1087,7 @@ contract FixedPointMathLibTest is SoladyTest {
         // Construct a * b
         uint256 prod0; // Least significant 256 bits of the product
         uint256 prod1; // Most significant 256 bits of the product
+        /// @solidity memory-safe-assembly
         assembly {
             let mm := mulmod(a, b, not(0))
             prod0 := mul(a, b)
