@@ -4,7 +4,7 @@
 
 # The Default Profile
 [profile.default]
-solc_version = "0.8.22"
+solc_version = "0.8.23"
 evm_version = "paris" # Shanghai will be tested in the CI.
 auto_detect_solc = false
 optimizer = true
