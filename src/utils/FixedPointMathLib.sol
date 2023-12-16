@@ -78,9 +78,8 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             z := mul(x, y)
-            // Equivalent to `require((x == 0 || r / x == y) && (x != -1 || y != type(int256).min))`.
-            if iszero(and(or(iszero(x), eq(sdiv(z, x), y)), or(lt(x, not(0)), sgt(y, shl(255, 1)))))
-            {
+            // Equivalent to `require((x == 0 || r / x == y) && !(x == -1 || y == type(int256).min))`.
+            if iszero(gt(or(iszero(x), eq(sdiv(z, x), y)), lt(not(x), eq(y, shl(255, 1))))) {
                 mstore(0x00, 0xedcd4dd4) // `SMulWadFailed()`.
                 revert(0x1c, 0x04)
             }
