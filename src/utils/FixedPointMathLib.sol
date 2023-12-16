@@ -24,12 +24,16 @@ library FixedPointMathLib {
     /// @dev The operation failed, due to an multiplication overflow.
     error MulWadFailed();
 
-    /// @dev The operation failed, either due to a
-    /// multiplication overflow, or a division by a zero.
+    /// @dev The operation failed, due to an multiplication overflow.
+    error SMulWadFailed();
+
+    /// @dev The operation failed, either due to a multiplication overflow, or a division by a zero.
     error DivWadFailed();
 
-    /// @dev The multiply-divide operation failed, either due to a
-    /// multiplication overflow, or a division by a zero.
+    /// @dev The operation failed, either due to a multiplication overflow, or a division by a zero.
+    error SDivWadFailed();
+
+    /// @dev The operation failed, either due to a multiplication overflow, or a division by a zero.
     error MulDivFailed();
 
     /// @dev The division failed, as the denominator is zero.
@@ -73,20 +77,11 @@ library FixedPointMathLib {
     function sMulWad(int256 x, int256 y) internal pure returns (int256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Store x * y in z for now.
             z := mul(x, y)
-
-            // Combined overflow check (`x == 0 || (x * y) / x == y`) and edge case check
-            // where x == -1 and y == type(int256).min, for y == -1 and x == min int256,
-            // the second overflow check will catch this.
-            // See: https://secure-contracts.com/learn_evm/arithmetic-checks.html#arithmetic-checks-for-int256-multiplication
-            // Combining into 1 expression saves gas as resulting bytecode will only have 1 `JUMPI`
-            // rather than 2.
-            // forgefmt: disable-next-item
-            if iszero(and(or(iszero(x), eq(sdiv(z, x), y)),
-                or(lt(x, not(0)), sgt(y, 0x8000000000000000000000000000000000000000000000000000000000000000)))) 
+            // Equivalent to `require((x == 0 || r / x == y) && (x != -1 || y != type(int256).min))`.
+            if iszero(and(or(iszero(x), eq(sdiv(z, x), y)), or(lt(x, not(0)), sgt(y, shl(255, 1)))))
             {
-                mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
+                mstore(0x00, 0xedcd4dd4) // `SMulWadFailed()`.
                 revert(0x1c, 0x04)
             }
             z := sdiv(z, WAD)
@@ -147,11 +142,10 @@ library FixedPointMathLib {
     function sDivWad(int256 x, int256 y) internal pure returns (int256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Store x * WAD in z for now.
             z := mul(x, WAD)
-            // Equivalent to require(y != 0 && ((x * WAD) / WAD == x))
+            // Equivalent to `require(y != 0 && ((x * WAD) / WAD == x))`.
             if iszero(and(iszero(iszero(y)), eq(sdiv(z, WAD), x))) {
-                mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
+                mstore(0x00, 0x5c43740d) // `SDivWadFailed()`.
                 revert(0x1c, 0x04)
             }
             z := sdiv(mul(x, WAD), y)
