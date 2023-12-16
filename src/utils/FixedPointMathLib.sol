@@ -24,12 +24,16 @@ library FixedPointMathLib {
     /// @dev The operation failed, due to an multiplication overflow.
     error MulWadFailed();
 
-    /// @dev The operation failed, either due to a
-    /// multiplication overflow, or a division by a zero.
+    /// @dev The operation failed, due to an multiplication overflow.
+    error SMulWadFailed();
+
+    /// @dev The operation failed, either due to a multiplication overflow, or a division by a zero.
     error DivWadFailed();
 
-    /// @dev The multiply-divide operation failed, either due to a
-    /// multiplication overflow, or a division by a zero.
+    /// @dev The operation failed, either due to a multiplication overflow, or a division by a zero.
+    error SDivWadFailed();
+
+    /// @dev The operation failed, either due to a multiplication overflow, or a division by a zero.
     error MulDivFailed();
 
     /// @dev The division failed, as the denominator is zero.
@@ -69,11 +73,33 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Equivalent to `(x * y) / WAD` rounded down.
+    function sMulWad(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mul(x, y)
+            // Equivalent to `require((x == 0 || z / x == y) && !(x == -1 && y == type(int256).min))`.
+            if iszero(gt(or(iszero(x), eq(sdiv(z, x), y)), lt(not(x), eq(y, shl(255, 1))))) {
+                mstore(0x00, 0xedcd4dd4) // `SMulWadFailed()`.
+                revert(0x1c, 0x04)
+            }
+            z := sdiv(z, WAD)
+        }
+    }
+
     /// @dev Equivalent to `(x * y) / WAD` rounded down, but without overflow checks.
     function rawMulWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             z := div(mul(x, y), WAD)
+        }
+    }
+
+    /// @dev Equivalent to `(x * y) / WAD` rounded down, but without overflow checks.
+    function rawSMulWad(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sdiv(mul(x, y), WAD)
         }
     }
 
@@ -111,11 +137,33 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Equivalent to `(x * WAD) / y` rounded down.
+    function sDivWad(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mul(x, WAD)
+            // Equivalent to `require(y != 0 && ((x * WAD) / WAD == x))`.
+            if iszero(and(iszero(iszero(y)), eq(sdiv(z, WAD), x))) {
+                mstore(0x00, 0x5c43740d) // `SDivWadFailed()`.
+                revert(0x1c, 0x04)
+            }
+            z := sdiv(mul(x, WAD), y)
+        }
+    }
+
     /// @dev Equivalent to `(x * WAD) / y` rounded down, but without overflow and divide by zero checks.
     function rawDivWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             z := div(mul(x, WAD), y)
+        }
+    }
+
+    /// @dev Equivalent to `(x * WAD) / y` rounded down, but without overflow and divide by zero checks.
+    function rawSDivWad(int256 x, int256 y) internal pure returns (int256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sdiv(mul(x, WAD), y)
         }
     }
 

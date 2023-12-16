@@ -612,6 +612,32 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.mulWad(0, 0), 0);
     }
 
+    function testSMulWad() public {
+        assertEq(FixedPointMathLib.sMulWad(0, -2e18), 0);
+        assertEq(FixedPointMathLib.sMulWad(1e18, -1), -1);
+        assertEq(FixedPointMathLib.sMulWad(-0.5e18, 2e18), -1e18);
+        assertEq(FixedPointMathLib.sMulWad(-0.5e18, -10e18), 5e18);
+    }
+
+    function testSMulWadOverflowTrickDifferential(int256 x, int256 y) public {
+        unchecked {
+            bool c;
+            int256 z;
+            /// @solidity memory-safe-assembly
+            assembly {
+                z := mul(x, y)
+                c := iszero(gt(or(iszero(x), eq(sdiv(z, x), y)), lt(not(x), eq(y, shl(255, 1)))))
+            }
+            assertEq(c, !((x == 0 || z / x == y) && (x != -1 || y != type(int256).min)));
+        }
+    }
+
+    function testSMulWadEdgeCases() public {
+        assertEq(FixedPointMathLib.sMulWad(1e18, type(int256).max / 1e18), type(int256).max / 1e18);
+        assertEq(FixedPointMathLib.sMulWad(-1e18, type(int256).min / 2e18), type(int256).max / 2e18);
+        assertEq(FixedPointMathLib.sMulWad(0, 0), 0);
+    }
+
     function testMulWadUp() public {
         assertEq(FixedPointMathLib.mulWadUp(2.5e18, 0.5e18), 1.25e18);
         assertEq(FixedPointMathLib.mulWadUp(3e18, 1e18), 3e18);
@@ -632,6 +658,16 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testDivWadEdgeCases() public {
         assertEq(FixedPointMathLib.divWad(0, 1e18), 0);
+    }
+
+    function testSDivWad() public {
+        assertEq(FixedPointMathLib.sDivWad(1.25e18, -0.5e18), -2.5e18);
+        assertEq(FixedPointMathLib.sDivWad(3e18, -1e18), -3e18);
+        assertEq(FixedPointMathLib.sDivWad(type(int256).min / 1e18, type(int256).max), 0);
+    }
+
+    function testSDivWadEdgeCases() public {
+        assertEq(FixedPointMathLib.sDivWad(0, 1e18), 0);
     }
 
     function testDivWadZeroDenominatorReverts() public {
@@ -1051,6 +1087,7 @@ contract FixedPointMathLibTest is SoladyTest {
         // Construct a * b
         uint256 prod0; // Least significant 256 bits of the product
         uint256 prod1; // Most significant 256 bits of the product
+        /// @solidity memory-safe-assembly
         assembly {
             let mm := mulmod(a, b, not(0))
             prod0 := mul(a, b)
@@ -1105,13 +1142,37 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.rawMulWad(x, y), result);
     }
 
+    function testSMulWad(int256 x, int256 y) public {
+        // Ignore cases where x * y overflows.
+        unchecked {
+            if ((x != 0 && (x * y) / x != y) || (x == -1 && y == type(int256).min)) return;
+        }
+
+        int256 result = FixedPointMathLib.sMulWad(x, y);
+        assertEq(result, int256((x * y) / 1e18));
+        assertEq(FixedPointMathLib.rawSMulWad(x, y), result);
+    }
+
     function testMulWadOverflowReverts(uint256 x, uint256 y) public {
-        // Ignore cases where x * y does not overflow.
         unchecked {
             vm.assume(x != 0 && (x * y) / x != y);
         }
         vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
         FixedPointMathLib.mulWad(x, y);
+    }
+
+    function testSMulWadOverflowRevertsOnCondition1(int256 x, int256 y) public {
+        unchecked {
+            vm.assume(x != 0 && (x * y) / x != y);
+        }
+        vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
+        FixedPointMathLib.sMulWad(x, y);
+    }
+
+    function testSMulWadOverflowRevertsOnCondition2(int256 x) public {
+        vm.assume(x < 0);
+        vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
+        FixedPointMathLib.sMulWad(x, type(int256).min);
     }
 
     function testMulWadUp(uint256 x, uint256 y) public {
@@ -1124,7 +1185,6 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulWadUpOverflowReverts(uint256 x, uint256 y) public {
-        // Ignore cases where x * y does not overflow.
         unchecked {
             vm.assume(x != 0 && !((x * y) / x == y));
         }
@@ -1143,8 +1203,18 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.rawDivWad(x, y), result);
     }
 
+    function testSDivWad(int256 x, int256 y) public {
+        // Ignore cases where x * WAD overflows or y is 0.
+        unchecked {
+            if (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) return;
+        }
+
+        int256 result = FixedPointMathLib.sDivWad(x, y);
+        assertEq(result, int256((x * 1e18) / y));
+        assertEq(FixedPointMathLib.rawSDivWad(x, y), result);
+    }
+
     function testDivWadOverflowReverts(uint256 x, uint256 y) public {
-        // Ignore cases where x * WAD does not overflow or y is 0.
         unchecked {
             vm.assume(y != 0 && (x * 1e18) / 1e18 != x);
         }
@@ -1152,9 +1222,22 @@ contract FixedPointMathLibTest is SoladyTest {
         FixedPointMathLib.divWad(x, y);
     }
 
+    function testSDivWadOverflowReverts(int256 x, int256 y) public {
+        unchecked {
+            vm.assume(y != 0 && (x * 1e18) / 1e18 != x);
+        }
+        vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
+        FixedPointMathLib.sDivWad(x, y);
+    }
+
     function testDivWadZeroDenominatorReverts(uint256 x) public {
         vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
         FixedPointMathLib.divWad(x, 0);
+    }
+
+    function testSDivWadZeroDenominatorReverts(int256 x) public {
+        vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
+        FixedPointMathLib.sDivWad(x, 0);
     }
 
     function testDivWadUp(uint256 x, uint256 y) public {
@@ -1167,7 +1250,6 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testDivWadUpOverflowReverts(uint256 x, uint256 y) public {
-        // Ignore cases where x * WAD does not overflow or y is 0.
         unchecked {
             vm.assume(y != 0 && (x * 1e18) / 1e18 != x);
         }
@@ -1190,7 +1272,6 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulDivOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
-        // Ignore cases where x * y does not overflow or denominator is 0.
         unchecked {
             vm.assume(denominator != 0 && x != 0 && (x * y) / x != y);
         }
@@ -1216,7 +1297,6 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulDivUpOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
-        // Ignore cases where x * y does not overflow or denominator is 0.
         unchecked {
             vm.assume(denominator != 0 && x != 0 && (x * y) / x != y);
         }
