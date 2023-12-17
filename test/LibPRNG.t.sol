@@ -176,7 +176,7 @@ contract LibPRNGTest is SoladyTest {
                 uint256 gasBefore = gasleft();
                 int256 x = prng.gaussianWad();
                 uint256 gasUsed = gasBefore - gasleft();
-                emit LogInt("gaussianWad", x);    
+                emit LogInt("gaussianWad", x);
                 emit LogUint("gasUsed", gasUsed);
             }
         }

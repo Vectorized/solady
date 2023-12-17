@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
-import "./FixedPointMathLib.sol";
+
 /// @notice Library for generating pseudorandom numbers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibPRNG.sol)
 library LibPRNG {
@@ -151,7 +151,7 @@ library LibPRNG {
         }
     }
 
-    /// @dev Returns a sample from the standard normal distribution denominated in `WAD`. 
+    /// @dev Returns a sample from the standard normal distribution denominated in `WAD`.
     function gaussianWad(PRNG memory prng) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {
