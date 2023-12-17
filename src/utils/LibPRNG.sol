@@ -155,91 +155,20 @@ library LibPRNG {
     function gaussianWad(PRNG memory prng) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            function U() -> _r {
-                if iszero(mload(0x20)) {
-                    _r := keccak256(0x00, 0x20)
-                    mstore(0x00, _r)
-                    mstore(0x20, 1)
-                    _r := shr(129, _r)
-                    leave
-                }
-                mstore(0x20, 0)
-                _r := and(0x7fffffffffffffffffffffffffffffff, mload(0x00))
-            }
-            function T(y_) -> _r {
-                for {} 1 {} {
-                    let z_ := U()
-                    if iszero(lt(z_, y_)) { break }
-                    y_ := U()
-                    if iszero(lt(y_, z_)) {
-                        _r := 1
-                        break
-                    }
-                }
-            }
-            mstore(0x20, 0)
-            mstore(0x00, mload(prng)) // Put state into scratch space.
-            for {} 1 {} {
-                let n := 0
-                for {} 1 { n := add(n, 1) } {
-                    let y := U()
-                    if iszero(shr(126, y)) { if iszero(T(y)) { break } }
-                }
-                let k := 0
-                let k2 := 0
-                for {} lt(k2, n) { k := add(1, k) } {
-                    k2 := add(k2, add(add(k, k), 1))
-                }
-                if iszero(eq(n, k2)) { continue }
-                let j := U()
-                let h := k
-                for {} 1 {} {
-                    h := sub(k, 1)
-                    if iszero(add(k, 1)) { break }
-                    let y := U()
-                    if iszero(lt(y, j)) { continue } 
-                    if iszero(T(y)) { break } 
-                }
-                if iszero(slt(h, 0)) { continue }
-                let r := 0
-                for { let y := 0 } 1 {} {
-                    if iszero(and(1, shr(128, mload(0x00)))) { break }
-                    let z := U()
-                    if iszero(lt(z, xor(y, mul(iszero(r), xor(j, y))))) { break }
-                    y := U()
-                    if iszero(lt(y, j)) { break }
-                    y := z
-                    r := add(r, 1)
-                }
-                if and(r, 1) { continue }
-                j := add(div(j, 170141183460469231901), mul(k, 1000000000000000000))
-                if iszero(and(1, shr(127, mload(0x00)))) { j := sub(0, j) }
-                result := j    
-                break
-            }
-            mstore(prng, mload(0x00)) // Restore state.
+            let n := 21888242871839275222246405745257275088548364400416034343698204186575808495617
+            let a := 60138855034168303847727928081792997591
+            let r0 := keccak256(prng, 0x20)
+            mstore(prng, r0)
+            let m0 := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
+            let r1 := and(m0, mod(mul(r0, a), n))
+            let r2 := and(m0, mod(mul(r1, a), n))
+            let r3 := and(m0, mod(mul(r2, a), n))
+            let m1 := 0xffffffffffffffff
+            let r := add(r0, add(r1, add(r2, r3)))
+            r := add(shr(192, r), add(and(m1, shr(128, r)), add(and(m1, shr(64, r)), and(m1, r))))
+            r := mul(r, 59512812588149737996718132680)
+            r := sub(r, 548908811460119190409942447553886244663175037406)
+            result := sar(96, r)
         }
-    }
-
-    function gaussianWad2(PRNG memory prng) internal pure returns (int256 result) {
-        int u; 
-        int v; 
-        int s;
-        /// @solidity memory-safe-assembly
-        assembly {
-            for {} 1 {} {
-                let d := keccak256(prng, 0x20)
-                mstore(prng, d)
-                u := sub(div(shr(128, d), 170141183460469231731), 1000000000000000000)
-                v := sub(div(shr(128, shl(128, d)), 170141183460469231731), 1000000000000000000)
-                s := div(add(mul(u, u), mul(v, v)), 1000000000000000000)
-                if s { if lt(s, 1000000000000000000) { break } }
-            }
-        }
-        unchecked {
-            s = int(FixedPointMathLib.sqrtWad(uint256(-2000000000000000000 * FixedPointMathLib.lnWad(s) / s)));
-            result = (s * u) / 1000000000000000000;    
-        }
-
     }
 }
