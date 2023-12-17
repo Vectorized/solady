@@ -155,6 +155,13 @@ library LibPRNG {
     function gaussianWad(PRNG memory prng) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {
+            // Technically, this is the Irwin-Hall distribution with 16 samples.
+            // The chance of drawing a sample outside 8 sigma from the standard normal distribution
+            // is about 0.0000000000000012442, which is insignificant for most practical purposes.
+            // This function uses about 325 gas.
+            //
+            // If even more accuracy is needed, use:
+            // `((gaussianWad() + gaussianWad()) * 56022770974786139918731938227) >> 96`.
             let n := 21888242871839275222246405745257275088548364400416034343698204186575808495617
             let a := 60138855034168303847727928081792997591
             let m := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
