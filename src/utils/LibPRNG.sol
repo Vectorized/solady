@@ -155,13 +155,10 @@ library LibPRNG {
     function gaussianWad(PRNG memory prng) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Technically, this is the Irwin-Hall distribution with 16 samples.
-            // The chance of drawing a sample outside 8 sigma from the standard normal distribution
-            // is about 0.0000000000000012442, which is insignificant for most practical purposes.
-            // This function uses about 325 gas.
-            //
-            // If even more accuracy is needed, use:
-            // `((gaussianWad() + gaussianWad()) * 56022770974786139918731938227) >> 96`.
+            // Technically, this is the Irwin-Hall distribution with 20 samples.
+            // The chance of drawing a sample outside 10 sigma from the standard normal distribution
+            // is about 0.000000000000000000000015, which is smaller than `1 / WAD`,
+            // insignificant for most practical purposes. This function uses about 359 gas.
             let n := 21888242871839275222246405745257275088548364400416034343698204186575808495617
             let a := 60138855034168303847727928081792997591
             let m := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
@@ -169,11 +166,14 @@ library LibPRNG {
             mstore(prng, r)
             let r1 := mulmod(r, a, n)
             let r2 := mulmod(r1, a, n)
-            r := add(and(m, r), add(and(m, r1), add(and(m, r2), and(m, mulmod(r2, a, n)))))
-            m := 0xffffffffffffffff
-            r := add(shr(192, r), add(and(m, shr(128, r)), add(and(m, shr(64, r)), and(m, r))))
-            r := mul(r, 59512812588149737996718132680)
-            result := sar(96, sub(r, 548908811460119190409942447553886244663175037406))
+            let r3 := mulmod(r2, a, n)
+            let s := add(and(m, r), add(and(m, r1), add(and(m, r2), and(m, r3))))
+            let t := shr(192, mul(and(m, mulmod(r3, a, n)), div(not(0), 0xffffffffffffffff)))
+            // forgefmt: disable-next-item
+            result := sar(96, sub(mul(53229877791723203740515581680,
+                add(t, add(shr(192, s), add(shr(192, shl(64, s)),
+                add(shr(192, shl(128, s)), and(0xffffffffffffffff, s)))))),
+                613698707936721051257405563935529819467266145679))
         }
     }
 }
