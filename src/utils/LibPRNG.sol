@@ -157,16 +157,16 @@ library LibPRNG {
         assembly {
             let n := 21888242871839275222246405745257275088548364400416034343698204186575808495617
             let a := 60138855034168303847727928081792997591
+            let m := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
             let r0 := keccak256(prng, 0x20)
             mstore(prng, r0)
-            let m0 := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
-            let r1 := and(m0, mod(mul(r0, a), n))
-            let r2 := and(m0, mod(mul(r1, a), n))
-            let r3 := and(m0, mod(mul(r2, a), n))
-            let m1 := 0xffffffffffffffff
+            let r1 := and(m, mulmod(r0, a, n))
+            let r2 := and(m, mulmod(r1, a, n))
+            let r3 := and(m, mulmod(r2, a, n))
             let r := add(r0, add(r1, add(r2, r3)))
-            r := add(shr(192, r), add(and(m1, shr(128, r)), add(and(m1, shr(64, r)), and(m1, r))))
-            r := mul(r, 59512812588149737996718132680)
+            r := add(shr(192, r), add(shr(192, shr(64, r)), 
+                add(shr(192, shl(128, r)), shr(192, shl(192, r)))))
+            r := mul(59512812588149737996718132680, r)
             r := sub(r, 548908811460119190409942447553886244663175037406)
             result := sar(96, r)
         }
