@@ -95,10 +95,10 @@
      */
     LibZip.flzCompress = function(data) {
         var ib = hexToBytes(hexString(data)), b = ib.length - 4;
-        var ht = [], ob = [], a = 0, i = 2, o = 0, j, s, h, d, c, l, r, p, q, e, m = 0xffffff;
+        var ht = [], ob = [], a = 0, i = 2, o = 0, j, s, h, d, c, l, r, p, q, e;
 
-        function u32(i) {
-            return ib[i] | (ib[++i] << 8) | (ib[++i] << 16) | (ib[++i] << 24);
+        function u24(i) {
+            return ib[i] | (ib[++i] << 8) | (ib[++i] << 16);
         }
 
         function hash(x) {
@@ -112,17 +112,17 @@
 
         while (i < b - 9) {
             do {
-                r = ht[h = hash(s = u32(i) & m)];
-                c = (d = (ht[h] = i) - r) < 8192 ? u32(r) & m : m + 1;
+                r = ht[h = hash(s = u24(i))] || 0;
+                c = (d = (ht[h] = i) - r) < 8192 ? u24(r) : 0x1000000;
             } while (i < b - 9 && i++ && s != c);
             if (i >= b - 9) break;
             if (--i > a) literals(i - a, a);
             for (l = 0, p = r + 3, q = i + 3, e = b - q; l < e; l++) e *= ib[p + l] === ib[q + l];
-            s = u32(i += l);
+            i += l;
             for (--d; l > 262; l -= 262) ob[o++] = 224 + (d >> 8), ob[o++] = 253, ob[o++] = d & 255;
             if (l < 7) ob[o++] = (l << 5) + (d >> 8), ob[o++] = d & 255;
             else ob[o++] = 224 + (d >> 8), ob[o++] = l - 7, ob[o++] = d & 255;
-            ht[hash(s & m)] = i++, ht[hash(s >> 8)] = i++, a = i;
+            ht[hash(u24(i))] = i++, ht[hash(u24(i))] = i++, a = i;
         }
         literals(b + 4 - a, a);
         return bytesToHex(ob);
