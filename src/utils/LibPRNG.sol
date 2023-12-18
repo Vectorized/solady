@@ -152,7 +152,7 @@ library LibPRNG {
     }
 
     /// @dev Returns a sample from the standard normal distribution denominated in `WAD`.
-    function gaussianWad(PRNG memory prng) internal pure returns (int256 result) {
+    function standardNormalWad(PRNG memory prng) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             // Technically, this is the Irwin-Hall distribution with 20 samples.

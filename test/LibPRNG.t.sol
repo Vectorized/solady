@@ -169,14 +169,14 @@ contract LibPRNGTest is SoladyTest {
         }
     }
 
-    function testGaussianWadGas() public {
+    function testStandardNormalWadGas() public {
         LibPRNG.PRNG memory prng;
         unchecked {
             for (uint256 i; i != 1000; ++i) {
                 uint256 gasBefore = gasleft();
-                int256 x = prng.gaussianWad();
+                int256 x = prng.standardNormalWad();
                 uint256 gasUsed = gasBefore - gasleft();
-                emit LogInt("gaussianWad", x);
+                emit LogInt("standardNormalWad", x);
                 emit LogUint("gasUsed", gasUsed);
             }
         }
