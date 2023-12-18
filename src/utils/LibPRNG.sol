@@ -158,21 +158,21 @@ library LibPRNG {
             // Technically, this is the Irwin-Hall distribution with 20 samples.
             // The chance of drawing a sample outside 10 sigma from the standard normal distribution
             // is about 0.000000000000000000000015, which is smaller than `1 / WAD`,
-            // insignificant for most practical purposes. This function uses about 359 gas.
+            // insignificant for most practical purposes. This function uses about 324 gas.
             let n := 21888242871839275222246405745257275088548364400416034343698204186575808495617
             let a := 60138855034168303847727928081792997591
             let m := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
+            let s := 0x1000000000000000100000000000000010000000000000001
             let r := keccak256(prng, 0x20)
             mstore(prng, r)
             let r1 := mulmod(r, a, n)
             let r2 := mulmod(r1, a, n)
             let r3 := mulmod(r2, a, n)
-            let s := add(and(m, r), add(and(m, r1), add(and(m, r2), and(m, r3))))
-            let t := shr(192, mul(and(m, mulmod(r3, a, n)), div(not(0), 0xffffffffffffffff)))
             // forgefmt: disable-next-item
             result := sar(96, sub(mul(53229877791723203740515581680,
-                add(t, add(shr(192, s), add(shr(192, shl(64, s)),
-                add(shr(192, shl(128, s)), and(0xffffffffffffffff, s)))))),
+                add(add(shr(192, mul(s, add(and(m, r), and(m, r1)))),
+                shr(192, mul(s, add(and(m, r2), and(m, r3))))),
+                shr(192, mul(and(m, mulmod(r3, a, n)), s)))),
                 613698707936721051257405563935529819467266145679))
         }
     }
