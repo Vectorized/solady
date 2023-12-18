@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
+import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
 contract LibPRNGTest is SoladyTest {
     using LibPRNG for *;
@@ -166,6 +167,38 @@ contract LibPRNGTest is SoladyTest {
             let a := 0xd6aad120322a96acae4ccfaf5fcd4bbfda3f2f3001db6837c0981639faa68d8d
             state := add(mul(state, a), 83)
             randomness := xor(state, shr(128, state))
+        }
+    }
+
+    function testStandardNormalWad() public {
+        LibPRNG.PRNG memory prng;
+        unchecked {
+            uint256 n = 1000;
+            int256 oldM;
+            int256 newM;
+            int256 oldS;
+            int256 newS;
+            for (uint256 i; i != n;) {
+                uint256 gasBefore = gasleft();
+                int256 x = prng.standardNormalWad();
+                uint256 gasUsed = gasBefore - gasleft();
+                if (++i == 1) {
+                    oldM = (newM = x);
+                } else {
+                    newM = oldM + (x - oldM) / int256(i);
+                    newS = oldS + (x - oldM) * (x - newM);
+                    oldM = newM;
+                    oldS = newS;
+                }
+                emit LogInt("standardNormalWad", x);
+                emit LogUint("gasUsed", gasUsed);
+            }
+            int256 wad = int256(FixedPointMathLib.WAD);
+            emit LogInt("mean", newM);
+            int256 sd = int256(FixedPointMathLib.sqrt(uint256(newS / int256(n - 1))));
+            assertLt(FixedPointMathLib.abs(newM), uint256(wad / 8));
+            emit LogInt("standard deviation", sd);
+            assertLt(FixedPointMathLib.abs(sd - wad), uint256(wad / 8));
         }
     }
 }

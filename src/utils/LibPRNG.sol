@@ -150,4 +150,30 @@ library LibPRNG {
             }
         }
     }
+
+    /// @dev Returns a sample from the standard normal distribution denominated in `WAD`.
+    function standardNormalWad(PRNG memory prng) internal pure returns (int256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Technically, this is the Irwin-Hall distribution with 20 samples.
+            // The chance of drawing a sample outside 10 σ from the standard normal distribution
+            // is ≈ 0.000000000000000000000015, which is insignificant for most practical purposes.
+            // This function uses about 324 gas.
+            let n := 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
+            let a := 0x2d3e5279f07911d5062dc0dd5c8998d7
+            let m := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
+            let s := 0x1000000000000000100000000000000010000000000000001
+            let r := keccak256(prng, 0x20)
+            mstore(prng, r)
+            let r1 := mulmod(r, a, n)
+            let r2 := mulmod(r1, a, n)
+            let r3 := mulmod(r2, a, n)
+            // forgefmt: disable-next-item
+            result := sar(96, sub(mul(53229877791723203740515581680,
+                add(add(shr(192, mul(s, add(and(m, r), and(m, r1)))),
+                shr(192, mul(s, add(and(m, r2), and(m, r3))))),
+                shr(192, mul(and(m, mulmod(r3, a, n)), s)))),
+                613698707936721051257405563935529819467266145679))
+        }
+    }
 }
