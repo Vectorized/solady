@@ -196,9 +196,9 @@ contract LibPRNGTest is SoladyTest {
             int256 wad = int256(FixedPointMathLib.WAD);
             emit LogInt("mean", newM);
             int256 sd = int256(FixedPointMathLib.sqrt(uint256(newS / int256(n - 1))));
-            assertLt(uint256(FixedPointMathLib.abs(newM)), uint256(wad / 8));
+            assertLt(FixedPointMathLib.abs(newM), uint256(wad / 8));
             emit LogInt("standard deviation", sd);
-            assertLt(uint256(FixedPointMathLib.abs(sd - wad)), uint256(wad / 8));
+            assertLt(FixedPointMathLib.abs(sd - wad), uint256(wad / 8));
         }
     }
 }
