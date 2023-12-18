@@ -156,11 +156,11 @@ library LibPRNG {
         /// @solidity memory-safe-assembly
         assembly {
             // Technically, this is the Irwin-Hall distribution with 20 samples.
-            // The chance of drawing a sample outside 10 sigma from the standard normal distribution
-            // is about 0.000000000000000000000015, which is smaller than `1 / WAD`,
-            // and insignificant for most practical purposes. This function uses about 324 gas.
-            let n := 21888242871839275222246405745257275088548364400416034343698204186575808495617
-            let a := 60138855034168303847727928081792997591
+            // The chance of drawing a sample outside 10 σ from the standard normal distribution
+            // is ≈ 0.000000000000000000000015, which is insignificant for most practical purposes.
+            // This function uses about 324 gas.
+            let n := 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
+            let a := 0x2d3e5279f07911d5062dc0dd5c8998d7
             let m := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
             let s := 0x1000000000000000100000000000000010000000000000001
             let r := keccak256(prng, 0x20)
