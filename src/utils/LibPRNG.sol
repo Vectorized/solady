@@ -158,7 +158,7 @@ library LibPRNG {
             // Technically, this is the Irwin-Hall distribution with 20 samples.
             // The chance of drawing a sample outside 10 sigma from the standard normal distribution
             // is about 0.000000000000000000000015, which is smaller than `1 / WAD`,
-            // insignificant for most practical purposes. This function uses about 324 gas.
+            // and insignificant for most practical purposes. This function uses about 324 gas.
             let n := 21888242871839275222246405745257275088548364400416034343698204186575808495617
             let a := 60138855034168303847727928081792997591
             let m := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
