@@ -44,6 +44,15 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    constructor() {
+        // Initlaizes the owner and blocks initialization for the implementation.
+        if (_disableInitializerForImplementation()) _initializeOwner(address(0));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        INITIALIZER                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -366,6 +375,11 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
 
     /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
     function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
+        return true;
+    }
+
+    /// @dev Initializes the owner in the constructor, in case someone forgets to.
+    function _disableInitializerForImplementation() internal pure virtual returns (bool) {
         return true;
     }
 
