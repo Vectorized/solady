@@ -63,6 +63,13 @@ contract ERC4337Test is SoladyTest {
         account = MockERC4337(payable(LibClone.deployERC1967(erc4337)));
     }
 
+    function testDisableInitializerForImplementation() public {
+        MockERC4337 mock = new MockERC4337();
+        assertEq(mock.owner(), address(0));
+        vm.expectRevert(Ownable.AlreadyInitialized.selector);
+        mock.initialize(address(this));
+    }
+
     function testInitializer() public {
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), address(this));
