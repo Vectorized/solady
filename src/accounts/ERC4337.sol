@@ -55,7 +55,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /// from initializing the implementation and doing a delegatecall to SELFDESTRUCT.
     /// Proxies to the implementation will still be able to initialize as per normal.
     function _disableERC4337ImplementationInitializer() internal virtual {
-        // Note that `Ownable._guardInitializeOwner` has been and must be overriden
+        // Note that `Ownable._guardInitializeOwner` has been and must be overridden
         // to return true, to block double-initialization. We'll initialize to `address(1)`,
         // so that it's easier to verify that the implementation has been initialized.
         _initializeOwner(address(1));
