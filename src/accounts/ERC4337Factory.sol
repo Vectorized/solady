@@ -6,7 +6,7 @@ import {LibClone} from "../utils/LibClone.sol";
 /// @notice Simple ERC4337 account factory implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC4337Factory.sol)
 ///
-/// Note:
+/// @dev Note:
 /// - Unlike the ERC1967Factory, this factory does NOT store any admin info on the factory itself.
 ///   The deployed ERC4337 accounts are minimal ERC1967 proxies to an ERC4337 implementation.
 ///   The proxy bytecode does NOT contain any upgrading logic.

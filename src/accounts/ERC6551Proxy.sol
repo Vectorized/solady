@@ -5,7 +5,7 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC6551Proxy.sol)
 /// @author ERC6551 team (https://github.com/erc6551/reference/blob/main/src/examples/upgradeable/ERC6551AccountProxy.sol)
 ///
-/// Note: This relay proxy is required for upgradeable ERC6551 accounts.
+/// @dev Note: This relay proxy is required for upgradeable ERC6551 accounts.
 ///
 /// ERC6551 clone -> ERC6551Proxy (relay) -> ERC6551 account implementation.
 ///
