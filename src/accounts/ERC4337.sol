@@ -16,6 +16,12 @@ import {SignatureCheckerLib, ERC1271} from "../accounts/ERC1271.sol";
 /// 2. Create a factory that uses `LibClone.deployERC1967` or
 ///    `LibClone.deployDeterministicERC1967` to clone the implementation.
 ///    See: `ERC4337Factory.sol`.
+///
+/// Note: ERC4337 is a very complicated standard with many potential gotchas.
+/// Usually, ERC4337 account implementations are developed by companies with ample funds
+/// for security reviews. This implementation is intended to serve as a base reference
+/// for smart account developers working in such companies. If you are using this
+/// implementation, please do get one or more security review before deployment.
 abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -48,8 +54,17 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor() {
-        // Initlaizes the owner and blocks initialization for the implementation.
-        if (_disableInitializerForImplementation()) _initializeOwner(address(0));
+        _disableERC4337ImplementationInitializer();
+    }
+
+    /// @dev Automatically initializes the owner for the implementation. This blocks someone
+    /// from initializing the implementation and doing a delegatecall to SELFDESTRUCT.
+    /// Proxies to the implementation will still be able to initialize as per normal.
+    function _disableERC4337ImplementationInitializer() internal virtual {
+        // Note that `Ownable._guardInitializeOwner` has been and must be overridden
+        // to return true, to block double-initialization. We'll initialize to `address(1)`,
+        // so that it's easier to verify that the implementation has been initialized.
+        _initializeOwner(address(1));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -375,11 +390,6 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
 
     /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
     function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
-        return true;
-    }
-
-    /// @dev Initializes the owner in the constructor, in case someone forgets to.
-    function _disableInitializerForImplementation() internal pure virtual returns (bool) {
         return true;
     }
 

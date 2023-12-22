@@ -112,7 +112,6 @@ library LibClone {
              * f3      | RETURN         |                        | [0..rds): returndata  |
              * --------------------------------------------------------------------------+
              */
-
             mstore(0x21, 0x5af43d3d93803e602a57fd5bf3)
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
@@ -250,7 +249,6 @@ library LibClone {
              * f3      | RETURN         |                        | [0..rds): returndata  |
              * --------------------------------------------------------------------------+
              */
-
             mstore(0x24, 0x5af43d5f5f3e6029573d5ffd5b3d5ff3) // 16
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
@@ -424,7 +422,6 @@ library LibClone {
              * f3       | RETURN         |                          | [0..rds): returndata                        |
              * ---------------------------------------------------------------------------------------------------+
              */
-
             mstore(data, 0x5af43d3d93803e606057fd5bf3) // Write the bytecode before the data.
             mstore(sub(data, 0x0d), implementation) // Write the address of the implementation.
             // Write the rest of the bytecode.
@@ -667,7 +664,6 @@ library LibClone {
              * f3         | RETURN         |                  | [0..returndatasize): returndata |
              * ---------------------------------------------------------------------------------+
              */
-
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
             mstore(0x40, 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)

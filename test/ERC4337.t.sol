@@ -65,7 +65,7 @@ contract ERC4337Test is SoladyTest {
 
     function testDisableInitializerForImplementation() public {
         MockERC4337 mock = new MockERC4337();
-        assertEq(mock.owner(), address(0));
+        assertEq(mock.owner(), address(1));
         vm.expectRevert(Ownable.AlreadyInitialized.selector);
         mock.initialize(address(this));
     }
