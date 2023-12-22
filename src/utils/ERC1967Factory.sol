@@ -381,7 +381,6 @@ contract ERC1967Factory {
              * fd          | REVERT         |                     | [0..returndatasize): returndata |
              * -------------------------------------------------------------------------------------+
              */
-
             m := mload(0x40)
             // forgefmt: disable-start
             switch shr(112, address())
