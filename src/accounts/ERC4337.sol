@@ -16,6 +16,12 @@ import {SignatureCheckerLib, ERC1271} from "../accounts/ERC1271.sol";
 /// 2. Create a factory that uses `LibClone.deployERC1967` or
 ///    `LibClone.deployDeterministicERC1967` to clone the implementation.
 ///    See: `ERC4337Factory.sol`.
+///
+/// Note: ERC4337 is a very complicated standard with many potential gotchas.
+/// Usually, ERC4337 account implementations are developed by companies with ample funds
+/// for security reviews. This implementation is intended to serve as a base reference
+/// for smart account developers working in such companies. If you are using this
+/// implementation, please do get one or more security review before deployment.
 abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
