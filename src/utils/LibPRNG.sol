@@ -161,8 +161,8 @@ library LibPRNG {
             // This function uses about 319 gas.
             result := keccak256(prng, 0x20)
             mstore(prng, result)
-            let n := 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
-            let a := 0x2d3e5279f07911d5062dc0dd5c8998d7
+            let n := 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001 // Prime.
+            let a := 0x2d3e5279f07911d5062dc0dd5c89992d // Prime and a primitive root of `n`.
             let m := 0x0fffffffffffffff0fffffffffffffff0fffffffffffffff0fffffffffffffff
             let s := 0x1000000000000000100000000000000010000000000000001
             let r1 := mulmod(result, a, n)
