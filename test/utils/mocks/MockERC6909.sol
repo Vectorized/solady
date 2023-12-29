@@ -9,11 +9,11 @@ import {LibString} from "../../../src/utils/LibString.sol";
 contract MockERC6909 is ERC6909 {
     error TokenDoesNotExist();
 
-    function name() public view virtual override returns (string memory) {
+    function name(uint256) public view virtual override returns (string memory) {
         return "Solady Token";
     }
 
-    function symbol() public view virtual override returns (string memory) {
+    function symbol(uint256) public view virtual override returns (string memory) {
         return "ST";
     }
 

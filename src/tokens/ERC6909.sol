@@ -94,11 +94,11 @@ abstract contract ERC6909 {
     /*                      ERC6909 METADATA                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the token collection name.
-    function name() public view virtual returns (string memory);
+    /// @dev Returns the name for token `id`.
+    function name(uint256 id) public view virtual returns (string memory);
 
-    /// @dev Returns the token collection symbol.
-    function symbol() public view virtual returns (string memory);
+    /// @dev Returns the symbol for token `id`.
+    function symbol(uint256 id) public view virtual returns (string memory);
 
     /// @dev Returns the number of decimals for token `id`.
     /// Returns 18 by default.

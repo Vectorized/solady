@@ -22,9 +22,9 @@ contract ERC6909Test is SoladyTest {
         token = new MockERC6909();
     }
 
-    function testMetadata() public {
-        assertEq(token.name(), "Solady Token");
-        assertEq(token.symbol(), "ST");
+    function testMetadata(uint256 id) public {
+        assertEq(token.name(id), "Solady Token");
+        assertEq(token.symbol(id), "ST");
     }
 
     function testMint() public {
