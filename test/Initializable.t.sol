@@ -1,0 +1,71 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
+
+import "./utils/SoladyTest.sol";
+import {
+    MockInitializable,
+    MockInitializableRevert,
+    MockInitializableDisabled,
+    MockInitializableRevertV2,
+    Initializable
+} from "./utils/mocks/MockInitializable.sol";
+
+contract InitializableTest is SoladyTest {
+    MockInitializable m1;
+
+    function setUp() public {
+        m1 = new MockInitializable();
+    }
+
+    function testInit(uint256 x) public {
+        m1.init(x);
+        assertEq(m1.x(), x);
+    }
+
+    function testInitRevertWithInvalidInitialization(uint256 x) public {
+        m1.init(x);
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        m1.init(x);
+    }
+
+    function testReinitialize() public {
+        m1.init(5);
+        assertEq(m1.getVersion(), 1);
+        for (uint64 i = 2; i < 258; i++) {
+            m1.reinit(i + 5, i);
+            assertEq(m1.getVersion(), i);
+            assertEq(m1.x(), i + 5);
+        }
+    }
+
+    function testReinitializeRevertWithInvalidInitialization(uint64 x_, uint64 version) public {
+        m1.init(x_);
+        m1.reinit(x_, type(uint64).max);
+
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        m1.reinit(x_, version);
+    }
+
+    function testReinitializeRevertWhenContractIsInitializing(uint256 x_, uint64 version) public {
+        MockInitializableRevert m2 = new MockInitializableRevert();
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        m2.init1(x_, version);
+    }
+
+    function testRevertWhenInitializeIsDisabled(uint256 x_) public {
+        MockInitializableDisabled m = new MockInitializableDisabled();
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        m.init(x_);
+    }
+
+    function testInitializeIsDisabled() public {
+        MockInitializableDisabled m = new MockInitializableDisabled();
+        assertEq(m.getVersion(), type(uint64).max);
+    }
+
+    function testRevertWhenCalledOnlyInitializingFunctionWithNonInitializer() public {
+        MockInitializableRevertV2 m = new MockInitializableRevertV2();
+        vm.expectRevert(Initializable.NotInitializing.selector);
+        m.init(5);
+    }
+}
