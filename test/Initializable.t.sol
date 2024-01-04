@@ -11,61 +11,71 @@ import {
 } from "./utils/mocks/MockInitializable.sol";
 
 contract InitializableTest is SoladyTest {
+    event Initialized(uint64 version);
+
     MockInitializable m1;
 
     function setUp() public {
         m1 = new MockInitializable();
     }
 
-    function testInit() public {
-        testInit(123);
+    function _expectEmitInitialized(uint64 version) internal {
+        vm.expectEmit(true, true, true, true);
+        emit Initialized(version);
     }
 
-    function testInit(uint256 x) public {
-        m1.init(x);
+    function testInitialize() public {
+        testInitialize(123);
+    }
+
+    function testInitialize(uint256 x) public {
+        _expectEmitInitialized(1);
+        m1.initialize(x);
         assertEq(m1.x(), x);
     }
 
     function testOnlyInitializing() public {
-        testInit(123);
+        testInitialize(123);
         vm.expectRevert(Initializable.NotInitializing.selector);
         m1.onlyDuringInitializing();
     }
 
     function testInitRevertWithInvalidInitialization(uint256 x) public {
-        m1.init(x);
+        m1.initialize(x);
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        m1.init(x);
+        m1.initialize(x);
     }
 
     function testReinitialize() public {
-        m1.init(5);
+        m1.initialize(5);
         assertEq(m1.getVersion(), 1);
         for (uint64 i = 2; i < 258; i++) {
-            m1.reinit(i + 5, i);
+            _expectEmitInitialized(i);
+            m1.reinitialize(i + 5, i);
             assertEq(m1.getVersion(), i);
             assertEq(m1.x(), i + 5);
         }
     }
 
-    function testReinitializeRevertWithInvalidInitialization(uint64 x_, uint64 version) public {
-        m1.init(x_);
-        m1.reinit(x_, type(uint64).max);
+    function testReinitializeRevertWithInvalidInitialization(uint64 x, uint64 version) public {
+        m1.initialize(x);
+        m1.reinitialize(x, type(uint64).max);
 
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        m1.reinit(x_, version);
+        m1.reinitialize(x, version);
     }
 
-    function testReinitializeRevertWhenContractIsInitializing(uint256 x_, uint64 version) public {
+    function testReinitializeRevertWhenContractIsInitializing(uint256 x, uint64 version) public {
         MockInitializableRevert m2 = new MockInitializableRevert();
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        m2.init1(x_, version);
+        m2.initialize1(x, version);
     }
 
-    function testRevertWhenInitializeIsDisabled(uint256 x_) public {
+    function testRevertWhenInitializeIsDisabled(uint256 x) public {
+        _expectEmitInitialized(type(uint64).max);
         MockInitializableDisabled m = new MockInitializableDisabled();
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        m.init(x_);
+        m.initialize(x);
     }
 
     function testInitializeIsDisabled() public {
@@ -76,7 +86,7 @@ contract InitializableTest is SoladyTest {
     function testRevertWhenCalledOnlyInitializingFunctionWithNonInitializer() public {
         MockInitializableRevert2 m = new MockInitializableRevert2();
         vm.expectRevert(Initializable.NotInitializing.selector);
-        m.init(5);
+        m.initialize(5);
     }
 
     function testInitializeInititalizerTrick(
