@@ -156,7 +156,7 @@ contract SSTORE2Test is SoladyTest {
     function testWriteReadDeterministic(bytes calldata testBytes) public brutalizeMemory {
         bytes32 salt = bytes32(_random());
         address deployer = address(this);
-        if (_random() % 8 == 0) {
+        if (_randomUniform() & 7 == 0) {
             (deployer,) = _randomSigner();
         }
         vm.prank(deployer);

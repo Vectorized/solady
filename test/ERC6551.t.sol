@@ -74,7 +74,7 @@ contract ERC6551Test is SoladyTest {
 
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
         while (true) {
-            tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
+            tokenId = _randomUniform() & 7 == 0 ? _randomUniform() % 32 : _random();
             (bool success,) =
                 _erc721.call(abi.encodeWithSignature("mint(address,uint256)", owner, tokenId));
             if (success) return tokenId;
@@ -110,7 +110,7 @@ contract ERC6551Test is SoladyTest {
         assertEq(tokenId, t.tokenId);
         address owner = t.account.owner();
         assertEq(owner, t.owner);
-        if (_random() % 8 == 0) {
+        if (_randomUniform() & 7 == 0) {
             vm.prank(owner);
             address newOnwer = _randomNonZeroAddress();
             MockERC721(_erc721).transferFrom(owner, newOnwer, t.tokenId);
@@ -164,10 +164,10 @@ contract ERC6551Test is SoladyTest {
             }
         }
         unchecked {
-            vm.chainId(_random() % 3);
-            uint256 i = _random() % 3;
-            uint256 j = _random() % 3;
-            while (j == i) j = _random() % 3;
+            vm.chainId(_randomUniform() % 3);
+            uint256 i = _randomUniform() % 3;
+            uint256 j = _randomUniform() % 3;
+            while (j == i) j = _randomUniform() % 3;
             vm.prank(t[i].owner);
             MockERC721(_erc721).safeTransferFrom(t[i].owner, address(t[j].account), t[i].tokenId);
         }

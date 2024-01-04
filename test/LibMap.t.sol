@@ -86,7 +86,7 @@ contract LibMapTest is SoladyTest {
                 assembly {
                     casted := r
                 }
-                uint256 index = _random() % 32;
+                uint256 index = _randomUniform() & 31;
                 uint8s[0].set(index, casted);
                 assertEq(uint8s[0].get(index), casted);
             }
@@ -137,7 +137,7 @@ contract LibMapTest is SoladyTest {
                 assembly {
                     casted := r
                 }
-                uint256 index = _random() % 32;
+                uint256 index = _randomUniform() & 31;
                 uint16s[0].set(index, casted);
                 assertEq(uint16s[0].get(index), casted);
             }
@@ -188,7 +188,7 @@ contract LibMapTest is SoladyTest {
                 assembly {
                     casted := r
                 }
-                uint256 index = _random() % 32;
+                uint256 index = _randomUniform() & 31;
                 uint32s[0].set(index, casted);
                 assertEq(uint32s[0].get(index), casted);
             }
@@ -239,7 +239,7 @@ contract LibMapTest is SoladyTest {
                 assembly {
                     casted := r
                 }
-                uint256 index = _random() % 32;
+                uint256 index = _randomUniform() & 31;
                 uint40s[0].set(index, casted);
                 assertEq(uint40s[0].get(index), casted);
             }
@@ -290,7 +290,7 @@ contract LibMapTest is SoladyTest {
                 assembly {
                     casted := r
                 }
-                uint256 index = _random() % 32;
+                uint256 index = _randomUniform() & 31;
                 uint64s[0].set(index, casted);
                 assertEq(uint64s[0].get(index), casted);
             }
@@ -341,7 +341,7 @@ contract LibMapTest is SoladyTest {
                 assembly {
                     casted := r
                 }
-                uint256 index = _random() % 32;
+                uint256 index = _randomUniform() & 31;
                 uint128s[0].set(index, casted);
                 assertEq(uint128s[0].get(index), casted);
             }
@@ -383,9 +383,9 @@ contract LibMapTest is SoladyTest {
     function testUint32Maps(uint256) public {
         unchecked {
             uint256 a0 = _random();
-            uint256 a1 = _randomBool() ? a0 + _random() % 4 : a0 - _random() % 4;
+            uint256 a1 = _randomBool() ? a0 + _randomUniform() % 4 : a0 - _randomUniform() % 4;
             uint256 b0 = _random();
-            uint256 b1 = _randomBool() ? b0 + _random() % 4 : b0 - _random() % 4;
+            uint256 b1 = _randomBool() ? b0 + _randomUniform() % 4 : b0 - _randomUniform() % 4;
             if (a0 == a1 && b1 == b0) {
                 if (_randomBool()) {
                     if (_randomBool()) b1++;
@@ -429,22 +429,23 @@ contract LibMapTest is SoladyTest {
         returns (_SearchSortedTestVars memory t)
     {
         unchecked {
-            t.n = 1 + _random() % 7 + (_random() % 8 == 0 ? _random() % 64 : 0);
+            t.n = 1 + _randomUniform() % 7 + (_randomUniform() & 7 == 0 ? _randomUniform() % 64 : 0);
             if (_randomBool()) {
                 t.o = type(uint256).max - t.n;
                 t.end = t.o + t.n;
                 assertEq(t.end, type(uint256).max);
             } else {
-                t.o = _random() % 4 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
+                t.o =
+                    _randomUniform() % 4 + (_randomUniform() & 7 == 0 ? type(uint256).max - 256 : 0);
                 t.end = t.o + t.n;
             }
-            uint256 v = _random() % 4;
-            uint256 b = (_random() % 2) * (_random() << 7);
+            uint256 v = _randomUniform() & 3;
+            uint256 b = (_randomUniform() % 2) * (_random() << 7);
             uint256 valueMask = (1 << bitWidth) - 1;
             for (uint256 i; i != t.n; ++i) {
                 map.set(t.o + i, b | v, bitWidth);
                 filled.set((b | v) & valueMask, 1, 1);
-                v += 1 + _random() % 2;
+                v += 1 + _randomUniform() % 2;
             }
             t.randomIndex = t.o + _random() % t.n;
             t.randomIndexValue = map.get(t.randomIndex, bitWidth);
@@ -571,10 +572,11 @@ contract LibMapTest is SoladyTest {
 
     function testGeneralMapFunctionsWithSmallBitWidths(uint256) public {
         unchecked {
-            uint256 bitWidth = 1 + _random() % 6;
+            uint256 bitWidth = 1 + _randomUniform() % 6;
             uint256 valueMask = (1 << bitWidth) - 1;
-            uint256 o = _random() % 64 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
-            uint256 n = _random() % 9;
+            uint256 o =
+                _randomUniform() % 64 + (_randomUniform() & 7 == 0 ? type(uint256).max - 256 : 0);
+            uint256 n = _randomUniform() % 9;
             for (uint256 k; k != 2; ++k) {
                 for (uint256 i; i != n; ++i) {
                     uint256 j = o + i * 2;

@@ -108,7 +108,7 @@ contract DynamicBufferLibTest is SoladyTest {
             uint256 z = _bound(_random(), 32, 4096);
             if (_randomUniform() & 7 == 0) bufferA.reserve(_random() % z);
             if (_randomUniform() & 7 == 0) bufferB.reserve(_random() % z);
-            uint256 r = _random() % 3;
+            uint256 r = _randomUniform() % 3;
             uint256 o = _bound(_random(), 0, 32);
             uint256 n = _bound(_random(), 5, _randomUniform() & 7 == 0 ? 64 : 8);
             z = z + z;

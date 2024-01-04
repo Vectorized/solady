@@ -198,7 +198,7 @@ contract OwnableRolesTest is SoladyTest {
     function testRolesFromOrdinals() public {
         unchecked {
             for (uint256 t; t != 32; ++t) {
-                uint8[] memory ordinals = new uint8[](_random() % 32);
+                uint8[] memory ordinals = new uint8[](_randomUniform() % 32);
                 for (uint256 i; i != ordinals.length; ++i) {
                     uint256 randomness = _random();
                     uint8 r;

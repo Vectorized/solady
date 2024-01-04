@@ -7,7 +7,7 @@ import "src/utils/LibSort.sol";
 contract LibSortTest is SoladyTest {
     function testInsertionSortAddressesDifferential(uint256) public {
         unchecked {
-            uint256 n = _random() % 32 == 0 ? _randomArrayLength() : _random() % 4;
+            uint256 n = _randomUniform() % 32 == 0 ? _randomArrayLength() : _randomUniform() & 3;
             address[] memory a = _randomAddresses(n);
             // Make a copy of the `a` and perform insertion sort on it.
             address[] memory aCopy = _copy(a);
@@ -760,10 +760,10 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedDifferential(uint256) public {
         unchecked {
-            uint256 n = _randomBool() ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomBool() ? _randomUniform() % 4 : _randomArrayLength();
             uint256[] memory a = new uint256[](n);
             for (uint256 i; i != n; ++i) {
-                a[i] = _random() % 4;
+                a[i] = _randomUniform() & 3;
             }
             assertEq(LibSort.isSorted(a), _isSorted(a));
             LibSort.sort(a);
@@ -780,10 +780,10 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedIntsDifferential(uint256) public {
         unchecked {
-            uint256 n = _randomBool() ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomBool() ? _randomUniform() % 4 : _randomArrayLength();
             int256[] memory a = new int256[](n);
             for (uint256 i; i != n; ++i) {
-                a[i] = int256(_random() % 4);
+                a[i] = int256(_randomUniform() & 3);
                 if (_randomBool()) {
                     a[i] = -a[i];
                 }
@@ -803,10 +803,10 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedAddressesDifferential(uint256) public {
         unchecked {
-            uint256 n = _randomBool() ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomBool() ? _randomUniform() % 4 : _randomArrayLength();
             address[] memory a = new address[](n);
             for (uint256 i; i != n; ++i) {
-                a[i] = address(uint160(_random() % 4));
+                a[i] = address(uint160(_randomUniform() & 3));
             }
             assertEq(LibSort.isSorted(a), _isSorted(a));
             LibSort.sort(a);
@@ -823,10 +823,10 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedAndUniquifiedDifferential(uint256) public {
         unchecked {
-            uint256 n = _randomBool() ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomBool() ? _randomUniform() % 4 : _randomArrayLength();
             uint256[] memory a = new uint256[](n);
             for (uint256 i; i != n; ++i) {
-                a[i] = _random() % 4;
+                a[i] = _randomUniform() & 3;
             }
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
             LibSort.sort(a);
@@ -843,10 +843,10 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedAndUniquifiedIntsDifferential(uint256) public {
         unchecked {
-            uint256 n = _randomBool() ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomBool() ? _randomUniform() % 4 : _randomArrayLength();
             int256[] memory a = new int256[](n);
             for (uint256 i; i != n; ++i) {
-                a[i] = int256(_random() % 4);
+                a[i] = int256(_randomUniform() & 3);
                 if (_randomBool()) {
                     a[i] = -a[i];
                 }
@@ -866,10 +866,10 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedAndUniquifiedAddressesDifferential(uint256) public {
         unchecked {
-            uint256 n = _randomBool() ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomBool() ? _randomUniform() % 4 : _randomArrayLength();
             address[] memory a = new address[](n);
             for (uint256 i; i != n; ++i) {
-                a[i] = address(uint160(_random() % 4));
+                a[i] = address(uint160(_randomUniform() & 3));
             }
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
             LibSort.sort(a);

@@ -23,8 +23,9 @@ contract ERC4337FactoryTest is SoladyTest {
     function testDeployDeterministic(uint256) public {
         vm.deal(address(this), 100 ether);
         address owner = _randomNonZeroAddress();
-        uint256 initialValue = _random() % 100 ether;
-        bytes32 salt = _random() % 8 == 0 ? bytes32(_random()) : bytes32(uint256(uint96(_random())));
+        uint256 initialValue = _randomUniform() % 100 ether;
+        bytes32 salt =
+            _randomUniform() & 7 == 0 ? bytes32(_random()) : bytes32(uint256(uint96(_random())));
         address account;
         if (uint256(salt) >> 96 != uint160(owner) && uint256(salt) >> 96 != 0) {
             vm.expectRevert(LibClone.SaltDoesNotStartWith.selector);

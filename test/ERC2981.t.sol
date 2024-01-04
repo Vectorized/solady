@@ -55,7 +55,7 @@ contract ERC2981Test is SoladyTest {
     function testSetAndGetRoyaltyInfo(uint256) public {
         _TestTemps memory t = _testTemps();
 
-        if (_random() % 16 == 0) _checkReverts(t);
+        if (_randomUniform() & 15 == 0) _checkReverts(t);
 
         _checkRoyaltyInfoIsZero(t);
 
@@ -70,7 +70,7 @@ contract ERC2981Test is SoladyTest {
         _checkRoyaltyInfo(t, 0);
         _checkRoyaltyInfo(t, 1);
 
-        if (_random() % 16 == 0) _checkReverts(t);
+        if (_randomUniform() & 15 == 0) _checkReverts(t);
 
         token.resetTokenRoyalty(t.tokenIds[0]);
         _checkRoyaltyInfoIsDefault(t, 0);
@@ -79,13 +79,13 @@ contract ERC2981Test is SoladyTest {
         _checkRoyaltyInfoIsDefault(t, 0);
         _checkRoyaltyInfoIsDefault(t, 1);
 
-        if (_random() % 16 == 0) _checkReverts(t);
+        if (_randomUniform() & 15 == 0) _checkReverts(t);
 
         token.deleteDefaultRoyalty();
 
         _checkRoyaltyInfoIsZero(t);
 
-        if (_random() % 16 == 0) _checkReverts(t);
+        if (_randomUniform() & 15 == 0) _checkReverts(t);
     }
 
     function _getInvalidFeeNumerator(_TestTemps memory t) internal returns (uint96 r) {

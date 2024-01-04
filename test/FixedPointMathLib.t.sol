@@ -1788,31 +1788,31 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testPackUnpackSci(uint256) public {
         unchecked {
-            uint256 x = (_random() & 0x1) * 10 ** (_random() % 70);
+            uint256 x = (_random() & 0x1) * 10 ** (_randomUniform() % 70);
             uint8 packed = uint8(FixedPointMathLib.packSci(x));
             uint256 unpacked = FixedPointMathLib.unpackSci(packed);
             assertEq(unpacked, x);
         }
         unchecked {
-            uint256 x = (_random() & 0x1ff) * 10 ** (_random() % 70);
+            uint256 x = (_random() & 0x1ff) * 10 ** (_randomUniform() % 70);
             uint16 packed = uint16(FixedPointMathLib.packSci(x));
             uint256 unpacked = FixedPointMathLib.unpackSci(packed);
             assertEq(unpacked, x);
         }
         unchecked {
-            uint256 x = (_random() & 0x1ffffff) * 10 ** (_random() % 70);
+            uint256 x = (_random() & 0x1ffffff) * 10 ** (_randomUniform() % 70);
             uint32 packed = uint32(FixedPointMathLib.packSci(x));
             uint256 unpacked = FixedPointMathLib.unpackSci(packed);
             assertEq(unpacked, x);
         }
         unchecked {
-            uint256 x = (_random() & 0x1ffffffffffffff) * 10 ** (_random() % 60);
+            uint256 x = (_random() & 0x1ffffffffffffff) * 10 ** (_randomUniform() % 60);
             uint64 packed = uint64(FixedPointMathLib.packSci(x));
             uint256 unpacked = FixedPointMathLib.unpackSci(packed);
             assertEq(unpacked, x);
         }
         unchecked {
-            uint256 x = (_random() * 10 ** (_random() % 78)) & ((1 << 249) - 1);
+            uint256 x = (_random() * 10 ** (_randomUniform() % 78)) & ((1 << 249) - 1);
             uint256 packed = FixedPointMathLib.packSci(x);
             uint256 unpacked = FixedPointMathLib.unpackSci(packed);
             assertEq(unpacked, x);

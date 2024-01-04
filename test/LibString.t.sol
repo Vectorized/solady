@@ -995,7 +995,7 @@ contract LibStringTest is SoladyTest {
         string memory filler0 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-        uint256 r = _random() % 5;
+        uint256 r = _randomUniform() % 5;
 
         string memory expectedResult =
             string(bytes.concat(bytes(filler0), bytes(escapedChars[r]), bytes(filler1)));
@@ -1385,7 +1385,7 @@ contract LibStringTest is SoladyTest {
 
     function _generateFrom(string memory subject) internal returns (uint256) {
         unchecked {
-            if (_random() % 8 == 0) {
+            if (_randomUniform() & 7 == 0) {
                 return _random();
             }
             return _random() % (bytes(subject).length + 10);
@@ -1416,10 +1416,10 @@ contract LibStringTest is SoladyTest {
     }
 
     function _randomStringLength() internal returns (uint256 r) {
-        r = _random() % 256;
-        if (r < 64) return _random() % 128;
-        if (r < 128) return _random() % 64;
-        return _random() % 16;
+        r = _randomUniform() % 256;
+        if (r < 64) return _randomUniform() % 128;
+        if (r < 128) return _randomUniform() % 64;
+        return _randomUniform() % 16;
     }
 
     function _stringArraysAreSame(string[] memory a, string[] memory b)

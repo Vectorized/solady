@@ -297,9 +297,9 @@ contract MetadataReaderLibTest is SoladyTest {
     }
 
     function _randomStringLength() internal returns (uint256 r) {
-        r = _random() % 256;
-        if (r < 64) return _random() % 128;
-        if (r < 128) return _random() % 64;
-        return _random() % 16;
+        r = _randomUniform() % 256;
+        if (r < 64) return _randomUniform() % 128;
+        if (r < 128) return _randomUniform() % 64;
+        return _randomUniform() % 16;
     }
 }

@@ -432,7 +432,7 @@ contract ERC6909Test is SoladyTest {
     function testDirectFunctions(uint256) public {
         _TestTemps memory t;
         t.id = _random();
-        t.by = _random() % 16 == 0 ? address(0) : _randomAddress();
+        t.by = _randomUniform() & 15 == 0 ? address(0) : _randomAddress();
         t.from = _randomAddress();
         t.to = _randomAddress();
 
@@ -441,7 +441,7 @@ contract ERC6909Test is SoladyTest {
             t.allowance = _random();
             t.balance = _random();
             t.amount = _random();
-            t.isOperator = _random() % 4 == 0;
+            t.isOperator = _randomUniform() % 4 == 0;
             t.id ^= 1;
 
             token.mint(t.from, t.id, t.balance);
@@ -467,14 +467,14 @@ contract ERC6909Test is SoladyTest {
                 }
             }
 
-            if (t.by == address(0) && _random() % 4 == 0) {
+            if (t.by == address(0) && _randomUniform() % 4 == 0) {
                 if (t.success) {
                     vm.expectEmit(true, true, true, true);
                     emit Transfer(t.from, t.from, t.to, t.id, t.amount);
                 }
                 vm.prank(t.from);
                 token.transfer(t.to, t.id, t.amount);
-            } else if (t.by != address(0) && _random() % 4 == 0) {
+            } else if (t.by != address(0) && _randomUniform() % 4 == 0) {
                 if (t.success) {
                     vm.expectEmit(true, true, true, true);
                     emit Transfer(t.by, t.from, t.to, t.id, t.amount);

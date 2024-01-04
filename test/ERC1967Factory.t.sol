@@ -116,7 +116,7 @@ contract ERC1967FactoryTest is SoladyTest {
         bytes memory data = abi.encodeWithSignature("setValue(uint256,uint256)", t.key, t.value);
         vm.deal(admin, type(uint128).max);
         vm.prank(admin);
-        if (_random() % 8 == 0) {
+        if (_randomUniform() & 7 == 0) {
             t.salt = keccak256(abi.encode(_random()));
             vm.expectRevert(ERC1967Factory.SaltDoesNotStartWithCaller.selector);
             t.proxy = factory.deployDeterministicAndCall{value: t.msgValue}(

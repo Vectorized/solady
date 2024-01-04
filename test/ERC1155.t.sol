@@ -309,7 +309,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
             do {
                 t.to = _randomNonZeroAddress();
             } while (t.from == t.to);
-            uint256 n = _random() % 4;
+            uint256 n = _randomUniform() & 3;
             t.n = n;
             t.ids = _randomArray(n);
             t.mintAmounts = _randomArray(n);
@@ -570,7 +570,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         if (_randomBool()) {
             _expectBurnEvent(t.to, t.id, t.burnAmount);
             token.uncheckedBurn(t.to, t.id, t.burnAmount);
-        } else if (_random() % 8 == 0) {
+        } else if (_randomUniform() & 7 == 0) {
             vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
             token.burn(t.to, t.id, t.burnAmount);
             return;
@@ -606,7 +606,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         if (_randomBool()) {
             _expectBurnEvent(t.to, t.ids, t.burnAmounts);
             token.uncheckedBatchBurn(t.to, t.ids, t.burnAmounts);
-        } else if (_random() % 8 == 0) {
+        } else if (_randomUniform() & 7 == 0) {
             vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
             token.batchBurn(t.to, t.ids, t.burnAmounts);
             return;
@@ -645,7 +645,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         if (_randomBool()) {
             _expectTransferEvent(t.from, t.to, t.id, t.transferAmount);
             token.uncheckedSafeTransferFrom(t.from, t.to, t.id, t.transferAmount, t.transferData);
-        } else if (_random() % 8 == 0) {
+        } else if (_randomUniform() & 7 == 0) {
             vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
             _safeTransferFrom(t.from, t.to, t.id, t.transferAmount, t.transferData);
             return;
@@ -736,7 +736,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
             token.uncheckedSafeBatchTransferFrom(
                 t.from, t.to, t.ids, t.transferAmounts, t.transferData
             );
-        } else if (_random() % 8 == 0) {
+        } else if (_randomUniform() & 7 == 0) {
             vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
             _safeBatchTransferFrom(t.from, t.to, t.ids, t.transferAmounts, t.transferData);
             return;
@@ -1074,8 +1074,8 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
     }
 
     function testSafeBatchTransferFromWithArrayLengthMismatchReverts(uint256) public {
-        uint256[] memory ids = new uint256[](_random() % 4);
-        uint256[] memory mintAmounts = new uint256[](_random() % 4);
+        uint256[] memory ids = new uint256[](_randomUniform() & 3);
+        uint256[] memory mintAmounts = new uint256[](_randomUniform() & 3);
 
         if (ids.length == mintAmounts.length) return;
 
@@ -1084,7 +1084,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         vm.expectRevert(ERC1155.ArrayLengthsMismatch.selector);
         token.batchMint(from, ids, mintAmounts, _randomBytes());
 
-        uint256[] memory transferAmounts = new uint256[](_random() % 4);
+        uint256[] memory transferAmounts = new uint256[](_randomUniform() & 3);
         if (ids.length == transferAmounts.length) return;
 
         vm.prank(from);
@@ -1177,8 +1177,8 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
     }
 
     function testBatchMintWithArrayMismatchReverts(uint256) public {
-        uint256[] memory ids = new uint256[](_random() % 4);
-        uint256[] memory amounts = new uint256[](_random() % 4);
+        uint256[] memory ids = new uint256[](_randomUniform() & 3);
+        uint256[] memory amounts = new uint256[](_randomUniform() & 3);
 
         if (ids.length == amounts.length) return;
 
@@ -1224,8 +1224,8 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
     }
 
     function testBalanceOfBatchWithArrayMismatchReverts(uint256) public {
-        address[] memory tos = new address[](_random() % 4);
-        uint256[] memory ids = new uint256[](_random() % 4);
+        address[] memory tos = new address[](_randomUniform() & 3);
+        uint256[] memory ids = new uint256[](_randomUniform() & 3);
         if (tos.length == ids.length) return;
 
         vm.expectRevert(ERC1155.ArrayLengthsMismatch.selector);

@@ -113,7 +113,7 @@ contract ERC721HooksTest is SoladyTest, ERC721TokenReceiver {
 
         expectedBeforeCounter++;
         expectedAfterCounter++;
-        uint256 r = ticker < 4 ? ticker : _random() % 4;
+        uint256 r = ticker < 4 ? ticker : _randomUniform() & 3;
         vm.prank(from);
         if (r == 0) {
             token.safeTransferFrom(from, address(this), tokenId);
@@ -347,7 +347,7 @@ contract ERC721Test is SoladyTest {
         } else {
             vm.expectRevert(ERC721.NotOwnerNorApproved.selector);
             token.burn(id);
-            uint256 r = _random() % 3;
+            uint256 r = _randomUniform() % 3;
             if (r == 0) {
                 vm.prank(owner);
                 _transferFrom(owner, address(this), id);
@@ -388,7 +388,7 @@ contract ERC721Test is SoladyTest {
         unchecked {
             (owners[0], owners[1]) = _owners();
             for (uint256 j; j != 2; ++j) {
-                tokens[j] = new uint256[](_random() % 3);
+                tokens[j] = new uint256[](_randomUniform() % 3);
             }
 
             for (uint256 j; j != 2; ++j) {
@@ -638,7 +638,7 @@ contract ERC721Test is SoladyTest {
         token.mint(from, id);
 
         if (_randomBool()) {
-            uint256 r = _random() % 3;
+            uint256 r = _randomUniform() % 3;
             if (r == 0) {
                 vm.prank(from);
                 _approve(address(this), id);

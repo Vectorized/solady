@@ -22,7 +22,7 @@ contract MinHeapLibTest is SoladyTest {
 
     function testHeapPushAndPop(uint256) public {
         unchecked {
-            uint256 n = _random() % 8;
+            uint256 n = _randomUniform() % 8;
             uint256[] memory a = new uint256[](n);
 
             for (uint256 i; i < n; ++i) {
@@ -40,13 +40,13 @@ contract MinHeapLibTest is SoladyTest {
 
     function testHeapPushPop(uint256) public {
         unchecked {
-            uint256 n = _random() % 8;
+            uint256 n = _randomUniform() % 8;
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
                 heap0.push(r);
                 heap1.push(r);
             }
-            n = _random() % 8;
+            n = _randomUniform() % 8;
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
                 uint256 popped0 = heap0.pushPop(r);
@@ -59,13 +59,13 @@ contract MinHeapLibTest is SoladyTest {
 
     function testHeapReplace(uint256) public {
         unchecked {
-            uint256 n = _random() % 8 + 1;
+            uint256 n = _randomUniform() % 8 + 1;
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
                 heap0.push(r);
                 heap1.push(r);
             }
-            n = _random() % 8;
+            n = _randomUniform() % 8;
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
                 uint256 popped0 = heap0.replace(r);
@@ -78,8 +78,8 @@ contract MinHeapLibTest is SoladyTest {
 
     function testHeapEnqueue(uint256) public {
         unchecked {
-            uint256 maxLength = _random() % 8 + 1;
-            uint256 m = _random() % 32 + maxLength;
+            uint256 maxLength = _randomUniform() % 8 + 1;
+            uint256 m = _randomUniform() % 32 + maxLength;
             uint256[] memory a = new uint256[](m);
             uint256[] memory rejected = new uint256[](m);
             uint256 numRejected;
@@ -119,7 +119,7 @@ contract MinHeapLibTest is SoladyTest {
                 this.enqueue(i, 8);
             }
             for (uint256 i; i < 16; ++i) {
-                this.enqueue(_random() % 16, 8);
+                this.enqueue(_randomUniform() % 16, 8);
             }
         }
     }

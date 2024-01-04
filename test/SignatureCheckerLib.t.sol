@@ -93,7 +93,7 @@ contract SignatureCheckerLibTest is SoladyTest {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         _checkSignature(signer, digest, abi.encodePacked(r, s, v), true);
 
-        if (_random() % 8 == 0) {
+        if (_randomUniform() & 7 == 0) {
             assertEq(
                 this.isValidSignatureNowCalldata(signer, digest, abi.encodePacked(r, s, v)), true
             );
@@ -116,7 +116,7 @@ contract SignatureCheckerLibTest is SoladyTest {
             assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, v, r, s), true);
         }
 
-        if (_random() % 8 == 0) {
+        if (_randomUniform() & 7 == 0) {
             bytes32 vs;
             /// @solidity memory-safe-assembly
             assembly {
@@ -129,7 +129,7 @@ contract SignatureCheckerLibTest is SoladyTest {
             assertEq(this.isValidSignatureNowCalldata(signer, digest, abi.encode(r, vs)), true);
         }
 
-        if (_random() % 8 == 0) {
+        if (_randomUniform() & 7 == 0) {
             bytes32 vsc; // Corrupted `vs`.
             /// @solidity memory-safe-assembly
             assembly {
@@ -142,14 +142,14 @@ contract SignatureCheckerLibTest is SoladyTest {
             assertEq(this.isValidSignatureNowCalldata(signer, digest, abi.encode(r, vsc)), false);
         }
 
-        if (_random() % 8 == 0 && r != bytes32(0) && s != bytes32(0)) {
+        if (_randomUniform() & 7 == 0 && r != bytes32(0) && s != bytes32(0)) {
             bytes32 rc = bytes32(uint256(r) - (_randomUniform() & 1)); // Corrupted `r`.
             bytes32 sc = bytes32(uint256(s) - (_randomUniform() & 1)); // Corrupted `s`.
             bool anyCorrupted = rc != r || sc != s;
             _checkSignature(signer, digest, abi.encodePacked(rc, sc, v), !anyCorrupted);
         }
 
-        if (_random() % 8 == 0) {
+        if (_randomUniform() & 7 == 0) {
             uint8 vc = uint8(_random()); // Corrupted `v`.
             while (vc == 28 || vc == 27) vc = uint8(_random());
             assertEq(SignatureCheckerLib.isValidSignatureNow(signer, digest, vc, r, s), false);

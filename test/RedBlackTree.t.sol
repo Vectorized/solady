@@ -106,7 +106,7 @@ contract RedBlackTreeLibTest is SoladyTest {
             if (exists) {
                 assertEq(ptr.value(), choice);
                 ptr.remove();
-                if (_random() % 4 == 0) tree.tryRemove(choice);
+                if (_randomUniform() % 4 == 0) tree.tryRemove(choice);
                 assertTrue(tree.find(choice).isEmpty());
                 assertFalse(tree.exists(choice));
             }
@@ -115,7 +115,7 @@ contract RedBlackTreeLibTest is SoladyTest {
             }
             if (exists) {
                 tree.insert(choice);
-                if (_random() % 4 == 0) tree.tryInsert(choice);
+                if (_randomUniform() % 4 == 0) tree.tryInsert(choice);
                 assertFalse(tree.find(choice).isEmpty());
                 assertTrue(tree.exists(choice));
             }
@@ -145,7 +145,7 @@ contract RedBlackTreeLibTest is SoladyTest {
     }
 
     function _testRedBlackTreeInsertAndRemove() internal {
-        uint256 n = _random() % (_random() % 128 == 0 ? 32 : 8);
+        uint256 n = _random() % (_randomUniform() % 128 == 0 ? 32 : 8);
         uint256[] memory a = _fillTree(n);
 
         LibSort.sort(a);
@@ -216,7 +216,7 @@ contract RedBlackTreeLibTest is SoladyTest {
             }
             uint256[] memory records = _makeArray(0);
             uint256 mode = 0;
-            for (uint256 t = _random() % 32 + 1; t != 0; --t) {
+            for (uint256 t = _randomUniform() % 32 + 1; t != 0; --t) {
                 uint256 r = candidates[_random() % n];
                 bytes32 ptr = tree.find(r);
                 if (mode == 0) {
@@ -230,7 +230,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                         _removeFromArray(records, r);
                     }
                 }
-                if (_random() % 3 == 0) mode = _random() % 2;
+                if (_randomUniform() % 3 == 0) mode = _randomUniform() % 2;
             }
             LibSort.sort(records);
             assertEq(tree.size(), records.length);
@@ -390,7 +390,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeClear(uint256) public {
         unchecked {
-            uint256 n = _random() % (_random() % 128 == 0 ? 32 : 8);
+            uint256 n = _random() % (_randomUniform() % 128 == 0 ? 32 : 8);
             uint256[] memory a = _fillTree(n);
 
             bytes32[] memory ptrs = new bytes32[](n);
@@ -454,7 +454,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeNearest(uint256) public {
         assertEq(tree.nearest(1), bytes32(0));
-        uint256[] memory a = _fillTree(_random() % 8);
+        uint256[] memory a = _fillTree(_randomUniform() % 8);
         uint256 x = _bound(_random(), 1, type(uint256).max);
         (uint256 nearestIndex, bool found) = _nearestIndex(a, x);
         if (found) {
@@ -488,7 +488,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeNearestBefore(uint256) public {
         assertEq(tree.nearestBefore(1), bytes32(0));
-        uint256[] memory a = _fillTree(_random() % 8);
+        uint256[] memory a = _fillTree(_randomUniform() % 8);
         uint256 x = _bound(_random(), 1, type(uint256).max);
         (uint256 nearestIndexBefore, bool found) = _nearestIndexBefore(a, x);
         if (found) {
@@ -521,7 +521,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeNearestAfter(uint256) public {
         assertEq(tree.nearestAfter(1), bytes32(0));
-        uint256[] memory a = _fillTree(_random() % 8);
+        uint256[] memory a = _fillTree(_randomUniform() % 8);
         uint256 x = _bound(_random(), 1, type(uint256).max);
         (uint256 nearestIndexAfter, bool found) = _nearestIndexAfter(a, x);
         if (found) {
@@ -561,7 +561,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                     a[i++] = r;
                     tree.insert(r);
                 }
-                if (_random() % 4 == 0) {
+                if (_randomUniform() % 4 == 0) {
                     _testRemoveAndInsertBack(a, i, (3 + i >> 2));
                 }
             }
