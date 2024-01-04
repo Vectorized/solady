@@ -27,6 +27,7 @@ import "./utils/ERC1967Factory.sol";
 import "./utils/ERC1967FactoryConstants.sol";
 import "./utils/FixedPointMathLib.sol";
 import "./utils/GasBurnerLib.sol";
+import "./utils/Initializable.sol";
 import "./utils/JSONParserLib.sol";
 import "./utils/LibBit.sol";
 import "./utils/LibBitmap.sol";

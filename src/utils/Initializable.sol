@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Initializable helper for the upgradeable contracts
+/// @notice Initializable mixin for the upgradeable contracts.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Initializable.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/proxy/utils/Initializable.sol)
 abstract contract Initializable {
