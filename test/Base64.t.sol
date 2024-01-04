@@ -78,16 +78,16 @@ contract Base64Test is SoladyTest {
             string memory encoded = Base64.encode(input);
             _checkMemory(encoded);
 
-            if (_random() & 1 == 0) {
+            if (_randomBool()) {
                 encoded = LibString.replace(encoded, "=", "");
             }
-            if (_random() & 1 == 0) {
+            if (_randomBool()) {
                 encoded = LibString.replace(encoded, "/", ",");
             }
-            if (_random() & 1 == 0) {
+            if (_randomBool()) {
                 encoded = LibString.replace(encoded, "/", "_");
             }
-            if (_random() & 1 == 0) {
+            if (_randomBool()) {
                 encoded = LibString.replace(encoded, "+", "-");
             }
 

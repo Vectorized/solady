@@ -14,7 +14,7 @@ contract DynamicBufferLibTest is SoladyTest {
         bytes memory emptyBytes;
         assertEq(buffer.data.length, 0);
         assertEq(emptyBytes.length, 0);
-        if (_random() & 1 == 0) buffer.clear();
+        if (_randomBool()) buffer.clear();
         assertEq(buffer.data.length, 0);
         assertEq(emptyBytes.length, 0);
         buffer.clear().p(b0);
@@ -102,48 +102,48 @@ contract DynamicBufferLibTest is SoladyTest {
 
     function testDynamicBuffer(uint256) public brutalizeMemory {
         unchecked {
-            if (_random() & 7 == 0) _misalignFreeMemoryPointer();
+            if (_randomUniform() & 7 == 0) _misalignFreeMemoryPointer();
             DynamicBufferLib.DynamicBuffer memory bufferA;
             DynamicBufferLib.DynamicBuffer memory bufferB;
             uint256 z = _bound(_random(), 32, 4096);
-            if (_random() & 7 == 0) bufferA.reserve(_random() % z);
-            if (_random() & 7 == 0) bufferB.reserve(_random() % z);
+            if (_randomUniform() & 7 == 0) bufferA.reserve(_random() % z);
+            if (_randomUniform() & 7 == 0) bufferB.reserve(_random() % z);
             uint256 r = _random() % 3;
             uint256 o = _bound(_random(), 0, 32);
-            uint256 n = _bound(_random(), 5, _random() & 7 == 0 ? 64 : 8);
+            uint256 n = _bound(_random(), 5, _randomUniform() & 7 == 0 ? 64 : 8);
             z = z + z;
 
             if (r == 0) {
                 for (uint256 i; i != n; ++i) {
-                    if (_random() & 7 == 0) bufferA.reserve(_random() % z);
+                    if (_randomUniform() & 7 == 0) bufferA.reserve(_random() % z);
                     bufferA.p(_generateRandomBytes(i + o, i + z));
                 }
                 for (uint256 i; i != n; ++i) {
-                    if (_random() & 7 == 0) bufferB.reserve(_random() % z);
+                    if (_randomUniform() & 7 == 0) bufferB.reserve(_random() % z);
                     bufferB.p(_generateRandomBytes(i + o, i + z));
                 }
             } else if (r == 1) {
                 for (uint256 i; i != n; ++i) {
-                    if (_random() & 7 == 0) bufferB.reserve(_random() % z);
+                    if (_randomUniform() & 7 == 0) bufferB.reserve(_random() % z);
                     bufferB.p(_generateRandomBytes(i + o, i + z));
                 }
                 for (uint256 i; i != n; ++i) {
-                    if (_random() & 7 == 0) bufferA.reserve(_random() % z);
+                    if (_randomUniform() & 7 == 0) bufferA.reserve(_random() % z);
                     bufferA.p(_generateRandomBytes(i + o, i + z));
                 }
             } else {
                 uint256 mode;
                 for (uint256 i; i != n; ++i) {
-                    if (_random() & 7 == 0) mode ^= 1;
+                    if (_randomUniform() & 7 == 0) mode ^= 1;
                     if (mode == 0) {
-                        if (_random() & 7 == 0) bufferA.reserve(_random() % z);
+                        if (_randomUniform() & 7 == 0) bufferA.reserve(_random() % z);
                         bufferA.p(_generateRandomBytes(i + o, i + z));
-                        if (_random() & 7 == 0) bufferB.reserve(_random() % z);
+                        if (_randomUniform() & 7 == 0) bufferB.reserve(_random() % z);
                         bufferB.p(_generateRandomBytes(i + o, i + z));
                     } else {
-                        if (_random() & 7 == 0) bufferB.reserve(_random() % z);
+                        if (_randomUniform() & 7 == 0) bufferB.reserve(_random() % z);
                         bufferB.p(_generateRandomBytes(i + o, i + z));
-                        if (_random() & 7 == 0) bufferA.reserve(_random() % z);
+                        if (_randomUniform() & 7 == 0) bufferA.reserve(_random() % z);
                         bufferA.p(_generateRandomBytes(i + o, i + z));
                     }
                 }

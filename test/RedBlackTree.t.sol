@@ -193,7 +193,7 @@ contract RedBlackTreeLibTest is SoladyTest {
         assertEq(tree.size(), 0);
 
         unchecked {
-            if (_random() % 2 == 0) {
+            if (_randomBool()) {
                 for (uint256 i; i != n; ++i) {
                     assertTrue(tree.find(a[i]).isEmpty());
                 }
@@ -209,7 +209,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeInsertAndRemove2(uint256) public {
         unchecked {
-            uint256 n = _random() % 2 == 0 ? 16 : 32;
+            uint256 n = _randomBool() ? 16 : 32;
             uint256[] memory candidates = _makeArray(n);
             for (uint256 i; i != n; ++i) {
                 candidates[i] = _bound(_random(), 1, type(uint256).max);

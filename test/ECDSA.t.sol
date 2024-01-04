@@ -241,7 +241,7 @@ contract ECDSATest is SoladyTest {
             _checkSignature(t);
         }
 
-        if (_random() & 1 == 0) {
+        if (_randomBool()) {
             t.argsSignature = "(bytes32,bytes)";
             t.encodedCalldataArgs = abi.encode(digest, abi.encodePacked(r, s, v));
             _checkSignature(t);
@@ -282,7 +282,7 @@ contract ECDSATest is SoladyTest {
         (address signer, uint256 privateKey) = _randomSigner();
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-        if (_random() & 7 == 0) {
+        if (_randomUniform() & 7 == 0) {
             _checkSignature(signer, digest, v, r, s, true);
         }
 

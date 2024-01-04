@@ -17,8 +17,8 @@ contract InitializableTest is SoladyTest {
     function _args() internal returns (MockInitializable.Args memory a) {
         a.x = _random();
         a.version = uint64(_bound(_random(), 1, type(uint64).max));
-        a.checkOnlyDuringInitializing = _random() & 1 == 0;
-        a.recurse = _random() & 1 == 0;
+        a.checkOnlyDuringInitializing = _randomBool();
+        a.recurse = _randomBool();
     }
 
     function _expectEmitInitialized(uint64 version) internal {
@@ -44,7 +44,7 @@ contract InitializableTest is SoladyTest {
 
         if (a.recurse) {
             vm.expectRevert(Initializable.InvalidInitialization.selector);
-            if (_random() & 1 == 0) {
+            if (_randomBool()) {
                 m.initialize(a);
             } else {
                 m.reinitialize(a);
@@ -52,7 +52,7 @@ contract InitializableTest is SoladyTest {
             return;
         }
 
-        if (_random() & 1 == 0) {
+        if (_randomBool()) {
             _expectEmitInitialized(1);
             m.initialize(a);
             a.version = 1;
@@ -63,15 +63,15 @@ contract InitializableTest is SoladyTest {
         assertEq(m.x(), a.x);
         _checkVersion(a.version);
 
-        if (_random() & 1 == 0) {
+        if (_randomBool()) {
             vm.expectRevert(Initializable.InvalidInitialization.selector);
             m.initialize(a);
         }
-        if (_random() & 1 == 0) {
+        if (_randomBool()) {
             vm.expectRevert(Initializable.InvalidInitialization.selector);
             m.reinitialize(a);
         }
-        if (_random() & 1 == 0) {
+        if (_randomBool()) {
             a.version = m.version();
             uint64 newVersion = uint64(_random());
             if (newVersion > a.version) {

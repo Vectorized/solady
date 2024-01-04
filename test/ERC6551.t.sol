@@ -290,7 +290,7 @@ contract ERC6551Test is SoladyTest {
             }
 
             bytes[] memory results;
-            if (_random() & 1 == 0) {
+            if (_randomBool()) {
                 vm.prank(t.owner);
                 results = t.account.executeBatch(_random(), calls, 0);
             } else {

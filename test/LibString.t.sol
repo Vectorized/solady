@@ -643,7 +643,7 @@ contract LibStringTest is SoladyTest {
             assertEq(LibString.startsWith(subject, search), true);
         }
 
-        if (_random() & 1 == 1) {
+        if (_randomBool()) {
             string memory subject = string(bytes.concat(bytes(search), bytes(filler)));
             assertEq(LibString.startsWith(subject, search), true);
         }
@@ -677,7 +677,7 @@ contract LibStringTest is SoladyTest {
             assertEq(LibString.endsWith(subject, search), true);
         }
 
-        if (_random() & 1 == 1) {
+        if (_randomBool()) {
             string memory subject = string(bytes.concat(bytes(filler), bytes(search)));
             assertEq(LibString.endsWith(subject, search), true);
         }
@@ -787,7 +787,7 @@ contract LibStringTest is SoladyTest {
 
         unchecked {
             uint256[] memory indices;
-            if (_random() & 1 == 0) {
+            if (_randomBool()) {
                 subject = string(bytes.concat(bytes(filler0), bytes(search), bytes(filler1)));
                 indices = new uint256[](1);
                 indices[0] = bytes(filler0).length;

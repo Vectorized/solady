@@ -199,7 +199,7 @@ contract LibBitmapTest is SoladyTest {
                 if (j != jPrev && start <= j && j < start + amount) {
                     expectedCount += 1;
                 }
-                if (start + amount <= j && _random() & 7 == 0) break;
+                if (start + amount <= j && _randomUniform() & 7 == 0) break;
                 jPrev = j;
                 j += _random() & 0xff;
             }

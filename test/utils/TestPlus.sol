@@ -10,6 +10,10 @@ contract TestPlus {
     /// @dev `address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))`.
     address private constant _VM_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
 
+    /// @dev This is the keccak256 of a very long string I randomly mashed on my keyboard.
+    bytes32 private constant _RANDOMNESS_SLOT =
+        0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee;
+
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
     /// which reads/write to the memory.
     function _brutalizeMemory() private view {
@@ -73,12 +77,11 @@ contract TestPlus {
     function _random() internal returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            // This is the keccak256 of a very long string I randomly mashed on my keyboard.
-            let sSlot := 0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee
+            let sSlot := _RANDOMNESS_SLOT
             let sValue := sload(sSlot)
 
             mstore(0x20, sValue)
-            r := keccak256(0x20, 0x40)
+            r := keccak256(0x20, 0x20)
 
             // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
@@ -121,6 +124,32 @@ contract TestPlus {
                 break
             }
         }
+    }
+
+    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
+    function _randomUniform() internal returns (uint256 r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let sSlot := _RANDOMNESS_SLOT
+            let sValue := sload(sSlot)
+
+            mstore(0x20, sValue)
+            r := keccak256(0x20, 0x20)
+
+            // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
+            if iszero(sValue) {
+                sValue := sSlot
+                let m := mload(0x40)
+                calldatacopy(m, 0, calldatasize())
+                r := keccak256(m, calldatasize())
+            }
+            sstore(sSlot, add(r, 1))
+        }
+    }
+
+    /// @dev Returns true or false.
+    function _randomBool() internal returns (bool r) {
+        return _randomUniform() & 1 == 0;
     }
 
     /// @dev Returns a random signer and its private key.

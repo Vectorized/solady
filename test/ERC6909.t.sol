@@ -445,7 +445,7 @@ contract ERC6909Test is SoladyTest {
             t.id ^= 1;
 
             token.mint(t.from, t.id, t.balance);
-            if (_random() % 2 == 0) {
+            if (_randomBool()) {
                 _directSetOperator(t.from, t.by, t.isOperator);
                 _directApprove(t.from, t.by, t.id, t.allowance);
             } else {

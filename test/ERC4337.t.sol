@@ -176,7 +176,7 @@ contract ERC4337Test is SoladyTest {
             }
 
             bytes[] memory results;
-            if (_random() & 1 == 0) {
+            if (_randomBool()) {
                 results = account.executeBatch(_random(), calls);
             } else {
                 results = account.executeBatch(calls);

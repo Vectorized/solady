@@ -383,15 +383,15 @@ contract LibMapTest is SoladyTest {
     function testUint32Maps(uint256) public {
         unchecked {
             uint256 a0 = _random();
-            uint256 a1 = _random() % 2 == 0 ? a0 + _random() % 4 : a0 - _random() % 4;
+            uint256 a1 = _randomBool() ? a0 + _random() % 4 : a0 - _random() % 4;
             uint256 b0 = _random();
-            uint256 b1 = _random() % 2 == 0 ? b0 + _random() % 4 : b0 - _random() % 4;
+            uint256 b1 = _randomBool() ? b0 + _random() % 4 : b0 - _random() % 4;
             if (a0 == a1 && b1 == b0) {
-                if (_random() % 2 == 0) {
-                    if (_random() % 2 == 0) b1++;
+                if (_randomBool()) {
+                    if (_randomBool()) b1++;
                     else a0++;
                 } else {
-                    if (_random() % 2 == 0) b1--;
+                    if (_randomBool()) b1--;
                     else a0--;
                 }
             }
@@ -430,7 +430,7 @@ contract LibMapTest is SoladyTest {
     {
         unchecked {
             t.n = 1 + _random() % 7 + (_random() % 8 == 0 ? _random() % 64 : 0);
-            if (_random() % 2 == 0) {
+            if (_randomBool()) {
                 t.o = type(uint256).max - t.n;
                 t.end = t.o + t.n;
                 assertEq(t.end, type(uint256).max);

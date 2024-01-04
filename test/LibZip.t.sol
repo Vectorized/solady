@@ -46,7 +46,7 @@ contract LibZipTest is SoladyTest {
     }
 
     function testFlzCompressDecompress(bytes memory data) public brutalizeMemory {
-        if (_random() % 2 == 0) {
+        if (_randomBool()) {
             data = _expandedData(data);
         }
         bytes32 dataHash = keccak256(data);
@@ -102,7 +102,7 @@ contract LibZipTest is SoladyTest {
     function _randomCd() internal returns (bytes memory data) {
         uint256 n = _random() % 8 == 0 ? _random() % 2048 : _random() % 256;
         data = new bytes(n);
-        if (_random() % 2 == 0) {
+        if (_randomBool()) {
             /// @solidity memory-safe-assembly
             assembly {
                 for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
