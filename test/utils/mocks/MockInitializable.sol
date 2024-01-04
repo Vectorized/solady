@@ -8,8 +8,11 @@ import {Initializable} from "../../../src/utils/Initializable.sol";
 contract MockInitializableParent is Initializable {
     uint256 public x;
 
-    function _initialize(uint256 x_) public onlyInitializing {
+    event Yo();
+
+    function _initialize(uint256 x_) internal onlyInitializing {
         x = x_;
+        if (x_ & 8 == 0) onlyDuringInitializing();
     }
 
     function getVersion() external view returns (uint64) {
@@ -18,6 +21,10 @@ contract MockInitializableParent is Initializable {
 
     function IsInitializing() external view returns (bool) {
         return _isInitializing();
+    }
+
+    function onlyDuringInitializing() public onlyInitializing {
+        emit Yo();
     }
 }
 

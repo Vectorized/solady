@@ -17,9 +17,19 @@ contract InitializableTest is SoladyTest {
         m1 = new MockInitializable();
     }
 
+    function testInit() public {
+        testInit(123);
+    }
+
     function testInit(uint256 x) public {
         m1.init(x);
         assertEq(m1.x(), x);
+    }
+
+    function testOnlyInitializing() public {
+        testInit(123);
+        vm.expectRevert(Initializable.NotInitializing.selector);
+        m1.onlyDuringInitializing();
     }
 
     function testInitRevertWithInvalidInitialization(uint256 x) public {
