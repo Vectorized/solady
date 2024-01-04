@@ -6,7 +6,7 @@ import {
     MockInitializable,
     MockInitializableRevert,
     MockInitializableDisabled,
-    MockInitializableRevertV2,
+    MockInitializableRevert2,
     Initializable
 } from "./utils/mocks/MockInitializable.sol";
 
@@ -74,7 +74,7 @@ contract InitializableTest is SoladyTest {
     }
 
     function testRevertWhenCalledOnlyInitializingFunctionWithNonInitializer() public {
-        MockInitializableRevertV2 m = new MockInitializableRevertV2();
+        MockInitializableRevert2 m = new MockInitializableRevert2();
         vm.expectRevert(Initializable.NotInitializing.selector);
         m.init(5);
     }

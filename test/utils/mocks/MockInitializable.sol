@@ -57,7 +57,7 @@ contract MockInitializableDisabled is MockInitializableParent {
     }
 }
 
-contract MockInitializableRevertV2 is MockInitializableParent {
+contract MockInitializableRevert2 is MockInitializableParent {
     function init(uint256 x_) public {
         _initialize(x_);
     }
