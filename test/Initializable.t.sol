@@ -68,4 +68,37 @@ contract InitializableTest is SoladyTest {
         vm.expectRevert(Initializable.NotInitializing.selector);
         m.init(5);
     }
+
+    function testInitializeInititalizerTrick(
+        bool initializing,
+        uint64 initializedVersion,
+        uint64 codeSize
+    ) public {
+        bool isTopLevelCall = !initializing;
+        bool initialSetup = initializedVersion == 0 && isTopLevelCall;
+        bool construction = initializedVersion == 1 && codeSize == 0;
+        bool expected = !initialSetup && !construction;
+        bool computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let i := or(initializing, shl(1, initializedVersion))
+            computed := iszero(or(iszero(i), lt(codeSize, eq(shr(1, i), 1))))
+        }
+        assertEq(computed, expected);
+    }
+
+    function testInitializeReinititalizerTrick(
+        bool initializing,
+        uint64 initializedVersion,
+        uint64 version
+    ) public {
+        bool expected = initializing == true || initializedVersion >= version;
+        bool computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let i := or(initializing, shl(1, initializedVersion))
+            computed := iszero(lt(and(i, 1), lt(shr(1, i), version)))
+        }
+        assertEq(computed, expected);
+    }
 }
