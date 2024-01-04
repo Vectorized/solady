@@ -19,7 +19,7 @@ contract MockInitializableParent is Initializable {
         return _getInitializedVersion();
     }
 
-    function IsInitializing() external view returns (bool) {
+    function isInitializing() external view returns (bool) {
         return _isInitializing();
     }
 

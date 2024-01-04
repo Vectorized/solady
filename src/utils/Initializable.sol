@@ -48,7 +48,7 @@ abstract contract Initializable {
     /// You can guard a function with `onlyInitializing` such that it can be called
     /// through a function guarded with `initializer`.
     ///
-    /// This is similar to `reinitializer(1)`, except that in the context of a constructor
+    /// This is similar to `reinitializer(1)`, except that in the context of a constructor,
     /// an `initializer` guarded function can be invoked multiple times.
     /// This can be useful during testing and is not expected to be used in production.
     ///
@@ -149,12 +149,12 @@ abstract contract Initializable {
                 mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
                 revert(0x1c, 0x04)
             }
-            let initializedVersion := shr(192, s)
-            if iszero(eq(shr(1, i), initializedVersion)) {
+            let uint64max := shr(192, s) // Computed to save bytecode.
+            if iszero(eq(shr(1, i), uint64max)) {
                 // Sets `initializing` to 0, `initializedVersion` to `2**64 - 1`.
-                sstore(s, shl(1, initializedVersion))
+                sstore(s, shl(1, uint64max))
                 // Emit the {Initialized} event.
-                mstore(0x20, initializedVersion)
+                mstore(0x20, uint64max)
                 log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
             }
         }
