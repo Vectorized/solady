@@ -5,12 +5,51 @@ import {Initializable} from "../../../src/utils/Initializable.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockInitializableParent is Initializable {
+contract MockInitializable is Initializable {
     uint256 public x;
     uint256 public y;
 
-    function _initialize(uint256 x_) internal onlyInitializing {
-        x = x_;
+    struct Args {
+        uint256 x;
+        uint64 version;
+        bool disableInitializers;
+        bool initializeMulti;
+        bool checkOnlyDuringInitializing;
+        bool recurse;
+    }
+
+    constructor(Args memory a) {
+        if (a.initializeMulti) {
+            initialize(a);
+            initialize(a);
+        }
+        if (a.disableInitializers) {
+            _disableInitializers();
+        }
+    }
+
+    function initialize(Args memory a) public initializer {
+        x = a.x;
+        if (a.checkOnlyDuringInitializing) {
+            onlyDuringInitializing();
+        }
+        if (a.recurse) {
+            a.recurse = false;
+            if (a.x & 1 == 0) initialize(a);
+            else reinitialize(a);
+        }
+    }
+
+    function reinitialize(Args memory a) public reinitializer(a.version) {
+        x = a.x;
+        if (a.checkOnlyDuringInitializing) {
+            onlyDuringInitializing();
+        }
+        if (a.recurse) {
+            a.recurse = false;
+            if (a.x & 1 == 0) initialize(a);
+            else reinitialize(a);
+        }
     }
 
     function getVersion() external view returns (uint64) {
@@ -22,41 +61,12 @@ contract MockInitializableParent is Initializable {
     }
 
     function onlyDuringInitializing() public onlyInitializing {
-        y++;
-    }
-}
-
-contract MockInitializable is MockInitializableParent {
-    function initialize(uint256 x_) public initializer {
-        _initialize(x_);
+        unchecked {
+            ++y;
+        }
     }
 
-    function reinitialize(uint256 x_, uint64 version) public reinitializer(version) {
-        _initialize(x_);
-    }
-}
-
-contract MockInitializableRevert is MockInitializableParent {
-    function initialize1(uint256 x_, uint64 version) public initializer {
-        _initialize(x_);
-        reinitialize(version);
-    }
-
-    function reinitialize(uint64 version) public reinitializer(version) {}
-}
-
-contract MockInitializableDisabled is MockInitializableParent {
-    constructor() {
+    function disableInitializers() public {
         _disableInitializers();
-    }
-
-    function initialize(uint256 x_) public initializer {
-        _initialize(x_);
-    }
-}
-
-contract MockInitializableRevert2 is MockInitializableParent {
-    function initialize(uint256 x_) public {
-        _initialize(x_);
     }
 }
