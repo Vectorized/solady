@@ -67,7 +67,7 @@ abstract contract Initializable {
                     revert(0x1c, 0x04)
                 }
             }
-            // Sets `initializing` to 1, `initializedVersion` to 1.
+            // Set `initializing` to 1, `initializedVersion` to 1.
             sstore(s, 3)
         }
         _;
@@ -75,7 +75,7 @@ abstract contract Initializable {
         assembly {
             // If `initializing`.
             if iszero(and(i, 1)) {
-                // Sets `initializing` to 0, `initializedVersion` to 1.
+                // Set `initializing` to 0, `initializedVersion` to 1.
                 sstore(_INITIALIZABLE_SLOT, 2)
                 // Emit the {Initialized} event.
                 mstore(0x20, 1)
@@ -101,13 +101,13 @@ abstract contract Initializable {
                 mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
                 revert(0x1c, 0x04)
             }
-            // Sets `initializing` to 1, `initializedVersion` to `version`.
+            // Set `initializing` to 1, `initializedVersion` to `version`.
             sstore(s, or(1, shl(1, version)))
         }
         _;
         /// @solidity memory-safe-assembly
         assembly {
-            // Sets `initializing` to 0, `initializedVersion` to `version`.
+            // Set `initializing` to 0, `initializedVersion` to `version`.
             sstore(_INITIALIZABLE_SLOT, shl(1, version))
             // Emit the {Initialized} event.
             mstore(0x20, version)
@@ -151,7 +151,7 @@ abstract contract Initializable {
             }
             let uint64max := shr(192, s) // Computed to save bytecode.
             if iszero(eq(shr(1, i), uint64max)) {
-                // Sets `initializing` to 0, `initializedVersion` to `2**64 - 1`.
+                // Set `initializing` to 0, `initializedVersion` to `2**64 - 1`.
                 sstore(s, shl(1, uint64max))
                 // Emit the {Initialized} event.
                 mstore(0x20, uint64max)
