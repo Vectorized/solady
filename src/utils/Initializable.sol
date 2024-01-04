@@ -43,7 +43,7 @@ abstract contract Initializable {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Guards an initialzer function so that it can be invoked at most once.
+    /// @dev Guards an initializer function so that it can be invoked at most once.
     ///
     /// You can guard a function with `onlyInitializing` such that it can be called
     /// through a function guarded with `initializer`.
@@ -61,7 +61,7 @@ abstract contract Initializable {
             i := sload(s)
             // If `!(initializing == 0 && initializedVersion == 0)`.
             if i {
-                // If `codesize == 0 && initializedVersion == 1`.
+                // If `!(codesize == 0 && initializedVersion == 1)`.
                 if iszero(lt(codesize(), eq(shr(1, i), 1))) {
                     mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
                     revert(0x1c, 0x04)
