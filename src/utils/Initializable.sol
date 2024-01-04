@@ -54,10 +54,10 @@ abstract contract Initializable {
     ///
     /// Emits an {Initialized} event.
     modifier initializer() {
-        bytes32 s = _INITIALIZABLE_SLOT;
         uint256 i;
         /// @solidity memory-safe-assembly
         assembly {
+            let s := _INITIALIZABLE_SLOT
             i := sload(s)
             // If `!((initializing == 0 && initializedVersion == 0) ||
             //       (codesize == 0 && initializedVersion == 1))`.
@@ -74,7 +74,7 @@ abstract contract Initializable {
             // If `initializing == 0`.
             if iszero(and(i, 1)) {
                 // Sets `initializing` to 0, `initializedVersion` to 1.
-                sstore(s, 2)
+                sstore(_INITIALIZABLE_SLOT, 2)
                 // Emit the {Initialized} event.
                 mstore(0x20, 1)
                 log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
@@ -89,10 +89,10 @@ abstract contract Initializable {
     ///
     /// Emits an {Initialized} event.
     modifier reinitializer(uint64 version) {
-        bytes32 s = _INITIALIZABLE_SLOT;
         /// @solidity memory-safe-assembly
         assembly {
             version := and(version, 0xffffffffffffffff) // Clean upper bits.
+            let s := _INITIALIZABLE_SLOT
             let i := sload(s)
             // If `initializing == 1 || initializedVersion >= version`.
             if iszero(lt(and(i, 1), lt(shr(1, i), version))) {
@@ -106,7 +106,7 @@ abstract contract Initializable {
         /// @solidity memory-safe-assembly
         assembly {
             // Sets `initializing` to 0, `initializedVersion` to `version`.
-            sstore(s, shl(1, version))
+            sstore(_INITIALIZABLE_SLOT, shl(1, version))
             // Emit the {Initialized} event.
             mstore(0x20, version)
             log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
