@@ -27,41 +27,63 @@ contract InitializableTest is SoladyTest {
     }
 
     function testInitialize() public {
-        this.testInitialize(123);
-    }
-
-    function testInitialize(uint256) public {
-        MockInitializable.Args memory a = _args();
-        if (a.recurse) {
-            vm.expectRevert(Initializable.InvalidInitialization.selector);
-            m.reinitialize(a);
-            return;
-        }
-        _expectEmitInitialized(1);
+        MockInitializable.Args memory a;
+        a.x = 123;
         m.initialize(a);
         assertEq(m.x(), a.x);
         assertEq(m.version(), 1);
-
-        a.version = 1;
-        _testInitializeReinitialize(a);
     }
 
-    function testReinitialize(uint256) public {
+    function testInitializeReinititalize(uint256) public {
         MockInitializable.Args memory a = _args();
+
         if (a.recurse) {
             vm.expectRevert(Initializable.InvalidInitialization.selector);
-            m.reinitialize(a);
+            if (_random() & 1 == 0) {
+                m.initialize(a);
+            } else {
+                m.reinitialize(a);
+            }
             return;
         }
-        _expectEmitInitialized(a.version);
-        m.reinitialize(a);
-        assertEq(m.x(), a.x);
-        assertEq(m.version(), a.version);
 
-        _testInitializeReinitialize(a);
+        if (_random() & 1 == 0) {
+            _expectEmitInitialized(1);
+            m.initialize(a);
+            assertEq(m.x(), a.x);
+            assertEq(m.version(), 1);
+            a.version = 1;
+        } else {
+            _expectEmitInitialized(a.version);
+            m.reinitialize(a);
+            assertEq(m.x(), a.x);
+            assertEq(m.version(), a.version);
+        }
+
+        assertFalse(m.isInitializing());
+
+        if (_random() & 1 == 0) {
+            vm.expectRevert(Initializable.InvalidInitialization.selector);
+            m.initialize(a);
+        }
+        if (_random() & 1 == 0) {
+            vm.expectRevert(Initializable.InvalidInitialization.selector);
+            m.reinitialize(a);
+        }
+        if (_random() & 1 == 0) {
+            a.version = m.version();
+            uint64 newVersion = uint64(_random());
+            if (newVersion > a.version) {
+                a.version = newVersion;
+                m.reinitialize(a);
+                assertEq(m.version(), a.version);
+            }
+        }
     }
 
     function _testInitializeReinitialize(MockInitializable.Args memory a) internal {
+        assertFalse(m.isInitializing());
+
         if (_random() & 1 == 0) {
             vm.expectRevert(Initializable.InvalidInitialization.selector);
             m.initialize(a);
@@ -82,7 +104,6 @@ contract InitializableTest is SoladyTest {
     }
 
     function testOnlyInitializing() public {
-        testInitialize(123);
         vm.expectRevert(Initializable.NotInitializing.selector);
         m.onlyDuringInitializing();
     }
