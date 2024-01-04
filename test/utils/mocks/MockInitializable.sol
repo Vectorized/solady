@@ -20,8 +20,14 @@ contract MockInitializable is Initializable {
 
     constructor(Args memory a) {
         if (a.initializeMulti) {
+            require(_getInitializedVersion() == 0, "The version should be zero.");
+            require(!_isInitializing(), "Initializing should be false.");
             initialize(a);
+            require(_getInitializedVersion() == 1, "The version should be one.");
+            require(!_isInitializing(), "Initializing should be false.");
             initialize(a);
+            require(_getInitializedVersion() == 1, "The version should be one.");
+            require(!_isInitializing(), "Initializing should be false.");
         }
         if (a.disableInitializers) {
             _disableInitializers();
@@ -52,7 +58,7 @@ contract MockInitializable is Initializable {
         }
     }
 
-    function getVersion() external view returns (uint64) {
+    function version() external view returns (uint64) {
         return _getInitializedVersion();
     }
 
@@ -61,6 +67,8 @@ contract MockInitializable is Initializable {
     }
 
     function onlyDuringInitializing() public onlyInitializing {
+        require(_getInitializedVersion() != 0, "The version should not be zero.");
+        require(_isInitializing(), "Initializing should be true.");
         unchecked {
             ++y;
         }

@@ -40,7 +40,7 @@ contract InitializableTest is SoladyTest {
         _expectEmitInitialized(1);
         m.initialize(a);
         assertEq(m.x(), a.x);
-        assertEq(m.getVersion(), 1);
+        assertEq(m.version(), 1);
 
         a.version = 1;
         _testInitializeReinitialize(a);
@@ -56,7 +56,7 @@ contract InitializableTest is SoladyTest {
         _expectEmitInitialized(a.version);
         m.reinitialize(a);
         assertEq(m.x(), a.x);
-        assertEq(m.getVersion(), a.version);
+        assertEq(m.version(), a.version);
 
         _testInitializeReinitialize(a);
     }
@@ -71,12 +71,12 @@ contract InitializableTest is SoladyTest {
             m.reinitialize(a);
         }
         if (_random() & 1 == 0) {
-            a.version = m.getVersion();
+            a.version = m.version();
             uint64 newVersion = uint64(_random());
             if (newVersion > a.version) {
                 a.version = newVersion;
                 m.reinitialize(a);
-                assertEq(m.getVersion(), a.version);
+                assertEq(m.version(), a.version);
             }
         }
     }
@@ -90,9 +90,9 @@ contract InitializableTest is SoladyTest {
     function testDisableInitializers() public {
         _expectEmitInitialized(type(uint64).max);
         m.disableInitializers();
-        assertEq(m.getVersion(), type(uint64).max);
+        assertEq(m.version(), type(uint64).max);
         m.disableInitializers();
-        assertEq(m.getVersion(), type(uint64).max);
+        assertEq(m.version(), type(uint64).max);
 
         MockInitializable.Args memory a;
         vm.expectRevert(Initializable.InvalidInitialization.selector);
@@ -105,7 +105,7 @@ contract InitializableTest is SoladyTest {
         MockInitializable.Args memory a;
         a.initializeMulti = true;
         m = new MockInitializable(a);
-        assertEq(m.getVersion(), 1);
+        assertEq(m.version(), 1);
 
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         m.initialize(a);
@@ -115,7 +115,7 @@ contract InitializableTest is SoladyTest {
         a.disableInitializers = true;
         _expectEmitInitialized(type(uint64).max);
         m = new MockInitializable(a);
-        assertEq(m.getVersion(), type(uint64).max);
+        assertEq(m.version(), type(uint64).max);
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         m.initialize(a);
         vm.expectRevert(Initializable.InvalidInitialization.selector);
