@@ -59,11 +59,13 @@ abstract contract Initializable {
         assembly {
             let s := _INITIALIZABLE_SLOT
             i := sload(s)
-            // If `!((initializing == 0 && initializedVersion == 0) ||
-            //       (codesize == 0 && initializedVersion == 1))`.
-            if iszero(or(iszero(i), lt(codesize(), eq(shr(1, i), 1)))) {
-                mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
-                revert(0x1c, 0x04)
+            // If `!(initializing == 0 && initializedVersion == 0)`.
+            if i {
+                // If `codesize == 0 && initializedVersion == 1`.
+                if iszero(lt(codesize(), eq(shr(1, i), 1))) {
+                    mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
+                    revert(0x1c, 0x04)
+                }
             }
             // Sets `initializing` to 1, `initializedVersion` to 1.
             sstore(s, 3)

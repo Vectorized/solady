@@ -89,10 +89,11 @@ contract InitializableTest is SoladyTest {
         bool construction = initializedVersion == 1 && codeSize == 0;
         bool expected = !initialSetup && !construction;
         bool computed;
+        uint256 i;
         /// @solidity memory-safe-assembly
         assembly {
-            let i := or(initializing, shl(1, initializedVersion))
-            computed := iszero(or(iszero(i), lt(codeSize, eq(shr(1, i), 1))))
+            i := or(initializing, shl(1, initializedVersion))
+            if i { if iszero(lt(codeSize, eq(shr(1, i), 1))) { computed := 1 } }
         }
         assertEq(computed, expected);
     }
