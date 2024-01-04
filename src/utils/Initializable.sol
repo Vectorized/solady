@@ -59,7 +59,7 @@ abstract contract Initializable {
         assembly {
             let s := _INITIALIZABLE_SLOT
             i := sload(s)
-            // If `!(initializing == 0 && initializedVersion == 0)`.
+            // If `!(initializing && initializedVersion == 0)`.
             if i {
                 // If `!(codesize == 0 && initializedVersion == 1)`.
                 if iszero(lt(codesize(), eq(shr(1, i), 1))) {
@@ -73,7 +73,7 @@ abstract contract Initializable {
         _;
         /// @solidity memory-safe-assembly
         assembly {
-            // If `initializing == 0`.
+            // If `initializing`.
             if iszero(and(i, 1)) {
                 // Sets `initializing` to 0, `initializedVersion` to 1.
                 sstore(_INITIALIZABLE_SLOT, 2)
@@ -96,7 +96,7 @@ abstract contract Initializable {
             version := and(version, 0xffffffffffffffff) // Clean upper bits.
             let s := _INITIALIZABLE_SLOT
             let i := sload(s)
-            // If `initializing == 1 || initializedVersion >= version`.
+            // If `initializing || initializedVersion >= version`.
             if iszero(lt(and(i, 1), lt(shr(1, i), version))) {
                 mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
                 revert(0x1c, 0x04)
