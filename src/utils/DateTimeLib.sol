@@ -97,7 +97,7 @@ library DateTimeLib {
             let doy := sub(doe, sub(add(mul(365, yoe), shr(2, yoe)), div(yoe, 100)))
             let mp := div(add(mul(5, doy), 2), 153)
             day := add(sub(doy, shr(11, add(mul(mp, 62719), 769))), 1)
-            month := sub(add(mp, 3), mul(gt(mp, 9), 12))
+            month := byte(mp, shl(160, 0x030405060708090a0b0c0102))
             year := add(add(yoe, mul(div(epochDay, 146097), 400)), lt(month, 3))
         }
     }
