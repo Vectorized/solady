@@ -41,6 +41,7 @@ abstract contract ReentrancyGuard {
         }
     }
 
+    /// @dev Guards a function from non-read reentrancy.
     modifier nonReadReentrant() virtual {
         /// @solidity memory-safe-assembly
         assembly {
