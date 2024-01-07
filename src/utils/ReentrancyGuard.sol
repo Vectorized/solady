@@ -8,7 +8,7 @@ abstract contract ReentrancyGuard {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev An attempt was made to call a non-reentrant function from within a reentrant call.
+    /// @dev Unauthorized reentrant call.
     error Reentrancy();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -41,7 +41,7 @@ abstract contract ReentrancyGuard {
         }
     }
 
-    /// @dev Guards a function from non-read reentrancy.
+    /// @dev Guards a view function from read-only reentrancy.
     modifier nonReadReentrant() virtual {
         /// @solidity memory-safe-assembly
         assembly {
