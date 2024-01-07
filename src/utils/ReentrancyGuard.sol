@@ -5,6 +5,13 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ReentrancyGuard.sol)
 abstract contract ReentrancyGuard {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev A reentrancy has occured in a `nonReentrant` method.
+    error Reentrancy();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -20,7 +27,10 @@ abstract contract ReentrancyGuard {
     modifier nonReentrant() virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            if eq(sload(_REENTRANCY_GUARD_SLOT), 2) { revert(codesize(), 0x00) }
+            if eq(sload(_REENTRANCY_GUARD_SLOT), 2) {
+                mstore(0x00, 0xab143c06) // `Reentrancy()`.
+                revert(0x1c, 0x04)
+            }
             sstore(_REENTRANCY_GUARD_SLOT, 2)
         }
         _;
@@ -28,5 +38,16 @@ abstract contract ReentrancyGuard {
         assembly {
             sstore(_REENTRANCY_GUARD_SLOT, 1)
         }
+    }
+
+    modifier nonReadReentrant() virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if eq(sload(_REENTRANCY_GUARD_SLOT), 2) {
+                mstore(0x00, 0xab143c06) // `Reentrancy()`.
+                revert(0x1c, 0x04)
+            }
+        }
+        _;
     }
 }
