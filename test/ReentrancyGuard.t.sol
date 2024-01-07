@@ -16,10 +16,7 @@ contract ReentrancyGuardTest is SoladyTest {
         assertEq(target.isReentrancyGuardLocked(), false);
     }
 
-    function testRevertGuardLocked()
-        external
-        expectBeforeAfterReentrancyGuardUnlocked
-    {
+    function testRevertGuardLocked() external expectBeforeAfterReentrancyGuardUnlocked {
         // Attempt to call a `nonReentrant` methiod with an unprotected method.
         // Expect a success.
         target.callUnguardedToGuarded();
@@ -31,10 +28,7 @@ contract ReentrancyGuardTest is SoladyTest {
         target.callGuardedToGuarded();
     }
 
-    function testRevertReadGuardLocked()
-        external
-        expectBeforeAfterReentrancyGuardUnlocked
-    {
+    function testRevertReadGuardLocked() external expectBeforeAfterReentrancyGuardUnlocked {
         // Attempt to call a `nonReadReentrant` methiod with an unprotected method.
         // Expect a success.
         target.callUnguardedToReadGuarded();
@@ -46,19 +40,13 @@ contract ReentrancyGuardTest is SoladyTest {
         target.callGuardedToReadGuarded();
     }
 
-    function testRevertRemoteCallback()
-        external
-        expectBeforeAfterReentrancyGuardUnlocked
-    {
+    function testRevertRemoteCallback() external expectBeforeAfterReentrancyGuardUnlocked {
         // Attempt to reenter a `nonReentrant` method from a remote contract.
         vm.expectRevert(ReentrancyAttack.ReentrancyAttackFailed.selector);
         target.countAndCall(reentrancyAttack);
     }
 
-    function testRecursiveDirectUnguardedCall()
-        external
-        expectBeforeAfterReentrancyGuardUnlocked
-    {
+    function testRecursiveDirectUnguardedCall() external expectBeforeAfterReentrancyGuardUnlocked {
         // Expect to be able to call unguarded methods recursively.
         // Expect a success.
         target.countUnguardedDirectRecursive(10);

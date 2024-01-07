@@ -16,9 +16,7 @@ contract MockReentrancyGuard is ReentrancyGuard {
     function isReentrancyGuardLocked() public view returns (bool locked) {
         /// @solidity memory-safe-assembly
         assembly {
-            if eq(sload(_REENTRANCY_GUARD_SLOT), 2) {
-                locked := true
-            }
+            if eq(sload(_REENTRANCY_GUARD_SLOT), 2) { locked := true }
         }
     }
 
@@ -69,9 +67,7 @@ contract MockReentrancyGuard is ReentrancyGuard {
         _recurseDirect(false, recursion);
     }
 
-    function countGuardedDirectRecursive(
-        uint256 recursion
-    ) public nonReentrant {
+    function countGuardedDirectRecursive(uint256 recursion) public nonReentrant {
         _recurseDirect(true, recursion);
     }
 
@@ -79,9 +75,7 @@ contract MockReentrancyGuard is ReentrancyGuard {
         _recurseIndirect(false, recursion);
     }
 
-    function countGuardedIndirectRecursive(
-        uint256 recursion
-    ) public nonReentrant {
+    function countGuardedIndirectRecursive(uint256 recursion) public nonReentrant {
         _recurseIndirect(true, recursion);
     }
 
@@ -135,7 +129,7 @@ contract ReentrancyAttack {
 
     /// @dev Call the msg.sender with the given data to perform a reentrancy attack.
     function callSender(bytes4 data) external {
-        (bool success, ) = msg.sender.call(abi.encodeWithSelector(data));
+        (bool success,) = msg.sender.call(abi.encodeWithSelector(data));
 
         if (!success) revert ReentrancyAttackFailed();
     }
