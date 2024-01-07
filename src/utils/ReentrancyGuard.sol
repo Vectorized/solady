@@ -8,7 +8,7 @@ abstract contract ReentrancyGuard {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev A reentrancy has occured in a `nonReentrant` method.
+    /// @dev An attempt was made to call a non-reentrant function from within a reentrant call.
     error Reentrancy();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
