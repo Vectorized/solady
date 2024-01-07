@@ -9,14 +9,15 @@ abstract contract ReentrancyGuard {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Equivalent to: `uint72(bytes9(keccak256("_REENTRANCY_GUARD_SLOT")))`.
-    /// Large enough to avoid collisions with lower slots,
-    /// but not too large to prevent bytecode bloat.
+    /// 9 bytes is large enough to avoid collisions with lower slots,
+    /// but not too large to result in excessive bytecode bloat.
     uint256 private constant _REENTRANCY_GUARD_SLOT = 0x929eee149b4bd21268;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      REENTRANCY GUARD                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Guards a function from reentrancy.
     modifier nonReentrant() virtual {
         /// @solidity memory-safe-assembly
         assembly {
