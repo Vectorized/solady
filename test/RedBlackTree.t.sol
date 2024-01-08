@@ -339,6 +339,79 @@ contract RedBlackTreeLibTest is SoladyTest {
         }
     }
 
+    function testRedBlackTreeInsertOneGas() public {
+        unchecked {
+            for (uint256 i; i != 1; ++i) {
+                tree.insert(i + 1);
+            }
+        }
+    }
+
+    function testRedBlackTreeInsertTwoGas() public {
+        unchecked {
+            for (uint256 i; i != 2; ++i) {
+                tree.insert(i + 1);
+            }
+        }
+    }
+
+    function testRedBlackTreeInsertThreeGas() public {
+        unchecked {
+            for (uint256 i; i != 3; ++i) {
+                tree.insert(i + 1);
+            }
+        }
+    }
+
+    function testRedBlackTreeInsertTenGas() public {
+        unchecked {
+            for (uint256 i; i != 10; ++i) {
+                tree.insert(i + 1);
+            }
+        }
+    }
+
+    function testRedBlackTreeValues() public {
+        testRedBlackTreeValues(3);
+    }
+
+    function testRedBlackTreeValues(uint256 n) public {
+        unchecked {
+            n = n & 7;
+            while (true) {
+                uint256[] memory values = new uint256[](n);
+                for (uint256 i; i != n; ++i) {
+                    values[i] = 1 | _random();
+                    tree.tryInsert(values[i]);
+                }
+                LibSort.sort(values);
+                LibSort.uniquifySorted(values);
+                uint256[] memory retrieved = tree.values();
+                _checkMemory();
+                assertEq(retrieved, values);
+                n = values.length;
+                if (_random() & 3 == 0) {
+                    tree.clear();
+                    assertEq(tree.values(), new uint256[](0));
+                }
+                if (_random() & 3 == 0) {
+                    LibPRNG.PRNG memory prng = LibPRNG.PRNG(_random());
+                    prng.shuffle(values);
+                    for (uint256 i; i != n; ++i) {
+                        tree.tryRemove(values[i]);
+                    }
+                    assertEq(tree.values(), new uint256[](0));
+                }
+                if (_random() & 7 == 0) {
+                    tree.clear();
+                    n += _random() & 15;
+                    continue;
+                }
+                break;
+            }
+        }
+    }
+
     function testRedBlackTreeRejectsEmptyValue() public {
         vm.expectRevert(RedBlackTreeLib.ValueIsEmpty.selector);
         tree.insert(0);
