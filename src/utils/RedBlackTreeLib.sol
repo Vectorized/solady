@@ -95,6 +95,7 @@ library RedBlackTreeLib {
 
     /// @dev Returns an array of all the values in the tree in ascending sorted order.
     /// WARNING! This function can exhaust the block gas limit if the tree is big.
+    /// It is intended for usage in off-chain view functions.
     function values(Tree storage tree) internal view returns (uint256[] memory result) {
         uint256 nodes = _nodes(tree);
         /// @solidity memory-safe-assembly
