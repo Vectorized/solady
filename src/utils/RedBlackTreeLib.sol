@@ -93,6 +93,35 @@ library RedBlackTreeLib {
         }
     }
 
+    /// @dev Returns an array of all the values in the tree in ascending sorted order.
+    /// WARNING! This function can exhaust the block gas limit if the tree is big.
+    /// It is intended for usage in off-chain view functions.
+    function values(Tree storage tree) internal view returns (uint256[] memory result) {
+        uint256 nodes = _nodes(tree);
+        /// @solidity memory-safe-assembly
+        assembly {
+            function visit(current_) {
+                let cursor_ := or(mload(0x00), current_)
+                let packed_ := sload(cursor_)
+                let left_ := and(packed_, _BITMASK_KEY)
+                if left_ { visit(left_) }
+                let value_ := shr(_BITPOS_PACKED_VALUE, packed_)
+                if iszero(value_) { value_ := sload(or(cursor_, _BIT_FULL_VALUE_SLOT)) }
+                mstore(mload(0x20), value_)
+                mstore(0x20, add(0x20, mload(0x20)))
+                let right_ := and(shr(_BITPOS_RIGHT, packed_), _BITMASK_KEY)
+                if right_ { visit(right_) }
+            }
+            result := mload(0x40)
+            let rootPacked := sload(nodes)
+            mstore(result, and(rootPacked, _BITMASK_KEY)) // Length of `result`.
+            mstore(0x00, nodes) // Cache the nodes pointer in scratch space.
+            mstore(0x20, add(result, 0x20)) // Cache the results offset in scratch space.
+            mstore(0x40, add(mload(0x20), shl(5, mload(result)))) // Allocate memory.
+            visit(shr(128, rootPacked))
+        }
+    }
+
     /// @dev Returns a pointer to the value `x`.
     /// If the value `x` is not in the tree, the returned pointer will be empty.
     function find(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
