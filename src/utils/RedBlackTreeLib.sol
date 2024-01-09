@@ -101,16 +101,15 @@ library RedBlackTreeLib {
         /// @solidity memory-safe-assembly
         assembly {
             function visit(current_) {
-                let cursor_ := or(mload(0x00), current_)
-                let packed_ := sload(cursor_)
-                let left_ := and(packed_, _BITMASK_KEY)
-                if left_ { visit(left_) }
+                if iszero(current_) { leave }
+                current_ := or(mload(0x00), current_)
+                let packed_ := sload(current_)
+                visit(and(packed_, _BITMASK_KEY))
                 let value_ := shr(_BITPOS_PACKED_VALUE, packed_)
-                if iszero(value_) { value_ := sload(or(cursor_, _BIT_FULL_VALUE_SLOT)) }
+                if iszero(value_) { value_ := sload(or(current_, _BIT_FULL_VALUE_SLOT)) }
                 mstore(mload(0x20), value_)
                 mstore(0x20, add(0x20, mload(0x20)))
-                let right_ := and(shr(_BITPOS_RIGHT, packed_), _BITMASK_KEY)
-                if right_ { visit(right_) }
+                visit(and(shr(_BITPOS_RIGHT, packed_), _BITMASK_KEY))
             }
             result := mload(0x40)
             let rootPacked := sload(nodes)
