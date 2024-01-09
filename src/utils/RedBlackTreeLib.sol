@@ -107,8 +107,8 @@ library RedBlackTreeLib {
                 visit(and(packed_, _BITMASK_KEY)) // Visit left child.
                 let value_ := shr(_BITPOS_PACKED_VALUE, packed_) // Current value.
                 if iszero(value_) { value_ := sload(or(current_, _BIT_FULL_VALUE_SLOT)) }
-                mstore(mload(0x20), value_)
-                mstore(0x20, add(0x20, mload(0x20)))
+                mstore(mload(0x20), value_) // Append the value to results.
+                mstore(0x20, add(0x20, mload(0x20))) // Advance the results offset.
                 visit(and(shr(_BITPOS_RIGHT, packed_), _BITMASK_KEY)) // Visit right child.
             }
             result := mload(0x40)
@@ -117,7 +117,7 @@ library RedBlackTreeLib {
             mstore(0x00, nodes) // Cache the nodes pointer in scratch space.
             mstore(0x20, add(result, 0x20)) // Cache the results offset in scratch space.
             mstore(0x40, add(mload(0x20), shl(5, mload(result)))) // Allocate memory.
-            visit(shr(128, rootPacked))
+            visit(shr(128, rootPacked)) // Start the tree traversal.
         }
     }
 
