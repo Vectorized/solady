@@ -12,16 +12,6 @@ abstract contract ReentrancyGuard {
     error Reentrancy();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev The non-reentrancy flag.
-    uint256 private constant _NOT_ENTERED = 1;
-
-    /// @dev The reentrancy flag.
-    uint256 private constant _ENTERED = 2;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -31,17 +21,6 @@ abstract contract ReentrancyGuard {
     uint256 private constant _REENTRANCY_GUARD_SLOT = 0x929eee149b4bd21268;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        CONSTRUCTOR                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    constructor() {
-        /// @solidity memory-safe-assembly
-        assembly {
-            sstore(_REENTRANCY_GUARD_SLOT, _NOT_ENTERED)
-        }
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      REENTRANCY GUARD                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -49,16 +28,16 @@ abstract contract ReentrancyGuard {
     modifier nonReentrant() virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            if eq(sload(_REENTRANCY_GUARD_SLOT), _ENTERED) {
+            if eq(sload(_REENTRANCY_GUARD_SLOT), 2) {
                 mstore(0x00, 0xab143c06) // `Reentrancy()`.
                 revert(0x1c, 0x04)
             }
-            sstore(_REENTRANCY_GUARD_SLOT, _ENTERED)
+            sstore(_REENTRANCY_GUARD_SLOT, 2)
         }
         _;
         /// @solidity memory-safe-assembly
         assembly {
-            sstore(_REENTRANCY_GUARD_SLOT, _NOT_ENTERED)
+            sstore(_REENTRANCY_GUARD_SLOT, 1)
         }
     }
 
@@ -66,7 +45,7 @@ abstract contract ReentrancyGuard {
     modifier nonReadReentrant() virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            if eq(sload(_REENTRANCY_GUARD_SLOT), _ENTERED) {
+            if eq(sload(_REENTRANCY_GUARD_SLOT), 2) {
                 mstore(0x00, 0xab143c06) // `Reentrancy()`.
                 revert(0x1c, 0x04)
             }
