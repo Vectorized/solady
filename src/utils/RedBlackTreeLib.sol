@@ -102,14 +102,14 @@ library RedBlackTreeLib {
         assembly {
             function visit(current_) {
                 if iszero(current_) { leave }
-                current_ := or(mload(0x00), current_)
+                current_ := or(mload(0x00), current_) // Cursor.
                 let packed_ := sload(current_)
-                visit(and(packed_, _BITMASK_KEY))
-                let value_ := shr(_BITPOS_PACKED_VALUE, packed_)
+                visit(and(packed_, _BITMASK_KEY)) // Visit left child.
+                let value_ := shr(_BITPOS_PACKED_VALUE, packed_) // Current value.
                 if iszero(value_) { value_ := sload(or(current_, _BIT_FULL_VALUE_SLOT)) }
                 mstore(mload(0x20), value_)
                 mstore(0x20, add(0x20, mload(0x20)))
-                visit(and(shr(_BITPOS_RIGHT, packed_), _BITMASK_KEY))
+                visit(and(shr(_BITPOS_RIGHT, packed_), _BITMASK_KEY)) // Visit right child.
             }
             result := mload(0x40)
             let rootPacked := sload(nodes)
