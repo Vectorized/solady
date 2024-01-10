@@ -430,7 +430,7 @@ library FixedPointMathLib {
     /*                  GENERAL NUMBER UTILITIES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Calculates `floor(a * b / d)` with full precision.
+    /// @dev Calculates `floor(x * y / d)` with full precision.
     /// Throws if result overflows a uint256 or when `d` is zero.
     /// Credit to Remco Bloemen under MIT license: https://2π.com/21/muldiv
     function fullMulDiv(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 result) {
