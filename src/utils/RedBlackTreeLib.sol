@@ -674,6 +674,7 @@ library RedBlackTreeLib {
                 removeLast(nodes_, cursor_)
             }
 
+            mstore(0x00, 0)
             mstore(0x10, sload(nodes))
 
             for {} 1 {} {
