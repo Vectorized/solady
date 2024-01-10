@@ -105,8 +105,12 @@ contract RedBlackTreeLibTest is SoladyTest {
             bool exists = !ptr.isEmpty();
             if (exists) {
                 assertEq(ptr.value(), choice);
+                _brutalizeScratchSpace();
                 ptr.remove();
-                if (_random() % 4 == 0) tree.tryRemove(choice);
+                if (_random() % 4 == 0) {
+                    _brutalizeScratchSpace();
+                    tree.tryRemove(choice);
+                }
                 assertTrue(tree.find(choice).isEmpty());
                 assertFalse(tree.exists(choice));
             }
@@ -114,8 +118,12 @@ contract RedBlackTreeLibTest is SoladyTest {
                 _testRemoveAndInsertBack(a, n, t - 1);
             }
             if (exists) {
+                _brutalizeScratchSpace();
                 tree.insert(choice);
-                if (_random() % 4 == 0) tree.tryInsert(choice);
+                if (_random() % 4 == 0) {
+                    _brutalizeScratchSpace();
+                    tree.tryInsert(choice);
+                }
                 assertFalse(tree.find(choice).isEmpty());
                 assertTrue(tree.exists(choice));
             }
@@ -183,6 +191,7 @@ contract RedBlackTreeLibTest is SoladyTest {
         unchecked {
             uint256 m = n < 8 ? 4 : n;
             for (uint256 i; i != n; ++i) {
+                _brutalizeScratchSpace();
                 tree.remove(a[i]);
                 assertEq(tree.size(), n - i - 1);
                 if (_random() % m == 0) {
@@ -221,11 +230,13 @@ contract RedBlackTreeLibTest is SoladyTest {
                 bytes32 ptr = tree.find(r);
                 if (mode == 0) {
                     if (ptr.isEmpty()) {
+                        _brutalizeScratchSpace();
                         tree.insert(r);
                         _addToArray(records, r);
                     }
                 } else {
                     if (!ptr.isEmpty()) {
+                        _brutalizeScratchSpace();
                         tree.remove(r);
                         _removeFromArray(records, r);
                     }
@@ -306,6 +317,7 @@ contract RedBlackTreeLibTest is SoladyTest {
         unchecked {
             uint256 m = type(uint256).max;
             for (uint256 i; i < 256; ++i) {
+                _brutalizeScratchSpace();
                 tree.insert(m - i);
                 assertEq(tree.size(), i + 1);
             }
@@ -322,6 +334,7 @@ contract RedBlackTreeLibTest is SoladyTest {
             bytes32[] memory ptrs = new bytes32[](256);
             for (uint256 i; i < 256; ++i) {
                 bytes32 ptr = tree.find(m - i);
+                _brutalizeScratchSpace();
                 ptr.remove();
                 assertTrue(ptr.value() != m - i);
                 ptrs[i] = ptr;
@@ -330,9 +343,11 @@ contract RedBlackTreeLibTest is SoladyTest {
             for (uint256 i; i < 256; ++i) {
                 assertEq(ptrs[i].value(), 0);
                 vm.expectRevert(RedBlackTreeLib.PointerOutOfBounds.selector);
+                _brutalizeScratchSpace();
                 ptrs[i].remove();
             }
             for (uint256 i; i < 256; ++i) {
+                _brutalizeScratchSpace();
                 tree2.remove(i + 1);
                 assertEq(tree2.size(), 256 - (i + 1));
             }
@@ -382,6 +397,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                 uint256[] memory values = new uint256[](n);
                 for (uint256 i; i != n; ++i) {
                     values[i] = 1 | _random();
+                    _brutalizeScratchSpace();
                     tree.tryInsert(values[i]);
                 }
                 LibSort.sort(values);
@@ -394,6 +410,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                     LibPRNG.PRNG memory prng = LibPRNG.PRNG(_random());
                     prng.shuffle(values);
                     for (uint256 i; i != n; ++i) {
+                        _brutalizeScratchSpace();
                         tree.tryRemove(values[i]);
                     }
                     assertEq(tree.values(), new uint256[](0));
@@ -597,6 +614,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                 uint256 r = _bound(_random(), 1, type(uint256).max);
                 if (tree.find(r).isEmpty()) {
                     a[i++] = r;
+                    _brutalizeScratchSpace();
                     tree.insert(r);
                 }
                 if (_random() % 4 == 0) {

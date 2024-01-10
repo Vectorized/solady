@@ -12,7 +12,7 @@ contract TestPlus {
 
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
     /// which reads/write to the memory.
-    function _brutalizeMemory() private view {
+    function _brutalizeMemory() internal view {
         // To prevent a solidity 0.8.13 bug.
         // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
         // Basically, we need to access a solidity variable from the assembly to
@@ -59,10 +59,38 @@ contract TestPlus {
         }
     }
 
+    /// @dev Fills the scratch space with junk, for more robust testing of inline assembly
+    /// which reads/write to the memory.
+    function _brutalizeScratchSpace() internal view {
+        // To prevent a solidity 0.8.13 bug.
+        // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
+        // Basically, we need to access a solidity variable from the assembly to
+        // tell the compiler that this assembly block is not in isolation.
+        uint256 zero;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let offset := mload(0x40) // Start the offset at the free memory pointer.
+            calldatacopy(offset, zero, calldatasize())
+
+            // Fill the 64 bytes of scratch space with garbage.
+            mstore(zero, add(caller(), gas()))
+            mstore(0x20, keccak256(offset, calldatasize()))
+            mstore(zero, keccak256(zero, 0x40))
+        }
+    }
+
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
     /// which reads/write to the memory.
     modifier brutalizeMemory() {
         _brutalizeMemory();
+        _;
+        _checkMemory();
+    }
+
+    /// @dev Fills the scratch space with junk, for more robust testing of inline assembly
+    /// which reads/write to the memory.
+    modifier brutalizeScratchSpace() {
+        _brutalizeScratchSpace();
         _;
         _checkMemory();
     }
