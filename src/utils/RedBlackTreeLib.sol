@@ -221,23 +221,6 @@ library RedBlackTreeLib {
         err = _update(nodes, 0, key, 0, 1);
     }
 
-    /// @dev Clears the entire tree. All data will be deleted from storage.
-    function clear(Tree storage tree) internal {
-        uint256 nodes = _nodes(tree);
-        /// @solidity memory-safe-assembly
-        assembly {
-            let totalNodes := and(sload(nodes), _BITMASK_KEY)
-            for { let i := 1 } iszero(gt(i, totalNodes)) { i := add(i, 1) } {
-                let ptr := or(nodes, i)
-                if iszero(shr(_BITPOS_PACKED_VALUE, sload(ptr))) {
-                    sstore(or(ptr, _BIT_FULL_VALUE_SLOT), 0)
-                }
-                sstore(ptr, 0)
-            }
-            sstore(nodes, 0)
-        }
-    }
-
     /// @dev Returns the value at pointer `ptr`.
     /// If `ptr` is empty, the result will be zero.
     function value(bytes32 ptr) internal view returns (uint256 result) {
