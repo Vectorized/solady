@@ -3,9 +3,9 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for managing a red-black-tree in storage.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/RedBlackTreeLib.sol)
-/// @author Modified from BokkyPooBahsRedBlackTreeLibrary
-/// (https://github.com/bokkypoobah/BokkyPooBahsRedBlackTreeLibrary)
-/// @dev This red-black-tree does not support the zero (i.e. empty) value.
+/// @author Modified from BokkyPooBahsRedBlackTreeLibrary (https://github.com/bokkypoobah/BokkyPooBahsRedBlackTreeLibrary)
+/// @dev This implementation does not support the zero (i.e. empty) value.
+///      This implementation supports up to 2147483647 values.
 library RedBlackTreeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -67,6 +67,17 @@ library RedBlackTreeLib {
     //     nodeValue := sload(or(_BIT_FULL_VALUE_SLOT, or(nodes, nodeIndex)))
     // }
     // ```
+    //
+    // Bits Layout of the Root Index Slot:
+    // - [0..30]    `totalNodes`
+    // - [128..159] `rootNodeIndex`
+    //
+    // Bits Layout of a Node:
+    // - [0..30]   `leftChildIndex`
+    // - [31..61]  `rightChildIndex`
+    // - [62..92]  `parentIndex`
+    // - [93]      `isRed`
+    // - [96..255] `nodePackedValue`
 
     uint256 private constant _NODES_SLOT_SEED = 0x1dc27bb5462fdadcb;
     uint256 private constant _NODES_SLOT_SHIFT = 32;
@@ -143,8 +154,7 @@ library RedBlackTreeLib {
             uint256 bValue = value(b);
             uint256 aDist = x < aValue ? aValue - x : x - aValue;
             uint256 bDist = x < bValue ? bValue - x : x - bValue;
-            if (aDist == bDist) return aValue < bValue ? a : b; // Tie-breaker.
-            return aDist < bDist ? a : b;
+            return (aDist == bDist ? aValue < bValue : aDist < bDist) ? a : b;
         }
     }
 
@@ -674,7 +684,7 @@ library RedBlackTreeLib {
                 removeLast(nodes_, cursor_)
             }
 
-            mstore(0x00, 0)
+            mstore(0x00, codesize()) // Zeroize the first 0x10 bytes.
             mstore(0x10, sload(nodes))
 
             for {} 1 {} {
@@ -712,8 +722,8 @@ library RedBlackTreeLib {
             mstore(0x20, tree.slot)
             mstore(0x00, _NODES_SLOT_SEED)
             nodes := shl(_NODES_SLOT_SHIFT, keccak256(0x00, 0x40))
-
-            mstore(0x01, _BITPOS_RIGHT)
+            // Layout scratch space so that `mload(0x00) == 0`, `mload(0x01) == _BITPOS_RIGHT`.
+            mstore(0x01, _BITPOS_RIGHT) // `_BITPOS_RIGHT` is 31.
             for { let probe := shr(128, sload(nodes)) } probe {} {
                 cursor := probe
                 let nodePacked := sload(or(nodes, probe))

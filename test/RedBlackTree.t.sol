@@ -623,4 +623,41 @@ contract RedBlackTreeLibTest is SoladyTest {
             }
         }
     }
+
+    function testNearestDistTrick(uint256 x, uint256 aValue, uint256 bValue, bytes32 a, bytes32 b)
+        public
+    {
+        bytes32 expected = _nearestDistTrickOriginal(x, aValue, bValue, a, b);
+        bytes32 computed = _nearestDistTrickOptimized(x, aValue, bValue, a, b);
+        assertEq(computed, expected);
+    }
+
+    function _nearestDistTrickOriginal(
+        uint256 x,
+        uint256 aValue,
+        uint256 bValue,
+        bytes32 a,
+        bytes32 b
+    ) internal pure returns (bytes32 result) {
+        uint256 aDist = x < aValue ? aValue - x : x - aValue;
+        uint256 bDist = x < bValue ? bValue - x : x - bValue;
+        if (aDist == bDist) return aValue < bValue ? a : b;
+        return aDist < bDist ? a : b;
+    }
+
+    function _nearestDistTrickOptimized(
+        uint256 x,
+        uint256 aValue,
+        uint256 bValue,
+        bytes32 a,
+        bytes32 b
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let aDist := add(xor(sub(0, lt(x, aValue)), sub(x, aValue)), lt(x, aValue))
+            let bDist := add(xor(sub(0, lt(x, bValue)), sub(x, bValue)), lt(x, bValue))
+            result := shr(eq(aDist, bDist), or(shl(1, lt(aValue, bValue)), lt(aDist, bDist)))
+            result := xor(mul(and(result, 1), xor(a, b)), b)
+        }
+    }
 }
