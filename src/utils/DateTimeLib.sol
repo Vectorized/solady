@@ -3,7 +3,8 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for date time operations.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/DateTimeLib.sol)
-///
+/// @author Modified from BokkyPooBahsDateTimeLibrary (https://github.com/bokkypoobah/BokkyPooBahsDateTimeLibrary)
+/// @dev
 /// Conventions:
 /// --------------------------------------------------------------------+
 /// Unit      | Range                | Notes                            |
@@ -21,11 +22,7 @@ library DateTimeLib {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Weekdays are 1-indexed for a traditional rustic feel.
-
-    // "And on the seventh day God finished his work that he had done,
-    // and he rested on the seventh day from all his work that he had done."
-    // -- Genesis 2:2
+    // Weekdays are 1-indexed, adhering to ISO 8601.
 
     uint256 internal constant MON = 1;
     uint256 internal constant TUE = 2;
@@ -35,7 +32,7 @@ library DateTimeLib {
     uint256 internal constant SAT = 6;
     uint256 internal constant SUN = 7;
 
-    // Months and days of months are 1-indexed for ease of use.
+    // Months and days of months are 1-indexed, adhering to ISO 8601.
 
     uint256 internal constant JAN = 1;
     uint256 internal constant FEB = 2;
@@ -185,7 +182,7 @@ library DateTimeLib {
             // `daysInMonths = [31,28,31,30,31,30,31,31,30,31,30,31]`.
             // `result = daysInMonths[month - 1] + isLeapYear(year)`.
             result :=
-                add(byte(month, shl(152, 0x1F1C1F1E1F1E1F1F1E1F1E1F)), and(eq(month, 2), flag))
+                add(byte(month, shl(152, 0x1f1c1f1e1f1e1f1f1e1f1e1f)), and(eq(month, 2), flag))
         }
     }
 
@@ -209,11 +206,10 @@ library DateTimeLib {
         uint256 md = daysInMonth(year, month);
         /// @solidity memory-safe-assembly
         assembly {
-            let w := not(0)
             result :=
                 and(
                     lt(sub(year, 1970), sub(MAX_SUPPORTED_YEAR, 1969)),
-                    and(lt(add(month, w), 12), lt(add(day, w), md))
+                    and(lt(sub(month, 1), 12), lt(sub(day, 1), md))
                 )
         }
     }
