@@ -303,7 +303,10 @@ abstract contract ERC4626 is ERC20 {
         }
     }
 
-    /// @dev Private helper to return the value plus one.
+    /// @dev Private helper to return `x + 1` without the overflow check.
+    /// Use to compute the denominator input to `FixedPointMathLib.fullMulDiv(a, b, x + 1)`.
+    /// When `x == type(uint256).max`, we get `x + 1 == 0` (mod 2**256 - 1),
+    /// and `FixedPointMathLib.fullMulDiv` will revert as the denominator is zero.
     function _inc(uint256 x) private pure returns (uint256) {
         unchecked {
             return x + 1;
