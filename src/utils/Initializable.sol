@@ -72,7 +72,7 @@ abstract contract Initializable {
                     mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
                     revert(0x1c, 0x04)
                 }
-                s := mul(s, iszero(and(i, 1))) // Skip initializing if `initializing == 1`.
+                s := shl(shl(255, i), s) // Skip initializing if `initializing == 1`.
             }
         }
         _;
