@@ -302,7 +302,7 @@ library JSONParserLib {
 
     /// @dev Parses a signed integer from a string (in decimal, i.e. base 10).
     /// Reverts if `s` is not a valid int256 string matching the RegEx `^[+-]?[0-9]+$`,
-    /// or if the parsed number cannot fit within `[-2*255 .. 2**255 - 1]`.
+    /// or if the parsed number cannot fit within `[-2**255 .. 2**255 - 1]`.
     function parseInt(string memory s) internal pure returns (int256 result) {
         uint256 n = bytes(s).length;
         uint256 sign;
