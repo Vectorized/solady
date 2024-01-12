@@ -323,7 +323,7 @@ library JSONParserLib {
         uint256 x = parseUint(s);
         /// @solidity memory-safe-assembly
         assembly {
-            if gt(x, add(shr(1, not(0)), isNegative)) {
+            if iszero(lt(x, add(shl(255, 1), isNegative))) {
                 mstore(0x00, 0x10182796) // `ParsingFailed()`.
                 revert(0x1c, 0x04)
             }

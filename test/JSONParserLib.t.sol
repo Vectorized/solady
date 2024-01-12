@@ -656,6 +656,16 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(this.parseInt(LibString.toString(val)), val);
     }
 
+    function testParseIntTrick(uint256 x, bool isNegative) public {
+        bool expected = !(isNegative ? x <= (1 << 255) : x < (1 << 255));
+        bool computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            computed := iszero(lt(x, add(shl(255, 1), isNegative)))
+        }
+        assertEq(computed, expected);
+    }
+
     function testParseInvalidIntReverts() public {
         _checkParseInvalidIntReverts("");
         _checkParseInvalidIntReverts("-");
