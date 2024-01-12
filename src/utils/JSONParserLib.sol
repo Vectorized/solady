@@ -324,8 +324,10 @@ library JSONParserLib {
         /// @solidity memory-safe-assembly
         assembly {
             if shr(255, x) {
-                mstore(0x00, 0x10182796) // `ParsingFailed()`.
-                revert(0x1c, 0x04)
+                if iszero(and(eq(x, shl(255, 1)), isNegative)) {
+                    mstore(0x00, 0x10182796) // `ParsingFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             if sign {
                 mstore(s, sign)
