@@ -58,7 +58,7 @@ abstract contract Initializable {
     /// This can be useful during testing and is not expected to be used in production.
     ///
     /// Emits an {Initialized} event.
-    modifier initializer() {
+    modifier initializer() virtual {
         bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
@@ -94,7 +94,7 @@ abstract contract Initializable {
     /// through a function guarded with `reinitializer`.
     ///
     /// Emits an {Initialized} event.
-    modifier reinitializer(uint64 version) {
+    modifier reinitializer(uint64 version) virtual {
         bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
@@ -121,7 +121,7 @@ abstract contract Initializable {
 
     /// @dev Guards a function such that it can only be called in the scope
     /// of a function guarded with `initializer` or `reinitializer`.
-    modifier onlyInitializing() {
+    modifier onlyInitializing() virtual {
         _checkInitializing();
         _;
     }
@@ -166,7 +166,7 @@ abstract contract Initializable {
     }
 
     /// @dev Returns the highest version that has been initialized.
-    function _getInitializedVersion() internal view returns (uint64 version) {
+    function _getInitializedVersion() internal view virtual returns (uint64 version) {
         bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
@@ -175,7 +175,7 @@ abstract contract Initializable {
     }
 
     /// @dev Returns whether the contract is currently initializing.
-    function _isInitializing() internal view returns (bool result) {
+    function _isInitializing() internal view virtual returns (bool result) {
         bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
