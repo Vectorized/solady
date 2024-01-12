@@ -302,7 +302,7 @@ library JSONParserLib {
 
     /// @dev Parses a signed integer from a string (in decimal, i.e. base 10).
     /// Reverts if `s` is not a valid int256 string matching the RegEx `^[+-]?[0-9]+$`,
-    /// or if the parsed number is too big for a int256.
+    /// or if the parsed number cannot fit within `[-2**255 .. 2**255 - 1]`.
     function parseInt(string memory s) internal pure returns (int256 result) {
         uint256 n = bytes(s).length;
         uint256 sign;
@@ -323,7 +323,7 @@ library JSONParserLib {
         uint256 x = parseUint(s);
         /// @solidity memory-safe-assembly
         assembly {
-            if shr(255, x) {
+            if iszero(lt(x, add(shl(255, 1), isNegative))) {
                 mstore(0x00, 0x10182796) // `ParsingFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -338,7 +338,7 @@ library JSONParserLib {
 
     /// @dev Parses an unsigned integer from a string (in hexadecimal, i.e. base 16).
     /// Reverts if `s` is not a valid uint256 hex string matching the RegEx
-    /// `^(0[xX])?[0-9a-fA-F]+$`, or if the parsed number is too big for a uint256.
+    /// `^(0[xX])?[0-9a-fA-F]+$`, or if the parsed number cannot fit within `[0 .. 2**256 - 1]`.
     function parseUintFromHex(string memory s) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {

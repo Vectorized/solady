@@ -76,7 +76,7 @@ library LibString {
             return toString(uint256(value));
         }
         unchecked {
-            str = toString(uint256(-value));
+            str = toString(~uint256(value) + 1);
         }
         /// @solidity memory-safe-assembly
         assembly {

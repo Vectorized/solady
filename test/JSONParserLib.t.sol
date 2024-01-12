@@ -644,10 +644,26 @@ contract JSONParserLibTest is SoladyTest {
         string memory s;
         s = "-57896044618658097711785492504343953926634992332820282019728792003956564819967";
         _checkParseInt(s, -type(int256).max);
+        s = "-57896044618658097711785492504343953926634992332820282019728792003956564819968";
+        _checkParseInt(s, type(int256).min);
         s = "+57896044618658097711785492504343953926634992332820282019728792003956564819967";
         _checkParseInt(s, type(int256).max);
         s = "57896044618658097711785492504343953926634992332820282019728792003956564819967";
         _checkParseInt(s, type(int256).max);
+    }
+
+    function testParseInt(int256 val) public {
+        assertEq(this.parseInt(LibString.toString(val)), val);
+    }
+
+    function testParseIntTrick(uint256 x, bool isNegative) public {
+        bool expected = !(isNegative ? x <= (1 << 255) : x < (1 << 255));
+        bool computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            computed := iszero(lt(x, add(shl(255, 1), isNegative)))
+        }
+        assertEq(computed, expected);
     }
 
     function testParseInvalidIntReverts() public {
@@ -663,10 +679,22 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseInvalidIntReverts(":");
         _checkParseInvalidIntReverts(":123");
         string memory s;
-        s = "-57896044618658097711785492504343953926634992332820282019728792003956564819968";
+        s = "-57896044618658097711785492504343953926634992332820282019728792003956564819969";
         _checkParseInvalidIntReverts(s);
         s = "+57896044618658097711785492504343953926634992332820282019728792003956564819968";
         _checkParseInvalidIntReverts(s);
+    }
+
+    function testParseIntReverts(uint256 val) public {
+        val = _bound(val, uint256(1 << 255) + 1, type(uint256).max);
+
+        string memory s = LibString.toString(val);
+        vm.expectRevert(JSONParserLib.ParsingFailed.selector);
+        this.parseInt(s);
+
+        string memory s1 = LibString.concat("-", s);
+        vm.expectRevert(JSONParserLib.ParsingFailed.selector);
+        this.parseInt(s1);
     }
 
     function _checkParseInt(string memory s, int256 x) internal {
