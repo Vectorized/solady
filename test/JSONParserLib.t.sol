@@ -673,8 +673,6 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseInvalidIntReverts(s);
     }
 
-    event log(uint256 val);
-
     function testParseIntReverts(uint256 val) public {
         val = _bound(val, uint256(1 << 255) + 1, type(uint256).max);
 
@@ -682,7 +680,6 @@ contract JSONParserLibTest is SoladyTest {
         vm.expectRevert(JSONParserLib.ParsingFailed.selector);
         this.parseInt(s);
 
-        emit log(val);
         string memory s1 = LibString.concat("-", s);
         vm.expectRevert(JSONParserLib.ParsingFailed.selector);
         this.parseInt(s1);
