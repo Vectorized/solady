@@ -30,7 +30,7 @@ abstract contract Initializable {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The initializable slot is given by:
+    /// @dev The default initializable slot is given by:
     /// `bytes32(~uint256(uint32(bytes4(keccak256("_INITIALIZABLE_SLOT")))))`.
     ///
     /// Bits Layout:
@@ -43,6 +43,11 @@ abstract contract Initializable {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Override to return a custom storage slot if required.
+    function _initializableSlot() internal pure virtual returns (bytes32) {
+        return _INITIALIZABLE_SLOT;
+    }
+
     /// @dev Guards an initializer function so that it can be invoked at most once.
     ///
     /// You can guard a function with `onlyInitializing` such that it can be called
@@ -53,12 +58,13 @@ abstract contract Initializable {
     /// This can be useful during testing and is not expected to be used in production.
     ///
     /// Emits an {Initialized} event.
-    modifier initializer() {
-        uint256 i;
+    modifier initializer() virtual {
+        bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
-            let s := _INITIALIZABLE_SLOT
-            i := sload(s)
+            let i := sload(s)
+            // Set `initializing` to 1, `initializedVersion` to 1.
+            sstore(s, 3)
             // If `!(initializing == 0 && initializedVersion == 0)`.
             if i {
                 // If `!(address(this).code.length == 0 && initializedVersion == 1)`.
@@ -66,17 +72,15 @@ abstract contract Initializable {
                     mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
                     revert(0x1c, 0x04)
                 }
+                s := shl(shl(255, i), s) // Skip initializing if `initializing == 1`.
             }
-            // Set `initializing` to 1, `initializedVersion` to 1.
-            sstore(s, 3)
         }
         _;
         /// @solidity memory-safe-assembly
         assembly {
-            // If `initializing == 0`.
-            if iszero(and(i, 1)) {
+            if s {
                 // Set `initializing` to 0, `initializedVersion` to 1.
-                sstore(_INITIALIZABLE_SLOT, 2)
+                sstore(s, 2)
                 // Emit the {Initialized} event.
                 mstore(0x20, 1)
                 log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
@@ -90,11 +94,11 @@ abstract contract Initializable {
     /// through a function guarded with `reinitializer`.
     ///
     /// Emits an {Initialized} event.
-    modifier reinitializer(uint64 version) {
+    modifier reinitializer(uint64 version) virtual {
+        bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
             version := and(version, 0xffffffffffffffff) // Clean upper bits.
-            let s := _INITIALIZABLE_SLOT
             let i := sload(s)
             // If `initializing == 1 || initializedVersion >= version`.
             if iszero(lt(and(i, 1), lt(shr(1, i), version))) {
@@ -108,7 +112,7 @@ abstract contract Initializable {
         /// @solidity memory-safe-assembly
         assembly {
             // Set `initializing` to 0, `initializedVersion` to `version`.
-            sstore(_INITIALIZABLE_SLOT, shl(1, version))
+            sstore(s, shl(1, version))
             // Emit the {Initialized} event.
             mstore(0x20, version)
             log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
@@ -117,16 +121,17 @@ abstract contract Initializable {
 
     /// @dev Guards a function such that it can only be called in the scope
     /// of a function guarded with `initializer` or `reinitializer`.
-    modifier onlyInitializing() {
+    modifier onlyInitializing() virtual {
         _checkInitializing();
         _;
     }
 
     /// @dev Reverts if the contract is not initializing.
     function _checkInitializing() internal view virtual {
+        bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(and(1, sload(_INITIALIZABLE_SLOT))) {
+            if iszero(and(1, sload(s))) {
                 mstore(0x00, 0xd7e6bcf8) // `NotInitializing()`.
                 revert(0x1c, 0x04)
             }
@@ -141,9 +146,9 @@ abstract contract Initializable {
     ///
     /// Emits an {Initialized} event the first time it is successfully called.
     function _disableInitializers() internal virtual {
+        bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
-            let s := _INITIALIZABLE_SLOT
             let i := sload(s)
             if and(i, 1) {
                 mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
@@ -161,18 +166,20 @@ abstract contract Initializable {
     }
 
     /// @dev Returns the highest version that has been initialized.
-    function _getInitializedVersion() internal view returns (uint64 version) {
+    function _getInitializedVersion() internal view virtual returns (uint64 version) {
+        bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
-            version := shr(1, sload(_INITIALIZABLE_SLOT))
+            version := shr(1, sload(s))
         }
     }
 
     /// @dev Returns whether the contract is currently initializing.
-    function _isInitializing() internal view returns (bool result) {
+    function _isInitializing() internal view virtual returns (bool result) {
+        bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
-            result := and(1, sload(_INITIALIZABLE_SLOT))
+            result := and(1, sload(s))
         }
     }
 }
