@@ -25,22 +25,66 @@ library MinHeapLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Tips:
-    // - To use as a max-map, negate the values.
+    // - To use as a max-heap, negate the values.
     // - If use on tuples, pack the tuple values into a single integer.
     // - To use on signed integers, convert the signed integers into
     //   their ordered unsigned counterparts via `uint256(x) + (1 << 255)`.
 
-    /// @dev Returns the minimum value of the heap.
+    /// @dev Returns the minimum (smallest) value of the heap.
     /// Reverts if the heap is empty.
     function root(Heap storage heap) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(sload(heap.slot)) {
-                mstore(0x00, 0xa6ca772e) // Store the function selector of `HeapIsEmpty()`.
-                revert(0x1c, 0x04) // Revert with (offset, size).
+                mstore(0x00, 0xa6ca772e) // `HeapIsEmpty()`.
+                revert(0x1c, 0x04)
             }
             mstore(0x00, heap.slot)
             result := sload(keccak256(0x00, 0x20))
+        }
+    }
+
+    /// @dev Returns an array of the `n` smallest items in the heap.
+    /// If the heap has less than `n` items, the result will contain all the heap's items.
+    function smallest(Heap storage heap, uint256 n) internal view returns (uint256[] memory a) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function min(x_, y_) -> _z {
+                _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
+            }
+            a := mload(0x40)
+            let l := sload(heap.slot) // The number of items in the heap.
+            mstore(0x00, heap.slot)
+            let sOffset := keccak256(0x00, 0x20)
+            
+            let o := add(0x20, a) // Offset into a.
+            let e := min(add(n, n), l)
+            for { let i := 0 } lt(i, e) { i := add(i, 1) } {
+                mstore(add(o, shl(5, i)), sload(add(sOffset, i)))
+            }
+
+            mstore(a, 0) // For insertion sort's inner loop to terminate.
+            let h := add(a, shl(5, e)) // High slot.
+            let s := 0x20
+            let w := not(0x1f)
+            for { let i := o } 1 {} {
+                i := add(i, s)
+                if gt(i, h) { break }
+                let k := mload(i) // Key.
+                let j := add(i, w) // The slot before the current slot.
+                let v := mload(j) // The value of `j`.
+                if iszero(gt(v, k)) { continue }
+                for {} 1 {} {
+                    mstore(add(j, s), v)
+                    j := add(j, w) // `sub(j, 0x20)`.
+                    v := mload(j)
+                    if iszero(gt(v, k)) { break }
+                }
+                mstore(add(j, s), k)
+            }
+            mstore(a, min(n, l)) // Store the length of `a`.
+            mstore(0x40, add(o, shl(5, mload(a)))) // Allocate memory for `a`.
+        
         }
     }
 

@@ -41,18 +41,27 @@ contract MinHeapLibTest is SoladyTest {
     function testHeapPushPop(uint256) public {
         unchecked {
             uint256 n = _random() % 8;
+            uint256[] memory a = new uint256[](n + 1);
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
                 heap0.push(r);
                 heap1.push(r);
+                a[i + 1] = r;
             }
             n = _random() % 8;
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
+                a[0] = r;
+                LibSort.insertionSort(a);
                 uint256 popped0 = heap0.pushPop(r);
                 heap1.push(r);
                 uint256 popped1 = heap1.pop();
                 assertEq(popped0, popped1);
+            }
+            LibSort.insertionSort(a);
+            n = heap0.length();
+            for (uint256 i; i < n; ++i) {
+                assertEq(heap0.pop(), a[i + 1]);
             }
         }
     }
@@ -60,20 +69,66 @@ contract MinHeapLibTest is SoladyTest {
     function testHeapReplace(uint256) public {
         unchecked {
             uint256 n = _random() % 8 + 1;
+            uint256[] memory a = new uint256[](n);
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
                 heap0.push(r);
                 heap1.push(r);
+                a[i] = r;
             }
             n = _random() % 8;
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
+                LibSort.insertionSort(a);
+                a[0] = r;
                 uint256 popped0 = heap0.replace(r);
                 uint256 popped1 = heap1.pop();
                 heap1.push(r);
                 assertEq(popped0, popped1);
             }
+            LibSort.insertionSort(a);
+            n = heap0.length();
+            for (uint256 i; i < n; ++i) {
+                assertEq(heap0.pop(), a[i]);
+            }
         }
+    }
+
+    function testHeapSmallest(uint256) public {
+        unchecked {
+            uint256[] memory a = new uint256[](_random() % 32);
+            for (uint256 i; i < a.length; ++i) {
+                uint256 r = _random();
+                heap0.push(r);
+                a[i] = r;
+            }
+            uint256 n = _random() % 32;
+            assertEq(heap0.smallest(n), _smallest(a, n));
+        }
+    }
+
+    function _smallest(uint256[] memory a, uint256 n) internal view returns (uint256[] memory result) {
+        result = _copy(a);
+        LibSort.insertionSort(result);
+        uint256 k = _min(n, result.length);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, k)
+        }
+    }
+
+    function _copy(uint256[] memory a) private view returns (uint256[] memory b) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            b := mload(0x40)
+            let n := add(shl(5, mload(a)), 0x20)
+            pop(staticcall(gas(), 4, a, n, b, n))
+            mstore(0x40, add(b, n))
+        }
+    }
+
+    function _min(uint256 a, uint256 b) private pure returns (uint256) {
+        return a < b ? a : b;
     }
 
     function testHeapEnqueue(uint256) public {
@@ -113,18 +168,18 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
-    function testHeapEnqueueGas(uint256) public {
+    function testHeapEnqueueGas() public {
         unchecked {
-            for (uint256 i; i < 16; ++i) {
-                this.enqueue(i, 8);
+            for (uint256 t = 8; t < 16; ++t) {
+                uint256 maxLength = t;
+                for (uint256 i; i < 16; ++i) {
+                    heap0.enqueue(i, maxLength);
+                }
+                for (uint256 i; i < 16; ++i) {
+                    heap0.enqueue(_random() % 16, maxLength);
+                }    
             }
-            for (uint256 i; i < 16; ++i) {
-                this.enqueue(_random() % 16, 8);
-            }
+            while (heap0.length() != 0) heap0.pop();
         }
-    }
-
-    function enqueue(uint256 value, uint256 maxLength) public {
-        heap0.enqueue(value, maxLength);
     }
 }
