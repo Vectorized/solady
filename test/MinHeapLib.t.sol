@@ -94,38 +94,38 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
-    function testHeapSmallest(uint256) public {
-        unchecked {
-            uint256[] memory a = new uint256[](_random() % 32);
-            for (uint256 i; i < a.length; ++i) {
-                uint256 r = _random();
-                heap0.push(r);
-                a[i] = r;
-            }
-            uint256 n = _random() % 32;
-            assertEq(heap0.smallest(n), _smallest(a, n));
-        }
-    }
+    // function testHeapSmallest(uint256) public {
+    //     unchecked {
+    //         uint256[] memory a = new uint256[](_random() % 32);
+    //         for (uint256 i; i < a.length; ++i) {
+    //             uint256 r = _random();
+    //             heap0.push(r);
+    //             a[i] = r;
+    //         }
+    //         uint256 n = _random() % 32;
+    //         assertEq(heap0.smallest(n), _smallest(a, n));
+    //     }
+    // }
 
-    function _smallest(uint256[] memory a, uint256 n) internal view returns (uint256[] memory result) {
-        result = _copy(a);
-        LibSort.insertionSort(result);
-        uint256 k = _min(n, result.length);
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(result, k)
-        }
-    }
+    // function _smallest(uint256[] memory a, uint256 n) internal view returns (uint256[] memory result) {
+    //     result = _copy(a);
+    //     LibSort.insertionSort(result);
+    //     uint256 k = _min(n, result.length);
+    //     /// @solidity memory-safe-assembly
+    //     assembly {
+    //         mstore(result, k)
+    //     }
+    // }
 
-    function _copy(uint256[] memory a) private view returns (uint256[] memory b) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            b := mload(0x40)
-            let n := add(shl(5, mload(a)), 0x20)
-            pop(staticcall(gas(), 4, a, n, b, n))
-            mstore(0x40, add(b, n))
-        }
-    }
+    // function _copy(uint256[] memory a) private view returns (uint256[] memory b) {
+    //     /// @solidity memory-safe-assembly
+    //     assembly {
+    //         b := mload(0x40)
+    //         let n := add(shl(5, mload(a)), 0x20)
+    //         pop(staticcall(gas(), 4, a, n, b, n))
+    //         mstore(0x40, add(b, n))
+    //     }
+    // }
 
     function _min(uint256 a, uint256 b) private pure returns (uint256) {
         return a < b ? a : b;

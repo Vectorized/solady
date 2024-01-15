@@ -44,47 +44,25 @@ library MinHeapLib {
         }
     }
 
-    /// @dev Returns an array of the `n` smallest items in the heap.
-    /// If the heap has less than `n` items, the result will contain all the heap's items.
-    function smallest(Heap storage heap, uint256 n) internal view returns (uint256[] memory a) {
+    /// @dev Returns an array of the `k` smallest items in the heap.
+    /// If the heap has less than `k` items, the result will contain all the heap's items.
+    function smallest(Heap storage heap, uint256 k) internal view returns (uint256[] memory a) {
         /// @solidity memory-safe-assembly
         assembly {
-            function min(x_, y_) -> _z {
-                _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
-            }
-            a := mload(0x40)
-            let l := sload(heap.slot) // The number of items in the heap.
-            mstore(0x00, heap.slot)
-            let sOffset := keccak256(0x00, 0x20)
-            
-            let o := add(0x20, a) // Offset into a.
-            let e := min(add(n, n), l)
-            for { let i := 0 } lt(i, e) { i := add(i, 1) } {
-                mstore(add(o, shl(5, i)), sload(add(sOffset, i)))
-            }
+            let n := sload(heap.slot) // The number of items in the heap.
+            if iszero(or(iszero(k), iszero(n))) {
+                a := mload(0x40)
+                mstore(0x00, heap.slot)
+                let sOffset := keccak256(0x00, 0x20)
+                let o := add(0x20, a) // Offset into a.
+                let b := add(o, shl(5, k)) // Buffer for priority queue.
+                let q := 1 // Number of elements in the priority queue.
+                mstore(b, 0) // Store the root in the priority queue.
+                for {} q {} {
+                    q := sub(q, 1)
 
-            mstore(a, 0) // For insertion sort's inner loop to terminate.
-            let h := add(a, shl(5, e)) // High slot.
-            let s := 0x20
-            let w := not(0x1f)
-            for { let i := o } 1 {} {
-                i := add(i, s)
-                if gt(i, h) { break }
-                let k := mload(i) // Key.
-                let j := add(i, w) // The slot before the current slot.
-                let v := mload(j) // The value of `j`.
-                if iszero(gt(v, k)) { continue }
-                for {} 1 {} {
-                    mstore(add(j, s), v)
-                    j := add(j, w) // `sub(j, 0x20)`.
-                    v := mload(j)
-                    if iszero(gt(v, k)) { break }
                 }
-                mstore(add(j, s), k)
             }
-            mstore(a, min(n, l)) // Store the length of `a`.
-            mstore(0x40, add(o, shl(5, mload(a)))) // Allocate memory for `a`.
-        
         }
     }
 
