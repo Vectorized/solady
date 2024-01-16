@@ -112,6 +112,7 @@ contract MinHeapLibTest is SoladyTest {
                 }
             }
             uint256 k = _random() & 15 == 0 ? _random() % 256 : _random() % 32;
+            k = _random() & 31 == 0 ? 1 << 255 : k;
             if (_random() & 7 == 0) _brutalizeMemory();
             uint256[] memory computed = heap0.smallest(k);
             _checkMemory();
@@ -247,8 +248,8 @@ contract MinHeapLibTest is SoladyTest {
 
     function testHeapEnqueue2(uint256) public {
         unchecked {
-            uint256 maxLength = _random() % 32 + 1;
-            uint256 m = _random() % 32 + maxLength;
+            uint256 maxLength = _random() & 31 == 0 ? 1 << 255 : _random() % 32 + 1;
+            uint256 m = _random() % 32 + 1;
             for (uint256 i; i < m; ++i) {
                 uint256 r = _random();
                 heap0.enqueue(r, maxLength);
@@ -256,6 +257,7 @@ contract MinHeapLibTest is SoladyTest {
                 if (heap1.length() > maxLength) heap1.pop();
             }
             uint256 k = _random() % m;
+            k = _random() & 31 == 0 ? 1 << 255 : k;
             assertEq(heap0.smallest(k), heap1.smallest(k));
         }
     }
