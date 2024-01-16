@@ -60,9 +60,9 @@ library MinHeapLib {
                 mstore(add(0x20, add(h_, shl(6, p_))), i_)
             }
             function pSiftdown(h_, p_, i_, v_) {
-                for {} p_ {} {
+                for {} 1 {} {
                     let u_ := shr(1, sub(p_, 1))
-                    if iszero(lt(v_, pValue(h_, u_))) { break }
+                    if iszero(mul(p_, lt(v_, pValue(h_, u_)))) { break }
                     pSet(h_, p_, pIndex(h_, u_), pValue(h_, u_))
                     p_ := u_
                 }
@@ -71,8 +71,7 @@ library MinHeapLib {
             function pSiftup(h_, e_, i_, v_) {
                 let p_ := 0
                 for { let c_ := 1 } lt(c_, e_) { c_ := add(1, shl(1, p_)) } {
-                    let r_ := add(c_, 1)
-                    if gt(lt(r_, e_), lt(pValue(h_, c_), pValue(h_, r_))) { c_ := r_ }
+                    c_ := add(c_, gt(pValue(h_, c_), pValue(h_, add(c_, lt(add(c_, 1), e_)))))
                     pSet(h_, p_, pIndex(h_, c_), pValue(h_, c_))
                     p_ := c_
                 }
