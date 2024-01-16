@@ -25,12 +25,12 @@ library MinHeapLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Tips:
-    // - To use as a max-heap, negate the values.
+    // - To use as a max-heap, bitwise negate the values (e.g. `heap.push(~x)`).
     // - If use on tuples, pack the tuple values into a single integer.
     // - To use on signed integers, convert the signed integers into
     //   their ordered unsigned counterparts via `uint256(x) + (1 << 255)`.
 
-    /// @dev Returns the minimum (smallest) value of the heap.
+    /// @dev Returns the minimum value of the heap.
     /// Reverts if the heap is empty.
     function root(Heap storage heap) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
@@ -44,8 +44,8 @@ library MinHeapLib {
         }
     }
 
-    /// @dev Returns an array of the `k` smallest items in the heap.
-    /// If the heap has less than `k` items, the result will contain all the heap's items.
+    /// @dev Returns an array of the `k` smallest items in the heap, without modifying the heap.
+    /// If the heap has less than `k` items, returns all items in the heap.
     function smallest(Heap storage heap, uint256 k) internal view returns (uint256[] memory a) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -54,14 +54,42 @@ library MinHeapLib {
                 a := mload(0x40)
                 mstore(0x00, heap.slot)
                 let sOffset := keccak256(0x00, 0x20)
-                let o := add(0x20, a) // Offset into a.
-                let b := add(o, shl(5, k)) // Buffer for priority queue.
-                let q := 1 // Number of elements in the priority queue.
-                mstore(b, 0) // Store the root in the priority queue.
+                let j := 0 // Number of items found.
+                let p := add(add(a, 0x60), shl(5, k)) // Priority queue.
+                let q := 0x40 // Priority queue length in bytes.
+                codecopy(sub(p, q), codesize(), 0x80) // Zeroize the start of the priority queue.
+                mstore(p, sload(sOffset)) // Store the root into the priority queue.
                 for {} q {} {
-                    q := sub(q, 1)
-
+                    j := add(1, j)
+                    mstore(add(a, shl(5, j)), mload(p))
+                    if eq(j, k) { break }
+                    let childPos := add(shl(1, mload(add(0x20, p))), 1)
+                    if iszero(lt(childPos, n)) {
+                        p := add(0x40, p)
+                        q := sub(q, 0x40)
+                        continue
+                    }
+                    let v := sload(add(sOffset, childPos))
+                    let i := add(p, 0x40)
+                    for { mstore(add(p, q), not(0)) } lt(mload(i), v) { i := add(i, 0x40) } {
+                        mstore(sub(i, 0x20), mload(add(0x20, i)))
+                        mstore(sub(i, 0x40), mload(i))
+                    }
+                    mstore(sub(i, 0x20), childPos)
+                    mstore(sub(i, 0x40), v)
+                    childPos := add(1, childPos)
+                    if iszero(lt(childPos, n)) { continue }
+                    v := sload(add(sOffset, childPos))
+                    for { i := add(p, sub(q, 0x40)) } gt(mload(i), v) { i := sub(i, 0x40) } {
+                        mstore(add(0x60, i), mload(add(0x20, i)))
+                        mstore(add(0x40, i), mload(i))
+                    }
+                    mstore(add(0x60, i), childPos)
+                    mstore(add(0x40, i), v)
+                    q := add(q, 0x40)
                 }
+                mstore(a, j) // Store the length.
+                mstore(0x40, add(a, shl(5, add(1, j)))) // Allocate memory.
             }
         }
     }

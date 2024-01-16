@@ -94,38 +94,50 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
-    // function testHeapSmallest(uint256) public {
-    //     unchecked {
-    //         uint256[] memory a = new uint256[](_random() % 32);
-    //         for (uint256 i; i < a.length; ++i) {
-    //             uint256 r = _random();
-    //             heap0.push(r);
-    //             a[i] = r;
-    //         }
-    //         uint256 n = _random() % 32;
-    //         assertEq(heap0.smallest(n), _smallest(a, n));
-    //     }
-    // }
+    function testHeapSmallest(uint256) public brutalizeMemory {
+        unchecked {
+            uint256 n = _random() % 32;
+            for (uint256 i; i < n; ++i) {
+                heap0.push(_random());
+            }
+            if (_random() & 7 == 0) {
+                n = _random() % 32;
+                for (uint256 i; i < n; ++i) {
+                    heap0.pushPop(_random());
+                }
+            }
+            uint256 k = _random() % 32;
+            if (_random() & 7 == 0) _brutalizeMemory();
+            uint256[] memory computed = heap0.smallest(k);
+            _checkMemory();
+            if (_random() & 7 == 0) _brutalizeMemory();
+            assertEq(computed, _smallest(heap0.data, k));
+        }
+    }
 
-    // function _smallest(uint256[] memory a, uint256 n) internal view returns (uint256[] memory result) {
-    //     result = _copy(a);
-    //     LibSort.insertionSort(result);
-    //     uint256 k = _min(n, result.length);
-    //     /// @solidity memory-safe-assembly
-    //     assembly {
-    //         mstore(result, k)
-    //     }
-    // }
+    function _smallest(uint256[] memory a, uint256 n)
+        internal
+        view
+        returns (uint256[] memory result)
+    {
+        result = _copy(a);
+        LibSort.insertionSort(result);
+        uint256 k = _min(n, result.length);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, k)
+        }
+    }
 
-    // function _copy(uint256[] memory a) private view returns (uint256[] memory b) {
-    //     /// @solidity memory-safe-assembly
-    //     assembly {
-    //         b := mload(0x40)
-    //         let n := add(shl(5, mload(a)), 0x20)
-    //         pop(staticcall(gas(), 4, a, n, b, n))
-    //         mstore(0x40, add(b, n))
-    //     }
-    // }
+    function _copy(uint256[] memory a) private view returns (uint256[] memory b) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            b := mload(0x40)
+            let n := add(shl(5, mload(a)), 0x20)
+            pop(staticcall(gas(), 4, a, n, b, n))
+            mstore(0x40, add(b, n))
+        }
+    }
 
     function _min(uint256 a, uint256 b) private pure returns (uint256) {
         return a < b ? a : b;
@@ -177,7 +189,7 @@ contract MinHeapLibTest is SoladyTest {
                 }
                 for (uint256 i; i < 16; ++i) {
                     heap0.enqueue(_random() % 16, maxLength);
-                }    
+                }
             }
             while (heap0.length() != 0) heap0.pop();
         }
