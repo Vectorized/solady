@@ -97,9 +97,10 @@ library MinHeapLib {
                     }
                     pSiftup(h, e, childPos, sload(add(sOffset, childPos)))
                     childPos := add(1, childPos)
-                    if iszero(lt(childPos, n)) { continue }
-                    pSiftdown(h, e, childPos, sload(add(sOffset, childPos)))
-                    e := add(e, 1)
+                    if iszero(eq(childPos, n)) {
+                        pSiftdown(h, e, childPos, sload(add(sOffset, childPos)))
+                        e := add(e, 1)
+                    }
                 }
                 mstore(a, j) // Store the length.
                 mstore(0x40, add(a, shl(5, add(1, j)))) // Allocate memory.
