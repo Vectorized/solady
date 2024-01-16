@@ -25,8 +25,8 @@ library MinHeapLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Tips:
-    // - To use as a max-heap, bitwise negate the values (e.g. `heap.push(~x)`).
-    // - If use on tuples, pack the tuple values into a single integer.
+    // - To use as a max-heap, bitwise negate the input and output values (e.g. `heap.push(~x)`).
+    // - To use on tuples, pack the tuple values into a single integer.
     // - To use on signed integers, convert the signed integers into
     //   their ordered unsigned counterparts via `uint256(x) + (1 << 255)`.
 
@@ -168,26 +168,23 @@ library MinHeapLib {
         /// @solidity memory-safe-assembly
         assembly {
             let n := sload(heap.slot)
-            // Compute the array storage slot offset.
             mstore(0x00, heap.slot)
-            let sOffset := keccak256(0x00, 0x20)
-
+            let sOffset := keccak256(0x00, 0x20) // Array storage slot offset.
             let pos := 0
             let childPos := not(0)
             // Operations are ordered from most likely usage to least likely usage.
             for {} 1 {
-                mstore(0x00, 0xa6ca772e) // Store the function selector of `HeapIsEmpty()`.
-                revert(0x1c, 0x04) // Revert with (offset, size).
+                mstore(0x00, 0xa6ca772e) // `HeapIsEmpty()`.
+                revert(0x1c, 0x04)
             } {
-                // `enqueue`.
+                // Mode: `enqueue`.
                 if iszero(mode) {
                     if iszero(maxLength) { continue }
+                    // If queue is not full.
                     if iszero(eq(n, maxLength)) {
-                        // If queue is not full.
                         success := 1
-                        // Increment and update the length.
                         pos := n
-                        sstore(heap.slot, add(pos, 1))
+                        sstore(heap.slot, add(pos, 1)) // Increment and update the length.
                         childPos := add(childPos, childPos)
                         break
                     }
@@ -199,14 +196,14 @@ library MinHeapLib {
                     popped := r
                     break
                 }
-                // `replace`.
+                // Mode: `replace`.
                 if eq(mode, 1) {
                     if iszero(n) { continue }
                     popped := sload(sOffset)
                     childPos := 1
                     break
                 }
-                // `pushPop`.
+                // Mode: `pushPop`.
                 if eq(mode, 2) {
                     popped := value
                     if iszero(n) { break }
@@ -216,7 +213,7 @@ library MinHeapLib {
                     childPos := 1
                     break
                 }
-                // `pop`.
+                // Mode: `pop`.
                 if eq(mode, 3) {
                     if iszero(n) { continue }
                     // Decrement and update the length.
@@ -230,38 +227,32 @@ library MinHeapLib {
                     childPos := 1
                     break
                 }
-                // `push`.
-                {
-                    // Increment and update the length.
-                    pos := n
-                    sstore(heap.slot, add(pos, 1))
-                    childPos := add(childPos, childPos)
-                    break
-                }
+                // Mode: `push`.
+                // Increment and update the length.
+                pos := n
+                sstore(heap.slot, add(pos, 1))
+                childPos := add(childPos, childPos)
+                break
             }
-
-            for {} lt(childPos, n) {} {
+            // Siftup.
+            for {} lt(childPos, n) { childPos := add(shl(1, pos), 1) } {
                 let child := sload(add(sOffset, childPos))
-                let rightPos := add(childPos, 1)
+                let rightPos := add(childPos, lt(add(childPos, 1), n))
                 let right := sload(add(sOffset, rightPos))
-                if iszero(gt(lt(rightPos, n), lt(child, right))) {
+                if iszero(gt(child, right)) {
                     right := child
                     rightPos := childPos
                 }
                 sstore(add(sOffset, pos), right)
                 pos := rightPos
-                childPos := add(shl(1, pos), 1)
             }
-
-            for {} pos {} {
-                let parentPos := shr(1, sub(pos, 1))
-                let parent := sload(add(sOffset, parentPos))
+            // Siftdown.
+            for {} pos { pos := shr(1, sub(pos, 1)) } {
+                let parent := sload(add(sOffset, shr(1, sub(pos, 1))))
                 if iszero(lt(value, parent)) { break }
                 sstore(add(sOffset, pos), parent)
-                pos := parentPos
             }
-
-            // If `childPos` is not `not(0)`.
+            // If `childPos` has been changed from `not(0)`.
             if add(childPos, 1) { sstore(add(sOffset, pos), value) }
         }
     }
