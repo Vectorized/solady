@@ -245,6 +245,21 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
+    function testHeapEnqueue2(uint256) public {
+        unchecked {
+            uint256 maxLength = _random() % 32 + 1;
+            uint256 m = _random() % 32 + maxLength;
+            for (uint256 i; i < m; ++i) {
+                uint256 r = _random();
+                heap0.enqueue(r, maxLength);
+                heap1.push(r);
+                if (heap1.length() > maxLength) heap1.pop();
+            }
+            uint256 k = _random() % m;
+            assertEq(heap0.smallest(k), heap1.smallest(k));
+        }
+    }
+
     function testHeapEnqueueGas() public {
         unchecked {
             for (uint256 t = 8; t < 16; ++t) {
