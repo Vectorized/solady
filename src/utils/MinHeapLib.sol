@@ -44,8 +44,9 @@ library MinHeapLib {
         }
     }
 
-    /// @dev Returns an array of the `k` smallest items in the heap, without modifying the heap.
-    /// If the heap has less than `k` items, returns all items in the heap.
+    /// @dev Returns an array of the `k` smallest items in the heap,
+    /// sorted in ascending order, without modifying the heap.
+    /// If the heap has less than `k` items, all items in the heap will be returned.
     function smallest(Heap storage heap, uint256 k) internal view returns (uint256[] memory a) {
         /// @solidity memory-safe-assembly
         assembly {
