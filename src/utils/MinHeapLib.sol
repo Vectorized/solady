@@ -49,44 +49,58 @@ library MinHeapLib {
     function smallest(Heap storage heap, uint256 k) internal view returns (uint256[] memory a) {
         /// @solidity memory-safe-assembly
         assembly {
+            function pIndex(h_, p_) -> _i {
+                _i := mload(add(0x20, add(h_, shl(6, p_))))
+            }
+            function pValue(h_, p_) -> _v {
+                _v := mload(add(h_, shl(6, p_)))
+            }
+            function pSet(h_, p_, i_, v_) {
+                mstore(add(h_, shl(6, p_)), v_)
+                mstore(add(0x20, add(h_, shl(6, p_))), i_)
+            }
+            function pSiftdown(h_, p_, i_, v_) {
+                for {} p_ {} {
+                    let u_ := shr(1, sub(p_, 1))
+                    if iszero(lt(v_, pValue(h_, u_))) { break }
+                    pSet(h_, p_, pIndex(h_, u_), pValue(h_, u_))
+                    p_ := u_
+                }
+                pSet(h_, p_, i_, v_)
+            }
+            function pSiftup(h_, e_, i_, v_) {
+                let p_ := 0
+                for { let c_ := 1 } lt(c_, e_) { c_ := add(1, shl(1, p_)) } {
+                    let r_ := add(c_, 1)
+                    if gt(lt(r_, e_), lt(pValue(h_, c_), pValue(h_, r_))) { c_ := r_ }
+                    pSet(h_, p_, pIndex(h_, c_), pValue(h_, c_))
+                    p_ := c_
+                }
+                pSiftdown(h_, p_, i_, v_)
+            }
             let n := sload(heap.slot) // The number of items in the heap.
             if iszero(or(iszero(k), iszero(n))) {
                 a := mload(0x40)
                 mstore(0x00, heap.slot)
                 let sOffset := keccak256(0x00, 0x20)
                 let j := 0 // Number of items found.
-                let p := add(add(a, 0x60), shl(5, k)) // Priority queue.
-                let q := 0x40 // Priority queue length in bytes.
-                codecopy(sub(p, q), codesize(), 0x80) // Zeroize the start of the priority queue.
-                mstore(p, sload(sOffset)) // Store the root into the priority queue.
-                for {} q {} {
+                let h := add(add(a, 0x20), shl(5, k)) // Priority queue.
+                pSet(h, 0, 0, sload(sOffset)) // Store the root into the priority queue.
+                for { let e := 1 } e {} {
                     j := add(1, j)
-                    mstore(add(a, shl(5, j)), mload(p))
+                    mstore(add(a, shl(5, j)), pValue(h, 0))
                     if eq(j, k) { break }
-                    let childPos := add(shl(1, mload(add(0x20, p))), 1)
+                    let childPos := add(shl(1, pIndex(h, 0)), 1)
                     if iszero(lt(childPos, n)) {
-                        p := add(0x40, p)
-                        q := sub(q, 0x40)
+                        e := sub(e, 1)
+                        pSiftup(h, e, pIndex(h, e), pValue(h, e))
                         continue
                     }
-                    let v := sload(add(sOffset, childPos))
-                    let i := add(p, 0x40)
-                    for { mstore(add(p, q), not(0)) } lt(mload(i), v) { i := add(i, 0x40) } {
-                        mstore(sub(i, 0x20), mload(add(0x20, i)))
-                        mstore(sub(i, 0x40), mload(i))
-                    }
-                    mstore(sub(i, 0x20), childPos)
-                    mstore(sub(i, 0x40), v)
+                    pSiftup(h, e, childPos, sload(add(sOffset, childPos)))
                     childPos := add(1, childPos)
                     if iszero(lt(childPos, n)) { continue }
-                    v := sload(add(sOffset, childPos))
-                    for { i := add(p, sub(q, 0x40)) } gt(mload(i), v) { i := sub(i, 0x40) } {
-                        mstore(add(0x60, i), mload(add(0x20, i)))
-                        mstore(add(0x40, i), mload(i))
-                    }
-                    mstore(add(0x60, i), childPos)
-                    mstore(add(0x40, i), v)
-                    q := add(q, 0x40)
+                    pSiftdown(h, e, childPos, sload(add(sOffset, childPos)))
+                    e := add(e, 1)
                 }
                 mstore(a, j) // Store the length.
                 mstore(0x40, add(a, shl(5, add(1, j)))) // Allocate memory.
