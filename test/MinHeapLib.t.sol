@@ -169,6 +169,7 @@ contract MinHeapLibTest is SoladyTest {
         pure
         returns (uint256 result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             function pValue(h_, p_) -> _v {
                 mstore(0x00, h_)
@@ -187,6 +188,7 @@ contract MinHeapLibTest is SoladyTest {
         pure
         returns (uint256 result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             function pValue(h_, p_) -> _v {
                 mstore(0x00, h_)
@@ -197,7 +199,7 @@ contract MinHeapLibTest is SoladyTest {
                 let child := pValue(sOffset, childPos)
                 let rightPos := add(childPos, 1)
                 let right := pValue(sOffset, rightPos)
-                if iszero(gt(lt(rightPos, n), lt(child, right))) {
+                if iszero(and(lt(rightPos, n), iszero(lt(child, right)))) {
                     right := child
                     rightPos := childPos
                 }
