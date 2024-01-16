@@ -120,8 +120,16 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
-    function testHeapSmallest() public {
-        testHeapSmallest(123);
+    function testHeapSmallestGas() public {
+        unchecked {
+            for (uint256 i; i < 2048; ++i) {
+                heap0.push(_random());
+            }
+            uint256 gasBefore = gasleft();
+            heap0.smallest(512);
+            uint256 gasUsed = gasBefore - gasleft();
+            emit LogUint("gasUsed", gasUsed);
+        }
     }
 
     function _smallest(uint256[] memory a, uint256 n)
