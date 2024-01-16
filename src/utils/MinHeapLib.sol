@@ -78,34 +78,33 @@ library MinHeapLib {
                 }
                 pSiftdown(h_, p_, i_, v_)
             }
+            a := mload(0x40)
+            mstore(0x00, heap.slot)
+            let sOffset := keccak256(0x00, 0x20)
+            let o := add(a, 0x20) // Offset into `a`.
             let n := sload(heap.slot) // The number of items in the heap.
-            if iszero(or(iszero(k), iszero(n))) {
-                a := mload(0x40)
-                mstore(0x00, heap.slot)
-                let sOffset := keccak256(0x00, 0x20)
-                let j := 0 // Number of items found.
-                let h := add(add(a, 0x20), shl(5, k)) // Priority queue.
-                pSet(h, 0, 0, sload(sOffset)) // Store the root into the priority queue.
-                for { let e := 1 } e {} {
-                    j := add(1, j)
-                    mstore(add(a, shl(5, j)), pValue(h, 0))
-                    if eq(j, k) { break }
-                    let childPos := add(shl(1, pIndex(h, 0)), 1)
-                    if iszero(lt(childPos, n)) {
-                        e := sub(e, 1)
-                        pSiftup(h, e, pIndex(h, e), pValue(h, e))
-                        continue
-                    }
-                    pSiftup(h, e, childPos, sload(add(sOffset, childPos)))
-                    childPos := add(1, childPos)
-                    if iszero(eq(childPos, n)) {
-                        pSiftdown(h, e, childPos, sload(add(sOffset, childPos)))
-                        e := add(e, 1)
-                    }
+            let m := xor(n, mul(xor(n, k), lt(k, n))) // `min(k, n)`.
+            let h := add(o, shl(5, m)) // Priority queue.
+            pSet(h, 0, 0, sload(sOffset)) // Store the root into the priority queue.
+            for { let e := iszero(eq(o, h)) } e {} {
+                mstore(o, pValue(h, 0))
+                o := add(0x20, o)
+                if eq(o, h) { break }
+                let childPos := add(shl(1, pIndex(h, 0)), 1)
+                if iszero(lt(childPos, n)) {
+                    e := sub(e, 1)
+                    pSiftup(h, e, pIndex(h, e), pValue(h, e))
+                    continue
                 }
-                mstore(a, j) // Store the length.
-                mstore(0x40, add(a, shl(5, add(1, j)))) // Allocate memory.
+                pSiftup(h, e, childPos, sload(add(sOffset, childPos)))
+                childPos := add(1, childPos)
+                if iszero(eq(childPos, n)) {
+                    pSiftdown(h, e, childPos, sload(add(sOffset, childPos)))
+                    e := add(e, 1)
+                }
             }
+            mstore(a, shr(5, sub(o, add(a, 0x20)))) // Store the length.
+            mstore(0x40, o) // Allocate memory.
         }
     }
 
