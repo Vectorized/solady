@@ -25,7 +25,7 @@ library MinHeapLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Tips:
-    // - To use as a max-map, negate the values.
+    // - To use as a max-heap, bitwise negate the values (e.g. `heap.push(~x)`).
     // - If use on tuples, pack the tuple values into a single integer.
     // - To use on signed integers, convert the signed integers into
     //   their ordered unsigned counterparts via `uint256(x) + (1 << 255)`.
@@ -36,11 +36,75 @@ library MinHeapLib {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(sload(heap.slot)) {
-                mstore(0x00, 0xa6ca772e) // Store the function selector of `HeapIsEmpty()`.
-                revert(0x1c, 0x04) // Revert with (offset, size).
+                mstore(0x00, 0xa6ca772e) // `HeapIsEmpty()`.
+                revert(0x1c, 0x04)
             }
             mstore(0x00, heap.slot)
             result := sload(keccak256(0x00, 0x20))
+        }
+    }
+
+    /// @dev Returns an array of the `k` smallest items in the heap,
+    /// sorted in ascending order, without modifying the heap.
+    /// If the heap has less than `k` items, all items in the heap will be returned.
+    function smallest(Heap storage heap, uint256 k) internal view returns (uint256[] memory a) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function pIndex(h_, p_) -> _i {
+                _i := mload(add(0x20, add(h_, shl(6, p_))))
+            }
+            function pValue(h_, p_) -> _v {
+                _v := mload(add(h_, shl(6, p_)))
+            }
+            function pSet(h_, p_, i_, v_) {
+                mstore(add(h_, shl(6, p_)), v_)
+                mstore(add(0x20, add(h_, shl(6, p_))), i_)
+            }
+            function pSiftdown(h_, p_, i_, v_) {
+                for {} 1 {} {
+                    let u_ := shr(1, sub(p_, 1))
+                    if iszero(mul(p_, lt(v_, pValue(h_, u_)))) { break }
+                    pSet(h_, p_, pIndex(h_, u_), pValue(h_, u_))
+                    p_ := u_
+                }
+                pSet(h_, p_, i_, v_)
+            }
+            function pSiftup(h_, e_, i_, v_) {
+                let p_ := 0
+                for { let c_ := 1 } lt(c_, e_) { c_ := add(1, shl(1, p_)) } {
+                    c_ := add(c_, gt(pValue(h_, c_), pValue(h_, add(c_, lt(add(c_, 1), e_)))))
+                    pSet(h_, p_, pIndex(h_, c_), pValue(h_, c_))
+                    p_ := c_
+                }
+                pSiftdown(h_, p_, i_, v_)
+            }
+            a := mload(0x40)
+            mstore(0x00, heap.slot)
+            let sOffset := keccak256(0x00, 0x20)
+            let o := add(a, 0x20) // Offset into `a`.
+            let n := sload(heap.slot) // The number of items in the heap.
+            let m := xor(n, mul(xor(n, k), lt(k, n))) // `min(k, n)`.
+            let h := add(o, shl(5, m)) // Priority queue.
+            pSet(h, 0, 0, sload(sOffset)) // Store the root into the priority queue.
+            for { let e := iszero(eq(o, h)) } e {} {
+                mstore(o, pValue(h, 0))
+                o := add(0x20, o)
+                if eq(o, h) { break }
+                let childPos := add(shl(1, pIndex(h, 0)), 1)
+                if iszero(lt(childPos, n)) {
+                    e := sub(e, 1)
+                    pSiftup(h, e, pIndex(h, e), pValue(h, e))
+                    continue
+                }
+                pSiftup(h, e, childPos, sload(add(sOffset, childPos)))
+                childPos := add(1, childPos)
+                if iszero(eq(childPos, n)) {
+                    pSiftdown(h, e, childPos, sload(add(sOffset, childPos)))
+                    e := add(e, 1)
+                }
+            }
+            mstore(a, shr(5, sub(o, add(a, 0x20)))) // Store the length.
+            mstore(0x40, o) // Allocate memory.
         }
     }
 
@@ -180,7 +244,7 @@ library MinHeapLib {
                 let child := sload(add(sOffset, childPos))
                 let rightPos := add(childPos, 1)
                 let right := sload(add(sOffset, rightPos))
-                if iszero(and(lt(rightPos, n), iszero(lt(child, right)))) {
+                if iszero(gt(lt(rightPos, n), lt(child, right))) {
                     right := child
                     rightPos := childPos
                 }
