@@ -186,9 +186,9 @@ contract MinHeapLibTest is SoladyTest {
 
     function _heapPSiftTrickOriginal(uint256 childPos, uint256 sOffset, uint256 n)
         internal
-        pure
         returns (uint256 result)
     {
+        uint256 r = _random();
         /// @solidity memory-safe-assembly
         assembly {
             function pValue(h_, p_) -> _v {
@@ -196,15 +196,30 @@ contract MinHeapLibTest is SoladyTest {
                 mstore(0x20, p_)
                 _v := keccak256(0x00, 0x40)
             }
-            if lt(childPos, n) {
-                let child := pValue(sOffset, childPos)
-                let rightPos := add(childPos, lt(add(childPos, 1), n))
-                let right := pValue(sOffset, rightPos)
-                if iszero(gt(child, right)) {
-                    right := child
-                    rightPos := childPos
+            switch and(r, 1)
+            case 0 {
+                if lt(childPos, n) {
+                    let child := pValue(sOffset, childPos)
+                    let rightPos := add(childPos, lt(add(childPos, 1), n))
+                    let right := pValue(sOffset, rightPos)
+                    if iszero(gt(child, right)) {
+                        right := child
+                        rightPos := childPos
+                    }
+                    result := rightPos
                 }
-                result := rightPos
+            }
+            default {
+                if lt(childPos, n) {
+                    let child := pValue(sOffset, childPos)
+                    let rightPos := add(childPos, 1)
+                    let right := pValue(sOffset, rightPos)
+                    if iszero(and(lt(rightPos, n), iszero(lt(child, right)))) {
+                        right := child
+                        rightPos := childPos
+                    }
+                    result := rightPos
+                }
             }
         }
     }

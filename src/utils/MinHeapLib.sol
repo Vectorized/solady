@@ -184,7 +184,8 @@ library MinHeapLib {
                     if iszero(eq(n, maxLength)) {
                         success := 1
                         pos := n
-                        sstore(heap.slot, add(pos, 1)) // Increment and update the length.
+                        // Increment and update the length.
+                        sstore(heap.slot, add(pos, 1))
                         childPos := add(childPos, childPos)
                         break
                     }
