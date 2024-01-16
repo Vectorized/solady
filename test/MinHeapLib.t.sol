@@ -160,6 +160,52 @@ contract MinHeapLibTest is SoladyTest {
         return a < b ? a : b;
     }
 
+    function testHeapPSiftTrick(uint256 c, uint256 h, uint256 e) public {
+        assertEq(_heapPSiftTrick(c, h, e), _heapPSiftTrickOriginal(c, h, e));
+    }
+
+    function _heapPSiftTrick(uint256 c, uint256 h, uint256 e)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        assembly {
+            function pValue(h_, p_) -> _v {
+                mstore(0x00, h_)
+                mstore(0x20, p_)
+                _v := keccak256(0x00, 0x40)
+            }
+            if lt(c, e) {
+                c := add(c, gt(pValue(h, c), pValue(h, add(c, lt(add(c, 1), e)))))
+                result := c
+            }
+        }
+    }
+
+    function _heapPSiftTrickOriginal(uint256 childPos, uint256 sOffset, uint256 n)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        assembly {
+            function pValue(h_, p_) -> _v {
+                mstore(0x00, h_)
+                mstore(0x20, p_)
+                _v := keccak256(0x00, 0x40)
+            }
+            if lt(childPos, n) {
+                let child := pValue(sOffset, childPos)
+                let rightPos := add(childPos, 1)
+                let right := pValue(sOffset, rightPos)
+                if iszero(gt(lt(rightPos, n), lt(child, right))) {
+                    right := child
+                    rightPos := childPos
+                }
+                result := rightPos
+            }
+        }
+    }
+
     function testHeapEnqueue(uint256) public {
         unchecked {
             uint256 maxLength = _random() % 8 + 1;
