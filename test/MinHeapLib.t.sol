@@ -104,6 +104,11 @@ contract MinHeapLibTest is SoladyTest {
                 n = _random() % 32;
                 for (uint256 i; i < n; ++i) {
                     heap0.pushPop(_random());
+                    if (_random() & 1 == 0) {
+                        heap0.push(_random());
+                        if (_random() & 1 == 0) heap0.pop();
+                    }
+                    if (_random() & 1 == 0) if (heap0.length() != 0) heap0.replace(_random());
                 }
             }
             uint256 k = _random() % 32;
@@ -113,6 +118,10 @@ contract MinHeapLibTest is SoladyTest {
             if (_random() & 7 == 0) _brutalizeMemory();
             assertEq(computed, _smallest(heap0.data, k));
         }
+    }
+
+    function testHeapSmallest() public {
+        testHeapSmallest(123);
     }
 
     function _smallest(uint256[] memory a, uint256 n)
