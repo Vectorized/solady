@@ -5,6 +5,14 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MetadataReaderLib.sol)
 library MetadataReaderLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Gas stipend for contract reads. High enough for most practical use cases
+    /// (able to SLOAD about 1kb of data), but low enough to prevent griefing.
+    uint256 internal constant GAS_STIPEND_NO_GRIEF = 100000;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                METADATA READING OPERATIONS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -77,7 +85,8 @@ library MetadataReaderLib {
             function min(x_, y_) -> _z {
                 _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
             }
-            for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
+            for {} staticcall(GAS_STIPEND_NO_GRIEF, target, add(ptr, 0x20), mload(ptr), 0x00, 0x20)
+            {} {
                 let m := mload(0x40) // Grab the free memory pointer.
                 let s := add(0x20, m) // Start of the string's bytes in memory.
                 // Attempt to `abi.decode` if the returndatasize is greater or equal to 64.
@@ -124,7 +133,7 @@ library MetadataReaderLib {
                     mload(0x20),
                     and( // The arguments of `and` are evaluated from right to left.
                         gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x20, 0x20)
+                        staticcall(GAS_STIPEND_NO_GRIEF, target, add(ptr, 0x20), mload(ptr), 0x20, 0x20)
                     )
                 )
         }
