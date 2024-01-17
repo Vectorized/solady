@@ -9,8 +9,11 @@ library MetadataReaderLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Gas stipend for contract reads. High enough for most practical use cases
-    /// (able to SLOAD about 1kb of data), but low enough to prevent griefing.
+    /// (able to SLOAD about 1000 bytes of data), but low enough to prevent griefing.
     uint256 internal constant GAS_STIPEND_NO_GRIEF = 100000;
+
+    /// @dev Default string byte length limit.
+    uint256 internal constant DEFAULT_STRING_LIMIT = 1000;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                METADATA READING OPERATIONS                 */
@@ -28,14 +31,30 @@ library MetadataReaderLib {
     // 3. With any remaining gas, scans the returndata from start to end for the
     //    null byte '\0', to interpret the returndata as a null-terminated string.
 
+    /// @dev Equivalent to `readString(abi.encodeWithSignature("name()"))`.
+    function readName(address target) internal view returns (string memory) {
+        return _string(target, _ptr(0x06fdde03), DEFAULT_STRING_LIMIT);
+    }
+
     /// @dev Equivalent to `readString(abi.encodeWithSignature("name()"), limit)`.
     function readName(address target, uint256 limit) internal view returns (string memory) {
         return _string(target, _ptr(0x06fdde03), limit);
     }
 
+    /// @dev Equivalent to `readString(abi.encodeWithSignature("symbol()"))`.
+    function readSymbol(address target) internal view returns (string memory) {
+        return _string(target, _ptr(0x95d89b41), DEFAULT_STRING_LIMIT);
+    }
+
     /// @dev Equivalent to `readString(abi.encodeWithSignature("symbol()"), limit)`.
     function readSymbol(address target, uint256 limit) internal view returns (string memory) {
         return _string(target, _ptr(0x95d89b41), limit);
+    }
+
+    /// @dev Performs a best-effort string query on `target` with `data` as the calldata.
+    /// The string will be truncated to `DEFAULT_STRING_LIMIT` (1000) bytes.
+    function readString(address target, bytes memory data) internal view returns (string memory) {
+        return _string(target, _ptr(data), DEFAULT_STRING_LIMIT);
     }
 
     /// @dev Performs a best-effort string query on `target` with `data` as the calldata.

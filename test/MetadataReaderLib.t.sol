@@ -185,25 +185,37 @@ contract MetadataReaderLibTest is SoladyTest {
         _stringToReturn = s;
         _randomness = r;
         data = abi.encodeWithSignature("returnsString()");
-        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
+        result = _random() & 1 == 0
+            ? MetadataReaderLib.readString(address(this), data, type(uint256).max)
+            : MetadataReaderLib.readString(address(this), data);
         _checkMemory(result);
         assertEq(result, s);
-        result = MetadataReaderLib.readName(address(this), type(uint256).max);
+        result = _random() & 1 == 0
+            ? MetadataReaderLib.readName(address(this), type(uint256).max)
+            : MetadataReaderLib.readName(address(this));
         _checkMemory(result);
         assertEq(result, s);
-        result = MetadataReaderLib.readSymbol(address(this), type(uint256).max);
+        result = _random() & 1 == 0
+            ? MetadataReaderLib.readSymbol(address(this), type(uint256).max)
+            : MetadataReaderLib.readSymbol(address(this));
         _checkMemory(result);
         assertEq(result, s);
         data = abi.encodeWithSignature("returnsEmptyString()");
-        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
+        result = _random() & 1 == 0
+            ? MetadataReaderLib.readString(address(this), data, type(uint256).max)
+            : MetadataReaderLib.readString(address(this), data);
         _checkMemory(result);
         assertEq(result, "");
         data = abi.encodeWithSignature("reverts()");
-        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
+        result = _random() & 1 == 0
+            ? MetadataReaderLib.readString(address(this), data, type(uint256).max)
+            : MetadataReaderLib.readString(address(this), data);
         _checkMemory(result);
         assertEq(result, "");
         data = abi.encodeWithSignature("returnsNothing()");
-        result = MetadataReaderLib.readString(address(this), data, type(uint256).max);
+        result = _random() & 1 == 0
+            ? MetadataReaderLib.readString(address(this), data, type(uint256).max)
+            : MetadataReaderLib.readString(address(this), data);
         _checkMemory(result);
         assertEq(result, "");
     }
