@@ -200,7 +200,7 @@ contract MinHeapLibTest is SoladyTest {
                 let child := pValue(sOffset, childPos)
                 let rightPos := add(childPos, 1)
                 let right := pValue(sOffset, rightPos)
-                if iszero(and(lt(rightPos, n), iszero(lt(child, right)))) {
+                if or(iszero(lt(rightPos, n)), lt(child, right)) {
                     right := child
                     rightPos := childPos
                 }
