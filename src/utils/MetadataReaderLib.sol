@@ -5,6 +5,17 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MetadataReaderLib.sol)
 library MetadataReaderLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Default gas stipend for contract reads. High enough for most practical use cases
+    /// (able to SLOAD about 1000 bytes of data), but low enough to prevent griefing.
+    uint256 internal constant GAS_STIPEND_NO_GRIEF = 100000;
+
+    /// @dev Default string byte length limit.
+    uint256 internal constant STRING_LIMIT_DEFAULT = 1000;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                METADATA READING OPERATIONS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -20,14 +31,48 @@ library MetadataReaderLib {
     // 3. With any remaining gas, scans the returndata from start to end for the
     //    null byte '\0', to interpret the returndata as a null-terminated string.
 
+    /// @dev Equivalent to `readString(abi.encodeWithSignature("name()"))`.
+    function readName(address target) internal view returns (string memory) {
+        return _string(target, _ptr(0x06fdde03), STRING_LIMIT_DEFAULT, GAS_STIPEND_NO_GRIEF);
+    }
+
     /// @dev Equivalent to `readString(abi.encodeWithSignature("name()"), limit)`.
     function readName(address target, uint256 limit) internal view returns (string memory) {
-        return _string(target, _ptr(0x06fdde03), limit);
+        return _string(target, _ptr(0x06fdde03), limit, GAS_STIPEND_NO_GRIEF);
+    }
+
+    /// @dev Equivalent to `readString(abi.encodeWithSignature("name()"), limit, gasStipend)`.
+    function readName(address target, uint256 limit, uint256 gasStipend)
+        internal
+        view
+        returns (string memory)
+    {
+        return _string(target, _ptr(0x06fdde03), limit, gasStipend);
+    }
+
+    /// @dev Equivalent to `readString(abi.encodeWithSignature("symbol()"))`.
+    function readSymbol(address target) internal view returns (string memory) {
+        return _string(target, _ptr(0x95d89b41), STRING_LIMIT_DEFAULT, GAS_STIPEND_NO_GRIEF);
     }
 
     /// @dev Equivalent to `readString(abi.encodeWithSignature("symbol()"), limit)`.
     function readSymbol(address target, uint256 limit) internal view returns (string memory) {
-        return _string(target, _ptr(0x95d89b41), limit);
+        return _string(target, _ptr(0x95d89b41), limit, GAS_STIPEND_NO_GRIEF);
+    }
+
+    /// @dev Equivalent to `readString(abi.encodeWithSignature("symbol()"), limit, gasStipend)`.
+    function readSymbol(address target, uint256 limit, uint256 gasStipend)
+        internal
+        view
+        returns (string memory)
+    {
+        return _string(target, _ptr(0x95d89b41), limit, gasStipend);
+    }
+
+    /// @dev Performs a best-effort string query on `target` with `data` as the calldata.
+    /// The string will be truncated to `STRING_LIMIT_DEFAULT` (1000) bytes.
+    function readString(address target, bytes memory data) internal view returns (string memory) {
+        return _string(target, _ptr(data), STRING_LIMIT_DEFAULT, GAS_STIPEND_NO_GRIEF);
     }
 
     /// @dev Performs a best-effort string query on `target` with `data` as the calldata.
@@ -37,7 +82,17 @@ library MetadataReaderLib {
         view
         returns (string memory)
     {
-        return _string(target, _ptr(data), limit);
+        return _string(target, _ptr(data), limit, GAS_STIPEND_NO_GRIEF);
+    }
+
+    /// @dev Performs a best-effort string query on `target` with `data` as the calldata.
+    /// The string will be truncated to `limit` bytes.
+    function readString(address target, bytes memory data, uint256 limit, uint256 gasStipend)
+        internal
+        view
+        returns (string memory)
+    {
+        return _string(target, _ptr(data), limit, gasStipend);
     }
 
     // Best-effort unsigned integer reading operations.
@@ -54,12 +109,26 @@ library MetadataReaderLib {
 
     /// @dev Equivalent to `uint8(readUint(abi.encodeWithSignature("decimal()")))`.
     function readDecimals(address target) internal view returns (uint8) {
-        return uint8(_uint(target, _ptr(0x313ce567)));
+        return uint8(_uint(target, _ptr(0x313ce567), GAS_STIPEND_NO_GRIEF));
+    }
+
+    /// @dev Equivalent to `uint8(readUint(abi.encodeWithSignature("decimal()"), gasStipend))`.
+    function readDecimals(address target, uint256 gasStipend) internal view returns (uint8) {
+        return uint8(_uint(target, _ptr(0x313ce567), gasStipend));
     }
 
     /// @dev Performs a best-effort uint query on `target` with `data` as the calldata.
     function readUint(address target, bytes memory data) internal view returns (uint256) {
-        return _uint(target, _ptr(data));
+        return _uint(target, _ptr(data), GAS_STIPEND_NO_GRIEF);
+    }
+
+    /// @dev Performs a best-effort uint query on `target` with `data` as the calldata.
+    function readUint(address target, bytes memory data, uint256 gasStipend)
+        internal
+        view
+        returns (uint256)
+    {
+        return _uint(target, _ptr(data), gasStipend);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -67,7 +136,7 @@ library MetadataReaderLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Attempts to read and return a string at `target`.
-    function _string(address target, bytes32 ptr, uint256 limit)
+    function _string(address target, bytes32 ptr, uint256 limit, uint256 gasStipend)
         private
         view
         returns (string memory result)
@@ -77,7 +146,7 @@ library MetadataReaderLib {
             function min(x_, y_) -> _z {
                 _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
             }
-            for {} staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
+            for {} staticcall(gasStipend, target, add(ptr, 0x20), mload(ptr), 0x00, 0x20) {} {
                 let m := mload(0x40) // Grab the free memory pointer.
                 let s := add(0x20, m) // Start of the string's bytes in memory.
                 // Attempt to `abi.decode` if the returndatasize is greater or equal to 64.
@@ -116,7 +185,11 @@ library MetadataReaderLib {
     }
 
     /// @dev Attempts to read and return a uint at `target`.
-    function _uint(address target, bytes32 ptr) private view returns (uint256 result) {
+    function _uint(address target, bytes32 ptr, uint256 gasStipend)
+        private
+        view
+        returns (uint256 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             result :=
@@ -124,7 +197,7 @@ library MetadataReaderLib {
                     mload(0x20),
                     and( // The arguments of `and` are evaluated from right to left.
                         gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), target, add(ptr, 0x20), mload(ptr), 0x20, 0x20)
+                        staticcall(gasStipend, target, add(ptr, 0x20), mload(ptr), 0x20, 0x20)
                     )
                 )
         }
