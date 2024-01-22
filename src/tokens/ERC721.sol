@@ -488,7 +488,7 @@ abstract contract ERC721 {
     }
 
     /// @dev Mints token `id` to `to`, and updates the extra data for token `id` to `value`.
-    /// Does NOT check if token `id` already exists (`id` is usually from an auto-incrementing counter).
+    /// Does NOT check if token `id` already exists (assumes `id` is auto-incrementing).
     ///
     /// Requirements:
     ///
