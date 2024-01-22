@@ -146,7 +146,7 @@ contract MockERC721 is ERC721 {
     function _brutalized(uint96 value) internal view returns (uint96 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(value, shl(160, gas()))
+            result := or(value, shl(96, gas()))
         }
     }
 }

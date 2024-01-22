@@ -311,6 +311,9 @@ contract ERC721Test is SoladyTest {
         vm.expectRevert(ERC721.AccountBalanceOverflow.selector);
         token.mint(owner0, 1);
 
+        vm.expectRevert(ERC721.AccountBalanceOverflow.selector);
+        token.mintWithExtraDataUnchecked(owner0, 1, _extraData(1));
+
         token.uncheckedBurn(0);
         assertEq(token.balanceOf(owner0), 0xfffffffe);
 
