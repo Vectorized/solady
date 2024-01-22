@@ -456,11 +456,6 @@ abstract contract ERC721 {
         assembly {
             // Clear the upper 96 bits.
             to := shr(96, shl(96, to))
-            // Revert if `to` is the zero address.
-            if iszero(to) {
-                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
-                revert(0x1c, 0x04)
-            }
             // Load the ownership data.
             mstore(0x00, id)
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
@@ -478,9 +473,11 @@ abstract contract ERC721 {
                 mstore(0x00, to)
                 let balanceSlot := keccak256(0x0c, 0x1c)
                 let balanceSlotPacked := add(sload(balanceSlot), 1)
-                if iszero(and(balanceSlotPacked, _MAX_ACCOUNT_BALANCE)) {
-                    mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
-                    revert(0x1c, 0x04)
+                // Revert if `to` is the zero address, or if the account balance overflows.
+                if iszero(mul(to, and(balanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
+                    // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
+                    mstore(0x00, 0xea553b3401336cea)
+                    revert(xor(0x1c, shl(2, iszero(to))), 0x04)
                 }
                 sstore(balanceSlot, balanceSlotPacked)
             }
@@ -514,6 +511,7 @@ abstract contract ERC721 {
                 mstore(0x00, to)
                 let balanceSlot := keccak256(0x0c, 0x1c)
                 let balanceSlotPacked := add(sload(balanceSlot), 1)
+                // Revert if `to` is the zero address, or if the account balance overflows.
                 if iszero(mul(to, and(balanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
                     // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
                     mstore(0x00, 0xea553b3401336cea)
