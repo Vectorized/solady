@@ -263,18 +263,10 @@ abstract contract ERC721 {
             let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
             let ownershipPacked := sload(ownershipSlot)
             let owner := and(bitmaskAddress, ownershipPacked)
-            // Revert if `from` is not the owner, or does not exist.
+            // Revert if the token does not exist, or if `from` is not the owner.
             if iszero(mul(owner, eq(owner, from))) {
-                if iszero(owner) {
-                    mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
-                    revert(0x1c, 0x04)
-                }
-                mstore(0x00, 0xa1148100) // `TransferFromIncorrectOwner()`.
-                revert(0x1c, 0x04)
-            }
-            // Revert if `to` is the zero address.
-            if iszero(to) {
-                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
+                // `TokenDoesNotExist()`, `TransferFromIncorrectOwner()`.
+                mstore(shl(2, iszero(owner)), 0xceea21b6a1148100)
                 revert(0x1c, 0x04)
             }
             // Load, check, and update the token approval.
@@ -303,8 +295,10 @@ abstract contract ERC721 {
                 mstore(0x00, to)
                 let toBalanceSlot := keccak256(0x0c, 0x1c)
                 let toBalanceSlotPacked := add(sload(toBalanceSlot), 1)
-                if iszero(and(toBalanceSlotPacked, _MAX_ACCOUNT_BALANCE)) {
-                    mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
+                // Revert if `to` is the zero address, or if the account balance overflows.
+                if iszero(mul(to, and(toBalanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
+                    // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
+                    mstore(shl(2, iszero(to)), 0xea553b3401336cea)
                     revert(0x1c, 0x04)
                 }
                 sstore(toBalanceSlot, toBalanceSlotPacked)
@@ -476,8 +470,8 @@ abstract contract ERC721 {
                 // Revert if `to` is the zero address, or if the account balance overflows.
                 if iszero(mul(to, and(balanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
                     // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
-                    mstore(0x00, 0xea553b3401336cea)
-                    revert(xor(0x1c, shl(2, iszero(to))), 0x04)
+                    mstore(shl(2, iszero(to)), 0xea553b3401336cea)
+                    revert(0x1c, 0x04)
                 }
                 sstore(balanceSlot, balanceSlotPacked)
             }
@@ -513,8 +507,8 @@ abstract contract ERC721 {
                 // Revert if `to` is the zero address, or if the account balance overflows.
                 if iszero(mul(to, and(balanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
                     // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
-                    mstore(0x00, 0xea553b3401336cea)
-                    revert(xor(0x1c, shl(2, iszero(to))), 0x04)
+                    mstore(shl(2, iszero(to)), 0xea553b3401336cea)
+                    revert(0x1c, 0x04)
                 }
                 sstore(balanceSlot, balanceSlotPacked)
             }
@@ -762,18 +756,10 @@ abstract contract ERC721 {
             let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
             let ownershipPacked := sload(ownershipSlot)
             let owner := and(bitmaskAddress, ownershipPacked)
-            // Revert if `from` is not the owner, or does not exist.
+            // Revert if the token does not exist, or if `from` is not the owner.
             if iszero(mul(owner, eq(owner, from))) {
-                if iszero(owner) {
-                    mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
-                    revert(0x1c, 0x04)
-                }
-                mstore(0x00, 0xa1148100) // `TransferFromIncorrectOwner()`.
-                revert(0x1c, 0x04)
-            }
-            // Revert if `to` is the zero address.
-            if iszero(to) {
-                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
+                // `TokenDoesNotExist()`, `TransferFromIncorrectOwner()`.
+                mstore(shl(2, iszero(owner)), 0xceea21b6a1148100)
                 revert(0x1c, 0x04)
             }
             // Load, check, and update the token approval.
@@ -803,8 +789,10 @@ abstract contract ERC721 {
                 mstore(0x00, to)
                 let toBalanceSlot := keccak256(0x0c, 0x1c)
                 let toBalanceSlotPacked := add(sload(toBalanceSlot), 1)
-                if iszero(and(toBalanceSlotPacked, _MAX_ACCOUNT_BALANCE)) {
-                    mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
+                // Revert if `to` is the zero address, or if the account balance overflows.
+                if iszero(mul(to, and(toBalanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
+                    // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
+                    mstore(shl(2, iszero(to)), 0xea553b3401336cea)
                     revert(0x1c, 0x04)
                 }
                 sstore(toBalanceSlot, toBalanceSlotPacked)
