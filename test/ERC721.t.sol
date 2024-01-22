@@ -335,25 +335,25 @@ contract ERC721Test is SoladyTest {
         assertEq(_ownerOf(id), owner);
     }
 
-    function testMintAndSetExtraData(uint256 id) public {
+    function testMintAndSetExtraDataUnchecked(uint256 id) public {
         address owner = _randomNonZeroAddress();
 
         _expectMintEvent(owner, id);
-        token.mintWithExtraData(owner, id, _extraData(id));
+        token.mintWithExtraDataUnchecked(owner, id, _extraData(id));
 
         assertEq(token.balanceOf(owner), 1);
         assertEq(_ownerOf(id), owner);
         assertEq(token.getExtraData(id), _extraData(id));
     }
 
-    function testMintAndSetExtraDataWithOverwrite(uint256 id, uint96 random) public {
+    function testMintAndSetExtraDataUncheckedWithOverwrite(uint256 id, uint96 random) public {
         address owner = _randomNonZeroAddress();
 
         token.setExtraData(id, random);
         assertEq(token.getExtraData(id), random);
 
         _expectMintEvent(owner, id);
-        token.mintWithExtraData(owner, id, _extraData(id));
+        token.mintWithExtraDataUnchecked(owner, id, _extraData(id));
 
         assertEq(token.getExtraData(id), _extraData(id));
     }
@@ -835,7 +835,7 @@ contract ERC721Test is SoladyTest {
         token.mint(address(0), id);
 
         vm.expectRevert(ERC721.TransferToZeroAddress.selector);
-        token.mintWithExtraData(address(0), id, _extraData(id));
+        token.mintWithExtraDataUnchecked(address(0), id, _extraData(id));
     }
 
     function testDoubleMintReverts(uint256 id) public {
@@ -844,9 +844,6 @@ contract ERC721Test is SoladyTest {
         token.mint(to, id);
         vm.expectRevert(ERC721.TokenAlreadyExists.selector);
         token.mint(to, id);
-
-        vm.expectRevert(ERC721.TokenAlreadyExists.selector);
-        token.mintWithExtraData(to, id, _extraData(id));
     }
 
     function testBurnNonExistentReverts(uint256 id) public {

@@ -490,15 +490,16 @@ abstract contract ERC721 {
         _afterTokenTransfer(address(0), to, id);
     }
 
-    /// @dev Mints token `id` to `to` and update the `extraData`.
+    /// @dev Mints token `id` to `to` and update the `extraData`,
+    /// but without checking if the token `id` already exists,
+    /// as `id` will usually be from an auto-incrementing counter.
     ///
     /// Requirements:
     ///
-    /// - Token `id` must not exist.
     /// - `to` cannot be the zero address.
     ///
     /// Emits a {Transfer} event.
-    function _mintAndSetExtraData(address to, uint256 id, uint96 value) internal virtual {
+    function _mintAndSetExtraDataUnchecked(address to, uint256 id, uint96 value) internal virtual {
         _beforeTokenTransfer(address(0), to, id);
         /// @solidity memory-safe-assembly
         assembly {
@@ -509,18 +510,10 @@ abstract contract ERC721 {
                 mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
                 revert(0x1c, 0x04)
             }
-            // Load the ownership data.
             mstore(0x00, id)
             mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
-            let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
-            let ownershipPacked := sload(ownershipSlot)
-            // Revert if the token already exists.
-            if shl(96, ownershipPacked) {
-                mstore(0x00, 0xc991cbb1) // `TokenAlreadyExists()`.
-                revert(0x1c, 0x04)
-            }
             // Update with the owner and extra data.
-            sstore(ownershipSlot, or(shl(160, value), to))
+            sstore(add(id, add(id, keccak256(0x00, 0x20))), or(shl(160, value), to))
             // Increment the balance of the owner.
             {
                 mstore(0x00, to)
