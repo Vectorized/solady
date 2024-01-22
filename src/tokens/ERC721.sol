@@ -490,6 +490,54 @@ abstract contract ERC721 {
         _afterTokenTransfer(address(0), to, id);
     }
 
+    /// @dev Mints token `id` to `to` and update the `extraData`.
+    ///
+    /// Requirements:
+    ///
+    /// - Token `id` must not exist.
+    /// - `to` cannot be the zero address.
+    ///
+    /// Emits a {Transfer} event.
+    function _mintAndSetExtraData(address to, uint256 id, uint96 value) internal virtual {
+        _beforeTokenTransfer(address(0), to, id);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Clear the upper 96 bits.
+            to := shr(96, shl(96, to))
+            // Revert if `to` is the zero address.
+            if iszero(to) {
+                mstore(0x00, 0xea553b34) // `TransferToZeroAddress()`.
+                revert(0x1c, 0x04)
+            }
+            // Load the ownership data.
+            mstore(0x00, id)
+            mstore(0x1c, _ERC721_MASTER_SLOT_SEED)
+            let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
+            let ownershipPacked := sload(ownershipSlot)
+            // Revert if the token already exists.
+            if shl(96, ownershipPacked) {
+                mstore(0x00, 0xc991cbb1) // `TokenAlreadyExists()`.
+                revert(0x1c, 0x04)
+            }
+            // Update with the owner and extra data.
+            sstore(ownershipSlot, or(shl(160, value), to))
+            // Increment the balance of the owner.
+            {
+                mstore(0x00, to)
+                let balanceSlot := keccak256(0x0c, 0x1c)
+                let balanceSlotPacked := add(sload(balanceSlot), 1)
+                if iszero(and(balanceSlotPacked, _MAX_ACCOUNT_BALANCE)) {
+                    mstore(0x00, 0x01336cea) // `AccountBalanceOverflow()`.
+                    revert(0x1c, 0x04)
+                }
+                sstore(balanceSlot, balanceSlotPacked)
+            }
+            // Emit the {Transfer} event.
+            log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, 0, to, id)
+        }
+        _afterTokenTransfer(address(0), to, id);
+    }
+
     /// @dev Equivalent to `_safeMint(to, id, "")`.
     function _safeMint(address to, uint256 id) internal virtual {
         _safeMint(to, id, "");
