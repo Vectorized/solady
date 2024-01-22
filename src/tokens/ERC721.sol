@@ -487,7 +487,7 @@ abstract contract ERC721 {
         _afterTokenTransfer(address(0), to, id);
     }
 
-    /// @dev Mints token `id` to `to` and update the `extraData`,
+    /// @dev Mints token `id` to `to` and updates the extra data for token `id` to `value`,
     /// but without checking if the token `id` already exists,
     /// as `id` will usually be from an auto-incrementing counter.
     ///
