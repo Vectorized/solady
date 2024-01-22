@@ -263,7 +263,7 @@ abstract contract ERC721 {
             let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
             let ownershipPacked := sload(ownershipSlot)
             let owner := and(bitmaskAddress, ownershipPacked)
-            // Revert if `from` is not the owner, or does not exist.
+            // Revert if the token does not exist, or if `from` is not the owner.
             if iszero(mul(owner, eq(owner, from))) {
                 // `TokenDoesNotExist()`, `TransferFromIncorrectOwner()`.
                 mstore(shl(2, iszero(owner)), 0xceea21b6a1148100)
@@ -756,7 +756,7 @@ abstract contract ERC721 {
             let ownershipSlot := add(id, add(id, keccak256(0x00, 0x20)))
             let ownershipPacked := sload(ownershipSlot)
             let owner := and(bitmaskAddress, ownershipPacked)
-            // Revert if `from` is not the owner, or does not exist.
+            // Revert if the token does not exist, or if `from` is not the owner.
             if iszero(mul(owner, eq(owner, from))) {
                 // `TokenDoesNotExist()`, `TransferFromIncorrectOwner()`.
                 mstore(shl(2, iszero(owner)), 0xceea21b6a1148100)
