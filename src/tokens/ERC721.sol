@@ -265,11 +265,8 @@ abstract contract ERC721 {
             let owner := and(bitmaskAddress, ownershipPacked)
             // Revert if `from` is not the owner, or does not exist.
             if iszero(mul(owner, eq(owner, from))) {
-                if iszero(owner) {
-                    mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
-                    revert(0x1c, 0x04)
-                }
-                mstore(0x00, 0xa1148100) // `TransferFromIncorrectOwner()`.
+                // `TokenDoesNotExist()`, `TransferFromIncorrectOwner()`.
+                mstore(shl(2, iszero(owner)), 0xceea21b6a1148100)
                 revert(0x1c, 0x04)
             }
             // Load, check, and update the token approval.
@@ -761,11 +758,8 @@ abstract contract ERC721 {
             let owner := and(bitmaskAddress, ownershipPacked)
             // Revert if `from` is not the owner, or does not exist.
             if iszero(mul(owner, eq(owner, from))) {
-                if iszero(owner) {
-                    mstore(0x00, 0xceea21b6) // `TokenDoesNotExist()`.
-                    revert(0x1c, 0x04)
-                }
-                mstore(0x00, 0xa1148100) // `TransferFromIncorrectOwner()`.
+                // `TokenDoesNotExist()`, `TransferFromIncorrectOwner()`.
+                mstore(shl(2, iszero(owner)), 0xceea21b6a1148100)
                 revert(0x1c, 0x04)
             }
             // Load, check, and update the token approval.
