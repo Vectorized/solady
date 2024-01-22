@@ -28,6 +28,10 @@ contract MockERC721 is ERC721 {
         _mint(_brutalized(to), id);
     }
 
+    function mintWithExtraDataUnchecked(address to, uint256 id, uint96 value) public virtual {
+        _mintAndSetExtraDataUnchecked(_brutalized(to), id, _brutalized(value));
+    }
+
     function burn(uint256 id) public virtual {
         _burn(msg.sender, id);
     }
@@ -136,6 +140,13 @@ contract MockERC721 is ERC721 {
         /// @solidity memory-safe-assembly
         assembly {
             result := or(a, shl(160, gas()))
+        }
+    }
+
+    function _brutalized(uint96 value) internal view returns (uint96 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := or(value, shl(96, gas()))
         }
     }
 }

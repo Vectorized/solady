@@ -311,6 +311,9 @@ contract ERC721Test is SoladyTest {
         vm.expectRevert(ERC721.AccountBalanceOverflow.selector);
         token.mint(owner0, 1);
 
+        vm.expectRevert(ERC721.AccountBalanceOverflow.selector);
+        token.mintWithExtraDataUnchecked(owner0, 1, _extraData(1));
+
         token.uncheckedBurn(0);
         assertEq(token.balanceOf(owner0), 0xfffffffe);
 
@@ -333,6 +336,29 @@ contract ERC721Test is SoladyTest {
 
         assertEq(token.balanceOf(owner), 1);
         assertEq(_ownerOf(id), owner);
+    }
+
+    function testMintAndSetExtraDataUnchecked(uint256 id) public {
+        address owner = _randomNonZeroAddress();
+
+        _expectMintEvent(owner, id);
+        token.mintWithExtraDataUnchecked(owner, id, _extraData(id));
+
+        assertEq(token.balanceOf(owner), 1);
+        assertEq(_ownerOf(id), owner);
+        assertEq(token.getExtraData(id), _extraData(id));
+    }
+
+    function testMintAndSetExtraDataUncheckedWithOverwrite(uint256 id, uint96 random) public {
+        address owner = _randomNonZeroAddress();
+
+        token.setExtraData(id, random);
+        assertEq(token.getExtraData(id), random);
+
+        _expectMintEvent(owner, id);
+        token.mintWithExtraDataUnchecked(owner, id, _extraData(id));
+
+        assertEq(token.getExtraData(id), _extraData(id));
     }
 
     function testBurn(uint256 id) public {
@@ -810,6 +836,9 @@ contract ERC721Test is SoladyTest {
     function testMintToZeroReverts(uint256 id) public {
         vm.expectRevert(ERC721.TransferToZeroAddress.selector);
         token.mint(address(0), id);
+
+        vm.expectRevert(ERC721.TransferToZeroAddress.selector);
+        token.mintWithExtraDataUnchecked(address(0), id, _extraData(id));
     }
 
     function testDoubleMintReverts(uint256 id) public {
