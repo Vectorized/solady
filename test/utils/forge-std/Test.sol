@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "./Script.sol";
-import "ds-test/test.sol";
+import "./ds-test/test.sol";
 
 // Wrappers around Cheatcodes to avoid footguns
 abstract contract Test is DSTest, Script {

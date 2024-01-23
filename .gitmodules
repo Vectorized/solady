@@ -1,4 +1,0 @@
-[submodule "lib/ds-test"]
-	path = lib/ds-test
-	url = https://github.com/dapphub/ds-test
-	branch = 9310e879db8ba3ea6d5c6489a579118fd264a3f5
