@@ -161,8 +161,8 @@ library LibClone {
             mstore(add(result, 0x40), 0x5af43d3d93803e602a57fd5bf30000000000000000000000)
             mstore(add(result, 0x28), implementation)
             mstore(add(result, 0x14), 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
-            mstore(result, 0x35)
-            mstore(0x40, add(result, 0x60))
+            mstore(result, 0x35) // Store the length.
+            mstore(0x40, add(result, 0x60)) // Allocate memory.
         }
     }
 
@@ -313,8 +313,8 @@ library LibClone {
             mstore(add(result, 0x40), 0x5af43d5f5f3e6029573d5ffd5b3d5ff300000000000000000000) // 16
             mstore(add(result, 0x26), implementation) // 20
             mstore(add(result, 0x12), 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
-            mstore(result, 0x36)
-            mstore(0x40, add(result, 0x60))
+            mstore(result, 0x36) // Store the length.
+            mstore(0x40, add(result, 0x60)) // Allocate memory.
         }
     }
 
@@ -562,8 +562,9 @@ library LibClone {
             result := mload(0x40)
             let dataLength := mload(data)
 
-            // +2 bytes for telling how much data there is appended to the call.
-            let extraLength := add(dataLength, 2)
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x62 = 0xff9b.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xff9b))
 
             let o := add(result, 0x8c)
             let end := add(o, dataLength)
@@ -575,9 +576,8 @@ library LibClone {
                 if iszero(lt(o, end)) { break }
             }
 
-            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x62 = 0xff9b.
-            // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xff9b))
+            // +2 bytes for telling how much data there is appended to the call.
+            let extraLength := add(dataLength, 2)
 
             mstore(add(result, 0x6c), 0x5af43d3d93803e606057fd5bf3) // Write the bytecode before the data.
             mstore(add(result, 0x5f), implementation) // Write the address of the implementation.
@@ -867,8 +867,8 @@ library LibClone {
             mstore(add(result, 0x1f), 0x6009)
             mstore(add(result, 0x1d), implementation)
             mstore(add(result, 0x09), 0x603d3d8160223d3973)
-            mstore(result, 0x5f)
-            mstore(0x40, add(result, 0x80))
+            mstore(result, 0x5f) // Store the length.
+            mstore(0x40, add(result, 0x80)) // Allocate memory.
         }
     }
 
