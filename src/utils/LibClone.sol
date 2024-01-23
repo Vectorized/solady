@@ -855,17 +855,15 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            mstore(add(result, 0x60), 0)
             mstore(
-                add(result, 0x5f),
-                0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3
+                add(result, 0x60),
+                0x3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f300
             )
             mstore(
-                add(result, 0x3f),
-                0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076
+                add(result, 0x40),
+                0x55f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc
             )
-            mstore(add(result, 0x1f), 0x6009)
-            mstore(add(result, 0x1d), implementation)
+            mstore(add(result, 0x20), or(shl(24, implementation), 0x600951))
             mstore(add(result, 0x09), 0x603d3d8160223d3973)
             mstore(result, 0x5f) // Store the length.
             mstore(0x40, add(result, 0x80)) // Allocate memory.

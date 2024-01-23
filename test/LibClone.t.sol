@@ -420,36 +420,50 @@ contract LibCloneTest is SoladyTest, Clone {
         }
     }
 
-    function testInitCode(address implementation) public brutalizeMemory {
+    function testInitCode(address implementation, uint256 r, uint256 c) public {
+        if (c & (1 << 0) == 0) _testInitCode(implementation);
+        if (c & (1 << 1) == 0) _testInitCode_PUSH0(implementation);
+        if (c & (1 << 2) == 0) _testInitCode(implementation, r);
+        if (c & (1 << 3) == 0) _testInitCodeERC1967(implementation);
+    }
+
+    function _testInitCode(address implementation) internal {
+        _brutalizeMemory();
         bytes memory initCode = LibClone.initCode(_brutalized(implementation));
         _checkMemory(initCode);
+        _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHash(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
-    function testInitCode_PUSH0(address implementation) public brutalizeMemory {
+    function _testInitCode_PUSH0(address implementation) internal {
+        _brutalizeMemory();
         bytes memory initCode = LibClone.initCode_PUSH0(_brutalized(implementation));
         _checkMemory(initCode);
+        _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHash_PUSH0(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
-    function testInitCode(address implementation, uint256 n) public brutalizeMemory {
+    function _testInitCode(address implementation, uint256 n) internal {
+        _brutalizeMemory();
         bytes memory data;
         if ((n >> 32) & 31 > 0) data = _dummyData((n >> 128) & 0xff);
         bytes memory initCode = LibClone.initCode(implementation, data);
         _checkMemory(initCode);
-        if ((n >> 64) & 31 > 0) _brutalizeMemory();
+        _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHash(implementation, data);
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
-    function testInitCodeERC1967(address implementation) public brutalizeMemory {
+    function _testInitCodeERC1967(address implementation) internal {
+        _brutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation));
         _checkMemory(initCode);
+        _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
