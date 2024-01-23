@@ -408,7 +408,6 @@ contract LibCloneTest is SoladyTest, Clone {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            mstore(result, n)
             mstore(0x00, n)
             mstore(0x20, 1)
             mstore(add(0x20, result), keccak256(0x00, 0x40))
@@ -417,6 +416,42 @@ contract LibCloneTest is SoladyTest, Clone {
             mstore(0x20, 3)
             mstore(add(result, n), keccak256(0x00, 0x40))
             mstore(0x40, add(add(0x20, result), n))
+            mstore(result, n)
         }
+    }
+
+    function testInitCode(address implementation) public brutalizeMemory {
+        bytes memory initCode = LibClone.initCode(_brutalized(implementation));
+        _checkMemory(initCode);
+        bytes32 expected = LibClone.initCodeHash(_brutalized(implementation));
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+    }
+
+    function testInitCode_PUSH0(address implementation) public brutalizeMemory {
+        bytes memory initCode = LibClone.initCode_PUSH0(_brutalized(implementation));
+        _checkMemory(initCode);
+        bytes32 expected = LibClone.initCodeHash_PUSH0(_brutalized(implementation));
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+    }
+
+    function testInitCode(address implementation, uint256 n) public brutalizeMemory {
+        bytes memory data;
+        if ((n >> 32) & 31 > 0) data = _dummyData((n >> 128) & 0xff);
+        bytes memory initCode = LibClone.initCode(implementation, data);
+        _checkMemory(initCode);
+        if ((n >> 64) & 31 > 0) _brutalizeMemory();
+        bytes32 expected = LibClone.initCodeHash(implementation, data);
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+    }
+
+    function testInitCodeERC1967(address implementation) public brutalizeMemory {
+        bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation));
+        _checkMemory(initCode);
+        bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation));
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
     }
 }
