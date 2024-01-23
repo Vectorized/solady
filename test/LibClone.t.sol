@@ -420,7 +420,7 @@ contract LibCloneTest is SoladyTest, Clone {
         }
     }
 
-    function testInitCode(address implementation, uint256 r, uint256 c) public brutalizeMemory {
+    function testInitCode(address implementation, uint256 r, uint256 c) public {
         if (c & (1 << 0) == 0) _testInitCode(implementation);
         if (c & (1 << 1) == 0) _testInitCode_PUSH0(implementation);
         if (c & (1 << 2) == 0) _testInitCode(implementation, r);
@@ -428,6 +428,7 @@ contract LibCloneTest is SoladyTest, Clone {
     }
 
     function _testInitCode(address implementation) internal {
+        _brutalizeMemory();
         bytes memory initCode = LibClone.initCode(_brutalized(implementation));
         _checkMemory(initCode);
         _brutalizeMemory();
@@ -437,6 +438,7 @@ contract LibCloneTest is SoladyTest, Clone {
     }
 
     function _testInitCode_PUSH0(address implementation) internal {
+        _brutalizeMemory();
         bytes memory initCode = LibClone.initCode_PUSH0(_brutalized(implementation));
         _checkMemory(initCode);
         _brutalizeMemory();
@@ -446,6 +448,7 @@ contract LibCloneTest is SoladyTest, Clone {
     }
 
     function _testInitCode(address implementation, uint256 n) internal {
+        _brutalizeMemory();
         bytes memory data;
         if ((n >> 32) & 31 > 0) data = _dummyData((n >> 128) & 0xff);
         bytes memory initCode = LibClone.initCode(implementation, data);
@@ -457,6 +460,7 @@ contract LibCloneTest is SoladyTest, Clone {
     }
 
     function _testInitCodeERC1967(address implementation) internal {
+        _brutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation));
         _checkMemory(initCode);
         _brutalizeMemory();
