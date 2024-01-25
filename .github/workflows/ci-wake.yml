@@ -13,7 +13,7 @@ jobs:
         profile: [via-ir-off, via-ir-on]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Wake
         uses: Ackee-Blockchain/wake-setup-action@0.1.0
