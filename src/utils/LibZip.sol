@@ -98,11 +98,10 @@ library LibZip {
                 a := ip
             }
             op := literals(sub(add(ipStart, mload(data)), a), a, op)
-            let n := sub(op, add(result, 0x8000))
-            mstore(result, n) // Store the length.
             // Copy the result to compact the memory, overwriting the hashmap.
             let o := add(result, 0x20)
-            let end := add(o, n)
+            let end := add(o, sub(op, add(result, 0x8000)))
+            mstore(result, sub(end, o)) // Store the length.
             for {} iszero(gt(o, end)) { o := add(o, 0x20) } { mstore(o, mload(add(o, 0x7fe0))) }
             mstore(end, 0) // Zeroize the slot after the string.
             mstore(0x40, add(end, 0x20)) // Allocate the memory.
