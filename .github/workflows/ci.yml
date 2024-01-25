@@ -16,6 +16,8 @@ jobs:
         profile: [post-shanghai,post-shanghai-via-ir,solc-past-versions-0,solc-past-versions-1,via-ir,min-solc,min-solc-via-ir,intense]
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Install Foundry
         uses: onbjerg/foundry-toolchain@v1
         with:
