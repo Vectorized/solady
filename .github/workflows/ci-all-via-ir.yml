@@ -13,10 +13,10 @@ jobs:
         profile: [via-ir-0,via-ir-1,via-ir-2,via-ir-3]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Foundry
-        uses: onbjerg/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
 
