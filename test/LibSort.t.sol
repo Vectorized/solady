@@ -641,12 +641,10 @@ contract LibSortTest is SoladyTest {
     function testCopy(uint256) public {
         unchecked {
             uint256[] memory a;
-            if (_random() % 31 > 0) a = _randomUints(_random() % 4);
+            if (_random() % 32 > 0) a = _randomUints(_random() % 4);
+            if (_random() % 32 == 0) _brutalizeMemory();
             uint256[] memory aCopy = LibSort.copy(a);
-            /// @solidity memory-safe-assembly
-            assembly {
-                mstore(mload(0x40), keccak256(0x00, 0x80))
-            }
+            if (_random() % 32 == 0) _brutalizeMemory();
             assertEq(aCopy, a);
             for (uint256 i; i != a.length; ++i) {
                 aCopy[i] *= 2;
