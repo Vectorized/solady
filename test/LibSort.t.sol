@@ -638,6 +638,25 @@ contract LibSortTest is SoladyTest {
         }
     }
 
+    function testCopy(uint256) public {
+        unchecked {
+            uint256[] memory a;
+            if (_random() % 31 > 0) a = _randomUints(_random() % 4);
+            uint256[] memory aCopy = LibSort.copy(a);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(mload(0x40), keccak256(0x00, 0x80))
+            }
+            assertEq(aCopy, a);
+            for (uint256 i; i != a.length; ++i) {
+                aCopy[i] *= 2;
+            }
+            for (uint256 i; i != a.length; ++i) {
+                assertEq(aCopy[i], a[i] * 2);
+            }
+        }
+    }
+
     function testSortedUnionDifferential(uint256) public {
         (uint256[] memory a, uint256[] memory b) = _randomUintsPair();
         uint256[] memory c = LibSort.union(a, b);
