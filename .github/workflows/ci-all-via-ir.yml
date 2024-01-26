@@ -46,6 +46,7 @@ jobs:
             forge test --use 0.8.17 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "via-ir-3" ] &&
+            forge test --use 0.8.24 --via-ir &&
             forge test --use 0.8.23 --via-ir &&
             forge test --use 0.8.22 --via-ir &&
             forge test --use 0.8.21 --via-ir &&
