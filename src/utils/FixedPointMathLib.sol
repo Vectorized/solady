@@ -200,7 +200,7 @@ library FixedPointMathLib {
     function expWad(int256 x) internal pure returns (int256 r) {
         unchecked {
             // When the result is less than 0.5 we return zero.
-            // This happens when `x <= floor(log(0.5e18) * 1e18) ≈ -42e18`.
+            // This happens when `x <= (log(1e-18) * 1e18) ~ -4.15e19`.
             if (x <= -41446531673892822313) return r;
 
             /// @solidity memory-safe-assembly
