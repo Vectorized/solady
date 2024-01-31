@@ -5,7 +5,7 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibString.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibString.sol)
 ///
-/// Note:
+/// @dev Note:
 /// For performance and bytecode compactness, most of the string operations are restricted to
 /// byte strings (7-bit ASCII), except where otherwise specified.
 /// Usage of byte string operations on charsets with runes spanning two or more bytes
