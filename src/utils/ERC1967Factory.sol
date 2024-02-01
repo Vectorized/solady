@@ -337,7 +337,7 @@ contract ERC1967Factory {
              * 5b          | JUMPDEST       | 0 0                 |                                 |
              * 3d          | RETURNDATASIZE | 0 0 0               |                                 |
              * 35          | CALLDATALOAD   | impl 0 0            |                                 |
-             * 06 0x20     | PUSH1 0x20     | w impl 0 0          |                                 |
+             * 60 0x20     | PUSH1 0x20     | w impl 0 0          |                                 |
              * 35          | CALLDATALOAD   | slot impl 0 0       |                                 |
              * 55          | SSTORE         | 0 0                 |                                 |
              *                                                                                      |
