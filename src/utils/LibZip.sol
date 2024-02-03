@@ -46,7 +46,7 @@ library LibZip {
                 mstore(ms8(_o, sub(runs_, 1)), mload(src_))
                 _o := add(1, add(_o, runs_))
             }
-            function match(l_, d_, o_) -> _o {
+            function mt(l_, d_, o_) -> _o {
                 for { d_ := sub(d_, 1) } iszero(lt(l_, 263)) { l_ := sub(l_, 262) } {
                     o_ := ms8(ms8(ms8(o_, add(224, shr(8, d_))), 253), and(0xff, d_))
                 }
@@ -93,7 +93,7 @@ library LibZip {
                 ip := sub(ip, 1)
                 if gt(ip, a) { op := literals(sub(ip, a), a, op) }
                 let l := cmp(add(r, 3), add(ip, 3), add(ipLimit, 9))
-                op := match(l, d, op)
+                op := mt(l, d, op)
                 ip := setNextHash(setNextHash(add(ip, l), ipStart), ipStart)
                 a := ip
             }
