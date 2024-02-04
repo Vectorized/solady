@@ -509,7 +509,7 @@ library FixedPointMathLib {
     /// @dev Calculates `floor(x * y / d)` with full precision, rounded up.
     /// Throws if result overflows a uint256 or when `d` is zero.
     /// Credit to Uniswap-v3-core under MIT license:
-    /// https://github.com/Uniswap/v3-core/blob/contracts/libraries/FullMath.sol
+    /// https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/FullMath.sol
     function fullMulDivUp(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 result) {
         result = fullMulDiv(x, y, d);
         /// @solidity memory-safe-assembly
