@@ -265,7 +265,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `ln(x)`, denominated in `WAD`.
-    /// Credit to Remco Bloemen under MIT license: https://2π.com/21/exp-ln
+    /// Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln
     function lnWad(int256 x) internal pure returns (int256 r) {
         /// @solidity memory-safe-assembly
         assembly {
