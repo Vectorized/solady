@@ -352,7 +352,7 @@ library RedBlackTreeLib {
         /// @solidity memory-safe-assembly
         assembly {
             function getKey(packed_, bitpos_) -> index_ {
-                index_ := and(shr(bitpos_, packed_), _BITMASK_KEY)
+                index_ := and(_BITMASK_KEY, shr(bitpos_, packed_))
             }
 
             function setKey(packed_, bitpos_, key_) -> result_ {
@@ -393,8 +393,7 @@ library RedBlackTreeLib {
 
             function insertFixup(nodes_, key_) {
                 let BR := _BITMASK_RED
-                for {} 1 {} {
-                    if eq(key_, mload(0x00)) { break }
+                for {} iszero(eq(key_, mload(0x00))) {} {
                     let packed_ := sload(or(nodes_, key_))
                     let parent_ := getKey(packed_, _BITPOS_PARENT)
                     let parentPacked_ := sload(or(nodes_, parent_))
@@ -427,8 +426,8 @@ library RedBlackTreeLib {
                     sstore(or(nodes_, grandParent_), or(grandParentPacked_, BR))
                     key_ := grandParent_
                 }
-                let root_ := mload(0x00)
-                sstore(or(nodes_, root_), and(sload(or(nodes_, root_)), not(BR)))
+                let root_ := or(nodes_, mload(0x00))
+                sstore(root_, and(sload(root_), not(BR)))
             }
 
             function insert(nodes_, cursor_, key_, x_) -> err_ {
@@ -480,8 +479,7 @@ library RedBlackTreeLib {
 
             function removeFixup(nodes_, key_) {
                 let BR := _BITMASK_RED
-                for {} 1 {} {
-                    if eq(key_, mload(0x00)) { break }
+                for {} iszero(eq(key_, mload(0x00))) {} {
                     let packed_ := sload(or(nodes_, key_))
                     if and(BR, packed_) { break }
 
@@ -586,9 +584,7 @@ library RedBlackTreeLib {
             }
 
             function remove(nodes_, key_) -> err_ {
-                let last_ := shr(128, mload(0x20))
-
-                if gt(key_, last_) {
+                if gt(key_, shr(128, mload(0x20))) {
                     err_ := ERROR_POINTER_OUT_OF_BOUNDS
                     leave
                 }
