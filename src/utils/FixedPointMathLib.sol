@@ -196,7 +196,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `exp(x)`, denominated in `WAD`.
-    /// Credit to Remco Bloemen under MIT license: https://2π.com/21/exp-ln
+    /// Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln
     function expWad(int256 x) internal pure returns (int256 r) {
         unchecked {
             // When the result is less than 0.5 we return zero.
@@ -265,7 +265,7 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `ln(x)`, denominated in `WAD`.
-    /// Credit to Remco Bloemen under MIT license: https://2π.com/21/exp-ln
+    /// Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln
     function lnWad(int256 x) internal pure returns (int256 r) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -509,7 +509,7 @@ library FixedPointMathLib {
     /// @dev Calculates `floor(x * y / d)` with full precision, rounded up.
     /// Throws if result overflows a uint256 or when `d` is zero.
     /// Credit to Uniswap-v3-core under MIT license:
-    /// https://github.com/Uniswap/v3-core/blob/contracts/libraries/FullMath.sol
+    /// https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/FullMath.sol
     function fullMulDivUp(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 result) {
         result = fullMulDiv(x, y, d);
         /// @solidity memory-safe-assembly
