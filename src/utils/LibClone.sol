@@ -900,7 +900,7 @@ library LibClone {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*              ERC1967 PROXY WITH IMPLEMENATION              */
+    /*              ERC1967 PROXY WITH IMPLEMENTATION             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Note: This Proxy has special path if `calldatasize() == 1` then
