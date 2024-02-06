@@ -900,10 +900,10 @@ library LibClone {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*              ERC1967 PROXY WITH IMPLEMENTATION             */
+    /*             ERC1967I PROXY WITH IMPLEMENTATION             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: This Proxy has special path if `calldatasize() == 1` then
+    // Note: This proxy has special path if `calldatasize() == 1` then
     // it will directly returns the `implementation` contract address.
 
     /// @dev Deploys a minimal ERC1967I proxy with `implementation`.
