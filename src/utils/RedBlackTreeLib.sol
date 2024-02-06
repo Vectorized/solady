@@ -532,57 +532,6 @@ library RedBlackTreeLib {
                 sstore(or(nodes_, key_), and(sload(or(nodes_, key_)), not(BR)))
             }
 
-            function removeLast(nodes_, cursor_) {
-                let last_ := shr(128, mload(0x20))
-                let lastPacked_ := sload(or(nodes_, last_))
-                let lastValue_ := shr(_BITPOS_PACKED_VALUE, lastPacked_)
-                let lastFullValue_ := 0
-                if iszero(lastValue_) {
-                    lastValue_ := sload(or(_BIT_FULL_VALUE_SLOT, or(nodes_, last_)))
-                    lastFullValue_ := lastValue_
-                }
-
-                let cursorPacked_ := sload(or(nodes_, cursor_))
-                let cursorValue_ := shr(_BITPOS_PACKED_VALUE, cursorPacked_)
-                let cursorFullValue_ := 0
-                if iszero(cursorValue_) {
-                    cursorValue_ := sload(or(_BIT_FULL_VALUE_SLOT, or(nodes_, cursor_)))
-                    cursorFullValue_ := cursorValue_
-                }
-
-                if iszero(eq(lastValue_, cursorValue_)) {
-                    sstore(or(nodes_, cursor_), lastPacked_)
-                    if iszero(eq(lastFullValue_, cursorFullValue_)) {
-                        sstore(or(_BIT_FULL_VALUE_SLOT, or(nodes_, cursor_)), lastFullValue_)
-                    }
-                    for { let lastParent_ := getKey(lastPacked_, _BITPOS_PARENT) } 1 {} {
-                        if iszero(lastParent_) {
-                            mstore(0x00, cursor_)
-                            break
-                        }
-                        let s_ := or(nodes_, lastParent_)
-                        let p_ := sload(s_)
-                        let t_ := iszero(eq(last_, getKey(p_, _BITPOS_LEFT)))
-                        sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), cursor_))
-                        break
-                    }
-                    let lastRight_ := getKey(lastPacked_, _BITPOS_RIGHT)
-                    if lastRight_ {
-                        let s_ := or(nodes_, lastRight_)
-                        sstore(s_, setKey(sload(s_), _BITPOS_PARENT, cursor_))
-                    }
-                    let lastLeft_ := getKey(lastPacked_, _BITPOS_LEFT)
-                    if lastLeft_ {
-                        let s_ := or(nodes_, lastLeft_)
-                        sstore(s_, setKey(sload(s_), _BITPOS_PARENT, cursor_))
-                    }
-                }
-                sstore(or(nodes_, last_), 0)
-                if lastFullValue_ { sstore(or(_BIT_FULL_VALUE_SLOT, or(nodes_, last_)), 0) }
-
-                mstore(0x20, shl(128, sub(last_, 1)))
-            }
-
             function replaceParent(nodes_, parent_, a_, b_) {
                 if iszero(parent_) {
                     mstore(0x00, a_)
@@ -646,8 +595,58 @@ library RedBlackTreeLib {
                     cursor_ := key_
                     key_ := t_
                 }
+
                 if iszero(and(_BITMASK_RED, cursorPacked_)) { removeFixup(nodes_, probe_) }
-                removeLast(nodes_, cursor_)
+
+                // Remove last workflow:
+
+                let last_ := shr(128, mload(0x20))
+                let lastPacked_ := sload(or(nodes_, last_))
+                let lastValue_ := shr(_BITPOS_PACKED_VALUE, lastPacked_)
+                let lastFullValue_ := 0
+                if iszero(lastValue_) {
+                    lastValue_ := sload(or(_BIT_FULL_VALUE_SLOT, or(nodes_, last_)))
+                    lastFullValue_ := lastValue_
+                }
+
+                let cursorValue_ := shr(_BITPOS_PACKED_VALUE, sload(or(nodes_, cursor_)))
+                let cursorFullValue_ := 0
+                if iszero(cursorValue_) {
+                    cursorValue_ := sload(or(_BIT_FULL_VALUE_SLOT, or(nodes_, cursor_)))
+                    cursorFullValue_ := cursorValue_
+                }
+
+                if iszero(eq(lastValue_, cursorValue_)) {
+                    sstore(or(nodes_, cursor_), lastPacked_)
+                    if iszero(eq(lastFullValue_, cursorFullValue_)) {
+                        sstore(or(_BIT_FULL_VALUE_SLOT, or(nodes_, cursor_)), lastFullValue_)
+                    }
+                    for { let lastParent_ := getKey(lastPacked_, _BITPOS_PARENT) } 1 {} {
+                        if iszero(lastParent_) {
+                            mstore(0x00, cursor_)
+                            break
+                        }
+                        let s_ := or(nodes_, lastParent_)
+                        let p_ := sload(s_)
+                        let t_ := iszero(eq(last_, getKey(p_, _BITPOS_LEFT)))
+                        sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), cursor_))
+                        break
+                    }
+                    let lastRight_ := getKey(lastPacked_, _BITPOS_RIGHT)
+                    if lastRight_ {
+                        let s_ := or(nodes_, lastRight_)
+                        sstore(s_, setKey(sload(s_), _BITPOS_PARENT, cursor_))
+                    }
+                    let lastLeft_ := getKey(lastPacked_, _BITPOS_LEFT)
+                    if lastLeft_ {
+                        let s_ := or(nodes_, lastLeft_)
+                        sstore(s_, setKey(sload(s_), _BITPOS_PARENT, cursor_))
+                    }
+                }
+                sstore(or(nodes_, last_), 0)
+                if lastFullValue_ { sstore(or(_BIT_FULL_VALUE_SLOT, or(nodes_, last_)), 0) }
+
+                mstore(0x20, shl(128, sub(last_, 1)))
             }
 
             mstore(0x00, codesize()) // Zeroize the first 0x10 bytes.
