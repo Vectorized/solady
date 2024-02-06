@@ -583,6 +583,17 @@ library RedBlackTreeLib {
                 mstore(0x20, shl(128, sub(last_, 1)))
             }
 
+            function replaceParent(nodes_, parent_, a_, b_) {
+                if iszero(parent_) {
+                    mstore(0x00, a_)
+                    leave
+                }
+                let s_ := or(nodes_, parent_)
+                let p_ := sload(s_)
+                let t_ := iszero(eq(b_, getKey(p_, _BITPOS_LEFT)))
+                sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), a_))
+            }
+
             function remove(nodes_, key_) -> err_ {
                 if gt(key_, shr(128, mload(0x20))) {
                     err_ := ERROR_POINTER_OUT_OF_BOUNDS
@@ -593,81 +604,49 @@ library RedBlackTreeLib {
                     leave
                 }
 
-                let cursor_ := 0
-
-                for {} 1 {} {
+                let cursor_ := key_
+                {
                     let packed_ := sload(or(nodes_, key_))
                     let left_ := getKey(packed_, _BITPOS_LEFT)
                     let right_ := getKey(packed_, _BITPOS_RIGHT)
-                    if iszero(mul(left_, right_)) {
-                        cursor_ := key_
-                        break
+                    if mul(left_, right_) {
+                        for { cursor_ := right_ } 1 {} {
+                            let cursorLeft_ := getKey(sload(or(nodes_, cursor_)), _BITPOS_LEFT)
+                            if iszero(cursorLeft_) { break }
+                            cursor_ := cursorLeft_
+                        }
                     }
-                    cursor_ := right_
-                    for {} 1 {} {
-                        let cursorLeft_ := getKey(sload(or(nodes_, cursor_)), _BITPOS_LEFT)
-                        if iszero(cursorLeft_) { break }
-                        cursor_ := cursorLeft_
-                    }
-                    break
                 }
 
                 let cursorPacked_ := sload(or(nodes_, cursor_))
                 let probe_ := getKey(cursorPacked_, _BITPOS_LEFT)
-                if iszero(probe_) { probe_ := getKey(cursorPacked_, _BITPOS_RIGHT) }
+                probe_ := getKey(cursorPacked_, mul(iszero(probe_), _BITPOS_RIGHT))
 
-                for { let yParent_ := getKey(cursorPacked_, _BITPOS_PARENT) } 1 {} {
-                    let probeSlot_ := or(nodes_, probe_)
-                    sstore(probeSlot_, setKey(sload(probeSlot_), _BITPOS_PARENT, yParent_))
-
-                    if iszero(yParent_) {
-                        mstore(0x00, probe_)
-                        break
-                    }
-                    let s_ := or(nodes_, yParent_)
-                    let p_ := sload(s_)
-                    let t_ := iszero(eq(cursor_, getKey(p_, _BITPOS_LEFT)))
-                    sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), probe_))
-                    break
-                }
-
-                let skipFixup_ := and(_BITMASK_RED, cursorPacked_)
+                let yParent_ := getKey(cursorPacked_, _BITPOS_PARENT)
+                let probeSlot_ := or(nodes_, probe_)
+                sstore(probeSlot_, setKey(sload(probeSlot_), _BITPOS_PARENT, yParent_))
+                replaceParent(nodes_, yParent_, probe_, cursor_)
 
                 if iszero(eq(cursor_, key_)) {
                     let packed_ := sload(or(nodes_, key_))
-                    let parent_ := getKey(packed_, _BITPOS_PARENT)
-                    for {} 1 {} {
-                        if iszero(parent_) {
-                            mstore(0x00, cursor_)
-                            break
-                        }
-                        let s_ := or(nodes_, parent_)
-                        let p_ := sload(s_)
-                        let t_ := iszero(eq(key_, getKey(p_, _BITPOS_LEFT)))
-                        sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), cursor_))
-                        break
-                    }
+                    replaceParent(nodes_, getKey(packed_, _BITPOS_PARENT), cursor_, key_)
 
-                    let left_ := getKey(packed_, _BITPOS_LEFT)
-                    let leftSlot_ := or(nodes_, left_)
+                    let leftSlot_ := or(nodes_, getKey(packed_, _BITPOS_LEFT))
                     sstore(leftSlot_, setKey(sload(leftSlot_), _BITPOS_PARENT, cursor_))
 
-                    let right_ := getKey(packed_, _BITPOS_RIGHT)
-                    let rightSlot_ := or(nodes_, right_)
+                    let rightSlot_ := or(nodes_, getKey(packed_, _BITPOS_RIGHT))
                     sstore(rightSlot_, setKey(sload(rightSlot_), _BITPOS_PARENT, cursor_))
 
-                    let m_ := sub(shl(_BITPOS_PACKED_VALUE, 1), 1)
-                    sstore(
-                        or(nodes_, cursor_),
-                        xor(cursorPacked_, and(xor(packed_, cursorPacked_), m_))
-                    )
+                    // Copy `left`, `right`, `red` from `cursor_` to `key_`.
+                    // forgefmt: disable-next-item
+                    sstore(or(nodes_, cursor_), xor(cursorPacked_,
+                        and(xor(packed_, cursorPacked_), sub(shl(_BITPOS_PACKED_VALUE, 1), 1))))
 
                     let t_ := cursor_
                     cursor_ := key_
                     key_ := t_
                 }
-                if iszero(skipFixup_) { removeFixup(nodes_, probe_) }
-
+                if iszero(and(_BITMASK_RED, cursorPacked_)) { removeFixup(nodes_, probe_) }
                 removeLast(nodes_, cursor_)
             }
 
