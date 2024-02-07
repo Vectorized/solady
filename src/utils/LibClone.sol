@@ -31,6 +31,18 @@ pragma solidity ^0.8.4;
 /// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The keccak256 of the deployed code for the ERC1967 proxy.
+    bytes32 internal constant ERC1967_CODEHASH =
+        0xaaa52c8cc8a0e3fd27ce756cc6b4e70c51423e9b597b11f32d3e49f8b1fc890d;
+
+    /// @dev The keccak256 of the deployed code for the ERC1967I proxy.
+    bytes32 internal constant ERC1967I_CODEHASH =
+        0xce700223c0d4cea4583409accfc45adac4a093b3519998a9cbbe1504dadba6f7;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 

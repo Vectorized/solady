@@ -93,16 +93,24 @@ contract LibCloneTest is SoladyTest, Clone {
         testDeployERC1967I(1);
     }
 
-    function testDeployERC1967ISpecialPath(bytes1 data) public {
-        address clone = LibClone.deployERC1967I(address(this));
+    function testDeployERC1967ISpecialPath(address impl, bytes1 data) public {
+        address clone = LibClone.deployERC1967I(impl);
         (, bytes memory rd) = clone.call(abi.encodePacked(data));
-        assertEq(address(this), abi.decode(rd, (address)));
+        assertEq(impl, abi.decode(rd, (address)));
     }
 
     function testDeployERC1967ISpecialPath() public {
         address clone = LibClone.deployERC1967I(address(this));
         (, bytes memory rd) = clone.call("I");
         assertEq(address(this), abi.decode(rd, (address)));
+    }
+
+    function testDeployERC1967CodeHash(address impl) public {
+        assertEq(keccak256(LibClone.deployERC1967(impl).code), LibClone.ERC1967_CODEHASH);
+    }
+
+    function testDeployERC1967ICodeHash(address impl) public {
+        assertEq(keccak256(LibClone.deployERC1967I(impl).code), LibClone.ERC1967I_CODEHASH);
     }
 
     function testClone(uint256 value_) public {
