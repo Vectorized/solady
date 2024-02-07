@@ -105,12 +105,14 @@ contract LibCloneTest is SoladyTest, Clone {
         assertEq(address(this), abi.decode(rd, (address)));
     }
 
-    function testDeployERC1967CodeHash(address impl) public {
+    function testDeployERC1967CodeHashAndLength(address impl) public {
         assertEq(keccak256(LibClone.deployERC1967(impl).code), LibClone.ERC1967_CODE_HASH);
+        assertEq(LibClone.deployERC1967(impl).code.length, 61);
     }
 
-    function testDeployERC1967ICodeHash(address impl) public {
+    function testDeployERC1967ICodeHashAndLength(address impl) public {
         assertEq(keccak256(LibClone.deployERC1967I(impl).code), LibClone.ERC1967I_CODE_HASH);
+        assertEq(LibClone.deployERC1967I(impl).code.length, 82);
     }
 
     function testClone(uint256 value_) public {
