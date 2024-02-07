@@ -899,7 +899,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic ERC1947 proxy of `implementation`,
+    /// @dev Returns the address of the deterministic ERC1967 proxy of `implementation`,
     /// with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddressERC1967(
@@ -1154,7 +1154,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic ERC1947I proxy of `implementation`,
+    /// @dev Returns the address of the deterministic ERC1967I proxy of `implementation`,
     /// with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddressERC1967I(
