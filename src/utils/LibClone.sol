@@ -29,6 +29,12 @@ pragma solidity ^0.8.4;
 /// @dev Minimal ERC1967 proxy:
 /// An minimal ERC1967 proxy, intended to be upgraded with UUPS.
 /// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
+///
+/// @dev ERC1967I proxy:
+/// An variant of the minimal ERC1967 proxy, with a special code path that activates
+/// if `calldatasize() == 1`. This code path skips the delegatecall and directly returns the
+/// `implementation` address. The returned implementation is guaranteed to be valid if the
+/// keccak256 of the proxy's code is equal to `ERC1967I_CODE_HASH`.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -912,11 +918,11 @@ library LibClone {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*             ERC1967I PROXY WITH IMPLEMENTATION             */
+    /*                 ERC1967I PROXY OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: This proxy has a special code path that activates if `calldatasize() == 1`,
-    // which directly returns the `implementation` address, skipping the delegatecall entirely.
+    // Note: This proxy has a special code path that activates if `calldatasize() == 1`.
+    // This code path skips the delegatecall and directly returns the `implementation` address.
     // The returned implementation is guaranteed to be valid if the keccak256 of the
     // proxy's code is equal to `ERC1967I_CODE_HASH`.
 
