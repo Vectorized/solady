@@ -106,11 +106,11 @@ contract LibCloneTest is SoladyTest, Clone {
     }
 
     function testDeployERC1967CodeHash(address impl) public {
-        assertEq(keccak256(LibClone.deployERC1967(impl).code), LibClone.ERC1967_CODEHASH);
+        assertEq(keccak256(LibClone.deployERC1967(impl).code), LibClone.ERC1967_CODE_HASH);
     }
 
     function testDeployERC1967ICodeHash(address impl) public {
-        assertEq(keccak256(LibClone.deployERC1967I(impl).code), LibClone.ERC1967I_CODEHASH);
+        assertEq(keccak256(LibClone.deployERC1967I(impl).code), LibClone.ERC1967I_CODE_HASH);
     }
 
     function testClone(uint256 value_) public {

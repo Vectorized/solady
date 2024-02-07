@@ -35,11 +35,11 @@ library LibClone {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The keccak256 of the deployed code for the ERC1967 proxy.
-    bytes32 internal constant ERC1967_CODEHASH =
+    bytes32 internal constant ERC1967_CODE_HASH =
         0xaaa52c8cc8a0e3fd27ce756cc6b4e70c51423e9b597b11f32d3e49f8b1fc890d;
 
     /// @dev The keccak256 of the deployed code for the ERC1967I proxy.
-    bytes32 internal constant ERC1967I_CODEHASH =
+    bytes32 internal constant ERC1967I_CODE_HASH =
         0xce700223c0d4cea4583409accfc45adac4a093b3519998a9cbbe1504dadba6f7;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -915,8 +915,10 @@ library LibClone {
     /*             ERC1967I PROXY WITH IMPLEMENTATION             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: This proxy has special path if `calldatasize() == 1` then
-    // it will directly returns the `implementation` contract address.
+    // Note: This proxy has a special code path that activates if `calldatasize() == 1`,
+    // which directly returns the `implementation` address, skipping the delegatecall entirely.
+    // The returned implementation is guaranteed to be valid if the keccak256 of the
+    // proxy's code is equal to `ERC1967I_CODE_HASH`.
 
     /// @dev Deploys a minimal ERC1967I proxy with `implementation`.
     function deployERC1967I(address implementation) internal returns (address instance) {
