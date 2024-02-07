@@ -31,6 +31,18 @@ pragma solidity ^0.8.4;
 /// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The keccak256 of the deployed code for the ERC1967 proxy.
+    bytes32 internal constant ERC1967_CODE_HASH =
+        0xaaa52c8cc8a0e3fd27ce756cc6b4e70c51423e9b597b11f32d3e49f8b1fc890d;
+
+    /// @dev The keccak256 of the deployed code for the ERC1967I proxy.
+    bytes32 internal constant ERC1967I_CODE_HASH =
+        0xce700223c0d4cea4583409accfc45adac4a093b3519998a9cbbe1504dadba6f7;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -705,7 +717,7 @@ library LibClone {
              * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
              * f3         | RETURN         |                  | [0..runSize): runtime code      |
              * ---------------------------------------------------------------------------------|
-             * RUNTIME (62 bytes)                                                               |
+             * RUNTIME (61 bytes)                                                               |
              * ---------------------------------------------------------------------------------|
              * Opcode     | Mnemonic       | Stack            | Memory                          |
              * ---------------------------------------------------------------------------------|
@@ -887,8 +899,8 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic clone of
-    /// `implementation` using immutable arguments encoded in `data`, with `salt`, by `deployer`.
+    /// @dev Returns the address of the deterministic ERC1967 proxy of `implementation`,
+    /// with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddressERC1967(
         address implementation,
@@ -896,6 +908,261 @@ library LibClone {
         address deployer
     ) internal pure returns (address predicted) {
         bytes32 hash = initCodeHashERC1967(implementation);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*             ERC1967I PROXY WITH IMPLEMENTATION             */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note: This proxy has a special code path that activates if `calldatasize() == 1`,
+    // which directly returns the `implementation` address, skipping the delegatecall entirely.
+    // The returned implementation is guaranteed to be valid if the keccak256 of the
+    // proxy's code is equal to `ERC1967I_CODE_HASH`.
+
+    /// @dev Deploys a minimal ERC1967I proxy with `implementation`.
+    function deployERC1967I(address implementation) internal returns (address instance) {
+        instance = deployERC1967I(0, implementation);
+    }
+
+    /// @dev Deploys a ERC1967I proxy with `implementation`.
+    /// Deposits `value` ETH during deployment.
+    function deployERC1967I(uint256 value, address implementation)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            /**
+             * ---------------------------------------------------------------------------------+
+             * CREATION (34 bytes)                                                              |
+             * ---------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                          |
+             * ---------------------------------------------------------------------------------|
+             * 60 runSize | PUSH1 runSize  | r                |                                 |
+             * 3d         | RETURNDATASIZE | 0 r              |                                 |
+             * 81         | DUP2           | r 0 r            |                                 |
+             * 60 offset  | PUSH1 offset   | o r 0 r          |                                 |
+             * 3d         | RETURNDATASIZE | 0 o r 0 r        |                                 |
+             * 39         | CODECOPY       | 0 r              | [0..runSize): runtime code      |
+             * 73 impl    | PUSH20 impl    | impl 0 r         | [0..runSize): runtime code      |
+             * 60 slotPos | PUSH1 slotPos  | slotPos impl 0 r | [0..runSize): runtime code      |
+             * 51         | MLOAD          | slot impl 0 r    | [0..runSize): runtime code      |
+             * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
+             * f3         | RETURN         |                  | [0..runSize): runtime code      |
+             * ---------------------------------------------------------------------------------|
+             * RUNTIME (82 bytes)                                                               |
+             * ---------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                          |
+             * ---------------------------------------------------------------------------------|
+             *                                                                                  |
+             * ::: check calldatasize ::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36         | CALLDATASIZE   | cds              |                                 |
+             * 58         | PC             | 1 cds            |                                 |
+             * 14         | EQ             | eqs              |                                 |
+             * 60 0x43    | PUSH1 0x43     | dest eqs         |                                 |
+             * 57         | JUMPI          |                  |                                 |
+             *                                                                                  |
+             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36         | CALLDATASIZE   | cds              |                                 |
+             * 3d         | RETURNDATASIZE | 0 cds            |                                 |
+             * 3d         | RETURNDATASIZE | 0 0 cds          |                                 |
+             * 37         | CALLDATACOPY   |                  | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | 0                |                                 |
+             * 3d         | RETURNDATASIZE | 0 0              |                                 |
+             * 36         | CALLDATASIZE   | cds 0 0          | [0..calldatasize): calldata     |
+             * 3d         | RETURNDATASIZE | 0 cds 0 0        | [0..calldatasize): calldata     |
+             * 7f slot    | PUSH32 slot    | s 0 cds 0 0      | [0..calldatasize): calldata     |
+             * 54         | SLOAD          | i 0 cds 0 0      | [0..calldatasize): calldata     |
+             * 5a         | GAS            | g i 0 cds 0 0    | [0..calldatasize): calldata     |
+             * f4         | DELEGATECALL   | succ             | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | rds succ         | [0..calldatasize): calldata     |
+             * 60 0x00    | PUSH1 0x00     | 0 rds succ       | [0..calldatasize): calldata     |
+             * 80         | DUP1           | 0 0 rds succ     | [0..calldatasize): calldata     |
+             * 3e         | RETURNDATACOPY | succ             | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::: |
+             * 60 0x3E    | PUSH1 0x3E     | dest succ        | [0..returndatasize): returndata |
+             * 57         | JUMPI          |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
+             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
+             * fd         | REVERT         |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b         | JUMPDEST       |                  | [0..returndatasize): returndata |
+             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
+             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
+             * f3         | RETURN         |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: implementation , return :::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b         | JUMPDEST       |                  |                                 |
+             * 60 0x20    | PUSH1 0x20     | 32               |                                 |
+             * 60 0x0F    | PUSH1 0x0F     | o 32             |                                 |
+             * 3d         | RETURNDATASIZE | 0 o 32           |                                 |
+             * 39         | CODECOPY       |                  | [0..32): implementation slot    |
+             * 3d         | RETURNDATASIZE | 0                | [0..32): implementation slot    |
+             * 51         | MLOAD          | slot             | [0..32): implementation slot    |
+             * 54         | SLOAD          | impl             | [0..32): implementation slot    |
+             * 3d         | RETURNDATASIZE | 0 impl           | [0..32): implementation slot    |
+             * 52         | MSTORE         |                  | [0..32): implementation address |
+             * 59         | MSIZE          | 32               | [0..32): implementation address |
+             * 3d         | RETURNDATASIZE | 0 32             | [0..32): implementation address |
+             * f3         | RETURN         |                  | [0..32): implementation address |
+             *                                                                                  |
+             * ---------------------------------------------------------------------------------+
+             */
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(0x40, 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(0x20, 0x600f5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, implementation))))
+            instance := create(value, 0x0c, 0x74)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Deploys a deterministic ERC1967I proxy with `implementation` and `salt`.
+    function deployDeterministicERC1967I(address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        instance = deployDeterministicERC1967I(0, implementation, salt);
+    }
+
+    /// @dev Deploys a deterministic ERC1967I proxy with `implementation` and `salt`.
+    /// Deposits `value` ETH during deployment.
+    function deployDeterministicERC1967I(uint256 value, address implementation, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(0x40, 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(0x20, 0x600f5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, implementation))))
+            instance := create2(value, 0x0c, 0x74, salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Creates a deterministic ERC1967I proxy with `implementation` and `salt`.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967I(address implementation, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        return createDeterministicERC1967I(0, implementation, salt);
+    }
+
+    /// @dev Creates a deterministic ERC1967I proxy with `implementation` and `salt`.
+    /// Deposits `value` ETH during deployment.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967I(uint256 value, address implementation, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(0x40, 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(0x20, 0x600f5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, implementation))))
+            // Compute and store the bytecode hash.
+            mstore(add(m, 0x35), keccak256(0x0c, 0x74))
+            mstore(m, shl(88, address()))
+            mstore8(m, 0xff) // Write the prefix.
+            mstore(add(m, 0x15), salt)
+            instance := keccak256(m, 0x55)
+            for {} 1 {} {
+                if iszero(extcodesize(instance)) {
+                    instance := create2(value, 0x0c, 0x74, salt)
+                    if iszero(instance) {
+                        mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    break
+                }
+                alreadyDeployed := 1
+                if iszero(value) { break }
+                if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
+                break
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Returns the initialization code of the minimal ERC1967 proxy of `implementation`.
+    function initCodeERC1967I(address implementation) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(
+                add(result, 0x74),
+                0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3
+            )
+            mstore(
+                add(result, 0x54),
+                0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4
+            )
+            mstore(add(result, 0x34), 0x600f5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(add(result, 0x1d), implementation)
+            mstore(add(result, 0x09), 0x60523d8160223d3973)
+            mstore(add(result, 0x94), 0)
+            mstore(result, 0x74) // Store the length.
+            mstore(0x40, add(result, 0xa0)) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the minimal ERC1967 proxy of `implementation`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHashERC1967I(address implementation) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(0x40, 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(0x20, 0x600f5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, implementation))))
+            hash := keccak256(0x0c, 0x74)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Returns the address of the deterministic ERC1967I proxy of `implementation`,
+    /// with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
+    function predictDeterministicAddressERC1967I(
+        address implementation,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        bytes32 hash = initCodeHashERC1967I(implementation);
         predicted = predictDeterministicAddress(hash, salt, deployer);
     }
 

@@ -77,8 +77,42 @@ contract LibCloneTest is SoladyTest, Clone {
         );
     }
 
+    function testDeployERC1967I(uint256 value_) public {
+        address clone = LibClone.deployERC1967I(address(this));
+        _shouldBehaveLikeClone(clone, value_);
+        assertEq(
+            vm.load(clone, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
+        );
+    }
+
     function testDeployERC1967() public {
         testDeployERC1967(1);
+    }
+
+    function testDeployERC1967I() public {
+        testDeployERC1967I(1);
+    }
+
+    function testDeployERC1967ISpecialPath(address impl, bytes1 data) public {
+        address clone = LibClone.deployERC1967I(impl);
+        (, bytes memory rd) = clone.call(abi.encodePacked(data));
+        assertEq(impl, abi.decode(rd, (address)));
+    }
+
+    function testDeployERC1967ISpecialPath() public {
+        address clone = LibClone.deployERC1967I(address(this));
+        (, bytes memory rd) = clone.call("I");
+        assertEq(address(this), abi.decode(rd, (address)));
+    }
+
+    function testDeployERC1967CodeHashAndLength(address impl) public {
+        assertEq(keccak256(LibClone.deployERC1967(impl).code), LibClone.ERC1967_CODE_HASH);
+        assertEq(LibClone.deployERC1967(impl).code.length, 61);
+    }
+
+    function testDeployERC1967ICodeHashAndLength(address impl) public {
+        assertEq(keccak256(LibClone.deployERC1967I(impl).code), LibClone.ERC1967I_CODE_HASH);
+        assertEq(LibClone.deployERC1967I(impl).code.length, 82);
     }
 
     function testClone(uint256 value_) public {
@@ -156,6 +190,92 @@ contract LibCloneTest is SoladyTest, Clone {
 
     function testDeployDeterministicERC1967() public {
         testDeployDeterministicERC1967(1, keccak256("b"));
+    }
+
+    function testDeployDeterministicERC1967I(uint256 value_, bytes32 salt) public {
+        if (saltIsUsed[salt]) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            this.deployDeterministicERC1967I(address(this), salt);
+            return;
+        }
+
+        address clone = this.deployDeterministicERC1967I(address(this), salt);
+        saltIsUsed[salt] = true;
+
+        _shouldBehaveLikeClone(clone, value_);
+
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967I(address(this), salt, address(this));
+        assertEq(clone, predicted);
+
+        assertEq(
+            vm.load(clone, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
+        );
+    }
+
+    function deployDeterministicERC1967I(address implementation, bytes32 salt)
+        external
+        returns (address)
+    {
+        return LibClone.deployDeterministicERC1967I(_brutalized(implementation), salt);
+    }
+
+    function testDeployDeterministicERC1967I() public {
+        testDeployDeterministicERC1967I(1, keccak256("b"));
+    }
+
+    function testCreateDeterministicERC1967(uint256 value_, bytes32 salt) public {
+        if (saltIsUsed[salt]) {
+            (bool deployed, address clone) =
+                LibClone.createDeterministicERC1967(address(this), salt);
+            assertEq(deployed, true);
+            assertEq(
+                clone,
+                LibClone.predictDeterministicAddressERC1967(address(this), salt, address(this))
+            );
+            return;
+        }
+
+        (bool deployed_, address clone_) = LibClone.createDeterministicERC1967(address(this), salt);
+        assertEq(deployed_, false);
+        saltIsUsed[salt] = true;
+
+        _shouldBehaveLikeClone(clone_, value_);
+
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967(address(this), salt, address(this));
+        assertEq(clone_, predicted);
+
+        assertEq(
+            vm.load(clone_, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
+        );
+    }
+
+    function testCreateDeterministicERC1967I(uint256 value_, bytes32 salt) public {
+        if (saltIsUsed[salt]) {
+            (bool deployed, address clone) =
+                LibClone.createDeterministicERC1967I(address(this), salt);
+            assertEq(deployed, true);
+            assertEq(
+                clone,
+                LibClone.predictDeterministicAddressERC1967I(address(this), salt, address(this))
+            );
+            return;
+        }
+
+        (bool deployed_, address clone_) = LibClone.createDeterministicERC1967I(address(this), salt);
+        assertEq(deployed_, false);
+        saltIsUsed[salt] = true;
+
+        _shouldBehaveLikeClone(clone_, value_);
+
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967I(address(this), salt, address(this));
+        assertEq(clone_, predicted);
+
+        assertEq(
+            vm.load(clone_, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
+        );
     }
 
     function getArgBytes(uint256 argOffset, uint256 length) public pure returns (bytes memory) {
@@ -425,6 +545,7 @@ contract LibCloneTest is SoladyTest, Clone {
         if (c & (1 << 1) == 0) _testInitCode_PUSH0(implementation);
         if (c & (1 << 2) == 0) _testInitCode(implementation, r);
         if (c & (1 << 3) == 0) _testInitCodeERC1967(implementation);
+        if (c & (1 << 4) == 0) _testInitCodeERC1967I(implementation);
     }
 
     function _testInitCode(address implementation) internal {
@@ -465,6 +586,16 @@ contract LibCloneTest is SoladyTest, Clone {
         _checkMemory(initCode);
         _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation));
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+    }
+
+    function _testInitCodeERC1967I(address implementation) internal {
+        _brutalizeMemory();
+        bytes memory initCode = LibClone.initCodeERC1967I(_brutalized(implementation));
+        _checkMemory(initCode);
+        _brutalizeMemory();
+        bytes32 expected = LibClone.initCodeHashERC1967I(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
