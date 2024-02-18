@@ -893,7 +893,7 @@ library FixedPointMathLib {
     /// @dev Returns the average of `x` and `y`.
     function avg(int256 x, int256 y) internal pure returns (int256 z) {
         unchecked {
-            z = (x >> 1) + (y >> 1) + (((x & 1) + (y & 1)) >> 1);
+            z = (x >> 1) + (y >> 1) + (x & y & 1);
         }
     }
 
