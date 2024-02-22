@@ -361,7 +361,7 @@ library MinHeapLib {
                 childPos := 1
                 break
             }
-            // Siftup.
+            // Siftdown.
             for {} lt(childPos, n) {} {
                 let child := sload(add(sOffset, childPos))
                 let rightPos := add(childPos, 1)
@@ -374,7 +374,7 @@ library MinHeapLib {
                 pos := rightPos
                 childPos := add(shl(1, pos), 1)
             }
-            // Siftdown.
+            // Siftup.
             for {} pos {} {
                 let parentPos := shr(1, sub(pos, 1))
                 let parent := sload(add(sOffset, parentPos))
@@ -402,13 +402,12 @@ library MinHeapLib {
             for {} iszero(and(n, 0x1f)) {} {
                 let cap := mload(add(heap, 0x20))
                 if lt(n, cap) { break }
-                let fresh := iszero(cap)
-                let newCap := or(shl(5, fresh), mul(shl(1, cap), iszero(fresh)))
-                let m := mload(0x40) // Grab the free memory pointer.
-                mstore(m, n) // Store the length.
+                let newCap := add(shl(1, cap), shl(5, iszero(cap)))
                 mstore(add(heap, 0x20), newCap) // Update `heap.capacity`.
+                let m := mload(0x40) // Grab the free memory pointer.
+                mstore(m, cap) // Store the length.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
-                if iszero(fresh) {
+                if cap {
                     let w := not(0x1f)
                     for { let i := shl(5, cap) } 1 {} {
                         mstore(add(m, i), mload(add(data, i)))
@@ -481,7 +480,7 @@ library MinHeapLib {
                 childPos := 1
                 break
             }
-            // Siftup.
+            // Siftdown.
             for {} lt(childPos, n) {} {
                 let child := mload(add(sOffset, shl(5, childPos)))
                 let rightPos := add(childPos, 1)
@@ -494,7 +493,7 @@ library MinHeapLib {
                 pos := rightPos
                 childPos := add(shl(1, pos), 1)
             }
-            // Siftdown.
+            // Siftup.
             for {} pos {} {
                 let parentPos := shr(1, sub(pos, 1))
                 let parent := mload(add(sOffset, shl(5, parentPos)))
