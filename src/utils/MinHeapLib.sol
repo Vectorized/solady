@@ -403,8 +403,8 @@ library MinHeapLib {
             let n := mload(mload(heap))
             // Allocation / re-allocation logic.
             for {} iszero(lt(n, mload(add(heap, 0x20)))) {} {
-                let cap := mload(add(heap, 0x20))
                 let oldData := mload(heap) // The old `heap.data`.
+                let cap := mload(add(heap, 0x20))
                 let fresh := iszero(cap)
                 let newCap := or(shl(5, fresh), mul(shl(1, cap), iszero(fresh)))
                 let m := mload(0x40) // Grab the free memory pointer.
