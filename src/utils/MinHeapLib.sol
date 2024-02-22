@@ -365,7 +365,7 @@ library MinHeapLib {
                 childPos := add(childPos, childPos)
                 break
             }
-            // Siftup.
+            // Siftdown.
             for {} lt(childPos, n) {} {
                 let child := sload(add(sOffset, childPos))
                 let rightPos := add(childPos, 1)
@@ -378,7 +378,7 @@ library MinHeapLib {
                 pos := rightPos
                 childPos := add(shl(1, pos), 1)
             }
-            // Siftdown.
+            // Siftup.
             for {} pos {} {
                 let parentPos := shr(1, sub(pos, 1))
                 let parent := sload(add(sOffset, parentPos))
@@ -487,7 +487,7 @@ library MinHeapLib {
                 childPos := add(childPos, childPos)
                 break
             }
-            // Siftup.
+            // Siftdown.
             for {} lt(childPos, n) {} {
                 let child := mload(add(sOffset, shl(5, childPos)))
                 let rightPos := add(childPos, 1)
@@ -500,7 +500,7 @@ library MinHeapLib {
                 pos := rightPos
                 childPos := add(shl(1, pos), 1)
             }
-            // Siftdown.
+            // Siftup.
             for {} pos {} {
                 let parentPos := shr(1, sub(pos, 1))
                 let parent := mload(add(sOffset, shl(5, parentPos)))
