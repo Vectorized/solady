@@ -403,7 +403,7 @@ library MinHeapLib {
             let n := mload(mload(heap))
             // Allocation / re-allocation logic.
             for { let cap := mload(add(0x20, heap)) } 1 {} {
-                if lt(add(n, 1), cap) { break }
+                if iszero(gt(add(n, 1), cap)) { break }
                 let oldData := mload(heap) // The old `heap.data`.
                 let fresh := iszero(cap)
                 let newCap := or(mul(fresh, 32), mul(iszero(fresh), shl(1, cap)))
