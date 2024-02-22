@@ -23,8 +23,8 @@ library MinHeapLib {
     /// @dev A heap in memory.
     struct MemHeap {
         uint256[] data;
-        uint256 capacity;
     }
+    // uint256 capacity;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OPERATIONS                         */
@@ -402,26 +402,25 @@ library MinHeapLib {
         assembly {
             let n := mload(mload(heap))
             // Allocation / re-allocation logic.
-            for {} iszero(lt(n, mload(add(heap, 0x20)))) {} {
-                let oldData := mload(heap) // The old `heap.data`.
-                let cap := mload(add(heap, 0x20))
-                let fresh := iszero(cap)
-                let newCap := or(shl(5, fresh), mul(shl(1, cap), iszero(fresh)))
+            if iszero(and(n, 0x1f)) {
                 let m := mload(0x40) // Grab the free memory pointer.
-                mstore(heap, m) // Update `heap.data`.
-                mstore(m, n) // Store the length.
-                mstore(add(heap, 0x20), newCap) // Update `heap.capacity`.
-                mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
-                codecopy(add(m, 0x20), codesize(), shl(5, newCap)) // Zeroize the `heap.data` memory.
-                if iszero(fresh) {
-                    for { let i := shl(5, cap) } 1 {} {
+                mstore(m, n)
+                let newCap := add(shl(6, n), shl(10, iszero(n)))
+                mstore(0x40, add(add(m, 0x20), newCap)) // Allocate `heap.data` memory.
+                codecopy(add(m, 0x20), codesize(), newCap) // Zeroize the `heap.data` memory.
+                if n {
+                    for {
+                        let i := shl(5, n)
+                        let oldData := mload(heap)
+                    } i {} {
                         mstore(add(m, i), mload(add(oldData, i)))
                         i := sub(i, 0x20)
                         if iszero(i) { break }
                     }
                 }
-                break
+                mstore(heap, m) // Update `heap.data`.
             }
+
             let sOffset := add(mload(heap), 0x20) // Array storage slot offset.
             let pos := 0
             let childPos := not(0)
