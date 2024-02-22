@@ -402,15 +402,15 @@ library MinHeapLib {
         assembly {
             let n := mload(mload(heap))
             // Allocation / re-allocation logic.
-            for { let cap := mload(add(0x20, heap)) } 1 {} {
-                if iszero(gt(add(n, 1), cap)) { break }
+            for {} iszero(lt(n, mload(add(heap, 0x20)))) {} {
+                let cap := mload(add(heap, 0x20))
                 let oldData := mload(heap) // The old `heap.data`.
                 let fresh := iszero(cap)
-                let newCap := or(mul(fresh, 32), mul(iszero(fresh), shl(1, cap)))
+                let newCap := or(shl(5, fresh), mul(shl(1, cap), iszero(fresh)))
                 let m := mload(0x40) // Grab the free memory pointer.
                 mstore(heap, m) // Update `heap.data`.
                 mstore(m, n) // Store the length.
-                mstore(add(0x20, heap), newCap) // Update `heap.capacity`.
+                mstore(add(heap, 0x20), newCap) // Update `heap.capacity`.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
                 codecopy(add(m, 0x20), codesize(), shl(5, newCap)) // Zeroize the `heap.data` memory.
                 if iszero(fresh) {

@@ -4,9 +4,11 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {MinHeapLib} from "../src/utils/MinHeapLib.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
+import {LibPRNG} from "../src/utils/LibPRNG.sol";
 
 contract MinHeapLibTest is SoladyTest {
     using MinHeapLib for *;
+    using LibPRNG for *;
 
     MinHeapLib.Heap heap0;
 
@@ -395,9 +397,10 @@ contract MinHeapLibTest is SoladyTest {
 
     function testMemHeapSmallestGas() public {
         MinHeapLib.MemHeap memory heapA;
+        LibPRNG.PRNG memory prng;
         unchecked {
             for (uint256 i; i < 2048; ++i) {
-                heapA.push(_random());
+                heapA.push(prng.next());
             }
             uint256 gasBefore = gasleft();
             heapA.smallest(512);
@@ -462,8 +465,18 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
-    function testMemHeapEnqueueGas() public {
+    function testMemHeapPushGas() public pure {
         MinHeapLib.MemHeap memory heapA;
+        unchecked {
+            for (uint256 i; i < 64; ++i) {
+                heapA.push(i);
+            }
+        }
+    }
+
+    function testMemHeapEnqueueGas() public pure {
+        MinHeapLib.MemHeap memory heapA;
+        LibPRNG.PRNG memory prng;
         unchecked {
             for (uint256 t = 8; t < 16; ++t) {
                 uint256 maxLength = t;
@@ -471,7 +484,7 @@ contract MinHeapLibTest is SoladyTest {
                     heapA.enqueue(i, maxLength);
                 }
                 for (uint256 i; i < 16; ++i) {
-                    heapA.enqueue(_random() % 16, maxLength);
+                    heapA.enqueue(prng.next() % 16, maxLength);
                 }
             }
             while (heapA.length() != 0) heapA.pop();
