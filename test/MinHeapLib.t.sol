@@ -4,9 +4,11 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {MinHeapLib} from "../src/utils/MinHeapLib.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
+import {LibPRNG} from "../src/utils/LibPRNG.sol";
 
 contract MinHeapLibTest is SoladyTest {
-    using MinHeapLib for MinHeapLib.Heap;
+    using MinHeapLib for *;
+    using LibPRNG for *;
 
     MinHeapLib.Heap heap0;
 
@@ -274,6 +276,218 @@ contract MinHeapLibTest is SoladyTest {
                 }
             }
             while (heap0.length() != 0) heap0.pop();
+        }
+    }
+
+    function testMemHeapRoot(uint256 x) public brutalizeMemory {
+        MinHeapLib.MemHeap memory heapA;
+        vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
+        heapA.root();
+        heapA.push(x);
+        assertEq(heapA.length(), 1);
+        assertEq(heapA.root(), x);
+    }
+
+    function testMemHeapPushAndPop(uint256) public brutalizeMemory {
+        MinHeapLib.MemHeap memory heapA;
+        unchecked {
+            uint256 n = _random() % 64;
+            uint256[] memory a = new uint256[](n);
+
+            for (uint256 i; i < n; ++i) {
+                uint256 r = _random();
+                a[i] = r;
+                heapA.push(r);
+            }
+            LibSort.insertionSort(a);
+            for (uint256 i; i < n; ++i) {
+                assertEq(heapA.pop(), a[i]);
+            }
+            assertEq(heapA.length(), 0);
+        }
+    }
+
+    function testMemHeapPushPop(uint256) public brutalizeMemory {
+        MinHeapLib.MemHeap memory heapA;
+        MinHeapLib.MemHeap memory heapB;
+        unchecked {
+            uint256 n = _random() % 64;
+            uint256[] memory a = new uint256[](n + 1);
+            for (uint256 i; i < n; ++i) {
+                uint256 r = _random();
+                heapA.push(r);
+                heapB.push(r);
+                a[i + 1] = r;
+            }
+            n = _random() % 8;
+            for (uint256 i; i < n; ++i) {
+                uint256 r = _random();
+                a[0] = r;
+                LibSort.insertionSort(a);
+                uint256 popped0 = heapA.pushPop(r);
+                heapB.push(r);
+                uint256 popped1 = heapB.pop();
+                assertEq(popped0, popped1);
+            }
+            LibSort.insertionSort(a);
+            n = heapA.length();
+            for (uint256 i; i < n; ++i) {
+                assertEq(heapA.pop(), a[i + 1]);
+            }
+        }
+    }
+
+    function testMemHeapReplace(uint256) public brutalizeMemory {
+        MinHeapLib.MemHeap memory heapA;
+        MinHeapLib.MemHeap memory heapB;
+        unchecked {
+            uint256 n = _random() % 64 + 1;
+            uint256[] memory a = new uint256[](n);
+            for (uint256 i; i < n; ++i) {
+                uint256 r = _random();
+                heapA.push(r);
+                heapB.push(r);
+                a[i] = r;
+            }
+            n = _random() % 8;
+            for (uint256 i; i < n; ++i) {
+                uint256 r = _random();
+                LibSort.insertionSort(a);
+                a[0] = r;
+                uint256 popped0 = heapA.replace(r);
+                uint256 popped1 = heapB.pop();
+                heapB.push(r);
+                assertEq(popped0, popped1);
+            }
+            LibSort.insertionSort(a);
+            n = heapA.length();
+            for (uint256 i; i < n; ++i) {
+                assertEq(heapA.pop(), a[i]);
+            }
+        }
+    }
+
+    function testMemHeapSmallest(uint256) public brutalizeMemory {
+        MinHeapLib.MemHeap memory heapA;
+        unchecked {
+            uint256 n = _random() & 15 == 0 ? _random() % 256 : _random() % 64;
+            for (uint256 i; i < n; ++i) {
+                heapA.push(_random());
+            }
+            if (_random() & 7 == 0) {
+                n = _random() % 32;
+                for (uint256 i; i < n; ++i) {
+                    heapA.pushPop(_random());
+                    if (_random() & 1 == 0) {
+                        heapA.push(_random());
+                        if (_random() & 1 == 0) heapA.pop();
+                    }
+                    if (_random() & 1 == 0) if (heapA.length() != 0) heapA.replace(_random());
+                }
+            }
+            uint256 k = _random() & 15 == 0 ? _random() % 256 : _random() % 64;
+            k = _random() & 31 == 0 ? 1 << 255 : k;
+            if (_random() & 7 == 0) _brutalizeMemory();
+            uint256[] memory computed = heapA.smallest(k);
+            _checkMemory();
+            if (_random() & 7 == 0) _brutalizeMemory();
+            assertEq(computed, _smallest(heapA.data, k));
+        }
+    }
+
+    function testMemHeapSmallestGas() public {
+        MinHeapLib.MemHeap memory heapA;
+        LibPRNG.PRNG memory prng;
+        unchecked {
+            for (uint256 i; i < 2048; ++i) {
+                heapA.push(prng.next());
+            }
+            uint256 gasBefore = gasleft();
+            heapA.smallest(512);
+            uint256 gasUsed = gasBefore - gasleft();
+            emit LogUint("gasUsed", gasUsed);
+        }
+    }
+
+    function testMemHeapEnqueue(uint256) public brutalizeMemory {
+        MinHeapLib.MemHeap memory heapA;
+        unchecked {
+            uint256 maxLength = _random() % 64 + 1;
+            uint256 m = _random() % 32 + maxLength;
+            uint256[] memory a = new uint256[](m);
+            uint256[] memory rejected = new uint256[](m);
+            uint256 numRejected;
+            for (uint256 i; i < m; ++i) {
+                uint256 r = _random();
+                (bool success, bool hasPopped, uint256 popped) = heapA.enqueue(r, maxLength);
+                if (hasPopped) {
+                    assertEq(heapA.length(), maxLength);
+                    assertEq(success, true);
+                    rejected[numRejected++] = popped;
+                }
+                if (!success) {
+                    assertEq(heapA.length(), maxLength);
+                    rejected[numRejected++] = r;
+                }
+                a[i] = r;
+            }
+            LibSort.insertionSort(a);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(rejected, numRejected)
+            }
+            LibSort.insertionSort(rejected);
+            for (uint256 i; i < maxLength; ++i) {
+                assertEq(a[m - maxLength + i], heapA.pop());
+            }
+            assertEq(numRejected + maxLength, m);
+            for (uint256 i; i < numRejected; ++i) {
+                assertEq(a[i], rejected[i]);
+            }
+        }
+    }
+
+    function testMemHeapEnqueue2(uint256) public brutalizeMemory {
+        MinHeapLib.MemHeap memory heapA;
+        MinHeapLib.MemHeap memory heapB;
+        unchecked {
+            uint256 maxLength = _random() & 31 == 0 ? 1 << 255 : _random() % 64 + 1;
+            uint256 m = _random() % 64 + 1;
+            for (uint256 i; i < m; ++i) {
+                uint256 r = _random();
+                heapA.enqueue(r, maxLength);
+                heapB.push(r);
+                if (heapB.length() > maxLength) heapB.pop();
+            }
+            uint256 k = _random() % m;
+            k = _random() & 31 == 0 ? 1 << 255 : k;
+            assertEq(heapA.smallest(k), heapB.smallest(k));
+        }
+    }
+
+    function testMemHeapPushGas() public pure {
+        MinHeapLib.MemHeap memory heapA;
+        unchecked {
+            for (uint256 i; i < 64; ++i) {
+                heapA.push(i);
+            }
+        }
+    }
+
+    function testMemHeapEnqueueGas() public pure {
+        MinHeapLib.MemHeap memory heapA;
+        LibPRNG.PRNG memory prng;
+        unchecked {
+            for (uint256 t = 8; t < 16; ++t) {
+                uint256 maxLength = t;
+                for (uint256 i; i < 16; ++i) {
+                    heapA.enqueue(i, maxLength);
+                }
+                for (uint256 i; i < 16; ++i) {
+                    heapA.enqueue(prng.next() % 16, maxLength);
+                }
+            }
+            while (heapA.length() != 0) heapA.pop();
         }
     }
 }
