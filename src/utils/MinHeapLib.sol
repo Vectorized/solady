@@ -202,34 +202,34 @@ library MinHeapLib {
 
     /// @dev Pushes the `value` onto the min-heap.
     function push(Heap storage heap, uint256 value) internal {
-        _set(heap, value, 0, 4);
+        _set(heap, value, 0, 3);
     }
 
     /// @dev Pushes the `value` onto the min-heap.
     function push(MemHeap memory heap, uint256 value) internal pure {
-        _set(heap, value, 0, 4);
+        _set(heap, value, 0, 3);
     }
 
     /// @dev Pops the minimum value from the min-heap.
     /// Reverts if the heap is empty.
     function pop(Heap storage heap) internal returns (uint256 popped) {
-        (,, popped) = _set(heap, 0, 0, 3);
+        (,, popped) = _set(heap, 0, 0, 2);
     }
 
     /// @dev Pops the minimum value from the min-heap.
     /// Reverts if the heap is empty.
     function pop(MemHeap memory heap) internal pure returns (uint256 popped) {
-        (,, popped) = _set(heap, 0, 0, 3);
+        (,, popped) = _set(heap, 0, 0, 2);
     }
 
     /// @dev Pushes the `value` onto the min-heap, and pops the minimum value.
     function pushPop(Heap storage heap, uint256 value) internal returns (uint256 popped) {
-        (,, popped) = _set(heap, value, 0, 2);
+        (,, popped) = _set(heap, value, 0, 4);
     }
 
     /// @dev Pushes the `value` onto the min-heap, and pops the minimum value.
     function pushPop(MemHeap memory heap, uint256 value) internal pure returns (uint256 popped) {
-        (,, popped) = _set(heap, value, 0, 2);
+        (,, popped) = _set(heap, value, 0, 4);
     }
 
     /// @dev Pops the minimum value, and pushes the new `value` onto the min-heap.
@@ -327,42 +327,38 @@ library MinHeapLib {
                     popped := r
                     break
                 }
-                // Mode: `replace`.
-                if eq(mode, 1) {
+                if iszero(gt(mode, 2)) {
                     if iszero(n) { continue }
-                    popped := sload(sOffset)
-                    childPos := 1
-                    break
-                }
-                // Mode: `pushPop`.
-                if eq(mode, 2) {
-                    popped := value
-                    if iszero(n) { break }
-                    let r := sload(sOffset)
-                    if iszero(lt(r, value)) { break }
-                    popped := r
-                    childPos := 1
-                    break
-                }
-                // Mode: `pop`.
-                if eq(mode, 3) {
-                    if iszero(n) { continue }
-                    // Decrement and update the length.
-                    n := sub(n, 1)
-                    sstore(heap.slot, n)
-                    // Set the `value` to the last item.
-                    value := sload(add(sOffset, n))
-                    popped := value
-                    if iszero(n) { break }
+                    // Mode: `pop`.
+                    if eq(mode, 2) {
+                        // Decrement and update the length.
+                        n := sub(n, 1)
+                        sstore(heap.slot, n)
+                        // Set the `value` to the last item.
+                        value := sload(add(sOffset, n))
+                        popped := value
+                        if iszero(n) { break }
+                    }
+                    // Mode: `replace`.
                     popped := sload(sOffset)
                     childPos := 1
                     break
                 }
                 // Mode: `push`.
-                // Increment and update the length.
-                pos := n
-                sstore(heap.slot, add(pos, 1))
-                childPos := add(childPos, childPos)
+                if eq(mode, 3) {
+                    // Increment and update the length.
+                    pos := n
+                    sstore(heap.slot, add(pos, 1))
+                    childPos := add(childPos, childPos)
+                    break
+                }
+                // Mode: `pushPop`.
+                popped := value
+                if iszero(n) { break }
+                let r := sload(sOffset)
+                if iszero(lt(r, value)) { break }
+                popped := r
+                childPos := 1
                 break
             }
             // Siftup.
@@ -400,29 +396,30 @@ library MinHeapLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := mload(mload(heap))
+            let data := mload(heap)
+            let n := mload(data)
             // Allocation / re-allocation logic.
-            for {} iszero(lt(n, mload(add(heap, 0x20)))) {} {
-                let oldData := mload(heap) // The old `heap.data`.
+            for {} iszero(and(n, 0x1f)) {} {
                 let cap := mload(add(heap, 0x20))
-                let fresh := iszero(cap)
-                let newCap := or(shl(5, fresh), mul(shl(1, cap), iszero(fresh)))
-                let m := mload(0x40) // Grab the free memory pointer.
-                mstore(heap, m) // Update `heap.data`.
-                mstore(m, n) // Store the length.
+                if lt(n, cap) { break }
+                let newCap := add(shl(1, cap), shl(5, iszero(cap)))
                 mstore(add(heap, 0x20), newCap) // Update `heap.capacity`.
+                let m := mload(0x40) // Grab the free memory pointer.
+                mstore(m, cap) // Store the length.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
-                codecopy(add(m, 0x20), codesize(), shl(5, newCap)) // Zeroize the `heap.data` memory.
-                if iszero(fresh) {
+                if cap {
+                    let w := not(0x1f)
                     for { let i := shl(5, cap) } 1 {} {
-                        mstore(add(m, i), mload(add(oldData, i)))
-                        i := sub(i, 0x20)
+                        mstore(add(m, i), mload(add(data, i)))
+                        i := add(i, w)
                         if iszero(i) { break }
                     }
                 }
+                mstore(heap, m) // Update `heap.data`.
+                data := m
                 break
             }
-            let sOffset := add(mload(heap), 0x20) // Array storage slot offset.
+            let sOffset := add(data, 0x20) // Array storage slot offset.
             let pos := 0
             let childPos := not(0)
             // Operations are ordered from most likely usage to least likely usage.
@@ -438,7 +435,7 @@ library MinHeapLib {
                         success := 1
                         pos := n
                         // Increment and update the length.
-                        mstore(mload(heap), add(pos, 1))
+                        mstore(data, add(pos, 1))
                         childPos := add(childPos, childPos)
                         break
                     }
@@ -450,42 +447,37 @@ library MinHeapLib {
                     popped := r
                     break
                 }
-                // Mode: `replace`.
-                if eq(mode, 1) {
+                if iszero(gt(mode, 2)) {
                     if iszero(n) { continue }
-                    popped := mload(sOffset)
-                    childPos := 1
-                    break
-                }
-                // Mode: `pushPop`.
-                if eq(mode, 2) {
-                    popped := value
-                    if iszero(n) { break }
-                    let r := mload(sOffset)
-                    if iszero(lt(r, value)) { break }
-                    popped := r
-                    childPos := 1
-                    break
-                }
-                // Mode: `pop`.
-                if eq(mode, 3) {
-                    if iszero(n) { continue }
-                    // Decrement and update the length.
-                    n := sub(n, 1)
-                    mstore(mload(heap), n)
-                    // Set the `value` to the last item.
-                    value := mload(add(sOffset, shl(5, n)))
-                    popped := value
-                    if iszero(n) { break }
+                    // Mode: `pop`.
+                    if eq(mode, 2) {
+                        // Decrement and update the length.
+                        n := sub(n, 1)
+                        mstore(data, n)
+                        // Set the `value` to the last item.
+                        value := mload(add(sOffset, shl(5, n)))
+                        popped := value
+                        if iszero(n) { break }
+                    }
+                    // Mode: `replace`.
                     popped := mload(sOffset)
                     childPos := 1
                     break
                 }
                 // Mode: `push`.
-                // Increment and update the length.
-                pos := n
-                mstore(mload(heap), add(pos, 1))
-                childPos := add(childPos, childPos)
+                if eq(mode, 3) {
+                    // Increment and update the length.
+                    pos := n
+                    mstore(data, add(pos, 1))
+                    childPos := add(childPos, childPos)
+                    break
+                }
+                // Mode: `pushPop`.
+                popped := value
+                let r := mload(sOffset)
+                if iszero(mul(n, lt(r, value))) { break }
+                popped := r
+                childPos := 1
                 break
             }
             // Siftup.
