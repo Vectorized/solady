@@ -486,8 +486,10 @@ library MinHeapLib {
                 let rightPos := add(childPos, 1)
                 let right := mload(add(sOffset, shl(5, rightPos)))
                 if iszero(gt(lt(rightPos, n), lt(child, right))) {
-                    right := child
-                    rightPos := childPos
+                    mstore(add(sOffset, shl(5, pos)), child)
+                    pos := childPos
+                    childPos := add(shl(1, pos), 1)
+                    continue
                 }
                 mstore(add(sOffset, shl(5, pos)), right)
                 pos := rightPos
