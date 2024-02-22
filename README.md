@@ -68,7 +68,7 @@ utils
 ├─ LibString — "Library for converting numbers into strings and other string operations"
 ├─ LibBitmap — "Library for storage of packed booleans"
 ├─ LibMap — "Library for storage of packed unsigned integers"
-├─ MinHeapLib — "Library for managing a min-heap in storage"
+├─ MinHeapLib — "Library for managing a min-heap in storage or memory"
 ├─ RedBlackTreeLib — "Library for managing a red-black-tree in storage"
 ├─ ReentrancyGuard — "Reentrancy guard mixin"
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
