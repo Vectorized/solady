@@ -289,7 +289,7 @@ contract MinHeapLibTest is SoladyTest {
     function testMemHeapPushAndPop(uint256) public brutalizeMemory {
         MinHeapLib.MemHeap memory heapA;
         unchecked {
-            uint256 n = _random() % 8;
+            uint256 n = _random() % 64;
             uint256[] memory a = new uint256[](n);
 
             for (uint256 i; i < n; ++i) {
@@ -309,7 +309,7 @@ contract MinHeapLibTest is SoladyTest {
         MinHeapLib.MemHeap memory heapA;
         MinHeapLib.MemHeap memory heapB;
         unchecked {
-            uint256 n = _random() % 8;
+            uint256 n = _random() % 64;
             uint256[] memory a = new uint256[](n + 1);
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
@@ -339,7 +339,7 @@ contract MinHeapLibTest is SoladyTest {
         MinHeapLib.MemHeap memory heapA;
         MinHeapLib.MemHeap memory heapB;
         unchecked {
-            uint256 n = _random() % 8 + 1;
+            uint256 n = _random() % 64 + 1;
             uint256[] memory a = new uint256[](n);
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
@@ -368,7 +368,7 @@ contract MinHeapLibTest is SoladyTest {
     function testMemHeapSmallest(uint256) public brutalizeMemory {
         MinHeapLib.MemHeap memory heapA;
         unchecked {
-            uint256 n = _random() & 15 == 0 ? _random() % 256 : _random() % 32;
+            uint256 n = _random() & 15 == 0 ? _random() % 256 : _random() % 64;
             for (uint256 i; i < n; ++i) {
                 heapA.push(_random());
             }
@@ -383,7 +383,7 @@ contract MinHeapLibTest is SoladyTest {
                     if (_random() & 1 == 0) if (heapA.length() != 0) heapA.replace(_random());
                 }
             }
-            uint256 k = _random() & 15 == 0 ? _random() % 256 : _random() % 32;
+            uint256 k = _random() & 15 == 0 ? _random() % 256 : _random() % 64;
             k = _random() & 31 == 0 ? 1 << 255 : k;
             if (_random() & 7 == 0) _brutalizeMemory();
             uint256[] memory computed = heapA.smallest(k);
@@ -409,7 +409,7 @@ contract MinHeapLibTest is SoladyTest {
     function testMemHeapEnqueue(uint256) public brutalizeMemory {
         MinHeapLib.MemHeap memory heapA;
         unchecked {
-            uint256 maxLength = _random() % 8 + 1;
+            uint256 maxLength = _random() % 64 + 1;
             uint256 m = _random() % 32 + maxLength;
             uint256[] memory a = new uint256[](m);
             uint256[] memory rejected = new uint256[](m);
@@ -448,8 +448,8 @@ contract MinHeapLibTest is SoladyTest {
         MinHeapLib.MemHeap memory heapA;
         MinHeapLib.MemHeap memory heapB;
         unchecked {
-            uint256 maxLength = _random() & 31 == 0 ? 1 << 255 : _random() % 32 + 1;
-            uint256 m = _random() % 32 + 1;
+            uint256 maxLength = _random() & 31 == 0 ? 1 << 255 : _random() % 64 + 1;
+            uint256 m = _random() % 64 + 1;
             for (uint256 i; i < m; ++i) {
                 uint256 r = _random();
                 heapA.enqueue(r, maxLength);
