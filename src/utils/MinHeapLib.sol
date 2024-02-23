@@ -481,8 +481,10 @@ library MinHeapLib {
                     break
                 }
                 // Mode: `pushPop`.
-                popped := value
-                if iszero(mul(n, lt(mload(sOffset), value))) { break }
+                if iszero(mul(n, lt(mload(sOffset), value))) {
+                    popped := value
+                    break
+                }
                 popped := mload(sOffset)
                 childPos := 1
                 break
