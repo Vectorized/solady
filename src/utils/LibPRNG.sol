@@ -196,6 +196,7 @@ library LibPRNG {
                     let v := and(m, r)
                     if iszero(lt(v, w)) {
                         r := mulmod(r, a, n)
+                        p := and(m, r)
                         result := add(result, 1000000000000000000)
                         c := 1
                         break
