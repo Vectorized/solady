@@ -419,7 +419,7 @@ library MinHeapLib {
                 data := m
                 break
             }
-            let sOffset := add(data, 0x20) // Array storage slot offset.
+            let sOffset := add(data, 0x20) // Array memory offset.
             let pos := 0
             let childPos := not(0)
             // Operations are ordered from most likely usage to least likely usage.
