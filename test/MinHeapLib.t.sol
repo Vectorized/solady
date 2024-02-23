@@ -15,8 +15,10 @@ contract MinHeapLibTest is SoladyTest {
     MinHeapLib.Heap heap1;
 
     function testHeapRoot(uint256 x) public {
-        vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-        heap0.root();
+        if (_random() % 2 == 0) {
+            vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
+            heap0.root();
+        }
         heap0.data.push(x);
         assertEq(heap0.length(), 1);
         assertEq(heap0.root(), x);
@@ -279,10 +281,37 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
+    function testHeapEnqueueZeroMaxLengthReverts(uint256) public {
+        if (_random() % 2 == 0) {
+            vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
+            heap0.enqueue(_random(), 0);
+        }
+        heap0.enqueue(_random(), 1);
+    }
+
+    function testHeapReplaceOrPopEmptyHeapReverts(uint256) public {
+        if (_random() % 2 == 0) {
+            vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
+            if (_random() % 2 == 0) {
+                heap0.replace(_random());
+            } else {
+                heap0.pop();
+            }
+        }
+        heap0.push(_random());
+        if (_random() % 2 == 0) {
+            heap0.replace(_random());
+        } else {
+            heap0.pop();
+        }
+    }
+
     function testMemHeapRoot(uint256 x) public brutalizeMemory {
         MinHeapLib.MemHeap memory heapA;
-        vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-        heapA.root();
+        if (_random() % 2 == 0) {
+            vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
+            heapA.root();
+        }
         heapA.push(x);
         assertEq(heapA.length(), 1);
         assertEq(heapA.root(), x);
@@ -471,6 +500,33 @@ contract MinHeapLibTest is SoladyTest {
             for (uint256 i; i < 64; ++i) {
                 heapA.push(i);
             }
+        }
+    }
+
+    function testMemHeapEnqueueZeroMaxLengthReverts(uint256) public {
+        MinHeapLib.MemHeap memory heapA;
+        if (_random() % 2 == 0) {
+            vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
+            heapA.enqueue(_random(), 0);
+        }
+        heapA.enqueue(_random(), 1);
+    }
+
+    function testMemHeapReplaceOrPopEmptyHeapReverts(uint256) public {
+        MinHeapLib.MemHeap memory heapA;
+        if (_random() % 2 == 0) {
+            vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
+            if (_random() % 2 == 0) {
+                heapA.replace(_random());
+            } else {
+                heapA.pop();
+            }
+        }
+        heapA.push(_random());
+        if (_random() % 2 == 0) {
+            heapA.replace(_random());
+        } else {
+            heapA.pop();
         }
     }
 
