@@ -182,31 +182,30 @@ library LibPRNG {
         assembly {
             let n := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43 // Prime.
             let a := 0x100000000000000000000000000000051 // Prime and a primitive root of `n`.
-            let m := 0xffffffffffffffffffffffffffffff
+            let m := 0x7fffffffffffffffffffffffffffffff
             let r := keccak256(prng, 0x20)
             mstore(prng, r)
-            let p := 0
-            for {} 1 {} {
-                let w := and(m, shr(120, r))
-                p := and(m, r)
-                if iszero(lt(w, p)) { break }
-                let c := 0
+            let p := and(m, r)
+            let w := and(m, shr(127, r))
+            if iszero(gt(w, p)) {
+                // Passes the Kolmogorov-Smirnov test for 200k samples.
+                // Gas usage varies, starting from about 199+ gas.
                 for {} 1 {} {
                     r := mulmod(r, a, n)
                     let v := and(m, r)
                     if iszero(lt(v, w)) {
                         r := mulmod(r, a, n)
-                        p := and(m, r)
                         result := add(result, 1000000000000000000)
-                        c := 1
-                        break
+                        w := and(m, shr(127, r))
+                        p := and(m, r)
+                        if iszero(lt(w, p)) { break }
+                        continue
                     }
-                    w := and(m, shr(120, r))
+                    w := and(m, shr(127, r))
                     if iszero(lt(w, v)) { break }
                 }
-                if iszero(c) { break }
             }
-            result := add(result, div(p, 1329227995784915873))
+            result := add(result, div(p, 170141183460469231732))
         }
     }
 }
