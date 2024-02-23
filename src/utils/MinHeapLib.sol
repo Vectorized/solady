@@ -39,14 +39,12 @@ library MinHeapLib {
     /// @dev Returns the minimum value of the heap.
     /// Reverts if the heap is empty.
     function root(Heap storage heap) internal view returns (uint256 result) {
-        /// @solidity memory-safe-assembly
         assembly {
             if iszero(sload(heap.slot)) {
                 mstore(0x00, 0xa6ca772e) // `HeapIsEmpty()`.
                 revert(0x1c, 0x04)
             }
-            mstore(0x00, heap.slot)
-            result := sload(keccak256(0x00, 0x20))
+            result := sload(add(heap.slot, 1))
         }
     }
 
