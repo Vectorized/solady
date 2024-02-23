@@ -55,11 +55,12 @@ library MinHeapLib {
     function root(MemHeap memory heap) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(mload(mload(heap))) {
+            result := mload(heap)
+            if iszero(mload(result)) {
                 mstore(0x00, 0xa6ca772e) // `HeapIsEmpty()`.
                 revert(0x1c, 0x04)
             }
-            result := mload(add(0x20, mload(heap)))
+            result := mload(add(0x20, result))
         }
     }
 
