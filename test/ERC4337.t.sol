@@ -50,7 +50,7 @@ contract ERC4337Test is SoladyTest {
     bytes32 internal constant _DOMAIN_SEP_B =
         0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
-    address internal constant _ENTRY_POINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+    address internal constant _ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
     address erc4337;
 

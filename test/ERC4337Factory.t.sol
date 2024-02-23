@@ -7,7 +7,7 @@ import {ERC4337Factory} from "../src/accounts/ERC4337Factory.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
 contract ERC4337FactoryTest is SoladyTest {
-    address internal constant _ENTRY_POINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+    address internal constant _ENTRY_POINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
     ERC4337Factory factory;
 
