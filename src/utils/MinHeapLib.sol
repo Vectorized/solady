@@ -327,7 +327,7 @@ library MinHeapLib {
                         pos := n
                         // Increment and update the length.
                         sstore(heap.slot, add(pos, 1))
-                        childPos := add(childPos, childPos)
+                        childPos := sOffset
                         break
                     }
                     let r := sload(sOffset)
@@ -359,7 +359,7 @@ library MinHeapLib {
                     // Increment and update the length.
                     pos := n
                     sstore(heap.slot, add(pos, 1))
-                    childPos := add(childPos, childPos)
+                    childPos := sOffset
                     break
                 }
                 // Mode: `pushPop`.
