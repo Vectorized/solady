@@ -214,35 +214,35 @@ library MinHeapLib {
     /// @dev Pops the minimum value from the min-heap.
     /// Reverts if the heap is empty.
     function pop(Heap storage heap) internal returns (uint256 popped) {
-        (,, popped) = _set(heap, 0, 0, 2);
+        (, popped) = _set(heap, 0, 0, 2);
     }
 
     /// @dev Pops the minimum value from the min-heap.
     /// Reverts if the heap is empty.
     function pop(MemHeap memory heap) internal pure returns (uint256 popped) {
-        (,, popped) = _set(heap, 0, 0, 2);
+        (, popped) = _set(heap, 0, 0, 2);
     }
 
     /// @dev Pushes the `value` onto the min-heap, and pops the minimum value.
     function pushPop(Heap storage heap, uint256 value) internal returns (uint256 popped) {
-        (,, popped) = _set(heap, value, 0, 4);
+        (, popped) = _set(heap, value, 0, 4);
     }
 
     /// @dev Pushes the `value` onto the min-heap, and pops the minimum value.
     function pushPop(MemHeap memory heap, uint256 value) internal pure returns (uint256 popped) {
-        (,, popped) = _set(heap, value, 0, 4);
+        (, popped) = _set(heap, value, 0, 4);
     }
 
     /// @dev Pops the minimum value, and pushes the new `value` onto the min-heap.
     /// Reverts if the heap is empty.
     function replace(Heap storage heap, uint256 value) internal returns (uint256 popped) {
-        (,, popped) = _set(heap, value, 0, 1);
+        (, popped) = _set(heap, value, 0, 1);
     }
 
     /// @dev Pops the minimum value, and pushes the new `value` onto the min-heap.
     /// Reverts if the heap is empty.
     function replace(MemHeap memory heap, uint256 value) internal pure returns (uint256 popped) {
-        (,, popped) = _set(heap, value, 0, 1);
+        (, popped) = _set(heap, value, 0, 1);
     }
 
     /// @dev Pushes the `value` onto the min-heap, and pops the minimum value
@@ -262,7 +262,12 @@ library MinHeapLib {
         internal
         returns (bool success, bool hasPopped, uint256 popped)
     {
-        (success, hasPopped, popped) = _set(heap, value, maxLength, 0);
+        (value, popped) = _set(heap, value, maxLength, 0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            hasPopped := eq(3, value)
+            success := value
+        }
     }
 
     /// @dev Pushes the `value` onto the min-heap, and pops the minimum value
@@ -283,7 +288,12 @@ library MinHeapLib {
         pure
         returns (bool success, bool hasPopped, uint256 popped)
     {
-        (success, hasPopped, popped) = _set(heap, value, maxLength, 0);
+        (value, popped) = _set(heap, value, maxLength, 0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            hasPopped := eq(3, value)
+            success := value
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -294,7 +304,7 @@ library MinHeapLib {
     /// Designed for code conciseness, bytecode compactness, and decent performance.
     function _set(Heap storage heap, uint256 value, uint256 maxLength, uint256 mode)
         private
-        returns (bool success, bool hasPopped, uint256 popped)
+        returns (uint256 status, uint256 popped)
     {
         /// @solidity memory-safe-assembly
         assembly {
@@ -313,7 +323,7 @@ library MinHeapLib {
                     if iszero(maxLength) { continue }
                     // If queue is not full.
                     if iszero(eq(n, maxLength)) {
-                        success := 1
+                        status := 1
                         pos := n
                         // Increment and update the length.
                         sstore(heap.slot, add(pos, 1))
@@ -322,8 +332,7 @@ library MinHeapLib {
                     }
                     let r := sload(sOffset)
                     if iszero(lt(r, value)) { break }
-                    success := 1
-                    hasPopped := 1
+                    status := 3
                     childPos := 1
                     popped := r
                     break
@@ -393,7 +402,7 @@ library MinHeapLib {
     function _set(MemHeap memory heap, uint256 value, uint256 maxLength, uint256 mode)
         private
         pure
-        returns (bool success, bool hasPopped, uint256 popped)
+        returns (uint256 status, uint256 popped)
     {
         /// @solidity memory-safe-assembly
         assembly {
@@ -433,7 +442,7 @@ library MinHeapLib {
                     if iszero(maxLength) { continue }
                     // If queue is not full.
                     if iszero(eq(n, maxLength)) {
-                        success := 1
+                        status := 1
                         pos := n
                         // Increment and update the length.
                         mstore(data, add(pos, 1))
@@ -442,8 +451,7 @@ library MinHeapLib {
                     }
                     let r := mload(sOffset)
                     if iszero(lt(r, value)) { break }
-                    success := 1
-                    hasPopped := 1
+                    status := 3
                     childPos := 1
                     popped := r
                     break
