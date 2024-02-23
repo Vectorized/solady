@@ -175,4 +175,37 @@ library LibPRNG {
                 shr(192, mul(s, and(m, mulmod(r3, a, n))))))), 7745966692414833770)
         }
     }
+
+    /// @dev Returns a sample from the unit exponential distribution denominated in `WAD`.
+    function exponentialWad(PRNG memory prng) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43 // Prime.
+            let a := 0x100000000000000000000000000000051 // Prime and a primitive root of `n`.
+            let m := 0xffffffffffffffffffffffffffffff
+            let r := keccak256(prng, 0x20)
+            mstore(prng, r)
+            let p := 0
+            for {} 1 {} {
+                let w := and(m, shr(120, r))
+                p := and(m, r)
+                if iszero(lt(w, p)) { break }
+                let c := 0
+                for {} 1 {} {
+                    r := mulmod(r, a, n)
+                    let v := and(m, r)
+                    if iszero(lt(v, w)) {
+                        r := mulmod(r, a, n)
+                        result := add(result, 1000000000000000000)
+                        c := 1
+                        break
+                    }
+                    w := and(m, shr(120, r))
+                    if iszero(lt(w, v)) { break }
+                }
+                if iszero(c) { break }
+            }
+            result := add(result, div(p, 1329227995784915873))
+        }
+    }
 }

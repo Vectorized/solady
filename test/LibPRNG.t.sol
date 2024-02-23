@@ -201,4 +201,36 @@ contract LibPRNGTest is SoladyTest {
             assertLt(FixedPointMathLib.abs(sd - wad), uint256(wad / 8));
         }
     }
+
+    function testExponentialWad() public {
+        LibPRNG.PRNG memory prng;
+        unchecked {
+            uint256 n = 1000;
+            int256 oldM;
+            int256 newM;
+            int256 oldS;
+            int256 newS;
+            for (uint256 i; i != n;) {
+                uint256 gasBefore = gasleft();
+                int256 x = int256(prng.exponentialWad());
+                uint256 gasUsed = gasBefore - gasleft();
+                if (++i == 1) {
+                    oldM = (newM = x);
+                } else {
+                    newM = oldM + (x - oldM) / int256(i);
+                    newS = oldS + (x - oldM) * (x - newM);
+                    oldM = newM;
+                    oldS = newS;
+                }
+                emit LogInt("exponentialWad", x);
+                emit LogUint("gasUsed", gasUsed);
+            }
+            int256 wad = int256(FixedPointMathLib.WAD);
+            emit LogInt("mean", newM);
+            int256 sd = int256(FixedPointMathLib.sqrt(uint256(newS / int256(n - 1))));
+            assertLt(FixedPointMathLib.abs(newM - wad), uint256(wad / 8));
+            emit LogInt("standard deviation", sd);
+            assertLt(FixedPointMathLib.abs(sd - wad), uint256(wad / 8));
+        }
+    }
 }
