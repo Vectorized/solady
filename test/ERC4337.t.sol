@@ -307,7 +307,7 @@ contract ERC4337Test is SoladyTest {
         vm.etch(account.entryPoint(), address(new MockEntryPoint()).code);
         MockEntryPoint ep = MockEntryPoint(payable(account.entryPoint()));
 
-        ERC4337.UserOperation memory userOp;
+        ERC4337.PackedUserOperation memory userOp;
         // Success returns 0.
         userOp.signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(
@@ -499,7 +499,7 @@ contract ERC4337Test is SoladyTest {
     }
 
     function testOwnerRecovery() public {
-        ERC4337.UserOperation memory userOp;
+        ERC4337.PackedUserOperation memory userOp;
 
         userOp.sender = address(account);
         userOp.nonce = 4337;

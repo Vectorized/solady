@@ -20,7 +20,7 @@ contract MockEntryPoint {
 
     function validateUserOp(
         address account,
-        ERC4337.UserOperation memory userOp,
+        ERC4337.PackedUserOperation memory userOp,
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) public payable returns (uint256 validationData) {
