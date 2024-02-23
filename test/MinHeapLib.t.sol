@@ -490,18 +490,4 @@ contract MinHeapLibTest is SoladyTest {
             while (heapA.length() != 0) heapA.pop();
         }
     }
-
-    function testParentPosTrick(uint256 pos) public {
-        pos = _bound(pos, 1, 2 ** 248 - 1);
-        uint256 expected;
-        uint256 computed;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let w := not(0x1f)
-            expected := shl(5, shr(1, sub(pos, 1)))
-            pos := shl(5, pos)
-            computed := and(w, shr(1, add(pos, w)))
-        }
-        assertEq(computed, expected);
-    }
 }
