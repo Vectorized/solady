@@ -408,6 +408,7 @@ library MinHeapLib {
         assembly {
             let data := mload(heap)
             let n := mload(data)
+            let w := not(0x1f)
             // Allocation / re-allocation logic.
             for {} iszero(and(n, 0x1f)) {} {
                 let cap := mload(add(heap, 0x20))
@@ -418,7 +419,6 @@ library MinHeapLib {
                 mstore(m, cap) // Store the length.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
                 if cap {
-                    let w := not(0x1f)
                     for { let i := shl(5, cap) } 1 {} {
                         mstore(add(m, i), mload(add(data, i)))
                         i := add(i, w)
@@ -429,9 +429,9 @@ library MinHeapLib {
                 data := m
                 break
             }
+            let childPos := w
             let sOffset := add(data, 0x20) // Array memory offset.
             let pos := 0
-            let childPos := not(0)
             // Operations are ordered from most likely usage to least likely usage.
             for {} 1 {
                 mstore(0x00, 0xa6ca772e) // `HeapIsEmpty()`.
@@ -452,7 +452,7 @@ library MinHeapLib {
                     let r := mload(sOffset)
                     if iszero(lt(r, value)) { break }
                     status := 3
-                    childPos := 1
+                    childPos := 0x20
                     popped := r
                     break
                 }
@@ -470,7 +470,7 @@ library MinHeapLib {
                     }
                     // Mode: `replace`.
                     popped := mload(sOffset)
-                    childPos := 1
+                    childPos := 0x20
                     break
                 }
                 // Mode: `push`.
@@ -486,34 +486,36 @@ library MinHeapLib {
                 let r := mload(sOffset)
                 if iszero(mul(n, lt(r, value))) { break }
                 popped := r
-                childPos := 1
+                childPos := 0x20
                 break
             }
+            n := shl(5, n)
+            pos := shl(5, pos)
             // Siftup.
             for {} lt(childPos, n) {} {
-                let child := mload(add(sOffset, shl(5, childPos)))
-                let rightPos := add(childPos, 1)
-                let right := mload(add(sOffset, shl(5, rightPos)))
+                let child := mload(add(sOffset, childPos))
+                let rightPos := add(childPos, 0x20)
+                let right := mload(add(sOffset, rightPos))
                 if iszero(gt(lt(rightPos, n), lt(child, right))) {
-                    mstore(add(sOffset, shl(5, pos)), child)
+                    mstore(add(sOffset, pos), child)
                     pos := childPos
-                    childPos := add(shl(1, pos), 1)
+                    childPos := add(0x20, add(pos, pos))
                     continue
                 }
-                mstore(add(sOffset, shl(5, pos)), right)
+                mstore(add(sOffset, pos), right)
                 pos := rightPos
-                childPos := add(shl(1, pos), 1)
+                childPos := add(0x20, add(pos, pos))
             }
             // Siftdown.
             for {} pos {} {
-                let parentPos := shr(1, sub(pos, 1))
-                let parent := mload(add(sOffset, shl(5, parentPos)))
+                let parentPos := and(w, shr(1, add(pos, w)))
+                let parent := mload(add(sOffset, parentPos))
                 if iszero(lt(value, parent)) { break }
-                mstore(add(sOffset, shl(5, pos)), parent)
+                mstore(add(sOffset, pos), parent)
                 pos := parentPos
             }
-            // If `childPos` has been changed from `not(0)`.
-            if add(childPos, 1) { mstore(add(sOffset, shl(5, pos)), value) }
+            // If `childPos` has been changed from `not(0x1f)`.
+            if add(childPos, 0x20) { mstore(add(sOffset, pos), value) }
         }
     }
 }
