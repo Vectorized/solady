@@ -327,7 +327,7 @@ library MinHeapLib {
                         pos := n
                         // Increment and update the length.
                         sstore(heap.slot, add(pos, 1))
-                        childPos := add(childPos, childPos)
+                        childPos := sOffset
                         break
                     }
                     let r := sload(sOffset)
@@ -359,7 +359,7 @@ library MinHeapLib {
                     // Increment and update the length.
                     pos := n
                     sstore(heap.slot, add(pos, 1))
-                    childPos := add(childPos, childPos)
+                    childPos := sOffset
                     break
                 }
                 // Mode: `pushPop`.
@@ -446,14 +446,13 @@ library MinHeapLib {
                         pos := n
                         // Increment and update the length.
                         mstore(data, add(pos, 1))
-                        childPos := add(childPos, childPos)
+                        childPos := 0xff0000000000000000
                         break
                     }
-                    let r := mload(sOffset)
-                    if iszero(lt(r, value)) { break }
+                    if iszero(lt(mload(sOffset), value)) { break }
                     status := 3
                     childPos := 1
-                    popped := r
+                    popped := mload(sOffset)
                     break
                 }
                 if iszero(gt(mode, 2)) {
@@ -478,14 +477,15 @@ library MinHeapLib {
                     // Increment and update the length.
                     pos := n
                     mstore(data, add(pos, 1))
-                    childPos := add(childPos, childPos)
+                    childPos := 0xff0000000000000000
                     break
                 }
                 // Mode: `pushPop`.
-                popped := value
-                let r := mload(sOffset)
-                if iszero(mul(n, lt(r, value))) { break }
-                popped := r
+                if iszero(mul(n, lt(mload(sOffset), value))) {
+                    popped := value
+                    break
+                }
+                popped := mload(sOffset)
                 childPos := 1
                 break
             }
@@ -513,7 +513,7 @@ library MinHeapLib {
                 pos := parentPos
             }
             // If `childPos` has been changed from `not(0)`.
-            if add(childPos, 1) { mstore(add(sOffset, shl(5, pos)), value) }
+            if iszero(shr(128, childPos)) { mstore(add(sOffset, shl(5, pos)), value) }
         }
     }
 }
