@@ -513,7 +513,7 @@ library MinHeapLib {
                 pos := parentPos
             }
             // If `childPos` has been changed from `not(0x1f)`.
-            if add(childPos, 0x20) { mstore(add(sOffset, pos), value) }
+            if iszero(shr(128, childPos)) { mstore(add(sOffset, pos), value) }
         }
     }
 }
