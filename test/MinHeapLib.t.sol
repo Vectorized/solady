@@ -372,6 +372,41 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
+    function testMemHeapPushPopLength(uint256) public brutalizeMemory {
+        MinHeapLib.MemHeap memory heapA;
+        MinHeapLib.MemHeap memory heapB;
+        unchecked {
+            uint256 heapALength;
+            uint256 heapBLength;
+            do {
+                if (_random() % 2 == 0) {
+                    if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                    heapA.push(_random());
+                    assertEq(heapA.data.length, ++heapALength);
+                    if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                }
+                if (heapALength != 0 && _random() % 2 == 0) {
+                    if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                    heapA.pop();
+                    assertEq(heapA.data.length, --heapALength);
+                    if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                }
+                if (_random() % 2 == 0) {
+                    if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                    heapB.push(_random());
+                    assertEq(heapB.data.length, ++heapBLength);
+                    if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                }
+                if (heapBLength != 0 && _random() % 2 == 0) {
+                    if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                    heapB.pop();
+                    assertEq(heapB.data.length, --heapBLength);
+                    if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                }
+            } while (_random() % 16 > 0);
+        }
+    }
+
     function testMemHeapReplace(uint256) public brutalizeMemory {
         MinHeapLib.MemHeap memory heapA;
         MinHeapLib.MemHeap memory heapB;
