@@ -64,6 +64,32 @@ library MinHeapLib {
         }
     }
 
+    /// @dev Reserves at least `minimum` slots of memory for the heap.
+    /// Helps avoid reallocation if you already know the max size of the heap.
+    function reserve(MemHeap memory heap, uint256 minimum) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if gt(minimum, mload(add(heap, 0x20))) {
+                let data := mload(heap)
+                let n := mload(data)
+                let cap := and(add(minimum, 0x1f), not(0x1f)) // Round up to multiple of 32.
+                mstore(add(heap, 0x20), cap) // Update `heap.capacity`.
+                let m := mload(0x40) // Grab the free memory pointer.
+                mstore(m, n) // Store the length.
+                mstore(0x40, add(add(m, 0x20), shl(5, cap))) // Allocate `heap.data` memory.
+                if n {
+                    let w := not(0x1f)
+                    for { let i := shl(5, n) } 1 {} {
+                        mstore(add(m, i), mload(add(data, i)))
+                        i := add(i, w)
+                        if iszero(i) { break }
+                    }
+                }
+                mstore(heap, m) // Update `heap.data`.
+            }
+        }
+    }
+
     /// @dev Returns an array of the `k` smallest items in the heap,
     /// sorted in ascending order, without modifying the heap.
     /// If the heap has less than `k` items, all items in the heap will be returned.
@@ -408,14 +434,14 @@ library MinHeapLib {
         assembly {
             let data := mload(heap)
             let n := mload(data)
-            // Allocation / re-allocation logic.
+            // Allocation / reallocation. Abuse `cap` being a multiple of 32 to early skip.
             for {} iszero(and(n, 0x1f)) {} {
                 let cap := mload(add(heap, 0x20))
                 if lt(n, cap) { break }
                 let newCap := add(shl(1, cap), shl(5, iszero(cap)))
                 mstore(add(heap, 0x20), newCap) // Update `heap.capacity`.
                 let m := mload(0x40) // Grab the free memory pointer.
-                mstore(m, cap) // Store the length.
+                mstore(m, n) // Store the length.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
                 if cap {
                     let w := not(0x1f)
