@@ -353,6 +353,8 @@ contract MinHeapLibTest is SoladyTest {
                 a[i] = r;
                 if (_random() % 16 == 0) heapA.reserve(_random() % 256);
                 heapA.push(r);
+                _checkMemory();
+                if (_random() % 32 == 0) _brutalizeMemory();
                 if (_random() % 16 == 0) heapA.reserve(_random() % 256);
             }
             LibSort.insertionSort(a);
@@ -373,9 +375,13 @@ contract MinHeapLibTest is SoladyTest {
                 uint256 r = _random();
                 if (_random() % 16 == 0) heapA.reserve(_random() % 256);
                 heapA.push(r);
+                _checkMemory();
+                if (_random() % 32 == 0) _brutalizeMemory();
                 if (_random() % 16 == 0) heapA.reserve(_random() % 256);
                 if (_random() % 16 == 0) heapB.reserve(_random() % 256);
                 heapB.push(r);
+                _checkMemory();
+                if (_random() % 32 == 0) _brutalizeMemory();
                 if (_random() % 16 == 0) heapB.reserve(_random() % 256);
                 a[i + 1] = r;
             }
