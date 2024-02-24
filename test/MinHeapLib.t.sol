@@ -70,6 +70,31 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
+    function testHeapPushPopLength(uint256) public brutalizeMemory {
+        unchecked {
+            uint256 heap0Length;
+            uint256 heap1Length;
+            do {
+                if (_random() % 2 == 0) {
+                    heap0.push(_random());
+                    assertEq(heap0.data.length, ++heap0Length);
+                }
+                if (heap0Length != 0 && _random() % 2 == 0) {
+                    heap0.pop();
+                    assertEq(heap0.data.length, --heap0Length);
+                }
+                if (_random() % 2 == 0) {
+                    heap1.push(_random());
+                    assertEq(heap1.data.length, ++heap1Length);
+                }
+                if (heap1Length != 0 && _random() % 2 == 0) {
+                    heap1.pop();
+                    assertEq(heap1.data.length, --heap1Length);
+                }
+            } while (_random() % 16 > 0);
+        }
+    }
+
     function testHeapReplace(uint256) public {
         unchecked {
             uint256 n = _random() % 8 + 1;
