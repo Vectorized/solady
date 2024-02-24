@@ -181,7 +181,7 @@ library LibPRNG {
         /// @solidity memory-safe-assembly
         assembly {
             // Passes the Kolmogorov-Smirnov test for 200k samples.
-            // Gas usage varies, starting from about 175+ gas.
+            // Gas usage varies, starting from about 172+ gas.
             let r := keccak256(prng, 0x20)
             mstore(prng, r)
             let p := shl(129, r)
@@ -193,7 +193,7 @@ library LibPRNG {
                     r := mulmod(r, a, n)
                     if iszero(lt(shl(129, r), w)) {
                         r := mulmod(r, a, n)
-                        result := add(result, 1000000000000000000)
+                        result := add(1000000000000000000, result)
                         w := shl(1, r)
                         p := shl(129, r)
                         if iszero(lt(w, p)) { break }
@@ -203,7 +203,7 @@ library LibPRNG {
                     if iszero(lt(w, shl(129, r))) { break }
                 }
             }
-            result := add(result, div(p, shl(129, 170141183460469231732)))
+            result := add(div(p, shl(129, 170141183460469231732)), result)
         }
     }
 }
