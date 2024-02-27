@@ -162,9 +162,9 @@ library LibBitmap {
         }
     }
 
-    /// @dev Returns the index of the most significant set bit before the bit at `before`.
+    /// @dev Returns the index of the most significant set bit in `[0..upTo]`.
     /// If no set bit is found, returns `NOT_FOUND`.
-    function findLastSet(Bitmap storage bitmap, uint256 before)
+    function findLastSet(Bitmap storage bitmap, uint256 upTo)
         internal
         view
         returns (uint256 setBitIndex)
@@ -174,10 +174,10 @@ library LibBitmap {
         /// @solidity memory-safe-assembly
         assembly {
             setBitIndex := not(0)
-            bucket := shr(8, before)
+            bucket := shr(8, upTo)
             mstore(0x00, bucket)
             mstore(0x20, bitmap.slot)
-            let offset := and(0xff, not(before)) // `256 - (255 & before) - 1`.
+            let offset := and(0xff, not(upTo)) // `256 - (255 & upTo) - 1`.
             bucketBits := shr(offset, shl(offset, sload(keccak256(0x00, 0x40))))
             if iszero(or(bucketBits, iszero(bucket))) {
                 for {} 1 {} {
@@ -192,7 +192,7 @@ library LibBitmap {
             setBitIndex = (bucket << 8) | LibBit.fls(bucketBits);
             /// @solidity memory-safe-assembly
             assembly {
-                setBitIndex := or(setBitIndex, sub(0, gt(setBitIndex, before)))
+                setBitIndex := or(setBitIndex, sub(0, gt(setBitIndex, upTo)))
             }
         }
     }

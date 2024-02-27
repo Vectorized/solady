@@ -245,29 +245,38 @@ contract LibBitmapTest is SoladyTest {
         }
     }
 
-    function testBitmapFindLastSet(uint256 before, uint256 randomness) public {
+    function testBitmapFindLastSet2() public {
+        unchecked {
+            assertEq(bitmap.findLastSet(100), LibBitmap.NOT_FOUND);
+            bitmap.set(0);
+            assertEq(bitmap.findLastSet(100), 0);
+            assertEq(bitmap.findLastSet(0), 0);
+        }
+    }
+
+    function testBitmapFindLastSet(uint256 upTo, uint256 randomness) public {
         uint256 n = 1000;
         unchecked {
             _resetBitmap(0, n / 256 + 1);
-            before = before % n;
+            upTo = upTo % n;
             randomness = _random() % n;
         }
         bitmap.set(randomness);
-        if (randomness <= before) {
-            assertEq(bitmap.findLastSet(before), randomness);
+        if (randomness <= upTo) {
+            assertEq(bitmap.findLastSet(upTo), randomness);
             uint256 nextLcg = _random();
             bitmap.set(nextLcg);
-            if (nextLcg <= before) {
-                assertEq(bitmap.findLastSet(before), (randomness < nextLcg ? nextLcg : randomness));
+            if (nextLcg <= upTo) {
+                assertEq(bitmap.findLastSet(upTo), (randomness < nextLcg ? nextLcg : randomness));
             }
         } else {
-            assertEq(bitmap.findLastSet(before), LibBitmap.NOT_FOUND);
+            assertEq(bitmap.findLastSet(upTo), LibBitmap.NOT_FOUND);
             uint256 nextLcg = _random();
             bitmap.set(nextLcg);
-            if (nextLcg <= before) {
-                assertEq(bitmap.findLastSet(before), nextLcg);
+            if (nextLcg <= upTo) {
+                assertEq(bitmap.findLastSet(upTo), nextLcg);
             } else {
-                assertEq(bitmap.findLastSet(before), LibBitmap.NOT_FOUND);
+                assertEq(bitmap.findLastSet(upTo), LibBitmap.NOT_FOUND);
             }
         }
     }
