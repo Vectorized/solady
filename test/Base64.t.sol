@@ -61,10 +61,10 @@ contract Base64Test is SoladyTest {
             mstore(0x00, gas())
             let r := keccak256(0x00, 0x60)
             mstore(add(output, add(0x20, n)), r)
-            mstore(add(output, add(0x40, n)), r)    
-            
+            mstore(add(output, add(0x40, n)), r)
+
             pop(staticcall(gas(), 4, input, add(0x20, n), output, add(0x20, n)))
-            
+
             mstore(0x40, add(output, add(0x40, n)))
         }
     }

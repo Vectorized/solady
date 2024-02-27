@@ -38,7 +38,7 @@ library Base64 {
                 // Skip the first slot, which stores the length.
                 let ptr := add(result, 0x20)
                 let end := add(ptr, encodedLength)
-                
+
                 let dataEnd := add(add(0x20, data), dataLength)
                 let dataEndValue := mload(dataEnd) // Cache the value at the `dataEnd` slot.
                 mstore(dataEnd, 0x00) // Zeroize the `dataEnd` slot to clear dirty bits.
