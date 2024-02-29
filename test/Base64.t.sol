@@ -49,7 +49,24 @@ contract Base64Test is SoladyTest {
     }
 
     function _testBase64Encode(string memory input, string memory output) private {
-        assertEq(Base64.encode(bytes(input)), output);
+        assertEq(Base64.encode(_withDirtyEndBits(bytes(input))), output);
+    }
+
+    function _withDirtyEndBits(bytes memory input) private view returns (bytes memory output) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            output := mload(0x40)
+            let n := mload(input)
+
+            mstore(0x00, gas())
+            let r := keccak256(0x00, 0x60)
+            mstore(add(output, add(0x20, n)), r)
+            mstore(add(output, add(0x40, n)), r)
+
+            pop(staticcall(gas(), 4, input, add(0x20, n), output, add(0x20, n)))
+
+            mstore(0x40, add(output, add(0x40, n)))
+        }
     }
 
     function testBase64EncodeDecode(bytes memory input) public {
@@ -75,6 +92,9 @@ contract Base64Test is SoladyTest {
     function testBase64EncodeDecodeAltModes(bytes memory input) public brutalizeMemory {
         for (uint256 i; i < 2; ++i) {
             _misalignFreeMemoryPointer();
+            if (_random() % 2 == 0) {
+                input = _withDirtyEndBits(input);
+            }
             string memory encoded = Base64.encode(input);
             _checkMemory(encoded);
 

@@ -39,6 +39,10 @@ library Base64 {
                 let ptr := add(result, 0x20)
                 let end := add(ptr, encodedLength)
 
+                let dataEnd := add(add(0x20, data), dataLength)
+                let dataEndValue := mload(dataEnd) // Cache the value at the `dataEnd` slot.
+                mstore(dataEnd, 0x00) // Zeroize the `dataEnd` slot to clear dirty bits.
+
                 // Run over the input, 3 bytes at a time.
                 for {} 1 {} {
                     data := add(data, 3) // Advance 3 bytes.
@@ -54,6 +58,7 @@ library Base64 {
                     ptr := add(ptr, 4) // Advance 4 bytes.
                     if iszero(lt(ptr, end)) { break }
                 }
+                mstore(dataEnd, dataEndValue) // Restore the cached value at `dataEnd`.
                 mstore(0x40, add(end, 0x20)) // Allocate the memory.
                 // Equivalent to `o = [0, 2, 1][dataLength % 3]`.
                 let o := div(2, mod(dataLength, 3))
