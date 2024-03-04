@@ -217,11 +217,34 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Sends `amount` of ERC20 `token` from `from` to `to`.
+    ///
+    /// The `from` account must have at least `amount` approved for the current contract to manage.
+    function trySafeTransferFrom(address token, address from, address to, uint256 amount)
+        internal
+        returns (bool success)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, amount) // Store the `amount` argument.
+            mstore(0x40, to) // Store the `to` argument.
+            mstore(0x2c, shl(96, from)) // Store the `from` argument.
+            mstore(0x0c, 0x23b872dd000000000000000000000000) // `transferFrom(address,address,uint256)`.
+            success :=
+                and( // The arguments of `and` are evaluated from right to left.
+                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
+                    call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
+                )
+            mstore(0x60, 0) // Restore the zero slot to zero.
+            mstore(0x40, m) // Restore the free memory pointer.
+        }
+    }
+
     /// @dev Sends all of ERC20 `token` from `from` to `to`.
     /// Reverts upon failure.
     ///
-    /// The `from` account must have their entire balance approved for
-    /// the current contract to manage.
+    /// The `from` account must have their entire balance approved for the current contract to manage.
     function safeTransferAllFrom(address token, address from, address to)
         internal
         returns (uint256 amount)
@@ -381,7 +404,7 @@ library SafeTransferLib {
             mstore(0x14, account) // Store the `account` argument.
             mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
             amount :=
-                mul(
+                mul( // The arguments of `mul` are evaluated from right to left.
                     mload(0x20),
                     and( // The arguments of `and` are evaluated from right to left.
                         gt(returndatasize(), 0x1f), // At least 32 bytes returned.
@@ -395,44 +418,33 @@ library SafeTransferLib {
     /// If the initial attempt fails, try to use Permit2 to transfer the token.
     /// Reverts upon failure.
     ///
-    /// The `from` account must have at least `amount` approved for
-    /// the current contract to manage.
+    /// The `from` account must have at least `amount` approved for the current contract to manage.
     function safeTransferFrom2(address token, address from, address to, uint256 amount) internal {
+        if (!trySafeTransferFrom(token, from, to, amount)) {
+            permit2TransferFrom(token, from, to, amount);
+        }
+    }
+
+    /// @dev Sends `amount` of ERC20 `token` from `from` to `to` via Permit2.
+    /// Reverts upon failure.
+    function permit2TransferFrom(address token, address from, address to, uint256 amount)
+        internal
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x60, amount) // Store the `amount` argument.
-            mstore(0x40, to) // Store the `to` argument.
-            mstore(0x2c, shl(96, from)) // Store the `from` argument.
-            mstore(0x0c, 0x23b872dd000000000000000000000000) // `transferFrom(address,address,uint256)`.
-            // Perform the transfer, reverting upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
-                )
-            ) {
-                if shr(160, amount) {
-                    mstore(0x00, 0x8757f0fd) // `Permit2AmountOverflow()`.
-                    revert(0x1c, 0x04)
-                }
-                mstore(m, 0x36c78516) // `transferFrom(address,address,uint160,address)`.
-                mstore(add(m, 0x20), mload(0x20)) // `from`.
-                mstore(add(m, 0x40), mload(0x40)) // `to`.
-                mstore(add(m, 0x60), amount)
-                mstore(add(m, 0x80), shr(96, shl(96, token)))
-                if iszero(
-                    mul(
-                        extcodesize(PERMIT2),
-                        call(gas(), PERMIT2, 0, add(m, 0x1c), 0x84, codesize(), 0x00)
-                    )
-                ) {
-                    mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
-                    revert(0x1c, 0x04)
-                }
+            let m := mload(0x40)
+            mstore(add(m, 0x74), shr(96, shl(96, token)))
+            mstore(add(m, 0x54), amount)
+            mstore(add(m, 0x34), to)
+            mstore(add(m, 0x20), shl(96, from))
+            // `transferFrom(address,address,uint160,address)`.
+            mstore(m, 0x36c78516000000000000000000000000)
+            let p := mul(PERMIT2, iszero(shr(160, amount)))
+            if iszero(mul(call(gas(), p, 0, add(m, 0x10), 0x84, codesize(), 0x00), extcodesize(p)))
+            {
+                mstore(0x00, 0x7939f4248757f0fd) // `TransferFromFailed()` or `Permit2AmountOverflow()`.
+                revert(add(0x18, shl(2, iszero(p))), 0x04)
             }
-            mstore(0x60, 0) // Restore the zero slot to zero.
-            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -452,25 +464,26 @@ library SafeTransferLib {
         bool success;
         /// @solidity memory-safe-assembly
         assembly {
-            if shl(96, xor(token, WETH9)) {
+            for {} shl(96, xor(token, WETH9)) {} {
                 mstore(0x00, 0x3644e515) // `DOMAIN_SEPARATOR()`.
-                success :=
-                    and(
-                        lt(iszero(mload(0x00)), eq(returndatasize(), 0x20)),
+                if iszero(
+                    and( // The arguments of `and` are evaluated from right to left.
+                        lt(iszero(mload(0x00)), eq(returndatasize(), 0x20)), // Returns 1 non-zero word.
+                        // Gas stipend to limit gas burn for tokens that don't refund gas when
+                        // an non-existing function is called. 5K should be enough for a SLOAD.
                         staticcall(5000, token, 0x1c, 0x04, 0x00, 0x20)
                     )
-            }
-            for {} success {} {
+                ) { break }
                 let m := mload(0x40)
                 mstore(add(m, 0x34), spender)
-                mstore(add(m, 0x20), shl(96, owner)) // `owner`.
+                mstore(add(m, 0x20), shl(96, owner))
+                mstore(add(m, 0x74), deadline)
                 if eq(mload(0x00), DAI_DOMAIN_SEPARATOR) {
                     mstore(0x14, owner)
                     mstore(0x00, 0x7ecebe00000000000000000000000000) // `nonces(address)`.
                     mstore(add(m, 0x94), staticcall(gas(), token, 0x10, 0x24, add(m, 0x54), 0x20))
                     mstore(m, 0x8fcbaf0c000000000000000000000000) // `IDAIPermit.permit`.
                     // `nonces` is already at `add(m, 0x54)`.
-                    mstore(add(m, 0x74), deadline)
                     // `1` is already stored at `add(m, 0x94)`.
                     mstore(add(m, 0xb4), and(0xff, v))
                     mstore(add(m, 0xd4), r)
@@ -480,7 +493,6 @@ library SafeTransferLib {
                 }
                 mstore(m, 0xd505accf000000000000000000000000) // `IERC20Permit.permit`.
                 mstore(add(m, 0x54), amount)
-                mstore(add(m, 0x74), deadline)
                 mstore(add(m, 0x94), and(0xff, v))
                 mstore(add(m, 0xb4), r)
                 mstore(add(m, 0xd4), s)
@@ -488,11 +500,7 @@ library SafeTransferLib {
                 break
             }
         }
-        if (!success) {
-            // If the initial DOMAIN_SEPARATOR call on the token failed or a
-            // subsequent call to permit failed, fall back to using Permit2.
-            simplePermit2(token, owner, spender, amount, deadline, v, r, s);
-        }
+        if (!success) simplePermit2(token, owner, spender, amount, deadline, v, r, s);
     }
 
     /// @dev Simple permit on the Permit2 contract.
@@ -508,10 +516,6 @@ library SafeTransferLib {
     ) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            if shr(160, amount) {
-                mstore(0x00, 0x8757f0fd) // `Permit2AmountOverflow()`.
-                revert(0x1c, 0x04)
-            }
             let m := mload(0x40)
             mstore(m, 0x927da105) // `allowance(address,address,address)`.
             {
@@ -521,14 +525,15 @@ library SafeTransferLib {
                 mstore(add(m, 0x60), and(addressMask, spender))
                 mstore(add(m, 0xc0), and(addressMask, spender))
             }
+            let p := mul(PERMIT2, iszero(shr(160, amount)))
             if iszero(
                 and( // The arguments of `and` are evaluated from right to left.
                     gt(returndatasize(), 0x5f), // Returns 3 words: `amount`, `expiration`, `nonce`.
-                    staticcall(gas(), PERMIT2, add(m, 0x1c), 0x64, add(m, 0x60), 0x60)
+                    staticcall(gas(), p, add(m, 0x1c), 0x64, add(m, 0x60), 0x60)
                 )
             ) {
-                mstore(0x00, 0x6b836e6b) // `Permit2Failed()`.
-                revert(0x1c, 0x04)
+                mstore(0x00, 0x6b836e6b8757f0fd) // `Permit2Failed()` or `Permit2AmountOverflow()`.
+                revert(add(0x18, shl(2, iszero(p))), 0x04)
             }
             mstore(m, 0x2b67b570) // `Permit2.permit` (PermitSingle variant).
             // `owner` is already `add(m, 0x20)`.
@@ -543,7 +548,7 @@ library SafeTransferLib {
             mstore(add(m, 0x140), r)
             mstore(add(m, 0x160), s)
             mstore(add(m, 0x180), shl(248, v))
-            if iszero(call(gas(), PERMIT2, 0, add(m, 0x1c), 0x184, codesize(), 0x00)) {
+            if iszero(call(gas(), p, 0, add(m, 0x1c), 0x184, codesize(), 0x00)) {
                 mstore(0x00, 0x6b836e6b) // `Permit2Failed()`.
                 revert(0x1c, 0x04)
             }
