@@ -79,6 +79,7 @@ library MinHeapLib {
                 let m := add(mload(0x40), 0x20)
                 mstore(m, n) // Store the length.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
+                mstore(heap, m) // Update `heap.data`.
                 if n {
                     for { let i := shl(5, n) } 1 {} {
                         mstore(add(m, i), mload(add(data, i)))
@@ -86,7 +87,6 @@ library MinHeapLib {
                         if iszero(i) { break }
                     }
                 }
-                mstore(heap, m) // Update `heap.data`.
             }
         }
     }
