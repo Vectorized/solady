@@ -467,8 +467,10 @@ library SafeTransferLib {
             for {} shl(96, xor(token, WETH9)) {} {
                 mstore(0x00, 0x3644e515) // `DOMAIN_SEPARATOR()`.
                 if iszero(
-                    and(
-                        lt(iszero(mload(0x00)), eq(returndatasize(), 0x20)),
+                    and( // The arguments of `and` are evaluated from right to left.
+                        lt(iszero(mload(0x00)), eq(returndatasize(), 0x20)), // Returns 1 non-zero word.
+                        // Gas stipend to limit gas burn for tokens that don't refund gas when
+                        // an non-existing function is called. 5K should be enough for a SLOAD.
                         staticcall(5000, token, 0x1c, 0x04, 0x00, 0x20)
                     )
                 ) { break }
