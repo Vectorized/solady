@@ -23,7 +23,6 @@ library MinHeapLib {
     /// @dev A heap in memory.
     struct MemHeap {
         uint256[] data;
-        uint256 capacity;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -69,23 +68,25 @@ library MinHeapLib {
     function reserve(MemHeap memory heap, uint256 minimum) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
-            if gt(minimum, mload(add(heap, 0x20))) {
+            let w := not(0x1f)
+            let prime := 5936628702318599
+            let cap := mload(add(mload(heap), w))
+            if gt(minimum, mul(iszero(mod(cap, prime)), div(cap, prime))) {
                 let data := mload(heap)
                 let n := mload(data)
-                let cap := and(add(minimum, 0x1f), not(0x1f)) // Round up to multiple of 32.
-                mstore(add(heap, 0x20), cap) // Update `heap.capacity`.
-                let m := mload(0x40) // Grab the free memory pointer.
+                let newCap := and(add(minimum, 0x1f), w) // Round up to multiple of 32.
+                mstore(mload(0x40), mul(newCap, prime))
+                let m := add(mload(0x40), 0x20)
                 mstore(m, n) // Store the length.
-                mstore(0x40, add(add(m, 0x20), shl(5, cap))) // Allocate `heap.data` memory.
+                mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
+                mstore(heap, m) // Update `heap.data`.
                 if n {
-                    let w := not(0x1f)
                     for { let i := shl(5, n) } 1 {} {
                         mstore(add(m, i), mload(add(data, i)))
                         i := add(i, w)
                         if iszero(i) { break }
                     }
                 }
-                mstore(heap, m) // Update `heap.data`.
             }
         }
     }
@@ -436,11 +437,13 @@ library MinHeapLib {
             let n := mload(data)
             // Allocation / reallocation. Abuse `cap` being a multiple of 32 to early skip.
             for {} iszero(and(n, 0x1f)) {} {
-                let cap := mload(add(heap, 0x20))
+                let cap := mload(sub(data, 0x20))
+                let prime := 5936628702318599
+                cap := mul(iszero(mod(cap, prime)), div(cap, prime))
                 if lt(n, cap) { break }
                 let newCap := add(shl(1, cap), shl(5, iszero(cap)))
-                mstore(add(heap, 0x20), newCap) // Update `heap.capacity`.
-                let m := mload(0x40) // Grab the free memory pointer.
+                mstore(mload(0x40), mul(newCap, prime)) // Update `heap.capacity`.
+                let m := add(mload(0x40), 0x20)
                 mstore(m, n) // Store the length.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
                 if cap {
