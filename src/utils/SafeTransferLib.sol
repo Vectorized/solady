@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Safe ETH and ERC20 transfer library that gracefully handles missing return values.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SafeTransferLib.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SafeTransferLib.sol)
+/// @author Permit2 operations from (https://github.com/Uniswap/permit2/blob/main/src/libraries/Permit2Lib.sol)
 ///
 /// @dev Note:
 /// - For ETH transfers, please use `forceSafeTransferETH` for DoS protection.
@@ -26,6 +27,12 @@ library SafeTransferLib {
     /// @dev The ERC20 `approve` has failed.
     error ApproveFailed();
 
+    /// @dev The Permit2 operation has failed.
+    error Permit2Failed();
+
+    /// @dev The Permit2 amount must be less than `2**160 - 1`.
+    error Permit2AmountOverflow();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -36,6 +43,18 @@ library SafeTransferLib {
     /// @dev Suggested gas stipend for contract receiving ETH to perform a few
     /// storage reads and writes, but low enough to prevent griefing.
     uint256 internal constant GAS_STIPEND_NO_GRIEF = 100000;
+
+    /// @dev The unique EIP-712 domain domain separator for the DAI token contract.
+    bytes32 internal constant DAI_DOMAIN_SEPARATOR =
+        0xdbb8cf42e1ecb028be3f3dbc922e1d878b963f411dc388ced501601c60f7c6f7;
+
+    /// @dev The address for the WETH9 contract on Ethereum mainnet.
+    address internal constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+
+    /// @dev The canonical Permit2 address.
+    /// [Github](https://github.com/Uniswap/permit2)
+    /// [Etherscan](https://etherscan.io/address/0x000000000022D473030F116dDEE9F6B43aC78BA3)
+    address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ETH OPERATIONS                       */
@@ -369,6 +388,165 @@ library SafeTransferLib {
                         staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
                     )
                 )
+        }
+    }
+
+    /// @dev Sends `amount` of ERC20 `token` from `from` to `to`.
+    /// If the initial attempt fails, try to use Permit2 to transfer the token.
+    /// Reverts upon failure.
+    ///
+    /// The `from` account must have at least `amount` approved for
+    /// the current contract to manage.
+    function safeTransferFrom2(address token, address from, address to, uint256 amount) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, amount) // Store the `amount` argument.
+            mstore(0x40, to) // Store the `to` argument.
+            mstore(0x2c, shl(96, from)) // Store the `from` argument.
+            mstore(0x0c, 0x23b872dd000000000000000000000000) // `transferFrom(address,address,uint256)`.
+            // Perform the transfer, reverting upon failure.
+            if iszero(
+                and( // The arguments of `and` are evaluated from right to left.
+                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
+                    call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
+                )
+            ) {
+                if shr(160, amount) {
+                    mstore(0x00, 0x8757f0fd) // `Permit2AmountOverflow()`.
+                    revert(0x1c, 0x04)
+                }
+                mstore(m, 0x36c78516) // `transferFrom(address,address,uint160,address)`.
+                mstore(add(m, 0x20), mload(0x20)) // `from`.
+                mstore(add(m, 0x40), mload(0x40)) // `to`.
+                mstore(add(m, 0x60), amount)
+                mstore(add(m, 0x80), shr(96, shl(96, token)))
+                if iszero(
+                    mul(
+                        extcodesize(PERMIT2),
+                        call(gas(), PERMIT2, 0, add(m, 0x1c), 0x84, codesize(), 0x00)
+                    )
+                ) {
+                    mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
+                    revert(0x1c, 0x04)
+                }
+            }
+            mstore(0x60, 0) // Restore the zero slot to zero.
+            mstore(0x40, m) // Restore the free memory pointer.
+        }
+    }
+
+    /// @dev Permit a user to spend a given amount of
+    /// another user's tokens via native EIP-2612 permit if possible, falling
+    /// back to Permit2 if native permit fails or is not implemented on the token.
+    function permit2(
+        address token,
+        address owner,
+        address spender,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal {
+        bool success;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if shl(96, xor(token, WETH9)) {
+                mstore(0x00, 0x3644e515) // `DOMAIN_SEPARATOR()`.
+                success :=
+                    and(
+                        lt(iszero(mload(0x00)), eq(returndatasize(), 0x20)),
+                        staticcall(5000, token, 0x1c, 0x04, 0x00, 0x20)
+                    )
+            }
+            for {} success {} {
+                let m := mload(0x40)
+                mstore(add(m, 0x34), spender)
+                mstore(add(m, 0x20), shl(96, owner)) // `owner`.
+                if eq(mload(0x00), DAI_DOMAIN_SEPARATOR) {
+                    mstore(0x14, owner)
+                    mstore(0x00, 0x7ecebe00000000000000000000000000) // `nonces(address)`.
+                    mstore(add(m, 0x94), staticcall(gas(), token, 0x10, 0x24, add(m, 0x54), 0x20))
+                    mstore(m, 0x8fcbaf0c000000000000000000000000) // `IDAIPermit.permit`.
+                    // `nonces` is already at `add(m, 0x54)`.
+                    mstore(add(m, 0x74), deadline)
+                    // `1` is already stored at `add(m, 0x94)`.
+                    mstore(add(m, 0xb4), and(0xff, v))
+                    mstore(add(m, 0xd4), r)
+                    mstore(add(m, 0xf4), s)
+                    success := call(gas(), token, 0, add(m, 0x10), 0x104, codesize(), 0x00)
+                    break
+                }
+                mstore(m, 0xd505accf000000000000000000000000) // `IERC20Permit.permit`.
+                mstore(add(m, 0x54), amount)
+                mstore(add(m, 0x74), deadline)
+                mstore(add(m, 0x94), and(0xff, v))
+                mstore(add(m, 0xb4), r)
+                mstore(add(m, 0xd4), s)
+                success := call(gas(), token, 0, add(m, 0x10), 0xe4, codesize(), 0x00)
+                break
+            }
+        }
+        if (!success) {
+            // If the initial DOMAIN_SEPARATOR call on the token failed or a
+            // subsequent call to permit failed, fall back to using Permit2.
+            simplePermit2(token, owner, spender, amount, deadline, v, r, s);
+        }
+    }
+
+    /// @dev Simple permit on the Permit2 contract.
+    function simplePermit2(
+        address token,
+        address owner,
+        address spender,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if shr(160, amount) {
+                mstore(0x00, 0x8757f0fd) // `Permit2AmountOverflow()`.
+                revert(0x1c, 0x04)
+            }
+            let m := mload(0x40)
+            mstore(m, 0x927da105) // `allowance(address,address,address)`.
+            {
+                let addressMask := shr(96, not(0))
+                mstore(add(m, 0x20), and(addressMask, owner))
+                mstore(add(m, 0x40), and(addressMask, token))
+                mstore(add(m, 0x60), and(addressMask, spender))
+                mstore(add(m, 0xc0), and(addressMask, spender))
+            }
+            if iszero(
+                and( // The arguments of `and` are evaluated from right to left.
+                    gt(returndatasize(), 0x5f), // Returns 3 words: `amount`, `expiration`, `nonce`.
+                    staticcall(gas(), PERMIT2, add(m, 0x1c), 0x64, add(m, 0x60), 0x60)
+                )
+            ) {
+                mstore(0x00, 0x6b836e6b) // `Permit2Failed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(m, 0x2b67b570) // `Permit2.permit` (PermitSingle variant).
+            // `owner` is already `add(m, 0x20)`.
+            // `token` is already at `add(m, 0x40)`.
+            mstore(add(m, 0x60), amount)
+            mstore(add(m, 0x80), 0xffffffffffff) // `expiration = type(uint48).max`.
+            // `nonce` is already at `add(m, 0xa0)`.
+            // `spender` is already at `add(m, 0xc0)`.
+            mstore(add(m, 0xe0), deadline)
+            mstore(add(m, 0x100), 0x100) // `signature` offset.
+            mstore(add(m, 0x120), 0x41) // `signature` length.
+            mstore(add(m, 0x140), r)
+            mstore(add(m, 0x160), s)
+            mstore(add(m, 0x180), shl(248, v))
+            if iszero(call(gas(), PERMIT2, 0, add(m, 0x1c), 0x184, codesize(), 0x00)) {
+                mstore(0x00, 0x6b836e6b) // `Permit2Failed()`.
+                revert(0x1c, 0x04)
+            }
         }
     }
 }

@@ -745,4 +745,34 @@ contract SafeTransferLibTest is SoladyTest {
             result := or(a, shl(160, keccak256(0x00, 0x20)))
         }
     }
+
+    function safeTransferFrom2(address token, address from, address to, uint256 amount) public {
+        SafeTransferLib.safeTransferFrom2(token, from, to, amount);
+    }
+
+    function permit2(
+        address token,
+        address owner,
+        address spender,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
+        SafeTransferLib.permit2(token, owner, spender, amount, deadline, v, r, s);
+    }
+
+    function simplePermit2(
+        address token,
+        address owner,
+        address spender,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
+        SafeTransferLib.simplePermit2(token, owner, spender, amount, deadline, v, r, s);
+    }
 }
