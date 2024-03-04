@@ -74,7 +74,7 @@ library MinHeapLib {
             if gt(minimum, mul(iszero(mod(cap, prime)), div(cap, prime))) {
                 let data := mload(heap)
                 let n := mload(data)
-                let newCap := and(add(minimum, 0x1f), not(0x1f)) // Round up to multiple of 32.
+                let newCap := and(add(minimum, 0x1f), w) // Round up to multiple of 32.
                 mstore(mload(0x40), mul(newCap, prime))
                 let m := add(mload(0x40), 0x20)
                 mstore(m, n) // Store the length.
