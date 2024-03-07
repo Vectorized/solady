@@ -87,16 +87,17 @@ library LibERC6551 {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0x8a54c52f) // `createAccount(address,bytes32,uint256,address,uint256)`.
-            mstore(add(m, 0x20), shr(96, shl(96, implementation_)))
-            mstore(add(m, 0x40), salt_)
-            mstore(add(m, 0x60), chainId_)
-            mstore(add(m, 0x80), shr(96, shl(96, tokenContract_)))
-            mstore(add(m, 0xa0), tokenId_)
+            mstore(add(m, 0x14), implementation_)
+            mstore(add(m, 0x34), salt_)
+            mstore(add(m, 0x54), chainId_)
+            mstore(add(m, 0x74), shr(96, shl(96, tokenContract_)))
+            mstore(add(m, 0x94), tokenId_)
+            // `createAccount(address,bytes32,uint256,address,uint256)`.
+            mstore(m, 0x8a54c52f000000000000000000000000)
             if iszero(
                 and(
                     gt(returndatasize(), 0x1f),
-                    call(gas(), REGISTRY, 0, add(m, 0x1c), 0xa4, 0x00, 0x20)
+                    call(gas(), REGISTRY, 0, add(m, 0x10), 0xa4, 0x00, 0x20)
                 )
             ) {
                 mstore(0x00, 0x20188a59) // `AccountCreationFailed()`.
