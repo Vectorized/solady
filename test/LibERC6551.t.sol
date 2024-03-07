@@ -67,7 +67,7 @@ contract LibERC6551Test is SoladyTest {
         );
         if (_random() % 8 == 0) _brutalizeMemory();
         if (_random() % 8 == 0) {
-            address deployed = registry.createAccount(
+            address deployed = _createAccount(
                 _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
             );
             assertEq(deployed, a);
@@ -89,16 +89,12 @@ contract LibERC6551Test is SoladyTest {
     ) public {
         if (_random() % 8 == 0) implementation = address(this);
 
-        IERC6551Registry registry = IERC6551Registry(LibERC6551.REGISTRY);
-
-        address a = registry.account(
-            _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
-        );
+        address a = _account(implementation, salt, chainId, tokenContract, tokenId);
         assertEq(LibERC6551.isERC6551Account(_brutalized(a), _brutalized(implementation)), false);
 
-        registry.createAccount(
-            _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
-        );
+        _createAccount(implementation, salt, chainId, tokenContract, tokenId);
+        assertEq(_createAccount(implementation, salt, chainId, tokenContract, tokenId), a);
+
         assertEq(LibERC6551.implementation(_brutalized(a)), _brutalized(implementation));
         assertEq(
             LibERC6551.isERC6551Account(_brutalized(a), _brutalized(implementation)),
@@ -112,6 +108,44 @@ contract LibERC6551Test is SoladyTest {
         }
         assertEq(LibERC6551.isERC6551Account(_brutalized(a), _brutalized(implementation)), false);
         _checkMemory();
+    }
+
+    function _account(
+        address implementation,
+        bytes32 salt,
+        uint256 chainId,
+        address tokenContract,
+        uint256 tokenId
+    ) internal returns (address) {
+        if (_random() % 2 == 0) {
+            return LibERC6551.account(
+                _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
+            );
+        } else {
+            IERC6551Registry registry = IERC6551Registry(LibERC6551.REGISTRY);
+            return registry.account(
+                _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
+            );
+        }
+    }
+
+    function _createAccount(
+        address implementation,
+        bytes32 salt,
+        uint256 chainId,
+        address tokenContract,
+        uint256 tokenId
+    ) internal returns (address) {
+        if (_random() % 2 == 0) {
+            return LibERC6551.createAccount(
+                _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
+            );
+        } else {
+            IERC6551Registry registry = IERC6551Registry(LibERC6551.REGISTRY);
+            return registry.createAccount(
+                _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
+            );
+        }
     }
 
     struct _TestTemps {
@@ -128,10 +162,7 @@ contract LibERC6551Test is SoladyTest {
         address tokenContract,
         uint256 tokenId
     ) public {
-        IERC6551Registry registry = IERC6551Registry(LibERC6551.REGISTRY);
-        address a = registry.createAccount(
-            _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
-        );
+        address a = _createAccount(implementation, salt, chainId, tokenContract, tokenId);
         assertEq(LibERC6551.salt(_brutalized(a)), salt);
         assertEq(LibERC6551.chainId(_brutalized(a)), chainId);
         assertEq(LibERC6551.tokenContract(_brutalized(a)), tokenContract);

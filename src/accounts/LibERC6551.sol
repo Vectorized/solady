@@ -6,6 +6,13 @@ pragma solidity ^0.8.4;
 /// @author ERC6551 team (https://github.com/erc6551/reference/blob/main/src/lib/ERC6551AccountLib.sol)
 library LibERC6551 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Failed to create a ERC6551 account via the registry.
+    error AccountCreationFailed();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -66,6 +73,37 @@ library LibERC6551 {
             mstore(add(result, 0x14), implementation_)
             mstore(result, 0x3d60ad80600a3d3981f3363d3d373d3d3d363d73)
             result := keccak256(add(result, 0x0c), 0xb7)
+        }
+    }
+
+    /// @dev Creates an account via the ERC6551 registry.
+    function createAccount(
+        address implementation_,
+        bytes32 salt_,
+        uint256 chainId_,
+        address tokenContract_,
+        uint256 tokenId_
+    ) internal returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(add(m, 0x14), implementation_)
+            mstore(add(m, 0x34), salt_)
+            mstore(add(m, 0x54), chainId_)
+            mstore(add(m, 0x74), shr(96, shl(96, tokenContract_)))
+            mstore(add(m, 0x94), tokenId_)
+            // `createAccount(address,bytes32,uint256,address,uint256)`.
+            mstore(m, 0x8a54c52f000000000000000000000000)
+            if iszero(
+                and(
+                    gt(returndatasize(), 0x1f),
+                    call(gas(), REGISTRY, 0, add(m, 0x10), 0xa4, 0x00, 0x20)
+                )
+            ) {
+                mstore(0x00, 0x20188a59) // `AccountCreationFailed()`.
+                revert(0x1c, 0x04)
+            }
+            result := mload(0x00)
         }
     }
 
