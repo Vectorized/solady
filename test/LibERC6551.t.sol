@@ -96,9 +96,28 @@ contract LibERC6551Test is SoladyTest {
         );
         assertEq(LibERC6551.isERC6551Account(_brutalized(a), _brutalized(implementation)), false);
 
-        registry.createAccount(
-            _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
-        );
+        if (_random() % 2 == 0) {
+            LibERC6551.createAccount(
+                _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
+            );
+        } else {
+            registry.createAccount(
+                _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
+            );
+        }
+
+        if (_random() % 2 == 0) {
+            address recreated = LibERC6551.createAccount(
+                _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
+            );
+            assertEq(recreated, a);
+        } else {
+            address recreated = registry.createAccount(
+                _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
+            );
+            assertEq(recreated, a);
+        }
+
         assertEq(LibERC6551.implementation(_brutalized(a)), _brutalized(implementation));
         assertEq(
             LibERC6551.isERC6551Account(_brutalized(a), _brutalized(implementation)),
