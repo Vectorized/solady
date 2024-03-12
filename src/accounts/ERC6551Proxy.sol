@@ -45,19 +45,22 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     fallback() external payable virtual {
-        uint256 implementation = _defaultImplementation;
+        uint256 implementation;
         assembly {
-            mstore(0x40, implementation) // Some optimization trick to get rid of the `6040608052`.
+            mstore(0x40, returndatasize()) // Some optimization trick to get rid of the `6040608052`.
             implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
-            // If the implementation is zero, initialize it to the default.
-            if iszero(implementation) {
-                implementation := mload(0x40)
+        }
+        if (_isZero(implementation)) {
+            implementation = _defaultImplementation;
+            assembly {
                 // Only initialize if the calldatasize is zero, so that staticcalls to
                 // functions (which will have 4-byte function selectors) won't revert.
                 // Some users may be fine without Etherscan proxy detection and thus may
                 // choose to not initialize the ERC1967 implementation slot.
                 if iszero(calldatasize()) { sstore(_ERC1967_IMPLEMENTATION_SLOT, implementation) }
             }
+        }
+        assembly {
             calldatacopy(returndatasize(), returndatasize(), calldatasize())
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), implementation,
@@ -67,6 +70,12 @@ contract ERC6551Proxy {
             }
             returndatacopy(0x00, 0x00, returndatasize())
             return(0x00, returndatasize())
+        }
+    }
+
+    function _isZero(uint256 x) internal pure returns (bool result) {
+        assembly {
+            result := iszero(x)
         }
     }
 }
