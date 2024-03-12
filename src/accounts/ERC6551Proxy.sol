@@ -45,14 +45,10 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     fallback() external payable virtual {
-        {
-            uint256 d = _defaultImplementation;
-            assembly {
-                mstore(0x40, d) // Some optimization trick to get rid of the `6040608052`.
-            }
-        }
+        uint256 implementation = _defaultImplementation;
         assembly {
-            let implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+            mstore(0x40, implementation) // Some optimization trick to get rid of the `6040608052`.
+            implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
             // If the implementation is zero, initialize it to the default.
             if iszero(implementation) {
                 implementation := mload(0x40)
@@ -70,8 +66,7 @@ contract ERC6551Proxy {
                 revert(0x00, returndatasize())
             }
             returndatacopy(0x00, 0x00, returndatasize())
-            if 1 { return(0x00, returndatasize()) } // Wrap in `if` to silence unreachable code warning.
-            pop(implementation) // Some optimization trick to get rid of a `POP` before `RETURN`.
+            return(0x00, returndatasize())
         }
     }
 }
