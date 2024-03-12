@@ -47,8 +47,8 @@ contract ERC6551Proxy {
     fallback() external payable virtual {
         bytes32 implementation;
         assembly {
-            implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
             mstore(0x40, returndatasize()) // Optimization trick to change `6040608052` into `3d604052`.
+            implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
         }
         if (implementation == bytes32(0)) {
             implementation = _defaultImplementation;
