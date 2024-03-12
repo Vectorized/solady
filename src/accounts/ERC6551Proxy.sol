@@ -21,7 +21,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The default implementation.
-    uint256 internal immutable _defaultImplementation;
+    bytes32 internal immutable _defaultImplementation;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -37,7 +37,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(address defaultImplementation) payable {
-        _defaultImplementation = uint256(uint160(defaultImplementation));
+        _defaultImplementation = bytes32(uint256(uint160(defaultImplementation)));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -45,12 +45,12 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     fallback() external payable virtual {
-        uint256 implementation;
+        bytes32 implementation;
         assembly {
-            mstore(0x40, returndatasize()) // Some optimization trick to get rid of the `6040608052`.
             implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+            mstore(0x40, returndatasize()) // Some optimization trick to get rid of the `6040608052`.
         }
-        if (_isZero(implementation)) {
+        if (implementation == bytes32(0)) {
             implementation = _defaultImplementation;
             assembly {
                 // Only initialize if the calldatasize is zero, so that staticcalls to
@@ -70,12 +70,6 @@ contract ERC6551Proxy {
             }
             returndatacopy(0x00, 0x00, returndatasize())
             return(0x00, returndatasize())
-        }
-    }
-
-    function _isZero(uint256 x) internal pure returns (bool result) {
-        assembly {
-            result := iszero(x)
         }
     }
 }
