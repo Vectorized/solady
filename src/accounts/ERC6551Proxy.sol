@@ -21,7 +21,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The default implementation.
-    uint256 internal immutable _defaultImplementation;
+    bytes32 internal immutable _defaultImplementation;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -37,7 +37,7 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(address defaultImplementation) payable {
-        _defaultImplementation = uint256(uint160(defaultImplementation));
+        _defaultImplementation = bytes32(uint256(uint160(defaultImplementation)));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -45,20 +45,23 @@ contract ERC6551Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     fallback() external payable virtual {
-        uint256 d = _defaultImplementation;
+        bytes32 implementation;
         assembly {
-            mstore(0x40, returndatasize()) // Some optimization trick.
-            calldatacopy(returndatasize(), returndatasize(), calldatasize())
-            let implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
-            // If the implementation is zero, initialize it to the default.
-            if iszero(implementation) {
-                implementation := d
+            mstore(0x40, returndatasize()) // Optimization trick to change `6040608052` into `3d604052`.
+            implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
+        }
+        if (implementation == bytes32(0)) {
+            implementation = _defaultImplementation;
+            assembly {
                 // Only initialize if the calldatasize is zero, so that staticcalls to
                 // functions (which will have 4-byte function selectors) won't revert.
                 // Some users may be fine without Etherscan proxy detection and thus may
                 // choose to not initialize the ERC1967 implementation slot.
-                if iszero(calldatasize()) { sstore(_ERC1967_IMPLEMENTATION_SLOT, d) }
+                if iszero(calldatasize()) { sstore(_ERC1967_IMPLEMENTATION_SLOT, implementation) }
             }
+        }
+        assembly {
+            calldatacopy(returndatasize(), returndatasize(), calldatasize())
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), implementation,
                 returndatasize(), calldatasize(), codesize(), returndatasize())) {
