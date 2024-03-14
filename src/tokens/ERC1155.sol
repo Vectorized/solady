@@ -186,7 +186,7 @@ abstract contract ERC1155 {
     /// - If `to` refers to a smart contract, it must implement
     ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
     ///
-    /// Emits a {Transfer} event.
+    /// Emits a {TransferSingle} event.
     function safeTransferFrom(
         address from,
         address to,
@@ -471,7 +471,7 @@ abstract contract ERC1155 {
     /// - If `to` refers to a smart contract, it must implement
     ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
     ///
-    /// Emits a {Transfer} event.
+    /// Emits a {TransferSingle} event.
     function _mint(address to, uint256 id, uint256 amount, bytes memory data) internal virtual {
         if (_useBeforeTokenTransfer()) {
             _beforeTokenTransfer(address(0), to, _single(id), _single(amount), data);
@@ -597,7 +597,7 @@ abstract contract ERC1155 {
     /// - If `by` is not the zero address, it must be either `from`,
     ///   or approved to manage the tokens of `from`.
     ///
-    /// Emits a {Transfer} event.
+    /// Emits a {TransferSingle} event.
     function _burn(address by, address from, uint256 id, uint256 amount) internal virtual {
         if (_useBeforeTokenTransfer()) {
             _beforeTokenTransfer(from, address(0), _single(id), _single(amount), "");
@@ -764,7 +764,7 @@ abstract contract ERC1155 {
     /// - If `to` refers to a smart contract, it must implement
     ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
     ///
-    /// Emits a {Transfer} event.
+    /// Emits a {TransferSingle} event.
     function _safeTransfer(
         address by,
         address from,
