@@ -361,6 +361,15 @@ contract ERC6551Test is SoladyTest {
         assertEq(calls[1].target.balance, 456);
     }
 
+    function testIsValidSigner(address signer) public {
+        _TestTemps memory t = _testTemps();
+        if (signer == t.owner) {
+            assertEq(t.account.isValidSigner(signer, _randomBytes(111)), bytes4(0x523e3260));
+        } else {
+            assertEq(t.account.isValidSigner(signer, _randomBytes(111)), bytes4(0x00000000));
+        }
+    }
+
     function testIsValidSignature() public {
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
