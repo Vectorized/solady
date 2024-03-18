@@ -172,15 +172,26 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Execute a call from this account.
+    /// Reverts and bubbles up error if operation fails.
+    /// Returns the result of the operation.
+    ///
+    /// Accounts MUST accept the following operation parameter values:
+    /// - 0 = CALL
+    /// - 1 = DELEGATECALL
+    /// - 2 = CREATE
+    /// - 3 = CREATE2
+    ///
+    /// Accounts MAY support additional operations or restrict a signer's
+    /// ability to execute certain operations.
     function execute(address target, uint256 value, bytes calldata data, uint8 operation)
         public
         payable
         virtual
         onlyValidSigner
-        onlyValidExecuteOperation(operation)
         incrementState
         returns (bytes memory result)
     {
+        if (operation != 0) revert OperationNotSupported();
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -198,15 +209,19 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     }
 
     /// @dev Execute a sequence of calls from this account.
+    /// Reverts and bubbles up error if an operation fails.
+    /// Returns the results of the operations.
+    ///
+    /// This is a batch variant of `execute` and is not required for `IERC6551Executable`.
     function executeBatch(Call[] calldata calls, uint8 operation)
         public
         payable
         virtual
         onlyValidSigner
-        onlyValidExecuteOperation(operation)
         incrementState
         returns (bytes[] memory results)
     {
+        if (operation != 0) revert OperationNotSupported();
         /// @solidity memory-safe-assembly
         assembly {
             results := mload(0x40)
@@ -233,12 +248,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
             }
             mstore(0x40, m) // Allocate the memory.
         }
-    }
-
-    /// @dev Requires that the execute `operation` is supported.
-    modifier onlyValidExecuteOperation(uint8 operation) virtual {
-        if (operation != 0) revert OperationNotSupported();
-        _;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
