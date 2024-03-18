@@ -28,11 +28,11 @@ jobs:
 
       - name: Run Tests with ${{ matrix.profile }}
         run: >
-          ( [ "${{ matrix.profile }}" = "post-shanghai" ] &&
-            forge test --use 0.8.24 --evm-version "shanghai"
+          ( [ "${{ matrix.profile }}" = "post-dencun" ] &&
+            forge test --use 0.8.25 --evm-version "dencun"
           ) ||
-          ( [ "${{ matrix.profile }}" = "post-shanghai-via-ir" ] &&
-            forge test --use 0.8.24 --evm-version "shanghai" --via-ir
+          ( [ "${{ matrix.profile }}" = "post-dencun-via-ir" ] &&
+            forge test --use 0.8.25 --evm-version "dencun" --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
             forge test --use 0.8.5 --fuzz-runs 16 &&
