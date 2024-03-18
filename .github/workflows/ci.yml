@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        profile: [post-shanghai,post-shanghai-via-ir,solc-past-versions-0,solc-past-versions-1,via-ir,min-solc,min-solc-via-ir,intense]
+        profile: [post-cancun,post-cancun-via-ir,solc-past-versions-0,solc-past-versions-1,via-ir,min-solc,min-solc-via-ir,intense]
 
     steps:
       - uses: actions/checkout@v4
@@ -28,11 +28,11 @@ jobs:
 
       - name: Run Tests with ${{ matrix.profile }}
         run: >
-          ( [ "${{ matrix.profile }}" = "post-shanghai" ] &&
-            forge test --use 0.8.24 --evm-version "shanghai"
+          ( [ "${{ matrix.profile }}" = "post-cancun" ] &&
+            forge test --use 0.8.25 --evm-version "cancun"
           ) ||
-          ( [ "${{ matrix.profile }}" = "post-shanghai-via-ir" ] &&
-            forge test --use 0.8.24 --evm-version "shanghai" --via-ir
+          ( [ "${{ matrix.profile }}" = "post-cancun-via-ir" ] &&
+            forge test --use 0.8.25 --evm-version "cancun" --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
             forge test --use 0.8.5 --fuzz-runs 16 &&

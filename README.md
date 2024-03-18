@@ -139,5 +139,5 @@ This repository is inspired by or directly modified from many sources, primarily
 [ci-shield]: https://img.shields.io/github/actions/workflow/status/vectorized/solady/ci.yml?branch=main&label=build
 [ci-url]: https://github.com/vectorized/solady/actions/workflows/ci.yml
 
-[solidity-shield]: https://img.shields.io/badge/solidity-%3E=0.8.4%20%3C=0.8.24-aa6746
+[solidity-shield]: https://img.shields.io/badge/solidity-%3E=0.8.4%20%3C=0.8.25-aa6746
 [solidity-ci-url]: https://github.com/Vectorized/solady/actions/workflows/ci-all-via-ir.yml

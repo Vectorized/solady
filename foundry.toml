@@ -4,8 +4,8 @@
 
 # The Default Profile
 [profile.default]
-solc_version = "0.8.24"
-evm_version = "paris" # Shanghai will be tested in the CI.
+solc_version = "0.8.25"
+evm_version = "paris" # Cancun will be tested in the CI.
 auto_detect_solc = false
 optimizer = true
 optimizer_runs = 1_000

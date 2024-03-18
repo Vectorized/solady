@@ -466,37 +466,32 @@ contract LibStringTest is SoladyTest {
         string memory search = _generateString("abcdefghijklmnopqrstuvwxyz");
         string memory replacement = _generateString("0123456790_-+/=|{}<>!");
         if (bytes(search).length != 0) {
-            string memory subject = string(
-                bytes.concat(
-                    bytes(filler), bytes(search), bytes(filler), bytes(search), bytes(filler)
-                )
-            );
+            string memory subject;
+            subject = LibString.concat(subject, filler);
+            subject = LibString.concat(subject, search);
+            subject = LibString.concat(subject, filler);
+            subject = LibString.concat(subject, search);
+            subject = LibString.concat(subject, filler);
             _misalignFreeMemoryPointer();
-            string memory expectedResult = string(
-                bytes.concat(
-                    bytes(filler),
-                    bytes(replacement),
-                    bytes(filler),
-                    bytes(replacement),
-                    bytes(filler)
-                )
-            );
+            string memory expectedResult;
+            expectedResult = LibString.concat(expectedResult, filler);
+            expectedResult = LibString.concat(expectedResult, replacement);
+            expectedResult = LibString.concat(expectedResult, filler);
+            expectedResult = LibString.concat(expectedResult, replacement);
+            expectedResult = LibString.concat(expectedResult, filler);
             _misalignFreeMemoryPointer();
             string memory replaced = LibString.replace(subject, search, replacement);
             _checkMemory(replaced);
             assertEq(replaced, expectedResult);
         } else {
-            string memory expectedResult = string(
-                bytes.concat(
-                    bytes(replacement),
-                    bytes(" "),
-                    bytes(replacement),
-                    bytes(" "),
-                    bytes(replacement),
-                    bytes(" "),
-                    bytes(replacement)
-                )
-            );
+            string memory expectedResult;
+            expectedResult = LibString.concat(expectedResult, replacement);
+            expectedResult = LibString.concat(expectedResult, " ");
+            expectedResult = LibString.concat(expectedResult, replacement);
+            expectedResult = LibString.concat(expectedResult, " ");
+            expectedResult = LibString.concat(expectedResult, replacement);
+            expectedResult = LibString.concat(expectedResult, " ");
+            expectedResult = LibString.concat(expectedResult, replacement);
             string memory replaced = LibString.replace("   ", search, replacement);
             assertEq(replaced, expectedResult);
         }
