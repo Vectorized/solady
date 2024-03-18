@@ -118,6 +118,26 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         return signer == owner();
     }
 
+    /// @dev Returns if `signer` is an authorized signer, with an optional `context`.
+    /// MUST return the bytes4 magic value `0x523e3260` if the given signer is valid.
+    /// By default, the holder of the non-fungible token the account is bound to
+    /// MUST be considered a valid signer.
+    function isValidSigner(address signer, bytes calldata context)
+        public
+        view
+        virtual
+        returns (bytes4 result)
+    {
+        context = context; // Silence unused variable warning.
+        bool isValid = _isValidSigner(signer);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // `success ? bytes4(keccak256("isValidSigner(address,bytes)")) : 0x00000000`.
+            // We use `0x00000000` for invalid, in convention with the reference implementation.
+            result := shl(224, mul(0x523e3260, iszero(iszero(isValid))))
+        }
+    }
+
     /// @dev Requires that the caller is a valid signer (i.e. the owner).
     modifier onlyValidSigner() virtual {
         if (!_isValidSigner(msg.sender)) revert Unauthorized();
