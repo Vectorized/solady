@@ -461,26 +461,21 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
 
-    struct _TestStringReplaceTemps {
-        string filler;
-        string search;
-        string replacement;
-        string subject;
-        string expectedResult;
-        string replaced;
-    }
-
     function testStringReplace(uint256) public brutalizeMemory {
         string memory filler = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory search = _generateString("abcdefghijklmnopqrstuvwxyz");
         string memory replacement = _generateString("0123456790_-+/=|{}<>!");
         if (bytes(search).length != 0) {
-            string memory subject = LibString.concat(filler, search);
+            string memory subject;
+            subject = LibString.concat(subject, filler);
+            subject = LibString.concat(subject, search);
             subject = LibString.concat(subject, filler);
             subject = LibString.concat(subject, search);
             subject = LibString.concat(subject, filler);
             _misalignFreeMemoryPointer();
-            string memory expectedResult = LibString.concat(filler, replacement);
+            string memory expectedResult;
+            expectedResult = LibString.concat(expectedResult, filler);
+            expectedResult = LibString.concat(expectedResult, replacement);
             expectedResult = LibString.concat(expectedResult, filler);
             expectedResult = LibString.concat(expectedResult, replacement);
             expectedResult = LibString.concat(expectedResult, filler);
