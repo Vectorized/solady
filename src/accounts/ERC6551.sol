@@ -118,9 +118,9 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         return signer == owner();
     }
 
-    /// @dev Requires that the caller is a valid signer (i.e. the owner), or the contract itself.
+    /// @dev Requires that the caller is a valid signer (i.e. the owner).
     modifier onlyValidSigner() virtual {
-        if (!_isValidSigner(msg.sender)) if (msg.sender != address(this)) revert Unauthorized();
+        if (!_isValidSigner(msg.sender)) revert Unauthorized();
         _;
     }
 
