@@ -252,8 +252,8 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         /// @solidity memory-safe-assembly
         assembly {
             let s := shr(224, interfaceId)
-            // ERC165: 0x01ffc9a7, ERC6551: 0x6faff5f1, ERC6551Executable: 0x74420f4c.
-            result := or(or(eq(s, 0x01ffc9a7), eq(s, 0x6faff5f1)), eq(s, 0x74420f4c))
+            // ERC165: 0x01ffc9a7, ERC6551: 0x6faff5f1, ERC6551Executable: 0x51945447.
+            result := or(or(eq(s, 0x01ffc9a7), eq(s, 0x6faff5f1)), eq(s, 0x51945447))
         }
     }
 
