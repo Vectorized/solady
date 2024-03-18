@@ -25,9 +25,15 @@ import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
 ///    the click on "Is this a proxy?" on the clone's page on Etherscan.
 ///
 /// Note:
-/// - ERC6551 accounts are not compatible with ERC4337
-///   (at least not without crazy hacks)
-///   due to storage access limitations during ERC4337 UserOp validation.
+/// - This implementation does NOT include ERC4337 functionality.
+///   This is intentional, because the canonical ERC4337 entry point may still change and we
+///   don't want to encourage upgradeability by default for ERC6551 accounts just to handle this.
+///   We may include ERC4337 functionality once ERC4337 has been finalized.
+///   Recent updates to the account abstraction validation scope rules
+///   [ERC7562](https://eips.ethereum.org/EIPS/eip-7562) has made ERC6551 compatible with ERC4337.
+///   For an opinionated implementation, see https://github.com/tokenbound/contracts.
+///   If you want to add it yourself, you'll just need to add in the
+///   user operation validation functionality (and use ERC6551's execution functionality).
 /// - Please refer to the official [ERC6551](https://github.com/erc6551/reference) reference
 ///   for latest updates on the ERC6551 standard, as well as canonical registry information.
 abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
