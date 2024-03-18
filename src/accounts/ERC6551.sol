@@ -25,9 +25,15 @@ import {UUPSUpgradeable} from "../utils/UUPSUpgradeable.sol";
 ///    the click on "Is this a proxy?" on the clone's page on Etherscan.
 ///
 /// Note:
-/// - ERC6551 accounts are not compatible with ERC4337
-///   (at least not without crazy hacks)
-///   due to storage access limitations during ERC4337 UserOp validation.
+/// - This implementation does NOT include ERC4337 functionality.
+///   This is intentional, because the canonical ERC4337 entry point may still change and we
+///   don't want to encourage upgradeability by default for ERC6551 accounts just to handle this.
+///   We may include ERC4337 functionality once ERC4337 has been finalized.
+///   Recent updates to the account abstraction validation scope rules
+///   [ERC7562](https://eips.ethereum.org/EIPS/eip-7562) has made ERC6551 compatible with ERC4337.
+///   For an opinionated implementation, see https://github.com/tokenbound/contracts.
+///   If you want to add it yourself, you'll just need to add in the
+///   user operation validation functionality (and use ERC6551's execution functionality).
 /// - Please refer to the official [ERC6551](https://github.com/erc6551/reference) reference
 ///   for latest updates on the ERC6551 standard, as well as canonical registry information.
 abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
@@ -172,15 +178,26 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Execute a call from this account.
+    /// Reverts and bubbles up error if operation fails.
+    /// Returns the result of the operation.
+    ///
+    /// Accounts MUST accept the following operation parameter values:
+    /// - 0 = CALL
+    /// - 1 = DELEGATECALL
+    /// - 2 = CREATE
+    /// - 3 = CREATE2
+    ///
+    /// Accounts MAY support additional operations or restrict a signer's
+    /// ability to execute certain operations.
     function execute(address target, uint256 value, bytes calldata data, uint8 operation)
         public
         payable
         virtual
         onlyValidSigner
-        onlyValidExecuteOperation(operation)
         incrementState
         returns (bytes memory result)
     {
+        if (operation != 0) revert OperationNotSupported();
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -198,15 +215,19 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     }
 
     /// @dev Execute a sequence of calls from this account.
+    /// Reverts and bubbles up error if an operation fails.
+    /// Returns the results of the operations.
+    ///
+    /// This is a batch variant of `execute` and is not required for `IERC6551Executable`.
     function executeBatch(Call[] calldata calls, uint8 operation)
         public
         payable
         virtual
         onlyValidSigner
-        onlyValidExecuteOperation(operation)
         incrementState
         returns (bytes[] memory results)
     {
+        if (operation != 0) revert OperationNotSupported();
         /// @solidity memory-safe-assembly
         assembly {
             results := mload(0x40)
@@ -235,12 +256,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         }
     }
 
-    /// @dev Requires that the execute `operation` is supported.
-    modifier onlyValidExecuteOperation(uint8 operation) virtual {
-        if (operation != 0) revert OperationNotSupported();
-        _;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERC165                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -252,8 +267,8 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         /// @solidity memory-safe-assembly
         assembly {
             let s := shr(224, interfaceId)
-            // ERC165: 0x01ffc9a7, ERC6551: 0x6faff5f1, ERC6551Executable: 0x74420f4c.
-            result := or(or(eq(s, 0x01ffc9a7), eq(s, 0x6faff5f1)), eq(s, 0x74420f4c))
+            // ERC165: 0x01ffc9a7, ERC6551: 0x6faff5f1, ERC6551Executable: 0x51945447.
+            result := or(or(eq(s, 0x01ffc9a7), eq(s, 0x6faff5f1)), eq(s, 0x51945447))
         }
     }
 

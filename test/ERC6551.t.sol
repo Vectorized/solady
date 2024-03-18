@@ -333,7 +333,7 @@ contract ERC6551Test is SoladyTest {
         _TestTemps memory t = _testTemps();
         assertTrue(t.account.supportsInterface(0x01ffc9a7));
         assertTrue(t.account.supportsInterface(0x6faff5f1));
-        assertTrue(t.account.supportsInterface(0x74420f4c));
+        assertTrue(t.account.supportsInterface(0x51945447));
         assertFalse(t.account.supportsInterface(0x00000001));
     }
 
