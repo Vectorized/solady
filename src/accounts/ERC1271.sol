@@ -98,6 +98,7 @@ abstract contract ERC1271 is EIP712 {
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
+            // We use `0xffffffff` for invalid, in convention with the reference implementation.
             result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
         }
     }

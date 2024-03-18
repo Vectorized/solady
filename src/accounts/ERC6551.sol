@@ -132,7 +132,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         bool isValid = _isValidSigner(signer);
         /// @solidity memory-safe-assembly
         assembly {
-            // `success ? bytes4(keccak256("isValidSigner(address,bytes)")) : 0x00000000`.
+            // `isValid ? bytes4(keccak256("isValidSigner(address,bytes)")) : 0x00000000`.
             // We use `0x00000000` for invalid, in convention with the reference implementation.
             result := shl(224, mul(0x523e3260, iszero(iszero(isValid))))
         }
