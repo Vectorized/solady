@@ -8,6 +8,14 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC1271.sol)
 abstract contract ERC1271 is EIP712 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    
+    /// @dev `keccak256("CoinbaseSmartWalletMessage(bytes32 hash)")`.
+    bytes32 internal constant _ERC1271_COINBASE_MESSAGE_TYPEHASH =
+        0x9b493d222105fee7df163ab5d57f0bf1ffd2da04dd5fafbe10b54c41c1adc657;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -17,6 +25,26 @@ abstract contract ERC1271 is EIP712 {
 
     /// @dev Validates the signature with ERC1271 return,
     /// so that this account can also be used as a signer.
+    ///
+    /// For maximum widespread compatibility, this will first use Solady's default workflow.
+    /// Upon failure, it will try with Coinbase wallet's workflow.
+    function isValidSignature(bytes32 hash, bytes calldata signature)
+        public
+        view
+        virtual
+        returns (bytes4 result)
+    {
+        bool success = _isValidSignatureSolady(hash, signature);
+        if (!success) success = _isValidSignatureCoinbase(hash, signature);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
+            // We use `0xffffffff` for invalid, in convention with the reference implementation.
+            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
+        }
+    }
+
+    /// @dev ERC1271 signature validation (Solady default workflow).
     ///
     /// This implementation uses ECDSA recovery. It also uses a nested EIP-712 approach to
     /// prevent signature replays when a single EOA owns multiple smart contract accounts,
@@ -57,12 +85,7 @@ abstract contract ERC1271 is EIP712 {
     /// All these are just for widespead out-of-the-box compatibility with other wallet apps.
     ///
     /// The `hash` parameter is the `childHash`.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        public
-        view
-        virtual
-        returns (bytes4 result)
-    {
+    function _isValidSignatureSolady(bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
@@ -92,14 +115,37 @@ abstract contract ERC1271 is EIP712 {
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
+        return SignatureCheckerLib.isValidSignatureNowCalldata(
             _erc1271Signer(), _hashTypedData(hash), signature
         );
+    }
+
+    /// @dev ERC1271 signature validation (Coinbase smart wallet workflow).
+    /// See: https://github.com/coinbase/smart-wallet/blob/main/src/ERC1271.sol
+    function _isValidSignatureCoinbase(bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
+        if (signature.length <= 0x5f) return false;
         /// @solidity memory-safe-assembly
         assembly {
-            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
-            // We use `0xffffffff` for invalid, in convention with the reference implementation.
-            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
+            let o := add(signature.offset, calldataload(signature.offset))
+            o := add(o, calldataload(add(o, 0x20)))
+            signature.length := calldataload(o)
+            signature.offset := add(o, 0x20)
         }
+        return SignatureCheckerLib.isValidSignatureNowCalldata(
+            _erc1271Signer(), replaySafeHash(hash), signature
+        );
+    }
+
+    /// @dev For Coinbase smart wallet SDK signature generation.
+    /// The Coinbase SDK will expect the account to implement this function
+    /// and use its result to generate the signature request.
+    function replaySafeHash(bytes32 hash) public view virtual returns (bytes32) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, _ERC1271_COINBASE_MESSAGE_TYPEHASH)
+            mstore(0x20, hash)
+            hash := keccak256(0x00, 0x40)
+        }
+        return _hashTypedData(hash);
     }
 }

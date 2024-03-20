@@ -452,6 +452,39 @@ contract ERC4337Test is SoladyTest {
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
     }
 
+    function testReplaySafeHash(bytes32 hash) public {
+        bytes32 expected = keccak256(abi.encodePacked("\x19\x01", account.DOMAIN_SEPARATOR(), keccak256(abi.encode(keccak256("CoinbaseSmartWalletMessage(bytes32 hash)"), hash))));
+        assertEq(account.replaySafeHash(hash), expected);
+    }
+
+    struct SignatureWrapper {
+        uint256 ownerIndex;
+        bytes signatureData;
+    }
+
+    function testIsValidSignatureCoinbase(bytes32 hash) public {
+        _TestTemps memory t;
+        (t.signer, t.privateKey) = _randomSigner();
+        account.initialize(t.signer);
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, account.replaySafeHash(hash));
+        SignatureWrapper memory sw; 
+        sw.ownerIndex = type(uint256).max;
+        sw.signatureData = abi.encodePacked(t.r, t.s, t.v);
+        assertEq(account.isValidSignature(hash, abi.encode(sw)), bytes4(0x1626ba7e));
+    }
+
+    function decodeSignatureCoinbase(bytes32, bytes calldata signature) public {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := add(signature.offset, calldataload(signature.offset))
+            o := add(o, calldataload(add(o, 0x20)))
+            signature.length := calldataload(o)
+            signature.offset := add(o, 0x20)
+        }
+        emit LogUint("Signature length", signature.length);
+        emit LogBytes("Signature", signature);
+    }
+
     function testETHReceived() public {
         (bool success,) = address(account).call{value: 1 ether}("");
         assertTrue(success);
