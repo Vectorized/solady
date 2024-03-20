@@ -35,8 +35,8 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bytes4 result)
     {
-        bool success = _isValidSignatureSolady(hash, signature);
-        if (!success) success = _isValidSignatureCoinbase(hash, signature);
+        bool success =
+            _isValidSignatureSolady(hash, signature) || _isValidSignatureCoinbase(hash, signature);
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
