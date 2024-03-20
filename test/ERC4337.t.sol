@@ -453,7 +453,13 @@ contract ERC4337Test is SoladyTest {
     }
 
     function testReplaySafeHash(bytes32 hash) public {
-        bytes32 expected = keccak256(abi.encodePacked("\x19\x01", account.DOMAIN_SEPARATOR(), keccak256(abi.encode(keccak256("CoinbaseSmartWalletMessage(bytes32 hash)"), hash))));
+        bytes32 expected = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                account.DOMAIN_SEPARATOR(),
+                keccak256(abi.encode(keccak256("CoinbaseSmartWalletMessage(bytes32 hash)"), hash))
+            )
+        );
         assertEq(account.replaySafeHash(hash), expected);
     }
 
@@ -467,7 +473,7 @@ contract ERC4337Test is SoladyTest {
         (t.signer, t.privateKey) = _randomSigner();
         account.initialize(t.signer);
         (t.v, t.r, t.s) = vm.sign(t.privateKey, account.replaySafeHash(hash));
-        SignatureWrapper memory sw; 
+        SignatureWrapper memory sw;
         sw.ownerIndex = type(uint256).max;
         sw.signatureData = abi.encodePacked(t.r, t.s, t.v);
         assertEq(account.isValidSignature(hash, abi.encode(sw)), bytes4(0x1626ba7e));

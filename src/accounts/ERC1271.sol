@@ -10,7 +10,7 @@ abstract contract ERC1271 is EIP712 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    
+
     /// @dev `keccak256("CoinbaseSmartWalletMessage(bytes32 hash)")`.
     bytes32 internal constant _ERC1271_COINBASE_MESSAGE_TYPEHASH =
         0x9b493d222105fee7df163ab5d57f0bf1ffd2da04dd5fafbe10b54c41c1adc657;
@@ -85,7 +85,12 @@ abstract contract ERC1271 is EIP712 {
     /// All these are just for widespead out-of-the-box compatibility with other wallet apps.
     ///
     /// The `hash` parameter is the `childHash`.
-    function _isValidSignatureSolady(bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
+    function _isValidSignatureSolady(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
@@ -122,7 +127,12 @@ abstract contract ERC1271 is EIP712 {
 
     /// @dev ERC1271 signature validation (Coinbase smart wallet workflow).
     /// See: https://github.com/coinbase/smart-wallet/blob/main/src/ERC1271.sol
-    function _isValidSignatureCoinbase(bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
+    function _isValidSignatureCoinbase(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
         if (signature.length <= 0x5f) return false;
         /// @solidity memory-safe-assembly
         assembly {
