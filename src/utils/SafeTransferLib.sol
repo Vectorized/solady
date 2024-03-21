@@ -439,11 +439,12 @@ library SafeTransferLib {
             mstore(add(m, 0x20), shl(96, from))
             // `transferFrom(address,address,uint160,address)`.
             mstore(m, 0x36c78516000000000000000000000000)
-            let p := mul(PERMIT2, iszero(shr(160, amount)))
-            if iszero(mul(call(gas(), p, 0, add(m, 0x10), 0x84, codesize(), 0x00), extcodesize(p)))
-            {
+            let p := PERMIT2
+            let exists := eq(chainid(), 1)
+            if iszero(exists) { exists := iszero(iszero(extcodesize(p))) }
+            if iszero(and(call(gas(), p, 0, add(m, 0x10), 0x84, codesize(), 0x00), exists)) {
                 mstore(0x00, 0x7939f4248757f0fd) // `TransferFromFailed()` or `Permit2AmountOverflow()`.
-                revert(add(0x18, shl(2, iszero(p))), 0x04)
+                revert(add(0x18, shl(2, iszero(iszero(shr(160, amount))))), 0x04)
             }
         }
     }
@@ -474,6 +475,7 @@ library SafeTransferLib {
                         staticcall(5000, token, 0x1c, 0x04, 0x00, 0x20)
                     )
                 ) { break }
+                // After here, we can be sure that token is a contract.
                 let m := mload(0x40)
                 mstore(add(m, 0x34), spender)
                 mstore(add(m, 0x20), shl(96, owner))
