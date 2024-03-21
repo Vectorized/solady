@@ -309,12 +309,21 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(erc20.balanceOf(to), originalBalance);
     }
 
+    function testTrySafeTransferFrom(address from, address to, uint256 amount) public {
+        uint256 balance = _random();
+        erc20.transfer(from, balance);
+        vm.prank(from);
+        erc20.approve(address(this), type(uint256).max);
+        bool result = SafeTransferLib.trySafeTransferFrom(address(erc20), from, to, amount);    
+        assertEq(result, amount <= balance);
+    }
+
     function testTransferAllFromWithStandardERC20() public {
         forceApprove(address(erc20), address(this), address(this), type(uint256).max);
         SafeTransferLib.safeTransferAllFrom(address(erc20), address(this), address(1));
     }
 
-    function testTransferAllFromWithStandardERC20(address to, address from, uint256 amount)
+    function testTransferAllFromWithStandardERC20(address from, address to, uint256 amount)
         public
     {
         SafeTransferLib.safeTransferAll(address(erc20), _brutalized(from));
