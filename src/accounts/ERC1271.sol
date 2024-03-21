@@ -128,7 +128,7 @@ abstract contract ERC1271 is EIP712 {
                     break
                 }
                 // Else, use the `personalSign` workflow.
-                // Truncate the `signature.length` by 1 word (32 bytes), until zero.
+                // If `signature.length` > 1 word (32 bytes), reduce by 1 word, else set to 0.
                 signature.length := mul(gt(signature.length, 0x20), sub(signature.length, 0x20))
                 // The `PARENT_TYPEHASH` is already at 0x40.
                 mstore(0x60, hash) // Store the `childHash`.
