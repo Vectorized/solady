@@ -378,6 +378,10 @@ contract SafeTransferLibTest is SoladyTest {
 
     function testTrySafeTransferFrom(address from, address to, uint256 amount) public {
         uint256 balance = _random();
+        while (from == address(this) || to == address(this) || from == to) {
+            from = _randomNonZeroAddress();
+            to = _randomNonZeroAddress();
+        }
         erc20.transfer(from, balance);
         vm.prank(from);
         erc20.approve(address(this), type(uint256).max);
@@ -832,6 +836,8 @@ contract SafeTransferLibTest is SoladyTest {
         address from;
         address spender;
         address to;
+        bytes32 hash;
+        IPermit2.PermitSingle permit;
     }
 
     function testPermit2() public {
@@ -839,7 +845,7 @@ contract SafeTransferLibTest is SoladyTest {
         (t.signer, t.privateKey) = _randomSigner();
         t.spender = _randomNonZeroAddress();
         t.amount = _bound(_random(), 0, type(uint160).max);
-        bytes32 hash = keccak256(
+        t.hash = keccak256(
             abi.encode(
                 _PERMIT_TYPEHASH,
                 t.signer,
@@ -849,8 +855,8 @@ contract SafeTransferLibTest is SoladyTest {
                 block.timestamp
             )
         );
-        hash = keccak256(abi.encodePacked("\x19\x01", erc20.DOMAIN_SEPARATOR(), hash));
-        (t.v, t.r, t.s) = vm.sign(t.privateKey, hash);
+        t.hash = keccak256(abi.encodePacked("\x19\x01", erc20.DOMAIN_SEPARATOR(), t.hash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
         SafeTransferLib.permit2(
             address(erc20), t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s
         );
@@ -861,7 +867,7 @@ contract SafeTransferLibTest is SoladyTest {
         (t.signer, t.privateKey) = _randomSigner();
         t.spender = _randomNonZeroAddress();
         t.amount = _bound(_random(), 0, type(uint160).max);
-        bytes32 hash = keccak256(
+        t.hash = keccak256(
             abi.encode(
                 _DAI_PERMIT_TYPEHASH,
                 t.signer,
@@ -871,8 +877,9 @@ contract SafeTransferLibTest is SoladyTest {
                 true
             )
         );
-        hash = keccak256(abi.encodePacked("\x19\x01", SafeTransferLib.DAI_DOMAIN_SEPARATOR, hash));
-        (t.v, t.r, t.s) = vm.sign(t.privateKey, hash);
+        t.hash =
+            keccak256(abi.encodePacked("\x19\x01", SafeTransferLib.DAI_DOMAIN_SEPARATOR, t.hash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
         SafeTransferLib.permit2(_DAI, t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s);
     }
 
@@ -892,20 +899,15 @@ contract SafeTransferLibTest is SoladyTest {
         vm.prank(t.signer);
         erc20.approve(_PERMIT2, type(uint256).max);
 
-        (,, uint48 nonce) = IPermit2(_PERMIT2).allowance(t.signer, address(erc20), t.spender);
+        t.permit.details.token = address(erc20);
+        t.permit.details.amount = t.amount;
+        t.permit.details.expiration = type(uint48).max;
+        (,, t.permit.details.nonce) =
+            IPermit2(_PERMIT2).allowance(t.signer, address(erc20), t.spender);
+        t.permit.spender = t.spender;
+        t.permit.sigDeadline = block.timestamp;
 
-        IPermit2.PermitSingle memory permit = IPermit2.PermitSingle({
-            details: IPermit2.PermitDetails({
-                token: address(erc20),
-                amount: t.amount,
-                expiration: type(uint48).max,
-                nonce: nonce
-            }),
-            spender: t.spender,
-            sigDeadline: block.timestamp
-        });
-        (t.v, t.r, t.s) =
-            _getPermitSignatureRaw(permit, t.privateKey, ERC20(_PERMIT2).DOMAIN_SEPARATOR());
+        _generatePermitSignatureRaw(t);
         SafeTransferLib.simplePermit2(
             address(erc20), t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s
         );
@@ -934,20 +936,15 @@ contract SafeTransferLibTest is SoladyTest {
         vm.prank(t.signer);
         erc20.approve(_PERMIT2, type(uint256).max);
 
-        (,, uint48 nonce) = IPermit2(_PERMIT2).allowance(t.signer, address(erc20), t.spender);
+        t.permit.details.token = address(erc20);
+        t.permit.details.amount = uint160(t.amount);
+        t.permit.details.expiration = type(uint48).max;
+        (,, t.permit.details.nonce) =
+            IPermit2(_PERMIT2).allowance(t.signer, address(erc20), t.spender);
+        t.permit.spender = t.spender;
+        t.permit.sigDeadline = block.timestamp;
 
-        IPermit2.PermitSingle memory permit = IPermit2.PermitSingle({
-            details: IPermit2.PermitDetails({
-                token: address(erc20),
-                amount: uint160(t.amount),
-                expiration: type(uint48).max,
-                nonce: nonce
-            }),
-            spender: t.spender,
-            sigDeadline: block.timestamp
-        });
-        (t.v, t.r, t.s) =
-            _getPermitSignatureRaw(permit, t.privateKey, ERC20(_PERMIT2).DOMAIN_SEPARATOR());
+        _generatePermitSignatureRaw(t);
         SafeTransferLib.simplePermit2(
             address(erc20), t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s
         );
@@ -968,20 +965,15 @@ contract SafeTransferLibTest is SoladyTest {
         vm.prank(t.signer);
         erc20.approve(_PERMIT2, type(uint256).max);
 
-        (,, uint48 nonce) = IPermit2(_PERMIT2).allowance(t.signer, address(erc20), t.spender);
+        t.permit.details.token = address(erc20);
+        t.permit.details.amount = uint160(t.amount);
+        t.permit.details.expiration = type(uint48).max;
+        (,, t.permit.details.nonce) =
+            IPermit2(_PERMIT2).allowance(t.signer, address(erc20), t.spender);
+        t.permit.spender = t.spender;
+        t.permit.sigDeadline = block.timestamp;
 
-        IPermit2.PermitSingle memory permit = IPermit2.PermitSingle({
-            details: IPermit2.PermitDetails({
-                token: address(erc20),
-                amount: uint160(t.amount),
-                expiration: type(uint48).max,
-                nonce: nonce
-            }),
-            spender: t.spender,
-            sigDeadline: block.timestamp
-        });
-        (t.v, t.r, t.s) =
-            _getPermitSignatureRaw(permit, t.privateKey, ERC20(_PERMIT2).DOMAIN_SEPARATOR());
+        _generatePermitSignatureRaw(t);
         SafeTransferLib.simplePermit2(
             address(erc20), t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s
         );
@@ -1002,44 +994,29 @@ contract SafeTransferLibTest is SoladyTest {
         vm.prank(t.signer);
         erc20.approve(_PERMIT2, type(uint256).max);
 
-        (,, uint48 nonce) = IPermit2(_PERMIT2).allowance(t.signer, address(erc20), t.spender);
+        t.permit.details.token = address(erc20);
+        t.permit.details.amount = t.amount;
+        t.permit.details.expiration = type(uint48).max;
+        (,, t.permit.details.nonce) =
+            IPermit2(_PERMIT2).allowance(t.signer, address(erc20), t.spender);
+        t.permit.spender = t.spender;
+        t.permit.sigDeadline = block.timestamp;
 
-        IPermit2.PermitSingle memory permit = IPermit2.PermitSingle({
-            details: IPermit2.PermitDetails({
-                token: address(erc20),
-                amount: t.amount,
-                expiration: type(uint48).max,
-                nonce: nonce
-            }),
-            spender: t.spender,
-            sigDeadline: block.timestamp
-        });
-        (t.v, t.r, t.s) =
-            _getPermitSignatureRaw(permit, t.privateKey, ERC20(_PERMIT2).DOMAIN_SEPARATOR());
+        _generatePermitSignatureRaw(t);
         vm.expectRevert(SafeTransferLib.Permit2AmountOverflow.selector);
         this.simplePermit2(
             address(erc20), t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s
         );
     }
 
-    function _getPermitSignatureRaw(
-        IPermit2.PermitSingle memory permit,
-        uint256 privateKey,
-        bytes32 domainSeparator
-    ) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
-        bytes32 permitHash = keccak256(abi.encode(_PERMIT_DETAILS_TYPEHASH, permit.details));
-        bytes32 msgHash = keccak256(
-            abi.encodePacked(
-                "\x19\x01",
-                domainSeparator,
-                keccak256(
-                    abi.encode(
-                        _PERMIT_SINGLE_TYPEHASH, permitHash, permit.spender, permit.sigDeadline
-                    )
-                )
-            )
+    function _generatePermitSignatureRaw(_TestTemps memory t) internal view {
+        bytes32 domainSeparator = ERC20(_PERMIT2).DOMAIN_SEPARATOR();
+        t.hash = keccak256(abi.encode(_PERMIT_DETAILS_TYPEHASH, t.permit.details));
+        t.hash = keccak256(
+            abi.encode(_PERMIT_SINGLE_TYPEHASH, t.hash, t.permit.spender, t.permit.sigDeadline)
         );
-        (v, r, s) = vm.sign(privateKey, msgHash);
+        t.hash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, t.hash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
     }
 
     function permit2TransferFrom(address token, address from, address to, uint256 amount) public {
