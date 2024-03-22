@@ -102,6 +102,8 @@ abstract contract ERC1271 is EIP712 {
     /// - https://github.com/junomonster/nested-eip-712
     /// - https://github.com/frangio/eip712-wrapper-for-eip1271
     ///
+    /// Their nomenclature may differ from ours, although the high-level idea is similar.
+    ///
     /// Of course, if you are a wallet app maker and can update your app's UI at will,
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
