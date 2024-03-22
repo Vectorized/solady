@@ -71,13 +71,16 @@ abstract contract ERC1271 is EIP712 {
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
-    ///             child: hashStruct(originalStruct),
-    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct))
+    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
+    ///             child: hashStruct(originalStruct)
     ///         }))
     ///     )
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
-    /// The signature will be `r || s || v || PARENT_TYPEHASH || DOMAIN_SEP_B || child`.
+    /// The order of Parent's fields is important: `childHash` comes before `child`.
+    ///
+    /// The signature will be `r || s || v || PARENT_TYPEHASH || DOMAIN_SEP_B || child`,
+    /// where `child` is the bytes32 struct hash of the original struct.
     ///
     /// The `DOMAIN_SEP_B` and `child` will be used to verify if `childHash` is indeed correct.
     /// __________________________________________________________________________________________
