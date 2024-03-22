@@ -836,6 +836,7 @@ contract SafeTransferLibTest is SoladyTest {
         address from;
         address spender;
         address to;
+        uint256 nonce;
         bytes32 hash;
         IPermit2.PermitSingle permit;
     }
@@ -845,15 +846,9 @@ contract SafeTransferLibTest is SoladyTest {
         (t.signer, t.privateKey) = _randomSigner();
         t.spender = _randomNonZeroAddress();
         t.amount = _bound(_random(), 0, type(uint160).max);
+        t.nonce = erc20.nonces(t.signer);
         t.hash = keccak256(
-            abi.encode(
-                _PERMIT_TYPEHASH,
-                t.signer,
-                t.spender,
-                t.amount,
-                erc20.nonces(t.signer),
-                block.timestamp
-            )
+            abi.encode(_PERMIT_TYPEHASH, t.signer, t.spender, t.amount, t.nonce, block.timestamp)
         );
         t.hash = keccak256(abi.encodePacked("\x19\x01", erc20.DOMAIN_SEPARATOR(), t.hash));
         (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
@@ -867,20 +862,14 @@ contract SafeTransferLibTest is SoladyTest {
         (t.signer, t.privateKey) = _randomSigner();
         t.spender = _randomNonZeroAddress();
         t.amount = _bound(_random(), 0, type(uint160).max);
+        t.nonce = ERC20(_DAI).nonces(t.signer);
         t.hash = keccak256(
-            abi.encode(
-                _DAI_PERMIT_TYPEHASH,
-                t.signer,
-                t.spender,
-                ERC20(_DAI).nonces(t.signer),
-                block.timestamp,
-                true
-            )
+            abi.encode(_DAI_PERMIT_TYPEHASH, t.signer, t.spender, t.nonce, block.timestamp, true)
         );
         t.hash =
             keccak256(abi.encodePacked("\x19\x01", SafeTransferLib.DAI_DOMAIN_SEPARATOR, t.hash));
         (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
-        SafeTransferLib.permit2(_DAI, t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s);
+        this.permit2(_DAI, t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s);
     }
 
     function testSimplePermit2AndPermit2TransferFrom() public {
@@ -908,7 +897,7 @@ contract SafeTransferLibTest is SoladyTest {
         t.permit.sigDeadline = block.timestamp;
 
         _generatePermitSignatureRaw(t);
-        SafeTransferLib.simplePermit2(
+        this.simplePermit2(
             address(erc20), t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s
         );
         t.to = _randomNonZeroAddress();
@@ -945,7 +934,7 @@ contract SafeTransferLibTest is SoladyTest {
         t.permit.sigDeadline = block.timestamp;
 
         _generatePermitSignatureRaw(t);
-        SafeTransferLib.simplePermit2(
+        this.simplePermit2(
             address(erc20), t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s
         );
         t.to = _randomNonZeroAddress();
@@ -974,7 +963,7 @@ contract SafeTransferLibTest is SoladyTest {
         t.permit.sigDeadline = block.timestamp;
 
         _generatePermitSignatureRaw(t);
-        SafeTransferLib.simplePermit2(
+        this.simplePermit2(
             address(erc20), t.signer, t.spender, t.amount, block.timestamp, t.v, t.r, t.s
         );
         t.to = _randomNonZeroAddress();
@@ -1027,29 +1016,37 @@ contract SafeTransferLibTest is SoladyTest {
         SafeTransferLib.safeTransferFrom2(token, from, to, amount);
     }
 
-    function permit2(
-        address token,
-        address owner,
-        address spender,
-        uint256 amount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public {
-        SafeTransferLib.permit2(token, owner, spender, amount, deadline, v, r, s);
+    function permit2(address, address, address, uint256, uint256, uint8, bytes32, bytes32) public {
+        SafeTransferLib.permit2(
+            address(uint160(_calldataload(0x04))),
+            address(uint160(_calldataload(0x24))),
+            address(uint160(_calldataload(0x44))),
+            _calldataload(0x64),
+            _calldataload(0x84),
+            uint8(_calldataload(0xa4)),
+            bytes32(_calldataload(0xc4)),
+            bytes32(_calldataload(0xe4))
+        );
     }
 
-    function simplePermit2(
-        address token,
-        address owner,
-        address spender,
-        uint256 amount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public {
-        SafeTransferLib.simplePermit2(token, owner, spender, amount, deadline, v, r, s);
+    function simplePermit2(address, address, address, uint256, uint256, uint8, bytes32, bytes32)
+        public
+    {
+        SafeTransferLib.simplePermit2(
+            address(uint160(_calldataload(0x04))),
+            address(uint160(_calldataload(0x24))),
+            address(uint160(_calldataload(0x44))),
+            _calldataload(0x64),
+            _calldataload(0x84),
+            uint8(_calldataload(0xa4)),
+            bytes32(_calldataload(0xc4)),
+            bytes32(_calldataload(0xe4))
+        );
+    }
+
+    function _calldataload(uint256 offset) private pure returns (uint256 value) {
+        assembly {
+            value := calldataload(offset)
+        }
     }
 }
