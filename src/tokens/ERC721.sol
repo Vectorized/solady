@@ -666,7 +666,7 @@ abstract contract ERC721 {
     /// - If `by` is not the zero address, `by` must be the owner
     ///   or an approved operator for the token owner.
     ///
-    /// Emits a {Transfer} event.
+    /// Emits a {Approval} event.
     function _approve(address by, address account, uint256 id) internal virtual {
         assembly {
             // Clear the upper 96 bits.
