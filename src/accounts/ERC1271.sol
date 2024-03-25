@@ -92,15 +92,15 @@ abstract contract ERC1271 is EIP712 {
             calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child's structHash.
             mstore(0x00, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x00.
             for {} 1 {} {
-                // Use the nested EIP-712 workflow if the reconstructed childHash matches,
+                // Use the nested EIP-712 workflow if the reconstructed `childHash` matches,
                 // and the signature is at least 96 bytes long.
                 if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
                     // Truncate the `signature.length` by 3 words (96 bytes).
                     signature.length := sub(signature.length, 0x60)
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
-                    // The child's structHash is already at 0x40.
-                    hash := keccak256(0x00, 0x60) // Compute the parent's structHash.
+                    // The `child` struct hash is already at 0x40.
+                    hash := keccak256(0x00, 0x60) // Compute the `parent` struct hash.
                     break
                 }
                 // Else, use the `personalSign` workflow.
@@ -108,7 +108,7 @@ abstract contract ERC1271 is EIP712 {
                 signature.length := mul(gt(signature.length, 0x20), sub(signature.length, 0x20))
                 // The `PARENT_TYPEHASH` is already at 0x40.
                 mstore(0x60, hash) // Store the `childHash`.
-                hash := keccak256(0x40, 0x40) // Compute the parent's structHash.
+                hash := keccak256(0x40, 0x40) // Compute the `parent` struct hash.
                 mstore(0x60, 0) // Restore the zero pointer.
                 break
             }
@@ -136,8 +136,8 @@ abstract contract ERC1271 is EIP712 {
     /// The `child` parameter is the struct hash of the original struct:
     /// `hashStruct(originalStruct)`.
     ///
-    /// If `child` is `bytes32(0)`, this method will return the replay safe hash
-    /// for the `personalSign` workflow.
+    /// If `child` is `bytes32(0)`, this method returns the replay safe hash for the
+    /// `personalSign` workflow, else the replay safe hash for the nested EIP-712 workflow.
     function replaySafeHash(bytes32 hash, bytes32 parentTypehash, bytes32 child)
         public
         view
