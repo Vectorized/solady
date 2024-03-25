@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Input hash helper for predeploy smart accounts using Solady ERC1271.
+/// @notice Deployless input hash generator for predeploy smart accounts using Solady ERC1271.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC1271InputGenerator.sol)
 /// @author Coinbase (https://github.com/coinbase/smart-wallet/blob/main/src/utils/ERC1271InputGenerator.sol)
 ///
@@ -10,7 +10,7 @@ pragma solidity ^0.8.4;
 /// only mock deployed and used via a static `eth_call`.
 ///
 /// For a minimal compilation:
-/// `solc src/accounts/ERC1271InputGenerator.sol  --bin --optimize  --optimize-runs=1 --no-cbor-metadata`.
+/// `solc src/accounts/ERC1271InputGenerator.sol --bin --optimize  --optimize-runs=1 --no-cbor-metadata`.
 ///
 /// May be useful for generating ERC-6492 compliant signatures.
 /// Inspired by Ambire's DeploylessUniversalSigValidator
