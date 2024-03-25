@@ -170,7 +170,7 @@ ERC1155Test:testSafeTransferFromToRevertingERC1155RecipientReverts(uint256) (run
 ERC1155Test:testSafeTransferFromToWrongReturnDataERC1155RecipientReverts(uint256) (runs: 268, μ: 273032, ~: 272654)
 ERC1155Test:testSafeTransferFromToZeroReverts(uint256) (runs: 268, μ: 70776, ~: 70216)
 ERC1155Test:test__codesize() (gas: 43403)
-ERC1271InputGeneratorTest:testERC1271Input(bytes32,bytes32) (runs: 268, μ: 158609, ~: 158574)
+ERC1271InputGeneratorTest:testERC1271Input(bytes32,bytes32) (runs: 268, μ: 158605, ~: 158574)
 ERC1271InputGeneratorTest:test__codesize() (gas: 16561)
 ERC1967FactoryTest:testChangeAdmin() (gas: 266356)
 ERC1967FactoryTest:testChangeAdminUnauthorized() (gas: 257316)

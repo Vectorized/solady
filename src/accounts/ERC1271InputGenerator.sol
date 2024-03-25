@@ -75,6 +75,8 @@ contract ERC1271InputGenerator {
                 mstore(0x00, 0xfac5869a) // `InvalidReturnedHash()`.
                 revert(0x1c, 0x04)
             }
+            // The contract bytecode must start with 0, which essentially prefixes the
+            // contract with STOP, as the starting byte of the hash may be an invalid opcode.
             mstore(0x00, 0x00)
             return(0x00, 0x40)
         }
