@@ -124,4 +124,44 @@ abstract contract ERC1271 is EIP712 {
             result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
         }
     }
+
+    /// @dev Returns the replay safe hash used for the signature in `isValidSignature`.
+    ///
+    /// The `hash` parameter is the `childHash`:
+    /// `keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct))`.
+    ///
+    /// The `parentTypehash` is the `PARENT_TYPEHASH` for the `Parent` struct,
+    /// which will be provided by the front end.
+    ///
+    /// The `child` parameter is the struct hash of the original struct:
+    /// `hashStruct(originalStruct)`.
+    ///
+    /// If `child` is `bytes32(0)`, this method will return the replay safe hash
+    /// for the `personalSign` workflow.
+    function replaySafeHash(bytes32 hash, bytes32 parentTypehash, bytes32 child)
+        public
+        view
+        virtual
+        returns (bytes32)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, parentTypehash)
+            mstore(0x20, hash)
+            for {} 1 {} {
+                // `personalSign` workflow.
+                if iszero(child) {
+                    hash := keccak256(0x00, 0x40)
+                    break
+                }
+                // Nested EIP-712 workflow.
+                let m := mload(0x40) // Cache the free memory pointer.
+                mstore(0x40, child)
+                hash := keccak256(0x00, 0x60)
+                mstore(0x40, m) // Restore the free memory pointer.
+                break
+            }
+        }
+        return _hashTypedData(hash);
+    }
 }
