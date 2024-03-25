@@ -9,7 +9,7 @@ pragma solidity ^0.8.4;
 /// This contract is not meant to ever actually be deployed,
 /// only mock deployed and used via a static `eth_call`.
 ///
-/// For a minimal compilation:
+/// For a minimal bytecode compilation:
 /// `solc src/accounts/ERC1271InputGenerator.sol --bin --optimize  --optimize-runs=1 --no-cbor-metadata`.
 ///
 /// May be useful for generating ERC-6492 compliant signatures.
