@@ -30,6 +30,7 @@ The Solidity smart contracts are located in the `src` directory.
 accounts
 ├─ Receiver — "Receiver mixin for ETH and safe-transferred ERC721 and ERC1155 tokens"
 ├─ ERC1271 — "ERC1271 mixin with nested EIP-712 approach"
+├─ ERC1271InputGenerator — "Deployless ERC1271 input hash generator for predeploy accounts"
 ├─ ERC4337 — "Simple ERC4337 account implementation"
 ├─ ERC4337Factory — "Simple ERC4337 account factory implementation"
 ├─ ERC6551 — "Simple ERC6551 account implementation"
