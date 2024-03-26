@@ -92,10 +92,15 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
                 )
             );
         }
-        bytes memory initcode = abi.encodePacked(
-            _CREATION_CODE,
-            abi.encode(target, targetQueryCalldata, address(factory), factoryCalldata)
-        );
+        bytes memory args =
+            abi.encode(target, targetQueryCalldata, address(factory), factoryCalldata);
+        bytes memory initcode;
+        if (_random() % 2 == 0) {
+            initcode = _CREATION_CODE;
+        } else {
+            initcode = type(DeploylessPredeployQueryer).creationCode;
+        }
+        initcode = abi.encodePacked(initcode, args);
         /// @solidity memory-safe-assembly
         assembly {
             result := create(0, add(0x20, initcode), mload(initcode))
