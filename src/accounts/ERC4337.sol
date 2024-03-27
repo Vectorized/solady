@@ -143,7 +143,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     ///
     /// The actual nonce uniqueness is managed by the EntryPoint, and thus no other
     /// action is needed by the account itself.
-    function _validateNonce(uint256 nonce) internal virtual {}
+    function _validateNonce(uint256) internal virtual {}
 
     /// @dev Sends to the EntryPoint (i.e. `msg.sender`) the missing funds for this transaction.
     /// Subclass MAY override this modifier for better funds management.
