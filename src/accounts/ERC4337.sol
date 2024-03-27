@@ -36,7 +36,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         bytes callData;
         bytes32 accountGasLimits;
         uint256 preVerificationGas;
-        bytes32 gasFees; // `maxPriorityFee` and `maxFeePerGas`.
+        bytes32 gasFees;
         bytes paymasterAndData;
         bytes signature;
     }
@@ -52,7 +52,8 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    constructor() {
+    /// @dev Deploys this ERC4337 account implementation and disables initialization (see below).
+    constructor() payable {
         _disableERC4337ImplementationInitializer();
     }
 
@@ -79,7 +80,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*                        ENTRY POINT                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the canonical ERC4337 EntryPoint contract.
+    /// @dev Returns the canonical ERC4337 EntryPoint contract (0.7).
     /// Override this function to return a different EntryPoint.
     function entryPoint() public view virtual returns (address) {
         return 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
@@ -109,18 +110,18 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         payPrefund(missingAccountFunds)
         returns (uint256 validationData)
     {
-        validationData = _validateSignature(userOp, userOpHash);
+        validationData = _validateSignature(userOpHash, userOp.signature);
         _validateNonce(userOp.nonce);
     }
 
     /// @dev Validate `userOp.signature` for the `userOpHash`.
-    function _validateSignature(PackedUserOperation calldata userOp, bytes32 userOpHash)
+    function _validateSignature(bytes32 userOpHash, bytes calldata signature)
         internal
         virtual
         returns (uint256 validationData)
     {
         bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), SignatureCheckerLib.toEthSignedMessageHash(userOpHash), userOp.signature
+            owner(), SignatureCheckerLib.toEthSignedMessageHash(userOpHash), signature
         );
         /// @solidity memory-safe-assembly
         assembly {
@@ -142,9 +143,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     ///
     /// The actual nonce uniqueness is managed by the EntryPoint, and thus no other
     /// action is needed by the account itself.
-    function _validateNonce(uint256 nonce) internal virtual {
-        nonce = nonce; // Silence unused variable warning.
-    }
+    function _validateNonce(uint256) internal virtual {}
 
     /// @dev Sends to the EntryPoint (i.e. `msg.sender`) the missing funds for this transaction.
     /// Subclass MAY override this modifier for better funds management.
@@ -166,7 +165,15 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
 
     /// @dev Requires that the caller is the EntryPoint.
     modifier onlyEntryPoint() virtual {
-        if (msg.sender != entryPoint()) revert Unauthorized();
+        address ep = entryPoint();
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the caller is not the EntryPoint, revert.
+            if iszero(eq(caller(), ep)) {
+                mstore(0x00, 0x82b42900) // `Unauthorized()`.
+                revert(0x1c, 0x04)
+            }
+        }
         _;
     }
 
@@ -335,14 +342,14 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         address ep = entryPoint();
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x20, address()) // Store the `account` argument.
-            mstore(0x00, 0x70a08231) // `balanceOf(address)`.
+            mstore(0x14, address()) // Store the `account` argument.
+            mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
             result :=
                 mul( // Returns 0 if the EntryPoint does not exist.
                     mload(0x20),
                     and( // The arguments of `and` are evaluated from right to left.
                         gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), ep, 0x1c, 0x24, 0x20, 0x20)
+                        staticcall(gas(), ep, 0x10, 0x24, 0x20, 0x20)
                     )
                 )
         }
