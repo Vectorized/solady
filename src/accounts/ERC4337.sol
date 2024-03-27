@@ -36,7 +36,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         bytes callData;
         bytes32 accountGasLimits;
         uint256 preVerificationGas;
-        bytes32 gasFees; // `maxPriorityFee` and `maxFeePerGas`.
+        bytes32 gasFees;
         bytes paymasterAndData;
         bytes signature;
     }
@@ -52,7 +52,8 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    constructor() {
+    /// @dev Deploys this ERC4337 account implementation and disables initialization (see below).
+    constructor() payable {
         _disableERC4337ImplementationInitializer();
     }
 
@@ -79,7 +80,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*                        ENTRY POINT                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the canonical ERC4337 EntryPoint contract.
+    /// @dev Returns the canonical ERC4337 EntryPoint contract (0.7).
     /// Override this function to return a different EntryPoint.
     function entryPoint() public view virtual returns (address) {
         return 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
