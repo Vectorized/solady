@@ -110,12 +110,12 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         payPrefund(missingAccountFunds)
         returns (uint256 validationData)
     {
-        validationData = _validateSignature(userOp.signature, userOpHash);
+        validationData = _validateSignature(userOpHash, userOp.signature);
         _validateNonce(userOp.nonce);
     }
 
     /// @dev Validate `userOp.signature` for the `userOpHash`.
-    function _validateSignature(bytes calldata signature, bytes32 userOpHash)
+    function _validateSignature(bytes32 userOpHash, bytes calldata signature)
         internal
         virtual
         returns (uint256 validationData)
