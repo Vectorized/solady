@@ -167,7 +167,15 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
 
     /// @dev Requires that the caller is the EntryPoint.
     modifier onlyEntryPoint() virtual {
-        if (msg.sender != entryPoint()) revert Unauthorized();
+        address ep = entryPoint();
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the caller is not the EntryPoint, revert.
+            if iszero(eq(caller(), ep)) {
+                mstore(0x00, 0x82b42900) // `Unauthorized()`.
+                revert(0x1c, 0x04)
+            }
+        }
         _;
     }
 
