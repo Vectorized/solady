@@ -32,12 +32,12 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     struct PackedUserOperation {
         address sender;
         uint256 nonce;
-        bytes initCode;
+        bytes initCode; // Factory address and `factoryData` (or empty).
         bytes callData;
-        bytes32 accountGasLimits;
+        bytes32 accountGasLimits; // `verificationGas` (16 bytes) and `callGas` (16 bytes).
         uint256 preVerificationGas;
-        bytes32 gasFees;
-        bytes paymasterAndData;
+        bytes32 gasFees; // `maxPriorityFee` (16 bytes) and `maxFeePerGas` (16 bytes).
+        bytes paymasterAndData; // Paymaster fields (or empty).
         bytes signature;
     }
 
