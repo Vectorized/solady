@@ -19,6 +19,8 @@ import {SignatureCheckerLib, ERC1271} from "../accounts/ERC1271.sol";
 ///
 /// Note:
 /// ERC4337 is a very complicated standard with many potential gotchas.
+/// Also, it is subject to change and has not been finalized
+/// (so accounts are encouraged to be upgradeable).
 /// Usually, ERC4337 account implementations are developed by companies with ample funds
 /// for security reviews. This implementation is intended to serve as a base reference
 /// for smart account developers working in such companies. If you are using this
@@ -32,12 +34,12 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     struct PackedUserOperation {
         address sender;
         uint256 nonce;
-        bytes initCode;
+        bytes initCode; // Factory address and `factoryData` (or empty).
         bytes callData;
-        bytes32 accountGasLimits;
+        bytes32 accountGasLimits; // `verificationGas` (16 bytes) and `callGas` (16 bytes).
         uint256 preVerificationGas;
-        bytes32 gasFees; // `maxPriorityFee` and `maxFeePerGas`.
-        bytes paymasterAndData;
+        bytes32 gasFees; // `maxPriorityFee` (16 bytes) and `maxFeePerGas` (16 bytes).
+        bytes paymasterAndData; // Paymaster fields (or empty).
         bytes signature;
     }
 
@@ -52,7 +54,8 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    constructor() {
+    /// @dev Deploys this ERC4337 account implementation and disables initialization (see below).
+    constructor() payable {
         _disableERC4337ImplementationInitializer();
     }
 
@@ -79,7 +82,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /*                        ENTRY POINT                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the canonical ERC4337 EntryPoint contract.
+    /// @dev Returns the canonical ERC4337 EntryPoint contract (0.7).
     /// Override this function to return a different EntryPoint.
     function entryPoint() public view virtual returns (address) {
         return 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
