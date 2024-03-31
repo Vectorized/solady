@@ -19,6 +19,8 @@ import {SignatureCheckerLib, ERC1271} from "../accounts/ERC1271.sol";
 ///
 /// Note:
 /// ERC4337 is a very complicated standard with many potential gotchas.
+/// Also, it is subject to change and has not been finalized
+/// (so accounts are encouraged to be upgradeable).
 /// Usually, ERC4337 account implementations are developed by companies with ample funds
 /// for security reviews. This implementation is intended to serve as a base reference
 /// for smart account developers working in such companies. If you are using this
