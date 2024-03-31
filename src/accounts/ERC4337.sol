@@ -110,18 +110,18 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         payPrefund(missingAccountFunds)
         returns (uint256 validationData)
     {
-        validationData = _validateSignature(userOpHash, userOp.signature);
+        validationData = _validateSignature(userOp, userOpHash);
         _validateNonce(userOp.nonce);
     }
 
     /// @dev Validate `userOp.signature` for the `userOpHash`.
-    function _validateSignature(bytes32 userOpHash, bytes calldata signature)
+    function _validateSignature(PackedUserOperation calldata userOp, bytes32 userOpHash)
         internal
         virtual
         returns (uint256 validationData)
     {
         bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
-            owner(), SignatureCheckerLib.toEthSignedMessageHash(userOpHash), signature
+            owner(), SignatureCheckerLib.toEthSignedMessageHash(userOpHash), userOp.signature
         );
         /// @solidity memory-safe-assembly
         assembly {
@@ -143,7 +143,9 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     ///
     /// The actual nonce uniqueness is managed by the EntryPoint, and thus no other
     /// action is needed by the account itself.
-    function _validateNonce(uint256) internal virtual {}
+    function _validateNonce(uint256 nonce) internal virtual {
+        nonce = nonce; // Silence unused variable warning.
+    }
 
     /// @dev Sends to the EntryPoint (i.e. `msg.sender`) the missing funds for this transaction.
     /// Subclass MAY override this modifier for better funds management.
