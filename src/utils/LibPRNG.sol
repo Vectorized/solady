@@ -10,8 +10,14 @@ library LibPRNG {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The lazy shuffler length must be greater than zero and less than `2**32 - 1`.
-    error InvalidLazyShufflerLength();
+    /// @dev The initial length must be greater than zero and less than `2**32 - 1`.
+    error InvalidInitialLazyShufflerLength();
+
+    /// @dev The new length must not be less than the current length.
+    error InvalidNewLazyShufflerLength();
+
+    /// @dev The lazy shuffler has not been initialized.
+    error LazyShufflerNotInitialized();
 
     /// @dev Cannot double initialize the lazy shuffler.
     error LazyShufflerAlreadyInitialized();
@@ -248,12 +254,12 @@ library LibPRNG {
     /// @dev Initializes the state for lazy-shuffling the range `[0..n)`.
     /// Reverts if `n == 0 || n >= 2**32 - 1`.
     /// Reverts if `$` has already been initialized.
-    /// If you need to change the length after initialization, just use a fresh new `$`.
+    /// If you need to reduce the length after initialization, just use a fresh new `$`.
     function initialize(LazyShuffler storage $, uint256 n) internal {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(sub(n, 1), 0xfffffffe)) {
-                mstore(0x00, 0xd6db60d3) // `InvalidLazyShufflerLength()`.
+                mstore(0x00, 0x83b53941) // `InvalidInitialLazyShufflerLength()`.
                 revert(0x1c, 0x04)
             }
             if sload($.slot) {
@@ -265,6 +271,25 @@ library LibPRNG {
         }
     }
 
+    /// @dev Increases the length of `$`.
+    /// Reverts if `$` has not been initialized.
+    function grow(LazyShuffler storage $, uint256 n) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let state := sload($.slot) // The packed value at `$`.
+            // If the new length is smaller than the old length, revert.
+            if lt(n, shr(224, state)) {
+                mstore(0x00, 0xbed37c6e) // `InvalidNewLazyShufflerLength()`.
+                revert(0x1c, 0x04)
+            }
+            if iszero(state) {
+                mstore(0x00, 0x1ead2566) // `LazyShufflerNotInitialized()`.
+                revert(0x1c, 0x04)
+            }
+            sstore($.slot, or(shl(224, n), shr(32, shl(32, state))))
+        }
+    }
+
     /// @dev Restarts the shuffler by setting `numShuffled` to zero,
     /// such that all elements can be drawn again.
     /// Restarting does NOT clear the internal permutation, nor changes the length.
@@ -272,7 +297,12 @@ library LibPRNG {
     function restart(LazyShuffler storage $) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            sstore($.slot, shl(32, shr(32, sload($.slot))))
+            let state := sload($.slot)
+            if iszero(state) {
+                mstore(0x00, 0x1ead2566) // `LazyShufflerNotInitialized()`.
+                revert(0x1c, 0x04)
+            }
+            sstore($.slot, shl(32, shr(32, state)))
         }
     }
 
@@ -285,7 +315,7 @@ library LibPRNG {
     }
 
     /// @dev Returns the length of `$`.
-    /// Returns zero if `$` is uninitialized, else a non-zero value less than `2**32 - 1`.
+    /// Returns zero if `$` is not initialized, else a non-zero value less than `2**32 - 1`.
     function length(LazyShuffler storage $) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -302,10 +332,15 @@ library LibPRNG {
     }
 
     /// @dev Returns if there are any more elements left to shuffle.
+    /// Reverts if `$` is not initialized.
     function finished(LazyShuffler storage $) internal view returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
             let state := sload($.slot) // The packed value at `$`.
+            if iszero(state) {
+                mstore(0x00, 0x1ead2566) // `LazyShufflerNotInitialized()`.
+                revert(0x1c, 0x04)
+            }
             result := eq(shr(224, state), and(0xffffffff, state))
         }
     }
@@ -333,7 +368,7 @@ library LibPRNG {
     /// @dev Does a single Fisher-Yates shuffle step, increments the `numShuffled` in `$`,
     /// and returns the next value in the shuffled range.
     /// `randomness` can be taken from a good-enough source, or a higher quality source like VRF.
-    /// Reverts if there are no more values to shuffle, which includes the case if `$` is uninitialized.
+    /// Reverts if there are no more values to shuffle, which includes the case if `$` is not initialized.
     function next(LazyShuffler storage $, uint256 randomness) internal returns (uint256 chosen) {
         /// @solidity memory-safe-assembly
         assembly {

@@ -242,7 +242,7 @@ contract LibPRNGTest is SoladyTest {
         if (_random() % 8 == 0) {
             _brutalizeMemory();
         }
-        _lazyShuffler0.initialize(uint32(n));
+        _lazyShuffler0.initialize(n);
         assertEq(_lazyShuffler0.length(), n);
         assertEq(_lazyShuffler0.numShuffled(), 0);
         if (_random() % 8 == 0) {
@@ -251,7 +251,6 @@ contract LibPRNGTest is SoladyTest {
         assertEq(_lazyShuffler0.initialized(), true);
         assertEq(_lazyShuffler1.initialized(), false);
         assertEq(_lazyShuffler0.finished(), false);
-        assertEq(_lazyShuffler1.finished(), true);
         uint256[] memory outputs = new uint256[](n);
         unchecked {
             for (uint256 i; i != n; ++i) {
@@ -272,7 +271,6 @@ contract LibPRNGTest is SoladyTest {
             assertEq(_lazyShuffler0.finished(), true);
         }
         assertEq(_lazyShuffler0.finished(), true);
-        assertEq(_lazyShuffler1.finished(), true);
     }
 
     function testLazyShufflerProducesShuffledRange2() public {
@@ -300,6 +298,32 @@ contract LibPRNGTest is SoladyTest {
                 }
             }
         }
+    }
+
+    function testLazyShufflerProducesShuffledRangeWithGrow(uint256 n, uint256 nGrow) public {
+        n = _bound(n, 1, 32);
+        nGrow = n + _bound(nGrow, 0, 32);
+        _lazyShuffler0.initialize(n);
+        uint256[] memory outputs = new uint256[](nGrow);
+        unchecked {
+            uint256 i;
+            while (i != n) {
+                outputs[i] = _lazyShuffler0.next(_random());
+                ++i;
+                if (_random() % 8 == 0) break;
+            }
+            _lazyShuffler0.grow(nGrow);
+            while (i != nGrow) {
+                outputs[i] = _lazyShuffler0.next(_random());
+                ++i;
+            }
+            LibSort.sort(outputs);
+            for (i = 0; i != nGrow; ++i) {
+                assertEq(outputs[i], i);
+            }
+            assertEq(_lazyShuffler0.finished(), true);
+        }
+        assertEq(_lazyShuffler0.finished(), true);
     }
 
     function testLazyShufflerNoStorageCollisions() public {
@@ -335,23 +359,23 @@ contract LibPRNGTest is SoladyTest {
         uint256[] memory outputs1 = new uint256[](32);
         unchecked {
             for (uint256 i; i != 16; ++i) {
-                assertEq(this.lazyShuffler0Get(i), i);
+                assertEq(_lazyShuffler0.get(i), i);
             }
             for (uint256 i; i != 16; ++i) {
                 outputs0[i] = _lazyShuffler0.next(_random());
             }
             for (uint256 i; i != 32; ++i) {
-                assertEq(this.lazyShuffler1Get(i), i);
+                assertEq(_lazyShuffler1.get(i), i);
             }
             for (uint256 i; i != 32; ++i) {
                 assertEq(_lazyShuffler1.finished(), false);
                 outputs1[i] = _lazyShuffler1.next(_random());
             }
             for (uint256 i; i != 16; ++i) {
-                assertEq(this.lazyShuffler0Get(i), outputs0[i]);
+                assertEq(_lazyShuffler0.get(i), outputs0[i]);
             }
             for (uint256 i; i != 32; ++i) {
-                assertEq(this.lazyShuffler1Get(i), outputs1[i]);
+                assertEq(_lazyShuffler1.get(i), outputs1[i]);
             }
         }
     }
@@ -397,9 +421,19 @@ contract LibPRNGTest is SoladyTest {
     function testLazyShufflerRevertsOnInitWithInvalidLength(uint256 n) public {
         n = _bound(n, 0, 2 ** 32 + 1);
         if (n == 0 || n >= 2 ** 32 - 1) {
-            vm.expectRevert(LibPRNG.InvalidLazyShufflerLength.selector);
+            vm.expectRevert(LibPRNG.InvalidInitialLazyShufflerLength.selector);
         }
         this.lazyShufflerInitialize(n);
+    }
+
+    function testLazyShufflerRevertsOnGrowWithInvalidLength(uint256 n, uint256 nGrow) public {
+        n = _bound(n, 1, 2 ** 32 - 2);
+        this.lazyShufflerInitialize(n);
+        nGrow = _bound(n, 0, 2 ** 32 - 2);
+        if (nGrow < n) {
+            vm.expectRevert(LibPRNG.InvalidNewLazyShufflerLength.selector);
+        }
+        this.lazyShufflerGrow(n);
     }
 
     function testLazyShufflerRevertsOnDoubleInit() public {
@@ -415,7 +449,7 @@ contract LibPRNGTest is SoladyTest {
 
     function testLazyShufflerRevertsOnFinshedNext(uint256 n) public {
         n = _bound(n, 1, 3);
-        _lazyShuffler0.initialize(uint32(n));
+        _lazyShuffler0.initialize(n);
         unchecked {
             for (uint256 i; i != n; ++i) {
                 lazyShufflerNext(_random());
@@ -427,6 +461,10 @@ contract LibPRNGTest is SoladyTest {
 
     function lazyShufflerInitialize(uint256 n) public {
         _lazyShuffler0.initialize(n);
+    }
+
+    function lazyShufflerGrow(uint256 n) public {
+        _lazyShuffler0.grow(n);
     }
 
     function lazyShufflerNext(uint256 randomness) public returns (uint256) {
