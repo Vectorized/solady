@@ -292,7 +292,7 @@ contract LibPRNGTest is SoladyTest {
                         m *= 2;
                         break;
                     }
-                }    
+                }
             }
         }
     }

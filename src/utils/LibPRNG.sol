@@ -282,7 +282,7 @@ library LibPRNG {
         }
     }
 
-    /// @dev Returns the length of `$`. 
+    /// @dev Returns the length of `$`.
     /// Returns zero if `$` is uninitialized, else a non-zero value less than `2**32 - 1`.
     function length(LazyShuffler storage $) internal view returns (uint32 result) {
         /// @solidity memory-safe-assembly
@@ -335,7 +335,7 @@ library LibPRNG {
             let remainder := sub(shr(224, state), shuffled) // Number of elements left to shuffle.
             if iszero(remainder) {
                 mstore(0x00, 0x51065f79) // `LazyShuffleFinished()`.
-                revert(0x1c, 0x04)    
+                revert(0x1c, 0x04)
             }
             let index := add(mod(randomness, remainder), shuffled) // Random chosen index.
             let u32 := gt(shr(224, state), 0xfffd)
