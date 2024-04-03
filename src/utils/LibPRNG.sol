@@ -310,6 +310,9 @@ library LibPRNG {
     /// @dev Does a single Fisher-Yates shuffle step, increments the `numShuffled` in `$`,
     /// and returns the next value in the shuffled range.
     /// Reverts if there are no more values to shuffle.
+    ///
+    /// Depending on the desired balance between unpredictability and performance,
+    /// `randomness` can be taken from a higher quality source (VRF).
     function next(LazyShuffler storage $, uint256 randomness) internal returns (uint256 chosen) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -336,7 +339,8 @@ library LibPRNG {
                 mstore(0x00, 0x51065f79) // `LazyShuffleFinished()`.
                 revert(0x1c, 0x04)
             }
-            let index := add(mod(randomness, remainder), shuffled) // Random chosen index.
+            mstore(0x00, randomness)
+            let index := add(mod(keccak256(0x00, 0x20), remainder), shuffled)
             chosen := _get(gt(n, 0xfffe), state, index)
             _set(gt(n, 0xfffe), state, index, _get(gt(n, 0xfffe), state, shuffled))
             _set(gt(n, 0xfffe), state, shuffled, chosen)
