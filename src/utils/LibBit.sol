@@ -53,37 +53,17 @@ library LibBit {
     function ffs(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-
-            // Get a 6-bit pattern
-            // then
+            // Isolate the least significant bit.
             x := and(x, add(not(x), 1))
 
-            // Get first 3 bits of c, with an extra bit so that c=256 when x=0.
-            // 6-bit pattern is shifted so all 256 bits are addressed
-            //then
-            // Store bits in r, shifted to their correct position
+            // For the first 3 bits, use a De Bruijn-like lookup.
+            // forgefmt: disable-next-item
             r := shl(5,shr(252,shl(shl(2,shr(250,mul(x,0xb6db6db6ddddddddd34d34d349249249210842108c6318c639ce739cffffffff))),0x8040405543005266443200005020610674053026020000107506200176117077)))
 
-            // Get last 5 bits of c (regular deBruijn lookup)
-            // r := or(r, byte(and(div(0xd76453e0, shr(r, x)), 0x1f),
-            // 0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
-            r := or(r, byte(shr(251, mul(shr(r, x), shl(224, 0x077cb531))), 
-            0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09))
-        
-
-            /*
-            // Isolate the least significant bit.
-            let b := and(x, add(not(x), 1))
-
-            r := or(shl(8, iszero(x)), shl(7, lt(0xffffffffffffffffffffffffffffffff, b)))
-            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, b))))
-            r := or(r, shl(5, lt(0xffffffff, shr(r, b))))
-
-            // For the remaining 32 bits, use a De Bruijn lookup.
+            // For the remaining 5 bits, use a De Bruijn lookup.
             // forgefmt: disable-next-item
-            r := or(r, byte(and(div(0xd76453e0, shr(r, b)), 0x1f),
-                0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
-            */
+            r := or(r, byte(and(div(0xd76453e0, shr(r, x)), 0x1f),
+            0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
         }
     }
 
