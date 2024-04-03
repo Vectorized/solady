@@ -56,6 +56,7 @@ library LibBit {
             // Isolate the least significant bit.
             x := and(x, add(not(x), 1))
             // For the upper 3 bits of the result, use a De Bruijn-like lookup.
+            // Credit to adhusson: https://blog.adhusson.com/cheap-find-first-set-evm/
             // forgefmt: disable-next-item
             r := shl(5, shr(252, shl(shl(2, shr(250, mul(x,
                 0xb6db6db6ddddddddd34d34d349249249210842108c6318c639ce739cffffffff))),
