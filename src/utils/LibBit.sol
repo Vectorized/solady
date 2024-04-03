@@ -58,12 +58,14 @@ library LibBit {
 
             // For the first 3 bits, use a De Bruijn-like lookup.
             // forgefmt: disable-next-item
-            r := shl(5,shr(252,shl(shl(2,shr(250,mul(x,0xb6db6db6ddddddddd34d34d349249249210842108c6318c639ce739cffffffff))),0x8040405543005266443200005020610674053026020000107506200176117077)))
+            r := shl(5,shr(252,shl(shl(2,shr(250,mul(x,
+                0xb6db6db6ddddddddd34d34d349249249210842108c6318c639ce739cffffffff))),
+                0x8040405543005266443200005020610674053026020000107506200176117077)))
 
             // For the remaining 5 bits, use a De Bruijn lookup.
             // forgefmt: disable-next-item
             r := or(r, byte(and(div(0xd76453e0, shr(r, x)), 0x1f),
-            0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
+                0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
         }
     }
 
