@@ -9,6 +9,9 @@ import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 contract LibPRNGTest is SoladyTest {
     using LibPRNG for *;
 
+    LibPRNG.LazyShuffler internal _lazyShuffler0;
+    LibPRNG.LazyShuffler internal _lazyShuffler1;
+
     function testPRNGNext() public {
         unchecked {
             // Super unlikely to fail.
@@ -232,5 +235,155 @@ contract LibPRNGTest is SoladyTest {
             emit LogInt("standard deviation", sd);
             assertLt(FixedPointMathLib.abs(sd - wad), uint256(wad / 8));
         }
+    }
+
+    function testLazyShufflerProducesShuffledRange(uint256 n) public {
+        n = _bound(n, 1, 38);
+        _lazyShuffler0.initialize(uint32(n));
+        if (_random() % 8 == 0) {
+            _lazyShuffler0.restart();
+        }
+        assertEq(_lazyShuffler0.initialized(), true);
+        assertEq(_lazyShuffler1.initialized(), false);
+        assertEq(_lazyShuffler0.finished(), false);
+        assertEq(_lazyShuffler1.finished(), true);
+        uint256[] memory outputs = new uint256[](n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                assertEq(_lazyShuffler0.finished(), false);
+                outputs[i] = _lazyShuffler0.next(_random());
+            }
+            if (n > 32) {
+                bool anyShuffled;
+                for (uint256 i; i != n && !anyShuffled; ++i) {
+                    anyShuffled = outputs[i] != i;
+                }
+                assert(anyShuffled); // Super unlikely to fail.
+            }
+            LibSort.sort(outputs);
+            for (uint256 i; i != n; ++i) {
+                assertEq(outputs[i], i);
+            }
+            assertEq(_lazyShuffler0.finished(), true);
+        }
+        assertEq(_lazyShuffler0.finished(), true);
+        assertEq(_lazyShuffler1.finished(), true);
+    }
+
+    function testLazyShufflerProducesShuffledRange2() public {
+        unchecked {
+            _lazyShuffler0.initialize(uint32(17));
+            int256 m = 16;
+            // This infinite loop must eventually break.
+            for (bool done; !done;) {
+                int256[] memory sums = new int256[](17);
+                for (int256 t; t != m; ++t) {
+                    for (uint256 i; i != 17; ++i) {
+                        sums[i] += int256(uint256(_lazyShuffler0.next(_random())));
+                    }
+                    _lazyShuffler0.restart();
+                }
+                int256 expectedAvgSum = 8 * m;
+                done = true;
+                uint256 thres = uint256(expectedAvgSum / 8);
+                for (uint256 i; i != 17; ++i) {
+                    if (FixedPointMathLib.abs(sums[i] - expectedAvgSum) >= thres) {
+                        done = false;
+                        m *= 2;
+                        break;
+                    }
+                }    
+            }
+        }
+    }
+
+    function testLazyShufflerNoStorageCollisions() public {
+        _lazyShuffler0.initialize(16);
+        _lazyShuffler1.initialize(32);
+        uint256[] memory outputs0 = new uint256[](16);
+        uint256[] memory outputs1 = new uint256[](32);
+        unchecked {
+            for (uint256 i; i != 16; ++i) {
+                outputs0[i] = _lazyShuffler0.next(_random());
+            }
+            for (uint256 i; i != 32; ++i) {
+                assertEq(_lazyShuffler1.finished(), false);
+                outputs1[i] = _lazyShuffler1.next(_random());
+            }
+            assertEq(_lazyShuffler0.finished(), true);
+            assertEq(_lazyShuffler1.finished(), true);
+            LibSort.sort(outputs0);
+            LibSort.sort(outputs1);
+            for (uint256 i; i != 16; ++i) {
+                assertEq(outputs0[i], i);
+            }
+            for (uint256 i; i != 32; ++i) {
+                assertEq(outputs1[i], i);
+            }
+        }
+    }
+
+    function testLazyShufflerRestart() public {
+        uint256[] memory outputs0 = new uint256[](32);
+        uint256[] memory outputs1 = new uint256[](32);
+        _lazyShuffler0.initialize(32);
+        assertEq(_lazyShuffler0.numShuffled(), 0);
+        assertEq(_lazyShuffler0.length(), 32);
+        for (uint256 i; i != 32; ++i) {
+            assertEq(_lazyShuffler0.numShuffled(), i);
+            outputs0[i] = _lazyShuffler0.next(_random());
+        }
+        assertEq(_lazyShuffler0.numShuffled(), 32);
+        _lazyShuffler0.restart();
+        assertEq(_lazyShuffler0.numShuffled(), 0);
+        assertEq(_lazyShuffler0.length(), 32);
+        for (uint256 i; i != 32; ++i) {
+            outputs1[i] = _lazyShuffler0.next(_random());
+        }
+        assert(keccak256(abi.encode(outputs0)) != keccak256(abi.encode(outputs1)));
+        LibSort.sort(outputs0);
+        LibSort.sort(outputs1);
+        for (uint256 i; i != 32; ++i) {
+            assertEq(outputs0[i], i);
+            assertEq(outputs1[i], i);
+        }
+    }
+
+    function testLazyShufflerRevertsOnInitWithInvalidLength(uint32 n) public {
+        if (n == 0 || n == 2 ** 32 - 1) {
+            vm.expectRevert(LibPRNG.InvalidLazyShufflerLength.selector);
+        }
+        this.lazyShufflerInitialize(n);
+    }
+
+    function testLazyShufflerRevertsOnDoubleInit() public {
+        this.lazyShufflerInitialize(1);
+        vm.expectRevert(LibPRNG.LazyShufflerAlreadyInitialized.selector);
+        this.lazyShufflerInitialize(2);
+    }
+
+    function testLazyShufflerRevertsOnZeroLengthNext() public {
+        vm.expectRevert(LibPRNG.LazyShuffleFinished.selector);
+        lazyShufflerNext(_random());
+    }
+
+    function testLazyShufflerRevertsOnFinshedNext(uint256 n) public {
+        n = _bound(n, 1, 3);
+        _lazyShuffler0.initialize(uint32(n));
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                lazyShufflerNext(_random());
+            }
+        }
+        vm.expectRevert(LibPRNG.LazyShuffleFinished.selector);
+        lazyShufflerNext(_random());
+    }
+
+    function lazyShufflerInitialize(uint32 n) public {
+        _lazyShuffler0.initialize(uint32(n));
+    }
+
+    function lazyShufflerNext(uint256 randomness) public returns (uint32) {
+        return _lazyShuffler0.next(randomness);
     }
 }

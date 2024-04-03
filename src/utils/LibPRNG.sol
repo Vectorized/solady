@@ -3,7 +3,22 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for generating pseudorandom numbers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibPRNG.sol)
+/// @author LazyShuffler based on NextShuffler by aschlosberg at divergencetech
+/// (https://github.com/divergencetech/ethier/blob/main/contracts/random/NextShuffler.sol)
 library LibPRNG {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The lazy shuffler length must be greater than zero and less than `2**32 - 1`.
+    error InvalidLazyShufflerLength();
+
+    /// @dev Cannot double initialize the lazy shuffler.
+    error LazyShufflerAlreadyInitialized();
+
+    /// @dev The lazy shuffle has finished.
+    error LazyShuffleFinished();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -18,6 +33,15 @@ library LibPRNG {
     /// @dev A pseudorandom number state in memory.
     struct PRNG {
         uint256 state;
+    }
+
+    /// @dev A lazy Fisher-Yates shuffler for a range `[0..n)` in storage.
+    struct LazyShuffler {
+        // Bits Layout:
+        // - [0..31]    `numShuffled`
+        // - [32..223]  `permutationSlot`
+        // - [224..255] `length`
+        uint256 _state;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -211,6 +235,114 @@ library LibPRNG {
                 }
             }
             result := add(div(p, shl(129, 170141183460469231732)), result)
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*       STORAGE-BASED RANGE LAZY SHUFFLING OPERATIONS        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Initializes the state for lazy-shuffling the range `[0..n)`.
+    /// Reverts if `n` is zero or `2**32 - 1`.
+    /// Reverts if `$` has already been initialized.
+    /// If you need to change the length after initialization, just use a fresh new `$`.
+    function initialize(LazyShuffler storage $, uint32 n) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If `n == 0 || n == 2**32 - 1`, revert.
+            if iszero(lt(sub(and(0xffffffff, n), 1), 0xfffffffe)) {
+                mstore(0x00, 0xd6db60d3) // `InvalidLazyShufflerLength()`.
+                revert(0x1c, 0x04)
+            }
+            if sload($.slot) {
+                mstore(0x00, 0x0c9f11f2) // `LazyShufflerAlreadyInitialized()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x00, $.slot)
+            sstore($.slot, or(shl(224, n), shl(32, shr(64, keccak256(0x00, 0x20)))))
+        }
+    }
+
+    /// @dev Restarts the shuffler by setting `numShuffled` to zero,
+    /// such that all elements can be drawn again.
+    /// Restarting does not clear the internal permutation, nor changes the length.
+    /// Even with the same sequence of randomness, reshuffling can yield different results.
+    function restart(LazyShuffler storage $) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            sstore($.slot, shl(32, shr(32, sload($.slot))))
+        }
+    }
+
+    /// @dev Returns the number of elements that have been shuffled.
+    function numShuffled(LazyShuffler storage $) internal view returns (uint32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(0xffffffff, sload($.slot))
+        }
+    }
+
+    /// @dev Returns the length of `$`. 
+    /// Returns zero if `$` is uninitialized, else a non-zero value less than `2**32 - 1`.
+    function length(LazyShuffler storage $) internal view returns (uint32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := shr(224, sload($.slot))
+        }
+    }
+
+    /// @dev Returns if `$` has been initialized.
+    function initialized(LazyShuffler storage $) internal view returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := iszero(iszero(sload($.slot)))
+        }
+    }
+
+    /// @dev Returns if there are any more elements left to shuffle.
+    function finished(LazyShuffler storage $) internal view returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let state := sload($.slot) // The packed value at `$`.
+            result := eq(shr(224, state), and(0xffffffff, state))
+        }
+    }
+
+    /// @dev Does a single Fisher-Yates shuffle step, increments the `numShuffled` in `$`,
+    /// and returns the next value in the shuffled range.
+    /// Reverts if there are no more values to shuffle.
+    function next(LazyShuffler storage $, uint256 randomness) internal returns (uint32 chosen) {
+        assembly {
+            // Returns the current value stored in `i_`, accounting for all historical shuffling.
+            function _get(u32_, state_, i_) -> _value {
+                let s_ := add(shr(sub(4, u32_), i_), shr(64, shl(32, state_))) // Bucket slot.
+                let o_ := shl(add(4, u32_), and(i_, shr(u32_, 15))) // Bucket slot offset (bits).
+                let m_ := or(mul(u32_, 0xffffffff), 0xffff) // Value mask.
+                _value := and(m_, shr(o_, sload(s_)))
+                _value := xor(i_, mul(xor(i_, sub(_value, 1)), iszero(iszero(_value))))
+            }
+            // Sets the value stored at `i_` to `value_`.
+            function _set(u32_, state_, i_, value_) {
+                let s_ := add(shr(sub(4, u32_), i_), shr(64, shl(32, state_))) // Bucket slot.
+                let o_ := shl(add(4, u32_), and(i_, shr(u32_, 15))) // Bucket slot offset (bits).
+                let m_ := or(mul(u32_, 0xffffffff), 0xffff) // Value mask.
+                let v_ := sload(s_) // Bucket slot value.
+                value_ := mul(iszero(eq(i_, value_)), add(value_, 1))
+                sstore(s_, xor(v_, shl(o_, and(m_, xor(shr(o_, v_), value_)))))
+            }
+            let state := sload($.slot) // The packed value at `$`.
+            let shuffled := and(0xffffffff, state) // Number of elements shuffled.
+            let remainder := sub(shr(224, state), shuffled) // Number of elements left to shuffle.
+            if iszero(remainder) {
+                mstore(0x00, 0x51065f79) // `LazyShuffleFinished()`.
+                revert(0x1c, 0x04)    
+            }
+            let index := add(mod(randomness, remainder), shuffled) // Random chosen index.
+            let u32 := gt(shr(224, state), 0xfffd)
+            chosen := _get(u32, state, index)
+            _set(u32, state, index, _get(u32, state, shuffled))
+            _set(u32, state, shuffled, chosen)
+            sstore($.slot, add(1, state)) // Increment the `numShuffled` by 1, and store it.
         }
     }
 }
