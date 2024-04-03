@@ -337,10 +337,9 @@ library LibPRNG {
                 revert(0x1c, 0x04)
             }
             let index := add(mod(randomness, remainder), shuffled) // Random chosen index.
-            let u32 := gt(n, 0xfffe)
-            chosen := _get(u32, state, index)
-            _set(u32, state, index, _get(u32, state, shuffled))
-            _set(u32, state, shuffled, chosen)
+            chosen := _get(gt(n, 0xfffe), state, index)
+            _set(gt(n, 0xfffe), state, index, _get(gt(n, 0xfffe), state, shuffled))
+            _set(gt(n, 0xfffe), state, shuffled, chosen)
             sstore($.slot, add(1, state)) // Increment the `numShuffled` by 1, and store it.
         }
     }
