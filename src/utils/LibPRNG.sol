@@ -19,6 +19,9 @@ library LibPRNG {
     /// @dev The lazy shuffle has finished.
     error LazyShuffleFinished();
 
+    /// @dev The queried index is out of bounds.
+    error LazyShufflerGetOutOfBounds();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -264,7 +267,7 @@ library LibPRNG {
 
     /// @dev Restarts the shuffler by setting `numShuffled` to zero,
     /// such that all elements can be drawn again.
-    /// Restarting does not clear the internal permutation, nor changes the length.
+    /// Restarting does NOT clear the internal permutation, nor changes the length.
     /// Even with the same sequence of randomness, reshuffling can yield different results.
     function restart(LazyShuffler storage $) internal {
         /// @solidity memory-safe-assembly
@@ -307,12 +310,30 @@ library LibPRNG {
         }
     }
 
+    /// @dev Returns the current value stored at `index`, accounting for all historical shuffling.
+    /// Reverts if `index` is greater than or equal to the `length` of `$`.
+    function get(LazyShuffler storage $, uint256 index) internal view returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let state := sload($.slot) // The packed value at `$`.
+            let n := shr(224, state) // Length of `$`.
+            if iszero(lt(index, n)) {
+                mstore(0x00, 0x61367cc4) // `LazyShufflerGetOutOfBounds()`.
+                revert(0x1c, 0x04)
+            }
+            let u32 := gt(n, 0xfffe)
+            let s := add(shr(sub(4, u32), index), shr(64, shl(32, state))) // Bucket slot.
+            let o := shl(add(4, u32), and(index, shr(u32, 15))) // Bucket slot offset (bits).
+            let m := sub(shl(shl(u32, 16), 1), 1) // Value mask.
+            result := and(m, shr(o, sload(s)))
+            result := xor(index, mul(xor(index, sub(result, 1)), iszero(iszero(result))))
+        }
+    }
+
     /// @dev Does a single Fisher-Yates shuffle step, increments the `numShuffled` in `$`,
     /// and returns the next value in the shuffled range.
-    /// Reverts if there are no more values to shuffle.
-    ///
-    /// Depending on the desired balance between unpredictability and performance,
-    /// `randomness` can be taken from a higher quality source (VRF).
+    /// `randomness` can be taken from a good-enough source, or a higher quality source like VRF.
+    /// Reverts if there are no more values to shuffle, which includes the case if `$` is uninitialized.
     function next(LazyShuffler storage $, uint256 randomness) internal returns (uint256 chosen) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -339,8 +360,9 @@ library LibPRNG {
                 mstore(0x00, 0x51065f79) // `LazyShuffleFinished()`.
                 revert(0x1c, 0x04)
             }
-            mstore(0x00, randomness)
-            let index := add(mod(keccak256(0x00, 0x20), remainder), shuffled)
+            mstore(0x00, randomness) // (Re)hash the randomness so that we don't
+            mstore(0x20, shuffled) // need to expect guarantees on its distribution.
+            let index := add(mod(keccak256(0x00, 0x40), remainder), shuffled)
             chosen := _get(gt(n, 0xfffe), state, index)
             _set(gt(n, 0xfffe), state, index, _get(gt(n, 0xfffe), state, shuffled))
             _set(gt(n, 0xfffe), state, shuffled, chosen)

@@ -328,6 +328,46 @@ contract LibPRNGTest is SoladyTest {
         }
     }
 
+    function testLazyShufflerGet() public {
+        _lazyShuffler0.initialize(16);
+        _lazyShuffler1.initialize(32);
+        uint256[] memory outputs0 = new uint256[](16);
+        uint256[] memory outputs1 = new uint256[](32);
+        unchecked {
+            for (uint256 i; i != 16; ++i) {
+                assertEq(this.lazyShuffler0Get(i), i);
+            }
+            for (uint256 i; i != 16; ++i) {
+                outputs0[i] = _lazyShuffler0.next(_random());
+            }
+            for (uint256 i; i != 32; ++i) {
+                assertEq(this.lazyShuffler1Get(i), i);
+            }
+            for (uint256 i; i != 32; ++i) {
+                assertEq(_lazyShuffler1.finished(), false);
+                outputs1[i] = _lazyShuffler1.next(_random());
+            }
+            for (uint256 i; i != 16; ++i) {
+                assertEq(this.lazyShuffler0Get(i), outputs0[i]);
+            }
+            for (uint256 i; i != 32; ++i) {
+                assertEq(this.lazyShuffler1Get(i), outputs1[i]);
+            }
+        }
+    }
+
+    function testLazyShufflerGetOutOfBoundsReverts(uint256 n, uint256 i) public {
+        n = _bound(n, 1, 2 ** 32 - 2);
+        _lazyShuffler0.initialize(n);
+        i = _bound(i, 1, 2 ** 32 + 1);
+        if (i < n) {
+            assertEq(this.lazyShuffler0Get(i), i);
+        } else {
+            vm.expectRevert(LibPRNG.LazyShufflerGetOutOfBounds.selector);
+            this.lazyShuffler0Get(i);
+        }
+    }
+
     function testLazyShufflerRestart() public {
         uint256[] memory outputs0 = new uint256[](32);
         uint256[] memory outputs1 = new uint256[](32);
@@ -391,5 +431,13 @@ contract LibPRNGTest is SoladyTest {
 
     function lazyShufflerNext(uint256 randomness) public returns (uint256) {
         return _lazyShuffler0.next(randomness);
+    }
+
+    function lazyShuffler0Get(uint256 i) public view returns (uint256) {
+        return _lazyShuffler0.get(i);
+    }
+
+    function lazyShuffler1Get(uint256 i) public view returns (uint256) {
+        return _lazyShuffler1.get(i);
     }
 }
