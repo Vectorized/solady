@@ -238,8 +238,13 @@ contract LibPRNGTest is SoladyTest {
     }
 
     function testLazyShufflerProducesShuffledRange(uint256 n) public {
-        n = _bound(n, 1, 38);
+        n = _bound(n, 1, _random() % 8 == 0 ? 50 : 10);
+        if (_random() % 8 == 0) {
+            _brutalizeMemory();
+        }
         _lazyShuffler0.initialize(uint32(n));
+        assertEq(_lazyShuffler0.length(), n);
+        assertEq(_lazyShuffler0.numShuffled(), 0);
         if (_random() % 8 == 0) {
             _lazyShuffler0.restart();
         }
@@ -258,7 +263,7 @@ contract LibPRNGTest is SoladyTest {
                 for (uint256 i; i != n && !anyShuffled; ++i) {
                     anyShuffled = outputs[i] != i;
                 }
-                assert(anyShuffled); // Super unlikely to fail.
+                assertTrue(anyShuffled); // Super unlikely to fail.
             }
             LibSort.sort(outputs);
             for (uint256 i; i != n; ++i) {
@@ -340,7 +345,7 @@ contract LibPRNGTest is SoladyTest {
         for (uint256 i; i != 32; ++i) {
             outputs1[i] = _lazyShuffler0.next(_random());
         }
-        assert(keccak256(abi.encode(outputs0)) != keccak256(abi.encode(outputs1)));
+        assertTrue(keccak256(abi.encode(outputs0)) != keccak256(abi.encode(outputs1)));
         LibSort.sort(outputs0);
         LibSort.sort(outputs1);
         for (uint256 i; i != 32; ++i) {
@@ -349,8 +354,9 @@ contract LibPRNGTest is SoladyTest {
         }
     }
 
-    function testLazyShufflerRevertsOnInitWithInvalidLength(uint32 n) public {
-        if (n == 0 || n == 2 ** 32 - 1) {
+    function testLazyShufflerRevertsOnInitWithInvalidLength(uint256 n) public {
+        n = _bound(n, 0, 2 ** 32 + 1);
+        if (n == 0 || n >= 2 ** 32 - 1) {
             vm.expectRevert(LibPRNG.InvalidLazyShufflerLength.selector);
         }
         this.lazyShufflerInitialize(n);
@@ -379,11 +385,11 @@ contract LibPRNGTest is SoladyTest {
         lazyShufflerNext(_random());
     }
 
-    function lazyShufflerInitialize(uint32 n) public {
-        _lazyShuffler0.initialize(uint32(n));
+    function lazyShufflerInitialize(uint256 n) public {
+        _lazyShuffler0.initialize(n);
     }
 
-    function lazyShufflerNext(uint256 randomness) public returns (uint32) {
+    function lazyShufflerNext(uint256 randomness) public returns (uint256) {
         return _lazyShuffler0.next(randomness);
     }
 }
