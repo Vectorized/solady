@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for generating pseudorandom numbers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibPRNG.sol)
-/// @author LazyShuffler based on NextShuffler by aschlosberg at divergencetech
+/// @author LazyShuffler based on NextShuffler by aschlosberg (divergencearran)
 /// (https://github.com/divergencetech/ethier/blob/main/contracts/random/NextShuffler.sol)
 library LibPRNG {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
