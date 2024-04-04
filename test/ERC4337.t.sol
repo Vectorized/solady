@@ -326,6 +326,7 @@ contract ERC4337Test is SoladyTest {
     }
 
     function testIsValidSignature() public {
+        vm.txGasPrice(10);
         _TestTemps memory t;
         t.hash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
@@ -369,6 +370,7 @@ contract ERC4337Test is SoladyTest {
     }
 
     function testIsValidSignaturePersonalSign() public {
+        vm.txGasPrice(10);
         _TestTemps memory t;
         t.hash = keccak256("123");
         (t.signer, t.privateKey) = _randomSigner();
