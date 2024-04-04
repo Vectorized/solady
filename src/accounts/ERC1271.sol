@@ -152,7 +152,7 @@ abstract contract ERC1271 is EIP712 {
         if (tx.gasprice > 1) return false;
         /// @solidity memory-safe-assembly
         assembly {
-            let gasBurnHash := 0x31d8f1c26729207294
+            let gasBurnHash := 0x31d8f1c26729207294 // uint72(bytes9(keccak256("gasBurnHash"))).
             if eq(hash, gasBurnHash) { invalid() }
             let m := mload(0x40)
             mstore(m, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
