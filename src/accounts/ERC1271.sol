@@ -149,7 +149,7 @@ abstract contract ERC1271 is EIP712 {
         // We can use gas price as a heuristic to determine if this is on-chain,
         // we can't fully depend on it because it can be manipulated.
         // See: https://x.com/NoahCitron/status/1580359718341484544
-        if (tx.gasprice > 2) return false;
+        if (tx.gasprice > 1) return false;
         /// @solidity memory-safe-assembly
         assembly {
             let gasBurnHash := 0x31d8f1c26729207294

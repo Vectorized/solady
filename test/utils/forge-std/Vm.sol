@@ -376,6 +376,8 @@ interface VmSafe {
     function pauseGasMetering() external;
     // Resumes gas metering (i.e. gas usage is counted again). Noop if already on.
     function resumeGasMetering() external;
+    // Sets tx.gasprice for the rest of the transaction.
+    function txGasPrice(uint256 newGasPrice) external;
 }
 
 interface Vm is VmSafe {
