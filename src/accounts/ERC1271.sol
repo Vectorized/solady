@@ -18,6 +18,26 @@ abstract contract ERC1271 is EIP712 {
     /// @dev Validates the signature with ERC1271 return,
     /// so that this account can also be used as a signer.
     ///
+    /// For maximum widespread compatibility, it will first use Solady's nested EIP-712 workflow.
+    /// Upon failure, it will try with the RPC workflow intended only for offchain calls.
+    function isValidSignature(bytes32 hash, bytes calldata signature)
+        public
+        view
+        virtual
+        returns (bytes4 result)
+    {
+        bool success = _isValidSignatureViaNestedEIP712(hash, signature)
+            || _isValidSignatureViaRPC(hash, signature);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
+            // We use `0xffffffff` for invalid, in convention with the reference implementation.
+            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
+        }
+    }
+
+    /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
+    ///
     /// This implementation uses ECDSA recovery. It also uses a nested EIP-712 approach to
     /// prevent signature replays when a single EOA owns multiple smart contract accounts,
     /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
@@ -38,7 +58,7 @@ abstract contract ERC1271 is EIP712 {
     ///   To be defined by the front end, such that `child` can be visible via EIP-712.
     /// __________________________________________________________________________________________
     ///
-    /// For the nested EIP-712 workflow, the final hash will be:
+    /// For the default nested EIP-712 workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
@@ -79,11 +99,11 @@ abstract contract ERC1271 is EIP712 {
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
     /// All these are just for widespead out-of-the-box compatibility with other wallet apps.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        public
+    function _isValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
+        internal
         view
         virtual
-        returns (bytes4 result)
+        returns (bool)
     {
         /// @solidity memory-safe-assembly
         assembly {
@@ -114,14 +134,36 @@ abstract contract ERC1271 is EIP712 {
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        bool success = SignatureCheckerLib.isValidSignatureNowCalldata(
+        return SignatureCheckerLib.isValidSignatureNowCalldata(
             _erc1271Signer(), _hashTypedData(hash), signature
         );
+    }
+
+    /// @dev Performs the signature validation without nested EIP-712 to allow for easy sign ins.
+    function _isValidSignatureViaRPC(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        // We can use gas price as a heuristic to determine if this is on-chain,
+        // we can't fully depend on it because it can be manipulated.
+        // See: https://x.com/NoahCitron/status/1580359718341484544
+        if (tx.gasprice > 1) return false;
         /// @solidity memory-safe-assembly
         assembly {
-            // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
-            // We use `0xffffffff` for invalid, in convention with the reference implementation.
-            result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
+            let gasBurnHash := 0x31d8f1c26729207294
+            if eq(hash, gasBurnHash) { invalid() }
+            let m := mload(0x40)
+            mstore(m, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
+            mstore(add(m, 0x20), gasBurnHash)
+            mstore(add(m, 0x40), 0x40)
+            mstore(add(m, 0x60), 0x00)
+            // Make a call to this with invalid calldata, thus burning the gas provided.
+            // No valid transaction can consume more than the gaslimit.
+            // See: https://ethereum.github.io/yellowpaper/paper.pdf
+            pop(staticcall(add(100000, gaslimit()), address(), add(m, 0x1c), 0x64, 0x00, 0x00))
         }
+        return SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
     }
 }
