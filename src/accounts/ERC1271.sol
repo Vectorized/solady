@@ -154,15 +154,15 @@ abstract contract ERC1271 is EIP712 {
         assembly {
             let gasBurnHash := 0x31d8f1c26729207294 // uint72(bytes9(keccak256("gasBurnHash"))).
             if eq(hash, gasBurnHash) { invalid() }
-            let m := mload(0x40)
-            mstore(m, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
-            mstore(add(m, 0x20), gasBurnHash)
-            mstore(add(m, 0x40), 0x40)
-            mstore(add(m, 0x60), 0x00)
-            // Make a call to this with invalid calldata, thus burning the gas provided.
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x00, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
+            mstore(0x20, gasBurnHash)
+            mstore(0x40, 0x40)
+            // Make a call to this with `gasBurnHash`, efficiently burning the gas provided.
             // No valid transaction can consume more than the gaslimit.
             // See: https://ethereum.github.io/yellowpaper/paper.pdf
-            pop(staticcall(add(100000, gaslimit()), address(), add(m, 0x1c), 0x64, 0x00, 0x00))
+            pop(staticcall(add(100000, gaslimit()), address(), 0x1c, 0x64, 0x00, 0x00))
+            mstore(0x40, m) // Restore the free memory pointer.
         }
         return SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
     }
