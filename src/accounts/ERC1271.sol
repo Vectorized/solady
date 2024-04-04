@@ -147,7 +147,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool)
     {
-        // We can use gas price as a heuristic to determine if this is on-chain,
+        // Non-zero gasprice is a heuristic to check if a call is on-chain,
         // but we can't fully depend on it because it can be manipulated.
         // See: https://x.com/NoahCitron/status/1580359718341484544
         if (tx.gasprice != 0) return false;
