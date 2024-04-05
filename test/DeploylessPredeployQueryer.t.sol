@@ -66,7 +66,7 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
     Factory factory;
 
     bytes internal constant _CREATION_CODE =
-        hex"38607d3d393d5160208051606051833b156045575b506000928391389184825192019034905af115603c578082523d90523d8160403e3d60600190f35b503d81803e3d90fd5b8260008281935190833d9101906040515af11560745783815114601f3d111660145763d1f6b81290526004601cfd5b3d81803e3d90fdfe";
+        hex"3860be3d393d516020805190606051833b156086575b5059926040908285528351938460051b9460018060fb1b031659523d604087015260005b8581036046578680590390f35b6000828683820101510138908688820151910147875af115607c57603f19875903018482890101523d59523d6000593e84016039565b3d6000803e3d6000fd5b816000828193519083479101906040515af11560b55783815114601f3d111660155763d1f6b81290526004601cfd5b3d81803e3d90fdfe";
 
     function setUp() public {
         factory = new Factory();
@@ -74,15 +74,17 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
 
     struct _TestTemps {
         address target;
-        uint256 seed;
+        uint256 n;
+        uint256[] seeds;
         address deployed;
         bytes factoryCalldata;
-        bytes targetQueryCalldata;
+        bytes[] targetQueryCalldata;
+        bytes[] decoded;
     }
 
     function _deployQuery(
         address target,
-        bytes memory targetQueryCalldata,
+        bytes[] memory targetQueryCalldata,
         bytes memory factoryCalldata
     ) internal returns (address result) {
         if (_random() % 2 == 0) {
@@ -108,31 +110,48 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
     }
 
     function testPredeployQueryer(bytes32 salt) public {
-        _TestTemps memory t;
-        t.target = factory.predictDeployment(salt);
-        if (_random() % 2 == 0) {
-            assertEq(factory.deploy(salt), t.target);
-        }
-        t.factoryCalldata = abi.encodeWithSignature("deploy(bytes32)", salt);
-        t.seed = _random();
-        if (_random() % 2 == 0) {
-            vm.expectRevert(DeploylessPredeployQueryer.ReturnedAddressMismatch.selector);
-            address wrongTarget = address(uint160(t.target) ^ 1);
-            t.deployed = _deployQuery(wrongTarget, t.targetQueryCalldata, t.factoryCalldata);
-        }
-        if (_random() % 2 == 0) {
-            t.targetQueryCalldata = abi.encodeWithSignature("generate(uint256)", t.seed);
+        unchecked {
+            _TestTemps memory t;
+            t.target = factory.predictDeployment(salt);
+            if (_random() % 2 == 0) {
+                assertEq(factory.deploy(salt), t.target);
+            }
+            t.factoryCalldata = abi.encodeWithSignature("deploy(bytes32)", salt);
+            t.n = _random() % 3;
+            t.targetQueryCalldata = new bytes[](t.n);
+            t.seeds = new uint256[](t.n);
+            if (_random() % 2 == 0) {
+                vm.expectRevert(DeploylessPredeployQueryer.ReturnedAddressMismatch.selector);
+                address wrongTarget = address(uint160(t.target) ^ 1);
+                t.deployed = _deployQuery(wrongTarget, t.targetQueryCalldata, t.factoryCalldata);
+            }
+            if (_random() % 2 == 0) {
+                for (uint256 i; i < t.n; ++i) {
+                    t.seeds[i] = _random();
+                    t.targetQueryCalldata[i] =
+                        abi.encodeWithSignature("generate(uint256)", t.seeds[i]);
+                }
+                t.deployed = _deployQuery(t.target, t.targetQueryCalldata, t.factoryCalldata);
+                t.decoded = abi.decode(t.deployed.code, (bytes[]));
+                assertEq(t.decoded.length, t.n);
+                for (uint256 i; i < t.n; ++i) {
+                    assertEq(
+                        abi.decode(t.decoded[i], (bytes)),
+                        RandomBytesGeneratorLib.generate(t.seeds[i])
+                    );
+                }
+            }
+            for (uint256 i; i < t.n; ++i) {
+                t.seeds[i] = _random();
+                t.targetQueryCalldata[i] = abi.encodeWithSignature("next(uint256)", t.seeds[i]);
+            }
             t.deployed = _deployQuery(t.target, t.targetQueryCalldata, t.factoryCalldata);
-            assertEq(
-                abi.decode(abi.decode(t.deployed.code, (bytes)), (bytes)),
-                RandomBytesGeneratorLib.generate(t.seed)
-            );
+            t.decoded = abi.decode(t.deployed.code, (bytes[]));
+            for (uint256 i; i < t.n; ++i) {
+                assertEq(
+                    abi.decode(t.decoded[i], (uint256)), RandomBytesGeneratorLib.next(t.seeds[i])
+                );
+            }
         }
-        t.targetQueryCalldata = abi.encodeWithSignature("next(uint256)", t.seed);
-        t.deployed = _deployQuery(t.target, t.targetQueryCalldata, t.factoryCalldata);
-        assertEq(
-            abi.decode(abi.decode(t.deployed.code, (bytes)), (uint256)),
-            RandomBytesGeneratorLib.next(t.seed)
-        );
     }
 }
