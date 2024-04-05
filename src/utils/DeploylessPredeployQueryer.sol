@@ -12,7 +12,7 @@ pragma solidity ^0.8.4;
 /// only mock deployed and used via a static `eth_call`.
 ///
 /// Creation code (hex-encoded):
-/// `3860ec3d393d516020805191606051813b1560b4575b50601f9291921992603f9380603f380116938051918260051b90604097604083890101966000906000955b858703605e578a808b8b8b81845260018060fb1b0316908301520390f35b90919293949598838c838b8d820101510138918c820151910147875af11560aa578486918c8e8d603f1983850301920101523d81523d868c83013e3d0101169888019594939291906040565b8a843d90823e3d90fd5b8260008281935190833d9101906040515af11560e35781815114601f3d111660155763d1f6b81290526004601cfd5b3d81803e3d90fdfe`
+/// `3860be3d393d516020805190606051833b156086575b5059926040908285528351938460051b9460018060fb1b031659523d604087015260005b8581036046578680590390f35b6000828683820101510138908688820151910147875af115607c57603f19875903018482890101523d59523d6000593e84016039565b3d6000803e3d6000fd5b816000828193519083479101906040515af11560b55783815114601f3d111660155763d1f6b81290526004601cfd5b3d81803e3d90fdfe`
 /// See: https://gist.github.com/Vectorized/f77fce00a03dfa99aee526d2a77fd2aa
 ///
 /// May be useful for generating ERC-6492 compliant signatures.
@@ -51,7 +51,7 @@ contract DeploylessPredeployQueryer {
                     call(
                         gas(),
                         factory,
-                        returndatasize(),
+                        selfbalance(),
                         add(factoryCalldata, 0x20),
                         mload(factoryCalldata),
                         m,
@@ -66,7 +66,7 @@ contract DeploylessPredeployQueryer {
                     revert(0x1c, 0x04)
                 }
             }
-            let n := shl(5, mload(targetQueryCalldata))
+            let n := mul(0x20, mload(targetQueryCalldata))
             let r := add(m, 0x40)
             let o := add(r, n)
             for { let i := 0 } iszero(eq(i, n)) { i := add(0x20, i) } {
