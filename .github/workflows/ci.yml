@@ -1,11 +1,16 @@
 name: ci
 
 on:
-  push:
+  pull_request:
+    branches: [main]
     paths:
       - '**.sol'
       - '**.yml'
-
+  push:
+    branches: [main]
+    paths:
+      - '**.sol'
+      - '**.yml'
 jobs:
   tests:
     name: Forge Testing
