@@ -2,153 +2,780 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "./Script.sol";
-import "./ds-test/test.sol";
 
-// Wrappers around Cheatcodes to avoid footguns
-abstract contract Test is DSTest, Script {
-    uint256 internal constant UINT256_MAX =
-        115792089237316195423570985008687907853269984665640564039457584007913129639935;
+abstract contract Test is Script {
+    bool private __failed;
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                    STD-LOGS
-    //////////////////////////////////////////////////////////////////////////*/
+    function failed() public view returns (bool) {
+        if (__failed) {
+            return __failed;
+        } else {
+            return vm.load(address(vm), bytes32("failed")) != bytes32(0);
+        }
+    }
 
-    event log_array(uint256[] val);
-    event log_array(int256[] val);
-    event log_array(address[] val);
-    event log_named_array(string key, uint256[] val);
-    event log_named_array(string key, int256[] val);
-    event log_named_array(string key, address[] val);
+    function fail() internal virtual {
+        vm.store(address(vm), bytes32("failed"), bytes32(uint256(1)));
+        __failed = true;
+    }
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                    STD-ASSERTIONS
-    //////////////////////////////////////////////////////////////////////////*/
+    // We intentionally do NOT mark these functions as pure,
+    // so that importing this file into codebases built with old forge-std
+    // won't trigger the compiler warning 2018.
+    //
+    // For performance, wherever possible, we do Solidity comparisons and
+    // only make vm call if we know know the assert fails,
+    // as preparing calls definitely costs more compute than doing
+    // just the Solidity comparisons.
 
-    function fail(string memory err) internal virtual {
-        emit log_named_string("Error", err);
-        fail();
+    function assertTrue(bool data) internal virtual {
+        if (!data) vm.assertTrue(data);
+    }
+
+    function assertTrue(bool data, string memory err) internal virtual {
+        if (!data) vm.assertTrue(data, err);
     }
 
     function assertFalse(bool data) internal virtual {
-        assertTrue(!data);
+        if (data) vm.assertFalse(data);
     }
 
     function assertFalse(bool data, string memory err) internal virtual {
-        assertTrue(!data, err);
+        if (data) vm.assertFalse(data, err);
     }
 
-    function assertEq(bool a, bool b) internal {
-        if (a != b) {
-            emit log("Error: a == b not satisfied [bool]");
-            emit log_named_string("  Expected", b ? "true" : "false");
-            emit log_named_string("    Actual", a ? "true" : "false");
-            fail();
-        }
+    function assertEq(bool left, bool right) internal virtual {
+        if (left != right) vm.assertEq(left, right);
     }
 
-    function assertEq(bool a, bool b, string memory err) internal {
-        if (a != b) {
-            emit log_named_string("Error", err);
-            assertEq(a, b);
-        }
+    function assertEq(bool left, bool right, string memory err) internal virtual {
+        if (left != right) vm.assertEq(left, right, err);
     }
 
-    function assertEq(bytes memory a, bytes memory b) internal {
-        assertEq0(a, b);
+    function assertEq(uint256 left, uint256 right) internal virtual {
+        if (left != right) vm.assertEq(left, right);
     }
 
-    function assertEq(bytes memory a, bytes memory b, string memory err) internal {
-        assertEq0(a, b, err);
+    function assertEq(uint256 left, uint256 right, string memory err) internal virtual {
+        if (left != right) vm.assertEq(left, right, err);
     }
 
-    function assertEq(uint256[] memory a, uint256[] memory b) internal {
-        bool inputsEq;
+    function assertEqDecimal(uint256 left, uint256 right, uint256 decimals) internal virtual {
+        if (left != right) vm.assertEqDecimal(left, right, decimals);
+    }
+
+    function assertEqDecimal(uint256 left, uint256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left != right) vm.assertEqDecimal(left, right, decimals, err);
+    }
+
+    function assertEq(int256 left, int256 right) internal virtual {
+        if (left != right) vm.assertEq(left, right);
+    }
+
+    function assertEq(int256 left, int256 right, string memory err) internal virtual {
+        if (left != right) vm.assertEq(left, right, err);
+    }
+
+    function assertEqDecimal(int256 left, int256 right, uint256 decimals) internal virtual {
+        if (left != right) vm.assertEqDecimal(left, right, decimals);
+    }
+
+    function assertEqDecimal(int256 left, int256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left != right) vm.assertEqDecimal(left, right, decimals, err);
+    }
+
+    function assertEq(address left, address right) internal virtual {
+        if (left != right) vm.assertEq(left, right);
+    }
+
+    function assertEq(address left, address right, string memory err) internal virtual {
+        if (left != right) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(bytes32 left, bytes32 right) internal virtual {
+        if (left != right) vm.assertEq(left, right);
+    }
+
+    function assertEq(bytes32 left, bytes32 right, string memory err) internal virtual {
+        if (left != right) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(string memory left, string memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(string memory left, string memory right, string memory err)
+        internal
+        virtual
+    {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(bytes memory left, bytes memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(bytes memory left, bytes memory right, string memory err) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(bool[] memory left, bool[] memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(bool[] memory left, bool[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(uint256[] memory left, uint256[] memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(uint256[] memory left, uint256[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(int256[] memory left, int256[] memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(int256[] memory left, int256[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(address[] memory left, address[] memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(address[] memory left, address[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(bytes32[] memory left, bytes32[] memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(bytes32[] memory left, bytes32[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(string[] memory left, string[] memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(string[] memory left, string[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertEq(bytes[] memory left, bytes[] memory right) internal virtual {
+        if (!__eq(left, right)) vm.assertEq(left, right);
+    }
+
+    function assertEq(bytes[] memory left, bytes[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (!__eq(left, right)) vm.assertEq(left, right, err);
+    }
+
+    function assertNotEq(bool left, bool right) internal virtual {
+        if (left == right) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(bool left, bool right, string memory err) internal virtual {
+        if (left == right) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(uint256 left, uint256 right) internal virtual {
+        if (left == right) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(uint256 left, uint256 right, string memory err) internal virtual {
+        if (left == right) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEqDecimal(uint256 left, uint256 right, uint256 decimals) internal virtual {
+        if (left == right) vm.assertNotEqDecimal(left, right, decimals);
+    }
+
+    function assertNotEqDecimal(uint256 left, uint256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left == right) vm.assertNotEqDecimal(left, right, decimals, err);
+    }
+
+    function assertNotEq(int256 left, int256 right) internal virtual {
+        if (left == right) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(int256 left, int256 right, string memory err) internal virtual {
+        if (left == right) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEqDecimal(int256 left, int256 right, uint256 decimals) internal virtual {
+        if (left == right) vm.assertNotEqDecimal(left, right, decimals);
+    }
+
+    function assertNotEqDecimal(int256 left, int256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left == right) vm.assertNotEqDecimal(left, right, decimals, err);
+    }
+
+    function assertNotEq(address left, address right) internal virtual {
+        if (left == right) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(address left, address right, string memory err) internal virtual {
+        if (left == right) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(bytes32 left, bytes32 right) internal virtual {
+        if (left == right) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(bytes32 left, bytes32 right, string memory err) internal virtual {
+        if (left == right) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(string memory left, string memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(string memory left, string memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(bytes memory left, bytes memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(bytes memory left, bytes memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(bool[] memory left, bool[] memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(bool[] memory left, bool[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(uint256[] memory left, uint256[] memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(uint256[] memory left, uint256[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(int256[] memory left, int256[] memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(int256[] memory left, int256[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(address[] memory left, address[] memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(address[] memory left, address[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(bytes32[] memory left, bytes32[] memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(bytes32[] memory left, bytes32[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(string[] memory left, string[] memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(string[] memory left, string[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertNotEq(bytes[] memory left, bytes[] memory right) internal virtual {
+        if (__eq(left, right)) vm.assertNotEq(left, right);
+    }
+
+    function assertNotEq(bytes[] memory left, bytes[] memory right, string memory err)
+        internal
+        virtual
+    {
+        if (__eq(left, right)) vm.assertNotEq(left, right, err);
+    }
+
+    function assertLt(uint256 left, uint256 right) internal virtual {
+        if (left >= right) vm.assertLt(left, right);
+    }
+
+    function assertLt(uint256 left, uint256 right, string memory err) internal virtual {
+        if (left >= right) vm.assertLt(left, right, err);
+    }
+
+    function assertLtDecimal(uint256 left, uint256 right, uint256 decimals) internal virtual {
+        if (left >= right) vm.assertLtDecimal(left, right, decimals);
+    }
+
+    function assertLtDecimal(uint256 left, uint256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left >= right) vm.assertLtDecimal(left, right, decimals, err);
+    }
+
+    function assertLt(int256 left, int256 right) internal virtual {
+        if (left >= right) vm.assertLt(left, right);
+    }
+
+    function assertLt(int256 left, int256 right, string memory err) internal virtual {
+        if (left >= right) vm.assertLt(left, right, err);
+    }
+
+    function assertLtDecimal(int256 left, int256 right, uint256 decimals) internal virtual {
+        if (left >= right) vm.assertLtDecimal(left, right, decimals);
+    }
+
+    function assertLtDecimal(int256 left, int256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left >= right) vm.assertLtDecimal(left, right, decimals, err);
+    }
+
+    function assertGt(uint256 left, uint256 right) internal virtual {
+        if (left <= right) vm.assertGt(left, right);
+    }
+
+    function assertGt(uint256 left, uint256 right, string memory err) internal virtual {
+        if (left <= right) vm.assertGt(left, right, err);
+    }
+
+    function assertGtDecimal(uint256 left, uint256 right, uint256 decimals) internal virtual {
+        if (left <= right) vm.assertGtDecimal(left, right, decimals);
+    }
+
+    function assertGtDecimal(uint256 left, uint256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left <= right) vm.assertGtDecimal(left, right, decimals, err);
+    }
+
+    function assertGt(int256 left, int256 right) internal virtual {
+        if (left <= right) vm.assertGt(left, right);
+    }
+
+    function assertGt(int256 left, int256 right, string memory err) internal virtual {
+        if (left <= right) vm.assertGt(left, right, err);
+    }
+
+    function assertGtDecimal(int256 left, int256 right, uint256 decimals) internal virtual {
+        if (left <= right) vm.assertGtDecimal(left, right, decimals);
+    }
+
+    function assertGtDecimal(int256 left, int256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left <= right) vm.assertGtDecimal(left, right, decimals, err);
+    }
+
+    function assertLe(uint256 left, uint256 right) internal virtual {
+        if (left > right) vm.assertLe(left, right);
+    }
+
+    function assertLe(uint256 left, uint256 right, string memory err) internal virtual {
+        if (left > right) vm.assertLe(left, right, err);
+    }
+
+    function assertLeDecimal(uint256 left, uint256 right, uint256 decimals) internal virtual {
+        if (left > right) vm.assertLeDecimal(left, right, decimals);
+    }
+
+    function assertLeDecimal(uint256 left, uint256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left > right) vm.assertLeDecimal(left, right, decimals, err);
+    }
+
+    function assertLe(int256 left, int256 right) internal virtual {
+        if (left > right) vm.assertLe(left, right);
+    }
+
+    function assertLe(int256 left, int256 right, string memory err) internal virtual {
+        if (left > right) vm.assertLe(left, right, err);
+    }
+
+    function assertLeDecimal(int256 left, int256 right, uint256 decimals) internal virtual {
+        if (left > right) vm.assertLeDecimal(left, right, decimals);
+    }
+
+    function assertLeDecimal(int256 left, int256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left > right) vm.assertLeDecimal(left, right, decimals, err);
+    }
+
+    function assertGe(uint256 left, uint256 right) internal virtual {
+        if (left < right) vm.assertGe(left, right);
+    }
+
+    function assertGe(uint256 left, uint256 right, string memory err) internal virtual {
+        if (left < right) vm.assertGe(left, right, err);
+    }
+
+    function assertGeDecimal(uint256 left, uint256 right, uint256 decimals) internal virtual {
+        if (left < right) vm.assertGeDecimal(left, right, decimals);
+    }
+
+    function assertGeDecimal(uint256 left, uint256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left < right) vm.assertGeDecimal(left, right, decimals, err);
+    }
+
+    function assertGe(int256 left, int256 right) internal virtual {
+        if (left < right) vm.assertGe(left, right);
+    }
+
+    function assertGe(int256 left, int256 right, string memory err) internal virtual {
+        if (left < right) vm.assertGe(left, right, err);
+    }
+
+    function assertGeDecimal(int256 left, int256 right, uint256 decimals) internal virtual {
+        if (left < right) vm.assertGeDecimal(left, right, decimals);
+    }
+
+    function assertGeDecimal(int256 left, int256 right, uint256 decimals, string memory err)
+        internal
+        virtual
+    {
+        if (left < right) vm.assertGeDecimal(left, right, decimals, err);
+    }
+
+    function assertApproxEqAbs(uint256 left, uint256 right, uint256 maxDelta) internal virtual {
+        vm.assertApproxEqAbs(left, right, maxDelta);
+    }
+
+    function assertApproxEqAbs(uint256 left, uint256 right, uint256 maxDelta, string memory err)
+        internal
+        virtual
+    {
+        vm.assertApproxEqAbs(left, right, maxDelta, err);
+    }
+
+    function assertApproxEqAbsDecimal(
+        uint256 left,
+        uint256 right,
+        uint256 maxDelta,
+        uint256 decimals
+    ) internal virtual {
+        vm.assertApproxEqAbsDecimal(left, right, maxDelta, decimals);
+    }
+
+    function assertApproxEqAbsDecimal(
+        uint256 left,
+        uint256 right,
+        uint256 maxDelta,
+        uint256 decimals,
+        string memory err
+    ) internal virtual {
+        vm.assertApproxEqAbsDecimal(left, right, maxDelta, decimals, err);
+    }
+
+    function assertApproxEqAbs(int256 left, int256 right, uint256 maxDelta) internal virtual {
+        vm.assertApproxEqAbs(left, right, maxDelta);
+    }
+
+    function assertApproxEqAbs(int256 left, int256 right, uint256 maxDelta, string memory err)
+        internal
+        virtual
+    {
+        vm.assertApproxEqAbs(left, right, maxDelta, err);
+    }
+
+    function assertApproxEqAbsDecimal(int256 left, int256 right, uint256 maxDelta, uint256 decimals)
+        internal
+        virtual
+    {
+        vm.assertApproxEqAbsDecimal(left, right, maxDelta, decimals);
+    }
+
+    function assertApproxEqAbsDecimal(
+        int256 left,
+        int256 right,
+        uint256 maxDelta,
+        uint256 decimals,
+        string memory err
+    ) internal virtual {
+        vm.assertApproxEqAbsDecimal(left, right, maxDelta, decimals, err);
+    }
+
+    function assertApproxEqRel(
+        uint256 left,
+        uint256 right,
+        uint256 maxPercentDelta // An 18 decimal fixed point number, where 1e18 == 100%
+    ) internal virtual {
+        vm.assertApproxEqRel(left, right, maxPercentDelta);
+    }
+
+    function assertApproxEqRel(
+        uint256 left,
+        uint256 right,
+        uint256 maxPercentDelta, // An 18 decimal fixed point number, where 1e18 == 100%
+        string memory err
+    ) internal virtual {
+        vm.assertApproxEqRel(left, right, maxPercentDelta, err);
+    }
+
+    function assertApproxEqRelDecimal(
+        uint256 left,
+        uint256 right,
+        uint256 maxPercentDelta, // An 18 decimal fixed point number, where 1e18 == 100%
+        uint256 decimals
+    ) internal virtual {
+        vm.assertApproxEqRelDecimal(left, right, maxPercentDelta, decimals);
+    }
+
+    function assertApproxEqRelDecimal(
+        uint256 left,
+        uint256 right,
+        uint256 maxPercentDelta, // An 18 decimal fixed point number, where 1e18 == 100%
+        uint256 decimals,
+        string memory err
+    ) internal virtual {
+        vm.assertApproxEqRelDecimal(left, right, maxPercentDelta, decimals, err);
+    }
+
+    function assertApproxEqRel(int256 left, int256 right, uint256 maxPercentDelta)
+        internal
+        virtual
+    {
+        vm.assertApproxEqRel(left, right, maxPercentDelta);
+    }
+
+    function assertApproxEqRel(
+        int256 left,
+        int256 right,
+        uint256 maxPercentDelta, // An 18 decimal fixed point number, where 1e18 == 100%
+        string memory err
+    ) internal virtual {
+        vm.assertApproxEqRel(left, right, maxPercentDelta, err);
+    }
+
+    function assertApproxEqRelDecimal(
+        int256 left,
+        int256 right,
+        uint256 maxPercentDelta, // An 18 decimal fixed point number, where 1e18 == 100%
+        uint256 decimals
+    ) internal virtual {
+        vm.assertApproxEqRelDecimal(left, right, maxPercentDelta, decimals);
+    }
+
+    function assertApproxEqRelDecimal(
+        int256 left,
+        int256 right,
+        uint256 maxPercentDelta, // An 18 decimal fixed point number, where 1e18 == 100%
+        uint256 decimals,
+        string memory err
+    ) internal virtual {
+        vm.assertApproxEqRelDecimal(left, right, maxPercentDelta, decimals, err);
+    }
+
+    function __eq(bool[] memory left, bool[] memory right) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            inputsEq :=
-                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
-        }
-        if (!inputsEq) {
-            emit log("Error: a == b not satisfied [uint[]]");
-            emit log_named_array("  Expected", b);
-            emit log_named_array("    Actual", a);
-            fail();
-        }
-    }
-
-    function assertEq(int256[] memory a, int256[] memory b) internal {
-        bool inputsEq;
-        /// @solidity memory-safe-assembly
-        assembly {
-            inputsEq :=
-                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
-        }
-        if (!inputsEq) {
-            emit log("Error: a == b not satisfied [int[]]");
-            emit log_named_array("  Expected", b);
-            emit log_named_array("    Actual", a);
-            fail();
+            let n := mload(left)
+            if eq(n, mload(right)) {
+                returndatacopy(returndatasize(), returndatasize(), shr(128, n))
+                result := 1
+                let d := sub(right, left)
+                for { n := add(left, shl(5, n)) } iszero(eq(left, n)) {} {
+                    left := add(left, 0x20)
+                    result := and(result, eq(iszero(mload(left)), iszero(mload(add(left, d)))))
+                }
+            }
         }
     }
 
-    function assertEq(address[] memory a, address[] memory b) internal {
-        bool inputsEq;
+    function __eq(address[] memory left, address[] memory right)
+        internal
+        pure
+        returns (bool result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            inputsEq :=
-                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
-        }
-        if (!inputsEq) {
-            emit log("Error: a == b not satisfied [address[]]");
-            emit log_named_array("  Expected", b);
-            emit log_named_array("    Actual", a);
-            fail();
+            let n := mload(left)
+            if eq(n, mload(right)) {
+                returndatacopy(returndatasize(), returndatasize(), shr(128, n))
+                result := 1
+                let d := sub(right, left)
+                for { n := add(left, shl(5, n)) } iszero(eq(left, n)) {} {
+                    left := add(left, 0x20)
+                    result := and(result, eq(shl(96, mload(left)), shl(96, mload(add(left, d)))))
+                }
+            }
         }
     }
 
-    function assertEq(uint256[] memory a, uint256[] memory b, string memory err) internal {
-        bool inputsEq;
+    function __eq(bytes32[] memory left, bytes32[] memory right)
+        internal
+        pure
+        returns (bool result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            inputsEq :=
-                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
-        }
-        if (!inputsEq) {
-            emit log_named_string("Error", err);
-            assertEq(a, b);
+            result := keccak256(left, shl(5, add(1, mload(left))))
+            result := eq(keccak256(right, shl(5, add(1, mload(right)))), result)
         }
     }
 
-    function assertEq(int256[] memory a, int256[] memory b, string memory err) internal {
-        bool inputsEq;
+    function __eq(int256[] memory left, int256[] memory right)
+        internal
+        pure
+        returns (bool result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            inputsEq :=
-                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
-        }
-        if (!inputsEq) {
-            emit log_named_string("Error", err);
-            assertEq(a, b);
+            result := keccak256(left, shl(5, add(1, mload(left))))
+            result := eq(keccak256(right, shl(5, add(1, mload(right)))), result)
         }
     }
 
-    function assertEq(address[] memory a, address[] memory b, string memory err) internal {
-        bool inputsEq;
+    function __eq(uint256[] memory left, uint256[] memory right)
+        internal
+        pure
+        returns (bool result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            inputsEq :=
-                eq(keccak256(a, shl(5, add(mload(a), 1))), keccak256(b, shl(5, add(mload(b), 1))))
+            result := keccak256(left, shl(5, add(1, mload(left))))
+            result := eq(keccak256(right, shl(5, add(1, mload(right)))), result)
         }
-        if (!inputsEq) {
-            emit log_named_string("Error", err);
-            assertEq(a, b);
+    }
+
+    function __eq(string[] memory left, string[] memory right)
+        internal
+        pure
+        returns (bool result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(left)
+            if eq(n, mload(right)) {
+                returndatacopy(returndatasize(), returndatasize(), shr(128, n))
+                result := 1
+                let d := sub(right, left)
+                for { n := add(left, shl(5, n)) } iszero(eq(left, n)) {} {
+                    left := add(left, 0x20)
+                    let l := mload(left)
+                    l := keccak256(l, add(0x20, mload(l)))
+                    let r := mload(add(left, d))
+                    r := keccak256(r, add(0x20, mload(r)))
+                    result := and(result, eq(l, r))
+                }
+            }
+        }
+    }
+
+    function __eq(bytes[] memory left, bytes[] memory right) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(left)
+            if eq(n, mload(right)) {
+                returndatacopy(returndatasize(), returndatasize(), shr(128, n))
+                result := 1
+                let d := sub(right, left)
+                for { n := add(left, shl(5, n)) } iszero(eq(left, n)) {} {
+                    left := add(left, 0x20)
+                    let l := mload(left)
+                    l := keccak256(l, add(0x20, mload(l)))
+                    let r := mload(add(left, d))
+                    r := keccak256(r, add(0x20, mload(r)))
+                    result := and(result, eq(l, r))
+                }
+            }
+        }
+    }
+
+    function __eq(string memory left, string memory right) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := keccak256(left, add(0x20, mload(left)))
+            result := eq(keccak256(right, add(0x20, mload(right))), result)
+        }
+    }
+
+    function __eq(bytes memory left, bytes memory right) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := keccak256(left, add(0x20, mload(left)))
+            result := eq(keccak256(right, add(0x20, mload(right))), result)
         }
     }
 }
-
-/*//////////////////////////////////////////////////////////////////////////
-                                STD-ERRORS
-//////////////////////////////////////////////////////////////////////////*/
 
 library stdError {
     bytes public constant assertionError = abi.encodeWithSignature("Panic(uint256)", 0x01);

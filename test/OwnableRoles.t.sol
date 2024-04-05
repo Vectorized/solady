@@ -51,21 +51,32 @@ contract OwnableRolesTest is SoladyTest {
         assertEq(mockOwnableRoles.rolesOf(user), rolesToGrant ^ (rolesToGrant & rolesToRemove));
     }
 
+    struct _TestTemps {
+        address userA;
+        address userB;
+        uint256 rolesA;
+        uint256 rolesB;
+    }
+
     function testSetRolesDirect(uint256) public {
-        address userA = _randomNonZeroAddress();
-        address userB = _randomNonZeroAddress();
-        while (userA == userB) userA = _randomNonZeroAddress();
-        for (uint256 t; t != 2; ++t) {
-            uint256 rolesA = _random();
-            uint256 rolesB = _random();
-            vm.expectEmit(true, true, true, true);
-            emit RolesUpdated(userA, rolesA);
-            mockOwnableRoles.setRolesDirect(userA, rolesA);
-            emit RolesUpdated(userB, rolesB);
-            mockOwnableRoles.setRolesDirect(userB, rolesB);
-            assertEq(mockOwnableRoles.rolesOf(userA), rolesA);
-            assertEq(mockOwnableRoles.rolesOf(userB), rolesB);
-        }
+        _TestTemps memory t;
+        t.userA = _randomNonZeroAddress();
+        t.userB = _randomNonZeroAddress();
+        while (t.userA == t.userB) t.userA = _randomNonZeroAddress();
+        _testSetRolesDirect(t);
+        _testSetRolesDirect(t);
+    }
+
+    function _testSetRolesDirect(_TestTemps memory t) internal {
+        t.rolesA = _random();
+        t.rolesB = _random();
+        vm.expectEmit(true, true, true, true);
+        emit RolesUpdated(t.userA, t.rolesA);
+        mockOwnableRoles.setRolesDirect(t.userA, t.rolesA);
+        emit RolesUpdated(t.userB, t.rolesB);
+        mockOwnableRoles.setRolesDirect(t.userB, t.rolesB);
+        assertEq(mockOwnableRoles.rolesOf(t.userA), t.rolesA);
+        assertEq(mockOwnableRoles.rolesOf(t.userB), t.rolesB);
     }
 
     function testSetOwnerDirect() public {
