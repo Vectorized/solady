@@ -126,7 +126,7 @@ contract ERC4626Test is SoladyTest {
             assertEq(vault.totalSupply(), aliceShareAmount);
             assertEq(vault.totalAssets(), aliceUnderlyingAmount);
             assertEq(vault.balanceOf(alice), aliceShareAmount);
-            assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
+            assertEq(vault.convertToAssets(aliceShareAmount), aliceUnderlyingAmount);
             assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
         }
 
@@ -169,7 +169,7 @@ contract ERC4626Test is SoladyTest {
             assertEq(vault.totalSupply(), aliceShareAmount);
             assertEq(vault.totalAssets(), aliceUnderlyingAmount);
             assertEq(vault.balanceOf(alice), aliceUnderlyingAmount);
-            assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
+            assertEq(vault.convertToAssets(aliceUnderlyingAmount), aliceUnderlyingAmount);
             assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
         }
 
@@ -427,9 +427,9 @@ contract ERC4626Test is SoladyTest {
             assertEq(vault.totalSupply(), 8000);
             assertEq(vault.totalAssets(), 14573);
             assertEq(vault.balanceOf(t.alice), 2000);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 3643);
+            assertEq(vault.convertToAssets(2000), 3643);
             assertEq(vault.balanceOf(t.bob), 6000);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 10929);
+            assertEq(vault.convertToAssets(6000), 10929);
         }
     }
 
@@ -443,9 +443,9 @@ contract ERC4626Test is SoladyTest {
             assertEq(vault.totalSupply(), 6392);
             assertEq(vault.totalAssets(), 11644);
             assertEq(vault.balanceOf(t.alice), 2000);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 3643);
+            assertEq(vault.convertToAssets(2000), 3643);
             assertEq(vault.balanceOf(t.bob), 4392);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 8000);
+            assertEq(vault.convertToAssets(4392), 8000);
         }
     }
 
@@ -461,9 +461,9 @@ contract ERC4626Test is SoladyTest {
             assertEq(vault.totalSupply(), 4392);
             assertEq(vault.totalAssets(), 8001);
             assertEq(vault.balanceOf(t.alice), 0);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 0);
+            assertEq(vault.convertToAssets(0), 0);
             assertEq(vault.balanceOf(t.bob), 4392);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 8001 - t.slippage);
+            assertEq(vault.convertToAssets(4392), 8001 - t.slippage);
         }
     }
 
@@ -478,9 +478,9 @@ contract ERC4626Test is SoladyTest {
             assertEq(vault.totalSupply(), 0);
             assertEq(vault.totalAssets() - t.slippage, 0);
             assertEq(vault.balanceOf(t.alice), 0);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 0);
+            assertEq(vault.convertToAssets(0), 0);
             assertEq(vault.balanceOf(t.bob), 0);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 0);
+            assertEq(vault.convertToAssets(0), 0);
 
             // Sanity check
             assertEq(underlying.balanceOf(address(vault)) - t.slippage, 0);
@@ -540,7 +540,7 @@ contract ERC4626Test is SoladyTest {
         vault.mint(0, address(this));
 
         assertEq(vault.balanceOf(address(this)), 0);
-        assertEq(vault.convertToAssets(vault.balanceOf(address(this))), 0);
+        assertEq(vault.convertToAssets(0), 0);
         assertEq(vault.totalSupply(), 0);
         assertEq(vault.totalAssets(), 0);
     }
@@ -549,7 +549,7 @@ contract ERC4626Test is SoladyTest {
         vault.withdraw(0, address(this), address(this));
 
         assertEq(vault.balanceOf(address(this)), 0);
-        assertEq(vault.convertToAssets(vault.balanceOf(address(this))), 0);
+        assertEq(vault.convertToAssets(0), 0);
         assertEq(vault.totalSupply(), 0);
         assertEq(vault.totalAssets(), 0);
     }
