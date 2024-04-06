@@ -306,8 +306,8 @@ contract ERC4626Test is SoladyTest {
         // Expect to have received the requested mint amount.
         assertEq(t.aliceShareAmount, 2000);
         assertEq(vault.balanceOf(t.alice), t.aliceShareAmount);
-        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), t.aliceUnderlyingAmount);
-        assertEq(vault.convertToShares(t.aliceUnderlyingAmount), vault.balanceOf(t.alice));
+        assertEq(vault.convertToAssets(t.aliceShareAmount), t.aliceUnderlyingAmount);
+        assertEq(vault.convertToShares(t.aliceUnderlyingAmount), t.aliceShareAmount);
 
         // Expect a 1:1 ratio before mutation.
         assertEq(t.aliceUnderlyingAmount, 2000);
@@ -330,8 +330,8 @@ contract ERC4626Test is SoladyTest {
             // Expect to have received the requested underlying amount.
             assertEq(t.bobUnderlyingAmount, 4000);
             assertEq(vault.balanceOf(t.bob), t.bobShareAmount);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), t.bobUnderlyingAmount);
-            assertEq(vault.convertToShares(t.bobUnderlyingAmount), vault.balanceOf(t.bob));
+            assertEq(vault.convertToAssets(t.bobShareAmount), t.bobUnderlyingAmount);
+            assertEq(vault.convertToShares(t.bobUnderlyingAmount), t.bobShareAmount);
 
             // Expect a 1:1 ratio before mutation.
             assertEq(t.bobShareAmount, t.bobUnderlyingAmount);
@@ -359,12 +359,12 @@ contract ERC4626Test is SoladyTest {
             assertEq(vault.totalAssets(), t.preMutationBal + t.mutationUnderlyingAmount);
             assertEq(vault.balanceOf(t.alice), t.aliceShareAmount);
             assertEq(
-                vault.convertToAssets(vault.balanceOf(t.alice)),
+                vault.convertToAssets(t.aliceShareAmount),
                 t.aliceUnderlyingAmount + (t.mutationUnderlyingAmount / 3) * 1 - t.slippage
             );
             assertEq(vault.balanceOf(t.bob), t.bobShareAmount);
             assertEq(
-                vault.convertToAssets(vault.balanceOf(t.bob)),
+                vault.convertToAssets(t.bobShareAmount),
                 t.bobUnderlyingAmount + (t.mutationUnderlyingAmount / 3) * 2 - t.slippage
             );
         }
@@ -377,9 +377,9 @@ contract ERC4626Test is SoladyTest {
 
         assertEq(vault.totalSupply(), 7333);
         assertEq(vault.balanceOf(t.alice), 3333);
-        assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 4999);
+        assertEq(vault.convertToAssets(3333), 4999);
         assertEq(vault.balanceOf(t.bob), 4000);
-        assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 6000);
+        assertEq(vault.convertToAssets(4000), 6000);
     }
 
     function _testMultipleMintDepositRedeemWithdraw5(_TestTemps memory t) internal {
@@ -392,9 +392,9 @@ contract ERC4626Test is SoladyTest {
 
             assertEq(vault.totalSupply(), 9333);
             assertEq(vault.balanceOf(t.alice), 3333);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.alice)), 5000 - t.slippage);
+            assertEq(vault.convertToAssets(3333), 5000 - t.slippage);
             assertEq(vault.balanceOf(t.bob), 6000);
-            assertEq(vault.convertToAssets(vault.balanceOf(t.bob)), 9000);
+            assertEq(vault.convertToAssets(6000), 9000);
 
             // Sanity checks:
             // Alice and t.bob should have spent all their tokens now
