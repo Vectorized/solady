@@ -15,6 +15,16 @@ abstract contract ERC1271 is EIP712 {
     /// Override to return the signer `isValidSignature` checks against.
     function _erc1271Signer() internal view virtual returns (address);
 
+    /// @dev Returns whether the `msg.sender` is considered safe, such
+    /// that we don't need to use the nested EIP-712 workflow.
+    /// Override to return true for more callers.
+    /// See: https://mirror.xyz/curiousapple.eth/pFqAdW2LiJ-6S4sg_u1z08k4vK6BCJ33LcyXpnNb8yU
+    function _erc1271CallerIsSafe() internal view virtual returns (bool) {
+        // The canonical `MulticallerWithSender` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
+        // is known to include the account in the hash to be signed.
+        return msg.sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c;
+    }
+
     /// @dev Validates the signature with ERC1271 return,
     /// so that this account can also be used as a signer.
     ///
@@ -27,6 +37,7 @@ abstract contract ERC1271 is EIP712 {
         returns (bytes4 result)
     {
         bool success = _isValidSignatureViaNestedEIP712(hash, signature)
+            || _isValidSignatureViaSafeCaller(hash, signature)
             || _isValidSignatureViaRPC(hash, signature);
         /// @solidity memory-safe-assembly
         assembly {
@@ -137,6 +148,18 @@ abstract contract ERC1271 is EIP712 {
         return SignatureCheckerLib.isValidSignatureNowCalldata(
             _erc1271Signer(), _hashTypedData(hash), signature
         );
+    }
+
+    /// @dev Performs the signature validation without nested EIP-712 if the caller is
+    /// a safe caller. A safe caller must include the address of this account in the hash.
+    function _isValidSignatureViaSafeCaller(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        if (!_erc1271CallerIsSafe()) return false;
+        return SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
     }
 
     /// @dev Performs the signature validation without nested EIP-712 to allow for easy sign ins.
