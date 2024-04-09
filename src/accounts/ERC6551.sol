@@ -52,7 +52,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Emitted when `saveChainId` is called.
+    /// @dev Emitted when the chain ID is saved to storage.
     event ChainIdSaved(uint256 indexed chainId);
 
     /// @dev `keccak256(bytes("ChainIdSaved(uint256)"))`.
@@ -71,9 +71,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
 
     /// @dev Self ownership detected.
     error SelfOwnDetected();
-
-    /// @dev The chain ID has already been saved.
-    error ChaindIdAlreadySaved();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -174,26 +171,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     modifier onlyValidSigner() virtual {
         if (!_isValidSigner(msg.sender)) revert Unauthorized();
         _;
-    }
-
-    /// @dev Saves the chain ID into storage. This is so that in case of the super rare
-    /// event of a hard fork, anyone can call this function to save the current chain ID,
-    /// allowing `owner` to still work after the hard fork.
-    /// Reverts if the chain ID has already been saved.
-    function saveChainId() public payable virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
-            let alreadySavedSlot := add(saveSlot, 1)
-            if sload(alreadySavedSlot) {
-                mstore(0x00, 0xfca1b190) // `ChaindIdAlreadySaved()`.
-                revert(0x1c, 0x04)
-            }
-            sstore(alreadySavedSlot, 1)
-            sstore(saveSlot, chainid())
-            // Emit the {ChainIdSaved} event.
-            log2(codesize(), 0x00, _CHAIN_ID_SAVED_EVENT_SIGNATURE, chainid())
-        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -336,8 +313,9 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         return owner();
     }
 
-    /// @dev For handling token callbacks.
+    /// @dev For handling token callbacks and hidden functions.
     /// Safe-transferred ERC721 tokens will trigger a ownership cycle check.
+    /// Also includes the hidden `saveChainId()` function.
     modifier receiverFallback() override(Receiver) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -392,6 +370,26 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
             if or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81)) {
                 mstore(0x20, s) // Store `msg.sig`.
                 return(0x3c, 0x20) // Return `msg.sig`.
+            }
+            // Hidden `saveChainId()` function:
+            // Saves the chain ID into storage. In case of the super rare event of
+            // a hard fork, anyone can call this to save the chain ID in storage,
+            // allowing `owner` to still work after the hard fork.
+            // No-op if the chain ID has already been saved.
+            // Returns the saved chain ID.
+            if eq(s, 0x7d870d25) {
+                let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
+                let alreadySavedSlot := add(saveSlot, 1)
+                if sload(alreadySavedSlot) {
+                    mstore(0x00, sload(saveSlot))
+                    return(0x00, 0x20)
+                }
+                sstore(alreadySavedSlot, 1)
+                sstore(saveSlot, chainid())
+                // Emit the {ChainIdSaved} event.
+                log2(codesize(), 0x00, _CHAIN_ID_SAVED_EVENT_SIGNATURE, chainid())
+                mstore(0x00, chainid())
+                return(0x00, 0x20)
             }
         }
         _;

@@ -30,6 +30,10 @@ contract Target {
     }
 }
 
+interface IERC6551WithChainIdSaver {
+    function saveChainId() external returns (uint256);
+}
+
 contract ERC6551Test is SoladyTest {
     MockERC6551Registry internal _registry;
 
@@ -129,10 +133,9 @@ contract ERC6551Test is SoladyTest {
         if (_random() % 2 == 0) {
             vm.expectEmit(true, true, true, true);
             emit ChainIdSaved(t.chainId);
-            t.account.saveChainId();
+            assertEq(IERC6551WithChainIdSaver(address(t.account)).saveChainId(), t.chainId);
             if (_random() % 2 == 0) {
-                vm.expectRevert(ERC6551.ChaindIdAlreadySaved.selector);
-                t.account.saveChainId();
+                assertEq(IERC6551WithChainIdSaver(address(t.account)).saveChainId(), t.chainId);
             }
             assertEq(t.account.owner(), t.owner);
             vm.chainId(newChainId);
