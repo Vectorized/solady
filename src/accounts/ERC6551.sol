@@ -313,9 +313,8 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         return owner();
     }
 
-    /// @dev For handling token callbacks and hidden functions.
+    /// @dev For handling token callbacks, and the hidden `saveChainId()` function.
     /// Safe-transferred ERC721 tokens will trigger a ownership cycle check.
-    /// Also includes the hidden `saveChainId()` function.
     modifier receiverFallback() override(Receiver) {
         /// @solidity memory-safe-assembly
         assembly {
