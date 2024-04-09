@@ -39,6 +39,8 @@ contract ERC6551Test is SoladyTest {
 
     address internal _proxy;
 
+    event ChainIdSaved(uint256 indexed chainId);
+
     // By right, this should be the keccak256 of some long-ass string:
     // (e.g. `keccak256("Parent(bytes32 childHash,Mail child)Mail(Person from,Person to,string contents)Person(string name,address wallet)")`).
     // But I'm lazy and will use something randomish here.
@@ -115,6 +117,33 @@ contract ERC6551Test is SoladyTest {
             address newOnwer = _randomNonZeroAddress();
             MockERC721(_erc721).transferFrom(owner, newOnwer, t.tokenId);
             assertEq(t.account.owner(), newOnwer);
+        }
+    }
+
+    function testSaveChainId(uint256 oldChainId, uint256 newChainId) public {
+        oldChainId = _bound(oldChainId, 0, 2 ** 64 - 1);
+        newChainId = _bound(newChainId, 0, 2 ** 64 - 1);
+        vm.chainId(oldChainId);
+        _TestTemps memory t = _testTemps();
+        assertEq(t.account.owner(), t.owner);
+        if (_random() % 2 == 0) {
+            vm.expectEmit(true, true, true, true);
+            emit ChainIdSaved(t.chainId);
+            t.account.saveChainId();
+            if (_random() % 2 == 0) {
+                vm.expectRevert(ERC6551.ChaindIdAlreadySaved.selector);
+                t.account.saveChainId();
+            }
+            assertEq(t.account.owner(), t.owner);
+            vm.chainId(newChainId);
+            assertEq(t.account.owner(), t.owner);
+        } else {
+            vm.chainId(newChainId);
+            if (newChainId == oldChainId) {
+                assertEq(t.account.owner(), t.owner);
+            } else {
+                assertEq(t.account.owner(), address(0));
+            }
         }
     }
 

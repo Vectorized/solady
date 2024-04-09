@@ -49,6 +49,17 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Emitted when `saveChainId` is called.
+    event ChainIdSaved(uint256 indexed chainId);
+
+    /// @dev `keccak256(bytes("ChainIdSaved(uint256)"))`.
+    uint256 private constant _CHAIN_ID_SAVED_EVENT_SIGNATURE =
+        0xa220d2547c767f2e114b44272960ca6b3144fa65180cd2b94adc4ed4980353f6;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -60,6 +71,9 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
 
     /// @dev Self ownership detected.
     error SelfOwnDetected();
+
+    /// @dev The chain ID has already been saved.
+    error ChaindIdAlreadySaved();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -73,6 +87,13 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /// with both regular and upgradeable contracts.
     uint256 internal constant _ERC6551_STATE_SLOT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffb919c7a5;
+
+    /// @dev The ERC6551 chain ID save slot is given by:
+    /// `bytes32(~uint256(uint32(bytes4(keccak256("_ERC6551_CHAIN_ID_SAVE_SLOT_NOT")))))`.
+    /// The slot of whether the chain ID has been saved is given by:
+    /// `_ERC6551_CHAIN_ID_SAVE_SLOT + 1`.
+    uint256 internal constant _ERC6551_CHAIN_ID_SAVE_SLOT =
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffba274b31;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*              TOKEN-BOUND OWNERSHIP OPERATIONS              */
@@ -96,13 +117,38 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         }
     }
 
+    /// @dev Saves the chain ID into storage. This is so that in case of the super rare
+    /// event of a hard fork, anyone can call this function to save the current chain ID,
+    /// allowing `owner` to still work after the hard fork.
+    /// Reverts if the chain ID has already been saved.
+    function saveChainId() public virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
+            let alreadySavedSlot := add(saveSlot, 1)
+            if sload(alreadySavedSlot) {
+                mstore(0x00, 0xfca1b190) // `ChaindIdAlreadySaved()`.
+                revert(0x1c, 0x04)
+            }
+            sstore(alreadySavedSlot, 1)
+            sstore(saveSlot, chainid())
+            // Emit the {ChainIdSaved} event.
+            log2(codesize(), 0x00, _CHAIN_ID_SAVED_EVENT_SIGNATURE, chainid())
+        }
+    }
+
     /// @dev Returns the owner of the contract.
     function owner() public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             extcodecopy(address(), 0x00, 0x4d, 0x60)
-            if eq(mload(0x00), chainid()) {
+            let chainsEq := eq(mload(0x00), chainid())
+            if iszero(chainsEq) {
+                let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
+                if sload(add(saveSlot, 1)) { chainsEq := eq(mload(0x00), sload(saveSlot)) }
+            }
+            if chainsEq {
                 let tokenContract := mload(0x20)
                 // `tokenId` is already at 0x40.
                 mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
@@ -305,6 +351,10 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
                     // `tokenId` is already at 0x40.
                     mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
                     let chainsEq := eq(mload(0x00), chainid())
+                    if iszero(chainsEq) {
+                        let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
+                        if sload(add(saveSlot, 1)) { chainsEq := eq(mload(0x00), sload(saveSlot)) }
+                    }
                     let currentOwner :=
                         mul(
                             mload(0x20),
