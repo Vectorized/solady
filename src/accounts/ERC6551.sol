@@ -372,8 +372,8 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
                 return(0x3c, 0x20) // Return `msg.sig`.
             }
             // Hidden `saveChainId()` function:
-            // Saves the chain ID into storage. In case of the super rare event of
-            // a hard fork, anyone can call this to save the chain ID in storage,
+            // Saves the chain ID into storage. In case of the super rare event of a hard fork,
+            // anyone can call this to save the chain ID in storage before the asteroid hits,
             // allowing `owner` to still work after the hard fork.
             // No-op if the chain ID has already been saved.
             // Returns the saved chain ID.
