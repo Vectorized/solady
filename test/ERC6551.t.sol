@@ -30,6 +30,10 @@ contract Target {
     }
 }
 
+interface IERC6551WithChainIdSaver {
+    function saveChainId() external returns (uint256);
+}
+
 contract ERC6551Test is SoladyTest {
     MockERC6551Registry internal _registry;
 
@@ -38,6 +42,8 @@ contract ERC6551Test is SoladyTest {
     address internal _erc721;
 
     address internal _proxy;
+
+    event ChainIdSaved(uint256 indexed chainId);
 
     // By right, this should be the keccak256 of some long-ass string:
     // (e.g. `keccak256("Parent(bytes32 childHash,Mail child)Mail(Person from,Person to,string contents)Person(string name,address wallet)")`).
@@ -115,6 +121,32 @@ contract ERC6551Test is SoladyTest {
             address newOnwer = _randomNonZeroAddress();
             MockERC721(_erc721).transferFrom(owner, newOnwer, t.tokenId);
             assertEq(t.account.owner(), newOnwer);
+        }
+    }
+
+    function testSaveChainId(uint256 oldChainId, uint256 newChainId) public {
+        oldChainId = _bound(oldChainId, 0, 2 ** 64 - 1);
+        newChainId = _bound(newChainId, 0, 2 ** 64 - 1);
+        vm.chainId(oldChainId);
+        _TestTemps memory t = _testTemps();
+        assertEq(t.account.owner(), t.owner);
+        if (_random() % 2 == 0) {
+            vm.expectEmit(true, true, true, true);
+            emit ChainIdSaved(t.chainId);
+            assertEq(IERC6551WithChainIdSaver(address(t.account)).saveChainId(), t.chainId);
+            if (_random() % 2 == 0) {
+                assertEq(IERC6551WithChainIdSaver(address(t.account)).saveChainId(), t.chainId);
+            }
+            assertEq(t.account.owner(), t.owner);
+            vm.chainId(newChainId);
+            assertEq(t.account.owner(), t.owner);
+        } else {
+            vm.chainId(newChainId);
+            if (newChainId == oldChainId) {
+                assertEq(t.account.owner(), t.owner);
+            } else {
+                assertEq(t.account.owner(), address(0));
+            }
         }
     }
 
