@@ -117,26 +117,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         }
     }
 
-    /// @dev Saves the chain ID into storage. This is so that in case of the super rare
-    /// event of a hard fork, anyone can call this function to save the current chain ID,
-    /// allowing `owner` to still work after the hard fork.
-    /// Reverts if the chain ID has already been saved.
-    function saveChainId() public virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
-            let alreadySavedSlot := add(saveSlot, 1)
-            if sload(alreadySavedSlot) {
-                mstore(0x00, 0xfca1b190) // `ChaindIdAlreadySaved()`.
-                revert(0x1c, 0x04)
-            }
-            sstore(alreadySavedSlot, 1)
-            sstore(saveSlot, chainid())
-            // Emit the {ChainIdSaved} event.
-            log2(codesize(), 0x00, _CHAIN_ID_SAVED_EVENT_SIGNATURE, chainid())
-        }
-    }
-
     /// @dev Returns the owner of the contract.
     function owner() public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
@@ -194,6 +174,26 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     modifier onlyValidSigner() virtual {
         if (!_isValidSigner(msg.sender)) revert Unauthorized();
         _;
+    }
+
+    /// @dev Saves the chain ID into storage. This is so that in case of the super rare
+    /// event of a hard fork, anyone can call this function to save the current chain ID,
+    /// allowing `owner` to still work after the hard fork.
+    /// Reverts if the chain ID has already been saved.
+    function saveChainId() public payable virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
+            let alreadySavedSlot := add(saveSlot, 1)
+            if sload(alreadySavedSlot) {
+                mstore(0x00, 0xfca1b190) // `ChaindIdAlreadySaved()`.
+                revert(0x1c, 0x04)
+            }
+            sstore(alreadySavedSlot, 1)
+            sstore(saveSlot, chainid())
+            // Emit the {ChainIdSaved} event.
+            log2(codesize(), 0x00, _CHAIN_ID_SAVED_EVENT_SIGNATURE, chainid())
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
