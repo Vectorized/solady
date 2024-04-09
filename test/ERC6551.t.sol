@@ -30,10 +30,6 @@ contract Target {
     }
 }
 
-interface IERC6551WithChainIdSaver {
-    function saveChainId() external returns (uint256);
-}
-
 contract ERC6551Test is SoladyTest {
     MockERC6551Registry internal _registry;
 
@@ -124,30 +120,16 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
-    function testSaveChainId(uint256 oldChainId, uint256 newChainId) public {
+    function testOwnerWorksWithChainIdChange(uint256 oldChainId, uint256 newChainId) public {
         oldChainId = _bound(oldChainId, 0, 2 ** 64 - 1);
         newChainId = _bound(newChainId, 0, 2 ** 64 - 1);
         vm.chainId(oldChainId);
+        _erc6551 = address(new MockERC6551());
+        _proxy = address(new ERC6551Proxy(_erc6551));
         _TestTemps memory t = _testTemps();
         assertEq(t.account.owner(), t.owner);
-        if (_random() % 2 == 0) {
-            vm.expectEmit(true, true, true, true);
-            emit ChainIdSaved(t.chainId);
-            assertEq(IERC6551WithChainIdSaver(address(t.account)).saveChainId(), t.chainId);
-            if (_random() % 2 == 0) {
-                assertEq(IERC6551WithChainIdSaver(address(t.account)).saveChainId(), t.chainId);
-            }
-            assertEq(t.account.owner(), t.owner);
-            vm.chainId(newChainId);
-            assertEq(t.account.owner(), t.owner);
-        } else {
-            vm.chainId(newChainId);
-            if (newChainId == oldChainId) {
-                assertEq(t.account.owner(), t.owner);
-            } else {
-                assertEq(t.account.owner(), address(0));
-            }
-        }
+        vm.chainId(newChainId);
+        assertEq(t.account.owner(), t.owner);
     }
 
     function testOnERC721ReceivedCycles() public {

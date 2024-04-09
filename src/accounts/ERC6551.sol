@@ -49,17 +49,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           EVENTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Emitted when the chain ID is saved to storage.
-    event ChainIdSaved(uint256 indexed chainId);
-
-    /// @dev `keccak256(bytes("ChainIdSaved(uint256)"))`.
-    uint256 private constant _CHAIN_ID_SAVED_EVENT_SIGNATURE =
-        0xa220d2547c767f2e114b44272960ca6b3144fa65180cd2b94adc4ed4980353f6;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -73,7 +62,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     error SelfOwnDetected();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
+    /*                  CONSTANTS AND IMMUTABLES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The ERC6551 state slot is given by:
@@ -85,12 +74,17 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     uint256 internal constant _ERC6551_STATE_SLOT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffb919c7a5;
 
-    /// @dev The ERC6551 chain ID save slot is given by:
-    /// `bytes32(~uint256(uint32(bytes4(keccak256("_ERC6551_CHAIN_ID_SAVE_SLOT_NOT")))))`.
-    /// The slot of whether the chain ID has been saved is given by:
-    /// `_ERC6551_CHAIN_ID_SAVE_SLOT + 1`.
-    uint256 internal constant _ERC6551_CHAIN_ID_SAVE_SLOT =
-        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffba274b31;
+    /// @dev Caches the chain ID in the deployed bytecode,
+    /// so that in the rare case of a hard fork, `owner` will still work.
+    uint256 private immutable _cachedChainId;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    constructor() {
+        _cachedChainId = block.chainid;
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*              TOKEN-BOUND OWNERSHIP OPERATIONS              */
@@ -116,16 +110,12 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
 
     /// @dev Returns the owner of the contract.
     function owner() public view virtual returns (address result) {
+        uint256 cachedChainId = _cachedChainId;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             extcodecopy(address(), 0x00, 0x4d, 0x60)
-            let chainsEq := eq(mload(0x00), chainid())
-            if iszero(chainsEq) {
-                let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
-                if sload(add(saveSlot, 1)) { chainsEq := eq(mload(0x00), sload(saveSlot)) }
-            }
-            if chainsEq {
+            if or(eq(mload(0x00), chainid()), eq(mload(0x00), cachedChainId)) {
                 let tokenContract := mload(0x20)
                 // `tokenId` is already at 0x40.
                 mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
@@ -316,6 +306,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /// @dev For handling token callbacks, and the hidden `saveChainId()` function.
     /// Safe-transferred ERC721 tokens will trigger a ownership cycle check.
     modifier receiverFallback() override(Receiver) {
+        uint256 cachedChainId = _cachedChainId;
         /// @solidity memory-safe-assembly
         assembly {
             let s := shr(224, calldataload(0x00))
@@ -327,11 +318,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
                     let tokenContract := mload(0x20)
                     // `tokenId` is already at 0x40.
                     mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                    let chainsEq := eq(mload(0x00), chainid())
-                    if iszero(chainsEq) {
-                        let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
-                        if sload(add(saveSlot, 1)) { chainsEq := eq(mload(0x00), sload(saveSlot)) }
-                    }
+                    let chainsEq := or(eq(mload(0x00), chainid()), eq(mload(0x00), cachedChainId))
                     let currentOwner :=
                         mul(
                             mload(0x20),
@@ -369,26 +356,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
             if or(eq(s, 0xf23a6e61), eq(s, 0xbc197c81)) {
                 mstore(0x20, s) // Store `msg.sig`.
                 return(0x3c, 0x20) // Return `msg.sig`.
-            }
-            // Hidden `saveChainId()` function:
-            // Saves the chain ID into storage. In case of the super rare event of a hard fork,
-            // anyone can call this to save the chain ID in storage before the asteroid hits,
-            // allowing `owner` to still work after the hard fork.
-            // No-op if the chain ID has already been saved.
-            // Returns the saved chain ID.
-            if eq(s, 0x7d870d25) {
-                let saveSlot := _ERC6551_CHAIN_ID_SAVE_SLOT
-                let alreadySavedSlot := add(saveSlot, 1)
-                if sload(alreadySavedSlot) {
-                    mstore(0x00, sload(saveSlot))
-                    return(0x00, 0x20)
-                }
-                sstore(alreadySavedSlot, 1)
-                sstore(saveSlot, chainid())
-                // Emit the {ChainIdSaved} event.
-                log2(codesize(), 0x00, _CHAIN_ID_SAVED_EVENT_SIGNATURE, chainid())
-                mstore(0x00, chainid())
-                return(0x00, 0x20)
             }
         }
         _;
