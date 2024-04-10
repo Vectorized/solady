@@ -1173,6 +1173,52 @@ library LibClone {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*            CONSTANT ERC1967 BOOTSTRAP OPERATIONS           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note: This enables an ERC1967 proxy to be deployed at a deterministic address
+    // independent of the implementation:
+    // ```
+    //     address bootstrap = LibClone.constantERC1967Bootstrap();
+    //     address instance = LibClone.deployDeterministicERC1967(0, bootstrap, salt);
+    //     LibClone.bootstrapConstantERC1967(bootstrap, implementation);
+    // ```
+
+    /// @dev Deploys the constant ERC1967 bootstrap if it has not been deployed.
+    function constantERC1967Bootstrap() internal returns (address bootstrap) {
+        bootstrap = constantERC1967BootstrapAddress();
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(extcodesize(bootstrap)) {
+                mstore(0x20, 0x0894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc55)
+                mstore(0x00, 0x60258060093d393df358357f36)
+                if iszero(create2(0, 0x13, 0x2e, 0)) {
+                    mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                    revert(0x1c, 0x04)
+                }
+            }
+        }
+    }
+
+    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
+    function constantERC1967BootstrapAddress() internal view returns (address bootstrap) {
+        bytes32 hash = 0xfe1a42b9c571a6a8c083c94ac67b9cfd74e2582923426aa3b762e3431d717cd1;
+        bootstrap = predictDeterministicAddress(hash, bytes32(0), address(this));
+    }
+
+    /// @dev Replaces the implementation at `instance`.
+    function bootstrapERC1967(address instance, address implementation) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, shr(96, shl(96, implementation)))
+            if iszero(call(gas(), instance, 0, 0x00, 0x20, codesize(), 0x00)) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      OTHER OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 

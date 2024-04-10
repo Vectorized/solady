@@ -599,4 +599,36 @@ contract LibCloneTest is SoladyTest, Clone {
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
+
+    function testERC1967ConstantBootstrap(address implementation, bytes32 salt) public {
+        address bootstrap = LibClone.constantERC1967BootstrapAddress();
+        assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
+        if (_random() % 2 == 0) {
+            assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
+        }
+
+        address instance;
+        if (_random() % 2 == 0) {
+            instance = LibClone.predictDeterministicAddressERC1967(bootstrap, salt, address(this));
+            assertEq(LibClone.deployDeterministicERC1967(0, bootstrap, salt), instance);
+        } else {
+            instance = LibClone.predictDeterministicAddressERC1967I(bootstrap, salt, address(this));
+            assertEq(LibClone.deployDeterministicERC1967I(0, bootstrap, salt), instance);
+        }
+
+        if (_random() % 2 == 0) {
+            LibClone.bootstrapERC1967(instance, implementation);
+            assertEq(
+                vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
+                bytes32(uint256(uint160(implementation)))
+            );
+        } else {
+            LibClone.bootstrapERC1967(instance, address(this));
+            assertEq(
+                vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
+                bytes32(uint256(uint160(address(this))))
+            );
+            _shouldBehaveLikeClone(instance, 1);
+        }
+    }
 }
