@@ -1181,12 +1181,12 @@ library LibClone {
     // ```
     //     address bootstrap = LibClone.constantERC1967Bootstrap();
     //     address instance = LibClone.deployDeterministicERC1967(0, bootstrap, salt);
-    //     LibClone.upgradeConstantERC1967Bootstrap(bootstrap, implementation);
+    //     LibClone.bootstrapConstantERC1967(bootstrap, implementation);
     // ```
 
     /// @dev Deploys the constant ERC1967 bootstrap if it has not been deployed.
-    function deployConstantERC1967Bootstrap() internal returns (address bootstrap) {
-        bootstrap = constantERC1967Bootstrap();
+    function constantERC1967Bootstrap() internal returns (address bootstrap) {
+        bootstrap = constantERC1967BootstrapAddress();
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(extcodesize(bootstrap)) {
@@ -1195,19 +1195,19 @@ library LibClone {
                 if iszero(create2(0, 0x13, 0x2e, 0)) {
                     mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                     revert(0x1c, 0x04)
-                }
+                }    
             }
         }
     }
 
-    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
-    function constantERC1967Bootstrap() internal view returns (address bootstrap) {
+    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract. 
+    function constantERC1967BootstrapAddress() internal view returns (address bootstrap) {
         bytes32 hash = 0xfe1a42b9c571a6a8c083c94ac67b9cfd74e2582923426aa3b762e3431d717cd1;
         bootstrap = predictDeterministicAddress(hash, bytes32(0), address(this));
     }
 
     /// @dev Replaces the implementation at `instance`.
-    function upgradeConstantERC1967Bootstrap(address instance, address implementation) internal {
+    function bootstrapERC1967(address instance, address implementation) internal {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, shr(96, shl(96, implementation)))

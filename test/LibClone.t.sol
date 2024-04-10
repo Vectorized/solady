@@ -601,10 +601,10 @@ contract LibCloneTest is SoladyTest, Clone {
     }
 
     function testERC1967ConstantBootstrap(address implementation, bytes32 salt) public {
-        address bootstrap = LibClone.constantERC1967Bootstrap();
-        assertEq(LibClone.deployConstantERC1967Bootstrap(), bootstrap);
+        address bootstrap = LibClone.constantERC1967BootstrapAddress();
+        assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
         if (_random() % 2 == 0) {
-            assertEq(LibClone.deployConstantERC1967Bootstrap(), bootstrap);
+            assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
         }
 
         address instance;
@@ -617,13 +617,13 @@ contract LibCloneTest is SoladyTest, Clone {
         }
 
         if (_random() % 2 == 0) {
-            LibClone.upgradeConstantERC1967Bootstrap(instance, implementation);
+            LibClone.bootstrapERC1967(instance, implementation);
             assertEq(
                 vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
                 bytes32(uint256(uint160(implementation)))
             );
         } else {
-            LibClone.upgradeConstantERC1967Bootstrap(instance, address(this));
+            LibClone.bootstrapERC1967(instance, address(this));
             assertEq(
                 vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
                 bytes32(uint256(uint160(address(this))))
