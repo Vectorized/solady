@@ -227,7 +227,7 @@ contract ERC6551Test is SoladyTest {
         address target = address(new Target());
         bytes memory data = _randomBytes(111);
 
-        assertEq(t.account.state(), 0);
+        assertEq(t.account.state(), bytes32(0));
 
         vm.prank(t.owner);
         t.account.execute(target, 123, abi.encodeWithSignature("setData(bytes)", data), 0);
@@ -249,8 +249,6 @@ contract ERC6551Test is SoladyTest {
         t.account.execute(
             target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data), 1
         );
-
-        assertEq(t.account.state(), 1);
     }
 
     function testExecuteBatch() public {
@@ -265,7 +263,7 @@ contract ERC6551Test is SoladyTest {
         calls[0].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(111));
         calls[1].data = abi.encodeWithSignature("setData(bytes)", _randomBytes(222));
 
-        assertEq(t.account.state(), 0);
+        assertEq(t.account.state(), bytes32(0));
 
         vm.prank(t.owner);
         t.account.executeBatch(calls, 0);
@@ -282,15 +280,13 @@ contract ERC6551Test is SoladyTest {
         vm.prank(t.owner);
         vm.expectRevert(ERC6551.OperationNotSupported.selector);
         t.account.executeBatch(calls, 1);
-
-        assertEq(t.account.state(), 1);
     }
 
     function testExecuteBatch(uint256 r) public {
         _TestTemps memory t = _testTemps();
         vm.deal(address(t.account), 1 ether);
 
-        assertEq(t.account.state(), 0);
+        assertEq(t.account.state(), bytes32(0));
 
         unchecked {
             uint256 n = r & 3;
@@ -320,8 +316,6 @@ contract ERC6551Test is SoladyTest {
                 assertEq(abi.decode(results[i], (bytes)), _randomBytes(v));
             }
         }
-
-        assertEq(t.account.state(), 1);
     }
 
     function testUpgrade() public {
@@ -329,18 +323,26 @@ contract ERC6551Test is SoladyTest {
         address anotherImplementation = address(new MockERC6551V2());
         vm.expectRevert(ERC6551.Unauthorized.selector);
         t.account.upgradeToAndCall(anotherImplementation, bytes(""));
-        assertEq(t.account.state(), 0);
+        bytes32 state;
+        assertEq(t.account.state(), state);
         assertEq(t.account.mockId(), "1");
 
         vm.prank(t.owner);
-        t.account.upgradeToAndCall(anotherImplementation, bytes(""));
-        assertEq(t.account.state(), 1);
+        bytes memory data =
+            abi.encodeWithSignature("upgradeToAndCall(address,bytes)", anotherImplementation, "");
+        (bool success,) = address(t.account).call(data);
+        assertTrue(success);
         assertEq(t.account.mockId(), "2");
+        state = keccak256(abi.encode(state, data));
+        assertEq(t.account.state(), state);
 
         vm.prank(t.owner);
-        t.account.upgradeToAndCall(_erc6551, bytes(""));
-        assertEq(t.account.state(), 2);
+        data = abi.encodeWithSignature("upgradeToAndCall(address,bytes)", _erc6551, "");
+        (success,) = address(t.account).call(data);
+        assertTrue(success);
         assertEq(t.account.mockId(), "1");
+        state = keccak256(abi.encode(state, data));
+        assertEq(t.account.state(), state);
     }
 
     function testSupportsInterface() public {
@@ -432,6 +434,37 @@ contract ERC6551Test is SoladyTest {
                 mstore(result, n)
                 codecopy(add(result, 0x20), byte(1, r), add(n, 0x40))
                 mstore(0x40, add(add(result, 0x40), n))
+            }
+        }
+    }
+
+    function testAbiEncodeMsgData(bytes32 state, uint256 seed) public {
+        bytes memory data = _randomBytes(seed);
+        bytes32 expected = this.abiEncodedMsgData(state, data);
+        assertEq(this.abiEncodedMsgData(state, data), expected);
+    }
+
+    uint256 internal _encodeMsgDataMode;
+
+    function abiEncodedMsgData(bytes32 state, bytes memory)
+        public
+        brutalizeMemory
+        returns (bytes32 result)
+    {
+        if (_encodeMsgDataMode == 0) {
+            _encodeMsgDataMode = 1;
+            result = keccak256(abi.encode(state, msg.data));
+        } else {
+            _encodeMsgDataMode = 0;
+            /// @solidity memory-safe-assembly
+            assembly {
+                let m := mload(0x40)
+                mstore(m, state)
+                mstore(add(0x20, m), 0x40)
+                mstore(add(0x40, m), calldatasize())
+                calldatacopy(add(0x60, m), 0x00, calldatasize())
+                mstore(add(add(0x60, m), calldatasize()), 0x00)
+                result := keccak256(m, and(add(0x7f, calldatasize()), not(0x1f)))
             }
         }
     }

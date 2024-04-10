@@ -168,22 +168,27 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the current value of the state counter.
-    function state() public view virtual returns (uint256 result) {
+    function state() public view virtual returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := sload(_ERC6551_STATE_SLOT)
         }
     }
 
-    /// @dev Increments the state counter. This modifier is required for every
+    /// @dev Mutates the state counter. This modifier is required for every
     /// public / external function that may modify storage or emit events.
-    modifier incrementState() virtual {
+    function _updateState() internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             let s := _ERC6551_STATE_SLOT
-            sstore(s, add(1, sload(s)))
+            let m := mload(0x40)
+            mstore(m, sload(s))
+            mstore(add(0x20, m), 0x40)
+            mstore(add(0x40, m), calldatasize())
+            calldatacopy(add(0x60, m), 0x00, calldatasize())
+            mstore(add(add(0x60, m), calldatasize()), 0x00)
+            sstore(s, keccak256(m, and(add(0x7f, calldatasize()), not(0x1f))))
         }
-        _;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -207,7 +212,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         payable
         virtual
         onlyValidSigner
-        incrementState
         returns (bytes memory result)
     {
         if (operation != 0) revert OperationNotSupported();
@@ -225,6 +229,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
             returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
             mstore(0x40, add(o, returndatasize())) // Allocate the memory.
         }
+        _updateState();
     }
 
     /// @dev Execute a sequence of calls from this account.
@@ -237,7 +242,6 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         payable
         virtual
         onlyValidSigner
-        incrementState
         returns (bytes[] memory results)
     {
         if (operation != 0) revert OperationNotSupported();
@@ -267,6 +271,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
             }
             mstore(0x40, m) // Allocate the memory.
         }
+        _updateState();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -295,8 +300,9 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         virtual
         override(UUPSUpgradeable)
         onlyValidSigner
-        incrementState
-    {}
+    {
+        _updateState();
+    }
 
     /// @dev Uses the `owner` as the ERC1271 signer.
     function _erc1271Signer() internal view virtual override(ERC1271) returns (address) {
