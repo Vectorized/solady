@@ -1195,12 +1195,12 @@ library LibClone {
                 if iszero(create2(0, 0x13, 0x2e, 0)) {
                     mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                     revert(0x1c, 0x04)
-                }    
+                }
             }
         }
     }
 
-    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract. 
+    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
     function constantERC1967BootstrapAddress() internal view returns (address bootstrap) {
         bytes32 hash = 0xfe1a42b9c571a6a8c083c94ac67b9cfd74e2582923426aa3b762e3431d717cd1;
         bootstrap = predictDeterministicAddress(hash, bytes32(0), address(this));
