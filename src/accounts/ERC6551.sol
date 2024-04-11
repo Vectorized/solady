@@ -175,7 +175,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         }
     }
 
-    /// @dev Mutates the state counter. This modifier is required for every
+    /// @dev Mutates the state counter. This function is required to be called for every
     /// public / external function that may modify storage or emit events.
     function _updateState() internal virtual {
         /// @solidity memory-safe-assembly
