@@ -462,8 +462,7 @@ contract ERC6551Test is SoladyTest {
                 mstore(m, state)
                 mstore(add(0x20, m), 0x40)
                 mstore(add(0x40, m), calldatasize())
-                calldatacopy(add(0x60, m), 0x00, calldatasize())
-                mstore(add(add(0x60, m), calldatasize()), 0x00)
+                calldatacopy(add(0x60, m), 0x00, add(0x20, calldatasize()))
                 result := keccak256(m, and(add(0x7f, calldatasize()), not(0x1f)))
             }
         }
