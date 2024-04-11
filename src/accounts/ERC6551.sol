@@ -185,8 +185,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
             mstore(m, sload(s))
             mstore(add(0x20, m), 0x40)
             mstore(add(0x40, m), calldatasize())
-            calldatacopy(add(0x60, m), 0x00, calldatasize())
-            mstore(add(add(0x60, m), calldatasize()), 0x00)
+            calldatacopy(add(0x60, m), 0x00, add(0x20, calldatasize()))
             sstore(s, keccak256(m, and(add(0x7f, calldatasize()), not(0x1f))))
         }
     }
