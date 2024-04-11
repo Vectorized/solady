@@ -76,15 +76,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
 
     /// @dev Caches the chain ID in the deployed bytecode,
     /// so that in the rare case of a hard fork, `owner` will still work.
-    uint256 private immutable _cachedChainId;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        CONSTRUCTOR                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    constructor() {
-        _cachedChainId = block.chainid;
-    }
+    uint256 private immutable _cachedChainId = block.chainid;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*              TOKEN-BOUND OWNERSHIP OPERATIONS              */
@@ -115,7 +107,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             extcodecopy(address(), 0x00, 0x4d, 0x60)
-            if or(eq(mload(0x00), chainid()), eq(mload(0x00), cachedChainId)) {
+            if eq(mload(0x00), cachedChainId) {
                 let tokenContract := mload(0x20)
                 // `tokenId` is already at 0x40.
                 mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
@@ -323,7 +315,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
                     let tokenContract := mload(0x20)
                     // `tokenId` is already at 0x40.
                     mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                    let chainsEq := or(eq(mload(0x00), chainid()), eq(mload(0x00), cachedChainId))
+                    let chainsEq := eq(mload(0x00), cachedChainId)
                     let currentOwner :=
                         mul(
                             mload(0x20),
