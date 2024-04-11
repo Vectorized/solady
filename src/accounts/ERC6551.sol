@@ -167,7 +167,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*                      STATE OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the current value of the state counter.
+    /// @dev Returns the current value of the state.
     function state() public view virtual returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -175,7 +175,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         }
     }
 
-    /// @dev Mutates the state counter. This function is required to be called for every
+    /// @dev Mutates the state. This function is required to be called in every
     /// public / external function that may modify storage or emit events.
     function _updateState() internal virtual {
         /// @solidity memory-safe-assembly
