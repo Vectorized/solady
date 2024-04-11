@@ -33,9 +33,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bytes4 result)
     {
-        bool success = _isValidSignatureViaSafeCaller(hash, signature)
-            || _isValidSignatureViaNestedEIP712(hash, signature)
-            || _isValidSignatureViaRPC(hash, signature);
+        bool success = _erc1271IsValidSignature(hash, signature);
         /// @solidity memory-safe-assembly
         assembly {
             // `success ? bytes4(keccak256("isValidSignature(bytes32,bytes)")) : 0xffffffff`.
@@ -44,16 +42,30 @@ abstract contract ERC1271 is EIP712 {
         }
     }
 
-    /// @dev Performs the signature validation without nested EIP-712 if the caller is
-    /// a safe caller. A safe caller must include the address of this account in the hash.
-    function _isValidSignatureViaSafeCaller(bytes32 hash, bytes calldata signature)
+    /// @dev Returns whether the `signature` is valid for the `hash.
+    function _erc1271IsValidSignature(bytes32 hash, bytes calldata signature)
         internal
         view
         virtual
         returns (bool)
     {
-        if (!_erc1271CallerIsSafe()) return false;
-        return SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
+        return _erc1271IsValidSignatureViaSafeCaller(hash, signature)
+            || _erc1271IsValidSignatureViaNestedEIP712(hash, signature)
+            || _erc1271IsValidSignatureViaRPC(hash, signature);
+    }
+
+    /// @dev Performs the signature validation without nested EIP-712 if the caller is
+    /// a safe caller. A safe caller must include the address of this account in the hash.
+    function _erc1271IsValidSignatureViaSafeCaller(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        virtual
+        returns (bool result)
+    {
+        if (_erc1271CallerIsSafe()) {
+            result =
+                SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
+        }
     }
 
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
@@ -119,7 +131,7 @@ abstract contract ERC1271 is EIP712 {
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
     /// All these are just for widespead out-of-the-box compatibility with other wallet apps.
-    function _isValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
+    function _erc1271IsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
         virtual
@@ -161,31 +173,33 @@ abstract contract ERC1271 is EIP712 {
 
     /// @dev Performs the signature validation without nested EIP-712 to allow for easy sign ins.
     /// This function must always return false or revert if called on-chain.
-    function _isValidSignatureViaRPC(bytes32 hash, bytes calldata signature)
+    function _erc1271IsValidSignatureViaRPC(bytes32 hash, bytes calldata signature)
         internal
         view
         virtual
-        returns (bool)
+        returns (bool result)
     {
         // Non-zero gasprice is a heuristic to check if a call is on-chain,
         // but we can't fully depend on it because it can be manipulated.
         // See: https://x.com/NoahCitron/status/1580359718341484544
-        if (tx.gasprice != 0) return false;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let gasBurnHash := 0x31d8f1c26729207294 // uint72(bytes9(keccak256("gasBurnHash"))).
-            if eq(hash, gasBurnHash) { invalid() } // Burns gas computationally efficiently.
-            let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x00, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
-            mstore(0x20, gasBurnHash)
-            mstore(0x40, 0x40)
-            // Make a call to this with `gasBurnHash`, efficiently burning the gas provided.
-            // No valid transaction can consume more than the gaslimit.
-            // See: https://ethereum.github.io/yellowpaper/paper.pdf
-            // Most RPCs perform calls with a gas budget greater than the gaslimit.
-            pop(staticcall(add(100000, gaslimit()), address(), 0x1c, 0x64, 0x00, 0x00))
-            mstore(0x40, m) // Restore the free memory pointer.
+        if (tx.gasprice == 0) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                let gasBurnHash := 0x31d8f1c26729207294 // uint72(bytes9(keccak256("gasBurnHash"))).
+                if eq(hash, gasBurnHash) { invalid() } // Burns gas computationally efficiently.
+                let m := mload(0x40) // Cache the free memory pointer.
+                mstore(0x00, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
+                mstore(0x20, gasBurnHash)
+                mstore(0x40, 0x40)
+                // Make a call to this with `gasBurnHash`, efficiently burning the gas provided.
+                // No valid transaction can consume more than the gaslimit.
+                // See: https://ethereum.github.io/yellowpaper/paper.pdf
+                // Most RPCs perform calls with a gas budget greater than the gaslimit.
+                pop(staticcall(add(100000, gaslimit()), address(), 0x1c, 0x64, 0x00, 0x00))
+                mstore(0x40, m) // Restore the free memory pointer.
+            }
+            result =
+                SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
         }
-        return SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
     }
 }
