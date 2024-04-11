@@ -167,7 +167,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*                      STATE OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the current value of the state counter.
+    /// @dev Returns the current value of the state.
     function state() public view virtual returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -175,7 +175,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         }
     }
 
-    /// @dev Mutates the state counter. This modifier is required for every
+    /// @dev Mutates the state. This function is required to be called in every
     /// public / external function that may modify storage or emit events.
     function _updateState() internal virtual {
         /// @solidity memory-safe-assembly
@@ -185,8 +185,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
             mstore(m, sload(s))
             mstore(add(0x20, m), 0x40)
             mstore(add(0x40, m), calldatasize())
-            calldatacopy(add(0x60, m), 0x00, calldatasize())
-            mstore(add(add(0x60, m), calldatasize()), 0x00)
+            calldatacopy(add(0x60, m), 0x00, add(0x20, calldatasize()))
             sstore(s, keccak256(m, and(add(0x7f, calldatasize()), not(0x1f))))
         }
     }
