@@ -415,7 +415,7 @@ contract ERC6551Test is SoladyTest {
             )
         );
         bytes32 parentStructHash =
-            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child));
+            keccak256(abi.encode(_PARENT_TYPEHASH, address(this), _toChildHash(child), child));
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
     }
 

@@ -76,12 +76,15 @@ abstract contract ERC1271 is EIP712 {
     ///
     /// - `Parent`: The parent struct type.
     ///   To be defined by the front end, such that `child` can be visible via EIP-712.
+    ///
+    /// - `contract`: The contract calling `isValidSignature`.
     /// __________________________________________________________________________________________
     ///
     /// For the default nested EIP-712 workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
+    ///             contract: msg.sender,
     ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
     ///             child: hashStruct(originalStruct)
     ///         }))
@@ -100,6 +103,7 @@ abstract contract ERC1271 is EIP712 {
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
+    ///             contract: msg.sender,
     ///             childHash: keccak256(\x19Ethereum Signed Message:\n ||
     ///                 base10(bytes(someString).length) || someString)
     ///         }))
@@ -129,30 +133,32 @@ abstract contract ERC1271 is EIP712 {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             let o := add(signature.offset, sub(signature.length, 0x60))
-            calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child's structHash.
-            mstore(0x00, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x00.
+            calldatacopy(0x20, o, 0x60) // Copy the `DOMAIN_SEP_B` and child's structHash.
+            mstore(0x20, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x20.
             for {} 1 {} {
                 // Use the nested EIP-712 workflow if the reconstructed `childHash` matches,
                 // and the signature is at least 96 bytes long.
-                if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
+                if iszero(or(xor(keccak256(0x3e, 0x42), hash), lt(signature.length, 0x60))) {
                     // Truncate the `signature.length` by 3 words (96 bytes).
                     signature.length := sub(signature.length, 0x60)
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
-                    mstore(0x20, hash) // Store the `childHash`.
-                    // The `child` struct hash is already at 0x40.
-                    hash := keccak256(0x00, 0x60) // Compute the `parent` struct hash.
+                    mstore(0x20, caller()) // Store the `contract`.
+                    mstore(0x40, hash) // Store the `childHash`.
+                    // The `child` struct hash is already at 0x60.
+                    hash := keccak256(0x00, 0x80) // Compute the `parent` struct hash.
                     break
                 }
                 // Else, use the `personalSign` workflow.
                 // If `signature.length` > 1 word (32 bytes), reduce by 1 word, else set to 0.
                 signature.length := mul(gt(signature.length, 0x20), sub(signature.length, 0x20))
-                // The `PARENT_TYPEHASH` is already at 0x40.
-                mstore(0x60, hash) // Store the `childHash`.
-                hash := keccak256(0x40, 0x40) // Compute the `parent` struct hash.
-                mstore(0x60, 0) // Restore the zero pointer.
+                mstore(0x00, mload(0x60)) // Copy the `PARENT_TYPEHASH` from 0x60 to 0x00.
+                mstore(0x20, caller()) // Store the `contract`.
+                mstore(0x40, hash) // Store the `childHash`.
+                hash := keccak256(0x00, 0x60) // Compute the `parent` struct hash.
                 break
             }
             mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
         }
         return SignatureCheckerLib.isValidSignatureNowCalldata(
             _erc1271Signer(), _hashTypedData(hash), signature
