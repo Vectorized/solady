@@ -191,11 +191,13 @@ abstract contract ERC1271 is EIP712 {
                 mstore(0x00, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
                 mstore(0x20, gasBurnHash)
                 mstore(0x40, 0x40)
+                let gasToBurn := add(100000, gaslimit())
+                if iszero(gt(gas(), gasToBurn)) { invalid() }
                 // Make a call to this with `gasBurnHash`, efficiently burning the gas provided.
                 // No valid transaction can consume more than the gaslimit.
                 // See: https://ethereum.github.io/yellowpaper/paper.pdf
                 // Most RPCs perform calls with a gas budget greater than the gaslimit.
-                pop(staticcall(add(100000, gaslimit()), address(), 0x1c, 0x64, 0x00, 0x00))
+                pop(staticcall(gasToBurn, address(), 0x1c, 0x64, codesize(), 0x00))
                 mstore(0x40, m) // Restore the free memory pointer.
             }
             result =
