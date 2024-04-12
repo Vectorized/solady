@@ -197,7 +197,7 @@ abstract contract ERC1271 is EIP712 {
                 // No valid transaction can consume more than the gaslimit.
                 // See: https://ethereum.github.io/yellowpaper/paper.pdf
                 // Most RPCs perform calls with a gas budget greater than the gaslimit.
-                pop(staticcall(gasToBurn, address(), 0x1c, 0x64, 0x00, 0x00))
+                pop(staticcall(gasToBurn, address(), 0x1c, 0x64, codesize(), 0x00))
                 mstore(0x40, m) // Restore the free memory pointer.
             }
             result =
