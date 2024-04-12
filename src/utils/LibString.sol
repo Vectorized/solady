@@ -1188,7 +1188,7 @@ library LibString {
             // Store the return offset.
             mstore(retStart, 0x20)
             // End the transaction, returning the string.
-            return(retStart, retSize)
+            return(retStart, and(not(0x1f), add(0x1f, retSize)))
         }
     }
 }
