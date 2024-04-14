@@ -403,6 +403,30 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
     }
 
+    function testIsValidSignatureViaRPC() public {
+        vm.txGasPrice(10);
+        _TestTemps memory t;
+        t.hash = keccak256("123");
+        (t.signer, t.privateKey) = _randomSigner();
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
+
+        account.initialize(t.signer);
+
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        vm.txGasPrice(1);
+        assertEq(account.isValidSignature(t.hash, signature), bytes4(0xffffffff));
+
+        vm.txGasPrice(0);
+        vm.expectRevert();
+        account.isValidSignature(t.hash, signature);
+
+        // Unfortunately, I don't know of a way to make Foundry simulate a call with `gas > gaslimit`.
+        // But we can be sure that most RPCs will do that.
+        // See: https://sepolia.etherscan.io/address/0x4f55bb26d7195babf9f8144bdc4ae4dd919c746d#code
+    }
+
     function testIsValidSignatureWrapped() public {
         _TestTemps memory t;
         t.hash = keccak256("123");
