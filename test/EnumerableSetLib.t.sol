@@ -263,6 +263,7 @@ contract EnumerableSetLibTest is SoladyTest {
             assertEq(addressSet.length(), additions.length);
             {
                 address[] memory values = addressSet.values();
+                _checkMemory();
                 uint256[] memory valuesCasted = _toUints(values);
                 LibSort.sort(valuesCasted);
                 assertEq(valuesCasted, additions);
@@ -281,6 +282,7 @@ contract EnumerableSetLibTest is SoladyTest {
             {
                 uint256[] memory difference = LibSort.difference(additions, removals);
                 address[] memory values = addressSet.values();
+                _checkMemory();
                 if (_random() % 8 == 0) _checkAddressSetValues(values);
                 uint256[] memory valuesCasted = _toUints(values);
                 LibSort.sort(valuesCasted);
@@ -306,6 +308,7 @@ contract EnumerableSetLibTest is SoladyTest {
             assertEq(bytes32Set.length(), additions.length);
             {
                 bytes32[] memory values = bytes32Set.values();
+                _checkMemory();
                 uint256[] memory valuesCasted = _toUints(values);
                 LibSort.sort(valuesCasted);
                 assertEq(valuesCasted, additions);
@@ -324,6 +327,7 @@ contract EnumerableSetLibTest is SoladyTest {
             {
                 uint256[] memory difference = LibSort.difference(additions, removals);
                 bytes32[] memory values = bytes32Set.values();
+                _checkMemory();
                 if (_random() % 8 == 0) _checkBytes32SetValues(values);
                 uint256[] memory valuesCasted = _toUints(values);
                 LibSort.sort(valuesCasted);
