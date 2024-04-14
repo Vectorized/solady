@@ -251,9 +251,10 @@ contract EnumerableSetLibTest is SoladyTest {
             LibPRNG.PRNG memory prng;
             prng.state = n;
             uint256[] memory additions = new uint256[](prng.next() % 16);
+            uint256 mask = _random() % 2 == 0 ? 7 : 15;
 
             for (uint256 i; i != additions.length; ++i) {
-                uint256 x = prng.next() & 7;
+                uint256 x = prng.next() & mask;
                 additions[i] = x;
                 addressSet.add(_brutalized(address(uint160(x))));
                 assertTrue(addressSet.contains(_brutalized(address(uint160(x)))));
@@ -271,7 +272,7 @@ contract EnumerableSetLibTest is SoladyTest {
 
             uint256[] memory removals = new uint256[](prng.next() % 16);
             for (uint256 i; i != removals.length; ++i) {
-                uint256 x = prng.next() & 7;
+                uint256 x = prng.next() & mask;
                 removals[i] = x;
                 addressSet.remove(_brutalized(address(uint160(x))));
                 assertFalse(addressSet.contains(_brutalized(address(uint160(x)))));
@@ -296,9 +297,10 @@ contract EnumerableSetLibTest is SoladyTest {
             LibPRNG.PRNG memory prng;
             prng.state = n;
             uint256[] memory additions = new uint256[](prng.next() % 16);
+            uint256 mask = _random() % 2 == 0 ? 7 : 15;
 
             for (uint256 i; i != additions.length; ++i) {
-                uint256 x = prng.next() & 7;
+                uint256 x = prng.next() & mask;
                 additions[i] = x;
                 bytes32Set.add(bytes32(x));
                 assertTrue(bytes32Set.contains(bytes32(x)));
@@ -316,7 +318,7 @@ contract EnumerableSetLibTest is SoladyTest {
 
             uint256[] memory removals = new uint256[](prng.next() % 16);
             for (uint256 i; i != removals.length; ++i) {
-                uint256 x = prng.next() & 7;
+                uint256 x = prng.next() & mask;
                 removals[i] = x;
                 bytes32Set.remove(bytes32(x));
                 assertFalse(bytes32Set.contains(bytes32(x)));
