@@ -10,7 +10,25 @@ contract EnumerableSetLibTest is SoladyTest {
     using EnumerableSetLib for *;
     using LibPRNG for *;
 
+    uint256 private constant _ZERO_SENTINEL = 0xfbb67fda52d4bfb8bf;
+
     EnumerableSetLib.AddressSet addressSet;
+    EnumerableSetLib.AddressSet addressSet2;
+
+    function testEnumerableAddressSetNoStorageCollision() public {
+        addressSet.add(address(1));
+        assertEq(addressSet2.contains(address(1)), false);
+        addressSet2.add(address(2));
+        assertEq(addressSet.contains(address(1)), true);
+        assertEq(addressSet2.contains(address(1)), false);
+        assertEq(addressSet.contains(address(2)), false);
+        addressSet.add(address(2));
+        assertEq(addressSet.contains(address(2)), true);
+        assertEq(addressSet2.contains(address(1)), false);
+        addressSet2.add(address(1));
+        assertEq(addressSet.contains(address(2)), true);
+        assertEq(addressSet2.contains(address(1)), true);
+    }
 
     function testEnumerableAddressSetBasic() public {
         assertEq(addressSet.length(), 0);
@@ -111,14 +129,14 @@ contract EnumerableSetLibTest is SoladyTest {
         assertEq(addressSet.length(), 0);
     }
 
-    function testEnumerableSetFuzz(uint256 n) public {
+    function testEnumerableAddressSetFuzz(uint256 n) public {
         unchecked {
             LibPRNG.PRNG memory prng;
             prng.state = n;
             uint256[] memory additions = new uint256[](prng.next() % 16);
 
             for (uint256 i; i != additions.length; ++i) {
-                uint256 x = 1 | (prng.next() & 7);
+                uint256 x = prng.next() & 7;
                 additions[i] = x;
                 addressSet.add(_brutalized(address(uint160(x))));
                 assertTrue(addressSet.contains(_brutalized(address(uint160(x)))));
@@ -135,7 +153,7 @@ contract EnumerableSetLibTest is SoladyTest {
 
             uint256[] memory removals = new uint256[](prng.next() % 16);
             for (uint256 i; i != removals.length; ++i) {
-                uint256 x = 1 | (prng.next() & 7);
+                uint256 x = prng.next() & 7;
                 removals[i] = x;
                 addressSet.remove(_brutalized(address(uint160(x))));
                 assertFalse(addressSet.contains(_brutalized(address(uint160(x)))));
@@ -146,11 +164,60 @@ contract EnumerableSetLibTest is SoladyTest {
             {
                 uint256[] memory difference = LibSort.difference(additions, removals);
                 address[] memory values = addressSet.values();
+                if (_random() % 8 == 0) _checkAddressSetValues(values);
                 uint256[] memory valuesCasted = _toUints(values);
                 LibSort.sort(valuesCasted);
                 assertEq(valuesCasted, difference);
             }
         }
+    }
+
+    function _checkAddressSetValues(address[] memory values) internal {
+        unchecked {
+            for (uint256 i; i != values.length; ++i) {
+                assertEq(addressSet.at(i), values[i]);
+            }
+        }
+    }
+
+    function testEnumerableAddressRevertsOnSentinel(uint256) public {
+        do {
+            address a = address(uint160(_random()));
+            if (_random() % 32 == 0) {
+                a = address(uint160(_ZERO_SENTINEL));
+            }
+            uint256 r = _random() % 3;
+            if (r == 0) {
+                if (a == address(uint160(_ZERO_SENTINEL))) {
+                    vm.expectRevert(EnumerableSetLib.ValueIsZeroSentinel.selector);
+                }
+                this.addToAddressSet(a);
+            }
+            if (r == 1) {
+                if (a == address(uint160(_ZERO_SENTINEL))) {
+                    vm.expectRevert(EnumerableSetLib.ValueIsZeroSentinel.selector);
+                }
+                this.addressSetContains(a);
+            }
+            if (r == 2) {
+                if (a == address(uint160(_ZERO_SENTINEL))) {
+                    vm.expectRevert(EnumerableSetLib.ValueIsZeroSentinel.selector);
+                }
+                this.removeFromAddressSet(a);
+            }
+        } while (_random() % 2 != 0);
+    }
+
+    function addToAddressSet(address a) public returns (bool) {
+        return addressSet.add(a);
+    }
+
+    function addressSetContains(address a) public view returns (bool) {
+        return addressSet.contains(a);
+    }
+
+    function removeFromAddressSet(address a) public returns (bool) {
+        return addressSet.remove(a);
     }
 
     function _brutalized(address a) private view returns (address result) {
