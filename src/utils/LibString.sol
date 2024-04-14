@@ -1181,13 +1181,14 @@ library LibString {
         assembly {
             // Assumes that the string does not start from the scratch space.
             let retStart := sub(a, 0x20)
+            let retUnpaddedSize := add(mload(a), 0x40)
             // Right pad with zeroes. Just in case the string is produced
             // by a method that doesn't zero right pad.
-            mstore(add(retStart, add(mload(a), 0x40)), 0)
+            mstore(add(retStart, retUnpaddedSize), 0)
             // Store the return offset.
             mstore(retStart, 0x20)
             // End the transaction, returning the string.
-            return(retStart, add(mload(a), 0x60))
+            return(retStart, and(not(0x1f), add(0x1f, retUnpaddedSize)))
         }
     }
 }
