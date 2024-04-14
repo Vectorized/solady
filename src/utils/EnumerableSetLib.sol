@@ -221,6 +221,7 @@ library EnumerableSetLib {
     }
 
     function values(AddressSet storage set) internal view returns (address[] memory result) {
+        uint256 n = length(set);
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x04, _ENUMERABLE_ADDRESS_SET_SLOT_SEED)
@@ -228,14 +229,11 @@ library EnumerableSetLib {
             let rootSlot := keccak256(0x00, 0x24)
             result := mload(0x40)
             let o := add(0x20, result)
-            let i := 0
-            for {} 1 { i := add(i, 1) } {
-                let value := shr(96, sload(add(rootSlot, i)))
-                if iszero(value) { break }
-                mstore(add(o, shl(5, i)), value)
+            for { let i := 0 } iszero(eq(i, n)) { i := add(i, 1) } {
+                mstore(add(o, shl(5, i)), shr(96, sload(add(rootSlot, i))))
             }
-            mstore(result, i)
-            mstore(0x40, add(o, shl(5, i)))
+            mstore(result, n)
+            mstore(0x40, add(o, shl(5, n)))
         }
     }
 
