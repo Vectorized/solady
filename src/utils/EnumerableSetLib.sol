@@ -33,7 +33,7 @@ library EnumerableSetLib {
     ///     let positionSlot := keccak256(0x00, 0x40)
     ///     let valueSlot := add(rootSlot, sload(positionSlot))
     ///     let valueInStorage := shr(96, sload(valueSlot))
-    ///     let lazyLength := and(0xffffffffffffffff, sload(rootSlot))
+    ///     let lazyLength := shr(160, shl(160, sload(rootSlot)))
     /// ```
     uint256 private constant _ENUMERABLE_ADDRESS_SET_SLOT_SEED = 0x978aab92;
 
