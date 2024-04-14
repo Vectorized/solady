@@ -186,13 +186,13 @@ abstract contract ERC1271 is EIP712 {
             /// @solidity memory-safe-assembly
             assembly {
                 let gasBurnHash := 0x31d8f1c26729207294 // uint72(bytes9(keccak256("gasBurnHash"))).
-                if eq(hash, gasBurnHash) { invalid() } // Burns gas computationally efficiently.
                 let m := mload(0x40) // Cache the free memory pointer.
                 mstore(0x00, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
                 mstore(0x20, gasBurnHash)
                 mstore(0x40, 0x40)
                 let gasToBurn := add(100000, gaslimit())
-                if iszero(gt(gas(), gasToBurn)) { invalid() }
+                // Burns gas computationally efficiently. Also, requires that `gas > gasToBurn`.
+                if or(eq(hash, gasBurnHash), lt(gas(), gasToBurn)) { invalid() }
                 // Make a call to this with `gasBurnHash`, efficiently burning the gas provided.
                 // No valid transaction can consume more than the gaslimit.
                 // See: https://ethereum.github.io/yellowpaper/paper.pdf
