@@ -15,6 +15,9 @@ contract EnumerableSetLibTest is SoladyTest {
     EnumerableSetLib.AddressSet addressSet;
     EnumerableSetLib.AddressSet addressSet2;
 
+    EnumerableSetLib.Bytes32Set bytes32Set;
+    EnumerableSetLib.Bytes32Set bytes32Set2;
+
     function testEnumerableAddressSetNoStorageCollision() public {
         addressSet.add(address(1));
         assertEq(addressSet2.contains(address(1)), false);
@@ -28,6 +31,21 @@ contract EnumerableSetLibTest is SoladyTest {
         addressSet2.add(address(1));
         assertEq(addressSet.contains(address(2)), true);
         assertEq(addressSet2.contains(address(1)), true);
+    }
+
+    function testEnumerableBytes32SetNoStorageCollision() public {
+        bytes32Set.add(bytes32(uint256(1)));
+        assertEq(bytes32Set2.contains(bytes32(uint256(1))), false);
+        bytes32Set2.add(bytes32(uint256(2)));
+        assertEq(bytes32Set.contains(bytes32(uint256(1))), true);
+        assertEq(bytes32Set2.contains(bytes32(uint256(1))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), false);
+        bytes32Set.add(bytes32(uint256(2)));
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), true);
+        assertEq(bytes32Set2.contains(bytes32(uint256(1))), false);
+        bytes32Set2.add(bytes32(uint256(1)));
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), true);
+        assertEq(bytes32Set2.contains(bytes32(uint256(1))), true);
     }
 
     function testEnumerableAddressSetBasic() public {
@@ -89,6 +107,65 @@ contract EnumerableSetLibTest is SoladyTest {
         assertEq(addressSet.contains(address(5)), true);
     }
 
+    function testEnumerableBytes32SetBasic() public {
+        assertEq(bytes32Set.length(), 0);
+        assertEq(bytes32Set.contains(bytes32(uint256(1))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(3))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(4))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(5))), false);
+
+        assertTrue(bytes32Set.add(bytes32(uint256(1))));
+        assertFalse(bytes32Set.add(bytes32(uint256(1))));
+
+        assertEq(bytes32Set.length(), 1);
+        assertEq(bytes32Set.contains(bytes32(uint256(1))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(3))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(4))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(5))), false);
+
+        assertTrue(bytes32Set.add(bytes32(uint256(2))));
+        assertFalse(bytes32Set.add(bytes32(uint256(2))));
+
+        assertEq(bytes32Set.length(), 2);
+        assertEq(bytes32Set.contains(bytes32(uint256(1))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(3))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(4))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(5))), false);
+
+        assertTrue(bytes32Set.add(bytes32(uint256(3))));
+        assertFalse(bytes32Set.add(bytes32(uint256(3))));
+
+        assertEq(bytes32Set.length(), 3);
+        assertEq(bytes32Set.contains(bytes32(uint256(1))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(3))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(4))), false);
+        assertEq(bytes32Set.contains(bytes32(uint256(5))), false);
+
+        assertTrue(bytes32Set.add(bytes32(uint256(4))));
+        assertFalse(bytes32Set.add(bytes32(uint256(4))));
+
+        assertEq(bytes32Set.length(), 4);
+        assertEq(bytes32Set.contains(bytes32(uint256(1))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(3))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(4))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(5))), false);
+
+        assertTrue(bytes32Set.add(bytes32(uint256(5))));
+        assertFalse(bytes32Set.add(bytes32(uint256(5))));
+
+        assertEq(bytes32Set.length(), 5);
+        assertEq(bytes32Set.contains(bytes32(uint256(1))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(2))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(3))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(4))), true);
+        assertEq(bytes32Set.contains(bytes32(uint256(5))), true);
+    }
+
     function testEnumerableAddressSetBasic2() public {
         addressSet.add(address(1));
         addressSet.add(address(2));
@@ -127,6 +204,46 @@ contract EnumerableSetLibTest is SoladyTest {
         assertEq(addressSet.length(), 1);
         addressSet.remove(address(3));
         assertEq(addressSet.length(), 0);
+    }
+
+    function testEnumerableBytes32SetBasic2() public {
+        bytes32Set.add(bytes32(uint256(1)));
+        bytes32Set.add(bytes32(uint256(2)));
+
+        bytes32Set.remove(bytes32(uint256(1)));
+        assertEq(bytes32Set.length(), 1);
+        bytes32Set.remove(bytes32(uint256(2)));
+        assertEq(bytes32Set.length(), 0);
+
+        bytes32Set.add(bytes32(uint256(1)));
+        bytes32Set.add(bytes32(uint256(2)));
+
+        bytes32Set.remove(bytes32(uint256(2)));
+        assertEq(bytes32Set.length(), 1);
+        bytes32Set.remove(bytes32(uint256(1)));
+        assertEq(bytes32Set.length(), 0);
+
+        bytes32Set.add(bytes32(uint256(1)));
+        bytes32Set.add(bytes32(uint256(2)));
+        bytes32Set.add(bytes32(uint256(3)));
+
+        bytes32Set.remove(bytes32(uint256(3)));
+        assertEq(bytes32Set.length(), 2);
+        bytes32Set.remove(bytes32(uint256(2)));
+        assertEq(bytes32Set.length(), 1);
+        bytes32Set.remove(bytes32(uint256(1)));
+        assertEq(bytes32Set.length(), 0);
+
+        bytes32Set.add(bytes32(uint256(1)));
+        bytes32Set.add(bytes32(uint256(2)));
+        bytes32Set.add(bytes32(uint256(3)));
+
+        bytes32Set.remove(bytes32(uint256(1)));
+        assertEq(bytes32Set.length(), 2);
+        bytes32Set.remove(bytes32(uint256(2)));
+        assertEq(bytes32Set.length(), 1);
+        bytes32Set.remove(bytes32(uint256(3)));
+        assertEq(bytes32Set.length(), 0);
     }
 
     function testEnumerableAddressSetFuzz(uint256 n) public {
@@ -172,10 +289,61 @@ contract EnumerableSetLibTest is SoladyTest {
         }
     }
 
+    function testEnumerableBytes32SetFuzz(uint256 n) public {
+        unchecked {
+            LibPRNG.PRNG memory prng;
+            prng.state = n;
+            uint256[] memory additions = new uint256[](prng.next() % 16);
+
+            for (uint256 i; i != additions.length; ++i) {
+                uint256 x = prng.next() & 7;
+                additions[i] = x;
+                bytes32Set.add(bytes32(x));
+                assertTrue(bytes32Set.contains(bytes32(x)));
+            }
+            LibSort.sort(additions);
+            LibSort.uniquifySorted(additions);
+            assertEq(bytes32Set.length(), additions.length);
+            {
+                bytes32[] memory values = bytes32Set.values();
+                uint256[] memory valuesCasted = _toUints(values);
+                LibSort.sort(valuesCasted);
+                assertEq(valuesCasted, additions);
+            }
+
+            uint256[] memory removals = new uint256[](prng.next() % 16);
+            for (uint256 i; i != removals.length; ++i) {
+                uint256 x = prng.next() & 7;
+                removals[i] = x;
+                bytes32Set.remove(bytes32(x));
+                assertFalse(bytes32Set.contains(bytes32(x)));
+            }
+            LibSort.sort(removals);
+            LibSort.uniquifySorted(removals);
+
+            {
+                uint256[] memory difference = LibSort.difference(additions, removals);
+                bytes32[] memory values = bytes32Set.values();
+                if (_random() % 8 == 0) _checkBytes32SetValues(values);
+                uint256[] memory valuesCasted = _toUints(values);
+                LibSort.sort(valuesCasted);
+                assertEq(valuesCasted, difference);
+            }
+        }
+    }
+
     function _checkAddressSetValues(address[] memory values) internal {
         unchecked {
             for (uint256 i; i != values.length; ++i) {
                 assertEq(addressSet.at(i), values[i]);
+            }
+        }
+    }
+
+    function _checkBytes32SetValues(bytes32[] memory values) internal {
+        unchecked {
+            for (uint256 i; i != values.length; ++i) {
+                assertEq(bytes32Set.at(i), values[i]);
             }
         }
     }
@@ -229,6 +397,13 @@ contract EnumerableSetLibTest is SoladyTest {
     }
 
     function _toUints(address[] memory a) private pure returns (uint256[] memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := a
+        }
+    }
+
+    function _toUints(bytes32[] memory a) private pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := a
