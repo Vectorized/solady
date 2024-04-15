@@ -18,6 +18,9 @@ contract EnumerableSetLibTest is SoladyTest {
     EnumerableSetLib.Bytes32Set bytes32Set;
     EnumerableSetLib.Bytes32Set bytes32Set2;
 
+    EnumerableSetLib.Uint256Set uint256Set;
+    EnumerableSetLib.Int256Set int256Set;
+
     function testEnumerableAddressSetNoStorageCollision() public {
         addressSet.add(address(1));
         assertEq(addressSet2.contains(address(1)), false);
@@ -246,7 +249,21 @@ contract EnumerableSetLibTest is SoladyTest {
         assertEq(bytes32Set.length(), 0);
     }
 
-    function testEnumerableAddressSetFuzz(uint256 n) public {
+    function testEnumerableSetFuzz(uint256 n) public {
+        vm.pauseGasMetering();
+        if (_random() % 2 == 0) {
+            _testEnumerableAddressSetFuzz(n);
+            _testEnumerableBytes32SetFuzz(n);
+        } else {
+            if (_random() % 2 == 0) _testEnumerableAddressSetFuzz();
+            if (_random() % 2 == 0) _testEnumerableBytes32SetFuzz();
+            if (_random() % 2 == 0) _testEnumerableUint256SetFuzz();
+            if (_random() % 2 == 0) _testEnumerableInt256SetFuzz();
+        }
+        vm.resumeGasMetering();
+    }
+
+    function _testEnumerableAddressSetFuzz(uint256 n) internal {
         unchecked {
             LibPRNG.PRNG memory prng;
             prng.state = n;
@@ -292,16 +309,16 @@ contract EnumerableSetLibTest is SoladyTest {
         }
     }
 
-    function testEnumerableAddressSetFuzz2(uint256) public {
+    function _testEnumerableAddressSetFuzz() internal {
         uint256[] memory s = _makeArray(0);
         do {
-            address a = address(uint160(_random()));
+            address r = address(uint160(_random()));
             if (_random() % 2 == 0) {
-                addressSet.add(a);
-                _addToArray(s, uint256(uint160(a)));
+                addressSet.add(r);
+                _addToArray(s, uint256(uint160(r)));
             } else {
-                addressSet.remove(a);
-                _removeFromArray(s, uint256(uint160(a)));
+                addressSet.remove(r);
+                _removeFromArray(s, uint256(uint160(r)));
             }
             if (_random() % 8 == 0) {
                 _checkArraysSortedEq(_toUints(addressSet.values()), s);
@@ -311,7 +328,7 @@ contract EnumerableSetLibTest is SoladyTest {
         _checkArraysSortedEq(_toUints(addressSet.values()), s);
     }
 
-    function testEnumerableBytes32SetFuzz(uint256 n) public {
+    function _testEnumerableBytes32SetFuzz(uint256 n) internal {
         unchecked {
             LibPRNG.PRNG memory prng;
             prng.state = n;
@@ -357,23 +374,61 @@ contract EnumerableSetLibTest is SoladyTest {
         }
     }
 
-    function testEnumerableBytes32SetFuzz2(uint256) public {
+    function _testEnumerableBytes32SetFuzz() internal {
         uint256[] memory s = _makeArray(0);
         do {
-            bytes32 a = bytes32(_random());
+            bytes32 r = bytes32(_random());
             if (_random() % 2 == 0) {
-                bytes32Set.add(a);
-                _addToArray(s, uint256(a));
+                bytes32Set.add(r);
+                _addToArray(s, uint256(r));
             } else {
-                bytes32Set.remove(a);
-                _removeFromArray(s, uint256(a));
+                bytes32Set.remove(r);
+                _removeFromArray(s, uint256(r));
             }
-            if (_random() % 8 == 0) {
+            if (_random() % 16 == 0) {
                 _checkArraysSortedEq(_toUints(bytes32Set.values()), s);
             }
             if (s.length == 512) break;
         } while (_random() % 8 != 0);
         _checkArraysSortedEq(_toUints(bytes32Set.values()), s);
+    }
+
+    function _testEnumerableUint256SetFuzz() public {
+        uint256[] memory s = _makeArray(0);
+        do {
+            uint256 r = _random();
+            if (_random() % 2 == 0) {
+                uint256Set.add(r);
+                _addToArray(s, r);
+            } else {
+                uint256Set.remove(r);
+                _removeFromArray(s, r);
+            }
+            if (_random() % 16 == 0) {
+                _checkArraysSortedEq(uint256Set.values(), s);
+            }
+            if (s.length == 512) break;
+        } while (_random() % 8 != 0);
+        _checkArraysSortedEq(uint256Set.values(), s);
+    }
+
+    function _testEnumerableInt256SetFuzz() public {
+        uint256[] memory s = _makeArray(0);
+        do {
+            uint256 r = _random();
+            if (_random() % 2 == 0) {
+                int256Set.add(int256(r));
+                _addToArray(s, uint256(r));
+            } else {
+                int256Set.remove(int256(r));
+                _removeFromArray(s, uint256(r));
+            }
+            if (_random() % 16 == 0) {
+                _checkArraysSortedEq(_toUints(int256Set.values()), s);
+            }
+            if (s.length == 512) break;
+        } while (_random() % 8 != 0);
+        _checkArraysSortedEq(_toUints(int256Set.values()), s);
     }
 
     function _checkArraysSortedEq(uint256[] memory a, uint256[] memory b) internal {
@@ -501,6 +556,13 @@ contract EnumerableSetLibTest is SoladyTest {
     }
 
     function _toUints(address[] memory a) private pure returns (uint256[] memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := a
+        }
+    }
+
+    function _toUints(int256[] memory a) private pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := a
