@@ -292,6 +292,25 @@ contract EnumerableSetLibTest is SoladyTest {
         }
     }
 
+    function testEnumerableAddressSetFuzz2(uint256) public {
+        uint256[] memory s = _makeArray(0);
+        do {
+            address a = address(uint160(_random()));
+            if (_random() % 2 == 0) {
+                addressSet.add(a);
+                _addToArray(s, uint256(uint160(a)));
+            } else {
+                addressSet.remove(a);
+                _removeFromArray(s, uint256(uint160(a)));
+            }
+            if (_random() % 8 == 0) {
+                _checkArraysSortedEq(_toUints(addressSet.values()), s);
+            }
+            if (s.length == 512) break;
+        } while (_random() % 8 != 0);
+        _checkArraysSortedEq(_toUints(addressSet.values()), s);
+    }
+
     function testEnumerableBytes32SetFuzz(uint256 n) public {
         unchecked {
             LibPRNG.PRNG memory prng;
@@ -336,6 +355,31 @@ contract EnumerableSetLibTest is SoladyTest {
                 assertEq(valuesCasted, difference);
             }
         }
+    }
+
+    function testEnumerableBytes32SetFuzz2(uint256) public {
+        uint256[] memory s = _makeArray(0);
+        do {
+            bytes32 a = bytes32(_random());
+            if (_random() % 2 == 0) {
+                bytes32Set.add(a);
+                _addToArray(s, uint256(a));
+            } else {
+                bytes32Set.remove(a);
+                _removeFromArray(s, uint256(a));
+            }
+            if (_random() % 8 == 0) {
+                _checkArraysSortedEq(_toUints(bytes32Set.values()), s);
+            }
+            if (s.length == 512) break;
+        } while (_random() % 8 != 0);
+        _checkArraysSortedEq(_toUints(bytes32Set.values()), s);
+    }
+
+    function _checkArraysSortedEq(uint256[] memory a, uint256[] memory b) internal {
+        LibSort.sort(a);
+        LibSort.sort(b);
+        assertEq(a, b);
     }
 
     function _checkAddressSetValues(address[] memory values) internal {
@@ -413,6 +457,59 @@ contract EnumerableSetLibTest is SoladyTest {
         /// @solidity memory-safe-assembly
         assembly {
             result := a
+        }
+    }
+
+    function _makeArray(uint256 size, uint256 maxCap)
+        internal
+        pure
+        returns (uint256[] memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, size)
+            mstore(0x40, add(result, shl(5, add(maxCap, 1))))
+        }
+    }
+
+    function _makeArray(uint256 size) internal pure returns (uint256[] memory result) {
+        require(size <= 512, "Size too big.");
+        result = _makeArray(size, 512);
+    }
+
+    function _addToArray(uint256[] memory a, uint256 x) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let exists := 0
+            let n := mload(a)
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                let o := add(add(a, 0x20), shl(5, i))
+                if eq(mload(o), x) {
+                    exists := 1
+                    break
+                }
+            }
+            if iszero(exists) {
+                n := add(n, 1)
+                mstore(add(a, shl(5, n)), x)
+                mstore(a, n)
+            }
+        }
+    }
+
+    function _removeFromArray(uint256[] memory a, uint256 x) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(a)
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                let o := add(add(a, 0x20), shl(5, i))
+                if eq(mload(o), x) {
+                    mstore(o, mload(add(a, shl(5, n))))
+                    mstore(a, sub(n, 1))
+                    break
+                }
+            }
         }
     }
 }
