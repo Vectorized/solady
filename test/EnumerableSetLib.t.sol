@@ -250,7 +250,6 @@ contract EnumerableSetLibTest is SoladyTest {
     }
 
     function testEnumerableSetFuzz(uint256 n) public {
-        vm.pauseGasMetering();
         if (_random() % 2 == 0) {
             _testEnumerableAddressSetFuzz(n);
             _testEnumerableBytes32SetFuzz(n);
@@ -260,7 +259,6 @@ contract EnumerableSetLibTest is SoladyTest {
             if (_random() % 2 == 0) _testEnumerableUint256SetFuzz();
             if (_random() % 2 == 0) _testEnumerableInt256SetFuzz();
         }
-        vm.resumeGasMetering();
     }
 
     function _testEnumerableAddressSetFuzz(uint256 n) internal {
