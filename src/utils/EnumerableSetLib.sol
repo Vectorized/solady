@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for efficient storage of enumerable sets.
+/// @notice Library for managing a enumerable-set in storage.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibMap.sol)
 library EnumerableSetLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
