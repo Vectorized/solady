@@ -71,6 +71,7 @@ utils
 ├─ LibBitmap — "Library for storage of packed booleans"
 ├─ LibMap — "Library for storage of packed unsigned integers"
 ├─ MinHeapLib — "Library for managing a min-heap in storage or memory"
+├─ EnumerableSetLib — "Library for managing a enumerable-set in storage"
 ├─ RedBlackTreeLib — "Library for managing a red-black-tree in storage"
 ├─ ReentrancyGuard — "Reentrancy guard mixin"
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
