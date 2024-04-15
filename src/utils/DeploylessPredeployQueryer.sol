@@ -66,7 +66,7 @@ contract DeploylessPredeployQueryer {
                     revert(0x1c, 0x04)
                 }
             }
-            let n := mul(0x20, mload(targetQueryCalldata))
+            let n := shl(5, mload(targetQueryCalldata))
             let r := add(m, 0x40)
             let o := add(r, n)
             for { let i := 0 } iszero(eq(i, n)) { i := add(0x20, i) } {
@@ -83,7 +83,7 @@ contract DeploylessPredeployQueryer {
                 o := and(add(add(o, returndatasize()), 0x3f), not(0x1f))
             }
             mstore(m, 0x20)
-            mstore(add(m, 0x20), shr(5, n))
+            mstore(add(m, 0x20), mload(targetQueryCalldata))
             return(m, sub(o, m))
         }
     }
