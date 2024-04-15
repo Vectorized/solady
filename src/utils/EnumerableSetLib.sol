@@ -16,8 +16,8 @@ library EnumerableSetLib {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The index cannot be greater than `2 ** 95 - 1`.
-    error IndexOverflow();
+    /// @dev The index must be less than the length.
+    error IndexOutOfBounds();
 
     /// @dev The value cannot be the zero sentinel.
     error ValueIsZeroSentinel();
@@ -549,11 +549,8 @@ library EnumerableSetLib {
         assembly {
             result := shr(96, sload(add(rootSlot, i)))
             result := mul(result, iszero(eq(result, _ZERO_SENTINEL)))
-            if shr(95, i) {
-                mstore(0x00, 0x7decd257) // `IndexOverflow()`.
-                revert(0x1c, 0x04)
-            }
         }
+        if (i >= length(set)) revert IndexOutOfBounds();
     }
 
     /// @dev Returns the element at index `i` in the set.
@@ -563,11 +560,8 @@ library EnumerableSetLib {
         assembly {
             result := sload(add(result, i))
             result := mul(result, iszero(eq(result, _ZERO_SENTINEL)))
-            if shr(95, i) {
-                mstore(0x00, 0x7decd257) // `IndexOverflow()`.
-                revert(0x1c, 0x04)
-            }
         }
+        if (i >= length(set)) revert IndexOutOfBounds();
     }
 
     /// @dev Returns the element at index `i` in the set.

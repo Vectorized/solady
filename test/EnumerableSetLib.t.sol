@@ -250,7 +250,6 @@ contract EnumerableSetLibTest is SoladyTest {
     }
 
     function testEnumerableSetFuzz(uint256 n) public {
-        vm.pauseGasMetering();
         if (_random() % 2 == 0) {
             _testEnumerableAddressSetFuzz(n);
             _testEnumerableBytes32SetFuzz(n);
@@ -260,7 +259,6 @@ contract EnumerableSetLibTest is SoladyTest {
             if (_random() % 2 == 0) _testEnumerableUint256SetFuzz();
             if (_random() % 2 == 0) _testEnumerableInt256SetFuzz();
         }
-        vm.resumeGasMetering();
     }
 
     function _testEnumerableAddressSetFuzz(uint256 n) internal {
@@ -466,6 +464,8 @@ contract EnumerableSetLibTest is SoladyTest {
             for (uint256 i; i != values.length; ++i) {
                 assertEq(addressSet.at(i), values[i]);
             }
+            vm.expectRevert(EnumerableSetLib.IndexOutOfBounds.selector);
+            addressSetAt(_bound(_random(), values.length, type(uint256).max));
         }
     }
 
@@ -474,21 +474,9 @@ contract EnumerableSetLibTest is SoladyTest {
             for (uint256 i; i != values.length; ++i) {
                 assertEq(bytes32Set.at(i), values[i]);
             }
+            vm.expectRevert(EnumerableSetLib.IndexOutOfBounds.selector);
+            bytes32SetAt(_bound(_random(), values.length, type(uint256).max));
         }
-    }
-
-    function testEnumerableAddressSetAtRevertsOnIndexOverflow(uint256 i) public {
-        if (i > 2 ** 95 - 1) {
-            vm.expectRevert(EnumerableSetLib.IndexOverflow.selector);
-        }
-        addressSet.at(i);
-    }
-
-    function testEnumerableBytes32SetAtRevertsOnIndexOverflow(uint256 i) public {
-        if (i > 2 ** 95 - 1) {
-            vm.expectRevert(EnumerableSetLib.IndexOverflow.selector);
-        }
-        bytes32Set.at(i);
     }
 
     function testEnumerableAddressSetRevertsOnSentinel(uint256) public {
@@ -559,6 +547,10 @@ contract EnumerableSetLibTest is SoladyTest {
         return addressSet.remove(a);
     }
 
+    function addressSetAt(uint256 i) public view returns (address) {
+        return addressSet.at(i);
+    }
+
     function addToBytes32Set(bytes32 a) public returns (bool) {
         return bytes32Set.add(a);
     }
@@ -569,6 +561,10 @@ contract EnumerableSetLibTest is SoladyTest {
 
     function removeFromBytes32Set(bytes32 a) public returns (bool) {
         return bytes32Set.remove(a);
+    }
+
+    function bytes32SetAt(uint256 i) public view returns (bytes32) {
+        return bytes32Set.at(i);
     }
 
     function _brutalized(address a) private view returns (address result) {
