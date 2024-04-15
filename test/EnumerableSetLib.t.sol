@@ -398,7 +398,21 @@ contract EnumerableSetLibTest is SoladyTest {
         }
     }
 
-    function testEnumerableAddressRevertsOnSentinel(uint256) public {
+    function testEnumerableAddressSetAtRevertsOnIndexOverflow(uint256 i) public {
+        if (i > 2 ** 95 - 1) {
+            vm.expectRevert(EnumerableSetLib.IndexOverflow.selector);
+        }
+        addressSet.at(i);
+    }
+
+    function testEnumerableBytes32SetAtRevertsOnIndexOverflow(uint256 i) public {
+        if (i > 2 ** 95 - 1) {
+            vm.expectRevert(EnumerableSetLib.IndexOverflow.selector);
+        }
+        bytes32Set.at(i);
+    }
+
+    function testEnumerableAddressSetRevertsOnSentinel(uint256) public {
         do {
             address a = address(uint160(_random()));
             if (_random() % 32 == 0) {
@@ -426,6 +440,34 @@ contract EnumerableSetLibTest is SoladyTest {
         } while (_random() % 2 != 0);
     }
 
+    function testEnumerableBytes32SetRevertsOnSentinel(uint256) public {
+        do {
+            bytes32 a = bytes32(_random());
+            if (_random() % 32 == 0) {
+                a = bytes32(_ZERO_SENTINEL);
+            }
+            uint256 r = _random() % 3;
+            if (r == 0) {
+                if (a == bytes32(_ZERO_SENTINEL)) {
+                    vm.expectRevert(EnumerableSetLib.ValueIsZeroSentinel.selector);
+                }
+                this.addToBytes32Set(a);
+            }
+            if (r == 1) {
+                if (a == bytes32(_ZERO_SENTINEL)) {
+                    vm.expectRevert(EnumerableSetLib.ValueIsZeroSentinel.selector);
+                }
+                this.bytes32SetContains(a);
+            }
+            if (r == 2) {
+                if (a == bytes32(_ZERO_SENTINEL)) {
+                    vm.expectRevert(EnumerableSetLib.ValueIsZeroSentinel.selector);
+                }
+                this.removeFromBytes32Set(a);
+            }
+        } while (_random() % 2 != 0);
+    }
+
     function addToAddressSet(address a) public returns (bool) {
         return addressSet.add(a);
     }
@@ -436,6 +478,18 @@ contract EnumerableSetLibTest is SoladyTest {
 
     function removeFromAddressSet(address a) public returns (bool) {
         return addressSet.remove(a);
+    }
+
+    function addToBytes32Set(bytes32 a) public returns (bool) {
+        return bytes32Set.add(a);
+    }
+
+    function bytes32SetContains(bytes32 a) public view returns (bool) {
+        return bytes32Set.contains(a);
+    }
+
+    function removeFromBytes32Set(bytes32 a) public returns (bool) {
+        return bytes32Set.remove(a);
     }
 
     function _brutalized(address a) private view returns (address result) {
