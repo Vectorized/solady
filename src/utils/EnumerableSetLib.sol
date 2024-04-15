@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 /// @notice Library for managing enumerable sets in storage.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibMap.sol)
 ///
-/// Note:
+/// @dev Note:
 /// In many applications, the number of elements in an enumerable set is small.
 /// This enumerable set implementation avoids storing the length and indices
 /// for up to 3 elements. Once the length exceeds 3 for the first time, the length
@@ -329,7 +329,7 @@ library EnumerableSetLib {
         result = add(_toBytes32Set(set), bytes32(uint256(value)));
     }
 
-    /// @dev Removes `value` from the `set. Returns whether `value` was in the set.
+    /// @dev Removes `value` from the set. Returns whether `value` was in the set.
     function remove(AddressSet storage set, address value) internal returns (bool result) {
         bytes32 rootSlot = _rootSlot(set);
         /// @solidity memory-safe-assembly
@@ -343,24 +343,23 @@ library EnumerableSetLib {
             let rootPacked := sload(rootSlot)
             for { let n := shr(160, shl(160, rootPacked)) } 1 {} {
                 if iszero(n) {
+                    result := 1
                     if eq(shr(96, rootPacked), value) {
                         sstore(rootSlot, sload(add(rootSlot, 1)))
                         sstore(add(rootSlot, 1), sload(add(rootSlot, 2)))
                         sstore(add(rootSlot, 2), 0)
-                        result := 1
                         break
                     }
                     if eq(shr(96, sload(add(rootSlot, 1))), value) {
                         sstore(add(rootSlot, 1), sload(add(rootSlot, 2)))
                         sstore(add(rootSlot, 2), 0)
-                        result := 1
                         break
                     }
                     if eq(shr(96, sload(add(rootSlot, 2))), value) {
                         sstore(add(rootSlot, 2), 0)
-                        result := 1
                         break
                     }
+                    result := 0
                     break
                 }
                 mstore(0x20, rootSlot)
@@ -384,7 +383,7 @@ library EnumerableSetLib {
         }
     }
 
-    /// @dev Removes `value` from the `set. Returns whether `value` was in the set.
+    /// @dev Removes `value` from the set. Returns whether `value` was in the set.
     function remove(Bytes32Set storage set, bytes32 value) internal returns (bool result) {
         bytes32 rootSlot = _rootSlot(set);
         /// @solidity memory-safe-assembly
@@ -396,24 +395,23 @@ library EnumerableSetLib {
             if iszero(value) { value := _ZERO_SENTINEL }
             for { let n := sload(not(rootSlot)) } 1 {} {
                 if iszero(n) {
+                    result := 1
                     if eq(sload(rootSlot), value) {
                         sstore(rootSlot, sload(add(rootSlot, 1)))
                         sstore(add(rootSlot, 1), sload(add(rootSlot, 2)))
                         sstore(add(rootSlot, 2), 0)
-                        result := 1
                         break
                     }
                     if eq(sload(add(rootSlot, 1)), value) {
                         sstore(add(rootSlot, 1), sload(add(rootSlot, 2)))
                         sstore(add(rootSlot, 2), 0)
-                        result := 1
                         break
                     }
                     if eq(sload(add(rootSlot, 2)), value) {
                         sstore(add(rootSlot, 2), 0)
-                        result := 1
                         break
                     }
+                    result := 0
                     break
                 }
                 mstore(0x20, rootSlot)
@@ -437,12 +435,12 @@ library EnumerableSetLib {
         }
     }
 
-    /// @dev Removes `value` from the `set. Returns whether `value` was in the set.
+    /// @dev Removes `value` from the set. Returns whether `value` was in the set.
     function remove(Uint256Set storage set, uint256 value) internal returns (bool result) {
         result = remove(_toBytes32Set(set), bytes32(value));
     }
 
-    /// @dev Removes `value` from the `set. Returns whether `value` was in the set.
+    /// @dev Removes `value` from the set. Returns whether `value` was in the set.
     function remove(Int256Set storage set, int256 value) internal returns (bool result) {
         result = remove(_toBytes32Set(set), bytes32(uint256(value)));
     }
