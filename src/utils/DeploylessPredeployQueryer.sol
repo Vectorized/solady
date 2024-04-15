@@ -12,7 +12,7 @@ pragma solidity ^0.8.4;
 /// only mock deployed and used via a static `eth_call`.
 ///
 /// Creation code (hex-encoded):
-/// `3860be3d393d516020805190606051833b156086575b5059926040908285528351938460051b9460018060fb1b031659523d604087015260005b8581036046578680590390f35b6000828683820101510138908688820151910147875af115607c57603f19875903018482890101523d59523d6000593e84016039565b3d6000803e3d6000fd5b816000828193519083479101906040515af11560b55783815114601f3d111660155763d1f6b81290526004601cfd5b3d81803e3d90fdfe`
+/// `3860b63d393d516020805190606051833b15607e575b5059926040908285528351938460051b9459523d604087015260005b858103603e578680590390f35b6000828683820101510138908688820151910147875af115607457603f19875903018482890101523d59523d6000593e84016031565b3d6000803e3d6000fd5b816000828193519083479101906040515af11560ad5783815114601f3d111660155763d1f6b81290526004601cfd5b3d81803e3d90fdfe`
 /// See: https://gist.github.com/Vectorized/f77fce00a03dfa99aee526d2a77fd2aa
 ///
 /// May be useful for generating ERC-6492 compliant signatures.
@@ -66,7 +66,8 @@ contract DeploylessPredeployQueryer {
                     revert(0x1c, 0x04)
                 }
             }
-            let n := mul(0x20, mload(targetQueryCalldata))
+            let l := mload(targetQueryCalldata)
+            let n := shl(5, l)
             let r := add(m, 0x40)
             let o := add(r, n)
             for { let i := 0 } iszero(eq(i, n)) { i := add(0x20, i) } {
@@ -83,7 +84,7 @@ contract DeploylessPredeployQueryer {
                 o := and(add(add(o, returndatasize()), 0x3f), not(0x1f))
             }
             mstore(m, 0x20)
-            mstore(add(m, 0x20), shr(5, n))
+            mstore(add(m, 0x20), l)
             return(m, sub(o, m))
         }
     }
