@@ -424,8 +424,15 @@ contract EnumerableSetLibTest is SoladyTest {
                 assertEq(uint256Set.length(), s.length);
             }
             if (s.length == 512) break;
-        } while (_random() % 8 != 0);
+        } while (_random() % 16 != 0);
         _checkArraysSortedEq(uint256Set.values(), s);
+        if (_random() % 4 == 0) {
+            unchecked {
+                for (uint256 i; i != s.length; ++i) {
+                    assertTrue(uint256Set.contains(s[i]));
+                }
+            }
+        }
     }
 
     function _testEnumerableInt256SetFuzz() public {
