@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for managing a enumerable-set in storage.
+/// @notice Library for managing enumerable sets in storage.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibMap.sol)
+///
+/// Note:
+/// In many applications, the number of elements in an enumerable set is small.
+/// This enumerable set implementation avoids storing the length and indices
+/// for up to 3 elements. Once the length exceeds 3 for the first time, the length
+/// and indices will be initialized. The amortized cost of adding elements is O(1).
+///
+/// The AddressSet implementation packs the length with the 0th entry.
 library EnumerableSetLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -18,8 +26,8 @@ library EnumerableSetLib {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev A sentinel value to denote the zero value.
-    /// No entries can be equal to this value.
+    /// @dev A sentinel value to denote the zero value in storage.
+    /// No elements can be equal to this value.
     /// `uint72(bytes9(keccak256(bytes("_ZERO_SENTINEL"))))`.
     uint256 private constant _ZERO_SENTINEL = 0xfbb67fda52d4bfb8bf;
 
