@@ -388,6 +388,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /// use `LibZip.cdFallback` for generalized calldata decompression.
     fallback() external payable virtual override(Receiver) receiverFallback {
         if (_useLibZipCdFallback()) {
+            // If `msg.data` is invalid, it will revert via infinite recursion.
             LibZip.cdFallback();
         } else {
             revert FnSelectorNotRecognized();
