@@ -61,6 +61,9 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /// @dev Self ownership detected.
     error SelfOwnDetected();
 
+    /// @dev The function selector is not recognized.
+    error FnSelectorNotRecognized();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  CONSTANTS AND IMMUTABLES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -125,7 +128,18 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     }
 
     /// @dev Returns if `signer` is an authorized signer.
-    function _isValidSigner(address signer) internal view virtual returns (bool) {
+    /// `extraData` can be anything (e.g. an address, a pointer to a struct / string in memory).
+    function _isValidSigner(address signer, bytes32 extraData, bytes calldata context)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            extraData := extraData // Silence unused variable warning.
+            context.length := context.length // Silence unused variable warning.
+        }
         return signer == owner();
     }
 
@@ -139,8 +153,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         virtual
         returns (bytes4 result)
     {
-        context = context; // Silence unused variable warning.
-        bool isValid = _isValidSigner(signer);
+        bool isValid = _isValidSigner(signer, bytes32(0), context);
         /// @solidity memory-safe-assembly
         assembly {
             // `isValid ? bytes4(keccak256("isValidSigner(address,bytes)")) : 0x00000000`.
@@ -149,9 +162,17 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         }
     }
 
+    /// @dev Returns empty calldata bytes.
+    function _emptyContext() internal pure returns (bytes calldata context) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            context.length := 0
+        }
+    }
+
     /// @dev Requires that the caller is a valid signer (i.e. the owner).
     modifier onlyValidSigner() virtual {
-        if (!_isValidSigner(msg.sender)) revert Unauthorized();
+        if (!_isValidSigner(msg.sender, bytes32(0), _emptyContext())) revert Unauthorized();
         _;
     }
 
@@ -358,10 +379,19 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         _;
     }
 
+    /// @dev If you don't need to use `LibZip.cdFallback`, override this function to return false.
+    function _useLibZipCdFallback() internal view virtual returns (bool) {
+        return true;
+    }
+
     /// @dev Handle token callbacks. If no token callback is triggered,
     /// use `LibZip.cdFallback` for generalized calldata decompression.
-    /// If you don't need either, re-override this function.
     fallback() external payable virtual override(Receiver) receiverFallback {
-        LibZip.cdFallback();
+        if (_useLibZipCdFallback()) {
+            // If `msg.data` is invalid, it will revert via infinite recursion.
+            LibZip.cdFallback();
+        } else {
+            revert FnSelectorNotRecognized();
+        }
     }
 }

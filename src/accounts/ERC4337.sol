@@ -51,6 +51,13 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The function selector is not recognized.
+    error FnSelectorNotRecognized();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -403,10 +410,19 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
     function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyOwner {}
 
+    /// @dev If you don't need to use `LibZip.cdFallback`, override this function to return false.
+    function _useLibZipCdFallback() internal view virtual returns (bool) {
+        return true;
+    }
+
     /// @dev Handle token callbacks. If no token callback is triggered,
     /// use `LibZip.cdFallback` for generalized calldata decompression.
-    /// If you don't need either, re-override this function.
     fallback() external payable virtual override(Receiver) receiverFallback {
-        LibZip.cdFallback();
+        if (_useLibZipCdFallback()) {
+            // If `msg.data` is invalid, it will revert via infinite recursion.
+            LibZip.cdFallback();
+        } else {
+            revert FnSelectorNotRecognized();
+        }
     }
 }
