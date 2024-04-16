@@ -33,9 +33,9 @@ contract Target {
 contract ERC6551Test is SoladyTest {
     MockERC6551Registry internal _registry;
 
-    address internal _v2;
-
     address internal _erc6551;
+
+    address internal _erc6551V2;
 
     address internal _erc721;
 
@@ -74,7 +74,7 @@ contract ERC6551Test is SoladyTest {
         _erc6551 = address(new MockERC6551());
         _erc721 = address(new MockERC721());
         _proxy = address(new ERC6551Proxy(_erc6551));
-        _v2 = address(new MockERC6551V2());
+        _erc6551V2 = address(new MockERC6551V2());
     }
 
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
@@ -324,13 +324,14 @@ contract ERC6551Test is SoladyTest {
     function testUpgrade() public {
         _TestTemps memory t = _testTemps();
         vm.expectRevert(ERC6551.Unauthorized.selector);
-        t.account.upgradeToAndCall(_v2, bytes(""));
+        t.account.upgradeToAndCall(_erc6551V2, bytes(""));
         bytes32 state;
         assertEq(t.account.state(), state);
         assertEq(t.account.mockId(), "1");
 
         vm.prank(t.owner);
-        bytes memory data = abi.encodeWithSignature("upgradeToAndCall(address,bytes)", _v2, "");
+        bytes memory data =
+            abi.encodeWithSignature("upgradeToAndCall(address,bytes)", _erc6551V2, "");
         (bool success,) = address(t.account).call(data);
         assertTrue(success);
         assertEq(t.account.mockId(), "2");
@@ -455,7 +456,7 @@ contract ERC6551Test is SoladyTest {
         statesA[1] = t.account.state();
 
         vm.prank(t.owner);
-        t.account.upgradeToAndCall(_v2, "");
+        t.account.upgradeToAndCall(_erc6551V2, "");
 
         t.account.clearState();
 
