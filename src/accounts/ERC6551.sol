@@ -304,6 +304,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
+    /// If you don't need upgradeability, override this function to return false.
     function _authorizeUpgrade(address)
         internal
         virtual
@@ -376,7 +377,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         _;
     }
 
-    /// @dev If you don't need to use `LibZip.cdFallback`, override this to return false.
+    /// @dev If you don't need to use `LibZip.cdFallback`, override this function to return false.
     function _useLibZipCdFallback() internal view virtual returns (bool) {
         return true;
     }

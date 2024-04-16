@@ -410,7 +410,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
     function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyOwner {}
 
-    /// @dev If you don't need to use `LibZip.cdFallback`, override this to return false.
+    /// @dev If you don't need to use `LibZip.cdFallback`, override this function to return false.
     function _useLibZipCdFallback() internal view virtual returns (bool) {
         return true;
     }
