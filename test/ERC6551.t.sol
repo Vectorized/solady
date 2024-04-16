@@ -35,6 +35,8 @@ contract ERC6551Test is SoladyTest {
 
     address internal _erc6551;
 
+    address internal _erc6551V2;
+
     address internal _erc721;
 
     address internal _proxy;
@@ -72,6 +74,7 @@ contract ERC6551Test is SoladyTest {
         _erc6551 = address(new MockERC6551());
         _erc721 = address(new MockERC721());
         _proxy = address(new ERC6551Proxy(_erc6551));
+        _erc6551V2 = address(new MockERC6551V2());
     }
 
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
@@ -320,16 +323,15 @@ contract ERC6551Test is SoladyTest {
 
     function testUpgrade() public {
         _TestTemps memory t = _testTemps();
-        address anotherImplementation = address(new MockERC6551V2());
         vm.expectRevert(ERC6551.Unauthorized.selector);
-        t.account.upgradeToAndCall(anotherImplementation, bytes(""));
+        t.account.upgradeToAndCall(_erc6551V2, bytes(""));
         bytes32 state;
         assertEq(t.account.state(), state);
         assertEq(t.account.mockId(), "1");
 
         vm.prank(t.owner);
         bytes memory data =
-            abi.encodeWithSignature("upgradeToAndCall(address,bytes)", anotherImplementation, "");
+            abi.encodeWithSignature("upgradeToAndCall(address,bytes)", _erc6551V2, "");
         (bool success,) = address(t.account).call(data);
         assertTrue(success);
         assertEq(t.account.mockId(), "2");
@@ -438,33 +440,32 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
-    function testAbiEncodeMsgData(bytes32 state, uint256 seed) public {
-        bytes memory data = _randomBytes(seed);
-        bytes32 expected = this.abiEncodedMsgData(state, data);
-        assertEq(this.abiEncodedMsgData(state, data), expected);
-    }
+    function testUpdateState(uint256 seed) public {
+        bytes[] memory data = new bytes[](2);
+        if (_random() % 8 != 0) data[0] = _randomBytes(seed);
+        if (_random() % 8 != 0) data[1] = _randomBytes(~seed);
 
-    uint256 internal _encodeMsgDataMode;
+        bytes32[] memory statesA = new bytes32[](2);
+        bytes32[] memory statesB = new bytes32[](2);
 
-    function abiEncodedMsgData(bytes32 state, bytes memory)
-        public
-        brutalizeMemory
-        returns (bytes32 result)
-    {
-        if (_encodeMsgDataMode == 0) {
-            _encodeMsgDataMode = 1;
-            result = keccak256(abi.encode(state, msg.data));
-        } else {
-            _encodeMsgDataMode = 0;
-            /// @solidity memory-safe-assembly
-            assembly {
-                let m := mload(0x40)
-                mstore(m, state)
-                mstore(add(0x20, m), 0x40)
-                mstore(add(0x40, m), calldatasize())
-                calldatacopy(add(0x60, m), 0x00, add(0x20, calldatasize()))
-                result := keccak256(m, and(add(0x7f, calldatasize()), not(0x1f)))
-            }
-        }
+        _TestTemps memory t = _testTemps();
+
+        t.account.somethingThatUpdatesState(data[0]);
+        statesA[0] = t.account.state();
+        t.account.somethingThatUpdatesState(data[1]);
+        statesA[1] = t.account.state();
+
+        vm.prank(t.owner);
+        t.account.upgradeToAndCall(_erc6551V2, "");
+
+        t.account.clearState();
+
+        t.account.somethingThatUpdatesState(data[0]);
+        statesB[0] = t.account.state();
+        t.account.somethingThatUpdatesState(data[1]);
+        statesB[1] = t.account.state();
+
+        assertEq(statesA, statesB);
+        assertTrue(statesA[0] != statesA[1]);
     }
 }
