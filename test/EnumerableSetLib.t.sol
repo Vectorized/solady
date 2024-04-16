@@ -311,6 +311,7 @@ contract EnumerableSetLibTest is SoladyTest {
         uint256[] memory s = _makeArray(0);
         do {
             address r = address(uint160(_random()));
+            if (_random() % 16 == 0) _brutalizeMemory();
             if (_random() % 2 == 0) {
                 addressSet.add(r);
                 _addToArray(s, uint256(uint160(r)));
@@ -320,6 +321,7 @@ contract EnumerableSetLibTest is SoladyTest {
                 _removeFromArray(s, uint256(uint160(r)));
                 assertFalse(addressSet.contains(r));
             }
+            if (_random() % 16 == 0) _brutalizeMemory();
             if (_random() % 8 == 0) {
                 _checkArraysSortedEq(_toUints(addressSet.values()), s);
             }
@@ -387,6 +389,7 @@ contract EnumerableSetLibTest is SoladyTest {
         uint256[] memory s = _makeArray(0);
         do {
             bytes32 r = bytes32(_random());
+            if (_random() % 16 == 0) _brutalizeMemory();
             if (_random() % 2 == 0) {
                 bytes32Set.add(r);
                 _addToArray(s, uint256(r));
@@ -396,6 +399,7 @@ contract EnumerableSetLibTest is SoladyTest {
                 _removeFromArray(s, uint256(r));
                 assertFalse(bytes32Set.contains(r));
             }
+            if (_random() % 16 == 0) _brutalizeMemory();
             if (_random() % 16 == 0) {
                 _checkArraysSortedEq(_toUints(bytes32Set.values()), s);
                 assertEq(bytes32Set.length(), s.length);
