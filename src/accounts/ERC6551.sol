@@ -135,11 +135,8 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         virtual
         returns (bool)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
-            extraData := extraData // Silence unused variable warning.
-            context.length := context.length // Silence unused variable warning.
-        }
+        extraData = extraData; // Silence unused variable warning.
+        context = context; // Silence unused variable warning.
         return signer == owner();
     }
 
@@ -307,6 +304,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
+    /// If you don't need upgradeability, override this function to return false.
     function _authorizeUpgrade(address)
         internal
         virtual
@@ -388,7 +386,8 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /// use `LibZip.cdFallback` for generalized calldata decompression.
     fallback() external payable virtual override(Receiver) receiverFallback {
         if (_useLibZipCdFallback()) {
-            // If `msg.data` is invalid, it will revert via infinite recursion.
+            // Reverts with out-of-gas by recursing infinitely if the first 4 bytes
+            // of the decompressed `msg.data` doesn't match any function selector.
             LibZip.cdFallback();
         } else {
             revert FnSelectorNotRecognized();

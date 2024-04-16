@@ -419,7 +419,8 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
     /// use `LibZip.cdFallback` for generalized calldata decompression.
     fallback() external payable virtual override(Receiver) receiverFallback {
         if (_useLibZipCdFallback()) {
-            // If `msg.data` is invalid, it will revert via infinite recursion.
+            // Reverts with out-of-gas by recursing infinitely if the first 4 bytes
+            // of the decompressed `msg.data` doesn't match any function selector.
             LibZip.cdFallback();
         } else {
             revert FnSelectorNotRecognized();
