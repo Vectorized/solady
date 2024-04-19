@@ -93,10 +93,10 @@ contract Brutalizer {
     function _brutalized(address value) internal pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, xor(add(shl(32, value), calldataload(0x00)), mload(0x00)))
+            mstore(0x00, xor(add(shl(32, value), calldataload(0x00)), mload(0x10)))
             mstore(0x20, calldataload(0x04))
-            mstore(0x00, keccak256(0x00, 0x40))
-            result := or(shl(160, mload(0x00)), value)
+            mstore(0x10, keccak256(0x00, 0x60))
+            result := or(shl(160, mload(0x10)), value)
         }
     }
 
@@ -104,10 +104,10 @@ contract Brutalizer {
     function _brutalized(uint96 value) internal pure returns (uint96 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, xor(add(shl(32, value), calldataload(0x00)), mload(0x00)))
+            mstore(0x00, xor(add(shl(32, value), calldataload(0x00)), mload(0x10)))
             mstore(0x20, calldataload(0x04))
-            mstore(0x00, keccak256(0x00, 0x40))
-            result := or(shl(96, mload(0x00)), value)
+            mstore(0x10, keccak256(0x00, 0x60))
+            result := or(shl(96, mload(0x10)), value)
         }
     }
 
@@ -115,10 +115,10 @@ contract Brutalizer {
     function _brutalized(bool value) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, xor(add(shl(32, value), calldataload(0x00)), mload(0x00)))
+            mstore(0x00, xor(add(shl(32, value), calldataload(0x00)), mload(0x10)))
             mstore(0x20, calldataload(0x04))
-            mstore(0x00, keccak256(0x00, 0x40))
-            result := mul(iszero(iszero(value)), mload(0x00))
+            mstore(0x10, keccak256(0x00, 0x60))
+            result := mul(iszero(iszero(value)), mload(0x10))
         }
     }
 
