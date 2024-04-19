@@ -3,10 +3,11 @@ pragma solidity ^0.8.4;
 
 import {ERC721} from "../../../src/tokens/ERC721.sol";
 import {LibString} from "../../../src/utils/LibString.sol";
+import {Brutalizer} from "../Brutalizer.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockERC721 is ERC721 {
+contract MockERC721 is ERC721, Brutalizer {
     function name() public view virtual override returns (string memory) {
         return "TEST NFT";
     }
@@ -134,19 +135,5 @@ contract MockERC721 is ERC721 {
     function directGetApproved(uint256 id) public view virtual returns (address) {
         if (!_exists(id)) revert TokenDoesNotExist();
         return _getApproved(id);
-    }
-
-    function _brutalized(address a) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(a, shl(160, gas()))
-        }
-    }
-
-    function _brutalized(uint96 value) internal view returns (uint96 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(value, shl(96, gas()))
-        }
     }
 }

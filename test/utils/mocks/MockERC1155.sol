@@ -2,10 +2,11 @@
 pragma solidity ^0.8.4;
 
 import {ERC1155} from "../../../src/tokens/ERC1155.sol";
+import {Brutalizer} from "../Brutalizer.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockERC1155 is ERC1155 {
+contract MockERC1155 is ERC1155, Brutalizer {
     function uri(uint256) public pure virtual override returns (string memory) {}
 
     function mint(address to, uint256 id, uint256 amount, bytes memory data) public virtual {
@@ -109,12 +110,5 @@ contract MockERC1155 is ERC1155 {
 
     function directSetApprovalForAll(address operator, bool approved) public virtual {
         _setApprovalForAll(_brutalized(msg.sender), _brutalized(operator), approved);
-    }
-
-    function _brutalized(address a) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(a, shl(160, gas()))
-        }
     }
 }

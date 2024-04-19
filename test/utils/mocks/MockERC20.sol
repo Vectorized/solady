@@ -2,10 +2,11 @@
 pragma solidity ^0.8.4;
 
 import {ERC20} from "../../../src/tokens/ERC20.sol";
+import {Brutalizer} from "../Brutalizer.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockERC20 is ERC20 {
+contract MockERC20 is ERC20, Brutalizer {
     string internal _name;
     string internal _symbol;
     uint8 internal _decimals;
@@ -61,12 +62,5 @@ contract MockERC20 is ERC20 {
         returns (bool)
     {
         return super.transferFrom(_brutalized(from), _brutalized(to), amount);
-    }
-
-    function _brutalized(address a) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(a, shl(160, gas()))
-        }
     }
 }

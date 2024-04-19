@@ -486,15 +486,8 @@ contract LibCloneTest is SoladyTest, Clone {
         this.checkStartsWith(bytes32((uint256(uint160(by)) << 96) | noise), notBy);
     }
 
-    function checkStartsWith(bytes32 salt, address by) public view {
+    function checkStartsWith(bytes32 salt, address by) public pure {
         LibClone.checkStartsWith(salt, _brutalized(by));
-    }
-
-    function _brutalized(address a) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(a, shl(160, gas()))
-        }
     }
 
     function testCloneWithImmutableArgsRevertsIfDataTooBig() public {
