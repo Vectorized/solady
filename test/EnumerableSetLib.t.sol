@@ -571,14 +571,6 @@ contract EnumerableSetLibTest is SoladyTest {
         return bytes32Set.at(i);
     }
 
-    function _brutalized(address a) private view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, gas())
-            result := or(shl(160, keccak256(0x00, 0x20)), a)
-        }
-    }
-
     function _toUints(address[] memory a) private pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {

@@ -2,10 +2,11 @@
 pragma solidity ^0.8.4;
 
 import {Ownable, OwnableRoles} from "../../../src/auth/OwnableRoles.sol";
+import {Brutalizer} from "../Brutalizer.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockOwnableRoles is OwnableRoles {
+contract MockOwnableRoles is OwnableRoles, Brutalizer {
     bool public flag;
 
     constructor() payable {
@@ -13,7 +14,7 @@ contract MockOwnableRoles is OwnableRoles {
 
         // Perform the tests on the helper functions.
 
-        address brutalizedAddress = _brutalizedAddress(address(0));
+        address brutalizedAddress = _brutalized(address(0));
         bool brutalizedAddressIsBrutalized;
         /// @solidity memory-safe-assembly
         assembly {
@@ -38,43 +39,43 @@ contract MockOwnableRoles is OwnableRoles {
     }
 
     function initializeOwnerDirect(address newOwner) public payable {
-        _initializeOwner(_brutalizedAddress(newOwner));
+        _initializeOwner(_brutalized(newOwner));
     }
 
     function setOwnerDirect(address newOwner) public payable {
-        _setOwner(_brutalizedAddress(newOwner));
+        _setOwner(_brutalized(newOwner));
     }
 
     function setRolesDirect(address user, uint256 roles) public payable {
-        _setRoles(_brutalizedAddress(user), roles);
+        _setRoles(_brutalized(user), roles);
     }
 
     function grantRolesDirect(address user, uint256 roles) public payable {
-        _grantRoles(_brutalizedAddress(user), roles);
+        _grantRoles(_brutalized(user), roles);
     }
 
     function removeRolesDirect(address user, uint256 roles) public payable {
-        _removeRoles(_brutalizedAddress(user), roles);
+        _removeRoles(_brutalized(user), roles);
     }
 
     function grantRoles(address user, uint256 roles) public payable virtual override {
-        super.grantRoles(_brutalizedAddress(user), roles);
+        super.grantRoles(_brutalized(user), roles);
     }
 
     function revokeRoles(address user, uint256 roles) public payable virtual override {
-        super.revokeRoles(_brutalizedAddress(user), roles);
+        super.revokeRoles(_brutalized(user), roles);
     }
 
     function completeOwnershipHandover(address pendingOwner) public payable virtual override {
-        super.completeOwnershipHandover(_brutalizedAddress(pendingOwner));
+        super.completeOwnershipHandover(_brutalized(pendingOwner));
     }
 
     function transferOwnership(address newOwner) public payable virtual override {
-        super.transferOwnership(_brutalizedAddress(newOwner));
+        super.transferOwnership(_brutalized(newOwner));
     }
 
     function rolesOf(address user) public view virtual override returns (uint256 result) {
-        result = super.rolesOf(_brutalizedAddress(user));
+        result = super.rolesOf(_brutalized(user));
     }
 
     function ownershipHandoverExpiresAt(address pendingOwner)
@@ -84,7 +85,7 @@ contract MockOwnableRoles is OwnableRoles {
         override
         returns (uint256 result)
     {
-        result = super.ownershipHandoverExpiresAt(_brutalizedAddress(pendingOwner));
+        result = super.ownershipHandoverExpiresAt(_brutalized(pendingOwner));
     }
 
     function ownershipHandoverValidFor() public view returns (uint64 result) {
@@ -124,19 +125,6 @@ contract MockOwnableRoles is OwnableRoles {
 
     function ordinalsFromRoles(uint256 roles) public pure returns (uint8[] memory ordinals) {
         ordinals = _ordinalsFromRoles(roles);
-    }
-
-    function _brutalizedAddress(address value) private view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Some acrobatics to make the brutalized bits pseudorandomly
-            // different with every call.
-            mstore(0x00, or(calldataload(0), mload(0x40)))
-            mstore(0x20, or(caller(), mload(0x00)))
-            result := or(shl(160, keccak256(0x00, 0x40)), value)
-            mstore(0x40, add(0x20, mload(0x40)))
-            mstore(0x00, result)
-        }
     }
 
     function _checkedBool(bool value) private pure returns (bool result) {

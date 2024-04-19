@@ -180,14 +180,4 @@ contract LibERC6551Test is SoladyTest {
         assertEq(t.tokenId, tokenId);
         _checkMemory();
     }
-
-    function _brutalized(address a) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, gas())
-            result := or(shl(160, keccak256(0x00, 0x20)), a)
-            mstore(0x00, result)
-            mstore(0x20, result)
-        }
-    }
 }

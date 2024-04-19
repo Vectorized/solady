@@ -2,10 +2,11 @@
 pragma solidity ^0.8.4;
 
 import {ERC2981} from "../../../src/tokens/ERC2981.sol";
+import {Brutalizer} from "../Brutalizer.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockERC2981 is ERC2981 {
+contract MockERC2981 is ERC2981, Brutalizer {
     function feeDenominator() external pure returns (uint256) {
         return _feeDenominator();
     }
@@ -24,19 +25,5 @@ contract MockERC2981 is ERC2981 {
 
     function resetTokenRoyalty(uint256 tokenId) external {
         _resetTokenRoyalty(tokenId);
-    }
-
-    function _brutalized(uint96 x) internal view returns (uint96 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(x, shl(96, gas()))
-        }
-    }
-
-    function _brutalized(address a) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(a, shl(160, gas()))
-        }
     }
 }

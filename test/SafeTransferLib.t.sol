@@ -819,13 +819,6 @@ contract SafeTransferLibTest is SoladyTest {
         }
     }
 
-    function _brutalized(address a) internal pure returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := or(a, shl(160, keccak256(0x00, 0x20)))
-        }
-    }
-
     struct _TestTemps {
         address signer;
         uint256 privateKey;
