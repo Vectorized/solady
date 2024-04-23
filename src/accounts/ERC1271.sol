@@ -170,9 +170,8 @@ abstract contract ERC1271 is EIP712 {
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        result = SignatureCheckerLib.isValidSignatureNowCalldata(
-            _erc1271Signer(), result ? hash : _hashTypedData(hash), signature
-        );
+        if (!result) hash = _hashTypedData(hash);
+        return SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
     }
 
     /// @dev Performs the signature validation without nested EIP-712 to allow for easy sign ins.
