@@ -391,7 +391,8 @@ contract ERC6551Test is SoladyTest {
     function testIsValidSignature() public {
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) = vm.sign(t.privateKey, _toERC1271Hash(keccak256("123")));
+        (t.v, t.r, t.s) =
+            vm.sign(t.privateKey, _toERC1271Hash(address(t.account), keccak256("123")));
 
         vm.prank(t.owner);
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
@@ -403,9 +404,9 @@ contract ERC6551Test is SoladyTest {
         assertEq(t.account.isValidSignature(_toChildHash(hash), signature), bytes4(0x1626ba7e));
     }
 
-    function _toERC1271Hash(bytes32 child) internal pure returns (bytes32) {
+    function _toERC1271Hash(address account, bytes32 child) internal pure returns (bytes32) {
         bytes32 parentStructHash =
-            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child));
+            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child, account));
         return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
     }
 

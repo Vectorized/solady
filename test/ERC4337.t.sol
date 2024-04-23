@@ -441,9 +441,9 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
     }
 
-    function _toERC1271Hash(bytes32 child) internal pure returns (bytes32) {
+    function _toERC1271Hash(bytes32 child) internal view returns (bytes32) {
         bytes32 parentStructHash =
-            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child));
+            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child, address(account)));
         return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
     }
 

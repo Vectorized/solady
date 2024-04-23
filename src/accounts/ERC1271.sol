@@ -95,7 +95,9 @@ abstract contract ERC1271 is EIP712 {
     ///     keccak256(\x19\x01 || DOMAIN_SEP_B ||
     ///         hashStruct(Parent({
     ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
-    ///             child: hashStruct(originalStruct)
+    ///             child: hashStruct(originalStruct),
+    ///             account: address(this),
+    ///             chainId: block.chainid
     ///         }))
     ///     )
     /// ```
@@ -112,8 +114,8 @@ abstract contract ERC1271 is EIP712 {
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(Parent({
-    ///             childHash: keccak256(\x19Ethereum Signed Message:\n ||
-    ///                 base10(bytes(someString).length) || someString)
+    ///             childHash: keccak256(bytes(\x19Ethereum Signed Message:\n ||
+    ///                 base10(bytes(someString).length) || someString))
     ///         }))
     ///     )
     /// ```
@@ -141,7 +143,7 @@ abstract contract ERC1271 is EIP712 {
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             let o := add(signature.offset, sub(signature.length, 0x60))
-            calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child's structHash.
+            calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child struct hash.
             mstore(0x00, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x00.
             for {} 1 {} {
                 // Use the nested EIP-712 workflow if the reconstructed `childHash` matches,
@@ -152,7 +154,9 @@ abstract contract ERC1271 is EIP712 {
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
                     // The `child` struct hash is already at 0x40.
-                    mstore(0x40, keccak256(0x00, 0x60)) // Store the parent struct hash.
+                    mstore(0x60, address()) // Store the address of this account.
+                    // We expect that `DOMAIN_SEP_B` would have already include chain ID if needed.
+                    mstore(0x40, keccak256(0x00, 0x80)) // Compute and store the parent struct hash.
                     mstore(0x20, calldataload(add(0x20, o))) // Store `DOMAIN_SEP_B`.
                     mstore(0x00, 0x1901) // Store "\x19\x01".
                     hash := keccak256(0x1e, 0x42)
@@ -164,10 +168,10 @@ abstract contract ERC1271 is EIP712 {
                 signature.length := mul(gt(signature.length, 0x20), sub(signature.length, 0x20))
                 // The `PARENT_TYPEHASH` is already at 0x40.
                 mstore(0x60, hash) // Store the `childHash`.
-                hash := keccak256(0x40, 0x40) // Compute the `parent` struct hash.
-                mstore(0x60, 0) // Restore the zero pointer.
+                hash := keccak256(0x40, 0x40) // Compute the parent struct hash.
                 break
             }
+            mstore(0x60, 0) // Restore the zero pointer.
             mstore(0x40, m) // Restore the free memory pointer.
         }
         if (!result) hash = _hashTypedData(hash);
