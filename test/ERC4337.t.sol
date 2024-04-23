@@ -378,12 +378,12 @@ contract ERC4337Test is SoladyTest {
 
         account.initialize(t.signer);
 
-        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH);
+        bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
 
         unchecked {
             uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
-            signature = abi.encodePacked(t.r, vs, _PARENT_TYPEHASH);
+            signature = abi.encodePacked(t.r, vs);
             assertEq(account.isValidSignature(t.hash, signature), bytes4(0x1626ba7e));
         }
 
@@ -463,7 +463,8 @@ contract ERC4337Test is SoladyTest {
                 address(account)
             )
         );
-        bytes32 parentStructHash = keccak256(abi.encode(_PARENT_TYPEHASH, childHash));
+        bytes32 parentStructHash =
+            keccak256(abi.encode(keccak256("PersonalSign(bytes prefixed)"), childHash));
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
     }
 

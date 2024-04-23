@@ -8,6 +8,14 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC1271.sol)
 abstract contract ERC1271 is EIP712 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
+    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
+        0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -112,14 +120,16 @@ abstract contract ERC1271 is EIP712 {
     /// For the `personalSign` workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
-    ///         hashStruct(Parent({
-    ///             childHash: keccak256(bytes(\x19Ethereum Signed Message:\n ||
+    ///         hashStruct(PersonalSign({
+    ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ||
     ///                 base10(bytes(someString).length) || someString))
     ///         }))
     ///     )
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
-    /// The signature will be `r || s || v || PARENT_TYPEHASH`.
+    ///
+    /// The parent type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
+    /// The signature will be `r || s || v`.
     /// __________________________________________________________________________________________
     ///
     /// For demo and typescript code, see:
@@ -160,17 +170,15 @@ abstract contract ERC1271 is EIP712 {
                     mstore(0x00, 0x1901) // Store "\x19\x01".
                     hash := keccak256(0x1e, 0x42)
                     result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                    mstore(0x60, 0) // Restore the zero pointer.
                     break
                 }
                 // Else, use the `personalSign` workflow.
-                // If `signature.length` > 1 word (32 bytes), reduce by 1 word, else set to 0.
-                signature.length := mul(gt(signature.length, 0x20), sub(signature.length, 0x20))
-                // The `PARENT_TYPEHASH` is already at 0x40.
-                mstore(0x60, hash) // Store the `childHash`.
-                hash := keccak256(0x40, 0x40) // Compute the parent struct hash.
+                mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
+                mstore(0x20, hash) // Store the `prefixed`.
+                hash := keccak256(0x00, 0x40) // Compute the parent struct hash.
                 break
             }
-            mstore(0x60, 0) // Restore the zero pointer.
             mstore(0x40, m) // Restore the free memory pointer.
         }
         if (!result) hash = _hashTypedData(hash);
