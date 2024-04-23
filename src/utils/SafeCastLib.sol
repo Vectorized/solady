@@ -369,6 +369,11 @@ library SafeCastLib {
         return int256(x);
     }
 
+    function toInt32(uint256 x) internal pure returns (int32) {
+        if (x >= 1 << 31) _revertOverflow();
+        return int32(int256(x));
+    }
+
     function toUint256(int256 x) internal pure returns (uint256) {
         if (x < 0) _revertOverflow();
         return uint256(x);

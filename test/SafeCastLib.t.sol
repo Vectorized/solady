@@ -256,6 +256,15 @@ contract SafeCastLibTest is SoladyTest {
         }
     }
 
+    function testSafeCastToInt32(uint256 x) public {
+        if (x >= (1 << 31)) {
+            vm.expectRevert(SafeCastLib.Overflow.selector);
+            SafeCastLib.toInt32(x);
+        } else {
+            assertEq(SafeCastLib.toInt32(x), int32(int256(x)));
+        }
+    }
+
     function testSafeCastToUint256(int256 x) public {
         if (x < 0) {
             vm.expectRevert(SafeCastLib.Overflow.selector);
