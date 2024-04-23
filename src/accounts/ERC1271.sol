@@ -152,9 +152,8 @@ abstract contract ERC1271 is EIP712 {
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
                     // The `child` struct hash is already at 0x40.
-                    // Compute the `parent` struct hash, and store it.
-                    mstore(0x40, keccak256(0x00, 0x60))
-                    mstore(0x20, calldataload(add(0x20, o))) // Store the domain separator.
+                    mstore(0x40, keccak256(0x00, 0x60)) // Store the parent struct hash.
+                    mstore(0x20, calldataload(add(0x20, o))) // Store `DOMAIN_SEP_B`.
                     mstore(0x00, 0x1901) // Store "\x19\x01".
                     hash := keccak256(0x1e, 0x42)
                     result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
