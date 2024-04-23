@@ -92,7 +92,7 @@ abstract contract ERC1271 is EIP712 {
     ///
     /// For the default nested EIP-712 workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
+    ///     keccak256(\x19\x01 || DOMAIN_SEP_B ||
     ///         hashStruct(Parent({
     ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
     ///             child: hashStruct(originalStruct)
@@ -135,7 +135,7 @@ abstract contract ERC1271 is EIP712 {
         internal
         view
         virtual
-        returns (bool)
+        returns (bool result)
     {
         /// @solidity memory-safe-assembly
         assembly {
@@ -152,7 +152,12 @@ abstract contract ERC1271 is EIP712 {
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
                     // The `child` struct hash is already at 0x40.
-                    hash := keccak256(0x00, 0x60) // Compute the `parent` struct hash.
+                    // Compute the `parent` struct hash, and store it.
+                    mstore(0x40, keccak256(0x00, 0x60))
+                    mstore(0x20, calldataload(add(0x20, o))) // Store the domain separator.
+                    mstore(0x00, 0x1901) // Store "\x19\x01".
+                    hash := keccak256(0x1e, 0x42)
+                    result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                     break
                 }
                 // Else, use the `personalSign` workflow.
@@ -166,8 +171,8 @@ abstract contract ERC1271 is EIP712 {
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        return SignatureCheckerLib.isValidSignatureNowCalldata(
-            _erc1271Signer(), _hashTypedData(hash), signature
+        result = SignatureCheckerLib.isValidSignatureNowCalldata(
+            _erc1271Signer(), result ? hash : _hashTypedData(hash), signature
         );
     }
 
