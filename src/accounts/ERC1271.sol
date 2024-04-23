@@ -96,8 +96,7 @@ abstract contract ERC1271 is EIP712 {
     ///         hashStruct(Parent({
     ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
     ///             child: hashStruct(originalStruct),
-    ///             account: address(this),
-    ///             chainId: block.chainid
+    ///             account: address(this)
     ///         }))
     ///     )
     /// ```
