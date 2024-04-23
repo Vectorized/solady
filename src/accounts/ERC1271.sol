@@ -162,7 +162,7 @@ abstract contract ERC1271 is EIP712 {
                     signature.length := sub(signature.length, 0x60)
                     mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(0x20, hash) // Store the `childHash`.
-                    // The `child` struct hash is already at 0x40.
+                    // The child struct hash is already at 0x40.
                     mstore(0x60, address()) // Store the address of this account.
                     // We expect that `DOMAIN_SEP_B` would have already include chain ID if needed.
                     mstore(0x40, keccak256(0x00, 0x80)) // Compute and store the parent struct hash.
