@@ -504,6 +504,7 @@ library SignatureCheckerLib {
         else p256 = 0x0b;
         /// @solidity memory-safe-assembly
         assembly {
+            let m := mload(0x40)
             mstore(0x00, hash)
             mstore(0x20, r) // `r`.
             mstore(0x40, s) // `s`.
