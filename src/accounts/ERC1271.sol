@@ -208,7 +208,7 @@ abstract contract ERC1271 is EIP712 {
                 mstore(0x00, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
                 mstore(0x20, gasBurnHash)
                 mstore(0x40, 0x40)
-                let gasToBurn := add(100000, gaslimit())
+                let gasToBurn := or(add(100000, gaslimit()), gaslimit())
                 // Burns gas computationally efficiently. Also, requires that `gas > gasToBurn`.
                 if or(eq(hash, gasBurnHash), lt(gas(), gasToBurn)) { invalid() }
                 // Make a call to this with `gasBurnHash`, efficiently burning the gas provided.
