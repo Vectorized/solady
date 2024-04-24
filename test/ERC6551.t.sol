@@ -405,8 +405,16 @@ contract ERC6551Test is SoladyTest {
     }
 
     function _toERC1271Hash(address account, bytes32 child) internal pure returns (bytes32) {
-        bytes32 parentStructHash =
-            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child, account));
+        bytes32 parentStructHash = keccak256(
+            abi.encode(
+                _PARENT_TYPEHASH,
+                _toChildHash(child),
+                child,
+                account,
+                keccak256("Milady"),
+                keccak256("1")
+            )
+        );
         return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
     }
 

@@ -104,7 +104,9 @@ abstract contract ERC1271 is EIP712 {
     ///         hashStruct(Parent({
     ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
     ///             child: hashStruct(originalStruct),
-    ///             account: address(this)
+    ///             account: address(this),
+    ///             name: keccak256(eip712Domain().name),
+    ///             version: keccak256(eip712Domain().version)
     ///         }))
     ///     )
     /// ```
@@ -148,6 +150,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
+        (string memory name, string memory version) = _domainNameAndVersion();
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
@@ -160,17 +163,18 @@ abstract contract ERC1271 is EIP712 {
                 if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
                     // Truncate the `signature.length` by 3 words (96 bytes).
                     signature.length := sub(signature.length, 0x60)
-                    mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
-                    mstore(0x20, hash) // Store the `childHash`.
-                    // The child struct hash is already at 0x40.
-                    mstore(0x60, address()) // Store the address of this account.
+                    mstore(m, calldataload(o)) // Store the `PARENT_TYPEHASH`.
+                    mstore(add(m, 0x20), hash) // Store the `childHash`.
+                    mstore(add(m, 0x40), mload(0x40)) // Store the child struct hash.
+                    mstore(add(m, 0x60), address()) // Store the address of this account.
+                    mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
+                    mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
                     // We expect that `DOMAIN_SEP_B` would have already include chain ID if needed.
-                    mstore(0x40, keccak256(0x00, 0x80)) // Compute and store the parent struct hash.
-                    mstore(0x20, calldataload(add(0x20, o))) // Store `DOMAIN_SEP_B`.
-                    mstore(0x00, 0x1901) // Store "\x19\x01".
+                    // The "\x19\x01" prefix is already at 0x00.
+                    // `DOMAIN_SEP_B` is already at 0x20.
+                    mstore(0x40, keccak256(m, 0xc0)) // Compute and store the parent struct hash.
                     hash := keccak256(0x1e, 0x42)
                     result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
-                    mstore(0x60, 0) // Restore the zero pointer.
                     break
                 }
                 // Else, use the `personalSign` workflow.
