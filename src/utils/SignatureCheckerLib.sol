@@ -492,16 +492,18 @@ library SignatureCheckerLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns whether the signature (`r`, `s`, `x`, `y`) is valid for `hash`
-    /// for an ERC7212 verification in the “secp256r1” elliptic curve.
+    /// for an ERC7212 verification in the “secp256r1” elliptic curve. Adjusts precompile for rollups.
     /// Modified from Daimo P256 (https://github.com/daimo-eth/p256-verifier/blob/master/src/P256.sol).
     function isValidERC7212SignatureNow(bytes32 hash, uint256 r, uint256 s, uint256 x, uint256 y)
         internal
         view
         returns (bool isValid)
     {
+        uint256 p256;
+        if (block.chainid != 1) p256 = 0x100;
+        else p256 = 0x0b;
         /// @solidity memory-safe-assembly
         assembly {
-            let m := mload(0x40)
             mstore(0x00, hash)
             mstore(0x20, r) // `r`.
             mstore(0x40, s) // `s`.
@@ -516,7 +518,7 @@ library SignatureCheckerLib {
                     // as the arguments are evaluated from right to left.
                     staticcall(
                         gas(), // Amount of gas left for the transaction.
-                        0x0b, // Address of `secp256r1`.
+                        p256, // Address of `secp256r1`.
                         0x00, // Start of input.
                         0xA0, // Size of input.
                         0x00, // Start of output.
