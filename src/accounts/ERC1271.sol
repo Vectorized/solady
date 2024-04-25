@@ -56,7 +56,7 @@ abstract contract ERC1271 is EIP712 {
             // We'll just compute it on-the-fly as efficiently as we can.
             let m := mload(0x40) // Grab the free memory pointer.
             mstore(m, _ACCOUNT_DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), shl(248, shr(248, fields)))
+            mstore(add(m, 0x20), shl(248, byte(0, fields)))
             mstore(add(m, 0x40), keccak256(add(name, 0x20), mload(name)))
             mstore(add(m, 0x60), keccak256(add(version, 0x20), mload(version)))
             mstore(add(m, 0x80), chainId)
