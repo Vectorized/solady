@@ -53,6 +53,7 @@ abstract contract ERC1271 is EIP712 {
         /// @solidity memory-safe-assembly
         assembly {
             // This is essentially `keccak256(abi.encode(_ACCOUNT_DOMAIN_TYPEHASH, ...))`.
+            // We'll just compute it on-the-fly as efficiently as we can.
             let m := mload(0x40) // Grab the free memory pointer.
             mstore(m, _ACCOUNT_DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), shl(248, shr(248, fields)))
@@ -143,6 +144,8 @@ abstract contract ERC1271 is EIP712 {
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
     /// The order of Parent's fields is important: `childHash` comes before `child`.
+    ///
+    /// For `accountDomain`, see `_ACCOUNT_DOMAIN_TYPEHASH` and `_erc1271AccountDomainStructHash`.
     ///
     /// The signature will be `r || s || v || PARENT_TYPEHASH || DOMAIN_SEP_B || child`,
     /// where `child` is the bytes32 struct hash of the original struct.
