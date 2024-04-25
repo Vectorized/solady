@@ -39,6 +39,7 @@ abstract contract ERC1271 is EIP712 {
 
     /// @dev Returns the struct hash of the `eip712Domain()`.
     /// Used in the nested EIP-712 workflow.
+    /// We'll refer to the EIP-712 domain as the account domain to make it more end-user-friendly.
     function _erc1271AccountDomainStructHash() internal view virtual returns (bytes32 result) {
         (
             bytes1 fields,
@@ -51,16 +52,17 @@ abstract contract ERC1271 is EIP712 {
         ) = eip712Domain();
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40)
-            mstore(result, _ACCOUNT_DOMAIN_TYPEHASH)
-            mstore(add(result, 0x20), shl(248, shr(248, fields)))
-            mstore(add(result, 0x40), keccak256(add(name, 0x20), mload(name)))
-            mstore(add(result, 0x60), keccak256(add(version, 0x20), mload(version)))
-            mstore(add(result, 0x80), chainId)
-            mstore(add(result, 0xa0), shr(96, shl(96, verifyingContract)))
-            mstore(add(result, 0xc0), salt)
-            mstore(add(result, 0xe0), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
-            result := keccak256(result, 0x100)
+            // This is essentially `keccak256(abi.encode(_ACCOUNT_DOMAIN_TYPEHASH, ...))`.
+            let m := mload(0x40) // Grab the free memory pointer.
+            mstore(m, _ACCOUNT_DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), shl(248, shr(248, fields)))
+            mstore(add(m, 0x40), keccak256(add(name, 0x20), mload(name)))
+            mstore(add(m, 0x60), keccak256(add(version, 0x20), mload(version)))
+            mstore(add(m, 0x80), chainId)
+            mstore(add(m, 0xa0), shr(96, shl(96, verifyingContract)))
+            mstore(add(m, 0xc0), salt)
+            mstore(add(m, 0xe0), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
+            result := keccak256(m, 0x100)
         }
     }
 
