@@ -15,6 +15,10 @@ abstract contract ERC1271 is EIP712 {
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
         0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
+    /// @dev `keccak256("AccountDomain(bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)")`.
+    bytes32 internal constant _ACCOUNT_DOMAIN_TYPEHASH =
+        0xf9397b815e3b748615251a6cf42deb547d35771d98dc90539cd5607ffa5c19a3;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -31,6 +35,33 @@ abstract contract ERC1271 is EIP712 {
         // The canonical `MulticallerWithSender` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
         // is known to include the account in the hash to be signed.
         return msg.sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c;
+    }
+
+    /// @dev Returns the struct hash of the `eip712Domain()`.
+    /// Used in the nested EIP-712 workflow.
+    function _erc1271AccountDomainStructHash() internal view virtual returns (bytes32 result) {
+        (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        ) = eip712Domain();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, _ACCOUNT_DOMAIN_TYPEHASH)
+            mstore(add(result, 0x20), shl(248, shr(248, fields)))
+            mstore(add(result, 0x40), keccak256(add(name, 0x20), mload(name)))
+            mstore(add(result, 0x60), keccak256(add(version, 0x20), mload(version)))
+            mstore(add(result, 0x80), chainId)
+            mstore(add(result, 0xa0), shr(96, shl(96, verifyingContract)))
+            mstore(add(result, 0xc0), salt)
+            mstore(add(result, 0xe0), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
+            result := keccak256(result, 0x100)
+        }
     }
 
     /// @dev Validates the signature with ERC1271 return,
@@ -104,9 +135,7 @@ abstract contract ERC1271 is EIP712 {
     ///         hashStruct(Parent({
     ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
     ///             child: hashStruct(originalStruct),
-    ///             account: address(this),
-    ///             name: keccak256(eip712Domain().name),
-    ///             version: keccak256(eip712Domain().version)
+    ///             accountDomain: hashStruct(eip712Domain())
     ///         }))
     ///     )
     /// ```
@@ -150,7 +179,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        (string memory name, string memory version) = _domainNameAndVersion();
+        bytes32 accountDomainStructHash = _erc1271AccountDomainStructHash();
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
@@ -166,13 +195,11 @@ abstract contract ERC1271 is EIP712 {
                     mstore(m, calldataload(o)) // Store the `PARENT_TYPEHASH`.
                     mstore(add(m, 0x20), hash) // Store the `childHash`.
                     mstore(add(m, 0x40), mload(0x40)) // Store the child struct hash.
-                    mstore(add(m, 0x60), address()) // Store the address of this account.
-                    mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
-                    mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
+                    mstore(add(m, 0x60), accountDomainStructHash)
                     // We expect that `DOMAIN_SEP_B` would have already include chain ID if needed.
                     // The "\x19\x01" prefix is already at 0x00.
                     // `DOMAIN_SEP_B` is already at 0x20.
-                    mstore(0x40, keccak256(m, 0xc0)) // Compute and store the parent struct hash.
+                    mstore(0x40, keccak256(m, 0x80)) // Compute and store the parent struct hash.
                     hash := keccak256(0x1e, 0x42)
                     result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                     break

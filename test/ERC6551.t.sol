@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {SignatureCheckerLib} from "../src/utils/SignatureCheckerLib.sol";
 import {ERC6551Proxy} from "../src/accounts/ERC6551Proxy.sol";
+import {EIP712} from "../src/utils/EIP712.sol";
 import {ERC6551, MockERC6551, MockERC6551V2} from "./utils/mocks/MockERC6551.sol";
 import {MockERC6551Registry} from "./utils/mocks/MockERC6551Registry.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
@@ -404,15 +405,41 @@ contract ERC6551Test is SoladyTest {
         assertEq(t.account.isValidSignature(_toChildHash(hash), signature), bytes4(0x1626ba7e));
     }
 
-    function _toERC1271Hash(address account, bytes32 child) internal pure returns (bytes32) {
+    struct _AccountDomainStruct {
+        bytes1 fields;
+        string name;
+        string version;
+        uint256 chainId;
+        address verifyingContract;
+        bytes32 salt;
+        uint256[] extensions;
+    }
+
+    function _accountDomainStructHash(address account) internal view returns (bytes32) {
+        _AccountDomainStruct memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            EIP712(account).eip712Domain();
+
+        return keccak256(
+            abi.encode(
+                keccak256(
+                    "AccountDomain(bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)"
+                ),
+                t.fields,
+                keccak256(bytes(t.name)),
+                keccak256(bytes(t.version)),
+                t.chainId,
+                t.verifyingContract,
+                t.salt,
+                keccak256(abi.encodePacked(t.extensions))
+            )
+        );
+    }
+
+    function _toERC1271Hash(address account, bytes32 child) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
             abi.encode(
-                _PARENT_TYPEHASH,
-                _toChildHash(child),
-                child,
-                account,
-                keccak256("Milady"),
-                keccak256("1")
+                _PARENT_TYPEHASH, _toChildHash(child), child, _accountDomainStructHash(account)
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));

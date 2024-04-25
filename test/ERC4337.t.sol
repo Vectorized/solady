@@ -441,16 +441,40 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.isValidSignature(_toChildHash(t.hash), signature), bytes4(0x1626ba7e));
     }
 
+    struct _AccountDomainStruct {
+        bytes1 fields;
+        string name;
+        string version;
+        uint256 chainId;
+        address verifyingContract;
+        bytes32 salt;
+        uint256[] extensions;
+    }
+
+    function _accountDomainStructHash() internal view returns (bytes32) {
+        _AccountDomainStruct memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            account.eip712Domain();
+
+        return keccak256(
+            abi.encode(
+                keccak256(
+                    "AccountDomain(bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)"
+                ),
+                t.fields,
+                keccak256(bytes(t.name)),
+                keccak256(bytes(t.version)),
+                t.chainId,
+                t.verifyingContract,
+                t.salt,
+                keccak256(abi.encodePacked(t.extensions))
+            )
+        );
+    }
+
     function _toERC1271Hash(bytes32 child) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
-            abi.encode(
-                _PARENT_TYPEHASH,
-                _toChildHash(child),
-                child,
-                address(account),
-                keccak256("Milady"),
-                keccak256("1")
-            )
+            abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child, _accountDomainStructHash())
         );
         return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
     }
