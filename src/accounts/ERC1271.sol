@@ -85,8 +85,6 @@ abstract contract ERC1271 is EIP712 {
     /// This implementation uses ECDSA recovery. It also uses a nested EIP-712 approach to
     /// prevent signature replays when a single EOA owns multiple smart contract accounts,
     /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
-    ///
-    /// The `hash` parameter to this method is the `childHash`.
     /// __________________________________________________________________________________________
     ///
     /// Glossary:
@@ -97,17 +95,14 @@ abstract contract ERC1271 is EIP712 {
     ///
     /// - `DOMAIN_SEP_A`: The domain separator of this account.
     ///   See: `EIP712._domainSeparator()`.
-    ///
-    /// - `Parent`: The parent struct type.
-    ///   To be defined by the front end, such that `child` can be visible via EIP-712.
     /// __________________________________________________________________________________________
     ///
     /// For the default nested EIP-712 workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_B ||
-    ///         hashStruct(Parent({
-    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
-    ///             child: hashStruct(originalStruct),
+    ///         hashStruct(TypedSign({
+    ///             hash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
+    ///             contents: hashStruct(originalStruct),
     ///             accountDomain: hashStruct(eip712Domain())
     ///         }))
     ///     )
@@ -154,7 +149,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        bytes32 accountDomainStructFields;
+        bytes32 typedSignFields;
         {
             (
                 bytes1 fields,
@@ -169,7 +164,7 @@ abstract contract ERC1271 is EIP712 {
             assembly {
                 let m := mload(0x40) // Grab the free memory pointer.
                 mstore(0x40, add(m, 0x100)) // Allocate the memory.
-                // Skip 3 words for the type hash, hash, content struct hash.
+                // Skip 3 words: `_TYPED_SIGN_TYPED_HASH, typedSign.hash, typedSign.contents`.
                 mstore(add(m, 0x60), shl(248, byte(0, fields)))
                 mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
                 mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
@@ -177,28 +172,42 @@ abstract contract ERC1271 is EIP712 {
                 mstore(add(m, 0xe0), shr(96, shl(96, verifyingContract)))
                 mstore(add(m, 0x100), salt)
                 mstore(add(m, 0x120), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
-                accountDomainStructFields := m
+                typedSignFields := m
             }
         }
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            // Length of the content type encoding.
+            // Length of the contents type encoding.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
             for {} 1 {} {
-                let l := add(0x42, c) // Length of signature appended data.
-                let o := add(signature.offset, sub(signature.length, l))
-                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and content struct hash.
+                let o := add(signature.offset, sub(signature.length, add(0x42, c)))
+                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
-                // Use the nested EIP-712 workflow if the reconstructed content hash matches,
-                // and the signature is at least 96 bytes long.
-                if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, l))) {
-
+                // Use the personal sign workflow if the reconstructed contents hash doesn't match,
+                // or if the signature is not long enough to contain the appended data.
+                if or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, add(0x42, c))) {
+                    mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
+                    mstore(0x20, hash) // Store the `prefixed`.
+                    hash := keccak256(0x00, 0x40) // Compute the parent struct hash.
+                    break
                 }
-                // Else, use the `personalSign` workflow.
-                mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
-                mstore(0x20, hash) // Store the `prefixed`.
-                hash := keccak256(0x00, 0x40) // Compute the parent struct hash.
-                break
+                // Else, use the nested EIP-712 workflow.
+                // First, we have to construct the `TypedSign` type hash.
+                let p := m
+                mstore(p, "TypedSign(bytes32 hash,")
+                p := add(p, 0x17) // Advance 23 bytes.
+                calldatacopy(p, add(o, 0x20), c)
+                mstore(add(p, c), 40)
+                for {} iszero(eq(byte(0, mload(p)), 40)) {} { p := add(p, 1) }
+                mstore(add(p, 0x00), " contents,bytes1 fields,string n")
+                mstore(add(p, 0x20), "ame,string version,uint256 chain")
+                mstore(add(p, 0x40), "Id,address verifyingContract,byt")
+                mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
+                p := add(p, 0x7f) // Advance 127 bytes. 
+                calldatacopy(p, add(o, 0x20), c)
+                p := add(p, c)
+                mstore(typedSignFields, keccak256(m, sub(p, m)))
+
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
