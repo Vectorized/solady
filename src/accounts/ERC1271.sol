@@ -89,7 +89,7 @@ abstract contract ERC1271 is EIP712 {
     ///
     /// Glossary:
     ///
-    /// - `DOMAIN_SEP_B`: The domain separator of the `childHash`.
+    /// - `DOMAIN_SEP_B`: The domain separator of the `hash`.
     ///   Provided by the front end. Intended to be the domain separator of the contract
     ///   that will call `isValidSignature` on this account.
     ///
@@ -103,19 +103,25 @@ abstract contract ERC1271 is EIP712 {
     ///         hashStruct(TypedSign({
     ///             hash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
     ///             contents: hashStruct(originalStruct),
-    ///             accountDomain: hashStruct(eip712Domain())
+    ///             name: keccak256(bytes(eip712Domain().name)),
+    ///             version: keccak256(bytes(eip712Domain().version)),
+    ///             chainId: eip712Domain().chainId,
+    ///             verifyingContract: eip712Domain().verifyingContract,
+    ///             salt: eip712Domain().salt
+    ///             extensions: keccak256(abi.encodePacked(eip712Domain().extensions))
     ///         }))
     ///     )
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
-    /// The order of Parent's fields is important: `childHash` comes before `child`.
+    /// The order of Parent's fields is important: `hash` comes before `contents`.
     ///
     /// For `accountDomain`, see `_ACCOUNT_DOMAIN_TYPEHASH` and `_erc1271AccountDomainStructHash`.
     ///
-    /// The signature will be `r || s || v || PARENT_TYPEHASH || DOMAIN_SEP_B || child`,
-    /// where `child` is the bytes32 struct hash of the original struct.
+    /// The signature will be `r || s || v ||
+    ///     DOMAIN_SEP_B || contents || contentsType || contentsTypeLength (uint16)`,
+    /// where `contents` is the bytes32 struct hash of the original struct.
     ///
-    /// The `DOMAIN_SEP_B` and `child` will be used to verify if `childHash` is indeed correct.
+    /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
     /// __________________________________________________________________________________________
     ///
     /// For the `personalSign` workflow, the final hash will be:
@@ -177,7 +183,7 @@ abstract contract ERC1271 is EIP712 {
         }
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            // Length of the contents type encoding.
+            // Length of the contents type.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
             for {} 1 {} {
                 let o := add(signature.offset, sub(signature.length, add(0x42, c)))
@@ -192,57 +198,34 @@ abstract contract ERC1271 is EIP712 {
                     break
                 }
                 // Else, use the nested EIP-712 workflow.
-                // First, we have to construct the `TypedSign` type hash.
+                // Construct the `_TYPED_SIGN_TYPED_HASH` on-the-fly.
                 let p := m
                 mstore(p, "TypedSign(bytes32 hash,")
                 p := add(p, 0x17) // Advance 23 bytes.
-                calldatacopy(p, add(o, 0x20), c)
-                mstore(add(p, c), 40)
+                calldatacopy(p, add(o, 0x20), c) // Copy the contents type.
+                mstore(add(p, c), 40) // End sentinel for '(' scan.
+                // Advance `p` until we encounter a '(' byte.
                 for {} iszero(eq(byte(0, mload(p)), 40)) {} { p := add(p, 1) }
                 mstore(add(p, 0x00), " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
                 mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
-                p := add(p, 0x7f) // Advance 127 bytes. 
-                calldatacopy(p, add(o, 0x20), c)
-                p := add(p, c)
-                mstore(typedSignFields, keccak256(m, sub(p, m)))
-
+                p := add(p, 0x7f) // Advance 127 bytes.
+                calldatacopy(p, add(o, 0x20), c) // Copy the contents type.
+                p := add(p, c) // Advance by the length of the contents type.
+                // Fill in the missing fields of the `TypedSign`.
+                mstore(typedSignFields, keccak256(m, sub(p, m))) // `_TYPED_SIGN_TYPED_HASH`.
+                mstore(typedSignFields, hash) // `typedSign.hash`.
+                mstore(typedSignFields, calldataload(add(o, 0x20))) // `typedSign.contents`.
+                // The "\x19\x01" prefix is already at 0x00.
+                // `DOMAIN_SEP_B` is already at 0x20.
+                mstore(0x40, keccak256(m, 0x140)) // Compute and store the parent struct hash.
+                hash := keccak256(0x1e, 0x42)
+                result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                break
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        // /// @solidity memory-safe-assembly
-        // assembly {
-        //     let m := mload(0x40) // Cache the free memory pointer.
-        //     let o := add(signature.offset, sub(signature.length, 0x60))
-        //     calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child struct hash.
-        //     mstore(0x00, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x00.
-        //     for {} 1 {} {
-        //         // Use the nested EIP-712 workflow if the reconstructed `childHash` matches,
-        //         // and the signature is at least 96 bytes long.
-        //         if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
-        //             // Truncate the `signature.length` by 3 words (96 bytes).
-        //             signature.length := sub(signature.length, 0x60)
-        //             mstore(m, calldataload(o)) // Store the `PARENT_TYPEHASH`.
-        //             mstore(add(m, 0x20), hash) // Store the `childHash`.
-        //             mstore(add(m, 0x40), mload(0x40)) // Store the child struct hash.
-        //             mstore(add(m, 0x60), accountDomainStructHash)
-        //             // We expect that `DOMAIN_SEP_B` would have already include chain ID if needed.
-        //             // The "\x19\x01" prefix is already at 0x00.
-        //             // `DOMAIN_SEP_B` is already at 0x20.
-        //             mstore(0x40, keccak256(m, 0x80)) // Compute and store the parent struct hash.
-        //             hash := keccak256(0x1e, 0x42)
-        //             result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
-        //             break
-        //         }
-        //         // Else, use the `personalSign` workflow.
-        //         mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
-        //         mstore(0x20, hash) // Store the `prefixed`.
-        //         hash := keccak256(0x00, 0x40) // Compute the parent struct hash.
-        //         break
-        //     }
-        //     mstore(0x40, m) // Restore the free memory pointer.
-        // }
         if (!result) hash = _hashTypedData(hash);
         result = SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
     }
