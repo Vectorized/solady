@@ -398,11 +398,15 @@ contract ERC6551Test is SoladyTest {
         vm.prank(t.owner);
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
 
-        bytes32 hash = keccak256("123");
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, hash);
+        bytes32 contents = keccak256("123");
+        bytes memory contentsType = "Contents(bytes32 stuff)";
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, _DOMAIN_SEP_B, contents, contentsType, uint16(contentsType.length)
+        );
         // Success returns `0x1626ba7e`.
-        assertEq(t.account.isValidSignature(_toChildHash(hash), signature), bytes4(0x1626ba7e));
+        assertEq(
+            t.account.isValidSignature(_toContentsHash(contents), signature), bytes4(0x1626ba7e)
+        );
     }
 
     struct _AccountDomainStruct {
@@ -415,38 +419,40 @@ contract ERC6551Test is SoladyTest {
         uint256[] extensions;
     }
 
-    function _accountDomainStructHash(address account) internal view returns (bytes32) {
+    function _accountDomainStructFields(address account) internal view returns (bytes memory) {
         _AccountDomainStruct memory t;
         (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
             EIP712(account).eip712Domain();
 
-        return keccak256(
-            abi.encode(
-                keccak256(
-                    "AccountDomain(bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)"
-                ),
-                t.fields,
-                keccak256(bytes(t.name)),
-                keccak256(bytes(t.version)),
-                t.chainId,
-                t.verifyingContract,
-                t.salt,
-                keccak256(abi.encodePacked(t.extensions))
-            )
+        return abi.encode(
+            t.fields,
+            keccak256(bytes(t.name)),
+            keccak256(bytes(t.version)),
+            t.chainId,
+            t.verifyingContract,
+            t.salt,
+            keccak256(abi.encodePacked(t.extensions))
         );
     }
 
-    function _toERC1271Hash(address account, bytes32 child) internal view returns (bytes32) {
+    function _toERC1271Hash(address account, bytes32 contents) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
-            abi.encode(
-                _PARENT_TYPEHASH, _toChildHash(child), child, _accountDomainStructHash(account)
+            abi.encodePacked(
+                abi.encode(
+                    keccak256(
+                        "TypedSign(bytes32 hash,Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"
+                    ),
+                    _toContentsHash(contents),
+                    contents
+                ),
+                _accountDomainStructFields(account)
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
     }
 
-    function _toChildHash(bytes32 child) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, child));
+    function _toContentsHash(bytes32 contents) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {

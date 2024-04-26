@@ -129,7 +129,7 @@ abstract contract ERC1271 is EIP712 {
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
     ///
-    /// The parent type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
+    /// The personal sign type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
     /// The signature will be `r || s || v`.
     /// __________________________________________________________________________________________
     ///
@@ -149,7 +149,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        bytes32 typedSignFields;
+        bytes32 typedSign;
         {
             (
                 bytes1 fields,
@@ -163,7 +163,7 @@ abstract contract ERC1271 is EIP712 {
             /// @solidity memory-safe-assembly
             assembly {
                 let m := mload(0x40) // Grab the free memory pointer.
-                mstore(0x40, add(m, 0x100)) // Allocate the memory.
+                mstore(0x40, add(m, 0x140)) // Allocate the memory.
                 // Skip 3 words: `_TYPED_SIGN_TYPED_HASH, typedSign.hash, typedSign.contents`.
                 mstore(add(m, 0x60), shl(248, byte(0, fields)))
                 mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
@@ -172,7 +172,7 @@ abstract contract ERC1271 is EIP712 {
                 mstore(add(m, 0xe0), shr(96, shl(96, verifyingContract)))
                 mstore(add(m, 0x100), salt)
                 mstore(add(m, 0x120), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
-                typedSignFields := m
+                typedSign := m
             }
         }
         assembly {
@@ -188,7 +188,7 @@ abstract contract ERC1271 is EIP712 {
                 if or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, add(0x42, c))) {
                     mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
                     mstore(0x20, hash) // Store the `prefixed`.
-                    hash := keccak256(0x00, 0x40) // Compute the parent struct hash.
+                    hash := keccak256(0x00, 0x40) // Compute the personal sign struct hash.
                     break
                 }
                 // Else, use the nested EIP-712 workflow.
@@ -196,7 +196,7 @@ abstract contract ERC1271 is EIP712 {
                 let p := m
                 mstore(p, "TypedSign(bytes32 hash,")
                 p := add(p, 0x17) // Advance 23 bytes.
-                calldatacopy(p, add(o, 0x20), c) // Copy the contents type.
+                calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 mstore(add(p, c), 40) // End sentinel for '(' scan.
                 // Advance `p` until we encounter a '(' byte.
                 for {} iszero(eq(byte(0, mload(p)), 40)) {} { p := add(p, 1) }
@@ -205,17 +205,18 @@ abstract contract ERC1271 is EIP712 {
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
                 mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
                 p := add(p, 0x7f) // Advance 127 bytes.
-                calldatacopy(p, add(o, 0x20), c) // Copy the contents type.
+                calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 p := add(p, c) // Advance by the length of the contents type.
                 // Fill in the missing fields of the `TypedSign`.
-                mstore(typedSignFields, keccak256(m, sub(p, m))) // `_TYPED_SIGN_TYPED_HASH`.
-                mstore(typedSignFields, hash) // `typedSign.hash`.
-                mstore(typedSignFields, calldataload(add(o, 0x20))) // `typedSign.contents`.
+                mstore(add(typedSign, 0x00), keccak256(m, sub(p, m))) // `_TYPED_SIGN_TYPED_HASH`.
+                mstore(add(typedSign, 0x20), hash) // `typedSign.hash`.
+                mstore(add(typedSign, 0x40), calldataload(add(o, 0x20))) // `typedSign.contents`.
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
-                mstore(0x40, keccak256(m, 0x140)) // Compute and store the parent struct hash.
+                mstore(0x40, keccak256(typedSign, 0x140)) // Compute and store the typed sign struct hash.
                 hash := keccak256(0x1e, 0x42)
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                signature.length := sub(signature.length, add(0x42, c)) // Truncate the signature.
                 break
             }
             mstore(0x40, m) // Restore the free memory pointer.
