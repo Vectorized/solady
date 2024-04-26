@@ -37,36 +37,6 @@ abstract contract ERC1271 is EIP712 {
         return msg.sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c;
     }
 
-    /// @dev Returns the struct hash of the `eip712Domain()`.
-    /// Used in the nested EIP-712 workflow.
-    /// We'll refer to the EIP-712 domain as the account domain to make it more end-user-friendly.
-    function _erc1271AccountDomainStructHash() internal view virtual returns (bytes32 result) {
-        (
-            bytes1 fields,
-            string memory name,
-            string memory version,
-            uint256 chainId,
-            address verifyingContract,
-            bytes32 salt,
-            uint256[] memory extensions
-        ) = eip712Domain();
-        /// @solidity memory-safe-assembly
-        assembly {
-            // This is essentially `keccak256(abi.encode(_ACCOUNT_DOMAIN_TYPEHASH, ...))`.
-            // We'll just compute it on-the-fly as efficiently as we can.
-            let m := mload(0x40) // Grab the free memory pointer.
-            mstore(m, _ACCOUNT_DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), shl(248, byte(0, fields)))
-            mstore(add(m, 0x40), keccak256(add(name, 0x20), mload(name)))
-            mstore(add(m, 0x60), keccak256(add(version, 0x20), mload(version)))
-            mstore(add(m, 0x80), chainId)
-            mstore(add(m, 0xa0), shr(96, shl(96, verifyingContract)))
-            mstore(add(m, 0xc0), salt)
-            mstore(add(m, 0xe0), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
-            result := keccak256(m, 0x100)
-        }
-    }
-
     /// @dev Validates the signature with ERC1271 return,
     /// so that this account can also be used as a signer.
     function isValidSignature(bytes32 hash, bytes calldata signature)
@@ -184,30 +154,45 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        bytes32 accountDomainStructHash = _erc1271AccountDomainStructHash();
-        /// @solidity memory-safe-assembly
+        bytes32 accountDomainStructFields;
+        {
+            (
+                bytes1 fields,
+                string memory name,
+                string memory version,
+                uint256 chainId,
+                address verifyingContract,
+                bytes32 salt,
+                uint256[] memory extensions
+            ) = eip712Domain();
+            /// @solidity memory-safe-assembly
+            assembly {
+                let m := mload(0x40) // Grab the free memory pointer.
+                mstore(0x40, add(m, 0x100)) // Allocate the memory.
+                // Skip 3 words for the type hash, hash, content struct hash.
+                mstore(add(m, 0x60), shl(248, byte(0, fields)))
+                mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
+                mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
+                mstore(add(m, 0xc0), chainId)
+                mstore(add(m, 0xe0), shr(96, shl(96, verifyingContract)))
+                mstore(add(m, 0x100), salt)
+                mstore(add(m, 0x120), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
+                accountDomainStructFields := m
+            }
+        }
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            let o := add(signature.offset, sub(signature.length, 0x60))
-            calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child struct hash.
-            mstore(0x00, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x00.
+            // Length of the content type encoding.
+            let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
             for {} 1 {} {
-                // Use the nested EIP-712 workflow if the reconstructed `childHash` matches,
+                let l := add(0x42, c) // Length of signature appended data.
+                let o := add(signature.offset, sub(signature.length, l))
+                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and content struct hash.
+                mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
+                // Use the nested EIP-712 workflow if the reconstructed content hash matches,
                 // and the signature is at least 96 bytes long.
-                if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
-                    // Truncate the `signature.length` by 3 words (96 bytes).
-                    signature.length := sub(signature.length, 0x60)
-                    mstore(m, calldataload(o)) // Store the `PARENT_TYPEHASH`.
-                    mstore(add(m, 0x20), hash) // Store the `childHash`.
-                    mstore(add(m, 0x40), mload(0x40)) // Store the child struct hash.
-                    mstore(add(m, 0x60), accountDomainStructHash)
-                    // We expect that `DOMAIN_SEP_B` would have already include chain ID if needed.
-                    // The "\x19\x01" prefix is already at 0x00.
-                    // `DOMAIN_SEP_B` is already at 0x20.
-                    mstore(0x40, keccak256(m, 0x80)) // Compute and store the parent struct hash.
-                    hash := keccak256(0x1e, 0x42)
-                    result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
-                    break
+                if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, l))) {
+
                 }
                 // Else, use the `personalSign` workflow.
                 mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
@@ -217,6 +202,38 @@ abstract contract ERC1271 is EIP712 {
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
+        // /// @solidity memory-safe-assembly
+        // assembly {
+        //     let m := mload(0x40) // Cache the free memory pointer.
+        //     let o := add(signature.offset, sub(signature.length, 0x60))
+        //     calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child struct hash.
+        //     mstore(0x00, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x00.
+        //     for {} 1 {} {
+        //         // Use the nested EIP-712 workflow if the reconstructed `childHash` matches,
+        //         // and the signature is at least 96 bytes long.
+        //         if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
+        //             // Truncate the `signature.length` by 3 words (96 bytes).
+        //             signature.length := sub(signature.length, 0x60)
+        //             mstore(m, calldataload(o)) // Store the `PARENT_TYPEHASH`.
+        //             mstore(add(m, 0x20), hash) // Store the `childHash`.
+        //             mstore(add(m, 0x40), mload(0x40)) // Store the child struct hash.
+        //             mstore(add(m, 0x60), accountDomainStructHash)
+        //             // We expect that `DOMAIN_SEP_B` would have already include chain ID if needed.
+        //             // The "\x19\x01" prefix is already at 0x00.
+        //             // `DOMAIN_SEP_B` is already at 0x20.
+        //             mstore(0x40, keccak256(m, 0x80)) // Compute and store the parent struct hash.
+        //             hash := keccak256(0x1e, 0x42)
+        //             result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+        //             break
+        //         }
+        //         // Else, use the `personalSign` workflow.
+        //         mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
+        //         mstore(0x20, hash) // Store the `prefixed`.
+        //         hash := keccak256(0x00, 0x40) // Compute the parent struct hash.
+        //         break
+        //     }
+        //     mstore(0x40, m) // Restore the free memory pointer.
+        // }
         if (!result) hash = _hashTypedData(hash);
         result = SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
     }
