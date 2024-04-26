@@ -15,10 +15,6 @@ abstract contract ERC1271 is EIP712 {
     bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
         0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
 
-    /// @dev `keccak256("AccountDomain(bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)")`.
-    bytes32 internal constant _ACCOUNT_DOMAIN_TYPEHASH =
-        0xf9397b815e3b748615251a6cf42deb547d35771d98dc90539cd5607ffa5c19a3;
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -114,8 +110,6 @@ abstract contract ERC1271 is EIP712 {
     /// ```
     /// where `||` denotes the concatenation operator for bytes.
     /// The order of Parent's fields is important: `hash` comes before `contents`.
-    ///
-    /// For `accountDomain`, see `_ACCOUNT_DOMAIN_TYPEHASH` and `_erc1271AccountDomainStructHash`.
     ///
     /// The signature will be `r || s || v ||
     ///     DOMAIN_SEP_B || contents || contentsType || contentsTypeLength (uint16)`,
