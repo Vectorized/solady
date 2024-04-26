@@ -149,32 +149,8 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        bytes32 typedSign;
-        {
-            (
-                bytes1 fields,
-                string memory name,
-                string memory version,
-                uint256 chainId,
-                address verifyingContract,
-                bytes32 salt,
-                uint256[] memory extensions
-            ) = eip712Domain();
-            /// @solidity memory-safe-assembly
-            assembly {
-                let m := mload(0x40) // Grab the free memory pointer.
-                mstore(0x40, add(m, 0x140)) // Allocate the memory.
-                // Skip 3 words: `_TYPED_SIGN_TYPED_HASH, typedSign.hash, typedSign.contents`.
-                mstore(add(m, 0x60), shl(248, byte(0, fields)))
-                mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
-                mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
-                mstore(add(m, 0xc0), chainId)
-                mstore(add(m, 0xe0), shr(96, shl(96, verifyingContract)))
-                mstore(add(m, 0x100), salt)
-                mstore(add(m, 0x120), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
-                typedSign := m
-            }
-        }
+        bytes32 t = _typedSignFields();
+        /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
             // Length of the contents type.
@@ -208,12 +184,12 @@ abstract contract ERC1271 is EIP712 {
                 p := add(p, 0x7f) // Advance 127 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 // Fill in the missing fields of the `TypedSign`.
-                mstore(typedSign, keccak256(m, sub(add(p, c), m))) // `_TYPED_SIGN_TYPED_HASH`.
-                mstore(add(typedSign, 0x20), hash) // `typedSign.hash`.
-                mstore(add(typedSign, 0x40), calldataload(add(o, 0x20))) // `typedSign.contents`.
+                mstore(t, keccak256(m, sub(add(p, c), m))) // `_TYPED_SIGN_TYPED_HASH`.
+                mstore(add(t, 0x20), hash) // `typedSign.hash`.
+                mstore(add(t, 0x40), calldataload(add(o, 0x20))) // `typedSign.contents`.
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
-                mstore(0x40, keccak256(typedSign, 0x140)) // Compute and store the typed sign struct hash.
+                mstore(0x40, keccak256(t, 0x140)) // Compute and store the typed sign struct hash.
                 hash := keccak256(0x1e, 0x42)
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
@@ -223,6 +199,32 @@ abstract contract ERC1271 is EIP712 {
         }
         if (!result) hash = _hashTypedData(hash);
         result = SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
+    }
+
+    /// @dev For use in `_erc1271IsValidSignatureViaNestedEIP712`,
+    function _typedSignFields() private view returns (bytes32 m) {
+        (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        ) = eip712Domain();
+        /// @solidity memory-safe-assembly
+        assembly {
+            m := mload(0x40) // Grab the free memory pointer.
+            mstore(0x40, add(m, 0x140)) // Allocate the memory.
+            // Skip 3 words: `_TYPED_SIGN_TYPED_HASH, typedSign.hash, typedSign.contents`.
+            mstore(add(m, 0x60), shl(248, byte(0, fields)))
+            mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
+            mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
+            mstore(add(m, 0xc0), chainId)
+            mstore(add(m, 0xe0), shr(96, shl(96, verifyingContract)))
+            mstore(add(m, 0x100), salt)
+            mstore(add(m, 0x120), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
+        }
     }
 
     /// @dev Performs the signature validation without nested EIP-712 to allow for easy sign ins.
