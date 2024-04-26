@@ -180,12 +180,13 @@ abstract contract ERC1271 is EIP712 {
             // Length of the contents type.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
             for {} 1 {} {
-                let o := add(signature.offset, sub(signature.length, add(0x42, c)))
+                let l := add(0x42, c)
+                let o := add(signature.offset, sub(signature.length, l))
                 calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                 // Use the personal sign workflow if the reconstructed contents hash doesn't match,
-                // or if the signature is not long enough to contain the appended data.
-                if or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, add(0x42, c))) {
+                // or if the appended data's length is invalid.
+                if or(xor(keccak256(0x1e, 0x42), hash), or(lt(signature.length, l), iszero(c))) {
                     mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
                     mstore(0x20, hash) // Store the `prefixed`.
                     hash := keccak256(0x00, 0x40) // Compute the personal sign struct hash.
@@ -215,7 +216,7 @@ abstract contract ERC1271 is EIP712 {
                 mstore(0x40, keccak256(typedSign, 0x140)) // Compute and store the typed sign struct hash.
                 hash := keccak256(0x1e, 0x42)
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
-                signature.length := sub(signature.length, add(0x42, c)) // Truncate the signature.
+                signature.length := sub(signature.length, l) // Truncate the signature.
                 break
             }
             mstore(0x40, m) // Restore the free memory pointer.
