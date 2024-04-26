@@ -200,15 +200,14 @@ abstract contract ERC1271 is EIP712 {
                 mstore(add(p, c), 40) // End sentinel for '(' scan.
                 // Advance `p` until we encounter a '(' byte.
                 for {} iszero(eq(byte(0, mload(p)), 40)) {} { p := add(p, 1) }
-                mstore(add(p, 0x00), " contents,bytes1 fields,string n")
+                mstore(p, " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
                 mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
                 p := add(p, 0x7f) // Advance 127 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
-                p := add(p, c) // Advance by the length of the contents type.
                 // Fill in the missing fields of the `TypedSign`.
-                mstore(add(typedSign, 0x00), keccak256(m, sub(p, m))) // `_TYPED_SIGN_TYPED_HASH`.
+                mstore(typedSign, keccak256(m, sub(add(p, c), m))) // `_TYPED_SIGN_TYPED_HASH`.
                 mstore(add(typedSign, 0x20), hash) // `typedSign.hash`.
                 mstore(add(typedSign, 0x40), calldataload(add(o, 0x20))) // `typedSign.contents`.
                 // The "\x19\x01" prefix is already at 0x00.
