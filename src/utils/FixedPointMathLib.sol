@@ -901,7 +901,7 @@ library FixedPointMathLib {
     function abs(int256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := xor(sub(0, shr(255, x)), add(sub(0, shr(255, x)), x))
+            z := xor(sar(255, x), add(sar(255, x), x))
         }
     }
 
