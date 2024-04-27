@@ -82,7 +82,7 @@ abstract contract ERC1271 is EIP712 {
     /// prevent signature replays when a single EOA owns multiple smart contract accounts,
     /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
     ///
-    /// Crafted for phishing resistance, efficiency, flexbility.
+    /// Crafted for phishing resistance, efficiency, flexibility.
     /// __________________________________________________________________________________________
     ///
     /// Glossary:
