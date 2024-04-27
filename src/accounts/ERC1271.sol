@@ -158,7 +158,7 @@ abstract contract ERC1271 is EIP712 {
             // Length of the contents type.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
             for {} 1 {} {
-                let l := add(0x42, c) // Total length of appended data. 2x bytes32, 1x uint16.
+                let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
                 let o := add(signature.offset, sub(signature.length, l))
                 calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
@@ -175,7 +175,7 @@ abstract contract ERC1271 is EIP712 {
                 mstore(m, "TypedDataSign(bytes32 hash,")
                 let p := add(m, 0x1b) // Advance 27 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
-                // Advance `p` until we encounter a '(' byte.
+                // Store the end sentinel and advance `p` until we encounter a '(' byte.
                 for { mstore(add(p, c), 4140) } xor(byte(0, mload(p)), 40) {} { p := add(p, 1) }
                 mstore(p, " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
