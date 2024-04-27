@@ -389,6 +389,10 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
+    function _contentsType() internal pure returns (bytes memory) {
+        return "Contents(bytes32 stuff)";
+    }
+
     function testIsValidSignature() public {
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
@@ -399,9 +403,9 @@ contract ERC6551Test is SoladyTest {
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
 
         bytes32 contents = keccak256("123");
-        bytes memory contentsType = "Contents(bytes32 stuff)";
+
         bytes memory signature = abi.encodePacked(
-            t.r, t.s, t.v, _DOMAIN_SEP_B, contents, contentsType, uint16(contentsType.length)
+            t.r, t.s, t.v, _DOMAIN_SEP_B, contents, _contentsType(), uint16(_contentsType().length)
         );
         // Success returns `0x1626ba7e`.
         assertEq(
@@ -440,7 +444,10 @@ contract ERC6551Test is SoladyTest {
             abi.encodePacked(
                 abi.encode(
                     keccak256(
-                        "TypedSign(bytes32 hash,Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"
+                        abi.encodePacked(
+                            "TypedSign(bytes32 hash,Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
+                            _contentsType()
+                        )
                     ),
                     _toContentsHash(contents),
                     contents

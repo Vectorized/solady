@@ -161,7 +161,7 @@ abstract contract ERC1271 is EIP712 {
                 calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                 // Use the personal sign workflow if the reconstructed contents hash doesn't match,
-                // or if the appended data's length is invalid.
+                // or if the appended data's length is invalid (too long or zero).
                 if or(xor(keccak256(0x1e, 0x42), hash), or(lt(signature.length, l), iszero(c))) {
                     mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
                     mstore(0x20, hash) // Store the `prefixed`.
