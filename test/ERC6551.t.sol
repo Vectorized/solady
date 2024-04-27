@@ -445,7 +445,7 @@ contract ERC6551Test is SoladyTest {
                 abi.encode(
                     keccak256(
                         abi.encodePacked(
-                            "TypedSign(bytes32 hash,Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
+                            "TypedDataSign(bytes32 hash,Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
                             _contentsType()
                         )
                     ),

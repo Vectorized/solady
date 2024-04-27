@@ -96,7 +96,7 @@ abstract contract ERC1271 is EIP712 {
     /// For the default nested EIP-712 workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_B ||
-    ///         hashStruct(TypedSign({
+    ///         hashStruct(TypedDataSign({
     ///             hash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
     ///             contents: hashStruct(originalStruct),
     ///             name: keccak256(bytes(eip712Domain().name)),
@@ -112,7 +112,7 @@ abstract contract ERC1271 is EIP712 {
     /// The order of Parent's fields is important: `hash` comes before `contents`.
     ///
     /// The signature will be `r || s || v ||
-    ///     DOMAIN_SEP_B || contents || contentsType || contentsTypeLength (uint16)`,
+    ///     DOMAIN_SEP_B || contents || contentsType || uint16(contentsType.length)`,
     /// where `contents` is the bytes32 struct hash of the original struct.
     ///
     /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
@@ -149,7 +149,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        bytes32 t = _typedSignFields();
+        bytes32 t = _typedDataSignFields();
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
@@ -169,10 +169,9 @@ abstract contract ERC1271 is EIP712 {
                     break
                 }
                 // Else, use the nested EIP-712 workflow.
-                // Construct the `_TYPED_SIGN_TYPED_HASH` on-the-fly.
-                let p := m
-                mstore(p, "TypedSign(bytes32 hash,")
-                p := add(p, 0x17) // Advance 23 bytes.
+                // Construct the `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
+                mstore(m, "TypedDataSign(bytes32 hash,")
+                let p := add(m, 0x1b) // Advance 27 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 mstore(add(p, c), 40) // End sentinel for '(' scan.
                 // Advance `p` until we encounter a '(' byte.
@@ -183,8 +182,8 @@ abstract contract ERC1271 is EIP712 {
                 mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
                 p := add(p, 0x7f) // Advance 127 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
-                // Fill in the missing fields of the `TypedSign`.
-                mstore(t, keccak256(m, sub(add(p, c), m))) // `_TYPED_SIGN_TYPED_HASH`.
+                // Fill in the missing fields of the `TypedDataSign`.
+                mstore(t, keccak256(m, sub(add(p, c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
                 mstore(add(t, 0x20), hash) // `typedSign.hash`.
                 mstore(add(t, 0x40), calldataload(add(o, 0x20))) // `typedSign.contents`.
                 // The "\x19\x01" prefix is already at 0x00.
@@ -202,7 +201,7 @@ abstract contract ERC1271 is EIP712 {
     }
 
     /// @dev For use in `_erc1271IsValidSignatureViaNestedEIP712`,
-    function _typedSignFields() private view returns (bytes32 m) {
+    function _typedDataSignFields() private view returns (bytes32 m) {
         (
             bytes1 fields,
             string memory name,
@@ -216,7 +215,7 @@ abstract contract ERC1271 is EIP712 {
         assembly {
             m := mload(0x40) // Grab the free memory pointer.
             mstore(0x40, add(m, 0x140)) // Allocate the memory.
-            // Skip 3 words: `_TYPED_SIGN_TYPED_HASH, typedSign.hash, typedSign.contents`.
+            // Skip 3 words: `TYPED_DATA_SIGN_TYPEHASH, hash, contents`.
             mstore(add(m, 0x60), shl(248, byte(0, fields)))
             mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
             mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
