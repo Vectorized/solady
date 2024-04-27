@@ -131,7 +131,7 @@ abstract contract ERC1271 is EIP712 {
     /// ```
     /// where `‖` denotes the concatenation operator for bytes.
     ///
-    /// The personal sign type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
+    /// The `PersonalSign` type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
     /// The signature will be `r ‖ s ‖ v`.
     /// __________________________________________________________________________________________
     ///
@@ -162,12 +162,12 @@ abstract contract ERC1271 is EIP712 {
                 let o := add(signature.offset, sub(signature.length, l))
                 calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
-                // Use the personal sign workflow if the reconstructed contents hash doesn't match,
+                // Use the `PersonalSign` workflow if the reconstructed contents hash doesn't match,
                 // or if the appended data is invalid (length too long, or empty contents type).
                 if or(xor(keccak256(0x1e, 0x42), hash), or(lt(signature.length, l), iszero(c))) {
                     mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
                     mstore(0x20, hash) // Store the `prefixed`.
-                    hash := keccak256(0x00, 0x40) // Compute the personal sign struct hash.
+                    hash := keccak256(0x00, 0x40) // Compute the `PersonalSign` struct hash.
                     break
                 }
                 // Else, use the `TypedDataSign` workflow.
@@ -175,9 +175,8 @@ abstract contract ERC1271 is EIP712 {
                 mstore(m, "TypedDataSign(bytes32 hash,")
                 let p := add(m, 0x1b) // Advance 27 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
-                mstore(add(p, c), 40) // End sentinel for '(' scan.
                 // Advance `p` until we encounter a '(' byte.
-                for {} xor(byte(0, mload(p)), 40) {} { p := add(p, 1) }
+                for { mstore(add(p, c), 4140) } xor(byte(0, mload(p)), 40) {} { p := add(p, 1) }
                 mstore(p, " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
