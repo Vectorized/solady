@@ -192,7 +192,7 @@ abstract contract ERC1271 is EIP712 {
                 mstore(0x40, keccak256(t, 0x140)) // `hashStruct(typedDataSign)`.
                 // Corrupts the hash if contents name starts with a lowercase ASCII alphabet.
                 let d := lt(sub(byte(0, mload(add(m, 0x1b))), 0x61), 0x1a)
-                hash := keccak256(0x1e, add(0x42, d)) // Compute the final hash.
+                hash := keccak256(0x1e, sub(0x42, d)) // Compute the final hash.
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
