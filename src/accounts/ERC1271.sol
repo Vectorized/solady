@@ -93,7 +93,7 @@ abstract contract ERC1271 is EIP712 {
     ///   See: `EIP712._domainSeparator()`.
     /// __________________________________________________________________________________________
     ///
-    /// For the default nested EIP-712 workflow, the final hash will be:
+    /// For the default typed data sign workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_B ||
     ///         hashStruct(TypedDataSign({
@@ -118,7 +118,7 @@ abstract contract ERC1271 is EIP712 {
     /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
     /// __________________________________________________________________________________________
     ///
-    /// For the `personalSign` workflow, the final hash will be:
+    /// For the person sign workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
     ///         hashStruct(PersonalSign({
@@ -168,7 +168,7 @@ abstract contract ERC1271 is EIP712 {
                     hash := keccak256(0x00, 0x40) // Compute the personal sign struct hash.
                     break
                 }
-                // Else, use the nested EIP-712 workflow.
+                // Else, use the typed data sign workflow.
                 // Construct the `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
                 mstore(m, "TypedDataSign(bytes32 hash,")
                 let p := add(m, 0x1b) // Advance 27 bytes.
