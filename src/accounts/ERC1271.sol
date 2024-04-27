@@ -171,7 +171,7 @@ abstract contract ERC1271 is EIP712 {
                     break
                 }
                 // Else, use the `TypedDataSign` workflow.
-                // Construct the `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
+                // Construct `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
                 mstore(m, "TypedDataSign(bytes32 hash,")
                 let p := add(m, 0x1b) // Advance 27 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
@@ -190,9 +190,9 @@ abstract contract ERC1271 is EIP712 {
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x140)) // `hashStruct(typedDataSign)`.
-                // Corrupts the hash if contents name starts with a lowercase ASCII alphabet.
-                let d := lt(sub(byte(0, mload(add(m, 0x1b))), 0x61), 0x1a)
-                hash := keccak256(0x1e, sub(0x42, d)) // Compute the final hash.
+                // Compute the final hash, corrupted if contents name begins with lowercase alphabet.
+                // forgefmt: disable-next-item
+                hash := keccak256(0x1e, add(0x42, gt(0x1a, sub(byte(0, mload(add(0x1b, m))), 0x61))))
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
