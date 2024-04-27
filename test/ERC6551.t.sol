@@ -439,19 +439,22 @@ contract ERC6551Test is SoladyTest {
         );
     }
 
+    function _typedDataSignTypeHash() internal pure returns (bytes32) {
+        bytes memory ct = _contentsType();
+        return keccak256(
+            abi.encodePacked(
+                "TypedDataSign(bytes32 hash,",
+                LibString.slice(string(ct), 0, LibString.indexOf(string(ct), "(", 0)),
+                " contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
+                ct
+            )
+        );
+    }
+
     function _toERC1271Hash(address account, bytes32 contents) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
-                abi.encode(
-                    keccak256(
-                        abi.encodePacked(
-                            "TypedDataSign(bytes32 hash,Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
-                            _contentsType()
-                        )
-                    ),
-                    _toContentsHash(contents),
-                    contents
-                ),
+                abi.encode(_typedDataSignTypeHash(), _toContentsHash(contents), contents),
                 _accountDomainStructFields(account)
             )
         );
