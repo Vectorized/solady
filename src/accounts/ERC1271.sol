@@ -81,6 +81,8 @@ abstract contract ERC1271 is EIP712 {
     /// This implementation uses ECDSA recovery. It also uses a nested EIP-712 approach to
     /// prevent signature replays when a single EOA owns multiple smart contract accounts,
     /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
+    ///
+    /// Crafted for phishing resistance, efficiency, flexbility.
     /// __________________________________________________________________________________________
     ///
     /// Glossary:
@@ -95,9 +97,9 @@ abstract contract ERC1271 is EIP712 {
     ///
     /// For the default typed data sign workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 || DOMAIN_SEP_B ||
+    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
     ///         hashStruct(TypedDataSign({
-    ///             hash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
+    ///             hash: keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖ hashStruct(originalStruct)),
     ///             contents: hashStruct(originalStruct),
     ///             name: keccak256(bytes(eip712Domain().name)),
     ///             version: keccak256(bytes(eip712Domain().version)),
@@ -108,11 +110,11 @@ abstract contract ERC1271 is EIP712 {
     ///         }))
     ///     )
     /// ```
-    /// where `||` denotes the concatenation operator for bytes.
+    /// where `‖` denotes the concatenation operator for bytes.
     /// The order of Parent's fields is important: `hash` comes before `contents`.
     ///
-    /// The signature will be `r || s || v ||
-    ///     DOMAIN_SEP_B || contents || contentsType || uint16(contentsType.length)`,
+    /// The signature will be `r ‖ s ‖ v ‖
+    ///     DOMAIN_SEP_B ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
     /// where `contents` is the bytes32 struct hash of the original struct.
     ///
     /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
@@ -120,17 +122,17 @@ abstract contract ERC1271 is EIP712 {
     ///
     /// For the person sign workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
+    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_A ‖
     ///         hashStruct(PersonalSign({
-    ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ||
-    ///                 base10(bytes(someString).length) || someString))
+    ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ‖
+    ///                 base10(bytes(someString).length) ‖ someString))
     ///         }))
     ///     )
     /// ```
-    /// where `||` denotes the concatenation operator for bytes.
+    /// where `‖` denotes the concatenation operator for bytes.
     ///
     /// The personal sign type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
-    /// The signature will be `r || s || v`.
+    /// The signature will be `r ‖ s ‖ v`.
     /// __________________________________________________________________________________________
     ///
     /// For demo and typescript code, see:
