@@ -156,12 +156,12 @@ abstract contract ERC1271 is EIP712 {
             // Length of the contents type.
             let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
             for {} 1 {} {
-                let l := add(0x42, c)
+                let l := add(0x42, c) // Total length of appended data. 2x bytes32, 1x uint16.
                 let o := add(signature.offset, sub(signature.length, l))
                 calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                 // Use the personal sign workflow if the reconstructed contents hash doesn't match,
-                // or if the appended data's length is invalid (too long or zero).
+                // or if the appended data is invalid (length too long, or empty contents type).
                 if or(xor(keccak256(0x1e, 0x42), hash), or(lt(signature.length, l), iszero(c))) {
                     mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
                     mstore(0x20, hash) // Store the `prefixed`.
@@ -184,12 +184,12 @@ abstract contract ERC1271 is EIP712 {
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 // Fill in the missing fields of the `TypedDataSign`.
                 mstore(t, keccak256(m, sub(add(p, c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
-                mstore(add(t, 0x20), hash) // `typedSign.hash`.
-                mstore(add(t, 0x40), calldataload(add(o, 0x20))) // `typedSign.contents`.
+                mstore(add(t, 0x20), hash) // `hash`.
+                mstore(add(t, 0x40), calldataload(add(o, 0x20))) // `contents`.
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
-                mstore(0x40, keccak256(t, 0x140)) // Compute and store the typed sign struct hash.
-                hash := keccak256(0x1e, 0x42)
+                mstore(0x40, keccak256(t, 0x140)) // `hashStruct(typedDataSign)`.
+                hash := keccak256(0x1e, 0x42) // Compute the final hash.
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
