@@ -95,7 +95,7 @@ abstract contract ERC1271 is EIP712 {
     ///   See: `EIP712._domainSeparator()`.
     /// __________________________________________________________________________________________
     ///
-    /// For the default typed data sign workflow, the final hash will be:
+    /// For the `TypedDataSign` workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
     ///         hashStruct(TypedDataSign({
@@ -120,7 +120,7 @@ abstract contract ERC1271 is EIP712 {
     /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
     /// __________________________________________________________________________________________
     ///
-    /// For the person sign workflow, the final hash will be:
+    /// For the `PersonalSign` workflow, the final hash will be:
     /// ```
     ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_A ‖
     ///         hashStruct(PersonalSign({
@@ -144,7 +144,7 @@ abstract contract ERC1271 is EIP712 {
     /// Of course, if you are a wallet app maker and can update your app's UI at will,
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
-    /// All these are just for widespead out-of-the-box compatibility with other wallet apps.
+    /// All these are just for widespead out-of-the-box compatibility with other wallet clients.
     function _erc1271IsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -170,14 +170,14 @@ abstract contract ERC1271 is EIP712 {
                     hash := keccak256(0x00, 0x40) // Compute the personal sign struct hash.
                     break
                 }
-                // Else, use the typed data sign workflow.
+                // Else, use the `TypedDataSign` workflow.
                 // Construct the `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
                 mstore(m, "TypedDataSign(bytes32 hash,")
                 let p := add(m, 0x1b) // Advance 27 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 mstore(add(p, c), 40) // End sentinel for '(' scan.
                 // Advance `p` until we encounter a '(' byte.
-                for {} iszero(eq(byte(0, mload(p)), 40)) {} { p := add(p, 1) }
+                for {} xor(byte(0, mload(p)), 40) {} { p := add(p, 1) }
                 mstore(p, " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
