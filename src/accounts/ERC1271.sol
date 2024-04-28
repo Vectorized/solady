@@ -8,6 +8,14 @@ import {SignatureCheckerLib} from "../utils/SignatureCheckerLib.sol";
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC1271.sol)
 abstract contract ERC1271 is EIP712 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev `keccak256("PersonalSign(bytes prefixed)")`.
+    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
+        0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -74,51 +82,57 @@ abstract contract ERC1271 is EIP712 {
     /// prevent signature replays when a single EOA owns multiple smart contract accounts,
     /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
     ///
-    /// The `hash` parameter to this method is the `childHash`.
+    /// Crafted for phishing resistance, efficiency, flexibility.
     /// __________________________________________________________________________________________
     ///
     /// Glossary:
     ///
-    /// - `DOMAIN_SEP_B`: The domain separator of the `childHash`.
+    /// - `DOMAIN_SEP_B`: The domain separator of the `hash`.
     ///   Provided by the front end. Intended to be the domain separator of the contract
     ///   that will call `isValidSignature` on this account.
     ///
     /// - `DOMAIN_SEP_A`: The domain separator of this account.
     ///   See: `EIP712._domainSeparator()`.
-    ///
-    /// - `Parent`: The parent struct type.
-    ///   To be defined by the front end, such that `child` can be visible via EIP-712.
     /// __________________________________________________________________________________________
     ///
-    /// For the default nested EIP-712 workflow, the final hash will be:
+    /// For the `TypedDataSign` workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
-    ///         hashStruct(Parent({
-    ///             childHash: keccak256(\x19\x01 || DOMAIN_SEP_B || hashStruct(originalStruct)),
-    ///             child: hashStruct(originalStruct)
+    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
+    ///         hashStruct(TypedDataSign({
+    ///             hash: keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖ hashStruct(originalStruct)),
+    ///             contents: hashStruct(originalStruct),
+    ///             name: keccak256(bytes(eip712Domain().name)),
+    ///             version: keccak256(bytes(eip712Domain().version)),
+    ///             chainId: eip712Domain().chainId,
+    ///             verifyingContract: eip712Domain().verifyingContract,
+    ///             salt: eip712Domain().salt
+    ///             extensions: keccak256(abi.encodePacked(eip712Domain().extensions))
     ///         }))
     ///     )
     /// ```
-    /// where `||` denotes the concatenation operator for bytes.
-    /// The order of Parent's fields is important: `childHash` comes before `child`.
+    /// where `‖` denotes the concatenation operator for bytes.
+    /// The order of Parent's fields is important: `hash` comes before `contents`.
     ///
-    /// The signature will be `r || s || v || PARENT_TYPEHASH || DOMAIN_SEP_B || child`,
-    /// where `child` is the bytes32 struct hash of the original struct.
+    /// The signature will be `r ‖ s ‖ v ‖
+    ///     DOMAIN_SEP_B ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
+    /// where `contents` is the bytes32 struct hash of the original struct.
     ///
-    /// The `DOMAIN_SEP_B` and `child` will be used to verify if `childHash` is indeed correct.
+    /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
     /// __________________________________________________________________________________________
     ///
-    /// For the `personalSign` workflow, the final hash will be:
+    /// For the `PersonalSign` workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 || DOMAIN_SEP_A ||
-    ///         hashStruct(Parent({
-    ///             childHash: keccak256(\x19Ethereum Signed Message:\n ||
-    ///                 base10(bytes(someString).length) || someString)
+    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_A ‖
+    ///         hashStruct(PersonalSign({
+    ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ‖
+    ///                 base10(bytes(someString).length) ‖ someString))
     ///         }))
     ///     )
     /// ```
-    /// where `||` denotes the concatenation operator for bytes.
-    /// The signature will be `r || s || v || PARENT_TYPEHASH`.
+    /// where `‖` denotes the concatenation operator for bytes.
+    ///
+    /// The `PersonalSign` type hash will be `keccak256("PersonalSign(bytes prefixed)")`.
+    /// The signature will be `r ‖ s ‖ v`.
     /// __________________________________________________________________________________________
     ///
     /// For demo and typescript code, see:
@@ -130,45 +144,88 @@ abstract contract ERC1271 is EIP712 {
     /// Of course, if you are a wallet app maker and can update your app's UI at will,
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
-    /// All these are just for widespead out-of-the-box compatibility with other wallet apps.
+    /// All these are just for widespead out-of-the-box compatibility with other wallet clients.
     function _erc1271IsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
         virtual
-        returns (bool)
+        returns (bool result)
     {
+        bytes32 t = _typedDataSignFields();
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            let o := add(signature.offset, sub(signature.length, 0x60))
-            calldatacopy(0x00, o, 0x60) // Copy the `DOMAIN_SEP_B` and child's structHash.
-            mstore(0x00, 0x1901) // Store the "\x19\x01" prefix, overwriting 0x00.
+            // Length of the contents type.
+            let c := and(0xffff, calldataload(add(signature.offset, sub(signature.length, 0x20))))
             for {} 1 {} {
-                // Use the nested EIP-712 workflow if the reconstructed `childHash` matches,
-                // and the signature is at least 96 bytes long.
-                if iszero(or(xor(keccak256(0x1e, 0x42), hash), lt(signature.length, 0x60))) {
-                    // Truncate the `signature.length` by 3 words (96 bytes).
-                    signature.length := sub(signature.length, 0x60)
-                    mstore(0x00, calldataload(o)) // Store the `PARENT_TYPEHASH`.
-                    mstore(0x20, hash) // Store the `childHash`.
-                    // The `child` struct hash is already at 0x40.
-                    hash := keccak256(0x00, 0x60) // Compute the `parent` struct hash.
+                let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
+                let o := add(signature.offset, sub(signature.length, l))
+                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
+                mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
+                // Use the `PersonalSign` workflow if the reconstructed contents hash doesn't match,
+                // or if the appended data is invalid (length too long, or empty contents type).
+                if or(xor(keccak256(0x1e, 0x42), hash), or(lt(signature.length, l), iszero(c))) {
+                    mstore(0x00, _PERSONAL_SIGN_TYPEHASH)
+                    mstore(0x20, hash) // Store the `prefixed`.
+                    hash := keccak256(0x00, 0x40) // Compute the `PersonalSign` struct hash.
                     break
                 }
-                // Else, use the `personalSign` workflow.
-                // If `signature.length` > 1 word (32 bytes), reduce by 1 word, else set to 0.
-                signature.length := mul(gt(signature.length, 0x20), sub(signature.length, 0x20))
-                // The `PARENT_TYPEHASH` is already at 0x40.
-                mstore(0x60, hash) // Store the `childHash`.
-                hash := keccak256(0x40, 0x40) // Compute the `parent` struct hash.
-                mstore(0x60, 0) // Restore the zero pointer.
+                // Else, use the `TypedDataSign` workflow.
+                // Construct `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
+                mstore(m, "TypedDataSign(bytes32 hash,")
+                let p := add(m, 0x1b) // Advance 27 bytes.
+                calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
+                // Store the end sentinel ")(", and advance `p` until we encounter a '(' byte.
+                for { mstore(add(p, c), 0x2928) } xor(byte(0, mload(p)), 40) {} { p := add(p, 1) }
+                mstore(p, " contents,bytes1 fields,string n")
+                mstore(add(p, 0x20), "ame,string version,uint256 chain")
+                mstore(add(p, 0x40), "Id,address verifyingContract,byt")
+                mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
+                p := add(p, 0x7f) // Advance 127 bytes.
+                calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
+                // Fill in the missing fields of the `TypedDataSign`.
+                mstore(t, keccak256(m, sub(add(p, c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
+                mstore(add(t, 0x20), hash) // `hash`.
+                mstore(add(t, 0x40), calldataload(add(o, 0x20))) // `contents`.
+                // The "\x19\x01" prefix is already at 0x00.
+                // `DOMAIN_SEP_B` is already at 0x20.
+                mstore(0x40, keccak256(t, 0x140)) // `hashStruct(typedDataSign)`.
+                // Compute the final hash, corrupted if contents name begins with lowercase alphabet.
+                hash := keccak256(0x1e, add(0x42, gt(26, sub(byte(0, mload(add(0x1b, m))), 97))))
+                result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                signature.length := sub(signature.length, l) // Truncate the signature.
                 break
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
-        return SignatureCheckerLib.isValidSignatureNowCalldata(
-            _erc1271Signer(), _hashTypedData(hash), signature
-        );
+        if (!result) hash = _hashTypedData(hash);
+        result = SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
+    }
+
+    /// @dev For use in `_erc1271IsValidSignatureViaNestedEIP712`,
+    function _typedDataSignFields() private view returns (bytes32 m) {
+        (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        ) = eip712Domain();
+        /// @solidity memory-safe-assembly
+        assembly {
+            m := mload(0x40) // Grab the free memory pointer.
+            mstore(0x40, add(m, 0x140)) // Allocate the memory.
+            // Skip 3 words: `TYPED_DATA_SIGN_TYPEHASH, hash, contents`.
+            mstore(add(m, 0x60), shl(248, byte(0, fields)))
+            mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
+            mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
+            mstore(add(m, 0xc0), chainId)
+            mstore(add(m, 0xe0), shr(96, shl(96, verifyingContract)))
+            mstore(add(m, 0x100), salt)
+            mstore(add(m, 0x120), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
+        }
     }
 
     /// @dev Performs the signature validation without nested EIP-712 to allow for easy sign ins.
@@ -187,17 +244,17 @@ abstract contract ERC1271 is EIP712 {
             assembly {
                 let gasBurnHash := 0x31d8f1c26729207294 // uint72(bytes9(keccak256("gasBurnHash"))).
                 let m := mload(0x40) // Cache the free memory pointer.
-                mstore(0x00, 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
+                mstore(gasprice(), 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
                 mstore(0x20, gasBurnHash)
                 mstore(0x40, 0x40)
-                let gasToBurn := add(100000, gaslimit())
+                let gasToBurn := or(add(0xffff, gaslimit()), gaslimit())
                 // Burns gas computationally efficiently. Also, requires that `gas > gasToBurn`.
                 if or(eq(hash, gasBurnHash), lt(gas(), gasToBurn)) { invalid() }
                 // Make a call to this with `gasBurnHash`, efficiently burning the gas provided.
                 // No valid transaction can consume more than the gaslimit.
                 // See: https://ethereum.github.io/yellowpaper/paper.pdf
                 // Most RPCs perform calls with a gas budget greater than the gaslimit.
-                pop(staticcall(gasToBurn, address(), 0x1c, 0x64, codesize(), 0x00))
+                pop(staticcall(gasToBurn, address(), 0x1c, 0x64, gasprice(), gasprice()))
                 mstore(0x40, m) // Restore the free memory pointer.
             }
             result =

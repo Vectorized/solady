@@ -10,6 +10,8 @@ contract TestPlus is Brutalizer {
     event LogBytes(bytes value);
     event LogUint(string name, uint256 value);
     event LogUint(uint256 value);
+    event LogBytes32(string name, bytes32 value);
+    event LogBytes32(bytes32 value);
     event LogInt(string name, int256 value);
     event LogInt(int256 value);
     event LogAddress(string name, address value);
