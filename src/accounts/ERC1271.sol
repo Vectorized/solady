@@ -175,9 +175,8 @@ abstract contract ERC1271 is EIP712 {
                 mstore(m, "TypedDataSign(bytes32 hash,")
                 let p := add(m, 0x1b) // Advance 27 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
-                // Whether the contents name is invalid. Starts with lowercase or '('.
-                let d := byte(0, mload(p))
-                d := or(gt(26, sub(d, 97)), eq(d, 40))
+                // Whether the contents name is invalid. Does not start with ASCII uppercase.
+                let d := iszero(gt(26, sub(byte(0, mload(p)), 65)))
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
                 for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
                     let b := byte(0, mload(p))
