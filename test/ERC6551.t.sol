@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {SignatureCheckerLib} from "../src/utils/SignatureCheckerLib.sol";
 import {ERC6551Proxy} from "../src/accounts/ERC6551Proxy.sol";
+import {EIP712} from "../src/utils/EIP712.sol";
 import {ERC6551, MockERC6551, MockERC6551V2} from "./utils/mocks/MockERC6551.sol";
 import {MockERC6551Registry} from "./utils/mocks/MockERC6551Registry.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
@@ -388,6 +389,10 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
+    function _contentsType() internal pure returns (bytes memory) {
+        return "Contents(bytes32 stuff)";
+    }
+
     function testIsValidSignature() public {
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
@@ -397,32 +402,67 @@ contract ERC6551Test is SoladyTest {
         vm.prank(t.owner);
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
 
-        bytes32 hash = keccak256("123");
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, _PARENT_TYPEHASH, _DOMAIN_SEP_B, hash);
+        bytes32 contents = keccak256("123");
+
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, _DOMAIN_SEP_B, contents, _contentsType(), uint16(_contentsType().length)
+        );
         // Success returns `0x1626ba7e`.
-        assertEq(t.account.isValidSignature(_toChildHash(hash), signature), bytes4(0x1626ba7e));
+        assertEq(
+            t.account.isValidSignature(_toContentsHash(contents), signature), bytes4(0x1626ba7e)
+        );
     }
 
-    function _toERC1271Hash(address account, bytes32 child) internal view returns (bytes32) {
-        bytes32 domainSeparator = keccak256(
-            abi.encode(
-                keccak256(
-                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                ),
-                keccak256("Milady"),
-                keccak256("1"),
-                block.chainid,
-                address(account)
+    struct _AccountDomainStruct {
+        bytes1 fields;
+        string name;
+        string version;
+        uint256 chainId;
+        address verifyingContract;
+        bytes32 salt;
+        uint256[] extensions;
+    }
+
+    function _accountDomainStructFields(address account) internal view returns (bytes memory) {
+        _AccountDomainStruct memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            EIP712(account).eip712Domain();
+
+        return abi.encode(
+            t.fields,
+            keccak256(bytes(t.name)),
+            keccak256(bytes(t.version)),
+            t.chainId,
+            t.verifyingContract,
+            t.salt,
+            keccak256(abi.encodePacked(t.extensions))
+        );
+    }
+
+    function _typedDataSignTypeHash() internal pure returns (bytes32) {
+        bytes memory ct = _contentsType();
+        return keccak256(
+            abi.encodePacked(
+                "TypedDataSign(bytes32 hash,",
+                LibString.slice(string(ct), 0, LibString.indexOf(string(ct), "(", 0)),
+                " contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
+                ct
             )
         );
-        bytes32 parentStructHash =
-            keccak256(abi.encode(_PARENT_TYPEHASH, _toChildHash(child), child));
-        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
     }
 
-    function _toChildHash(bytes32 child) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, child));
+    function _toERC1271Hash(address account, bytes32 contents) internal view returns (bytes32) {
+        bytes32 parentStructHash = keccak256(
+            abi.encodePacked(
+                abi.encode(_typedDataSignTypeHash(), _toContentsHash(contents), contents),
+                _accountDomainStructFields(account)
+            )
+        );
+        return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
+    }
+
+    function _toContentsHash(bytes32 contents) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
