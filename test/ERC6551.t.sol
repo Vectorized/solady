@@ -389,34 +389,47 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
+    struct _TestIsValidSignatureTemps {
+        string uppercased;
+        string lowercased;
+        string rest;
+        string banned;
+    }
+
     function testIsValidSignature(uint256 x) public {
         vm.txGasPrice(10);
         if (_random() % 8 == 0) {
             _testIsValidSignature(abi.encodePacked(uint8(x)), false);
         }
+        _TestIsValidSignatureTemps memory t;
+        t.uppercased = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        t.lowercased = "abcdefghijklmnopqrstuvwxyz";
+        t.rest = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
+        t.banned = "\x00 ,)";
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", true),
-                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
-                "(bytes32 stuff)"
+                _randomString(t.uppercased, true), _randomString(t.rest, false), "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, true);
         }
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", false),
-                _randomString("\x00 ,)", true),
-                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
+                _randomString(t.uppercased, false),
+                _randomString(t.banned, true),
+                _randomString(t.rest, false),
                 "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, false);
         }
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _randomString("abcdefghijklmnopqrstuvwxyz", true),
-                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
-                "(bytes32 stuff)"
+                _randomString(t.lowercased, true), _randomString(t.rest, false), "(bytes32 stuff)"
             );
+            _testIsValidSignature(contentsType, false);
+        }
+        if (_random() % 4 == 0) {
+            bytes memory contentsType =
+                abi.encodePacked(_randomString(t.uppercased, true), _randomString(t.rest, false));
             _testIsValidSignature(contentsType, false);
         }
     }
