@@ -389,6 +389,11 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
+    function testIsValidSignature(uint256 x) public {
+        vm.txGasPrice(10);
+        _testIsValidSignature(abi.encodePacked(uint8(x)), false);
+    }
+
     function testIsValidSignature() public {
         vm.txGasPrice(10);
 
@@ -403,50 +408,41 @@ contract ERC6551Test is SoladyTest {
         _testIsValidSignature("AB,C(bytes32 stuff)", false);
         _testIsValidSignature("A,BC(bytes32 stuff)", false);
         _testIsValidSignature(",ABC(bytes32 stuff)", false);
-        _testIsValidSignature(",", false);
 
         _testIsValidSignature("ABC (bytes32 stuff)", false);
         _testIsValidSignature("AB C(bytes32 stuff)", false);
         _testIsValidSignature("A BC(bytes32 stuff)", false);
         _testIsValidSignature(" ABC(bytes32 stuff)", false);
-        _testIsValidSignature(" ", false);
 
         _testIsValidSignature("ABC)(bytes32 stuff)", false);
         _testIsValidSignature("AB)C(bytes32 stuff)", false);
         _testIsValidSignature("A)BC(bytes32 stuff)", false);
         _testIsValidSignature(")ABC(bytes32 stuff)", false);
-        _testIsValidSignature(")", false);
 
-        _testIsValidSignature("Contents\x00(bytes32 stuff)", false);
-        _testIsValidSignature("Content\x00s(bytes32 stuff)", false);
-        _testIsValidSignature("C\x00ontents(bytes32 stuff)", false);
-        _testIsValidSignature("\x00Contents(bytes32 stuff)", false);
-        _testIsValidSignature("\x00", false);
+        _testIsValidSignature("ABC\x00(bytes32 stuff)", false);
+        _testIsValidSignature("AB\x00C(bytes32 stuff)", false);
+        _testIsValidSignature("A\x00BC(bytes32 stuff)", false);
+        _testIsValidSignature("\x00ABC(bytes32 stuff)", false);
 
         _testIsValidSignature("X(", true);
         _testIsValidSignature("X)", false);
         _testIsValidSignature("X(bytes32 stuff)", true);
         _testIsValidSignature("TheQuickBrownFoxJumpsOverTheLazyDog(bytes32 stuff)", true);
 
-        _testIsValidSignature(" ", false);
-        _testIsValidSignature("(", false);
-        _testIsValidSignature(")", false);
-        _testIsValidSignature(",", false);
         _testIsValidSignature("bytes32", false);
         _testIsValidSignature("()", false);
     }
 
-    function _testIsValidSignature(bytes memory contentsType, bool expected) internal {
+    function _testIsValidSignature(bytes memory contentsType, bool success) internal {
+        bytes32 contents = keccak256(abi.encode(_random(), contentsType));
+
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) = vm.sign(
-            t.privateKey, _toERC1271Hash(address(t.account), keccak256("123"), contentsType)
-        );
+        (t.v, t.r, t.s) =
+            vm.sign(t.privateKey, _toERC1271Hash(address(t.account), contents, contentsType));
 
         vm.prank(t.owner);
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
-
-        bytes32 contents = keccak256("123");
 
         bytes memory signature = abi.encodePacked(
             t.r, t.s, t.v, _DOMAIN_SEP_B, contents, contentsType, uint16(contentsType.length)
@@ -454,7 +450,7 @@ contract ERC6551Test is SoladyTest {
         // Success returns `0x1626ba7e`.
         assertEq(
             t.account.isValidSignature(_toContentsHash(contents), signature),
-            expected ? bytes4(0x1626ba7e) : bytes4(0xffffffff)
+            success ? bytes4(0x1626ba7e) : bytes4(0xffffffff)
         );
     }
 
