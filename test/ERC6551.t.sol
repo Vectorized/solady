@@ -399,21 +399,23 @@ contract ERC6551Test is SoladyTest {
         _testIsValidSignature("(bytes32 stuff)", false);
         _testIsValidSignature("contents(bytes32 stuff)", false);
 
-        _testIsValidSignature("Contents,(bytes32 stuff)", false);
-        _testIsValidSignature("Content,s(bytes32 stuff)", false);
-        _testIsValidSignature("C,ontents(bytes32 stuff)", false);
-        _testIsValidSignature(",Contents(bytes32 stuff)", false);
+        _testIsValidSignature("ABC,(bytes32 stuff)", false);
+        _testIsValidSignature("AB,C(bytes32 stuff)", false);
+        _testIsValidSignature("A,BC(bytes32 stuff)", false);
+        _testIsValidSignature(",ABC(bytes32 stuff)", false);
         _testIsValidSignature(",", false);
 
-        _testIsValidSignature("Contents)(bytes32 stuff)", false);
-        _testIsValidSignature("Content)s(bytes32 stuff)", false);
-        _testIsValidSignature("C)ontents(bytes32 stuff)", false);
-        _testIsValidSignature(")", false);
-
-        _testIsValidSignature("Contents (bytes32 stuff)", false);
-        _testIsValidSignature("Content s(bytes32 stuff)", false);
-        _testIsValidSignature("C ontents(bytes32 stuff)", false);
+        _testIsValidSignature("ABC (bytes32 stuff)", false);
+        _testIsValidSignature("AB C(bytes32 stuff)", false);
+        _testIsValidSignature("A BC(bytes32 stuff)", false);
+        _testIsValidSignature(" ABC(bytes32 stuff)", false);
         _testIsValidSignature(" ", false);
+
+        _testIsValidSignature("ABC)(bytes32 stuff)", false);
+        _testIsValidSignature("AB)C(bytes32 stuff)", false);
+        _testIsValidSignature("A)BC(bytes32 stuff)", false);
+        _testIsValidSignature(")ABC(bytes32 stuff)", false);
+        _testIsValidSignature(")", false);
 
         _testIsValidSignature("Contents\x00(bytes32 stuff)", false);
         _testIsValidSignature("Content\x00s(bytes32 stuff)", false);
