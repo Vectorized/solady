@@ -429,7 +429,9 @@ contract ERC6551Test is SoladyTest {
     function _randomNonWordASCIIByte() internal returns (string memory result) {
         string memory wa = string(_WORD_ASCII);
         while (true) {
-            result = string(abi.encodePacked(uint8(_random())));
+            uint8 i = uint8(_random());
+            if (i == 40) continue; // Gotta ignore '('.
+            result = string(abi.encodePacked(i));
             assertEq(bytes(result).length, 1);
             if (LibString.indexOf(wa, result, 0) == LibString.NOT_FOUND) break;
         }

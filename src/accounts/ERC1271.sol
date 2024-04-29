@@ -175,14 +175,14 @@ abstract contract ERC1271 is EIP712 {
                 mstore(m, "TypedDataSign(bytes32 hash,")
                 let p := add(m, 0x1b) // Advance 27 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
-                // Whether the contents name is invalid. Does not start with ASCII uppercase.
-                let d := iszero(gt(26, sub(byte(0, mload(p)), 65)))
+                // Whether the contents name is valid. Starts with ASCII uppercase.
+                let d := gt(26, sub(byte(0, mload(p)), 65))
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
                 for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
                     let b := byte(0, mload(p))
                     if eq(b, 40) { break }
-                    // Byte not in `[a-zA-Z0-9_]` (EIP-712 code use `\w` to match names).
-                    d := or(d, iszero(and(1, shr(b, 0x7fffffe87fffffe03ff000000000000))))
+                    // Byte in `[a-zA-Z0-9_]` (EIP-712 code use `\w` to match names).
+                    d := and(d, and(1, shr(b, 0x7fffffe87fffffe03ff000000000000)))
                 }
                 mstore(p, " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
@@ -198,7 +198,7 @@ abstract contract ERC1271 is EIP712 {
                 // `DOMAIN_SEP_B` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x140)) // `hashStruct(typedDataSign)`.
                 // Compute the final hash, corrupted if the contents name is invalid.
-                hash := keccak256(0x1e, add(0x42, d))
+                hash := keccak256(0x1e, add(0x42, iszero(d)))
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
