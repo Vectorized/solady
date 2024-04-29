@@ -389,16 +389,57 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
-    function _contentsType() internal pure returns (bytes memory) {
-        return "Contents(bytes32 stuff)";
-    }
-
     function testIsValidSignature() public {
         vm.txGasPrice(10);
+
+        _testIsValidSignature("Contents(bytes32 stuff)", true);
+        _testIsValidSignature("ABC(bytes32 stuff)", true);
+        _testIsValidSignature("C(bytes32 stuff)", true);
+
+        _testIsValidSignature("(bytes32 stuff)", false);
+        _testIsValidSignature("contents(bytes32 stuff)", false);
+
+        _testIsValidSignature("Contents,(bytes32 stuff)", false);
+        _testIsValidSignature("Content,s(bytes32 stuff)", false);
+        _testIsValidSignature("C,ontents(bytes32 stuff)", false);
+        _testIsValidSignature(",Contents(bytes32 stuff)", false);
+        _testIsValidSignature(",", false);
+
+        _testIsValidSignature("Contents)(bytes32 stuff)", false);
+        _testIsValidSignature("Content)s(bytes32 stuff)", false);
+        _testIsValidSignature("C)ontents(bytes32 stuff)", false);
+        _testIsValidSignature(")", false);
+
+        _testIsValidSignature("Contents (bytes32 stuff)", false);
+        _testIsValidSignature("Content s(bytes32 stuff)", false);
+        _testIsValidSignature("C ontents(bytes32 stuff)", false);
+        _testIsValidSignature(" ", false);
+
+        _testIsValidSignature("Contents\x00(bytes32 stuff)", false);
+        _testIsValidSignature("Content\x00s(bytes32 stuff)", false);
+        _testIsValidSignature("C\x00ontents(bytes32 stuff)", false);
+        _testIsValidSignature("\x00Contents(bytes32 stuff)", false);
+        _testIsValidSignature("\x00", false);
+
+        _testIsValidSignature("X(", true);
+        _testIsValidSignature("X)", false);
+        _testIsValidSignature("X(bytes32 stuff)", true);
+        _testIsValidSignature("TheQuickBrownFoxJumpsOverTheLazyDog(bytes32 stuff)", true);
+
+        _testIsValidSignature(" ", false);
+        _testIsValidSignature("(", false);
+        _testIsValidSignature(")", false);
+        _testIsValidSignature(",", false);
+        _testIsValidSignature("bytes32", false);
+        _testIsValidSignature("()", false);
+    }
+
+    function _testIsValidSignature(bytes memory contentsType, bool expected) internal {
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, _toERC1271Hash(address(t.account), keccak256("123")));
+        (t.v, t.r, t.s) = vm.sign(
+            t.privateKey, _toERC1271Hash(address(t.account), keccak256("123"), contentsType)
+        );
 
         vm.prank(t.owner);
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
@@ -406,11 +447,12 @@ contract ERC6551Test is SoladyTest {
         bytes32 contents = keccak256("123");
 
         bytes memory signature = abi.encodePacked(
-            t.r, t.s, t.v, _DOMAIN_SEP_B, contents, _contentsType(), uint16(_contentsType().length)
+            t.r, t.s, t.v, _DOMAIN_SEP_B, contents, contentsType, uint16(contentsType.length)
         );
         // Success returns `0x1626ba7e`.
         assertEq(
-            t.account.isValidSignature(_toContentsHash(contents), signature), bytes4(0x1626ba7e)
+            t.account.isValidSignature(_toContentsHash(contents), signature),
+            expected ? bytes4(0x1626ba7e) : bytes4(0xffffffff)
         );
     }
 
@@ -440,8 +482,8 @@ contract ERC6551Test is SoladyTest {
         );
     }
 
-    function _typedDataSignTypeHash() internal pure returns (bytes32) {
-        bytes memory ct = _contentsType();
+    function _typedDataSignTypeHash(bytes memory contentsType) internal pure returns (bytes32) {
+        bytes memory ct = contentsType;
         return keccak256(
             abi.encodePacked(
                 "TypedDataSign(bytes32 hash,",
@@ -452,10 +494,16 @@ contract ERC6551Test is SoladyTest {
         );
     }
 
-    function _toERC1271Hash(address account, bytes32 contents) internal view returns (bytes32) {
+    function _toERC1271Hash(address account, bytes32 contents, bytes memory contentsType)
+        internal
+        view
+        returns (bytes32)
+    {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
-                abi.encode(_typedDataSignTypeHash(), _toContentsHash(contents), contents),
+                abi.encode(
+                    _typedDataSignTypeHash(contentsType), _toContentsHash(contents), contents
+                ),
                 _accountDomainStructFields(account)
             )
         );
