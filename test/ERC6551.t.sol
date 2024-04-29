@@ -396,35 +396,37 @@ contract ERC6551Test is SoladyTest {
         }
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
-                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", true),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
                 "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, true);
         }
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
-                _nonEmptyString("\x00 ,)"),
-                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", false),
+                _randomString("\x00 ,)", true),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
                 "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, false);
         }
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _nonEmptyString("abcdefghijklmnopqrstuvwxyz"),
-                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+                _randomString("abcdefghijklmnopqrstuvwxyz", true),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
                 "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, false);
         }
     }
 
-    function _nonEmptyString(string memory byteChoices) internal returns (string memory result) {
+    function _randomString(string memory byteChoices, bool nonEmpty)
+        internal
+        returns (string memory result)
+    {
         uint256 randomness = _random();
-        uint256 resultLength = _random() % 32 != 0 ? 4 : 64;
-        resultLength = _bound(_random(), 1, resultLength);
+        uint256 resultLength = _bound(_random(), nonEmpty ? 1 : 0, _random() % 32 != 0 ? 4 : 64);
         /// @solidity memory-safe-assembly
         assembly {
             if mload(byteChoices) {
