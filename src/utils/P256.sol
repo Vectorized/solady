@@ -60,7 +60,7 @@ library P256 {
                     revert(0x1c, 0x04)
                 }
             }
-            isValid := and(success, eq(1, mload(0x00)))
+            isValid := and(eq(1, mload(0x00)), success)
         }
     }
 
@@ -88,7 +88,7 @@ library P256 {
                 }
             }
             // Optimize for happy path.
-            isValid := gt(and(success, eq(1, mload(0x00))), gt(s, P256_N_DIV_2))
+            isValid := lt(lt(P256_N_DIV_2, s), and(eq(1, mload(0x00)), success))
         }
     }
 }
