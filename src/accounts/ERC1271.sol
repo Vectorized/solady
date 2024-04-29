@@ -182,7 +182,7 @@ abstract contract ERC1271 is EIP712 {
                 for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
                     let b := byte(0, mload(p))
                     if eq(b, 40) { break }
-                    // Has a byte not in `[a-zA-Z0-9_]`. We have to use a whitelist, sadly.
+                    // Byte not in `[a-zA-Z0-9_]` (EIP-712 code use `\w` to match names).
                     d := or(d, iszero(and(1, shr(b, 0x7fffffe87fffffe03ff000000000000))))
                 }
                 mstore(p, " contents,bytes1 fields,string n")
