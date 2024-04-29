@@ -394,6 +394,7 @@ contract ERC6551Test is SoladyTest {
     }
 
     function testIsValidSignature() public {
+        vm.txGasPrice(10);
         _TestTemps memory t = _testTemps();
         (t.signer, t.privateKey) = _randomSigner();
         (t.v, t.r, t.s) =
