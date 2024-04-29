@@ -196,7 +196,8 @@ abstract contract ERC1271 is EIP712 {
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x140)) // `hashStruct(typedDataSign)`.
-                hash := keccak256(0x1e, add(0x42, d)) // Compute the final hash.
+                // Compute the final hash, corrupted if the contents name is invalid.
+                hash := keccak256(0x1e, add(0x42, d))
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
