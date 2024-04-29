@@ -60,7 +60,7 @@ library P256 {
                     revert(0x1c, 0x04)
                 }
             }
-            isValid := and(mload(0x00), isValid)
+            isValid := and(eq(1, mload(0x00)), isValid)
         }
     }
 
@@ -87,7 +87,7 @@ library P256 {
                     revert(0x1c, 0x04)
                 }
             }
-            isValid := gt(and(isValid, mload(0x00)), gt(s, P256_N_DIV_2))
+            isValid := gt(and(isValid, eq(1, mload(0x00))), gt(s, P256_N_DIV_2))
         }
     }
 }
