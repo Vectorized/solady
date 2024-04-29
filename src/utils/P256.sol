@@ -21,7 +21,7 @@ library P256 {
     address internal constant VERIFIER = 0xc2b78104907F722DABAc4C69f826a522B2754De4;
 
     /// @dev Address of the RIP-7212 P256 verifier precompile.
-    /// Currently, we don't support ERC-7212's precompile at 0x0b as it has not been finalized.
+    /// Currently, we don't support EIP-7212's precompile at 0x0b as it has not been finalized.
     /// See: https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md
     address internal constant RIP_PRECOMPILE = 0x0000000000000000000000000000000000000100;
 
@@ -51,15 +51,16 @@ library P256 {
             mstore(add(m, 0x40), s)
             mstore(add(m, 0x60), x)
             mstore(add(m, 0x80), y)
-            isValid := mload(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x01, 0x20)) // Won't revert.
+            isValid := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
-                isValid := mload(staticcall(gas(), VERIFIER, m, 0xa0, 0x01, 0x20))
+                isValid := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
+            isValid := and(mload(0x00), isValid)
         }
     }
 
@@ -77,16 +78,16 @@ library P256 {
             mstore(add(m, 0x40), s)
             mstore(add(m, 0x60), x)
             mstore(add(m, 0x80), y)
-            pop(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)) // Won't revert.
+            isValid := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
-                pop(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20))
+                isValid := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
-            isValid := gt(mload(0x00), gt(s, P256_N_DIV_2)) // Optimize for happy case.
+            isValid := gt(and(isValid, mload(0x00)), gt(s, P256_N_DIV_2))
         }
     }
 }
