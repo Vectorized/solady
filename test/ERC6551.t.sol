@@ -391,7 +391,58 @@ contract ERC6551Test is SoladyTest {
 
     function testIsValidSignature(uint256 x) public {
         vm.txGasPrice(10);
-        _testIsValidSignature(abi.encodePacked(uint8(x)), false);
+        if (_random() % 8 == 0) {
+            _testIsValidSignature(abi.encodePacked(uint8(x)), false);
+        }
+        if (_random() % 4 == 0) {
+            bytes memory contentsType = abi.encodePacked(
+                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+                "(bytes32 stuff)"
+            );
+            _testIsValidSignature(contentsType, true);
+        }
+        if (_random() % 4 == 0) {
+            bytes memory contentsType = abi.encodePacked(
+                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+                _nonEmptyString("\x00 ,)"),
+                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+                "(bytes32 stuff)"
+            );
+            _testIsValidSignature(contentsType, false);
+        }
+        if (_random() % 4 == 0) {
+            bytes memory contentsType = abi.encodePacked(
+                _nonEmptyString("abcdefghijklmnopqrstuvwxyz"),
+                _nonEmptyString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+                "(bytes32 stuff)"
+            );
+            _testIsValidSignature(contentsType, false);
+        }
+    }
+
+    function _nonEmptyString(string memory byteChoices) internal returns (string memory result) {
+        uint256 randomness = _random();
+        uint256 resultLength = _random() % 32 != 0 ? 4 : 64;
+        resultLength = _bound(_random(), 1, resultLength);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if mload(byteChoices) {
+                result := mload(0x40)
+                mstore(0x00, randomness)
+                mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
+                mstore(result, resultLength)
+
+                // forgefmt: disable-next-item
+                for { let i := 0 } lt(i, resultLength) { i := add(i, 1) } {
+                    mstore(0x20, gas())
+                    mstore8(
+                        add(add(result, 0x20), i), 
+                        mload(add(add(byteChoices, 1), mod(keccak256(0x00, 0x40), mload(byteChoices))))
+                    )
+                }
+            }
+        }
     }
 
     function testIsValidSignature() public {
@@ -405,24 +456,9 @@ contract ERC6551Test is SoladyTest {
         _testIsValidSignature("contents(bytes32 stuff)", false);
 
         _testIsValidSignature("ABC,(bytes32 stuff)", false);
-        _testIsValidSignature("AB,C(bytes32 stuff)", false);
-        _testIsValidSignature("A,BC(bytes32 stuff)", false);
-        _testIsValidSignature(",ABC(bytes32 stuff)", false);
-
         _testIsValidSignature("ABC (bytes32 stuff)", false);
-        _testIsValidSignature("AB C(bytes32 stuff)", false);
-        _testIsValidSignature("A BC(bytes32 stuff)", false);
-        _testIsValidSignature(" ABC(bytes32 stuff)", false);
-
         _testIsValidSignature("ABC)(bytes32 stuff)", false);
-        _testIsValidSignature("AB)C(bytes32 stuff)", false);
-        _testIsValidSignature("A)BC(bytes32 stuff)", false);
-        _testIsValidSignature(")ABC(bytes32 stuff)", false);
-
         _testIsValidSignature("ABC\x00(bytes32 stuff)", false);
-        _testIsValidSignature("AB\x00C(bytes32 stuff)", false);
-        _testIsValidSignature("A\x00BC(bytes32 stuff)", false);
-        _testIsValidSignature("\x00ABC(bytes32 stuff)", false);
 
         _testIsValidSignature("X(", true);
         _testIsValidSignature("X)", false);
