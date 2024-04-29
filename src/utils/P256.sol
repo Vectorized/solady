@@ -51,16 +51,16 @@ library P256 {
             mstore(add(m, 0x40), s)
             mstore(add(m, 0x60), x)
             mstore(add(m, 0x80), y)
-            isValid := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
+            let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
-                isValid := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
+                success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
-            isValid := and(eq(1, mload(0x00)), isValid)
+            isValid := and(success, eq(1, mload(0x00)))
         }
     }
 
@@ -78,16 +78,17 @@ library P256 {
             mstore(add(m, 0x40), s)
             mstore(add(m, 0x60), x)
             mstore(add(m, 0x80), y)
-            isValid := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
+            let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
-                isValid := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
+                success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
-            isValid := gt(and(isValid, eq(1, mload(0x00))), gt(s, P256_N_DIV_2))
+            // Optimize for happy path.
+            isValid := gt(and(success, eq(1, mload(0x00))), gt(s, P256_N_DIV_2))
         }
     }
 }
