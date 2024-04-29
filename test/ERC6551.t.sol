@@ -389,11 +389,6 @@ contract ERC6551Test is SoladyTest {
         }
     }
 
-    bytes internal constant _UPPERCASE_ASCII = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    bytes internal constant _LOWERCASE_ASCII = "abcdefghijklmnopqrstuvwxyz";
-    bytes internal constant _WORD_ASCII =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
-
     function testIsValidSignature(uint256 x) public {
         vm.txGasPrice(10);
         if (_random() % 8 == 0) {
@@ -401,39 +396,28 @@ contract ERC6551Test is SoladyTest {
         }
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _randomString(string(_UPPERCASE_ASCII), true),
-                _randomString(string(_WORD_ASCII), false),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", true),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
                 "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, true);
         }
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _randomString(string(_UPPERCASE_ASCII), false),
-                _randomNonWordASCIIByte(),
-                _randomString(string(_WORD_ASCII), false),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", false),
+                _randomString("\x00 ,)", true),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
                 "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, false);
         }
         if (_random() % 4 == 0) {
             bytes memory contentsType = abi.encodePacked(
-                _randomString(string(_LOWERCASE_ASCII), true),
-                _randomString(string(_WORD_ASCII), false),
+                _randomString("abcdefghijklmnopqrstuvwxyz", true),
+                _randomString("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", false),
                 "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, false);
-        }
-    }
-
-    function _randomNonWordASCIIByte() internal returns (string memory result) {
-        string memory wa = string(_WORD_ASCII);
-        while (true) {
-            uint8 i = uint8(_random());
-            if (i == 40) continue; // Gotta ignore '('.
-            result = string(abi.encodePacked(i));
-            assertEq(bytes(result).length, 1);
-            if (LibString.indexOf(wa, result, 0) == LibString.NOT_FOUND) break;
         }
     }
 
