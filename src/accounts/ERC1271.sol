@@ -99,7 +99,6 @@ abstract contract ERC1271 is EIP712 {
     /// ```
     ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
     ///         hashStruct(TypedDataSign({
-    ///             hash: keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖ hashStruct(originalStruct)),
     ///             contents: hashStruct(originalStruct),
     ///             name: keccak256(bytes(eip712Domain().name)),
     ///             version: keccak256(bytes(eip712Domain().version)),
@@ -111,7 +110,7 @@ abstract contract ERC1271 is EIP712 {
     ///     )
     /// ```
     /// where `‖` denotes the concatenation operator for bytes.
-    /// The order of Parent's fields is important: `hash` comes before `contents`.
+    /// The order of the fields is important: `contents` comes before `name`.
     ///
     /// The signature will be `r ‖ s ‖ v ‖
     ///     DOMAIN_SEP_B ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
@@ -172,8 +171,8 @@ abstract contract ERC1271 is EIP712 {
                 }
                 // Else, use the `TypedDataSign` workflow.
                 // Construct `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
-                mstore(m, "TypedDataSign(bytes32 hash,")
-                let p := add(m, 0x1b) // Advance 27 bytes.
+                mstore(m, "TypedDataSign(")
+                let p := add(m, 0x0e) // Advance 14 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 // Whether the contents name is invalid. Starts with lowercase or '('.
                 let d := byte(0, mload(p))
@@ -192,11 +191,10 @@ abstract contract ERC1271 is EIP712 {
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 // Fill in the missing fields of the `TypedDataSign`.
                 mstore(t, keccak256(m, sub(add(p, c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
-                mstore(add(t, 0x20), hash) // `hash`.
-                mstore(add(t, 0x40), calldataload(add(o, 0x20))) // `contents`.
+                mstore(add(t, 0x20), calldataload(add(o, 0x20))) // `contents`.
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
-                mstore(0x40, keccak256(t, 0x140)) // `hashStruct(typedDataSign)`.
+                mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
                 // Compute the final hash, corrupted if the contents name is invalid.
                 hash := keccak256(0x1e, add(0x42, d))
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
@@ -223,15 +221,15 @@ abstract contract ERC1271 is EIP712 {
         /// @solidity memory-safe-assembly
         assembly {
             m := mload(0x40) // Grab the free memory pointer.
-            mstore(0x40, add(m, 0x140)) // Allocate the memory.
-            // Skip 3 words: `TYPED_DATA_SIGN_TYPEHASH, hash, contents`.
-            mstore(add(m, 0x60), shl(248, byte(0, fields)))
-            mstore(add(m, 0x80), keccak256(add(name, 0x20), mload(name)))
-            mstore(add(m, 0xa0), keccak256(add(version, 0x20), mload(version)))
-            mstore(add(m, 0xc0), chainId)
-            mstore(add(m, 0xe0), shr(96, shl(96, verifyingContract)))
-            mstore(add(m, 0x100), salt)
-            mstore(add(m, 0x120), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
+            mstore(0x40, add(m, 0x120)) // Allocate the memory.
+            // Skip 2 words: `TYPED_DATA_SIGN_TYPEHASH, contents`.
+            mstore(add(m, 0x40), shl(248, byte(0, fields)))
+            mstore(add(m, 0x60), keccak256(add(name, 0x20), mload(name)))
+            mstore(add(m, 0x80), keccak256(add(version, 0x20), mload(version)))
+            mstore(add(m, 0xa0), chainId)
+            mstore(add(m, 0xc0), shr(96, shl(96, verifyingContract)))
+            mstore(add(m, 0xe0), salt)
+            mstore(add(m, 0x100), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
         }
     }
 
