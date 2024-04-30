@@ -18,6 +18,9 @@ out/
 # Ignore all vscode settings
 .vscode/
 
+# Ignore all jetbrain settings
+.idea/
+
 # Ignore flattened files
 flattened.txt
 

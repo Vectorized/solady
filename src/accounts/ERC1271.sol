@@ -175,8 +175,15 @@ abstract contract ERC1271 is EIP712 {
                 mstore(m, "TypedDataSign(bytes32 hash,")
                 let p := add(m, 0x1b) // Advance 27 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
-                // Store the end sentinel ")(", and advance `p` until we encounter a '(' byte.
-                for { mstore(add(p, c), 0x2928) } xor(byte(0, mload(p)), 40) {} { p := add(p, 1) }
+                // Whether the contents name is invalid. Starts with lowercase or '('.
+                let d := byte(0, mload(p))
+                d := or(gt(26, sub(d, 97)), eq(d, 40))
+                // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
+                for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
+                    let b := byte(0, mload(p))
+                    if eq(b, 40) { break }
+                    d := or(d, and(1, shr(b, 0x120100000001))) // Has a byte in ", )\x00".
+                }
                 mstore(p, " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
@@ -190,8 +197,8 @@ abstract contract ERC1271 is EIP712 {
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x140)) // `hashStruct(typedDataSign)`.
-                // Compute the final hash, corrupted if contents name begins with lowercase alphabet.
-                hash := keccak256(0x1e, add(0x42, gt(26, sub(byte(0, mload(add(0x1b, m))), 97))))
+                // Compute the final hash, corrupted if the contents name is invalid.
+                hash := keccak256(0x1e, add(0x42, d))
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
