@@ -54,6 +54,7 @@ library P256 {
             let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
+                // The verifier may actually revert, as it has `abi.decode` and `assert`.
                 success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
@@ -82,6 +83,7 @@ library P256 {
             let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
+                // The verifier may actually revert, as it has `abi.decode` and `assert`.
                 success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
