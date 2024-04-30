@@ -25,7 +25,7 @@ library P256 {
     /// See: https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md
     address internal constant RIP_PRECOMPILE = 0x0000000000000000000000000000000000000100;
 
-    /// @dev P256 curve order n/2 for malleability check.
+    /// @dev P256 curve order `n / 2` for malleability check.
     /// Included for safety as we have less information on how P256 signatures are being used.
     uint256 internal constant P256_N_DIV_2 =
         57896044605178124381348723474703786764998477612067880171211129530534256022184;
@@ -34,7 +34,7 @@ library P256 {
     /*                P256 VERIFICATION OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns whether the signature is valid.
+    /// @dev Returns if the signature (`r`, `s`) is valid for `hash` and public key (`x`, `y`).
     /// Does NOT include the malleability check.
     function verifySignatureAllowMalleability(
         bytes32 hash,
@@ -64,7 +64,8 @@ library P256 {
         }
     }
 
-    /// @dev Returns whether the signature is valid.
+    /// @dev Returns if the signature (`r`, `s`) is valid for `hash` and public key (`x`, `y`).
+    /// Includes the malleability check.
     function verifySignature(bytes32 hash, uint256 r, uint256 s, uint256 x, uint256 y)
         internal
         view
@@ -87,7 +88,7 @@ library P256 {
                     revert(0x1c, 0x04)
                 }
             }
-            // Optimize for happy path.
+            // Optimize for happy path. Users are unlikely to pass in malleable signatures.
             isValid := lt(lt(P256_N_DIV_2, s), and(eq(1, mload(0x00)), success))
         }
     }
