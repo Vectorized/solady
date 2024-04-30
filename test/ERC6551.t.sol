@@ -535,7 +535,7 @@ contract ERC6551Test is SoladyTest {
         bytes memory ct = contentsType;
         return keccak256(
             abi.encodePacked(
-                "TypedDataSign(bytes32 hash,",
+                "TypedDataSign(",
                 LibString.slice(string(ct), 0, LibString.indexOf(string(ct), "(", 0)),
                 " contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
                 ct
@@ -550,9 +550,7 @@ contract ERC6551Test is SoladyTest {
     {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
-                abi.encode(
-                    _typedDataSignTypeHash(contentsType), _toContentsHash(contents), contents
-                ),
+                abi.encode(_typedDataSignTypeHash(contentsType), contents),
                 _accountDomainStructFields(account)
             )
         );
