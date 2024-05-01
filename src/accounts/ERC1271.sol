@@ -174,27 +174,26 @@ abstract contract ERC1271 is EIP712 {
                 let p := add(m, 0x0e) // Advance 14 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
                 let d := byte(0, mload(p)) // For denoting if the contents name is invalid.
-                d := or(gt(26, sub(d, 97)), eq(d, 40)) // Starts with lowercase or '('.
+                d := or(gt(26, sub(d, 97)), eq(40, d)) // Starts with lowercase or '('.
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
                 for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
                     let b := byte(0, mload(p))
-                    if eq(b, 40) { break }
-                    d := or(d, and(shr(b, 0x120100000001), 1)) // Has a byte in ", )\x00".
+                    if eq(40, b) { break }
+                    d := or(d, shr(b, 0x120100000001)) // Has a byte in ", )\x00".
                 }
                 mstore(p, " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
                 mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
-                p := add(p, 0x7f) // Advance 127 bytes.
-                calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
+                calldatacopy(add(p, 0x7f), add(o, 0x40), c) // Copy the contents type.
                 // Fill in the missing fields of the `TypedDataSign`.
                 calldatacopy(t, o, 0x40) // Copy `contents` to `add(t, 0x20)`.
-                mstore(t, keccak256(m, sub(add(p, c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
+                mstore(t, keccak256(m, sub(add(add(p, 0x7f), c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
                 // Compute the final hash, corrupted if the contents name is invalid.
-                hash := keccak256(0x1e, add(0x42, d))
+                hash := keccak256(0x1e, add(0x42, and(1, d)))
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
