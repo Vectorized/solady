@@ -28,7 +28,7 @@ abstract contract ERC1271 is EIP712 {
     /// Override to return true for more callers.
     /// See: https://mirror.xyz/curiousapple.eth/pFqAdW2LiJ-6S4sg_u1z08k4vK6BCJ33LcyXpnNb8yU
     function _erc1271CallerIsSafe() internal view virtual returns (bool) {
-        // The canonical `MulticallerWithSender` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
+        // The canonical `MulticallerWithSigner` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
         // is known to include the account in the hash to be signed.
         return msg.sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c;
     }
@@ -170,33 +170,30 @@ abstract contract ERC1271 is EIP712 {
                     break
                 }
                 // Else, use the `TypedDataSign` workflow.
-                // Construct `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
-                mstore(m, "TypedDataSign(")
+                mstore(m, "TypedDataSign(") // To construct `TYPED_DATA_SIGN_TYPEHASH` on-the-fly.
                 let p := add(m, 0x0e) // Advance 14 bytes.
                 calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
-                // Whether the contents name is invalid. Starts with lowercase or '('.
-                let d := byte(0, mload(p))
-                d := or(gt(26, sub(d, 97)), eq(d, 40))
+                let d := byte(0, mload(p)) // For denoting if the contents name is invalid.
+                d := or(gt(26, sub(d, 97)), eq(40, d)) // Starts with lowercase or '('.
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
                 for { mstore(add(p, c), 40) } 1 { p := add(p, 1) } {
                     let b := byte(0, mload(p))
-                    if eq(b, 40) { break }
-                    d := or(d, and(1, shr(b, 0x120100000001))) // Has a byte in ", )\x00".
+                    if eq(40, b) { break }
+                    d := or(d, shr(b, 0x120100000001)) // Has a byte in ", )\x00".
                 }
                 mstore(p, " contents,bytes1 fields,string n")
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
                 mstore(add(p, 0x60), "es32 salt,uint256[] extensions)")
-                p := add(p, 0x7f) // Advance 127 bytes.
-                calldatacopy(p, add(o, 0x40), c) // Copy the contents type.
+                calldatacopy(add(p, 0x7f), add(o, 0x40), c) // Copy the contents type.
                 // Fill in the missing fields of the `TypedDataSign`.
-                mstore(t, keccak256(m, sub(add(p, c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
-                mstore(add(t, 0x20), calldataload(add(o, 0x20))) // `contents`.
+                calldatacopy(t, o, 0x40) // Copy `contents` to `add(t, 0x20)`.
+                mstore(t, keccak256(m, sub(add(add(p, 0x7f), c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
                 // The "\x19\x01" prefix is already at 0x00.
                 // `DOMAIN_SEP_B` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
                 // Compute the final hash, corrupted if the contents name is invalid.
-                hash := keccak256(0x1e, add(0x42, d))
+                hash := keccak256(0x1e, add(0x42, and(1, d)))
                 result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
