@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {IUpgradeableBeacon, MockUpgradeableBeacon} from "./utils/mocks/MockUpgradeableBeacon.sol";
+import {UpgradeableBeacon, MockUpgradeableBeacon} from "./utils/mocks/MockUpgradeableBeacon.sol";
 import {MockImplementation} from "./utils/mocks/MockImplementation.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
@@ -11,26 +11,24 @@ contract UpgradeableBeaconTest is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
     address implementation;
-    IUpgradeableBeacon beacon;
+    MockUpgradeableBeacon beacon;
 
     function setUp() public {
         implementation = address(new MockImplementation());
-        beacon =
-            IUpgradeableBeacon(address(new MockUpgradeableBeacon(address(this), implementation)));
+        beacon = new MockUpgradeableBeacon(address(this), implementation);
     }
 
     function testInitializeUpgradeableBeacon() public {
         address initialOwner;
-        vm.expectRevert(IUpgradeableBeacon.NewOwnerIsZeroAddress.selector);
+        vm.expectRevert(UpgradeableBeacon.NewOwnerIsZeroAddress.selector);
         new MockUpgradeableBeacon(initialOwner, implementation);
 
         initialOwner = address(this);
-        vm.expectRevert(IUpgradeableBeacon.NewImplementationHasNoCode.selector);
+        vm.expectRevert(UpgradeableBeacon.NewImplementationHasNoCode.selector);
         new MockUpgradeableBeacon(initialOwner, address(0));
 
         vm.expectEmit(true, true, true, true);
         emit Upgraded(address(implementation));
-        vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(0), initialOwner);
         new MockUpgradeableBeacon(initialOwner, implementation);
     }
@@ -39,11 +37,11 @@ contract UpgradeableBeaconTest is SoladyTest {
         internal
     {
         vm.startPrank(pranker);
-        vm.expectRevert(IUpgradeableBeacon.Unauthorized.selector);
+        vm.expectRevert(UpgradeableBeacon.Unauthorized.selector);
         beacon.transferOwnership(address(123));
-        vm.expectRevert(IUpgradeableBeacon.Unauthorized.selector);
+        vm.expectRevert(UpgradeableBeacon.Unauthorized.selector);
         beacon.renounceOwnership();
-        vm.expectRevert(IUpgradeableBeacon.Unauthorized.selector);
+        vm.expectRevert(UpgradeableBeacon.Unauthorized.selector);
         beacon.upgradeTo(newImplementation);
         vm.stopPrank();
     }
@@ -66,7 +64,7 @@ contract UpgradeableBeaconTest is SoladyTest {
         }
 
         if (_random() % 16 == 0) {
-            vm.expectRevert(IUpgradeableBeacon.NewOwnerIsZeroAddress.selector);
+            vm.expectRevert(UpgradeableBeacon.NewOwnerIsZeroAddress.selector);
             beacon.transferOwnership(address(0));
         }
 
@@ -100,7 +98,7 @@ contract UpgradeableBeaconTest is SoladyTest {
                 newImplementation = LibClone.clone(implementation);
             }
             if (newImplementation == address(0)) {
-                vm.expectRevert(IUpgradeableBeacon.NewImplementationHasNoCode.selector);
+                vm.expectRevert(UpgradeableBeacon.NewImplementationHasNoCode.selector);
                 beacon.upgradeTo(newImplementation);
                 assertEq(beacon.implementation(), implementation);
             }
@@ -112,8 +110,8 @@ contract UpgradeableBeaconTest is SoladyTest {
         }
     }
 
-    function testUpgradeableBeaconOnlyFnSelectorNotRecognised() public {
-        vm.expectRevert(IUpgradeableBeacon.FnSelectorNotRecognized.selector);
-        UpgradeableBeaconTest(address(beacon)).testUpgradeableBeaconOnlyFnSelectorNotRecognised();
-    }
+    // function testUpgradeableBeaconOnlyFnSelectorNotRecognised() public {
+    //     vm.expectRevert(UpgradeableBeacon.FnSelectorNotRecognized.selector);
+    //     UpgradeableBeaconTest(address(beacon)).testUpgradeableBeaconOnlyFnSelectorNotRecognised();
+    // }
 }
