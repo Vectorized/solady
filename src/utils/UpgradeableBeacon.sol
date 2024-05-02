@@ -7,8 +7,8 @@ pragma solidity ^0.8.4;
 /// (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/beacon/UpgradeableBeacon.sol)
 ///
 /// @dev Note:
-/// - For gas efficiency, the entirely of the contract (including basic ownable functionality)
-///   is implemented in the fallback method. As such, an interface is provided for easy querying.
+/// For gas efficiency, the entirely of the contract (including basic ownable functionality)
+/// is implemented in the fallback method. An interface is provided for easy querying.
 interface IUpgradeableBeacon {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -89,6 +89,7 @@ contract UpgradeableBeacon {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Required to be called in the constructor or initializer.
+    /// This function does not guard against double-initialization.
     function _initializeUpgradeableBeacon(address initialOwner, address initialImplementation)
         internal
         virtual
