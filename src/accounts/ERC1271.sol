@@ -245,13 +245,14 @@ abstract contract ERC1271 is EIP712 {
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(gasprice(), gasprice())
+                // See: https://gist.github.com/Vectorized/3c9b63524d57492b265454f62d895f71
                 let b := 0x00000000001D7E8ae12E256718361bF27a98e740 // Basefee contract,
                 pop(staticcall(gas(), b, codesize(), gasprice(), gasprice(), 0x20))
                 // If `gasprice < basefee`, the call cannot be on-chain, and we can skip the gas burn.
                 if iszero(mload(gasprice())) {
                     let m := mload(0x40) // Cache the free memory pointer.
                     mstore(gasprice(), 0x1626ba7e) // `isValidSignature(bytes32,bytes)`.
-                    mstore(0x20, b)
+                    mstore(0x20, b) // Recycle `b` to denote if we need to burn gas.
                     mstore(0x40, 0x40)
                     let gasToBurn := or(add(0xffff, gaslimit()), gaslimit())
                     // Burns gas computationally efficiently. Also, requires that `gas > gasToBurn`.
