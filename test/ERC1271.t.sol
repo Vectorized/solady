@@ -58,11 +58,14 @@ contract ERC1271Test is SoladyTest {
         _erc6551V2 = address(new MockERC6551V2());
     }
 
-    function testBaseFeeBytecodeContract() public {
+    function testBasefeeBytecodeContract() public {
         bytes memory initcode = hex"65483d52593df33d526006601af3";
+        emit LogBytes32(keccak256(initcode));
         bytes32 salt = 0x00000000000000000000000000000000000000003c6f8b80e9be740191d2e48f;
         address deployment = 0x000000000000378eDCD5B5B0A24f5342d8C10485;
 
+        vm.fee(11);
+        assertEq(_basefee(deployment), 0);
         {
             address nicksFactory = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
             vm.etch(
@@ -74,18 +77,18 @@ contract ERC1271Test is SoladyTest {
             assertTrue(success);
             assertGt(deployment.code.length, 0);
         }
+        assertEq(_basefee(deployment), 11);
+        vm.fee(12);
+        assertEq(_basefee(deployment), 12);
+    }
 
-        vm.fee(11);
-        emit LogBytes32(keccak256(initcode));
-
-        uint256 result;
+    function _basefee(address deployment) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x00)
             pop(staticcall(0xffff, deployment, codesize(), 0x00, 0x00, 0x20))
             result := mload(0x00)
         }
-        assertEq(result, 11);
     }
 
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
