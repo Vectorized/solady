@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {UpgradeableBeacon, MockUpgradeableBeacon} from "./utils/mocks/MockUpgradeableBeacon.sol";
+import {UpgradeableBeacon} from "../src/utils/UpgradeableBeacon.sol";
 import {MockImplementation} from "./utils/mocks/MockImplementation.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
@@ -11,26 +11,26 @@ contract UpgradeableBeaconTest is SoladyTest {
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
     address implementation;
-    MockUpgradeableBeacon beacon;
+    UpgradeableBeacon beacon;
 
     function setUp() public {
         implementation = address(new MockImplementation());
-        beacon = new MockUpgradeableBeacon(address(this), implementation);
+        beacon = new UpgradeableBeacon(address(this), implementation);
     }
 
     function testInitializeUpgradeableBeacon() public {
         address initialOwner;
         vm.expectRevert(UpgradeableBeacon.NewOwnerIsZeroAddress.selector);
-        new MockUpgradeableBeacon(initialOwner, implementation);
+        new UpgradeableBeacon(initialOwner, implementation);
 
         initialOwner = address(this);
         vm.expectRevert(UpgradeableBeacon.NewImplementationHasNoCode.selector);
-        new MockUpgradeableBeacon(initialOwner, address(0));
+        new UpgradeableBeacon(initialOwner, address(0));
 
         vm.expectEmit(true, true, true, true);
         emit Upgraded(address(implementation));
         emit OwnershipTransferred(address(0), initialOwner);
-        new MockUpgradeableBeacon(initialOwner, implementation);
+        new UpgradeableBeacon(initialOwner, implementation);
     }
 
     function _testUpgradeableBeaconOnlyOwnerFunctions(address pranker, address newImplementation)

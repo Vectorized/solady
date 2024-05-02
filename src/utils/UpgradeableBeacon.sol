@@ -24,9 +24,6 @@ contract UpgradeableBeacon {
     /// @dev The `newOwner` cannot be the zero address.
     error NewOwnerIsZeroAddress();
 
-    /// @dev The function selector is not recognized.
-    error FnSelectorNotRecognized();
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -59,6 +56,22 @@ contract UpgradeableBeacon {
     /// @dev The storage slot for the owner address.
     /// `uint72(bytes9(keccak256("_UPGRADEABLE_BEACON_OWNER_SLOT")))`.
     uint256 internal constant _UPGRADEABLE_BEACON_OWNER_SLOT = 0x4343a0dc92ed22dbfc;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    constructor(address initialOwner, address initialImplementation) payable {
+        _constructUpgradeableBeacon(initialOwner, initialImplementation);
+    }
+
+    /// @dev Called in the constructor. Override as required.
+    function _constructUpgradeableBeacon(address initialOwner, address initialImplementation)
+        internal
+        virtual
+    {
+        _initializeUpgradeableBeacon(initialOwner, initialImplementation);
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               UPGRADEABLE BEACON OPERATIONS                */
