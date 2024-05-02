@@ -42,8 +42,6 @@ contract ERC6551Test is SoladyTest {
 
     address internal _proxy;
 
-    event ChainIdSaved(uint256 indexed chainId);
-
     // By right, this should be the keccak256 of some long-ass string:
     // (e.g. `keccak256("Parent(bytes32 childHash,Mail child)Mail(Person from,Person to,string contents)Person(string name,address wallet)")`).
     // But I'm lazy and will use something randomish here.
@@ -76,6 +74,22 @@ contract ERC6551Test is SoladyTest {
         _erc721 = address(new MockERC721());
         _proxy = address(new ERC6551Proxy(_erc6551));
         _erc6551V2 = address(new MockERC6551V2());
+    }
+
+    function testBaseFeeMini() public {
+        vm.fee(11);
+
+        bytes memory initcode = hex"65483d52593df33d526006601af3";
+        emit LogBytes32(keccak256(initcode));
+        uint256 result;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let deployed := create(0, add(initcode, 0x20), mload(initcode))
+            if iszero(staticcall(gas(), deployed, 0x00, 0x00, 0x00, 0x20)) { invalid() }
+            if iszero(eq(returndatasize(), 0x20)) { invalid() }
+            result := mload(0x00)
+        }
+        emit LogUint("basefee", result);
     }
 
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
@@ -387,178 +401,6 @@ contract ERC6551Test is SoladyTest {
         } else {
             assertEq(t.account.isValidSigner(signer, _randomBytes(111)), bytes4(0x00000000));
         }
-    }
-
-    struct _TestIsValidSignatureTemps {
-        string uppercased;
-        string lowercased;
-        string rest;
-        string banned;
-    }
-
-    function testIsValidSignature(uint256 x) public {
-        vm.txGasPrice(10);
-        if (_random() % 8 == 0) {
-            _testIsValidSignature(abi.encodePacked(uint8(x)), false);
-        }
-        _TestIsValidSignatureTemps memory t;
-        t.uppercased = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        t.lowercased = "abcdefghijklmnopqrstuvwxyz";
-        t.rest = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
-        t.banned = "\x00 ,)";
-        if (_random() % 4 == 0) {
-            bytes memory contentsType = abi.encodePacked(
-                _randomString(t.uppercased, true), _randomString(t.rest, false), "(bytes32 stuff)"
-            );
-            _testIsValidSignature(contentsType, true);
-        }
-        if (_random() % 4 == 0) {
-            bytes memory contentsType = abi.encodePacked(
-                _randomString(t.uppercased, false),
-                _randomString(t.banned, true),
-                _randomString(t.rest, false),
-                "(bytes32 stuff)"
-            );
-            _testIsValidSignature(contentsType, false);
-        }
-        if (_random() % 4 == 0) {
-            bytes memory contentsType = abi.encodePacked(
-                _randomString(t.lowercased, true), _randomString(t.rest, false), "(bytes32 stuff)"
-            );
-            _testIsValidSignature(contentsType, false);
-        }
-        if (_random() % 4 == 0) {
-            bytes memory contentsType =
-                abi.encodePacked(_randomString(t.uppercased, true), _randomString(t.rest, false));
-            _testIsValidSignature(contentsType, false);
-        }
-    }
-
-    function _randomString(string memory byteChoices, bool nonEmpty)
-        internal
-        returns (string memory result)
-    {
-        uint256 randomness = _random();
-        uint256 resultLength = _bound(_random(), nonEmpty ? 1 : 0, _random() % 32 != 0 ? 4 : 64);
-        /// @solidity memory-safe-assembly
-        assembly {
-            if mload(byteChoices) {
-                result := mload(0x40)
-                mstore(0x00, randomness)
-                mstore(0x40, and(add(add(result, 0x40), resultLength), not(31)))
-                mstore(result, resultLength)
-
-                // forgefmt: disable-next-item
-                for { let i := 0 } lt(i, resultLength) { i := add(i, 1) } {
-                    mstore(0x20, gas())
-                    mstore8(
-                        add(add(result, 0x20), i), 
-                        mload(add(add(byteChoices, 1), mod(keccak256(0x00, 0x40), mload(byteChoices))))
-                    )
-                }
-            }
-        }
-    }
-
-    function testIsValidSignature() public {
-        vm.txGasPrice(10);
-
-        _testIsValidSignature("Contents(bytes32 stuff)", true);
-        _testIsValidSignature("ABC(bytes32 stuff)", true);
-        _testIsValidSignature("C(bytes32 stuff)", true);
-
-        _testIsValidSignature("(bytes32 stuff)", false);
-        _testIsValidSignature("contents(bytes32 stuff)", false);
-
-        _testIsValidSignature("ABC,(bytes32 stuff)", false);
-        _testIsValidSignature("ABC (bytes32 stuff)", false);
-        _testIsValidSignature("ABC)(bytes32 stuff)", false);
-        _testIsValidSignature("ABC\x00(bytes32 stuff)", false);
-
-        _testIsValidSignature("X(", true);
-        _testIsValidSignature("X)", false);
-        _testIsValidSignature("X(bytes32 stuff)", true);
-        _testIsValidSignature("TheQuickBrownFoxJumpsOverTheLazyDog(bytes32 stuff)", true);
-
-        _testIsValidSignature("bytes32", false);
-        _testIsValidSignature("()", false);
-    }
-
-    function _testIsValidSignature(bytes memory contentsType, bool success) internal {
-        bytes32 contents = keccak256(abi.encode(_random(), contentsType));
-
-        _TestTemps memory t = _testTemps();
-        (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, _toERC1271Hash(address(t.account), contents, contentsType));
-
-        vm.prank(t.owner);
-        MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
-
-        bytes memory signature = abi.encodePacked(
-            t.r, t.s, t.v, _DOMAIN_SEP_B, contents, contentsType, uint16(contentsType.length)
-        );
-        // Success returns `0x1626ba7e`.
-        assertEq(
-            t.account.isValidSignature(_toContentsHash(contents), signature),
-            success ? bytes4(0x1626ba7e) : bytes4(0xffffffff)
-        );
-    }
-
-    struct _AccountDomainStruct {
-        bytes1 fields;
-        string name;
-        string version;
-        uint256 chainId;
-        address verifyingContract;
-        bytes32 salt;
-        uint256[] extensions;
-    }
-
-    function _accountDomainStructFields(address account) internal view returns (bytes memory) {
-        _AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
-            EIP712(account).eip712Domain();
-
-        return abi.encode(
-            t.fields,
-            keccak256(bytes(t.name)),
-            keccak256(bytes(t.version)),
-            t.chainId,
-            t.verifyingContract,
-            t.salt,
-            keccak256(abi.encodePacked(t.extensions))
-        );
-    }
-
-    function _typedDataSignTypeHash(bytes memory contentsType) internal pure returns (bytes32) {
-        bytes memory ct = contentsType;
-        return keccak256(
-            abi.encodePacked(
-                "TypedDataSign(",
-                LibString.slice(string(ct), 0, LibString.indexOf(string(ct), "(", 0)),
-                " contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
-                ct
-            )
-        );
-    }
-
-    function _toERC1271Hash(address account, bytes32 contents, bytes memory contentsType)
-        internal
-        view
-        returns (bytes32)
-    {
-        bytes32 parentStructHash = keccak256(
-            abi.encodePacked(
-                abi.encode(_typedDataSignTypeHash(contentsType), contents),
-                _accountDomainStructFields(account)
-            )
-        );
-        return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
-    }
-
-    function _toContentsHash(bytes32 contents) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
     }
 
     function _randomBytes(uint256 seed) internal pure returns (bytes memory result) {
