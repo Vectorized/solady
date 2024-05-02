@@ -59,16 +59,29 @@ contract ERC1271Test is SoladyTest {
     }
 
     function testBaseFeeBytecodeContract() public {
-        vm.fee(11);
-
         bytes memory initcode = hex"65483d52593df33d526006601af3";
+        bytes32 salt = 0x00000000000000000000000000000000000000003c6f8b80e9be740191d2e48f;
+        address deployment = 0x000000000000378eDCD5B5B0A24f5342d8C10485;
+
+        {
+            address nicksFactory = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
+            vm.etch(
+                nicksFactory,
+                hex"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3"
+            );
+            assertEq(deployment.code.length, 0);
+            (bool success,) = address(nicksFactory).call(abi.encodePacked(salt, initcode));
+            assertTrue(success);
+            assertGt(deployment.code.length, 0);
+        }
+
+        vm.fee(11);
         emit LogBytes32(keccak256(initcode));
 
         uint256 result;
         /// @solidity memory-safe-assembly
         assembly {
-            let deployed := create(0, add(initcode, 0x20), mload(initcode))
-            if iszero(staticcall(gas(), deployed, 0x00, 0x00, 0x00, 0x20)) { invalid() }
+            if iszero(staticcall(gas(), deployment, 0x00, 0x00, 0x00, 0x20)) { invalid() }
             if iszero(eq(returndatasize(), 0x20)) { invalid() }
             result := mload(0x00)
         }

@@ -246,8 +246,8 @@ abstract contract ERC1271 is EIP712 {
             assembly {
                 mstore(gasprice(), gasprice())
                 // See: https://gist.github.com/Vectorized/3c9b63524d57492b265454f62d895f71
-                let b := 0x00000000001D7E8ae12E256718361bF27a98e740 // Basefee contract,
-                pop(staticcall(gas(), b, codesize(), gasprice(), gasprice(), 0x20))
+                let b := 0x000000000000378eDCD5B5B0A24f5342d8C10485 // Basefee contract,
+                pop(staticcall(0xffff, b, codesize(), gasprice(), gasprice(), 0x20))
                 // If `gasprice < basefee`, the call cannot be on-chain, and we can skip the gas burn.
                 if iszero(mload(gasprice())) {
                     let m := mload(0x40) // Cache the free memory pointer.
