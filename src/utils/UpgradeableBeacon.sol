@@ -8,7 +8,7 @@ pragma solidity ^0.8.4;
 ///
 /// @dev Note:
 /// - The implementation is intended to be used with ERC1967 beacon proxies.
-///   See: `LibClone.deployERC1967` and related functions.
+///   See: `LibClone.deployERC1967BeaconProxy` and related functions.
 /// - For gas efficiency, the entirety of the contract (including basic ownable functionality)
 ///   is implemented in the fallback method. Thus, an interface is provided for easy querying.
 interface IUpgradeableBeacon {
