@@ -7,8 +7,10 @@ pragma solidity ^0.8.4;
 /// (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/beacon/UpgradeableBeacon.sol)
 ///
 /// @dev Note:
-/// For gas efficiency, the entirely of the contract (including basic ownable functionality)
-/// is implemented in the fallback method. An interface is provided for easy querying.
+/// - The implementation is intended to be used with ERC1967 beacon proxies.
+///   See: `LibClone.deployERC1967` and related functions.
+/// - For gas efficiency, the entirety of the contract (including basic ownable functionality)
+///   is implemented in the fallback method. Thus, an interface is provided for easy querying.
 interface IUpgradeableBeacon {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
