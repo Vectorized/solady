@@ -81,11 +81,11 @@ contract ERC1271Test is SoladyTest {
         uint256 result;
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(staticcall(gas(), deployment, 0x00, 0x00, 0x00, 0x20)) { invalid() }
-            if iszero(eq(returndatasize(), 0x20)) { invalid() }
+            mstore(0x00, 0x00)
+            pop(staticcall(0xffff, deployment, codesize(), 0x00, 0x00, 0x20))
             result := mload(0x00)
         }
-        emit LogUint("basefee", result);
+        assertEq(result, 11);
     }
 
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
