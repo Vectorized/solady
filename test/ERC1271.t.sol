@@ -58,25 +58,35 @@ contract ERC1271Test is SoladyTest {
         _erc6551V2 = address(new MockERC6551V2());
     }
 
-    function testBasefeeBytecodeContract() public {
-        bytes memory initcode = hex"65483d52593df33d526006601af3";
-        emit LogBytes32(keccak256(initcode));
-        bytes32 salt = 0x00000000000000000000000000000000000000003c6f8b80e9be740191d2e48f;
-        address deployment = 0x000000000000378eDCD5B5B0A24f5342d8C10485;
-
-        vm.fee(11);
-        assertEq(_basefee(deployment), 0);
-        {
-            address nicksFactory = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
+    function _etchNicksFactory() internal returns (address nicksFactory) {
+        nicksFactory = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
+        if (nicksFactory.code.length != 0) {
             vm.etch(
                 nicksFactory,
                 hex"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3"
             );
-            assertEq(deployment.code.length, 0);
-            (bool success,) = address(nicksFactory).call(abi.encodePacked(salt, initcode));
-            assertTrue(success);
-            assertGt(deployment.code.length, 0);
         }
+    }
+
+    function _etchBasefeeContract(bytes32 salt, bytes memory initcode) internal {
+        (bool success,) = _etchNicksFactory().call(abi.encodePacked(salt, initcode));
+        assertTrue(success);
+    }
+
+    function _etchBasefeeContract() internal {
+        bytes memory initcode = hex"65483d52593df33d526006601af3";
+        emit LogBytes32(keccak256(initcode));
+        bytes32 salt = 0x00000000000000000000000000000000000000003c6f8b80e9be740191d2e48f;
+        _etchBasefeeContract(salt, initcode);
+    }
+
+    function testBasefeeBytecodeContract() public {
+        address deployment = 0x000000000000378eDCD5B5B0A24f5342d8C10485;
+        vm.fee(11);
+        assertEq(_basefee(deployment), 0);
+        assertEq(deployment.code.length, 0);
+        _etchBasefeeContract();
+        assertEq(deployment.code.length, 6);
         assertEq(_basefee(deployment), 11);
         vm.fee(12);
         assertEq(_basefee(deployment), 12);
@@ -120,6 +130,9 @@ contract ERC1271Test is SoladyTest {
         vm.txGasPrice(10);
         if (_random() % 8 == 0) {
             _testIsValidSignature(abi.encodePacked(uint8(x)), false);
+        }
+        if (_random() % 32 == 0) {
+            _etchBasefeeContract();
         }
         _TestIsValidSignatureTemps memory t;
         t.uppercased = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
