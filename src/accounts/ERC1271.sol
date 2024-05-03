@@ -65,8 +65,7 @@ abstract contract ERC1271 is EIP712 {
                 calldataload(add(signature.offset, sub(signature.length, 0x20))),
                 mul(0x6492, div(not(mload(0x60)), 0xffff)) // `0x6492...6492`.
             ) {
-                let o := add(signature.offset, calldataload(signature.offset))
-                o := add(o, calldataload(add(o, 0x40)))
+                let o := add(signature.offset, calldataload(add(signature.offset, 0x40)))
                 signature.length := calldataload(o)
                 signature.offset := add(o, 0x20)
             }
