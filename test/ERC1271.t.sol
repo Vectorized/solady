@@ -231,11 +231,27 @@ contract ERC1271Test is SoladyTest {
         bytes memory signature = abi.encodePacked(
             t.r, t.s, t.v, _DOMAIN_SEP_B, contents, contentsType, uint16(contentsType.length)
         );
+        if (_random() % 4 == 0) signature = _erc6492Wrap(signature);
         // Success returns `0x1626ba7e`.
         assertEq(
             t.account.isValidSignature(_toContentsHash(contents), signature),
             success ? bytes4(0x1626ba7e) : bytes4(0xffffffff)
         );
+    }
+
+    struct _ERC4692Wrapper {
+        address create2Factory;
+        bytes factoryCalldata;
+        bytes signature;
+    }
+
+    function _erc6492Wrap(bytes memory signature) internal returns (bytes memory) {
+        _ERC4692Wrapper memory w;
+        w.create2Factory = _randomNonZeroAddress();
+        w.factoryCalldata = bytes(_randomString("12345", false));
+        w.signature = signature;
+        bytes32 magic = bytes32(0x6492649264926492649264926492649264926492649264926492649264926492);
+        return abi.encodePacked(abi.encode(w), magic);
     }
 
     struct _AccountDomainStruct {
