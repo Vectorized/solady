@@ -239,19 +239,11 @@ contract ERC1271Test is SoladyTest {
         );
     }
 
-    struct _ERC4692Wrapper {
-        address create2Factory;
-        bytes factoryCalldata;
-        bytes signature;
-    }
-
     function _erc6492Wrap(bytes memory signature) internal returns (bytes memory) {
-        _ERC4692Wrapper memory w;
-        w.create2Factory = _randomNonZeroAddress();
-        w.factoryCalldata = bytes(_randomString("12345", false));
-        w.signature = signature;
-        bytes32 magic = bytes32(0x6492649264926492649264926492649264926492649264926492649264926492);
-        return abi.encodePacked(abi.encode(w), magic);
+        return abi.encodePacked(
+            abi.encode(_randomNonZeroAddress(), bytes(_randomString("12345", false)), signature),
+            bytes32(0x6492649264926492649264926492649264926492649264926492649264926492)
+        );
     }
 
     struct _AccountDomainStruct {
