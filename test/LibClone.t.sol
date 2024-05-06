@@ -5,6 +5,7 @@ import "./utils/SoladyTest.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {Clone} from "../src/utils/Clone.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
+import {UpgradeableBeaconTestLib} from "./UpgradeableBeacon.t.sol";
 
 contract LibCloneTest is SoladyTest, Clone {
     error CustomError(uint256 currentValue);
@@ -17,6 +18,9 @@ contract LibCloneTest is SoladyTest, Clone {
 
     bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+
+    bytes32 internal constant _ERC1967_BEACON_SLOT =
+        0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
 
     function setValue(uint256 value_) public {
         value = value_;
@@ -85,6 +89,13 @@ contract LibCloneTest is SoladyTest, Clone {
         );
     }
 
+    function testDeployERC1967BeaconProxy(uint256 value_) public {
+        address beacon = _deployBeacon();
+        address clone = LibClone.deployERC1967BeaconProxy(beacon);
+        _shouldBehaveLikeClone(clone, value_);
+        assertEq(vm.load(clone, _ERC1967_BEACON_SLOT), bytes32(uint256(uint160(address(beacon)))));
+    }
+
     function testDeployERC1967() public {
         testDeployERC1967(1);
     }
@@ -113,6 +124,14 @@ contract LibCloneTest is SoladyTest, Clone {
     function testDeployERC1967ICodeHashAndLength(address impl) public {
         assertEq(keccak256(LibClone.deployERC1967I(impl).code), LibClone.ERC1967I_CODE_HASH);
         assertEq(LibClone.deployERC1967I(impl).code.length, 82);
+    }
+
+    function testDeployERC1967BeaconProxyCodeHashAndLength(address impl) public {
+        assertEq(
+            keccak256(LibClone.deployERC1967BeaconProxy(impl).code),
+            LibClone.ERC1967_BEACON_PROXY_CODE_HASH
+        );
+        assertEq(LibClone.deployERC1967BeaconProxy(impl).code.length, 82);
     }
 
     function testClone(uint256 value_) public {
@@ -188,6 +207,13 @@ contract LibCloneTest is SoladyTest, Clone {
         return LibClone.deployDeterministicERC1967(_brutalized(implementation), salt);
     }
 
+    function deployDeterministicERC1967BeaconProxy(address beacon, bytes32 salt)
+        external
+        returns (address)
+    {
+        return LibClone.deployDeterministicERC1967BeaconProxy(_brutalized(beacon), salt);
+    }
+
     function testDeployDeterministicERC1967() public {
         testDeployDeterministicERC1967(1, keccak256("b"));
     }
@@ -224,6 +250,27 @@ contract LibCloneTest is SoladyTest, Clone {
         testDeployDeterministicERC1967I(1, keccak256("b"));
     }
 
+    function testDeployDeterministicERC1967BeaconProxy(uint256 value_, bytes32 salt) public {
+        address beacon = _deployBeacon();
+        if (saltIsUsed[salt]) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            this.deployDeterministicERC1967BeaconProxy(beacon, salt);
+            return;
+        }
+
+        address clone = this.deployDeterministicERC1967BeaconProxy(beacon, salt);
+        saltIsUsed[salt] = true;
+
+        _shouldBehaveLikeClone(clone, value_);
+
+        address predicted = LibClone.predictDeterministicAddressERC1967BeaconProxy(
+            address(beacon), salt, address(this)
+        );
+        assertEq(clone, predicted);
+
+        assertEq(vm.load(clone, _ERC1967_BEACON_SLOT), bytes32(uint256(uint160(address(beacon)))));
+    }
+
     function testCreateDeterministicERC1967(uint256 value_, bytes32 salt) public {
         if (saltIsUsed[salt]) {
             (bool deployed, address clone) =
@@ -249,6 +296,33 @@ contract LibCloneTest is SoladyTest, Clone {
         assertEq(
             vm.load(clone_, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
         );
+    }
+
+    function testCreateDeterministicERC1967BeaconProxy(uint256 value_, bytes32 salt) public {
+        address beacon = _deployBeacon();
+        if (saltIsUsed[salt]) {
+            (bool deployed, address clone) =
+                LibClone.createDeterministicERC1967BeaconProxy(beacon, salt);
+            assertEq(deployed, true);
+            assertEq(
+                clone,
+                LibClone.predictDeterministicAddressERC1967BeaconProxy(beacon, salt, address(this))
+            );
+            return;
+        }
+
+        (bool deployed_, address clone_) =
+            LibClone.createDeterministicERC1967BeaconProxy(beacon, salt);
+        assertEq(deployed_, false);
+        saltIsUsed[salt] = true;
+
+        _shouldBehaveLikeClone(clone_, value_);
+
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967BeaconProxy(beacon, salt, address(this));
+        assertEq(clone_, predicted);
+
+        assertEq(vm.load(clone_, _ERC1967_BEACON_SLOT), bytes32(uint256(uint160(address(beacon)))));
     }
 
     function testCreateDeterministicERC1967I(uint256 value_, bytes32 salt) public {
@@ -539,6 +613,7 @@ contract LibCloneTest is SoladyTest, Clone {
         if (c & (1 << 2) == 0) _testInitCode(implementation, r);
         if (c & (1 << 3) == 0) _testInitCodeERC1967(implementation);
         if (c & (1 << 4) == 0) _testInitCodeERC1967I(implementation);
+        if (c & (1 << 5) == 0) _testInitCodeERC1967BeaconProxy(implementation);
     }
 
     function _testInitCode(address implementation) internal {
@@ -593,6 +668,16 @@ contract LibCloneTest is SoladyTest, Clone {
         assertEq(keccak256(initCode), expected);
     }
 
+    function _testInitCodeERC1967BeaconProxy(address beacon) internal {
+        _brutalizeMemory();
+        bytes memory initCode = LibClone.initCodeERC1967BeaconProxy(_brutalized(beacon));
+        _checkMemory(initCode);
+        _brutalizeMemory();
+        bytes32 expected = LibClone.initCodeHashERC1967BeaconProxy(_brutalized(beacon));
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+    }
+
     function testERC1967ConstantBootstrap(address implementation, bytes32 salt) public {
         address bootstrap = LibClone.constantERC1967BootstrapAddress();
         assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
@@ -623,5 +708,12 @@ contract LibCloneTest is SoladyTest, Clone {
             );
             _shouldBehaveLikeClone(instance, 1);
         }
+    }
+
+    function _deployBeacon() internal returns (address) {
+        if (_random() % 2 == 0) {
+            return UpgradeableBeaconTestLib.deployYulBeacon(address(this), address(this));
+        }
+        return UpgradeableBeaconTestLib.deploySolidityBeacon(address(this), address(this));
     }
 }

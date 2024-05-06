@@ -48,6 +48,10 @@ library LibClone {
     bytes32 internal constant ERC1967I_CODE_HASH =
         0xce700223c0d4cea4583409accfc45adac4a093b3519998a9cbbe1504dadba6f7;
 
+    /// @dev The keccak256 of the deployed code for the ERC1967 beacon proxy.
+    bytes32 internal constant ERC1967_BEACON_PROXY_CODE_HASH =
+        0x14044459af17bc4f0f5aa2f658cb692add77d1302c29fe2aebab005eea9d1162;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -1253,7 +1257,7 @@ library LibClone {
              * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
              * f3         | RETURN         |                  | [0..runSize): runtime code      |
              * ---------------------------------------------------------------------------------|
-             * RUNTIME (81 bytes)                                                               |
+             * RUNTIME (82 bytes)                                                               |
              * ---------------------------------------------------------------------------------|
              * Opcode     | Mnemonic       | Stack            | Memory                          |
              * ---------------------------------------------------------------------------------|
@@ -1273,16 +1277,16 @@ library LibClone {
              * ------- beacon staticcall sub procedure ---------------------------------------- |
              * 60 0x20       | PUSH1 0x20       | 32                          |                 |
              * 36            | CALLDATASIZE     | cds 32                      |                 |
-             * 58            | PC               | p cds 32                    |                 |
-             * 36            | CALLDATASIZE     | cds p cds 32                |                 |
-             * 63 0x5c60da1b | PUSH4 0x5c60da1b | 0x5c60da1b cds p cds 32     |                 |
-             * 60 0xe0       | PUSH1 0xe0       | 224 0x5c60da1b cds p cds 32 |                 |
-             * 1b            | SHL              | sel cds p cds 32            |                 |
-             * 36            | CALLDATASIZE     | cds sel cds p cds 32        |                 |
-             * 52            | MSTORE           | cds p cds 32                | sel             |
-             * 7f slot       | PUSH32 slot      | s cds p cds 32              | sel             |
-             * 54            | SLOAD            | beac cds p cds 32           | sel             |
-             * 5a            | GAS              | g beac cds p cds 32         | sel             |
+             * 60 0x04       | PUSH1 0x04       | 4 cds 32                    |                 |
+             * 36            | CALLDATASIZE     | cds 4 cds 32                |                 |
+             * 63 0x5c60da1b | PUSH4 0x5c60da1b | 0x5c60da1b cds 4 cds 32     |                 |
+             * 60 0xe0       | PUSH1 0xe0       | 224 0x5c60da1b cds 4 cds 32 |                 |
+             * 1b            | SHL              | sel cds 4 cds 32            |                 |
+             * 36            | CALLDATASIZE     | cds sel cds 4 cds 32        |                 |
+             * 52            | MSTORE           | cds 4 cds 32                | sel             |
+             * 7f slot       | PUSH32 slot      | s cds 4 cds 32              | sel             |
+             * 54            | SLOAD            | beac cds 4 cds 32           | sel             |
+             * 5a            | GAS              | g beac cds 4 cds 32         | sel             |
              * Fa            | STATICCALL       | succ                        | impl            |
              * 50            | POP              |                             | impl            |
              * 36            | CALLDATASIZE     | cds                         | impl            |
@@ -1298,7 +1302,7 @@ library LibClone {
              * 3e         | RETURNDATACOPY | succ             | [0..returndatasize): returndata |
              *                                                                                  |
              * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::: |
-             * 60 0x4c    | PUSH1 0x4c     | dest succ        | [0..returndatasize): returndata |
+             * 60 0x4d    | PUSH1 0x4d     | dest succ        | [0..returndatasize): returndata |
              * 57         | JUMPI          |                  | [0..returndatasize): returndata |
              *                                                                                  |
              * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::: |
@@ -1314,11 +1318,11 @@ library LibClone {
              * ---------------------------------------------------------------------------------+
              */
             let m := mload(0x40) // Cache the free memory pointer.
-            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604c573d6000fd5b3d6000f3)
+            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
             mstore(0x40, 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
-            mstore(0x20, 0x60185155f3363d3d373d3d363d6020365836635c60da)
-            mstore(0x0a, or(shl(160, 0x60513d8160223d3973), shr(96, shl(96, beacon))))
-            instance := create(value, 0x0d, 0x73)
+            mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
+            instance := create(value, 0x0c, 0x74)
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
@@ -1344,19 +1348,18 @@ library LibClone {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // let m := mload(0x40) // Cache the free memory pointer.
-            // mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
-            // mstore(0x40, 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
-            // mstore(0x20, 0x6009)
-            // mstore(0x1e, beacon)
-            // mstore(0x0a, 0x603d3d8160223d3973)
-            // instance := create2(value, 0x21, 0x5f, salt)
-            // if iszero(instance) {
-            //     mstore(0x00, 0x30116425) // `DeploymentFailed()`.
-            //     revert(0x1c, 0x04)
-            // }
-            // mstore(0x40, m) // Restore the free memory pointer.
-            // mstore(0x60, 0) // Restore the zero slot.
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(0x40, 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
+            instance := create2(value, 0x0c, 0x74, salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
         }
     }
 
@@ -1380,57 +1383,62 @@ library LibClone {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // let m := mload(0x40) // Cache the free memory pointer.
-            // mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
-            // mstore(0x40, 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
-            // mstore(0x20, 0x6009)
-            // mstore(0x1e, beacon)
-            // mstore(0x0a, 0x603d3d8160223d3973)
-            // // Compute and store the bytecode hash.
-            // mstore(add(m, 0x35), keccak256(0x21, 0x5f))
-            // mstore(m, shl(88, address()))
-            // mstore8(m, 0xff) // Write the prefix.
-            // mstore(add(m, 0x15), salt)
-            // instance := keccak256(m, 0x55)
-            // for {} 1 {} {
-            //     if iszero(extcodesize(instance)) {
-            //         instance := create2(value, 0x21, 0x5f, salt)
-            //         if iszero(instance) {
-            //             mstore(0x00, 0x30116425) // `DeploymentFailed()`.
-            //             revert(0x1c, 0x04)
-            //         }
-            //         break
-            //     }
-            //     alreadyDeployed := 1
-            //     if iszero(value) { break }
-            //     if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
-            //         mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
-            //         revert(0x1c, 0x04)
-            //     }
-            //     break
-            // }
-            // mstore(0x40, m) // Restore the free memory pointer.
-            // mstore(0x60, 0) // Restore the zero slot.
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(0x40, 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
+            // Compute and store the bytecode hash.
+            mstore(add(m, 0x35), keccak256(0x0c, 0x74))
+            mstore(m, shl(88, address()))
+            mstore8(m, 0xff) // Write the prefix.
+            mstore(add(m, 0x15), salt)
+            instance := keccak256(m, 0x55)
+            for {} 1 {} {
+                if iszero(extcodesize(instance)) {
+                    instance := create2(value, 0x0c, 0x74, salt)
+                    if iszero(instance) {
+                        mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    break
+                }
+                alreadyDeployed := 1
+                if iszero(value) { break }
+                if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
+                break
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
         }
     }
 
     /// @dev Returns the initialization code of the minimal ERC1967 beacon proxy.
-    function initCodeERC1967BeaconProxy(address beacon) internal pure returns (bytes memory result) {
+    function initCodeERC1967BeaconProxy(address beacon)
+        internal
+        pure
+        returns (bytes memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            // result := mload(0x40)
-            // mstore(
-            //     add(result, 0x60),
-            //     0x3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f300
-            // )
-            // mstore(
-            //     add(result, 0x40),
-            //     0x55f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc
-            // )
-            // mstore(add(result, 0x20), or(shl(24, beacon), 0x600951))
-            // mstore(add(result, 0x09), 0x603d3d8160223d3973)
-            // mstore(result, 0x5f) // Store the length.
-            // mstore(0x40, add(result, 0x80)) // Allocate memory.
+            result := mload(0x40)
+            mstore(
+                add(result, 0x74),
+                0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3
+            )
+            mstore(
+                add(result, 0x54),
+                0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c
+            )
+            mstore(add(result, 0x34), 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(add(result, 0x1d), beacon)
+            mstore(add(result, 0x09), 0x60523d8160223d3973)
+            mstore(add(result, 0x94), 0)
+            mstore(result, 0x74) // Store the length.
+            mstore(0x40, add(result, 0xa0)) // Allocate memory.
         }
     }
 
@@ -1439,15 +1447,14 @@ library LibClone {
     function initCodeHashERC1967BeaconProxy(address beacon) internal pure returns (bytes32 hash) {
         /// @solidity memory-safe-assembly
         assembly {
-            // let m := mload(0x40) // Cache the free memory pointer.
-            // mstore(0x60, 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
-            // mstore(0x40, 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
-            // mstore(0x20, 0x6009)
-            // mstore(0x1e, beacon)
-            // mstore(0x0a, 0x603d3d8160223d3973)
-            // hash := keccak256(0x21, 0x5f)
-            // mstore(0x40, m) // Restore the free memory pointer.
-            // mstore(0x60, 0) // Restore the zero slot.
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(0x40, 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
+            hash := keccak256(0x0c, 0x74)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
         }
     }
 
