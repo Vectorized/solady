@@ -13,6 +13,9 @@ contract UpgradeableBeaconTest is SoladyTest {
     address implementation;
     UpgradeableBeacon beacon;
 
+    bytes32 internal constant _ERC1967_BEACON_SLOT =
+        0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
+
     function setUp() public {
         implementation = address(new MockImplementation());
     }
@@ -175,4 +178,17 @@ contract UpgradeableBeaconTest is SoladyTest {
         vm.expectRevert();
         UpgradeableBeaconTest(address(beacon)).testUpgradeableYulBeaconOnlyFnSelectorNotRecognised();
     }
+
+    function testDeployBeaconProxy() public {
+        _deploySolidityBeacon();
+        address clone = LibClone.deployERC1967BeaconProxy(address(beacon));
+        emit LogBytes(clone.code);
+        assertEq(
+            vm.load(clone, _ERC1967_BEACON_SLOT), bytes32(uint256(uint160(address(beacon))))
+        );
+
+        MockImplementation(clone).setValue(111, 222);
+        assertEq(MockImplementation(clone).getValue(111), 222);
+    }
+
 }
