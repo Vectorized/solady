@@ -585,6 +585,12 @@ contract LibCloneTest is SoladyTest, Clone {
         assertEq(LibClone.cloneDeterministic(123, t, "", bytes32(gasleft())).balance, 123);
         assertEq(LibClone.deployERC1967(123, t).balance, 123);
         assertEq(LibClone.deployDeterministicERC1967(123, t, bytes32(gasleft())).balance, 123);
+        assertEq(LibClone.deployERC1967I(123, t).balance, 123);
+        assertEq(LibClone.deployDeterministicERC1967I(123, t, bytes32(gasleft())).balance, 123);
+        assertEq(LibClone.deployERC1967BeaconProxy(123, t).balance, 123);
+        assertEq(
+            LibClone.deployDeterministicERC1967BeaconProxy(123, t, bytes32(gasleft())).balance, 123
+        );
     }
 
     function argBytesHash() public pure returns (bytes32) {
