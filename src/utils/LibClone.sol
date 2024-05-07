@@ -1024,7 +1024,6 @@ library LibClone {
              * 59         | MSIZE          | 32               | [0..32): implementation address |
              * 3d         | RETURNDATASIZE | 0 32             | [0..32): implementation address |
              * f3         | RETURN         |                  | [0..32): implementation address |
-             *                                                                                  |
              * ---------------------------------------------------------------------------------+
              */
             let m := mload(0x40) // Cache the free memory pointer.
@@ -1274,7 +1273,7 @@ library LibClone {
              * 36         | CALLDATASIZE   | cds 0 0          | [0..calldatasize): calldata     |
              * 3d         | RETURNDATASIZE | 0 cds 0 0        | [0..calldatasize): calldata     |
              *                                                                                  |
-             * ------- beacon staticcall sub procedure ---------------------------------------- |
+             * ~~~~~~~ beacon staticcall sub procedure ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
              * 60 0x20       | PUSH1 0x20       | 32                          |                 |
              * 36            | CALLDATASIZE     | cds 32                      |                 |
              * 60 0x04       | PUSH1 0x04       | 4 cds 32                    |                 |
@@ -1287,11 +1286,11 @@ library LibClone {
              * 7f slot       | PUSH32 slot      | s cds 4 cds 32              | sel             |
              * 54            | SLOAD            | beac cds 4 cds 32           | sel             |
              * 5a            | GAS              | g beac cds 4 cds 32         | sel             |
-             * Fa            | STATICCALL       | succ                        | impl            |
+             * fa            | STATICCALL       | succ                        | impl            |
              * 50            | POP              |                             | impl            |
              * 36            | CALLDATASIZE     | cds                         | impl            |
              * 51            | MLOAD            | impl                        | impl            |
-             * -------------------------------------------------------------------------------- |
+             * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
              * 5a         | GAS            | g impl 0 cds 0 0 | [0..calldatasize): calldata     |
              * f4         | DELEGATECALL   | succ             | [0..calldatasize): calldata     |
              *                                                                                  |
