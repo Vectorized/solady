@@ -722,4 +722,29 @@ contract LibCloneTest is SoladyTest, Clone {
         }
         return UpgradeableBeaconTestLib.deploySolidityBeacon(address(this), address(this));
     }
+
+    function testERC1967BeaconProxyGasBehavior(uint256 gasBudget, uint256 value_) public {
+        address beacon = _deployBeacon();
+        address clone = LibClone.deployERC1967BeaconProxy(beacon);
+        LibCloneTest(clone).setValue(value_);
+        gasBudget = _random() % 2 == 0 ? gasBudget % 3000 : gasBudget % 30000;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, value_)
+            let hash := keccak256(0x00, 0x40)
+            mstore(0x20, hash)
+            mstore(0x00, 0x3fa4f245) // `value()`.
+            switch staticcall(gasBudget, clone, 0x1c, 0x04, 0x20, 0x20)
+            case 0 { if iszero(eq(mload(0x20), hash)) { invalid() } }
+            default { if iszero(eq(mload(0x20), value_)) { invalid() } }
+
+            mstore(0x20, hash)
+            mstore(0x00, 0x57eca1a5) // `revertWithError()`.
+            switch staticcall(gasBudget, clone, 0x1c, 0x04, 0x20, 0x20)
+            case 0 {
+                if iszero(or(iszero(returndatasize()), eq(returndatasize(), 0x24))) { invalid() }
+            }
+            default { invalid() }
+        }
+    }
 }
