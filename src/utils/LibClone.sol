@@ -29,6 +29,7 @@ pragma solidity ^0.8.4;
 /// @dev Minimal ERC1967 proxy:
 /// An minimal ERC1967 proxy, intended to be upgraded with UUPS.
 /// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
+/// This proxy is automatically verified on Etherscan.
 ///
 /// @dev ERC1967I proxy:
 /// An variant of the minimal ERC1967 proxy, with a special code path that activates
@@ -1224,6 +1225,12 @@ library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*          MINIMAL ERC1967 BEACON PROXY OPERATIONS           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note: If you use this proxy, you MUST make sure that the beacon is a
+    // valid ERC1967 beacon. This means that the beacon must always return a valid
+    // address upon a staticcall to `implementation()`, given sufficient gas.
+    // For performance, the deployment operations and the proxy assumes that the
+    // beacon is always valid and will NOT validate it.
 
     /// @dev Deploys a minimal ERC1967 beacon proxy.
     function deployERC1967BeaconProxy(address beacon) internal returns (address instance) {
