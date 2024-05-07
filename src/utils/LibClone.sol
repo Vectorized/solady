@@ -29,6 +29,7 @@ pragma solidity ^0.8.4;
 /// @dev Minimal ERC1967 proxy:
 /// An minimal ERC1967 proxy, intended to be upgraded with UUPS.
 /// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
+/// This proxy is automatically verified on Etherscan.
 ///
 /// @dev ERC1967I proxy:
 /// An variant of the minimal ERC1967 proxy, with a special code path that activates
@@ -47,6 +48,10 @@ library LibClone {
     /// @dev The keccak256 of the deployed code for the ERC1967I proxy.
     bytes32 internal constant ERC1967I_CODE_HASH =
         0xce700223c0d4cea4583409accfc45adac4a093b3519998a9cbbe1504dadba6f7;
+
+    /// @dev The keccak256 of the deployed code for the ERC1967 beacon proxy.
+    bytes32 internal constant ERC1967_BEACON_PROXY_CODE_HASH =
+        0x14044459af17bc4f0f5aa2f658cb692add77d1302c29fe2aebab005eea9d1162;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -1020,7 +1025,6 @@ library LibClone {
              * 59         | MSIZE          | 32               | [0..32): implementation address |
              * 3d         | RETURNDATASIZE | 0 32             | [0..32): implementation address |
              * f3         | RETURN         |                  | [0..32): implementation address |
-             *                                                                                  |
              * ---------------------------------------------------------------------------------+
              */
             let m := mload(0x40) // Cache the free memory pointer.
@@ -1216,6 +1220,260 @@ library LibClone {
                 revert(0x1c, 0x04)
             }
         }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*          MINIMAL ERC1967 BEACON PROXY OPERATIONS           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note: If you use this proxy, you MUST make sure that the beacon is a
+    // valid ERC1967 beacon. This means that the beacon must always return a valid
+    // address upon a staticcall to `implementation()`, given sufficient gas.
+    // For performance, the deployment operations and the proxy assumes that the
+    // beacon is always valid and will NOT validate it.
+
+    /// @dev Deploys a minimal ERC1967 beacon proxy.
+    function deployERC1967BeaconProxy(address beacon) internal returns (address instance) {
+        instance = deployERC1967BeaconProxy(0, beacon);
+    }
+
+    /// @dev Deploys a minimal ERC1967 beacon proxy.
+    /// Deposits `value` ETH during deployment.
+    function deployERC1967BeaconProxy(uint256 value, address beacon)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            /**
+             * ---------------------------------------------------------------------------------+
+             * CREATION (34 bytes)                                                              |
+             * ---------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                          |
+             * ---------------------------------------------------------------------------------|
+             * 60 runSize | PUSH1 runSize  | r                |                                 |
+             * 3d         | RETURNDATASIZE | 0 r              |                                 |
+             * 81         | DUP2           | r 0 r            |                                 |
+             * 60 offset  | PUSH1 offset   | o r 0 r          |                                 |
+             * 3d         | RETURNDATASIZE | 0 o r 0 r        |                                 |
+             * 39         | CODECOPY       | 0 r              | [0..runSize): runtime code      |
+             * 73 beac    | PUSH20 beac    | beac 0 r         | [0..runSize): runtime code      |
+             * 60 slotPos | PUSH1 slotPos  | slotPos beac 0 r | [0..runSize): runtime code      |
+             * 51         | MLOAD          | slot beac 0 r    | [0..runSize): runtime code      |
+             * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
+             * f3         | RETURN         |                  | [0..runSize): runtime code      |
+             * ---------------------------------------------------------------------------------|
+             * RUNTIME (82 bytes)                                                               |
+             * ---------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                          |
+             * ---------------------------------------------------------------------------------|
+             *                                                                                  |
+             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36         | CALLDATASIZE   | cds              |                                 |
+             * 3d         | RETURNDATASIZE | 0 cds            |                                 |
+             * 3d         | RETURNDATASIZE | 0 0 cds          |                                 |
+             * 37         | CALLDATACOPY   |                  | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | 0                |                                 |
+             * 3d         | RETURNDATASIZE | 0 0              |                                 |
+             * 36         | CALLDATASIZE   | cds 0 0          | [0..calldatasize): calldata     |
+             * 3d         | RETURNDATASIZE | 0 cds 0 0        | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ~~~~~~~ beacon staticcall sub procedure ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
+             * 60 0x20       | PUSH1 0x20       | 32                          |                 |
+             * 36            | CALLDATASIZE     | cds 32                      |                 |
+             * 60 0x04       | PUSH1 0x04       | 4 cds 32                    |                 |
+             * 36            | CALLDATASIZE     | cds 4 cds 32                |                 |
+             * 63 0x5c60da1b | PUSH4 0x5c60da1b | 0x5c60da1b cds 4 cds 32     |                 |
+             * 60 0xe0       | PUSH1 0xe0       | 224 0x5c60da1b cds 4 cds 32 |                 |
+             * 1b            | SHL              | sel cds 4 cds 32            |                 |
+             * 36            | CALLDATASIZE     | cds sel cds 4 cds 32        |                 |
+             * 52            | MSTORE           | cds 4 cds 32                | sel             |
+             * 7f slot       | PUSH32 slot      | s cds 4 cds 32              | sel             |
+             * 54            | SLOAD            | beac cds 4 cds 32           | sel             |
+             * 5a            | GAS              | g beac cds 4 cds 32         | sel             |
+             * fa            | STATICCALL       | succ                        | impl            |
+             * 50            | POP              |                             | impl            |
+             * 36            | CALLDATASIZE     | cds                         | impl            |
+             * 51            | MLOAD            | impl                        | impl            |
+             * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
+             * 5a         | GAS            | g impl 0 cds 0 0 | [0..calldatasize): calldata     |
+             * f4         | DELEGATECALL   | succ             | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | rds succ         | [0..calldatasize): calldata     |
+             * 60 0x00    | PUSH1 0x00     | 0 rds succ       | [0..calldatasize): calldata     |
+             * 80         | DUP1           | 0 0 rds succ     | [0..calldatasize): calldata     |
+             * 3e         | RETURNDATACOPY | succ             | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::: |
+             * 60 0x4d    | PUSH1 0x4d     | dest succ        | [0..returndatasize): returndata |
+             * 57         | JUMPI          |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
+             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
+             * fd         | REVERT         |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b         | JUMPDEST       |                  | [0..returndatasize): returndata |
+             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
+             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
+             * f3         | RETURN         |                  | [0..returndatasize): returndata |
+             * ---------------------------------------------------------------------------------+
+             */
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(0x40, 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
+            instance := create(value, 0x0c, 0x74)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Deploys a deterministic minimal ERC1967 beacon proxy with `salt`.
+    function deployDeterministicERC1967BeaconProxy(address beacon, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        instance = deployDeterministicERC1967BeaconProxy(0, beacon, salt);
+    }
+
+    /// @dev Deploys a deterministic minimal ERC1967 beacon proxy with `salt`.
+    /// Deposits `value` ETH during deployment.
+    function deployDeterministicERC1967BeaconProxy(uint256 value, address beacon, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(0x40, 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
+            instance := create2(value, 0x0c, 0x74, salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Creates a deterministic minimal ERC1967 beacon proxy with `salt`.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967BeaconProxy(address beacon, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        return createDeterministicERC1967BeaconProxy(0, beacon, salt);
+    }
+
+    /// @dev Creates a deterministic minimal ERC1967 beacon proxy with `salt`.
+    /// Deposits `value` ETH during deployment.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967BeaconProxy(uint256 value, address beacon, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(0x40, 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
+            // Compute and store the bytecode hash.
+            mstore(add(m, 0x35), keccak256(0x0c, 0x74))
+            mstore(m, shl(88, address()))
+            mstore8(m, 0xff) // Write the prefix.
+            mstore(add(m, 0x15), salt)
+            instance := keccak256(m, 0x55)
+            for {} 1 {} {
+                if iszero(extcodesize(instance)) {
+                    instance := create2(value, 0x0c, 0x74, salt)
+                    if iszero(instance) {
+                        mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    break
+                }
+                alreadyDeployed := 1
+                if iszero(value) { break }
+                if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
+                break
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Returns the initialization code of the minimal ERC1967 beacon proxy.
+    function initCodeERC1967BeaconProxy(address beacon)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(
+                add(result, 0x74),
+                0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3
+            )
+            mstore(
+                add(result, 0x54),
+                0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c
+            )
+            mstore(add(result, 0x34), 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(add(result, 0x1d), beacon)
+            mstore(add(result, 0x09), 0x60523d8160223d3973)
+            mstore(add(result, 0x94), 0)
+            mstore(result, 0x74) // Store the length.
+            mstore(0x40, add(result, 0xa0)) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the minimal ERC1967 beacon proxy.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHashERC1967BeaconProxy(address beacon) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x60, 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(0x40, 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
+            hash := keccak256(0x0c, 0x74)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero slot.
+        }
+    }
+
+    /// @dev Returns the address of the deterministic ERC1967 beacon proxy,
+    /// with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
+    function predictDeterministicAddressERC1967BeaconProxy(
+        address beacon,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        bytes32 hash = initCodeHashERC1967BeaconProxy(beacon);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
