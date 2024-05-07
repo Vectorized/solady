@@ -424,14 +424,7 @@ contract ERC20Test is SoladyTest {
     }
 
     function _permit(_TestTemps memory t) internal {
-        address token_ = address(token);
-        /// @solidity memory-safe-assembly
-        assembly {
-            let m := mload(sub(t, 0x20))
-            mstore(sub(t, 0x20), 0xd505accf)
-            pop(call(gas(), token_, 0, sub(t, 0x04), 0xe4, 0x00, 0x00))
-            mstore(sub(t, 0x20), m)
-        }
+        token.permit(t.owner, t.to, t.amount, t.deadline, t.v, t.r, t.s);
     }
 }
 
