@@ -372,7 +372,7 @@ contract ERC20Test is SoladyTest {
 
         _signPermit(t);
 
-        //        vm.expectRevert(ERC20.InvalidPermit.selector);
+        vm.expectRevert(ERC20.InvalidPermit.selector);
         _permit(t);
     }
 
@@ -383,7 +383,7 @@ contract ERC20Test is SoladyTest {
 
         _signPermit(t);
 
-        //        vm.expectRevert(ERC20.InvalidPermit.selector);
+        vm.expectRevert(ERC20.InvalidPermit.selector);
         t.deadline += 1;
         _permit(t);
     }
@@ -394,7 +394,7 @@ contract ERC20Test is SoladyTest {
 
         _signPermit(t);
 
-        //        vm.expectRevert(ERC20.PermitExpired.selector);
+        vm.expectRevert(ERC20.PermitExpired.selector);
         _permit(t);
     }
 
@@ -406,7 +406,7 @@ contract ERC20Test is SoladyTest {
 
         _expectPermitEmitApproval(t);
         _permit(t);
-        //        vm.expectRevert(ERC20.InvalidPermit.selector);
+        vm.expectRevert(ERC20.InvalidPermit.selector);
         _permit(t);
     }
 
