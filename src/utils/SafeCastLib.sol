@@ -457,9 +457,17 @@ library SafeCastLib {
         return int248(int256(x));
     }
 
-    function toInt256(uint256 x) internal pure returns (int256) {
-        if (x >= 1 << 255) _revertOverflow();
-        return int256(x);
+    function toInt256(uint256 x) internal pure returns (int256 y) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if slt(x, 0) {
+                // Store the function selector of `Overflow()`.
+                mstore(0x00, 0x35278d12)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            y := x
+        }
     }
 
     function toUint256(int256 x) internal pure returns (uint256) {
