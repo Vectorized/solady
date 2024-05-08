@@ -906,6 +906,14 @@ contract SafeCastLibTest is SoladyTest {
         } while (_random() % 2 == 0);
     }
 
+    function testSafeCastToInt256Bench() public pure {
+        unchecked {
+            for (uint256 i; i != 256; ++i) {
+                SafeCastLib.toInt256(1 << i - 1);
+            }
+        }
+    }
+
     function testSafeCastToInt256(uint256 x) public {
         if (x > uint256(type(int256).max)) {
             vm.expectRevert(SafeCastLib.Overflow.selector);
