@@ -175,127 +175,158 @@ library SafeCastLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function toInt8(int256 x) internal pure returns (int8 y) {
-        if (x != (y = int8(x))) _revertOverflow();
+        if (x != int8(x)) _revertOverflow();
+        y = int8(x);
     }
 
     function toInt16(int256 x) internal pure returns (int16 y) {
-        if (x != (y = int16(x))) _revertOverflow();
+        if (x != int16(x)) _revertOverflow();
+        y = int16(x);
     }
 
     function toInt24(int256 x) internal pure returns (int24 y) {
-        if (x != (y = int24(x))) _revertOverflow();
+        if (x != int24(x)) _revertOverflow();
+        y = int24(x);
     }
 
     function toInt32(int256 x) internal pure returns (int32 y) {
-        if (x != (y = int32(x))) _revertOverflow();
+        if (x != int32(x)) _revertOverflow();
+        y = int32(x);
     }
 
     function toInt40(int256 x) internal pure returns (int40 y) {
-        if (x != (y = int40(x))) _revertOverflow();
+        if (x != int40(x)) _revertOverflow();
+        y = int40(x);
     }
 
     function toInt48(int256 x) internal pure returns (int48 y) {
-        if (x != (y = int48(x))) _revertOverflow();
+        if (x != int48(x)) _revertOverflow();
+        y = int48(x);
     }
 
     function toInt56(int256 x) internal pure returns (int56 y) {
-        if (x != (y = int56(x))) _revertOverflow();
+        if (x != int56(x)) _revertOverflow();
+        y = int56(x);
     }
 
     function toInt64(int256 x) internal pure returns (int64 y) {
-        if (x != (y = int64(x))) _revertOverflow();
+        if (x != int64(x)) _revertOverflow();
+        y = int64(x);
     }
 
     function toInt72(int256 x) internal pure returns (int72 y) {
-        if (x != (y = int72(x))) _revertOverflow();
+        if (x != int72(x)) _revertOverflow();
+        y = int72(x);
     }
 
     function toInt80(int256 x) internal pure returns (int80 y) {
-        if (x != (y = int80(x))) _revertOverflow();
+        if (x != int80(x)) _revertOverflow();
+        y = int80(x);
     }
 
     function toInt88(int256 x) internal pure returns (int88 y) {
-        if (x != (y = int88(x))) _revertOverflow();
+        if (x != int88(x)) _revertOverflow();
+        y = int88(x);
     }
 
     function toInt96(int256 x) internal pure returns (int96 y) {
-        if (x != (y = int96(x))) _revertOverflow();
+        if (x != int96(x)) _revertOverflow();
+        y = int96(x);
     }
 
     function toInt104(int256 x) internal pure returns (int104 y) {
-        if (x != (y = int104(x))) _revertOverflow();
+        if (x != int104(x)) _revertOverflow();
+        y = int104(x);
     }
 
     function toInt112(int256 x) internal pure returns (int112 y) {
-        if (x != (y = int112(x))) _revertOverflow();
+        if (x != int112(x)) _revertOverflow();
+        y = int112(x);
     }
 
     function toInt120(int256 x) internal pure returns (int120 y) {
-        if (x != (y = int120(x))) _revertOverflow();
+        if (x != int120(x)) _revertOverflow();
+        y = int120(x);
     }
 
     function toInt128(int256 x) internal pure returns (int128 y) {
-        if (x != (y = int128(x))) _revertOverflow();
+        if (x != int128(x)) _revertOverflow();
+        y = int128(x);
     }
 
     function toInt136(int256 x) internal pure returns (int136 y) {
-        if (x != (y = int136(x))) _revertOverflow();
+        if (x != int136(x)) _revertOverflow();
+        y = int136(x);
     }
 
     function toInt144(int256 x) internal pure returns (int144 y) {
-        if (x != (y = int144(x))) _revertOverflow();
+        if (x != int144(x)) _revertOverflow();
+        y = int144(x);
     }
 
     function toInt152(int256 x) internal pure returns (int152 y) {
-        if (x != (y = int152(x))) _revertOverflow();
+        if (x != int152(x)) _revertOverflow();
+        y = int152(x);
     }
 
     function toInt160(int256 x) internal pure returns (int160 y) {
-        if (x != (y = int160(x))) _revertOverflow();
+        if (x != int160(x)) _revertOverflow();
+        y = int160(x);
     }
 
     function toInt168(int256 x) internal pure returns (int168 y) {
-        if (x != (y = int168(x))) _revertOverflow();
+        if (x != int168(x)) _revertOverflow();
+        y = int168(x);
     }
 
     function toInt176(int256 x) internal pure returns (int176 y) {
-        if (x != (y = int176(x))) _revertOverflow();
+        if (x != int176(x)) _revertOverflow();
+        y = int176(x);
     }
 
     function toInt184(int256 x) internal pure returns (int184 y) {
-        if (x != (y = int184(x))) _revertOverflow();
+        if (x != int184(x)) _revertOverflow();
+        y = int184(x);
     }
 
     function toInt192(int256 x) internal pure returns (int192 y) {
-        if (x != (y = int192(x))) _revertOverflow();
+        if (x != int192(x)) _revertOverflow();
+        y = int192(x);
     }
 
     function toInt200(int256 x) internal pure returns (int200 y) {
-        if (x != (y = int200(x))) _revertOverflow();
+        if (x != int200(x)) _revertOverflow();
+        y = int200(x);
     }
 
     function toInt208(int256 x) internal pure returns (int208 y) {
-        if (x != (y = int208(x))) _revertOverflow();
+        if (x != int208(x)) _revertOverflow();
+        y = int208(x);
     }
 
     function toInt216(int256 x) internal pure returns (int216 y) {
-        if (x != (y = int216(x))) _revertOverflow();
+        if (x != int216(x)) _revertOverflow();
+        y = int216(x);
     }
 
     function toInt224(int256 x) internal pure returns (int224 y) {
-        if (x != (y = int224(x))) _revertOverflow();
+        if (x != int224(x)) _revertOverflow();
+        y = int224(x);
     }
 
     function toInt232(int256 x) internal pure returns (int232 y) {
-        if (x != (y = int232(x))) _revertOverflow();
+        if (x != int232(x)) _revertOverflow();
+        y = int232(x);
     }
 
     function toInt240(int256 x) internal pure returns (int240 y) {
-        if (x != (y = int240(x))) _revertOverflow();
+        if (x != int240(x)) _revertOverflow();
+        y = int240(x);
     }
 
     function toInt248(int256 x) internal pure returns (int248 y) {
-        if (x != (y = int248(x))) _revertOverflow();
+        if (x != int248(x)) _revertOverflow();
+        y = int248(x);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -457,14 +488,30 @@ library SafeCastLib {
         return int248(int256(x));
     }
 
-    function toInt256(uint256 x) internal pure returns (int256) {
-        if (x >= 1 << 255) _revertOverflow();
-        return int256(x);
+    function toInt256(uint256 x) internal pure returns (int256 y) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if slt(x, 0) {
+                // Store the function selector of `Overflow()`.
+                mstore(0x00, 0x35278d12)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            y := x
+        }
     }
 
-    function toUint256(int256 x) internal pure returns (uint256) {
-        if (x < 0) _revertOverflow();
-        return uint256(x);
+    function toUint256(int256 x) internal pure returns (uint256 y) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if slt(x, 0) {
+                // Store the function selector of `Overflow()`.
+                mstore(0x00, 0x35278d12)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+            y := x
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
