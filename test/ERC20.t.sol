@@ -429,7 +429,11 @@ contract ERC20Test is SoladyTest {
         assembly {
             let m := mload(sub(t, 0x20))
             mstore(sub(t, 0x20), 0xd505accf)
-            pop(call(gas(), token_, 0, sub(t, 0x04), 0xe4, 0x00, 0x00))
+            let success := call(gas(), token_, 0, sub(t, 0x04), 0xe4, 0x00, 0x00)
+            if iszero(success) {
+                returndatacopy(0, 0, returndatasize())
+                revert(0, returndatasize())
+            }
             mstore(sub(t, 0x20), m)
         }
     }
