@@ -556,8 +556,8 @@ library SafeCastLib {
         assembly {
             overflows := slt(x, 0)
         }
-        if (overflows) _revertOverflow();
-        return int256(x);
+        if (!overflows) return int256(x);
+        _revertOverflow();
     }
 
     function toUint256(int256 x) internal pure returns (uint256) {
@@ -566,8 +566,8 @@ library SafeCastLib {
         assembly {
             overflows := slt(x, 0)
         }
-        if (overflows) _revertOverflow();
-        return uint256(x);
+        if (!overflows) return uint256(x);
+        _revertOverflow();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
