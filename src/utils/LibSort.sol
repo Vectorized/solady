@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Optimized sorts and operations for sorted arrays.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Sort.sol)
+/// @author Solady (https://github.com/Vectorized/solady/blob/main/src/utils/LibSort.sol)
 library LibSort {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      INSERTION SORT                        */
