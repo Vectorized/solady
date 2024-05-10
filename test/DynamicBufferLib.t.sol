@@ -7,6 +7,71 @@ import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
 contract DynamicBufferLibTest is SoladyTest {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
+    function testDynamicBufferPushSingles(uint256 x) public {
+        {
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            assertEq(buffer.data.length, 0x00);
+            buffer.pUint256(x);
+            assertEq(buffer.data, abi.encodePacked(uint256(x)));
+        }
+
+        {
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            assertEq(buffer.data.length, 0x00);
+            buffer.pUint8(uint8(x));
+            assertEq(buffer.data, abi.encodePacked(uint8(x)));
+        }
+
+        {
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            assertEq(buffer.data.length, 0x00);
+            buffer.pBytes32(bytes32(x));
+            assertEq(buffer.data, abi.encodePacked(bytes32(x)));
+        }
+
+        {
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            assertEq(buffer.data.length, 0x00);
+            buffer.pBytes1(bytes1(bytes32(x)));
+            assertEq(buffer.data, abi.encodePacked(bytes1(bytes32(x))));
+        }
+
+        {
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            assertEq(buffer.data.length, 0x00);
+            buffer.pBool(x % 2 == 0);
+            assertEq(buffer.data, abi.encodePacked(bool(x % 2 == 0)));
+        }
+
+        {
+            DynamicBufferLib.DynamicBuffer memory buffer;
+            assertEq(buffer.data.length, 0x00);
+            buffer.pAddress(address(uint160(x)));
+            assertEq(buffer.data, abi.encodePacked(address(uint160(x))));
+        }
+    }
+
+    function testDynamicBufferPushSinglesReinterpretCast() public {
+        uint256 n = 32;
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        uint256[] memory expected = new uint256[](n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                uint256 v = (i << 128) | 1;
+                buffer.pUint256(v);
+                expected[i] = v;
+            }
+        }
+        uint256[] memory computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            computed := mload(buffer)
+            let nBytes := mload(computed)
+            mstore(computed, shr(5, nBytes))
+        }
+        assertEq(computed, expected);
+    }
+
     function testClear(uint256) public {
         DynamicBufferLib.DynamicBuffer memory buffer;
         bytes memory b0 = _generateRandomBytes(128, _random());
