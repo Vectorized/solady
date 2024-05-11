@@ -292,7 +292,7 @@ contract SafeCastLibTest is SoladyTest {
         } while (_random() % 2 == 0);
     }
 
-    function testSafeCastToUintBench() public {
+    function testSafeCastUint256ToUintBench() public {
         unchecked {
             uint256 sum;
             for (uint256 i; i != 127; ++i) {
@@ -947,7 +947,7 @@ contract SafeCastLibTest is SoladyTest {
         } while (_random() % 2 == 0);
     }
 
-    function testSafeCastToInt256Bench() public pure {
+    function testSafeCastUint256ToInt256Bench() public pure {
         unchecked {
             for (uint256 i; i != 256; ++i) {
                 SafeCastLib.toInt256(1 << i - 1);
