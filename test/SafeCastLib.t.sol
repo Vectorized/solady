@@ -292,7 +292,7 @@ contract SafeCastLibTest is SoladyTest {
         } while (_random() % 2 == 0);
     }
 
-    function testSafeCastToUintBench() public {
+    function testSafeCastUint256ToUintBench() public {
         unchecked {
             uint256 sum;
             for (uint256 i; i != 127; ++i) {
@@ -330,6 +330,18 @@ contract SafeCastLibTest is SoladyTest {
             }
             assertTrue(sum > 100);
         }
+    }
+
+    function check_SafeCastInt256ToIntTrickEquivalence(int256 x) public pure {
+        unchecked {
+            bool expected = x == int32(x);
+            bool optimized = ((1 << 31) + uint256(x)) >> 32 == uint256(0);
+            assert(optimized == expected);
+        }
+    }
+
+    function testSafeCastInt256ToIntTrickEquivalence(int256 x) public pure {
+        check_SafeCastInt256ToIntTrickEquivalence(x);
     }
 
     function testSafeCastInt256ToInt(int256 x, uint256 r) public {
@@ -619,6 +631,47 @@ contract SafeCastLibTest is SoladyTest {
         } while (_random() % 2 == 0);
     }
 
+    function testSafeCastUint256ToIntBench() public {
+        unchecked {
+            int256 sum;
+            for (uint256 i; i != 127; ++i) {
+                sum += int256(SafeCastLib.toInt8(i));
+                sum += int256(SafeCastLib.toInt16(i));
+                sum += int256(SafeCastLib.toInt24(i));
+                sum += int256(SafeCastLib.toInt32(i));
+                sum += int256(SafeCastLib.toInt40(i));
+                sum += int256(SafeCastLib.toInt48(i));
+                sum += int256(SafeCastLib.toInt56(i));
+                sum += int256(SafeCastLib.toInt64(i));
+                sum += int256(SafeCastLib.toInt72(i));
+                sum += int256(SafeCastLib.toInt80(i));
+                sum += int256(SafeCastLib.toInt88(i));
+                sum += int256(SafeCastLib.toInt96(i));
+                sum += int256(SafeCastLib.toInt104(i));
+                sum += int256(SafeCastLib.toInt112(i));
+                sum += int256(SafeCastLib.toInt120(i));
+                sum += int256(SafeCastLib.toInt128(i));
+                sum += int256(SafeCastLib.toInt136(i));
+                sum += int256(SafeCastLib.toInt144(i));
+                sum += int256(SafeCastLib.toInt152(i));
+                sum += int256(SafeCastLib.toInt160(i));
+                sum += int256(SafeCastLib.toInt168(i));
+                sum += int256(SafeCastLib.toInt176(i));
+                sum += int256(SafeCastLib.toInt184(i));
+                sum += int256(SafeCastLib.toInt192(i));
+                sum += int256(SafeCastLib.toInt200(i));
+                sum += int256(SafeCastLib.toInt208(i));
+                sum += int256(SafeCastLib.toInt216(i));
+                sum += int256(SafeCastLib.toInt224(i));
+                sum += int256(SafeCastLib.toInt232(i));
+                sum += int256(SafeCastLib.toInt240(i));
+                sum += int256(SafeCastLib.toInt248(i));
+                sum += int256(SafeCastLib.toInt256(i));
+            }
+            assertTrue(sum > 100);
+        }
+    }
+
     function testSafeCastUint256ToInt(uint256 x, uint256 r) public {
         do {
             r = _random() % 31;
@@ -906,7 +959,7 @@ contract SafeCastLibTest is SoladyTest {
         } while (_random() % 2 == 0);
     }
 
-    function testSafeCastToInt256Bench() public pure {
+    function testSafeCastUint256ToInt256Bench() public pure {
         unchecked {
             for (uint256 i; i != 256; ++i) {
                 SafeCastLib.toInt256(1 << i - 1);
@@ -932,7 +985,7 @@ contract SafeCastLibTest is SoladyTest {
         }
     }
 
-    function testSafeCastToIntBench() public {
+    function testSafeCastInt256ToIntBench() public {
         unchecked {
             int256 sum;
             for (int256 i; i != 127; ++i) {
