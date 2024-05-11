@@ -332,6 +332,18 @@ contract SafeCastLibTest is SoladyTest {
         }
     }
 
+    function check_SafeCastInt256ToIntTrickEquivalence(int256 x) public pure {
+        unchecked {
+            bool expected = x == int32(x);
+            bool optimized = ((1 << 31) + uint256(x)) >> 32 == uint256(0);
+            assert(optimized == expected);
+        }
+    }
+
+    function testSafeCastInt256ToIntTrickEquivalence(int256 x) public pure {
+        check_SafeCastInt256ToIntTrickEquivalence(x);
+    }
+
     function testSafeCastInt256ToInt(int256 x, uint256 r) public {
         do {
             r = r % 31;
