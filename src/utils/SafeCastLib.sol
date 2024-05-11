@@ -556,12 +556,7 @@ library SafeCastLib {
     }
 
     function toUint256(int256 x) internal pure returns (uint256) {
-        bool overflows;
-        /// @solidity memory-safe-assembly
-        assembly {
-            overflows := slt(x, 0)
-        }
-        if (!overflows) return uint256(x);
+        if (x >= 0) return uint256(x);
         _revertOverflow();
     }
 
