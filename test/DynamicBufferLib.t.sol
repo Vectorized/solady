@@ -9,32 +9,80 @@ contract DynamicBufferLibTest is SoladyTest {
 
     function testDynamicBufferPushSingles(uint256 x, uint256 y, uint256 z) public {
         if (_random() % 32 == 0) _brutalizeMemory();
-        {
-            DynamicBufferLib.DynamicBuffer memory buffer;
+        DynamicBufferLib.DynamicBuffer memory buffer;
+        if (_random() % 4 == 0) {
+            if (_random() % 2 == 0) {
+                DynamicBufferLib.DynamicBuffer memory newBuffer;
+                buffer = newBuffer;
+            }
             buffer.pUint256(x);
             assertEq(buffer.data, abi.encodePacked(uint256(x)));
             buffer.pUint256(y).pUint256(z);
             assertEq(buffer.data, abi.encodePacked(uint256(x), uint256(y), uint256(z)));
         }
         if (_random() % 32 == 0) _brutalizeMemory();
-        {
-            DynamicBufferLib.DynamicBuffer memory buffer;
+        if (_random() % 4 == 0) {
+            if (_random() % 2 == 0) {
+                DynamicBufferLib.DynamicBuffer memory newBuffer;
+                buffer = newBuffer;
+            } else {
+                buffer.clear();
+            }
+            buffer.pUint32(uint32(x));
+            assertEq(buffer.data, abi.encodePacked(uint32(x)));
+            buffer.pUint32(uint32(y)).pUint32(uint32(z));
+            assertEq(buffer.data, abi.encodePacked(uint32(x), uint32(y), uint32(z)));
+        }
+        if (_random() % 32 == 0) _brutalizeMemory();
+        if (_random() % 4 == 0) {
+            if (_random() % 2 == 0) {
+                DynamicBufferLib.DynamicBuffer memory newBuffer;
+                buffer = newBuffer;
+            } else {
+                buffer.clear();
+            }
             buffer.pUint8(uint8(x));
             assertEq(buffer.data, abi.encodePacked(uint8(x)));
             buffer.pUint8(uint8(y)).pUint8(uint8(z));
             assertEq(buffer.data, abi.encodePacked(uint8(x), uint8(y), uint8(z)));
         }
         if (_random() % 32 == 0) _brutalizeMemory();
-        {
-            DynamicBufferLib.DynamicBuffer memory buffer;
+        if (_random() % 4 == 0) {
+            if (_random() % 2 == 0) {
+                DynamicBufferLib.DynamicBuffer memory newBuffer;
+                buffer = newBuffer;
+            } else {
+                buffer.clear();
+            }
             buffer.pBytes32(bytes32(x));
             assertEq(buffer.data, abi.encodePacked(bytes32(x)));
             buffer.pBytes32(bytes32(y)).pBytes32(bytes32(z));
             assertEq(buffer.data, abi.encodePacked(bytes32(x), bytes32(y), bytes32(z)));
         }
         if (_random() % 32 == 0) _brutalizeMemory();
-        {
-            DynamicBufferLib.DynamicBuffer memory buffer;
+        if (_random() % 4 == 0) {
+            if (_random() % 2 == 0) {
+                DynamicBufferLib.DynamicBuffer memory newBuffer;
+                buffer = newBuffer;
+            } else {
+                buffer.clear();
+            }
+            buffer.pBytes3(bytes3(bytes32(x)));
+            assertEq(buffer.data, abi.encodePacked(bytes3(bytes32(x))));
+            buffer.pBytes3(bytes3(bytes32(y))).pBytes3(bytes3(bytes32(z)));
+            assertEq(
+                buffer.data,
+                abi.encodePacked(bytes3(bytes32(x)), bytes3(bytes32(y)), bytes3(bytes32(z)))
+            );
+        }
+        if (_random() % 32 == 0) _brutalizeMemory();
+        if (_random() % 4 == 0) {
+            if (_random() % 2 == 0) {
+                DynamicBufferLib.DynamicBuffer memory newBuffer;
+                buffer = newBuffer;
+            } else {
+                buffer.clear();
+            }
             buffer.pBytes1(bytes1(bytes32(x)));
             assertEq(buffer.data, abi.encodePacked(bytes1(bytes32(x))));
             buffer.pBytes1(bytes1(bytes32(y))).pBytes1(bytes1(bytes32(z)));
@@ -44,16 +92,26 @@ contract DynamicBufferLibTest is SoladyTest {
             );
         }
         if (_random() % 32 == 0) _brutalizeMemory();
-        {
-            DynamicBufferLib.DynamicBuffer memory buffer;
+        if (_random() % 4 == 0) {
+            if (_random() % 2 == 0) {
+                DynamicBufferLib.DynamicBuffer memory newBuffer;
+                buffer = newBuffer;
+            } else {
+                buffer.clear();
+            }
             buffer.pBool(x % 2 == 0);
             assertEq(buffer.data, abi.encodePacked(x % 2 == 0));
             buffer.pBool(y % 2 == 0).pBool(z % 2 == 0);
             assertEq(buffer.data, abi.encodePacked(x % 2 == 0, y % 2 == 0, z % 2 == 0));
         }
         if (_random() % 32 == 0) _brutalizeMemory();
-        {
-            DynamicBufferLib.DynamicBuffer memory buffer;
+        if (_random() % 4 == 0) {
+            if (_random() % 2 == 0) {
+                DynamicBufferLib.DynamicBuffer memory newBuffer;
+                buffer = newBuffer;
+            } else {
+                buffer.clear();
+            }
             buffer.pAddress(address(uint160(x)));
             assertEq(buffer.data, abi.encodePacked(address(uint160(x))));
             buffer.pAddress(address(uint160(y))).pAddress(address(uint160(z)));
