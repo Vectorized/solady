@@ -1001,12 +1001,12 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testDist() public {
-        assertEq(FixedPointMathLib.dist(int(0), int(0)), 0);
-        assertEq(FixedPointMathLib.dist(int(-5), int(-4)), 1);
-        assertEq(FixedPointMathLib.dist(int(5), int(46)), 41);
-        assertEq(FixedPointMathLib.dist(int(46), int(5)), 41);
-        assertEq(FixedPointMathLib.dist(int(-1155656654), int(6544844)) , 1162201498);
-        assertEq(FixedPointMathLib.dist(int(-848877), int(-8447631456)), 8446782579);
+        assertEq(FixedPointMathLib.dist(int256(0), int256(0)), 0);
+        assertEq(FixedPointMathLib.dist(int256(-5), int256(-4)), 1);
+        assertEq(FixedPointMathLib.dist(int256(5), int256(46)), 41);
+        assertEq(FixedPointMathLib.dist(int256(46), int256(5)), 41);
+        assertEq(FixedPointMathLib.dist(int256(-1155656654), int256(6544844)), 1162201498);
+        assertEq(FixedPointMathLib.dist(int256(-848877), int256(-8447631456)), 8446782579);
     }
 
     function testDistEdgeCases() public {
@@ -1838,70 +1838,115 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testLerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end) public {
         while (begin == end) begin = _random();
-        assertEq(_lerpOriginal(a, b, t, begin, end), _lerpOriginal2(a, b, t, begin, end));
+        assertEq(_lerpOriginal(a, b, t, begin, end), FixedPointMathLib.lerp(a, b, t, begin, end));
+    }
+
+    function testLerp(int256 a, int256 b, int256 t, int256 begin, int256 end) public {
+        while (begin == end) begin = int(_random());
+        assertEq(_lerpOriginal(a, b, t, begin, end), FixedPointMathLib.lerp(a, b, t, begin, end));
     }
 
     function testLerpOriginal() public {
-        assertEq(_lerpOriginal(100, 200, 0, 5, 10), 100);
-        assertEq(_lerpOriginal(100, 200, 5, 5, 10), 100);
-        assertEq(_lerpOriginal(100, 200, 10, 5, 10), 200);
-        assertEq(_lerpOriginal(100, 200, 15, 5, 10), 200);
-        assertEq(_lerpOriginal(100, 200, 6, 5, 10), 120);
-        assertEq(_lerpOriginal(100, 200, 9, 5, 10), 180);
-        
-        assertEq(_lerpOriginal(200, 100, 0, 5, 10), 200);
-        assertEq(_lerpOriginal(200, 100, 5, 5, 10), 200);
-        assertEq(_lerpOriginal(200, 100, 10, 5, 10), 100);
-        assertEq(_lerpOriginal(200, 100, 15, 5, 10), 100);
-        assertEq(_lerpOriginal(200, 100, 6, 5, 10), 180);
-        assertEq(_lerpOriginal(200, 100, 9, 5, 10), 120);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 0, 5, 10), 100);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 5, 5, 10), 100);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 10, 5, 10), 200);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 15, 5, 10), 200);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 6, 5, 10), 120);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 9, 5, 10), 180);
 
-        assertEq(_lerpOriginal(200, 100, 0, 10, 5), 100);
-        assertEq(_lerpOriginal(200, 100, 5, 10, 5), 100);
-        assertEq(_lerpOriginal(200, 100, 10, 10, 5), 200);
-        assertEq(_lerpOriginal(200, 100, 15, 10, 5), 200);
-        assertEq(_lerpOriginal(200, 100, 6, 10, 5), 120);
-        assertEq(_lerpOriginal(200, 100, 9, 10, 5), 180);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 0, 5, 10), 200);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 5, 5, 10), 200);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 10, 5, 10), 100);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 15, 5, 10), 100);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 6, 5, 10), 180);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 9, 5, 10), 120);
 
-        assertEq(_lerpOriginal(100, 200, 0, 10, 5), 200);
-        assertEq(_lerpOriginal(100, 200, 5, 10, 5), 200);
-        assertEq(_lerpOriginal(100, 200, 10, 10, 5), 100);
-        assertEq(_lerpOriginal(100, 200, 15, 10, 5), 100);
-        assertEq(_lerpOriginal(100, 200, 6, 10, 5), 180);
-        assertEq(_lerpOriginal(100, 200, 9, 10, 5), 120);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 0, 10, 5), 100);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 5, 10, 5), 100);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 10, 10, 5), 200);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 15, 10, 5), 200);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 6, 10, 5), 120);
+        assertEq(FixedPointMathLib.lerp(uint256(200), 100, 9, 10, 5), 180);
+
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 0, 10, 5), 200);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 5, 10, 5), 200);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 10, 10, 5), 100);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 15, 10, 5), 100);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 6, 10, 5), 180);
+        assertEq(FixedPointMathLib.lerp(uint256(100), 200, 9, 10, 5), 120);
+
+        assertEq(FixedPointMathLib.lerp(-50, 50, 0, 5, 10), -50);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 5, 5, 10), -50);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 10, 5, 10), 50);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 15, 5, 10), 50);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 6, 5, 10), -30);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 9, 5, 10), 30);
+
+        assertEq(FixedPointMathLib.lerp(50, -50, 0, 5, 10), 50);
+        assertEq(FixedPointMathLib.lerp(50, -50, 5, 5, 10), 50);
+        assertEq(FixedPointMathLib.lerp(50, -50, 10, 5, 10), -50);
+        assertEq(FixedPointMathLib.lerp(50, -50, 15, 5, 10), -50);
+        assertEq(FixedPointMathLib.lerp(50, -50, 6, 5, 10), 30);
+        assertEq(FixedPointMathLib.lerp(50, -50, 9, 5, 10), -30);
+
+        assertEq(FixedPointMathLib.lerp(50, -50, 0, 10, 5), -50);
+        assertEq(FixedPointMathLib.lerp(50, -50, 5, 10, 5), -50);
+        assertEq(FixedPointMathLib.lerp(50, -50, 10, 10, 5), 50);
+        assertEq(FixedPointMathLib.lerp(50, -50, 15, 10, 5), 50);
+        assertEq(FixedPointMathLib.lerp(50, -50, 6, 10, 5), -30);
+        assertEq(FixedPointMathLib.lerp(50, -50, 9, 10, 5), 30);
+
+        assertEq(FixedPointMathLib.lerp(-50, 50, 0, 10, 5), 50);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 5, 10, 5), 50);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 10, 10, 5), -50);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 15, 10, 5), -50);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 6, 10, 5), 30);
+        assertEq(FixedPointMathLib.lerp(-50, 50, 9, 10, 5), -30);
     }
 
-    function _lerpOriginal(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end) internal pure returns (uint256) {
+    function _lerpOriginal(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end)
+        internal
+        pure
+        returns (uint256)
+    {
         if (begin < end) {
             if (t <= begin) return a;
             if (t >= end) return b;
         }
-
         if (begin > end) {
             if (t >= begin) return a;
             if (t <= end) return b;
         }
-
-        uint256 delta = FixedPointMathLib.fullMulDiv(FixedPointMathLib.dist(a, b), FixedPointMathLib.dist(t, begin), FixedPointMathLib.dist(end, begin));
+        uint256 delta = FixedPointMathLib.fullMulDiv(
+            FixedPointMathLib.dist(a, b),
+            FixedPointMathLib.dist(t, begin),
+            FixedPointMathLib.dist(end, begin)
+        );
         if (b > a) return a + delta;
         if (b < a) return a - delta;
         return a;
     }
-    
-    function _lerpOriginal2(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end) internal pure returns (uint256) {
+
+    function _lerpOriginal(int256 a, int256 b, int256 t, int256 begin, int256 end)
+        internal
+        pure
+        returns (int256)
+    {
         if (begin < end) {
             if (t <= begin) return a;
             if (t >= end) return b;
         }
-
         if (begin > end) {
             if (t >= begin) return a;
             if (t <= end) return b;
         }
-
-        unchecked {
-            if (b >= a) return a + FixedPointMathLib.fullMulDiv(b - a, FixedPointMathLib.dist(t, begin), FixedPointMathLib.dist(end, begin));
-            return a - FixedPointMathLib.fullMulDiv(a - b, FixedPointMathLib.dist(t, begin), FixedPointMathLib.dist(end, begin));
-        }
+        uint256 delta = FixedPointMathLib.fullMulDiv(
+            FixedPointMathLib.dist(a, b),
+            FixedPointMathLib.dist(t, begin),
+            FixedPointMathLib.dist(end, begin)
+        );
+        if (b > a) return a + int256(delta);
+        if (b < a) return a - int256(delta);
+        return a;
     }
 }

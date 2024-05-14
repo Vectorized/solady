@@ -987,13 +987,28 @@ library FixedPointMathLib {
         }
     }
 
-    // function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end) internal pure returns (uint256 z) {
-    //     /// @solidity memory-safe-assembly
-    //     assembly {
+    /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
+    function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end) internal pure returns (uint256) {
+        if (begin >= end) {
+            t = ~t;
+            begin = ~begin;
+            end = ~end;
+        }
+        if (t <= begin) return a;
+        if (t >= end) return b;
+        unchecked {
+            if (b >= a) return a + fullMulDiv(b - a, t - begin, end - begin);
+            return a - fullMulDiv(a - b, t - begin, end - begin);
+        }
+    }
 
-    //         mul(sub(t, begin), div(sub(b, a), sub(end, begin)))
-    //     }
-    // }
+    /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
+    function lerp(int256 a, int256 b, int256 t, int256 begin, int256 end) internal pure returns (int256) {
+        unchecked {
+            uint256 w = 1 << 255;
+            return int256(lerp(uint(a) + w, uint(b) + w, uint(t) + w, uint(begin) + w, uint(end) + w) + w);
+        }
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   RAW NUMBER OPERATIONS                    */
