@@ -988,7 +988,11 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
-    function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end) internal pure returns (uint256) {
+    function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end)
+        internal
+        pure
+        returns (uint256)
+    {
         if (begin >= end) {
             t = ~t;
             begin = ~begin;
@@ -1003,10 +1007,22 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
-    function lerp(int256 a, int256 b, int256 t, int256 begin, int256 end) internal pure returns (int256) {
+    function lerp(int256 a, int256 b, int256 t, int256 begin, int256 end)
+        internal
+        pure
+        returns (int256)
+    {
         unchecked {
             uint256 w = 1 << 255;
-            return int256(lerp(uint(a) + w, uint(b) + w, uint(t) + w, uint(begin) + w, uint(end) + w) + w);
+            return int256(
+                lerp(
+                    uint256(a) + w,
+                    uint256(b) + w,
+                    uint256(t) + w,
+                    uint256(begin) + w,
+                    uint256(end) + w
+                ) + w
+            );
         }
     }
 
