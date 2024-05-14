@@ -906,6 +906,14 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the absolute distance between `x` and `y`.
+    function dist(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := xor(mul(xor(sub(y, x), sub(x, y)), gt(x, y)), sub(y, x))
+        }
+    }
+
+    /// @dev Returns the absolute distance between `x` and `y`.
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -978,6 +986,14 @@ library FixedPointMathLib {
             }
         }
     }
+
+    // function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end) internal pure returns (uint256 z) {
+    //     /// @solidity memory-safe-assembly
+    //     assembly {
+
+    //         mul(sub(t, begin), div(sub(b, a), sub(end, begin)))
+    //     }
+    // }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   RAW NUMBER OPERATIONS                    */
