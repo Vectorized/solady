@@ -1946,8 +1946,16 @@ contract FixedPointMathLibTest is SoladyTest {
             FixedPointMathLib.dist(end, begin)
         );
         unchecked {
-            if (b > a) return int256(uint256(a) + delta);
-            if (b < a) return int256(uint256(a) - delta);
+            if (b > a) {
+                int256 result = int256(uint256(a) + delta);
+                assert(a <= result && result <= b);
+                return result;
+            }
+            if (b < a) {
+                int256 result = int256(uint256(a) - delta);
+                assert(a >= result && result >= b);
+                return result;
+            }
         }
         return a;
     }

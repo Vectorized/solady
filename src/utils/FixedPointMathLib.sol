@@ -988,6 +988,8 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
+    /// Agnostic to the order of (`a`, `b`) and (`end`, `begin`).
+    /// Reverts if `begin` equals `end` (division by zero).
     function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end)
         internal
         pure
@@ -1007,22 +1009,26 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
+    /// Agnostic to the order of (`a`, `b`) and (`end`, `begin`).
+    /// Reverts if `begin` equals `end` (division by zero).
     function lerp(int256 a, int256 b, int256 t, int256 begin, int256 end)
         internal
         pure
         returns (int256)
     {
+        if (begin >= end) {
+            t = int256(~uint256(t));
+            begin = int256(~uint256(begin));
+            end = int256(~uint256(end));
+        }
+        if (t <= begin) return a;
+        if (t >= end) return b;
+        // forgefmt: disable-next-item
         unchecked {
-            uint256 w = 1 << 255;
-            return int256(
-                lerp(
-                    uint256(a) + w,
-                    uint256(b) + w,
-                    uint256(t) + w,
-                    uint256(begin) + w,
-                    uint256(end) + w
-                ) + w
-            );
+            if (b >= a) return int256(uint256(a) + fullMulDiv(uint256(b) - uint256(a),
+                uint256(t) - uint256(begin), uint256(end) - uint256(begin)));
+            return int256(uint256(a) - fullMulDiv(uint256(a) - uint256(b),
+                uint256(t) - uint256(begin), uint256(end) - uint256(begin)));
         }
     }
 
