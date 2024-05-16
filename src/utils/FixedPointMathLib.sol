@@ -449,17 +449,18 @@ library FixedPointMathLib {
                 if iszero(mul(or(iszero(x), eq(div(result, x), y)), d)) {
                     let mm := mulmod(x, y, not(0))
                     let p1 := sub(mm, add(result, lt(mm, result))) // Upper 256 bits of `x * y`.
-                    // Make sure the result is less than `2**256`. Also prevents `d == 0`.
-                    if iszero(gt(d, p1)) {
-                        mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
-                        revert(0x1c, 0x04)
-                    }
 
                     /*------------------- 512 by 256 division --------------------*/
 
                     // Make division exact by subtracting the remainder from `[p1 p0]`.
                     let r := mulmod(x, y, d) // Compute remainder using mulmod.
                     let t := and(d, sub(0, d)) // The least significant bit of `d`. `t >= 1`.
+                    // Make sure the result is less than `2**256`. Also prevents `d == 0`.
+                    // Placing the check here seems to give more optimal stack operations.
+                    if iszero(gt(d, p1)) {
+                        mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
+                        revert(0x1c, 0x04)
+                    }
                     d := div(d, t) // Divide `d` by `t`, which is a power of two.
                     // Invert `d mod 2**256`
                     // Now that `d` is an odd number, it has an inverse
@@ -484,7 +485,7 @@ library FixedPointMathLib {
                                 mul(sub(p1, gt(r, result)), add(div(sub(0, t), t), 1)),
                                 div(sub(result, r), t)
                             ),
-                            mul(inv, sub(2, mul(d, inv))) // inverse mod 2**256
+                            mul(sub(2, mul(d, inv)), inv) // inverse mod 2**256
                         )
                     break
                 }

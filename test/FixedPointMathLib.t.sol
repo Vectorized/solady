@@ -1268,11 +1268,13 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulDiv(uint256 x, uint256 y, uint256 denominator) public {
-        // Ignore cases where x * y overflows or denominator is 0.
         unchecked {
-            if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
+            if (denominator == 0 || (x != 0 && (x * y) / x != y)) {
+                vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
+                FixedPointMathLib.mulDiv(x, y, denominator);
+                return;
+            }
         }
-
         assertEq(FixedPointMathLib.mulDiv(x, y, denominator), (x * y) / denominator);
     }
 
@@ -1290,11 +1292,12 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulDivUp(uint256 x, uint256 y, uint256 denominator) public {
-        // Ignore cases where x * y overflows or denominator is 0.
         unchecked {
-            if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
+            if (denominator == 0 || (x != 0 && (x * y) / x != y)) {
+                vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
+                FixedPointMathLib.mulDivUp(x, y, denominator);
+            }
         }
-
         assertEq(
             FixedPointMathLib.mulDivUp(x, y, denominator),
             x * y == 0 ? 0 : (x * y - 1) / denominator + 1
