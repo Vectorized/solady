@@ -1922,12 +1922,50 @@ contract FixedPointMathLibTest is SoladyTest {
             FixedPointMathLib.dist(t, begin),
             FixedPointMathLib.dist(end, begin)
         );
-        if (b > a) return a + delta;
-        if (b < a) return a - delta;
+        if (b > a) {
+            uint256 result = a + delta;
+            assert(a <= result && result <= b);
+            return result;
+        }
+        if (b < a) {
+            uint256 result = a - delta;
+            assert(a >= result && result >= b);
+            return result;
+        }
         return a;
     }
 
     function _lerpOriginal(int256 a, int256 b, int256 t, int256 begin, int256 end)
+        internal
+        pure
+        returns (int256)
+    {
+        int256 result1 = _lerpOriginal1(a, b, t, begin, end);
+        int256 result2 = _lerpOriginal2(a, b, t, begin, end);
+        assert(result1 == result2);
+        return result2;
+    }
+
+    function _lerpOriginal1(int256 a, int256 b, int256 t, int256 begin, int256 end)
+        internal
+        pure
+        returns (int256)
+    {
+        unchecked {
+            uint256 w = 1 << 255;
+            return int256(
+                _lerpOriginal(
+                    uint256(a) + w,
+                    uint256(b) + w,
+                    uint256(t) + w,
+                    uint256(begin) + w,
+                    uint256(end) + w
+                ) + w
+            );
+        }
+    }
+
+    function _lerpOriginal2(int256 a, int256 b, int256 t, int256 begin, int256 end)
         internal
         pure
         returns (int256)
