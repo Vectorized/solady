@@ -1053,6 +1053,11 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.fullMulDiv(2 ** 200, 2 ** 200, 2 ** 200), 2 ** 200);
     }
 
+    function testFullMulDivAlwaysRevertsIfDivisorIsZero(uint256 a, uint256 b) public {
+        vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
+        FixedPointMathLib.fullMulDivUp(a, b, 0);
+    }
+
     function testFullMulDivUpRevertsIfRoundedUpResultOverflowsCase1() public {
         vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
         FixedPointMathLib.fullMulDivUp(
