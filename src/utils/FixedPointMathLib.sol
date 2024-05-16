@@ -517,12 +517,13 @@ library FixedPointMathLib {
     function mulDiv(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to require(d != 0 && (y == 0 || x <= type(uint256).max / y))
-            if iszero(mul(d, iszero(mul(y, gt(x, div(not(0), y)))))) {
+            z := mul(x, y)
+            // Equivalent to `require(d != 0 && (y == 0 || x <= type(uint256).max / y))`.
+            if iszero(mul(or(iszero(x), eq(div(z, x), y)), d)) {
                 mstore(0x00, 0xad251c27) // `MulDivFailed()`.
                 revert(0x1c, 0x04)
             }
-            z := div(mul(x, y), d)
+            z := div(z, d)
         }
     }
 
@@ -531,12 +532,13 @@ library FixedPointMathLib {
     function mulDivUp(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to require(d != 0 && (y == 0 || x <= type(uint256).max / y))
-            if iszero(mul(d, iszero(mul(y, gt(x, div(not(0), y)))))) {
+            z := mul(x, y)
+            // Equivalent to `require(d != 0 && (y == 0 || x <= type(uint256).max / y))`.
+            if iszero(mul(or(iszero(x), eq(div(z, x), y)), d)) {
                 mstore(0x00, 0xad251c27) // `MulDivFailed()`.
                 revert(0x1c, 0x04)
             }
-            z := add(iszero(iszero(mod(mul(x, y), d))), div(mul(x, y), d))
+            z := add(iszero(iszero(mod(z, d))), div(z, d))
         }
     }
 
