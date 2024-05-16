@@ -436,71 +436,60 @@ library FixedPointMathLib {
     function fullMulDiv(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
+            // 512-bit multiply `[p1 p0] = x * y`.
+            // Compute the product mod `2**256` and mod `2**256 - 1`
+            // then use the Chinese Remainder Theorem to reconstruct
+            // the 512 bit result. The result is stored in two 256
+            // variables such that `product = p1 * 2**256 + p0`.
+
+            // Temporarily use `result` as `p0` to save gas.
+            result := mul(x, y) // Lower 256 bits of `x * y`.
             for {} 1 {} {
-                // 512-bit multiply `[p1 p0] = x * y`.
-                // Compute the product mod `2**256` and mod `2**256 - 1`
-                // then use the Chinese Remainder Theorem to reconstruct
-                // the 512 bit result. The result is stored in two 256
-                // variables such that `product = p1 * 2**256 + p0`.
+                // If overflows.
+                if iszero(mul(or(iszero(x), eq(div(result, x), y)), d)) {
+                    let mm := mulmod(x, y, not(0))
+                    let p1 := sub(mm, add(result, lt(mm, result))) // Upper 256 bits of `x * y`.
 
-                // Least significant 256 bits of the product.
-                result := mul(x, y) // Temporarily use `result` as `p0` to save gas.
-                let mm := mulmod(x, y, not(0))
-                // Most significant 256 bits of the product.
-                let p1 := sub(mm, add(result, lt(mm, result)))
+                    /*------------------- 512 by 256 division --------------------*/
 
-                // Handle non-overflow cases, 256 by 256 division.
-                if iszero(p1) {
-                    if iszero(d) {
+                    // Make division exact by subtracting the remainder from `[p1 p0]`.
+                    let r := mulmod(x, y, d) // Compute remainder using mulmod.
+                    let t := and(d, sub(0, d)) // The least significant bit of `d`. `t >= 1`.
+                    // Make sure the result is less than `2**256`. Also prevents `d == 0`.
+                    // Placing the check here seems to give more optimal stack operations.
+                    if iszero(gt(d, p1)) {
                         mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
                         revert(0x1c, 0x04)
                     }
-                    result := div(result, d)
+                    d := div(d, t) // Divide `d` by `t`, which is a power of two.
+                    // Invert `d mod 2**256`
+                    // Now that `d` is an odd number, it has an inverse
+                    // modulo `2**256` such that `d * inv = 1 mod 2**256`.
+                    // Compute the inverse by starting with a seed that is correct
+                    // correct for four bits. That is, `d * inv = 1 mod 2**4`.
+                    let inv := xor(2, mul(3, d))
+                    // Now use Newton-Raphson iteration to improve the precision.
+                    // Thanks to Hensel's lifting lemma, this also works in modular
+                    // arithmetic, doubling the correct bits in each step.
+                    inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**8
+                    inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**16
+                    inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**32
+                    inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**64
+                    inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**128
+                    result :=
+                        mul(
+                            // Divide [p1 p0] by the factors of two.
+                            // Shift in bits from `p1` into `p0`. For this we need
+                            // to flip `t` such that it is `2**256 / t`.
+                            or(
+                                mul(sub(p1, gt(r, result)), add(div(sub(0, t), t), 1)),
+                                div(sub(result, r), t)
+                            ),
+                            mul(sub(2, mul(d, inv)), inv) // inverse mod 2**256
+                        )
                     break
                 }
-
-                // Make sure the result is less than `2**256`. Also prevents `d == 0`.
-                if iszero(gt(d, p1)) {
-                    mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
-                    revert(0x1c, 0x04)
-                }
-
-                /*------------------- 512 by 256 division --------------------*/
-
-                // Make division exact by subtracting the remainder from `[p1 p0]`.
-                // Compute remainder using mulmod.
-                let r := mulmod(x, y, d)
-                // `t` is the least significant bit of `d`.
-                // Always greater or equal to 1.
-                let t := and(d, sub(0, d))
-                // Divide `d` by `t`, which is a power of two.
-                d := div(d, t)
-                // Invert `d mod 2**256`
-                // Now that `d` is an odd number, it has an inverse
-                // modulo `2**256` such that `d * inv = 1 mod 2**256`.
-                // Compute the inverse by starting with a seed that is correct
-                // correct for four bits. That is, `d * inv = 1 mod 2**4`.
-                let inv := xor(2, mul(3, d))
-                // Now use Newton-Raphson iteration to improve the precision.
-                // Thanks to Hensel's lifting lemma, this also works in modular
-                // arithmetic, doubling the correct bits in each step.
-                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**8
-                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**16
-                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**32
-                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**64
-                inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**128
-                result :=
-                    mul(
-                        // Divide [p1 p0] by the factors of two.
-                        // Shift in bits from `p1` into `p0`. For this we need
-                        // to flip `t` such that it is `2**256 / t`.
-                        or(
-                            mul(sub(p1, gt(r, result)), add(div(sub(0, t), t), 1)),
-                            div(sub(result, r), t)
-                        ),
-                        // inverse mod 2**256
-                        mul(inv, sub(2, mul(d, inv)))
-                    )
+                result := div(result, d)
                 break
             }
         }
@@ -529,12 +518,13 @@ library FixedPointMathLib {
     function mulDiv(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to require(d != 0 && (y == 0 || x <= type(uint256).max / y))
-            if iszero(mul(d, iszero(mul(y, gt(x, div(not(0), y)))))) {
+            z := mul(x, y)
+            // Equivalent to `require(d != 0 && (y == 0 || x <= type(uint256).max / y))`.
+            if iszero(mul(or(iszero(x), eq(div(z, x), y)), d)) {
                 mstore(0x00, 0xad251c27) // `MulDivFailed()`.
                 revert(0x1c, 0x04)
             }
-            z := div(mul(x, y), d)
+            z := div(z, d)
         }
     }
 
@@ -543,12 +533,13 @@ library FixedPointMathLib {
     function mulDivUp(uint256 x, uint256 y, uint256 d) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to require(d != 0 && (y == 0 || x <= type(uint256).max / y))
-            if iszero(mul(d, iszero(mul(y, gt(x, div(not(0), y)))))) {
+            z := mul(x, y)
+            // Equivalent to `require(d != 0 && (y == 0 || x <= type(uint256).max / y))`.
+            if iszero(mul(or(iszero(x), eq(div(z, x), y)), d)) {
                 mstore(0x00, 0xad251c27) // `MulDivFailed()`.
                 revert(0x1c, 0x04)
             }
-            z := add(iszero(iszero(mod(mul(x, y), d))), div(mul(x, y), d))
+            z := add(iszero(iszero(mod(z, d))), div(z, d))
         }
     }
 
@@ -906,6 +897,14 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the absolute distance between `x` and `y`.
+    function dist(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := xor(mul(xor(sub(y, x), sub(x, y)), gt(x, y)), sub(y, x))
+        }
+    }
+
+    /// @dev Returns the absolute distance between `x` and `y`.
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -976,6 +975,53 @@ library FixedPointMathLib {
                 y := mod(z, y)
                 z := t
             }
+        }
+    }
+
+    /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`,
+    /// with `t` clamped between `begin` and `end` (inclusive).
+    /// Agnostic to the order of (`a`, `b`) and (`end`, `begin`).
+    /// Reverts if `begin` equals `end` (due to division by zero).
+    function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end)
+        internal
+        pure
+        returns (uint256)
+    {
+        if (begin >= end) {
+            t = ~t;
+            begin = ~begin;
+            end = ~end;
+        }
+        if (t <= begin) return a;
+        if (t >= end) return b;
+        unchecked {
+            if (b >= a) return a + fullMulDiv(b - a, t - begin, end - begin);
+            return a - fullMulDiv(a - b, t - begin, end - begin);
+        }
+    }
+
+    /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
+    /// with `t` clamped between `begin` and `end` (inclusive).
+    /// Agnostic to the order of (`a`, `b`) and (`end`, `begin`).
+    /// Reverts if `begin` equals `end` (due to division by zero).
+    function lerp(int256 a, int256 b, int256 t, int256 begin, int256 end)
+        internal
+        pure
+        returns (int256)
+    {
+        if (begin >= end) {
+            t = int256(~uint256(t));
+            begin = int256(~uint256(begin));
+            end = int256(~uint256(end));
+        }
+        if (t <= begin) return a;
+        if (t >= end) return b;
+        // forgefmt: disable-next-item
+        unchecked {
+            if (b >= a) return int256(uint256(a) + fullMulDiv(uint256(b) - uint256(a),
+                uint256(t) - uint256(begin), uint256(end) - uint256(begin)));
+            return int256(uint256(a) - fullMulDiv(uint256(a) - uint256(b),
+                uint256(t) - uint256(begin), uint256(end) - uint256(begin)));
         }
     }
 
