@@ -50,6 +50,17 @@ abstract contract ERC1271 is EIP712 {
         }
     }
 
+    /// @dev Returns whether the `hash` and `signature` are valid.
+    /// Override if you need non-ECDSA logic.
+    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        return SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
+    }
+
     /// @dev Returns whether the `signature` is valid for the `hash.
     function _erc1271IsValidSignature(bytes32 hash, bytes calldata signature)
         internal
@@ -83,10 +94,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        if (_erc1271CallerIsSafe()) {
-            result =
-                SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
-        }
+        if (_erc1271CallerIsSafe()) result = _erc1271IsValidSignatureNowCalldata(hash, signature);
     }
 
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
@@ -117,7 +125,7 @@ abstract contract ERC1271 is EIP712 {
     ///             version: keccak256(bytes(eip712Domain().version)),
     ///             chainId: eip712Domain().chainId,
     ///             verifyingContract: eip712Domain().verifyingContract,
-    ///             salt: eip712Domain().salt
+    ///             salt: eip712Domain().salt,
     ///             extensions: keccak256(abi.encodePacked(eip712Domain().extensions))
     ///         }))
     ///     )
@@ -214,7 +222,7 @@ abstract contract ERC1271 is EIP712 {
             mstore(0x40, m) // Restore the free memory pointer.
         }
         if (!result) hash = _hashTypedData(hash);
-        result = SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
+        result = _erc1271IsValidSignatureNowCalldata(hash, signature);
     }
 
     /// @dev For use in `_erc1271IsValidSignatureViaNestedEIP712`,
@@ -278,8 +286,7 @@ abstract contract ERC1271 is EIP712 {
                     mstore(0x40, m) // Restore the free memory pointer.
                 }
             }
-            result =
-                SignatureCheckerLib.isValidSignatureNowCalldata(_erc1271Signer(), hash, signature);
+            result = _erc1271IsValidSignatureNowCalldata(hash, signature);
         }
     }
 }
