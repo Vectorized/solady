@@ -99,8 +99,9 @@ abstract contract ERC1271 is EIP712 {
 
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
     ///
-    /// This implementation uses ECDSA recovery. It also uses a nested EIP-712 approach to
-    /// prevent signature replays when a single EOA owns multiple smart contract accounts,
+    /// This uses ECDSA recovery by default (see: `_erc1271IsValidSignatureNowCalldata`).
+    /// It also uses a nested EIP-712 approach to prevent signature replays when a single EOA
+    /// owns multiple smart contract accounts,
     /// while still enabling wallet UIs (e.g. Metamask) to show the EIP-712 values.
     ///
     /// Crafted for phishing resistance, efficiency, flexibility.
@@ -108,17 +109,17 @@ abstract contract ERC1271 is EIP712 {
     ///
     /// Glossary:
     ///
-    /// - `DOMAIN_SEP_B`: The domain separator of the `hash`.
+    /// - `APP_DOMAIN_SEPARATOR`: The domain separator of the `hash` passed in by the application.
     ///   Provided by the front end. Intended to be the domain separator of the contract
     ///   that will call `isValidSignature` on this account.
     ///
-    /// - `DOMAIN_SEP_A`: The domain separator of this account.
+    /// - `ACCOUNT_DOMAIN_SEPARATOR`: The domain separator of this account.
     ///   See: `EIP712._domainSeparator()`.
     /// __________________________________________________________________________________________
     ///
     /// For the `TypedDataSign` workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_B ‖
+    ///     keccak256(\x19\x01 ‖ APP_DOMAIN_SEPARATOR ‖
     ///         hashStruct(TypedDataSign({
     ///             contents: hashStruct(originalStruct),
     ///             name: keccak256(bytes(eip712Domain().name)),
@@ -134,15 +135,15 @@ abstract contract ERC1271 is EIP712 {
     /// The order of the fields is important: `contents` comes before `name`.
     ///
     /// The signature will be `r ‖ s ‖ v ‖
-    ///     DOMAIN_SEP_B ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
+    ///     APP_DOMAIN_SEPARATOR ‖ contents ‖ contentsType ‖ uint16(contentsType.length)`,
     /// where `contents` is the bytes32 struct hash of the original struct.
     ///
-    /// The `DOMAIN_SEP_B` and `contents` will be used to verify if `hash` is indeed correct.
+    /// The `APP_DOMAIN_SEPARATOR` and `contents` will be used to verify if `hash` is indeed correct.
     /// __________________________________________________________________________________________
     ///
     /// For the `PersonalSign` workflow, the final hash will be:
     /// ```
-    ///     keccak256(\x19\x01 ‖ DOMAIN_SEP_A ‖
+    ///     keccak256(\x19\x01 ‖ ACCOUNT_DOMAIN_SEPARATOR ‖
     ///         hashStruct(PersonalSign({
     ///             prefixed: keccak256(bytes(\x19Ethereum Signed Message:\n ‖
     ///                 base10(bytes(someString).length) ‖ someString))
@@ -161,10 +162,12 @@ abstract contract ERC1271 is EIP712 {
     ///
     /// Their nomenclature may differ from ours, although the high-level idea is similar.
     ///
-    /// Of course, if you are a wallet app maker and can update your app's UI at will,
+    /// Of course, if you have control over the codebase of the wallet client(s) too,
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
     /// All these are just for widespead out-of-the-box compatibility with other wallet clients.
+    /// We want to create bazaars, not walled castles.
+    /// And we'll use push the Turing Completeness of the EVM to the limits to do so.
     function _erc1271IsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)
         internal
         view
@@ -180,7 +183,7 @@ abstract contract ERC1271 is EIP712 {
             for {} 1 {} {
                 let l := add(0x42, c) // Total length of appended data (32 + 32 + c + 2).
                 let o := add(signature.offset, sub(signature.length, l))
-                calldatacopy(0x20, o, 0x40) // Copy the `DOMAIN_SEP_B` and contents struct hash.
+                calldatacopy(0x20, o, 0x40) // Copy the `APP_DOMAIN_SEPARATOR` and contents struct hash.
                 mstore(0x00, 0x1901) // Store the "\x19\x01" prefix.
                 // Use the `PersonalSign` workflow if the reconstructed contents hash doesn't match,
                 // or if the appended data is invalid (length too long, or empty contents type).
@@ -211,11 +214,11 @@ abstract contract ERC1271 is EIP712 {
                 calldatacopy(t, o, 0x40) // Copy `contents` to `add(t, 0x20)`.
                 mstore(t, keccak256(m, sub(add(add(p, 0x7f), c), m))) // `TYPED_DATA_SIGN_TYPEHASH`.
                 // The "\x19\x01" prefix is already at 0x00.
-                // `DOMAIN_SEP_B` is already at 0x20.
+                // `APP_DOMAIN_SEPARATOR` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
                 // Compute the final hash, corrupted if the contents name is invalid.
                 hash := keccak256(0x1e, add(0x42, and(1, d)))
-                result := 1 // Use `result` to temporarily denote if we will use `DOMAIN_SEP_B`.
+                result := 1 // Use `result` to temporarily denote if we will use `APP_DOMAIN_SEPARATOR`.
                 signature.length := sub(signature.length, l) // Truncate the signature.
                 break
             }
