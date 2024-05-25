@@ -171,31 +171,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        bytes32 t;
-        do {
-            (
-                bytes1 fields,
-                string memory name,
-                string memory version,
-                uint256 chainId,
-                address verifyingContract,
-                bytes32 salt,
-                uint256[] memory extensions
-            ) = eip712Domain();
-            /// @solidity memory-safe-assembly
-            assembly {
-                t := mload(0x40) // Grab the free memory pointer.
-                mstore(0x40, add(t, 0x120)) // Allocate the memory.
-                // Skip 2 words: `TYPED_DATA_SIGN_TYPEHASH, contents`.
-                mstore(add(t, 0x40), shl(248, byte(0, fields)))
-                mstore(add(t, 0x60), keccak256(add(name, 0x20), mload(name)))
-                mstore(add(t, 0x80), keccak256(add(version, 0x20), mload(version)))
-                mstore(add(t, 0xa0), chainId)
-                mstore(add(t, 0xc0), shr(96, shl(96, verifyingContract)))
-                mstore(add(t, 0xe0), salt)
-                mstore(add(t, 0x100), keccak256(add(extensions, 0x20), shl(5, mload(extensions))))
-            }
-        } while (false);
+        bytes32 t = _typedDataSignFields();
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
@@ -286,7 +262,7 @@ abstract contract ERC1271 is EIP712 {
         // Non-zero gasprice is a heuristic to check if a call is on-chain,
         // but we can't fully depend on it because it can be manipulated.
         // See: https://x.com/NoahCitron/status/1580359718341484544
-        if (tx.gasprice == 0) {
+        if (tx.gasprice == uint256(0)) {
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(gasprice(), gasprice())
