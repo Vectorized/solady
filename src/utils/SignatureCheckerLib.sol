@@ -498,6 +498,71 @@ library SignatureCheckerLib {
     // These functions are intended to be used with the regular `isValidSignatureNow` functions
     // or other signature verification functions (e.g. P256).
 
+    /// @dev Returns whether `signature` is valid for `hash`.
+    /// If the signature is postfixed with the ERC6492 magic number, it will attempt to unwrap
+    /// the signature and deploy the smart account before doing a regular ERC1271 check.
+    /// Note: This function is NOT reentrancy safe.
+    function isValidERC6492SignatureNowAllowSideEffects(
+        address signer,
+        bytes32 hash,
+        bytes memory signature
+    ) internal returns (bool isValid) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function deployOrPrepare(signature_) -> _success {
+                let o_ := add(signature_, 0x20)
+                let d_ := add(o_, mload(add(signature_, 0x40)))
+                _success := call(gas(), mload(o_), 0, add(d_, 0x20), mload(d_), codesize(), 0x00)
+            }
+            function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
+                let m_ := mload(0x40)
+                let f_ := shl(224, 0x1626ba7e)
+                mstore(m_, f_) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+                mstore(add(m_, 0x04), hash_)
+                let d_ := add(m_, 0x24)
+                mstore(d_, 0x40) // The offset of the `signature` in the calldata.
+                // Copy the `signature` over.
+                let n_ := add(0x20, mload(signature_))
+                pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
+                // forgefmt: disable-next-item
+                _isValid := and(
+                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
+                    eq(mload(d_), f_),
+                    // Whether the staticcall does not revert.
+                    // This must be placed at the end of the `and` clause,
+                    // as the arguments are evaluated from right to left.
+                    staticcall(
+                        gas(), // Remaining gas.
+                        signer_, // The `signer` address.
+                        m_, // Offset of calldata in memory.
+                        add(returndatasize(), 0x44), // Length of calldata in memory.
+                        d_, // Offset of returndata.
+                        0x20 // Length of returndata to write.
+                    )
+                )
+            }
+            for {} 1 {} {
+                if iszero(
+                    eq(
+                        mload(add(signature, mload(signature))),
+                        mul(0x6492, div(not(mload(0x60)), 0xffff)) // `0x6492...6492`.
+                    )
+                ) {
+                    isValid := callIsValidSignature(signer, hash, signature)
+                    break
+                }
+                if iszero(gt(mload(signature), 0x5f)) { break }
+                if iszero(extcodesize(signer)) { if iszero(deployOrPrepare(signature)) { break } }
+                let innerSignature := add(add(signature, 0x20), mload(add(signature, 0x60)))
+                isValid := callIsValidSignature(signer, hash, innerSignature)
+                if iszero(isValid) {
+                    if iszero(deployOrPrepare(signature)) { break }
+                    isValid := callIsValidSignature(signer, hash, innerSignature)
+                }
+                break
+            }
+        }
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
