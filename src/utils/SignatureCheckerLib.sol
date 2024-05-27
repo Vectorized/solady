@@ -577,7 +577,7 @@ library SignatureCheckerLib {
                         add(returndatasize(), 0x40), // Length of calldata in memory.
                         // forgefmt: disable-next-item
                         staticcall(gas(), 4, add(signature_, 0x20), mload(signature_),
-                                add(m_, 0x40), mload(signature_)),
+                                    add(m_, 0x40), mload(signature_)),
                         0x00 // Length of returndata to write.
                     )
                 _isValid := gt(returndatasize(), _isValid)

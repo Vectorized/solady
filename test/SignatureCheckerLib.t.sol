@@ -470,6 +470,26 @@ contract SignatureCheckerLibTest is SoladyTest {
         emit LogBytes(revertingVerifier.code);
     }
 
+    function testERC6492PostDeploy() public {
+        _ERC6492TestTemps memory t = _erc6492TestTemps();
+        t.revertingVerifier = _etchERC6492RevertingVerifier();
+        (bool success,) = t.factory.call(t.factoryCalldata);
+        require(success);
+
+        assertGt(t.smartAccount.code.length, 0);
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertTrue(t.result);
+
+        address oldEOA = t.eoa;
+        _makeNewEOA(t);
+        t.result =
+            SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
+        assertTrue(t.result);
+        assertEq(MockERC1271Wallet(t.smartAccount).signer(), oldEOA);
+    }
+
     function testERC6492PreDeploy() public {
         _ERC6492TestTemps memory t = _erc6492TestTemps();
         t.revertingVerifier = _etchERC6492RevertingVerifier();
