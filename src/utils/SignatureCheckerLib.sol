@@ -556,7 +556,7 @@ library SignatureCheckerLib {
     /// @dev Returns whether `signature` is valid for `hash`.
     /// If the signature is postfixed with the ERC6492 magic number, it will attempt
     /// to use a reverting verifier to deploy / prepare the `signer` smart account
-    /// and do `isValidSignature` check.
+    /// and do a `isValidSignature` check via the reverting verifier.
     /// Note: This function is reentrancy safe.
     /// The reverting verifier must be be deployed.
     /// Otherwise, the function will return false if `signer` is not yet deployed / prepared.
