@@ -517,4 +517,31 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertFalse(t.result);
         assertEq(t.smartAccount.code.length, 0);
     }
+
+    function testERC6492WithoutRevertingVerifier() public {
+        _ERC6492TestTemps memory t = _erc6492TestTemps();
+
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertFalse(t.result);
+
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertFalse(t.result);
+        // This should return false, as the function does NOT do ECDSA fallback.
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.innerSignature);
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+        // Without the reverting verifier, the function will simply return false.
+        t.result =
+            SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+        t.result =
+            SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+    }
 }

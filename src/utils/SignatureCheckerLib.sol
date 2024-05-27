@@ -338,7 +338,7 @@ library SignatureCheckerLib {
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: The ERC1271 operations do NOT have an ECDSA fallback.
+    // Note: These ERC1271 operations do NOT have an ECDSA fallback.
     // These functions are intended to be used with the regular `isValidSignatureNow` functions
     // or other signature verification functions (e.g. P256).
 
@@ -494,14 +494,14 @@ library SignatureCheckerLib {
     /*                     ERC6492 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: The ERC6492 operations do NOT have an ECDSA fallback.
+    // Note: These ERC6492 operations do NOT have an ECDSA fallback.
     // These functions are intended to be used with the regular `isValidSignatureNow` functions
     // or other signature verification functions (e.g. P256).
     // The calldata variants are excluded for brevity.
 
     /// @dev Returns whether `signature` is valid for `hash`.
-    /// If the signature is postfixed with the ERC6492 magic number, it will attempt to unwrap
-    /// the signature and deploy the smart account before doing a regular ERC1271 check.
+    /// If the signature is postfixed with the ERC6492 magic number, it will attempt to
+    /// deploy / prepare the `signer` smart account before doing a regular ERC1271 check.
     /// Note: This function is NOT reentrancy safe.
     function isValidERC6492SignatureNowAllowSideEffects(
         address signer,
@@ -554,9 +554,12 @@ library SignatureCheckerLib {
     }
 
     /// @dev Returns whether `signature` is valid for `hash`.
-    /// If the signature is postfixed with the ERC6492 magic number, it will attempt to unwrap
-    /// the signature and deploy the smart account before doing a regular ERC1271 check.
-    /// Note: This function requires the reverting verifier to be deployed.
+    /// If the signature is postfixed with the ERC6492 magic number, it will attempt
+    /// to use a reverting verifier to deploy / prepare the `signer` smart account
+    /// and do `isValidSignature` check.
+    /// Note: This function is reentrancy safe.
+    /// The reverting verifier must be be deployed.
+    /// Otherwise, the function will return false if `signer` is not yet deployed / prepared.
     /// See: https://gist.github.com/Vectorized/846a474c855eee9e441506676800a9ad
     function isValidERC6492SignatureNow(address signer, bytes32 hash, bytes memory signature)
         internal
@@ -569,7 +572,7 @@ library SignatureCheckerLib {
                 mstore(m_, signer_)
                 mstore(add(m_, 0x20), hash_)
                 // forgefmt: disable-next-item
-                _isValid :=
+                let mustBeZero_ :=
                     call(
                         gas(), // Remaining gas.
                         0x00000000009F9FB8Ee7F67678D343BC19A1c0adc, // Reverting verifier.
@@ -577,10 +580,10 @@ library SignatureCheckerLib {
                         m_, // Start of memory.
                         add(returndatasize(), 0x40), // Length of calldata in memory.
                         staticcall(gas(), 4, add(signature_, 0x20), mload(signature_),
-                            add(m_, 0x40), mload(signature_)),
+                            add(m_, 0x40), mload(signature_)), // 1.
                         0x00 // Length of returndata to write.
                     )
-                _isValid := gt(returndatasize(), _isValid)
+                _isValid := gt(returndatasize(), mustBeZero_)
             }
             function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
                 let m_ := mload(0x40)
