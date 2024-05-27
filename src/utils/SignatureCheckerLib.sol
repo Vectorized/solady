@@ -497,6 +497,7 @@ library SignatureCheckerLib {
     // Note: The ERC6492 operations do NOT have an ECDSA fallback.
     // These functions are intended to be used with the regular `isValidSignatureNow` functions
     // or other signature verification functions (e.g. P256).
+    // The calldata variants are excluded for brevity.
 
     /// @dev Returns whether `signature` is valid for `hash`.
     /// If the signature is postfixed with the ERC6492 magic number, it will attempt to unwrap
@@ -521,25 +522,13 @@ library SignatureCheckerLib {
                 mstore(add(m_, 0x04), hash_)
                 let d_ := add(m_, 0x24)
                 mstore(d_, 0x40) // The offset of the `signature` in the calldata.
-                // Copy the `signature` over.
                 let n_ := add(0x20, mload(signature_))
                 pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
-                // forgefmt: disable-next-item
-                _isValid := and(
-                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(d_), f_),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer_, // The `signer` address.
-                        m_, // Offset of calldata in memory.
-                        add(returndatasize(), 0x44), // Length of calldata in memory.
-                        d_, // Offset of returndata.
-                        0x20 // Length of returndata to write.
+                _isValid :=
+                    and(
+                        eq(mload(d_), f_),
+                        staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
                     )
-                )
             }
             for {} 1 {} {
                 if iszero(
@@ -551,7 +540,7 @@ library SignatureCheckerLib {
                     isValid := callIsValidSignature(signer, hash, signature)
                     break
                 }
-                if iszero(gt(mload(signature), 0x5f)) { break }
+                if iszero(gt(mload(signature), 0x7f)) { break } // Signature too short.
                 if iszero(extcodesize(signer)) { if iszero(deployOrPrepare(signature)) { break } }
                 let innerSignature := add(add(signature, 0x20), mload(add(signature, 0x60)))
                 isValid := callIsValidSignature(signer, hash, innerSignature)
@@ -559,6 +548,73 @@ library SignatureCheckerLib {
                     if iszero(deployOrPrepare(signature)) { break }
                     isValid := callIsValidSignature(signer, hash, innerSignature)
                 }
+                break
+            }
+        }
+    }
+
+    /// @dev Returns whether `signature` is valid for `hash`.
+    /// If the signature is postfixed with the ERC6492 magic number, it will attempt to unwrap
+    /// the signature and deploy the smart account before doing a regular ERC1271 check.
+    /// Note: This function requires the reverting verifier to be deployed.
+    /// See: https://gist.github.com/Vectorized/846a474c855eee9e441506676800a9ad
+    function isValidERC6492SignatureNow(address signer, bytes32 hash, bytes memory signature)
+        internal
+        returns (bool isValid)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function verifyWithRevert(signer_, hash_, signature_) -> _isValid {
+                let m_ := mload(0x40)
+                mstore(m_, signer_)
+                mstore(add(m_, 0x20), hash_)
+                _isValid :=
+                    call(
+                        gas(), // Remaining gas.
+                        0x00000000009F9FB8Ee7F67678D343BC19A1c0adc, // Reverting verifier.
+                        0, // Send zero ETH.
+                        m_, // Start of memory.
+                        add(returndatasize(), 0x40), // Length of calldata in memory.
+                        // forgefmt: disable-next-item
+                        staticcall(gas(), 4, add(signature_, 0x20), mload(signature_),
+                                add(m_, 0x40), mload(signature_)),
+                        0x00 // Length of returndata to write.
+                    )
+                _isValid := gt(returndatasize(), _isValid)
+            }
+            function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
+                let m_ := mload(0x40)
+                let f_ := shl(224, 0x1626ba7e)
+                mstore(m_, f_) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+                mstore(add(m_, 0x04), hash_)
+                let d_ := add(m_, 0x24)
+                mstore(d_, 0x40) // The offset of the `signature` in the calldata.
+                let n_ := add(0x20, mload(signature_))
+                pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
+                _isValid :=
+                    and(
+                        eq(mload(d_), f_),
+                        staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
+                    )
+            }
+            for {} 1 {} {
+                if iszero(
+                    eq(
+                        mload(add(signature, mload(signature))),
+                        mul(0x6492, div(not(mload(0x60)), 0xffff)) // `0x6492...6492`.
+                    )
+                ) {
+                    isValid := callIsValidSignature(signer, hash, signature)
+                    break
+                }
+                if iszero(gt(mload(signature), 0x7f)) { break } // Signature too short.
+                if iszero(extcodesize(signer)) {
+                    isValid := verifyWithRevert(signer, hash, signature)
+                    break
+                }
+                let innerSignature := add(add(signature, 0x20), mload(add(signature, 0x60)))
+                isValid := callIsValidSignature(signer, hash, innerSignature)
+                if iszero(isValid) { isValid := verifyWithRevert(signer, hash, signature) }
                 break
             }
         }
