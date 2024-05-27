@@ -338,6 +338,10 @@ library SignatureCheckerLib {
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // Note: The ERC1271 operations do NOT have an ECDSA fallback.
+    // These functions are intended to be used with the regular `isValidSignatureNow` functions
+    // or other signature verification functions (e.g. P256).
+
     /// @dev Returns whether `signature` is valid for `hash` for an ERC1271 `signer` contract.
     function isValidERC1271SignatureNow(address signer, bytes32 hash, bytes memory signature)
         internal
@@ -485,6 +489,15 @@ library SignatureCheckerLib {
             )
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     ERC6492 OPERATIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note: The ERC6492 operations do NOT have an ECDSA fallback.
+    // These functions are intended to be used with the regular `isValidSignatureNow` functions
+    // or other signature verification functions (e.g. P256).
+
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
