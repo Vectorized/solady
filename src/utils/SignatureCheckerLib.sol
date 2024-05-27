@@ -575,7 +575,7 @@ library SignatureCheckerLib {
                 let mustBeZero_ :=
                     call(
                         gas(), // Remaining gas.
-                        0x000000000059aA5531DC1BdFe4ACDbCAE82C41c4, // Reverting verifier.
+                        0x000000000000E135b50C3642e265be39FbE8B823, // Reverting verifier.
                         0, // Send zero ETH.
                         m_, // Start of memory.
                         add(returndatasize(), 0x40), // Length of calldata in memory.
