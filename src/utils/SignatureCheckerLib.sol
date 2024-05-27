@@ -510,11 +510,6 @@ library SignatureCheckerLib {
     ) internal returns (bool isValid) {
         /// @solidity memory-safe-assembly
         assembly {
-            function deployOrPrepare(signature_) -> _success {
-                let o_ := add(signature_, 0x20)
-                let d_ := add(o_, mload(add(signature_, 0x40)))
-                _success := call(gas(), mload(o_), 0, add(d_, 0x20), mload(d_), codesize(), 0x00)
-            }
             function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
                 let m_ := mload(0x40)
                 let f_ := shl(224, 0x1626ba7e)
@@ -530,23 +525,24 @@ library SignatureCheckerLib {
                         staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
                     )
             }
-            for {} 1 {} {
-                if iszero(
-                    eq(
-                        mload(add(signature, mload(signature))),
-                        mul(0x6492, div(not(mload(0x60)), 0xffff)) // `0x6492...6492`.
-                    )
-                ) {
+            for { let n := mload(signature) } 1 {} {
+                if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
                     isValid := callIsValidSignature(signer, hash, signature)
                     break
                 }
-                if iszero(gt(mload(signature), 0x7f)) { break } // Signature too short.
-                if iszero(extcodesize(signer)) { if iszero(deployOrPrepare(signature)) { break } }
-                let innerSignature := add(add(signature, 0x20), mload(add(signature, 0x60)))
-                isValid := callIsValidSignature(signer, hash, innerSignature)
+                let o := add(signature, 0x20) // Signature bytes.
+                let d := add(o, mload(add(o, 0x20))) // Factory calldata.
+                if iszero(extcodesize(signer)) {
+                    if iszero(call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00)) {
+                        break
+                    }
+                }
+                let s := add(o, mload(add(o, 0x40))) // Inner signature.
+                isValid := callIsValidSignature(signer, hash, s)
                 if iszero(isValid) {
-                    if iszero(deployOrPrepare(signature)) { break }
-                    isValid := callIsValidSignature(signer, hash, innerSignature)
+                    if call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00) {
+                        isValid := callIsValidSignature(signer, hash, s)
+                    }
                 }
                 break
             }
@@ -600,23 +596,17 @@ library SignatureCheckerLib {
                         staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
                     )
             }
-            for {} 1 {} {
-                if iszero(
-                    eq(
-                        mload(add(signature, mload(signature))),
-                        mul(0x6492, div(not(mload(0x60)), 0xffff)) // `0x6492...6492`.
-                    )
-                ) {
+            for { let n := mload(signature) } 1 {} {
+                if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
                     isValid := callIsValidSignature(signer, hash, signature)
                     break
                 }
-                if iszero(gt(mload(signature), 0x7f)) { break } // Signature too short.
                 if iszero(extcodesize(signer)) {
                     isValid := verifyWithRevert(signer, hash, signature)
                     break
                 }
-                let innerSignature := add(add(signature, 0x20), mload(add(signature, 0x60)))
-                isValid := callIsValidSignature(signer, hash, innerSignature)
+                let o := add(signature, 0x20) // Signature bytes.
+                isValid := callIsValidSignature(signer, hash, add(o, mload(add(o, 0x40))))
                 if iszero(isValid) { isValid := verifyWithRevert(signer, hash, signature) }
                 break
             }
