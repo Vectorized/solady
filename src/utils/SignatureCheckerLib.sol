@@ -591,7 +591,7 @@ library SignatureCheckerLib {
                 let m := mload(0x40)
                 mstore(m, signer)
                 mstore(add(m, 0x20), hash)
-                let mustBeZero :=
+                let willBeZeroIfRevertingVerifierExists :=
                     call(
                         gas(), // Remaining gas.
                         0x000000000000E135b50C3642e265be39FbE8B823, // Reverting verifier.
@@ -601,7 +601,7 @@ library SignatureCheckerLib {
                         staticcall(gas(), 4, add(signature, 0x20), n, add(m, 0x40), n), // 1.
                         0x00 // Length of returndata to write.
                     )
-                isValid := gt(returndatasize(), mustBeZero)
+                isValid := gt(returndatasize(), willBeZeroIfRevertingVerifierExists)
                 break
             }
         }
