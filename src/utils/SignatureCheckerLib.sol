@@ -591,7 +591,6 @@ library SignatureCheckerLib {
                 let m := mload(0x40)
                 mstore(m, signer)
                 mstore(add(m, 0x20), hash)
-                // forgefmt: disable-next-item
                 let mustBeZero :=
                     call(
                         gas(), // Remaining gas.
@@ -599,8 +598,7 @@ library SignatureCheckerLib {
                         0, // Send zero ETH.
                         m, // Start of memory.
                         add(returndatasize(), 0x40), // Length of calldata in memory.
-                        staticcall(gas(), 4, add(signature, 0x20), mload(signature),
-                            add(m, 0x40), mload(signature)), // 1.
+                        staticcall(gas(), 4, add(signature, 0x20), n, add(m, 0x40), n), // 1.
                         0x00 // Length of returndata to write.
                     )
                 isValid := gt(returndatasize(), mustBeZero)
