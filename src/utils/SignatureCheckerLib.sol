@@ -563,24 +563,6 @@ library SignatureCheckerLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            function verifyWithRevert(signer_, hash_, signature_) -> _isValid {
-                let m_ := mload(0x40)
-                mstore(m_, signer_)
-                mstore(add(m_, 0x20), hash_)
-                // forgefmt: disable-next-item
-                let mustBeZero_ :=
-                    call(
-                        gas(), // Remaining gas.
-                        0x000000000000E135b50C3642e265be39FbE8B823, // Reverting verifier.
-                        0, // Send zero ETH.
-                        m_, // Start of memory.
-                        add(returndatasize(), 0x40), // Length of calldata in memory.
-                        staticcall(gas(), 4, add(signature_, 0x20), mload(signature_),
-                            add(m_, 0x40), mload(signature_)), // 1.
-                        0x00 // Length of returndata to write.
-                    )
-                _isValid := gt(returndatasize(), mustBeZero_)
-            }
             function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
                 let m_ := mload(0x40)
                 let f_ := shl(224, 0x1626ba7e)
@@ -601,13 +583,27 @@ library SignatureCheckerLib {
                     isValid := callIsValidSignature(signer, hash, signature)
                     break
                 }
-                if iszero(extcodesize(signer)) {
-                    isValid := verifyWithRevert(signer, hash, signature)
-                    break
+                if extcodesize(signer) {
+                    let o := add(signature, 0x20) // Signature bytes.
+                    isValid := callIsValidSignature(signer, hash, add(o, mload(add(o, 0x40))))
+                    if isValid { break }
                 }
-                let o := add(signature, 0x20) // Signature bytes.
-                isValid := callIsValidSignature(signer, hash, add(o, mload(add(o, 0x40))))
-                if iszero(isValid) { isValid := verifyWithRevert(signer, hash, signature) }
+                let m := mload(0x40)
+                mstore(m, signer)
+                mstore(add(m, 0x20), hash)
+                // forgefmt: disable-next-item
+                let mustBeZero :=
+                    call(
+                        gas(), // Remaining gas.
+                        0x000000000000E135b50C3642e265be39FbE8B823, // Reverting verifier.
+                        0, // Send zero ETH.
+                        m, // Start of memory.
+                        add(returndatasize(), 0x40), // Length of calldata in memory.
+                        staticcall(gas(), 4, add(signature, 0x20), mload(signature),
+                            add(m, 0x40), mload(signature)), // 1.
+                        0x00 // Length of returndata to write.
+                    )
+                isValid := gt(returndatasize(), mustBeZero)
                 break
             }
         }
