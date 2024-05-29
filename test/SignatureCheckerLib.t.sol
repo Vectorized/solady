@@ -459,9 +459,9 @@ contract SignatureCheckerLibTest is SoladyTest {
 
     function _etchERC6492RevertingVerifier() internal returns (address revertingVerifier) {
         bytes memory initcode =
-            hex"6053600b3d3960533df3fe3660403d373d60405160208282518201803d3d855151868051013d3d515af194604001606037818160600152631626ba7e82528235835260408052606401601c82355afa9151631626ba7e60e01b14161638fd";
+            hex"6051600b3d3960513df3fe6020604036813d378051908151830180923d3d865151878051013d3d515af1508201606037348260600152631626ba7e34528235835280523490606401601c34355afa3451631626ba7e60e01b141634fd";
         address factory = _etchNicksFactory();
-        bytes32 salt = 0x0000000000000000000000000000000000000000e390ed784c118800af20a3f9;
+        bytes32 salt = 0x0000000000000000000000000000000000000000771afb1968f078025ab1be60;
         (bool success,) = factory.call(abi.encodePacked(salt, initcode));
         revertingVerifier = LibClone.predictDeterministicAddress(keccak256(initcode), salt, factory);
         assertTrue(success);
