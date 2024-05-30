@@ -61,7 +61,7 @@ library P256 {
                     revert(0x1c, 0x04)
                 }
             }
-            isValid := and(eq(1, mload(0x00)), success)
+            isValid := iszero(sub(mload(0x00), success))
         }
     }
 
@@ -91,7 +91,7 @@ library P256 {
                 }
             }
             // Optimize for happy path. Users are unlikely to pass in malleable signatures.
-            isValid := lt(lt(P256_N_DIV_2, s), and(eq(1, mload(0x00)), success))
+            isValid := eq(lt(P256_N_DIV_2, s), sub(mload(0x00), success))
         }
     }
 }
