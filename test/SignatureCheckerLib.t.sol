@@ -458,15 +458,17 @@ contract SignatureCheckerLibTest is SoladyTest {
     }
 
     function _etchERC6492RevertingVerifier() internal returns (address revertingVerifier) {
-        bytes memory initcode =
-            hex"6051600b3d3960513df3fe6020604036813d378051908151830180923d3d865151878051013d3d515af1508201606037348260600152631626ba7e34528235835280523490606401601c34355afa3451631626ba7e60e01b141634fd";
-        address factory = _etchNicksFactory();
-        bytes32 salt = 0x0000000000000000000000000000000000000000771afb1968f078025ab1be60;
-        (bool success,) = factory.call(abi.encodePacked(salt, initcode));
-        revertingVerifier = LibClone.predictDeterministicAddress(keccak256(initcode), salt, factory);
+        _ERC6492TestTemps memory t;
+        t.initcode =
+            hex"6040600b3d3960403df3fe36383d373d3d6020515160208051013d3d515af160203851516084018038385101606037303452813582523838523490601c34355afa34513060e01b141634fd";
+        t.factory = _etchNicksFactory();
+        t.salt = 0x00000000000000000000000000000000000000002614b11f577f1e0327f55dc3;
+        (bool success,) = t.factory.call(abi.encodePacked(t.salt, t.initcode));
+        revertingVerifier =
+            LibClone.predictDeterministicAddress(keccak256(t.initcode), t.salt, t.factory);
         assertTrue(success);
         assertGt(revertingVerifier.code.length, 0);
-        emit LogBytes32(keccak256(initcode));
+        emit LogBytes32(keccak256(t.initcode));
         emit LogBytes(revertingVerifier.code);
     }
 
