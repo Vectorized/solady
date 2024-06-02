@@ -19,6 +19,21 @@ contract TestPlus is Brutalizer {
     event LogBool(string name, bool value);
     event LogBool(bool value);
 
+    event LogStringArray(string name, string[] value);
+    event LogStringArray(string[] value);
+    event LogBytesArray(string name, bytes[] value);
+    event LogBytesArray(bytes[] value);
+    event LogUintArray(string name, uint256[] value);
+    event LogUintArray(uint256[] value);
+    event LogBytes32Array(string name, bytes32[] value);
+    event LogBytes32Array(bytes32[] value);
+    event LogIntArray(string name, int256[] value);
+    event LogIntArray(int256[] value);
+    event LogAddressArray(string name, address[] value);
+    event LogAddressArray(address[] value);
+    event LogBoolArray(string name, bool[] value);
+    event LogBoolArray(bool[] value);
+
     /// @dev `address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))`.
     address private constant _VM_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
 

@@ -104,93 +104,6 @@ library LibPRNG {
         }
     }
 
-    /// @dev Shuffles the array in-place with Fisher-Yates shuffle.
-    function shuffle(PRNG memory prng, uint256[] memory a) internal pure {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let n := mload(a)
-            let w := not(0)
-            let mask := shr(128, w)
-            if n {
-                for { a := add(a, 0x20) } 1 {} {
-                    // We can just directly use `keccak256`, cuz
-                    // the other approaches don't save much.
-                    let r := keccak256(prng, 0x20)
-                    mstore(prng, r)
-
-                    // Note that there will be a very tiny modulo bias
-                    // if the length of the array is not a power of 2.
-                    // For all practical purposes, it is negligible
-                    // and will not be a fairness or security concern.
-                    {
-                        let j := add(a, shl(5, mod(shr(128, r), n)))
-                        n := add(n, w) // `sub(n, 1)`.
-                        if iszero(n) { break }
-
-                        let i := add(a, shl(5, n))
-                        let t := mload(i)
-                        mstore(i, mload(j))
-                        mstore(j, t)
-                    }
-
-                    {
-                        let j := add(a, shl(5, mod(and(r, mask), n)))
-                        n := add(n, w) // `sub(n, 1)`.
-                        if iszero(n) { break }
-
-                        let i := add(a, shl(5, n))
-                        let t := mload(i)
-                        mstore(i, mload(j))
-                        mstore(j, t)
-                    }
-                }
-            }
-        }
-    }
-
-    /// @dev Shuffles the bytes in-place with Fisher-Yates shuffle.
-    function shuffle(PRNG memory prng, bytes memory a) internal pure {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let n := mload(a)
-            let w := not(0)
-            let mask := shr(128, w)
-            if n {
-                let b := add(a, 0x01)
-                for { a := add(a, 0x20) } 1 {} {
-                    // We can just directly use `keccak256`, cuz
-                    // the other approaches don't save much.
-                    let r := keccak256(prng, 0x20)
-                    mstore(prng, r)
-
-                    // Note that there will be a very tiny modulo bias
-                    // if the length of the array is not a power of 2.
-                    // For all practical purposes, it is negligible
-                    // and will not be a fairness or security concern.
-                    {
-                        let o := mod(shr(128, r), n)
-                        n := add(n, w) // `sub(n, 1)`.
-                        if iszero(n) { break }
-
-                        let t := mload(add(b, n))
-                        mstore8(add(a, n), mload(add(b, o)))
-                        mstore8(add(a, o), t)
-                    }
-
-                    {
-                        let o := mod(and(r, mask), n)
-                        n := add(n, w) // `sub(n, 1)`.
-                        if iszero(n) { break }
-
-                        let t := mload(add(b, n))
-                        mstore8(add(a, n), mload(add(b, o)))
-                        mstore8(add(a, o), t)
-                    }
-                }
-            }
-        }
-    }
-
     /// @dev Returns a sample from the standard normal distribution denominated in `WAD`.
     function standardNormalWad(PRNG memory prng) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
@@ -244,6 +157,163 @@ library LibPRNG {
                 }
             }
             result := add(div(p, shl(129, 170141183460469231732)), result)
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*             MEMORY ARRAY SHUFFLING OPERATIONS              */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Shuffles the array in-place with Fisher-Yates shuffle.
+    function shuffle(PRNG memory prng, uint256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(a)
+            let w := not(0)
+            let mask := shr(128, w)
+            if n {
+                for { a := add(a, 0x20) } 1 {} {
+                    // We can just directly use `keccak256`, cuz
+                    // the other approaches don't save much.
+                    let r := keccak256(prng, 0x20)
+                    mstore(prng, r)
+
+                    // Note that there will be a very tiny modulo bias
+                    // if the length of the array is not a power of 2.
+                    // For all practical purposes, it is negligible
+                    // and will not be a fairness or security concern.
+                    {
+                        let j := add(a, shl(5, mod(shr(128, r), n)))
+                        n := add(n, w) // `sub(n, 1)`.
+                        if iszero(n) { break }
+
+                        let i := add(a, shl(5, n))
+                        let t := mload(i)
+                        mstore(i, mload(j))
+                        mstore(j, t)
+                    }
+
+                    {
+                        let j := add(a, shl(5, mod(and(r, mask), n)))
+                        n := add(n, w) // `sub(n, 1)`.
+                        if iszero(n) { break }
+
+                        let i := add(a, shl(5, n))
+                        let t := mload(i)
+                        mstore(i, mload(j))
+                        mstore(j, t)
+                    }
+                }
+            }
+        }
+    }
+
+    /// @dev Shuffles the array in-place with Fisher-Yates shuffle.
+    function shuffle(PRNG memory prng, int256[] memory a) internal pure {
+        shuffle(prng, _toUints(a));
+    }
+
+    /// @dev Shuffles the array in-place with Fisher-Yates shuffle.
+    function shuffle(PRNG memory prng, address[] memory a) internal pure {
+        shuffle(prng, _toUints(a));
+    }
+
+    /// @dev Partially shuffles the array in-place with Fisher-Yates shuffle.
+    /// The first `k` elements will be uniformly sampled without replacement.
+    function shuffle(PRNG memory prng, uint256[] memory a, uint256 k) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(a)
+            k := xor(k, mul(xor(k, n), lt(n, k))) // `min(n, k)`.
+            if k {
+                let mask := shr(128, not(0))
+                let b := 0
+                for { a := add(a, 0x20) } 1 {} {
+                    // We can just directly use `keccak256`, cuz
+                    // the other approaches don't save much.
+                    let r := keccak256(prng, 0x20)
+                    mstore(prng, r)
+
+                    // Note that there will be a very tiny modulo bias
+                    // if the length of the array is not a power of 2.
+                    // For all practical purposes, it is negligible
+                    // and will not be a fairness or security concern.
+                    {
+                        let j := add(a, shl(5, add(b, mod(shr(128, r), sub(n, b)))))
+                        let i := add(a, shl(5, b))
+                        let t := mload(i)
+                        mstore(i, mload(j))
+                        mstore(j, t)
+                        b := add(b, 1)
+                        if eq(b, k) { break }
+                    }
+
+                    {
+                        let j := add(a, shl(5, add(b, mod(and(r, mask), sub(n, b)))))
+                        let i := add(a, shl(5, b))
+                        let t := mload(i)
+                        mstore(i, mload(j))
+                        mstore(j, t)
+                        b := add(b, 1)
+                        if eq(b, k) { break }
+                    }
+                }
+            }
+        }
+    }
+
+    /// @dev Partially shuffles the array in-place with Fisher-Yates shuffle.
+    /// The first `k` elements will be uniformly sampled without replacement.
+    function shuffle(PRNG memory prng, int256[] memory a, uint256 k) internal pure {
+        shuffle(prng, _toUints(a), k);
+    }
+
+    /// @dev Partially shuffles the array in-place with Fisher-Yates shuffle.
+    /// The first `k` elements will be uniformly sampled without replacement.
+    function shuffle(PRNG memory prng, address[] memory a, uint256 k) internal pure {
+        shuffle(prng, _toUints(a), k);
+    }
+
+    /// @dev Shuffles the bytes in-place with Fisher-Yates shuffle.
+    function shuffle(PRNG memory prng, bytes memory a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(a)
+            let w := not(0)
+            let mask := shr(128, w)
+            if n {
+                let b := add(a, 0x01)
+                for { a := add(a, 0x20) } 1 {} {
+                    // We can just directly use `keccak256`, cuz
+                    // the other approaches don't save much.
+                    let r := keccak256(prng, 0x20)
+                    mstore(prng, r)
+
+                    // Note that there will be a very tiny modulo bias
+                    // if the length of the array is not a power of 2.
+                    // For all practical purposes, it is negligible
+                    // and will not be a fairness or security concern.
+                    {
+                        let o := mod(shr(128, r), n)
+                        n := add(n, w) // `sub(n, 1)`.
+                        if iszero(n) { break }
+
+                        let t := mload(add(b, n))
+                        mstore8(add(a, n), mload(add(b, o)))
+                        mstore8(add(a, o), t)
+                    }
+
+                    {
+                        let o := mod(and(r, mask), n)
+                        n := add(n, w) // `sub(n, 1)`.
+                        if iszero(n) { break }
+
+                        let t := mload(add(b, n))
+                        mstore8(add(a, n), mload(add(b, o)))
+                        mstore8(add(a, o), t)
+                    }
+                }
+            }
         }
     }
 
@@ -402,6 +472,29 @@ library LibPRNG {
             _set(gt(n, 0xfffe), state, index, _get(gt(n, 0xfffe), state, shuffled))
             _set(gt(n, 0xfffe), state, shuffled, chosen)
             sstore($.slot, add(1, state)) // Increment the `numShuffled` by 1, and store it.
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Reinterpret cast to an uint256 array.
+    function _toUints(int256[] memory a) private pure returns (uint256[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+    }
+
+    /// @dev Reinterpret cast to an uint256 array.
+    function _toUints(address[] memory a) private pure returns (uint256[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // As any address written to memory will have the upper 96 bits
+            // of the word zeroized (as per Solidity spec), we can directly
+            // compare these addresses as if they are whole uint256 words.
+            casted := a
         }
     }
 }

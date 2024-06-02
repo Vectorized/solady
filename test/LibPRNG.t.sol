@@ -98,6 +98,39 @@ contract LibPRNGTest is SoladyTest {
         }
     }
 
+    function testPRNGPartialShuffle() public {
+        for (uint256 i; i < 8; ++i) {
+            _testPRNGPartialShuffle(i + 123);
+        }
+    }
+
+    function _testPRNGPartialShuffle(uint256 state) internal {
+        unchecked {
+            LibPRNG.PRNG memory prng;
+            prng.state = state;
+            for (uint256 s = 1; s < 9; ++s) {
+                uint256[] memory a = new uint256[](1 << s);
+                for (uint256 i; i < a.length; ++i) {
+                    a[i] = i;
+                }
+                bytes32 hashBefore = keccak256(abi.encode(a));
+                for (;;) {
+                    prng.shuffle(a, _bound(_random(), 0, a.length * 2));
+                    bytes32 hashAfterShuffle = keccak256(abi.encode(a));
+                    LibSort.sort(a);
+                    bytes32 hashAfterSort = keccak256(abi.encode(a));
+                    assertTrue(hashBefore == hashAfterSort);
+                    if (hashBefore != hashAfterShuffle) break;
+                }
+            }
+            // Checking that we won't crash.
+            for (uint256 n = 0; n < 2; ++n) {
+                uint256[] memory a = new uint256[](n);
+                prng.shuffle(a, _bound(_random(), 0, a.length * 2));
+            }
+        }
+    }
+
     function testPRNGShuffleBytes() public {
         unchecked {
             LibPRNG.PRNG memory prng;
