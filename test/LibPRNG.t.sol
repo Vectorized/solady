@@ -6,8 +6,55 @@ import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
 import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
+library RunningStatsLib {
+    struct RunningStats {
+        int256 oldM;
+        int256 newM;
+        int256 oldS;
+        int256 newS;
+        int256 n;
+    }
+
+    function clear(RunningStats memory rs) internal pure {
+        rs.n = 0;
+    }
+
+    function push(RunningStats memory rs, int256 x) internal pure {
+        unchecked {
+            if (++rs.n == 1) {
+                rs.newM = x;
+                rs.oldM = x;
+                rs.oldS = 0;
+            } else {
+                int256 diff = (x - rs.oldM);
+                rs.newM = rs.oldM + diff / rs.n;
+                rs.newS = rs.oldS + diff * (x - rs.newM);
+                rs.oldM = rs.newM;
+                rs.oldS = rs.newS;
+            }
+        }
+    }
+
+    function mean(RunningStats memory rs) internal pure returns (int256 result) {
+        require(rs.n != 0, "No elements collected.");
+        result = rs.newM;
+    }
+
+    function variance(RunningStats memory rs) internal pure returns (int256 result) {
+        unchecked {
+            require(rs.n > 1, "Insufficient elements collected.");
+            result = rs.newS / (rs.n - 1);
+        }
+    }
+
+    function standardDeviation(RunningStats memory rs) internal pure returns (int256) {
+        return int256(FixedPointMathLib.sqrt(uint256(variance(rs))));
+    }
+}
+
 contract LibPRNGTest is SoladyTest {
     using LibPRNG for *;
+    using RunningStatsLib for *;
 
     LibPRNG.LazyShuffler internal _lazyShuffler0;
     LibPRNG.LazyShuffler internal _lazyShuffler1;
@@ -71,29 +118,65 @@ contract LibPRNGTest is SoladyTest {
         }
     }
 
+    struct _TestPRNGShuffleTemps {
+        int256[] a;
+        bytes32 hashBefore;
+        bytes32 hashAfterShuffle;
+        bytes32 hashAfterSort;
+        RunningStatsLib.RunningStats[] rsElements;
+    }
+
     function testPRNGShuffle() public {
         unchecked {
             LibPRNG.PRNG memory prng;
+            _TestPRNGShuffleTemps memory t;
             for (uint256 s = 1; s < 9; ++s) {
-                uint256 n = 1 << s; // 2, 4, 8, 16, ...
-                uint256[] memory a = new uint256[](n);
-                for (uint256 i; i < n; ++i) {
-                    a[i] = i;
+                t.a = new int256[](1 << s); // 2, 4, 8, 16, ...
+                t.rsElements = new RunningStatsLib.RunningStats[](t.a.length);
+                for (uint256 i; i < t.a.length; ++i) {
+                    int256 x = int256(i * FixedPointMathLib.WAD);
+                    t.a[i] = x;
                 }
-                bytes32 hashBefore = keccak256(abi.encode(a));
+                t.hashBefore = keccak256(abi.encode(t.a));
                 for (;;) {
-                    prng.shuffle(a);
-                    bytes32 hashAfterShuffle = keccak256(abi.encode(a));
-                    LibSort.sort(a);
-                    bytes32 hashAfterSort = keccak256(abi.encode(a));
-                    assertTrue(hashBefore == hashAfterSort);
-                    if (hashBefore != hashAfterShuffle) break;
+                    prng.shuffle(t.a);
+                    t.hashAfterShuffle = keccak256(abi.encode(t.a));
+                    LibSort.sort(t.a);
+                    t.hashAfterSort = keccak256(abi.encode(t.a));
+                    assertEq(t.hashBefore, t.hashAfterSort);
+                    if (t.hashBefore != t.hashAfterShuffle) break;
                 }
             }
             // Checking that we won't crash.
             for (uint256 n = 0; n < 2; ++n) {
                 uint256[] memory a = new uint256[](n);
                 prng.shuffle(a);
+            }
+        }
+    }
+
+    function testPRNGShuffleDistribution() public pure {
+        unchecked {
+            LibPRNG.PRNG memory prng;
+            _TestPRNGShuffleTemps memory t;
+            t.a = new int256[](8);
+            t.rsElements = new RunningStatsLib.RunningStats[](8);
+            while (true) {
+                for (uint256 i; i < 8; ++i) {
+                    t.a[i] = int256(i * 1000000);
+                }
+                prng.shuffle(t.a);
+                for (uint256 i; i < 8; ++i) {
+                    t.rsElements[i].push(t.a[i]);
+                }
+                bool done = true;
+                for (uint256 i; i < 8; ++i) {
+                    if (FixedPointMathLib.dist(3500000, t.rsElements[i].mean()) > 350000) {
+                        done = false;
+                        break;
+                    }
+                }
+                if (done) break;
             }
         }
     }
@@ -117,7 +200,7 @@ contract LibPRNGTest is SoladyTest {
                 for (;;) {
                     prng.shuffle(a, _bound(_random(), 0, a.length * 2));
                     bytes32 hashAfterShuffle = keccak256(abi.encode(a));
-                    LibSort.sort(a);
+                    LibSort.insertionSort(a);
                     bytes32 hashAfterSort = keccak256(abi.encode(a));
                     assertTrue(hashBefore == hashAfterSort);
                     if (hashBefore != hashAfterShuffle) break;
@@ -127,6 +210,41 @@ contract LibPRNGTest is SoladyTest {
             for (uint256 n = 0; n < 2; ++n) {
                 uint256[] memory a = new uint256[](n);
                 prng.shuffle(a, _bound(_random(), 0, a.length * 2));
+            }
+        }
+    }
+
+    function testPRNGPartialShuffleDistribution() public pure {
+        _testPRNGPartialShuffleDistribution(0);
+        _testPRNGPartialShuffleDistribution(1);
+        _testPRNGPartialShuffleDistribution(4);
+        _testPRNGPartialShuffleDistribution(7);
+        _testPRNGPartialShuffleDistribution(8);
+    }
+
+    function _testPRNGPartialShuffleDistribution(uint256 k) internal pure {
+        unchecked {
+            LibPRNG.PRNG memory prng;
+            prng.state = k;
+            _TestPRNGShuffleTemps memory t;
+            t.a = new int256[](8);
+            t.rsElements = new RunningStatsLib.RunningStats[](8);
+            while (true) {
+                for (uint256 i; i < 8; ++i) {
+                    t.a[i] = int256(i * 1000000);
+                }
+                prng.shuffle(t.a, k);
+                for (uint256 i; i < k; ++i) {
+                    t.rsElements[i].push(t.a[i]);
+                }
+                bool done = true;
+                for (uint256 i; i < k; ++i) {
+                    if (FixedPointMathLib.dist(3500000, t.rsElements[i].mean()) > 350000) {
+                        done = false;
+                        break;
+                    }
+                }
+                if (done) break;
             }
         }
     }
@@ -208,31 +326,21 @@ contract LibPRNGTest is SoladyTest {
 
     function testStandardNormalWad() public {
         LibPRNG.PRNG memory prng;
+        RunningStatsLib.RunningStats memory rs;
         unchecked {
             uint256 n = 1000;
-            int256 oldM;
-            int256 newM;
-            int256 oldS;
-            int256 newS;
-            for (uint256 i; i != n;) {
+            for (uint256 i; i != n; ++i) {
                 uint256 gasBefore = gasleft();
                 int256 x = prng.standardNormalWad();
                 uint256 gasUsed = gasBefore - gasleft();
-                if (++i == 1) {
-                    oldM = (newM = x);
-                } else {
-                    newM = oldM + (x - oldM) / int256(i);
-                    newS = oldS + (x - oldM) * (x - newM);
-                    oldM = newM;
-                    oldS = newS;
-                }
                 emit LogInt("standardNormalWad", x);
                 emit LogUint("gasUsed", gasUsed);
+                rs.push(x);
             }
             int256 wad = int256(FixedPointMathLib.WAD);
-            emit LogInt("mean", newM);
-            int256 sd = int256(FixedPointMathLib.sqrt(uint256(newS / int256(n - 1))));
-            assertLt(FixedPointMathLib.abs(newM), uint256(wad / 8));
+            emit LogInt("mean", rs.mean());
+            int256 sd = rs.standardDeviation();
+            assertLt(FixedPointMathLib.abs(rs.mean()), uint256(wad / 8));
             emit LogInt("standard deviation", sd);
             assertLt(FixedPointMathLib.abs(sd - wad), uint256(wad / 8));
         }
@@ -240,31 +348,21 @@ contract LibPRNGTest is SoladyTest {
 
     function testExponentialWad() public {
         LibPRNG.PRNG memory prng;
+        RunningStatsLib.RunningStats memory rs;
         unchecked {
             uint256 n = 1000;
-            int256 oldM;
-            int256 newM;
-            int256 oldS;
-            int256 newS;
-            for (uint256 i; i != n;) {
+            for (uint256 i; i != n; ++i) {
                 uint256 gasBefore = gasleft();
                 int256 x = int256(prng.exponentialWad());
                 uint256 gasUsed = gasBefore - gasleft();
-                if (++i == 1) {
-                    oldM = (newM = x);
-                } else {
-                    newM = oldM + (x - oldM) / int256(i);
-                    newS = oldS + (x - oldM) * (x - newM);
-                    oldM = newM;
-                    oldS = newS;
-                }
                 emit LogInt("exponentialWad", x);
                 emit LogUint("gasUsed", gasUsed);
+                rs.push(x);
             }
             int256 wad = int256(FixedPointMathLib.WAD);
-            emit LogInt("mean", newM);
-            int256 sd = int256(FixedPointMathLib.sqrt(uint256(newS / int256(n - 1))));
-            assertLt(FixedPointMathLib.abs(newM - wad), uint256(wad / 8));
+            emit LogInt("mean", rs.mean());
+            int256 sd = rs.standardDeviation();
+            assertLt(FixedPointMathLib.abs(rs.mean() - wad), uint256(wad / 8));
             emit LogInt("standard deviation", sd);
             assertLt(FixedPointMathLib.abs(sd - wad), uint256(wad / 8));
         }
