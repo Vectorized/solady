@@ -155,9 +155,16 @@ contract LibPRNGTest is SoladyTest {
         }
     }
 
-    function testPRNGShuffleDistribution() public pure {
+    function testPRNGShuffleDistribution() public {
+        for (uint256 t; t < 8; ++t) {
+            _testPRNGShuffleDistribution();
+        }
+    }
+
+    function _testPRNGShuffleDistribution() internal {
         unchecked {
             LibPRNG.PRNG memory prng;
+            prng.state = _random();
             _TestPRNGShuffleTemps memory t;
             t.a = new int256[](8);
             t.rsElements = new RunningStatsLib.RunningStats[](8);
@@ -214,18 +221,22 @@ contract LibPRNGTest is SoladyTest {
         }
     }
 
-    function testPRNGPartialShuffleDistribution() public pure {
-        _testPRNGPartialShuffleDistribution(0);
-        _testPRNGPartialShuffleDistribution(1);
-        _testPRNGPartialShuffleDistribution(4);
-        _testPRNGPartialShuffleDistribution(7);
-        _testPRNGPartialShuffleDistribution(8);
+    function testPRNGPartialShuffleDistribution() public {
+        _testPRNGPartialShuffleDistribution();
+        _testPRNGPartialShuffleDistribution();
+        _testPRNGPartialShuffleDistribution();
     }
 
-    function _testPRNGPartialShuffleDistribution(uint256 k) internal pure {
+    function _testPRNGPartialShuffleDistribution() internal {
+        for (uint256 k; k <= 8; ++k) {
+            _testPRNGPartialShuffleDistribution(k);
+        }
+    }
+
+    function _testPRNGPartialShuffleDistribution(uint256 k) internal {
         unchecked {
             LibPRNG.PRNG memory prng;
-            prng.state = k;
+            prng.state = _random();
             _TestPRNGShuffleTemps memory t;
             t.a = new int256[](8);
             t.rsElements = new RunningStatsLib.RunningStats[](8);
