@@ -309,13 +309,13 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
-            extcodecopy(address(), 0x00, 0x4d, 0x60) // `chainId`, `tokenContract`, `tokenId`.
+            extcodecopy(address(), 0x00, 0x4d, 0x60) // `(chainId, tokenContract, tokenId)`.
             mstore(0x60, 0xfc0c546a) // `token()`.
             for {} 1 {} {
                 let tokenContract := mload(0x20)
                 mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
                 let currentOwner :=
-                    mul(
+                    mul( // `chainId == cachedChainId ? tokenContract.ownerOf(tokenId) : address(0)`.
                         mload(0x20),
                         and(
                             and(gt(returndatasize(), 0x1f), eq(mload(0x00), cachedChainId)),
@@ -324,7 +324,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
                     )
                 if iszero(eq(currentOwner, address())) {
                     if iszero(
-                        and(
+                        and( // `(chainId, tokenContract, tokenId) = currentOwner.token()`.
                             gt(returndatasize(), 0x5f),
                             staticcall(gas(), currentOwner, 0x7c, 0x04, 0x00, 0x60)
                         )
