@@ -304,7 +304,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns whether there is an ownership cycle.
-    function _hasOwnershipCycle() internal view returns (bool result) {
+    function _hasOwnershipCycle() internal view virtual returns (bool result) {
         uint256 cachedChainId = _cachedChainId;
         /// @solidity memory-safe-assembly
         assembly {
