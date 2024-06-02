@@ -172,6 +172,16 @@ contract ERC6551Test is SoladyTest {
                         t[i].owner, address(t[j].account), t[i].tokenId
                     );
                 }
+                for (uint256 j; j != i; ++j) {
+                    vm.prank(t[i].owner);
+                    MockERC721(_erc721).safeTransferFrom(
+                        t[i].owner, address(t[j].account), t[i].tokenId
+                    );
+                    vm.prank(address(t[j].account));
+                    MockERC721(_erc721).safeTransferFrom(
+                        address(t[j].account), t[i].owner, t[i].tokenId
+                    );
+                }
             }
 
             _TestTemps memory u = _testTemps();
