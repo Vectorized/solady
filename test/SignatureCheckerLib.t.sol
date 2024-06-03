@@ -462,7 +462,7 @@ contract SignatureCheckerLibTest is SoladyTest {
         t.initcode =
             hex"6040600b3d3960403df3fe36383d373d3d6020515160208051013d3d515af160203851516084018038385101606037303452813582523838523490601c34355afa34513060e01b141634fd";
         t.factory = _etchNicksFactory();
-        t.salt = 0x00000000000000000000000000000000000000002614b11f577f1e0327f55dc3;
+        t.salt = 0x000000000000000000000000000000000000000068f35e1510740001fd13984a;
         (bool success,) = t.factory.call(abi.encodePacked(t.salt, t.initcode));
         revertingVerifier =
             LibClone.predictDeterministicAddress(keccak256(t.initcode), t.salt, t.factory);
