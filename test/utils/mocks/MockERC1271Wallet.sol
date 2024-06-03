@@ -40,9 +40,13 @@ abstract contract ERC1155TokenReceiver {
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC1271Wallet is ERC721TokenReceiver, ERC1155TokenReceiver {
-    address signer;
+    address public signer;
 
     constructor(address signer_) {
+        signer = signer_;
+    }
+
+    function setSigner(address signer_) external {
         signer = signer_;
     }
 

@@ -338,6 +338,10 @@ library SignatureCheckerLib {
     /*                     ERC1271 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // Note: These ERC1271 operations do NOT have an ECDSA fallback.
+    // These functions are intended to be used with the regular `isValidSignatureNow` functions
+    // or other signature verification functions (e.g. P256).
+
     /// @dev Returns whether `signature` is valid for `hash` for an ERC1271 `signer` contract.
     function isValidERC1271SignatureNow(address signer, bytes32 hash, bytes memory signature)
         internal
@@ -483,6 +487,123 @@ library SignatureCheckerLib {
                     0x20 // Length of returndata to write.
                 )
             )
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     ERC6492 OPERATIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note: These ERC6492 operations do NOT have an ECDSA fallback.
+    // These functions are intended to be used with the regular `isValidSignatureNow` functions
+    // or other signature verification functions (e.g. P256).
+    // The calldata variants are excluded for brevity.
+
+    /// @dev Returns whether `signature` is valid for `hash`.
+    /// If the signature is postfixed with the ERC6492 magic number, it will attempt to
+    /// deploy / prepare the `signer` smart account before doing a regular ERC1271 check.
+    /// Note: This function is NOT reentrancy safe.
+    function isValidERC6492SignatureNowAllowSideEffects(
+        address signer,
+        bytes32 hash,
+        bytes memory signature
+    ) internal returns (bool isValid) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
+                let m_ := mload(0x40)
+                let f_ := shl(224, 0x1626ba7e)
+                mstore(m_, f_) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+                mstore(add(m_, 0x04), hash_)
+                let d_ := add(m_, 0x24)
+                mstore(d_, 0x40) // The offset of the `signature` in the calldata.
+                let n_ := add(0x20, mload(signature_))
+                pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
+                _isValid :=
+                    and(
+                        eq(mload(d_), f_),
+                        staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
+                    )
+            }
+            for { let n := mload(signature) } 1 {} {
+                if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
+                    isValid := callIsValidSignature(signer, hash, signature)
+                    break
+                }
+                let o := add(signature, 0x20) // Signature bytes.
+                let d := add(o, mload(add(o, 0x20))) // Factory calldata.
+                if iszero(extcodesize(signer)) {
+                    if iszero(call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00)) {
+                        break
+                    }
+                }
+                let s := add(o, mload(add(o, 0x40))) // Inner signature.
+                isValid := callIsValidSignature(signer, hash, s)
+                if iszero(isValid) {
+                    if call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00) {
+                        isValid := callIsValidSignature(signer, hash, s)
+                    }
+                }
+                break
+            }
+        }
+    }
+
+    /// @dev Returns whether `signature` is valid for `hash`.
+    /// If the signature is postfixed with the ERC6492 magic number, it will attempt
+    /// to use a reverting verifier to deploy / prepare the `signer` smart account
+    /// and do a `isValidSignature` check via the reverting verifier.
+    /// Note: This function is reentrancy safe.
+    /// The reverting verifier must be be deployed.
+    /// Otherwise, the function will return false if `signer` is not yet deployed / prepared.
+    /// See: https://gist.github.com/Vectorized/846a474c855eee9e441506676800a9ad
+    function isValidERC6492SignatureNow(address signer, bytes32 hash, bytes memory signature)
+        internal
+        returns (bool isValid)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
+                let m_ := mload(0x40)
+                let f_ := shl(224, 0x1626ba7e)
+                mstore(m_, f_) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
+                mstore(add(m_, 0x04), hash_)
+                let d_ := add(m_, 0x24)
+                mstore(d_, 0x40) // The offset of the `signature` in the calldata.
+                let n_ := add(0x20, mload(signature_))
+                pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
+                _isValid :=
+                    and(
+                        eq(mload(d_), f_),
+                        staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
+                    )
+            }
+            for { let n := mload(signature) } 1 {} {
+                if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
+                    isValid := callIsValidSignature(signer, hash, signature)
+                    break
+                }
+                if extcodesize(signer) {
+                    let o := add(signature, 0x20) // Signature bytes.
+                    isValid := callIsValidSignature(signer, hash, add(o, mload(add(o, 0x40))))
+                    if isValid { break }
+                }
+                let m := mload(0x40)
+                mstore(m, signer)
+                mstore(add(m, 0x20), hash)
+                let willBeZeroIfRevertingVerifierExists :=
+                    call(
+                        gas(), // Remaining gas.
+                        0x00007bd799e4A591FeA53f8A8a3E9f931626Ba7e, // Reverting verifier.
+                        0, // Send zero ETH.
+                        m, // Start of memory.
+                        add(returndatasize(), 0x40), // Length of calldata in memory.
+                        staticcall(gas(), 4, add(signature, 0x20), n, add(m, 0x40), n), // 1.
+                        0x00 // Length of returndata to write.
+                    )
+                isValid := gt(returndatasize(), willBeZeroIfRevertingVerifierExists)
+                break
+            }
         }
     }
 

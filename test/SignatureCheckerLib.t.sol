@@ -6,6 +6,7 @@ import {SignatureCheckerLib} from "../src/utils/SignatureCheckerLib.sol";
 import {ECDSA} from "../src/utils/ECDSA.sol";
 import {MockERC1271Wallet} from "./utils/mocks/MockERC1271Wallet.sol";
 import {MockERC1271Malicious} from "./utils/mocks/MockERC1271Malicious.sol";
+import {LibClone} from "../src/utils/LibClone.sol";
 
 contract SignatureCheckerLibTest is SoladyTest {
     bytes32 constant TEST_MESSAGE =
@@ -337,5 +338,216 @@ contract SignatureCheckerLibTest is SoladyTest {
 
     function testToEthSignedMessageHashDifferential(bytes memory s) public {
         assertEq(SignatureCheckerLib.toEthSignedMessageHash(s), ECDSA.toEthSignedMessageHash(s));
+    }
+
+    function _etchNicksFactory() internal returns (address nicksFactory) {
+        nicksFactory = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
+        if (nicksFactory.code.length != 0) {
+            vm.etch(
+                nicksFactory,
+                hex"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3"
+            );
+        }
+    }
+
+    bytes32 private constant _ERC6492_DETECTION_SUFFIX =
+        0x6492649264926492649264926492649264926492649264926492649264926492;
+
+    struct _ERC6492TestTemps {
+        bytes initcode;
+        bytes factoryCalldata;
+        bytes setSignerCalldata;
+        address eoa;
+        bytes32 salt;
+        uint256 privateKey;
+        address factory;
+        address smartAccount;
+        bytes32 digest;
+        bytes innerSignature;
+        bytes signature;
+        bool result;
+        address revertingVerifier;
+    }
+
+    function _erc6492TestTemps() internal returns (_ERC6492TestTemps memory t) {
+        t.factory = _etchNicksFactory();
+        assertGt(t.factory.code.length, 0);
+        (t.eoa, t.privateKey) = _randomSigner();
+        t.initcode = abi.encodePacked(type(MockERC1271Wallet).creationCode, uint256(uint160(t.eoa)));
+        t.salt = bytes32(_random());
+        t.factoryCalldata = abi.encodePacked(t.salt, t.initcode);
+        t.smartAccount =
+            LibClone.predictDeterministicAddress(keccak256(t.initcode), t.salt, t.factory);
+        assertEq(t.smartAccount.code.length, 0);
+
+        t.digest = keccak256(abi.encodePacked("Hehe", _random()));
+        {
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
+            t.innerSignature = abi.encodePacked(r, s, v);
+        }
+        t.signature = abi.encode(t.factory, t.factoryCalldata, t.innerSignature);
+        t.signature = abi.encodePacked(t.signature, _ERC6492_DETECTION_SUFFIX);
+    }
+
+    function _makeNewEOA(_ERC6492TestTemps memory t) internal {
+        while (true) {
+            (address newEOA, uint256 newPrivateKey) = _randomSigner();
+            if (newEOA == t.eoa) continue;
+            t.eoa = newEOA;
+            t.privateKey = newPrivateKey;
+            t.digest = keccak256(abi.encodePacked("Haha", _random()));
+            {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
+                t.innerSignature = abi.encodePacked(r, s, v);
+            }
+            t.setSignerCalldata = abi.encodeWithSignature("setSigner(address)", t.eoa);
+            t.signature = abi.encode(t.smartAccount, t.setSignerCalldata, t.innerSignature);
+            t.signature = abi.encodePacked(t.signature, _ERC6492_DETECTION_SUFFIX);
+            break;
+        }
+    }
+
+    function testERC6492AllowSideEffectsPostDeploy() public {
+        _ERC6492TestTemps memory t = _erc6492TestTemps();
+        (bool success,) = t.factory.call(t.factoryCalldata);
+        require(success);
+        assertGt(t.smartAccount.code.length, 0);
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertTrue(t.result);
+
+        _makeNewEOA(t);
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.smartAccount, t.digest, t.signature
+        );
+        assertTrue(t.result);
+        assertEq(MockERC1271Wallet(t.smartAccount).signer(), t.eoa);
+    }
+
+    function testERC6492AllowSideEffectsPreDeploy() public {
+        _ERC6492TestTemps memory t = _erc6492TestTemps();
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertFalse(t.result);
+        // This should return false, as the function does NOT do ECDSA fallback.
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.eoa, t.digest, t.innerSignature
+        );
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.smartAccount, t.digest, t.signature
+        );
+        assertTrue(t.result);
+        assertGt(t.smartAccount.code.length, 0);
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.smartAccount, t.digest, t.signature
+        );
+        assertTrue(t.result);
+        assertGt(t.smartAccount.code.length, 0);
+        assertEq(MockERC1271Wallet(t.smartAccount).signer(), t.eoa);
+
+        _makeNewEOA(t);
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.smartAccount, t.digest, t.signature
+        );
+        assertTrue(t.result);
+        assertEq(MockERC1271Wallet(t.smartAccount).signer(), t.eoa);
+    }
+
+    function _etchERC6492RevertingVerifier() internal returns (address revertingVerifier) {
+        _ERC6492TestTemps memory t;
+        t.initcode =
+            hex"6040600b3d3960403df3fe36383d373d3d6020515160208051013d3d515af160203851516084018038385101606037303452813582523838523490601c34355afa34513060e01b141634fd";
+        t.factory = _etchNicksFactory();
+        t.salt = 0x000000000000000000000000000000000000000068f35e1510740001fd13984a;
+        (bool success,) = t.factory.call(abi.encodePacked(t.salt, t.initcode));
+        revertingVerifier =
+            LibClone.predictDeterministicAddress(keccak256(t.initcode), t.salt, t.factory);
+        assertTrue(success);
+        assertGt(revertingVerifier.code.length, 0);
+        emit LogBytes32(keccak256(t.initcode));
+        emit LogBytes(revertingVerifier.code);
+    }
+
+    function testEtchERC6492RevertingVerifier() public {
+        _etchERC6492RevertingVerifier();
+    }
+
+    function testERC6492PostDeploy() public {
+        _ERC6492TestTemps memory t = _erc6492TestTemps();
+        t.revertingVerifier = _etchERC6492RevertingVerifier();
+        (bool success,) = t.factory.call(t.factoryCalldata);
+        require(success);
+
+        assertGt(t.smartAccount.code.length, 0);
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertTrue(t.result);
+
+        address oldEOA = t.eoa;
+        _makeNewEOA(t);
+        t.result =
+            SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
+        assertTrue(t.result);
+        assertEq(MockERC1271Wallet(t.smartAccount).signer(), oldEOA);
+    }
+
+    function testERC6492PreDeploy() public {
+        _ERC6492TestTemps memory t = _erc6492TestTemps();
+        t.revertingVerifier = _etchERC6492RevertingVerifier();
+
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertFalse(t.result);
+        // This should return false, as the function does NOT do ECDSA fallback.
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.innerSignature);
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+        t.result =
+            SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
+        assertTrue(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+        t.result =
+            SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
+        assertTrue(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.smartAccount, keccak256(""), t.signature
+        );
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+    }
+
+    function testERC6492WithoutRevertingVerifier() public {
+        _ERC6492TestTemps memory t = _erc6492TestTemps();
+
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertFalse(t.result);
+
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.smartAccount, t.digest, t.innerSignature
+        );
+        assertFalse(t.result);
+        // This should return false, as the function does NOT do ECDSA fallback.
+        t.result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.innerSignature);
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+        // Without the reverting verifier, the function will simply return false.
+        t.result =
+            SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
+        t.result =
+            SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
+        assertFalse(t.result);
+        assertEq(t.smartAccount.code.length, 0);
     }
 }
