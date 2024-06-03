@@ -683,10 +683,15 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the square root of `x`, denominated in `WAD`.
+    /// Note: This function does a best effort precision attempt
+    /// - If `x >= type(uint256).max / 10 ** 18`: `sqrt(x) * 10 ** 9`
+    /// - Otherwise `sqrt(x * 10 ** 18)`
+    /// The output is bounded by the following relation
+    /// `sqrtWad(x) >= sqrt(x) * 10 ** 9 && sqrtWad(x) <= (sqrt(x) + 1) * 10 ** 9`.
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             z = 10 ** 9;
-            if (x <= type(uint256).max / 10 ** 36 - 1) {
+            if (x <= (type(uint256).max / 10 ** 18) - 1) {
                 x *= 10 ** 18;
                 z = 1;
             }
@@ -695,10 +700,16 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the cube root of `x`, denominated in `WAD`.
+    /// Note: This function does a best effort precision attempt
+    /// - If `x >= type(uint256).max / 10 ** 36 * 10 ** 18`: `cbrt(x) * 10 ** 12`
+    /// - Else if `x >= type(uint256).max / 10 ** 36`: `cbrt(x * 10 ** 18) * 10 ** 6`
+    /// - Otherwise `cbrt(x * 10 ** 36)`
+    /// The output is bounded by the following relation
+    /// `cbrtWad(x) >= cbrt(x) * 10 ** 12 && cbrtWad(x) <= (cbrt(x) + 1) * 10 ** 12`.
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             z = 10 ** 12;
-            if (x <= (type(uint256).max / 10 ** 36) * 10 ** 18 - 1) {
+            if (x <= ((type(uint256).max / 10 ** 36) * 10 ** 18) - 1) {
                 if (x >= type(uint256).max / 10 ** 36) {
                     x *= 10 ** 18;
                     z = 10 ** 6;
