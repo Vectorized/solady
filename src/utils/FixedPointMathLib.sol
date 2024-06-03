@@ -190,6 +190,7 @@ library FixedPointMathLib {
 
     /// @dev Equivalent to `x` to the power of `y`.
     /// because `x ** y = (e ** ln(x)) ** y = e ** (ln(x) * y)`.
+    /// Note: This function is an approximation.
     function powWad(int256 x, int256 y) internal pure returns (int256) {
         // Using `ln(x)` means `x` must be greater than 0.
         return expWad((lnWad(x) * y) / int256(WAD));
@@ -197,6 +198,7 @@ library FixedPointMathLib {
 
     /// @dev Returns `exp(x)`, denominated in `WAD`.
     /// Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln
+    /// Note: This function is an approximation. Monotonically increasing.
     function expWad(int256 x) internal pure returns (int256 r) {
         unchecked {
             // When the result is less than 0.5 we return zero.
@@ -266,6 +268,7 @@ library FixedPointMathLib {
 
     /// @dev Returns `ln(x)`, denominated in `WAD`.
     /// Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln
+    /// Note: This function is an approximation. Monotonically increasing.
     function lnWad(int256 x) internal pure returns (int256 r) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -341,6 +344,7 @@ library FixedPointMathLib {
     /// @dev Returns `W_0(x)`, denominated in `WAD`.
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
+    /// Note: This function is an approximation. Monotonically increasing.
     function lambertW0Wad(int256 x) internal pure returns (int256 w) {
         // forgefmt: disable-next-item
         unchecked {
@@ -683,10 +687,15 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the square root of `x`, denominated in `WAD`.
+    /// Note: This function can cause precision loss due to the limits of 256-bit square root.
+    /// - If `x >= type(uint256).max / 10 ** 18`: `sqrt(x) * 10 ** 9`
+    /// - Otherwise `sqrt(x * 10 ** 18)`
+    /// The output is bounded by the following relation
+    /// `sqrtWad(x) >= sqrt(x) * 10 ** 9 && sqrtWad(x) <= (sqrt(x) + 1) * 10 ** 9`.
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             z = 10 ** 9;
-            if (x <= type(uint256).max / 10 ** 36 - 1) {
+            if (x <= (type(uint256).max / 10 ** 18) - 1) {
                 x *= 10 ** 18;
                 z = 1;
             }
@@ -695,10 +704,16 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the cube root of `x`, denominated in `WAD`.
+    /// Note: This function can cause precision loss due to the limits of 256-bit cube root.
+    /// - If `x >= type(uint256).max / 10 ** 36 * 10 ** 18`: `cbrt(x) * 10 ** 12`
+    /// - Else if `x >= type(uint256).max / 10 ** 36`: `cbrt(x * 10 ** 18) * 10 ** 6`
+    /// - Otherwise `cbrt(x * 10 ** 36)`
+    /// The output is bounded by the following relation
+    /// `cbrtWad(x) >= cbrt(x) * 10 ** 12 && cbrtWad(x) <= (cbrt(x) + 1) * 10 ** 12`.
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             z = 10 ** 12;
-            if (x <= (type(uint256).max / 10 ** 36) * 10 ** 18 - 1) {
+            if (x <= ((type(uint256).max / 10 ** 36) * 10 ** 18) - 1) {
                 if (x >= type(uint256).max / 10 ** 36) {
                     x *= 10 ** 18;
                     z = 10 ** 6;
