@@ -1,0 +1,27 @@
+name: ci-invariant-intense
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Forge Testing invariant intense
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        profile: [invariant-intense-0,invariant-intense-1,invariant-intense-2,invariant-intense-3]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Run Tests with ${{ matrix.profile }}
+        run: FOUNDRY_INVARIANT_RUNS=500 FOUNDRY_INVARIANT_DEPTH=500 forge test
