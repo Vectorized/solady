@@ -844,68 +844,8 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.sqrtWad(type(uint128).max), 18446744073709551615999999999);
         assertEq(
             FixedPointMathLib.sqrtWad(type(uint256).max),
-            340282366920938463463374607431768211455000000000
+            340282366920938463463374607431768211455999999999
         );
-    }
-
-    function _sqrtWad(uint256 x, uint256 threshold) internal pure returns (uint256 z) {
-        unchecked {
-            z = 10 ** 9;
-            if (x <= threshold) {
-                x *= 10 ** 18;
-                z = 1;
-            }
-            z *= FixedPointMathLib.sqrt(x);
-        }
-    }
-
-    function _sqrtWadDefaultThreshold() internal pure returns (uint256) {
-        return type(uint256).max / 10 ** 18;
-    }
-
-    function _nonMonotonicallyIncreasingSqrtWad(uint256 x) internal pure returns (uint256) {
-        return _sqrtWad(x, _sqrtWadDefaultThreshold());
-    }
-
-    function _sqrtWadThreshold() internal returns (uint256) {
-        uint256 x = _sqrtWadDefaultThreshold();
-        emit LogUint(
-            "_nonMonotonicallyIncreasingSqrtWad(x - 2)", _nonMonotonicallyIncreasingSqrtWad(x - 2)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingSqrtWad(x - 1)", _nonMonotonicallyIncreasingSqrtWad(x - 1)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingSqrtWad(x + 0)", _nonMonotonicallyIncreasingSqrtWad(x + 0)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingSqrtWad(x + 1)", _nonMonotonicallyIncreasingSqrtWad(x + 1)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingSqrtWad(x + 2)", _nonMonotonicallyIncreasingSqrtWad(x + 2)
-        );
-        // This is undesirable, but we'll just assert `>=` here to show that it happens.
-        assertGt(_nonMonotonicallyIncreasingSqrtWad(x), _nonMonotonicallyIncreasingSqrtWad(x + 1));
-        uint256 root = _nonMonotonicallyIncreasingSqrtWad(x + 1);
-        emit LogUint("root", root);
-        uint256 threshold = FixedPointMathLib.fullMulDiv(root, root, 10 ** 18);
-        emit LogUint("threshold", threshold);
-        return threshold;
-    }
-
-    function testSqrtWadMonotonicallyIncreasing() public {
-        unchecked {
-            uint256 threshold = _sqrtWadThreshold();
-            uint256 o = threshold - 10;
-            for (uint256 i; i != 20; ++i) {
-                uint256 x = o + i;
-                emit LogUint("x", x);
-                uint256 root = _sqrtWad(x, threshold);
-                assertEq(FixedPointMathLib.sqrtWad(x), root);
-                emit LogUint("root", root);
-                assertLe(root, _sqrtWad(x + 1, threshold));
-            }
-        }
     }
 
     function testCbrt() public {
@@ -946,120 +886,8 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.cbrtWad(type(uint64).max), 2642245949629133047);
         assertEq(FixedPointMathLib.cbrtWad(type(uint128).max), 6981463658331559092288464);
         assertEq(
-            FixedPointMathLib.cbrtWad(type(uint256).max), 48740834812604276470692694000000000000
+            FixedPointMathLib.cbrtWad(type(uint256).max), 48740834812604276470692694885616578541
         );
-    }
-
-    function _cbrtWad(uint256 x, uint256 threshold1, uint256 threshold2)
-        internal
-        pure
-        returns (uint256 z)
-    {
-        unchecked {
-            z = 10 ** 12;
-            if (x <= threshold1) {
-                if (x <= threshold2) {
-                    x *= 10 ** 36;
-                    z = 1;
-                } else {
-                    x *= 10 ** 18;
-                    z = 10 ** 6;
-                }
-            }
-            z *= FixedPointMathLib.cbrt(x);
-        }
-    }
-
-    function _cbrtWadDefaultThreshold1() internal pure returns (uint256) {
-        return (type(uint256).max / 10 ** 36) * 10 ** 18;
-    }
-
-    function _cbrtWadDefaultThreshold2() internal pure returns (uint256) {
-        return type(uint256).max / 10 ** 36;
-    }
-
-    function _nonMonotonicallyIncreasingCbrtWad(uint256 x) internal pure returns (uint256) {
-        return _cbrtWad(x, _cbrtWadDefaultThreshold1(), _cbrtWadDefaultThreshold2());
-    }
-
-    function _cbrtWadThreshold1() internal returns (uint256) {
-        uint256 x = _cbrtWadDefaultThreshold1();
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x - 2)", _nonMonotonicallyIncreasingCbrtWad(x - 2)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x - 1)", _nonMonotonicallyIncreasingCbrtWad(x - 1)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x + 0)", _nonMonotonicallyIncreasingCbrtWad(x + 0)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x + 1)", _nonMonotonicallyIncreasingCbrtWad(x + 1)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x + 2)", _nonMonotonicallyIncreasingCbrtWad(x + 2)
-        );
-        // This is undesirable, but we'll just assert `>=` here to show that it happens.
-        assertGt(_nonMonotonicallyIncreasingCbrtWad(x), _nonMonotonicallyIncreasingCbrtWad(x + 1));
-        uint256 root = _nonMonotonicallyIncreasingCbrtWad(x + 1);
-        emit LogUint("root", root);
-        uint256 threshold = FixedPointMathLib.fullMulDiv(root, root * root, 10 ** 36);
-        emit LogUint("threshold", threshold);
-        return threshold;
-    }
-
-    function _cbrtWadThreshold2() internal returns (uint256) {
-        uint256 x = _cbrtWadDefaultThreshold2();
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x - 2)", _nonMonotonicallyIncreasingCbrtWad(x - 2)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x - 1)", _nonMonotonicallyIncreasingCbrtWad(x - 1)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x + 0)", _nonMonotonicallyIncreasingCbrtWad(x + 0)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x + 1)", _nonMonotonicallyIncreasingCbrtWad(x + 1)
-        );
-        emit LogUint(
-            "_nonMonotonicallyIncreasingCbrtWad(x + 2)", _nonMonotonicallyIncreasingCbrtWad(x + 2)
-        );
-        // This is undesirable, but we'll just assert `>=` here to show that it happens.
-        assertGt(_nonMonotonicallyIncreasingCbrtWad(x), _nonMonotonicallyIncreasingCbrtWad(x + 1));
-        uint256 root = _nonMonotonicallyIncreasingCbrtWad(x + 1);
-        emit LogUint("root", root);
-        uint256 threshold = FixedPointMathLib.fullMulDiv(root, root * root, 10 ** 36);
-        emit LogUint("threshold", threshold);
-        return threshold;
-    }
-
-    function testCbrtWadMonotonicallyIncreasing() public {
-        uint256 threshold1 = _cbrtWadThreshold1();
-        unchecked {
-            uint256 threshold2 = _cbrtWadDefaultThreshold2();
-            uint256 o = threshold1 - 10;
-            for (uint256 i; i != 20; ++i) {
-                uint256 x = o + i;
-                emit LogUint("x", x);
-                uint256 root = _cbrtWad(x, threshold1, threshold2);
-                emit LogUint("root", root);
-                assertEq(FixedPointMathLib.cbrtWad(x), root);
-                assertLe(root, _cbrtWad(x + 1, threshold1, threshold2));
-            }
-        }
-        unchecked {
-            uint256 threshold2 = _cbrtWadThreshold2();
-            uint256 o = threshold2 - 10;
-            for (uint256 i; i != 20; ++i) {
-                uint256 x = o + i;
-                emit LogUint("x", x);
-                uint256 root = _cbrtWad(x, threshold1, threshold2);
-                emit LogUint("root", root);
-                assertEq(FixedPointMathLib.cbrtWad(x), root);
-                assertLe(root, _cbrtWad(x + 1, threshold1, threshold2));
-            }
-        }
     }
 
     function testLog2() public {
@@ -1223,6 +1051,12 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.fullMulDiv(0, 0, 1), 0);
         assertEq(FixedPointMathLib.fullMulDiv(4, 4, 2), 8);
         assertEq(FixedPointMathLib.fullMulDiv(2 ** 200, 2 ** 200, 2 ** 200), 2 ** 200);
+    }
+
+    function testFullMulDivUnchecked() public {
+        assertEq(FixedPointMathLib.fullMulDivUnchecked(0, 0, 1), 0);
+        assertEq(FixedPointMathLib.fullMulDivUnchecked(4, 4, 2), 8);
+        assertEq(FixedPointMathLib.fullMulDivUnchecked(2 ** 200, 2 ** 200, 2 ** 200), 2 ** 200);
     }
 
     function testFullMulDivAlwaysRevertsIfDivisorIsZero(uint256 a, uint256 b) public {

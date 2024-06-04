@@ -499,6 +499,36 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Calculates `floor(x * y / d)` with full precision.
+    /// Behavior is undefined if `d` is zero or the final result cannot fit in 256 bits.
+    /// Performs the full 512 bit calculation regardless.
+    function fullMulDivUnchecked(uint256 x, uint256 y, uint256 d)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mul(x, y)
+            let mm := mulmod(x, y, not(0))
+            let p1 := sub(mm, add(result, lt(mm, result)))
+            let r := mulmod(x, y, d)
+            let t := and(d, sub(0, d))
+            d := div(d, t)
+            let inv := xor(2, mul(3, d))
+            inv := mul(inv, sub(2, mul(d, inv)))
+            inv := mul(inv, sub(2, mul(d, inv)))
+            inv := mul(inv, sub(2, mul(d, inv)))
+            inv := mul(inv, sub(2, mul(d, inv)))
+            inv := mul(inv, sub(2, mul(d, inv)))
+            result :=
+                mul(
+                    or(mul(sub(p1, gt(r, result)), add(div(sub(0, t), t), 1)), div(sub(result, r), t)),
+                    mul(sub(2, mul(d, inv)), inv)
+                )
+        }
+    }
+
     /// @dev Calculates `floor(x * y / d)` with full precision, rounded up.
     /// Throws if result overflows a uint256 or when `d` is zero.
     /// Credit to Uniswap-v3-core under MIT license:
@@ -687,43 +717,24 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the square root of `x`, denominated in `WAD`.
-    /// Note: Precision will be lost if `x` is big due to the limits of 256-bit square root.
-    /// The output is bounded by the following relation
-    /// `sqrtWad(x) >= sqrt(x) * 10 ** 9 && sqrtWad(x) <= (sqrt(x) + 1) * 10 ** 9`.
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
-            z = 10 ** 9;
-            // Upper limit of `x` that can be multiplied by `10 ** 18` without overflow,
-            // while ensuring that the `sqrtWad(x) <= sqrtWad(x + 1)`.
-            if (x <= 115792089237316195423570985008165090228183063917833360419761) {
-                x *= 10 ** 18;
-                z = 1;
+            if (x <= type(uint256).max / 10 ** 18) {
+                return sqrt(x * 10 ** 18);
             }
-            z *= sqrt(x);
+            z = (1 + sqrt(x)) * 10 ** 9;
+            z = (fullMulDivUnchecked(x, 10 ** 18, z) + z) >> 1;
         }
     }
 
     /// @dev Returns the cube root of `x`, denominated in `WAD`.
-    /// Note: Precision will be lost if `x` is big due to the limits of 256-bit cube root.
-    /// The output is bounded by the following relation
-    /// `cbrtWad(x) >= cbrt(x) * 10 ** 12 && cbrtWad(x) <= (cbrt(x) + 1) * 10 ** 12`.
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
-            z = 10 ** 12;
-            // Upper limit of `x` that can be multiplied by `10 ** 18` without overflow,
-            // while ensuring that the `cbrtWad(x) <= cbrtWad(x + 1)`.
-            if (x <= 115792089237316195418634143755275135376114762862117969023000) {
-                // Upper limit of `x` that can be multiplied by `10 ** 36` without overflow,
-                // while ensuring that the `cbrtWad(x) <= cbrtWad(x + 1)`.
-                if (x <= 115792089237316195418634143755275135376114) {
-                    x *= 10 ** 36;
-                    z = 1;
-                } else {
-                    x *= 10 ** 18;
-                    z = 10 ** 6;
-                }
+            if (x <= type(uint256).max / 10 ** 36) {
+                return cbrt(x * 10 ** 36);
             }
-            z *= cbrt(x);
+            z = (1 + cbrt(x)) * 10 ** 12;
+            z = (fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
         }
     }
 
