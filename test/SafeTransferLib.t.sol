@@ -437,12 +437,8 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransfer(address(returnsRawBytes), to, amount, _SUCCESS);
     }
 
-    function testTransferWithNonContract(address nonContract, address to, uint256 amount) public {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
-            return;
-        }
-
-        SafeTransferLib.safeTransfer(nonContract, _brutalized(to), amount);
+    function testTransferWithNonContract(bytes32, address to, uint256 amount) public {
+        SafeTransferLib.safeTransfer(_brutalized(_randomHashedAddress()), _brutalized(to), amount);
     }
 
     function testTransferETHToContractWithoutFallbackReverts() public {
@@ -538,30 +534,13 @@ contract SafeTransferLibTest is SoladyTest {
         testApproveWithRetry(address(1), 123, 456);
     }
 
-    function testTransferETH(address recipient, uint256 amount) public {
-        // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
-        if (
-            recipient.code.length > 0 || uint256(uint160(recipient)) <= 18
-                || recipient == msg.sender
-        ) {
-            return;
-        }
-
+    function testTransferETH(bytes32, uint256 amount) public {
         amount = _bound(amount, 0, address(this).balance);
-
-        SafeTransferLib.safeTransferETH(recipient, amount);
+        SafeTransferLib.safeTransferETH(_randomHashedAddress(), amount);
     }
 
-    function testTransferAllETH(address recipient) public {
-        // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
-        if (
-            recipient.code.length > 0 || uint256(uint160(recipient)) <= 18
-                || recipient == msg.sender
-        ) {
-            return;
-        }
-
-        SafeTransferLib.safeTransferAllETH(recipient);
+    function testTransferAllETH(bytes32) public {
+        SafeTransferLib.safeTransferAllETH(_randomHashedAddress());
     }
 
     function testTransferWithReturnsFalseReverts(address to, uint256 amount) public {

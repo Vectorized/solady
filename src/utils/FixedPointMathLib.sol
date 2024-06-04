@@ -687,15 +687,15 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the square root of `x`, denominated in `WAD`.
-    /// Note: This function can cause precision loss due to the limits of 256-bit square root.
-    /// - If `x >= type(uint256).max / 10 ** 18`: `sqrt(x) * 10 ** 9`
-    /// - Otherwise `sqrt(x * 10 ** 18)`
+    /// Note: Precision will be lost if `x` is big due to the limits of 256-bit square root.
     /// The output is bounded by the following relation
     /// `sqrtWad(x) >= sqrt(x) * 10 ** 9 && sqrtWad(x) <= (sqrt(x) + 1) * 10 ** 9`.
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             z = 10 ** 9;
-            if (x <= (type(uint256).max / 10 ** 18) - 1) {
+            // Upper limit of `x` that can be multiplied by `10 ** 18` without overflow,
+            // while ensuring that the `sqrtWad(x) <= sqrtWad(x + 1)`.
+            if (x <= 115792089237316195423570985008165090228183063917833360419761) {
                 x *= 10 ** 18;
                 z = 1;
             }
@@ -704,22 +704,23 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the cube root of `x`, denominated in `WAD`.
-    /// Note: This function can cause precision loss due to the limits of 256-bit cube root.
-    /// - If `x >= type(uint256).max / 10 ** 36 * 10 ** 18`: `cbrt(x) * 10 ** 12`
-    /// - Else if `x >= type(uint256).max / 10 ** 36`: `cbrt(x * 10 ** 18) * 10 ** 6`
-    /// - Otherwise `cbrt(x * 10 ** 36)`
+    /// Note: Precision will be lost if `x` is big due to the limits of 256-bit cube root.
     /// The output is bounded by the following relation
     /// `cbrtWad(x) >= cbrt(x) * 10 ** 12 && cbrtWad(x) <= (cbrt(x) + 1) * 10 ** 12`.
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             z = 10 ** 12;
-            if (x <= ((type(uint256).max / 10 ** 36) * 10 ** 18) - 1) {
-                if (x >= type(uint256).max / 10 ** 36) {
-                    x *= 10 ** 18;
-                    z = 10 ** 6;
-                } else {
+            // Upper limit of `x` that can be multiplied by `10 ** 18` without overflow,
+            // while ensuring that the `cbrtWad(x) <= cbrtWad(x + 1)`.
+            if (x <= 115792089237316195418634143755275135376114762862117969023000) {
+                // Upper limit of `x` that can be multiplied by `10 ** 36` without overflow,
+                // while ensuring that the `cbrtWad(x) <= cbrtWad(x + 1)`.
+                if (x <= 115792089237316195418634143755275135376114) {
                     x *= 10 ** 36;
                     z = 1;
+                } else {
+                    x *= 10 ** 18;
+                    z = 10 ** 6;
                 }
             }
             z *= cbrt(x);

@@ -112,10 +112,23 @@ contract TestPlus is Brutalizer {
     }
 
     /// @dev Returns a random non-zero address.
+    /// This function will not return an existing contract.
     function _randomNonZeroAddress() internal returns (address result) {
         do {
             result = address(uint160(_random()));
         } while (result == address(0));
+    }
+
+    /// @dev Returns a random hashed address.
+    /// This function will not return an existing contract.
+    /// This function will not return a precompile address.
+    function _randomHashedAddress() internal returns (address result) {
+        uint256 r = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, r)
+            result := keccak256(0x00, 0x20)
+        }
     }
 
     /// @dev Adapted from `bound`:
