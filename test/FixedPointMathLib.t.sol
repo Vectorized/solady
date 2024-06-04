@@ -1080,6 +1080,13 @@ contract FixedPointMathLibTest is SoladyTest {
         );
     }
 
+    function testFullMulDivUnchecked(uint256 a, uint256 b, uint256 d) public {
+        a = _bound(a, 0, type(uint128).max);
+        b = _bound(b, 0, type(uint128).max);
+        d = _bound(d, 1, type(uint256).max);
+        assertEq(a * b / d, FixedPointMathLib.fullMulDivUnchecked(a, b, d));
+    }
+
     function testFullMulDiv(uint256 a, uint256 b, uint256 d) public returns (uint256 result) {
         if (d == 0) {
             vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
