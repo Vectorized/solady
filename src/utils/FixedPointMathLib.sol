@@ -693,9 +693,9 @@ library FixedPointMathLib {
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             z = 10 ** 9;
-            // The largest number `x` can be multiplied by `10 ** 18` without overflow,
+            // Upper limit of `x` that can be multiplied by `10 ** 18` without overflow,
             // while ensuring that the `sqrtWad(x) <= sqrtWad(x + 1)`.
-            if (x <= 115792089237316195423570985008165090228183063917833360419760) {
+            if (x <= 115792089237316195423570985008165090228183063917833360419761) {
                 x *= 10 ** 18;
                 z = 1;
             }
@@ -710,17 +710,17 @@ library FixedPointMathLib {
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             z = 10 ** 12;
-            // The largest number `x` can be multiplied by `10 ** 18` without overflow,
+            // Upper limit of `x` that can be multiplied by `10 ** 18` without overflow,
             // while ensuring that the `cbrtWad(x) <= cbrtWad(x + 1)`.
             if (x <= 115792089237316195418634143755275135376114762862117969023000) {
-                // The largest number `x` can be multiplied by `10 ** 36` without overflow,
+                // Upper limit of `x` that can be multiplied by `10 ** 36` without overflow,
                 // while ensuring that the `cbrtWad(x) <= cbrtWad(x + 1)`.
-                if (x >= 115792089237316195418634143755275135376115) {
-                    x *= 10 ** 18;
-                    z = 10 ** 6;
-                } else {
+                if (x <= 115792089237316195418634143755275135376114) {
                     x *= 10 ** 36;
                     z = 1;
+                } else {
+                    x *= 10 ** 18;
+                    z = 10 ** 6;
                 }
             }
             z *= cbrt(x);
