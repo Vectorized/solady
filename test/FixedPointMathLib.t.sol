@@ -848,6 +848,15 @@ contract FixedPointMathLibTest is SoladyTest {
         );
     }
 
+    function testSqrtWadMonotonicallyIncreasing() public {
+        unchecked {
+            uint256 x = 115792089237316195423570985008165090228183063917833360419760;
+            for (uint256 i; i != 20; ++i) {
+                assertLe(FixedPointMathLib.sqrtWad(x + i), FixedPointMathLib.sqrtWad(x + i + 1));
+            }
+        }
+    }
+
     function testCbrt() public {
         assertEq(FixedPointMathLib.cbrt(0), 0);
         assertEq(FixedPointMathLib.cbrt(1), 1);
@@ -888,6 +897,21 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(
             FixedPointMathLib.cbrtWad(type(uint256).max), 48740834812604276470692694000000000000
         );
+    }
+
+    function testCbrtWadMonotonicallyIncreasing() public {
+        unchecked {
+            uint256 x = 115792089237316195418634143755275135376114762862117969023000;
+            for (uint256 i; i != 20; ++i) {
+                assertLe(FixedPointMathLib.cbrtWad(x + i), FixedPointMathLib.cbrtWad(x + i + 1));
+            }
+        }
+        unchecked {
+            uint256 x = 115792089237316195418634143755275135376115;
+            for (uint256 i; i != 20; ++i) {
+                assertLe(FixedPointMathLib.cbrtWad(x + i), FixedPointMathLib.cbrtWad(x + i + 1));
+            }
+        }
     }
 
     function testLog2() public {
@@ -1337,6 +1361,13 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(result / 10 ** 12, floor);
     }
 
+    function testCbrtWadMonotonicallyIncreasing(uint256 x) public {
+        while (x == type(uint256).max) x = _random();
+        uint256 a = FixedPointMathLib.cbrtWad(x);
+        uint256 b = FixedPointMathLib.cbrtWad(x + 1);
+        assertLe(a, b);
+    }
+
     function testCbrtBack(uint256 x) public {
         unchecked {
             x = _bound(x, 0, 48740834812604276470692694);
@@ -1364,6 +1395,13 @@ contract FixedPointMathLibTest is SoladyTest {
         uint256 floor = FixedPointMathLib.sqrt(x);
         assertTrue(result >= floor * 10 ** 9 && result <= (floor + 1) * 10 ** 9);
         assertEq(result / 10 ** 9, floor);
+    }
+
+    function testSqrtWadMonotonicallyIncreasing(uint256 x) public {
+        while (x == type(uint256).max) x = _random();
+        uint256 a = FixedPointMathLib.sqrtWad(x);
+        uint256 b = FixedPointMathLib.sqrtWad(x + 1);
+        assertLe(a, b);
     }
 
     function testSqrtBack(uint256 x) public {
