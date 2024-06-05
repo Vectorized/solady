@@ -636,7 +636,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the square root of `x`.
+    /// @dev Returns the square root of `x`, rounded down.
     function sqrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -690,7 +690,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the cube root of `x`.
+    /// @dev Returns the cube root of `x`, rounded down.
     /// Credit to bout3fiddy and pcaversaccio under AGPLv3 license:
     /// https://github.com/pcaversaccio/snekmate/blob/main/src/utils/Math.vy
     function cbrt(uint256 x) internal pure returns (uint256 z) {
@@ -716,7 +716,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the square root of `x`, denominated in `WAD`.
+    /// @dev Returns the square root of `x`, denominated in `WAD`, rounded down.
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             uint256 wad = 10 ** 18;
@@ -733,7 +733,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the cube root of `x`, denominated in `WAD`.
+    /// @dev Returns the cube root of `x`, denominated in `WAD`, rounded down.
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             uint256 wadSq = 10 ** 36;
