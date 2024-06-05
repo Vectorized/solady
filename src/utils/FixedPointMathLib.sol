@@ -720,16 +720,11 @@ library FixedPointMathLib {
     function sqrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             uint256 wad = 10 ** 18;
-            if (x <= type(uint256).max / wad) {
-                return sqrt(x * wad);
-            }
+            if (x <= type(uint256).max / wad) return sqrt(x * wad);
             z = (1 + sqrt(x)) * 10 ** 9;
             z = (fullMulDivUnchecked(x, wad, z) + z) >> 1;
-            /// @solidity memory-safe-assembly
-            assembly {
-                let t := mulmod(z, z, x)
-                z := sub(z, gt(lt(t, wad), iszero(t)))
-            }
+            if (rawMulMod(z, z, x) >= wad) return z;
+            if (fullMulDivUnchecked(x, wad, z) < z) --z;
         }
     }
 
@@ -737,16 +732,11 @@ library FixedPointMathLib {
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             uint256 wadSq = 10 ** 36;
-            if (x <= type(uint256).max / wadSq) {
-                return cbrt(x * wadSq);
-            }
+            if (x <= type(uint256).max / wadSq) return cbrt(x * wadSq);
             z = (1 + cbrt(x)) * 10 ** 12;
             z = (fullMulDivUnchecked(x, wadSq, z * z) + z + z) / 3;
-            /// @solidity memory-safe-assembly
-            assembly {
-                let t := mulmod(z, mul(z, z), x)
-                z := sub(z, gt(lt(t, wadSq), iszero(t)))
-            }
+            if (rawMulMod(z, z * z, x) >= wadSq) return z;
+            if (fullMulDivUnchecked(x, wadSq, z * z) < z) --z;
         }
     }
 
