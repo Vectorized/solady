@@ -1358,11 +1358,29 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(result / 10 ** 12, floor);
     }
 
-    function testCbrtWadMonotonicallyIncreasing(uint256 x) public {
+    function testCbrtWadMonotonicallyIncreasing(uint256 x, uint256 y) public {
         while (x == type(uint256).max) x = _random();
         uint256 a = FixedPointMathLib.cbrtWad(x);
         uint256 b = FixedPointMathLib.cbrtWad(x + 1);
         assertLe(a, b);
+        if (x < y) {
+            b = FixedPointMathLib.cbrtWad(y);
+            assertLe(a, b);
+        } else {
+            b = a;
+            a = FixedPointMathLib.cbrtWad(y);
+            assertLe(a, b);
+        }
+    }
+
+    function testCbrtWadConverged(uint256 x) public {
+        uint256 z = FixedPointMathLib.cbrtWad(x);
+        while (z == 0) {
+            x = _random();
+            z = FixedPointMathLib.cbrtWad(x);
+        }
+        uint256 next = (FixedPointMathLib.fullMulDiv(x, 10 ** 36, z * z) + z + z) / 3;
+        assertLt(FixedPointMathLib.dist(next, z), 2);
     }
 
     function testCbrtBack(uint256 x) public {
@@ -1394,11 +1412,29 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(result / 10 ** 9, floor);
     }
 
-    function testSqrtWadMonotonicallyIncreasing(uint256 x) public {
+    function testSqrtWadMonotonicallyIncreasing(uint256 x, uint256 y) public {
         while (x == type(uint256).max) x = _random();
         uint256 a = FixedPointMathLib.sqrtWad(x);
         uint256 b = FixedPointMathLib.sqrtWad(x + 1);
         assertLe(a, b);
+        if (x < y) {
+            b = FixedPointMathLib.sqrtWad(y);
+            assertLe(a, b);
+        } else {
+            b = a;
+            a = FixedPointMathLib.sqrtWad(y);
+            assertLe(a, b);
+        }
+    }
+
+    function testSqrtWadConverged(uint256 x) public {
+        uint256 z = FixedPointMathLib.sqrtWad(x);
+        while (z == 0) {
+            x = _random();
+            z = FixedPointMathLib.sqrtWad(x);
+        }
+        uint256 next = (FixedPointMathLib.fullMulDiv(x, 10 ** 18, z) + z) >> 1;
+        assertLt(FixedPointMathLib.dist(next, z), 2);
     }
 
     function testSqrtBack(uint256 x) public {
