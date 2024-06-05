@@ -723,8 +723,13 @@ library FixedPointMathLib {
             if (x <= type(uint256).max / wad) return sqrt(x * wad);
             z = (1 + sqrt(x)) * 10 ** 9;
             z = (fullMulDivUnchecked(x, wad, z) + z) >> 1;
+            // Heuristic to early return if `z` is not ceil.
             if (rawMulMod(z, z, x) >= wad) return z;
-            if (fullMulDivUnchecked(x, wad, z) < z) --z;
+            uint256 t = fullMulDivUnchecked(x, wad, z);
+            /// @solidity memory-safe-assembly
+            assembly {
+                z := sub(z, lt(t, z))
+            }
         }
     }
 
@@ -735,8 +740,13 @@ library FixedPointMathLib {
             if (x <= type(uint256).max / wadSq) return cbrt(x * wadSq);
             z = (1 + cbrt(x)) * 10 ** 12;
             z = (fullMulDivUnchecked(x, wadSq, z * z) + z + z) / 3;
-            if (rawMulMod(z, z * z, x) >= wadSq) return z;
-            if (fullMulDivUnchecked(x, wadSq, z * z) < z) --z;
+            // Heuristic to early return if `z` is not ceil.
+            if (rawMulMod(z * z, z, x) >= wadSq) return z;
+            uint256 t = fullMulDivUnchecked(x, wadSq, z * z);
+            /// @solidity memory-safe-assembly
+            assembly {
+                z := sub(z, lt(t, z))
+            }
         }
     }
 
