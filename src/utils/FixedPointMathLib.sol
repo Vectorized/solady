@@ -722,12 +722,9 @@ library FixedPointMathLib {
             if (x <= type(uint256).max / 10 ** 18) return sqrt(x * 10 ** 18);
             z = (1 + sqrt(x)) * 10 ** 9;
             z = (fullMulDivUnchecked(x, 10 ** 18, z) + z) >> 1;
-            // Heuristic to early return if `z` is not ceil.
-            if (rawMulMod(z, z, x) >= 10 ** 18) return z;
-            uint256 t = fullMulDivUnchecked(x, 10 ** 18, z);
             /// @solidity memory-safe-assembly
             assembly {
-                z := sub(z, lt(t, z))
+                z := sub(z, lt(sub(mulmod(z, z, x), 1), 999999999999999999))
             }
         }
     }
