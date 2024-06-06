@@ -848,14 +848,6 @@ contract FixedPointMathLibTest is SoladyTest {
         );
     }
 
-    function testSqrtWadZ() public {
-        emit LogUint(
-            FixedPointMathLib.sqrtWad(
-                110427941548649020598956093796432407239217743554726184882600387580788736
-            )
-        );
-    }
-
     function testCbrt() public {
         assertEq(FixedPointMathLib.cbrt(0), 0);
         assertEq(FixedPointMathLib.cbrt(1), 1);
