@@ -737,9 +737,9 @@ library FixedPointMathLib {
             z = (fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
             /// @solidity memory-safe-assembly
             assembly {
-                let t := sub(mulmod(z, mul(z, z), x), 1)
+                let t := sub(mulmod(mul(z, z), z, x), 1)
                 if iszero(gt(t, sub(exp(10, 36), 2))) {
-                    z := sub(z, eq(sub(mulmod(z, mul(z, z), sub(x, 1)), t), add(exp(10, 36), 1)))
+                    z := sub(z, eq(mulmod(mul(z, z), z, sub(x, 1)), add(add(exp(10, 36), 1), t)))
                 }
             }
         }
