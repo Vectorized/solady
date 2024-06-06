@@ -359,7 +359,7 @@ library FixedPointMathLib {
                 } else if (w <= -0x3ffffffffffffff) {
                     i = 32; // Inputs near `-1/e` take very long to converge.
                 }
-            } else if (w >> 63 == 0) {
+            } else if (uint(w >> 63) == uint(0)) {
                 /// @solidity memory-safe-assembly
                 assembly {
                     // Inline log2 for more performance, since the range is small.
@@ -380,7 +380,7 @@ library FixedPointMathLib {
                     i := add(3, iszero(shr(68, x)))
                     c := iszero(shr(143, x))
                 }
-                if (c == 0) {
+                if (c == uint(0)) {
                     do { // If `x` is big, use Newton's so that intermediate values won't overflow.
                         int256 e = expWad(w);
                         /// @solidity memory-safe-assembly
@@ -390,7 +390,7 @@ library FixedPointMathLib {
                         }
                         if (p <= w) break;
                         p = w;
-                    } while (--i != 0);
+                    } while (--i != uint(0));
                     /// @solidity memory-safe-assembly
                     assembly {
                         w := sub(w, sgt(w, 2))
@@ -415,7 +415,7 @@ library FixedPointMathLib {
             }
             // For certain ranges of `x`, we'll use the quadratic-rate recursive formula of
             // R. Iacono and J.P. Boyd for the last iteration, to avoid catastrophic cancellation.
-            if (c != 0) {
+            if (c != uint(0)) {
                 int256 t = w | 1;
                 /// @solidity memory-safe-assembly
                 assembly {
@@ -624,7 +624,7 @@ library FixedPointMathLib {
                         // If `z * x` overflowed or `zx + half` overflowed:
                         if or(xor(div(zx, x), z), lt(zxRound, zx)) {
                             // Revert if `x` is non-zero.
-                            if iszero(iszero(x)) {
+                            if x {
                                 mstore(0x00, 0x49f7642b) // `RPowOverflow()`.
                                 revert(0x1c, 0x04)
                             }
