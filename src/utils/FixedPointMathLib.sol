@@ -735,12 +735,12 @@ library FixedPointMathLib {
             if (x <= type(uint256).max / 10 ** 36) return cbrt(x * 10 ** 36);
             z = (1 + cbrt(x)) * 10 ** 12;
             z = (fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
-            // Heuristic to early return if `z` is not ceil.
-            if (rawMulMod(z * z, z, x) >= 10 ** 36) return z;
-            uint256 t = fullMulDivUnchecked(x, 10 ** 36, z * z);
             /// @solidity memory-safe-assembly
             assembly {
-                z := sub(z, lt(t, z))
+                let t := sub(mulmod(z, mul(z, z), x), 1)
+                if iszero(gt(t, sub(exp(10, 36), 2))) {
+                    z := sub(z, eq(sub(mulmod(z, mul(z, z), sub(x, 1)), t), add(exp(10, 36), 1)))
+                }
             }
         }
     }
