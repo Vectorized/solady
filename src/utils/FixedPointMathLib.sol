@@ -740,7 +740,7 @@ library FixedPointMathLib {
         assembly {
             if iszero(lt(sub(exp(10, 36), 2), sub(mulmod(mul(z, z), z, x), 1))) {
                 // forgefmt: disable-next-item
-                z := sub(z, eq(mulmod(mul(z, z), z, sub(x, 1)), 
+                z := sub(z, eq(mulmod(mul(z, z), z, sub(x, 1)),
                     add(exp(10, 36), mulmod(mul(z, z), z, x))))
             }
         }
