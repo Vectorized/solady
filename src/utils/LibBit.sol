@@ -105,7 +105,7 @@ library LibBit {
     function reverseBytes(uint256 x) internal pure returns (uint256 r) {
         unchecked {
             // Computing masks on-the-fly reduces bytecode size by about 200 bytes.
-            uint256 m0 = 0x100000000000000000000000000000001 * (~toUint(x == 0) >> 192);
+            uint256 m0 = 0x100000000000000000000000000000001 * (~toUint(x == uint256(0)) >> 192);
             uint256 m1 = m0 ^ (m0 << 32);
             uint256 m2 = m1 ^ (m1 << 16);
             uint256 m3 = m2 ^ (m2 << 8);

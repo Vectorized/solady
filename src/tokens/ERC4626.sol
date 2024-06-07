@@ -172,7 +172,7 @@ abstract contract ERC4626 is ERC20 {
                 : FixedPointMathLib.fullMulDiv(assets, supply, totalAssets());
         }
         uint256 o = _decimalsOffset();
-        if (o == 0) {
+        if (o == uint256(0)) {
             return FixedPointMathLib.fullMulDiv(assets, totalSupply() + 1, _inc(totalAssets()));
         }
         return FixedPointMathLib.fullMulDiv(assets, totalSupply() + 10 ** o, _inc(totalAssets()));
@@ -192,12 +192,12 @@ abstract contract ERC4626 is ERC20 {
     function convertToAssets(uint256 shares) public view virtual returns (uint256 assets) {
         if (!_useVirtualShares()) {
             uint256 supply = totalSupply();
-            return supply == 0
+            return supply == uint256(0)
                 ? _initialConvertToAssets(shares)
                 : FixedPointMathLib.fullMulDiv(shares, totalAssets(), supply);
         }
         uint256 o = _decimalsOffset();
-        if (o == 0) {
+        if (o == uint256(0)) {
             return FixedPointMathLib.fullMulDiv(shares, totalAssets() + 1, _inc(totalSupply()));
         }
         return FixedPointMathLib.fullMulDiv(shares, totalAssets() + 1, totalSupply() + 10 ** o);
@@ -238,12 +238,12 @@ abstract contract ERC4626 is ERC20 {
     function previewMint(uint256 shares) public view virtual returns (uint256 assets) {
         if (!_useVirtualShares()) {
             uint256 supply = totalSupply();
-            return supply == 0
+            return supply == uint256(0)
                 ? _initialConvertToAssets(shares)
                 : FixedPointMathLib.fullMulDivUp(shares, totalAssets(), supply);
         }
         uint256 o = _decimalsOffset();
-        if (o == 0) {
+        if (o == uint256(0)) {
             return FixedPointMathLib.fullMulDivUp(shares, totalAssets() + 1, _inc(totalSupply()));
         }
         return FixedPointMathLib.fullMulDivUp(shares, totalAssets() + 1, totalSupply() + 10 ** o);
@@ -271,7 +271,7 @@ abstract contract ERC4626 is ERC20 {
                 : FixedPointMathLib.fullMulDivUp(assets, supply, totalAssets());
         }
         uint256 o = _decimalsOffset();
-        if (o == 0) {
+        if (o == uint256(0)) {
             return FixedPointMathLib.fullMulDivUp(assets, totalSupply() + 1, _inc(totalAssets()));
         }
         return FixedPointMathLib.fullMulDivUp(assets, totalSupply() + 10 ** o, _inc(totalAssets()));

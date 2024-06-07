@@ -145,8 +145,8 @@ library RedBlackTreeLib {
     function nearest(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
         (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
         unchecked {
-            if (cursor == 0) return result; // Nothing found -- empty tree.
-            if (key != 0) return _pack(nodes, key); // Exact match.
+            if (cursor == uint256(0)) return result; // Nothing found -- empty tree.
+            if (key != uint256(0)) return _pack(nodes, key); // Exact match.
             bytes32 a = _pack(nodes, cursor);
             uint256 aValue = value(a);
             bytes32 b = x < aValue ? prev(a) : next(a);
@@ -162,8 +162,8 @@ library RedBlackTreeLib {
     /// If there is no value lesser or equal to `x`, the returned pointer will be empty.
     function nearestBefore(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
         (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
-        if (cursor == 0) return result; // Nothing found -- empty tree.
-        if (key != 0) return _pack(nodes, key); // Exact match.
+        if (cursor == uint256(0)) return result; // Nothing found -- empty tree.
+        if (key != uint256(0)) return _pack(nodes, key); // Exact match.
         bytes32 a = _pack(nodes, cursor);
         return value(a) < x ? a : prev(a);
     }
@@ -172,8 +172,8 @@ library RedBlackTreeLib {
     /// If there is no value greater or equal to `x`, the returned pointer will be empty.
     function nearestAfter(Tree storage tree, uint256 x) internal view returns (bytes32 result) {
         (uint256 nodes, uint256 cursor, uint256 key) = _find(tree, x);
-        if (cursor == 0) return result; // Nothing found -- empty tree.
-        if (key != 0) return _pack(nodes, key); // Exact match.
+        if (cursor == uint256(0)) return result; // Nothing found -- empty tree.
+        if (key != uint256(0)) return _pack(nodes, key); // Exact match.
         bytes32 a = _pack(nodes, cursor);
         return value(a) > x ? a : next(a);
     }
@@ -682,7 +682,7 @@ library RedBlackTreeLib {
         view
         returns (uint256 nodes, uint256 cursor, uint256 key)
     {
-        if (x == 0) _revert(0xc94f1877); // `ValueIsEmpty()`.
+        if (x == uint256(0)) _revert(0xc94f1877); // `ValueIsEmpty()`.
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, tree.slot)
