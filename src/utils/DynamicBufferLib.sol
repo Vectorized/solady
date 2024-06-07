@@ -71,7 +71,7 @@ library DynamicBufferLib {
     {
         _deallocate(result);
         result = buffer;
-        if (data.length == 0) return result;
+        if (data.length == uint256(0)) return result;
         /// @solidity memory-safe-assembly
         assembly {
             let w := not(0x1f)
