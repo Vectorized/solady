@@ -722,10 +722,10 @@ library FixedPointMathLib {
             if (x <= type(uint256).max / 10 ** 18) return sqrt(x * 10 ** 18);
             z = (1 + sqrt(x)) * 10 ** 9;
             z = (fullMulDivUnchecked(x, 10 ** 18, z) + z) >> 1;
-            /// @solidity memory-safe-assembly
-            assembly {
-                z := sub(z, lt(sub(mulmod(z, z, x), 1), 999999999999999999))
-            }
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sub(z, gt(999999999999999999, sub(mulmod(z, z, x), 1)))
         }
     }
 
@@ -735,12 +735,13 @@ library FixedPointMathLib {
             if (x <= type(uint256).max / 10 ** 36) return cbrt(x * 10 ** 36);
             z = (1 + cbrt(x)) * 10 ** 12;
             z = (fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
-            /// @solidity memory-safe-assembly
-            assembly {
-                let t := sub(mulmod(mul(z, z), z, x), 1)
-                if iszero(gt(t, sub(exp(10, 36), 2))) {
-                    z := sub(z, eq(mulmod(mul(z, z), z, sub(x, 1)), add(add(exp(10, 36), 1), t)))
-                }
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(sub(exp(10, 36), 2), sub(mulmod(mul(z, z), z, x), 1))) {
+                // forgefmt: disable-next-item
+                z := sub(z, eq(mulmod(mul(z, z), z, sub(x, 1)), 
+                    add(exp(10, 36), mulmod(mul(z, z), z, x))))
             }
         }
     }
