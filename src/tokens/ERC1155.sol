@@ -184,7 +184,7 @@ abstract contract ERC1155 {
     /// - If the caller is not `from`,
     ///   it must be approved to manage the tokens of `from`.
     /// - If `to` refers to a smart contract, it must implement
-    ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
+    ///   {ERC1155-onERC1155Received}, which is called upon a batch transfer.
     ///
     /// Emits a {TransferSingle} event.
     function safeTransferFrom(
@@ -288,7 +288,7 @@ abstract contract ERC1155 {
     /// - If the caller is not `from`,
     ///   it must be approved to manage the tokens of `from`.
     /// - If `to` refers to a smart contract, it must implement
-    ///   {ERC1155-onERC1155BatchReveived}, which is called upon a batch transfer.
+    ///   {ERC1155-onERC1155BatchReceived}, which is called upon a batch transfer.
     ///
     /// Emits a {TransferBatch} event.
     function safeBatchTransferFrom(
@@ -469,7 +469,7 @@ abstract contract ERC1155 {
     /// Requirements:
     /// - `to` cannot be the zero address.
     /// - If `to` refers to a smart contract, it must implement
-    ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
+    ///   {ERC1155-onERC1155Received}, which is called upon a batch transfer.
     ///
     /// Emits a {TransferSingle} event.
     function _mint(address to, uint256 id, uint256 amount, bytes memory data) internal virtual {
@@ -514,7 +514,7 @@ abstract contract ERC1155 {
     /// - `to` cannot be the zero address.
     /// - `ids` and `amounts` must have the same length.
     /// - If `to` refers to a smart contract, it must implement
-    ///   {ERC1155-onERC1155BatchReveived}, which is called upon a batch transfer.
+    ///   {ERC1155-onERC1155BatchReceived}, which is called upon a batch transfer.
     ///
     /// Emits a {TransferBatch} event.
     function _batchMint(
@@ -762,7 +762,7 @@ abstract contract ERC1155 {
     /// - If `by` is not the zero address, it must be either `from`,
     ///   or approved to manage the tokens of `from`.
     /// - If `to` refers to a smart contract, it must implement
-    ///   {ERC1155-onERC1155Reveived}, which is called upon a batch transfer.
+    ///   {ERC1155-onERC1155Received}, which is called upon a batch transfer.
     ///
     /// Emits a {TransferSingle} event.
     function _safeTransfer(
@@ -850,7 +850,7 @@ abstract contract ERC1155 {
     /// - If `by` is not the zero address, it must be either `from`,
     ///   or approved to manage the tokens of `from`.
     /// - If `to` refers to a smart contract, it must implement
-    ///   {ERC1155-onERC1155BatchReveived}, which is called upon a batch transfer.
+    ///   {ERC1155-onERC1155BatchReceived}, which is called upon a batch transfer.
     ///
     /// Emits a {TransferBatch} event.
     function _safeBatchTransfer(
