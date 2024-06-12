@@ -98,12 +98,13 @@ abstract contract ERC1271 is EIP712 {
     }
 
     /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
-    /// By default, it returns `bytes4(keccak256("supportsNestedEIP712()"))`, denoting support
-    /// for the default behavior, as implemented in `_erc1271IsValidSignatureViaNestedEIP712`,
-    /// which is called in `isValidSignature`.
+    /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedEIP712()")))`,
+    /// denoting support for the default behavior, as implemented in
+    /// `_erc1271IsValidSignatureViaNestedEIP712`, which is called in `isValidSignature`.
     /// Future extensions should return a different non-zero `result` to denote different behavior.
-    function supportsNestedEIP712() public view virtual returns (bytes4 result) {
-        result = 0xb7517011;
+    /// This method intentionally returns bytes32 to allow freedom for future extensions.
+    function supportsNestedEIP712() public view virtual returns (bytes32 result) {
+        result = bytes4(0xb7517011);
     }
 
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
