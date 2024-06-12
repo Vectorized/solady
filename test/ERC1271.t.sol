@@ -312,4 +312,12 @@ contract ERC1271Test is SoladyTest {
     function _toContentsHash(bytes32 contents) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
     }
+
+    function testSupportsNestedTypedDataSign() public {
+        _TestTemps memory t = _testTemps();
+        assertEq(
+            t.account.supportsNestedTypedDataSign(),
+            bytes4(keccak256("supportsNestedTypedDataSign()"))
+        );
+    }
 }
