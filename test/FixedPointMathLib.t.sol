@@ -890,6 +890,19 @@ contract FixedPointMathLibTest is SoladyTest {
         );
     }
 
+    function testCbrtWadDebug() public {
+        uint256 x = 57896044618658097711785492504343953926634992332820282019727;
+        uint256 z = FixedPointMathLib.cbrt(x);
+        emit LogUint(z);
+        z = (z + 1) * 10 ** 12;
+        z = (FixedPointMathLib.fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
+        emit LogUint(z);
+        z = (FixedPointMathLib.fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
+        emit LogUint(z);
+        z = (FixedPointMathLib.fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
+        emit LogUint(z);
+    }
+
     function testLog2() public {
         assertEq(FixedPointMathLib.log2(0), 0);
         assertEq(FixedPointMathLib.log2(2), 1);
@@ -1363,6 +1376,12 @@ contract FixedPointMathLibTest is SoladyTest {
             a = FixedPointMathLib.cbrtWad(y);
             assertLe(a, b);
         }
+    }
+
+    function testCbrtWadMonotonicallyIncreasing() public {
+        this.testCbrtWadMonotonicallyIncreasing(
+            57896044618658097711785492504343953926634992332820282019727, 939263490
+        );
     }
 
     function testCbrtWadConverged(uint256 x) public {
