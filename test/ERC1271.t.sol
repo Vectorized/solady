@@ -267,22 +267,6 @@ contract ERC1271Test is SoladyTest {
         uint256[] extensions;
     }
 
-    function _accountDomainStructFields(address account) internal view returns (bytes memory) {
-        _AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
-            EIP712(account).eip712Domain();
-
-        return abi.encode(
-            t.fields,
-            keccak256(bytes(t.name)),
-            keccak256(bytes(t.version)),
-            t.chainId,
-            t.verifyingContract,
-            t.salt,
-            keccak256(abi.encodePacked(t.extensions))
-        );
-    }
-
     function _typedDataSignTypeHash(bytes memory contentsType) internal pure returns (bytes32) {
         bytes memory ct = contentsType;
         return keccak256(
@@ -300,10 +284,21 @@ contract ERC1271Test is SoladyTest {
         view
         returns (bytes32)
     {
+        _AccountDomainStruct memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            EIP712(account).eip712Domain();
+
         bytes32 parentStructHash = keccak256(
-            abi.encodePacked(
-                abi.encode(_typedDataSignTypeHash(contentsType), contents),
-                _accountDomainStructFields(account)
+            abi.encode(
+                _typedDataSignTypeHash(contentsType),
+                contents,
+                t.fields,
+                keccak256(bytes(t.name)),
+                keccak256(bytes(t.version)),
+                t.chainId,
+                t.verifyingContract,
+                t.salt,
+                keccak256(abi.encodePacked(t.extensions))
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEP_B, parentStructHash));
