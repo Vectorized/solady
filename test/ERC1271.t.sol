@@ -313,8 +313,11 @@ contract ERC1271Test is SoladyTest {
         return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
     }
 
-    function testSupportsNestedEIP712() public {
+    function testSupportsNestedTypedDataSign() public {
         _TestTemps memory t = _testTemps();
-        assertEq(t.account.supportsNestedEIP712(), bytes4(keccak256("supportsNestedEIP712()")));
+        assertEq(
+            t.account.supportsNestedTypedDataSign(),
+            bytes4(keccak256("supportsNestedTypedDataSign()"))
+        );
     }
 }
