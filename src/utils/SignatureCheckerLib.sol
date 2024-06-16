@@ -554,7 +554,7 @@ library SignatureCheckerLib {
     /// to use a reverting verifier to deploy / prepare the `signer` smart account
     /// and do a `isValidSignature` check via the reverting verifier.
     /// Note: This function is reentrancy safe.
-    /// The reverting verifier must be be deployed.
+    /// The reverting verifier must be deployed.
     /// Otherwise, the function will return false if `signer` is not yet deployed / prepared.
     /// See: https://gist.github.com/Vectorized/846a474c855eee9e441506676800a9ad
     function isValidERC6492SignatureNow(address signer, bytes32 hash, bytes memory signature)
