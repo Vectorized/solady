@@ -6,6 +6,8 @@ abstract contract Lifebouy {
     error ETHTransferFailed();
     /// @dev The ERC20 `transfer` has failed.
     error ERC20TransferFailed();
+    /// @dev The ERC721 `transfer` has failed.
+    error ERC721TransferFailed();
     /// @dev `rescueLocked` was set to true.
     error LockedRescue();
     /// @dev Not owner or deployer.
@@ -123,7 +125,11 @@ abstract contract Lifebouy {
             // `safeTransferFrom(address from, address to, uint256 tokenId)`.
             mstore(0x00, 0x42842e0e000000000000000000000000)
             // Perform the safe transfer from, reverting upon failure.
-            pop(call(gas(), erc721, 0x00, 0x10, 0x64, codesize(), 0x00))
+
+            if iszero(call(gas(), erc721, 0x00, 0x10, 0x64, codesize(), 0x00)) {
+                mstore(0x00, 0xdff14c1e) // `ERC721TransferFailed()`.
+                revert(0x1c, 0x04)
+            }
         }
     }
 

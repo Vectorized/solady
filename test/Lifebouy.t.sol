@@ -210,6 +210,15 @@ contract LifebouyTest is SoladyTest {
         assertEq(balanceBefore + secondAmount, owner.balance);
     }
 
+    function testRescueETHTransferFails() public {
+        MockLifebouyDeployerNoFallback mock = new MockLifebouyDeployerNoFallback();
+
+        vm.prank(deployer);
+        vm.expectRevert(0xb12d13eb);
+
+        mockLifebouy.rescueETH(address(mock), address(mockLifebouy).balance);
+    }
+
     function testRescueETHNotAllowed(address caller, uint256 amount) public {
         vm.assume(caller != deployer);
 
@@ -277,6 +286,14 @@ contract LifebouyTest is SoladyTest {
         assertEq(balanceBefore + secondAmount, mockERC20.balanceOf(owner));
     }
 
+    function testRescueERC20TransferFails(uint256 amount) public {
+        vm.assume(amount > mockERC20.balanceOf(address(mockLifebouy)));
+        vm.prank(deployer);
+        vm.expectRevert(0xf27f64e4);
+
+        mockLifebouy.rescueERC20(erc20, deployer, amount);
+    }
+
     function testRescueERC20NotAllowed(address caller, uint256 amount) public {
         vm.assume(caller != deployer);
 
@@ -332,6 +349,13 @@ contract LifebouyTest is SoladyTest {
         mockLifebouyOwned.rescueERC721(erc721, owner, id + 1);
 
         assertEq(owner, mockERC721.ownerOf(id + 1));
+    }
+
+    function testRescueERC721TransferFails() public {
+        vm.prank(deployer);
+        vm.expectRevert(0xdff14c1e);
+
+        mockLifebouy.rescueERC721(erc721, deployer, 999);
     }
 
     function testRescueERC721NotAllowed(address caller, uint256 id) public {
