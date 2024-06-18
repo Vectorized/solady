@@ -10,6 +10,24 @@ import {LibRLP} from "../src/utils/LibRLP.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
 contract LifebuoyTest is SoladyTest {
+    /// @dev Flag to denote that the deployer's access is locked.
+    uint256 internal constant _LIFEBUOY_DEPLOYER_ACCESS_LOCK = 1 << 0;
+
+    /// @dev Flag to denote that the `owner()`'s access is locked.
+    uint256 internal constant _LIFEBUOY_OWNER_ACCESS_LOCK = 1 << 1;
+
+    /// @dev Flag to denote that the `lockRescue` function is locked.
+    uint256 internal constant _LIFEBUOY_LOCK_RESCUE_LOCK = 1 << 2;
+
+    /// @dev Flag to denote that the `rescueETH` function is locked.
+    uint256 internal constant _LIFEBUOY_RESCUE_ETH_LOCK = 1 << 3;
+
+    /// @dev Flag to denote that the `rescueERC20` function is locked.
+    uint256 internal constant _LIFEBUOY_RESCUE_ERC20_LOCK = 1 << 4;
+
+    /// @dev Flag to denote that the `rescueERC721` function is locked.
+    uint256 internal constant _LIFEBUOY_RESCUE_ERC721_LOCK = 1 << 5;
+
     MockERC20 erc20;
     MockERC721 erc721;
 
@@ -97,7 +115,7 @@ contract LifebuoyTest is SoladyTest {
             if (_random() % 2 == 0) {
                 t.lifebuoy.rescueETH(t.recipient, 1);
             }
-            t.lifebuoy.lockRescueForDeployer();
+            t.lifebuoy.lockRescue(_LIFEBUOY_DEPLOYER_ACCESS_LOCK);
             vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
             t.lifebuoy.rescueETH(t.recipient, 1);
             vm.stopPrank();
@@ -126,7 +144,7 @@ contract LifebuoyTest is SoladyTest {
 
             if (_random() % 2 == 0) {
                 vm.prank(t.deployer);
-                t.lifebuoyOwned.lockRescueForDeployer();
+                t.lifebuoyOwned.lockRescue(_LIFEBUOY_DEPLOYER_ACCESS_LOCK);
                 vm.prank(t.deployer);
                 if (t.deployer != t.owner) {
                     vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
@@ -134,7 +152,7 @@ contract LifebuoyTest is SoladyTest {
                 t.lifebuoyOwned.rescueETH(t.recipient, 1);
             } else {
                 vm.prank(t.deployer);
-                t.lifebuoyOwned.lockRescueForOwner();
+                t.lifebuoyOwned.lockRescue(_LIFEBUOY_OWNER_ACCESS_LOCK);
 
                 vm.prank(t.owner);
                 if (t.deployer != t.owner) {
@@ -215,6 +233,37 @@ contract LifebuoyTest is SoladyTest {
         assertEq(erc721.balanceOf(t.recipient), 1);
         vm.prank(t.owner);
         vm.expectRevert(Lifebuoy.RescueFailed.selector);
+        t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
+    }
+
+    function testLockRescueETH() public {
+        _TestTemps memory t = _testTemps();
+        vm.startPrank(t.owner);
+        t.lifebuoyOwned.rescueETH(t.recipient, 1);
+        t.lifebuoyOwned.lockRescue(_LIFEBUOY_RESCUE_ETH_LOCK);
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoyOwned.rescueETH(t.recipient, 1);
+        t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
+    }
+
+    function testLockRescue() public {
+        _TestTemps memory t = _testTemps();
+        vm.startPrank(t.owner);
+        t.lifebuoyOwned.rescueETH(t.recipient, 1);
+        t.lifebuoyOwned.lockRescue(_LIFEBUOY_LOCK_RESCUE_LOCK);
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoyOwned.lockRescue(_LIFEBUOY_LOCK_RESCUE_LOCK);
+    }
+
+    function testLockEverything() public {
+        _TestTemps memory t = _testTemps();
+        vm.startPrank(t.owner);
+        t.lifebuoyOwned.lockRescue(type(uint256).max);
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoyOwned.lockRescue(_LIFEBUOY_LOCK_RESCUE_LOCK);
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoyOwned.rescueETH(t.recipient, 1);
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
     }
 }
