@@ -92,8 +92,8 @@ contract Lifebuoy {
                 // with any kind of Ownable contract, not just Solady's.
                 mstore(0x08, 0x8da5cb5b0a0362e0) // `owner()` and `RescueUnauthorizedOrLocked()`.
                 if and(
-                    lt(lockedForOwner, eq(mload(0x00), caller())),
-                    staticcall(gas(), address(), 0x20, 0x04, 0x00, 0x20)
+                    and(gt(returndatasize(), 0x1f), eq(mload(0x00), caller())),
+                    lt(lockedForOwner, staticcall(gas(), address(), 0x20, 0x04, 0x00, 0x20))
                 ) { break }
                 revert(0x24, 0x04)
             }
