@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Class that allows for rescue of ETH, ERC20, ERC721 assets.
+/// @notice Class that allows for rescue of ETH, ERC20, ERC721 tokens.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Lifebuoy.sol)
 ///
 /// @dev This contract is created to mitigate the following disasters:
-/// - Careless user sends assets to the wrong chain or wrong contract.
+/// - Careless user sends tokens to the wrong chain or wrong contract.
 /// - Careless dev deploys a contract without a withdraw function in attempt to rescue
-///   careless user's assets, due to deployment nonce mismatch caused by
+///   careless user's tokens, due to deployment nonce mismatch caused by
 ///   script misfire / misconfiguration.
 /// - Careless dev forgets to add a withdraw function to a NFT sale contract.
 ///
