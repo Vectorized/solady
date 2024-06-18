@@ -78,45 +78,38 @@ contract LifebuoyTest is SoladyTest {
         vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
         t.lifebuoy.rescueETH(t.recipient, 1);
 
+        vm.prank(t.deployer);
         if (t.deployer.code.length == 0) {
-            vm.prank(t.deployer);
             t.lifebuoy.rescueETH(t.recipient, 1);
         } else {
-            vm.prank(t.deployer);
             vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
             t.lifebuoy.rescueETH(t.recipient, 1);
         }
 
-        if (t.deployer != t.owner) {
-            vm.prank(t.owner);
+        vm.prank(t.owner);
+        if (t.deployer != t.owner || t.deployer.code.length != 0) {
             vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
-            t.lifebuoy.rescueETH(t.recipient, 1);
         }
+        t.lifebuoy.rescueETH(t.recipient, 1);
 
         if (_random() % 2 == 0 && t.deployer.code.length == 0) {
+            vm.startPrank(t.deployer);
             if (_random() % 2 == 0) {
-                vm.prank(t.deployer);
                 t.lifebuoy.rescueETH(t.recipient, 1);
             }
-            vm.prank(t.deployer);
             t.lifebuoy.lockRescueForDeployer();
-            vm.prank(t.deployer);
             vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
             t.lifebuoy.rescueETH(t.recipient, 1);
+            vm.stopPrank();
         }
     }
 
     function _testLifebuoyOwnedRescuePermissions(_TestTemps memory t) internal {
-        if (t.deployer.code.length == 0) {
-            vm.prank(t.deployer);
-            t.lifebuoyOwned.rescueETH(t.recipient, 1);
-        } else {
-            if (t.deployer != t.owner) {
-                vm.prank(t.deployer);
-                vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
-                t.lifebuoyOwned.rescueETH(t.recipient, 1);
-            }
+        vm.prank(t.deployer);
+        if (t.deployer != t.owner && t.deployer.code.length != 0) {
+            vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
         }
+        t.lifebuoyOwned.rescueETH(t.recipient, 1);
 
         vm.prank(t.owner);
         t.lifebuoyOwned.rescueETH(t.recipient, 1);
