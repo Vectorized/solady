@@ -6,7 +6,7 @@ pragma solidity ^0.8.4;
 ///
 /// @dev This contract is created to mitigate the following disasters:
 /// - Careless user sends assets to the wrong chain or wrong contract.
-/// - Careless dev turns an EOA into a bricked contract in attempt to rescue
+/// - Careless dev deploys a contract without a withdraw function in attempt to rescue
 ///   careless user's assets, due to deployment nonce mismatch caused by
 ///   script misfire / misconfiguration.
 /// - Careless dev forgets to add a withdraw function to a NFT sale contract.
@@ -17,7 +17,7 @@ pragma solidity ^0.8.4;
 /// - For escrow contracts, lock access as tight as possible,
 ///   as soon as possible. Or simply don't inherit Lifebuoy.
 /// Escrow: Your contract is designed to hold ETH, ERC20s, ERC721s
-/// (e.g. liquidity pools, token sale contracts).
+/// (e.g. liquidity pools).
 ///
 /// All rescue and rescue authorization functions require either:
 /// - Caller is the deployer
