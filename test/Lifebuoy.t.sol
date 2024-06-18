@@ -234,6 +234,11 @@ contract LifebuoyTest is SoladyTest {
         vm.prank(t.owner);
         vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
+
+        (address eoa,) = _randomSigner();
+        vm.prank(t.owner);
+        vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
+        t.lifebuoyOwned.rescueERC721(eoa, t.recipient, t.tokenId);
     }
 
     function testLockRescueETH() public {
@@ -265,5 +270,9 @@ contract LifebuoyTest is SoladyTest {
         t.lifebuoyOwned.rescueETH(t.recipient, 1);
         vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoyOwned.rescueERC20(address(erc20), t.recipient, _random());
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoyOwned.rescueETH(t.recipient, _random());
     }
 }
