@@ -80,13 +80,8 @@ contract Lifebuoy {
                 // AND the contract is not a proxy
                 // AND `lockedForDeployer` is false.
                 mstore(0x00, caller())
-                mstore(0x20, address())
-                if iszero(
-                    or(
-                        xor(keccak256(0x00, 0x40), lifebuoyDeployerHash),
-                        or(extcodesize(caller()), lockedForDeployer)
-                    )
-                ) { break }
+                mstore(0x20, xor(address(), or(extcodesize(caller()), lockedForDeployer)))
+                if eq(keccak256(0x00, 0x40), lifebuoyDeployerHash) { break }
                 // If the caller is `onwer()` AND `lockedForOwner` is false.
                 mstore(0x08, 0x8da5cb5b0a0362e0) // `owner()` and `RescueUnauthorizedOrLocked()`.
                 if and( // The arguments of `and` are evaluated from right to left.
@@ -192,8 +187,7 @@ contract Lifebuoy {
             // `RescueFailed()` and `transferFrom(address,address,uint256)`.
             mstore(0x00, 0xb8eaf7a123b872dd)
             // Perform the transfer, reverting upon failure.
-            if iszero(mul(extcodesize(token), call(gas(), token, 0, 0x1c, 0x64, codesize(), 0x00)))
-            {
+            if iszero(mul(extcodesize(token), call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x00))) {
                 revert(0x18, 0x04)
             }
             mstore(0x60, 0) // Restore the zero slot to zero.
