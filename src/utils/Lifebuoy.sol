@@ -41,7 +41,7 @@ contract Lifebuoy {
     error RescueUnauthorizedOrLocked();
 
     /// @dev The rescue operation has failed due to a failed transfer.
-    error RescueFailed();
+    error RescueTransferFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  CONSTANTS AND IMMUTABLES                  */
@@ -200,7 +200,7 @@ contract Lifebuoy {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(call(gas(), to, amount, codesize(), 0x00, codesize(), 0x00)) {
-                mstore(0x00, 0xb8eaf7a1) // `RescueFailed()`.
+                mstore(0x00, 0x7ec62e76) // `RescueTransferFailed()`.
                 revert(0x1c, 0x04)
             }
         }
@@ -226,7 +226,7 @@ contract Lifebuoy {
                     call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
                 )
             ) {
-                mstore(0x00, 0xb8eaf7a1) // `RescueFailed()`.
+                mstore(0x00, 0x7ec62e76) // `RescueTransferFailed()`.
                 revert(0x1c, 0x04)
             }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
@@ -247,8 +247,8 @@ contract Lifebuoy {
             mstore(0x60, tokenId) // Store the `tokenId` argument.
             mstore(0x40, shr(96, shl(96, to))) // Store the `to` argument.
             mstore(0x20, address()) // Store the `from` argument.
-            // `RescueFailed()` and `transferFrom(address,address,uint256)`.
-            mstore(0x00, 0xb8eaf7a123b872dd)
+            // `RescueTransferFailed()` and `transferFrom(address,address,uint256)`.
+            mstore(0x00, 0x7ec62e7623b872dd)
             // Perform the transfer, reverting upon failure.
             if iszero(mul(extcodesize(token), call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x00))) {
                 revert(0x18, 0x04)

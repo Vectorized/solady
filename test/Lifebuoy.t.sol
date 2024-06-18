@@ -198,7 +198,7 @@ contract LifebuoyTest is SoladyTest {
             assertEq(t.recipient.balance, amount);
         } else if (amount > address(t.lifebuoyOwned).balance) {
             vm.prank(t.owner);
-            vm.expectRevert(Lifebuoy.RescueFailed.selector);
+            vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
             t.lifebuoyOwned.rescueETH(t.recipient, amount);
         } else {
             vm.prank(t.owner);
@@ -217,7 +217,7 @@ contract LifebuoyTest is SoladyTest {
             assertEq(erc20.balanceOf(t.recipient), amount);
         } else if (amount > erc20.balanceOf(address(t.lifebuoyOwned))) {
             vm.prank(t.owner);
-            vm.expectRevert(Lifebuoy.RescueFailed.selector);
+            vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
             t.lifebuoyOwned.rescueERC20(address(erc20), t.recipient, amount);
         } else {
             vm.prank(t.owner);
@@ -232,7 +232,7 @@ contract LifebuoyTest is SoladyTest {
         assertEq(erc721.balanceOf(address(t.lifebuoyOwned)), 0);
         assertEq(erc721.balanceOf(t.recipient), 1);
         vm.prank(t.owner);
-        vm.expectRevert(Lifebuoy.RescueFailed.selector);
+        vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
     }
 
