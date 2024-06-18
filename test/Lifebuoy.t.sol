@@ -64,6 +64,7 @@ contract LifebuoyTest is SoladyTest {
     }
 
     function _testTemps() internal returns (_TestTemps memory t) {
+        vm.pauseGasMetering();
         t.deployer = _randomHashedAddress();
         t.owner = _randomHashedAddress();
         while (true) {
@@ -93,6 +94,7 @@ contract LifebuoyTest is SoladyTest {
 
         t.tokenId = _random();
         erc721.mint(address(t.lifebuoyOwned), t.tokenId);
+        vm.resumeGasMetering();
     }
 
     function testLifebuoyRescuePermissions(bytes32) public {
