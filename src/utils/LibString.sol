@@ -445,12 +445,12 @@ library LibString {
         /// @solidity memory-safe-assembly
         assembly {
             result := 1
-            allowed := shr(128, shl(128, allowed))
             if mload(s) {
+                let allowed_ := shr(128, shl(128, allowed))
                 let o := add(s, 0x20)
                 let end := add(o, mload(s))
                 for {} 1 {} {
-                    result := and(result, shr(byte(0, mload(o)), allowed))
+                    result := and(result, shr(byte(0, mload(o)), allowed_))
                     o := add(o, 1)
                     if iszero(and(result, lt(o, end))) { break }
                 }
@@ -472,10 +472,10 @@ library LibString {
                     o := add(o, 1)
                     if iszero(lt(o, end)) { break }
                 }
-            }
-            if shr(128, result) {
-                mstore(0x00, 0xc9807e0d) // `StringNot7BitASCII()`.
-                revert(0x1c, 0x04)
+                if shr(128, result) {
+                    mstore(0x00, 0xc9807e0d) // `StringNot7BitASCII()`.
+                    revert(0x1c, 0x04)
+                }
             }
         }
     }

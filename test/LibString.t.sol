@@ -391,6 +391,8 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.is7BitASCII("0123456789", allowed), true);
         assertEq(LibString.is7BitASCII("0123456789a", allowed), false);
         assertEq(LibString.is7BitASCII("a0123456789", allowed), false);
+        assertEq(LibString.is7BitASCII("", 0), true);
+        assertEq(LibString.is7BitASCII("1", 0), false);
     }
 
     function testTo7BitASCIIAllowedLookup() public {
