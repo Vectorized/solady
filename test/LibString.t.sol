@@ -126,59 +126,6 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.toHexString(0x4132), "0x4132");
     }
 
-    function testIsAlphaNumeric() public {
-        assertFalse(LibString.isAlphanumeric("abcded#$%jaierafadfa"));
-        assertFalse(LibString.isAlphanumeric(""));
-        assertTrue(
-            LibString.isAlphanumeric(
-                "0123456789 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            )
-        );
-    }
-
-    function testIsAlphaNumeric(uint256) public {
-        string memory an = "0123456789 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        string memory nan =
-            hex"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2122232425262728292a2b2c2d2e2f3a3b3c3d3e3f405b5c5d5e5f607b7c7d7e7f";
-
-        uint256 n = _random() % 3;
-        if (n == 0) {
-            string memory st = _generateString(an);
-            if (bytes(st).length != 0) {
-                assertTrue(LibString.isAlphanumeric(st));
-            }
-        } else if (n == 1) {
-            assertFalse(LibString.isAlphanumeric(_generateString(nan)));
-        } else {
-            string memory st1 = _generateString(an);
-            string memory st2 = _generateString(nan);
-
-            string memory merge = LibString.concat(st1, st2);
-
-            if (bytes(st1).length != 0 && bytes(st2).length == 0) {
-                assertTrue(LibString.isAlphanumeric(merge));
-            } else {
-                assertFalse(LibString.isAlphanumeric(merge));
-            }
-        }
-    }
-
-    function testIsAlphaNumericwithUTF8() public {
-        bytes memory nan =
-            hex"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2122232425262728292a2b2c2d2e2f3a3b3c3d3e3f405b5c5d5e5f607b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff";
-        assertFalse(LibString.isAlphanumeric(_generateString(string(nan))));
-    }
-
-    function testIsAlphaNumericChar() public {
-        for (uint256 i = 0; i < 256; ++i) {
-            if (i == 32 || (i > 47 && i < 58) || (i > 64 && i < 91) || (i > 96 && i < 123)) {
-                assertTrue(LibString.isAlphanumericChar(bytes1(bytes32(uint256(i << 248)))));
-            } else {
-                assertFalse(LibString.isAlphanumericChar(bytes1(bytes32(uint256(i << 248)))));
-            }
-        }
-    }
-
     function testToHexStringUint256Max() public {
         assertEq(
             LibString.toHexString(type(uint256).max),
@@ -432,6 +379,45 @@ contract LibStringTest is SoladyTest {
                 assertTrue(hexChars[t & 15] == bytes(converted)[i * 2 + 1 + 2]);
                 assertTrue(hexChars[(t >> 4) & 15] == bytes(converted)[i * 2 + 2]);
             }
+        }
+    }
+
+    function testStringIs7BitASCIIWithAllowedLookup() public {
+        uint128 allowed = LibString.to7BitASCIIAllowedLookup("0123456789");
+        assertEq(LibString.is7BitASCII("", allowed), true);
+        assertEq(LibString.is7BitASCII("0", allowed), true);
+        assertEq(LibString.is7BitASCII("9", allowed), true);
+        assertEq(LibString.is7BitASCII("a", allowed), false);
+        assertEq(LibString.is7BitASCII("0123456789", allowed), true);
+        assertEq(LibString.is7BitASCII("0123456789a", allowed), false);
+        assertEq(LibString.is7BitASCII("a0123456789", allowed), false);
+    }
+
+    function testTo7BitASCIIAllowedLookup() public {
+        assertEq(LibString.to7BitASCIIAllowedLookup("0123456789"), LibString.DIGITS_7_BIT_ASCII);
+        assertEq(
+            LibString.to7BitASCIIAllowedLookup("abcdefghijklmnopqrstuvwxyz"),
+            LibString.LOWERCASE_7_BIT_ASCII
+        );
+    }
+
+    function testStringIs7BitASCIIWithAllowedLookupDifferential(bytes memory raw, uint128 allowed)
+        public
+        brutalizeMemory
+    {
+        string memory s = string(raw);
+        bytes32 hashBefore = keccak256(raw);
+        assertEq(LibString.is7BitASCII(s, allowed), _is7BitASCIIOriginal(s, allowed));
+        assertEq(keccak256(raw), hashBefore);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(add(raw, add(0x20, mload(raw))), hashBefore)
+        }
+        assertEq(LibString.is7BitASCII(s, allowed), _is7BitASCIIOriginal(s, allowed));
+        assertEq(keccak256(raw), hashBefore);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(eq(mload(add(raw, add(0x20, mload(raw)))), hashBefore)) { revert(0, 0) }
         }
     }
 
@@ -1383,6 +1369,17 @@ contract LibStringTest is SoladyTest {
             bytes memory sBytes = bytes(s);
             for (uint256 i; i < sBytes.length; ++i) {
                 if (uint8(bytes1(sBytes[i])) > 127) return false;
+            }
+            return true;
+        }
+    }
+
+    function _is7BitASCIIOriginal(string memory s, uint256 allowed) internal pure returns (bool) {
+        unchecked {
+            bytes memory sBytes = bytes(s);
+            for (uint256 i; i < sBytes.length; ++i) {
+                uint256 ord = uint8(bytes1(sBytes[i]));
+                if (ord > 127 || ((allowed >> ord) & 1) == 0) return false;
             }
             return true;
         }

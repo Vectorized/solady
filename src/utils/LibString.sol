@@ -21,12 +21,45 @@ library LibString {
     /// @dev The length of the string is more than 32 bytes.
     error TooBigForSmallString();
 
+    /// @dev The input string must be a 7-bit ASCII.
+    error StringNot7BitASCII();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The constant returned when the `search` is not found in the string.
     uint256 internal constant NOT_FOUND = type(uint256).max;
+
+    /// @dev Lookup for '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.
+    uint128 internal constant ALPHANUMERIC_7_BIT_ASCII = 0x7fffffe07fffffe03ff000000000000;
+
+    /// @dev Lookup for 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.
+    uint128 internal constant LETTERS_7_BIT_ASCII = 0x7fffffe07fffffe0000000000000000;
+
+    /// @dev Lookup for 'abcdefghijklmnopqrstuvwxyz'.
+    uint128 internal constant LOWERCASE_7_BIT_ASCII = 0x7fffffe000000000000000000000000;
+
+    /// @dev Lookup for 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
+    uint128 internal constant UPPERCASE_7_BIT_ASCII = 0x7fffffe0000000000000000;
+
+    /// @dev Lookup for '0123456789'.
+    uint128 internal constant DIGITS_7_BIT_ASCII = 0x3ff000000000000;
+
+    /// @dev Lookup for '0123456789abcdefABCDEF'.
+    uint128 internal constant HEXDIGITS_7_BIT_ASCII = 0x7e0000007e03ff000000000000;
+
+    /// @dev Lookup for '01234567'.
+    uint128 internal constant OCTDIGITS_7_BIT_ASCII = 0xff000000000000;
+
+    /// @dev Lookup for '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c'.
+    uint128 internal constant PRINTABLE_7_BIT_ASCII = 0x7fffffffffffffffffffffff00003e00;
+
+    /// @dev Lookup for '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'.
+    uint128 internal constant PUNCTUATION_7_BIT_ASCII = 0x78000001f8000001fc00fffe00000000;
+
+    /// @dev Lookup for ' \t\n\r\x0b\x0c'.
+    uint128 internal constant WHITESPACE_7_BIT_ASCII = 0x100003e00;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     DECIMAL OPERATIONS                     */
@@ -406,33 +439,44 @@ library LibString {
         }
     }
 
-    /// @dev Returns if this string is a alphanumeric character including space.
-    function isAlphanumeric(string memory str) public pure returns (bool result) {
+    /// @dev Returns if this string is a 7-bit ASCII string,
+    /// where all characters are in the `allowed` lookup.
+    function is7BitASCII(string memory s, uint128 allowed) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            if mload(str) {
-                result := 1
-                let o := add(str, result)
-                let end := add(o, mload(str))
+            result := 1
+            allowed := shr(128, shl(128, allowed))
+            if mload(s) {
+                let o := add(s, 0x20)
+                let end := add(o, mload(s))
                 for {} 1 {} {
-                    if iszero(
-                        and(result, shr(and(0xff, mload(o)), 0x07fffffe07fffffe03ff000100000000))
-                    ) {
-                        result := 0
-                        break
-                    }
-                    o := add(o, result)
-                    if iszero(lt(o, end)) { break }
+                    result := and(result, shr(byte(0, mload(o)), allowed))
+                    o := add(o, 1)
+                    if iszero(and(result, lt(o, end))) { break }
                 }
             }
         }
     }
 
-    /// @dev Returns if this character is a alphanumeric including space.
-    function isAlphanumericChar(bytes1 char) internal pure returns (bool result) {
+    /// @dev Converts the bytes in the 7-bit ASCII string `s` to
+    /// an allowed lookup for use in `is7BitASCII(s, allowed)`.
+    /// To save runtime gas, you can cache the result in an immutable variable.
+    function to7BitASCIIAllowedLookup(string memory s) internal pure returns (uint128 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := and(0x01, shr(shr(248, char), 0x07fffffe07fffffe03ff000100000000))
+            if mload(s) {
+                let o := add(s, 0x20)
+                let end := add(o, mload(s))
+                for {} 1 {} {
+                    result := or(result, shl(byte(0, mload(o)), 1))
+                    o := add(o, 1)
+                    if iszero(lt(o, end)) { break }
+                }
+            }
+            if shr(128, result) {
+                mstore(0x00, 0xc9807e0d) // `StringNot7BitASCII()`.
+                revert(0x1c, 0x04)
+            }
         }
     }
 
