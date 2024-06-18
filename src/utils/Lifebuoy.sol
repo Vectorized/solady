@@ -10,11 +10,11 @@ pragma solidity ^0.8.4;
 ///
 /// All rescue and rescue authorization functions require either:
 /// - Caller is `owner()`
-///   AND rescue not locked for owner.
+///   AND `rescueLocked().forOwner` is false.
 /// - Caller is the deployer
 ///   AND caller is an EOA
 ///   AND the contract is not a proxy
-///   AND rescue is not locked for the deployer.
+///   AND `rescueLocked().forDeployer` is false.
 contract Lifebuoy {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -75,18 +75,21 @@ contract Lifebuoy {
         /// @solidity memory-safe-assembly
         assembly {
             for {} 1 {} {
-                // If the caller is an EOA, check if the caller is the deployer and
-                // that the context is not a delegatecall. For safety, we will only allow EOAs
-                // in case the contract is deployed via a factory with permissionless functions.
-                // In the case where the mock is a proxy, it is highly likely that it will
-                // have the appropriate `owner()` set.
+                // Caller is the deployer
+                // AND caller is an EOA
+                // AND the contract is not a proxy
+                // AND `lockedForDeployer` is false.
                 mstore(0x00, caller())
-                mstore(0x20, xor(address(), or(extcodesize(caller()), lockedForDeployer)))
-                if eq(keccak256(0x00, 0x40), lifebuoyDeployerHash) { break }
-                // We'll do a self staticcall to `owner()` so that this is compatible
-                // with any kind of Ownable contract, not just Solady's.
+                mstore(0x20, address())
+                if iszero(
+                    or(
+                        xor(keccak256(0x00, 0x40), lifebuoyDeployerHash),
+                        or(extcodesize(caller()), lockedForDeployer)
+                    )
+                ) { break }
+                // If the caller is `onwer()` AND `lockedForOwner` is false.
                 mstore(0x08, 0x8da5cb5b0a0362e0) // `owner()` and `RescueUnauthorizedOrLocked()`.
-                if and(
+                if and( // The arguments of `and` are evaluated from right to left.
                     and(gt(returndatasize(), 0x1f), eq(mload(0x00), caller())),
                     lt(lockedForOwner, staticcall(gas(), address(), 0x20, 0x04, 0x00, 0x20))
                 ) { break }
