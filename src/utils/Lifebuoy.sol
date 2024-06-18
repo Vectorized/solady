@@ -50,22 +50,22 @@ contract Lifebuoy {
     // These flags are kept internal to avoid bloating up the function dispatch.
     // You can just copy paste this into your own code.
 
-    /// @dev Flag to denote that the deployer's access is locked.
+    /// @dev Flag to denote that the deployer's access is locked. (1)
     uint256 internal constant _LIFEBUOY_DEPLOYER_ACCESS_LOCK = 1 << 0;
 
-    /// @dev Flag to denote that the `owner()`'s access is locked.
+    /// @dev Flag to denote that the `owner()`'s access is locked. (2)
     uint256 internal constant _LIFEBUOY_OWNER_ACCESS_LOCK = 1 << 1;
 
-    /// @dev Flag to denote that the `lockRescue` function is locked.
+    /// @dev Flag to denote that the `lockRescue` function is locked. (4)
     uint256 internal constant _LIFEBUOY_LOCK_RESCUE_LOCK = 1 << 2;
 
-    /// @dev Flag to denote that the `rescueETH` function is locked.
+    /// @dev Flag to denote that the `rescueETH` function is locked. (8)
     uint256 internal constant _LIFEBUOY_RESCUE_ETH_LOCK = 1 << 3;
 
-    /// @dev Flag to denote that the `rescueERC20` function is locked.
+    /// @dev Flag to denote that the `rescueERC20` function is locked. (16)
     uint256 internal constant _LIFEBUOY_RESCUE_ERC20_LOCK = 1 << 4;
 
-    /// @dev Flag to denote that the `rescueERC721` function is locked.
+    /// @dev Flag to denote that the `rescueERC721` function is locked. (32)
     uint256 internal constant _LIFEBUOY_RESCUE_ERC721_LOCK = 1 << 5;
 
     /// @dev For checking that the caller is the deployer and
