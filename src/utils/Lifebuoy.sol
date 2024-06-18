@@ -12,17 +12,12 @@ pragma solidity ^0.8.4;
 /// - Careless dev forgets to add a withdraw function to a NFT sale contract.
 ///
 /// For best safety:
-/// - Make all your mocks inherit Lifebuoy if they are deployed via scripts.
-///   This is so that in case of a script misfire / misconfiguration,
-///   all contracts deployed to incorrect nonces can still allow for
-///   assets to be rescued.
-/// - Lock access to rescue functions on production escrow contracts
-///   (i.e. holds ETH, ERC20, ERC721) as soon as possible.
-/// - If the contract does not have any escrow functionality,
-///   (e.g. an ERC20 that does not have any public mint functions)
-///   just leave the rescue access unlocked.
-/// - Add your own withdraw functions.
-///   Avoid depending on the Lifebuoy's rescue functions.
+/// - For non-escrow contracts, inherit Lifebuoy as much as possible,
+///   and leave it unlocked.
+/// - For escrow contracts, lock access as tight as possible,
+///   as soon as possible. Or simply don't inherit Lifebuoy.
+/// Escrow: Your contract is designed to hold ETH, ERC20s, ERC721s
+/// (e.g. liquidity pools, token sale contracts).
 ///
 /// All rescue and rescue authorization functions require either:
 /// - Caller is the deployer
