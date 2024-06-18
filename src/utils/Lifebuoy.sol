@@ -107,7 +107,7 @@ contract Lifebuoy {
     }
 
     /// @dev Locks rescue functions for the deployer.
-    function lockRescueForDeployer() public virtual onlyRescuer {
+    function lockRescueForDeployer() public payable virtual onlyRescuer {
         /// @solidity memory-safe-assembly
         assembly {
             let s := _RESCUE_LOCKED_FLAGS_SLOT
@@ -116,7 +116,7 @@ contract Lifebuoy {
     }
 
     /// @dev Locks rescue functions for the owner.
-    function lockRescueForOwner() public virtual onlyRescuer {
+    function lockRescueForOwner() public payable virtual onlyRescuer {
         /// @solidity memory-safe-assembly
         assembly {
             let s := _RESCUE_LOCKED_FLAGS_SLOT
@@ -140,7 +140,7 @@ contract Lifebuoy {
 
     /// @dev Sends `amount` (in wei) ETH from the current contract to `to`.
     /// Reverts upon failure.
-    function rescueETH(address to, uint256 amount) public virtual onlyRescuer {
+    function rescueETH(address to, uint256 amount) public payable virtual onlyRescuer {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(call(gas(), to, amount, codesize(), 0x00, codesize(), 0x00)) {
@@ -152,7 +152,12 @@ contract Lifebuoy {
 
     /// @dev Sends `amount` of ERC20 `token` from the current contract to `to`.
     /// Reverts upon failure.
-    function rescueERC20(address token, address to, uint256 amount) public virtual onlyRescuer {
+    function rescueERC20(address token, address to, uint256 amount)
+        public
+        payable
+        virtual
+        onlyRescuer
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x14, to) // Store the `to` argument.
@@ -174,7 +179,12 @@ contract Lifebuoy {
 
     /// @dev Sends `tokenId` of ERC721 `token` from the current contract to `to`.
     /// Reverts upon failure.
-    function rescueERC721(address token, address to, uint256 tokenId) public virtual onlyRescuer {
+    function rescueERC721(address token, address to, uint256 tokenId)
+        public
+        payable
+        virtual
+        onlyRescuer
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
