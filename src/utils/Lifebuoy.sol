@@ -81,13 +81,8 @@ contract Lifebuoy {
                 // In the case where the mock is a proxy, it is highly likely that it will
                 // have the appropriate `owner()` set.
                 mstore(0x00, caller())
-                mstore(0x20, address())
-                if iszero(
-                    or(
-                        or(extcodesize(caller()), lockedForDeployer),
-                        xor(keccak256(0x00, 0x40), lifebuoyDeployerHash)
-                    )
-                ) { break }
+                mstore(0x20, xor(address(), or(extcodesize(caller()), lockedForDeployer)))
+                if eq(keccak256(0x00, 0x40), lifebuoyDeployerHash) { break }
                 // We'll do a self staticcall to `owner()` so that this is compatible
                 // with any kind of Ownable contract, not just Solady's.
                 mstore(0x08, 0x8da5cb5b0a0362e0) // `owner()` and `RescueUnauthorizedOrLocked()`.
