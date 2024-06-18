@@ -97,13 +97,22 @@ contract Lifebuoy {
 
     constructor() payable {
         bytes32 hash;
+        address deployer = _lifebuoyUseTxOriginAsDeployer() ? tx.origin : msg.sender;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, caller())
+            mstore(0x00, shr(96, shl(96, deployer)))
             mstore(0x20, address())
             hash := keccak256(0x00, 0x40)
         }
         _lifebuoyDeployerHash = hash;
+    }
+
+    /// @dev Override to return true if the contract is to be deployed via a factory
+    /// in a transaction initiated by a trusted EOA that is NEVER shared.
+    /// If your contract is deployed by someone else's EOA (e.g. sponsored transactions),
+    /// this function MUST return false, as per default.
+    function _lifebuoyUseTxOriginAsDeployer() internal view virtual returns (bool) {
+        return false;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
