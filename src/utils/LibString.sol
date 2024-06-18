@@ -406,7 +406,7 @@ library LibString {
         }
     }
 
-    /// @dev Returns if this string is a alphanumeric characters including space.
+    /// @dev Returns if this string is a alphanumeric character including space.
     function isAlphanumeric(string memory str) public pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -428,7 +428,7 @@ library LibString {
         }
     }
 
-    /// @dev Returns if this characater is a alphanumeric including space.
+    /// @dev Returns if this character is a alphanumeric including space.
     function isAlphanumericChar(bytes1 char) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
