@@ -406,6 +406,36 @@ library LibString {
         }
     }
 
+    /// @dev Returns if this string is a alphanumeric characters including space.
+    function isAlphanumeric(string memory str) public pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if mload(str) {
+                result := 1
+                let o := add(str, result)
+                let end := add(o, mload(str))
+                for {} 1 {} {
+                    if iszero(
+                        and(result, shr(and(0xff, mload(o)), 0x07fffffe07fffffe03ff000100000000))
+                    ) {
+                        result := 0
+                        break
+                    }
+                    o := add(o, result)
+                    if iszero(lt(o, end)) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Returns if this characater is a alphanumeric including space.
+    function isAlphanumericChar(bytes1 char) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(0x01, shr(shr(248, char), 0x07fffffe07fffffe03ff000100000000))
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   BYTE STRING OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
