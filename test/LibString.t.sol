@@ -424,6 +424,7 @@ contract LibStringTest is SoladyTest {
     }
 
     function testStringIs7BitASCII() public {
+        assertEq(LibString.is7BitASCII(""), true);
         bytes memory raw = new bytes(1);
         for (uint256 i; i < 256; ++i) {
             raw[0] = bytes1(uint8(i));
