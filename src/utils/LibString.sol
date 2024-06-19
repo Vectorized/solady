@@ -441,10 +441,7 @@ library LibString {
 
     /// @dev Returns if this string is a 7-bit ASCII string,
     /// AND all characters are in the `allowed` lookup.
-    /// Note:
-    /// - If `bytes(s).length == 0 && allowed == 0`: returns true
-    /// - If `bytes(s).length == 0 && allowed != 0`: returns true
-    /// - If `bytes(s).length != 0 && allowed == 0`: returns false
+    /// Note: If `s` is empty, returns true regardless of `allowed`.
     function is7BitASCII(string memory s, uint128 allowed) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
