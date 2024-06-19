@@ -35,7 +35,7 @@ contract SignatureCheckerMock {
     }
 }
 
-contract ERC1217SignatureChecker {
+contract ERC1271SignatureChecker {
     bytes4 constant internal MAGICVALUE = 0x1626ba7e;
 
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view returns (bytes4) {

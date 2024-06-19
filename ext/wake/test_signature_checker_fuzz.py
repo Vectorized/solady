@@ -1,15 +1,15 @@
 from wake.testing import *
 from wake.testing.fuzzing import *
-from pytypes.tests.SignatureCheckerMock import SignatureCheckerMock, ERC1217SignatureChecker
+from pytypes.tests.SignatureCheckerMock import SignatureCheckerMock, ERC1271SignatureChecker
 
 class SignatureCheckerFuzzTest(FuzzTest):
     _signature_checker: SignatureCheckerMock
-    _erc1271_signature_checker: ERC1217SignatureChecker
+    _erc1271_signature_checker: ERC1271SignatureChecker
     _signer: Account
 
     def pre_sequence(self) -> None:
         self._signature_checker = SignatureCheckerMock.deploy()
-        self._erc1271_signature_checker = ERC1217SignatureChecker.deploy()
+        self._erc1271_signature_checker = ERC1271SignatureChecker.deploy()
         self._signer = Account.new()
 
     @flow()
