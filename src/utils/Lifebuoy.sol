@@ -44,7 +44,7 @@ contract Lifebuoy {
     error RescueTransferFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                  CONSTANTS AND IMMUTABLES                  */
+    /*                    LOCK FLAGS CONSTANTS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // These flags are kept internal to avoid bloating up the function dispatch.
@@ -67,6 +67,10 @@ contract Lifebuoy {
 
     /// @dev Flag to denote that the `rescueERC721` function is locked. (32)
     uint256 internal constant _LIFEBUOY_RESCUE_ERC721_LOCK = 1 << 5;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         IMMUTABLES                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev For checking that the caller is the deployer and
     /// that the context is not a delegatecall
@@ -108,81 +112,6 @@ contract Lifebuoy {
     /// this function MUST return false, as per default.
     function _lifebuoyUseTxOriginAsDeployer() internal view virtual returns (bool) {
         return false;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*              RESCUE AUTHORIZATION OPERATIONS               */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Requires that the rescue functions are not locked,
-    /// and the caller is either the `owner()`, or the deployer (if not via a delegate call).
-    function _checkRescuer(uint256 modeLock) internal view virtual {
-        uint256 locks = rescueLocked();
-        bytes32 lifebuoyDeployerHash = _lifebuoyDeployerHash;
-        /// @solidity memory-safe-assembly
-        assembly {
-            for {} 1 {} {
-                // If the `modeLock` flag is true, set all bits in `locks` to true.
-                locks := or(locks, sub(0, iszero(iszero(and(modeLock, locks)))))
-                // Caller is the deployer
-                // AND caller is an EOA
-                // AND the contract is not a proxy
-                // AND `locks & _LIFEBUOY_DEPLOYER_ACCESS_LOCK` is false.
-                mstore(0x00, caller())
-                mstore(0x20, address())
-                if iszero(
-                    or(
-                        or(extcodesize(caller()), and(locks, _LIFEBUOY_DEPLOYER_ACCESS_LOCK)),
-                        xor(keccak256(0x00, 0x40), lifebuoyDeployerHash)
-                    )
-                ) { break }
-                // If the caller is `owner()`
-                // AND `locks & _LIFEBUOY_OWNER_ACCESS_LOCK` is false.
-                mstore(0x08, 0x8da5cb5b0a0362e0) // `owner()` and `RescueUnauthorizedOrLocked()`.
-                if and( // The arguments of `and` are evaluated from right to left.
-                    lt(
-                        and(locks, _LIFEBUOY_OWNER_ACCESS_LOCK),
-                        and(gt(returndatasize(), 0x1f), eq(mload(0x00), caller()))
-                    ),
-                    staticcall(gas(), address(), 0x20, 0x04, 0x00, 0x20)
-                ) { break }
-                revert(0x24, 0x04)
-            }
-        }
-    }
-
-    /// @dev Modifier that calls `_checkRescuer()` at the start of the function.
-    modifier onlyRescuer(uint256 modeLock) virtual {
-        _checkRescuer(modeLock);
-        _;
-    }
-
-    /// @dev Internal function to set the lock flags without going through access control.
-    function _lockRescue(uint256 locksToSet) internal virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let s := _RESCUE_LOCKED_FLAGS_SLOT
-            sstore(s, or(sload(s), locksToSet))
-        }
-    }
-
-    /// @dev Locks (i.e. permanently removes) access to rescue functions (including `lockRescue`).
-    function lockRescue(uint256 locksToSet)
-        public
-        payable
-        virtual
-        onlyRescuer(_LIFEBUOY_LOCK_RESCUE_LOCK)
-    {
-        _lockRescue(locksToSet);
-    }
-
-    /// @dev Returns the flags denoting whether access to rescue functions
-    /// (including `lockRescue`) is locked.
-    function rescueLocked() public view virtual returns (uint256 locks) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            locks := sload(_RESCUE_LOCKED_FLAGS_SLOT)
-        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -256,5 +185,80 @@ contract Lifebuoy {
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
         }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              RESCUE AUTHORIZATION OPERATIONS               */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the flags denoting whether access to rescue functions
+    /// (including `lockRescue`) is locked.
+    function rescueLocked() public view virtual returns (uint256 locks) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            locks := sload(_RESCUE_LOCKED_FLAGS_SLOT)
+        }
+    }
+
+    /// @dev Locks (i.e. permanently removes) access to rescue functions (including `lockRescue`).
+    function lockRescue(uint256 locksToSet)
+        public
+        payable
+        virtual
+        onlyRescuer(_LIFEBUOY_LOCK_RESCUE_LOCK)
+    {
+        _lockRescue(locksToSet);
+    }
+
+    /// @dev Internal function to set the lock flags without going through access control.
+    function _lockRescue(uint256 locksToSet) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := _RESCUE_LOCKED_FLAGS_SLOT
+            sstore(s, or(sload(s), locksToSet))
+        }
+    }
+
+    /// @dev Requires that the rescue functions are not locked,
+    /// and the caller is either the `owner()`, or the deployer (if not via a delegate call).
+    function _checkRescuer(uint256 modeLock) internal view virtual {
+        uint256 locks = rescueLocked();
+        bytes32 lifebuoyDeployerHash = _lifebuoyDeployerHash;
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} 1 {} {
+                // If the `modeLock` flag is true, set all bits in `locks` to true.
+                locks := or(locks, sub(0, iszero(iszero(and(modeLock, locks)))))
+                // Caller is the deployer
+                // AND caller is an EOA
+                // AND the contract is not a proxy
+                // AND `locks & _LIFEBUOY_DEPLOYER_ACCESS_LOCK` is false.
+                mstore(0x00, caller())
+                mstore(0x20, address())
+                if iszero(
+                    or(
+                        or(extcodesize(caller()), and(locks, _LIFEBUOY_DEPLOYER_ACCESS_LOCK)),
+                        xor(keccak256(0x00, 0x40), lifebuoyDeployerHash)
+                    )
+                ) { break }
+                // If the caller is `owner()`
+                // AND `locks & _LIFEBUOY_OWNER_ACCESS_LOCK` is false.
+                mstore(0x08, 0x8da5cb5b0a0362e0) // `owner()` and `RescueUnauthorizedOrLocked()`.
+                if and( // The arguments of `and` are evaluated from right to left.
+                    lt(
+                        and(locks, _LIFEBUOY_OWNER_ACCESS_LOCK),
+                        and(gt(returndatasize(), 0x1f), eq(mload(0x00), caller()))
+                    ),
+                    staticcall(gas(), address(), 0x20, 0x04, 0x00, 0x20)
+                ) { break }
+                revert(0x24, 0x04)
+            }
+        }
+    }
+
+    /// @dev Modifier that calls `_checkRescuer()` at the start of the function.
+    modifier onlyRescuer(uint256 modeLock) virtual {
+        _checkRescuer(modeLock);
+        _;
     }
 }
