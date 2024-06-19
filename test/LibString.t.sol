@@ -382,7 +382,49 @@ contract LibStringTest is SoladyTest {
         }
     }
 
+    function testStringIs7BitASCIIWithAllowedLookup() public {
+        uint128 allowed = LibString.to7BitASCIIAllowedLookup("0123456789");
+        assertEq(LibString.is7BitASCII("", allowed), true);
+        assertEq(LibString.is7BitASCII("0", allowed), true);
+        assertEq(LibString.is7BitASCII("9", allowed), true);
+        assertEq(LibString.is7BitASCII("a", allowed), false);
+        assertEq(LibString.is7BitASCII("0123456789", allowed), true);
+        assertEq(LibString.is7BitASCII("0123456789a", allowed), false);
+        assertEq(LibString.is7BitASCII("a0123456789", allowed), false);
+        assertEq(LibString.is7BitASCII("", 0), true);
+        assertEq(LibString.is7BitASCII("1", 0), false);
+    }
+
+    function testTo7BitASCIIAllowedLookup() public {
+        assertEq(LibString.to7BitASCIIAllowedLookup("0123456789"), LibString.DIGITS_7_BIT_ASCII);
+        assertEq(
+            LibString.to7BitASCIIAllowedLookup("abcdefghijklmnopqrstuvwxyz"),
+            LibString.LOWERCASE_7_BIT_ASCII
+        );
+    }
+
+    function testStringIs7BitASCIIWithAllowedLookupDifferential(bytes memory raw, uint128 allowed)
+        public
+        brutalizeMemory
+    {
+        string memory s = string(raw);
+        bytes32 hashBefore = keccak256(raw);
+        assertEq(LibString.is7BitASCII(s, allowed), _is7BitASCIIOriginal(s, allowed));
+        assertEq(keccak256(raw), hashBefore);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(add(raw, add(0x20, mload(raw))), hashBefore)
+        }
+        assertEq(LibString.is7BitASCII(s, allowed), _is7BitASCIIOriginal(s, allowed));
+        assertEq(keccak256(raw), hashBefore);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(eq(mload(add(raw, add(0x20, mload(raw)))), hashBefore)) { revert(0, 0) }
+        }
+    }
+
     function testStringIs7BitASCII() public {
+        assertEq(LibString.is7BitASCII(""), true);
         bytes memory raw = new bytes(1);
         for (uint256 i; i < 256; ++i) {
             raw[0] = bytes1(uint8(i));
@@ -540,7 +582,6 @@ contract LibStringTest is SoladyTest {
             LibString.indexOf(subject, "qrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 17),
             LibString.NOT_FOUND
         );
-
         assertEq(LibString.indexOf("abcabcabc", "abc"), 0);
         assertEq(LibString.indexOf("abcabcabc", "abc", 1), 3);
 
@@ -1331,6 +1372,17 @@ contract LibStringTest is SoladyTest {
             bytes memory sBytes = bytes(s);
             for (uint256 i; i < sBytes.length; ++i) {
                 if (uint8(bytes1(sBytes[i])) > 127) return false;
+            }
+            return true;
+        }
+    }
+
+    function _is7BitASCIIOriginal(string memory s, uint256 allowed) internal pure returns (bool) {
+        unchecked {
+            bytes memory sBytes = bytes(s);
+            for (uint256 i; i < sBytes.length; ++i) {
+                uint256 ord = uint8(bytes1(sBytes[i]));
+                if (ord > 127 || ((allowed >> ord) & 1) == 0) return false;
             }
             return true;
         }
