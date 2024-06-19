@@ -41,6 +41,7 @@ import "./utils/LibRLP.sol";
 import "./utils/LibSort.sol";
 import "./utils/LibString.sol";
 import "./utils/LibZip.sol";
+import "./utils/Lifebuoy.sol";
 import "./utils/MerkleProofLib.sol";
 import "./utils/MetadataReaderLib.sol";
 import "./utils/MinHeapLib.sol";
