@@ -523,7 +523,7 @@ library FixedPointMathLib {
             result :=
                 mul(
                     or(mul(sub(p1, gt(r, result)), add(div(sub(0, t), t), 1)), div(sub(result, r), t)),
-                    mul(inv, sub(2, mul(d, inv)))
+                    mul(sub(2, mul(d, inv)), inv)
                 )
         }
     }
