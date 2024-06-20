@@ -415,17 +415,16 @@ library FixedPointMathLib {
             }
             // For certain ranges of `x`, we'll use the quadratic-rate recursive formula of
             // R. Iacono and J.P. Boyd for the last iteration, to avoid catastrophic cancellation.
-            if (c != uint256(0)) {
-                int256 t = w | 1;
-                /// @solidity memory-safe-assembly
-                assembly {
-                    x := sdiv(mul(x, wad), t)
-                }
-                x = (t * (wad + lnWad(x)));
-                /// @solidity memory-safe-assembly
-                assembly {
-                    w := sdiv(x, add(wad, t))
-                }
+            if (c == uint256(0)) return w;
+            int256 t = w | 1;
+            /// @solidity memory-safe-assembly
+            assembly {
+                x := sdiv(mul(x, wad), t)
+            }
+            x = (t * (wad + lnWad(x)));
+            /// @solidity memory-safe-assembly
+            assembly {
+                w := sdiv(x, add(wad, t))
             }
         }
     }
@@ -524,7 +523,7 @@ library FixedPointMathLib {
             result :=
                 mul(
                     or(mul(sub(p1, gt(r, result)), add(div(sub(0, t), t), 1)), div(sub(result, r), t)),
-                    mul(sub(2, mul(d, inv)), inv)
+                    mul(inv, sub(2, mul(d, inv)))
                 )
         }
     }
@@ -595,6 +594,14 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             z := mul(gt(x, y), sub(x, y))
+        }
+    }
+
+    /// @dev Returns `condition ? x : y`, without branching.
+    function ternary(bool condition, uint256 x, uint256 y) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := xor(x, mul(xor(x, y), iszero(condition)))
         }
     }
 
@@ -735,8 +742,13 @@ library FixedPointMathLib {
             if (x <= type(uint256).max / 10 ** 36) return cbrt(x * 10 ** 36);
             z = (1 + cbrt(x)) * 10 ** 12;
             z = (fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
-            if (rawMulMod(z * z, z, x) >= 10 ** 37) return z;
-            uint256 t = fullMulDivUnchecked(x, 10 ** 36, z * z);
+            uint256 t = 10 ** 37;
+            /// @solidity memory-safe-assembly
+            assembly {
+                t := gt(t, mulmod(mul(z, z), z, x))
+            }
+            if (t == uint256(0)) return z;
+            t = fullMulDivUnchecked(x, 10 ** 36, z * z);
             /// @solidity memory-safe-assembly
             assembly {
                 z := sub(z, lt(t, z))
@@ -748,11 +760,12 @@ library FixedPointMathLib {
     function factorial(uint256 x) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
+            result := 1
             if iszero(lt(x, 58)) {
                 mstore(0x00, 0xaba0f2a2) // `FactorialOverflow()`.
                 revert(0x1c, 0x04)
             }
-            for { result := 1 } x { x := sub(x, 1) } { result := mul(result, x) }
+            for {} x { x := sub(x, 1) } { result := mul(result, x) }
         }
     }
 
@@ -907,14 +920,14 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns the average of `x` and `y`.
+    /// @dev Returns the average of `x` and `y`. Rounds towards zero.
     function avg(uint256 x, uint256 y) internal pure returns (uint256 z) {
         unchecked {
             z = (x & y) + ((x ^ y) >> 1);
         }
     }
 
-    /// @dev Returns the average of `x` and `y`.
+    /// @dev Returns the average of `x` and `y`. Rounds towards negative infinity.
     function avg(int256 x, int256 y) internal pure returns (int256 z) {
         unchecked {
             z = (x >> 1) + (y >> 1) + (x & y & 1);
