@@ -1384,16 +1384,19 @@ contract FixedPointMathLibTest is SoladyTest {
         );
     }
 
-    function testCbrtWadConverged(uint256 x) public returns (uint256 z) {
-        z = FixedPointMathLib.cbrtWad(x);
-        while (z == uint256(0)) {
-            x = _random();
-            z = FixedPointMathLib.cbrtWad(x);
-        }
+    function testCbrtWadConverged(uint256 x) public {
         unchecked {
-            uint256 next = (FixedPointMathLib.fullMulDiv(x, 10 ** 36, z * z) + z + z) / 3;
-            assertLt(FixedPointMathLib.dist(next, z), 2);
+            x = _bound(x, type(uint256).max / 10 ** 36, type(uint256).max);
+            uint256 z = (1 + FixedPointMathLib.cbrt(x)) * 10 ** 12;
+            z = (FixedPointMathLib.fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
+            uint256 zBefore = z;
+            z = (FixedPointMathLib.fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
+            assertLt(FixedPointMathLib.dist(zBefore, z), 2);
         }
+    }
+
+    function testCbrtWadConverged() public {
+        this.testCbrtWadConverged(149402619197264205146140478723340791358082632884804826834926);
     }
 
     function testCbrtBack(uint256 x) public {
@@ -1438,13 +1441,14 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testSqrtWadConverged(uint256 x) public {
-        uint256 z = FixedPointMathLib.sqrtWad(x);
-        while (z == 0) {
-            x = _random();
-            z = FixedPointMathLib.sqrtWad(x);
+        unchecked {
+            x = _bound(x, type(uint256).max / 10 ** 18, type(uint256).max);
+            uint256 z = (1 + FixedPointMathLib.sqrt(x)) * 10 ** 9;
+            z = (FixedPointMathLib.fullMulDivUnchecked(x, 10 ** 18, z) + z) >> 1;
+            uint256 zBefore = z;
+            z = (FixedPointMathLib.fullMulDivUnchecked(x, 10 ** 18, z) + z) >> 1;
+            assertLt(FixedPointMathLib.dist(zBefore, z), 2);
         }
-        uint256 next = (FixedPointMathLib.fullMulDiv(x, 10 ** 18, z) + z) >> 1;
-        assertLt(FixedPointMathLib.dist(next, z), 2);
     }
 
     function testSqrtBack(uint256 x) public {
