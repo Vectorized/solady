@@ -742,11 +742,11 @@ library FixedPointMathLib {
             if (x <= type(uint256).max / 10 ** 36) return cbrt(x * 10 ** 36);
             z = (1 + cbrt(x)) * 10 ** 12;
             z = (fullMulDivUnchecked(x, 10 ** 36, z * z) + z + z) / 3;
-            uint256 t = fullMulDivUnchecked(x, 10 ** 36, z * z);
-            /// @solidity memory-safe-assembly
-            assembly {
-                z := sub(z, lt(t, z))
-            }
+            x = fullMulDivUnchecked(x, 10 ** 36, z * z);
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := sub(z, lt(x, z))
         }
     }
 
