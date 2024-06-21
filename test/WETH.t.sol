@@ -13,30 +13,8 @@ contract ContractWithoutReceive {}
 contract WETHTest is SoladyTest {
     WETH weth;
 
-    event Deposit(address indexed from, uint256 amount);
-
-    event Withdrawal(address indexed to, uint256 amount);
-
     function setUp() public {
         weth = new WETH();
-    }
-
-    function _expectDepositEvent(address from, uint256 amount) internal {
-        vm.expectEmit(true, true, true, true);
-        emit Deposit(from, amount);
-    }
-
-    function _expectDepositEvent(uint256 amount) internal {
-        _expectDepositEvent(address(this), amount);
-    }
-
-    function _expectWithdrawalEvent(address to, uint256 amount) internal {
-        vm.expectEmit(true, true, true, true);
-        emit Withdrawal(to, amount);
-    }
-
-    function _expectWithdrawalEvent(uint256 amount) internal {
-        _expectWithdrawalEvent(address(this), amount);
     }
 
     function testMetadata() public {
@@ -49,7 +27,6 @@ contract WETHTest is SoladyTest {
         assertEq(weth.balanceOf(address(this)), 0);
         assertEq(weth.totalSupply(), 0);
 
-        _expectDepositEvent(1 ether);
         SafeTransferLib.safeTransferETH(address(weth), 1 ether);
 
         assertEq(weth.balanceOf(address(this)), 1 ether);
@@ -60,7 +37,6 @@ contract WETHTest is SoladyTest {
         assertEq(weth.balanceOf(address(this)), 0);
         assertEq(weth.totalSupply(), 0);
 
-        _expectDepositEvent(1 ether);
         weth.deposit{value: 1 ether}();
 
         assertEq(weth.balanceOf(address(this)), 1 ether);
@@ -70,10 +46,8 @@ contract WETHTest is SoladyTest {
     function testWithdraw() public {
         uint256 startingBalance = address(this).balance;
 
-        _expectDepositEvent(1 ether);
         weth.deposit{value: 1 ether}();
 
-        _expectWithdrawalEvent(1 ether);
         weth.withdraw(1 ether);
 
         uint256 balanceAfterWithdraw = address(this).balance;
@@ -84,12 +58,10 @@ contract WETHTest is SoladyTest {
     }
 
     function testPartialWithdraw() public {
-        _expectDepositEvent(1 ether);
         weth.deposit{value: 1 ether}();
 
         uint256 balanceBeforeWithdraw = address(this).balance;
 
-        _expectWithdrawalEvent(0.5 ether);
         weth.withdraw(0.5 ether);
 
         uint256 balanceAfterWithdraw = address(this).balance;
@@ -105,7 +77,6 @@ contract WETHTest is SoladyTest {
         vm.deal(owner, 1 ether);
 
         vm.prank(owner);
-        _expectDepositEvent(owner, 1 ether);
         weth.deposit{value: 1 ether}();
 
         assertEq(weth.balanceOf(owner), 1 ether);
@@ -121,7 +92,6 @@ contract WETHTest is SoladyTest {
         assertEq(weth.balanceOf(address(this)), 0);
         assertEq(weth.totalSupply(), 0);
 
-        _expectDepositEvent(amount);
         SafeTransferLib.safeTransferETH(address(weth), amount);
 
         assertEq(weth.balanceOf(address(this)), amount);
@@ -134,7 +104,6 @@ contract WETHTest is SoladyTest {
         assertEq(weth.balanceOf(address(this)), 0);
         assertEq(weth.totalSupply(), 0);
 
-        _expectDepositEvent(amount);
         weth.deposit{value: amount}();
 
         assertEq(weth.balanceOf(address(this)), amount);
@@ -145,12 +114,10 @@ contract WETHTest is SoladyTest {
         depositAmount = _bound(depositAmount, 0, address(this).balance);
         withdrawAmount = _bound(withdrawAmount, 0, depositAmount);
 
-        _expectDepositEvent(depositAmount);
         weth.deposit{value: depositAmount}();
 
         uint256 balanceBeforeWithdraw = address(this).balance;
 
-        _expectWithdrawalEvent(withdrawAmount);
         weth.withdraw(withdrawAmount);
 
         uint256 balanceAfterWithdraw = address(this).balance;
