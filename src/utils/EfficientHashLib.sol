@@ -296,15 +296,6 @@ library EfficientHashLib {
         }
     }
 
-    /// @dev Returns `keccak256(abi.encode(buffer[0], .., value[n - 1]))`.
-    /// For efficiency, this function does not do bounds checking.
-    function hash(bytes32[] memory buffer, uint256 n) internal pure returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := keccak256(add(buffer, 0x20), shl(5, n))
-        }
-    }
-
     /// @dev Returns `keccak256(abi.encode(buffer[0], .., value[buffer.length - 1]))`.
     function hash(bytes32[] memory buffer) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
