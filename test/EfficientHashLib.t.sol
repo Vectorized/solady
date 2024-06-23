@@ -23,7 +23,6 @@ contract EfficientHashLibTest is SoladyTest {
         }
         bytes memory encoded = abi.encodePacked(a);
         assertEq(EfficientHashLib.hash(a[0]), _hash(encoded, 1));
-        assertEq(EfficientHashLib.hash(a, 1), _hash(encoded, 1));
         assertEq(EfficientHashLib.hash(a[0], a[1]), _hash(encoded, 2));
         assertEq(EfficientHashLib.hash(a[0], a[1], a[2]), _hash(encoded, 3));
         assertEq(EfficientHashLib.hash(a[0], a[1], a[2], a[3]), _hash(encoded, 4));
@@ -33,7 +32,6 @@ contract EfficientHashLibTest is SoladyTest {
         assertEq(
             EfficientHashLib.hash(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]), _hash(encoded, 8)
         );
-        assertEq(EfficientHashLib.hash(a, 8), _hash(encoded, 8));
         _checkMemory();
         EfficientHashLib.free(a);
         _checkMemory();
@@ -64,14 +62,47 @@ contract EfficientHashLibTest is SoladyTest {
 
     function testEfficientHashSet() public {
         assertEq(
-            EfficientHashLib.malloc(3).set(0, 1).set(1, 2).set(2, 3).hash(3),
+            EfficientHashLib.malloc(3).set(0, 1).set(1, 2).set(2, 3).hash(),
             keccak256(abi.encode(uint256(1), uint256(2), uint256(3)))
         );
+        assertEq(
+            EfficientHashLib.malloc(2).set(0, 1).set(1, 2).hash(),
+            keccak256(abi.encode(uint256(1), uint256(2)))
+        );
+        assertEq(EfficientHashLib.malloc(1).set(0, 1).hash(), keccak256(abi.encode(uint256(1))));
+        assertEq(EfficientHashLib.malloc(0).hash(), keccak256(""));
+        assertEq(EfficientHashLib.malloc(0).hash(), keccak256(""));
+        bytes32[] memory empty;
+        assertEq(EfficientHashLib.hash(empty), keccak256(""));
     }
 
     function _hash(bytes memory encoded, uint256 n) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := keccak256(add(encoded, 0x20), shl(5, n))
+        }
+    }
+
+    function testEfficientHashFree() public {
+        uint256 mBefore = _fmp();
+        bytes32[] memory buffer;
+        EfficientHashLib.free(buffer);
+        assertEq(mBefore, _fmp());
+    }
+
+    function testEfficientHashFree(uint8 n, bool b, uint8 t) public {
+        if (b) EfficientHashLib.malloc(t | 1);
+        uint256 mBefore = _fmp();
+        bytes32[] memory buffer = EfficientHashLib.malloc(n | 1);
+        assertGt(_fmp(), mBefore);
+        EfficientHashLib.free(buffer);
+        assertEq(mBefore, _fmp());
+    }
+
+    function _fmp() internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
         }
     }
 }
