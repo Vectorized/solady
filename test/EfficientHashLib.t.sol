@@ -67,6 +67,32 @@ contract EfficientHashLibTest is SoladyTest {
             EfficientHashLib.malloc(3).set(0, 1).set(1, 2).set(2, 3).hash(3),
             keccak256(abi.encode(uint256(1), uint256(2), uint256(3)))
         );
+        assertEq(
+            EfficientHashLib.malloc(3).set(0, 1).set(1, 2).set(2, 3).hash(2),
+            keccak256(abi.encode(uint256(1), uint256(2)))
+        );
+        assertEq(
+            EfficientHashLib.malloc(3).set(0, 1).set(1, 2).set(2, 3).hash(1),
+            keccak256(abi.encode(uint256(1)))
+        );
+        assertEq(EfficientHashLib.malloc(3).set(0, 1).set(1, 2).set(2, 3).hash(0), keccak256(""));
+        assertEq(
+            EfficientHashLib.malloc(3).set(0, 1).set(1, 2).set(2, 3).hash(),
+            keccak256(abi.encode(uint256(1), uint256(2), uint256(3)))
+        );
+        assertEq(
+            EfficientHashLib.malloc(3).set(1, 2).set(0, 1).set(2, 3).hash(),
+            keccak256(abi.encode(uint256(1), uint256(2), uint256(3)))
+        );
+        assertEq(
+            EfficientHashLib.malloc(3).set(1, bytes32(uint256(2))).set(0, bytes32(uint256(1))).set(
+                2, bytes32(uint256(3))
+            ).hash(),
+            keccak256(abi.encode(uint256(1), uint256(2), uint256(3)))
+        );
+        assertEq(EfficientHashLib.malloc(0).hash(), keccak256(""));
+        bytes32[] memory empty;
+        assertEq(EfficientHashLib.hash(empty), keccak256(""));
     }
 
     function _hash(bytes memory encoded, uint256 n) internal pure returns (bytes32 result) {

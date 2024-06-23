@@ -3,6 +3,14 @@ pragma solidity ^0.8.4;
 
 /// @notice Library for efficiently performing keccak256 hashes.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/EfficientHashLib.sol)
+/// @dev To avoid stack-too-deep, you can use:
+/// ```
+/// bytes32[] memory buffer = EfficientHashLib.malloc(10);
+/// EfficientHashLib.set(buffer, 0, value0);
+/// ..
+/// EfficientHashLib.set(buffer, 9, value9);
+/// bytes32 finalHash = EfficientHashLib.hash(buffer);
+/// ```
 library EfficientHashLib {
     /// @dev Returns `keccak256(abi.encode(value0))`.
     function hash(bytes32 value0) internal pure returns (bytes32 result) {
@@ -288,11 +296,20 @@ library EfficientHashLib {
         }
     }
 
-    /// @dev Returns `keccak256(abi.encode(buffer[0], .., value[n-1]))`.
+    /// @dev Returns `keccak256(abi.encode(buffer[0], .., value[n - 1]))`.
+    /// For efficiency, this function does not do bounds checking.
     function hash(bytes32[] memory buffer, uint256 n) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := keccak256(add(buffer, 0x20), shl(5, n))
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(buffer[0], .., value[buffer.length - 1]))`.
+    function hash(bytes32[] memory buffer) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := keccak256(add(buffer, 0x20), shl(5, mload(buffer)))
         }
     }
 
