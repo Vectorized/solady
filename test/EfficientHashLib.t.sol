@@ -77,8 +77,32 @@ contract EfficientHashLibTest is SoladyTest {
     }
 
     function _hash(bytes memory encoded, uint256 n) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
         assembly {
             result := keccak256(add(encoded, 0x20), shl(5, n))
+        }
+    }
+
+    function testEfficientHashFree() public {
+        uint256 mBefore = _fmp();
+        bytes32[] memory buffer;
+        EfficientHashLib.free(buffer);
+        assertEq(mBefore, _fmp());
+    }
+
+    function testEfficientHashFree(uint8 n, bool b, uint8 t) public {
+        if (b) EfficientHashLib.malloc(t | 1);
+        uint256 mBefore = _fmp();
+        bytes32[] memory buffer = EfficientHashLib.malloc(n | 1);
+        assertGt(_fmp(), mBefore);
+        EfficientHashLib.free(buffer);
+        assertEq(mBefore, _fmp());
+    }
+
+    function _fmp() internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
         }
     }
 }

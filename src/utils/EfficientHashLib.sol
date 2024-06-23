@@ -346,7 +346,8 @@ library EfficientHashLib {
     function free(bytes32[] memory buffer) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(shl(6, eq(add(shl(5, add(1, mload(buffer))), buffer), mload(0x40))), buffer)
+            let n := mload(buffer)
+            mstore(shl(6, lt(iszero(n), eq(add(shl(5, add(1, n)), buffer), mload(0x40)))), buffer)
         }
     }
 }
