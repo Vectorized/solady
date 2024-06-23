@@ -80,6 +80,7 @@ utils
 ├─ GasBurnerLib — "Library for burning gas without reverting"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
 ├─ DynamicBufferLib — "Library for buffers with automatic capacity resizing"
+├─ EfficientHashLib — "Library for efficiently performing keccak256 hashes"
 ├─ MetadataReaderLib — "Library for reading contract metadata robustly"
 ├─ FixedPointMathLib — "Arithmetic library with operations for fixed-point numbers"
 ├─ SafeCastLib — "Library for integer casting that reverts on overflow"
