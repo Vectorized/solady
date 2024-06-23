@@ -342,8 +342,8 @@ library EfficientHashLib {
         }
     }
 
-    /// @dev Frees memory that has been created by `malloc`.
-    /// No-op if `buffer.length` is zero, or if new memory has been allocated after `malloc`.
+    /// @dev Frees memory that has been allocated for `buffer`.
+    /// No-op if `buffer.length` is zero, or if new memory has been allocated after `buffer`.
     function free(bytes32[] memory buffer) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
