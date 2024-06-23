@@ -175,7 +175,7 @@ abstract contract ERC1271 is EIP712 {
     /// Of course, if you have control over the codebase of the wallet client(s) too,
     /// you can choose a more minimalistic signature scheme like
     /// `keccak256(abi.encode(address(this), hash))` instead of all these acrobatics.
-    /// All these are just for widespead out-of-the-box compatibility with other wallet clients.
+    /// All these are just for widespread out-of-the-box compatibility with other wallet clients.
     /// We want to create bazaars, not walled castles.
     /// And we'll use push the Turing Completeness of the EVM to the limits to do so.
     function _erc1271IsValidSignatureViaNestedEIP712(bytes32 hash, bytes calldata signature)

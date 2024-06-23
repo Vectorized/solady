@@ -90,7 +90,7 @@ library LibPRNG {
     /// If your modulus is big, this method is recommended
     /// for uniform sampling to avoid modulo bias.
     /// For uniform sampling across all uint256 values,
-    /// or for small enough moduli such that the bias is neligible,
+    /// or for small enough moduli such that the bias is negligible,
     /// use {next} instead.
     function uniform(PRNG memory prng, uint256 upper) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
