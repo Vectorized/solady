@@ -27,6 +27,7 @@ import "./utils/ECDSA.sol";
 import "./utils/EIP712.sol";
 import "./utils/ERC1967Factory.sol";
 import "./utils/ERC1967FactoryConstants.sol";
+import "./utils/EfficientHashLib.sol";
 import "./utils/EnumerableSetLib.sol";
 import "./utils/FixedPointMathLib.sol";
 import "./utils/GasBurnerLib.sol";
