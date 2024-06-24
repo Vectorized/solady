@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Library for managing enumerable sets in storage.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibMap.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/EnumerableSetLib.sol)
 ///
 /// @dev Note:
 /// In many applications, the number of elements in an enumerable set is small.
