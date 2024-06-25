@@ -1930,12 +1930,12 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testLerpUint(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end) public {
-        while (begin == end) begin = _random();
-        assertEq(_lerpUintOriginal(a, b, t, begin, end), FixedPointMathLib.lerp(a, b, t, begin, end));
+        assertEq(
+            _lerpUintOriginal(a, b, t, begin, end), FixedPointMathLib.lerp(a, b, t, begin, end)
+        );
     }
 
     function testLerpInt(int256 a, int256 b, int256 t, int256 begin, int256 end) public {
-        while (begin == end) begin = int256(_random());
         assertEq(_lerpIntOriginal(a, b, t, begin, end), FixedPointMathLib.lerp(a, b, t, begin, end));
     }
 
@@ -2010,6 +2010,7 @@ contract FixedPointMathLibTest is SoladyTest {
         pure
         returns (uint256)
     {
+        if (begin == end) return t < begin ? b : a;
         if (begin < end) {
             if (t <= begin) return a;
             if (t >= end) return b;
@@ -2052,6 +2053,7 @@ contract FixedPointMathLibTest is SoladyTest {
         pure
         returns (int256)
     {
+        if (begin == end) return t < begin ? b : a;
         unchecked {
             uint256 w = 1 << 255;
             return int256(
@@ -2071,6 +2073,7 @@ contract FixedPointMathLibTest is SoladyTest {
         pure
         returns (int256)
     {
+        if (begin == end) return t < begin ? b : a;
         if (begin < end) {
             if (t <= begin) return a;
             if (t >= end) return b;

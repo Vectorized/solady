@@ -1021,7 +1021,7 @@ library FixedPointMathLib {
     /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`,
     /// with `t` clamped between `begin` and `end` (inclusive).
     /// Agnostic to the order of (`a`, `b`) and (`end`, `begin`).
-    /// Reverts if `begin` equals `end` (due to division by zero).
+    /// If `begins == end`, returns `t < begin ? a : b`.
     function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end)
         internal
         pure
@@ -1043,7 +1043,7 @@ library FixedPointMathLib {
     /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
     /// with `t` clamped between `begin` and `end` (inclusive).
     /// Agnostic to the order of (`a`, `b`) and (`end`, `begin`).
-    /// Reverts if `begin` equals `end` (due to division by zero).
+    /// If `begins == end`, returns `t < begin ? a : b`.
     function lerp(int256 a, int256 b, int256 t, int256 begin, int256 end)
         internal
         pure
