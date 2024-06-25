@@ -2010,7 +2010,7 @@ contract FixedPointMathLibTest is SoladyTest {
         pure
         returns (uint256)
     {
-        if (begin == end) return t < begin ? b : a;
+        if (begin == end) return t <= begin ? a : b;
         if (begin < end) {
             if (t <= begin) return a;
             if (t >= end) return b;
@@ -2053,7 +2053,7 @@ contract FixedPointMathLibTest is SoladyTest {
         pure
         returns (int256)
     {
-        if (begin == end) return t < begin ? b : a;
+        if (begin == end) return t <= begin ? a : b;
         unchecked {
             uint256 w = 1 << 255;
             return int256(
@@ -2073,7 +2073,7 @@ contract FixedPointMathLibTest is SoladyTest {
         pure
         returns (int256)
     {
-        if (begin == end) return t < begin ? b : a;
+        if (begin == end) return t <= begin ? a : b;
         if (begin < end) {
             if (t <= begin) return a;
             if (t >= end) return b;
