@@ -6,81 +6,23 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibRLP.sol)
 library LibRLP {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The bytes string is too big to be RLP encoded.
+    error BytesStringTooBig();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev A pointer to a RLP item node.
-    struct Item {
+    /// @dev A pointer to a RLP item list.
+    struct List {
         // Do NOT modify the `_data` directly.
-        // Bits Layout:
-        /// - [0..1]     item type (0: uint inlined, 1: uint pointer, 2: bytes, 3: list)
-        /// - [2..255]   uint inlined value or pointer to uint / bytes / children array.
+        // Bits layout for each element:
+        // - [0..1]     item type (0: uint inlined, 1: uint pointer, 2: bytes, 3: list)
+        // - [2..255]   uint inlined value or pointer to uint / bytes / children array.
         uint256 _data;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                  RLP ENCODING OPERATIONS                   */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Returns `x` as an item.
-    function toItem(uint256 x) internal pure returns (Item memory result) {
-        // TODO
-    }
-
-    /// @dev Returns `x` as an item.
-    function toItem(bytes memory x) internal pure returns (Item memory result) {
-        // TODO
-    }
-
-    /// @dev Returns an item representing a list of `n` items.
-    /// All items are initialized to 0.
-    function list(uint256 n) internal pure returns (Item memory result) {
-        // TODO.
-    }
-
-    /// @dev Converts `item` into a bytes string and sets its value to `x`.
-    function set(Item memory item, uint256 x) internal pure returns (Item memory result) {
-        // TODO
-    }
-
-    /// @dev Converts `item` into a bytes string and sets its value to `x`.
-    function set(Item memory item, bytes memory x) internal pure returns (Item memory result) {
-        // TODO
-    }
-
-    /// @dev Converts `item` into a list and sets the `i`th element to `x`.
-    /// `item` will be automatically resized, with new items defaulting to 0.
-    function set(Item memory item, uint256 i, uint256 x)
-        internal
-        pure
-        returns (Item memory result)
-    {
-        // TODO
-    }
-
-    /// @dev Converts `item` into a list and sets the `i`th element to `x`.
-    /// `item` will be automatically resized, with new items defaulting to 0.
-    function set(Item memory item, uint256 i, bytes memory x)
-        internal
-        pure
-        returns (Item memory result)
-    {
-        // TODO
-    }
-
-    /// @dev Converts `item` into a list and sets the `i`th element to `x`.
-    /// `item` will be automatically resized, with new items defaulting to 0.
-    function set(Item memory item, uint256 i, Item memory x)
-        internal
-        pure
-        returns (Item memory result)
-    {
-        // TODO
-    }
-
-    /// @dev Returns the RLP encoding of `item`.
-    function encode(Item memory item) internal pure returns (bytes memory result) {
-        // TODO
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -152,11 +94,45 @@ library LibRLP {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  RLP ENCODING OPERATIONS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Appends `x` to `l`.
+    function p(List memory l, uint256 x) internal pure returns (List memory result) {
+        // TODO
+    }
+
+    /// @dev Appends `x` to `l`.
+    function p(List memory l, bytes memory x) internal pure returns (List memory result) {
+        // TODO
+    }
+
+    /// @dev Appends `x` to `l`.
+    function p(List memory l, List memory x) internal pure returns (List memory result) {
+        // TODO
+    }
+
+    /// @dev Returns the RLP encoding of `l`.
+    function encode(List memory l) internal pure returns (bytes memory result) {
+        // TODO
+    }
+
+    /// @dev Returns the RLP encoding of `x`.
+    function encode(uint256 x) internal pure returns (bytes memory result) {
+        // TODO
+    }
+
+    /// @dev Returns the RLP encoding of `x`.
+    function encode(bytes memory x) internal pure returns (bytes memory result) {
+        // TODO
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Helper for deallocating a automatically allocated `item` pointer.
-    function _deallocate(Item memory result) private pure {
+    /// @dev Helper for deallocating a automatically allocated `list` pointer.
+    function _deallocate(List memory result) private pure {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, result) // Deallocate, as we have already allocated.
