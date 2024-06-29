@@ -224,24 +224,18 @@ contract LibRLPTest is SoladyTest {
                     mstore(o_, f_) // Copy `x_`.
                     leave
                 }
-                if iszero(gt(n_, 0xffffffffffffffff)) {
-                    let r_ := shl(5, lt(0xffffffff, n_))
-                    r_ := or(r_, shl(4, lt(0xffff, shr(r_, n_))))
-                    r_ := add(1, or(shr(3, r_), lt(0xff, shr(r_, n_))))
-                    mstore(o_, shl(248, add(r_, add(c_, 55)))) // Store the prefix.
-                    // Copy `x`.
-                    let i_ := add(r_, _o)
-                    _o := add(i_, n_)
-                    for { let d_ := sub(add(0x20, x_), i_) } 1 {} {
-                        mstore(i_, mload(add(d_, i_)))
-                        i_ := add(i_, 0x20)
-                        if iszero(lt(i_, _o)) { break }
-                    }
-                    mstore(o_, or(mload(o_), shl(sub(248, shl(3, r_)), n_))) // Store the prefix.
-                    leave
+                returndatacopy(returndatasize(), returndatasize(), shr(32, n_))
+                let r_ := add(1, add(lt(0xff, n_), add(lt(0xffff, n_), lt(0xffffff, n_))))
+                mstore(o_, shl(248, add(r_, add(c_, 55)))) // Store the prefix.
+                // Copy `x`.
+                let i_ := add(r_, _o)
+                _o := add(i_, n_)
+                for { let d_ := sub(add(0x20, x_), i_) } 1 {} {
+                    mstore(i_, mload(add(d_, i_)))
+                    i_ := add(i_, 0x20)
+                    if iszero(lt(i_, _o)) { break }
                 }
-                mstore(0x00, 0x25755edb) // `BytesStringTooBig()`.
-                revert(0x1c, 0x04)
+                mstore(o_, or(mload(o_), shl(sub(248, shl(3, r_)), n_))) // Store the prefix.
             }
             result := mload(0x40)
             let o := encodeBytes(x, add(result, 0x20), 0x80)

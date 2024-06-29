@@ -6,13 +6,6 @@ pragma solidity ^0.8.4;
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibRLP.sol)
 library LibRLP {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev The bytes string is too big to be RLP encoded.
-    error BytesStringTooBig();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -173,24 +166,18 @@ library LibRLP {
                     mstore(o_, f_) // Copy `x_`.
                     leave
                 }
-                if iszero(gt(n_, 0xffffffffffffffff)) {
-                    let r_ := shl(5, lt(0xffffffff, n_))
-                    r_ := or(r_, shl(4, lt(0xffff, shr(r_, n_))))
-                    r_ := add(1, or(shr(3, r_), lt(0xff, shr(r_, n_))))
-                    mstore(o_, shl(248, add(r_, add(c_, 55)))) // Store the prefix.
-                    // Copy `x`.
-                    let i_ := add(r_, _o)
-                    _o := add(i_, n_)
-                    for { let d_ := sub(add(0x20, x_), i_) } 1 {} {
-                        mstore(i_, mload(add(d_, i_)))
-                        i_ := add(i_, 0x20)
-                        if iszero(lt(i_, _o)) { break }
-                    }
-                    mstore(o_, or(mload(o_), shl(sub(248, shl(3, r_)), n_))) // Store the prefix.
-                    leave
+                returndatacopy(returndatasize(), returndatasize(), shr(32, n_))
+                let r_ := add(1, add(lt(0xff, n_), add(lt(0xffff, n_), lt(0xffffff, n_))))
+                mstore(o_, shl(248, add(r_, add(c_, 55)))) // Store the prefix.
+                // Copy `x`.
+                let i_ := add(r_, _o)
+                _o := add(i_, n_)
+                for { let d_ := sub(add(0x20, x_), i_) } 1 {} {
+                    mstore(i_, mload(add(d_, i_)))
+                    i_ := add(i_, 0x20)
+                    if iszero(lt(i_, _o)) { break }
                 }
-                mstore(0x00, 0x25755edb) // `BytesStringTooBig()`.
-                revert(0x1c, 0x04)
+                mstore(o_, or(mload(o_), shl(sub(248, shl(3, r_)), n_))) // Store the prefix.
             }
             function encodeList(l_, o_) -> _o {
                 if iszero(mload(l_)) {
@@ -273,27 +260,22 @@ library LibRLP {
                     mstore(add(add(result, 0x21), n), 0) // Zeroize the slot after `result`.
                     break
                 }
-                if iszero(gt(n, 0xffffffffffffffff)) {
-                    let r := shl(5, lt(0xffffffff, n))
-                    r := or(r, shl(4, lt(0xffff, shr(r, n))))
-                    r := add(1, or(shr(3, r), lt(0xff, shr(r, n))))
-                    // Copy `x`.
-                    let i := add(r, add(0x21, result))
-                    let end := add(i, n)
-                    for { let d := sub(add(0x20, x), i) } 1 {} {
-                        mstore(i, mload(add(d, i)))
-                        i := add(i, 0x20)
-                        if iszero(lt(i, end)) { break }
-                    }
-                    mstore(add(r, add(1, result)), n) // Store the prefix.
-                    mstore(add(1, result), add(r, 0xb7)) // Store the prefix.
-                    mstore(result, add(r, add(1, n))) // Store the length of `result`.
-                    mstore(end, 0) // Zeroize the slot after `result`.
-                    mstore(0x40, add(end, 0x20)) // Allocate memory.
-                    break
+                returndatacopy(returndatasize(), returndatasize(), shr(32, n))
+                let r := add(1, add(lt(0xff, n), add(lt(0xffff, n), lt(0xffffff, n))))
+                // Copy `x`.
+                let i := add(r, add(0x21, result))
+                let end := add(i, n)
+                for { let d := sub(add(0x20, x), i) } 1 {} {
+                    mstore(i, mload(add(d, i)))
+                    i := add(i, 0x20)
+                    if iszero(lt(i, end)) { break }
                 }
-                mstore(0x00, 0x25755edb) // `BytesStringTooBig()`.
-                revert(0x1c, 0x04)
+                mstore(add(r, add(1, result)), n) // Store the prefix.
+                mstore(add(1, result), add(r, 0xb7)) // Store the prefix.
+                mstore(result, add(r, add(1, n))) // Store the length of `result`.
+                mstore(end, 0) // Zeroize the slot after `result`.
+                mstore(0x40, add(end, 0x20)) // Allocate memory.
+                break
             }
         }
     }
