@@ -89,13 +89,13 @@ contract LibRLPTest is SoladyTest {
         revert();
     }
 
-    function testPUint256() public {
-        _testPUint256(0);
-        _testPUint256(1);
-        _testPUint256(1 << 255);
+    function testRLPPUint256() public {
+        _testRLPPUint256(0);
+        _testRLPPUint256(1);
+        _testRLPPUint256(1 << 255);
     }
 
-    function _testPUint256(uint256 x) internal {
+    function _testRLPPUint256(uint256 x) internal {
         LibRLP.List memory l;
         unchecked {
             for (uint256 i; i != 32; ++i) {
@@ -125,5 +125,83 @@ contract LibRLPTest is SoladyTest {
                 if eq(1, and(data, 0xff)) { result := mload(result) }
             }
         }
+    }
+
+    function testRLPEncodeBytes() public {
+        bytes memory s;
+        assertEq(LibRLP.encode(""), hex"80");
+        s = "dog";
+        assertEq(LibRLP.encode(s), abi.encodePacked(hex"83", s));
+        assertEq(LibRLP.encode(hex"00"), hex"00");
+        assertEq(LibRLP.encode(hex"0f"), hex"0f");
+        assertEq(LibRLP.encode(hex"0400"), hex"820400");
+        s = "Lorem ipsum dolor sit amet, consectetur adipisicing elit";
+        assertEq(LibRLP.encode(s), abi.encodePacked(hex"b838", s));
+    }
+
+    function testRLPEncodeUint256() public {
+        // forgefmt: disable-next-item
+        {
+            _testRLPEncodeUint256(0x1, hex"01");
+            _testRLPEncodeUint256(0x2, hex"02");
+            _testRLPEncodeUint256(0x7e, hex"7e");
+            _testRLPEncodeUint256(0x7f, hex"7f");
+            _testRLPEncodeUint256(0x80, hex"8180");
+            _testRLPEncodeUint256(0x81, hex"8181");
+            _testRLPEncodeUint256(0x82, hex"8182");
+            _testRLPEncodeUint256(0xfe, hex"81fe");
+            _testRLPEncodeUint256(0xff, hex"81ff");
+            _testRLPEncodeUint256(0xfffe, hex"82fffe");
+            _testRLPEncodeUint256(0xffff, hex"82ffff");
+            _testRLPEncodeUint256(0xfffffe, hex"83fffffe");
+            _testRLPEncodeUint256(0xffffff, hex"83ffffff");
+            _testRLPEncodeUint256(0xfffffffe, hex"84fffffffe");
+            _testRLPEncodeUint256(0xffffffff, hex"84ffffffff");
+            _testRLPEncodeUint256(0xfffffffffe, hex"85fffffffffe");
+            _testRLPEncodeUint256(0xffffffffff, hex"85ffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffe, hex"86fffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffff, hex"86ffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffe, hex"87fffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffff, hex"87ffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffe, hex"88fffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffff, hex"88ffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffe, hex"89fffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffff, hex"89ffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffe, hex"8afffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffff, hex"8affffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffe, hex"8bfffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffff, hex"8bffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffe, hex"8cfffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffff, hex"8cffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffe, hex"8dfffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffff, hex"8dffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffe, hex"8efffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffff, hex"8effffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffe, hex"8ffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffff, hex"8fffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffe, hex"90fffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffff, hex"90ffffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffffe, hex"91fffffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffffff, hex"91ffffffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffffffe, hex"92fffffffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffffffff, hex"92ffffffffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffffffffe, hex"93fffffffffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffffffffff, hex"93ffffffffffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffffffffffffe, hex"95fffffffffffffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffffffffffffff, hex"95ffffffffffffffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffffffffffffffe, hex"96fffffffffffffffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffffffffffffffff, hex"96ffffffffffffffffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffffffffffffffffe, hex"97fffffffffffffffffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffffffffffffffffff, hex"97ffffffffffffffffffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffffffffffffffffffe, hex"98fffffffffffffffffffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffffffffffffffffffff, hex"98ffffffffffffffffffffffffffffffffffffffffffffffff");
+            _testRLPEncodeUint256(0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe, hex"a0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+            _testRLPEncodeUint256(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, hex"a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        }
+    }
+
+    function _testRLPEncodeUint256(uint256 x, bytes memory expected) internal {
+        assertEq(LibRLP.encode(x), expected);
+        _checkMemory();
     }
 }
