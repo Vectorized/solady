@@ -138,6 +138,11 @@ contract LibRLPTest is SoladyTest {
                 let o := add(result, 0x20)
                 codecopy(o, byte(1, r), add(n, 0x40))
                 mstore(0x40, add(o, n))
+                // Zero-right-pad if encode will simply return the string.
+                if and(eq(n, 1), lt(byte(0, mload(add(0x20, result))), 0x80)) {
+                    mstore(add(o, n), 0)
+                    mstore(0x40, add(0x20, add(o, n)))
+                }
             }
         }
     }
@@ -207,7 +212,6 @@ contract LibRLPTest is SoladyTest {
 
     function testRLPEncodeBytes() public {
         bytes memory s;
-        testRLPEncodeBytesDifferential(s);
         assertEq(LibRLP.encode(""), hex"80");
         s = "dog";
         assertEq(LibRLP.encode(s), abi.encodePacked(hex"83", s));
@@ -241,7 +245,8 @@ contract LibRLPTest is SoladyTest {
         assertEq(computed, LibRLP.encode(list));
     }
 
-    function testRLPEncodeBytesDifferential(bytes memory x) public {
+    function testRLPEncodeBytesDifferential(bytes32) public {
+        bytes memory x = _randomBytes();
         _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
         _checkAndMaybeBzztMemory(computed);
