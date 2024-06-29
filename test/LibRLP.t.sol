@@ -146,7 +146,10 @@ contract LibRLPTest is SoladyTest {
     }
 
     function testRLPEncodeBytesDifferential(bytes memory x) public {
-        assertEq(LibRLP.encode(x), _encode(x));
+        bytes memory computed = LibRLP.encode(x);
+        _checkMemory();
+        assertEq(computed, _encode(x));
+        assertEq(computed, _encodeSimple(x));
         _checkMemory();
     }
 
@@ -156,7 +159,10 @@ contract LibRLPTest is SoladyTest {
     }
 
     function testRLPEncodeUintDifferential(uint256 x) public {
-        assertEq(LibRLP.encode(x), _encode(x));
+        bytes memory computed = LibRLP.encode(x);
+        _checkMemory();
+        assertEq(computed, _encode(x));
+        assertEq(computed, _encodeSimple(x));
         _checkMemory();
     }
 
@@ -231,6 +237,82 @@ contract LibRLPTest is SoladyTest {
         }
     }
 
+    function _encodeSimple(uint256 x) internal pure returns (bytes memory) {
+        if (x == 0) return hex"80";
+        if (x < 0x80) return abi.encodePacked(uint8(x));
+        if (x <= type(uint8).max) return abi.encodePacked(bytes1(0x81), uint8(x));
+        if (x <= type(uint16).max) return abi.encodePacked(bytes1(0x82), uint16(x));
+        if (x <= type(uint24).max) return abi.encodePacked(bytes1(0x83), uint24(x));
+        if (x <= type(uint32).max) return abi.encodePacked(bytes1(0x84), uint32(x));
+        if (x <= type(uint40).max) return abi.encodePacked(bytes1(0x85), uint40(x));
+        if (x <= type(uint48).max) return abi.encodePacked(bytes1(0x86), uint48(x));
+        if (x <= type(uint56).max) return abi.encodePacked(bytes1(0x87), uint56(x));
+        if (x <= type(uint64).max) return abi.encodePacked(bytes1(0x88), uint64(x));
+        if (x <= type(uint72).max) return abi.encodePacked(bytes1(0x89), uint72(x));
+        if (x <= type(uint80).max) return abi.encodePacked(bytes1(0x8a), uint80(x));
+        if (x <= type(uint88).max) return abi.encodePacked(bytes1(0x8b), uint88(x));
+        if (x <= type(uint96).max) return abi.encodePacked(bytes1(0x8c), uint96(x));
+        if (x <= type(uint104).max) return abi.encodePacked(bytes1(0x8d), uint104(x));
+        if (x <= type(uint112).max) return abi.encodePacked(bytes1(0x8e), uint112(x));
+        if (x <= type(uint120).max) return abi.encodePacked(bytes1(0x8f), uint120(x));
+        if (x <= type(uint128).max) return abi.encodePacked(bytes1(0x90), uint128(x));
+        if (x <= type(uint136).max) return abi.encodePacked(bytes1(0x91), uint136(x));
+        if (x <= type(uint144).max) return abi.encodePacked(bytes1(0x92), uint144(x));
+        if (x <= type(uint152).max) return abi.encodePacked(bytes1(0x93), uint152(x));
+        if (x <= type(uint160).max) return abi.encodePacked(bytes1(0x94), uint160(x));
+        if (x <= type(uint168).max) return abi.encodePacked(bytes1(0x95), uint168(x));
+        if (x <= type(uint176).max) return abi.encodePacked(bytes1(0x96), uint176(x));
+        if (x <= type(uint184).max) return abi.encodePacked(bytes1(0x97), uint184(x));
+        if (x <= type(uint192).max) return abi.encodePacked(bytes1(0x98), uint192(x));
+        if (x <= type(uint200).max) return abi.encodePacked(bytes1(0x99), uint200(x));
+        if (x <= type(uint208).max) return abi.encodePacked(bytes1(0x9a), uint208(x));
+        if (x <= type(uint216).max) return abi.encodePacked(bytes1(0x9b), uint216(x));
+        if (x <= type(uint224).max) return abi.encodePacked(bytes1(0x9c), uint224(x));
+        if (x <= type(uint232).max) return abi.encodePacked(bytes1(0x9d), uint232(x));
+        if (x <= type(uint240).max) return abi.encodePacked(bytes1(0x9e), uint240(x));
+        if (x <= type(uint248).max) return abi.encodePacked(bytes1(0x9f), uint248(x));
+        return abi.encodePacked(bytes1(0xa0), uint256(x));
+    }
+
+    function _encodeSimple(bytes memory x) internal pure returns (bytes memory) {
+        uint256 n = x.length;
+        if (n == 0) return hex"80";
+        if (n == 1 && uint8(bytes1(x[0])) < 0x80) return x;
+        if (n < 56) return abi.encodePacked(uint8(n + 0x80), x);
+        if (n <= type(uint8).max) return abi.encodePacked(bytes1(0xb8), uint8(n), x);
+        if (n <= type(uint16).max) return abi.encodePacked(bytes1(0xb9), uint16(n), x);
+        if (n <= type(uint24).max) return abi.encodePacked(bytes1(0xba), uint24(n), x);
+        if (n <= type(uint32).max) return abi.encodePacked(bytes1(0xbb), uint32(n), x);
+        if (n <= type(uint40).max) return abi.encodePacked(bytes1(0xbc), uint40(n), x);
+        if (n <= type(uint48).max) return abi.encodePacked(bytes1(0xbd), uint48(n), x);
+        if (n <= type(uint56).max) return abi.encodePacked(bytes1(0xbe), uint56(n), x);
+        if (n <= type(uint64).max) return abi.encodePacked(bytes1(0xbf), uint64(n), x);
+        if (n <= type(uint72).max) return abi.encodePacked(bytes1(0xc0), uint72(n), x);
+        if (n <= type(uint80).max) return abi.encodePacked(bytes1(0xc1), uint80(n), x);
+        if (n <= type(uint88).max) return abi.encodePacked(bytes1(0xc2), uint88(n), x);
+        if (n <= type(uint96).max) return abi.encodePacked(bytes1(0xc3), uint96(n), x);
+        if (n <= type(uint104).max) return abi.encodePacked(bytes1(0xc4), uint104(n), x);
+        if (n <= type(uint112).max) return abi.encodePacked(bytes1(0xc5), uint112(n), x);
+        if (n <= type(uint120).max) return abi.encodePacked(bytes1(0xc6), uint120(n), x);
+        if (n <= type(uint128).max) return abi.encodePacked(bytes1(0xc7), uint128(n), x);
+        if (n <= type(uint136).max) return abi.encodePacked(bytes1(0xc8), uint136(n), x);
+        if (n <= type(uint144).max) return abi.encodePacked(bytes1(0xc9), uint144(n), x);
+        if (n <= type(uint152).max) return abi.encodePacked(bytes1(0xca), uint152(n), x);
+        if (n <= type(uint160).max) return abi.encodePacked(bytes1(0xcb), uint160(n), x);
+        if (n <= type(uint168).max) return abi.encodePacked(bytes1(0xcc), uint168(n), x);
+        if (n <= type(uint176).max) return abi.encodePacked(bytes1(0xcd), uint176(n), x);
+        if (n <= type(uint184).max) return abi.encodePacked(bytes1(0xce), uint184(n), x);
+        if (n <= type(uint192).max) return abi.encodePacked(bytes1(0xcf), uint192(n), x);
+        if (n <= type(uint200).max) return abi.encodePacked(bytes1(0xd0), uint200(n), x);
+        if (n <= type(uint208).max) return abi.encodePacked(bytes1(0xd1), uint208(n), x);
+        if (n <= type(uint216).max) return abi.encodePacked(bytes1(0xd2), uint216(n), x);
+        if (n <= type(uint224).max) return abi.encodePacked(bytes1(0xd3), uint224(n), x);
+        if (n <= type(uint232).max) return abi.encodePacked(bytes1(0xd4), uint232(n), x);
+        if (n <= type(uint240).max) return abi.encodePacked(bytes1(0xd5), uint240(n), x);
+        if (n <= type(uint248).max) return abi.encodePacked(bytes1(0xd6), uint248(n), x);
+        return abi.encodePacked(bytes1(0xd7), uint256(n), x);
+    }
+
     function testRLPEncodeUint() public {
         _testRLPEncodeUint(0, hex"80");
         _testRLPEncodeUint(0x1, hex"01");
@@ -242,70 +324,72 @@ contract LibRLPTest is SoladyTest {
         _testRLPEncodeUint(0x82, hex"8182");
         _testRLPEncodeUint(0xfe, hex"81fe");
         _testRLPEncodeUint(0xff, hex"81ff");
-        _testRLPEncodeUint(type(uint8).max - 0, abi.encodePacked(hex"81", type(uint8).max - 0));
-        _testRLPEncodeUint(type(uint8).max - 1, abi.encodePacked(hex"81", type(uint8).max - 1));
-        _testRLPEncodeUint(type(uint16).max - 0, abi.encodePacked(hex"82", type(uint16).max - 0));
-        _testRLPEncodeUint(type(uint16).max - 1, abi.encodePacked(hex"82", type(uint16).max - 1));
-        _testRLPEncodeUint(type(uint24).max - 0, abi.encodePacked(hex"83", type(uint24).max - 0));
-        _testRLPEncodeUint(type(uint24).max - 1, abi.encodePacked(hex"83", type(uint24).max - 1));
-        _testRLPEncodeUint(type(uint32).max - 0, abi.encodePacked(hex"84", type(uint32).max - 0));
-        _testRLPEncodeUint(type(uint32).max - 1, abi.encodePacked(hex"84", type(uint32).max - 1));
-        _testRLPEncodeUint(type(uint40).max - 0, abi.encodePacked(hex"85", type(uint40).max - 0));
-        _testRLPEncodeUint(type(uint40).max - 1, abi.encodePacked(hex"85", type(uint40).max - 1));
-        _testRLPEncodeUint(type(uint48).max - 0, abi.encodePacked(hex"86", type(uint48).max - 0));
-        _testRLPEncodeUint(type(uint48).max - 1, abi.encodePacked(hex"86", type(uint48).max - 1));
-        _testRLPEncodeUint(type(uint56).max - 0, abi.encodePacked(hex"87", type(uint56).max - 0));
-        _testRLPEncodeUint(type(uint56).max - 1, abi.encodePacked(hex"87", type(uint56).max - 1));
-        _testRLPEncodeUint(type(uint64).max - 0, abi.encodePacked(hex"88", type(uint64).max - 0));
-        _testRLPEncodeUint(type(uint64).max - 1, abi.encodePacked(hex"88", type(uint64).max - 1));
-        _testRLPEncodeUint(type(uint72).max - 0, abi.encodePacked(hex"89", type(uint72).max - 0));
-        _testRLPEncodeUint(type(uint72).max - 1, abi.encodePacked(hex"89", type(uint72).max - 1));
-        _testRLPEncodeUint(type(uint80).max - 0, abi.encodePacked(hex"8a", type(uint80).max - 0));
-        _testRLPEncodeUint(type(uint80).max - 1, abi.encodePacked(hex"8a", type(uint80).max - 1));
-        _testRLPEncodeUint(type(uint88).max - 0, abi.encodePacked(hex"8b", type(uint88).max - 0));
-        _testRLPEncodeUint(type(uint88).max - 1, abi.encodePacked(hex"8b", type(uint88).max - 1));
-        _testRLPEncodeUint(type(uint96).max - 0, abi.encodePacked(hex"8c", type(uint96).max - 0));
-        _testRLPEncodeUint(type(uint96).max - 1, abi.encodePacked(hex"8c", type(uint96).max - 1));
-        _testRLPEncodeUint(type(uint104).max - 0, abi.encodePacked(hex"8d", type(uint104).max - 0));
-        _testRLPEncodeUint(type(uint104).max - 1, abi.encodePacked(hex"8d", type(uint104).max - 1));
-        _testRLPEncodeUint(type(uint112).max - 0, abi.encodePacked(hex"8e", type(uint112).max - 0));
-        _testRLPEncodeUint(type(uint112).max - 1, abi.encodePacked(hex"8e", type(uint112).max - 1));
-        _testRLPEncodeUint(type(uint120).max - 0, abi.encodePacked(hex"8f", type(uint120).max - 0));
-        _testRLPEncodeUint(type(uint120).max - 1, abi.encodePacked(hex"8f", type(uint120).max - 1));
-        _testRLPEncodeUint(type(uint128).max - 0, abi.encodePacked(hex"90", type(uint128).max - 0));
-        _testRLPEncodeUint(type(uint128).max - 1, abi.encodePacked(hex"90", type(uint128).max - 1));
-        _testRLPEncodeUint(type(uint136).max - 0, abi.encodePacked(hex"91", type(uint136).max - 0));
-        _testRLPEncodeUint(type(uint136).max - 1, abi.encodePacked(hex"91", type(uint136).max - 1));
-        _testRLPEncodeUint(type(uint144).max - 0, abi.encodePacked(hex"92", type(uint144).max - 0));
-        _testRLPEncodeUint(type(uint144).max - 1, abi.encodePacked(hex"92", type(uint144).max - 1));
-        _testRLPEncodeUint(type(uint152).max - 0, abi.encodePacked(hex"93", type(uint152).max - 0));
-        _testRLPEncodeUint(type(uint152).max - 1, abi.encodePacked(hex"93", type(uint152).max - 1));
-        _testRLPEncodeUint(type(uint160).max - 0, abi.encodePacked(hex"94", type(uint160).max - 0));
-        _testRLPEncodeUint(type(uint160).max - 1, abi.encodePacked(hex"94", type(uint160).max - 1));
-        _testRLPEncodeUint(type(uint168).max - 0, abi.encodePacked(hex"95", type(uint168).max - 0));
-        _testRLPEncodeUint(type(uint168).max - 1, abi.encodePacked(hex"95", type(uint168).max - 1));
-        _testRLPEncodeUint(type(uint176).max - 0, abi.encodePacked(hex"96", type(uint176).max - 0));
-        _testRLPEncodeUint(type(uint176).max - 1, abi.encodePacked(hex"96", type(uint176).max - 1));
-        _testRLPEncodeUint(type(uint184).max - 0, abi.encodePacked(hex"97", type(uint184).max - 0));
-        _testRLPEncodeUint(type(uint184).max - 1, abi.encodePacked(hex"97", type(uint184).max - 1));
-        _testRLPEncodeUint(type(uint192).max - 0, abi.encodePacked(hex"98", type(uint192).max - 0));
-        _testRLPEncodeUint(type(uint192).max - 1, abi.encodePacked(hex"98", type(uint192).max - 1));
-        _testRLPEncodeUint(type(uint200).max - 0, abi.encodePacked(hex"99", type(uint200).max - 0));
-        _testRLPEncodeUint(type(uint200).max - 1, abi.encodePacked(hex"99", type(uint200).max - 1));
-        _testRLPEncodeUint(type(uint208).max - 0, abi.encodePacked(hex"9a", type(uint208).max - 0));
-        _testRLPEncodeUint(type(uint208).max - 1, abi.encodePacked(hex"9a", type(uint208).max - 1));
-        _testRLPEncodeUint(type(uint216).max - 0, abi.encodePacked(hex"9b", type(uint216).max - 0));
-        _testRLPEncodeUint(type(uint216).max - 1, abi.encodePacked(hex"9b", type(uint216).max - 1));
-        _testRLPEncodeUint(type(uint224).max - 0, abi.encodePacked(hex"9c", type(uint224).max - 0));
-        _testRLPEncodeUint(type(uint224).max - 1, abi.encodePacked(hex"9c", type(uint224).max - 1));
-        _testRLPEncodeUint(type(uint232).max - 0, abi.encodePacked(hex"9d", type(uint232).max - 0));
-        _testRLPEncodeUint(type(uint232).max - 1, abi.encodePacked(hex"9d", type(uint232).max - 1));
-        _testRLPEncodeUint(type(uint240).max - 0, abi.encodePacked(hex"9e", type(uint240).max - 0));
-        _testRLPEncodeUint(type(uint240).max - 1, abi.encodePacked(hex"9e", type(uint240).max - 1));
-        _testRLPEncodeUint(type(uint248).max - 0, abi.encodePacked(hex"9f", type(uint248).max - 0));
-        _testRLPEncodeUint(type(uint248).max - 1, abi.encodePacked(hex"9f", type(uint248).max - 1));
-        _testRLPEncodeUint(type(uint256).max - 0, abi.encodePacked(hex"a0", type(uint256).max - 0));
-        _testRLPEncodeUint(type(uint256).max - 1, abi.encodePacked(hex"a0", type(uint256).max - 1));
+        uint256 f = type(uint256).max;
+        uint256 e = f - 1;
+        _testRLPEncodeUint(uint8(f), abi.encodePacked(hex"81", uint8(f)));
+        _testRLPEncodeUint(uint8(e), abi.encodePacked(hex"81", uint8(e)));
+        _testRLPEncodeUint(uint16(f), abi.encodePacked(hex"82", uint16(f)));
+        _testRLPEncodeUint(uint16(e), abi.encodePacked(hex"82", uint16(e)));
+        _testRLPEncodeUint(uint24(f), abi.encodePacked(hex"83", uint24(f)));
+        _testRLPEncodeUint(uint24(e), abi.encodePacked(hex"83", uint24(e)));
+        _testRLPEncodeUint(uint32(f), abi.encodePacked(hex"84", uint32(f)));
+        _testRLPEncodeUint(uint32(e), abi.encodePacked(hex"84", uint32(e)));
+        _testRLPEncodeUint(uint40(f), abi.encodePacked(hex"85", uint40(f)));
+        _testRLPEncodeUint(uint40(e), abi.encodePacked(hex"85", uint40(e)));
+        _testRLPEncodeUint(uint48(f), abi.encodePacked(hex"86", uint48(f)));
+        _testRLPEncodeUint(uint48(e), abi.encodePacked(hex"86", uint48(e)));
+        _testRLPEncodeUint(uint56(f), abi.encodePacked(hex"87", uint56(f)));
+        _testRLPEncodeUint(uint56(e), abi.encodePacked(hex"87", uint56(e)));
+        _testRLPEncodeUint(uint64(f), abi.encodePacked(hex"88", uint64(f)));
+        _testRLPEncodeUint(uint64(e), abi.encodePacked(hex"88", uint64(e)));
+        _testRLPEncodeUint(uint72(f), abi.encodePacked(hex"89", uint72(f)));
+        _testRLPEncodeUint(uint72(e), abi.encodePacked(hex"89", uint72(e)));
+        _testRLPEncodeUint(uint80(f), abi.encodePacked(hex"8a", uint80(f)));
+        _testRLPEncodeUint(uint80(e), abi.encodePacked(hex"8a", uint80(e)));
+        _testRLPEncodeUint(uint88(f), abi.encodePacked(hex"8b", uint88(f)));
+        _testRLPEncodeUint(uint88(e), abi.encodePacked(hex"8b", uint88(e)));
+        _testRLPEncodeUint(uint96(f), abi.encodePacked(hex"8c", uint96(f)));
+        _testRLPEncodeUint(uint96(e), abi.encodePacked(hex"8c", uint96(e)));
+        _testRLPEncodeUint(uint104(f), abi.encodePacked(hex"8d", uint104(f)));
+        _testRLPEncodeUint(uint104(e), abi.encodePacked(hex"8d", uint104(e)));
+        _testRLPEncodeUint(uint112(f), abi.encodePacked(hex"8e", uint112(f)));
+        _testRLPEncodeUint(uint112(e), abi.encodePacked(hex"8e", uint112(e)));
+        _testRLPEncodeUint(uint120(f), abi.encodePacked(hex"8f", uint120(f)));
+        _testRLPEncodeUint(uint120(e), abi.encodePacked(hex"8f", uint120(e)));
+        _testRLPEncodeUint(uint128(f), abi.encodePacked(hex"90", uint128(f)));
+        _testRLPEncodeUint(uint128(e), abi.encodePacked(hex"90", uint128(e)));
+        _testRLPEncodeUint(uint136(f), abi.encodePacked(hex"91", uint136(f)));
+        _testRLPEncodeUint(uint136(e), abi.encodePacked(hex"91", uint136(e)));
+        _testRLPEncodeUint(uint144(f), abi.encodePacked(hex"92", uint144(f)));
+        _testRLPEncodeUint(uint144(e), abi.encodePacked(hex"92", uint144(e)));
+        _testRLPEncodeUint(uint152(f), abi.encodePacked(hex"93", uint152(f)));
+        _testRLPEncodeUint(uint152(e), abi.encodePacked(hex"93", uint152(e)));
+        _testRLPEncodeUint(uint160(f), abi.encodePacked(hex"94", uint160(f)));
+        _testRLPEncodeUint(uint160(e), abi.encodePacked(hex"94", uint160(e)));
+        _testRLPEncodeUint(uint168(f), abi.encodePacked(hex"95", uint168(f)));
+        _testRLPEncodeUint(uint168(e), abi.encodePacked(hex"95", uint168(e)));
+        _testRLPEncodeUint(uint176(f), abi.encodePacked(hex"96", uint176(f)));
+        _testRLPEncodeUint(uint176(e), abi.encodePacked(hex"96", uint176(e)));
+        _testRLPEncodeUint(uint184(f), abi.encodePacked(hex"97", uint184(f)));
+        _testRLPEncodeUint(uint184(e), abi.encodePacked(hex"97", uint184(e)));
+        _testRLPEncodeUint(uint192(f), abi.encodePacked(hex"98", uint192(f)));
+        _testRLPEncodeUint(uint192(e), abi.encodePacked(hex"98", uint192(e)));
+        _testRLPEncodeUint(uint200(f), abi.encodePacked(hex"99", uint200(f)));
+        _testRLPEncodeUint(uint200(e), abi.encodePacked(hex"99", uint200(e)));
+        _testRLPEncodeUint(uint208(f), abi.encodePacked(hex"9a", uint208(f)));
+        _testRLPEncodeUint(uint208(e), abi.encodePacked(hex"9a", uint208(e)));
+        _testRLPEncodeUint(uint216(f), abi.encodePacked(hex"9b", uint216(f)));
+        _testRLPEncodeUint(uint216(e), abi.encodePacked(hex"9b", uint216(e)));
+        _testRLPEncodeUint(uint224(f), abi.encodePacked(hex"9c", uint224(f)));
+        _testRLPEncodeUint(uint224(e), abi.encodePacked(hex"9c", uint224(e)));
+        _testRLPEncodeUint(uint232(f), abi.encodePacked(hex"9d", uint232(f)));
+        _testRLPEncodeUint(uint232(e), abi.encodePacked(hex"9d", uint232(e)));
+        _testRLPEncodeUint(uint240(f), abi.encodePacked(hex"9e", uint240(f)));
+        _testRLPEncodeUint(uint240(e), abi.encodePacked(hex"9e", uint240(e)));
+        _testRLPEncodeUint(uint248(f), abi.encodePacked(hex"9f", uint248(f)));
+        _testRLPEncodeUint(uint248(e), abi.encodePacked(hex"9f", uint248(e)));
+        _testRLPEncodeUint(uint256(f), abi.encodePacked(hex"a0", uint256(f)));
+        _testRLPEncodeUint(uint256(e), abi.encodePacked(hex"a0", uint256(e)));
     }
 
     function _testRLPEncodeUint(uint256 x, bytes memory expected) internal {
@@ -357,9 +441,8 @@ contract LibRLPTest is SoladyTest {
         _checkMemory();
         bytes memory computed = LibRLP.encode(l);
         _checkMemory();
-        assertEq(
-            computed,
-            hex"f8a58354686585717569636b8562726f776e83666f78856a756d7073846f76657283746865846c617a7983646f67f85280017f81808181a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff884a61636b64617773856c6f766573826d798085677265617486737068696e78826f668671756172747aa4303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a"
-        );
+        bytes memory expected =
+            hex"f8a58354686585717569636b8562726f776e83666f78856a756d7073846f76657283746865846c617a7983646f67f85280017f81808181a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff884a61636b64617773856c6f766573826d798085677265617486737068696e78826f668671756172747aa4303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a";
+        assertEq(computed, expected);
     }
 }
