@@ -100,22 +100,18 @@ library LibRLP {
     /// @dev Appends `x` to `l`.
     function p(List memory l, uint256 x) internal pure returns (List memory result) {
         _deallocate(result);
-        bytes32 ptr = _grow(l);
+        uint256 data = x << 8;
         /// @solidity memory-safe-assembly
         assembly {
-            for {} 1 {} {
-                if iszero(shr(254, x)) {
-                    mstore(ptr, x)
-                    break
-                }
+            if shr(208, x) {
                 let m := mload(0x40)
                 mstore(m, x)
-                mstore(ptr, or(shl(254, 1), m))
                 mstore(0x40, add(m, 0x20))
-                break
+                data := or(1, data)
             }
-            result := l
         }
+        _p(l, data);
+        result = l;
     }
 
     /// @dev Appends `x` to `l`.
@@ -147,32 +143,20 @@ library LibRLP {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Extends the list by 1 slot and returns the newly allocated slot.
-    function _grow(List memory l) private pure returns (bytes32 ptr) {
+    function _p(List memory l, uint256 data) private pure {
         /// @solidity memory-safe-assembly
         assembly {
+            let m := mload(0x40)
+            mstore(m, shl(40, data))
+            mstore(0x40, add(0x20, m))
             for { let v := mload(l) } 1 {} {
-                let n := and(v, 0xffffffff) // Length of `l`.
-                if iszero(eq(shr(224, shl(192, v)), n)) {
-                    mstore(l, add(v, 1))
-                    ptr := add(shr(64, v), shl(5, n))
+                if iszero(v) {
+                    mstore(l, or(shl(40, m), m))
                     break
                 }
-                ptr := mload(0x40)
-                if iszero(n) {
-                    mstore(l, or(shl(64, ptr), or(shl(32, 0x10), 1)))
-                    mstore(0x40, add(ptr, 0x200)) // Allocate 16 slots.
-                    break
-                }
-                let end := add(ptr, shl(5, n))
-                mstore(l, or(shl(64, ptr), or(shl(33, n), add(1, n))))
-                mstore(0x40, add(ptr, shl(6, n))) // Allocate memory.
-                let d := sub(shr(64, v), ptr)
-                for {} 1 {} {
-                    mstore(ptr, mload(add(ptr, d)))
-                    ptr := add(ptr, 0x20)
-                    if eq(ptr, end) { break }
-                }
+                let tail := shr(40, v)
+                mstore(l, or(shl(40, m), and(0xffffffffff, v))) // Update the tail.
+                mstore(tail, or(mload(tail), m)) // Make the previous tail point to `m`.
                 break
             }
         }
