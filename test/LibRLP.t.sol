@@ -91,8 +91,8 @@ contract LibRLPTest is SoladyTest {
 
     function testPUint256() public {
         _testPUint256(0);
-        // _testPUint256(1);
-        // _testPUint256(1 << 255);
+        _testPUint256(1);
+        _testPUint256(1 << 255);
     }
 
     function _testPUint256(uint256 x) internal {
@@ -117,7 +117,7 @@ contract LibRLPTest is SoladyTest {
             mstore(0x00, 0)
             let head := and(mload(l), 0xffffffffff)
             if head {
-                for { let j := 0 } lt(j, i) { j := add(j, 1) } {
+                for { let j := 0 } iszero(eq(j, i)) { j := add(j, 1) } {
                     head := and(mload(head), 0xffffffffff)
                 }
                 let data := shr(40, mload(head))
