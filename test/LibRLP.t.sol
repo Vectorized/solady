@@ -143,6 +143,7 @@ contract LibRLPTest is SoladyTest {
 
     function testRLPEncodeBytes() public {
         bytes memory s;
+        testRLPEncodeBytesDifferential(s);
         assertEq(LibRLP.encode(""), hex"80");
         s = "dog";
         assertEq(LibRLP.encode(s), abi.encodePacked(hex"83", s));
@@ -167,11 +168,6 @@ contract LibRLPTest is SoladyTest {
         _checkMemory();
     }
 
-    function testRLPEncodeBytesDifferential() public {
-        bytes memory x;
-        testRLPEncodeBytesDifferential(x);
-    }
-
     function testRLPEncodeUintDifferential(uint256 x) public {
         bytes memory computed = LibRLP.encode(x);
         _checkMemory();
@@ -186,7 +182,7 @@ contract LibRLPTest is SoladyTest {
             function encodeUint(x_, o_) -> _o {
                 _o := add(o_, 1)
                 if iszero(gt(x_, 0x7f)) {
-                    mstore8(o_, or(x_, shl(7, iszero(x_)))) // Copy `x_`.
+                    mstore8(o_, or(shl(7, iszero(x_)), x_)) // Copy `x_`.
                     leave
                 }
                 let r_ := shl(7, lt(0xffffffffffffffffffffffffffffffff, x_))
@@ -195,7 +191,8 @@ contract LibRLPTest is SoladyTest {
                 r_ := or(r_, shl(4, lt(0xffff, shr(r_, x_))))
                 r_ := or(shr(3, r_), lt(0xff, shr(r_, x_)))
                 mstore8(o_, add(r_, 0x81)) // Store the prefix.
-                mstore(_o, shl(shl(3, xor(31, r_)), x_)) // Copy `x_`.
+                mstore(0x00, x_)
+                mstore(_o, mload(xor(31, r_))) // Copy `x_`.
                 _o := add(add(1, r_), _o)
             }
             result := mload(0x40)
