@@ -161,19 +161,43 @@ contract LibRLPTest is SoladyTest {
     }
 
     function testRLPEncodeBytesDifferential(bytes memory x) public {
+        _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
-        _checkMemory();
-        assertEq(computed, _encode(x));
+        _checkMemory(computed);
+        _maybeBzztMemory();
+        bytes memory computed2 = _encode(x);
+        _checkMemory(computed2);
+        assertEq(computed, computed2);
+        _maybeBzztMemory();
         assertEq(computed, _encodeSimple(x));
-        _checkMemory();
+        _checkMemory(computed);
+        _checkMemory(computed2);
     }
 
     function testRLPEncodeUintDifferential(uint256 x) public {
+        _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
-        _checkMemory();
-        assertEq(computed, _encode(x));
+        _checkMemory(computed);
+        _maybeBzztMemory();
+        bytes memory computed2 = _encode(x);
+        _checkMemory(computed2);
+        assertEq(computed, computed2);
+        _maybeBzztMemory();
         assertEq(computed, _encodeSimple(x));
-        _checkMemory();
+        _checkMemory(computed);
+        _checkMemory(computed2);
+    }
+
+    function _maybeBzztMemory() internal {
+        uint256 r = _random();
+        if (r & 0x000f == uint256(0)) _misalignFreeMemoryPointer();
+        if (r & 0x0ff0 == uint256(0)) _brutalizeMemory();
+        if (r & 0xf000 == uint256(0)) _misalignFreeMemoryPointer();
+    }
+
+    function _bzztMemory() internal view {
+        _misalignFreeMemoryPointer();
+        _brutalizeMemory();
     }
 
     function _encode(uint256 x) internal pure returns (bytes memory result) {
@@ -259,6 +283,7 @@ contract LibRLPTest is SoladyTest {
     }
 
     function testRLPEncodeUint(uint256 x) public {
+        _maybeBzztMemory();
         if (x == 0) {
             _testRLPEncodeUint(x, hex"80");
             return;
@@ -294,24 +319,33 @@ contract LibRLPTest is SoladyTest {
     }
 
     function _testRLPEncodeUint(uint256 x, bytes memory expected) internal {
-        assertEq(LibRLP.encode(x), expected);
-        _checkMemory();
+        bytes memory computed = LibRLP.encode(x);
+        _checkMemory(computed);
+        assertEq(computed, expected);
     }
 
     function testRLPEncodeList() public {
         LibRLP.List memory l;
+        _bzztMemory();
         assertEq(LibRLP.encode(l), hex"c0");
         l.p(LibRLP.l());
         l.p(LibRLP.l(LibRLP.l()));
         l.p(LibRLP.l(LibRLP.l()).p(LibRLP.l(LibRLP.l())));
         _checkMemory();
+        _bzztMemory();
         bytes memory computed = LibRLP.encode(l);
-        _checkMemory();
+        _checkMemory(computed);
         assertEq(computed, hex"c7c0c1c0c3c0c1c0");
+        _bzztMemory();
+        bytes memory computed2 = LibRLP.encode(l);
+        assertEq(computed, computed2);
+        _checkMemory(computed);
+        _checkMemory(computed2);
     }
 
     function testRLPEncodeList2() public {
         LibRLP.List memory l;
+        _bzztMemory();
         l.p("The").p("quick").p("brown").p("fox");
         l.p("jumps").p("over").p("the").p("lazy").p("dog");
         {
@@ -322,13 +356,19 @@ contract LibRLPTest is SoladyTest {
             lSub.p("great").p("sphinx").p("of").p("quartz");
             l.p(lSub);
         }
+        _bzztMemory();
         l.p("0123456789abcdefghijklmnopqrstuvwxyz");
         _checkMemory();
         bytes memory computed = LibRLP.encode(l);
-        _checkMemory();
+        _checkMemory(computed);
         bytes memory expected =
             hex"f8a58354686585717569636b8562726f776e83666f78856a756d7073846f76657283746865846c617a7983646f67f85280017f81808181a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff884a61636b64617773856c6f766573826d798085677265617486737068696e78826f668671756172747aa4303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a";
         assertEq(computed, expected);
+        _bzztMemory();
+        bytes memory computed2 = LibRLP.encode(l);
+        assertEq(computed, computed2);
+        _checkMemory(computed);
+        _checkMemory(computed2);
     }
 
     function testSmallLog256Equivalence(uint256 n) public {
