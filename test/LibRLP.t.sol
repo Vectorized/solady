@@ -160,20 +160,57 @@ contract LibRLPTest is SoladyTest {
         assertEq(LibRLP.encode(s), abi.encodePacked(hex"b9fffe", s));
     }
 
+    function testRLPEncodeListDifferential(bytes memory x0, uint256 x1) public {
+        _maybeBzztMemory();
+        LibRLP.List memory list = LibRLP.l(x0).p(x1).p(x1).p(x0);
+        _maybeBzztMemory();
+        bytes memory computed = LibRLP.encode(list);
+        _checkAndMaybeBzztMemory(computed);
+        bytes memory x0Encoded = LibRLP.encode(x0);
+        _checkAndMaybeBzztMemory(x0Encoded);
+        bytes memory x1Encoded = LibRLP.encode(x1);
+        _checkAndMaybeBzztMemory(x1Encoded);
+        bytes memory combined = abi.encodePacked(x0Encoded, x1Encoded, x1Encoded, x0Encoded);
+        assertEq(computed, _encodeSimple(combined, 0xc0));
+        _checkAndMaybeBzztMemory(computed);
+        assertEq(computed, LibRLP.encode(list));
+    }
+
     function testRLPEncodeBytesDifferential(bytes memory x) public {
+        _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
-        _checkMemory();
-        assertEq(computed, _encode(x));
+        _checkAndMaybeBzztMemory(computed);
+        bytes memory computed2 = _encode(x);
+        _checkAndMaybeBzztMemory(computed2);
+        assertEq(computed, computed2);
         assertEq(computed, _encodeSimple(x));
-        _checkMemory();
     }
 
     function testRLPEncodeUintDifferential(uint256 x) public {
+        _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
-        _checkMemory();
-        assertEq(computed, _encode(x));
+        _checkAndMaybeBzztMemory(computed);
+        bytes memory computed2 = _encode(x);
+        _checkAndMaybeBzztMemory(computed2);
+        assertEq(computed, computed2);
         assertEq(computed, _encodeSimple(x));
-        _checkMemory();
+    }
+
+    function _maybeBzztMemory() internal {
+        uint256 r = _random();
+        if (r & 0x000f == uint256(0)) _misalignFreeMemoryPointer();
+        if (r & 0x0ff0 == uint256(0)) _brutalizeMemory();
+        if (r & 0xf000 == uint256(0)) _misalignFreeMemoryPointer();
+    }
+
+    function _bzztMemory() internal view {
+        _misalignFreeMemoryPointer();
+        _brutalizeMemory();
+    }
+
+    function _checkAndMaybeBzztMemory(bytes memory x) internal {
+        _checkMemory(x);
+        _maybeBzztMemory();
     }
 
     function _encode(uint256 x) internal pure returns (bytes memory result) {
@@ -249,16 +286,21 @@ contract LibRLPTest is SoladyTest {
         return abi.encodePacked(uint8(0x80 + ep.length), ep);
     }
 
-    function _encodeSimple(bytes memory x) internal pure returns (bytes memory) {
+    function _encodeSimple(bytes memory x, uint256 c) internal pure returns (bytes memory) {
         uint256 n = x.length;
         if (n == 0) return hex"80";
         if (n == 1 && uint8(bytes1(x[0])) < 0x80) return x;
-        if (n < 56) return abi.encodePacked(uint8(n + 0x80), x);
+        if (n < 56) return abi.encodePacked(uint8(n + c), x);
         bytes memory ep = _ep(n);
-        return abi.encodePacked(uint8(0xb7 + ep.length), ep, x);
+        return abi.encodePacked(uint8(c + 55 + ep.length), ep, x);
+    }
+
+    function _encodeSimple(bytes memory x) internal pure returns (bytes memory) {
+        return _encodeSimple(x, 0x80);
     }
 
     function testRLPEncodeUint(uint256 x) public {
+        _maybeBzztMemory();
         if (x == 0) {
             _testRLPEncodeUint(x, hex"80");
             return;
@@ -294,24 +336,33 @@ contract LibRLPTest is SoladyTest {
     }
 
     function _testRLPEncodeUint(uint256 x, bytes memory expected) internal {
-        assertEq(LibRLP.encode(x), expected);
-        _checkMemory();
+        bytes memory computed = LibRLP.encode(x);
+        _checkMemory(computed);
+        assertEq(computed, expected);
     }
 
     function testRLPEncodeList() public {
         LibRLP.List memory l;
+        _bzztMemory();
         assertEq(LibRLP.encode(l), hex"c0");
         l.p(LibRLP.l());
         l.p(LibRLP.l(LibRLP.l()));
         l.p(LibRLP.l(LibRLP.l()).p(LibRLP.l(LibRLP.l())));
         _checkMemory();
+        _bzztMemory();
         bytes memory computed = LibRLP.encode(l);
-        _checkMemory();
+        _checkMemory(computed);
         assertEq(computed, hex"c7c0c1c0c3c0c1c0");
+        _bzztMemory();
+        bytes memory computed2 = LibRLP.encode(l);
+        assertEq(computed, computed2);
+        _checkMemory(computed);
+        _checkMemory(computed2);
     }
 
     function testRLPEncodeList2() public {
         LibRLP.List memory l;
+        _bzztMemory();
         l.p("The").p("quick").p("brown").p("fox");
         l.p("jumps").p("over").p("the").p("lazy").p("dog");
         {
@@ -322,13 +373,20 @@ contract LibRLPTest is SoladyTest {
             lSub.p("great").p("sphinx").p("of").p("quartz");
             l.p(lSub);
         }
+        _bzztMemory();
         l.p("0123456789abcdefghijklmnopqrstuvwxyz");
         _checkMemory();
+        _bzztMemory();
         bytes memory computed = LibRLP.encode(l);
-        _checkMemory();
+        _checkMemory(computed);
         bytes memory expected =
             hex"f8a58354686585717569636b8562726f776e83666f78856a756d7073846f76657283746865846c617a7983646f67f85280017f81808181a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff884a61636b64617773856c6f766573826d798085677265617486737068696e78826f668671756172747aa4303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a";
         assertEq(computed, expected);
+        _bzztMemory();
+        bytes memory computed2 = LibRLP.encode(l);
+        assertEq(computed, computed2);
+        _checkMemory(computed);
+        _checkMemory(computed2);
     }
 
     function testSmallLog256Equivalence(uint256 n) public {
