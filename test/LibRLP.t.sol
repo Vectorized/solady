@@ -116,12 +116,81 @@ contract LibRLPTest is SoladyTest {
             for (uint256 i; i != 32; ++i) {
                 uint256 y = x ^ i;
                 l.p(y);
-                _checkMemory();
+                _checkMemory(l);
                 assertEq(_getUint256(l, i), y);
             }
             for (uint256 i; i != 32; ++i) {
                 uint256 y = x ^ i;
                 assertEq(_getUint256(l, i), y);
+            }
+        }
+    }
+
+    function _randomBytes() internal returns (bytes memory result) {
+        uint256 r = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            if byte(0, r) {
+                result := mload(0x40)
+                let n := and(r, 0xf)
+                if iszero(and(r, 0xf0)) { n := and(0xfff, shr(32, r)) }
+                mstore(result, n)
+                let o := add(result, 0x20)
+                codecopy(o, byte(1, r), add(n, 0x40))
+                mstore(0x40, add(o, n))
+                // Zero-right-pad if encode will simply return the string.
+                if and(eq(n, 1), lt(byte(0, mload(add(0x20, result))), 0x80)) {
+                    mstore(add(o, n), 0)
+                    mstore(0x40, add(0x20, add(o, n)))
+                }
+            }
+        }
+    }
+
+    function testRLPMemory(bytes32) public returns (LibRLP.List memory l) {
+        while (true) {
+            uint256 r = _random();
+            if (r & 0x0003 == 0) {
+                _maybeBzztMemory();
+                l.p(_randomBytes());
+                _checkMemory(l);
+            }
+            if (r & 0x0030 == 0) {
+                l.p(_random());
+                _checkMemory(l);
+                _maybeBzztMemory();
+            }
+            if (r & 0x0100 == 0) {
+                l.p(_testRLPP(0));
+                _checkMemory(l);
+            }
+            if (r & 0x1000 == 0) break;
+        }
+        _checkMemory(l.encode());
+    }
+
+    function _testRLPP(uint256 depth) internal returns (LibRLP.List memory l) {
+        if (depth <= 2) {
+            while (true) {
+                uint256 r = _random();
+                if (r & 0x0007 == 0) {
+                    _maybeBzztMemory();
+                    l.p(_randomBytes());
+                    _checkMemory(l);
+                }
+                if (r & 0x0030 == 0) {
+                    l.p(_random());
+                    _checkMemory(l);
+                    _maybeBzztMemory();
+                }
+                if (r & 0x0300 == 0) {
+                    _maybeBzztMemory();
+                    unchecked {
+                        l.p(_testRLPP(depth + 1));
+                    }
+                    _checkMemory(l);
+                }
+                if (r & 0x1000 == 0) break;
             }
         }
     }
@@ -143,7 +212,6 @@ contract LibRLPTest is SoladyTest {
 
     function testRLPEncodeBytes() public {
         bytes memory s;
-        testRLPEncodeBytesDifferential(s);
         assertEq(LibRLP.encode(""), hex"80");
         s = "dog";
         assertEq(LibRLP.encode(s), abi.encodePacked(hex"83", s));
@@ -163,6 +231,7 @@ contract LibRLPTest is SoladyTest {
     function testRLPEncodeListDifferential(bytes memory x0, uint256 x1) public {
         _maybeBzztMemory();
         LibRLP.List memory list = LibRLP.l(x0).p(x1).p(x1).p(x0);
+        _checkMemory(list);
         _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(list);
         _checkAndMaybeBzztMemory(computed);
@@ -176,7 +245,8 @@ contract LibRLPTest is SoladyTest {
         assertEq(computed, LibRLP.encode(list));
     }
 
-    function testRLPEncodeBytesDifferential(bytes memory x) public {
+    function testRLPEncodeBytesDifferential(bytes32) public {
+        bytes memory x = _randomBytes();
         _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
         _checkAndMaybeBzztMemory(computed);
@@ -245,9 +315,9 @@ contract LibRLPTest is SoladyTest {
         assembly {
             function encodeBytes(x_, o_, c_) -> _o {
                 _o := add(o_, 1)
-                let f_ := mload(add(0x20, x_))
                 let n_ := mload(x_)
                 if iszero(gt(n_, 55)) {
+                    let f_ := mload(add(0x20, x_))
                     if iszero(and(eq(1, n_), lt(byte(0, f_), 0x80))) {
                         mstore8(o_, add(n_, c_)) // Store the prefix.
                         mstore(add(0x21, o_), mload(add(0x40, x_)))
@@ -346,9 +416,11 @@ contract LibRLPTest is SoladyTest {
         _bzztMemory();
         assertEq(LibRLP.encode(l), hex"c0");
         l.p(LibRLP.l());
+        _checkMemory(l);
         l.p(LibRLP.l(LibRLP.l()));
+        _checkMemory(l);
         l.p(LibRLP.l(LibRLP.l()).p(LibRLP.l(LibRLP.l())));
-        _checkMemory();
+        _checkMemory(l);
         _bzztMemory();
         bytes memory computed = LibRLP.encode(l);
         _checkMemory(computed);
@@ -362,20 +434,25 @@ contract LibRLPTest is SoladyTest {
 
     function testRLPEncodeList2() public {
         LibRLP.List memory l;
+        _checkMemory(l);
         _bzztMemory();
         l.p("The").p("quick").p("brown").p("fox");
         l.p("jumps").p("over").p("the").p("lazy").p("dog");
+        _checkMemory(l);
         {
             LibRLP.List memory lSub;
             lSub.p(0).p(1).p(0x7f).p(0x80).p(0x81);
             lSub.p(2 ** 256 - 1);
+            _checkMemory(lSub);
             lSub.p("Jackdaws").p("loves").p("my").p("");
             lSub.p("great").p("sphinx").p("of").p("quartz");
+            _checkMemory(lSub);
             l.p(lSub);
+            _checkMemory(l);
         }
         _bzztMemory();
         l.p("0123456789abcdefghijklmnopqrstuvwxyz");
-        _checkMemory();
+        _checkMemory(l);
         _bzztMemory();
         bytes memory computed = LibRLP.encode(l);
         _checkMemory(computed);
@@ -392,13 +469,37 @@ contract LibRLPTest is SoladyTest {
     function testSmallLog256Equivalence(uint256 n) public {
         n = _bound(n, 0, 0xffffffff);
         assertEq(_smallLog256(n), FixedPointMathLib.log256(n));
+        assertEq(_smallLog256(n), _smallLog256Simple(n));
+        n = _random() & 0xffffffff;
+        assertEq(_smallLog256(n), _smallLog256Simple(n));
     }
 
     function _smallLog256(uint256 n) internal pure returns (uint256 result) {
-        require(n >> 32 == 0);
         /// @solidity memory-safe-assembly
         assembly {
             result := add(lt(0xff, n), add(lt(0xffff, n), lt(0xffffff, n)))
         }
+    }
+
+    function _smallLog256Simple(uint256 n) internal pure returns (uint256 result) {
+        if (n <= 0x000000ff) return 0;
+        if (n <= 0x0000ffff) return 1;
+        if (n <= 0x00ffffff) return 2;
+        if (n <= 0xffffffff) return 3;
+        revert();
+    }
+
+    function _checkMemory(LibRLP.List memory l) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let v := mload(l)
+            if gt(shr(40, v), m) { invalid() }
+            for { let head := and(v, 0xffffffffff) } head {} {
+                if gt(head, m) { invalid() }
+                head := and(mload(head), 0xffffffffff)
+            }
+        }
+        _checkMemory();
     }
 }

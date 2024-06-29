@@ -177,9 +177,9 @@ library LibRLP {
             }
             function encodeBytes(x_, o_, c_) -> _o {
                 _o := add(o_, 1)
-                let f_ := mload(add(0x20, x_))
                 let n_ := mload(x_)
                 if iszero(gt(n_, 55)) {
+                    let f_ := mload(add(0x20, x_))
                     if iszero(and(eq(1, n_), lt(byte(0, f_), 0x80))) {
                         mstore8(o_, add(n_, c_)) // Store the prefix.
                         mstore(add(0x21, o_), mload(add(0x40, x_)))
