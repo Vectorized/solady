@@ -356,6 +356,7 @@ contract LibRLPTest is SoladyTest {
     }
 
     function _smallLog256(uint256 n) internal pure returns (uint256 result) {
+        require(n >> 32 == 0);
         /// @solidity memory-safe-assembly
         assembly {
             result := add(lt(0xff, n), add(lt(0xffff, n), lt(0xffffff, n)))
