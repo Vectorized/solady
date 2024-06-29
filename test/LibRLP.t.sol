@@ -193,10 +193,10 @@ contract LibRLPTest is SoladyTest {
                 r_ := or(r_, shl(6, lt(0xffffffffffffffff, shr(r_, x_))))
                 r_ := or(r_, shl(5, lt(0xffffffff, shr(r_, x_))))
                 r_ := or(r_, shl(4, lt(0xffff, shr(r_, x_))))
-                r_ := add(1, or(shr(3, r_), lt(0xff, shr(r_, x_))))
-                mstore8(o_, add(r_, 0x80)) // Store the prefix.
-                mstore(_o, shl(shl(3, sub(32, r_)), x_)) // Copy `x_`.
-                _o := add(r_, _o)
+                r_ := or(shr(3, r_), lt(0xff, shr(r_, x_)))
+                mstore8(o_, add(r_, 0x81)) // Store the prefix.
+                mstore(_o, shl(shl(3, xor(31, r_)), x_)) // Copy `x_`.
+                _o := add(add(1, r_), _o)
             }
             result := mload(0x40)
             let o := encodeUint(x, add(result, 0x20))
