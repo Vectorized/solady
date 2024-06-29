@@ -139,6 +139,8 @@ contract LibRLPTest is SoladyTest {
             _checkMemory(l);
             if (r & 0x3000 == 0) break;
         }
+        bytes memory encoded = l.encode();
+        _checkMemory(encoded);
     }
 
     function _testRLPP(uint256 depth) internal returns (LibRLP.List memory l) {
