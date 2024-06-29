@@ -374,6 +374,7 @@ contract LibRLPTest is SoladyTest {
             LibRLP.List memory lSub;
             lSub.p(0).p(1).p(0x7f).p(0x80).p(0x81);
             lSub.p(2 ** 256 - 1);
+            _checkMemory(lSub);
             lSub.p("Jackdaws").p("loves").p("my").p("");
             lSub.p("great").p("sphinx").p("of").p("quartz");
             _checkMemory(lSub);
