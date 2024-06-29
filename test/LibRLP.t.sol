@@ -135,8 +135,14 @@ contract LibRLPTest is SoladyTest {
         assertEq(LibRLP.encode(hex"00"), hex"00");
         assertEq(LibRLP.encode(hex"0f"), hex"0f");
         assertEq(LibRLP.encode(hex"0400"), hex"820400");
+        s = "Lorem ipsum dolor sit amet, consectetur adipisicing eli";
+        assertEq(LibRLP.encode(s), abi.encodePacked(hex"b7", s));
         s = "Lorem ipsum dolor sit amet, consectetur adipisicing elit";
         assertEq(LibRLP.encode(s), abi.encodePacked(hex"b838", s));
+        s = new bytes(0x100);
+        assertEq(LibRLP.encode(s), abi.encodePacked(hex"b90100", s));
+        s = new bytes(0xfffe);
+        assertEq(LibRLP.encode(s), abi.encodePacked(hex"b9fffe", s));
     }
 
     function testRLPEncodeUint256() public {

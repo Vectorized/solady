@@ -141,7 +141,8 @@ library LibRLP {
 
     /// @dev Returns the RLP encoding of `l`.
     function encode(List memory l) internal pure returns (bytes memory result) {
-        // TODO
+        /// @solidity memory-safe-assembly
+        assembly {}
     }
 
     /// @dev Returns the RLP encoding of `x`.
