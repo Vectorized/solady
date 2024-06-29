@@ -20,8 +20,8 @@ library LibRLP {
     struct List {
         // Do NOT modify the `_data` directly.
         // Bits layout for each element:
-        // - [0..1]     item type (0: uint inlined, 1: uint pointer, 2: bytes, 3: list)
-        // - [2..255]   uint inlined value or pointer to uint / bytes / children array.
+        // - [0..253]     uint inlined value or pointer to uint / bytes / children array.
+        // - [254..255]   item type (0: uint inlined, 1: uint pointer, 2: bytes, 3: list).
         uint256 _data;
     }
 
@@ -99,7 +99,23 @@ library LibRLP {
 
     /// @dev Appends `x` to `l`.
     function p(List memory l, uint256 x) internal pure returns (List memory result) {
-        // TODO
+        _deallocate(result);
+        bytes32 ptr = _grow(l);
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} 1 {} {
+                if iszero(shr(254, x)) {
+                    mstore(ptr, x)
+                    break
+                }
+                let m := mload(0x40)
+                mstore(m, x)
+                mstore(ptr, or(shl(254, 1), m))
+                mstore(0x40, add(m, 0x20))
+                break
+            }
+            result := l
+        }
     }
 
     /// @dev Appends `x` to `l`.
@@ -130,6 +146,37 @@ library LibRLP {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Extends the list by 1 slot and returns the newly allocated slot.
+    function _grow(List memory l) private pure returns (bytes32 ptr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for { let v := mload(l) } 1 {} {
+                let n := and(v, 0xffffffff) // Length of `l`.
+                if iszero(eq(shr(224, shl(192, v)), n)) {
+                    mstore(l, add(v, 1))
+                    ptr := add(shr(64, v), shl(5, n))
+                    break
+                }
+                ptr := mload(0x40)
+                if iszero(n) {
+                    mstore(l, or(shl(64, ptr), or(shl(32, 0x10), 1)))
+                    mstore(0x40, add(ptr, 0x200)) // Allocate 16 slots.
+                    break
+                }
+                let end := add(ptr, shl(5, n))
+                mstore(l, or(shl(64, ptr), or(shl(33, n), add(1, n))))
+                mstore(0x40, add(ptr, shl(6, n))) // Allocate memory.
+                let d := sub(shr(64, v), ptr)
+                for {} 1 {} {
+                    mstore(ptr, mload(add(ptr, d)))
+                    ptr := add(ptr, 0x20)
+                    if eq(ptr, end) { break }
+                }
+                break
+            }
+        }
+    }
 
     /// @dev Helper for deallocating a automatically allocated `list` pointer.
     function _deallocate(List memory result) private pure {
