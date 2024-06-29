@@ -335,7 +335,10 @@ contract LibRLPTest is SoladyTest {
             t2b.p(t2c);
             l.p(t2a);
         }
-        assertEq(LibRLP.encode(l), hex"c7c0c1c0c3c0c1c0");
+        _checkMemory();
+        bytes memory computed = LibRLP.encode(l);
+        _checkMemory();
+        assertEq(computed, hex"c7c0c1c0c3c0c1c0");
     }
 
     function testRLPEncodeList2() public {
@@ -351,8 +354,11 @@ contract LibRLPTest is SoladyTest {
             l.p(lSub);
         }
         l.p("0123456789abcdefghijklmnopqrstuvwxyz");
+        _checkMemory();
+        bytes memory computed = LibRLP.encode(l);
+        _checkMemory();
         assertEq(
-            LibRLP.encode(l),
+            computed,
             hex"f8a58354686585717569636b8562726f776e83666f78856a756d7073846f76657283746865846c617a7983646f67f85280017f81808181a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff884a61636b64617773856c6f766573826d798085677265617486737068696e78826f668671756172747aa4303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a"
         );
     }
