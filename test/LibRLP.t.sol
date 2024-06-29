@@ -163,46 +163,37 @@ contract LibRLPTest is SoladyTest {
     function testRLPEncodeListDifferential(bytes memory x0, uint256 x1) public {
         _maybeBzztMemory();
         LibRLP.List memory list = LibRLP.l(x0).p(x1).p(x1).p(x0);
+        _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(list);
-        _checkMemory(computed);
-        _maybeBzztMemory();
+        _checkAndMaybeBzztMemory(computed);
         bytes memory x0Encoded = LibRLP.encode(x0);
-        _checkMemory(x0Encoded);
-        _maybeBzztMemory();
+        _checkAndMaybeBzztMemory(x0Encoded);
         bytes memory x1Encoded = LibRLP.encode(x1);
-        _checkMemory(x1Encoded);
+        _checkAndMaybeBzztMemory(x1Encoded);
         bytes memory combined = abi.encodePacked(x0Encoded, x1Encoded, x1Encoded, x0Encoded);
         assertEq(computed, _encodeSimple(combined, 0xc0));
+        _checkAndMaybeBzztMemory(computed);
         assertEq(computed, LibRLP.encode(list));
-        _checkMemory(computed);
     }
 
     function testRLPEncodeBytesDifferential(bytes memory x) public {
         _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
-        _checkMemory(computed);
-        _maybeBzztMemory();
+        _checkAndMaybeBzztMemory(computed);
         bytes memory computed2 = _encode(x);
-        _checkMemory(computed2);
+        _checkAndMaybeBzztMemory(computed2);
         assertEq(computed, computed2);
-        _maybeBzztMemory();
         assertEq(computed, _encodeSimple(x));
-        _checkMemory(computed);
-        _checkMemory(computed2);
     }
 
     function testRLPEncodeUintDifferential(uint256 x) public {
         _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
-        _checkMemory(computed);
-        _maybeBzztMemory();
+        _checkAndMaybeBzztMemory(computed);
         bytes memory computed2 = _encode(x);
-        _checkMemory(computed2);
+        _checkAndMaybeBzztMemory(computed2);
         assertEq(computed, computed2);
-        _maybeBzztMemory();
         assertEq(computed, _encodeSimple(x));
-        _checkMemory(computed);
-        _checkMemory(computed2);
     }
 
     function _maybeBzztMemory() internal {
@@ -215,6 +206,11 @@ contract LibRLPTest is SoladyTest {
     function _bzztMemory() internal view {
         _misalignFreeMemoryPointer();
         _brutalizeMemory();
+    }
+
+    function _checkAndMaybeBzztMemory(bytes memory x) internal {
+        _checkMemory(x);
+        _maybeBzztMemory();
     }
 
     function _encode(uint256 x) internal pure returns (bytes memory result) {
