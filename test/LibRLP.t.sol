@@ -116,12 +116,42 @@ contract LibRLPTest is SoladyTest {
             for (uint256 i; i != 32; ++i) {
                 uint256 y = x ^ i;
                 l.p(y);
-                _checkMemory();
+                _checkMemory(l);
                 assertEq(_getUint256(l, i), y);
             }
             for (uint256 i; i != 32; ++i) {
                 uint256 y = x ^ i;
                 assertEq(_getUint256(l, i), y);
+            }
+        }
+    }
+
+    function testRLPMemory(bytes memory x) internal returns (LibRLP.List memory l) {
+        while (true) {
+            uint256 r = _random();
+            _maybeBzztMemory();
+            if (r & 0x0001 == 0) l.p(x);
+            _checkMemory(l);
+            if (r & 0x0010 == 0) l.p(_random());
+            _checkMemory(l);
+            _maybeBzztMemory();
+            if (r & 0x0100 == 0) l.p(_testRLPP(0));
+            _checkMemory(l);
+            if (r & 0x3000 == 0) break;
+        }
+    }
+
+    function _testRLPP(uint256 depth) internal returns (LibRLP.List memory l) {
+        if (depth <= 3) {
+            while (true) {
+                uint256 r = _random();
+                _maybeBzztMemory();
+                if (r & 0x001 == 0) l.p(_random());
+                _checkMemory(l);
+                _maybeBzztMemory();
+                if (r & 0x010 == 0) l.p(_testRLPP(depth + 1));
+                _checkMemory(l);
+                if (r & 0x300 == 0) break;
             }
         }
     }
