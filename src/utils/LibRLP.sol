@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for computing contract addresses from their deployer and nonce.
+/// @notice Library for RLP encoding and CREATE address computation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibRLP.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibRLP.sol)
 library LibRLP {
@@ -16,7 +16,7 @@ library LibRLP {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                ADDRESS PREDICTION OPERATION                */
+    /*                 CREATE ADDRESS PREDICTION                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the address where a contract will be stored if deployed via
