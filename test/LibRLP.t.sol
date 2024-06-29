@@ -301,25 +301,9 @@ contract LibRLPTest is SoladyTest {
     function testRLPEncodeList() public {
         LibRLP.List memory l;
         assertEq(LibRLP.encode(l), hex"c0");
-        {
-            LibRLP.List memory t0;
-            l.p(t0);
-        }
-        {
-            LibRLP.List memory t1a;
-            LibRLP.List memory t1b;
-            t1a.p(t1b);
-            l.p(t1a);
-        }
-        {
-            LibRLP.List memory t2a;
-            LibRLP.List memory t2b;
-            LibRLP.List memory t2c;
-            t2a.p(t2c);
-            t2a.p(t2b);
-            t2b.p(t2c);
-            l.p(t2a);
-        }
+        l.p(LibRLP.l());
+        l.p(LibRLP.l(LibRLP.l()));
+        l.p(LibRLP.l(LibRLP.l()).p(LibRLP.l(LibRLP.l())));
         _checkMemory();
         bytes memory computed = LibRLP.encode(l);
         _checkMemory();

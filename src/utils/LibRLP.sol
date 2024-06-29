@@ -87,14 +87,32 @@ library LibRLP {
     /*                  RLP ENCODING OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Appends `x` to `l`.
-    function p(List memory l, uint256 x) internal pure returns (List memory result) {
+    /// @dev Returns a new empty list.
+    function l() internal pure returns (List memory result) {}
+
+    /// @dev Returns a new list with `x` as the only element.
+    function l(uint256 x) internal pure returns (List memory result) {
+        p(result, x);
+    }
+
+    /// @dev Returns a new list with `x` as the only element.
+    function l(bytes memory x) internal pure returns (List memory result) {
+        p(result, x);
+    }
+
+    /// @dev Returns a new list with `x` as the only element.
+    function l(List memory x) internal pure returns (List memory result) {
+        p(result, x);
+    }
+
+    /// @dev Appends `x` to `list`.
+    function p(List memory list, uint256 x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(48, x))
-            let v := or(shr(mload(l), result), mload(l))
+            let v := or(shr(mload(list), result), mload(list))
             let tail := shr(40, v)
-            mstore(l, xor(shl(40, xor(tail, result)), v)) // Update the tail.
+            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
             mstore(tail, or(mload(tail), result)) // Make the previous tail point to `m`.
             if shr(208, x) {
                 let m := mload(0x40)
@@ -102,38 +120,38 @@ library LibRLP {
                 mstore(0x40, add(m, 0x20))
                 mstore(result, shl(40, or(1, shl(8, m))))
             }
-            result := l
+            result := list
         }
     }
 
-    /// @dev Appends `x` to `l`.
-    function p(List memory l, bytes memory x) internal pure returns (List memory result) {
+    /// @dev Appends `x` to `list`.
+    function p(List memory list, bytes memory x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(2, shl(8, x))))
-            let v := or(shr(mload(l), result), mload(l))
+            let v := or(shr(mload(list), result), mload(list))
             let tail := shr(40, v)
-            mstore(l, xor(shl(40, xor(tail, result)), v)) // Update the tail.
+            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
             mstore(tail, or(mload(tail), result)) // Make the previous tail point to `m`.
-            result := l
+            result := list
         }
     }
 
-    /// @dev Appends `x` to `l`.
-    function p(List memory l, List memory x) internal pure returns (List memory result) {
+    /// @dev Appends `x` to `list`.
+    function p(List memory list, List memory x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(3, shl(8, x))))
-            let v := or(shr(mload(l), result), mload(l))
+            let v := or(shr(mload(list), result), mload(list))
             let tail := shr(40, v)
-            mstore(l, xor(shl(40, xor(tail, result)), v)) // Update the tail.
+            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
             mstore(tail, or(mload(tail), result)) // Make the previous tail point to `m`.
-            result := l
+            result := list
         }
     }
 
-    /// @dev Returns the RLP encoding of `l`.
-    function encode(List memory l) internal pure returns (bytes memory result) {
+    /// @dev Returns the RLP encoding of `list`.
+    function encode(List memory list) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             function encodeUint(x_, o_) -> _o {
@@ -210,7 +228,7 @@ library LibRLP {
             }
             result := mload(0x40)
             let begin := add(result, 0x20)
-            let end := encodeList(l, begin)
+            let end := encodeList(list, begin)
             mstore(result, sub(end, begin))
             mstore(end, 0)
             mstore(0x40, add(end, 0x20))
