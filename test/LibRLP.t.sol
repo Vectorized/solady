@@ -160,6 +160,23 @@ contract LibRLPTest is SoladyTest {
         assertEq(LibRLP.encode(s), abi.encodePacked(hex"b9fffe", s));
     }
 
+    function testRLPEncodeListDifferential(bytes memory x0, uint256 x1) public {
+        _maybeBzztMemory();
+        LibRLP.List memory list = LibRLP.l(x0).p(x1).p(x1).p(x0);
+        bytes memory computed = LibRLP.encode(list);
+        _checkMemory(computed);
+        _maybeBzztMemory();
+        bytes memory x0Encoded = LibRLP.encode(x0);
+        _checkMemory(x0Encoded);
+        _maybeBzztMemory();
+        bytes memory x1Encoded = LibRLP.encode(x1);
+        _checkMemory(x1Encoded);
+        bytes memory combined = abi.encodePacked(x0Encoded, x1Encoded, x1Encoded, x0Encoded);
+        assertEq(computed, _encodeSimple(combined, 0xc0));
+        assertEq(computed, LibRLP.encode(list));
+        _checkMemory(computed);
+    }
+
     function testRLPEncodeBytesDifferential(bytes memory x) public {
         _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
@@ -273,13 +290,17 @@ contract LibRLPTest is SoladyTest {
         return abi.encodePacked(uint8(0x80 + ep.length), ep);
     }
 
-    function _encodeSimple(bytes memory x) internal pure returns (bytes memory) {
+    function _encodeSimple(bytes memory x, uint256 c) internal pure returns (bytes memory) {
         uint256 n = x.length;
         if (n == 0) return hex"80";
         if (n == 1 && uint8(bytes1(x[0])) < 0x80) return x;
-        if (n < 56) return abi.encodePacked(uint8(n + 0x80), x);
+        if (n < 56) return abi.encodePacked(uint8(n + c), x);
         bytes memory ep = _ep(n);
-        return abi.encodePacked(uint8(0xb7 + ep.length), ep, x);
+        return abi.encodePacked(uint8(c + 55 + ep.length), ep, x);
+    }
+
+    function _encodeSimple(bytes memory x) internal pure returns (bytes memory) {
+        return _encodeSimple(x, 0x80);
     }
 
     function testRLPEncodeUint(uint256 x) public {
@@ -359,6 +380,7 @@ contract LibRLPTest is SoladyTest {
         _bzztMemory();
         l.p("0123456789abcdefghijklmnopqrstuvwxyz");
         _checkMemory();
+        _bzztMemory();
         bytes memory computed = LibRLP.encode(l);
         _checkMemory(computed);
         bytes memory expected =
