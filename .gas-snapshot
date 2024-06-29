@@ -1240,7 +1240,7 @@ UpgradeableBeaconTest:testUpgradeableSolidityBeaconOnlyOwnerFunctions() (gas: 26
 UpgradeableBeaconTest:testUpgradeableYulBeaconOnlyFnSelectorNotRecognised() (gas: 172796)
 UpgradeableBeaconTest:testUpgradeableYulBeaconOnlyOwnerFunctions() (gas: 198398)
 UpgradeableBeaconTest:test__codesize() (gas: 8808)
-WETHInvariants:invariantTotalSupplyEqualsBalance() (runs: 10, calls: 150, reverts: 78)
+WETHInvariants:invariantTotalSupplyEqualsBalance() (runs: 10, calls: 150, reverts: 77)
 WETHInvariants:test__codesize() (gas: 5178)
 WETHTest:testDeposit() (gas: 62272)
 WETHTest:testDeposit(uint256) (runs: 298, μ: 61542, ~: 62566)
