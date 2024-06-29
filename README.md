@@ -61,7 +61,7 @@ utils
 ├─ Base64 — "Library for Base64 encoding and decoding"
 ├─ SSTORE2 — "Library for cheaper reads and writes to persistent storage"
 ├─ CREATE3 — "Deploy to deterministic addresses without an initcode factor"
-├─ LibRLP — "Library for computing contract addresses from their deployer and nonce"
+├─ LibRLP — "Library for RLP encoding and CREATE address computation"
 ├─ LibBit — "Library for bit twiddling and boolean operations"
 ├─ LibZip — "Library for compressing and decompressing bytes"
 ├─ Clone — "Class with helper read functions for clone with immutable args"
