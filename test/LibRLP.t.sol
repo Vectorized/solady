@@ -45,49 +45,63 @@ contract LibRLPTest is SoladyTest {
         pure
         returns (address)
     {
+        return address(uint160(uint256(keccak256(_computeAddressOriginal(deployer, nonce)))));
+    }
+
+    function _computeAddressOriginal(address deployer, uint256 nonce)
+        internal
+        pure
+        returns (bytes memory)
+    {
         // Although the theoretical allowed limit, based on EIP-2681,
         // for an account nonce is 2**64-2: https://eips.ethereum.org/EIPS/eip-2681,
         // we just test all the way to 2**256-1 to ensure that the computeAddress function does not revert
         // for whatever nonce we provide.
 
-        // forgefmt: disable-next-item
-        {
-            if (nonce == 0x00) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, bytes1(0x80))))));
-            if (nonce <= 0x7f) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, uint8(nonce))))));
-            if (nonce <= type(uint8).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd7), bytes1(0x94), deployer, bytes1(0x81), uint8(nonce))))));
-            if (nonce <= type(uint16).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd8), bytes1(0x94), deployer, bytes1(0x82), uint16(nonce))))));
-            if (nonce <= type(uint24).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd9), bytes1(0x94), deployer, bytes1(0x83), uint24(nonce))))));
-            if (nonce <= type(uint32).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xda), bytes1(0x94), deployer, bytes1(0x84), uint32(nonce))))));
-            if (nonce <= type(uint40).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xdb), bytes1(0x94), deployer, bytes1(0x85), uint40(nonce))))));
-            if (nonce <= type(uint48).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xdc), bytes1(0x94), deployer, bytes1(0x86), uint48(nonce))))));
-            if (nonce <= type(uint56).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xdd), bytes1(0x94), deployer, bytes1(0x87), uint56(nonce))))));
-            if (nonce <= type(uint64).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xde), bytes1(0x94), deployer, bytes1(0x88), uint64(nonce))))));
-            if (nonce <= type(uint72).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xdf), bytes1(0x94), deployer, bytes1(0x89), uint72(nonce))))));
-            if (nonce <= type(uint80).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe0), bytes1(0x94), deployer, bytes1(0x8a), uint80(nonce))))));
-            if (nonce <= type(uint88).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe1), bytes1(0x94), deployer, bytes1(0x8b), uint88(nonce))))));
-            if (nonce <= type(uint96).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe2), bytes1(0x94), deployer, bytes1(0x8c), uint96(nonce))))));
-            if (nonce <= type(uint104).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe3), bytes1(0x94), deployer, bytes1(0x8d), uint104(nonce))))));
-            if (nonce <= type(uint112).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe4), bytes1(0x94), deployer, bytes1(0x8e), uint112(nonce))))));
-            if (nonce <= type(uint120).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe5), bytes1(0x94), deployer, bytes1(0x8f), uint120(nonce))))));
-            if (nonce <= type(uint128).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe6), bytes1(0x94), deployer, bytes1(0x90), uint128(nonce))))));
-            if (nonce <= type(uint136).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe7), bytes1(0x94), deployer, bytes1(0x91), uint136(nonce))))));
-            if (nonce <= type(uint144).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe8), bytes1(0x94), deployer, bytes1(0x92), uint144(nonce))))));
-            if (nonce <= type(uint152).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xe9), bytes1(0x94), deployer, bytes1(0x93), uint152(nonce))))));
-            if (nonce <= type(uint160).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xea), bytes1(0x94), deployer, bytes1(0x94), uint160(nonce))))));
-            if (nonce <= type(uint168).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xeb), bytes1(0x94), deployer, bytes1(0x95), uint168(nonce))))));
-            if (nonce <= type(uint176).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xec), bytes1(0x94), deployer, bytes1(0x96), uint176(nonce))))));
-            if (nonce <= type(uint184).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xed), bytes1(0x94), deployer, bytes1(0x97), uint184(nonce))))));
-            if (nonce <= type(uint192).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xee), bytes1(0x94), deployer, bytes1(0x98), uint192(nonce))))));
-            if (nonce <= type(uint200).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xef), bytes1(0x94), deployer, bytes1(0x99), uint200(nonce))))));
-            if (nonce <= type(uint208).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xf0), bytes1(0x94), deployer, bytes1(0x9a), uint208(nonce))))));
-            if (nonce <= type(uint216).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xf1), bytes1(0x94), deployer, bytes1(0x9b), uint216(nonce))))));
-            if (nonce <= type(uint224).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xf2), bytes1(0x94), deployer, bytes1(0x9c), uint224(nonce))))));
-            if (nonce <= type(uint232).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xf3), bytes1(0x94), deployer, bytes1(0x9d), uint232(nonce))))));
-            if (nonce <= type(uint240).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xf4), bytes1(0x94), deployer, bytes1(0x9e), uint240(nonce))))));
-            if (nonce <= type(uint248).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xf5), bytes1(0x94), deployer, bytes1(0x9f), uint248(nonce))))));
-            if (nonce <= type(uint256).max) return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xf6), bytes1(0x94), deployer, bytes1(0xa0), uint256(nonce))))));
+        if (nonce == 0x00) {
+            return abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, bytes1(0x80));
         }
-        revert();
+        if (nonce <= 0x7f) {
+            return abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, uint8(nonce));
+        }
+        bytes memory ep = _ep(nonce);
+        uint256 n = ep.length;
+        return abi.encodePacked(uint8(0xd6 + n), uint8(0x94), deployer, uint8(0x80 + n), ep);
+    }
+
+    function _ep(uint256 x) internal pure returns (bytes memory) {
+        if (x <= type(uint8).max) return abi.encodePacked(uint8(x));
+        if (x <= type(uint16).max) return abi.encodePacked(uint16(x));
+        if (x <= type(uint24).max) return abi.encodePacked(uint24(x));
+        if (x <= type(uint32).max) return abi.encodePacked(uint32(x));
+        if (x <= type(uint40).max) return abi.encodePacked(uint40(x));
+        if (x <= type(uint48).max) return abi.encodePacked(uint48(x));
+        if (x <= type(uint56).max) return abi.encodePacked(uint56(x));
+        if (x <= type(uint64).max) return abi.encodePacked(uint64(x));
+        if (x <= type(uint72).max) return abi.encodePacked(uint72(x));
+        if (x <= type(uint80).max) return abi.encodePacked(uint80(x));
+        if (x <= type(uint88).max) return abi.encodePacked(uint88(x));
+        if (x <= type(uint96).max) return abi.encodePacked(uint96(x));
+        if (x <= type(uint104).max) return abi.encodePacked(uint104(x));
+        if (x <= type(uint112).max) return abi.encodePacked(uint112(x));
+        if (x <= type(uint120).max) return abi.encodePacked(uint120(x));
+        if (x <= type(uint128).max) return abi.encodePacked(uint128(x));
+        if (x <= type(uint136).max) return abi.encodePacked(uint136(x));
+        if (x <= type(uint144).max) return abi.encodePacked(uint144(x));
+        if (x <= type(uint152).max) return abi.encodePacked(uint152(x));
+        if (x <= type(uint160).max) return abi.encodePacked(uint160(x));
+        if (x <= type(uint168).max) return abi.encodePacked(uint168(x));
+        if (x <= type(uint176).max) return abi.encodePacked(uint176(x));
+        if (x <= type(uint184).max) return abi.encodePacked(uint184(x));
+        if (x <= type(uint192).max) return abi.encodePacked(uint192(x));
+        if (x <= type(uint200).max) return abi.encodePacked(uint200(x));
+        if (x <= type(uint208).max) return abi.encodePacked(uint208(x));
+        if (x <= type(uint216).max) return abi.encodePacked(uint216(x));
+        if (x <= type(uint224).max) return abi.encodePacked(uint224(x));
+        if (x <= type(uint232).max) return abi.encodePacked(uint232(x));
+        if (x <= type(uint240).max) return abi.encodePacked(uint240(x));
+        if (x <= type(uint248).max) return abi.encodePacked(uint248(x));
+        return abi.encodePacked(uint256(x));
     }
 
     function testRLPPUint256() public {
@@ -240,38 +254,8 @@ contract LibRLPTest is SoladyTest {
     function _encodeSimple(uint256 x) internal pure returns (bytes memory) {
         if (x == 0) return hex"80";
         if (x < 0x80) return abi.encodePacked(uint8(x));
-        if (x <= type(uint8).max) return abi.encodePacked(bytes1(0x81), uint8(x));
-        if (x <= type(uint16).max) return abi.encodePacked(bytes1(0x82), uint16(x));
-        if (x <= type(uint24).max) return abi.encodePacked(bytes1(0x83), uint24(x));
-        if (x <= type(uint32).max) return abi.encodePacked(bytes1(0x84), uint32(x));
-        if (x <= type(uint40).max) return abi.encodePacked(bytes1(0x85), uint40(x));
-        if (x <= type(uint48).max) return abi.encodePacked(bytes1(0x86), uint48(x));
-        if (x <= type(uint56).max) return abi.encodePacked(bytes1(0x87), uint56(x));
-        if (x <= type(uint64).max) return abi.encodePacked(bytes1(0x88), uint64(x));
-        if (x <= type(uint72).max) return abi.encodePacked(bytes1(0x89), uint72(x));
-        if (x <= type(uint80).max) return abi.encodePacked(bytes1(0x8a), uint80(x));
-        if (x <= type(uint88).max) return abi.encodePacked(bytes1(0x8b), uint88(x));
-        if (x <= type(uint96).max) return abi.encodePacked(bytes1(0x8c), uint96(x));
-        if (x <= type(uint104).max) return abi.encodePacked(bytes1(0x8d), uint104(x));
-        if (x <= type(uint112).max) return abi.encodePacked(bytes1(0x8e), uint112(x));
-        if (x <= type(uint120).max) return abi.encodePacked(bytes1(0x8f), uint120(x));
-        if (x <= type(uint128).max) return abi.encodePacked(bytes1(0x90), uint128(x));
-        if (x <= type(uint136).max) return abi.encodePacked(bytes1(0x91), uint136(x));
-        if (x <= type(uint144).max) return abi.encodePacked(bytes1(0x92), uint144(x));
-        if (x <= type(uint152).max) return abi.encodePacked(bytes1(0x93), uint152(x));
-        if (x <= type(uint160).max) return abi.encodePacked(bytes1(0x94), uint160(x));
-        if (x <= type(uint168).max) return abi.encodePacked(bytes1(0x95), uint168(x));
-        if (x <= type(uint176).max) return abi.encodePacked(bytes1(0x96), uint176(x));
-        if (x <= type(uint184).max) return abi.encodePacked(bytes1(0x97), uint184(x));
-        if (x <= type(uint192).max) return abi.encodePacked(bytes1(0x98), uint192(x));
-        if (x <= type(uint200).max) return abi.encodePacked(bytes1(0x99), uint200(x));
-        if (x <= type(uint208).max) return abi.encodePacked(bytes1(0x9a), uint208(x));
-        if (x <= type(uint216).max) return abi.encodePacked(bytes1(0x9b), uint216(x));
-        if (x <= type(uint224).max) return abi.encodePacked(bytes1(0x9c), uint224(x));
-        if (x <= type(uint232).max) return abi.encodePacked(bytes1(0x9d), uint232(x));
-        if (x <= type(uint240).max) return abi.encodePacked(bytes1(0x9e), uint240(x));
-        if (x <= type(uint248).max) return abi.encodePacked(bytes1(0x9f), uint248(x));
-        return abi.encodePacked(bytes1(0xa0), uint256(x));
+        bytes memory ep = _ep(x);
+        return abi.encodePacked(uint8(0x80 + ep.length), ep);
     }
 
     function _encodeSimple(bytes memory x) internal pure returns (bytes memory) {
@@ -279,38 +263,22 @@ contract LibRLPTest is SoladyTest {
         if (n == 0) return hex"80";
         if (n == 1 && uint8(bytes1(x[0])) < 0x80) return x;
         if (n < 56) return abi.encodePacked(uint8(n + 0x80), x);
-        if (n <= type(uint8).max) return abi.encodePacked(bytes1(0xb8), uint8(n), x);
-        if (n <= type(uint16).max) return abi.encodePacked(bytes1(0xb9), uint16(n), x);
-        if (n <= type(uint24).max) return abi.encodePacked(bytes1(0xba), uint24(n), x);
-        if (n <= type(uint32).max) return abi.encodePacked(bytes1(0xbb), uint32(n), x);
-        if (n <= type(uint40).max) return abi.encodePacked(bytes1(0xbc), uint40(n), x);
-        if (n <= type(uint48).max) return abi.encodePacked(bytes1(0xbd), uint48(n), x);
-        if (n <= type(uint56).max) return abi.encodePacked(bytes1(0xbe), uint56(n), x);
-        if (n <= type(uint64).max) return abi.encodePacked(bytes1(0xbf), uint64(n), x);
-        if (n <= type(uint72).max) return abi.encodePacked(bytes1(0xc0), uint72(n), x);
-        if (n <= type(uint80).max) return abi.encodePacked(bytes1(0xc1), uint80(n), x);
-        if (n <= type(uint88).max) return abi.encodePacked(bytes1(0xc2), uint88(n), x);
-        if (n <= type(uint96).max) return abi.encodePacked(bytes1(0xc3), uint96(n), x);
-        if (n <= type(uint104).max) return abi.encodePacked(bytes1(0xc4), uint104(n), x);
-        if (n <= type(uint112).max) return abi.encodePacked(bytes1(0xc5), uint112(n), x);
-        if (n <= type(uint120).max) return abi.encodePacked(bytes1(0xc6), uint120(n), x);
-        if (n <= type(uint128).max) return abi.encodePacked(bytes1(0xc7), uint128(n), x);
-        if (n <= type(uint136).max) return abi.encodePacked(bytes1(0xc8), uint136(n), x);
-        if (n <= type(uint144).max) return abi.encodePacked(bytes1(0xc9), uint144(n), x);
-        if (n <= type(uint152).max) return abi.encodePacked(bytes1(0xca), uint152(n), x);
-        if (n <= type(uint160).max) return abi.encodePacked(bytes1(0xcb), uint160(n), x);
-        if (n <= type(uint168).max) return abi.encodePacked(bytes1(0xcc), uint168(n), x);
-        if (n <= type(uint176).max) return abi.encodePacked(bytes1(0xcd), uint176(n), x);
-        if (n <= type(uint184).max) return abi.encodePacked(bytes1(0xce), uint184(n), x);
-        if (n <= type(uint192).max) return abi.encodePacked(bytes1(0xcf), uint192(n), x);
-        if (n <= type(uint200).max) return abi.encodePacked(bytes1(0xd0), uint200(n), x);
-        if (n <= type(uint208).max) return abi.encodePacked(bytes1(0xd1), uint208(n), x);
-        if (n <= type(uint216).max) return abi.encodePacked(bytes1(0xd2), uint216(n), x);
-        if (n <= type(uint224).max) return abi.encodePacked(bytes1(0xd3), uint224(n), x);
-        if (n <= type(uint232).max) return abi.encodePacked(bytes1(0xd4), uint232(n), x);
-        if (n <= type(uint240).max) return abi.encodePacked(bytes1(0xd5), uint240(n), x);
-        if (n <= type(uint248).max) return abi.encodePacked(bytes1(0xd6), uint248(n), x);
-        return abi.encodePacked(bytes1(0xd7), uint256(n), x);
+        bytes memory ep = _ep(n);
+        return abi.encodePacked(uint8(0xb7 + ep.length), ep, x);
+    }
+
+    function testRLPEncodeUint(uint256 x) public {
+        if (x == 0) {
+            _testRLPEncodeUint(x, hex"80");
+            return;
+        }
+        if (x < 0x80) {
+            _testRLPEncodeUint(x, abi.encodePacked(uint8(x)));
+            return;
+        }
+        bytes memory ep = _ep(x);
+        uint256 n = ep.length;
+        _testRLPEncodeUint(x, abi.encodePacked(uint8(0x80 + n), _ep(x)));
     }
 
     function testRLPEncodeUint() public {
@@ -324,72 +292,14 @@ contract LibRLPTest is SoladyTest {
         _testRLPEncodeUint(0x82, hex"8182");
         _testRLPEncodeUint(0xfe, hex"81fe");
         _testRLPEncodeUint(0xff, hex"81ff");
-        uint256 f = type(uint256).max;
-        uint256 e = f - 1;
-        _testRLPEncodeUint(uint8(f), abi.encodePacked(hex"81", uint8(f)));
-        _testRLPEncodeUint(uint8(e), abi.encodePacked(hex"81", uint8(e)));
-        _testRLPEncodeUint(uint16(f), abi.encodePacked(hex"82", uint16(f)));
-        _testRLPEncodeUint(uint16(e), abi.encodePacked(hex"82", uint16(e)));
-        _testRLPEncodeUint(uint24(f), abi.encodePacked(hex"83", uint24(f)));
-        _testRLPEncodeUint(uint24(e), abi.encodePacked(hex"83", uint24(e)));
-        _testRLPEncodeUint(uint32(f), abi.encodePacked(hex"84", uint32(f)));
-        _testRLPEncodeUint(uint32(e), abi.encodePacked(hex"84", uint32(e)));
-        _testRLPEncodeUint(uint40(f), abi.encodePacked(hex"85", uint40(f)));
-        _testRLPEncodeUint(uint40(e), abi.encodePacked(hex"85", uint40(e)));
-        _testRLPEncodeUint(uint48(f), abi.encodePacked(hex"86", uint48(f)));
-        _testRLPEncodeUint(uint48(e), abi.encodePacked(hex"86", uint48(e)));
-        _testRLPEncodeUint(uint56(f), abi.encodePacked(hex"87", uint56(f)));
-        _testRLPEncodeUint(uint56(e), abi.encodePacked(hex"87", uint56(e)));
-        _testRLPEncodeUint(uint64(f), abi.encodePacked(hex"88", uint64(f)));
-        _testRLPEncodeUint(uint64(e), abi.encodePacked(hex"88", uint64(e)));
-        _testRLPEncodeUint(uint72(f), abi.encodePacked(hex"89", uint72(f)));
-        _testRLPEncodeUint(uint72(e), abi.encodePacked(hex"89", uint72(e)));
-        _testRLPEncodeUint(uint80(f), abi.encodePacked(hex"8a", uint80(f)));
-        _testRLPEncodeUint(uint80(e), abi.encodePacked(hex"8a", uint80(e)));
-        _testRLPEncodeUint(uint88(f), abi.encodePacked(hex"8b", uint88(f)));
-        _testRLPEncodeUint(uint88(e), abi.encodePacked(hex"8b", uint88(e)));
-        _testRLPEncodeUint(uint96(f), abi.encodePacked(hex"8c", uint96(f)));
-        _testRLPEncodeUint(uint96(e), abi.encodePacked(hex"8c", uint96(e)));
-        _testRLPEncodeUint(uint104(f), abi.encodePacked(hex"8d", uint104(f)));
-        _testRLPEncodeUint(uint104(e), abi.encodePacked(hex"8d", uint104(e)));
-        _testRLPEncodeUint(uint112(f), abi.encodePacked(hex"8e", uint112(f)));
-        _testRLPEncodeUint(uint112(e), abi.encodePacked(hex"8e", uint112(e)));
-        _testRLPEncodeUint(uint120(f), abi.encodePacked(hex"8f", uint120(f)));
-        _testRLPEncodeUint(uint120(e), abi.encodePacked(hex"8f", uint120(e)));
-        _testRLPEncodeUint(uint128(f), abi.encodePacked(hex"90", uint128(f)));
-        _testRLPEncodeUint(uint128(e), abi.encodePacked(hex"90", uint128(e)));
-        _testRLPEncodeUint(uint136(f), abi.encodePacked(hex"91", uint136(f)));
-        _testRLPEncodeUint(uint136(e), abi.encodePacked(hex"91", uint136(e)));
-        _testRLPEncodeUint(uint144(f), abi.encodePacked(hex"92", uint144(f)));
-        _testRLPEncodeUint(uint144(e), abi.encodePacked(hex"92", uint144(e)));
-        _testRLPEncodeUint(uint152(f), abi.encodePacked(hex"93", uint152(f)));
-        _testRLPEncodeUint(uint152(e), abi.encodePacked(hex"93", uint152(e)));
-        _testRLPEncodeUint(uint160(f), abi.encodePacked(hex"94", uint160(f)));
-        _testRLPEncodeUint(uint160(e), abi.encodePacked(hex"94", uint160(e)));
-        _testRLPEncodeUint(uint168(f), abi.encodePacked(hex"95", uint168(f)));
-        _testRLPEncodeUint(uint168(e), abi.encodePacked(hex"95", uint168(e)));
-        _testRLPEncodeUint(uint176(f), abi.encodePacked(hex"96", uint176(f)));
-        _testRLPEncodeUint(uint176(e), abi.encodePacked(hex"96", uint176(e)));
-        _testRLPEncodeUint(uint184(f), abi.encodePacked(hex"97", uint184(f)));
-        _testRLPEncodeUint(uint184(e), abi.encodePacked(hex"97", uint184(e)));
-        _testRLPEncodeUint(uint192(f), abi.encodePacked(hex"98", uint192(f)));
-        _testRLPEncodeUint(uint192(e), abi.encodePacked(hex"98", uint192(e)));
-        _testRLPEncodeUint(uint200(f), abi.encodePacked(hex"99", uint200(f)));
-        _testRLPEncodeUint(uint200(e), abi.encodePacked(hex"99", uint200(e)));
-        _testRLPEncodeUint(uint208(f), abi.encodePacked(hex"9a", uint208(f)));
-        _testRLPEncodeUint(uint208(e), abi.encodePacked(hex"9a", uint208(e)));
-        _testRLPEncodeUint(uint216(f), abi.encodePacked(hex"9b", uint216(f)));
-        _testRLPEncodeUint(uint216(e), abi.encodePacked(hex"9b", uint216(e)));
-        _testRLPEncodeUint(uint224(f), abi.encodePacked(hex"9c", uint224(f)));
-        _testRLPEncodeUint(uint224(e), abi.encodePacked(hex"9c", uint224(e)));
-        _testRLPEncodeUint(uint232(f), abi.encodePacked(hex"9d", uint232(f)));
-        _testRLPEncodeUint(uint232(e), abi.encodePacked(hex"9d", uint232(e)));
-        _testRLPEncodeUint(uint240(f), abi.encodePacked(hex"9e", uint240(f)));
-        _testRLPEncodeUint(uint240(e), abi.encodePacked(hex"9e", uint240(e)));
-        _testRLPEncodeUint(uint248(f), abi.encodePacked(hex"9f", uint248(f)));
-        _testRLPEncodeUint(uint248(e), abi.encodePacked(hex"9f", uint248(e)));
-        _testRLPEncodeUint(uint256(f), abi.encodePacked(hex"a0", uint256(f)));
-        _testRLPEncodeUint(uint256(e), abi.encodePacked(hex"a0", uint256(e)));
+        unchecked {
+            uint256 x = type(uint256).max;
+            while (x != 0) {
+                testRLPEncodeUint(x);
+                testRLPEncodeUint(x - 1);
+                x >>= 8;
+            }
+        }
     }
 
     function _testRLPEncodeUint(uint256 x, bytes memory expected) internal {
