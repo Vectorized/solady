@@ -142,7 +142,91 @@ library LibRLP {
     /// @dev Returns the RLP encoding of `l`.
     function encode(List memory l) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
-        assembly {}
+        assembly {
+            function encodeUint(x_, o_) -> _o {
+                _o := add(o_, 1)
+                if iszero(gt(x_, 0x7f)) {
+                    mstore8(o_, or(x_, shl(7, iszero(x_)))) // Copy `x_`.
+                    leave
+                }
+                let r_ := shl(7, lt(0xffffffffffffffffffffffffffffffff, x_))
+                r_ := or(r_, shl(6, lt(0xffffffffffffffff, shr(r_, x_))))
+                r_ := or(r_, shl(5, lt(0xffffffff, shr(r_, x_))))
+                r_ := or(r_, shl(4, lt(0xffff, shr(r_, x_))))
+                r_ := add(1, or(shr(3, r_), lt(0xff, shr(r_, x_))))
+                mstore8(o_, add(r_, 0x80)) // Store the prefix.
+                mstore(_o, shl(shl(3, sub(32, r_)), x_)) // Copy `x_`.
+                _o := add(r_, _o)
+            }
+            function encodeBytes(x_, o_, c_) -> _o {
+                _o := add(o_, 1)
+                let f_ := mload(add(0x20, x_))
+                let n_ := mload(x_)
+                if iszero(gt(n_, 55)) {
+                    if iszero(and(eq(1, n_), lt(byte(0, f_), 0x80))) {
+                        mstore8(o_, add(n_, c_)) // Store the prefix.
+                        mstore(add(0x21, o_), mload(add(0x40, x_)))
+                        mstore(_o, f_)
+                        _o := add(n_, _o)
+                        leave
+                    }
+                    mstore(o_, f_) // Copy `x_`.
+                    leave
+                }
+                if iszero(gt(n_, 0xffffffffffffffff)) {
+                    let r_ := shl(5, lt(0xffffffff, n_))
+                    r_ := or(r_, shl(4, lt(0xffff, shr(r_, n_))))
+                    r_ := add(1, or(shr(3, r_), lt(0xff, shr(r_, n_))))
+                    mstore(o_, shl(248, add(r_, add(c_, 55)))) // Store the prefix.
+                    // Copy `x`.
+                    let i_ := add(r_, _o)
+                    _o := add(i_, n_)
+                    for { let d_ := sub(add(0x20, x_), i_) } 1 {} {
+                        mstore(i_, mload(add(d_, i_)))
+                        i_ := add(i_, 0x20)
+                        if iszero(lt(i_, _o)) { break }
+                    }
+                    mstore(o_, or(mload(o_), shl(sub(248, shl(3, r_)), n_))) // Store the prefix.
+                    leave
+                }
+                mstore(0x00, 0x25755edb) // `BytesStringTooBig()`.
+                revert(0x1c, 0x04)
+            }
+            function encodeList(l_, o_) -> _o {
+                if iszero(mload(l_)) {
+                    mstore8(o_, 0xc0)
+                    _o := add(o_, 1)
+                    leave
+                }
+                let j_ := add(o_, 0x20)
+                for { let h_ := l_ } 1 {} {
+                    h_ := and(mload(h_), 0xffffffffff)
+                    if iszero(h_) { break }
+                    let t_ := byte(26, mload(h_))
+                    if iszero(gt(t_, 1)) {
+                        if iszero(t_) {
+                            j_ := encodeUint(shr(48, mload(h_)), j_)
+                            continue
+                        }
+                        j_ := encodeUint(mload(shr(48, mload(h_))), j_)
+                        continue
+                    }
+                    if eq(t_, 2) {
+                        j_ := encodeBytes(shr(48, mload(h_)), j_, 0x80)
+                        continue
+                    }
+                    j_ := encodeList(shr(48, mload(h_)), j_)
+                }
+                mstore(o_, sub(j_, add(o_, 0x20)))
+                _o := encodeBytes(o_, o_, 0xc0)
+            }
+            result := mload(0x40)
+            let begin := add(result, 0x20)
+            let end := encodeList(l, begin)
+            mstore(result, sub(end, begin))
+            mstore(end, 0)
+            mstore(0x40, add(end, 0x20))
+        }
     }
 
     /// @dev Returns the RLP encoding of `x`.
@@ -153,7 +237,7 @@ library LibRLP {
                 result := mload(0x40)
                 if iszero(gt(x, 0x7f)) {
                     mstore(result, 1) // Store the length of `result`.
-                    mstore(add(result, 0x20), shl(248, x)) // Copy `x`.
+                    mstore(add(result, 0x20), shl(248, or(shl(7, iszero(x)), x))) // Copy `x`.
                     mstore(0x40, add(result, 0x40)) // Allocate memory for `result`.
                     break
                 }
