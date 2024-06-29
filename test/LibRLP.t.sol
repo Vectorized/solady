@@ -126,34 +126,66 @@ contract LibRLPTest is SoladyTest {
         }
     }
 
-    function testRLPMemory(bytes memory x) internal returns (LibRLP.List memory l) {
+    function _randomBytes() internal returns (bytes memory result) {
+        uint256 r = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            if byte(0, r) {
+                result := mload(0x40)
+                let n := and(r, 0xf)
+                if iszero(and(r, 0xf0)) { n := and(0xfff, shr(32, r)) }
+                mstore(result, n)
+                let o := add(result, 0x20)
+                codecopy(o, byte(1, r), add(n, 0x40))
+                mstore(0x40, add(o, n))
+            }
+        }
+    }
+
+    function testRLPMemory(bytes32) public returns (LibRLP.List memory l) {
         while (true) {
             uint256 r = _random();
-            _maybeBzztMemory();
-            if (r & 0x0001 == 0) l.p(x);
-            _checkMemory(l);
-            if (r & 0x0010 == 0) l.p(_random());
-            _checkMemory(l);
-            _maybeBzztMemory();
-            if (r & 0x0100 == 0) l.p(_testRLPP(0));
-            _checkMemory(l);
-            if (r & 0x3000 == 0) break;
+            if (r & 0x0003 == 0) {
+                _maybeBzztMemory();
+                l.p(_randomBytes());
+                _checkMemory(l);
+            }
+            if (r & 0x0030 == 0) {
+                l.p(_random());
+                _checkMemory(l);
+                _maybeBzztMemory();
+            }
+            if (r & 0x0100 == 0) {
+                l.p(_testRLPP(0));
+                _checkMemory(l);
+            }
+            if (r & 0x1000 == 0) break;
         }
-        bytes memory encoded = l.encode();
-        _checkMemory(encoded);
+        _checkMemory(l.encode());
     }
 
     function _testRLPP(uint256 depth) internal returns (LibRLP.List memory l) {
-        if (depth <= 3) {
+        if (depth <= 2) {
             while (true) {
                 uint256 r = _random();
-                _maybeBzztMemory();
-                if (r & 0x001 == 0) l.p(_random());
-                _checkMemory(l);
-                _maybeBzztMemory();
-                if (r & 0x010 == 0) l.p(_testRLPP(depth + 1));
-                _checkMemory(l);
-                if (r & 0x300 == 0) break;
+                if (r & 0x0007 == 0) {
+                    _maybeBzztMemory();
+                    l.p(_randomBytes());
+                    _checkMemory(l);
+                }
+                if (r & 0x0030 == 0) {
+                    l.p(_random());
+                    _checkMemory(l);
+                    _maybeBzztMemory();
+                }
+                if (r & 0x0300 == 0) {
+                    _maybeBzztMemory();
+                    unchecked {
+                        l.p(_testRLPP(depth + 1));
+                    }
+                    _checkMemory(l);
+                }
+                if (r & 0x1000 == 0) break;
             }
         }
     }
