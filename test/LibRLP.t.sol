@@ -349,4 +349,16 @@ contract LibRLPTest is SoladyTest {
             hex"f8a58354686585717569636b8562726f776e83666f78856a756d7073846f76657283746865846c617a7983646f67f85280017f81808181a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff884a61636b64617773856c6f766573826d798085677265617486737068696e78826f668671756172747aa4303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a";
         assertEq(computed, expected);
     }
+
+    function testSmallLog256Equivalence(uint256 n) public {
+        n = _bound(n, 0, 0xffffffff);
+        assertEq(_smallLog256(n), FixedPointMathLib.log256(n));
+    }
+
+    function _smallLog256(uint256 n) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := add(lt(0xff, n), add(lt(0xffff, n), lt(0xffffff, n)))
+        }
+    }
 }
