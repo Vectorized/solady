@@ -9,7 +9,9 @@ contract LibRLPTest is SoladyTest {
     using LibRLP for LibRLP.List;
 
     function testComputeAddressDifferential(address deployer, uint256 nonce) public {
-        assertEq(LibRLP.computeAddress(deployer, nonce), computeAddressOriginal(deployer, nonce));
+        address computed = LibRLP.computeAddress(deployer, nonce);
+        assertEq(computed, computeAddressOriginal(deployer, nonce));
+        assertEq(computed, computeAddressWithRLPList(deployer, nonce));
     }
 
     function testComputeAddressForSmallNonces() public {
@@ -40,6 +42,14 @@ contract LibRLPTest is SoladyTest {
         assertTrue(computeAddressOriginal(deployer, 0xffffffffffffffff) != address(0));
     }
 
+    function computeAddressWithRLPList(address deployer, uint256 nonce)
+        internal
+        pure
+        returns (address)
+    {
+        return address(uint160(uint256(keccak256(LibRLP.l(deployer).p(nonce).encode()))));
+    }
+
     function computeAddressOriginal(address deployer, uint256 nonce)
         internal
         pure
@@ -59,10 +69,10 @@ contract LibRLPTest is SoladyTest {
         // for whatever nonce we provide.
 
         if (nonce == 0x00) {
-            return abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, bytes1(0x80));
+            return abi.encodePacked(uint8(0xd6), uint8(0x94), deployer, uint8(0x80));
         }
         if (nonce <= 0x7f) {
-            return abi.encodePacked(bytes1(0xd6), bytes1(0x94), deployer, uint8(nonce));
+            return abi.encodePacked(uint8(0xd6), uint8(0x94), deployer, uint8(nonce));
         }
         bytes memory ep = _ep(nonce);
         uint256 n = ep.length;
@@ -156,7 +166,11 @@ contract LibRLPTest is SoladyTest {
                 _checkMemory(l);
             }
             if (r & 0x0030 == 0) {
-                l.p(_random());
+                if (_random() & 1 == 0) {
+                    l.p(_randomNonZeroAddress());
+                } else {
+                    l.p(_random());
+                }
                 _checkMemory(l);
                 _maybeBzztMemory();
             }
@@ -179,7 +193,11 @@ contract LibRLPTest is SoladyTest {
                     _checkMemory(l);
                 }
                 if (r & 0x0030 == 0) {
-                    l.p(_random());
+                    if (_random() & 1 == 0) {
+                        l.p(_randomNonZeroAddress());
+                    } else {
+                        l.p(_random());
+                    }
                     _checkMemory(l);
                     _maybeBzztMemory();
                 }
@@ -266,6 +284,26 @@ contract LibRLPTest is SoladyTest {
         assertEq(computed, _encodeSimple(x));
     }
 
+    function testRLPEncodeAddressDifferential(address x) public {
+        _maybeBzztMemory();
+        bytes memory computed = LibRLP.encode(x);
+        _checkAndMaybeBzztMemory(computed);
+        bytes memory computed2 = _encode(x);
+        _checkAndMaybeBzztMemory(computed2);
+        assertEq(computed, computed2);
+        assertEq(computed, _encodeSimple(x));
+    }
+
+    function testRLPEncodeBool(bool x) public {
+        _maybeBzztMemory();
+        bytes memory computed = LibRLP.encode(_brutalized(x));
+        _checkMemory(computed);
+        bytes memory expected = bytes(x ? hex"01" : hex"80");
+        assertEq(computed, expected);
+        uint256 y = x ? 1 : 0;
+        assertEq(LibRLP.l(y).p(y ^ 1).p(y).encode(), LibRLP.l(x).p(!x).p(x).encode());
+    }
+
     function _maybeBzztMemory() internal {
         uint256 r = _random();
         if (r & 0x000f == uint256(0)) _misalignFreeMemoryPointer();
@@ -349,11 +387,31 @@ contract LibRLPTest is SoladyTest {
         }
     }
 
+    function _encode(address x) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function encodeAddress(x_, o_) -> _o {
+                _o := add(o_, 0x15)
+                mstore(o_, shl(88, x_))
+                mstore8(o_, 0x94)
+            }
+            result := mload(0x40)
+            let o := encodeAddress(x, add(result, 0x20))
+            mstore(result, sub(o, add(result, 0x20)))
+            mstore(o, 0)
+            mstore(0x40, add(o, 0x20))
+        }
+    }
+
     function _encodeSimple(uint256 x) internal pure returns (bytes memory) {
         if (x == 0) return hex"80";
         if (x < 0x80) return abi.encodePacked(uint8(x));
         bytes memory ep = _ep(x);
         return abi.encodePacked(uint8(0x80 + ep.length), ep);
+    }
+
+    function _encodeSimple(address x) internal pure returns (bytes memory) {
+        return abi.encodePacked(uint8(0x94), x);
     }
 
     function _encodeSimple(bytes memory x, uint256 c) internal pure returns (bytes memory) {

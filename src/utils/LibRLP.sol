@@ -87,11 +87,25 @@ library LibRLP {
     /*                  RLP ENCODING OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // Note:
+    // - Addresses are treated like byte arrays of length 20, regardless of any leading zero bytes.
+    // - uint256s are converted to the shortest byte array and encoded.
+
     /// @dev Returns a new empty list.
     function l() internal pure returns (List memory result) {}
 
     /// @dev Returns a new list with `x` as the only element.
     function l(uint256 x) internal pure returns (List memory result) {
+        p(result, x);
+    }
+
+    /// @dev Returns a new list with `x` as the only element.
+    function l(address x) internal pure returns (List memory result) {
+        p(result, x);
+    }
+
+    /// @dev Returns a new list with `x` as the only element.
+    function l(bool x) internal pure returns (List memory result) {
         p(result, x);
     }
 
@@ -123,6 +137,34 @@ library LibRLP {
                 mstore(0x40, add(m, 0x20))
                 mstore(result, shl(40, or(1, shl(8, m))))
             }
+            result := list
+        }
+    }
+
+    /// @dev Appends `x` to `list`.
+    /// Returns `list` for function chaining.
+    function p(List memory list, address x) internal pure returns (List memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, shl(40, or(4, shl(8, x))))
+            let v := or(shr(mload(list), result), mload(list))
+            let tail := shr(40, v)
+            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
+            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
+            result := list
+        }
+    }
+
+    /// @dev Appends `x` to `list`.
+    /// Returns `list` for function chaining.
+    function p(List memory list, bool x) internal pure returns (List memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, shl(48, iszero(iszero(x))))
+            let v := or(shr(mload(list), result), mload(list))
+            let tail := shr(40, v)
+            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
+            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
             result := list
         }
     }
@@ -175,6 +217,11 @@ library LibRLP {
                 mstore(_o, mload(xor(31, r_))) // Copy `x_`.
                 _o := add(add(1, r_), _o)
             }
+            function encodeAddress(x_, o_) -> _o {
+                _o := add(o_, 0x15)
+                mstore(o_, shl(88, x_))
+                mstore8(o_, 0x94)
+            }
             function encodeBytes(x_, o_, c_) -> _o {
                 _o := add(o_, 1)
                 let n_ := mload(x_)
@@ -226,7 +273,11 @@ library LibRLP {
                         j_ := encodeBytes(shr(48, mload(h_)), j_, 0x80)
                         continue
                     }
-                    j_ := encodeList(shr(48, mload(h_)), j_)
+                    if eq(t_, 3) {
+                        j_ := encodeList(shr(48, mload(h_)), j_)
+                        continue
+                    }
+                    j_ := encodeAddress(shr(48, mload(h_)), j_)
                 }
                 mstore(o_, sub(j_, add(o_, 0x20)))
                 _o := encodeBytes(o_, o_, 0xc0)
@@ -264,6 +315,30 @@ library LibRLP {
                 mstore(0x40, add(result, 0x60)) // Allocate memory for `result`.
                 break
             }
+        }
+    }
+
+    /// @dev Returns the RLP encoding of `x`.
+    function encode(address x) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, 0x15)
+            let o := add(0x20, result)
+            mstore(o, shl(88, x))
+            mstore8(o, 0x94)
+            mstore(0x40, add(0x20, o))
+        }
+    }
+
+    /// @dev Returns the RLP encoding of `x`.
+    function encode(bool x) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, 1)
+            mstore(add(0x20, result), shl(248, or(shl(7, iszero(x)), iszero(iszero(x)))))
+            mstore(0x40, add(0x40, result))
         }
     }
 
