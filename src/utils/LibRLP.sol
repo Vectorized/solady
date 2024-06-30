@@ -39,6 +39,9 @@ library LibRLP {
     /// It is the user's responsibility to ensure that the nonce is valid
     /// (e.g. no dirty bits after packing / unpacking).
     ///
+    /// This is equivalent to:
+    /// `address(uint160(uint256(keccak256(LibRLP.l(deployer).p(nonce).encode()))))`.
+    ///
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function computeAddress(address deployer, uint256 nonce)
         internal
@@ -88,39 +91,39 @@ library LibRLP {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Note:
-    // - Addresses are treated like byte arrays of length 20, regardless of any leading zero bytes.
-    // - uint256s are converted to the shortest byte array and encoded.
+    // - addresses are treated like byte strings of length 20, agnostic of leading zero bytes.
+    // - uint256s are converted to byte strings, stripped of leading zero bytes, and encoded.
+    // - bools are converted to uint256s (`b ? 1 : 0`), then encoded with the uint256.
 
     /// @dev Returns a new empty list.
     function l() internal pure returns (List memory result) {}
 
-    /// @dev Returns a new list with `x` as the only element.
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
     function l(uint256 x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Returns a new list with `x` as the only element.
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
     function l(address x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Returns a new list with `x` as the only element.
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
     function l(bool x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Returns a new list with `x` as the only element.
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
     function l(bytes memory x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Returns a new list with `x` as the only element.
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
     function l(List memory x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Appends `x` to `list`.
-    /// Returns `list` for function chaining.
+    /// @dev Appends `x` to `list`. Returns `list` for function chaining.
     function p(List memory list, uint256 x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -141,8 +144,7 @@ library LibRLP {
         }
     }
 
-    /// @dev Appends `x` to `list`.
-    /// Returns `list` for function chaining.
+    /// @dev Appends `x` to `list`. Returns `list` for function chaining.
     function p(List memory list, address x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -155,8 +157,7 @@ library LibRLP {
         }
     }
 
-    /// @dev Appends `x` to `list`.
-    /// Returns `list` for function chaining.
+    /// @dev Appends `x` to `list`. Returns `list` for function chaining.
     function p(List memory list, bool x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -169,8 +170,7 @@ library LibRLP {
         }
     }
 
-    /// @dev Appends `x` to `list`.
-    /// Returns `list` for function chaining.
+    /// @dev Appends `x` to `list`. Returns `list` for function chaining.
     function p(List memory list, bytes memory x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -183,8 +183,7 @@ library LibRLP {
         }
     }
 
-    /// @dev Appends `x` to `list`.
-    /// Returns `list` for function chaining.
+    /// @dev Appends `x` to `list`. Returns `list` for function chaining.
     function p(List memory list, List memory x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {

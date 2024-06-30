@@ -9,7 +9,7 @@ contract LibRLPTest is SoladyTest {
     using LibRLP for LibRLP.List;
 
     function testComputeAddressDifferential(address deployer, uint256 nonce) public {
-        address computed = LibRLP.computeAddress(deployer, nonce);
+        address computed = LibRLP.computeAddress(_brutalized(deployer), nonce);
         assertEq(computed, computeAddressOriginal(deployer, nonce));
         assertEq(computed, computeAddressWithRLPList(deployer, nonce));
     }
