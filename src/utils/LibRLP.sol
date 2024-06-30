@@ -87,6 +87,10 @@ library LibRLP {
     /*                  RLP ENCODING OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    // Note:
+    // - Addresses are treated like byte arrays of length 20, regardless of any leading zero bytes.
+    // - uint256s are converted to the shortest byte array and encoded.
+
     /// @dev Returns a new empty list.
     function l() internal pure returns (List memory result) {}
 
@@ -97,6 +101,11 @@ library LibRLP {
 
     /// @dev Returns a new list with `x` as the only element.
     function l(address x) internal pure returns (List memory result) {
+        p(result, x);
+    }
+
+    /// @dev Returns a new list with `x` as the only element.
+    function l(bool x) internal pure returns (List memory result) {
         p(result, x);
     }
 
@@ -138,6 +147,20 @@ library LibRLP {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(4, shl(8, x))))
+            let v := or(shr(mload(list), result), mload(list))
+            let tail := shr(40, v)
+            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
+            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
+            result := list
+        }
+    }
+
+    /// @dev Appends `x` to `list`.
+    /// Returns `list` for function chaining.
+    function p(List memory list, bool x) internal pure returns (List memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, shl(48, iszero(iszero(x))))
             let v := or(shr(mload(list), result), mload(list))
             let tail := shr(40, v)
             mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
@@ -296,7 +319,6 @@ library LibRLP {
     }
 
     /// @dev Returns the RLP encoding of `x`.
-    /// Addresses are treated like byte arrays of length 20, regardless of any leading zero bytes.
     function encode(address x) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -306,6 +328,17 @@ library LibRLP {
             mstore(o, shl(88, x))
             mstore8(o, 0x94)
             mstore(0x40, add(0x20, o))
+        }
+    }
+
+    /// @dev Returns the RLP encoding of `x`.
+    function encode(bool x) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, 1)
+            mstore(add(0x20, result), shl(248, or(shl(7, iszero(x)), iszero(iszero(x)))))
+            mstore(0x40, add(0x40, result))
         }
     }
 

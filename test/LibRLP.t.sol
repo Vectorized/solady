@@ -294,6 +294,16 @@ contract LibRLPTest is SoladyTest {
         assertEq(computed, _encodeSimple(x));
     }
 
+    function testRLPEncodeBool(bool x) public {
+        _maybeBzztMemory();
+        bytes memory computed = LibRLP.encode(_brutalized(x));
+        _checkMemory(computed);
+        bytes memory expected = bytes(x ? hex"01" : hex"80");
+        assertEq(computed, expected);
+        uint256 y = x ? 1 : 0;
+        assertEq(LibRLP.l(y).p(y ^ 1).p(y).encode(), LibRLP.l(x).p(!x).p(x).encode());
+    }
+
     function _maybeBzztMemory() internal {
         uint256 r = _random();
         if (r & 0x000f == uint256(0)) _misalignFreeMemoryPointer();
