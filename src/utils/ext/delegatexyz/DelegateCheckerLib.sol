@@ -23,12 +23,6 @@ library DelegateCheckerLib {
     // Note:
     // - `to` is the delegate. Typically called the "hot wallet".
     // - `from` is the grantor of the delegate rights. Typically called the "cold vault".
-    // - For token delegate rights checks (ERC721, ERC20, ERC1155),
-    //   both factories fallback to `checkDelegateForContract` checks.
-    //   For delegated quantity queries (ERC20, ERC1155), this returns
-    //   the maximum uint256 amount if the fallback returns true.
-    // - For contract delegate rights checks, both factories fallback to
-    //   `checkDelegateForAll` checks.
 
     /// @dev Returns if `to` is a delegate of `from`.
     /// ```
@@ -94,6 +88,7 @@ library DelegateCheckerLib {
     ///     v2.checkDelegateForContract(to, from, contract_, "") ||
     ///     v1.checkDelegateForContract(to, from, contract_)
     /// ```
+    /// Returns true if `checkDelegateForAll(to, from)` returns true.
     function checkDelegateForContract(address to, address from, address contract_)
         internal
         view
@@ -129,6 +124,7 @@ library DelegateCheckerLib {
     ///     v2.checkDelegateForContract(to, from, contract_, rights) ||
     ///     (rights == "" && v1.checkDelegateForContract(to, from, contract_))
     /// ```
+    /// Returns true if `checkDelegateForAll(to, from, rights)` returns true.
     function checkDelegateForContract(address to, address from, address contract_, bytes32 rights)
         internal
         view
@@ -164,6 +160,7 @@ library DelegateCheckerLib {
     ///     v2.checkDelegateForERC721(to, from, contract_, id, "") ||
     ///     v1.checkDelegateForToken(to, from, contract_, id)
     /// ```
+    /// Returns true if `checkDelegateForContract(to, from, contract_)` returns true.
     function checkDelegateForERC721(address to, address from, address contract_, uint256 id)
         internal
         view
@@ -200,6 +197,7 @@ library DelegateCheckerLib {
     ///     v2.checkDelegateForERC721(to, from, contract_, id, rights) ||
     ///     (rights == "" && v1.checkDelegateForToken(to, from, contract_, id))
     /// ```
+    /// Returns true if `checkDelegateForContract(to, from, contract_, rights)` returns true.
     function checkDelegateForERC721(
         address to,
         address from,
@@ -241,6 +239,7 @@ library DelegateCheckerLib {
     ///         v1.checkDelegateForContract(to, from, contract_) ? type(uint256).max : 0
     ///     )
     /// ```
+    /// Returns `type(uint256).max` if `checkDelegateForContract(to, from, contract_)` returns true.
     function checkDelegateForERC20(address to, address from, address contract_)
         internal
         view
@@ -279,6 +278,7 @@ library DelegateCheckerLib {
     ///         (rights == "" && v1.checkDelegateForContract(to, from, contract_)) ? type(uint256).max : 0
     ///     )
     /// ```
+    /// Returns `type(uint256).max` if `checkDelegateForContract(to, from, contract_, rights)` returns true.
     function checkDelegateForERC20(address to, address from, address contract_, bytes32 rights)
         internal
         view
@@ -317,6 +317,7 @@ library DelegateCheckerLib {
     ///         v1.checkDelegateForContract(to, from, contract_, id) ? type(uint256).max : 0
     ///     )
     /// ```
+    /// Returns `type(uint256).max` if `checkDelegateForContract(to, from, contract_)` returns true.
     function checkDelegateForERC1155(address to, address from, address contract_, uint256 id)
         internal
         view
@@ -356,6 +357,7 @@ library DelegateCheckerLib {
     ///         (rights == "" && v1.checkDelegateForContract(to, from, contract_, id)) ? type(uint256).max : 0
     ///     )
     /// ```
+    /// Returns `type(uint256).max` if `checkDelegateForContract(to, from, contract_, rights)` returns true.
     function checkDelegateForERC1155(
         address to,
         address from,

@@ -211,6 +211,13 @@ contract DelegateCheckerLibTest is SoladyTest {
             v2.checkDelegateForContract(to, from, contract_, "")
                 || v1.checkDelegateForContract(to, from, contract_)
         );
+        if (DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from))) {
+            assertTrue(
+                DelegateCheckerLib.checkDelegateForContract(
+                    _brutalized(to), _brutalized(from), contract_
+                )
+            );
+        }
         _maybeBrutalizeMemory();
         assertEq(
             DelegateCheckerLib.checkDelegateForContract(
@@ -220,6 +227,13 @@ contract DelegateCheckerLibTest is SoladyTest {
                 || (rights == "" && v1.checkDelegateForContract(to, from, contract_))
         );
         _checkMemory();
+        if (DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from), rights)) {
+            assertTrue(
+                DelegateCheckerLib.checkDelegateForContract(
+                    _brutalized(to), _brutalized(from), contract_, rights
+                )
+            );
+        }
     }
 
     function testCheckDelegateForERC721(
@@ -244,6 +258,17 @@ contract DelegateCheckerLibTest is SoladyTest {
             v2.checkDelegateForERC721(to, from, contract_, id, "")
                 || v1.checkDelegateForToken(to, from, contract_, id)
         );
+        if (
+            DelegateCheckerLib.checkDelegateForContract(
+                _brutalized(to), _brutalized(from), contract_
+            )
+        ) {
+            assertTrue(
+                DelegateCheckerLib.checkDelegateForERC721(
+                    _brutalized(to), _brutalized(from), contract_, id
+                )
+            );
+        }
         _maybeBrutalizeMemory();
         assertEq(
             DelegateCheckerLib.checkDelegateForERC721(
@@ -253,6 +278,17 @@ contract DelegateCheckerLibTest is SoladyTest {
                 || (rights == "" && v1.checkDelegateForToken(to, from, contract_, id))
         );
         _checkMemory();
+        if (
+            DelegateCheckerLib.checkDelegateForContract(
+                _brutalized(to), _brutalized(from), contract_, rights
+            )
+        ) {
+            assertTrue(
+                DelegateCheckerLib.checkDelegateForERC721(
+                    _brutalized(to), _brutalized(from), contract_, id, rights
+                )
+            );
+        }
     }
 
     function testCheckDelegateForERC20(address to, address from, address contract_, bytes32 rights)
@@ -272,6 +308,18 @@ contract DelegateCheckerLibTest is SoladyTest {
                 v1.checkDelegateForContract(to, from, contract_) ? type(uint256).max : 0
             )
         );
+        if (
+            DelegateCheckerLib.checkDelegateForContract(
+                _brutalized(to), _brutalized(from), contract_
+            )
+        ) {
+            assertEq(
+                DelegateCheckerLib.checkDelegateForERC20(
+                    _brutalized(to), _brutalized(from), contract_
+                ),
+                type(uint256).max
+            );
+        }
         _maybeBrutalizeMemory();
         assertEq(
             DelegateCheckerLib.checkDelegateForERC20(
@@ -285,6 +333,18 @@ contract DelegateCheckerLibTest is SoladyTest {
             )
         );
         _checkMemory();
+        if (
+            DelegateCheckerLib.checkDelegateForContract(
+                _brutalized(to), _brutalized(from), contract_, rights
+            )
+        ) {
+            assertEq(
+                DelegateCheckerLib.checkDelegateForERC20(
+                    _brutalized(to), _brutalized(from), contract_, rights
+                ),
+                type(uint256).max
+            );
+        }
     }
 
     function testCheckDelegateForERC1155(
@@ -311,6 +371,18 @@ contract DelegateCheckerLibTest is SoladyTest {
                 v1.checkDelegateForContract(to, from, contract_) ? type(uint256).max : 0
             )
         );
+        if (
+            DelegateCheckerLib.checkDelegateForContract(
+                _brutalized(to), _brutalized(from), contract_
+            )
+        ) {
+            assertEq(
+                DelegateCheckerLib.checkDelegateForERC1155(
+                    _brutalized(to), _brutalized(from), contract_, id
+                ),
+                type(uint256).max
+            );
+        }
         _maybeBrutalizeMemory();
         assertEq(
             DelegateCheckerLib.checkDelegateForERC1155(
@@ -324,5 +396,17 @@ contract DelegateCheckerLibTest is SoladyTest {
             )
         );
         _checkMemory();
+        if (
+            DelegateCheckerLib.checkDelegateForContract(
+                _brutalized(to), _brutalized(from), contract_, rights
+            )
+        ) {
+            assertEq(
+                DelegateCheckerLib.checkDelegateForERC1155(
+                    _brutalized(to), _brutalized(from), contract_, id, rights
+                ),
+                type(uint256).max
+            );
+        }
     }
 }
