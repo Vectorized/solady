@@ -94,6 +94,8 @@ library LibRLP {
     // - addresses are treated like byte strings of length 20, agnostic of leading zero bytes.
     // - uint256s are converted to byte strings, stripped of leading zero bytes, and encoded.
     // - bools are converted to uint256s (`b ? 1 : 0`), then encoded with the uint256.
+    // - For bytes1 to bytes32, you must manually convert them to bytes memory
+    //   with `abi.encodePacked(x)` before encoding.
 
     /// @dev Returns a new empty list.
     function l() internal pure returns (List memory result) {}
