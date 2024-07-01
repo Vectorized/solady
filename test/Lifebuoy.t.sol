@@ -38,7 +38,7 @@ contract LifebuoyTest is SoladyTest {
     }
 
     function _deployViaCreate(address deployer, bytes memory initcode) internal returns (address) {
-        (bool success, bytes memory result) = deployer.call(type(MockERC721).creationCode);
+        (bool success, bytes memory result) = deployer.call(initcode);
         assertTrue(success);
         return abi.decode(result, (address));
     }
@@ -50,24 +50,22 @@ contract LifebuoyTest is SoladyTest {
         vm.etch(deployer, hex"3d3d363d3d37363d34f09052602081f3");
         for (uint256 i; i != 3; ++i) {
             r = r >> 32;
+            address expected;
             if (r & 31 == 0) {
-                address expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
-                address deployed = _deployViaCreate(deployer, type(MockERC721).creationCode);
-                assertEq(deployed, expected);
+                expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
+                assertEq(_deployViaCreate(deployer, type(MockERC721).creationCode), expected);
                 continue;
             }
             r = r >> 8;
             if (r & 1 == 0) {
-                address expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
+                expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
                 bytes memory initcode = type(MockLifebuoyOwned).creationCode;
                 initcode = abi.encodePacked(initcode, owner);
-                address deployed = _deployViaCreate(deployer, initcode);
-                assertEq(deployed, expected);
+                assertEq(_deployViaCreate(deployer, initcode), expected);
                 continue;
             }
-            address expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
-            address deployed = _deployViaCreate(deployer, type(MockLifebuoy).creationCode);
-            assertEq(deployed, expected);
+            expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
+            assertEq(_deployViaCreate(deployer, type(MockLifebuoy).creationCode), expected);
         }
     }
 
