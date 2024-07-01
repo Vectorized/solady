@@ -47,7 +47,8 @@ contract LibRLPTest is SoladyTest {
         pure
         returns (address)
     {
-        return address(uint160(uint256(keccak256(LibRLP.l(deployer).p(nonce).encode()))));
+        return
+            address(uint160(uint256(keccak256(LibRLP.l(_brutalized(deployer)).p(nonce).encode()))));
     }
 
     function computeAddressOriginal(address deployer, uint256 nonce)
