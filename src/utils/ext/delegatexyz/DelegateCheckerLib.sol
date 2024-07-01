@@ -266,7 +266,7 @@ library DelegateCheckerLib {
             if not(amount) {
                 mstore(m, 0x90c9a2d0) // `checkDelegateForContract(address,address,address)`.
                 let t := staticcall(gas(), DELEGATE_REGISTRY_V1, add(m, 0x1c), 0x64, m, 0x20)
-                amount := sub(0, and(eq(mload(m), 1), t))
+                amount := or(sub(0, and(eq(mload(m), 1), t)), amount)
             }
         }
     }
@@ -304,7 +304,7 @@ library DelegateCheckerLib {
             if iszero(or(rights, iszero(not(amount)))) {
                 mstore(m, 0x90c9a2d0) // `checkDelegateForContract(address,address,address)`.
                 let t := staticcall(gas(), DELEGATE_REGISTRY_V1, add(m, 0x1c), 0x64, m, 0x20)
-                amount := sub(0, and(eq(mload(m), 1), t))
+                amount := or(sub(0, and(eq(mload(m), 1), t)), amount)
             }
         }
     }
@@ -343,7 +343,7 @@ library DelegateCheckerLib {
             if not(amount) {
                 mstore(m, 0x90c9a2d0) // `checkDelegateForContract(address,address,address)`.
                 let t := staticcall(gas(), DELEGATE_REGISTRY_V1, add(m, 0x1c), 0x64, m, 0x20)
-                amount := sub(0, and(eq(mload(m), 1), t))
+                amount := or(sub(0, and(eq(mload(m), 1), t)), amount)
             }
         }
     }
@@ -384,7 +384,7 @@ library DelegateCheckerLib {
             if iszero(or(rights, iszero(not(amount)))) {
                 mstore(m, 0x90c9a2d0) // `checkDelegateForContract(address,address,address)`.
                 let t := staticcall(gas(), DELEGATE_REGISTRY_V1, add(m, 0x1c), 0x64, m, 0x20)
-                amount := sub(0, and(eq(mload(m), 1), t))
+                amount := or(sub(0, and(eq(mload(m), 1), t)), amount)
             }
         }
     }
