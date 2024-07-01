@@ -160,8 +160,8 @@ contract DelegateCheckerLibTest is SoladyTest {
     }
 
     function _maybeMutateRights(bytes32 rights) internal returns (bytes32) {
-        if (_random() % 2 == 0) return bytes32(0);
-        if (_random() % 2 == 0) return bytes32(_random());
+        if (_random() % 32 == 0) return bytes32(0);
+        if (_random() % 8 == 0) return bytes32(_random());
         return rights;
     }
 
@@ -200,6 +200,7 @@ contract DelegateCheckerLibTest is SoladyTest {
         bytes32 rights
     ) public {
         _maybeDelegateContract(to, from, contract_, rights);
+        rights = _maybeMutateRights(rights);
         if (_random() % 2 == 0) _maybeDelegateAll(to, from, rights);
         rights = _maybeMutateRights(rights);
         _maybeBrutalizeMemory();
@@ -229,7 +230,9 @@ contract DelegateCheckerLibTest is SoladyTest {
         bytes32 rights
     ) public {
         _maybeDelegateERC721(to, from, contract_, id, rights);
+        rights = _maybeMutateRights(rights);
         if (_random() % 2 == 0) _maybeDelegateContract(to, from, contract_, rights);
+        rights = _maybeMutateRights(rights);
         if (_random() % 2 == 0) _maybeDelegateAll(to, from, rights);
         rights = _maybeMutateRights(rights);
         id = _maybeMutateId(id);
@@ -256,7 +259,9 @@ contract DelegateCheckerLibTest is SoladyTest {
         public
     {
         _maybeDelegateERC20(to, from, contract_, rights);
+        rights = _maybeMutateRights(rights);
         if (_random() % 2 == 0) _maybeDelegateContract(to, from, contract_, rights);
+        rights = _maybeMutateRights(rights);
         if (_random() % 2 == 0) _maybeDelegateAll(to, from, rights);
         rights = _maybeMutateRights(rights);
         _maybeBrutalizeMemory();
@@ -290,7 +295,9 @@ contract DelegateCheckerLibTest is SoladyTest {
         bytes32 rights
     ) public {
         _maybeDelegateERC1155(to, from, contract_, id, rights);
+        rights = _maybeMutateRights(rights);
         if (_random() % 2 == 0) _maybeDelegateContract(to, from, contract_, rights);
+        rights = _maybeMutateRights(rights);
         if (_random() % 2 == 0) _maybeDelegateAll(to, from, rights);
         rights = _maybeMutateRights(rights);
         id = _maybeMutateId(id);
