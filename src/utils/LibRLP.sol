@@ -94,6 +94,8 @@ library LibRLP {
     // - addresses are treated like byte strings of length 20, agnostic of leading zero bytes.
     // - uint256s are converted to byte strings, stripped of leading zero bytes, and encoded.
     // - bools are converted to uint256s (`b ? 1 : 0`), then encoded with the uint256.
+    // - For bytes1 to bytes32, you must manually convert them to bytes memory
+    //   with `abi.encodePacked(x)` before encoding.
 
     /// @dev Returns a new empty list.
     function l() internal pure returns (List memory result) {}
@@ -125,13 +127,10 @@ library LibRLP {
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
     function p(List memory list, uint256 x) internal pure returns (List memory result) {
+        result._data = x << 48;
+        _updateTail(list, result);
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(result, shl(48, x))
-            let v := or(shr(mload(list), result), mload(list))
-            let tail := shr(40, v)
-            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
-            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
             // If `x` is too big, we cannot pack it inline with the node.
             // We'll have to allocate a new slot for `x` and store the pointer to it in the node.
             if shr(208, x) {
@@ -140,8 +139,8 @@ library LibRLP {
                 mstore(0x40, add(m, 0x20))
                 mstore(result, shl(40, or(1, shl(8, m))))
             }
-            result := list
         }
+        result = list;
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
@@ -149,12 +148,9 @@ library LibRLP {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(4, shl(8, x))))
-            let v := or(shr(mload(list), result), mload(list))
-            let tail := shr(40, v)
-            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
-            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
-            result := list
         }
+        _updateTail(list, result);
+        result = list;
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
@@ -162,12 +158,9 @@ library LibRLP {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(48, iszero(iszero(x))))
-            let v := or(shr(mload(list), result), mload(list))
-            let tail := shr(40, v)
-            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
-            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
-            result := list
         }
+        _updateTail(list, result);
+        result = list;
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
@@ -175,12 +168,9 @@ library LibRLP {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(2, shl(8, x))))
-            let v := or(shr(mload(list), result), mload(list))
-            let tail := shr(40, v)
-            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
-            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
-            result := list
         }
+        _updateTail(list, result);
+        result = list;
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
@@ -188,12 +178,9 @@ library LibRLP {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(3, shl(8, x))))
-            let v := or(shr(mload(list), result), mload(list))
-            let tail := shr(40, v)
-            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
-            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
-            result := list
         }
+        _updateTail(list, result);
+        result = list;
     }
 
     /// @dev Returns the RLP encoding of `list`.
@@ -375,6 +362,21 @@ library LibRLP {
                 mstore(0x40, add(end, 0x20)) // Allocate memory.
                 break
             }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Updates the tail in `list`.
+    function _updateTail(List memory list, List memory result) private pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let v := or(shr(mload(list), result), mload(list))
+            let tail := shr(40, v)
+            mstore(list, xor(shl(40, xor(tail, result)), v)) // Update the tail.
+            mstore(tail, or(mload(tail), result)) // Make the previous tail point to `result`.
         }
     }
 }
