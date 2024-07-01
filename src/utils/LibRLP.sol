@@ -118,6 +118,11 @@ library LibRLP {
         p(result, x);
     }
 
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x, n)`.
+    function l(bytes32 x, uint256 n) internal pure returns (List memory result) {
+        p(result, x, n);
+    }
+
     /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
     function l(List memory x) internal pure returns (List memory result) {
         p(result, x);
@@ -165,6 +170,20 @@ library LibRLP {
     function p(List memory list, bytes memory x) internal pure returns (List memory result) {
         /// @solidity memory-safe-assembly
         assembly {
+            mstore(result, shl(40, or(2, shl(8, x))))
+        }
+        _updateTail(list, result);
+        result = list;
+    }
+
+    /// @dev Appends `x` as an `n` bytes string to `list`. Returns `list` for function chaining.
+    function p(List memory list, bytes32 x, uint256 n) internal pure returns (List memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, n)
+            mstore(add(m, 0x20), x)
+            mstore(0x40, add(m, 0x40))
             mstore(result, shl(40, or(2, shl(8, x))))
         }
         _updateTail(list, result);
