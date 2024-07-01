@@ -43,6 +43,11 @@ contract LifebuoyTest is SoladyTest {
         return abi.decode(result, (address));
     }
 
+    function _testLifebuoyCreateDeployment(address deployer, bytes memory initcode) internal {
+        address expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
+        assertEq(_deployViaCreate(deployer, initcode), expected);
+    }
+
     function testLifebuoyCreateDeployment(address deployer, address owner, uint256 r) public {
         while (deployer.code.length != 0 || uint160(deployer) < 0xffffffffff) {
             deployer = _randomNonZeroAddress();
@@ -50,22 +55,18 @@ contract LifebuoyTest is SoladyTest {
         vm.etch(deployer, hex"3d3d363d3d37363d34f09052602081f3");
         for (uint256 i; i != 3; ++i) {
             r = r >> 32;
-            address expected;
             if (r & 31 == 0) {
-                expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
-                assertEq(_deployViaCreate(deployer, type(MockERC721).creationCode), expected);
+                _testLifebuoyCreateDeployment(deployer, type(MockERC721).creationCode);
                 continue;
             }
             r = r >> 8;
             if (r & 1 == 0) {
-                expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
                 bytes memory initcode = type(MockLifebuoyOwned).creationCode;
-                initcode = abi.encodePacked(initcode, owner);
-                assertEq(_deployViaCreate(deployer, initcode), expected);
+                initcode = abi.encodePacked(initcode, abi.encode(owner));
+                _testLifebuoyCreateDeployment(deployer, initcode);
                 continue;
             }
-            expected = LibRLP.computeAddress(deployer, vm.getNonce(deployer));
-            assertEq(_deployViaCreate(deployer, type(MockLifebuoy).creationCode), expected);
+            _testLifebuoyCreateDeployment(deployer, type(MockLifebuoy).creationCode);
         }
     }
 
