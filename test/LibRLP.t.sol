@@ -47,8 +47,7 @@ contract LibRLPTest is SoladyTest {
         pure
         returns (address)
     {
-        return
-            address(uint160(uint256(keccak256(LibRLP.l(_brutalized(deployer)).p(nonce).encode()))));
+        return address(uint160(uint256(keccak256(LibRLP.l(deployer).p(nonce).encode()))));
     }
 
     function computeAddressOriginal(address deployer, uint256 nonce)
@@ -247,6 +246,15 @@ contract LibRLPTest is SoladyTest {
         assertEq(LibRLP.encode(s), abi.encodePacked(hex"b9fffe", s));
     }
 
+    function testRLPEncodeAddressViaList(address a0, address a1) public {
+        _maybeBzztMemory();
+        bytes memory computed = LibRLP.l(_brutalized(a0)).p(_brutalized(a1)).encode();
+        _checkMemory(computed);
+        _maybeBzztMemory();
+        bytes memory expected = LibRLP.l(abi.encodePacked(a0)).p(abi.encodePacked(a1)).encode();
+        assertEq(computed, expected);
+    }
+
     function testRLPEncodeListDifferential(bytes memory x0, uint256 x1) public {
         _maybeBzztMemory();
         LibRLP.List memory list = LibRLP.l(x0).p(x1).p(x1).p(x0);
@@ -287,7 +295,7 @@ contract LibRLPTest is SoladyTest {
 
     function testRLPEncodeAddressDifferential(address x) public {
         _maybeBzztMemory();
-        bytes memory computed = LibRLP.encode(x);
+        bytes memory computed = LibRLP.encode(_brutalized(x));
         _checkAndMaybeBzztMemory(computed);
         bytes memory computed2 = _encode(x);
         _checkAndMaybeBzztMemory(computed2);
