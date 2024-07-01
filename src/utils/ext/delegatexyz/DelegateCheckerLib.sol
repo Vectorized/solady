@@ -8,11 +8,11 @@ library DelegateCheckerLib {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The canonical elegate registry V1.
+    /// @dev The canonical delegate registry V1.
     /// See: https://etherscan.io/address/0x00000000000076a84fef008cdabe6409d2fe638b
     address internal constant DELEGATE_REGISTRY_V1 = 0x00000000000076A84feF008CDAbe6409d2FE638B;
 
-    /// @dev The canonical elegate registry V2.
+    /// @dev The canonical delegate registry V2.
     /// See: https://etherscan.io/address/0x00000000000000447e69651d841bD8D104Bed493
     address internal constant DELEGATE_REGISTRY_V2 = 0x00000000000000447e69651d841bD8D104Bed493;
 
@@ -22,12 +22,12 @@ library DelegateCheckerLib {
 
     // Note:
     // - `to` is the delegate. Typically called the "hot wallet".
-    // - `from` is the grantor of the delegate. Typically called the "cold vault".
-    // - For token authorization checks (ERC721, ERC20, ERC1155),
+    // - `from` is the grantor of the delegate rights. Typically called the "cold vault".
+    // - For token delegate rights checks (ERC721, ERC20, ERC1155),
     //   both factories fallback to `checkDelegateForContract` checks.
     //   For delegated quantity queries (ERC20, ERC1155), this returns
     //   the maximum uint256 amount if the fallback returns true.
-    // - For contract authorization checks, both factories fallback to
+    // - For contract delegate rights checks, both factories fallback to
     //   `checkDelegateForAll` checks.
 
     /// @dev Returns if `to` is a delegate of `from`.
