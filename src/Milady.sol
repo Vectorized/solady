@@ -56,6 +56,7 @@ import "./utils/SafeTransferLib.sol";
 import "./utils/SignatureCheckerLib.sol";
 import "./utils/UUPSUpgradeable.sol";
 import "./utils/UpgradeableBeacon.sol";
+import "./utils/ext/delegatexyz/DelegateCheckerLib.sol";
 
 library Milady {
     string internal constant WEBSITE = "https://miladymaker.net";

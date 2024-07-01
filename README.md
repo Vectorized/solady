@@ -85,7 +85,8 @@ utils
 ├─ FixedPointMathLib — "Arithmetic library with operations for fixed-point numbers"
 ├─ SafeCastLib — "Library for integer casting that reverts on overflow"
 ├─ DateTimeLib — "Library for date time operations"
-└─ Lifebuoy — "Class that allows for rescue of ETH, ERC20, ERC721 tokens"
+├─ Lifebuoy — "Class that allows for rescue of ETH, ERC20, ERC721 tokens"
+└─ ext — "Utilities for external protocols"
 ```
 
 ## Directories
