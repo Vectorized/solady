@@ -76,6 +76,7 @@ interface IDelegateRegistryV2 {
 contract DelegateCheckerLibTest is SoladyTest {
     IDelegateRegistryV1 v1;
     IDelegateRegistryV2 v2;
+    bool testForGas;
 
     function setUp() public {
         vm.etch(
@@ -91,6 +92,7 @@ contract DelegateCheckerLibTest is SoladyTest {
     }
 
     function _randomAmount() internal returns (uint256) {
+        if (testForGas) return 111;
         uint256 r = _random();
         if (r & 0x03 == 0) return type(uint256).max;
         if (r & 0x30 == 0) return 0;
@@ -98,7 +100,7 @@ contract DelegateCheckerLibTest is SoladyTest {
     }
 
     function _maybeDelegateAll(address to, address from, bytes32 rights) internal {
-        uint256 r = _random();
+        uint256 r = testForGas ? 0 : _random();
         if (r & 0x01 == 0) {
             vm.prank(from);
             v1.delegateForAll(to, true);
@@ -112,7 +114,7 @@ contract DelegateCheckerLibTest is SoladyTest {
     function _maybeDelegateContract(address to, address from, address contract_, bytes32 rights)
         internal
     {
-        uint256 r = _random();
+        uint256 r = testForGas ? 0 : _random();
         if (r & 0x001 == 0) {
             vm.prank(from);
             v1.delegateForContract(to, contract_, true);
@@ -131,7 +133,7 @@ contract DelegateCheckerLibTest is SoladyTest {
         uint256 id,
         bytes32 rights
     ) internal {
-        uint256 r = _random();
+        uint256 r = testForGas ? 0 : _random();
         if (r & 0x001 == 0) {
             vm.prank(from);
             v1.delegateForToken(to, contract_, id, true);
@@ -148,7 +150,7 @@ contract DelegateCheckerLibTest is SoladyTest {
     function _maybeDelegateERC20(address to, address from, address contract_, bytes32 rights)
         internal
     {
-        uint256 r = _random();
+        uint256 r = testForGas ? 0 : _random();
         if (r & 0x01 == 0) {
             vm.prank(from);
             v2.delegateERC20(to, contract_, rights, _randomAmount());
@@ -165,7 +167,7 @@ contract DelegateCheckerLibTest is SoladyTest {
         uint256 id,
         bytes32 rights
     ) internal {
-        uint256 r = _random();
+        uint256 r = testForGas ? 0 : _random();
         if (r & 0x01 == 0) {
             vm.prank(from);
             v2.delegateERC1155(to, contract_, id, rights, _randomAmount());
@@ -176,23 +178,23 @@ contract DelegateCheckerLibTest is SoladyTest {
     }
 
     function _maybeMutateRights(bytes32 rights) internal returns (bytes32) {
-        uint256 r = _random();
+        uint256 r = testForGas ? 0 : _random();
         if (r & 0xf0 == 0) return bytes32(0);
         if (r & 0x07 == 0) return bytes32(_random());
         return rights;
     }
 
     function _maybeMutateId(uint256 id) internal returns (uint256) {
-        uint256 r = _random();
+        uint256 r = testForGas ? 0 : _random();
         if (r & 0x01 == 0) return 0;
         if (r & 0x10 == 0) return _random();
         return id;
     }
 
     modifier maybeBrutalizeMemory() {
-        if (_random() & 0x1f == 0) _brutalizeMemory();
+        if (!testForGas && _random() & 0x1f == 0) _brutalizeMemory();
         _;
-        _checkMemory();
+        if (!testForGas) _checkMemory();
     }
 
     function _checkDelegateForAll(address to, address from)
@@ -295,6 +297,11 @@ contract DelegateCheckerLibTest is SoladyTest {
         );
     }
 
+    function testCheckDelegateForAll() public {
+        testForGas = true;
+        testCheckDelegateForAll(address(111), address(222), bytes32(0));
+    }
+
     function testCheckDelegateForAll(address to, address from, bytes32 rights) public {
         _maybeDelegateAll(to, from, rights);
         rights = _maybeMutateRights(rights);
@@ -307,6 +314,11 @@ contract DelegateCheckerLibTest is SoladyTest {
             v2.checkDelegateForAll(to, from, rights)
                 || (rights == "" && v1.checkDelegateForAll(to, from))
         );
+    }
+
+    function testCheckDelegateForContract() public {
+        testForGas = true;
+        testCheckDelegateForContract(address(111), address(222), address(333), bytes32(0));
     }
 
     function testCheckDelegateForContract(
@@ -333,6 +345,11 @@ contract DelegateCheckerLibTest is SoladyTest {
         if (_checkDelegateForAll(to, from, rights)) {
             assertTrue(_checkDelegateForContract(to, from, contract_, rights));
         }
+    }
+
+    function testCheckDelegateForERC721() public {
+        testForGas = true;
+        testCheckDelegateForERC721(address(111), address(222), address(333), 1, bytes32(0));
     }
 
     function testCheckDelegateForERC721(
@@ -363,6 +380,11 @@ contract DelegateCheckerLibTest is SoladyTest {
         }
     }
 
+    function testCheckDelegateForERC20() public {
+        testForGas = true;
+        testCheckDelegateForERC20(address(111), address(222), address(333), bytes32(0));
+    }
+
     function testCheckDelegateForERC20(address to, address from, address contract_, bytes32 rights)
         public
     {
@@ -390,6 +412,11 @@ contract DelegateCheckerLibTest is SoladyTest {
         if (_checkDelegateForContract(to, from, contract_, rights)) {
             assertEq(_checkDelegateForERC20(to, from, contract_, rights), type(uint256).max);
         }
+    }
+
+    function testCheckDelegateForERC1155() public {
+        testForGas = true;
+        testCheckDelegateForERC1155(address(111), address(222), address(333), 11, bytes32(0));
     }
 
     function testCheckDelegateForERC1155(
