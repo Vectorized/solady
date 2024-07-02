@@ -3,19 +3,18 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
-import {LibPRNG} from "../src/utils/LibPRNG.sol";
+import {PRNG} from "../src/utils/LibPRNG.sol";
 import {RedBlackTreeLib} from "../src/utils/RedBlackTreeLib.sol";
 
 contract RedBlackTreeLibTest is SoladyTest {
     using RedBlackTreeLib for *;
-    using LibPRNG for *;
 
     RedBlackTreeLib.Tree tree;
     RedBlackTreeLib.Tree tree2;
 
     function testRedBlackTreeInsertBenchStep() public {
         unchecked {
-            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            PRNG memory prng = PRNG(123);
             uint256 n = 128;
             uint256 m = (1 << 160) - 1;
             for (uint256 i; i != n; ++i) {
@@ -28,7 +27,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeInsertBenchUint160() public {
         unchecked {
-            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            PRNG memory prng = PRNG(123);
             uint256 n = 128;
             uint256[] memory a = _makeArray(n);
             uint256 m = (1 << 160) - 1;
@@ -42,7 +41,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeBenchUint160() public {
         unchecked {
-            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            PRNG memory prng = PRNG(123);
             uint256 n = 128;
             uint256[] memory a = _makeArray(n);
             uint256 m = (1 << 160) - 1;
@@ -61,7 +60,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeInsertBenchUint256() public {
         unchecked {
-            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            PRNG memory prng = PRNG(123);
             uint256 n = 128;
             uint256[] memory a = _makeArray(n);
             for (uint256 i; i != n; ++i) {
@@ -74,7 +73,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeBenchUint256() public {
         unchecked {
-            LibPRNG.PRNG memory prng = LibPRNG.PRNG(123);
+            PRNG memory prng = PRNG(123);
             uint256 n = 128;
             uint256[] memory a = _makeArray(n);
             for (uint256 i; i != n; ++i) {
@@ -185,7 +184,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
         _testIterateTree();
 
-        LibPRNG.PRNG memory prng = LibPRNG.PRNG(_random());
+        PRNG memory prng = PRNG(_random());
         prng.shuffle(a);
 
         unchecked {
@@ -407,7 +406,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                 assertEq(retrieved, values);
                 n = values.length;
                 if (_random() & 1 == 0) {
-                    LibPRNG.PRNG memory prng = LibPRNG.PRNG(_random());
+                    PRNG memory prng = PRNG(_random());
                     prng.shuffle(values);
                     for (uint256 i; i != n; ++i) {
                         _brutalizeScratchSpace();

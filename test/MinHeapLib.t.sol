@@ -4,11 +4,10 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {MinHeapLib} from "../src/utils/MinHeapLib.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
-import {LibPRNG} from "../src/utils/LibPRNG.sol";
+import {PRNG} from "../src/utils/LibPRNG.sol";
 
 contract MinHeapLibTest is SoladyTest {
     using MinHeapLib for *;
-    using LibPRNG for *;
 
     MinHeapLib.Heap heap0;
 
@@ -498,7 +497,7 @@ contract MinHeapLibTest is SoladyTest {
 
     function testMemHeapSmallestGas() public {
         MinHeapLib.MemHeap memory heapA;
-        LibPRNG.PRNG memory prng;
+        PRNG memory prng;
         unchecked {
             for (uint256 i; i < 2048; ++i) {
                 heapA.push(prng.next());
@@ -604,7 +603,7 @@ contract MinHeapLibTest is SoladyTest {
 
     function testMemHeapEnqueueGas() public pure {
         MinHeapLib.MemHeap memory heapA;
-        LibPRNG.PRNG memory prng;
+        PRNG memory prng;
         unchecked {
             for (uint256 t = 8; t < 16; ++t) {
                 uint256 maxLength = t;

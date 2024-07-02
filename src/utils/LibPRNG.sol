@@ -1,6 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+/// @dev A pseudorandom number state in memory.
+struct PRNG {
+    uint256 state;
+}
+
+/// @dev A lazy Fisher-Yates shuffler for a range `[0..n)` in storage.
+struct LazyShuffler {
+    // Bits Layout:
+    // - [0..31]    `numShuffled`
+    // - [32..223]  `permutationSlot`
+    // - [224..255] `length`
+    uint256 _state;
+}
+
+using LibPRNG for PRNG global;
+using LibPRNG for LazyShuffler global;
+
 /// @notice Library for generating pseudorandom numbers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibPRNG.sol)
 /// @author LazyShuffler based on NextShuffler by aschlosberg (divergencearran)
@@ -34,24 +51,6 @@ library LibPRNG {
 
     /// @dev The scalar of ETH and most ERC20s.
     uint256 internal constant WAD = 1e18;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STRUCTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev A pseudorandom number state in memory.
-    struct PRNG {
-        uint256 state;
-    }
-
-    /// @dev A lazy Fisher-Yates shuffler for a range `[0..n)` in storage.
-    struct LazyShuffler {
-        // Bits Layout:
-        // - [0..31]    `numShuffled`
-        // - [32..223]  `permutationSlot`
-        // - [224..255] `length`
-        uint256 _state;
-    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OPERATIONS                         */

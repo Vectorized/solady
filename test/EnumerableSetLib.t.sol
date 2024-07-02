@@ -4,11 +4,10 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {EnumerableSetLib} from "../src/utils/EnumerableSetLib.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
-import {LibPRNG} from "../src/utils/LibPRNG.sol";
+import {PRNG} from "../src/utils/LibPRNG.sol";
 
 contract EnumerableSetLibTest is SoladyTest {
     using EnumerableSetLib for *;
-    using LibPRNG for *;
 
     uint256 private constant _ZERO_SENTINEL = 0xfbb67fda52d4bfb8bf;
 
@@ -263,7 +262,7 @@ contract EnumerableSetLibTest is SoladyTest {
 
     function _testEnumerableAddressSetFuzz(uint256 n) internal {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             prng.state = n;
             uint256[] memory additions = new uint256[](prng.next() % 16);
             uint256 mask = _random() % 2 == 0 ? 7 : 15;
@@ -341,7 +340,7 @@ contract EnumerableSetLibTest is SoladyTest {
 
     function _testEnumerableBytes32SetFuzz(uint256 n) internal {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             prng.state = n;
             uint256[] memory additions = new uint256[](prng.next() % 16);
             uint256 mask = _random() % 2 == 0 ? 7 : 15;

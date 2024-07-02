@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {LibPRNG} from "../src/utils/LibPRNG.sol";
+import {LibPRNG, PRNG, LazyShuffler} from "../src/utils/LibPRNG.sol";
 import {LibSort} from "../src/utils/LibSort.sol";
 import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
@@ -53,17 +53,16 @@ library RunningStatsLib {
 }
 
 contract LibPRNGTest is SoladyTest {
-    using LibPRNG for *;
     using RunningStatsLib for *;
 
-    LibPRNG.LazyShuffler internal _lazyShuffler0;
-    LibPRNG.LazyShuffler internal _lazyShuffler1;
+    LazyShuffler internal _lazyShuffler0;
+    LazyShuffler internal _lazyShuffler1;
 
     function testPRNGNext() public {
         unchecked {
             // Super unlikely to fail.
             for (uint256 i; i < 32; ++i) {
-                LibPRNG.PRNG memory prng;
+                PRNG memory prng;
                 prng.seed(i);
                 uint256 r0 = prng.next();
                 uint256 r1 = prng.next();
@@ -79,7 +78,7 @@ contract LibPRNGTest is SoladyTest {
 
     function testPRNGUniform() public {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             for (uint256 i = 1; i < 32; ++i) {
                 for (uint256 j; j < 32; ++j) {
                     assertTrue(prng.uniform(i) < i);
@@ -105,7 +104,7 @@ contract LibPRNGTest is SoladyTest {
     function testPRNGShuffleGas() public pure {
         unchecked {
             uint256[] memory a = new uint256[](10000);
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             prng.shuffle(a);
         }
     }
@@ -113,7 +112,7 @@ contract LibPRNGTest is SoladyTest {
     function testPRNGShuffleBytesGas() public pure {
         unchecked {
             bytes memory a = new bytes(10000);
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             prng.shuffle(a);
         }
     }
@@ -128,7 +127,7 @@ contract LibPRNGTest is SoladyTest {
 
     function testPRNGShuffle() public {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             _TestPRNGShuffleTemps memory t;
             for (uint256 s = 1; s < 9; ++s) {
                 t.a = new int256[](1 << s); // 2, 4, 8, 16, ...
@@ -163,7 +162,7 @@ contract LibPRNGTest is SoladyTest {
 
     function _testPRNGShuffleDistribution() internal {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             prng.state = _random();
             _TestPRNGShuffleTemps memory t;
             t.a = new int256[](8);
@@ -196,7 +195,7 @@ contract LibPRNGTest is SoladyTest {
 
     function _testPRNGPartialShuffle(uint256 state) internal {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             prng.state = state;
             for (uint256 s = 1; s < 9; ++s) {
                 uint256[] memory a = new uint256[](1 << s);
@@ -235,7 +234,7 @@ contract LibPRNGTest is SoladyTest {
 
     function _testPRNGPartialShuffleDistribution(uint256 k) internal {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             prng.state = _random();
             _TestPRNGShuffleTemps memory t;
             t.a = new int256[](8);
@@ -262,7 +261,7 @@ contract LibPRNGTest is SoladyTest {
 
     function testPRNGShuffleBytes() public {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             for (uint256 s = 1; s < 9; ++s) {
                 uint256 n = 1 << s; // 2, 4, 8, 16, ...
                 bytes memory a = new bytes(n);
@@ -298,7 +297,7 @@ contract LibPRNGTest is SoladyTest {
 
     function testPRNGGas() public {
         unchecked {
-            LibPRNG.PRNG memory prng;
+            PRNG memory prng;
             uint256 randomness;
             for (uint256 i; i < 256; i++) {
                 randomness = prng.next();
@@ -336,7 +335,7 @@ contract LibPRNGTest is SoladyTest {
     }
 
     function testStandardNormalWad() public {
-        LibPRNG.PRNG memory prng;
+        PRNG memory prng;
         RunningStatsLib.RunningStats memory rs;
         unchecked {
             uint256 n = 1000;
@@ -358,7 +357,7 @@ contract LibPRNGTest is SoladyTest {
     }
 
     function testExponentialWad() public {
-        LibPRNG.PRNG memory prng;
+        PRNG memory prng;
         RunningStatsLib.RunningStats memory rs;
         unchecked {
             uint256 n = 1000;
