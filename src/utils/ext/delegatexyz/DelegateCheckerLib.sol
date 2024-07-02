@@ -33,10 +33,10 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(0x00, 0xe839bd53) // `checkDelegateForAll(address,address,bytes32)`.
-            mstore(0x20, shr(96, shl(96, to)))
-            mstore(0x40, shr(96, shl(96, from)))
             // `0x60` is already 0.
+            mstore(0x40, from)
+            mstore(0x2c, shl(96, to))
+            mstore(0x0c, 0xe839bd53000000000000000000000000) // `checkDelegateForAll(address,address,bytes32)`.
             isValid :=
                 and(eq(mload(0x00), 1), staticcall(gas(), DELEGATE_REGISTRY_V2, 0x1c, 0x64, 0x00, 0x20))
             if iszero(isValid) {
@@ -64,10 +64,10 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(0x00, 0xe839bd53) // `checkDelegateForAll(address,address,bytes32)`.
-            mstore(0x20, shr(96, shl(96, to)))
-            mstore(0x40, shr(96, shl(96, from)))
             mstore(0x60, rights)
+            mstore(0x40, from)
+            mstore(0x2c, shl(96, to))
+            mstore(0x0c, 0xe839bd53000000000000000000000000) // `checkDelegateForAll(address,address,bytes32)`.
             isValid :=
                 and(eq(mload(0x00), 1), staticcall(gas(), DELEGATE_REGISTRY_V2, 0x1c, 0x64, 0x00, 0x20))
             if iszero(or(rights, isValid)) {
@@ -97,12 +97,12 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0x8988eea9) // `checkDelegateForContract(address,address,address,bytes32)`.
-            let addressMask := shr(96, not(0))
-            mstore(add(0x20, m), and(addressMask, to))
-            mstore(add(0x40, m), and(addressMask, from))
-            mstore(add(0x60, m), and(addressMask, contract_))
             mstore(add(0x80, m), 0)
+            mstore(add(0x60, m), contract_)
+            mstore(add(0x4c, m), shl(96, from))
+            mstore(add(0x2c, m), shl(96, to))
+            // `checkDelegateForContract(address,address,address,bytes32)`.
+            mstore(add(0x0c, m), 0x8988eea9000000000000000000000000) 
             isValid :=
                 and(
                     eq(mload(m), 1),
@@ -133,12 +133,12 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0x8988eea9) // `checkDelegateForContract(address,address,address,bytes32)`.
-            let addressMask := shr(96, not(0))
-            mstore(add(0x20, m), and(addressMask, to))
-            mstore(add(0x40, m), and(addressMask, from))
-            mstore(add(0x60, m), and(addressMask, contract_))
             mstore(add(0x80, m), rights)
+            mstore(add(0x60, m), contract_)
+            mstore(add(0x4c, m), shl(96, from))
+            mstore(add(0x2c, m), shl(96, to))
+            // `checkDelegateForContract(address,address,address,bytes32)`.
+            mstore(add(0x0c, m), 0x8988eea9000000000000000000000000) 
             isValid :=
                 and(
                     eq(mload(m), 1),
@@ -169,13 +169,13 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0xb9f36874) // `checkDelegateForERC721(address,address,address,uint256,bytes32)`.
-            let addressMask := shr(96, not(0))
-            mstore(add(0x20, m), and(addressMask, to))
-            mstore(add(0x40, m), and(addressMask, from))
-            mstore(add(0x60, m), and(addressMask, contract_))
-            mstore(add(0x80, m), id)
             mstore(add(0xa0, m), 0)
+            mstore(add(0x80, m), id)
+            mstore(add(0x60, m), contract_)
+            mstore(add(0x4c, m), shl(96, from))
+            mstore(add(0x2c, m), shl(96, to))
+            // `checkDelegateForERC721(address,address,address,uint256,bytes32)`.
+            mstore(add(0x0c, m), 0xb9f36874000000000000000000000000) 
             isValid :=
                 and(
                     eq(mload(m), 1),
@@ -208,13 +208,13 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0xb9f36874) // `checkDelegateForERC721(address,address,address,uint256,bytes32)`.
-            let addressMask := shr(96, not(0))
-            mstore(add(0x20, m), and(addressMask, to))
-            mstore(add(0x40, m), and(addressMask, from))
-            mstore(add(0x60, m), and(addressMask, contract_))
-            mstore(add(0x80, m), id)
             mstore(add(0xa0, m), rights)
+            mstore(add(0x80, m), id)
+            mstore(add(0x60, m), contract_)
+            mstore(add(0x4c, m), shl(96, from))
+            mstore(add(0x2c, m), shl(96, to))
+            // `checkDelegateForERC721(address,address,address,uint256,bytes32)`.
+            mstore(add(0x0c, m), 0xb9f36874000000000000000000000000) 
             isValid :=
                 and(
                     eq(mload(m), 1),
@@ -248,19 +248,17 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0xba63c817) // `checkDelegateForERC20(address,address,address,bytes32)`.
-            let addressMask := shr(96, not(0))
-            mstore(add(0x20, m), and(addressMask, to))
-            mstore(add(0x40, m), and(addressMask, from))
-            mstore(add(0x60, m), and(addressMask, contract_))
-            mstore(add(0x80, m), 0)
+            let o := add(0x80, m)
+            mstore(o, 0)
+            mstore(add(0x60, m), contract_)
+            mstore(add(0x4c, m), shl(96, from))
+            mstore(add(0x2c, m), shl(96, to))
+            // `checkDelegateForERC20(address,address,address,bytes32)`.
+            mstore(add(0x0c, m), 0xba63c817000000000000000000000000) 
             amount :=
                 mul(
-                    mload(m),
-                    and(
-                        gt(returndatasize(), 0x1f),
-                        staticcall(gas(), DELEGATE_REGISTRY_V2, add(m, 0x1c), 0x84, m, 0x20)
-                    )
+                    mload(o),
+                    staticcall(gas(), DELEGATE_REGISTRY_V2, add(m, 0x1c), 0x84, o, 0x20)
                 )
             if not(amount) {
                 mstore(m, 0x90c9a2d0) // `checkDelegateForContract(address,address,address)`.
@@ -287,19 +285,17 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0xba63c817) // `checkDelegateForERC20(address,address,address,bytes32)`.
-            let addressMask := shr(96, not(0))
-            mstore(add(0x20, m), and(addressMask, to))
-            mstore(add(0x40, m), and(addressMask, from))
-            mstore(add(0x60, m), and(addressMask, contract_))
+            mstore(0x00, 0)
             mstore(add(0x80, m), rights)
+            mstore(add(0x60, m), contract_)
+            mstore(add(0x4c, m), shl(96, from))
+            mstore(add(0x2c, m), shl(96, to))
+            // `checkDelegateForERC20(address,address,address,bytes32)`.
+            mstore(add(0x0c, m), 0xba63c817000000000000000000000000) 
             amount :=
                 mul(
-                    mload(m),
-                    and(
-                        gt(returndatasize(), 0x1f),
-                        staticcall(gas(), DELEGATE_REGISTRY_V2, add(m, 0x1c), 0x84, m, 0x20)
-                    )
+                    mload(0x00),
+                    staticcall(gas(), DELEGATE_REGISTRY_V2, add(m, 0x1c), 0x84, 0x00, 0x20)
                 )
             if iszero(or(rights, iszero(not(amount)))) {
                 mstore(m, 0x90c9a2d0) // `checkDelegateForContract(address,address,address)`.
@@ -326,20 +322,18 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0xb8705875) // `checkDelegateForERC1155(address,address,address,uint256,bytes32)`.
-            let addressMask := shr(96, not(0))
-            mstore(add(0x20, m), and(addressMask, to))
-            mstore(add(0x40, m), and(addressMask, from))
-            mstore(add(0x60, m), and(addressMask, contract_))
+            let o := add(0xa0, m)
+            mstore(o, 0)
             mstore(add(0x80, m), id)
-            mstore(add(0xa0, m), 0)
+            mstore(add(0x60, m), contract_)
+            mstore(add(0x4c, m), shl(96, from))
+            mstore(add(0x2c, m), shl(96, to))
+            // `checkDelegateForERC1155(address,address,address,uint256,bytes32)`.
+            mstore(add(0x0c, m), 0xb8705875000000000000000000000000) 
             amount :=
                 mul(
-                    mload(m),
-                    and(
-                        gt(returndatasize(), 0x1f),
-                        staticcall(gas(), DELEGATE_REGISTRY_V2, add(m, 0x1c), 0xa4, m, 0x20)
-                    )
+                    mload(o),
+                    staticcall(gas(), DELEGATE_REGISTRY_V2, add(m, 0x1c), 0xa4, o, 0x20)
                 )
             if not(amount) {
                 mstore(m, 0x90c9a2d0) // `checkDelegateForContract(address,address,address)`.
@@ -368,20 +362,18 @@ library DelegateCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(m, 0xb8705875) // `checkDelegateForERC1155(address,address,address,uint256,bytes32)`.
-            let addressMask := shr(96, not(0))
-            mstore(add(0x20, m), and(addressMask, to))
-            mstore(add(0x40, m), and(addressMask, from))
-            mstore(add(0x60, m), and(addressMask, contract_))
-            mstore(add(0x80, m), id)
+            mstore(0x00, 0)
             mstore(add(0xa0, m), rights)
+            mstore(add(0x80, m), id)
+            mstore(add(0x60, m), contract_)
+            mstore(add(0x4c, m), shl(96, from))
+            mstore(add(0x2c, m), shl(96, to))
+            // `checkDelegateForERC1155(address,address,address,uint256,bytes32)`.
+            mstore(add(0x0c, m), 0xb8705875000000000000000000000000) 
             amount :=
                 mul(
-                    mload(m),
-                    and(
-                        gt(returndatasize(), 0x1f),
-                        staticcall(gas(), DELEGATE_REGISTRY_V2, add(m, 0x1c), 0xa4, m, 0x20)
-                    )
+                    mload(0x00),
+                    staticcall(gas(), DELEGATE_REGISTRY_V2, add(m, 0x1c), 0xa4, 0x00, 0x20)
                 )
             if iszero(or(rights, iszero(not(amount)))) {
                 mstore(m, 0x90c9a2d0) // `checkDelegateForContract(address,address,address)`.
