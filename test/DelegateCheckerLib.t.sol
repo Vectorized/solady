@@ -91,17 +91,19 @@ contract DelegateCheckerLibTest is SoladyTest {
     }
 
     function _randomAmount() internal returns (uint256) {
-        if (_random() % 4 == 0) return type(uint256).max;
-        if (_random() % 4 == 0) return 0;
+        uint256 r = _random();
+        if (r & 0x03 == 0) return type(uint256).max;
+        if (r & 0x30 == 0) return 0;
         return _random();
     }
 
     function _maybeDelegateAll(address to, address from, bytes32 rights) internal {
-        if (_random() % 2 == 0) {
+        uint256 r = _random();
+        if (r & 0x01 == 0) {
             vm.prank(from);
             v1.delegateForAll(to, true);
         }
-        if (_random() % 2 == 0) {
+        if (r & 0x10 == 0) {
             vm.prank(from);
             v2.delegateAll(to, rights, true);
         }
@@ -110,14 +112,16 @@ contract DelegateCheckerLibTest is SoladyTest {
     function _maybeDelegateContract(address to, address from, address contract_, bytes32 rights)
         internal
     {
-        if (_random() % 2 == 0) {
+        uint256 r = _random();
+        if (r & 0x001 == 0) {
             vm.prank(from);
             v1.delegateForContract(to, contract_, true);
         }
-        if (_random() % 2 == 0) {
+        if (r & 0x010 == 0) {
             vm.prank(from);
             v2.delegateContract(to, contract_, rights, true);
         }
+        if (r & 0x100 == 0) _maybeDelegateAll(to, from, rights);
     }
 
     function _maybeDelegateERC721(
@@ -127,22 +131,30 @@ contract DelegateCheckerLibTest is SoladyTest {
         uint256 id,
         bytes32 rights
     ) internal {
-        if (_random() % 2 == 0) {
+        uint256 r = _random();
+        if (r & 0x001 == 0) {
             vm.prank(from);
             v1.delegateForToken(to, contract_, id, true);
         }
-        if (_random() % 2 == 0) {
+        if (r & 0x010 == 0) {
             vm.prank(from);
             v2.delegateERC721(to, contract_, id, rights, true);
+        }
+        if (r & 0x100 == 0) {
+            _maybeDelegateContract(to, from, contract_, _maybeMutateRights(rights));
         }
     }
 
     function _maybeDelegateERC20(address to, address from, address contract_, bytes32 rights)
         internal
     {
-        if (_random() % 2 == 0) {
+        uint256 r = _random();
+        if (r & 0x01 == 0) {
             vm.prank(from);
             v2.delegateERC20(to, contract_, rights, _randomAmount());
+        }
+        if (r & 0x10 == 0) {
+            _maybeDelegateContract(to, from, contract_, _maybeMutateRights(rights));
         }
     }
 
@@ -153,44 +165,148 @@ contract DelegateCheckerLibTest is SoladyTest {
         uint256 id,
         bytes32 rights
     ) internal {
-        if (_random() % 2 == 0) {
+        uint256 r = _random();
+        if (r & 0x01 == 0) {
             vm.prank(from);
             v2.delegateERC1155(to, contract_, id, rights, _randomAmount());
+        }
+        if (r & 0x10 == 0) {
+            _maybeDelegateContract(to, from, contract_, _maybeMutateRights(rights));
         }
     }
 
     function _maybeMutateRights(bytes32 rights) internal returns (bytes32) {
-        if (_random() % 32 == 0) return bytes32(0);
-        if (_random() % 8 == 0) return bytes32(_random());
+        uint256 r = _random();
+        if (r & 0xf0 == 0) return bytes32(0);
+        if (r & 0x07 == 0) return bytes32(_random());
         return rights;
     }
 
     function _maybeMutateId(uint256 id) internal returns (uint256) {
-        if (_random() % 2 == 0) return 0;
-        if (_random() % 2 == 0) return _random();
+        uint256 r = _random();
+        if (r & 0x01 == 0) return 0;
+        if (r & 0x10 == 0) return _random();
         return id;
     }
 
-    function _maybeBrutalizeMemory() internal {
-        if (_random() % 32 == 0) _brutalizeMemory();
+    modifier maybeBrutalizeMemory() {
+        if (_random() & 0x1f == 0) _brutalizeMemory();
+        _;
+        _checkMemory();
+    }
+
+    function _checkDelegateForAll(address to, address from)
+        internal
+        maybeBrutalizeMemory
+        returns (bool)
+    {
+        return DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from));
+    }
+
+    function _checkDelegateForAll(address to, address from, bytes32 rights)
+        internal
+        maybeBrutalizeMemory
+        returns (bool)
+    {
+        return DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from), rights);
+    }
+
+    function _checkDelegateForContract(address to, address from, address contract_)
+        internal
+        maybeBrutalizeMemory
+        returns (bool)
+    {
+        return DelegateCheckerLib.checkDelegateForContract(
+            _brutalized(to), _brutalized(from), _brutalized(contract_)
+        );
+    }
+
+    function _checkDelegateForContract(address to, address from, address contract_, bytes32 rights)
+        internal
+        maybeBrutalizeMemory
+        returns (bool)
+    {
+        return DelegateCheckerLib.checkDelegateForContract(
+            _brutalized(to), _brutalized(from), _brutalized(contract_), rights
+        );
+    }
+
+    function _checkDelegateForERC721(address to, address from, address contract_, uint256 id)
+        internal
+        maybeBrutalizeMemory
+        returns (bool)
+    {
+        return DelegateCheckerLib.checkDelegateForERC721(
+            _brutalized(to), _brutalized(from), _brutalized(contract_), id
+        );
+    }
+
+    function _checkDelegateForERC721(
+        address to,
+        address from,
+        address contract_,
+        uint256 id,
+        bytes32 rights
+    ) internal maybeBrutalizeMemory returns (bool) {
+        return DelegateCheckerLib.checkDelegateForERC721(
+            _brutalized(to), _brutalized(from), _brutalized(contract_), id, rights
+        );
+    }
+
+    function _checkDelegateForERC20(address to, address from, address contract_)
+        internal
+        maybeBrutalizeMemory
+        returns (uint256)
+    {
+        return DelegateCheckerLib.checkDelegateForERC20(
+            _brutalized(to), _brutalized(from), _brutalized(contract_)
+        );
+    }
+
+    function _checkDelegateForERC20(address to, address from, address contract_, bytes32 rights)
+        internal
+        maybeBrutalizeMemory
+        returns (uint256)
+    {
+        return DelegateCheckerLib.checkDelegateForERC20(
+            _brutalized(to), _brutalized(from), _brutalized(contract_), rights
+        );
+    }
+
+    function _checkDelegateForERC1155(address to, address from, address contract_, uint256 id)
+        internal
+        maybeBrutalizeMemory
+        returns (uint256)
+    {
+        return DelegateCheckerLib.checkDelegateForERC1155(
+            _brutalized(to), _brutalized(from), _brutalized(contract_), id
+        );
+    }
+
+    function _checkDelegateForERC1155(
+        address to,
+        address from,
+        address contract_,
+        uint256 id,
+        bytes32 rights
+    ) internal maybeBrutalizeMemory returns (uint256) {
+        return DelegateCheckerLib.checkDelegateForERC1155(
+            _brutalized(to), _brutalized(from), _brutalized(contract_), id, rights
+        );
     }
 
     function testCheckDelegateForAll(address to, address from, bytes32 rights) public {
         _maybeDelegateAll(to, from, rights);
         rights = _maybeMutateRights(rights);
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from)),
+            _checkDelegateForAll(to, from),
             v2.checkDelegateForAll(to, from, "") || v1.checkDelegateForAll(to, from)
         );
-        _checkMemory();
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from), rights),
+            _checkDelegateForAll(to, from, rights),
             v2.checkDelegateForAll(to, from, rights)
                 || (rights == "" && v1.checkDelegateForAll(to, from))
         );
-        _checkMemory();
     }
 
     function testCheckDelegateForContract(
@@ -201,38 +317,21 @@ contract DelegateCheckerLibTest is SoladyTest {
     ) public {
         _maybeDelegateContract(to, from, contract_, rights);
         rights = _maybeMutateRights(rights);
-        if (_random() % 2 == 0) _maybeDelegateAll(to, from, rights);
-        rights = _maybeMutateRights(rights);
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForContract(
-                _brutalized(to), _brutalized(from), contract_
-            ),
+            _checkDelegateForContract(to, from, contract_),
             v2.checkDelegateForContract(to, from, contract_, "")
                 || v1.checkDelegateForContract(to, from, contract_)
         );
-        if (DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from))) {
-            assertTrue(
-                DelegateCheckerLib.checkDelegateForContract(
-                    _brutalized(to), _brutalized(from), contract_
-                )
-            );
+        if (_checkDelegateForAll(to, from)) {
+            assertTrue(_checkDelegateForContract(to, from, contract_));
         }
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForContract(
-                _brutalized(to), _brutalized(from), contract_, rights
-            ),
+            _checkDelegateForContract(to, from, contract_, rights),
             v2.checkDelegateForContract(to, from, contract_, rights)
                 || (rights == "" && v1.checkDelegateForContract(to, from, contract_))
         );
-        _checkMemory();
-        if (DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from), rights)) {
-            assertTrue(
-                DelegateCheckerLib.checkDelegateForContract(
-                    _brutalized(to), _brutalized(from), contract_, rights
-                )
-            );
+        if (_checkDelegateForAll(to, from, rights)) {
+            assertTrue(_checkDelegateForContract(to, from, contract_, rights));
         }
     }
 
@@ -245,49 +344,22 @@ contract DelegateCheckerLibTest is SoladyTest {
     ) public {
         _maybeDelegateERC721(to, from, contract_, id, rights);
         rights = _maybeMutateRights(rights);
-        if (_random() % 2 == 0) _maybeDelegateContract(to, from, contract_, rights);
-        rights = _maybeMutateRights(rights);
-        if (_random() % 2 == 0) _maybeDelegateAll(to, from, rights);
-        rights = _maybeMutateRights(rights);
         id = _maybeMutateId(id);
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForERC721(
-                _brutalized(to), _brutalized(from), contract_, id
-            ),
+            _checkDelegateForERC721(to, from, contract_, id),
             v2.checkDelegateForERC721(to, from, contract_, id, "")
                 || v1.checkDelegateForToken(to, from, contract_, id)
         );
-        if (
-            DelegateCheckerLib.checkDelegateForContract(
-                _brutalized(to), _brutalized(from), contract_
-            )
-        ) {
-            assertTrue(
-                DelegateCheckerLib.checkDelegateForERC721(
-                    _brutalized(to), _brutalized(from), contract_, id
-                )
-            );
+        if (_checkDelegateForContract(to, from, contract_)) {
+            assertTrue(_checkDelegateForERC721(to, from, contract_, id));
         }
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForERC721(
-                _brutalized(to), _brutalized(from), contract_, id, rights
-            ),
+            _checkDelegateForERC721(to, from, contract_, id, rights),
             v2.checkDelegateForERC721(to, from, contract_, id, rights)
                 || (rights == "" && v1.checkDelegateForToken(to, from, contract_, id))
         );
-        _checkMemory();
-        if (
-            DelegateCheckerLib.checkDelegateForContract(
-                _brutalized(to), _brutalized(from), contract_, rights
-            )
-        ) {
-            assertTrue(
-                DelegateCheckerLib.checkDelegateForERC721(
-                    _brutalized(to), _brutalized(from), contract_, id, rights
-                )
-            );
+        if (_checkDelegateForContract(to, from, contract_, rights)) {
+            assertTrue(_checkDelegateForERC721(to, from, contract_, id, rights));
         }
     }
 
@@ -296,35 +368,18 @@ contract DelegateCheckerLibTest is SoladyTest {
     {
         _maybeDelegateERC20(to, from, contract_, rights);
         rights = _maybeMutateRights(rights);
-        if (_random() % 2 == 0) _maybeDelegateContract(to, from, contract_, rights);
-        rights = _maybeMutateRights(rights);
-        if (_random() % 2 == 0) _maybeDelegateAll(to, from, rights);
-        rights = _maybeMutateRights(rights);
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForERC20(_brutalized(to), _brutalized(from), contract_),
+            _checkDelegateForERC20(to, from, contract_),
             FixedPointMathLib.max(
                 v2.checkDelegateForERC20(to, from, contract_, ""),
                 v1.checkDelegateForContract(to, from, contract_) ? type(uint256).max : 0
             )
         );
-        if (
-            DelegateCheckerLib.checkDelegateForContract(
-                _brutalized(to), _brutalized(from), contract_
-            )
-        ) {
-            assertEq(
-                DelegateCheckerLib.checkDelegateForERC20(
-                    _brutalized(to), _brutalized(from), contract_
-                ),
-                type(uint256).max
-            );
+        if (_checkDelegateForContract(to, from, contract_)) {
+            assertEq(_checkDelegateForERC20(to, from, contract_), type(uint256).max);
         }
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForERC20(
-                _brutalized(to), _brutalized(from), contract_, rights
-            ),
+            _checkDelegateForERC20(to, from, contract_, rights),
             FixedPointMathLib.max(
                 v2.checkDelegateForERC20(to, from, contract_, rights),
                 (rights == "" && v1.checkDelegateForContract(to, from, contract_))
@@ -332,18 +387,8 @@ contract DelegateCheckerLibTest is SoladyTest {
                     : 0
             )
         );
-        _checkMemory();
-        if (
-            DelegateCheckerLib.checkDelegateForContract(
-                _brutalized(to), _brutalized(from), contract_, rights
-            )
-        ) {
-            assertEq(
-                DelegateCheckerLib.checkDelegateForERC20(
-                    _brutalized(to), _brutalized(from), contract_, rights
-                ),
-                type(uint256).max
-            );
+        if (_checkDelegateForContract(to, from, contract_, rights)) {
+            assertEq(_checkDelegateForERC20(to, from, contract_, rights), type(uint256).max);
         }
     }
 
@@ -356,38 +401,19 @@ contract DelegateCheckerLibTest is SoladyTest {
     ) public {
         _maybeDelegateERC1155(to, from, contract_, id, rights);
         rights = _maybeMutateRights(rights);
-        if (_random() % 2 == 0) _maybeDelegateContract(to, from, contract_, rights);
-        rights = _maybeMutateRights(rights);
-        if (_random() % 2 == 0) _maybeDelegateAll(to, from, rights);
-        rights = _maybeMutateRights(rights);
         id = _maybeMutateId(id);
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForERC1155(
-                _brutalized(to), _brutalized(from), contract_, id
-            ),
+            _checkDelegateForERC1155(to, from, contract_, id),
             FixedPointMathLib.max(
                 v2.checkDelegateForERC1155(to, from, contract_, id, ""),
                 v1.checkDelegateForContract(to, from, contract_) ? type(uint256).max : 0
             )
         );
-        if (
-            DelegateCheckerLib.checkDelegateForContract(
-                _brutalized(to), _brutalized(from), contract_
-            )
-        ) {
-            assertEq(
-                DelegateCheckerLib.checkDelegateForERC1155(
-                    _brutalized(to), _brutalized(from), contract_, id
-                ),
-                type(uint256).max
-            );
+        if (_checkDelegateForContract(to, from, contract_)) {
+            assertEq(_checkDelegateForERC1155(to, from, contract_, id), type(uint256).max);
         }
-        _maybeBrutalizeMemory();
         assertEq(
-            DelegateCheckerLib.checkDelegateForERC1155(
-                _brutalized(to), _brutalized(from), contract_, id, rights
-            ),
+            _checkDelegateForERC1155(to, from, contract_, id, rights),
             FixedPointMathLib.max(
                 v2.checkDelegateForERC1155(to, from, contract_, id, rights),
                 (rights == "" && v1.checkDelegateForContract(to, from, contract_))
@@ -395,18 +421,8 @@ contract DelegateCheckerLibTest is SoladyTest {
                     : 0
             )
         );
-        _checkMemory();
-        if (
-            DelegateCheckerLib.checkDelegateForContract(
-                _brutalized(to), _brutalized(from), contract_, rights
-            )
-        ) {
-            assertEq(
-                DelegateCheckerLib.checkDelegateForERC1155(
-                    _brutalized(to), _brutalized(from), contract_, id, rights
-                ),
-                type(uint256).max
-            );
+        if (_checkDelegateForContract(to, from, contract_, rights)) {
+            assertEq(_checkDelegateForERC1155(to, from, contract_, id, rights), type(uint256).max);
         }
     }
 }
