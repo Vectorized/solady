@@ -199,18 +199,16 @@ contract DelegateCheckerLibTest is SoladyTest {
         return id;
     }
 
-    modifier maybeBrutalizeMemory() {
-        if (!testForGas) {
-            _brutalizeScratchSpace();
-            if (_random() & 0x1f == 0) _brutalizeMemory();
-        }
+    modifier brutalizeMemoryIfNoGasCheck() {
+        if (!testForGas) _brutalizeLowerMemory();
         _;
         if (!testForGas) _checkMemory();
     }
 
     function _checkDelegateForAll(address to, address from)
         internal
-        maybeBrutalizeMemory
+        view
+        brutalizeMemoryIfNoGasCheck
         returns (bool)
     {
         return DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from));
@@ -218,7 +216,8 @@ contract DelegateCheckerLibTest is SoladyTest {
 
     function _checkDelegateForAll(address to, address from, bytes32 rights)
         internal
-        maybeBrutalizeMemory
+        view
+        brutalizeMemoryIfNoGasCheck
         returns (bool)
     {
         return DelegateCheckerLib.checkDelegateForAll(_brutalized(to), _brutalized(from), rights);
@@ -226,7 +225,8 @@ contract DelegateCheckerLibTest is SoladyTest {
 
     function _checkDelegateForContract(address to, address from, address contract_)
         internal
-        maybeBrutalizeMemory
+        view
+        brutalizeMemoryIfNoGasCheck
         returns (bool)
     {
         return DelegateCheckerLib.checkDelegateForContract(
@@ -236,7 +236,8 @@ contract DelegateCheckerLibTest is SoladyTest {
 
     function _checkDelegateForContract(address to, address from, address contract_, bytes32 rights)
         internal
-        maybeBrutalizeMemory
+        view
+        brutalizeMemoryIfNoGasCheck
         returns (bool)
     {
         return DelegateCheckerLib.checkDelegateForContract(
@@ -246,7 +247,8 @@ contract DelegateCheckerLibTest is SoladyTest {
 
     function _checkDelegateForERC721(address to, address from, address contract_, uint256 id)
         internal
-        maybeBrutalizeMemory
+        view
+        brutalizeMemoryIfNoGasCheck
         returns (bool)
     {
         return DelegateCheckerLib.checkDelegateForERC721(
@@ -260,7 +262,7 @@ contract DelegateCheckerLibTest is SoladyTest {
         address contract_,
         uint256 id,
         bytes32 rights
-    ) internal maybeBrutalizeMemory returns (bool) {
+    ) internal view brutalizeMemoryIfNoGasCheck returns (bool) {
         return DelegateCheckerLib.checkDelegateForERC721(
             _brutalized(to), _brutalized(from), _brutalized(contract_), id, rights
         );
@@ -268,7 +270,8 @@ contract DelegateCheckerLibTest is SoladyTest {
 
     function _checkDelegateForERC20(address to, address from, address contract_)
         internal
-        maybeBrutalizeMemory
+        view
+        brutalizeMemoryIfNoGasCheck
         returns (uint256)
     {
         return DelegateCheckerLib.checkDelegateForERC20(
@@ -278,7 +281,8 @@ contract DelegateCheckerLibTest is SoladyTest {
 
     function _checkDelegateForERC20(address to, address from, address contract_, bytes32 rights)
         internal
-        maybeBrutalizeMemory
+        view
+        brutalizeMemoryIfNoGasCheck
         returns (uint256)
     {
         return DelegateCheckerLib.checkDelegateForERC20(
@@ -288,7 +292,8 @@ contract DelegateCheckerLibTest is SoladyTest {
 
     function _checkDelegateForERC1155(address to, address from, address contract_, uint256 id)
         internal
-        maybeBrutalizeMemory
+        view
+        brutalizeMemoryIfNoGasCheck
         returns (uint256)
     {
         return DelegateCheckerLib.checkDelegateForERC1155(
@@ -302,7 +307,7 @@ contract DelegateCheckerLibTest is SoladyTest {
         address contract_,
         uint256 id,
         bytes32 rights
-    ) internal maybeBrutalizeMemory returns (uint256) {
+    ) internal view brutalizeMemoryIfNoGasCheck returns (uint256) {
         return DelegateCheckerLib.checkDelegateForERC1155(
             _brutalized(to), _brutalized(from), _brutalized(contract_), id, rights
         );
