@@ -95,9 +95,26 @@ contract Brutalizer {
             for { let r := keccak256(0x10, 0x20) } 1 {} {
                 if iszero(and(7, r)) {
                     let x := keccak256(zero, 0x40)
-                    for { let i := 0 } iszero(eq(i, 0x280)) { i := add(i, 0x20) } {
-                        mstore(add(i, offset), x)
-                    }
+                    mstore(offset, x)
+                    mstore(add(0x20, offset), x)
+                    mstore(add(0x40, offset), x)
+                    mstore(add(0x60, offset), x)
+                    mstore(add(0x80, offset), x)
+                    mstore(add(0xa0, offset), x)
+                    mstore(add(0xc0, offset), x)
+                    mstore(add(0xe0, offset), x)
+                    mstore(add(0x100, offset), x)
+                    mstore(add(0x120, offset), x)
+                    mstore(add(0x140, offset), x)
+                    mstore(add(0x160, offset), x)
+                    mstore(add(0x180, offset), x)
+                    mstore(add(0x1a0, offset), x)
+                    mstore(add(0x1c0, offset), x)
+                    mstore(add(0x1e0, offset), x)
+                    mstore(add(0x200, offset), x)
+                    mstore(add(0x220, offset), x)
+                    mstore(add(0x240, offset), x)
+                    mstore(add(0x260, offset), x)
                     break
                 }
                 codecopy(offset, byte(0, r), codesize())
