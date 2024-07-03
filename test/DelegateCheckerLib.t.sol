@@ -200,7 +200,10 @@ contract DelegateCheckerLibTest is SoladyTest {
     }
 
     modifier maybeBrutalizeMemory() {
-        if (!testForGas) if (_random() & 0x1f == 0) _brutalizeMemory();
+        if (!testForGas) {
+            _brutalizeScratchSpace();
+            if (_random() & 0x1f == 0) _brutalizeMemory();
+        }
         _;
         if (!testForGas) _checkMemory();
     }
@@ -443,7 +446,7 @@ contract DelegateCheckerLibTest is SoladyTest {
             _checkDelegateForERC20(to, from, contract_),
             FixedPointMathLib.max(
                 v2.checkDelegateForERC20(to, from, contract_, ""),
-                v1.checkDelegateForContract(to, from, contract_) ? type(uint256).max : 0
+                _uintMaxIfTrueElse0(v1.checkDelegateForContract(to, from, contract_))
             )
         );
         if (_checkDelegateForContract(to, from, contract_)) {
