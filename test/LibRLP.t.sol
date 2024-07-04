@@ -246,6 +246,21 @@ contract LibRLPTest is SoladyTest {
         assertEq(LibRLP.encode(s), abi.encodePacked(hex"b9fffe", s));
     }
 
+    function testRLPEncodeBytes2() public {
+        assertEq(LibRLP.encode(""), hex"80");
+        for (uint256 i = 0; i < 128; ++i) {
+            assertEq(
+                LibRLP.encode(bytes(abi.encodePacked(uint8(i)))), bytes(abi.encodePacked(uint8(i)))
+            );
+        }
+        for (uint256 i = 128; i < 256; ++i) {
+            assertEq(
+                LibRLP.encode(bytes(abi.encodePacked(uint8(i)))),
+                bytes(abi.encodePacked(bytes1(0x81), uint8(i)))
+            );
+        }
+    }
+
     function testRLPEncodeAddressViaList(address a0, address a1) public {
         _maybeBzztMemory();
         bytes memory computed = LibRLP.l(_brutalized(a0)).p(_brutalized(a1)).encode();

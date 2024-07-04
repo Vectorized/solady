@@ -293,11 +293,11 @@ library LibRLP {
                 r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
                 r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
                 r := or(r, shl(4, lt(0xffff, shr(r, x))))
-                r := add(1, or(shr(3, r), lt(0xff, shr(r, x))))
-                mstore(add(r, add(result, 1)), x) // Copy `x`.
-                mstore(add(result, 1), add(r, 0x80)) // Store the prefix.
-                mstore(result, add(1, r)) // Store the length of `result`.
-                mstore(add(r, add(result, 0x21)), 0) // Zeroize the slot after `result`.
+                r := add(2, or(shr(3, r), lt(0xff, shr(r, x))))
+                mstore(add(r, result), x) // Copy `x`.
+                mstore(add(result, 1), add(r, 0x7f)) // Store the prefix.
+                mstore(result, r) // Store the length of `result`.
+                mstore(add(r, add(result, 0x20)), 0) // Zeroize the slot after `result`.
                 mstore(0x40, add(result, 0x60)) // Allocate memory for `result`.
                 break
             }
@@ -323,7 +323,7 @@ library LibRLP {
         assembly {
             result := mload(0x40)
             mstore(result, 1)
-            mstore(add(0x20, result), shl(248, or(shl(7, iszero(x)), iszero(iszero(x)))))
+            mstore(add(0x20, result), shl(add(0xf8, mul(7, iszero(x))), 0x01))
             mstore(0x40, add(0x40, result))
         }
     }
@@ -333,9 +333,10 @@ library LibRLP {
         /// @solidity memory-safe-assembly
         assembly {
             result := x
+
             for {} iszero(and(eq(1, mload(x)), lt(byte(0, mload(add(x, 0x20))), 0x80))) {} {
                 result := mload(0x40)
-                let n := mload(x)
+                let n := mload(x) // Length of `x`.
                 if iszero(gt(n, 55)) {
                     mstore(0x40, add(result, 0x60))
                     mstore(add(0x41, result), mload(add(0x40, x)))
@@ -345,19 +346,19 @@ library LibRLP {
                     mstore(add(add(result, 0x21), n), 0) // Zeroize the slot after `result`.
                     break
                 }
-                returndatacopy(returndatasize(), returndatasize(), shr(32, n))
-                let r := add(1, add(lt(0xff, n), add(lt(0xffff, n), lt(0xffffff, n))))
+                returndatacopy(returndatasize(), returndatasize(), shr(32, n)) // out of
+                let r := add(2, add(lt(0xff, n), add(lt(0xffff, n), lt(0xffffff, n))))
                 // Copy `x`.
-                let i := add(r, add(0x21, result))
+                let i := add(r, add(0x20, result))
                 let end := add(i, n)
                 for { let d := sub(add(0x20, x), i) } 1 {} {
                     mstore(i, mload(add(d, i)))
                     i := add(i, 0x20)
                     if iszero(lt(i, end)) { break }
                 }
-                mstore(add(r, add(1, result)), n) // Store the prefix.
-                mstore(add(1, result), add(r, 0xb7)) // Store the prefix.
-                mstore(result, add(r, add(1, n))) // Store the length of `result`.
+                mstore(add(r, result), n) // Store the prefix.
+                mstore(add(1, result), add(r, 0xb6)) // Store the prefix.
+                mstore(result, add(r, n)) // Store the length of `result`.
                 mstore(end, 0) // Zeroize the slot after `result`.
                 mstore(0x40, add(end, 0x20)) // Allocate memory.
                 break
