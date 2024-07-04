@@ -336,7 +336,7 @@ library LibRLP {
 
             for {} iszero(and(eq(1, mload(x)), lt(byte(0, mload(add(x, 0x20))), 0x80))) {} {
                 result := mload(0x40)
-                let n := mload(x) // length of the x
+                let n := mload(x) // Length of `x`.
                 if iszero(gt(n, 55)) {
                     mstore(0x40, add(result, 0x60))
                     mstore(add(0x41, result), mload(add(0x40, x)))
