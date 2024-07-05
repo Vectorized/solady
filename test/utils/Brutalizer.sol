@@ -73,6 +73,56 @@ contract Brutalizer {
         }
     }
 
+    /// @dev Fills the lower memory with junk, for more robust testing of inline assembly
+    /// which reads/write to the memory.
+    /// For efficiency, this only fills a small portion of the free memory.
+    function _brutalizeLowerMemory() internal view {
+        // To prevent a solidity 0.8.13 bug.
+        // See: https://blog.soliditylang.org/2022/06/15/inline-assembly-memory-side-effects-bug
+        // Basically, we need to access a solidity variable from the assembly to
+        // tell the compiler that this assembly block is not in isolation.
+        uint256 zero;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let offset := mload(0x40) // Start the offset at the free memory pointer.
+            calldatacopy(offset, zero, calldatasize())
+
+            // Fill the 64 bytes of scratch space with garbage.
+            mstore(zero, add(caller(), gas()))
+            mstore(0x20, keccak256(offset, calldatasize()))
+            mstore(zero, keccak256(zero, 0x40))
+
+            for { let r := keccak256(0x10, 0x20) } 1 {} {
+                if iszero(and(7, r)) {
+                    let x := keccak256(zero, 0x40)
+                    mstore(offset, x)
+                    mstore(add(0x20, offset), x)
+                    mstore(add(0x40, offset), x)
+                    mstore(add(0x60, offset), x)
+                    mstore(add(0x80, offset), x)
+                    mstore(add(0xa0, offset), x)
+                    mstore(add(0xc0, offset), x)
+                    mstore(add(0xe0, offset), x)
+                    mstore(add(0x100, offset), x)
+                    mstore(add(0x120, offset), x)
+                    mstore(add(0x140, offset), x)
+                    mstore(add(0x160, offset), x)
+                    mstore(add(0x180, offset), x)
+                    mstore(add(0x1a0, offset), x)
+                    mstore(add(0x1c0, offset), x)
+                    mstore(add(0x1e0, offset), x)
+                    mstore(add(0x200, offset), x)
+                    mstore(add(0x220, offset), x)
+                    mstore(add(0x240, offset), x)
+                    mstore(add(0x260, offset), x)
+                    break
+                }
+                codecopy(offset, byte(0, r), codesize())
+                break
+            }
+        }
+    }
+
     /// @dev Fills the memory with junk, for more robust testing of inline assembly
     /// which reads/write to the memory.
     modifier brutalizeMemory() {
@@ -85,6 +135,14 @@ contract Brutalizer {
     /// which reads/write to the memory.
     modifier brutalizeScratchSpace() {
         _brutalizeScratchSpace();
+        _;
+        _checkMemory();
+    }
+
+    /// @dev Fills the lower memory with junk, for more robust testing of inline assembly
+    /// which reads/write to the memory.
+    modifier brutalizeLowerMemory() {
+        _brutalizeLowerMemory();
         _;
         _checkMemory();
     }
