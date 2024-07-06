@@ -28,7 +28,7 @@ library P256 {
     /// @dev P256 curve order `n / 2` for malleability check.
     /// Included for safety as we have less information on how P256 signatures are being used.
     uint256 internal constant P256_N_DIV_2 =
-        57896044605178124381348723474703786764998477612067880171211129530534256022184;
+        0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a8;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                P256 VERIFICATION OPERATIONS                */
@@ -54,7 +54,6 @@ library P256 {
             let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
-                // The verifier may actually revert, as it has `abi.decode` and `assert`.
                 success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
@@ -83,7 +82,6 @@ library P256 {
             let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
-                // The verifier may actually revert, as it has `abi.decode` and `assert`.
                 success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
