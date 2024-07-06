@@ -2,7 +2,9 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
+import {LibString} from "../src/utils/LibString.sol";
 import {P256} from "../src/utils/P256.sol";
+import {P256Verifier} from "./p256/P256Verifier.sol";
 
 contract P256Test is SoladyTest {
     bytes private constant _VERIFIER_BYTECODE =
@@ -11,14 +13,25 @@ contract P256Test is SoladyTest {
     // Public key x and y.
     uint256 private constant _X = 0x65a2fa44daad46eab0278703edb6c4dcf5e30b8a9aec09fdc71a56f52aa392e4;
     uint256 private constant _Y = 0x4a7a9e4604aa36898209997288e902ac544a555e4b5e0a9efef2b59233f3f437;
-
     uint256 private constant _R = 0x01655c1753db6b61a9717e4ccc5d6c4bf7681623dd54c2d6babc55125756661c;
     uint256 private constant _NON_MALLEABLE_S =
-        7033802732221576339889804108463427183539365869906989872244893535944704590394;
+        0xf8cfdc3921ecf0f7aef50be09b0f98383392dd8079014df95fde2a04b79023a;
     uint256 private constant _MALLEABLE_S =
         0xf073023b6de130f18510af41f64f067c39adccd59f8789a55dbbe822b0ea2317;
     bytes32 private constant _HASH =
         0x267f9ea080b54bbea2443dff8aa543604564329783b6a515c6663a691c555490;
+    uint256 private constant _N = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551;
+    uint256 private constant _MALLEABILITY_THRESHOLD =
+        0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a8;
+
+    mapping(bytes32 => bool) internal _vectorTested;
+    mapping(bytes32 => bool) internal _vectorResult;
+
+    address verifer;
+
+    function setUp() public {
+        verifer = address(new P256Verifier());
+    }
 
     function _etchRIPPrecompile() internal {
         vm.etch(P256.RIP_PRECOMPILE, _VERIFIER_BYTECODE);
@@ -91,5 +104,46 @@ contract P256Test is SoladyTest {
     function _testP256VerifyNonMalleable() internal {
         assertEq(P256.verifySignatureAllowMalleability(_HASH, _R, _NON_MALLEABLE_S, _X, _Y), true);
         assertEq(P256.verifySignature(_HASH, _R, _NON_MALLEABLE_S, _X, _Y), true);
+    }
+
+    function testP256Wycheproof() public {
+        _testP256Wycheproof("./test/p256/test-vectors/vectors_wycheproof.jsonl");
+    }
+
+    function _testP256Wycheproof(string memory file) internal {
+        vm.pauseGasMetering();
+        for (uint256 i = 1;; ++i) {
+            string memory vector = vm.readLine(file);
+            if (bytes(vector).length == 0) break;
+            bool expected = vm.parseJsonBool(vector, ".valid");
+            bool result = _verifyViaVerifier(
+                vm.parseJsonBytes32(vector, ".hash"),
+                vm.parseJsonBytes32(vector, ".r"),
+                vm.parseJsonBytes32(vector, ".s"),
+                vm.parseJsonBytes32(vector, ".x"),
+                vm.parseJsonBytes32(vector, ".y")
+            );
+            if (result != expected) {
+                bytes memory err = abi.encodePacked("Line: ", LibString.toString(i));
+                err = abi.encodePacked(err, ", Expected: ", expected ? "1" : "0");
+                err = abi.encodePacked(err, ", Returned: ", result ? "1" : "0");
+                err = abi.encodePacked(err, ", Comment: ", vm.parseJsonString(vector, ".comment"));
+                revert(string(err));
+            }
+        }
+        vm.resumeGasMetering();
+    }
+
+    function _verifyViaVerifier(bytes32 hash, bytes32 r, bytes32 s, bytes32 x, bytes32 y)
+        internal
+        returns (bool)
+    {
+        bytes memory payload = abi.encode(hash, r, s, x, y);
+        bytes32 payloadHash = keccak256(payload);
+        if (_vectorTested[payloadHash]) return _vectorResult[payloadHash];
+        (bool success, bytes memory result) = verifer.call(payload);
+        assertTrue(success);
+        _vectorTested[payloadHash] = true;
+        return (_vectorResult[payloadHash] = abi.decode(result, (bool)));
     }
 }
