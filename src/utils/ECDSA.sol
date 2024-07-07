@@ -358,7 +358,7 @@ library ECDSA {
 
     /// @dev Returns an Ethereum Signed Message, created from a `hash`.
     /// This produces a hash corresponding to the one signed with the
-    /// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
+    /// [`eth_sign`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_sign)
     /// JSON-RPC method as part of EIP-191.
     function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
@@ -371,7 +371,7 @@ library ECDSA {
 
     /// @dev Returns an Ethereum Signed Message, created from `s`.
     /// This produces a hash corresponding to the one signed with the
-    /// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
+    /// [`eth_sign`](https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_sign)
     /// JSON-RPC method as part of EIP-191.
     /// Note: Supports lengths of `s` up to 999999 bytes.
     function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32 result) {
