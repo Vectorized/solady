@@ -125,6 +125,7 @@ contract P256Test is SoladyTest {
         (bytes32 x, bytes32 y) = P256PublicKey.getPublicKey(privateKey);
         (bytes32 r, bytes32 s) = vm.signP256(privateKey, digest);
         assertTrue(_verifyViaVerifier(digest, r, s, x, y));
+        assertFalse(_verifyViaVerifier(digest, r, s, x, bytes32(uint256(y) ^ 1)));
     }
 
     function testP256Wycheproof() public {
@@ -178,7 +179,8 @@ contract P256Test is SoladyTest {
 
 /// @dev Library to derive P256 public key from private key
 /// Should be removed if Foundry adds this functionality
-/// See https://github.com/foundry-rs/foundry/issues/7908
+/// See: https://github.com/foundry-rs/foundry/issues/7908
+/// From: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/P256.sol
 library P256PublicKey {
     uint256 private constant GX = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;
     uint256 private constant GY = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
