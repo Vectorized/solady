@@ -128,11 +128,11 @@ contract P256Test is SoladyTest {
         assertFalse(_verifyViaVerifier(digest, r, s, x, bytes32(uint256(y) ^ 1)));
     }
 
-    function testP256Wycheproof() public {
-        _testP256Wycheproof("./test/data/wycheproof.jsonl");
+    function testP256VerifyWycheproof() public {
+        _testP256VerifyWycheproof("./test/data/wycheproof.jsonl");
     }
 
-    function _testP256Wycheproof(string memory file) internal {
+    function _testP256VerifyWycheproof(string memory file) internal {
         vm.pauseGasMetering();
         _etchVerifier();
         uint256 numParseFails;
