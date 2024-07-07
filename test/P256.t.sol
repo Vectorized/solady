@@ -26,21 +26,32 @@ contract P256Test is SoladyTest {
     mapping(bytes32 => bool) internal _vectorTested;
     mapping(bytes32 => bool) internal _vectorResult;
 
-    function _etchRIPPrecompile() internal {
-        vm.etch(P256.RIP_PRECOMPILE, _VERIFIER_BYTECODE);
+    function setUp() public {
+        _etchRIPPrecompile(true);
+        _etchVerifier(true);
     }
 
-    function _etchVerifier() internal {
-        vm.etch(P256.VERIFIER, _VERIFIER_BYTECODE);
+    function _etchVerifierBytecode(address target, bool active) internal {
+        if (active) {
+            if (target.code.length == 0) vm.etch(target, _VERIFIER_BYTECODE);
+        } else {
+            if (target.code.length != 0) vm.etch(target, "");
+        }
+    }
+
+    function _etchRIPPrecompile(bool active) internal {
+        _etchVerifierBytecode(P256.RIP_PRECOMPILE, active);
+    }
+
+    function _etchVerifier(bool active) internal {
+        _etchVerifierBytecode(P256.VERIFIER, active);
     }
 
     function testP256VerifyMalleableRIPPrecompile() public {
-        _etchRIPPrecompile();
         _testP256VerifyMalleable();
     }
 
     function testP256VerifyMalleableVerifier() public {
-        _etchVerifier();
         _testP256VerifyMalleable();
     }
 
@@ -70,12 +81,10 @@ contract P256Test is SoladyTest {
     }
 
     function testP256VerifyNonMalleableRIPPrecompile() public {
-        _etchRIPPrecompile();
         _testP256VerifyNonMalleable();
     }
 
     function testP256VerifyNonMalleableVerifier() public {
-        _etchVerifier();
         _testP256VerifyNonMalleable();
     }
 
@@ -87,6 +96,8 @@ contract P256Test is SoladyTest {
         bytes32 y,
         bool t
     ) public {
+        _etchVerifier(false);
+        _etchRIPPrecompile(false);
         if (t) {
             vm.expectRevert(P256.P256VerificationFailed.selector);
             this.verifySignatureAllowMalleability(hash, r, s, x, y);
@@ -119,13 +130,12 @@ contract P256Test is SoladyTest {
         assertTrue(_verifySignature(_HASH, _R, _NON_MALLEABLE_S, _X, _Y));
     }
 
-    function testP256Verify(uint256 seed, bytes32 digest) public {
-        _etchVerifier();
+    function testP256Verify(uint256 seed, bytes32 hash) public {
         uint256 privateKey = _bound(uint256(keccak256(abi.encode(seed))), 1, _N - 1);
         (bytes32 x, bytes32 y) = P256PublicKey.getPublicKey(privateKey);
-        (bytes32 r, bytes32 s) = vm.signP256(privateKey, digest);
-        assertTrue(_verifyViaVerifier(digest, r, s, x, y));
-        assertFalse(_verifyViaVerifier(digest, r, s, x, bytes32(uint256(y) ^ 1)));
+        (bytes32 r, bytes32 s) = vm.signP256(privateKey, hash);
+        assertTrue(_verifyViaVerifier(hash, r, s, x, y));
+        assertFalse(_verifyViaVerifier(hash, r, s, x, bytes32(uint256(y) ^ 1)));
     }
 
     function testP256VerifyWycheproof() public {
@@ -134,7 +144,6 @@ contract P256Test is SoladyTest {
 
     function _testP256VerifyWycheproof(string memory file) internal {
         vm.pauseGasMetering();
-        _etchVerifier();
         uint256 numParseFails;
         for (uint256 i = 1;; ++i) {
             string memory vector = vm.readLine(file);
@@ -163,6 +172,13 @@ contract P256Test is SoladyTest {
         vm.resumeGasMetering();
     }
 
+    function _verifyViaVerifier(bytes32 hash, uint256 r, uint256 s, uint256 x, uint256 y)
+        internal
+        returns (bool)
+    {
+        return _verifyViaVerifier(hash, bytes32(r), bytes32(s), bytes32(x), bytes32(y));
+    }
+
     function _verifyViaVerifier(bytes32 hash, bytes32 r, bytes32 s, bytes32 x, bytes32 y)
         internal
         returns (bool)
@@ -175,6 +191,16 @@ contract P256Test is SoladyTest {
         _vectorTested[payloadHash] = true;
         return (_vectorResult[payloadHash] = abi.decode(result, (bool)));
     }
+
+    function testP256VerifyOutOfBounds() public {
+        uint256 p = P256PublicKey.P;
+        assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, 1, 1));
+        assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, 0, 1));
+        assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, 1, 0));
+        assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, 1, p));
+        assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, p, 1));
+        assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, p - 1, 1));
+    }
 }
 
 /// @dev Library to derive P256 public key from private key
@@ -182,15 +208,17 @@ contract P256Test is SoladyTest {
 /// See: https://github.com/foundry-rs/foundry/issues/7908
 /// From: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/P256.sol
 library P256PublicKey {
-    uint256 private constant GX = 0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;
-    uint256 private constant GY = 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
-    uint256 private constant P = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
-    uint256 private constant N = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
-    uint256 private constant A = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC;
-    uint256 private constant B = 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B;
-    uint256 private constant P1DIV4 =
+    uint256 internal constant GX =
+        0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296;
+    uint256 internal constant GY =
+        0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
+    uint256 internal constant P = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 internal constant N = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
+    uint256 internal constant A = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC;
+    uint256 internal constant B = 0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B;
+    uint256 internal constant P1DIV4 =
         0x3fffffffc0000000400000000000000000000000400000000000000000000000;
-    uint256 private constant HALF_N =
+    uint256 internal constant HALF_N =
         0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a8;
 
     function getPublicKey(uint256 privateKey) internal view returns (bytes32, bytes32) {
