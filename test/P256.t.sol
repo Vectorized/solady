@@ -44,19 +44,29 @@ contract P256Test is SoladyTest {
         _testP256VerifyMalleable();
     }
 
+    function _verifySignatureAllowMalleability(
+        bytes32 hash,
+        uint256 r,
+        uint256 s,
+        uint256 x,
+        uint256 y
+    ) internal view returns (bool) {
+        return P256.verifySignatureAllowMalleability(
+            hash, bytes32(r), bytes32(s), bytes32(x), bytes32(y)
+        );
+    }
+
+    function _verifySignature(bytes32 hash, uint256 r, uint256 s, uint256 x, uint256 y)
+        internal
+        view
+        returns (bool)
+    {
+        return P256.verifySignature(hash, bytes32(r), bytes32(s), bytes32(x), bytes32(y));
+    }
+
     function _testP256VerifyMalleable() internal {
-        assertEq(
-            P256.verifySignatureAllowMalleability(
-                _HASH, bytes32(_R), bytes32(_MALLEABLE_S), bytes32(_X), bytes32(_Y)
-            ),
-            true
-        );
-        assertEq(
-            P256.verifySignature(
-                _HASH, bytes32(_R), bytes32(_MALLEABLE_S), bytes32(_X), bytes32(_Y)
-            ),
-            false
-        );
+        assertTrue(_verifySignatureAllowMalleability(_HASH, _R, _MALLEABLE_S, _X, _Y));
+        assertFalse(_verifySignature(_HASH, _R, _MALLEABLE_S, _X, _Y));
     }
 
     function testP256VerifyNonMalleableRIPPrecompile() public {
@@ -105,16 +115,8 @@ contract P256Test is SoladyTest {
     }
 
     function _testP256VerifyNonMalleable() internal {
-        assertTrue(
-            P256.verifySignatureAllowMalleability(
-                _HASH, bytes32(_R), bytes32(_NON_MALLEABLE_S), bytes32(_X), bytes32(_Y)
-            )
-        );
-        assertTrue(
-            P256.verifySignature(
-                _HASH, bytes32(_R), bytes32(_NON_MALLEABLE_S), bytes32(_X), bytes32(_Y)
-            )
-        );
+        assertTrue(_verifySignatureAllowMalleability(_HASH, _R, _NON_MALLEABLE_S, _X, _Y));
+        assertTrue(_verifySignature(_HASH, _R, _NON_MALLEABLE_S, _X, _Y));
     }
 
     function testP256Verify(uint256 seed, bytes32 digest) public {
@@ -235,13 +237,12 @@ library P256PublicKey {
         returns (uint256 rx, uint256 ry, uint256 rz)
     {
         uint256 p = P;
-        uint256 a = A;
         /// @solidity memory-safe-assembly
         assembly {
             let yy := mulmod(y, y, p)
             let zz := mulmod(z, z, p)
             mstore(0x00, mulmod(4, mulmod(x, yy, p), p))
-            mstore(0x20, addmod(mulmod(3, mulmod(x, x, p), p), mulmod(a, mulmod(zz, zz, p), p), p))
+            mstore(0x20, addmod(mulmod(3, mulmod(x, x, p), p), mulmod(A, mulmod(zz, zz, p), p), p))
             rx := addmod(mulmod(mload(0x20), mload(0x20), p), sub(p, mulmod(2, mload(0x00), p)), p)
             ry :=
                 addmod(
