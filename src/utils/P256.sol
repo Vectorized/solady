@@ -19,8 +19,9 @@ library P256 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Address of the Solidity P256 verifier.
+    /// Please make sure the contract is deployed onto the chain you are working on.
     /// See: https://gist.github.com/Vectorized/599b0d8a94d21bc74700eb1354e2f55c
-    address internal constant VERIFIER = 0x00000000000058734C4ce0fa7d019c2020289543;
+    address internal constant VERIFIER = 0x000000000000E052BBf2730c643462Afb680718A;
 
     /// @dev Address of the RIP-7212 P256 verifier precompile.
     /// Currently, we don't support EIP-7212's precompile at 0x0b as it has not been finalized.
