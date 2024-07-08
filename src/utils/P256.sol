@@ -4,21 +4,24 @@ pragma solidity ^0.8.4;
 /// @notice Gas optimized P256 wrapper.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/P256.sol)
 /// @author Modified from Daimo P256 Verifier (https://github.com/daimo-eth/p256-verifier/blob/master/src/P256.sol)
+/// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/P256.sol)
 library P256 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Unable to verify the P256 signature, due to missing
-    /// RIP-7212 P256 verifier precompile and missing Daimo P256 verifier.
+    /// RIP-7212 P256 verifier precompile and missing Solidity P256 verifier.
     error P256VerificationFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Address of the Daimo P256 verifier.
-    address internal constant VERIFIER = 0xc2b78104907F722DABAc4C69f826a522B2754De4;
+    /// @dev Address of the Solidity P256 verifier.
+    /// Please make sure the contract is deployed onto the chain you are working on.
+    /// See: https://gist.github.com/Vectorized/599b0d8a94d21bc74700eb1354e2f55c
+    address internal constant VERIFIER = 0x000000000000E052BBf2730c643462Afb680718A;
 
     /// @dev Address of the RIP-7212 P256 verifier precompile.
     /// Currently, we don't support EIP-7212's precompile at 0x0b as it has not been finalized.
@@ -28,7 +31,7 @@ library P256 {
     /// @dev P256 curve order `n / 2` for malleability check.
     /// Included for safety as we have less information on how P256 signatures are being used.
     uint256 internal constant P256_N_DIV_2 =
-        57896044605178124381348723474703786764998477612067880171211129530534256022184;
+        0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a8;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                P256 VERIFICATION OPERATIONS                */
@@ -38,10 +41,10 @@ library P256 {
     /// Does NOT include the malleability check.
     function verifySignatureAllowMalleability(
         bytes32 hash,
-        uint256 r,
-        uint256 s,
-        uint256 x,
-        uint256 y
+        bytes32 r,
+        bytes32 s,
+        bytes32 x,
+        bytes32 y
     ) internal view returns (bool isValid) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -54,7 +57,6 @@ library P256 {
             let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
-                // The verifier may actually revert, as it has `abi.decode` and `assert`.
                 success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
@@ -67,7 +69,7 @@ library P256 {
 
     /// @dev Returns if the signature (`r`, `s`) is valid for `hash` and public key (`x`, `y`).
     /// Includes the malleability check.
-    function verifySignature(bytes32 hash, uint256 r, uint256 s, uint256 x, uint256 y)
+    function verifySignature(bytes32 hash, bytes32 r, bytes32 s, bytes32 x, bytes32 y)
         internal
         view
         returns (bool isValid)
@@ -83,7 +85,6 @@ library P256 {
             let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
             // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
             if iszero(returndatasize()) {
-                // The verifier may actually revert, as it has `abi.decode` and `assert`.
                 success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
