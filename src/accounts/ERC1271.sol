@@ -234,7 +234,7 @@ abstract contract ERC1271 is EIP712 {
                 calldatacopy(p, add(o, 0x40), c) // Copy `contentsType`.
                 // Fill in the missing fields of the `TypedDataSign`.
                 calldatacopy(t, o, 0x40) // Copy the `contents` struct hash to `add(t, 0x20)`.
-                mstore(t, keccak256(m, sub(add(p, c), m))) // Store `TYPED_DATA_SIGN_TYPEHASH`.
+                mstore(t, keccak256(m, sub(add(p, c), m))) // Store `typedDataSignTypehash`.
                 // The "\x19\x01" prefix is already at 0x00.
                 // `APP_DOMAIN_SEPARATOR` is already at 0x20.
                 mstore(0x40, keccak256(t, 0x120)) // `hashStruct(typedDataSign)`.
@@ -264,7 +264,7 @@ abstract contract ERC1271 is EIP712 {
         assembly {
             m := mload(0x40) // Grab the free memory pointer.
             mstore(0x40, add(m, 0x120)) // Allocate the memory.
-            // Skip 2 words for the `TYPED_DATA_SIGN_TYPEHASH` and `contents` struct hash.
+            // Skip 2 words for the `typedDataSignTypehash` and `contents` struct hash.
             mstore(add(m, 0x40), shl(248, byte(0, fields)))
             mstore(add(m, 0x60), keccak256(add(name, 0x20), mload(name)))
             mstore(add(m, 0x80), keccak256(add(version, 0x20), mload(version)))
