@@ -122,11 +122,13 @@ library SSTORE2 {
     }
 
     /// @dev Returns the deterministic address for `salt`.
+    /// This uses the "CREATE3" formula.
     function predictDeterministicAddress(bytes32 salt) internal view returns (address pointer) {
         pointer = predictDeterministicAddress(salt, address(this));
     }
 
     /// @dev Returns the deterministic address for `salt` with `deployer`.
+    /// This uses the "CREATE3" formula.
     function predictDeterministicAddress(bytes32 salt, address deployer)
         internal
         pure
