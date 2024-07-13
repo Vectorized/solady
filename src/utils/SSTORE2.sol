@@ -81,27 +81,6 @@ library SSTORE2 {
         }
     }
 
-    /// @dev Returns the initialization code hash of the storage contract for `data`.
-    /// Used for mining vanity addresses with create2crunch.
-    function initCodeHash(bytes memory data) internal pure returns (bytes32 hash) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let originalDataLength := mload(data)
-            let dataSize := add(originalDataLength, DATA_OFFSET)
-
-            // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
-            // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), shr(16, dataSize))
-
-            mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
-
-            hash := keccak256(add(data, 0x15), add(dataSize, 0xa))
-
-            // Restore original length of the variable size `data`.
-            mstore(data, originalDataLength)
-        }
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         READ LOGIC                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
