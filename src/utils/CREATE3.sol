@@ -56,11 +56,21 @@ library CREATE3 {
     /*                      CREATE3 OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Deploys `creationCode` deterministically with a `salt`.
+    /// @dev Deploys `initCode` deterministically with a `salt`.
+    /// Returns the deterministic address of the deployed contract,
+    /// which solely depends on `salt`.
+    function deployDeterministic(bytes memory initCode, bytes32 salt)
+        internal
+        returns (address deployed)
+    {
+        deployed = deployDeterministic(0, initCode, salt);
+    }
+
+    /// @dev Deploys `initCode` deterministically with a `salt`.
     /// The deployed contract is funded with `value` (in wei) ETH.
     /// Returns the deterministic address of the deployed contract,
     /// which solely depends on `salt`.
-    function deploy(bytes32 salt, bytes memory creationCode, uint256 value)
+    function deployDeterministic(uint256 value, bytes memory initCode, bytes32 salt)
         internal
         returns (address deployed)
     {
@@ -95,8 +105,8 @@ library CREATE3 {
                     gas(), // Gas remaining.
                     proxy, // Proxy's address.
                     value, // Ether value.
-                    add(creationCode, 0x20), // Start of `creationCode`.
-                    mload(creationCode), // Length of `creationCode`.
+                    add(initCode, 0x20), // Start of `initCode`.
+                    mload(initCode), // Length of `initCode`.
                     0x00, // Offset of output.
                     0x00 // Length of output.
                 )
@@ -117,8 +127,17 @@ library CREATE3 {
         }
     }
 
+    /// @dev Returns the deterministic address for `salt`.
+    function predictDeterministicAddress(bytes32 salt) internal view returns (address deployed) {
+        deployed = predictDeterministicAddress(salt, address(this));
+    }
+
     /// @dev Returns the deterministic address for `salt` with `deployer`.
-    function getDeployed(bytes32 salt, address deployer) internal pure returns (address deployed) {
+    function predictDeterministicAddress(bytes32 salt, address deployer)
+        internal
+        pure
+        returns (address deployed)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             // Cache the free memory pointer.
@@ -144,10 +163,5 @@ library CREATE3 {
 
             deployed := keccak256(0x1e, 0x17)
         }
-    }
-
-    /// @dev Returns the deterministic address for `salt`.
-    function getDeployed(bytes32 salt) internal view returns (address deployed) {
-        deployed = getDeployed(salt, address(this));
     }
 }
