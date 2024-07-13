@@ -14,14 +14,13 @@ contract CREATE3Test is SoladyTest {
         bytes32 salt = keccak256(bytes("A salt!"));
 
         MockERC20 deployed = MockERC20(
-            this.deploy(
-                salt,
+            this.deployDeterministic(
                 abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18)),
-                0
+                salt
             )
         );
 
-        assertEq(address(deployed), CREATE3.getDeployed(salt));
+        assertEq(address(deployed), CREATE3.predictDeterministicAddress(salt));
 
         assertEq(deployed.name(), "Mock Token");
         assertEq(deployed.symbol(), "MOCK");
@@ -30,7 +29,7 @@ contract CREATE3Test is SoladyTest {
 
     function testDeployedUpperBitsSafeForPlainSolidity() public {
         bytes32 salt = keccak256(bytes("A salt!"));
-        address deployed = CREATE3.getDeployed(salt);
+        address deployed = CREATE3.predictDeterministicAddress(salt);
         uint256 someNumber = 123456789;
         uint256 packed = (someNumber << 160) | uint160(deployed);
         uint256 someNumberUnpacked = packed >> 160;
@@ -40,17 +39,17 @@ contract CREATE3Test is SoladyTest {
     function testDoubleDeploySameBytecodeReverts() public {
         bytes32 salt = keccak256(bytes("Salty..."));
 
-        this.deploy(salt, type(MockCd).creationCode, 0);
+        this.deployDeterministic(type(MockCd).creationCode, salt);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        this.deploy(salt, type(MockCd).creationCode, 0);
+        this.deployDeterministic(type(MockCd).creationCode, salt);
     }
 
     function testDoubleDeployDifferentBytecodeReverts() public {
         bytes32 salt = keccak256(bytes("and sweet!"));
 
-        this.deploy(salt, type(WETH).creationCode, 0);
+        this.deployDeterministic(type(WETH).creationCode, salt);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        this.deploy(salt, type(MockCd).creationCode, 0);
+        this.deployDeterministic(type(MockCd).creationCode, salt);
     }
 
     function testDeployERC20(
@@ -60,14 +59,13 @@ contract CREATE3Test is SoladyTest {
         uint8 decimals
     ) public {
         MockERC20 deployed = MockERC20(
-            this.deploy(
-                salt,
+            this.deployDeterministic(
                 abi.encodePacked(type(MockERC20).creationCode, abi.encode(name, symbol, decimals)),
-                0
+                salt
             )
         );
 
-        assertEq(address(deployed), CREATE3.getDeployed(salt));
+        assertEq(address(deployed), CREATE3.predictDeterministicAddress(salt));
 
         assertEq(deployed.name(), name);
         assertEq(deployed.symbol(), symbol);
@@ -75,10 +73,10 @@ contract CREATE3Test is SoladyTest {
     }
 
     function testDoubleDeploySameBytecodeReverts(bytes32 salt, bytes calldata bytecode) public {
-        bytes memory creationCode = _creationCode(bytecode);
-        this.deploy(salt, creationCode, 0);
+        bytes memory creationCode = _initCode(bytecode);
+        this.deployDeterministic(creationCode, salt);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        this.deploy(salt, creationCode, 0);
+        this.deployDeterministic(creationCode, salt);
     }
 
     function testDoubleDeployDifferentBytecodeReverts(
@@ -86,19 +84,26 @@ contract CREATE3Test is SoladyTest {
         bytes memory bytecode1,
         bytes memory bytecode2
     ) public {
-        this.deploy(salt, _creationCode(bytecode1), 0);
+        this.deployDeterministic(_initCode(bytecode1), salt);
         vm.expectRevert(CREATE3.DeploymentFailed.selector);
-        this.deploy(salt, _creationCode(bytecode2), 0);
+        this.deployDeterministic(_initCode(bytecode2), salt);
     }
 
-    function deploy(bytes32 salt, bytes calldata creationCode, uint256 value)
-        external
+    function deployDeterministic(uint256 value, bytes calldata creationCode, bytes32 salt)
+        public
         returns (address)
     {
-        return CREATE3.deploy(salt, creationCode, value);
+        return CREATE3.deployDeterministic(value, creationCode, salt);
     }
 
-    function _creationCode(bytes memory bytecode) internal pure returns (bytes memory result) {
+    function deployDeterministic(bytes calldata creationCode, bytes32 salt)
+        public
+        returns (address)
+    {
+        return deployDeterministic(0, creationCode, salt);
+    }
+
+    function _initCode(bytes memory bytecode) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             // Trim the length if needed.

@@ -6,11 +6,8 @@ import {SSTORE2} from "../src/utils/SSTORE2.sol";
 
 contract SSTORE2Test is SoladyTest {
     function testWriteRead() public {
-        bytes memory testBytes = abi.encode("this is a test");
-
-        address pointer = SSTORE2.write(testBytes);
-
-        assertEq(SSTORE2.read(pointer), testBytes);
+        bytes memory data = abi.encode("this is a test");
+        assertEq(SSTORE2.read(SSTORE2.write(data)), data);
     }
 
     function testWriteReadFullStartBound() public {
@@ -22,9 +19,8 @@ contract SSTORE2Test is SoladyTest {
     }
 
     function testWriteReadFullBoundedRead() public {
-        bytes memory testBytes = abi.encode("this is a test");
-
-        assertEq(SSTORE2.read(SSTORE2.write(testBytes), 0, testBytes.length), testBytes);
+        bytes memory data = abi.encode("this is a test");
+        assertEq(SSTORE2.read(SSTORE2.write(data), 0, data.length), data);
     }
 
     function testWriteReadCustomBounds() public {
@@ -68,43 +64,42 @@ contract SSTORE2Test is SoladyTest {
         SSTORE2.read(pointer, 41000, 42000);
     }
 
-    function testWriteRead(bytes calldata testBytes) public brutalizeMemory {
+    function testWriteRead(bytes calldata data) public brutalizeMemory {
         _misalignFreeMemoryPointer();
-        bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes));
+        bytes memory readResult = SSTORE2.read(SSTORE2.write(data));
         _checkMemory(readResult);
-        assertEq(readResult, testBytes);
+        assertEq(readResult, data);
     }
 
-    function testWriteReadCustomStartBound(bytes calldata testBytes, uint256 startIndex)
+    function testWriteReadCustomStartBound(bytes calldata data, uint256 startIndex)
         public
         brutalizeMemory
     {
-        if (testBytes.length == 0) return;
+        if (data.length == 0) return;
 
-        startIndex = _bound(startIndex, 0, testBytes.length);
+        startIndex = _bound(startIndex, 0, data.length);
 
         _misalignFreeMemoryPointer();
-        bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex);
+        bytes memory readResult = SSTORE2.read(SSTORE2.write(data), startIndex);
         _checkMemory(readResult);
-        assertEq(readResult, bytes(testBytes[startIndex:]));
+        assertEq(readResult, bytes(data[startIndex:]));
     }
 
-    function testWriteReadCustomBounds(
-        bytes calldata testBytes,
-        uint256 startIndex,
-        uint256 endIndex
-    ) public brutalizeMemory {
-        if (testBytes.length == 0) return;
+    function testWriteReadCustomBounds(bytes calldata data, uint256 startIndex, uint256 endIndex)
+        public
+        brutalizeMemory
+    {
+        if (data.length == 0) return;
 
-        endIndex = _bound(endIndex, 0, testBytes.length);
-        startIndex = _bound(startIndex, 0, testBytes.length);
+        endIndex = _bound(endIndex, 0, data.length);
+        startIndex = _bound(startIndex, 0, data.length);
 
         if (startIndex > endIndex) return;
 
         _misalignFreeMemoryPointer();
-        bytes memory readResult = SSTORE2.read(SSTORE2.write(testBytes), startIndex, endIndex);
+        bytes memory readResult = SSTORE2.read(SSTORE2.write(data), startIndex, endIndex);
         _checkMemory(readResult);
-        assertEq(readResult, bytes(testBytes[startIndex:endIndex]));
+        assertEq(readResult, bytes(data[startIndex:endIndex]));
     }
 
     function testReadInvalidPointerRevert(address pointer) public brutalizeMemory {
@@ -132,42 +127,25 @@ contract SSTORE2Test is SoladyTest {
         SSTORE2.read(pointer, startIndex, endIndex);
     }
 
-    function testWriteReadCustomStartBoundOutOfRangeReverts(
-        bytes calldata testBytes,
-        uint256 startIndex
-    ) public brutalizeMemory {
-        startIndex = _bound(startIndex, testBytes.length + 1, type(uint256).max);
-        address pointer = SSTORE2.write(testBytes);
+    function testWriteReadCustomStartBoundOutOfRangeReverts(bytes calldata data, uint256 startIndex)
+        public
+        brutalizeMemory
+    {
+        startIndex = _bound(startIndex, data.length + 1, type(uint256).max);
+        address pointer = SSTORE2.write(data);
         vm.expectRevert(SSTORE2.ReadOutOfBounds.selector);
         SSTORE2.read(pointer, startIndex);
     }
 
     function testWriteReadCustomBoundsOutOfRangeReverts(
-        bytes calldata testBytes,
+        bytes calldata data,
         uint256 startIndex,
         uint256 endIndex
     ) public brutalizeMemory {
-        endIndex = _bound(endIndex, testBytes.length + 1, type(uint256).max);
-        address pointer = SSTORE2.write(testBytes);
+        endIndex = _bound(endIndex, data.length + 1, type(uint256).max);
+        address pointer = SSTORE2.write(data);
         vm.expectRevert(SSTORE2.ReadOutOfBounds.selector);
         SSTORE2.read(pointer, startIndex, endIndex);
-    }
-
-    function testWriteReadDeterministic(bytes calldata testBytes) public brutalizeMemory {
-        bytes32 salt = bytes32(_random());
-        address deployer = address(this);
-        if (_random() % 8 == 0) {
-            (deployer,) = _randomSigner();
-        }
-        vm.prank(deployer);
-        address deterministicPointer = SSTORE2.writeDeterministic(testBytes, salt);
-        assertEq(SSTORE2.read(deterministicPointer), testBytes);
-        assertEq(
-            SSTORE2.predictDeterministicAddress(testBytes, salt, deployer), deterministicPointer
-        );
-
-        address pointer = SSTORE2.write(testBytes);
-        assertEq(pointer.code, deterministicPointer.code);
     }
 
     function testWriteWithTooBigDataReverts() public {
@@ -180,6 +158,33 @@ contract SSTORE2Test is SoladyTest {
 
     function write(bytes memory data) public returns (address) {
         return SSTORE2.write(data);
+    }
+
+    function testWriteReadDeterministic(bytes memory data, bytes32 salt) public {
+        address predicted = SSTORE2.predictDeterministicAddress(salt);
+        assertEq(predicted.code.length, 0);
+        address pointer = this.writeDeterministic(data, salt);
+        assertEq(pointer, predicted);
+        assertEq(pointer.code, abi.encodePacked(hex"00", data));
+        assertEq(SSTORE2.read(predicted), data);
+        if (_random() & 31 == 0) {
+            vm.expectRevert();
+            this.writeDeterministic(data, salt);
+        }
+    }
+
+    function writeDeterministic(bytes memory data, bytes32 salt)
+        public
+        brutalizeMemory
+        returns (address pointer)
+    {
+        _misalignFreeMemoryPointer();
+        if (data.length == 0) {
+            bytes memory empty;
+            pointer = SSTORE2.writeDeterministic(empty, salt);
+        } else {
+            pointer = SSTORE2.writeDeterministic(data, salt);
+        }
     }
 
     function _dummyData(uint256 n) internal pure returns (bytes memory result) {

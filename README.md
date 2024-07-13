@@ -60,7 +60,7 @@ utils
 ├─ LibPRNG — "Library for generating pseudorandom numbers"
 ├─ Base64 — "Library for Base64 encoding and decoding"
 ├─ SSTORE2 — "Library for cheaper reads and writes to persistent storage"
-├─ CREATE3 — "Deploy to deterministic addresses without an initcode factor"
+├─ CREATE3 — "Deterministic deployments agnostic to the initialization code"
 ├─ LibRLP — "Library for RLP encoding and CREATE address computation"
 ├─ LibBit — "Library for bit twiddling and boolean operations"
 ├─ LibZip — "Library for compressing and decompressing bytes"
