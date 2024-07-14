@@ -3,10 +3,11 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {SSTORE2} from "../src/utils/SSTORE2.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract SSTORE2Test is SoladyTest {
     function testWriteRead() public {
-        bytes memory data = abi.encode("this is a test");
+        bytes memory data = "this is a test";
         assertEq(SSTORE2.read(SSTORE2.write(data)), data);
     }
 
@@ -19,7 +20,7 @@ contract SSTORE2Test is SoladyTest {
     }
 
     function testWriteReadFullBoundedRead() public {
-        bytes memory data = abi.encode("this is a test");
+        bytes memory data = "this is a test";
         assertEq(SSTORE2.read(SSTORE2.write(data), 0, data.length), data);
     }
 
@@ -89,17 +90,32 @@ contract SSTORE2Test is SoladyTest {
         public
         brutalizeMemory
     {
-        if (data.length == 0) return;
-
-        endIndex = _bound(endIndex, 0, data.length);
-        startIndex = _bound(startIndex, 0, data.length);
-
-        if (startIndex > endIndex) return;
+        do {
+            endIndex = _bound(_random(), 0, data.length);
+            startIndex = _bound(_random(), 0, data.length);
+        } while (startIndex > endIndex);
 
         _misalignFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(data), startIndex, endIndex);
         _checkMemory(readResult);
         assertEq(readResult, bytes(data[startIndex:endIndex]));
+    }
+
+    function testWriteReadCustomBounds2(bytes32, uint256 startIndex, uint256 endIndex) public {
+        bytes memory data = _dummyData(_bound(_random(), 0, 0xfffe));
+
+        do {
+            endIndex = _bound(_random(), 0, data.length);
+            startIndex = _bound(_random(), 0, data.length);
+        } while (startIndex > endIndex);
+
+        _misalignFreeMemoryPointer();
+        address pointer = SSTORE2.write(data);
+        if (_random() & 7 == 0) assertEq(pointer.code, abi.encodePacked(hex"00", data));
+        if (_random() & 1 == 0) _misalignFreeMemoryPointer();
+        bytes memory readResult = SSTORE2.read(pointer, startIndex, endIndex);
+        _checkMemory(readResult);
+        assertEq(readResult, bytes(LibString.slice(string(data), startIndex, endIndex)));
     }
 
     function testReadInvalidPointerRevert(address pointer) public brutalizeMemory {
@@ -160,6 +176,12 @@ contract SSTORE2Test is SoladyTest {
         return SSTORE2.write(data);
     }
 
+    function testWriteReadDeterministic() public {
+        bytes32 salt = keccak256("salt");
+        bytes memory data = "this is a test";
+        assertEq(SSTORE2.writeDeterministic(data, salt).code, abi.encodePacked(hex"00", data));
+    }
+
     function testWriteReadDeterministic(bytes memory data, bytes32 salt) public {
         address predicted = SSTORE2.predictDeterministicAddress(salt);
         assertEq(predicted.code.length, 0);
@@ -179,7 +201,7 @@ contract SSTORE2Test is SoladyTest {
         returns (address pointer)
     {
         _misalignFreeMemoryPointer();
-        if (data.length == 0) {
+        if (data.length == 0 && _random() & 1 == 0) {
             bytes memory empty;
             pointer = SSTORE2.writeDeterministic(empty, salt);
         } else {
@@ -187,19 +209,20 @@ contract SSTORE2Test is SoladyTest {
         }
     }
 
-    function _dummyData(uint256 n) internal pure returns (bytes memory result) {
+    function _dummyData(uint256 n) internal returns (bytes memory result) {
+        uint256 r = _random();
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            mstore(result, n)
             mstore(0x00, n)
-            mstore(0x20, 1)
+            mstore(0x20, r)
             mstore(add(0x20, result), keccak256(0x00, 0x40))
-            mstore(0x20, 2)
+            mstore(0x20, add(r, 2))
             mstore(add(add(0x20, result), n), keccak256(0x00, 0x40))
-            mstore(0x20, 3)
+            mstore(0x20, add(r, 3))
             mstore(add(result, n), keccak256(0x00, 0x40))
             mstore(0x40, add(add(0x20, result), n))
+            mstore(result, n) // Store the length of `result`.
         }
     }
 }
