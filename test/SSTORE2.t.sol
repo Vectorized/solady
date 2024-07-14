@@ -6,7 +6,7 @@ import {SSTORE2} from "../src/utils/SSTORE2.sol";
 
 contract SSTORE2Test is SoladyTest {
     function testWriteRead() public {
-        bytes memory data = abi.encode("this is a test");
+        bytes memory data = "this is a test";
         assertEq(SSTORE2.read(SSTORE2.write(data)), data);
     }
 
@@ -19,7 +19,7 @@ contract SSTORE2Test is SoladyTest {
     }
 
     function testWriteReadFullBoundedRead() public {
-        bytes memory data = abi.encode("this is a test");
+        bytes memory data = "this is a test";
         assertEq(SSTORE2.read(SSTORE2.write(data), 0, data.length), data);
     }
 
@@ -158,6 +158,12 @@ contract SSTORE2Test is SoladyTest {
 
     function write(bytes memory data) public returns (address) {
         return SSTORE2.write(data);
+    }
+
+    function testWriteReadDeterministic() public {
+        bytes32 salt = keccak256("salt");
+        bytes memory data = "this is a test";
+        assertEq(SSTORE2.writeDeterministic(data, salt).code, abi.encodePacked(hex"00", data));
     }
 
     function testWriteReadDeterministic(bytes memory data, bytes32 salt) public {
