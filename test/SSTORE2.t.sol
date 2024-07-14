@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {SSTORE2} from "../src/utils/SSTORE2.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract SSTORE2Test is SoladyTest {
     function testWriteRead() public {
@@ -102,6 +103,20 @@ contract SSTORE2Test is SoladyTest {
         assertEq(readResult, bytes(data[startIndex:endIndex]));
     }
 
+    function testWriteReadCustomBounds2(bytes32, uint256 startIndex, uint256 endIndex) public {
+        bytes memory data = _dummyData(_bound(_random(), 0, 0xfffe));
+        endIndex = _bound(endIndex, 0, data.length);
+        startIndex = _bound(startIndex, 0, data.length);
+
+        if (startIndex > endIndex) return;
+
+        _misalignFreeMemoryPointer();
+        address pointer = SSTORE2.write(data);
+        bytes memory readResult = SSTORE2.read(pointer, startIndex, endIndex);
+        _checkMemory(readResult);
+        assertEq(readResult, bytes(LibString.slice(string(data), startIndex, endIndex)));
+    }
+
     function testReadInvalidPointerRevert(address pointer) public brutalizeMemory {
         if (pointer.code.length > 0) return;
         vm.expectRevert(SSTORE2.InvalidPointer.selector);
@@ -193,19 +208,20 @@ contract SSTORE2Test is SoladyTest {
         }
     }
 
-    function _dummyData(uint256 n) internal pure returns (bytes memory result) {
+    function _dummyData(uint256 n) internal returns (bytes memory result) {
+        uint256 r = _random();
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            mstore(result, n)
             mstore(0x00, n)
-            mstore(0x20, 1)
+            mstore(0x20, r)
             mstore(add(0x20, result), keccak256(0x00, 0x40))
-            mstore(0x20, 2)
+            mstore(0x20, add(r, 2))
             mstore(add(add(0x20, result), n), keccak256(0x00, 0x40))
-            mstore(0x20, 3)
+            mstore(0x20, add(r, 3))
             mstore(add(result, n), keccak256(0x00, 0x40))
             mstore(0x40, add(add(0x20, result), n))
+            mstore(result, n) // Store the length of `result`.
         }
     }
 }
