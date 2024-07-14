@@ -183,7 +183,7 @@ contract SSTORE2Test is SoladyTest {
     }
 
     function testWriteReadDeterministic(bytes memory data, bytes32 salt) public {
-        address predicted = SSTORE2.predictDeterministicAddress(salt);
+        address predicted = SSTORE2.predictDeterministicAddress(salt, _brutalized(address(this)));
         assertEq(predicted.code.length, 0);
         address pointer = this.writeDeterministic(data, salt);
         assertEq(pointer, predicted);
