@@ -44,18 +44,18 @@ library SSTORE2 {
             let originalDataLength := mload(data)
             let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
             /**
-             * ----------------------------------------------------------------+
-             * Opcode      | Mnemonic        | Stack     | Memory              |
-             * ----------------------------------------------------------------|
-             * 61 n        | PUSH2 n         | n         |                     |
-             * 80          | DUP1            | n n       |                     |
-             * 60 0xa      | PUSH1 0xa       | 0xa n n   |                     |
-             * 3D          | RETURNDATASIZE  | 0 0xa n n |                     |
-             * 39          | CODECOPY        | n         | [0..n): code        |
-             * 3D          | RETURNDATASIZE  | 0 n       | [0..n): code        |
-             * F3          | RETURN          |           | [0..n): code        |
-             * 00          | STOP            |           |                     |
-             * ----------------------------------------------------------------+
+             * ---------------------------------------------------+
+             * Opcode | Mnemonic       | Stack     | Memory       |
+             * ---------------------------------------------------|
+             * 61 n   | PUSH2 n        | n         |              |
+             * 80     | DUP1           | n n       |              |
+             * 60 0xa | PUSH1 0xa      | 0xa n n   |              |
+             * 3D     | RETURNDATASIZE | 0 0xa n n |              |
+             * 39     | CODECOPY       | n         | [0..n): code |
+             * 3D     | RETURNDATASIZE | 0 n       | [0..n): code |
+             * F3     | RETURN         |           | [0..n): code |
+             * 00     | STOP           |           |              |
+             * ---------------------------------------------------+
              * @dev Prefix the bytecode with a STOP opcode to ensure it cannot be called.
              * Also PUSH2 is used since max contract size cap is 24,576 bytes which is less than 2 ** 16.
              */
@@ -64,7 +64,7 @@ library SSTORE2 {
                 // The actual EVM limit may be smaller and may change over time.
                 add(data, gt(n, 0xffff)),
                 // Left shift `n` by 64 so that it lines up with the 0000 after PUSH2.
-                or(0xfd61000080600a3d393df300, shl(0x40, n))
+                or(0xfe61000080600a3d393df300, shl(0x40, n)) // `fe` is the INVALID opcode.
             )
             // Deploy a new contract with the generated creation code.
             pointer := create(0, add(data, 0x15), add(n, 0xa))
@@ -106,7 +106,7 @@ library SSTORE2 {
                 // The actual EVM limit may be smaller and may change over time.
                 add(data, gt(n, 0xffff)),
                 // Left shift `n` by 64 so that it lines up with the 0000 after PUSH2.
-                or(0xfd61000080600a3d393df300, shl(0x40, n))
+                or(0xfe61000080600a3d393df300, shl(0x40, n)) // `fe` is the INVALID opcode.
             )
             if iszero(
                 mul( // The arguments of `mul` are evaluated last to first.
@@ -171,9 +171,8 @@ library SSTORE2 {
             // then copy the code to the allocated memory.
             data := mload(0x40)
             mstore(0x40, add(data, add(l, 0x40)))
-            mstore(data, l)
-            mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), 1, l)
+            mstore(data, l) // Store the length of `data`.
+            extcodecopy(pointer, add(data, 0x20), 1, add(l, 0x20)) // Copy the code.
         }
     }
 
@@ -199,9 +198,8 @@ library SSTORE2 {
             // then copy the code to the allocated memory.
             data := mload(0x40)
             mstore(0x40, add(data, add(l, 0x40)))
-            mstore(data, l)
-            mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), l)
+            mstore(data, l) // Store the length of `data`.
+            extcodecopy(pointer, add(data, 0x20), add(start, 1), add(l, 0x20)) // Copy the code.
         }
     }
 
@@ -232,9 +230,9 @@ library SSTORE2 {
             // then copy the code to the allocated memory.
             data := mload(0x40)
             mstore(0x40, add(data, add(l, 0x40)))
-            mstore(data, l)
-            mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), l)
+            mstore(data, l) // Store the length of `data`.
+            mstore(add(add(data, 0x20), l), 0) // Zeroize the slot after `data`.
+            extcodecopy(pointer, add(data, 0x20), add(start, 1), l) // Copy the code.
         }
     }
 }

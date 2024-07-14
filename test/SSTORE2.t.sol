@@ -183,7 +183,7 @@ contract SSTORE2Test is SoladyTest {
     }
 
     function testWriteReadDeterministic(bytes memory data, bytes32 salt) public {
-        address predicted = SSTORE2.predictDeterministicAddress(salt);
+        address predicted = SSTORE2.predictDeterministicAddress(salt, _brutalized(address(this)));
         assertEq(predicted.code.length, 0);
         address pointer = this.writeDeterministic(data, salt);
         assertEq(pointer, predicted);
@@ -224,5 +224,30 @@ contract SSTORE2Test is SoladyTest {
             mstore(0x40, add(add(0x20, result), n))
             mstore(result, n) // Store the length of `result`.
         }
+    }
+
+    function testReadBoundsCheckTrick(uint256 dataLength, uint256 start) public {
+        dataLength = _bound(dataLength, 0, 0xffffffff);
+        bool expected = !(dataLength + 1 > start) || start == type(uint256).max;
+        bool computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let pointerCodesize := add(dataLength, 1)
+            computed := iszero(gt(pointerCodesize, start))
+        }
+        assertEq(computed, expected);
+    }
+
+    function testReadBoundsCheckTrick(uint256 dataLength, uint256 start, uint256 end) public {
+        dataLength = _bound(dataLength, 0, 0xffffffff);
+        bool expected = !(dataLength + 1 > end && start <= end) || start == type(uint256).max
+            || end == type(uint256).max;
+        bool computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let pointerCodesize := add(dataLength, 1)
+            computed := iszero(gt(gt(pointerCodesize, end), gt(start, end)))
+        }
+        assertEq(computed, expected);
     }
 }
