@@ -740,7 +740,9 @@ contract LibStringTest is SoladyTest {
 
     function testStringRepeat(string memory subject, uint256 times) public brutalizeMemory {
         times = times % 8;
+        _misalignFreeMemoryPointer();
         string memory repeated = LibString.repeat(subject, times);
+        _checkMemory(repeated);
         string memory expectedResult = _repeatOriginal(subject, times);
         _checkMemory(repeated);
         assertEq(repeated, expectedResult);
@@ -785,6 +787,20 @@ contract LibStringTest is SoladyTest {
         string memory slice = LibString.slice(subject, start, end);
         _checkMemory(slice);
         assertEq(slice, expectedResult);
+    }
+
+    function testStringSlice(bytes calldata subject, uint256 start, uint256 end)
+        public
+        brutalizeMemory
+    {
+        _misalignFreeMemoryPointer();
+        do {
+            start = _bound(_random(), 0, subject.length);
+            end = _bound(_random(), 0, subject.length);
+        } while (end < start);
+        _misalignFreeMemoryPointer();
+        bytes memory slice = bytes(LibString.slice(string(subject), start, end));
+        assertEq(slice, subject[start:end]);
     }
 
     function testStringSlice() public {
@@ -916,10 +932,10 @@ contract LibStringTest is SoladyTest {
             }
             _misalignFreeMemoryPointer();
             string[] memory split = LibString.split(subject, delimiter);
-            assertTrue(_stringArraysAreSame(split, elements));
             for (uint256 i; i < split.length; ++i) {
                 _checkMemory(split[i]);
             }
+            assertTrue(_stringArraysAreSame(split, elements));
         }
     }
 
