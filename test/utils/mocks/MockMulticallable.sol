@@ -33,6 +33,26 @@ contract MockMulticallable is Multicallable {
         return s;
     }
 
+    function returnsRandomizedString(string calldata s) external pure returns (string memory) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := add(mload(0x40), 0x20)
+            calldatacopy(m, s.offset, s.length)
+            mstore(0x20, keccak256(m, s.length))
+            let v := keccak256(m, add(s.length, 1))
+            let n := and(mload(0x20), 0x1ff)
+            mstore(0x00, 0)
+            for { let i := 0 } lt(i, n) {} {
+                mstore(add(m, i), v)
+                mstore(0x00, add(1, mload(0x00)))
+                i := add(i, and(keccak256(0x00, 0x40), 0x3f))
+            }
+            mstore(m, n)
+            mstore(sub(m, 0x20), 0x20)
+            return(sub(m, 0x20), add(n, 0x60))
+        }
+    }
+
     uint256 public paid;
 
     function pay() external payable {

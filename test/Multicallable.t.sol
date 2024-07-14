@@ -63,17 +63,19 @@ contract MulticallableTest is SoladyTest {
         n = n % 2;
         bytes[] memory dataIn = new bytes[](n);
         if (n > 0) {
-            dataIn[0] = abi.encodeWithSelector(MockMulticallable.returnsString.selector, sIn0);
+            dataIn[0] =
+                abi.encodeWithSelector(MockMulticallable.returnsRandomizedString.selector, sIn0);
         }
         if (n > 1) {
-            dataIn[1] = abi.encodeWithSelector(MockMulticallable.returnsString.selector, sIn1);
+            dataIn[1] =
+                abi.encodeWithSelector(MockMulticallable.returnsRandomizedString.selector, sIn1);
         }
         bytes[] memory dataOut = multicallable.multicall(dataIn);
         if (n > 0) {
-            assertEq(abi.decode(dataOut[0], (string)), sIn0);
+            assertEq(abi.decode(dataOut[0], (string)), multicallable.returnsRandomizedString(sIn0));
         }
         if (n > 1) {
-            assertEq(abi.decode(dataOut[1], (string)), sIn1);
+            assertEq(abi.decode(dataOut[1], (string)), multicallable.returnsRandomizedString(sIn1));
         }
     }
 

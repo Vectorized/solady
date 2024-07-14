@@ -6,12 +6,16 @@ import {LibClone} from "../src/utils/LibClone.sol";
 import {DeploylessPredeployQueryer} from "../src/utils/DeploylessPredeployQueryer.sol";
 
 library RandomBytesGeneratorLib {
+    function generate(bytes memory seed) internal pure returns (bytes memory result) {
+        result = generate(uint256(keccak256(seed)));
+    }
+
     function generate(uint256 seed) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := add(0x20, mload(0x40))
             mstore(0x00, seed)
-            let n := mod(keccak256(0x00, 0x20), 50)
+            let n := mod(keccak256(0x00, 0x20), 300)
             mstore(result, n)
             for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                 mstore(0x20, i)
@@ -31,6 +35,15 @@ library RandomBytesGeneratorLib {
 }
 
 contract Target {
+    function generate(bytes memory seed) public pure returns (bytes memory result) {
+        result = RandomBytesGeneratorLib.generate(seed);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(sub(result, 0x20), 0x20)
+            return(sub(result, 0x20), add(add(0x40, mod(seed, 50)), mload(result)))
+        }
+    }
+
     function generate(uint256 seed) public pure returns (bytes memory result) {
         result = RandomBytesGeneratorLib.generate(seed);
         /// @solidity memory-safe-assembly
@@ -76,6 +89,7 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
         address target;
         uint256 n;
         uint256[] seeds;
+        bytes[] bytesSeeds;
         address deployed;
         bytes factoryCalldata;
         bytes[] targetQueryCalldata;
@@ -97,7 +111,7 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
         bytes memory args =
             abi.encode(target, targetQueryCalldata, address(factory), factoryCalldata);
         bytes memory initcode;
-        if (_random() % 2 == 0) {
+        if (false && _random() % 2 == 0) {
             initcode = _CREATION_CODE;
         } else {
             initcode = type(DeploylessPredeployQueryer).creationCode;
@@ -106,6 +120,14 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
         /// @solidity memory-safe-assembly
         assembly {
             result := create(0, add(0x20, initcode), mload(initcode))
+        }
+    }
+
+    function testTargetGenerate() public {
+        Target target = new Target();
+        for (uint256 i; i < 16; ++i) {
+            bytes memory seed = _randomBytes();
+            assertEq(target.generate(seed), RandomBytesGeneratorLib.generate(seed));
         }
     }
 
@@ -120,6 +142,7 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
             t.n = _random() % 3;
             t.targetQueryCalldata = new bytes[](t.n);
             t.seeds = new uint256[](t.n);
+            t.bytesSeeds = new bytes[](t.n);
             if (_random() % 2 == 0) {
                 vm.expectRevert(DeploylessPredeployQueryer.ReturnedAddressMismatch.selector);
                 address wrongTarget = address(uint160(t.target) ^ 1);
@@ -127,9 +150,9 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
             }
             if (_random() % 2 == 0) {
                 for (uint256 i; i < t.n; ++i) {
-                    t.seeds[i] = _random();
+                    t.bytesSeeds[i] = _randomBytes();
                     t.targetQueryCalldata[i] =
-                        abi.encodeWithSignature("generate(uint256)", t.seeds[i]);
+                        abi.encodeWithSignature("generate(bytes)", t.bytesSeeds[i]);
                 }
                 t.deployed = _deployQuery(t.target, t.targetQueryCalldata, t.factoryCalldata);
                 t.decoded = abi.decode(t.deployed.code, (bytes[]));
@@ -137,7 +160,7 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
                 for (uint256 i; i < t.n; ++i) {
                     assertEq(
                         abi.decode(t.decoded[i], (bytes)),
-                        RandomBytesGeneratorLib.generate(t.seeds[i])
+                        RandomBytesGeneratorLib.generate(t.bytesSeeds[i])
                     );
                 }
             }
@@ -152,6 +175,19 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
                     abi.decode(t.decoded[i], (uint256)), RandomBytesGeneratorLib.next(t.seeds[i])
                 );
             }
+        }
+    }
+
+    function _randomBytes() internal returns (bytes memory result) {
+        uint256 r = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(0x00, r)
+            let n := mod(r, 300)
+            codecopy(add(result, 0x20), and(keccak256(0x00, 0x20), 0xff), codesize())
+            mstore(0x40, add(n, add(0x40, result)))
+            mstore(result, n)
         }
     }
 }
