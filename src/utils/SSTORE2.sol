@@ -169,7 +169,6 @@ library SSTORE2 {
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
-            // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
             mstore(0x40, add(data, add(l, 0x40)))
             mstore(data, l)
@@ -198,7 +197,6 @@ library SSTORE2 {
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
-            // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
             mstore(0x40, add(data, add(l, 0x40)))
             mstore(data, l)
@@ -232,7 +230,6 @@ library SSTORE2 {
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
-            // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
             mstore(0x40, add(data, add(l, 0x40)))
             mstore(data, l)
