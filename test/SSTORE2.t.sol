@@ -200,7 +200,7 @@ contract SSTORE2Test is SoladyTest {
         returns (address pointer)
     {
         _misalignFreeMemoryPointer();
-        if (data.length == 0) {
+        if (data.length == 0 && _random() & 1 == 0) {
             bytes memory empty;
             pointer = SSTORE2.writeDeterministic(empty, salt);
         } else {
