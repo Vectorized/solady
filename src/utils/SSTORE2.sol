@@ -44,18 +44,18 @@ library SSTORE2 {
             let originalDataLength := mload(data)
             let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
             /**
-             * ----------------------------------------------------------------+
-             * Opcode      | Mnemonic        | Stack     | Memory              |
-             * ----------------------------------------------------------------|
-             * 61 n        | PUSH2 n         | n         |                     |
-             * 80          | DUP1            | n n       |                     |
-             * 60 0xa      | PUSH1 0xa       | 0xa n n   |                     |
-             * 3D          | RETURNDATASIZE  | 0 0xa n n |                     |
-             * 39          | CODECOPY        | n         | [0..n): code        |
-             * 3D          | RETURNDATASIZE  | 0 n       | [0..n): code        |
-             * F3          | RETURN          |           | [0..n): code        |
-             * 00          | STOP            |           |                     |
-             * ----------------------------------------------------------------+
+             * ---------------------------------------------------+
+             * Opcode | Mnemonic       | Stack     | Memory       |
+             * ---------------------------------------------------|
+             * 61 n   | PUSH2 n        | n         |              |
+             * 80     | DUP1           | n n       |              |
+             * 60 0xa | PUSH1 0xa      | 0xa n n   |              |
+             * 3D     | RETURNDATASIZE | 0 0xa n n |              |
+             * 39     | CODECOPY       | n         | [0..n): code |
+             * 3D     | RETURNDATASIZE | 0 n       | [0..n): code |
+             * F3     | RETURN         |           | [0..n): code |
+             * 00     | STOP           |           |              |
+             * ---------------------------------------------------+
              * @dev Prefix the bytecode with a STOP opcode to ensure it cannot be called.
              * Also PUSH2 is used since max contract size cap is 24,576 bytes which is less than 2 ** 16.
              */
