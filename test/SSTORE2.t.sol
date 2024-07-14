@@ -90,12 +90,10 @@ contract SSTORE2Test is SoladyTest {
         public
         brutalizeMemory
     {
-        if (data.length == 0) return;
-
-        endIndex = _bound(endIndex, 0, data.length);
-        startIndex = _bound(startIndex, 0, data.length);
-
-        if (startIndex > endIndex) return;
+        do {
+            endIndex = _bound(_random(), 0, data.length);
+            startIndex = _bound(_random(), 0, data.length);
+        } while (startIndex > endIndex);
 
         _misalignFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(SSTORE2.write(data), startIndex, endIndex);
@@ -105,13 +103,16 @@ contract SSTORE2Test is SoladyTest {
 
     function testWriteReadCustomBounds2(bytes32, uint256 startIndex, uint256 endIndex) public {
         bytes memory data = _dummyData(_bound(_random(), 0, 0xfffe));
-        endIndex = _bound(endIndex, 0, data.length);
-        startIndex = _bound(startIndex, 0, data.length);
 
-        if (startIndex > endIndex) return;
+        do {
+            endIndex = _bound(_random(), 0, data.length);
+            startIndex = _bound(_random(), 0, data.length);
+        } while (startIndex > endIndex);
 
         _misalignFreeMemoryPointer();
         address pointer = SSTORE2.write(data);
+        if (_random() & 7 == 0) assertEq(pointer.code, abi.encodePacked(hex"00", data));
+        if (_random() & 1 == 0) _misalignFreeMemoryPointer();
         bytes memory readResult = SSTORE2.read(pointer, startIndex, endIndex);
         _checkMemory(readResult);
         assertEq(readResult, bytes(LibString.slice(string(data), startIndex, endIndex)));

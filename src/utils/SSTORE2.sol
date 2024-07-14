@@ -171,7 +171,7 @@ library SSTORE2 {
             // then copy the code to the allocated memory.
             // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
-            mstore(0x40, add(data, and(add(l, 0x3f), 0xffe0)))
+            mstore(0x40, add(data, add(l, 0x40)))
             mstore(data, l)
             mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
             extcodecopy(pointer, add(data, 0x20), 1, l)
@@ -200,7 +200,7 @@ library SSTORE2 {
             // then copy the code to the allocated memory.
             // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
-            mstore(0x40, add(data, and(add(l, 0x3f), 0xffe0)))
+            mstore(0x40, add(data, add(l, 0x40)))
             mstore(data, l)
             mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
             extcodecopy(pointer, add(data, 0x20), add(start, 1), l)
@@ -234,7 +234,7 @@ library SSTORE2 {
             // then copy the code to the allocated memory.
             // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
-            mstore(0x40, add(data, and(add(l, 0x3f), 0xffe0)))
+            mstore(0x40, add(data, add(l, 0x40)))
             mstore(data, l)
             mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
             extcodecopy(pointer, add(data, 0x20), add(start, 1), l)
