@@ -42,32 +42,32 @@ library SSTORE2 {
         /// @solidity memory-safe-assembly
         assembly {
             let originalDataLength := mload(data)
-            let dataSize := add(originalDataLength, 1) // Add 1 to skp the STOP opcode.
+            let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
             /**
-             * ------------------------------------------------------------------------------+
-             * Opcode      | Mnemonic        | Stack                   | Memory              |
-             * ------------------------------------------------------------------------------|
-             * 61 dataSize | PUSH2 dataSize  | dataSize                |                     |
-             * 80          | DUP1            | dataSize dataSize       |                     |
-             * 60 0xa      | PUSH1 0xa       | 0xa dataSize dataSize   |                     |
-             * 3D          | RETURNDATASIZE  | 0 0xa dataSize dataSize |                     |
-             * 39          | CODECOPY        | dataSize                | [0..dataSize): code |
-             * 3D          | RETURNDATASIZE  | 0 dataSize              | [0..dataSize): code |
-             * F3          | RETURN          |                         | [0..dataSize): code |
-             * 00          | STOP            |                         |                     |
-             * ------------------------------------------------------------------------------+
+             * ----------------------------------------------------------------+
+             * Opcode      | Mnemonic        | Stack     | Memory              |
+             * ----------------------------------------------------------------|
+             * 61 n        | PUSH2 n         | n         |                     |
+             * 80          | DUP1            | n n       |                     |
+             * 60 0xa      | PUSH1 0xa       | 0xa n n   |                     |
+             * 3D          | RETURNDATASIZE  | 0 0xa n n |                     |
+             * 39          | CODECOPY        | n         | [0..n): code        |
+             * 3D          | RETURNDATASIZE  | 0 n       | [0..n): code        |
+             * F3          | RETURN          |           | [0..n): code        |
+             * 00          | STOP            |           |                     |
+             * ----------------------------------------------------------------+
              * @dev Prefix the bytecode with a STOP opcode to ensure it cannot be called.
              * Also PUSH2 is used since max contract size cap is 24,576 bytes which is less than 2 ** 16.
              */
             mstore(
-                // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+                // Do a out-of-gas revert if `n` is more than 2 bytes.
                 // The actual EVM limit may be smaller and may change over time.
-                add(data, gt(dataSize, 0xffff)),
-                // Left shift `dataSize` by 64 so that it lines up with the 0000 after PUSH2.
-                or(0xfd61000080600a3d393df300, shl(0x40, dataSize))
+                add(data, gt(n, 0xffff)),
+                // Left shift `n` by 64 so that it lines up with the 0000 after PUSH2.
+                or(0xfd61000080600a3d393df300, shl(0x40, n))
             )
             // Deploy a new contract with the generated creation code.
-            pointer := create(0, add(data, 0x15), add(dataSize, 0xa))
+            pointer := create(0, add(data, 0x15), add(n, 0xa))
             if iszero(pointer) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
@@ -86,7 +86,7 @@ library SSTORE2 {
         /// @solidity memory-safe-assembly
         assembly {
             let originalDataLength := mload(data)
-            let dataSize := add(originalDataLength, 1) // Add 1 to skp the STOP opcode.
+            let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
 
             mstore(0x00, _CREATE3_PROXY_INITCODE) // Store the `_PROXY_INITCODE`.
             let proxy := create2(0, 0x10, 0x10, salt)
@@ -102,16 +102,16 @@ library SSTORE2 {
             pointer := keccak256(0x1e, 0x17)
 
             mstore(
-                // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+                // Do a out-of-gas revert if `n` is more than 2 bytes.
                 // The actual EVM limit may be smaller and may change over time.
-                add(data, gt(dataSize, 0xffff)),
-                // Left shift `dataSize` by 64 so that it lines up with the 0000 after PUSH2.
-                or(0xfd61000080600a3d393df300, shl(0x40, dataSize))
+                add(data, gt(n, 0xffff)),
+                // Left shift `n` by 64 so that it lines up with the 0000 after PUSH2.
+                or(0xfd61000080600a3d393df300, shl(0x40, n))
             )
             if iszero(
                 mul( // The arguments of `mul` are evaluated last to first.
                     extcodesize(pointer),
-                    call(gas(), proxy, 0, add(data, 0x15), add(dataSize, 0xa), codesize(), 0x00)
+                    call(gas(), proxy, 0, add(data, 0x15), add(n, 0xa), codesize(), 0x00)
                 )
             ) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
@@ -165,16 +165,16 @@ library SSTORE2 {
                 mstore(0x00, 0x11052bb4) // `InvalidPointer()`.
                 revert(0x1c, 0x04)
             }
-            let size := sub(pointerCodesize, 1) // Sub 1 to skip the STOP opcode.
+            let l := sub(pointerCodesize, 1) // Data length. -1 to skip the STOP opcode.
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
-            mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
-            mstore(data, size)
-            mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), 1, size)
+            mstore(0x40, add(data, and(add(l, 0x3f), 0xffe0)))
+            mstore(data, l)
+            mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
+            extcodecopy(pointer, add(data, 0x20), 1, l)
         }
     }
 
@@ -188,22 +188,22 @@ library SSTORE2 {
                 mstore(0x00, 0x11052bb4) // `InvalidPointer()`.
                 revert(0x1c, 0x04)
             }
-            // If `!(data.length + 1 > start)`, reverts.
+            // If `!(data.length + 1 > start)`, revert.
             // This also handles the case where `start + 1` overflows.
             if iszero(gt(pointerCodesize, start)) {
                 mstore(0x00, 0x84eb0dd1) // `ReadOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
-            let size := sub(pointerCodesize, add(start, 1))
+            let l := sub(pointerCodesize, add(start, 1)) // Data length. -1 to skip the STOP opcode.
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
-            mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
-            mstore(data, size)
-            mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), size)
+            mstore(0x40, add(data, and(add(l, 0x3f), 0xffe0)))
+            mstore(data, l)
+            mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
+            extcodecopy(pointer, add(data, 0x20), add(start, 1), l)
         }
     }
 
@@ -228,16 +228,16 @@ library SSTORE2 {
                 mstore(0x00, 0x84eb0dd1) // `ReadOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
-            let size := sub(end, start)
+            let l := sub(end, start) // Data length.
             // Get the pointer to the free memory and allocate
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             // Masking with 0xffe0 will suffice, since contract size is less than 16 bits.
             data := mload(0x40)
-            mstore(0x40, add(data, and(add(size, 0x3f), 0xffe0)))
-            mstore(data, size)
-            mstore(add(add(data, 0x20), size), 0) // Zeroize the last slot.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), size)
+            mstore(0x40, add(data, and(add(l, 0x3f), 0xffe0)))
+            mstore(data, l)
+            mstore(add(add(data, 0x20), l), 0) // Zeroize the last slot.
+            extcodecopy(pointer, add(data, 0x20), add(start, 1), l)
         }
     }
 }
