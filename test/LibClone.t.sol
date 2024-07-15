@@ -62,6 +62,16 @@ contract LibCloneTest is SoladyTest {
         );
     }
 
+    function testDeployERC1967WithImmutableArgs(uint256 value_, bytes32) public {
+        bytes memory args = _randomBytesForERC1967ImmutableArgs();
+        address clone = LibClone.deployERC1967(address(this), args);
+        _checkArgsOnERC1967(clone, args);
+        _shouldBehaveLikeClone(clone, value_);
+        assertEq(
+            vm.load(clone, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
+        );
+    }
+
     function testDeployERC1967I(uint256 value_) public {
         address clone = LibClone.deployERC1967I(address(this));
         _shouldBehaveLikeClone(clone, value_);
@@ -79,6 +89,10 @@ contract LibCloneTest is SoladyTest {
 
     function testDeployERC1967() public {
         testDeployERC1967(1);
+    }
+
+    function testDeployERC1967WithImmutableArgs() public {
+        testDeployERC1967WithImmutableArgs(1, bytes32(0));
     }
 
     function testDeployERC1967I() public {
@@ -181,11 +195,40 @@ contract LibCloneTest is SoladyTest {
         );
     }
 
+    function testDeployDeterministicERC1967WithImmutableArgs(uint256 value_, bytes32 salt) public {
+        bytes memory args = _randomBytesForERC1967ImmutableArgs();
+        if (saltIsUsed[salt]) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            this.deployDeterministicERC1967(address(this), args, salt);
+            return;
+        }
+
+        address clone = this.deployDeterministicERC1967(address(this), args, salt);
+        saltIsUsed[salt] = true;
+
+        _shouldBehaveLikeClone(clone, value_);
+
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967(address(this), args, salt, address(this));
+        assertEq(clone, predicted);
+
+        assertEq(
+            vm.load(clone, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(address(this))))
+        );
+    }
+
     function deployDeterministicERC1967(address implementation, bytes32 salt)
         external
         returns (address)
     {
         return LibClone.deployDeterministicERC1967(_brutalized(implementation), salt);
+    }
+
+    function deployDeterministicERC1967(address implementation, bytes memory args, bytes32 salt)
+        external
+        returns (address)
+    {
+        return LibClone.deployDeterministicERC1967(_brutalized(implementation), args, salt);
     }
 
     function deployDeterministicERC1967BeaconProxy(address beacon, bytes32 salt)
@@ -367,29 +410,14 @@ contract LibCloneTest is SoladyTest {
         );
     }
 
-    function _dummyData(uint256 n) internal pure returns (bytes memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(0x40)
-            mstore(0x00, n)
-            mstore(0x20, 1)
-            mstore(add(0x20, result), keccak256(0x00, 0x40))
-            mstore(0x20, 2)
-            mstore(add(add(0x20, result), n), keccak256(0x00, 0x40))
-            mstore(0x20, 3)
-            mstore(add(result, n), keccak256(0x00, 0x40))
-            mstore(0x40, add(add(0x20, result), n))
-            mstore(result, n)
-        }
-    }
-
-    function testInitCode(address implementation, uint256 r, uint256 c) public {
-        if (c & (1 << 0) == 0) _testInitCode(implementation);
-        if (c & (1 << 1) == 0) _testInitCode_PUSH0(implementation);
-        if (c & (1 << 2) == 0) _testInitCode(implementation, r);
-        if (c & (1 << 3) == 0) _testInitCodeERC1967(implementation);
-        if (c & (1 << 4) == 0) _testInitCodeERC1967I(implementation);
-        if (c & (1 << 5) == 0) _testInitCodeERC1967BeaconProxy(implementation);
+    function testInitCode(address implementation, uint256 c) public {
+        uint256 m = 1;
+        if (c & (m <<= 1) == 0) _testInitCode(implementation);
+        if (c & (m <<= 1) == 0) _testInitCode_PUSH0(implementation);
+        if (c & (m <<= 1) == 0) _testInitCodeERC1967(implementation);
+        if (c & (m <<= 1) == 0) _testInitCodeERC1967WithImmutableArgs(implementation);
+        if (c & (m <<= 1) == 0) _testInitCodeERC1967I(implementation);
+        if (c & (m <<= 1) == 0) _testInitCodeERC1967BeaconProxy(implementation);
     }
 
     function _testInitCode(address implementation) internal {
@@ -412,24 +440,23 @@ contract LibCloneTest is SoladyTest {
         assertEq(keccak256(initCode), expected);
     }
 
-    function _testInitCode(address implementation, uint256 n) internal {
-        _brutalizeMemory();
-        bytes memory data;
-        if ((n >> 32) & 31 > 0) data = _dummyData((n >> 128) & 0xff);
-        bytes memory initCode = LibClone.initCode(implementation, data);
-        _checkMemory(initCode);
-        _brutalizeMemory();
-        bytes32 expected = LibClone.initCodeHash(implementation, data);
-        _checkMemory(initCode);
-        assertEq(keccak256(initCode), expected);
-    }
-
     function _testInitCodeERC1967(address implementation) internal {
         _brutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation));
         _checkMemory(initCode);
         _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation));
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+    }
+
+    function _testInitCodeERC1967WithImmutableArgs(address implementation) internal {
+        _brutalizeMemory();
+        bytes memory args = _randomBytesForERC1967ImmutableArgs();
+        bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation), args);
+        _checkMemory(initCode);
+        _brutalizeMemory();
+        bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation), args);
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
@@ -516,5 +543,45 @@ contract LibCloneTest is SoladyTest {
             }
             default { invalid() }
         }
+    }
+
+    function _randomBytes() internal returns (bytes memory result) {
+        uint256 r = _random();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(0x00, r)
+            let n := and(r, 0xffff)
+            let t := keccak256(0x00, 0x20)
+            codecopy(add(result, 0x20), byte(0, t), codesize())
+            codecopy(add(result, n), byte(1, t), codesize())
+            mstore(0x40, add(n, add(0x40, result)))
+            mstore(result, n)
+            if iszero(byte(3, t)) { result := 0x60 }
+        }
+    }
+
+    function _randomBytesForERC1967ImmutableArgs() internal returns (bytes memory result) {
+        return _truncateBytes(_randomBytes(), 0xffc0);
+    }
+
+    function _truncateBytes(bytes memory b, uint256 n)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if gt(mload(b), n) { mstore(b, n) }
+            result := b
+        }
+    }
+
+    function _checkArgsOnERC1967(address clone, bytes memory data) internal {
+        if (_random() & 31 == 0) _brutalizeMemory();
+        _misalignFreeMemoryPointer();
+        bytes memory retrievedArgs = LibClone.argsOnERC1967(clone);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, data);
     }
 }
