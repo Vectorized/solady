@@ -21,10 +21,9 @@ pragma solidity ^0.8.4;
 /// Please use with caution.
 ///
 /// @dev Clones with immutable args (CWIA):
-/// The implementation of CWIA here implements a `receive()` method that emits the
-/// `ReceiveETH(uint256)` event. This skips the `DELEGATECALL` when there is no calldata,
-/// enabling us to accept hard gas-capped `sends` & `transfers` for maximum backwards
-/// composability. The minimal proxy implementation does not offer this feature.
+/// The implementation of CWIA here is does NOT append the immutable args into the calldata
+/// passed into delegatecall. It is simply an ERC-1167 minimal proxy with the immutable arguments
+/// appended to the back of the runtime bytecode.
 ///
 /// @dev Minimal ERC1967 proxy:
 /// An minimal ERC1967 proxy, intended to be upgraded with UUPS.
@@ -920,6 +919,231 @@ library LibClone {
     ) internal pure returns (address predicted) {
         bytes32 hash = initCodeHashERC1967(implementation);
         predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*    MINIMAL ERC1967 PROXY WITH IMMUTABLE ARGS OPERATIONS    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Deploys a minimal ERC1967 proxy with `implementation` and `args`.
+    function deployERC1967(address implementation, bytes memory args)
+        internal
+        returns (address instance)
+    {
+        instance = deployERC1967(0, implementation, args);
+    }
+
+    /// @dev Deploys a minimal ERC1967 proxy with `implementation` and `args`.
+    /// Deposits `value` ETH during deployment.
+    function deployERC1967(uint256 value, address implementation, bytes memory args)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let dataLength := mload(args)
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x3d = 0xffc0.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xffc0))
+            pop(staticcall(gas(), 4, add(args, 0x20), dataLength, add(m, 0x60), dataLength))
+            mstore(add(m, 0x40), 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
+            mstore(add(m, 0x20), 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
+            mstore(0x20, 0x6009)
+            mstore(0x1e, implementation)
+            mstore(0x0a, add(0x61003d3d8160233d3973, shl(56, dataLength)))
+            mstore(m, mload(0x20))
+            instance := create(value, m, add(dataLength, 0x60))
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation`, `args` and `salt`.
+    function deployDeterministicERC1967(address implementation, bytes memory args, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        instance = deployDeterministicERC1967(0, implementation, args, salt);
+    }
+
+    /// @dev Deploys a deterministic minimal ERC1967 proxy with `implementation`, `args` and `salt`.
+    /// Deposits `value` ETH during deployment.
+    function deployDeterministicERC1967(
+        uint256 value,
+        address implementation,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (address instance) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let dataLength := mload(args)
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x3d = 0xffc0.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xffc0))
+            pop(staticcall(gas(), 4, add(args, 0x20), dataLength, add(m, 0x60), dataLength))
+            mstore(add(m, 0x40), 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
+            mstore(add(m, 0x20), 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
+            mstore(0x20, 0x6009)
+            mstore(0x1e, implementation)
+            mstore(0x0a, add(0x61003d3d8160233d3973, shl(56, dataLength)))
+            mstore(m, mload(0x20))
+            instance := create2(value, m, add(dataLength, 0x60), salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Creates a deterministic minimal ERC1967 proxy with `implementation`, `args` and `salt`.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967(address implementation, bytes memory args, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        return createDeterministicERC1967(0, implementation, args, salt);
+    }
+
+    /// @dev Creates a deterministic minimal ERC1967 proxy with `implementation`, `args` and `salt`.
+    /// Deposits `value` ETH during deployment.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967(
+        uint256 value,
+        address implementation,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (bool alreadyDeployed, address instance) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let dataLength := mload(args)
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x3d = 0xffc0.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xffc0))
+            pop(staticcall(gas(), 4, add(args, 0x20), dataLength, add(m, 0x60), dataLength))
+            mstore(add(m, 0x40), 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
+            mstore(add(m, 0x20), 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
+            mstore(0x20, 0x6009)
+            mstore(0x1e, implementation)
+            mstore(0x0a, add(0x61003d3d8160233d3973, shl(56, dataLength)))
+            mstore(m, mload(0x20))
+            // Compute and store the bytecode hash.
+            mstore(add(m, 0x35), keccak256(m, add(dataLength, 0x60)))
+            mstore(m, shl(88, address()))
+            mstore8(m, 0xff) // Write the prefix.
+            mstore(add(m, 0x15), salt)
+            instance := keccak256(m, 0x55)
+            for {} 1 {} {
+                if iszero(extcodesize(instance)) {
+                    instance := create2(value, m, add(dataLength, 0x60), salt)
+                    if iszero(instance) {
+                        mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    break
+                }
+                alreadyDeployed := 1
+                if iszero(value) { break }
+                if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
+                break
+            }
+        }
+    }
+
+    /// @dev Returns the initialization code of the minimal ERC1967 proxy of `implementation` and `args`.
+    function initCodeERC1967(address implementation, bytes memory args)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let dataLength := mload(args)
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x3d = 0xffc0.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xffc0))
+            for { let i := 0 } lt(i, dataLength) { i := add(i, 0x20) } {
+                mstore(add(add(result, 0x80), i), mload(add(add(args, 0x20), i)))
+            }
+            mstore(
+                add(result, 0x60),
+                0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3
+            )
+            mstore(
+                add(result, 0x40),
+                0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076
+            )
+            mstore(add(result, 0x20), 0x6009)
+            mstore(add(result, 0x1e), implementation)
+            mstore(add(result, 0x0a), add(0x61003d3d8160233d3973, shl(56, dataLength)))
+            mstore(result, add(dataLength, 0x60))
+            mstore(add(result, add(dataLength, 0x80)), 0)
+            mstore(0x40, add(result, add(dataLength, 0xa0)))
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the minimal ERC1967 proxy of `implementation` and `args`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHashERC1967(address implementation, bytes memory args)
+        internal
+        pure
+        returns (bytes32 hash)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let dataLength := mload(args)
+            // Do a out-of-gas revert if `dataLength` is too big. 0xffff - 0x02 - 0x3d = 0xffc0.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), gt(dataLength, 0xffc0))
+            for { let i := 0 } lt(i, dataLength) { i := add(i, 0x20) } {
+                mstore(add(add(m, 0x60), i), mload(add(add(args, 0x20), i)))
+            }
+            mstore(add(m, 0x40), 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
+            mstore(add(m, 0x20), 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
+            mstore(0x20, 0x6009)
+            mstore(0x1e, implementation)
+            mstore(0x0a, add(0x61003d3d8160233d3973, shl(56, dataLength)))
+            mstore(m, mload(0x20))
+            hash := keccak256(m, add(dataLength, 0x60))
+        }
+    }
+
+    /// @dev Returns the address of the deterministic ERC1967 proxy of `implementation`, `args`,
+    /// with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
+    function predictDeterministicAddressERC1967(
+        address implementation,
+        bytes memory args,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        bytes32 hash = initCodeHashERC1967(implementation, args);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /// @dev Returns the immutable arguments on `target`.
+    /// The `target` MUST be deployed via the ERC1967 functions in this library.
+    /// Otherwise, the behavior is undefined.
+    function argsOnERC1967(address target) internal view returns (bytes memory args) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let n := extcodesize(target)
+            mstore(args, sub(n, 0x3d))
+            extcodecopy(target, add(args, 0x20), 0x3d, n)
+            mstore(0x40, add(add(args, 0x40), n))
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
