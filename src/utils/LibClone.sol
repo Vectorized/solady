@@ -36,6 +36,10 @@ pragma solidity ^0.8.4;
 /// if `calldatasize() == 1`. This code path skips the delegatecall and directly returns the
 /// `implementation` address. The returned implementation is guaranteed to be valid if the
 /// keccak256 of the proxy's code is equal to `ERC1967I_CODE_HASH`.
+///
+/// @dev Minimal Beacon proxy:
+/// A minimal beacon proxy, intended to be upgraded with an upgradable beacon.
+/// This proxy is automatically verified on Etherscan.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
