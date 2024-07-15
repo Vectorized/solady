@@ -458,7 +458,7 @@ library LibClone {
                 or(shl(0x88, add(dataLength, 0x2d)), 0xfd6100003d81600a3d39f3363d3d373d3d3d363d73)
             )
 
-            instance := create(value, sub(data, 0x18), add(dataLength, 0x37))
+            instance := create(value, sub(data, 0x17), add(dataLength, 0x37))
 
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
@@ -505,7 +505,7 @@ library LibClone {
                 or(shl(0x88, add(dataLength, 0x2d)), 0xfd6100003d81600a3d39f3363d3d373d3d3d363d73)
             )
 
-            instance := create2(value, sub(data, 0x18), add(dataLength, 0x37), salt)
+            instance := create2(value, sub(data, 0x17), add(dataLength, 0x37), salt)
 
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
@@ -586,7 +586,7 @@ library LibClone {
                 or(shl(0x88, add(dataLength, 0x2d)), 0xfd6100003d81600a3d39f3363d3d373d3d3d363d73)
             )
 
-            hash := keccak256(sub(data, 0x18), add(dataLength, 0x37))
+            hash := keccak256(sub(data, 0x17), add(dataLength, 0x37))
 
             // Restore the overwritten memory surrounding `data`.
             mstore(data, dataLength)
@@ -629,6 +629,7 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the boundaries of the data and cache the memory slots around it.
+            let mBefore4 := mload(sub(data, 0x80))
             let mBefore3 := mload(sub(data, 0x60))
             let mBefore2 := mload(sub(data, 0x40))
             let mBefore1 := mload(sub(data, 0x20))
@@ -700,7 +701,6 @@ library LibClone {
             mstore(sub(data, 0x40), 0x6009)
             mstore(sub(data, 0x42), implementation)
 
-            
             mstore(
                 // Do a out-of-gas revert if `extraLength` is too big. 0xffff - 0x60 + 0x01 = 0xffa0.
                 // The actual EVM limit may be smaller and may change over time.
@@ -708,14 +708,18 @@ library LibClone {
                 or(shl(0x38, add(dataLength, 0x3d)), 0xfd6100003d8160223d3973)
             )
 
-            instance := create(value, sub(data, 0x41), add(0x60, dataLength))
+            instance := create(value, sub(data, 0x40), add(0x60, dataLength))
 
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            mstore(0x40, m) // Restore the free memory pointer.
-            mstore(0x60, 0) // Restore the zero slot.
+            // Restore the overwritten memory surrounding `data`.
+            mstore(data, dataLength)
+            mstore(sub(data, 0x20), mBefore1)
+            mstore(sub(data, 0x40), mBefore2)
+            mstore(sub(data, 0x60), mBefore3)
+            mstore(sub(data, 0x80), mBefore4)
         }
     }
 
