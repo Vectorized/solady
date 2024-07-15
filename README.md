@@ -64,7 +64,6 @@ utils
 ├─ LibRLP — "Library for RLP encoding and CREATE address computation"
 ├─ LibBit — "Library for bit twiddling and boolean operations"
 ├─ LibZip — "Library for compressing and decompressing bytes"
-├─ Clone — "Class with helper read functions for clone with immutable args"
 ├─ LibClone — "Minimal proxy library"
 ├─ Initializable — "Initializable mixin for the upgradeable contracts"
 ├─ UUPSUpgradeable — "UUPS proxy mixin"
@@ -86,6 +85,7 @@ utils
 ├─ SafeCastLib — "Library for integer casting that reverts on overflow"
 ├─ DateTimeLib — "Library for date time operations"
 ├─ Lifebuoy — "Class that allows for rescue of ETH, ERC20, ERC721 tokens"
+├─ legacy — "Legacy support"
 └─ ext — "Utilities for external protocols"
 ```
 
