@@ -97,7 +97,7 @@ contract OwnableRolesTest is SoladyTest {
     ) public {
         assertEq(mockOwnableRoles.owner(), address(this));
 
-        vm.assume(newOwner != address(this));
+        while (newOwner == address(this)) newOwner = _randomNonZeroAddress();
 
         if (newOwner == address(0) || setNewOwnerToZeroAddress) {
             newOwner = address(0);
@@ -135,7 +135,7 @@ contract OwnableRolesTest is SoladyTest {
         uint256 rolesToGrant,
         uint256 rolesToRevoke
     ) public {
-        vm.assume(user != address(this));
+        while (user == address(this)) user = _randomNonZeroAddress();
 
         uint256 rolesAfterRevoke = rolesToGrant ^ (rolesToGrant & rolesToRevoke);
 
@@ -249,7 +249,7 @@ contract OwnableRolesTest is SoladyTest {
     }
 
     function testOnlyOwnerModifier(address nonOwner, bool callerIsOwner) public {
-        vm.assume(nonOwner != address(this));
+        while (nonOwner == address(this)) nonOwner = _randomNonZeroAddress();
 
         if (!callerIsOwner) {
             vm.prank(nonOwner);
@@ -276,7 +276,7 @@ contract OwnableRolesTest is SoladyTest {
         uint256 rolesToGrant,
         uint256 rolesToCheck
     ) public {
-        vm.assume(user != address(this));
+        while (user == address(this)) user = _randomNonZeroAddress();
 
         mockOwnableRoles.grantRoles(user, rolesToGrant);
 
@@ -295,7 +295,7 @@ contract OwnableRolesTest is SoladyTest {
         uint256 rolesToGrant,
         uint256 rolesToCheck
     ) public {
-        vm.assume(user != address(this));
+        while (user == address(this)) user = _randomNonZeroAddress();
 
         mockOwnableRoles.grantRoles(user, rolesToGrant);
 

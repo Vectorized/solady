@@ -1187,7 +1187,10 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testMulWadOverflowReverts(uint256 x, uint256 y) public {
         unchecked {
-            vm.assume(x != 0 && (x * y) / x != y);
+            while (!(x != 0 && (x * y) / x != y)) {
+                x = _random();
+                y = _random();
+            }
         }
         vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
         FixedPointMathLib.mulWad(x, y);
@@ -1195,14 +1198,17 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testSMulWadOverflowRevertsOnCondition1(int256 x, int256 y) public {
         unchecked {
-            vm.assume(x != 0 && (x * y) / x != y);
+            while (!(x != 0 && (x * y) / x != y)) {
+                x = int256(_random());
+                y = int256(_random());
+            }
         }
         vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
         FixedPointMathLib.sMulWad(x, y);
     }
 
     function testSMulWadOverflowRevertsOnCondition2(int256 x) public {
-        vm.assume(x < 0);
+        while (!(x < 0)) x = int256(_random());
         vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
         FixedPointMathLib.sMulWad(x, type(int256).min);
     }
@@ -1210,7 +1216,10 @@ contract FixedPointMathLibTest is SoladyTest {
     function testMulWadUp(uint256 x, uint256 y) public {
         // Ignore cases where x * y overflows.
         unchecked {
-            if (x != 0 && (x * y) / x != y) return;
+            while (x != 0 && (x * y) / x != y) {
+                x = _random();
+                y = _random();
+            }
         }
 
         assertEq(FixedPointMathLib.mulWadUp(x, y), x * y == 0 ? 0 : (x * y - 1) / 1e18 + 1);
@@ -1218,7 +1227,10 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testMulWadUpOverflowReverts(uint256 x, uint256 y) public {
         unchecked {
-            vm.assume(x != 0 && !((x * y) / x == y));
+            while (!(x != 0 && !((x * y) / x == y))) {
+                x = _random();
+                y = _random();
+            }
         }
         vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
         FixedPointMathLib.mulWadUp(x, y);
@@ -1227,9 +1239,11 @@ contract FixedPointMathLibTest is SoladyTest {
     function testDivWad(uint256 x, uint256 y) public {
         // Ignore cases where x * WAD overflows or y is 0.
         unchecked {
-            if (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) return;
+            while (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) {
+                x = _random();
+                y = _random();
+            }
         }
-
         uint256 result = FixedPointMathLib.divWad(x, y);
         assertEq(result, (x * 1e18) / y);
         assertEq(FixedPointMathLib.rawDivWad(x, y), result);
@@ -1238,9 +1252,11 @@ contract FixedPointMathLibTest is SoladyTest {
     function testSDivWad(int256 x, int256 y) public {
         // Ignore cases where x * WAD overflows or y is 0.
         unchecked {
-            if (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) return;
+            while (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) {
+                x = int256(_random());
+                y = int256(_random());
+            }
         }
-
         int256 result = FixedPointMathLib.sDivWad(x, y);
         assertEq(result, int256((x * 1e18) / y));
         assertEq(FixedPointMathLib.rawSDivWad(x, y), result);
@@ -1248,7 +1264,10 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testDivWadOverflowReverts(uint256 x, uint256 y) public {
         unchecked {
-            vm.assume(y != 0 && (x * 1e18) / 1e18 != x);
+            while (!(y != 0 && (x * 1e18) / 1e18 != x)) {
+                x = _random();
+                y = _random();
+            }
         }
         vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
         FixedPointMathLib.divWad(x, y);
@@ -1256,7 +1275,10 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testSDivWadOverflowReverts(int256 x, int256 y) public {
         unchecked {
-            vm.assume(y != 0 && (x * 1e18) / 1e18 != x);
+            while (!(y != 0 && (x * 1e18) / 1e18 != x)) {
+                x = int256(_random());
+                y = int256(_random());
+            }
         }
         vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
         FixedPointMathLib.sDivWad(x, y);
@@ -1275,15 +1297,20 @@ contract FixedPointMathLibTest is SoladyTest {
     function testDivWadUp(uint256 x, uint256 y) public {
         // Ignore cases where x * WAD overflows or y is 0.
         unchecked {
-            if (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) return;
+            while (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) {
+                x = _random();
+                y = _random();
+            }
         }
-
         assertEq(FixedPointMathLib.divWadUp(x, y), x == 0 ? 0 : (x * 1e18 - 1) / y + 1);
     }
 
     function testDivWadUpOverflowReverts(uint256 x, uint256 y) public {
         unchecked {
-            vm.assume(y != 0 && (x * 1e18) / 1e18 != x);
+            while (!(y != 0 && (x * 1e18) / 1e18 != x)) {
+                x = _random();
+                y = _random();
+            }
         }
         vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
         FixedPointMathLib.divWadUp(x, y);
@@ -1307,7 +1334,11 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testMulDivOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
         unchecked {
-            vm.assume(denominator != 0 && x != 0 && (x * y) / x != y);
+            while (!(denominator != 0 && x != 0 && (x * y) / x != y)) {
+                x = _random();
+                y = _random();
+                denominator = _random();
+            }
         }
         vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
         FixedPointMathLib.mulDiv(x, y, denominator);
@@ -1333,7 +1364,11 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testMulDivUpOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
         unchecked {
-            vm.assume(denominator != 0 && x != 0 && (x * y) / x != y);
+            while (!(denominator != 0 && x != 0 && (x * y) / x != y)) {
+                x = _random();
+                y = _random();
+                denominator = _random();
+            }
         }
         vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
         FixedPointMathLib.mulDivUp(x, y, denominator);

@@ -351,8 +351,8 @@ contract SafeTransferLibTest is SoladyTest {
 
     function testBalanceOfStandardERC20(address to, uint256 amount) public {
         uint256 originalBalance = erc20.balanceOf(address(this));
-        vm.assume(originalBalance >= amount);
-        vm.assume(to != address(this));
+        while (originalBalance < amount) amount = _random();
+        while (to == address(this)) to = _randomHashedAddress();
 
         SafeTransferLib.safeTransfer(address(erc20), _brutalized(to), originalBalance - amount);
         assertEq(SafeTransferLib.balanceOf(address(erc20), _brutalized(address(this))), amount);
@@ -364,8 +364,8 @@ contract SafeTransferLibTest is SoladyTest {
 
     function testTransferAllWithStandardERC20(address to, uint256 amount) public {
         uint256 originalBalance = erc20.balanceOf(address(this));
-        vm.assume(originalBalance >= amount);
-        vm.assume(to != address(this));
+        while (originalBalance < amount) amount = _random();
+        while (to == address(this)) to = _randomHashedAddress();
 
         SafeTransferLib.safeTransfer(address(erc20), _brutalized(to), originalBalance - amount);
         assertEq(erc20.balanceOf(address(this)), amount);
@@ -397,11 +397,15 @@ contract SafeTransferLibTest is SoladyTest {
     function testTransferAllFromWithStandardERC20(address from, address to, uint256 amount)
         public
     {
+        while (!(to != from && to != address(this) && from != address(this))) {
+            to = _randomNonZeroAddress();
+            from = _randomNonZeroAddress();
+        }
+
         SafeTransferLib.safeTransferAll(address(erc20), _brutalized(from));
 
         uint256 originalBalance = erc20.balanceOf(from);
-        vm.assume(originalBalance >= amount);
-        vm.assume(to != from && to != address(this) && from != address(this));
+        while (originalBalance < amount) amount = _random();
 
         forceApprove(address(erc20), from, address(this), type(uint256).max);
 
