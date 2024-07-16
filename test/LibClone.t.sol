@@ -146,7 +146,7 @@ contract LibCloneTest is SoladyTest {
         _shouldBehaveLikeClone(instance);
     }
 
-    function testCloneWithImmutableArgs2(bytes memory args) public {
+    function testCloneWithImmutableArgsSlicing(bytes memory args) public {
         args = _truncateBytes(args, _CLONES_ARGS_MAX_LENGTH);
         address instance = this.clone(address(this), args);
         _checkArgsOnClone(instance, args);
@@ -609,7 +609,8 @@ contract LibCloneTest is SoladyTest {
     }
 
     function _checkArgsOnERC1967(address instance, bytes memory args) internal {
-        if (_random() & 31 == 0) _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 31 == 0) _brutalizeMemory();
         _misalignFreeMemoryPointer();
         bytes memory retrievedArgs = LibClone.argsOnERC1967(instance);
         _checkMemory(retrievedArgs);
@@ -622,8 +623,8 @@ contract LibCloneTest is SoladyTest {
             )
         );
         uint256 n = args.length + 0xf;
-        uint256 start = _bound(_random(), 0, n);
-        uint256 end = _bound(_random(), 0, n);
+        uint256 start = _bound(r >> 64, 0, n);
+        uint256 end = _bound(r >> 128, 0, n);
         retrievedArgs = LibClone.argsOnERC1967(instance, start, end);
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
@@ -633,7 +634,8 @@ contract LibCloneTest is SoladyTest {
     }
 
     function _checkArgsOnClone(address instance, bytes memory args) internal {
-        if (_random() & 31 == 0) _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 31 == 0) _brutalizeMemory();
         _misalignFreeMemoryPointer();
         bytes memory retrievedArgs = LibClone.argsOnClone(instance);
         _checkMemory(retrievedArgs);
@@ -645,8 +647,8 @@ contract LibCloneTest is SoladyTest {
             )
         );
         uint256 n = args.length + 0xf;
-        uint256 start = _bound(_random(), 0, n);
-        uint256 end = _bound(_random(), 0, n);
+        uint256 start = _bound(r >> 64, 0, n);
+        uint256 end = _bound(r >> 128, 0, n);
         retrievedArgs = LibClone.argsOnClone(instance, start, end);
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
