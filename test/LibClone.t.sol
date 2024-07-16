@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
+import {LibString} from "../src/utils/LibString.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 import {UpgradeableBeaconTestLib} from "./UpgradeableBeacon.t.sol";
 
@@ -143,6 +144,22 @@ contract LibCloneTest is SoladyTest {
         address instance = this.clone(address(this), args);
         _checkArgsOnClone(instance, args);
         _shouldBehaveLikeClone(instance);
+    }
+
+    function testCloneWithImmutableArgsSlicing() public {
+        bytes memory args = "1234567890123456789012345678901234567890123456789012345678901234";
+        address instance = LibClone.clone(address(this), args);
+        assertEq(LibClone.argsOnClone(instance), args);
+        assertEq(LibClone.argsOnClone(instance, 32), "34567890123456789012345678901234");
+        assertEq(LibClone.argsOnClone(instance, 0, 64), args);
+        assertEq(LibClone.argsOnClone(instance, 0, 65), args);
+        assertEq(LibClone.argsOnClone(instance, 0, 32), "12345678901234567890123456789012");
+        assertEq(LibClone.argsOnClone(instance, 1, 32), "2345678901234567890123456789012");
+    }
+
+    function testCloneWithImmutableArgsSlicing(bytes memory args) public {
+        args = _truncateBytes(args, _CLONES_ARGS_MAX_LENGTH);
+        _checkArgsOnClone(LibClone.clone(address(this), args), args);
     }
 
     function testCloneDeterministic(bytes32 salt) public {
@@ -428,72 +445,79 @@ contract LibCloneTest is SoladyTest {
     }
 
     function _testInitCode(address implementation) internal {
-        _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         bytes memory initCode = LibClone.initCode(_brutalized(implementation));
         _checkMemory(initCode);
-        _brutalizeMemory();
+        if (r & 0xf0 == 0) _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHash(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeWithImmutableArgs(address implementation) internal {
-        _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         bytes memory args = _randomBytesForCloneImmutableArgs();
         bytes memory initCode = LibClone.initCode(_brutalized(implementation), args);
         _checkMemory(initCode);
-        _brutalizeMemory();
+        if (r & 0xf0 == 0) _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHash(_brutalized(implementation), args);
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCode_PUSH0(address implementation) internal {
-        _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         bytes memory initCode = LibClone.initCode_PUSH0(_brutalized(implementation));
         _checkMemory(initCode);
-        _brutalizeMemory();
+        if (r & 0xf0 == 0) _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHash_PUSH0(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeERC1967(address implementation) internal {
-        _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation));
         _checkMemory(initCode);
-        _brutalizeMemory();
+        if (r & 0xf0 == 0) _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeERC1967WithImmutableArgs(address implementation) internal {
-        _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         bytes memory args = _randomBytesForERC1967ImmutableArgs();
         bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation), args);
         _checkMemory(initCode);
-        _brutalizeMemory();
+        if (r & 0xf0 == 0) _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation), args);
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeERC1967I(address implementation) internal {
-        _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967I(_brutalized(implementation));
         _checkMemory(initCode);
-        _brutalizeMemory();
+        if (r & 0xf0 == 0) _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967I(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeERC1967BeaconProxy(address beacon) internal {
-        _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967BeaconProxy(_brutalized(beacon));
         _checkMemory(initCode);
-        _brutalizeMemory();
+        if (r & 0xf0 == 0) _brutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967BeaconProxy(_brutalized(beacon));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
@@ -601,7 +625,8 @@ contract LibCloneTest is SoladyTest {
     }
 
     function _checkArgsOnERC1967(address instance, bytes memory args) internal {
-        if (_random() & 31 == 0) _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         _misalignFreeMemoryPointer();
         bytes memory retrievedArgs = LibClone.argsOnERC1967(instance);
         _checkMemory(retrievedArgs);
@@ -613,10 +638,22 @@ contract LibCloneTest is SoladyTest {
                 args
             )
         );
+        uint256 n = args.length + 0xf;
+        uint256 start = _bound(r >> 64, 0, n);
+        uint256 end = _bound(r >> 128, 0, n);
+        if (r & 0x30 == 0) _brutalizeMemory();
+        retrievedArgs = LibClone.argsOnERC1967(instance, start, end);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
+        retrievedArgs = LibClone.argsOnERC1967(instance, start);
+        if (r & 0xf00 == 0) _brutalizeMemory();
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
     }
 
     function _checkArgsOnClone(address instance, bytes memory args) internal {
-        if (_random() & 31 == 0) _brutalizeMemory();
+        uint256 r = _random();
+        if (r & 0xf == 0) _brutalizeMemory();
         _misalignFreeMemoryPointer();
         bytes memory retrievedArgs = LibClone.argsOnClone(instance);
         _checkMemory(retrievedArgs);
@@ -627,6 +664,17 @@ contract LibCloneTest is SoladyTest {
                 hex"363d3d373d3d3d363d73", address(this), hex"5af43d82803e903d91602b57fd5bf3", args
             )
         );
+        uint256 n = args.length + 0xf;
+        uint256 start = _bound(r >> 64, 0, n);
+        uint256 end = _bound(r >> 128, 0, n);
+        retrievedArgs = LibClone.argsOnClone(instance, start, end);
+        if (r & 0x30 == 0) _brutalizeMemory();
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
+        retrievedArgs = LibClone.argsOnClone(instance, start);
+        if (r & 0xf00 == 0) _brutalizeMemory();
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
     }
 
     function testClonesWithImmutableArgsInitCode(address implementation, bytes memory args)

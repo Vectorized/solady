@@ -563,17 +563,57 @@ library LibClone {
         predicted = predictDeterministicAddress(hash, salt, deployer);
     }
 
-    /// @dev Returns the immutable arguments on `target`.
-    /// The `target` MUST be deployed via the clone with immutable args functions in this library.
-    /// Otherwise, the behavior is undefined.
-    function argsOnClone(address target) internal view returns (bytes memory args) {
+    /// @dev Equivalent to `argsOnClone(instance, 0, 2 ** 256 - 1)`.
+    function argsOnClone(address instance) internal view returns (bytes memory args) {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let n := extcodesize(target)
-            mstore(args, sub(n, 0x2d)) // Store the length.
-            extcodecopy(target, add(args, 0x20), 0x2d, n)
-            mstore(0x40, add(add(args, 0x40), n)) // Allocate memory.
+            let l := extcodesize(instance)
+            mstore(args, sub(l, 0x2d)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x2d, l)
+            mstore(0x40, add(add(args, 0x40), l)) // Allocate memory.
+        }
+    }
+
+    /// @dev Equivalent to `argsOnClone(instance, start, 2 ** 256 - 1)`.
+    function argsOnClone(address instance, uint256 start)
+        internal
+        view
+        returns (bytes memory args)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let n := sub(extcodesize(instance), 0x2d)
+            n := mul(sub(n, start), lt(start, n))
+            extcodecopy(instance, args, add(start, 0x0d), add(0x40, n))
+            mstore(args, n) // Store the length.
+            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
+    /// `start` and `end` will be clamped to the range `[0, args.length]`.
+    /// The `instance` MUST be deployed via the clone with immutable args functions in this library.
+    /// Otherwise, the behavior is undefined.
+    function argsOnClone(address instance, uint256 start, uint256 end)
+        internal
+        view
+        returns (bytes memory args)
+    {
+        if (end < start) return args;
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let d := and(0xffff, sub(end, start))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), d)
+            if iszero(and(0xff, mload(add(args, d)))) {
+                let n := sub(extcodesize(instance), 0x2d)
+                d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
+            }
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
     }
 
@@ -1006,17 +1046,57 @@ library LibClone {
         predicted = predictDeterministicAddress(hash, salt, deployer);
     }
 
-    /// @dev Returns the immutable arguments on `target`.
-    /// The `target` MUST be deployed via the ERC1967 functions in this library.
-    /// Otherwise, the behavior is undefined.
-    function argsOnERC1967(address target) internal view returns (bytes memory args) {
+    /// @dev Equivalent to `argsOnERC1967(instance, start, 2 ** 256 - 1)`.
+    function argsOnERC1967(address instance) internal view returns (bytes memory args) {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let n := extcodesize(target)
-            mstore(args, sub(n, 0x3d)) // Store the length.
-            extcodecopy(target, add(args, 0x20), 0x3d, n)
-            mstore(0x40, add(add(args, 0x40), n)) // Allocate memory.
+            let l := extcodesize(instance)
+            mstore(args, sub(l, 0x3d)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x3d, l)
+            mstore(0x40, add(add(args, 0x40), l)) // Allocate memory.
+        }
+    }
+
+    /// @dev Equivalent to `argsOnERC1967(instance, start, 2 ** 256 - 1)`.
+    function argsOnERC1967(address instance, uint256 start)
+        internal
+        view
+        returns (bytes memory args)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let n := sub(extcodesize(instance), 0x3d)
+            n := mul(sub(n, start), lt(start, n))
+            extcodecopy(instance, args, add(start, 0x1d), add(0x40, n))
+            mstore(args, n) // Store the length.
+            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
+    /// `start` and `end` will be clamped to the range `[0, args.length]`.
+    /// The `instance` MUST be deployed via the ERC1967 with immutable args functions in this library.
+    /// Otherwise, the behavior is undefined.
+    function argsOnERC1967(address instance, uint256 start, uint256 end)
+        internal
+        view
+        returns (bytes memory args)
+    {
+        if (end < start) return args;
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let d := and(0xffff, sub(end, start))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x3d), d)
+            if iszero(and(0xff, mload(add(args, d)))) {
+                let n := sub(extcodesize(instance), 0x3d)
+                d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
+            }
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
     }
 
