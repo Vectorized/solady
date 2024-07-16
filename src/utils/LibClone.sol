@@ -571,7 +571,7 @@ library LibClone {
             let l := extcodesize(instance)
             mstore(args, sub(l, 0x2d)) // Store the length.
             extcodecopy(instance, add(args, 0x20), 0x2d, l)
-            mstore(0x40, add(add(args, 0x40), l)) // Allocate memory.
+            mstore(0x40, add(l, add(args, 0x20))) // Allocate memory.
         }
     }
 
@@ -1054,7 +1054,7 @@ library LibClone {
             let l := extcodesize(instance)
             mstore(args, sub(l, 0x3d)) // Store the length.
             extcodecopy(instance, add(args, 0x20), 0x3d, l)
-            mstore(0x40, add(add(args, 0x40), l)) // Allocate memory.
+            mstore(0x40, add(l, add(args, 0x20))) // Allocate memory.
         }
     }
 
