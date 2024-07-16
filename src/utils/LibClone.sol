@@ -43,9 +43,12 @@ pragma solidity ^0.8.4;
 /// `implementation` address. The returned implementation is guaranteed to be valid if the
 /// keccak256 of the proxy's code is equal to `ERC1967I_CODE_HASH`.
 ///
-/// @dev Minimal Beacon proxy:
+/// @dev Minimal ERC1967 beacon proxy:
 /// A minimal beacon proxy, intended to be upgraded with an upgradable beacon.
 /// - Automatically verified on Etherscan.
+///
+/// @dev Minimal ERC1967 beacon proxy with immutable args:
+/// - Uses the identity precompile (0x4) to copy args during deployment.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -200,7 +203,6 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code hash of the clone of `implementation`.
-    /// Used for mining vanity addresses with create2crunch.
     function initCodeHash(address implementation) internal pure returns (bytes32 hash) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -212,8 +214,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic clone of `implementation`,
-    /// with `salt` by `deployer`.
+    /// @dev Returns the address of the clone of `implementation`, with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(address implementation, bytes32 salt, address deployer)
         internal
@@ -352,7 +353,6 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code hash of the PUSH0 clone of `implementation`.
-    /// Used for mining vanity addresses with create2crunch.
     function initCodeHash_PUSH0(address implementation) internal pure returns (bytes32 hash) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -364,8 +364,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic PUSH0 clone of `implementation`,
-    /// with `salt` by `deployer`.
+    /// @dev Returns the address of the PUSH0 clone of `implementation`, with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress_PUSH0(
         address implementation,
@@ -454,8 +453,7 @@ library LibClone {
             mstore(add(m, 0x23), 0x5af43d82803e903d91602b57fd5bf3)
             mstore(add(m, 0x14), implementation)
             mstore(m, add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(0x88, n)))
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x2d = 0xffd2.
-            // The actual EVM limit may be smaller and may change over time.
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
             instance := create(value, add(m, add(0x0b, lt(n, 0xffd3))), add(n, 0x37))
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
@@ -489,8 +487,7 @@ library LibClone {
             mstore(add(m, 0x23), 0x5af43d82803e903d91602b57fd5bf3)
             mstore(add(m, 0x14), implementation)
             mstore(m, add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(0x88, n)))
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x2d = 0xffd2.
-            // The actual EVM limit may be smaller and may change over time.
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
             instance := create2(value, add(m, add(0x0b, lt(n, 0xffd3))), add(n, 0x37), salt)
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
@@ -510,8 +507,7 @@ library LibClone {
         assembly {
             c := mload(0x40)
             let n := mload(args)
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x2d = 0xffd2.
-            // The actual EVM limit may be smaller and may change over time.
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
             returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffd2))
             for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                 mstore(add(add(c, 0x57), i), mload(add(add(args, 0x20), i)))
@@ -527,7 +523,6 @@ library LibClone {
 
     /// @dev Returns the initialization code hash of the clone of `implementation`
     /// using immutable arguments encoded in `args`.
-    /// Used for mining vanity addresses with create2crunch.
     function initCodeHash(address implementation, bytes memory args)
         internal
         pure
@@ -537,8 +532,7 @@ library LibClone {
         assembly {
             let m := mload(0x40)
             let n := mload(args)
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x2d = 0xffd2.
-            // The actual EVM limit may be smaller and may change over time.
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
             returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffd2))
             for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                 mstore(add(add(m, 0x43), i), mload(add(add(args, 0x20), i)))
@@ -550,7 +544,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic clone of
+    /// @dev Returns the address of the clone of
     /// `implementation` using immutable arguments encoded in `args`, with `salt`, by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddress(
@@ -815,7 +809,6 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code hash of the minimal ERC1967 proxy of `implementation`.
-    /// Used for mining vanity addresses with create2crunch.
     function initCodeHashERC1967(address implementation) internal pure returns (bytes32 hash) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -831,8 +824,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic ERC1967 proxy of `implementation`,
-    /// with `salt` by `deployer`.
+    /// @dev Returns the address of the ERC1967 proxy of `implementation`, with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddressERC1967(
         address implementation,
@@ -868,12 +860,11 @@ library LibClone {
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x60), n))
             mstore(add(m, 0x40), 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
             mstore(add(m, 0x20), 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
-            mstore(0x20, 0x6009)
-            mstore(0x1e, implementation)
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x3d = 0xffc2.
-            // The actual EVM limit may be smaller and may change over time.
-            mstore(add(0x0a, gt(n, 0xffc2)), add(0xfe61003d3d8160233d3973, shl(56, n)))
-            mstore(m, mload(0x20))
+            mstore(0x16, 0x6009)
+            mstore(0x14, implementation)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x3d = 0xffc2`.
+            mstore(gt(n, 0xffc2), add(0xfe61003d3d8160233d3973, shl(56, n)))
+            mstore(m, mload(0x16))
             instance := create(value, m, add(n, 0x60))
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
@@ -905,12 +896,11 @@ library LibClone {
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x60), n))
             mstore(add(m, 0x40), 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
             mstore(add(m, 0x20), 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
-            mstore(0x20, 0x6009)
-            mstore(0x1e, implementation)
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x3d = 0xffc2.
-            // The actual EVM limit may be smaller and may change over time.
-            mstore(add(0x0a, gt(n, 0xffc2)), add(0xfe61003d3d8160233d3973, shl(56, n)))
-            mstore(m, mload(0x20))
+            mstore(0x16, 0x6009)
+            mstore(0x14, implementation)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x3d = 0xffc2`.
+            mstore(gt(n, 0xffc2), add(0xfe61003d3d8160233d3973, shl(56, n)))
+            mstore(m, mload(0x16))
             instance := create2(value, m, add(n, 0x60), salt)
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
@@ -946,12 +936,11 @@ library LibClone {
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x60), n))
             mstore(add(m, 0x40), 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
             mstore(add(m, 0x20), 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
-            mstore(0x20, 0x6009)
-            mstore(0x1e, implementation)
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x3d = 0xffc2.
-            // The actual EVM limit may be smaller and may change over time.
-            mstore(add(0x0a, gt(n, 0xffc2)), add(0xfe61003d3d8160233d3973, shl(56, n)))
-            mstore(m, mload(0x20))
+            mstore(0x16, 0x6009)
+            mstore(0x14, implementation)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x3d = 0xffc2`.
+            mstore(gt(n, 0xffc2), add(0xfe61003d3d8160233d3973, shl(56, n)))
+            mstore(m, mload(0x16))
             // Compute and store the bytecode hash.
             mstore8(0x00, 0xff) // Write the prefix.
             mstore(0x35, keccak256(m, add(n, 0x60)))
@@ -989,8 +978,7 @@ library LibClone {
         assembly {
             c := mload(0x40)
             let n := mload(args)
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x3d = 0xffc2.
-            // The actual EVM limit may be smaller and may change over time.
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x3d = 0xffc2`.
             returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffc2))
             for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                 mstore(add(add(c, 0x80), i), mload(add(add(args, 0x20), i)))
@@ -1007,7 +995,6 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code hash of the minimal ERC1967 proxy of `implementation` and `args`.
-    /// Used for mining vanity addresses with create2crunch.
     function initCodeHashERC1967(address implementation, bytes memory args)
         internal
         pure
@@ -1017,24 +1004,22 @@ library LibClone {
         assembly {
             let m := mload(0x40)
             let n := mload(args)
-            // Do a out-of-gas revert if `n` is too big. 0xffff - 0x3d = 0xffc2.
-            // The actual EVM limit may be smaller and may change over time.
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x3d = 0xffc2`.
             returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffc2))
             for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                 mstore(add(add(m, 0x60), i), mload(add(add(args, 0x20), i)))
             }
             mstore(add(m, 0x40), 0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3)
             mstore(add(m, 0x20), 0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076)
-            mstore(0x20, 0x6009)
-            mstore(0x1e, implementation)
-            mstore(0x0a, add(0x61003d3d8160233d3973, shl(56, n)))
-            mstore(m, mload(0x20))
+            mstore(0x16, 0x6009)
+            mstore(0x14, implementation)
+            mstore(0x00, add(0x61003d3d8160233d3973, shl(56, n)))
+            mstore(m, mload(0x16))
             hash := keccak256(m, add(n, 0x60))
         }
     }
 
-    /// @dev Returns the address of the deterministic ERC1967 proxy of `implementation`, `args`,
-    /// with `salt` by `deployer`.
+    /// @dev Returns the address of the ERC1967 proxy of `implementation`, `args`, with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddressERC1967(
         address implementation,
@@ -1321,7 +1306,6 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code hash of the minimal ERC1967 proxy of `implementation`.
-    /// Used for mining vanity addresses with create2crunch.
     function initCodeHashERC1967I(address implementation) internal pure returns (bytes32 hash) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -1336,8 +1320,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic ERC1967I proxy of `implementation`,
-    /// with `salt` by `deployer`.
+    /// @dev Returns the address of the ERC1967I proxy of `implementation`, with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddressERC1967I(
         address implementation,
@@ -1611,7 +1594,6 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code hash of the minimal ERC1967 beacon proxy.
-    /// Used for mining vanity addresses with create2crunch.
     function initCodeHashERC1967BeaconProxy(address beacon) internal pure returns (bytes32 hash) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -1626,8 +1608,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the address of the deterministic ERC1967 beacon proxy,
-    /// with `salt` by `deployer`.
+    /// @dev Returns the address of the ERC1967 beacon proxy, with `salt` by `deployer`.
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function predictDeterministicAddressERC1967BeaconProxy(
         address beacon,
@@ -1636,6 +1617,253 @@ library LibClone {
     ) internal pure returns (address predicted) {
         bytes32 hash = initCodeHashERC1967BeaconProxy(beacon);
         predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*    ERC1967 BEACON PROXY WITH IMMUTABLE ARGS OPERATIONS     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Deploys a minimal ERC1967 beacon proxy with `args`.
+    function deployERC1967BeaconProxy(address beacon, bytes memory args)
+        internal
+        returns (address instance)
+    {
+        instance = deployERC1967BeaconProxy(0, beacon, args);
+    }
+
+    /// @dev Deploys a minimal ERC1967 beacon proxy with `args`.
+    /// Deposits `value` ETH during deployment.
+    function deployERC1967BeaconProxy(uint256 value, address beacon, bytes memory args)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let n := mload(args)
+            pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x8b), n))
+            mstore(add(m, 0x6b), 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(add(m, 0x4b), 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(add(m, 0x2b), 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(add(m, 0x14), beacon)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            mstore(add(m, gt(n, 0xffad)), add(0xfe6100523d8160233d3973, shl(56, n)))
+            instance := create(value, add(m, 0x16), add(n, 0x75))
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Deploys a deterministic minimal ERC1967 beacon proxy with `args` and `salt`.
+    function deployDeterministicERC1967BeaconProxy(address beacon, bytes memory args, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        instance = deployDeterministicERC1967BeaconProxy(0, beacon, args, salt);
+    }
+
+    /// @dev Deploys a deterministic minimal ERC1967 beacon proxy with `args` and `salt`.
+    /// Deposits `value` ETH during deployment.
+    function deployDeterministicERC1967BeaconProxy(
+        uint256 value,
+        address beacon,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (address instance) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let n := mload(args)
+            pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x8b), n))
+            mstore(add(m, 0x6b), 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(add(m, 0x4b), 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(add(m, 0x2b), 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(add(m, 0x14), beacon)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            mstore(add(m, gt(n, 0xffad)), add(0xfe6100523d8160233d3973, shl(56, n)))
+            instance := create2(value, add(m, 0x16), add(n, 0x75), salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Creates a deterministic minimal ERC1967 beacon proxy with `args` and `salt`.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967BeaconProxy(address beacon, bytes memory args, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        return createDeterministicERC1967BeaconProxy(0, beacon, args, salt);
+    }
+
+    /// @dev Creates a deterministic minimal ERC1967 beacon proxy with `args` and `salt`.
+    /// Deposits `value` ETH during deployment.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967BeaconProxy(
+        uint256 value,
+        address beacon,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (bool alreadyDeployed, address instance) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let n := mload(args)
+            pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x8b), n))
+            mstore(add(m, 0x6b), 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(add(m, 0x4b), 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(add(m, 0x2b), 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(add(m, 0x14), beacon)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            mstore(add(m, gt(n, 0xffad)), add(0xfe6100523d8160233d3973, shl(56, n)))
+            // Compute and store the bytecode hash.
+            mstore8(0x00, 0xff) // Write the prefix.
+            mstore(0x35, keccak256(add(m, 0x16), add(n, 0x75)))
+            mstore(0x01, shl(96, address()))
+            mstore(0x15, salt)
+            instance := keccak256(0x00, 0x55)
+            for {} 1 {} {
+                if iszero(extcodesize(instance)) {
+                    instance := create2(value, add(m, 0x16), add(n, 0x75), salt)
+                    if iszero(instance) {
+                        mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    break
+                }
+                alreadyDeployed := 1
+                if iszero(value) { break }
+                if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
+                break
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+        }
+    }
+
+    /// @dev Returns the initialization code of the minimal ERC1967 beacon proxy.
+    function initCodeERC1967BeaconProxy(address beacon, bytes memory args)
+        internal
+        pure
+        returns (bytes memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            c := mload(0x40)
+            let n := mload(args)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffad))
+            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                mstore(add(add(c, 0x95), i), mload(add(add(args, 0x20), i)))
+            }
+            mstore(add(c, 0x75), 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(add(c, 0x55), 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(add(c, 0x35), 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(add(c, 0x1e), beacon)
+            mstore(add(c, 0x0a), add(0x6100523d8160233d3973, shl(56, n)))
+            mstore(c, add(n, 0x75)) // Store the length.
+            mstore(add(c, add(n, 0x95)), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(c, add(n, 0xb5))) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the minimal ERC1967 beacon proxy with `args`.
+    function initCodeHashERC1967BeaconProxy(address beacon, bytes memory args)
+        internal
+        pure
+        returns (bytes32 hash)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let n := mload(args)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffad))
+            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                mstore(add(add(m, 0x8b), i), mload(add(add(args, 0x20), i)))
+            }
+            mstore(add(m, 0x6b), 0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3)
+            mstore(add(m, 0x4b), 0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c)
+            mstore(add(m, 0x2b), 0x60195155f3363d3d373d3d363d602036600436635c60da)
+            mstore(add(m, 0x14), beacon)
+            mstore(m, add(0x6100523d8160233d3973, shl(56, n)))
+            hash := keccak256(add(m, 0x16), add(n, 0x75))
+        }
+    }
+
+    /// @dev Returns the address of the ERC1967 beacon proxy with `args`, with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
+    function predictDeterministicAddressERC1967BeaconProxy(
+        address beacon,
+        bytes memory args,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        bytes32 hash = initCodeHashERC1967BeaconProxy(beacon, args);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /// @dev Equivalent to `argsOnERC1967BeaconProxy(instance, start, 2 ** 256 - 1)`.
+    function argsOnERC1967BeaconProxy(address instance) internal view returns (bytes memory args) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let l := extcodesize(instance)
+            mstore(args, sub(l, 0x52)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x52, l)
+            mstore(0x40, add(l, add(args, 0x20))) // Allocate memory.
+        }
+    }
+
+    /// @dev Equivalent to `argsOnERC1967BeaconProxy(instance, start, 2 ** 256 - 1)`.
+    function argsOnERC1967BeaconProxy(address instance, uint256 start)
+        internal
+        view
+        returns (bytes memory args)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let n := sub(extcodesize(instance), 0x52)
+            n := mul(sub(n, start), lt(start, n))
+            extcodecopy(instance, args, add(start, 0x32), add(0x40, n))
+            mstore(args, n) // Store the length.
+            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
+    /// `start` and `end` will be clamped to the range `[0, args.length]`.
+    /// The `instance` MUST be deployed via the ERC1967 beacon proxy with immutable args
+    /// functions in this library.
+    /// Otherwise, the behavior is undefined.
+    function argsOnERC1967BeaconProxy(address instance, uint256 start, uint256 end)
+        internal
+        view
+        returns (bytes memory args)
+    {
+        if (end < start) return args;
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let d := and(0xffff, sub(end, start))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x52), d)
+            if iszero(and(0xff, mload(add(args, d)))) {
+                let n := sub(extcodesize(instance), 0x52)
+                d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
+            }
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
