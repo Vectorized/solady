@@ -170,7 +170,7 @@ contract LibCloneTest is SoladyTest {
         _testCloneDeterministicWithImmutableArgs(_randomBytes(), salt);
     }
 
-    function _testCloneDeterministicWithImmutableArgs(bytes memory args, bytes32 salt) public {
+    function _testCloneDeterministicWithImmutableArgs(bytes memory args, bytes32 salt) internal {
         if (args.length > _CLONES_ARGS_MAX_LENGTH) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
             this.cloneDeterministic{gas: gasleft() >> 2}(address(this), args, salt);
@@ -227,7 +227,7 @@ contract LibCloneTest is SoladyTest {
     }
 
     function _testDeployDeterministicERC1967WithImmutableArgs(bytes memory args, bytes32 salt)
-        public
+        internal
     {
         bytes32 saltedSalt = keccak256(abi.encode(args, salt));
         if (args.length > _ERC1967_ARGS_MAX_LENGTH) {
