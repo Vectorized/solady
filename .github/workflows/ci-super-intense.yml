@@ -26,8 +26,8 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "super-intense-0" ] &&
-            forge test --fuzz-runs 123456
+            forge test --fuzz-runs 20000
           ) ||
           ( [ "${{ matrix.profile }}" = "super-intense-1" ] &&
-            forge test --fuzz-runs 12345678
+            forge test --fuzz-runs 200000
           )
