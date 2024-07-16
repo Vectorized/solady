@@ -585,10 +585,10 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := sub(extcodesize(instance), 0x2d)
-            if iszero(gt(n, start)) { start := n }
-            mstore(args, sub(n, start)) // Store the length.
-            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), add(0x20, mload(args)))
-            mstore(0x40, add(add(args, 0x40), mload(args))) // Allocate memory.
+            n := mul(sub(n, start), lt(start, n))
+            extcodecopy(instance, args, add(start, 0x0d), add(0x40, n))
+            mstore(args, n) // Store the length.
+            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
         }
     }
 
@@ -601,20 +601,19 @@ library LibClone {
         view
         returns (bytes memory args)
     {
+        if (end < start) return args;
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(gt(start, end)) {
-                args := mload(0x40)
-                let d := and(0xffff, sub(end, start))
-                extcodecopy(instance, add(args, 0x20), add(start, 0x2d), d)
-                if iszero(and(0xff, mload(add(args, d)))) {
-                    let n := sub(extcodesize(instance), 0x2d)
-                    d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
-                }
-                mstore(args, d) // Store the length.
-                mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
-                mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
+            args := mload(0x40)
+            let d := and(0xffff, sub(end, start))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), d)
+            if iszero(and(0xff, mload(add(args, d)))) {
+                let n := sub(extcodesize(instance), 0x2d)
+                d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
     }
 
@@ -1069,10 +1068,10 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := sub(extcodesize(instance), 0x3d)
-            if iszero(gt(n, start)) { start := n }
-            mstore(args, sub(n, start)) // Store the length.
-            extcodecopy(instance, add(args, 0x20), add(start, 0x3d), add(0x20, mload(args)))
-            mstore(0x40, add(add(args, 0x40), mload(args))) // Allocate memory.
+            n := mul(sub(n, start), lt(start, n))
+            extcodecopy(instance, args, add(start, 0x1d), add(0x40, n))
+            mstore(args, n) // Store the length.
+            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
         }
     }
 
@@ -1085,20 +1084,19 @@ library LibClone {
         view
         returns (bytes memory args)
     {
+        if (end < start) return args;
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(gt(start, end)) {
-                args := mload(0x40)
-                let d := and(0xffff, sub(end, start))
-                extcodecopy(instance, add(args, 0x20), add(start, 0x3d), d)
-                if iszero(and(0xff, mload(add(args, d)))) {
-                    let n := sub(extcodesize(instance), 0x3d)
-                    d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
-                }
-                mstore(args, d) // Store the length.
-                mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
-                mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
+            args := mload(0x40)
+            let d := and(0xffff, sub(end, start))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x3d), d)
+            if iszero(and(0xff, mload(add(args, d)))) {
+                let n := sub(extcodesize(instance), 0x3d)
+                d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
     }
 

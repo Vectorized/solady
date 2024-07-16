@@ -146,9 +146,20 @@ contract LibCloneTest is SoladyTest {
         _shouldBehaveLikeClone(instance);
     }
 
+    function testCloneWithImmutableArgsSlicing() public {
+        bytes memory args = "1234567890123456789012345678901234567890123456789012345678901234";
+        address instance = LibClone.clone(address(this), args);
+        assertEq(LibClone.argsOnClone(instance), args);
+        assertEq(LibClone.argsOnClone(instance, 32), "34567890123456789012345678901234");
+        assertEq(LibClone.argsOnClone(instance, 0, 64), args);
+        assertEq(LibClone.argsOnClone(instance, 0, 65), args);
+        assertEq(LibClone.argsOnClone(instance, 0, 32), "12345678901234567890123456789012");
+        assertEq(LibClone.argsOnClone(instance, 1, 32), "2345678901234567890123456789012");
+    }
+
     function testCloneWithImmutableArgsSlicing(bytes memory args) public {
         args = _truncateBytes(args, _CLONES_ARGS_MAX_LENGTH);
-        address instance = this.clone(address(this), args);
+        address instance = LibClone.clone(address(this), args);
         _checkArgsOnClone(instance, args);
         _shouldBehaveLikeClone(instance);
     }
