@@ -54,7 +54,7 @@ contract OwnableTest is SoladyTest {
     ) public {
         assertEq(mockOwnable.owner(), address(this));
 
-        vm.assume(newOwner != address(this));
+        while (newOwner == address(this)) newOwner = _randomNonZeroAddress();
 
         if (newOwner == address(0) || setNewOwnerToZeroAddress) {
             newOwner = address(0);
@@ -79,7 +79,7 @@ contract OwnableTest is SoladyTest {
     }
 
     function testOnlyOwnerModifier(address nonOwner, bool callerIsOwner) public {
-        vm.assume(nonOwner != address(this));
+        while (nonOwner == address(this)) nonOwner = _randomNonZeroAddress();
 
         if (!callerIsOwner) {
             vm.prank(nonOwner);

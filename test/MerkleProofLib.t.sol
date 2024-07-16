@@ -30,7 +30,7 @@ contract MerkleProofLibTest is SoladyTest {
     }
 
     function testVerifyProof(bytes32[] memory data, uint256 randomness) public brutalizeMemory {
-        vm.assume(data.length > 1);
+        if (!(data.length > 1)) data = _randomData();
         uint256 nodeIndex = randomness % data.length;
         bytes32 root = _getRoot(data);
         bytes32[] memory proof = _getProof(data, nodeIndex);
@@ -116,7 +116,7 @@ contract MerkleProofLibTest is SoladyTest {
         public
         brutalizeMemory
     {
-        vm.assume(data.length > 1);
+        if (!(data.length > 1)) data = _randomData();
         uint256 nodeIndex = randomness % data.length;
         bytes32 root = _getRoot(data);
         bytes32[] memory proof = _getProof(data, nodeIndex);
@@ -436,5 +436,15 @@ contract MerkleProofLibTest is SoladyTest {
                 MerkleProofLib.emptyFlags()
             )
         );
+    }
+
+    function _randomData() internal returns (bytes32[] memory result) {
+        uint256 n = _bound(_random(), 2, 0xff);
+        result = new bytes32[](n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                result[i] = bytes32(_random());
+            }
+        }
     }
 }
