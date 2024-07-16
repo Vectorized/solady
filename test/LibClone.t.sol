@@ -177,15 +177,15 @@ contract LibCloneTest is SoladyTest {
             return;
         }
 
-        bytes32 saltedSalt = keccak256(abi.encode(args, salt));
-        if (saltIsUsed[saltedSalt]) {
+        bytes32 saltKey = _saltKey(args, salt);
+        if (saltIsUsed[saltKey]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
             this.cloneDeterministic{gas: gasleft() >> 2}(address(this), args, salt);
             return;
         }
 
         address instance = this.cloneDeterministic(address(this), args, salt);
-        saltIsUsed[saltedSalt] = true;
+        saltIsUsed[saltKey] = true;
 
         _shouldBehaveLikeClone(instance);
         _checkArgsOnClone(instance, args);
@@ -229,13 +229,13 @@ contract LibCloneTest is SoladyTest {
     function _testDeployDeterministicERC1967WithImmutableArgs(bytes memory args, bytes32 salt)
         internal
     {
-        bytes32 saltedSalt = keccak256(abi.encode(args, salt));
+        bytes32 saltKey = _saltKey(args, salt);
         if (args.length > _ERC1967_ARGS_MAX_LENGTH) {
             vm.expectRevert();
             this.deployDeterministicERC1967{gas: gasleft() >> 2}(address(this), args, salt);
             return;
         }
-        if (saltIsUsed[saltedSalt]) {
+        if (saltIsUsed[saltKey]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
             this.deployDeterministicERC1967{gas: gasleft() >> 2}(address(this), args, salt);
             return;
@@ -245,7 +245,7 @@ contract LibCloneTest is SoladyTest {
             this.deployDeterministicERC1967{gas: gasleft() >> 2}(address(this), args, salt);
         _checkArgsOnERC1967(instance, args);
         _shouldBehaveLikeClone(instance);
-        saltIsUsed[saltedSalt] = true;
+        saltIsUsed[saltKey] = true;
 
         _checkERC1967ImplementationSlot(instance);
 
@@ -327,14 +327,14 @@ contract LibCloneTest is SoladyTest {
             return;
         }
 
-        bytes32 saltedSalt = keccak256(abi.encode(args, salt));
-        if (saltIsUsed[saltedSalt]) {
+        bytes32 saltKey = keccak256(abi.encode(args, salt));
+        if (saltIsUsed[saltKey]) {
             this.createDeterministicERC1967(address(this), args, salt);
             return;
         }
 
         address instance = this.createDeterministicERC1967(address(this), args, salt);
-        saltIsUsed[saltedSalt] = true;
+        saltIsUsed[saltKey] = true;
 
         _shouldBehaveLikeClone(instance);
         _checkERC1967ImplementationSlot(instance);
@@ -807,6 +807,10 @@ contract LibCloneTest is SoladyTest {
             LibClone.createDeterministicERC1967BeaconProxy(_brutalized(beacon), salt);
         assertEq(deployed, alreadyDeployed);
         assertEq(instance, predicted);
+    }
+
+    function _saltKey(bytes memory args, bytes32 salt) internal pure returns (bytes32) {
+        return bytes32(uint256(keccak256(args)) ^ uint256(salt));
     }
 
     modifier maybeBrutalizeMemory() {
