@@ -43,9 +43,12 @@ pragma solidity ^0.8.4;
 /// `implementation` address. The returned implementation is guaranteed to be valid if the
 /// keccak256 of the proxy's code is equal to `ERC1967I_CODE_HASH`.
 ///
-/// @dev Minimal Beacon proxy:
+/// @dev Minimal ERC1967 beacon proxy:
 /// A minimal beacon proxy, intended to be upgraded with an upgradable beacon.
 /// - Automatically verified on Etherscan.
+///
+/// @dev Minimal ERC1967 beacon proxy with immutable args:
+/// - Uses the identity precompile (0x4) to copy args during deployment.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
