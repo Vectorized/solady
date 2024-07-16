@@ -12,6 +12,7 @@ pragma solidity ^0.8.4;
 /// Although the sw0nt pattern saves 5 gas over the ERC1167 pattern during runtime,
 /// it is not supported out-of-the-box on Etherscan. Hence, we choose to use the 0age pattern,
 /// which saves 4 gas over the ERC1167 pattern during runtime, and has the smallest bytecode.
+/// - Automatically verified on Etherscan.
 ///
 /// @dev Minimal proxy (PUSH0 variant):
 /// This is a new minimal proxy that uses the PUSH0 opcode introduced during Shanghai.
@@ -19,20 +20,22 @@ pragma solidity ^0.8.4;
 /// The PUSH0 clone functions are intentionally postfixed with a jarring "_PUSH0" as
 /// many EVM chains may not support the PUSH0 opcode in the early months after Shanghai.
 /// Please use with caution.
+/// - Automatically verified on Etherscan.
 ///
 /// @dev Clones with immutable args (CWIA):
 /// The implementation of CWIA here is does NOT append the immutable args into the calldata
 /// passed into delegatecall. It is simply an ERC1167 minimal proxy with the immutable arguments
 /// appended to the back of the runtime bytecode.
-/// Uses the identity precompile (0x4) to copy args.
+/// - Uses the identity precompile (0x4) to copy args during deployment.
 ///
 /// @dev Minimal ERC1967 proxy:
 /// An minimal ERC1967 proxy, intended to be upgraded with UUPS.
 /// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
-/// This proxy is automatically verified on Etherscan.
+/// - Automatically verified on Etherscan.
 ///
 /// @dev Minimal ERC1967 proxy with immutable args:
-/// Uses the identity precompile (0x4) to copy args.
+/// - Uses the identity precompile (0x4) to copy args during deployment.
+/// - Automatically verified on Etherscan.
 ///
 /// @dev ERC1967I proxy:
 /// An variant of the minimal ERC1967 proxy, with a special code path that activates
@@ -42,7 +45,7 @@ pragma solidity ^0.8.4;
 ///
 /// @dev Minimal Beacon proxy:
 /// A minimal beacon proxy, intended to be upgraded with an upgradable beacon.
-/// This proxy is automatically verified on Etherscan.
+/// - Automatically verified on Etherscan.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
