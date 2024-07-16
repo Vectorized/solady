@@ -146,6 +146,13 @@ contract LibCloneTest is SoladyTest {
         _shouldBehaveLikeClone(instance);
     }
 
+    function testCloneWithImmutableArgs2(bytes memory args) public {
+        args = _truncateBytes(args, _CLONES_ARGS_MAX_LENGTH);
+        address instance = this.clone(address(this), args);
+        _checkArgsOnClone(instance, args);
+        _shouldBehaveLikeClone(instance);
+    }
+
     function testCloneDeterministic(bytes32 salt) public {
         if (saltIsUsed[salt]) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
