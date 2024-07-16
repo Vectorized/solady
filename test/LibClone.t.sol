@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
+import {LibString} from "../src/utils/LibString.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 import {UpgradeableBeaconTestLib} from "./UpgradeableBeacon.t.sol";
 
@@ -613,6 +614,15 @@ contract LibCloneTest is SoladyTest {
                 args
             )
         );
+        uint256 n = args.length + 0xf;
+        uint256 start = _bound(_random(), 0, n);
+        uint256 end = _bound(_random(), 0, n);
+        retrievedArgs = LibClone.argsOnERC1967(instance, start, end);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
+        retrievedArgs = LibClone.argsOnERC1967(instance, start);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
     }
 
     function _checkArgsOnClone(address instance, bytes memory args) internal {
@@ -627,6 +637,15 @@ contract LibCloneTest is SoladyTest {
                 hex"363d3d373d3d3d363d73", address(this), hex"5af43d82803e903d91602b57fd5bf3", args
             )
         );
+        uint256 n = args.length + 0xf;
+        uint256 start = _bound(_random(), 0, n);
+        uint256 end = _bound(_random(), 0, n);
+        retrievedArgs = LibClone.argsOnClone(instance, start, end);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
+        retrievedArgs = LibClone.argsOnClone(instance, start);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
     }
 
     function testClonesWithImmutableArgsInitCode(address implementation, bytes memory args)
