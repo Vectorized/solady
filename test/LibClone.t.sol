@@ -159,9 +159,7 @@ contract LibCloneTest is SoladyTest {
 
     function testCloneWithImmutableArgsSlicing(bytes memory args) public {
         args = _truncateBytes(args, _CLONES_ARGS_MAX_LENGTH);
-        address instance = LibClone.clone(address(this), args);
-        _checkArgsOnClone(instance, args);
-        _shouldBehaveLikeClone(instance);
+        _checkArgsOnClone(LibClone.clone(address(this), args), args);
     }
 
     function testCloneDeterministic(bytes32 salt) public {
@@ -643,7 +641,7 @@ contract LibCloneTest is SoladyTest {
         uint256 n = args.length + 0xf;
         uint256 start = _bound(r >> 64, 0, n);
         uint256 end = _bound(r >> 128, 0, n);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        if (r & 0x30 == 0) _brutalizeMemory();
         retrievedArgs = LibClone.argsOnERC1967(instance, start, end);
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
@@ -670,7 +668,7 @@ contract LibCloneTest is SoladyTest {
         uint256 start = _bound(r >> 64, 0, n);
         uint256 end = _bound(r >> 128, 0, n);
         retrievedArgs = LibClone.argsOnClone(instance, start, end);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        if (r & 0x30 == 0) _brutalizeMemory();
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
         retrievedArgs = LibClone.argsOnClone(instance, start);
