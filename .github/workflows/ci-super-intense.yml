@@ -1,0 +1,33 @@
+name: ci-super-intense
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Forge Testing super intense
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        profile: [super-intense-0,super-intense-1]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Run Tests with ${{ matrix.profile }}
+        run: >
+          ( [ "${{ matrix.profile }}" = "super-intense-0" ] &&
+            forge test --fuzz-runs 123456
+          ) ||
+          ( [ "${{ matrix.profile }}" = "super-intense-1" ] &&
+            forge test --fuzz-runs 12345678
+          )
