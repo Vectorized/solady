@@ -209,6 +209,23 @@ contract SSTORE2Test is SoladyTest {
         }
     }
 
+    function testWriteReadCounterfactual(bytes calldata testBytes) public brutalizeMemory {
+        bytes32 salt = bytes32(_random());
+        address deployer = address(this);
+        if (_random() % 8 == 0) {
+            (deployer,) = _randomSigner();
+        }
+        vm.prank(deployer);
+        address deterministicPointer = SSTORE2.writeCounterfactual(testBytes, salt);
+        assertEq(SSTORE2.read(deterministicPointer), testBytes);
+        assertEq(
+            SSTORE2.predictCounterfactualAddress(testBytes, salt, deployer), deterministicPointer
+        );
+
+        address pointer = SSTORE2.write(testBytes);
+        assertEq(pointer.code, deterministicPointer.code);
+    }
+
     function _dummyData(uint256 n) internal returns (bytes memory result) {
         uint256 r = _random();
         /// @solidity memory-safe-assembly
