@@ -127,28 +127,40 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testDeployERC1967BeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
-        bytes memory args = _randomBytesForERC1967BeconProxyImmutableArgs();
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967_BEACON_PROXY_ARGS_MAX_LENGTH) {
+            if (_random() & 1 == 0) {
+                vm.expectRevert();
+                this.deployERC1967BeaconProxy(beacon, args);
+                return;
+            }
+            if (_random() & 1 == 0) {
+                vm.expectRevert();
+                this.deployDeterministicERC1967BeaconProxy(beacon, args, salt);
+                return;
+            }
+            vm.expectRevert();
+            this.createDeterministicERC1967BeaconProxy(beacon, args, salt);
+            return;
+        }
         bytes memory expected =
             abi.encodePacked(LibClone.deployERC1967BeaconProxy(beacon).code, args);
         if (_random() & 1 == 0) {
-            address instance = LibClone.deployERC1967BeaconProxy(beacon, args);
+            address instance = this.deployERC1967BeaconProxy(beacon, args);
             assertEq(instance.code, expected);
         }
-        address predicted = LibClone.predictDeterministicAddressERC1967BeaconProxy(
-            beacon, args, salt, address(this)
-        );
         if (_random() & 1 == 0) {
-            address instance = LibClone.deployDeterministicERC1967BeaconProxy(beacon, args, salt);
+            address instance = this.deployDeterministicERC1967BeaconProxy(beacon, args, salt);
             assertEq(instance.code, expected);
-            assertEq(instance, predicted);
+            if (_random() & 1 == 0) {
+                vm.expectRevert();
+                this.deployDeterministicERC1967BeaconProxy(beacon, args, salt);
+                return;
+            }
         }
         if (_random() & 1 == 0) {
-            bool alreadyDeployed = predicted.code.length != 0;
-            (bool deployed, address instance) =
-                LibClone.createDeterministicERC1967BeaconProxy(beacon, args, salt);
-            assertEq(deployed, alreadyDeployed);
+            address instance = this.createDeterministicERC1967BeaconProxy(beacon, args, salt);
             assertEq(instance.code, expected);
-            assertEq(instance, predicted);
             _checkArgsOnERC1967BeaconProxy(instance, args);
         }
     }
@@ -967,6 +979,42 @@ contract LibCloneTest is SoladyTest {
         bool deployed;
         (deployed, instance) =
             LibClone.createDeterministicERC1967BeaconProxy(_brutalized(beacon), salt);
+        assertEq(deployed, alreadyDeployed);
+        assertEq(instance, predicted);
+    }
+
+    function deployERC1967BeaconProxy(address beacon, bytes memory args)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        instance = LibClone.deployERC1967BeaconProxy(_brutalized(beacon), args);
+    }
+
+    function deployDeterministicERC1967BeaconProxy(address beacon, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        instance = LibClone.deployDeterministicERC1967BeaconProxy(_brutalized(beacon), args, salt);
+        address predicted = LibClone.predictDeterministicAddressERC1967BeaconProxy(
+            beacon, args, salt, address(this)
+        );
+        assertEq(instance, predicted);
+    }
+
+    function createDeterministicERC1967BeaconProxy(address beacon, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        address predicted = LibClone.predictDeterministicAddressERC1967BeaconProxy(
+            beacon, args, salt, address(this)
+        );
+        bool alreadyDeployed = predicted.code.length != 0;
+        bool deployed;
+        (deployed, instance) =
+            LibClone.createDeterministicERC1967BeaconProxy(_brutalized(beacon), args, salt);
         assertEq(deployed, alreadyDeployed);
         assertEq(instance, predicted);
     }
