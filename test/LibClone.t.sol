@@ -629,6 +629,34 @@ contract LibCloneTest is SoladyTest {
         );
     }
 
+    function testClonesWithImmutableArgsInitCode(address implementation, bytes memory args)
+        public
+    {
+        bytes memory expected = abi.encodePacked(
+            hex"61",
+            uint16(args.length + 0x2d),
+            hex"3d81600a3d39f3363d3d373d3d3d363d73",
+            implementation,
+            hex"5af43d82803e903d91602b57fd5bf3",
+            args
+        );
+        assertEq(LibClone.initCode(implementation, args), expected);
+    }
+
+    function testERC1967WithImmutableArgsInitCode(address implementation, bytes memory args)
+        public
+    {
+        bytes memory expected = abi.encodePacked(
+            hex"61",
+            uint16(args.length + 0x3d),
+            hex"3d8160233d3973",
+            implementation,
+            hex"60095155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3",
+            args
+        );
+        assertEq(LibClone.initCodeERC1967(implementation, args), expected);
+    }
+
     function _checkERC1967ImplementationSlot(address instance) internal {
         _checkERC1967ImplementationSlot(instance, address(this));
     }
