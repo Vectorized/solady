@@ -104,8 +104,8 @@ library SSTORE2 {
     }
 
     /// @dev Writes `data` into the bytecode of a storage contract and returns its address.
-    /// This uses the "CREATE3" workflow, which means that `pointer` is agnostic to `data,
-    /// and only depends on `salt`.
+    /// This uses the so-called "CREATE3" workflow,
+    /// which means that `pointer` is agnostic to `data, and only depends on `salt`.
     function writeDeterministic(bytes memory data, bytes32 salt)
         internal
         returns (address pointer)
