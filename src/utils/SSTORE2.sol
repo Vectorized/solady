@@ -104,8 +104,8 @@ library SSTORE2 {
     }
 
     /// @dev Writes `data` into the bytecode of a storage contract and returns its address.
-    /// This uses the "CREATE3" workflow, which means that `pointer` is agnostic to `data,
-    /// and only depends on `salt`.
+    /// This uses the so-called "CREATE3" workflow,
+    /// which means that `pointer` is agnostic to `data, and only depends on `salt`.
     function writeDeterministic(bytes memory data, bytes32 salt)
         internal
         returns (address pointer)
@@ -152,6 +152,23 @@ library SSTORE2 {
     /*                    ADDRESS CALCULATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns the initialization code hash of the storage contract for `data`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHash(bytes memory data) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let originalDataLength := mload(data)
+            let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
+            // Do a out-of-gas revert if `n` is more than 2 bytes.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), shr(16, n))
+            mstore(data, or(0x61000080600a3d393df300, shl(0x40, n)))
+            hash := keccak256(add(data, 0x15), add(n, 0xa))
+            // Restore original length of the variable size `data`.
+            mstore(data, originalDataLength)
+        }
+    }
+
     /// @dev Equivalent to `predictCounterfactualAddress(data, salt, address(this))`
     function predictCounterfactualAddress(bytes memory data, bytes32 salt)
         internal
@@ -188,8 +205,7 @@ library SSTORE2 {
         pointer = predictDeterministicAddress(salt, address(this));
     }
 
-    /// @dev Returns the deterministic address for `salt` with `deployer`.
-    /// This uses the "CREATE3" formula.
+    /// @dev Returns the "CREATE3" deterministic address for `salt` with `deployer`.
     function predictDeterministicAddress(bytes32 salt, address deployer)
         internal
         pure
@@ -210,23 +226,6 @@ library SSTORE2 {
             mstore(0x00, 0xd694)
             mstore8(0x34, 0x01) // Nonce of the proxy contract (1).
             pointer := keccak256(0x1e, 0x17)
-        }
-    }
-
-    /// @dev Returns the initialization code hash of the storage contract for `data`.
-    /// Used for mining vanity addresses with create2crunch.
-    function initCodeHash(bytes memory data) internal pure returns (bytes32 hash) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let originalDataLength := mload(data)
-            let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
-            // Do a out-of-gas revert if `n` is more than 2 bytes.
-            // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), shr(16, n))
-            mstore(data, or(0x61000080600a3d393df300, shl(0x40, n)))
-            hash := keccak256(add(data, 0x15), add(n, 0xa))
-            // Restore original length of the variable size `data`.
-            mstore(data, originalDataLength)
         }
     }
 
