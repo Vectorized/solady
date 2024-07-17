@@ -20,6 +20,10 @@ library SSTORE2 {
     bytes32 internal constant CREATE3_PROXY_INITCODE_HASH =
         0x21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f;
 
+    /// @dev We skip the first byte as it's a STOP opcode,
+    /// which ensures the contract can't be called
+    uint256 internal constant DATA_OFFSET = 1;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -149,6 +153,84 @@ library SSTORE2 {
             mstore(0x00, 0xd694)
             mstore8(0x34, 0x01) // Nonce of the proxy contract (1).
             pointer := keccak256(0x1e, 0x17)
+        }
+    }
+
+    /// @dev Writes `data` into the bytecode of a storage contract with `salt`
+    /// and returns its normal CREATE2 deterministic address.
+    function writeCounterfactual(bytes memory data, bytes32 salt)
+        internal
+        returns (address pointer)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let originalDataLength := mload(data)
+            let dataSize := add(originalDataLength, DATA_OFFSET)
+
+            mstore(
+                // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+                // The actual EVM limit may be smaller and may change over time.
+                add(data, gt(dataSize, 0xffff)),
+                // Left shift `dataSize` by 64 so that it lines up with the 0000 after PUSH2.
+                or(0xfd61000080600a3d393df300, shl(0x40, dataSize))
+            )
+
+            // Deploy a new contract with the generated creation code.
+            pointer := create2(0, add(data, 0x15), add(dataSize, 0xa), salt)
+
+            // If `pointer` is zero, revert.
+            if iszero(pointer) {
+                // Store the function selector of `DeploymentFailed()`.
+                mstore(0x00, 0x30116425)
+                // Revert with (offset, size).
+                revert(0x1c, 0x04)
+            }
+
+            // Restore original length of the variable size `data`.
+            mstore(data, originalDataLength)
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the storage contract for `data`.
+    /// Used for mining vanity addresses with create2crunch.
+    function initCodeHash(bytes memory data) internal pure returns (bytes32 hash) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let originalDataLength := mload(data)
+            let dataSize := add(originalDataLength, DATA_OFFSET)
+
+            // Do a out-of-gas revert if `dataSize` is more than 2 bytes.
+            // The actual EVM limit may be smaller and may change over time.
+            returndatacopy(returndatasize(), returndatasize(), shr(16, dataSize))
+
+            mstore(data, or(0x61000080600a3d393df300, shl(0x40, dataSize)))
+
+            hash := keccak256(add(data, 0x15), add(dataSize, 0xa))
+
+            // Restore original length of the variable size `data`.
+            mstore(data, originalDataLength)
+        }
+    }
+
+    /// @dev Returns the CREATE2 address of the storage contract for `data`
+    /// deployed with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
+    function predictCounterfactualAddress(bytes memory data, bytes32 salt, address deployer)
+        internal
+        pure
+        returns (address predicted)
+    {
+        bytes32 hash = initCodeHash(data);
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute and store the bytecode hash.
+            mstore8(0x00, 0xff) // Write the prefix.
+            mstore(0x35, hash)
+            mstore(0x01, shl(96, deployer))
+            mstore(0x15, salt)
+            predicted := keccak256(0x00, 0x55)
+            // Restore the part of the free memory pointer that has been overwritten.
+            mstore(0x35, 0)
         }
     }
 
