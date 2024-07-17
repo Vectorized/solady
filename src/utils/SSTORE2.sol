@@ -225,7 +225,7 @@ library SSTORE2 {
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             data := mload(0x40)
-            mstore(0x40, add(data, add(l, 0x40)))
+            mstore(0x40, add(data, add(l, 0x40))) // Allocate memory.
             mstore(data, l) // Store the length of `data`.
             extcodecopy(pointer, add(data, 0x20), 1, add(l, 0x20)) // Copy the code.
         }
@@ -252,9 +252,9 @@ library SSTORE2 {
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             data := mload(0x40)
-            mstore(0x40, add(data, add(l, 0x40)))
+            mstore(0x40, add(data, add(l, 0x40))) // Allocate memory.
+            extcodecopy(pointer, add(data, 0x1f), start, add(l, 0x21)) // Copy the code.
             mstore(data, l) // Store the length of `data`.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), add(l, 0x20)) // Copy the code.
         }
     }
 
@@ -284,7 +284,7 @@ library SSTORE2 {
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             data := mload(0x40)
-            mstore(0x40, add(data, add(l, 0x40)))
+            mstore(0x40, add(data, add(l, 0x40))) // Allocate memory.
             mstore(data, l) // Store the length of `data`.
             mstore(add(add(data, 0x20), l), 0) // Zeroize the slot after `data`.
             extcodecopy(pointer, add(data, 0x20), add(start, 1), l) // Copy the code.
