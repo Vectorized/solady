@@ -49,6 +49,7 @@ pragma solidity ^0.8.4;
 ///
 /// @dev Minimal ERC1967 beacon proxy with immutable args:
 /// - Uses the identity precompile (0x4) to copy args during deployment.
+/// - Automatically verified on Etherscan.
 library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
