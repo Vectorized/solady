@@ -41,8 +41,7 @@ library SSTORE2 {
     function write(bytes memory data) internal returns (address pointer) {
         /// @solidity memory-safe-assembly
         assembly {
-            let originalDataLength := mload(data)
-            let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
+            let l := mload(data) // Let `n` be `l + 1`. +1 as we prefix a STOP opcode.
             /**
              * ---------------------------------------------------+
              * Opcode | Mnemonic       | Stack     | Memory       |
@@ -59,20 +58,15 @@ library SSTORE2 {
              * @dev Prefix the bytecode with a STOP opcode to ensure it cannot be called.
              * Also PUSH2 is used since max contract size cap is 24,576 bytes which is less than 2 ** 16.
              */
-            mstore(
-                // Do a out-of-gas revert if `n` is more than 2 bytes.
-                // The actual EVM limit may be smaller and may change over time.
-                add(data, gt(n, 0xffff)),
-                // Left shift `n` by 64 so that it lines up with the 0000 after PUSH2.
-                or(0xfe61000080600a3d393df300, shl(0x40, n)) // `fe` is the INVALID opcode.
-            )
+            // Do a out-of-gas revert if `l + 1` is more than 2 bytes.
+            mstore(add(data, gt(l, 0xfffe)), add(0xfe61000180600a3d393df300, shl(0x40, l)))
             // Deploy a new contract with the generated creation code.
-            pointer := create(0, add(data, 0x15), add(n, 0xa))
+            pointer := create(0, add(data, 0x15), add(l, 0xb))
             if iszero(pointer) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            mstore(data, originalDataLength) // Restore the length of `data`.
+            mstore(data, l) // Restore the length of `data`.
         }
     }
 
@@ -84,22 +78,16 @@ library SSTORE2 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let originalDataLength := mload(data)
-            let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
-            mstore(
-                // Do a out-of-gas revert if `n` is more than 2 bytes.
-                // The actual EVM limit may be smaller and may change over time.
-                add(data, gt(n, 0xffff)),
-                // Left shift `n` by 64 so that it lines up with the 0000 after PUSH2.
-                or(0xfd61000080600a3d393df300, shl(0x40, n))
-            )
+            let l := mload(data) // Let `n` be `l + 1`. +1 as we prefix a STOP opcode.
+            // Do a out-of-gas revert if `l + 1` is more than 2 bytes.
+            mstore(add(data, gt(l, 0xfffe)), add(0xfe61000180600a3d393df300, shl(0x40, l)))
             // Deploy a new contract with the generated creation code.
-            pointer := create2(0, add(data, 0x15), add(n, 0xa), salt)
+            pointer := create2(0, add(data, 0x15), add(l, 0xb), salt)
             if iszero(pointer) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            mstore(data, originalDataLength) // Restore the length of `data`.
+            mstore(data, l) // Restore the length of `data`.
         }
     }
 
@@ -112,9 +100,7 @@ library SSTORE2 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let originalDataLength := mload(data)
-            let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
-
+            let l := mload(data) // Let `n` be `l + 1`. +1 as we prefix a STOP opcode.
             mstore(0x00, _CREATE3_PROXY_INITCODE) // Store the `_PROXY_INITCODE`.
             let proxy := create2(0, 0x10, 0x10, salt)
             if iszero(proxy) {
@@ -128,23 +114,18 @@ library SSTORE2 {
             mstore8(0x34, 0x01) // Nonce of the proxy contract (1).
             pointer := keccak256(0x1e, 0x17)
 
-            mstore(
-                // Do a out-of-gas revert if `n` is more than 2 bytes.
-                // The actual EVM limit may be smaller and may change over time.
-                add(data, gt(n, 0xffff)),
-                // Left shift `n` by 64 so that it lines up with the 0000 after PUSH2.
-                or(0xfe61000080600a3d393df300, shl(0x40, n)) // `fe` is the INVALID opcode.
-            )
+            // Do a out-of-gas revert if `l + 1` is more than 2 bytes.
+            mstore(add(data, gt(l, 0xfffe)), add(0xfe61000180600a3d393df300, shl(0x40, l)))
             if iszero(
                 mul( // The arguments of `mul` are evaluated last to first.
                     extcodesize(pointer),
-                    call(gas(), proxy, 0, add(data, 0x15), add(n, 0xa), codesize(), 0x00)
+                    call(gas(), proxy, 0, add(data, 0x15), add(l, 0xb), codesize(), 0x00)
                 )
             ) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-            mstore(data, originalDataLength) // Restore the length of `data`.
+            mstore(data, l) // Restore the length of `data`.
         }
     }
 
@@ -157,15 +138,12 @@ library SSTORE2 {
     function initCodeHash(bytes memory data) internal pure returns (bytes32 hash) {
         /// @solidity memory-safe-assembly
         assembly {
-            let originalDataLength := mload(data)
-            let n := add(originalDataLength, 1) // Bytecode length. +1 as we prefix a STOP opcode.
-            // Do a out-of-gas revert if `n` is more than 2 bytes.
-            // The actual EVM limit may be smaller and may change over time.
-            returndatacopy(returndatasize(), returndatasize(), shr(16, n))
-            mstore(data, or(0x61000080600a3d393df300, shl(0x40, n)))
-            hash := keccak256(add(data, 0x15), add(n, 0xa))
-            // Restore original length of the variable size `data`.
-            mstore(data, originalDataLength)
+            let l := mload(data) // Let `n` be `l + 1`. +1 as we prefix a STOP opcode.
+            // Do a out-of-gas revert if `l + 1` is more than 2 bytes.
+            returndatacopy(returndatasize(), returndatasize(), gt(l, 0xfffe))
+            mstore(data, add(0x61000180600a3d393df300, shl(0x40, l)))
+            hash := keccak256(add(data, 0x15), add(l, 0xb))
+            mstore(data, l) // Restore the length of `data`.
         }
     }
 
@@ -247,7 +225,7 @@ library SSTORE2 {
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             data := mload(0x40)
-            mstore(0x40, add(data, add(l, 0x40)))
+            mstore(0x40, add(data, add(l, 0x40))) // Allocate memory.
             mstore(data, l) // Store the length of `data`.
             extcodecopy(pointer, add(data, 0x20), 1, add(l, 0x20)) // Copy the code.
         }
@@ -274,9 +252,9 @@ library SSTORE2 {
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             data := mload(0x40)
-            mstore(0x40, add(data, add(l, 0x40)))
+            mstore(0x40, add(data, add(l, 0x40))) // Allocate memory.
+            extcodecopy(pointer, add(data, 0x1f), start, add(l, 0x21)) // Copy the code.
             mstore(data, l) // Store the length of `data`.
-            extcodecopy(pointer, add(data, 0x20), add(start, 1), add(l, 0x20)) // Copy the code.
         }
     }
 
@@ -306,7 +284,7 @@ library SSTORE2 {
             // enough 32-byte words for the data and the length of the data,
             // then copy the code to the allocated memory.
             data := mload(0x40)
-            mstore(0x40, add(data, add(l, 0x40)))
+            mstore(0x40, add(data, add(l, 0x40))) // Allocate memory.
             mstore(data, l) // Store the length of `data`.
             mstore(add(add(data, 0x20), l), 0) // Zeroize the slot after `data`.
             extcodecopy(pointer, add(data, 0x20), add(start, 1), l) // Copy the code.
