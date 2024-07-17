@@ -148,6 +148,10 @@ library SSTORE2 {
         }
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    ADDRESS CALCULATIONS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @dev Equivalent to `predictCounterfactualAddress(data, salt, address(this))`
     function predictCounterfactualAddress(bytes memory data, bytes32 salt)
         internal
