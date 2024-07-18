@@ -432,7 +432,7 @@ contract ERC6909Test is SoladyTest {
     function testDirectFunctions(uint256) public {
         _TestTemps memory t;
         t.id = _random();
-        t.by = _random() % 16 == 0 ? address(0) : _randomAddress();
+        t.by = _randomChance(16) ? address(0) : _randomAddress();
         t.from = _randomAddress();
         t.to = _randomAddress();
 
@@ -441,11 +441,11 @@ contract ERC6909Test is SoladyTest {
             t.allowance = _random();
             t.balance = _random();
             t.amount = _random();
-            t.isOperator = _random() % 4 == 0;
+            t.isOperator = _randomChance(4);
             t.id ^= 1;
 
             token.mint(t.from, t.id, t.balance);
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 _directSetOperator(t.from, t.by, t.isOperator);
                 _directApprove(t.from, t.by, t.id, t.allowance);
             } else {
@@ -467,14 +467,14 @@ contract ERC6909Test is SoladyTest {
                 }
             }
 
-            if (t.by == address(0) && _random() % 4 == 0) {
+            if (t.by == address(0) && _randomChance(4)) {
                 if (t.success) {
                     vm.expectEmit(true, true, true, true);
                     emit Transfer(t.from, t.from, t.to, t.id, t.amount);
                 }
                 vm.prank(t.from);
                 token.transfer(t.to, t.id, t.amount);
-            } else if (t.by != address(0) && _random() % 4 == 0) {
+            } else if (t.by != address(0) && _randomChance(4)) {
                 if (t.success) {
                     vm.expectEmit(true, true, true, true);
                     emit Transfer(t.by, t.from, t.to, t.id, t.amount);

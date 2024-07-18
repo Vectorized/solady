@@ -648,7 +648,7 @@ contract SafeTransferLibTest is SoladyTest {
 
     function verifySafeTransfer(address token, address to, uint256 amount) public brutalizeMemory {
         uint256 preBal = ERC20(token).balanceOf(to);
-        if (amount == ERC20(token).balanceOf(address(this)) && _random() % 2 == 0) {
+        if (amount == ERC20(token).balanceOf(address(this)) && _randomChance(2)) {
             SafeTransferLib.safeTransferAll(address(token), _brutalized(to));
         } else {
             SafeTransferLib.safeTransfer(address(token), _brutalized(to), amount);
@@ -699,7 +699,7 @@ contract SafeTransferLibTest is SoladyTest {
         MissingReturnToken(token).transfer(from, amount);
 
         uint256 preBal = ERC20(token).balanceOf(to);
-        if (amount == ERC20(token).balanceOf(from) && _random() % 2 == 0) {
+        if (amount == ERC20(token).balanceOf(from) && _randomChance(2)) {
             SafeTransferLib.safeTransferAllFrom(address(token), _brutalized(from), _brutalized(to));
         } else {
             SafeTransferLib.safeTransferFrom(token, _brutalized(from), _brutalized(to), amount);
@@ -884,7 +884,7 @@ contract SafeTransferLibTest is SoladyTest {
 
         uint256 balanceBefore = erc20.balanceOf(t.to);
         vm.startPrank(t.spender);
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             SafeTransferLib.permit2TransferFrom(address(erc20), t.signer, t.to, t.amount);
         } else {
             SafeTransferLib.safeTransferFrom2(address(erc20), t.signer, t.to, t.amount);

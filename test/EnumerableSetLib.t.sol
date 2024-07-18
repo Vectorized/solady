@@ -250,14 +250,14 @@ contract EnumerableSetLibTest is SoladyTest {
     }
 
     function testEnumerableSetFuzz(uint256 n) public {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             _testEnumerableAddressSetFuzz(n);
             _testEnumerableBytes32SetFuzz(n);
         } else {
-            if (_random() % 2 == 0) _testEnumerableAddressSetFuzz();
-            if (_random() % 2 == 0) _testEnumerableBytes32SetFuzz();
-            if (_random() % 2 == 0) _testEnumerableUint256SetFuzz();
-            if (_random() % 2 == 0) _testEnumerableInt256SetFuzz();
+            if (_randomChance(2)) _testEnumerableAddressSetFuzz();
+            if (_randomChance(2)) _testEnumerableBytes32SetFuzz();
+            if (_randomChance(2)) _testEnumerableUint256SetFuzz();
+            if (_randomChance(2)) _testEnumerableInt256SetFuzz();
         }
     }
 
@@ -266,7 +266,7 @@ contract EnumerableSetLibTest is SoladyTest {
             LibPRNG.PRNG memory prng;
             prng.state = n;
             uint256[] memory additions = new uint256[](prng.next() % 16);
-            uint256 mask = _random() % 2 == 0 ? 7 : 15;
+            uint256 mask = _randomChance(2) ? 7 : 15;
 
             for (uint256 i; i != additions.length; ++i) {
                 uint256 x = prng.next() & mask;
@@ -299,7 +299,7 @@ contract EnumerableSetLibTest is SoladyTest {
                 uint256[] memory difference = LibSort.difference(additions, removals);
                 address[] memory values = addressSet.values();
                 _checkMemory();
-                if (_random() % 8 == 0) _checkAddressSetValues(values);
+                if (_randomChance(8)) _checkAddressSetValues(values);
                 uint256[] memory valuesCasted = _toUints(values);
                 LibSort.sort(valuesCasted);
                 assertEq(valuesCasted, difference);
@@ -311,8 +311,8 @@ contract EnumerableSetLibTest is SoladyTest {
         uint256[] memory s = _makeArray(0);
         do {
             address r = address(uint160(_random()));
-            if (_random() % 16 == 0) _brutalizeMemory();
-            if (_random() % 2 == 0) {
+            if (_randomChance(16)) _brutalizeMemory();
+            if (_randomChance(2)) {
                 addressSet.add(r);
                 _addToArray(s, uint256(uint160(r)));
                 assertTrue(addressSet.contains(r));
@@ -321,16 +321,16 @@ contract EnumerableSetLibTest is SoladyTest {
                 _removeFromArray(s, uint256(uint160(r)));
                 assertFalse(addressSet.contains(r));
             }
-            if (_random() % 16 == 0) _brutalizeMemory();
-            if (_random() % 8 == 0) {
+            if (_randomChance(16)) _brutalizeMemory();
+            if (_randomChance(8)) {
                 _checkArraysSortedEq(_toUints(addressSet.values()), s);
             }
             assertEq(addressSet.length(), s.length);
             if (s.length == 512) break;
-        } while (_random() % 8 != 0);
+        } while (!_randomChance(8));
         assertEq(addressSet.length(), s.length);
         _checkArraysSortedEq(_toUints(addressSet.values()), s);
-        if (_random() % 4 == 0) {
+        if (_randomChance(4)) {
             unchecked {
                 for (uint256 i; i != s.length; ++i) {
                     assertTrue(addressSet.contains(address(uint160(s[i]))));
@@ -344,7 +344,7 @@ contract EnumerableSetLibTest is SoladyTest {
             LibPRNG.PRNG memory prng;
             prng.state = n;
             uint256[] memory additions = new uint256[](prng.next() % 16);
-            uint256 mask = _random() % 2 == 0 ? 7 : 15;
+            uint256 mask = _randomChance(2) ? 7 : 15;
 
             for (uint256 i; i != additions.length; ++i) {
                 uint256 x = prng.next() & mask;
@@ -377,7 +377,7 @@ contract EnumerableSetLibTest is SoladyTest {
                 uint256[] memory difference = LibSort.difference(additions, removals);
                 bytes32[] memory values = bytes32Set.values();
                 _checkMemory();
-                if (_random() % 8 == 0) _checkBytes32SetValues(values);
+                if (_randomChance(8)) _checkBytes32SetValues(values);
                 uint256[] memory valuesCasted = _toUints(values);
                 LibSort.sort(valuesCasted);
                 assertEq(valuesCasted, difference);
@@ -389,8 +389,8 @@ contract EnumerableSetLibTest is SoladyTest {
         uint256[] memory s = _makeArray(0);
         do {
             bytes32 r = bytes32(_random());
-            if (_random() % 16 == 0) _brutalizeMemory();
-            if (_random() % 2 == 0) {
+            if (_randomChance(16)) _brutalizeMemory();
+            if (_randomChance(2)) {
                 bytes32Set.add(r);
                 _addToArray(s, uint256(r));
                 assertTrue(bytes32Set.contains(r));
@@ -399,36 +399,36 @@ contract EnumerableSetLibTest is SoladyTest {
                 _removeFromArray(s, uint256(r));
                 assertFalse(bytes32Set.contains(r));
             }
-            if (_random() % 16 == 0) _brutalizeMemory();
-            if (_random() % 16 == 0) {
+            if (_randomChance(16)) _brutalizeMemory();
+            if (_randomChance(16)) {
                 _checkArraysSortedEq(_toUints(bytes32Set.values()), s);
                 assertEq(bytes32Set.length(), s.length);
             }
             if (s.length == 512) break;
-        } while (_random() % 8 != 0);
+        } while (!_randomChance(8));
         _checkArraysSortedEq(_toUints(bytes32Set.values()), s);
     }
 
     function _testEnumerableUint256SetFuzz() public {
         uint256[] memory s = _makeArray(0);
-        uint256 mask = _random() % 2 == 0 ? 7 : type(uint256).max;
+        uint256 mask = _randomChance(2) ? 7 : type(uint256).max;
         do {
             uint256 r = _random() & mask;
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 uint256Set.add(r);
                 _addToArray(s, r);
             } else {
                 uint256Set.remove(r);
                 _removeFromArray(s, r);
             }
-            if (_random() % 8 == 0) {
+            if (_randomChance(8)) {
                 _checkArraysSortedEq(uint256Set.values(), s);
                 assertEq(uint256Set.length(), s.length);
             }
             if (s.length == 512) break;
-        } while (_random() % 16 != 0);
+        } while (!_randomChance(16));
         _checkArraysSortedEq(uint256Set.values(), s);
-        if (_random() % 4 == 0) {
+        if (_randomChance(4)) {
             unchecked {
                 for (uint256 i; i != s.length; ++i) {
                     assertTrue(uint256Set.contains(s[i]));
@@ -441,19 +441,19 @@ contract EnumerableSetLibTest is SoladyTest {
         uint256[] memory s = _makeArray(0);
         do {
             uint256 r = _random();
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 int256Set.add(int256(r));
                 _addToArray(s, uint256(r));
             } else {
                 int256Set.remove(int256(r));
                 _removeFromArray(s, uint256(r));
             }
-            if (_random() % 16 == 0) {
+            if (_randomChance(16)) {
                 _checkArraysSortedEq(_toUints(int256Set.values()), s);
                 assertEq(int256Set.length(), s.length);
             }
             if (s.length == 512) break;
-        } while (_random() % 8 != 0);
+        } while (!_randomChance(8));
         _checkArraysSortedEq(_toUints(int256Set.values()), s);
     }
 
@@ -486,7 +486,7 @@ contract EnumerableSetLibTest is SoladyTest {
     function testEnumerableAddressSetRevertsOnSentinel(uint256) public {
         do {
             address a = address(uint160(_random()));
-            if (_random() % 32 == 0) {
+            if (_randomChance(32)) {
                 a = address(uint160(_ZERO_SENTINEL));
             }
             uint256 r = _random() % 3;
@@ -508,13 +508,13 @@ contract EnumerableSetLibTest is SoladyTest {
                 }
                 this.removeFromAddressSet(a);
             }
-        } while (_random() % 2 != 0);
+        } while (!_randomChance(2));
     }
 
     function testEnumerableBytes32SetRevertsOnSentinel(uint256) public {
         do {
             bytes32 a = bytes32(_random());
-            if (_random() % 32 == 0) {
+            if (_randomChance(32)) {
                 a = bytes32(_ZERO_SENTINEL);
             }
             uint256 r = _random() % 3;
@@ -536,7 +536,7 @@ contract EnumerableSetLibTest is SoladyTest {
                 }
                 this.removeFromBytes32Set(a);
             }
-        } while (_random() % 2 != 0);
+        } while (!_randomChance(2));
     }
 
     function addToAddressSet(address a) public returns (bool) {

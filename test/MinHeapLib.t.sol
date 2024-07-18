@@ -15,7 +15,7 @@ contract MinHeapLibTest is SoladyTest {
     MinHeapLib.Heap heap1;
 
     function testHeapRoot(uint256 x) public {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
             heap0.root();
         }
@@ -75,23 +75,23 @@ contract MinHeapLibTest is SoladyTest {
             uint256 heap0Length;
             uint256 heap1Length;
             do {
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     heap0.push(_random());
                     assertEq(heap0.data.length, ++heap0Length);
                 }
-                if (heap0Length != 0 && _random() % 2 == 0) {
+                if (heap0Length != 0 && _randomChance(2)) {
                     heap0.pop();
                     assertEq(heap0.data.length, --heap0Length);
                 }
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     heap1.push(_random());
                     assertEq(heap1.data.length, ++heap1Length);
                 }
-                if (heap1Length != 0 && _random() % 2 == 0) {
+                if (heap1Length != 0 && _randomChance(2)) {
                     heap1.pop();
                     assertEq(heap1.data.length, --heap1Length);
                 }
-            } while (_random() % 16 > 0);
+            } while (!_randomChance(16));
         }
     }
 
@@ -307,7 +307,7 @@ contract MinHeapLibTest is SoladyTest {
     }
 
     function testHeapEnqueueZeroMaxLengthReverts(uint256) public {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
             heap0.enqueue(_random(), 0);
         }
@@ -315,16 +315,16 @@ contract MinHeapLibTest is SoladyTest {
     }
 
     function testHeapReplaceOrPopEmptyHeapReverts(uint256) public {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 heap0.replace(_random());
             } else {
                 heap0.pop();
             }
         }
         heap0.push(_random());
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             heap0.replace(_random());
         } else {
             heap0.pop();
@@ -333,7 +333,7 @@ contract MinHeapLibTest is SoladyTest {
 
     function testMemHeapRoot(uint256 x) public brutalizeMemory {
         MinHeapLib.MemHeap memory heapA;
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
             heapA.root();
         }
@@ -351,11 +351,11 @@ contract MinHeapLibTest is SoladyTest {
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
                 a[i] = r;
-                if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                if (_randomChance(16)) heapA.reserve(_random() % 256);
                 heapA.push(r);
                 _checkMemory();
-                if (_random() % 32 == 0) _brutalizeMemory();
-                if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                if (_randomChance(32)) _brutalizeMemory();
+                if (_randomChance(16)) heapA.reserve(_random() % 256);
             }
             LibSort.insertionSort(a);
             for (uint256 i; i < n; ++i) {
@@ -373,16 +373,16 @@ contract MinHeapLibTest is SoladyTest {
             uint256[] memory a = new uint256[](n + 1);
             for (uint256 i; i < n; ++i) {
                 uint256 r = _random();
-                if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                if (_randomChance(16)) heapA.reserve(_random() % 256);
                 heapA.push(r);
                 _checkMemory();
-                if (_random() % 32 == 0) _brutalizeMemory();
-                if (_random() % 16 == 0) heapA.reserve(_random() % 256);
-                if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                if (_randomChance(32)) _brutalizeMemory();
+                if (_randomChance(16)) heapA.reserve(_random() % 256);
+                if (_randomChance(16)) heapB.reserve(_random() % 256);
                 heapB.push(r);
                 _checkMemory();
-                if (_random() % 32 == 0) _brutalizeMemory();
-                if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                if (_randomChance(32)) _brutalizeMemory();
+                if (_randomChance(16)) heapB.reserve(_random() % 256);
                 a[i + 1] = r;
             }
             n = _random() % 8;
@@ -410,31 +410,31 @@ contract MinHeapLibTest is SoladyTest {
             uint256 heapALength;
             uint256 heapBLength;
             do {
-                if (_random() % 2 == 0) {
-                    if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                if (_randomChance(2)) {
+                    if (_randomChance(16)) heapA.reserve(_random() % 256);
                     heapA.push(_random());
                     assertEq(heapA.data.length, ++heapALength);
-                    if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                    if (_randomChance(16)) heapA.reserve(_random() % 256);
                 }
-                if (heapALength != 0 && _random() % 2 == 0) {
-                    if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                if (heapALength != 0 && _randomChance(2)) {
+                    if (_randomChance(16)) heapA.reserve(_random() % 256);
                     heapA.pop();
                     assertEq(heapA.data.length, --heapALength);
-                    if (_random() % 16 == 0) heapA.reserve(_random() % 256);
+                    if (_randomChance(16)) heapA.reserve(_random() % 256);
                 }
-                if (_random() % 2 == 0) {
-                    if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                if (_randomChance(2)) {
+                    if (_randomChance(16)) heapB.reserve(_random() % 256);
                     heapB.push(_random());
                     assertEq(heapB.data.length, ++heapBLength);
-                    if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                    if (_randomChance(16)) heapB.reserve(_random() % 256);
                 }
-                if (heapBLength != 0 && _random() % 2 == 0) {
-                    if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                if (heapBLength != 0 && _randomChance(2)) {
+                    if (_randomChance(16)) heapB.reserve(_random() % 256);
                     heapB.pop();
                     assertEq(heapB.data.length, --heapBLength);
-                    if (_random() % 16 == 0) heapB.reserve(_random() % 256);
+                    if (_randomChance(16)) heapB.reserve(_random() % 256);
                 }
-            } while (_random() % 16 > 0);
+            } while (!_randomChance(16));
         }
     }
 
@@ -577,7 +577,7 @@ contract MinHeapLibTest is SoladyTest {
 
     function testMemHeapEnqueueZeroMaxLengthReverts(uint256) public {
         MinHeapLib.MemHeap memory heapA;
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
             heapA.enqueue(_random(), 0);
         }
@@ -586,16 +586,16 @@ contract MinHeapLibTest is SoladyTest {
 
     function testMemHeapReplaceOrPopEmptyHeapReverts(uint256) public {
         MinHeapLib.MemHeap memory heapA;
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 heapA.replace(_random());
             } else {
                 heapA.pop();
             }
         }
         heapA.push(_random());
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             heapA.replace(_random());
         } else {
             heapA.pop();

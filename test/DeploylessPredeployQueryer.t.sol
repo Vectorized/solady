@@ -101,7 +101,7 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
         bytes[] memory targetQueryCalldata,
         bytes memory factoryCalldata
     ) internal returns (address result) {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             return address(
                 new DeploylessPredeployQueryer(
                     target, targetQueryCalldata, address(factory), factoryCalldata
@@ -111,7 +111,7 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
         bytes memory args =
             abi.encode(target, targetQueryCalldata, address(factory), factoryCalldata);
         bytes memory initcode;
-        if (false && _random() % 2 == 0) {
+        if (false && _randomChance(2)) {
             initcode = _CREATION_CODE;
         } else {
             initcode = type(DeploylessPredeployQueryer).creationCode;
@@ -135,7 +135,7 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
         unchecked {
             _TestTemps memory t;
             t.target = factory.predictDeployment(salt);
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 assertEq(factory.deploy(salt), t.target);
             }
             t.factoryCalldata = abi.encodeWithSignature("deploy(bytes32)", salt);
@@ -143,12 +143,12 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
             t.targetQueryCalldata = new bytes[](t.n);
             t.seeds = new uint256[](t.n);
             t.bytesSeeds = new bytes[](t.n);
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 vm.expectRevert(DeploylessPredeployQueryer.ReturnedAddressMismatch.selector);
                 address wrongTarget = address(uint160(t.target) ^ 1);
                 t.deployed = _deployQuery(wrongTarget, t.targetQueryCalldata, t.factoryCalldata);
             }
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 for (uint256 i; i < t.n; ++i) {
                     t.bytesSeeds[i] = _randomBytes();
                     t.targetQueryCalldata[i] =

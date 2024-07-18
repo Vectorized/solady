@@ -380,14 +380,14 @@ contract LibPRNGTest is SoladyTest {
     }
 
     function testLazyShufflerProducesShuffledRange(uint256 n) public {
-        n = _bound(n, 1, _random() % 8 == 0 ? 50 : 10);
-        if (_random() % 8 == 0) {
+        n = _bound(n, 1, _randomChance(8) ? 50 : 10);
+        if (_randomChance(8)) {
             _brutalizeMemory();
         }
         _lazyShuffler0.initialize(n);
         assertEq(_lazyShuffler0.length(), n);
         assertEq(_lazyShuffler0.numShuffled(), 0);
-        if (_random() % 8 == 0) {
+        if (_randomChance(8)) {
             _lazyShuffler0.restart();
         }
         assertEq(_lazyShuffler0.initialized(), true);
@@ -452,7 +452,7 @@ contract LibPRNGTest is SoladyTest {
             while (i != n) {
                 outputs[i] = _lazyShuffler0.next(_random());
                 ++i;
-                if (_random() % 8 == 0) break;
+                if (_randomChance(8)) break;
             }
             _lazyShuffler0.grow(nGrow);
             while (i != nGrow) {

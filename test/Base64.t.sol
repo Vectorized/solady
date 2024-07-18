@@ -92,7 +92,7 @@ contract Base64Test is SoladyTest {
     function testBase64EncodeDecodeAltModes(bytes memory input) public brutalizeMemory {
         for (uint256 i; i < 2; ++i) {
             _misalignFreeMemoryPointer();
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 input = _withDirtyEndBits(input);
             }
             string memory encoded = Base64.encode(input);

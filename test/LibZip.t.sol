@@ -32,7 +32,7 @@ contract LibZipTest is SoladyTest {
         unchecked {
             DynamicBufferLib.DynamicBuffer memory buffer;
             bytes memory r = abi.encode(_random());
-            if (_random() % 8 == 0) {
+            if (_randomChance(8)) {
                 r = abi.encodePacked(r, r, r, r);
                 r = bytes(LibString.slice(string(r), 0, _random() % r.length));
             }
@@ -46,7 +46,7 @@ contract LibZipTest is SoladyTest {
     }
 
     function testFlzCompressDecompress(bytes memory data) public brutalizeMemory {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             data = _expandedData(data);
         }
         bytes32 dataHash = keccak256(data);
@@ -82,7 +82,7 @@ contract LibZipTest is SoladyTest {
     }
 
     function testCdCompressDecompress(bytes memory data) public brutalizeMemory {
-        if (_random() % 8 == 0) {
+        if (_randomChance(8)) {
             data = _expandedData(data);
         }
         bytes32 dataHash = keccak256(data);
@@ -100,9 +100,9 @@ contract LibZipTest is SoladyTest {
     }
 
     function _randomCd() internal returns (bytes memory data) {
-        uint256 n = _random() % 8 == 0 ? _random() % 2048 : _random() % 256;
+        uint256 n = _randomChance(8) ? _random() % 2048 : _random() % 256;
         data = new bytes(n);
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             /// @solidity memory-safe-assembly
             assembly {
                 for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
@@ -231,7 +231,7 @@ contract LibZipTest is SoladyTest {
         MockCd mockCd = new MockCd();
         callValue = _bound(callValue, 0, 123 ether);
         vm.deal(address(this), callValue * 2);
-        if (_random() % 8 == 0) {
+        if (_randomChance(8)) {
             data = _expandedData(data);
         }
 

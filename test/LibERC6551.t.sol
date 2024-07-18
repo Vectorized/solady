@@ -47,10 +47,10 @@ contract LibERC6551Test is SoladyTest {
     ) public {
         bytes memory initCode =
             LibERC6551.initCode(implementation, salt, chainId, tokenContract, tokenId);
-        if (_random() % 8 == 0) _brutalizeMemory();
+        if (_randomChance(8)) _brutalizeMemory();
         bytes32 initCodeHash =
             LibERC6551.initCodeHash(implementation, salt, chainId, tokenContract, tokenId);
-        if (_random() % 8 == 0) _brutalizeMemory();
+        if (_randomChance(8)) _brutalizeMemory();
         assertEq(initCodeHash, keccak256(initCode));
     }
 
@@ -65,14 +65,14 @@ contract LibERC6551Test is SoladyTest {
         address a = registry.account(
             _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
         );
-        if (_random() % 8 == 0) _brutalizeMemory();
-        if (_random() % 8 == 0) {
+        if (_randomChance(8)) _brutalizeMemory();
+        if (_randomChance(8)) {
             address deployed = _createAccount(
                 _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
             );
             assertEq(deployed, a);
         }
-        if (_random() % 8 == 0) _brutalizeMemory();
+        if (_randomChance(8)) _brutalizeMemory();
         address computed = LibERC6551.account(
             _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
         );
@@ -87,7 +87,7 @@ contract LibERC6551Test is SoladyTest {
         address tokenContract,
         uint256 tokenId
     ) public {
-        if (_random() % 8 == 0) implementation = address(this);
+        if (_randomChance(8)) implementation = address(this);
 
         address a = _account(implementation, salt, chainId, tokenContract, tokenId);
         assertEq(LibERC6551.isERC6551Account(_brutalized(a), _brutalized(implementation)), false);
@@ -117,7 +117,7 @@ contract LibERC6551Test is SoladyTest {
         address tokenContract,
         uint256 tokenId
     ) internal returns (address) {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             return LibERC6551.account(
                 _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
             );
@@ -136,7 +136,7 @@ contract LibERC6551Test is SoladyTest {
         address tokenContract,
         uint256 tokenId
     ) internal returns (address) {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             return LibERC6551.createAccount(
                 _brutalized(implementation), salt, chainId, _brutalized(tokenContract), tokenId
             );

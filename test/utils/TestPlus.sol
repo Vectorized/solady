@@ -49,10 +49,8 @@ contract TestPlus is Brutalizer {
         assembly {
             let sSlot := _TESTPLUS_RANDOMNESS_SLOT
             let sValue := sload(sSlot)
-
             mstore(0x20, sValue)
             r := keccak256(0x20, 0x40)
-
             // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
                 sValue := sSlot
@@ -102,10 +100,8 @@ contract TestPlus is Brutalizer {
         assembly {
             let sSlot := _TESTPLUS_RANDOMNESS_SLOT
             let sValue := sload(sSlot)
-
             mstore(0x20, sValue)
             result := keccak256(0x20, 0x40)
-
             // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
                 sValue := sSlot

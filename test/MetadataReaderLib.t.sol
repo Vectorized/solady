@@ -285,7 +285,7 @@ contract MetadataReaderLibTest is SoladyTest {
 
     function testBoundsCheckDifferential(uint256) public {
         uint256 rds = _bound(_random(), 0, 128);
-        uint256 l = _random() % 2 == 0 ? type(uint248).max : 128;
+        uint256 l = _randomChance(2) ? type(uint248).max : 128;
         uint256 o = _bound(_random(), 0, l);
         uint256 n = _bound(_random(), 0, l);
         bool result;

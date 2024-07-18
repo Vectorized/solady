@@ -1448,7 +1448,7 @@ contract LibStringTest is SoladyTest {
 
     function _generateFrom(string memory subject) internal returns (uint256) {
         unchecked {
-            if (_random() % 8 == 0) {
+            if (_randomChance(8)) {
                 return _random();
             }
             return _random() % (bytes(subject).length + 10);

@@ -332,7 +332,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         uint256 amount,
         bytes memory data
     ) internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             token.safeTransferFrom(from, to, id, amount, data);
         } else {
             token.directSafeTransferFrom(from, to, id, amount, data);
@@ -346,7 +346,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         uint256[] memory amounts,
         bytes memory data
     ) internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             token.safeBatchTransferFrom(from, to, ids, amounts, data);
         } else {
             token.directSafeBatchTransferFrom(from, to, ids, amounts, data);
@@ -354,7 +354,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
     }
 
     function _setApprovalForAll(address operator, bool approved) internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             token.setApprovalForAll(operator, approved);
         } else {
             token.directSetApprovalForAll(operator, approved);
@@ -567,10 +567,10 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         _expectMintEvent(t.to, t.id, t.mintAmount);
         token.mint(t.to, t.id, t.mintAmount, t.mintData);
 
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             _expectBurnEvent(t.to, t.id, t.burnAmount);
             token.uncheckedBurn(t.to, t.id, t.burnAmount);
-        } else if (_random() % 8 == 0) {
+        } else if (_randomChance(8)) {
             vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
             token.burn(t.to, t.id, t.burnAmount);
             return;
@@ -603,10 +603,10 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         _expectMintEvent(t.to, t.ids, t.mintAmounts);
         token.batchMint(t.to, t.ids, t.mintAmounts, t.mintData);
 
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             _expectBurnEvent(t.to, t.ids, t.burnAmounts);
             token.uncheckedBatchBurn(t.to, t.ids, t.burnAmounts);
-        } else if (_random() % 8 == 0) {
+        } else if (_randomChance(8)) {
             vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
             token.batchBurn(t.to, t.ids, t.burnAmounts);
             return;
@@ -642,10 +642,10 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         _expectMintEvent(t.from, t.id, t.mintAmount);
         token.mint(t.from, t.id, t.mintAmount, t.mintData);
 
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             _expectTransferEvent(t.from, t.to, t.id, t.transferAmount);
             token.uncheckedSafeTransferFrom(t.from, t.to, t.id, t.transferAmount, t.transferData);
-        } else if (_random() % 8 == 0) {
+        } else if (_randomChance(8)) {
             vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
             _safeTransferFrom(t.from, t.to, t.id, t.transferAmount, t.transferData);
             return;
@@ -731,12 +731,12 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         _expectMintEvent(t.from, t.ids, t.mintAmounts);
         token.batchMint(t.from, t.ids, t.mintAmounts, t.mintData);
 
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             _expectTransferEvent(t.from, t.to, t.ids, t.transferAmounts);
             token.uncheckedSafeBatchTransferFrom(
                 t.from, t.to, t.ids, t.transferAmounts, t.transferData
             );
-        } else if (_random() % 8 == 0) {
+        } else if (_randomChance(8)) {
             vm.expectRevert(ERC1155.NotOwnerNorApproved.selector);
             _safeBatchTransferFrom(t.from, t.to, t.ids, t.transferAmounts, t.transferData);
             return;

@@ -383,15 +383,15 @@ contract LibMapTest is SoladyTest {
     function testUint32Maps(uint256) public {
         unchecked {
             uint256 a0 = _random();
-            uint256 a1 = _random() % 2 == 0 ? a0 + _random() % 4 : a0 - _random() % 4;
+            uint256 a1 = _randomChance(2) ? a0 + _random() % 4 : a0 - _random() % 4;
             uint256 b0 = _random();
-            uint256 b1 = _random() % 2 == 0 ? b0 + _random() % 4 : b0 - _random() % 4;
+            uint256 b1 = _randomChance(2) ? b0 + _random() % 4 : b0 - _random() % 4;
             if (a0 == a1 && b1 == b0) {
-                if (_random() % 2 == 0) {
-                    if (_random() % 2 == 0) b1++;
+                if (_randomChance(2)) {
+                    if (_randomChance(2)) b1++;
                     else a0++;
                 } else {
-                    if (_random() % 2 == 0) b1--;
+                    if (_randomChance(2)) b1--;
                     else a0--;
                 }
             }
@@ -429,13 +429,13 @@ contract LibMapTest is SoladyTest {
         returns (_SearchSortedTestVars memory t)
     {
         unchecked {
-            t.n = 1 + _random() % 7 + (_random() % 8 == 0 ? _random() % 64 : 0);
-            if (_random() % 2 == 0) {
+            t.n = 1 + _random() % 7 + (_randomChance(8) ? _random() % 64 : 0);
+            if (_randomChance(2)) {
                 t.o = type(uint256).max - t.n;
                 t.end = t.o + t.n;
                 assertEq(t.end, type(uint256).max);
             } else {
-                t.o = _random() % 4 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
+                t.o = _random() % 4 + (_randomChance(8) ? type(uint256).max - 256 : 0);
                 t.end = t.o + t.n;
             }
             uint256 v = _random() % 4;
@@ -573,7 +573,7 @@ contract LibMapTest is SoladyTest {
         unchecked {
             uint256 bitWidth = 1 + _random() % 6;
             uint256 valueMask = (1 << bitWidth) - 1;
-            uint256 o = _random() % 64 + (_random() % 8 == 0 ? type(uint256).max - 256 : 0);
+            uint256 o = _random() % 64 + (_randomChance(8) ? type(uint256).max - 256 : 0);
             uint256 n = _random() % 9;
             for (uint256 k; k != 2; ++k) {
                 for (uint256 i; i != n; ++i) {
