@@ -64,7 +64,7 @@ contract TestPlus is Brutalizer {
             // prettier-ignore
             for {} 1 {} {
                 let d := byte(0, r)
-                // With a 1/256 chance, randomly set `r` to any of 0,1,2.
+                // With a 1/256 chance, randomly set `r` to any of 0,1,2,3.
                 if iszero(d) {
                     r := and(r, 3)
                     break
@@ -72,19 +72,21 @@ contract TestPlus is Brutalizer {
                 // With a 1/2 chance, set `r` to near a random power of 2.
                 if iszero(and(2, d)) {
                     // Set `t` either `not(0)` or `xor(sValue, r)`.
-                    let t := xor(not(0), mul(iszero(and(4, d)), not(xor(sValue, r))))
+                    let t := or(xor(sValue, r), sub(0, iszero(and(4, d))))
                     // Set `r` to `t` shifted left or right by a random multiple of 8.
-                    switch and(8, d)
-                    case 0 {
-                        if iszero(and(16, d)) { t := 1 }
-                        r := add(shl(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
-                    }
-                    default {
+                    // prettier-ignore
+                    for {} 1 {} {
+                        if iszero(and(8, d)) {
+                            if iszero(and(16, d)) { t := 1 }
+                            r := add(shl(shl(3, and(byte(3, r), 0x1f)), t), sub(3, and(7, r)))
+                            break
+                        }
                         if iszero(and(16, d)) { t := shl(255, 1) }
-                        r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
+                        r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(3, and(7, r)))
+                        break
                     }
                     // With a 1/2 chance, negate `r`.
-                    if iszero(and(0x20, d)) { r := not(r) }
+                    r := xor(sub(0, iszero(and(32, d))), r)
                     break
                 }
                 // Otherwise, just set `r` to `xor(sValue, r)`.
@@ -126,7 +128,7 @@ contract TestPlus is Brutalizer {
         assembly {
             mstore(0x00, 0xffa18649) // `addr(uint256)`.
             mstore(0x20, privateKey)
-            if iszero(call(gas(), _VM_ADDRESS, 0, 0x1c, 0x24, 0x00, 0x20)) { revert(0, 0) }
+            pop(call(gas(), _VM_ADDRESS, 0, 0x1c, 0x24, 0x00, 0x20))
             signer := mload(0x00)
         }
     }
@@ -186,9 +188,8 @@ contract TestPlus is Brutalizer {
                     break
                 }
 
-                let w := not(0)
-                if lt(lt(x, not(3)), gt(size, sub(w, x))) {
-                    result := sub(max, sub(w, x))
+                if lt(lt(x, not(3)), gt(size, not(x))) {
+                    result := sub(max, not(x))
                     break
                 }
 
@@ -201,7 +202,7 @@ contract TestPlus is Brutalizer {
                         result := max
                         break
                     }
-                    result := add(add(min, r), w)
+                    result := sub(add(min, r), 1)
                     break
                 }
                 let d := sub(min, x)
@@ -242,9 +243,7 @@ contract TestPlus is Brutalizer {
                 for { let i := 0 } lt(i, n) { i := add(0x20, i) } {
                     mstore(add(add(m, 0x80), i), mload(add(add(ic2fBytecode, 0x20), i)))
                 }
-                if iszero(call(gas(), _VM_ADDRESS, 0, add(m, 0x1c), add(n, 0x64), 0x00, 0x00)) {
-                    revert(0, 0)
-                }
+                pop(call(gas(), _VM_ADDRESS, 0, add(m, 0x1c), add(n, 0x64), 0x00, 0x00))
             }
         }
         /// @solidity memory-safe-assembly

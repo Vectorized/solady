@@ -343,9 +343,8 @@ contract ERC4337Test is SoladyTest {
         );
 
         unchecked {
-            uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
             signature = abi.encodePacked(
-                t.r, vs, _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
+                t.r, _vs(t), _DOMAIN_SEP_B, t.contents, contentsType, uint16(contentsType.length)
             );
             assertEq(
                 account.isValidSignature(_toContentsHash(t.contents), signature), bytes4(0x1626ba7e)
@@ -375,10 +374,10 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.isValidSignature(t.contents, signature), bytes4(0xffffffff));
     }
 
-    function testIsValidSignaturePersonalSign() public {
+    function testIsValidSignaturePersonalSign(bytes32 seed) public {
         vm.txGasPrice(10);
         _TestTemps memory t;
-        t.contents = keccak256("123");
+        t.contents = keccak256(abi.encode("123", seed));
         (t.signer, t.privateKey) = _randomSigner();
         (t.v, t.r, t.s) = vm.sign(t.privateKey, _toERC1271HashPersonalSign(t.contents));
 
@@ -388,8 +387,7 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.isValidSignature(t.contents, signature), bytes4(0x1626ba7e));
 
         unchecked {
-            uint256 vs = uint256(t.s) | uint256(t.v - 27) << 255;
-            signature = abi.encodePacked(t.r, vs);
+            signature = abi.encodePacked(t.r, _vs(t));
             assertEq(account.isValidSignature(t.contents, signature), bytes4(0x1626ba7e));
         }
 
@@ -400,13 +398,23 @@ contract ERC4337Test is SoladyTest {
         assertEq(account.isValidSignature(t.contents, signature), bytes4(0xffffffff));
 
         signature = abi.encodePacked(t.r, t.s);
-        assertEq(account.isValidSignature(t.contents, signature), bytes4(0xffffffff));
+        if (keccak256(signature) == keccak256(abi.encodePacked(t.r, _vs(t)))) {
+            assertEq(account.isValidSignature(t.contents, signature), bytes4(0x1626ba7e));
+        } else {
+            assertEq(account.isValidSignature(t.contents, signature), bytes4(0xffffffff));
+        }
 
         signature = abi.encodePacked(t.r);
         assertEq(account.isValidSignature(t.contents, signature), bytes4(0xffffffff));
 
         signature = "";
         assertEq(account.isValidSignature(t.contents, signature), bytes4(0xffffffff));
+    }
+
+    function _vs(_TestTemps memory t) internal pure returns (uint256) {
+        unchecked {
+            return uint256(t.s) | uint256(t.v - 27) << 255;
+        }
     }
 
     function testIsValidSignatureViaRPC() public {
