@@ -80,9 +80,9 @@ contract TestPlus is Brutalizer {
                             if iszero(and(16, d)) { t := 1 }
                             if iszero(and(32, d)) {
                                 r := add(shl(shl(3, and(byte(3, r), 31)), t), sub(3, and(7, r)))
-                                break    
+                                break
                             }
-                            r := add(shl(byte(3, r), t), sub(0x1ff, and(0x3ff, r)))
+                            r := add(shl(byte(3, r), t), sub(511, and(1023, r)))
                             break
                         }
                         if iszero(and(16, d)) { t := shl(255, 1) }
@@ -90,7 +90,7 @@ contract TestPlus is Brutalizer {
                             r := add(shr(shl(3, and(byte(3, r), 31)), t), sub(3, and(7, r)))
                             break
                         }
-                        r := add(shr(byte(3, r), t), sub(0x1ff, and(0x3ff, r)))
+                        r := add(shr(byte(3, r), t), sub(511, and(1023, r)))
                         break
                     }
                     // With a 1/2 chance, negate `r`.
