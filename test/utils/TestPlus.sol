@@ -54,47 +54,52 @@ contract TestPlus is Brutalizer {
             // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
                 sValue := sSlot
-                let m := mload(0x40)
-                calldatacopy(m, 0, calldatasize())
-                r := keccak256(m, calldatasize())
+                calldatacopy(mload(0x40), 0, calldatasize())
+                r := keccak256(mload(0x40), calldatasize())
             }
             sstore(sSlot, add(r, 1))
 
             // Do some biased sampling for more robust tests.
             // prettier-ignore
             for {} 1 {} {
-                let d := byte(0, r)
+                let y :=
+                    mulmod(
+                        r,
+                        0x100000000000000000000000000000051, // Prime and a primitive root of `n`.
+                        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43 // `n`, prime.
+                    )
                 // With a 1/256 chance, randomly set `r` to any of 0,1,2,3.
-                if iszero(d) {
-                    r := and(r, 3)
+                if iszero(byte(19, y)) {
+                    r := and(byte(11, y), 3)
                     break
                 }
+                let d := byte(17, y)
                 // With a 1/2 chance, set `r` to near a random power of 2.
                 if iszero(and(2, d)) {
                     // Set `t` either `not(0)` or `xor(sValue, r)`.
-                    let t := or(xor(sValue, r), sub(0, iszero(and(4, d))))
+                    let t := or(xor(sValue, r), sub(0, and(1, d)))
                     // Set `r` to `t` shifted left or right.
                     // prettier-ignore
                     for {} 1 {} {
                         if iszero(and(8, d)) {
                             if iszero(and(16, d)) { t := 1 }
                             if iszero(and(32, d)) {
-                                r := add(shl(shl(3, and(byte(3, r), 31)), t), sub(3, and(7, r)))
+                                r := add(shl(shl(3, and(byte(7, y), 31)), t), sub(3, and(7, r)))
                                 break
                             }
-                            r := add(shl(byte(3, r), t), sub(511, and(1023, r)))
+                            r := add(shl(byte(7, y), t), sub(511, and(1023, r)))
                             break
                         }
                         if iszero(and(16, d)) { t := shl(255, 1) }
                         if iszero(and(32, d)) {
-                            r := add(shr(shl(3, and(byte(3, r), 31)), t), sub(3, and(7, r)))
+                            r := add(shr(shl(3, and(byte(7, y), 31)), t), sub(3, and(7, r)))
                             break
                         }
-                        r := add(shr(byte(3, r), t), sub(511, and(1023, r)))
+                        r := add(shr(byte(7, y), t), sub(511, and(1023, r)))
                         break
                     }
                     // With a 1/2 chance, negate `r`.
-                    r := xor(sub(0, iszero(and(64, d))), r)
+                    r := xor(sub(0, shr(7, d)), r)
                     break
                 }
                 // Otherwise, just set `r` to `xor(sValue, r)`.
