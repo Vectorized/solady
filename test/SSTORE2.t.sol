@@ -75,7 +75,7 @@ contract SSTORE2Test is SoladyTest {
 
         address pointer = SSTORE2.write(data);
 
-        if (_random() & 1 == 0) assertEq(pointer.code, abi.encodePacked(hex"00", data));
+        if (r & 0x1 == 0) assertEq(pointer.code, abi.encodePacked(hex"00", data));
 
         _maybeBrutalizeMemory();
 
@@ -85,7 +85,7 @@ contract SSTORE2Test is SoladyTest {
 
         _maybeBrutalizeMemory();
 
-        if (_random() & 1 == 0) {
+        if (r & 0x10 == 0) {
             readResult = SSTORE2.read(pointer, startIndex);
             _checkMemory(readResult);
             assertEq(readResult, bytes(LibString.slice(string(data), startIndex)));
