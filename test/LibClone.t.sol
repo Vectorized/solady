@@ -196,6 +196,66 @@ contract LibCloneTest is SoladyTest {
         _shouldBehaveLikeClone(instance);
     }
 
+    function testSlicingRevertsOnZeroCodeAddress(address instance, uint256 c) public {
+        while (instance.code.length != 0) instance = _randomNonZeroAddress();
+        uint256 m = 1;
+        if (c & (m <<= 1) == 0) {
+            c = _random();
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnClone(instance);
+                return;
+            }
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnClone(instance, _random());
+                return;
+            }
+            vm.expectRevert();
+            LibClone.argsOnClone(instance, _random(), _random());
+            return;
+        }
+        if (c & (m <<= 1) == 0) {
+            c = _random();
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnERC1967(instance);
+                return;
+            }
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnERC1967(instance, _random());
+                return;
+            }
+            vm.expectRevert();
+            LibClone.argsOnERC1967(instance, _random(), _random());
+            return;
+        }
+        if (c & (m <<= 1) == 0) {
+            c = _random();
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnERC1967BeaconProxy(instance);
+                return;
+            }
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnERC1967BeaconProxy(instance, _random());
+                return;
+            }
+            vm.expectRevert();
+            LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random());
+            return;
+        }
+    }
+
+    function _sampleStartAndEnd() internal returns (uint256 start, uint256 end) {
+        do {
+            start = _random();
+            end = _random();
+        } while (end < start);
+    }
+
     function testCloneWithImmutableArgsSlicing() public {
         bytes memory args = "1234567890123456789012345678901234567890123456789012345678901234";
         address instance = LibClone.clone(address(this), args);
