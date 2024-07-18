@@ -563,10 +563,9 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let l := extcodesize(instance)
-            mstore(args, sub(l, 0x2d)) // Store the length.
-            extcodecopy(instance, add(args, 0x20), 0x2d, l)
-            mstore(0x40, add(l, add(args, 0x20))) // Allocate memory.
+            mstore(args, sub(extcodesize(instance), 0x2d)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x2d, add(mload(args), 0x20))
+            mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
         }
     }
 
@@ -580,33 +579,33 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := sub(extcodesize(instance), 0x2d)
-            n := mul(sub(n, start), lt(start, n))
-            extcodecopy(instance, args, add(start, 0x0d), add(0x40, n))
-            mstore(args, n) // Store the length.
-            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), add(n, 0x20))
+            mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
+            mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
     }
 
     /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
     /// `start` and `end` will be clamped to the range `[0, args.length]`.
-    /// The `instance` MUST be deployed via the clone with immutable args functions in this library.
+    /// The `instance` MUST be deployed via the clone with immutable args functions.
     /// Otherwise, the behavior is undefined.
+    /// Out-of-gas reverts if `instance` does not have any code.
     function argsOnClone(address instance, uint256 start, uint256 end)
         internal
         view
         returns (bytes memory args)
     {
-        if (end < start) return args;
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
             let d := and(0xffff, sub(end, start))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), d)
+            extcodecopy(instance, args, add(start, 0x0d), add(d, 0x20))
             if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x2d)
+                returndatacopy(returndatasize(), returndatasize(), shr(64, n))
                 d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
-            mstore(args, d) // Store the length.
+            mstore(args, mul(d, lt(start, end))) // Store the length.
             mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
             mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
@@ -1037,10 +1036,9 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let l := extcodesize(instance)
-            mstore(args, sub(l, 0x3d)) // Store the length.
-            extcodecopy(instance, add(args, 0x20), 0x3d, l)
-            mstore(0x40, add(l, add(args, 0x20))) // Allocate memory.
+            mstore(args, sub(extcodesize(instance), 0x3d)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x3d, add(mload(args), 0x20))
+            mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
         }
     }
 
@@ -1054,33 +1052,33 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := sub(extcodesize(instance), 0x3d)
-            n := mul(sub(n, start), lt(start, n))
-            extcodecopy(instance, args, add(start, 0x1d), add(0x40, n))
-            mstore(args, n) // Store the length.
-            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+            extcodecopy(instance, add(args, 0x20), add(start, 0x3d), add(n, 0x20))
+            mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
+            mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
     }
 
     /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
     /// `start` and `end` will be clamped to the range `[0, args.length]`.
-    /// The `instance` MUST be deployed via the ERC1967 with immutable args functions in this library.
+    /// The `instance` MUST be deployed via the ERC1967 with immutable args functions.
     /// Otherwise, the behavior is undefined.
+    /// Out-of-gas reverts if `instance` does not have any code.
     function argsOnERC1967(address instance, uint256 start, uint256 end)
         internal
         view
         returns (bytes memory args)
     {
-        if (end < start) return args;
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
             let d := and(0xffff, sub(end, start))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x3d), d)
+            extcodecopy(instance, args, add(start, 0x1d), add(d, 0x20))
             if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x3d)
+                returndatacopy(returndatasize(), returndatasize(), shr(64, n))
                 d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
-            mstore(args, d) // Store the length.
+            mstore(args, mul(d, lt(start, end))) // Store the length.
             mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
             mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
@@ -1817,10 +1815,9 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let l := extcodesize(instance)
-            mstore(args, sub(l, 0x52)) // Store the length.
-            extcodecopy(instance, add(args, 0x20), 0x52, l)
-            mstore(0x40, add(l, add(args, 0x20))) // Allocate memory.
+            mstore(args, sub(extcodesize(instance), 0x52)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x52, add(mload(args), 0x20))
+            mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
         }
     }
 
@@ -1834,34 +1831,33 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := sub(extcodesize(instance), 0x52)
-            n := mul(sub(n, start), lt(start, n))
-            extcodecopy(instance, args, add(start, 0x32), add(0x40, n))
-            mstore(args, n) // Store the length.
-            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+            extcodecopy(instance, add(args, 0x20), add(start, 0x52), add(n, 0x20))
+            mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
+            mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
     }
 
     /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
     /// `start` and `end` will be clamped to the range `[0, args.length]`.
-    /// The `instance` MUST be deployed via the ERC1967 beacon proxy with immutable args
-    /// functions in this library.
+    /// The `instance` MUST be deployed via the ERC1967 beacon proxy with immutable args functions.
     /// Otherwise, the behavior is undefined.
+    /// Out-of-gas reverts if `instance` does not have any code.
     function argsOnERC1967BeaconProxy(address instance, uint256 start, uint256 end)
         internal
         view
         returns (bytes memory args)
     {
-        if (end < start) return args;
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
             let d := and(0xffff, sub(end, start))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x52), d)
+            extcodecopy(instance, args, add(start, 0x32), add(d, 0x20))
             if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x52)
+                returndatacopy(returndatasize(), returndatasize(), shr(64, n))
                 d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
-            mstore(args, d) // Store the length.
+            mstore(args, mul(d, lt(start, end))) // Store the length.
             mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
             mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }

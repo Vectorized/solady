@@ -37,14 +37,17 @@ contract TestPlus is Brutalizer {
     /// @dev `address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))`.
     address private constant _VM_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
 
+    /// @dev This is the keccak256 of a very long string I randomly mashed on my keyboard.
+    uint256 private constant _TESTPLUS_RANDOMNESS_SLOT =
+        0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee;
+
     /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
     /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
     /// e.g. `testSomething(uint256) public`.
     function _random() internal returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            // This is the keccak256 of a very long string I randomly mashed on my keyboard.
-            let sSlot := 0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee
+            let sSlot := _TESTPLUS_RANDOMNESS_SLOT
             let sValue := sload(sSlot)
 
             mstore(0x20, sValue)
@@ -90,6 +93,28 @@ contract TestPlus is Brutalizer {
                 r := xor(sValue, r)
                 break
             }
+        }
+    }
+
+    /// @dev Returns a boolean with a `1 / n` chance of being true.
+    function _randomChance(uint256 n) internal returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let sSlot := _TESTPLUS_RANDOMNESS_SLOT
+            let sValue := sload(sSlot)
+
+            mstore(0x20, sValue)
+            result := keccak256(0x20, 0x40)
+
+            // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
+            if iszero(sValue) {
+                sValue := sSlot
+                let m := mload(0x40)
+                calldatacopy(m, 0, calldatasize())
+                result := keccak256(m, calldatasize())
+            }
+            sstore(sSlot, add(result, 1))
+            result := iszero(mod(result, n))
         }
     }
 
