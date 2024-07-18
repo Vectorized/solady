@@ -563,10 +563,9 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let n := sub(extcodesize(instance), 0x2d)
-            mstore(args, n) // Store the length.
-            extcodecopy(instance, add(args, 0x20), 0x2d, add(n, 0x20))
-            mstore(0x40, add(n, add(args, 0x40))) // Allocate memory.
+            mstore(args, sub(extcodesize(instance), 0x2d)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x2d, add(mload(args), 0x20))
+            mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
         }
     }
 
@@ -581,9 +580,8 @@ library LibClone {
             args := mload(0x40)
             let n := sub(extcodesize(instance), 0x2d)
             extcodecopy(instance, add(args, 0x20), add(start, 0x2d), add(n, 0x20))
-            n := mul(sub(n, start), lt(start, n))
-            mstore(args, n) // Store the length.
-            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+            mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
+            mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
     }
 
@@ -1038,10 +1036,9 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let n := sub(extcodesize(instance), 0x3d)
-            mstore(args, n) // Store the length.
-            extcodecopy(instance, add(args, 0x20), 0x3d, add(n, 0x20))
-            mstore(0x40, add(n, add(args, 0x40))) // Allocate memory.
+            mstore(args, sub(extcodesize(instance), 0x3d)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x3d, add(mload(args), 0x20))
+            mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
         }
     }
 
@@ -1056,9 +1053,8 @@ library LibClone {
             args := mload(0x40)
             let n := sub(extcodesize(instance), 0x3d)
             extcodecopy(instance, add(args, 0x20), add(start, 0x3d), add(n, 0x20))
-            n := mul(sub(n, start), lt(start, n))
-            mstore(args, n) // Store the length.
-            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+            mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
+            mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
     }
 
@@ -1819,10 +1815,9 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let n := sub(extcodesize(instance), 0x52)
-            mstore(args, n) // Store the length.
-            extcodecopy(instance, add(args, 0x20), 0x52, add(n, 0x20))
-            mstore(0x40, add(n, add(args, 0x40))) // Allocate memory.
+            mstore(args, sub(extcodesize(instance), 0x52)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x52, add(mload(args), 0x20))
+            mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
         }
     }
 
@@ -1837,9 +1832,8 @@ library LibClone {
             args := mload(0x40)
             let n := sub(extcodesize(instance), 0x52)
             extcodecopy(instance, add(args, 0x20), add(start, 0x52), add(n, 0x20))
-            n := mul(sub(n, start), lt(start, n))
-            mstore(args, n) // Store the length.
-            mstore(0x40, add(args, add(0x40, n))) // Allocate memory.
+            mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
+            mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
     }
 
