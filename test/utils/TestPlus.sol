@@ -73,20 +73,28 @@ contract TestPlus is Brutalizer {
                 if iszero(and(2, d)) {
                     // Set `t` either `not(0)` or `xor(sValue, r)`.
                     let t := or(xor(sValue, r), sub(0, iszero(and(4, d))))
-                    // Set `r` to `t` shifted left or right by a random multiple of 8.
+                    // Set `r` to `t` shifted left or right.
                     // prettier-ignore
                     for {} 1 {} {
                         if iszero(and(8, d)) {
                             if iszero(and(16, d)) { t := 1 }
-                            r := add(shl(shl(3, and(byte(3, r), 0x1f)), t), sub(3, and(7, r)))
+                            if iszero(and(32, d)) {
+                                r := add(shl(shl(3, and(byte(3, r), 0x1f)), t), sub(3, and(7, r)))
+                                break
+                            }
+                            r := add(shl(byte(3, r), t), sub(0xff, and(0x1ff, r)))
                             break
                         }
                         if iszero(and(16, d)) { t := shl(255, 1) }
-                        r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(3, and(7, r)))
+                        if iszero(and(32, d)) {
+                            r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(3, and(7, r)))
+                            break
+                        }
+                        r := add(shr(byte(3, r), t), sub(0xff, and(0x1ff, r)))
                         break
                     }
                     // With a 1/2 chance, negate `r`.
-                    r := xor(sub(0, iszero(and(32, d))), r)
+                    r := xor(sub(0, iszero(and(64, d))), r)
                     break
                 }
                 // Otherwise, just set `r` to `xor(sValue, r)`.
