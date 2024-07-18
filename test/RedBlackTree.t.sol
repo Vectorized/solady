@@ -107,7 +107,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                 assertEq(ptr.value(), choice);
                 _brutalizeScratchSpace();
                 ptr.remove();
-                if (_random() % 4 == 0) {
+                if (_randomChance(4)) {
                     _brutalizeScratchSpace();
                     tree.tryRemove(choice);
                 }
@@ -120,7 +120,7 @@ contract RedBlackTreeLibTest is SoladyTest {
             if (exists) {
                 _brutalizeScratchSpace();
                 tree.insert(choice);
-                if (_random() % 4 == 0) {
+                if (_randomChance(4)) {
                     _brutalizeScratchSpace();
                     tree.tryInsert(choice);
                 }
@@ -153,7 +153,7 @@ contract RedBlackTreeLibTest is SoladyTest {
     }
 
     function _testRedBlackTreeInsertAndRemove() internal {
-        uint256 n = _random() % (_random() % 128 == 0 ? 32 : 8);
+        uint256 n = _random() % (_randomChance(128) ? 32 : 8);
         uint256[] memory a = _fillTree(n);
 
         LibSort.sort(a);
@@ -202,7 +202,7 @@ contract RedBlackTreeLibTest is SoladyTest {
         assertEq(tree.size(), 0);
 
         unchecked {
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 for (uint256 i; i != n; ++i) {
                     assertTrue(tree.find(a[i]).isEmpty());
                 }
@@ -218,7 +218,7 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeInsertAndRemove2(uint256) public {
         unchecked {
-            uint256 n = _random() % 2 == 0 ? 16 : 32;
+            uint256 n = _randomChance(2) ? 16 : 32;
             uint256[] memory candidates = _makeArray(n);
             for (uint256 i; i != n; ++i) {
                 candidates[i] = _bound(_random(), 1, type(uint256).max);
@@ -241,7 +241,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                         _removeFromArray(records, r);
                     }
                 }
-                if (_random() % 3 == 0) mode = _random() % 2;
+                if (_randomChance(3)) mode = _random() % 2;
             }
             LibSort.sort(records);
             assertEq(tree.size(), records.length);
@@ -617,7 +617,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                     _brutalizeScratchSpace();
                     tree.insert(r);
                 }
-                if (_random() % 4 == 0) {
+                if (_randomChance(4)) {
                     _testRemoveAndInsertBack(a, i, (3 + i >> 2));
                 }
             }

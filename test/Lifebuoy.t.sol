@@ -92,8 +92,8 @@ contract LifebuoyTest is SoladyTest {
             t.recipient = _randomHashedAddress();
         } while (t.recipient == t.deployer || t.recipient == t.owner);
 
-        if (_random() % 32 == 0) t.owner = t.deployer;
-        if (_random() % 2 == 0) vm.etch(t.deployer, " ");
+        if (_randomChance(32)) t.owner = t.deployer;
+        if (_randomChance(2)) vm.etch(t.deployer, " ");
 
         vm.prank(t.deployer);
         t.lifebuoyOwned = new MockLifebuoyOwned(t.owner);
@@ -142,9 +142,9 @@ contract LifebuoyTest is SoladyTest {
         }
         t.lifebuoy.rescueETH(t.recipient, 1);
 
-        if (_random() % 2 == 0 && t.deployer.code.length == 0) {
+        if (_randomChance(2) && t.deployer.code.length == 0) {
             vm.startPrank(t.deployer);
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 t.lifebuoy.rescueETH(t.recipient, 1);
             }
             t.lifebuoy.lockRescue(_LIFEBUOY_DEPLOYER_ACCESS_LOCK);
@@ -165,17 +165,17 @@ contract LifebuoyTest is SoladyTest {
         vm.prank(t.owner);
         t.lifebuoyOwned.rescueETH(t.recipient, 1);
 
-        if (_random() % 2 == 0 && t.deployer.code.length == 0) {
-            if (_random() % 2 == 0) {
+        if (_randomChance(2) && t.deployer.code.length == 0) {
+            if (_randomChance(2)) {
                 vm.prank(t.deployer);
                 t.lifebuoyOwned.rescueETH(t.recipient, 1);
             }
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 vm.prank(t.owner);
                 t.lifebuoyOwned.rescueETH(t.recipient, 1);
             }
 
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 vm.prank(t.deployer);
                 t.lifebuoyOwned.lockRescue(_LIFEBUOY_DEPLOYER_ACCESS_LOCK);
                 vm.prank(t.deployer);
@@ -216,7 +216,7 @@ contract LifebuoyTest is SoladyTest {
 
     function testRescueETH(uint256 amount) public {
         _TestTemps memory t = _testTempsForRescue();
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             amount = _bound(amount, 0, address(t.lifebuoyOwned).balance);
             uint256 expectedRemaining = address(t.lifebuoyOwned).balance - amount;
             vm.prank(t.owner);
@@ -235,7 +235,7 @@ contract LifebuoyTest is SoladyTest {
 
     function testRescueERC20(uint256 amount) public {
         _TestTemps memory t = _testTempsForRescue();
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             amount = _bound(amount, 0, t.erc20Amount);
             vm.prank(t.owner);
             t.lifebuoyOwned.rescueERC20(address(erc20), t.recipient, amount);

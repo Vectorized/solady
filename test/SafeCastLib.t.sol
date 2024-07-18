@@ -289,7 +289,7 @@ contract SafeCastLibTest is SoladyTest {
             }
             r = _random();
             x = _random();
-        } while (_random() % 2 == 0);
+        } while (_randomChance(2));
     }
 
     function testSafeCastUint256ToUintBench() public {
@@ -628,7 +628,7 @@ contract SafeCastLibTest is SoladyTest {
             }
             r = _random();
             x = int256(_random());
-        } while (_random() % 2 == 0);
+        } while (_randomChance(2));
     }
 
     function testSafeCastUint256ToIntBench() public {
@@ -956,7 +956,7 @@ contract SafeCastLibTest is SoladyTest {
             }
             r = _random();
             x = _random();
-        } while (_random() % 2 == 0);
+        } while (_randomChance(2));
     }
 
     function testSafeCastUint256ToInt256Bench() public pure {

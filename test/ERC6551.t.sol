@@ -94,7 +94,7 @@ contract ERC6551Test is SoladyTest {
 
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
         while (true) {
-            tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
+            tokenId = _randomChance(8) ? _random() % 32 : _random();
             (bool success,) =
                 _erc721.call(abi.encodeWithSignature("mint(address,uint256)", owner, tokenId));
             if (success) return tokenId;
@@ -130,7 +130,7 @@ contract ERC6551Test is SoladyTest {
         assertEq(tokenId, t.tokenId);
         address owner = t.account.owner();
         assertEq(owner, t.owner);
-        if (_random() % 8 == 0) {
+        if (_randomChance(8)) {
             vm.prank(owner);
             address newOnwer = _randomNonZeroAddress();
             MockERC721(_erc721).transferFrom(owner, newOnwer, t.tokenId);
@@ -430,8 +430,8 @@ contract ERC6551Test is SoladyTest {
 
     function testUpdateState(uint256 seed) public {
         bytes[] memory data = new bytes[](2);
-        if (_random() % 8 != 0) data[0] = _randomBytes(seed);
-        if (_random() % 8 != 0) data[1] = _randomBytes(~seed);
+        if (!_randomChance(8)) data[0] = _randomBytes(seed);
+        if (!_randomChance(8)) data[1] = _randomBytes(~seed);
 
         bytes32[] memory statesA = new bytes32[](2);
         bytes32[] memory statesB = new bytes32[](2);

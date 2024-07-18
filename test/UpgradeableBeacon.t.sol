@@ -66,7 +66,7 @@ contract UpgradeableBeaconTest is SoladyTest {
     }
 
     function _deployBeacon() internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             _deployYulBeacon();
         } else {
             _deploySolidityBeacon();
@@ -132,28 +132,28 @@ contract UpgradeableBeaconTest is SoladyTest {
 
         address newOwner = _randomNonZeroAddress();
 
-        if (_random() % 32 == 0) {
+        if (_randomChance(32)) {
             _testUpgradeableBeaconOnlyOwnerFunctions();
         }
 
-        if (_random() % 16 == 0) {
+        if (_randomChance(16)) {
             vm.expectRevert(UpgradeableBeacon.NewOwnerIsZeroAddress.selector);
             beacon.transferOwnership(address(0));
         }
 
-        if (_random() % 16 == 0) {
+        if (_randomChance(16)) {
             vm.expectEmit(true, true, true, true);
             emit OwnershipTransferred(address(this), address(0));
             beacon.renounceOwnership();
             assertEq(beacon.owner(), address(0));
         }
 
-        if (beacon.owner() != address(0) && _random() % 2 == 0) {
+        if (beacon.owner() != address(0) && _randomChance(2)) {
             emit OwnershipTransferred(address(this), newOwner);
             beacon.transferOwnership(newOwner);
             assertEq(beacon.owner(), newOwner);
 
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 _testUpgradeableBeaconOnlyOwnerFunctions(address(this), implementation);
             }
 
@@ -163,11 +163,11 @@ contract UpgradeableBeaconTest is SoladyTest {
             assertEq(beacon.owner(), address(this));
         }
 
-        if (beacon.owner() != address(0) && _random() % 2 == 0) {
+        if (beacon.owner() != address(0) && _randomChance(2)) {
             assertEq(beacon.implementation(), implementation);
 
             address newImplementation;
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 newImplementation = LibClone.clone(implementation);
             }
             if (newImplementation == address(0)) {

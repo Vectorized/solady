@@ -103,7 +103,7 @@ contract ERC1271Test is SoladyTest {
 
     function _testTempsMint(address owner) internal returns (uint256 tokenId) {
         while (true) {
-            tokenId = _random() % 8 == 0 ? _random() % 32 : _random();
+            tokenId = _randomChance(8) ? _random() % 32 : _random();
             (bool success,) =
                 _erc721.call(abi.encodeWithSignature("mint(address,uint256)", owner, tokenId));
             if (success) return tokenId;
@@ -128,10 +128,10 @@ contract ERC1271Test is SoladyTest {
 
     function testIsValidSignature(uint256 x) public {
         vm.txGasPrice(10);
-        if (_random() % 8 == 0) {
+        if (_randomChance(8)) {
             _testIsValidSignature(abi.encodePacked(uint8(x)), false);
         }
-        if (_random() % 32 == 0) {
+        if (_randomChance(32)) {
             _etchBasefeeContract();
         }
         _TestIsValidSignatureTemps memory t;
@@ -139,13 +139,13 @@ contract ERC1271Test is SoladyTest {
         t.lowercased = "abcdefghijklmnopqrstuvwxyz";
         t.rest = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
         t.banned = "\x00 ,)";
-        if (_random() % 4 == 0) {
+        if (_randomChance(4)) {
             bytes memory contentsType = abi.encodePacked(
                 _randomString(t.uppercased, true), _randomString(t.rest, false), "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, true);
         }
-        if (_random() % 4 == 0) {
+        if (_randomChance(4)) {
             bytes memory contentsType = abi.encodePacked(
                 _randomString(t.uppercased, false),
                 _randomString(t.banned, true),
@@ -154,18 +154,18 @@ contract ERC1271Test is SoladyTest {
             );
             _testIsValidSignature(contentsType, false);
         }
-        if (_random() % 4 == 0) {
+        if (_randomChance(4)) {
             bytes memory contentsType = abi.encodePacked(
                 _randomString(t.lowercased, true), _randomString(t.rest, false), "(bytes32 stuff)"
             );
             _testIsValidSignature(contentsType, false);
         }
-        if (_random() % 4 == 0) {
+        if (_randomChance(4)) {
             bytes memory contentsType =
                 abi.encodePacked(_randomString(t.uppercased, true), _randomString(t.rest, false));
             _testIsValidSignature(contentsType, false);
         }
-        if (_random() % 16 == 0) {
+        if (_randomChance(16)) {
             _testIsValidSignatureWontOutOfGas();
         }
     }
@@ -175,7 +175,7 @@ contract ERC1271Test is SoladyTest {
         returns (string memory result)
     {
         uint256 randomness = _random();
-        uint256 resultLength = _bound(_random(), nonEmpty ? 1 : 0, _random() % 32 != 0 ? 4 : 128);
+        uint256 resultLength = _bound(_random(), nonEmpty ? 1 : 0, !_randomChance(32) ? 4 : 128);
         /// @solidity memory-safe-assembly
         assembly {
             if mload(byteChoices) {
@@ -234,7 +234,7 @@ contract ERC1271Test is SoladyTest {
         bytes memory signature = abi.encodePacked(
             t.r, t.s, t.v, _DOMAIN_SEP_B, contents, contentsType, uint16(contentsType.length)
         );
-        if (_random() % 4 == 0) signature = _erc6492Wrap(signature);
+        if (_randomChance(4)) signature = _erc6492Wrap(signature);
         // Success returns `0x1626ba7e`.
         assertEq(
             t.account.isValidSignature(_toContentsHash(contents), signature),

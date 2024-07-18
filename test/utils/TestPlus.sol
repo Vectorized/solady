@@ -49,44 +49,57 @@ contract TestPlus is Brutalizer {
         assembly {
             let sSlot := _TESTPLUS_RANDOMNESS_SLOT
             let sValue := sload(sSlot)
-
             mstore(0x20, sValue)
             r := keccak256(0x20, 0x40)
-
             // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
                 sValue := sSlot
-                let m := mload(0x40)
-                calldatacopy(m, 0, calldatasize())
-                r := keccak256(m, calldatasize())
+                calldatacopy(mload(0x40), 0, calldatasize())
+                r := keccak256(mload(0x40), calldatasize())
             }
             sstore(sSlot, add(r, 1))
 
             // Do some biased sampling for more robust tests.
             // prettier-ignore
             for {} 1 {} {
-                let d := byte(0, r)
-                // With a 1/256 chance, randomly set `r` to any of 0,1,2.
-                if iszero(d) {
-                    r := and(r, 3)
+                let y :=
+                    mulmod(
+                        r,
+                        0x100000000000000000000000000000051, // Prime and a primitive root of `n`.
+                        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43 // `n`, prime.
+                    )
+                // With a 1/256 chance, randomly set `r` to any of 0,1,2,3.
+                if iszero(byte(19, y)) {
+                    r := and(byte(11, y), 3)
                     break
                 }
+                let d := byte(17, y)
                 // With a 1/2 chance, set `r` to near a random power of 2.
                 if iszero(and(2, d)) {
                     // Set `t` either `not(0)` or `xor(sValue, r)`.
-                    let t := xor(not(0), mul(iszero(and(4, d)), not(xor(sValue, r))))
-                    // Set `r` to `t` shifted left or right by a random multiple of 8.
-                    switch and(8, d)
-                    case 0 {
-                        if iszero(and(16, d)) { t := 1 }
-                        r := add(shl(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
-                    }
-                    default {
+                    let t := or(xor(sValue, r), sub(0, and(1, d)))
+                    // Set `r` to `t` shifted left or right.
+                    // prettier-ignore
+                    for {} 1 {} {
+                        if iszero(and(8, d)) {
+                            if iszero(and(16, d)) { t := 1 }
+                            if iszero(and(32, d)) {
+                                r := add(shl(shl(3, and(byte(7, y), 31)), t), sub(3, and(7, r)))
+                                break
+                            }
+                            r := add(shl(byte(7, y), t), sub(511, and(1023, r)))
+                            break
+                        }
                         if iszero(and(16, d)) { t := shl(255, 1) }
-                        r := add(shr(shl(3, and(byte(3, r), 0x1f)), t), sub(and(r, 7), 3))
+                        if iszero(and(32, d)) {
+                            r := add(shr(shl(3, and(byte(7, y), 31)), t), sub(3, and(7, r)))
+                            break
+                        }
+                        r := add(shr(byte(7, y), t), sub(511, and(1023, r)))
+                        break
                     }
                     // With a 1/2 chance, negate `r`.
-                    if iszero(and(0x20, d)) { r := not(r) }
+                    r := xor(sub(0, shr(7, d)), r)
                     break
                 }
                 // Otherwise, just set `r` to `xor(sValue, r)`.
@@ -100,21 +113,23 @@ contract TestPlus is Brutalizer {
     function _randomChance(uint256 n) internal returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let sSlot := _TESTPLUS_RANDOMNESS_SLOT
-            let sValue := sload(sSlot)
-
-            mstore(0x20, sValue)
-            result := keccak256(0x20, 0x40)
-
-            // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
-            if iszero(sValue) {
-                sValue := sSlot
-                let m := mload(0x40)
-                calldatacopy(m, 0, calldatasize())
-                result := keccak256(m, calldatasize())
+            result := _TESTPLUS_RANDOMNESS_SLOT
+            // prettier-ignore
+            for { let sValue := sload(result) } 1 {} {
+                // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
+                if iszero(sValue) {
+                    calldatacopy(mload(0x40), 0, calldatasize())
+                    sValue := keccak256(mload(0x40), calldatasize())
+                    sstore(result, sValue)
+                    result := iszero(mod(sValue, n))
+                    break
+                }
+                mstore(0x1f, sValue)
+                sValue := keccak256(0x20, 0x40)
+                sstore(result, sValue)
+                result := iszero(mod(sValue, n))
+                break
             }
-            sstore(sSlot, add(result, 1))
-            result := iszero(mod(result, n))
         }
     }
 
@@ -126,7 +141,7 @@ contract TestPlus is Brutalizer {
         assembly {
             mstore(0x00, 0xffa18649) // `addr(uint256)`.
             mstore(0x20, privateKey)
-            if iszero(call(gas(), _VM_ADDRESS, 0, 0x1c, 0x24, 0x00, 0x20)) { revert(0, 0) }
+            pop(call(gas(), _VM_ADDRESS, 0, 0x1c, 0x24, 0x00, 0x20))
             signer := mload(0x00)
         }
     }
@@ -181,14 +196,13 @@ contract TestPlus is Brutalizer {
                 }
 
                 let size := add(sub(max, min), 1)
-                if and(iszero(gt(x, 3)), gt(size, x)) {
+                if lt(gt(x, 3), gt(size, x)) {
                     result := add(min, x)
                     break
                 }
 
-                let w := not(0)
-                if and(iszero(lt(x, sub(0, 4))), gt(size, sub(w, x))) {
-                    result := sub(max, sub(w, x))
+                if lt(lt(x, not(3)), gt(size, not(x))) {
+                    result := sub(max, not(x))
                     break
                 }
 
@@ -201,7 +215,7 @@ contract TestPlus is Brutalizer {
                         result := max
                         break
                     }
-                    result := add(add(min, r), w)
+                    result := sub(add(min, r), 1)
                     break
                 }
                 let d := sub(min, x)
@@ -242,9 +256,7 @@ contract TestPlus is Brutalizer {
                 for { let i := 0 } lt(i, n) { i := add(0x20, i) } {
                     mstore(add(add(m, 0x80), i), mload(add(add(ic2fBytecode, 0x20), i)))
                 }
-                if iszero(call(gas(), _VM_ADDRESS, 0, add(m, 0x1c), add(n, 0x64), 0x00, 0x00)) {
-                    revert(0, 0)
-                }
+                pop(call(gas(), _VM_ADDRESS, 0, add(m, 0x1c), add(n, 0x64), 0x00, 0x00))
             }
         }
         /// @solidity memory-safe-assembly

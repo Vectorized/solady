@@ -192,7 +192,7 @@ contract ERC721Test is SoladyTest {
     }
 
     function _transferFrom(address from, address to, uint256 id) internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             token.transferFrom(from, to, id);
         } else {
             token.directTransferFrom(from, to, id);
@@ -200,7 +200,7 @@ contract ERC721Test is SoladyTest {
     }
 
     function _safeTransferFrom(address from, address to, uint256 id) internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             token.safeTransferFrom(from, to, id);
         } else {
             token.directSafeTransferFrom(from, to, id);
@@ -208,7 +208,7 @@ contract ERC721Test is SoladyTest {
     }
 
     function _safeTransferFrom(address from, address to, uint256 id, bytes memory data) internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             token.safeTransferFrom(from, to, id, data);
         } else {
             token.directSafeTransferFrom(from, to, id, data);
@@ -216,7 +216,7 @@ contract ERC721Test is SoladyTest {
     }
 
     function _approve(address spender, uint256 id) internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             token.approve(spender, id);
         } else {
             token.directApprove(spender, id);
@@ -224,7 +224,7 @@ contract ERC721Test is SoladyTest {
     }
 
     function _setApprovalForAll(address operator, bool approved) internal {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             token.setApprovalForAll(operator, approved);
         } else {
             token.directSetApprovalForAll(operator, approved);
@@ -232,7 +232,7 @@ contract ERC721Test is SoladyTest {
     }
 
     function _ownerOf(uint256 id) internal returns (address) {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             return token.ownerOf(id);
         } else {
             return token.directOwnerOf(id);
@@ -240,7 +240,7 @@ contract ERC721Test is SoladyTest {
     }
 
     function _getApproved(uint256 id) internal returns (address) {
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             return token.getApproved(id);
         } else {
             return token.directGetApproved(id);
@@ -367,7 +367,7 @@ contract ERC721Test is SoladyTest {
         _expectMintEvent(owner, id);
         token.mint(owner, id);
 
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             _expectBurnEvent(owner, id);
             token.uncheckedBurn(id);
         } else {
@@ -455,7 +455,7 @@ contract ERC721Test is SoladyTest {
                     assertEq(token.getExtraData(tokens[j][i]), _extraData(tokens[j][i]));
                 }
             }
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 for (uint256 j; j != 2; ++j) {
                     for (uint256 i; i != tokens[j].length; ++i) {
                         vm.expectRevert(ERC721.NotOwnerNorApproved.selector);
@@ -528,7 +528,7 @@ contract ERC721Test is SoladyTest {
     function testExtraData(uint256 id) public {
         (address owner0, address owner1) = _owners();
 
-        bool setExtraData = _random() % 2 == 0;
+        bool setExtraData = _randomChance(2);
         uint96 extraData = uint96(_bound(_random(), 0, type(uint96).max));
         if (setExtraData) {
             token.setExtraData(id, extraData);
@@ -551,7 +551,7 @@ contract ERC721Test is SoladyTest {
         }
         assertEq(_ownerOf(id), owner1);
 
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             extraData = uint96(_bound(_random(), 0, type(uint96).max));
             token.setExtraData(id, extraData);
             setExtraData = true;
@@ -579,7 +579,7 @@ contract ERC721Test is SoladyTest {
     function testAux(uint256) public {
         (address owner0, address owner1) = _owners();
 
-        bool setAux = _random() % 2 == 0;
+        bool setAux = _randomChance(2);
         if (setAux) {
             token.setAux(owner0, _aux(owner0));
             token.setAux(owner1, _aux(owner1));
@@ -652,7 +652,7 @@ contract ERC721Test is SoladyTest {
 
     function testApproveAll(uint256) public {
         (address operator,) = _randomSigner();
-        bool approved = _random() % 2 == 0;
+        bool approved = _randomChance(2);
         _expectApprovalForAllEvent(address(this), operator, approved);
         _setApprovalForAll(operator, approved);
         assertEq(token.isApprovedForAll(address(this), operator), approved);
@@ -663,7 +663,7 @@ contract ERC721Test is SoladyTest {
 
         token.mint(from, id);
 
-        if (_random() % 2 == 0) {
+        if (_randomChance(2)) {
             uint256 r = _random() % 3;
             if (r == 0) {
                 vm.prank(from);
@@ -687,7 +687,7 @@ contract ERC721Test is SoladyTest {
         } else {
             (address temp,) = _randomSigner();
             while (temp == from || temp == to) (temp,) = _randomSigner();
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 _expectTransferEvent(from, temp, id);
                 token.uncheckedTransferFrom(from, temp, id);
             } else {

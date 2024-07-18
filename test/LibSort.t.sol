@@ -7,7 +7,7 @@ import "src/utils/LibSort.sol";
 contract LibSortTest is SoladyTest {
     function testInsertionSortAddressesDifferential(uint256) public {
         unchecked {
-            uint256 n = _random() % 32 == 0 ? _randomArrayLength() : _random() % 4;
+            uint256 n = _randomChance(32) ? _randomArrayLength() : _random() % 4;
             address[] memory a = _randomAddresses(n);
             // Make a copy of the `a` and perform insertion sort on it.
             address[] memory aCopy = _copy(a);
@@ -434,7 +434,7 @@ contract LibSortTest is SoladyTest {
             _misalignFreeMemoryPointer();
             uint256[] memory a = _randomUints(_randomNonZeroArrayLength());
             LibSort.sort(a);
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 LibSort.uniquifySorted(a);
             }
             uint256 randomIndex = _random() % a.length;
@@ -450,13 +450,13 @@ contract LibSortTest is SoladyTest {
             _misalignFreeMemoryPointer();
             uint256[] memory a = _randomUints(_randomNonZeroArrayLength());
             LibSort.sort(a);
-            if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
                 LibSort.uniquifySorted(a);
             }
             uint256 randomIndex = _random() % a.length;
             uint256 missingValue;
-            if (_random() % 2 == 0) {
-                if (_random() % 2 == 0) {
+            if (_randomChance(2)) {
+                if (_randomChance(2)) {
                     missingValue = a[randomIndex] + 1;
                     if (missingValue == 0) return;
                 } else {
@@ -529,7 +529,7 @@ contract LibSortTest is SoladyTest {
     function testSearchSortedDifferential(uint256) public {
         uint256[] memory a = _randomUints(_randomArrayLength());
         uint256 needle = _random();
-        if (_random() % 2 == 0 && a.length != 0) {
+        if (_randomChance(2) && a.length != 0) {
             needle = a[_random() % a.length];
         }
         (bool found, uint256 index) = LibSort.searchSorted(a, needle);
@@ -641,10 +641,10 @@ contract LibSortTest is SoladyTest {
     function testCopy(uint256) public {
         unchecked {
             uint256[] memory a;
-            if (_random() % 32 > 0) a = _randomUints(_random() % 4);
-            if (_random() % 32 == 0) _brutalizeMemory();
+            if (!_randomChance(32)) a = _randomUints(_random() % 4);
+            if (_randomChance(32)) _brutalizeMemory();
             uint256[] memory aCopy = LibSort.copy(a);
-            if (_random() % 32 == 0) _brutalizeMemory();
+            if (_randomChance(32)) _brutalizeMemory();
             assertEq(aCopy, a);
             for (uint256 i; i != a.length; ++i) {
                 aCopy[i] *= 2;
@@ -777,7 +777,7 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedDifferential(uint256) public {
         unchecked {
-            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomChance(2) ? _random() % 4 : _randomArrayLength();
             uint256[] memory a = new uint256[](n);
             for (uint256 i; i != n; ++i) {
                 a[i] = _random() % 4;
@@ -787,7 +787,7 @@ contract LibSortTest is SoladyTest {
             assertEq(LibSort.isSorted(a), _isSorted(a));
             if (n != 0) {
                 a[_random() % n] = 0;
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     a[_random() % n] = a[_random() % n];
                 }
             }
@@ -797,11 +797,11 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedIntsDifferential(uint256) public {
         unchecked {
-            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomChance(2) ? _random() % 4 : _randomArrayLength();
             int256[] memory a = new int256[](n);
             for (uint256 i; i != n; ++i) {
                 a[i] = int256(_random() % 4);
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     a[i] = -a[i];
                 }
             }
@@ -810,7 +810,7 @@ contract LibSortTest is SoladyTest {
             assertEq(LibSort.isSorted(a), _isSorted(a));
             if (n != 0) {
                 a[_random() % n] = 0;
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     a[_random() % n] = a[_random() % n];
                 }
             }
@@ -820,7 +820,7 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedAddressesDifferential(uint256) public {
         unchecked {
-            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomChance(2) ? _random() % 4 : _randomArrayLength();
             address[] memory a = new address[](n);
             for (uint256 i; i != n; ++i) {
                 a[i] = address(uint160(_random() % 4));
@@ -830,7 +830,7 @@ contract LibSortTest is SoladyTest {
             assertEq(LibSort.isSorted(a), _isSorted(a));
             if (n != 0) {
                 a[_random() % n] = address(0);
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     a[_random() % n] = a[_random() % n];
                 }
             }
@@ -840,7 +840,7 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedAndUniquifiedDifferential(uint256) public {
         unchecked {
-            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomChance(2) ? _random() % 4 : _randomArrayLength();
             uint256[] memory a = new uint256[](n);
             for (uint256 i; i != n; ++i) {
                 a[i] = _random() % 4;
@@ -850,7 +850,7 @@ contract LibSortTest is SoladyTest {
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
             if (n != 0) {
                 a[_random() % n] = 0;
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     a[_random() % n] = a[_random() % n];
                 }
             }
@@ -860,11 +860,11 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedAndUniquifiedIntsDifferential(uint256) public {
         unchecked {
-            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomChance(2) ? _random() % 4 : _randomArrayLength();
             int256[] memory a = new int256[](n);
             for (uint256 i; i != n; ++i) {
                 a[i] = int256(_random() % 4);
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     a[i] = -a[i];
                 }
             }
@@ -873,7 +873,7 @@ contract LibSortTest is SoladyTest {
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
             if (n != 0) {
                 a[_random() % n] = 0;
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     a[_random() % n] = a[_random() % n];
                 }
             }
@@ -883,7 +883,7 @@ contract LibSortTest is SoladyTest {
 
     function testIsSortedAndUniquifiedAddressesDifferential(uint256) public {
         unchecked {
-            uint256 n = _random() % 2 == 0 ? _random() % 4 : _randomArrayLength();
+            uint256 n = _randomChance(2) ? _random() % 4 : _randomArrayLength();
             address[] memory a = new address[](n);
             for (uint256 i; i != n; ++i) {
                 a[i] = address(uint160(_random() % 4));
@@ -893,7 +893,7 @@ contract LibSortTest is SoladyTest {
             assertEq(LibSort.isSortedAndUniquified(a), _isSortedAndUniquified(a));
             if (n != 0) {
                 a[_random() % n] = address(0);
-                if (_random() % 2 == 0) {
+                if (_randomChance(2)) {
                     a[_random() % n] = a[_random() % n];
                 }
             }
