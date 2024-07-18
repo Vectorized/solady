@@ -6,7 +6,8 @@ pragma solidity ^0.8.4;
 ///
 /// @dev Intended for Contract Secured Revenue (CSR).
 ///
-/// Recommendation: pass in an admin-controlled dynamic value instead of a hardcoded one.
+/// Recommendation: for the amount of gas to burn,
+/// pass in an admin-controlled dynamic value instead of a hardcoded one.
 /// This is so that you can adjust your contract as needed depending on market conditions,
 /// and to give you and your users a leeway in case the L2 chain change the rules.
 library GasBurnerLib {

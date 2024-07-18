@@ -20,10 +20,6 @@ contract GasBurnerLibTest is SoladyTest {
         }
     }
 
-    function testBurnPureTiming() public pure {
-        GasBurnerLib.burnPure(300000);
-    }
-
     function testBurnView() public {
         _testBurnView(1 * 3000);
         _testBurnView(2 * 3000);
@@ -37,6 +33,25 @@ contract GasBurnerLibTest is SoladyTest {
         _testBurn(20000);
         _testBurn(30000);
         _testBurn(50000);
+    }
+
+    function testBurnPure(uint256 x) public {
+        x = _bound(x, 0, _randomChance(512) ? 30000000 : 5000);
+        GasBurnerLib.burnPure(x);
+    }
+
+    function testBurnView(uint256 x) public {
+        x = _bound(x, 0, _randomChance(512) ? 30000000 : 15000);
+        GasBurnerLib.burnView(x);
+    }
+
+    function testBurn(uint256 x) public {
+        x = _bound(x, 0, _randomChance(512) ? 30000000 : 60000);
+        GasBurnerLib.burn(x);
+    }
+
+    function testBurnPureTiming() public pure {
+        GasBurnerLib.burnPure(300000);
     }
 
     function testBurnViewTiming() public view {
