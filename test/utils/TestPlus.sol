@@ -98,19 +98,23 @@ contract TestPlus is Brutalizer {
     function _randomChance(uint256 n) internal returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let sSlot := _TESTPLUS_RANDOMNESS_SLOT
-            let sValue := sload(sSlot)
-            mstore(0x20, sValue)
-            result := keccak256(0x20, 0x40)
-            // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
-            if iszero(sValue) {
-                sValue := sSlot
-                let m := mload(0x40)
-                calldatacopy(m, 0, calldatasize())
-                result := keccak256(m, calldatasize())
+            result := _TESTPLUS_RANDOMNESS_SLOT
+            // prettier-ignore
+            for { let sValue := sload(result) } 1 {} {
+                // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
+                if iszero(sValue) {
+                    calldatacopy(mload(0x40), 0, calldatasize())
+                    sValue := keccak256(mload(0x40), calldatasize())
+                    sstore(result, sValue)
+                    result := iszero(mod(sValue, n))
+                    break
+                }
+                mstore(0x1f, sValue)
+                sValue := keccak256(0x20, 0x40)
+                sstore(result, sValue)
+                result := iszero(mod(sValue, n))
+                break
             }
-            sstore(sSlot, add(result, 1))
-            result := iszero(mod(result, n))
         }
     }
 
@@ -177,13 +181,13 @@ contract TestPlus is Brutalizer {
                 }
 
                 let size := add(sub(max, min), 1)
-                if and(iszero(gt(x, 3)), gt(size, x)) {
+                if lt(gt(x, 3), gt(size, x)) {
                     result := add(min, x)
                     break
                 }
 
                 let w := not(0)
-                if and(iszero(lt(x, sub(0, 4))), gt(size, sub(w, x))) {
+                if lt(lt(x, not(3)), gt(size, sub(w, x))) {
                     result := sub(max, sub(w, x))
                     break
                 }
