@@ -34,20 +34,20 @@ contract SSTORE2Test is SoladyTest {
         SSTORE2.read(SSTORE2.write(hex"11223344"), 3, 3);
     }
 
-    function testReadRevertsOnZeroCodeAddress(address pointer, uint256 r) public {
+    function testReadRevertsOnZeroCodeAddress(address pointer) public {
         while (pointer.code.length != 0) pointer = _randomNonZeroAddress();
         _maybeBrutalizeMemory();
-        if (r & 0x1 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert();
             _mustCompute(SSTORE2.read(pointer));
             return;
         }
-        if (r & 0x10 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert();
             _mustCompute(SSTORE2.read(pointer, _random()));
             return;
         }
-        if (r & 0x100 == 0) {
+        if (_randomChance(2)) {
             vm.expectRevert();
             _mustCompute(SSTORE2.read(pointer, _random(), _random()));
             return;
@@ -65,7 +65,7 @@ contract SSTORE2Test is SoladyTest {
         }
     }
 
-    function testWriteRead(bytes32, uint256 r) public {
+    function testWriteRead(bytes32) public {
         bytes memory data = _truncateBytes(_randomBytes(), _DATA_MAX_LENGTH);
 
         uint256 startIndex = _bound(_random(), 0, data.length + 2);
@@ -75,7 +75,7 @@ contract SSTORE2Test is SoladyTest {
 
         address pointer = SSTORE2.write(data);
 
-        if (r & 0x1 == 0) assertEq(pointer.code, abi.encodePacked(hex"00", data));
+        if (_randomChance(2)) assertEq(pointer.code, abi.encodePacked(hex"00", data));
 
         _maybeBrutalizeMemory();
 
@@ -85,7 +85,7 @@ contract SSTORE2Test is SoladyTest {
 
         _maybeBrutalizeMemory();
 
-        if (r & 0x10 == 0) {
+        if (_randomChance(2)) {
             readResult = SSTORE2.read(pointer, startIndex);
             _checkMemory(readResult);
             assertEq(readResult, bytes(LibString.slice(string(data), startIndex)));
@@ -119,8 +119,8 @@ contract SSTORE2Test is SoladyTest {
         address pointer = SSTORE2.writeDeterministic(data, salt);
         assertEq(pointer, predicted);
         assertEq(SSTORE2.read(predicted), data);
-        if (_random() & 31 == 0) {
-            if (_random() & 1 == 0) data = _truncateBytes(_randomBytes(), 0xfffe);
+        if (_randomChance(32)) {
+            if (_randomChance(2)) data = _truncateBytes(_randomBytes(), 0xfffe);
             vm.expectRevert(SSTORE2.DeploymentFailed.selector);
             this.testWriteReadDeterministic(data, salt);
         }
@@ -139,7 +139,7 @@ contract SSTORE2Test is SoladyTest {
 
         assertEq(SSTORE2.write(data).code, pointer.code);
 
-        if (_random() & 31 == 0) {
+        if (_randomChance(32)) {
             vm.expectRevert(SSTORE2.DeploymentFailed.selector);
             this.testWriteReadCounterfactual(data, salt, deployer);
         }
@@ -186,8 +186,7 @@ contract SSTORE2Test is SoladyTest {
     }
 
     function _maybeBrutalizeMemory() internal {
-        uint256 r = _random();
-        if (r & 0x10 == 0) _misalignFreeMemoryPointer();
-        if (r & 0xf == 0) _brutalizeMemory();
+        if (_randomChance(2)) _misalignFreeMemoryPointer();
+        if (_randomChance(16)) _brutalizeMemory();
     }
 }
