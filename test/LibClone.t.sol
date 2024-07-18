@@ -186,8 +186,15 @@ contract LibCloneTest is SoladyTest {
                 LibClone.argsOnClone(instance, _random());
                 return;
             }
-            vm.expectRevert();
-            LibClone.argsOnClone(instance, _random(), _random());
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnClone(instance, _random(), _random());
+                return;
+            }
+            instance = LibClone.clone(address(this), "");
+            assertEq(LibClone.argsOnClone(instance), "");
+            assertEq(LibClone.argsOnClone(instance, _random()), "");
+            assertEq(LibClone.argsOnClone(instance, _random(), _random()), "");
             return;
         }
         if (c & (m <<= 1) == 0) {
@@ -202,8 +209,15 @@ contract LibCloneTest is SoladyTest {
                 LibClone.argsOnERC1967(instance, _random());
                 return;
             }
-            vm.expectRevert();
-            LibClone.argsOnERC1967(instance, _random(), _random());
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnERC1967(instance, _random(), _random());
+                return;
+            }
+            instance = LibClone.deployERC1967(address(this), "");
+            assertEq(LibClone.argsOnERC1967(instance), "");
+            assertEq(LibClone.argsOnERC1967(instance, _random()), "");
+            assertEq(LibClone.argsOnERC1967(instance, _random(), _random()), "");
             return;
         }
         if (c & (m <<= 1) == 0) {
@@ -218,8 +232,15 @@ contract LibCloneTest is SoladyTest {
                 LibClone.argsOnERC1967BeaconProxy(instance, _random());
                 return;
             }
-            vm.expectRevert();
-            LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random());
+            if (c & (m <<= 1) == 0) {
+                vm.expectRevert();
+                LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random());
+                return;
+            }
+            instance = LibClone.deployERC1967BeaconProxy(address(this), "");
+            assertEq(LibClone.argsOnERC1967BeaconProxy(instance), "");
+            assertEq(LibClone.argsOnERC1967BeaconProxy(instance, _random()), "");
+            assertEq(LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random()), "");
             return;
         }
     }

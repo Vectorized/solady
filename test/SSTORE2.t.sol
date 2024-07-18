@@ -38,21 +38,24 @@ contract SSTORE2Test is SoladyTest {
         while (pointer.code.length != 0) pointer = _randomNonZeroAddress();
         uint256 m = 1;
         if (c & (m <<= 1) == 0) {
-            c = _random();
-            if (c & (m <<= 1) == 0) {
-                vm.expectRevert();
-                SSTORE2.read(pointer);
-                return;
-            }
-            if (c & (m <<= 1) == 0) {
-                vm.expectRevert();
-                SSTORE2.read(pointer, _random());
-                return;
-            }
+            vm.expectRevert();
+            SSTORE2.read(pointer);
+            return;
+        }
+        if (c & (m <<= 1) == 0) {
+            vm.expectRevert();
+            SSTORE2.read(pointer, _random());
+            return;
+        }
+        if (c & (m <<= 1) == 0) {
             vm.expectRevert();
             SSTORE2.read(pointer, _random(), _random());
             return;
         }
+        pointer = SSTORE2.write("");
+        assertEq(SSTORE2.read(pointer), "");
+        assertEq(SSTORE2.read(pointer, _random()), "");
+        assertEq(SSTORE2.read(pointer, _random(), _random()), "");
     }
 
     function testWriteRead(bytes32, uint256 r) public {
@@ -137,6 +140,17 @@ contract SSTORE2Test is SoladyTest {
             vm.expectRevert(SSTORE2.DeploymentFailed.selector);
             this.testWriteReadCounterfactual(data, salt, deployer);
         }
+    }
+
+    function testReadSlicing() public {
+        bytes memory data = "1234567890123456789012345678901234567890123456789012345678901234";
+        address pointer = SSTORE2.write(data);
+        assertEq(SSTORE2.read(pointer), data);
+        assertEq(SSTORE2.read(pointer, 32), "34567890123456789012345678901234");
+        assertEq(SSTORE2.read(pointer, 0, 64), data);
+        assertEq(SSTORE2.read(pointer, 0, 65), data);
+        assertEq(SSTORE2.read(pointer, 0, 32), "12345678901234567890123456789012");
+        assertEq(SSTORE2.read(pointer, 1, 32), "2345678901234567890123456789012");
     }
 
     function _randomBytes() internal returns (bytes memory result) {
