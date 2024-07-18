@@ -171,24 +171,23 @@ contract LibCloneTest is SoladyTest {
         _checkBehavesLikeProxy(instance);
     }
 
-    function testSlicingRevertsOnZeroCodeAddress(address instance, uint256 c) public {
+    function testSlicingRevertsOnZeroCodeAddress(address instance, uint256 c, uint256 r) public {
         while (instance.code.length != 0) instance = _randomNonZeroAddress();
-        uint256 m = 1;
-        if (c & (m <<= 1) == 0) {
-            c = _random();
-            if (c & (m <<= 1) == 0) {
+        if (c & 0x1 == 0) {
+            _maybeBrutalizeMemory();
+            if (r & 0x1 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnClone(instance);
+                _mustCompute(LibClone.argsOnClone(instance));
                 return;
             }
-            if (c & (m <<= 1) == 0) {
+            if (r & 0x10 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnClone(instance, _random());
+                _mustCompute(LibClone.argsOnClone(instance, _random()));
                 return;
             }
-            if (c & (m <<= 1) == 0) {
+            if (r & 0x100 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnClone(instance, _random(), _random());
+                _mustCompute(LibClone.argsOnClone(instance, _random(), _random()));
                 return;
             }
             instance = LibClone.clone(address(this), "");
@@ -197,21 +196,21 @@ contract LibCloneTest is SoladyTest {
             assertEq(LibClone.argsOnClone(instance, _random(), _random()), "");
             return;
         }
-        if (c & (m <<= 1) == 0) {
-            c = _random();
-            if (c & (m <<= 1) == 0) {
+        if (c & 0x10 == 0) {
+            _maybeBrutalizeMemory();
+            if (r & 0x1 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnERC1967(instance);
+                _mustCompute(LibClone.argsOnERC1967(instance));
                 return;
             }
-            if (c & (m <<= 1) == 0) {
+            if (r & 0x10 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnERC1967(instance, _random());
+                _mustCompute(LibClone.argsOnERC1967(instance, _random()));
                 return;
             }
-            if (c & (m <<= 1) == 0) {
+            if (r & 0x100 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnERC1967(instance, _random(), _random());
+                _mustCompute(LibClone.argsOnERC1967(instance, _random(), _random()));
                 return;
             }
             instance = LibClone.deployERC1967(address(this), "");
@@ -220,21 +219,21 @@ contract LibCloneTest is SoladyTest {
             assertEq(LibClone.argsOnERC1967(instance, _random(), _random()), "");
             return;
         }
-        if (c & (m <<= 1) == 0) {
-            c = _random();
-            if (c & (m <<= 1) == 0) {
+        if (c & 0x100 == 0) {
+            _maybeBrutalizeMemory();
+            if (r & 0x1 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnERC1967BeaconProxy(instance);
+                _mustCompute(LibClone.argsOnERC1967BeaconProxy(instance));
                 return;
             }
-            if (c & (m <<= 1) == 0) {
+            if (r & 0x10 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnERC1967BeaconProxy(instance, _random());
+                _mustCompute(LibClone.argsOnERC1967BeaconProxy(instance, _random()));
                 return;
             }
-            if (c & (m <<= 1) == 0) {
+            if (r & 0x100 == 0) {
                 vm.expectRevert();
-                LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random());
+                _mustCompute(LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random()));
                 return;
             }
             instance = LibClone.deployERC1967BeaconProxy(address(this), "");
@@ -242,6 +241,13 @@ contract LibCloneTest is SoladyTest {
             assertEq(LibClone.argsOnERC1967BeaconProxy(instance, _random()), "");
             assertEq(LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random()), "");
             return;
+        }
+    }
+
+    function _mustCompute(bytes memory s) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if eq(keccak256(s, 0x80), 123) { sstore(keccak256(0x00, 0x21), 1) }
         }
     }
 
@@ -439,108 +445,93 @@ contract LibCloneTest is SoladyTest {
 
     function _testInitCode(address implementation) internal {
         _misalignFreeMemoryPointer();
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes memory initCode = LibClone.initCode(_brutalized(implementation));
         _checkMemory(initCode);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes32 expected = LibClone.initCodeHash(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeWithImmutableArgs(address implementation) internal {
-        _misalignFreeMemoryPointer();
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes memory args = _randomBytesForCloneImmutableArgs();
         bytes memory initCode = LibClone.initCode(_brutalized(implementation), args);
         _checkMemory(initCode);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes32 expected = LibClone.initCodeHash(_brutalized(implementation), args);
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
-        if (r & 0x300 == 0) {
+        if (_random() & 31 == 0) {
             assertEq(initCode, _initCodeOfClonesWithImmutableArgs(implementation, args));
         }
     }
 
     function _testInitCode_PUSH0(address implementation) internal {
-        _misalignFreeMemoryPointer();
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes memory initCode = LibClone.initCode_PUSH0(_brutalized(implementation));
         _checkMemory(initCode);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes32 expected = LibClone.initCodeHash_PUSH0(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeERC1967(address implementation) internal {
-        _misalignFreeMemoryPointer();
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation));
         _checkMemory(initCode);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeERC1967WithImmutableArgs(address implementation) internal {
-        _misalignFreeMemoryPointer();
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes memory args = _randomBytesForERC1967ImmutableArgs();
         bytes memory initCode = LibClone.initCodeERC1967(_brutalized(implementation), args);
         _checkMemory(initCode);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967(_brutalized(implementation), args);
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
-        if (r & 0x300 == 0) {
+        if (_random() & 31 == 0) {
             assertEq(initCode, _initCodeOfERC1967WithImmutableArgs(implementation, args));
         }
     }
 
     function _testInitCodeERC1967I(address implementation) internal {
-        _misalignFreeMemoryPointer();
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967I(_brutalized(implementation));
         _checkMemory(initCode);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967I(_brutalized(implementation));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeERC1967BeaconProxy(address beacon) internal {
-        _misalignFreeMemoryPointer();
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967BeaconProxy(_brutalized(beacon));
         _checkMemory(initCode);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967BeaconProxy(_brutalized(beacon));
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
     }
 
     function _testInitCodeERC1967BeaconProxyWithImmutableArgs(address beacon) internal {
-        _misalignFreeMemoryPointer();
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes memory args = _randomBytesForERC1967BeconProxyImmutableArgs();
         bytes memory initCode = LibClone.initCodeERC1967BeaconProxy(_brutalized(beacon), args);
         _checkMemory(initCode);
-        if (r & 0xf0 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         bytes32 expected = LibClone.initCodeHashERC1967BeaconProxy(_brutalized(beacon), args);
         _checkMemory(initCode);
         assertEq(keccak256(initCode), expected);
-        if (r & 0x300 == 0) {
+        if (_random() & 31 == 0) {
             assertEq(initCode, _initCodeOfERC1967BeaconProxyWithImmutableArgs(beacon, args));
         }
     }
@@ -593,12 +584,12 @@ contract LibCloneTest is SoladyTest {
     function testERC1967ConstantBootstrap(address implementation, bytes32 salt) public {
         address bootstrap = LibClone.constantERC1967BootstrapAddress();
         assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
-        if (_random() % 2 == 0) {
+        if (_random() & 1 == 0) {
             assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
         }
 
         address instance;
-        if (_random() % 2 == 0) {
+        if (_random() & 1 == 0) {
             instance = LibClone.predictDeterministicAddressERC1967(bootstrap, salt, address(this));
             assertEq(this.deployDeterministicERC1967(bootstrap, salt), instance);
         } else {
@@ -606,7 +597,7 @@ contract LibCloneTest is SoladyTest {
             assertEq(this.deployDeterministicERC1967I(bootstrap, salt), instance);
         }
 
-        if (_random() % 2 == 0) {
+        if (_random() & 1 == 0) {
             LibClone.bootstrapERC1967(instance, implementation);
             assertEq(
                 vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
@@ -635,7 +626,7 @@ contract LibCloneTest is SoladyTest {
     function testERC1967BeaconProxyGasBehavior(uint256 gasBudget, uint256 value_) public {
         address instance = this.deployERC1967BeaconProxy(_beacon());
         LibCloneTest(instance).setValue(value_);
-        gasBudget = _random() % 2 == 0 ? gasBudget % 3000 : gasBudget % 30000;
+        gasBudget = _random() & 1 == 0 ? gasBudget % 3000 : gasBudget % 30000;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, value_)
@@ -704,29 +695,23 @@ contract LibCloneTest is SoladyTest {
     }
 
     function _checkArgsOnERC1967BeaconProxy(address instance, bytes memory args) internal {
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
-        _misalignFreeMemoryPointer();
+        _maybeBrutalizeMemory();
         bytes memory retrievedArgs = LibClone.argsOnERC1967BeaconProxy(instance);
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, args);
-        uint256 n = args.length + 0xf;
-        uint256 start = _bound(r >> 64, 0, n);
-        uint256 end = _bound(r >> 128, 0, n);
-        if (r & 0x30 == 0) _brutalizeMemory();
+        (uint256 start, uint256 end) = _randomStartAndEnd(args);
+        _maybeBrutalizeMemory();
         retrievedArgs = LibClone.argsOnERC1967BeaconProxy(instance, start, end);
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
         retrievedArgs = LibClone.argsOnERC1967BeaconProxy(instance, start);
-        if (r & 0xf00 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
     }
 
     function _checkArgsOnERC1967(address instance, bytes memory args) internal {
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
-        _misalignFreeMemoryPointer();
+        _maybeBrutalizeMemory();
         bytes memory retrievedArgs = LibClone.argsOnERC1967(instance);
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, args);
@@ -737,23 +722,19 @@ contract LibCloneTest is SoladyTest {
                 args
             )
         );
-        uint256 n = args.length + 0xf;
-        uint256 start = _bound(r >> 64, 0, n);
-        uint256 end = _bound(r >> 128, 0, n);
-        if (r & 0x30 == 0) _brutalizeMemory();
+        (uint256 start, uint256 end) = _randomStartAndEnd(args);
+        _maybeBrutalizeMemory();
         retrievedArgs = LibClone.argsOnERC1967(instance, start, end);
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
         retrievedArgs = LibClone.argsOnERC1967(instance, start);
-        if (r & 0xf00 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
     }
 
     function _checkArgsOnClone(address instance, bytes memory args) internal {
-        uint256 r = _random();
-        if (r & 0xf == 0) _brutalizeMemory();
-        _misalignFreeMemoryPointer();
+        _maybeBrutalizeMemory();
         bytes memory retrievedArgs = LibClone.argsOnClone(instance);
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, args);
@@ -763,17 +744,24 @@ contract LibCloneTest is SoladyTest {
                 hex"363d3d373d3d3d363d73", address(this), hex"5af43d82803e903d91602b57fd5bf3", args
             )
         );
-        uint256 n = args.length + 0xf;
-        uint256 start = _bound(r >> 64, 0, n);
-        uint256 end = _bound(r >> 128, 0, n);
+        (uint256 start, uint256 end) = _randomStartAndEnd(args);
         retrievedArgs = LibClone.argsOnClone(instance, start, end);
-        if (r & 0x30 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
         retrievedArgs = LibClone.argsOnClone(instance, start);
-        if (r & 0xf00 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
+    }
+
+    function _randomStartAndEnd(bytes memory args) internal returns (uint256 start, uint256 end) {
+        unchecked {
+            uint256 r = _random();
+            uint256 n = args.length + 0xf;
+            start = _bound(r >> 64, 0, n);
+            end = _bound(r >> 128, 0, n);
+        }
     }
 
     function _checkERC1967ImplementationSlot(address instance) internal {
@@ -993,9 +981,14 @@ contract LibCloneTest is SoladyTest {
     }
 
     modifier maybeBrutalizeMemory() {
-        if (_random() & 31 == 0) _brutalizeMemory();
-        _misalignFreeMemoryPointer();
+        _maybeBrutalizeMemory();
         _;
         _checkMemory();
+    }
+
+    function _maybeBrutalizeMemory() internal {
+        uint256 r = _random();
+        if (r & 0x10 == 0) _misalignFreeMemoryPointer();
+        if (r & 0xf == 0) _brutalizeMemory();
     }
 }

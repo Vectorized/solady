@@ -34,22 +34,22 @@ contract SSTORE2Test is SoladyTest {
         SSTORE2.read(SSTORE2.write(hex"11223344"), 3, 3);
     }
 
-    function testReadRevertsOnZeroCodeAddress(address pointer, uint256 c) public {
+    function testReadRevertsOnZeroCodeAddress(address pointer, uint256 r) public {
         while (pointer.code.length != 0) pointer = _randomNonZeroAddress();
-        uint256 m = 1;
-        if (c & (m <<= 1) == 0) {
+        _maybeBrutalizeMemory();
+        if (r & 0x1 == 0) {
             vm.expectRevert();
-            SSTORE2.read(pointer);
+            _mustCompute(SSTORE2.read(pointer));
             return;
         }
-        if (c & (m <<= 1) == 0) {
+        if (r & 0x10 == 0) {
             vm.expectRevert();
-            SSTORE2.read(pointer, _random());
+            _mustCompute(SSTORE2.read(pointer, _random()));
             return;
         }
-        if (c & (m <<= 1) == 0) {
+        if (r & 0x100 == 0) {
             vm.expectRevert();
-            SSTORE2.read(pointer, _random(), _random());
+            _mustCompute(SSTORE2.read(pointer, _random(), _random()));
             return;
         }
         pointer = SSTORE2.write("");
@@ -58,29 +58,34 @@ contract SSTORE2Test is SoladyTest {
         assertEq(SSTORE2.read(pointer, _random(), _random()), "");
     }
 
+    function _mustCompute(bytes memory s) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if eq(keccak256(s, 0x80), 123) { sstore(keccak256(0x00, 0x21), 1) }
+        }
+    }
+
     function testWriteRead(bytes32, uint256 r) public {
         bytes memory data = _truncateBytes(_randomBytes(), _DATA_MAX_LENGTH);
 
         uint256 startIndex = _bound(_random(), 0, data.length + 2);
         uint256 endIndex = _bound(_random(), 0, data.length + 2);
 
-        if (r & 0x1 == 0) _misalignFreeMemoryPointer();
+        _maybeBrutalizeMemory();
 
         address pointer = SSTORE2.write(data);
 
-        if (r & 0x70 == 0) assertEq(pointer.code, abi.encodePacked(hex"00", data));
+        if (_random() & 1 == 0) assertEq(pointer.code, abi.encodePacked(hex"00", data));
 
-        if (r & 0x100 == 0) _misalignFreeMemoryPointer();
-        if (r & 0x3000 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
 
         bytes memory readResult = SSTORE2.read(pointer, startIndex, endIndex);
         _checkMemory(readResult);
         assertEq(readResult, bytes(LibString.slice(string(data), startIndex, endIndex)));
 
-        if (r & 0x10000 == 0) _misalignFreeMemoryPointer();
-        if (r & 0x300000 == 0) _brutalizeMemory();
+        _maybeBrutalizeMemory();
 
-        if (r & 0x1000000 == 0) {
+        if (_random() & 1 == 0) {
             readResult = SSTORE2.read(pointer, startIndex);
             _checkMemory(readResult);
             assertEq(readResult, bytes(LibString.slice(string(data), startIndex)));
@@ -114,9 +119,8 @@ contract SSTORE2Test is SoladyTest {
         address pointer = SSTORE2.writeDeterministic(data, salt);
         assertEq(pointer, predicted);
         assertEq(SSTORE2.read(predicted), data);
-        uint256 r = _random();
-        if (r & 0xf == 0) {
-            if (r & 0x10 == 0) data = _truncateBytes(_randomBytes(), 0xfffe);
+        if (_random() & 31 == 0) {
+            if (_random() & 1 == 0) data = _truncateBytes(_randomBytes(), 0xfffe);
             vm.expectRevert(SSTORE2.DeploymentFailed.selector);
             this.testWriteReadDeterministic(data, salt);
         }
@@ -135,8 +139,7 @@ contract SSTORE2Test is SoladyTest {
 
         assertEq(SSTORE2.write(data).code, pointer.code);
 
-        uint256 r = _random();
-        if (r & 0xf == 0) {
+        if (_random() & 31 == 0) {
             vm.expectRevert(SSTORE2.DeploymentFailed.selector);
             this.testWriteReadCounterfactual(data, salt, deployer);
         }
@@ -180,5 +183,11 @@ contract SSTORE2Test is SoladyTest {
             if gt(mload(b), n) { mstore(b, n) }
             result := b
         }
+    }
+
+    function _maybeBrutalizeMemory() internal {
+        uint256 r = _random();
+        if (r & 0x10 == 0) _misalignFreeMemoryPointer();
+        if (r & 0xf == 0) _brutalizeMemory();
     }
 }

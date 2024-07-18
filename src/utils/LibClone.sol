@@ -599,7 +599,7 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let d := and(0xffff, sub(end, start))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), d)
+            extcodecopy(instance, args, add(start, 0x0d), add(d, 0x20))
             if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x2d)
                 returndatacopy(returndatasize(), returndatasize(), shr(64, n))
@@ -1072,7 +1072,7 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let d := and(0xffff, sub(end, start))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x3d), d)
+            extcodecopy(instance, args, add(start, 0x1d), add(d, 0x20))
             if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x3d)
                 returndatacopy(returndatasize(), returndatasize(), shr(64, n))
@@ -1851,7 +1851,7 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let d := and(0xffff, sub(end, start))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x52), d)
+            extcodecopy(instance, args, add(start, 0x32), add(d, 0x20))
             if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x52)
                 returndatacopy(returndatasize(), returndatasize(), shr(64, n))

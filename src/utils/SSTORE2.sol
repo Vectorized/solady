@@ -243,7 +243,7 @@ library SSTORE2 {
         assembly {
             data := mload(0x40)
             let d := and(0xffff, sub(end, start))
-            extcodecopy(pointer, add(data, 0x20), add(start, 0x01), d)
+            extcodecopy(pointer, add(data, 0x1f), start, add(d, 0x01))
             if iszero(and(0xff, mload(add(data, d)))) {
                 let n := sub(extcodesize(pointer), 0x01)
                 returndatacopy(returndatasize(), returndatasize(), shr(64, n))
