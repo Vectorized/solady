@@ -30,7 +30,7 @@ library GasBurnerLib {
         assembly {
             let n := mul(gt(x, 3500), div(x, 3200))
             let m := mload(0x40)
-            mstore(0x00, xor(origin(), timestamp()))
+            mstore(0x00, xor(address(), xor(origin(), timestamp())))
             mstore(0x00, keccak256(0x00, 0x20))
             mstore(0x20, 27) // `v`.
             mstore(0x40, 45) // `r`.
@@ -50,7 +50,7 @@ library GasBurnerLib {
         assembly {
             let m := mload(0x40)
             let n := mul(gt(x, 18000), div(x, 17700))
-            mstore(m, xor(origin(), timestamp()))
+            mstore(m, xor(address(), xor(origin(), timestamp())))
             codecopy(add(m, 0x20), and(keccak256(m, 0x20), 0xff), 2080)
             for { let i := 0 } 1 { i := add(i, 1) } {
                 let h := keccak256(m, 0x21)
