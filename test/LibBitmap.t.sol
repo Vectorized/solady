@@ -235,7 +235,7 @@ contract LibBitmapTest is SoladyTest {
         assertEq(bitmap.findFirstUnset(1000, 9), LibBitmap.NOT_FOUND);
     }
 
-    function testBitmapFindFirstUnset(uint256 begin, uint256 upTo, uint256) public {
+    function testBitmapFindFirstUnset(uint256 begin, uint256 upTo, bytes32) public {
         unchecked {
             for (uint256 i; i != 5; ++i) {
                 bitmap.map[i] = type(uint256).max;
@@ -254,12 +254,21 @@ contract LibBitmapTest is SoladyTest {
             expected < begin || expected > upTo ? LibBitmap.NOT_FOUND : expected
         );
 
-        do {
-            begin = _bound(_random(), 0, 1000);
-            upTo = _bound(_random(), 0, 1000);
-        } while (!(begin > upTo));
+        while (_randomChance(4)) {
+            uint256 nextExpected = _bound(_random(), 0, 1000);
+            bitmap.unset(nextExpected);
+            if (nextExpected < expected) expected = nextExpected;
+            assertEq(bitmap.findFirstUnset(0, 1000), expected);
+        }
 
-        assertEq(bitmap.findFirstUnset(begin, upTo), LibBitmap.NOT_FOUND);
+        if (_randomChance(8)) {
+            do {
+                begin = _bound(_random(), 0, 1000);
+                upTo = _bound(_random(), 0, 1000);
+            } while (begin <= upTo);
+
+            assertEq(bitmap.findFirstUnset(begin, upTo), LibBitmap.NOT_FOUND);
+        }
     }
 
     function testBitmapFindLastSet() public {
@@ -299,8 +308,9 @@ contract LibBitmapTest is SoladyTest {
         }
     }
 
-    function testBitmapFindLastSet(uint256 upTo, uint256 randomness) public {
+    function testBitmapFindLastSet(uint256 upTo, bytes32) public {
         uint256 n = 1000;
+        uint256 randomness;
         unchecked {
             _resetBitmap(0, n / 256 + 1);
             upTo = upTo % n;
