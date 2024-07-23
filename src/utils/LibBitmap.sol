@@ -169,30 +169,67 @@ library LibBitmap {
         view
         returns (uint256 setBitIndex)
     {
-        uint256 bucket;
-        uint256 bucketBits;
+        setBitIndex = NOT_FOUND;
+        uint256 bucket = upTo >> 8;
+        uint256 bits;
         /// @solidity memory-safe-assembly
         assembly {
-            setBitIndex := not(0)
-            bucket := shr(8, upTo)
             mstore(0x00, bucket)
             mstore(0x20, bitmap.slot)
             let offset := and(0xff, not(upTo)) // `256 - (255 & upTo) - 1`.
-            bucketBits := shr(offset, shl(offset, sload(keccak256(0x00, 0x40))))
-            if iszero(or(bucketBits, iszero(bucket))) {
+            bits := shr(offset, shl(offset, sload(keccak256(0x00, 0x40))))
+            if iszero(or(bits, iszero(bucket))) {
                 for {} 1 {} {
                     bucket := add(bucket, setBitIndex) // `sub(bucket, 1)`.
                     mstore(0x00, bucket)
-                    bucketBits := sload(keccak256(0x00, 0x40))
-                    if or(bucketBits, iszero(bucket)) { break }
+                    bits := sload(keccak256(0x00, 0x40))
+                    if or(bits, iszero(bucket)) { break }
                 }
             }
         }
-        if (bucketBits != 0) {
-            setBitIndex = (bucket << 8) | LibBit.fls(bucketBits);
+        if (bits != 0) {
+            setBitIndex = (bucket << 8) | LibBit.fls(bits);
             /// @solidity memory-safe-assembly
             assembly {
                 setBitIndex := or(setBitIndex, sub(0, gt(setBitIndex, upTo)))
+            }
+        }
+    }
+
+    /// @dev Returns the index of the least significant unset bit in `[begin..upTo]`.
+    /// If no unset bit is found, returns `NOT_FOUND`.
+    function findFirstUnset(Bitmap storage bitmap, uint256 begin, uint256 upTo)
+        internal
+        view
+        returns (uint256 unsetBitIndex)
+    {
+        unsetBitIndex = NOT_FOUND;
+        uint256 bucket = begin >> 8;
+        uint256 negBits;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, bucket)
+            mstore(0x20, bitmap.slot)
+            let offset := and(0xff, begin)
+            negBits := shl(offset, shr(offset, not(sload(keccak256(0x00, 0x40)))))
+            if iszero(negBits) {
+                let lastBucket := shr(8, upTo)
+                for {} 1 {} {
+                    bucket := add(bucket, 1)
+                    mstore(0x00, bucket)
+                    negBits := not(sload(keccak256(0x00, 0x40)))
+                    if or(negBits, gt(bucket, lastBucket)) { break }
+                }
+                if gt(bucket, lastBucket) {
+                    negBits := shl(and(0xff, not(upTo)), shr(and(0xff, not(upTo)), negBits))
+                }
+            }
+        }
+        if (negBits != 0) {
+            uint256 r = (bucket << 8) | LibBit.ffs(negBits);
+            /// @solidity memory-safe-assembly
+            assembly {
+                unsetBitIndex := or(r, sub(0, or(gt(r, upTo), lt(r, begin))))
             }
         }
     }
