@@ -229,7 +229,7 @@ library SSTORE2 {
         }
     }
 
-    /// @dev Returns the a slice of the data on `pointer` from `start` to `end`.
+    /// @dev Returns a slice of the data on `pointer` from `start` to `end`.
     /// `start` and `end` will be clamped to the range `[0, args.length]`.
     /// The `pointer` MUST be deployed via the SSTORE2 write functions.
     /// Otherwise, the behavior is undefined.

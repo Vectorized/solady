@@ -585,7 +585,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
+    /// @dev Returns a slice of the immutable arguments on `instance` from `start` to `end`.
     /// `start` and `end` will be clamped to the range `[0, args.length]`.
     /// The `instance` MUST be deployed via the clone with immutable args functions.
     /// Otherwise, the behavior is undefined.
@@ -1058,7 +1058,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
+    /// @dev Returns a slice of the immutable arguments on `instance` from `start` to `end`.
     /// `start` and `end` will be clamped to the range `[0, args.length]`.
     /// The `instance` MUST be deployed via the ERC1967 with immutable args functions.
     /// Otherwise, the behavior is undefined.
@@ -1837,7 +1837,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the a slice of the immutable arguments on `instance` from `start` to `end`.
+    /// @dev Returns a slice of the immutable arguments on `instance` from `start` to `end`.
     /// `start` and `end` will be clamped to the range `[0, args.length]`.
     /// The `instance` MUST be deployed via the ERC1967 beacon proxy with immutable args functions.
     /// Otherwise, the behavior is undefined.
