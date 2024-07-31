@@ -747,15 +747,15 @@ library FixedPointMathLib {
         assembly {
             let p := x
             for {} 1 {} {
-                if iszero(shr(229, x)) {
-                    if iszero(shr(199, x)) {
-                        p := mul(x, 100000000000000000)
+                if iszero(shr(229, p)) {
+                    if iszero(shr(199, p)) {
+                        p := mul(p, 100000000000000000)
                         break
                     }
-                    p := mul(x, 100000000)
+                    p := mul(p, 100000000)
                     break
                 }
-                if iszero(shr(249, x)) { p := mul(x, 100) }
+                if iszero(shr(249, p)) { p := mul(p, 100) }
                 break
             }
             let t := mulmod(mul(z, z), z, p)
