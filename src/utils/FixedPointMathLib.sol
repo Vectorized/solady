@@ -700,6 +700,8 @@ library FixedPointMathLib {
     /// @dev Returns the cube root of `x`, rounded down.
     /// Credit to bout3fiddy and pcaversaccio under AGPLv3 license:
     /// https://github.com/pcaversaccio/snekmate/blob/main/src/utils/Math.vy
+    /// Formally verified by xuwinnie:
+    /// https://github.com/vectorized/solady/blob/main/audits/xuwinnie-solady-cbrt-proof.pdf
     function cbrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -737,6 +739,8 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns the cube root of `x`, denominated in `WAD`, rounded down.
+    /// Formally verified by xuwinnie:
+    /// https://github.com/vectorized/solady/blob/main/audits/xuwinnie-solady-cbrt-proof.pdf
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             if (x <= type(uint256).max / 10 ** 36) return cbrt(x * 10 ** 36);
