@@ -710,9 +710,9 @@ library FixedPointMathLib {
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
-
+            // Makeshift lookup table to nudge the approximate log2 result.
             z := div(shl(div(r, 3), shl(lt(0xf, shr(r, x)), 0xf)), xor(7, mod(r, 3)))
-
+            // Newton-Raphson's.
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
@@ -720,7 +720,7 @@ library FixedPointMathLib {
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
-
+            // Round down.
             z := sub(z, lt(div(x, mul(z, z)), z))
         }
     }
@@ -734,7 +734,7 @@ library FixedPointMathLib {
         }
         /// @solidity memory-safe-assembly
         assembly {
-            z := sub(z, gt(999999999999999999, sub(mulmod(z, z, x), 1)))
+            z := sub(z, gt(999999999999999999, sub(mulmod(z, z, x), 1))) // Round down.
         }
     }
 
@@ -763,7 +763,7 @@ library FixedPointMathLib {
                 break
             }
             let t := mulmod(mul(z, z), z, p)
-            z := sub(z, gt(lt(t, shr(1, p)), iszero(t)))
+            z := sub(z, gt(lt(t, shr(1, p)), iszero(t))) // Round down.
         }
     }
 
