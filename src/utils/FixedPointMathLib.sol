@@ -753,10 +753,10 @@ library FixedPointMathLib {
             for {} 1 {} {
                 if iszero(shr(229, p)) {
                     if iszero(shr(199, p)) {
-                        p := mul(p, 100000000000000000)
+                        p := mul(p, 100000000000000000) // 10 ** 17.
                         break
                     }
-                    p := mul(p, 100000000)
+                    p := mul(p, 100000000) // 10 ** 8.
                     break
                 }
                 if iszero(shr(249, p)) { p := mul(p, 100) }
