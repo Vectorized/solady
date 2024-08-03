@@ -76,8 +76,13 @@ contract SSTORE2Test is SoladyTest {
             l := xor(d, mul(gt(d, 0xffff), xor(0xffff, d)))
             if gt(l, 0xffff) { invalid() }
             switch gt(add(start, l), n)
-            case 1 { d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n)))) }
-            case 0 { if and(r, 1) { d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n)))) } }
+            case 0 {
+                if iszero(and(r, 1)) {
+                    d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
+                }
+            }
+            default { d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n)))) }
+
             l := mul(d, lt(start, end))
         }
         uint256 expected = FixedPointMathLib.zeroFloorSub(
