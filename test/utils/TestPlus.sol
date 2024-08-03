@@ -177,6 +177,23 @@ contract TestPlus is Brutalizer {
             mstore(0x00, 0xffa18649) // `addr(uint256)`.
             mstore(0x20, privateKey)
             result := mload(staticcall(gas(), _VM_ADDRESS, 0x1c, 0x24, 0x01, 0x20))
+            result := or(shl(160, _VM_ADDRESS), result)
+        }
+    }
+
+    /// @dev Private helper to ensure an address is brutalized.
+    function __toBrutalizedAddress(address a) private pure returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := or(shl(160, _VM_ADDRESS), a)
+        }
+    }
+
+    /// @dev Private helper to ensure an address is brutalized.
+    function __toBrutalizedAddress(uint256 a) private pure returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := or(shl(160, _VM_ADDRESS), a)
         }
     }
 
@@ -184,7 +201,7 @@ contract TestPlus is Brutalizer {
     /// This function may return a previously returned result.
     function _randomSigner() internal returns (address signer, uint256 privateKey) {
         privateKey = _randomPrivateKey();
-        signer = address(uint160(__getSigner(privateKey)));
+        signer = __toBrutalizedAddress(__getSigner(privateKey));
     }
 
     /// @dev Returns a pseudorandom address.
@@ -215,11 +232,20 @@ contract TestPlus is Brutalizer {
         }
     }
 
+    /// @dev Cleans the upper 96 bits of the address.
+    /// This is included so that CI passes for older solc versions with --via-ir.
+    function _clean(address a) internal pure returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := shr(96, shl(96, a))
+        }
+    }
+
     /// @dev Returns a pseudorandom address.
     /// The result may have dirty upper 96 bits.
     /// This function may return a previously returned result.
     function _randomAddressWithVmVars() internal returns (address result) {
-        if (_randomChance(8)) result = address(uint160(_randomVmVar()));
+        if (_randomChance(8)) result = __toBrutalizedAddress(_randomVmVar());
         else result = _randomAddress();
     }
 
@@ -228,7 +254,7 @@ contract TestPlus is Brutalizer {
     /// This function may return a previously returned result.
     function _randomNonZeroAddressWithVmVars() internal returns (address result) {
         do {
-            if (_randomChance(8)) result = address(uint160(_randomVmVar()));
+            if (_randomChance(8)) result = __toBrutalizedAddress(_randomVmVar());
             else result = _randomAddress();
         } while (result == address(0));
     }
