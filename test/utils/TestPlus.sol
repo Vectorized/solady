@@ -45,6 +45,18 @@ contract TestPlus is Brutalizer {
     uint256 private constant _PRIVATE_KEY_MAX =
         0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
 
+    /// @dev Some constant to brutalize the upper bits of addresses.
+    uint256 private constant _ADDRESS_BRUTALIZER =
+        0xc0618c2bfd481dcf3e31738f0000000000000000000000000000000000000000;
+
+    /// @dev Multiplier for a mulmod Lehmer psuedorandom number generator.
+    /// Prime, and a primitive root of `_LPRNG_MODULO`.
+    uint256 private constant _LPRNG_MULTIPLIER = 0x100000000000000000000000000000051;
+
+    /// @dev Modulo for a mulmod Lehmer psuedorandom number generator. (prime)
+    uint256 private constant _LPRNG_MODULO =
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43;
+
     /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
     /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
     /// e.g. `testSomething(uint256) public`.
@@ -67,12 +79,7 @@ contract TestPlus is Brutalizer {
             // Do some biased sampling for more robust tests.
             // prettier-ignore
             for {} 1 {} {
-                let y :=
-                    mulmod(
-                        r,
-                        0x100000000000000000000000000000051, // Prime and a primitive root of `n`.
-                        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43 // `n`, prime.
-                    )
+                let y := mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
                 // With a 1/256 chance, randomly set `r` to any of 0,1,2,3.
                 if iszero(byte(19, y)) {
                     r := and(byte(11, y), 3)
@@ -177,7 +184,6 @@ contract TestPlus is Brutalizer {
             mstore(0x00, 0xffa18649) // `addr(uint256)`.
             mstore(0x20, privateKey)
             result := mload(staticcall(gas(), _VM_ADDRESS, 0x1c, 0x24, 0x01, 0x20))
-            result := or(shl(160, _VM_ADDRESS), result)
         }
     }
 
@@ -185,7 +191,7 @@ contract TestPlus is Brutalizer {
     function __toBrutalizedAddress(address a) private pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(shl(160, _VM_ADDRESS), a)
+            result := or(_ADDRESS_BRUTALIZER, a)
         }
     }
 
@@ -193,7 +199,7 @@ contract TestPlus is Brutalizer {
     function __toBrutalizedAddress(uint256 a) private pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(shl(160, _VM_ADDRESS), a)
+            result := or(_ADDRESS_BRUTALIZER, a)
         }
     }
 
@@ -352,17 +358,16 @@ contract TestPlus is Brutalizer {
                 mstore(add(result, 0x20), xor(calldataload(0x00), _TESTPLUS_RANDOMNESS_SLOT))
                 // With a 1/2 chance, copy the contract code to the start and end.
                 if iszero(and(t, 0x1000)) {
-                    if iszero(and(t, 0x2000)) { codecopy(result, byte(1, r), codesize()) } // Copy to the start.
-
-                    codecopy(add(result, n), byte(2, r), 0x40) // Copy to the end.
+                    // Copy to the start.
+                    if iszero(and(t, 0x2000)) { codecopy(result, byte(1, r), codesize()) }
+                    // Copy to the end.
+                    codecopy(add(result, n), byte(2, r), 0x40)
                 }
                 // With a 1/16 chance, randomize the start and end.
                 if iszero(and(t, 0xf0000)) {
-                    mstore(0x05, 0x592ad1ef6b)
-                    mstore(0x00, r)
-                    let y := keccak256(0x00, 0x30)
+                    let y := mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
                     mstore(add(result, 0x20), y)
-                    mstore(add(result, n), xor(y, r))
+                    mstore(add(result, n), xor(r, y))
                 }
                 // With a 1/256 chance, make the result entirely zero bytes.
                 if iszero(byte(4, r)) { codecopy(result, codesize(), add(n, 0x20)) }
