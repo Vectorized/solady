@@ -160,19 +160,26 @@ contract ERC721Test is SoladyTest {
         _expectTransferEvent(from, address(0), id);
     }
 
+    function _clean(address a) internal pure returns (address cleaned) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            cleaned := shr(96, shl(96, a))
+        }
+    }
+
     function _expectTransferEvent(address from, address to, uint256 id) internal {
         vm.expectEmit(true, true, true, true);
-        emit Transfer(from, to, id);
+        emit Transfer(_clean(from), _clean(to), id);
     }
 
     function _expectApprovalEvent(address owner, address approved, uint256 id) internal {
         vm.expectEmit(true, true, true, true);
-        emit Approval(owner, approved, id);
+        emit Approval(_clean(owner), _clean(approved), id);
     }
 
     function _expectApprovalForAllEvent(address owner, address operator, bool approved) internal {
         vm.expectEmit(true, true, true, true);
-        emit ApprovalForAll(owner, operator, approved);
+        emit ApprovalForAll(_clean(owner), _clean(operator), approved);
     }
 
     function _aux(address owner) internal pure returns (uint224 result) {
