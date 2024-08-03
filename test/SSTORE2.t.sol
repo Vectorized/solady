@@ -79,9 +79,6 @@ contract SSTORE2Test is SoladyTest {
         unchecked {
             if (start < 0xffffff && end < 0xffffff) {
                 assertLe((end - start) & 0xffff, 0xffff);
-                if (start <= end) {
-                    assertLe((end - start) & 0xffff, 0xffff);
-                }
             }
         }
         uint256 expected = FixedPointMathLib.zeroFloorSub(
@@ -90,7 +87,7 @@ contract SSTORE2Test is SoladyTest {
         assertEq(l, expected);
     }
 
-    function testWriteRead(bytes32, uint256 startIndex, uint256 endIndex) public {
+    function testWriteRead(uint256 startIndex, uint256 endIndex) public {
         bytes memory data = _truncateBytes(_randomBytes(), _DATA_MAX_LENGTH);
 
         if (_randomChance(2)) {

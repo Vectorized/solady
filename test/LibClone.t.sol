@@ -723,9 +723,14 @@ contract LibCloneTest is SoladyTest {
 
     function _randomStartAndEnd(bytes memory args) internal returns (uint256 start, uint256 end) {
         unchecked {
-            uint256 n = args.length + 0xf;
-            start = _bound(_random(), 0, n);
-            end = _bound(_random(), 0, n);
+            if (_randomChance(2)) {
+                uint256 n = args.length + 2;
+                start = _bound(_random(), 0, n);
+                end = _bound(_random(), 0, n);
+            } else {
+                start = _random();
+                end = _random();
+            }
         }
     }
 
