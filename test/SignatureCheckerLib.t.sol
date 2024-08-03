@@ -201,7 +201,9 @@ contract SignatureCheckerLibTest is SoladyTest {
                 // `bytes4(keccak256("isValidERC1271SignatureNow(address,bytes32,bytes)"))`.
                 mstore(m, shl(224, 0x3ae5d83c))
             }
-            mstore(add(m, 0x04), signer)
+            // We'll still clean the upper 96 bits of signer,
+            // so that it will pass the implicit calldata check added by Solidity.
+            mstore(add(m, 0x04), shr(96, shl(96, signer)))
             mstore(add(m, 0x24), hash)
             mstore(add(m, 0x44), 0x60) // Offset of signature in calldata.
             mstore(add(m, 0x64), mload(signature))

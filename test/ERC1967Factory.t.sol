@@ -64,6 +64,7 @@ contract ERC1967FactoryTest is SoladyTest {
 
     function testDeployBrutalized(uint256) public withFactories {
         (address admin,) = _randomSigner();
+        admin = _clean(admin);
         address implementation = implementation0;
         bool brutalized;
         bool success;
