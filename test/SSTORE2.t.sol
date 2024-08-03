@@ -66,31 +66,6 @@ contract SSTORE2Test is SoladyTest {
         }
     }
 
-    function testSliceTrick(uint256 n, uint256 start, uint256 end, uint256 r) public {
-        n = _bound(n, 0, _DATA_MAX_LENGTH - ((r >> 8) & 0xff));
-        uint256 d;
-        uint256 l;
-        /// @solidity memory-safe-assembly
-        assembly {
-            d := sub(end, start)
-            l := xor(d, mul(gt(d, 0xffff), xor(0xffff, d)))
-            if gt(l, 0xffff) { invalid() }
-            switch gt(add(start, l), n)
-            case 0 {
-                if iszero(and(r, 1)) {
-                    d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
-                }
-            }
-            default { d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n)))) }
-
-            l := mul(d, lt(start, end))
-        }
-        uint256 expected = FixedPointMathLib.zeroFloorSub(
-            FixedPointMathLib.clamp(end, 0, n), FixedPointMathLib.clamp(start, 0, n)
-        );
-        assertEq(l, expected);
-    }
-
     function testWriteRead(uint256 startIndex, uint256 endIndex) public {
         bytes memory data = _truncateBytes(_randomBytes(), _DATA_MAX_LENGTH);
 
