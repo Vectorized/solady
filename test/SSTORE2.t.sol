@@ -156,35 +156,6 @@ contract SSTORE2Test is SoladyTest {
         assertEq(SSTORE2.read(pointer, 1, 32), "2345678901234567890123456789012");
     }
 
-    function _randomBytes() internal returns (bytes memory result) {
-        uint256 r = _random();
-        uint256 n = r & 0xffff;
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(0x40)
-            mstore(0x00, r)
-            let t := keccak256(0x00, 0x20)
-            if gt(byte(0, r), 16) { n := and(r, 0x7f) }
-            codecopy(add(result, 0x20), byte(0, t), codesize())
-            codecopy(add(result, n), byte(1, t), codesize())
-            mstore(0x40, add(n, add(0x40, result)))
-            mstore(result, n)
-            if iszero(byte(3, t)) { result := 0x60 }
-        }
-    }
-
-    function _truncateBytes(bytes memory b, uint256 n)
-        internal
-        pure
-        returns (bytes memory result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            if gt(mload(b), n) { mstore(b, n) }
-            result := b
-        }
-    }
-
     function _maybeBrutalizeMemory() internal {
         if (_randomChance(2)) _misalignFreeMemoryPointer();
         if (_randomChance(16)) _brutalizeMemory();

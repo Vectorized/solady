@@ -41,23 +41,28 @@ contract TestPlus is Brutalizer {
     uint256 private constant _TESTPLUS_RANDOMNESS_SLOT =
         0xd715531fe383f818c5f158c342925dcf01b954d24678ada4d07c36af0f20e1ee;
 
+    /// @dev The maximum private key.
+    uint256 private constant _PRIVATE_KEY_MAX =
+        0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
+
     /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
     /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
     /// e.g. `testSomething(uint256) public`.
-    function _random() internal returns (uint256 r) {
+    /// This function may return a previously returned result.
+    function _random() internal returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let sSlot := _TESTPLUS_RANDOMNESS_SLOT
-            let sValue := sload(sSlot)
+            result := _TESTPLUS_RANDOMNESS_SLOT
+            let sValue := sload(result)
             mstore(0x20, sValue)
-            r := keccak256(0x20, 0x40)
+            let r := keccak256(0x20, 0x40)
             // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
             if iszero(sValue) {
-                sValue := sSlot
-                calldatacopy(mload(0x40), 0, calldatasize())
+                sValue := result
+                calldatacopy(mload(0x40), 0x00, calldatasize())
                 r := keccak256(mload(0x40), calldatasize())
             }
-            sstore(sSlot, add(r, 1))
+            sstore(result, add(r, 1))
 
             // Do some biased sampling for more robust tests.
             // prettier-ignore
@@ -71,6 +76,12 @@ contract TestPlus is Brutalizer {
                 // With a 1/256 chance, randomly set `r` to any of 0,1,2,3.
                 if iszero(byte(19, y)) {
                     r := and(byte(11, y), 3)
+                    break
+                }
+                // With a 1/16 chance, set `r` to some random word in the current code.
+                if iszero(and(y, 0xf0000)) {
+                    codecopy(0x00, mod(and(y, 0xffff), add(codesize(), 0x20)), 0x20)
+                    r := mload(0x00)
                     break
                 }
                 let d := byte(17, y)
@@ -106,11 +117,12 @@ contract TestPlus is Brutalizer {
                 r := xor(sValue, r)
                 break
             }
+            result := r
         }
     }
 
-    /// @dev Returns a boolean with a `1 / n` chance of being true.
-    function _randomChance(uint256 n) internal returns (bool result) {
+    /// @dev Returns a pseudorandom number, uniformly distributed in [0 .. 2**256 - 1] (inclusive).
+    function _randomUniform() internal returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := _TESTPLUS_RANDOMNESS_SLOT
@@ -118,25 +130,35 @@ contract TestPlus is Brutalizer {
             for { let sValue := sload(result) } 1 {} {
                 // If the storage is uninitialized, initialize it to the keccak256 of the calldata.
                 if iszero(sValue) {
-                    calldatacopy(mload(0x40), 0, calldatasize())
+                    calldatacopy(mload(0x40), 0x00, calldatasize())
                     sValue := keccak256(mload(0x40), calldatasize())
                     sstore(result, sValue)
-                    result := iszero(mod(sValue, n))
+                    result := sValue
                     break
                 }
                 mstore(0x1f, sValue)
                 sValue := keccak256(0x20, 0x40)
                 sstore(result, sValue)
-                result := iszero(mod(sValue, n))
+                result := sValue
                 break
             }
         }
     }
 
-    /// @dev Returns a random signer and its private key.
+    /// @dev Returns a boolean with an approximately 1/n chance of being true.
+    /// This function may return a previously returned result.
+    function _randomChance(uint256 n) internal returns (bool result) {
+        uint256 r = _randomUniform();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := iszero(mod(r, n))
+        }
+    }
+
+    /// @dev Returns a pseudorandom signer and its private key.
+    /// This function may return a previously returned result.
     function _randomSigner() internal returns (address signer, uint256 privateKey) {
-        uint256 privateKeyMax = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
-        privateKey = _hem(_random(), 1, privateKeyMax);
+        privateKey = _hem(_random(), 1, _PRIVATE_KEY_MAX);
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0xffa18649) // `addr(uint256)`.
@@ -146,28 +168,208 @@ contract TestPlus is Brutalizer {
         }
     }
 
-    /// @dev Returns a random address.
+    /// @dev Returns a pseudorandom address.
+    /// The result may have dirty upper 96 bits.
+    /// This function will not return an existing contract.
+    /// This function may return a previously returned result.
     function _randomAddress() internal returns (address result) {
-        result = address(uint160(_random()));
+        uint256 r = _randomUniform();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := xor(shl(158, r), and(sub(7, shr(252, r)), r))
+        }
     }
 
-    /// @dev Returns a random non-zero address.
+    /// @dev Returns a pseudorandom non-zero address.
+    /// The result may have dirty upper 96 bits.
     /// This function will not return an existing contract.
+    /// This function may return a previously returned result.
     function _randomNonZeroAddress() internal returns (address result) {
+        uint256 r = _randomUniform();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := xor(shl(158, r), and(sub(7, shr(252, r)), r))
+            if iszero(shl(96, result)) {
+                mstore(0x00, result)
+                result := keccak256(0x00, 0x30)
+            }
+        }
+    }
+
+    /// @dev Returns a pseudorandom address.
+    /// The result may have dirty upper 96 bits.
+    /// This function may return a previously returned result.
+    function _randomAddressWithVmVars() internal returns (address result) {
+        if (_randomChance(8)) result = address(uint160(_randomVmVar()));
+        else result = _randomAddress();
+    }
+
+    /// @dev Returns a pseudorandom non-zero address.
+    /// The result may have dirty upper 96 bits.
+    /// This function may return a previously returned result.
+    function _randomNonZeroAddressWithVmVars() internal returns (address result) {
         do {
-            result = address(uint160(_random()));
+            if (_randomChance(8)) result = address(uint160(_randomVmVar()));
+            else result = _randomAddress();
         } while (result == address(0));
     }
 
-    /// @dev Returns a random hashed address.
-    /// This function will not return an existing contract.
-    /// This function will not return a precompile address.
-    function _randomHashedAddress() internal returns (address result) {
-        uint256 r = _random();
+    /// @dev Returns a random variable in the virtual machine.
+    function _randomVmVar() internal returns (uint256 result) {
+        uint256 r = _randomUniform();
+        uint256 t = r % 11;
+        if (t <= 4) {
+            if (t == 0) return uint160(address(this));
+            if (t == 1) return uint160(tx.origin);
+            if (t == 2) return uint160(msg.sender);
+            if (t == 3) return uint160(_VM_ADDRESS);
+            if (t == 4) return uint160(0x000000000000000000636F6e736F6c652e6c6f67);
+        }
+        uint256 y = r >> 32;
+        if (t == 5) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, r)
+                codecopy(0x00, mod(and(y, 0xffff), add(codesize(), 0x20)), 0x20)
+                result := mload(0x00)
+            }
+            return result;
+        }
+        if (t == 6) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                calldatacopy(0x00, mod(and(y, 0xffff), add(calldatasize(), 0x20)), 0x20)
+                result := mload(0x00)
+            }
+            return result;
+        }
+        if (t == 7) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                let m := mload(0x40)
+                returndatacopy(m, 0x00, returndatasize())
+                result := mload(add(m, mod(and(y, 0xffff), add(returndatasize(), 0x20))))
+            }
+            return result;
+        }
+        if (t == 8) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                result := sload(and(y, 0xff))
+            }
+            return result;
+        }
+        if (t == 9) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                result := mload(mod(y, add(mload(0x40), 0x40)))
+            }
+            return result;
+        }
+        uint256 privateKey = _hem(_random(), 1, _PRIVATE_KEY_MAX);
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, r)
-            result := keccak256(0x00, 0x20)
+            mstore(0x00, 0xffa18649) // `addr(uint256)`.
+            mstore(0x20, privateKey)
+            pop(call(gas(), _VM_ADDRESS, 0, 0x1c, 0x24, 0x00, 0x20))
+            result := mload(0x00)
+        }
+    }
+
+    /// @dev Returns a pseudorandom hashed address.
+    /// The result may have dirty upper 96 bits.
+    /// This function will not return an existing contract.
+    /// This function will not return a precompile address.
+    /// This function will not return a zero address.
+    /// This function may return a previously returned result.
+    function _randomHashedAddress() internal returns (address result) {
+        uint256 r = _randomUniform();
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x1f, and(sub(7, shr(252, r)), r))
+            calldatacopy(0x00, 0x00, 0x24)
+            result := keccak256(0x00, 0x3f)
+        }
+    }
+
+    /// @dev Private helper function for returning random bytes.
+    function __randomBytes(bool zeroRightPad) private returns (bytes memory result) {
+        uint256 r = _randomUniform();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := and(r, 0x1ffff)
+            let t := shr(24, r)
+            for {} 1 {} {
+                // With a 1/256 chance, just return the zero pointer as the result.
+                if iszero(and(t, 0xff0)) {
+                    result := 0x60
+                    break
+                }
+                result := mload(0x40)
+                // With a 15/16 chance, set the length to be
+                // exponentially distributed in the range [0,255] (inclusive).
+                if shr(252, r) { n := shr(and(t, 0x7), byte(5, r)) }
+                // Store some fixed word at the start of the string.
+                // We want this function to sometimes return duplicates.
+                mstore(add(result, 0x20), xor(calldataload(0x00), _TESTPLUS_RANDOMNESS_SLOT))
+                // With a 1/2 chance, copy the contract code to the start and the end.
+                if iszero(and(t, 0x1000)) {
+                    codecopy(add(result, 0x20), byte(1, r), codesize()) // Copy to the start.
+                    codecopy(add(result, n), byte(2, r), codesize()) // Copy to the end.
+                }
+                // With a 1/16 chance, randomize the start of the result.
+                if iszero(and(t, 0xf0000)) {
+                    mstore(0x05, 0x592ad1ef6b)
+                    mstore(0x00, r)
+                    mstore(add(result, 0x20), keccak256(0x00, 0x30))
+                }
+                // With a 1/16 chance, randomize the end of the result.
+                if iszero(and(t, 0xf00000)) {
+                    mstore(0x05, 0x1addebe197)
+                    mstore(0x00, r)
+                    mstore(add(result, n), keccak256(0x00, 0x30))
+                }
+                // With a 1/256 chance, make the result entirely zero bytes.
+                if iszero(byte(4, r)) { codecopy(result, codesize(), add(n, 0x20)) }
+                // Skip the zero-right-padding if not required.
+                if iszero(zeroRightPad) {
+                    mstore(0x40, add(n, add(0x40, result))) // Allocate memory.
+                    mstore(result, n) // Store the length.
+                    break
+                }
+                mstore(add(add(result, 0x20), n), 0) // Zeroize the word after the result.
+                mstore(0x40, add(n, add(0x60, result))) // Allocate memory.
+                mstore(result, n) // Store the length.
+                break
+            }
+        }
+    }
+
+    /// @dev Returns a random bytes string from 0 to 131071 bytes long.
+    /// This random bytes string may NOT be zero-right-padded.
+    /// This is intentional for memory robustness testing.
+    /// This function may return a previously returned result.
+    function _randomBytes() internal returns (bytes memory result) {
+        result = __randomBytes(false);
+    }
+
+    /// @dev Returns a random bytes string from 0 to 131071 bytes long.
+    /// This function may return a previously returned result.
+    function _randomBytesZeroRightPadded() internal returns (bytes memory result) {
+        result = __randomBytes(true);
+    }
+
+    /// @dev Truncate the bytes to `n` bytes.
+    /// Returns the result for function chaining.
+    function _truncateBytes(bytes memory b, uint256 n)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if gt(mload(b), n) { mstore(b, n) }
+            result := b
         }
     }
 

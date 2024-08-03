@@ -136,27 +136,6 @@ contract LibRLPTest is SoladyTest {
         }
     }
 
-    function _randomBytes() internal returns (bytes memory result) {
-        uint256 r = _random();
-        /// @solidity memory-safe-assembly
-        assembly {
-            if byte(0, r) {
-                result := mload(0x40)
-                let n := and(r, 0xf)
-                if iszero(and(r, 0xf0)) { n := and(0xfff, shr(32, r)) }
-                mstore(result, n)
-                let o := add(result, 0x20)
-                codecopy(o, byte(1, r), add(n, 0x40))
-                mstore(0x40, add(o, n))
-                // Zero-right-pad if encode will simply return the string.
-                if and(eq(n, 1), lt(byte(0, mload(add(0x20, result))), 0x80)) {
-                    mstore(add(o, n), 0)
-                    mstore(0x40, add(0x20, add(o, n)))
-                }
-            }
-        }
-    }
-
     function testRLPMemory(bytes32) public returns (LibRLP.List memory l) {
         while (true) {
             uint256 r = _random();
@@ -288,7 +267,7 @@ contract LibRLPTest is SoladyTest {
     }
 
     function testRLPEncodeBytesDifferential(bytes32) public {
-        bytes memory x = _randomBytes();
+        bytes memory x = _randomBytesZeroRightPadded();
         _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(x);
         _checkAndMaybeBzztMemory(computed);

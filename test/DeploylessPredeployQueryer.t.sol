@@ -177,17 +177,4 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
             }
         }
     }
-
-    function _randomBytes() internal returns (bytes memory result) {
-        uint256 r = _random();
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(0x40)
-            mstore(0x00, r)
-            let n := mod(r, 300)
-            codecopy(add(result, 0x20), and(keccak256(0x00, 0x20), 0xff), codesize())
-            mstore(0x40, add(n, add(0x40, result)))
-            mstore(result, n)
-        }
-    }
 }
