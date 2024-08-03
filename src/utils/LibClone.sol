@@ -598,18 +598,17 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let d := sub(end, start)
-            let l := xor(d, mul(gt(d, 0xffff), xor(0xffff, d)))
-            extcodecopy(instance, args, add(start, 0x0d), add(l, 0x20))
-            if iszero(and(0xff, mload(add(args, l)))) {
+            if iszero(lt(end, 0xffff)) { end := 0xffff }
+            let d := mul(sub(end, start), lt(start, end))
+            extcodecopy(instance, args, add(start, 0x0d), add(d, 0x20))
+            if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x2d)
                 returndatacopy(returndatasize(), returndatasize(), shr(64, n))
                 d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
-            l := mul(d, lt(start, end))
-            mstore(args, l) // Store the length.
-            mstore(add(add(args, 0x20), l), 0) // Zeroize the slot after the bytes.
-            mstore(0x40, add(add(args, 0x40), l)) // Allocate memory.
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
     }
 
@@ -1073,18 +1072,17 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let d := sub(end, start)
-            let l := xor(d, mul(gt(d, 0xffff), xor(0xffff, d)))
-            extcodecopy(instance, args, add(start, 0x1d), add(l, 0x20))
-            if iszero(and(0xff, mload(add(args, l)))) {
+            if iszero(lt(end, 0xffff)) { end := 0xffff }
+            let d := mul(sub(end, start), lt(start, end))
+            extcodecopy(instance, args, add(start, 0x1d), add(d, 0x20))
+            if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x3d)
                 returndatacopy(returndatasize(), returndatasize(), shr(64, n))
                 d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
-            l := mul(d, lt(start, end))
-            mstore(args, l) // Store the length.
-            mstore(add(add(args, 0x20), l), 0) // Zeroize the slot after the bytes.
-            mstore(0x40, add(add(args, 0x40), l)) // Allocate memory.
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
     }
 
@@ -1854,18 +1852,17 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            let d := sub(end, start)
-            let l := xor(d, mul(gt(d, 0xffff), xor(0xffff, d)))
-            extcodecopy(instance, args, add(start, 0x32), add(l, 0x20))
-            if iszero(and(0xff, mload(add(args, l)))) {
+            if iszero(lt(end, 0xffff)) { end := 0xffff }
+            let d := mul(sub(end, start), lt(start, end))
+            extcodecopy(instance, args, add(start, 0x32), add(d, 0x20))
+            if iszero(and(0xff, mload(add(args, d)))) {
                 let n := sub(extcodesize(instance), 0x52)
                 returndatacopy(returndatasize(), returndatasize(), shr(64, n))
                 d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
-            l := mul(d, lt(start, end))
-            mstore(args, l) // Store the length.
-            mstore(add(add(args, 0x20), l), 0) // Zeroize the slot after the bytes.
-            mstore(0x40, add(add(args, 0x40), l)) // Allocate memory.
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
         }
     }
 
