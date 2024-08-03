@@ -149,17 +149,42 @@ contract TestPlus is Brutalizer {
         }
     }
 
-    /// @dev Returns a pseudorandom signer and its private key.
+    /// @dev Returns a random private key that can be used for ECDSA signing.
     /// This function may return a previously returned result.
-    function _randomSigner() internal returns (address signer, uint256 privateKey) {
-        privateKey = _hem(_random(), 1, _PRIVATE_KEY_MAX);
+    function _randomPrivateKey() internal returns (uint256 result) {
+        result = _randomUniform();
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} 1 {} {
+                if iszero(and(result, 0x10)) {
+                    if iszero(and(result, 0x20)) {
+                        result := add(and(result, 0xf), 1)
+                        break
+                    }
+                    result := sub(_PRIVATE_KEY_MAX, and(result, 0xf))
+                    break
+                }
+                result := shr(1, result)
+                break
+            }
+        }
+    }
+
+    /// @dev Private helper function to get the signer from a private key.
+    function __getSigner(uint256 privateKey) private view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0xffa18649) // `addr(uint256)`.
             mstore(0x20, privateKey)
-            pop(call(gas(), _VM_ADDRESS, 0, 0x1c, 0x24, 0x00, 0x20))
-            signer := mload(0x00)
+            result := mload(staticcall(gas(), _VM_ADDRESS, 0x1c, 0x24, 0x01, 0x20))
         }
+    }
+
+    /// @dev Returns a pseudorandom signer and its private key.
+    /// This function may return a previously returned result.
+    function _randomSigner() internal returns (address signer, uint256 privateKey) {
+        privateKey = _randomPrivateKey();
+        signer = address(uint160(__getSigner(privateKey)));
     }
 
     /// @dev Returns a pseudorandom address.
@@ -260,14 +285,7 @@ contract TestPlus is Brutalizer {
             }
             return result;
         }
-        uint256 privateKey = _hem(_random(), 1, _PRIVATE_KEY_MAX);
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, 0xffa18649) // `addr(uint256)`.
-            mstore(0x20, privateKey)
-            pop(call(gas(), _VM_ADDRESS, 0, 0x1c, 0x24, 0x00, 0x20))
-            result := mload(0x00)
-        }
+        result = __getSigner(_randomPrivateKey());
     }
 
     /// @dev Returns a pseudorandom hashed address.
