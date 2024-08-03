@@ -326,8 +326,9 @@ contract TestPlus is Brutalizer {
                 mstore(add(result, 0x20), xor(calldataload(0x00), _TESTPLUS_RANDOMNESS_SLOT))
                 // With a 1/2 chance, copy the contract code to the start and end.
                 if iszero(and(t, 0x1000)) {
-                    codecopy(add(result, 0x20), byte(1, r), codesize()) // Copy to the start.
-                    codecopy(add(result, n), byte(2, r), codesize()) // Copy to the end.
+                    if iszero(and(t, 0x2000)) { codecopy(result, byte(1, r), codesize()) } // Copy to the start.
+
+                    codecopy(add(result, n), byte(2, r), 0x40) // Copy to the end.
                 }
                 // With a 1/16 chance, randomize the start and end.
                 if iszero(and(t, 0xf0000)) {
