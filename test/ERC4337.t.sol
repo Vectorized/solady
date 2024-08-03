@@ -78,7 +78,7 @@ contract ERC4337Test is SoladyTest {
         vm.expectRevert(Ownable.AlreadyInitialized.selector);
         account.initialize(address(this));
 
-        address newOwner = _clean(_randomNonZeroAddress());
+        address newOwner = _cleaned(_randomNonZeroAddress());
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferred(address(this), newOwner);
         account.transferOwnership(newOwner);

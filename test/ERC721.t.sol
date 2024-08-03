@@ -162,17 +162,17 @@ contract ERC721Test is SoladyTest {
 
     function _expectTransferEvent(address from, address to, uint256 id) internal {
         vm.expectEmit(true, true, true, true);
-        emit Transfer(_clean(from), _clean(to), id);
+        emit Transfer(_cleaned(from), _cleaned(to), id);
     }
 
     function _expectApprovalEvent(address owner, address approved, uint256 id) internal {
         vm.expectEmit(true, true, true, true);
-        emit Approval(_clean(owner), _clean(approved), id);
+        emit Approval(_cleaned(owner), _cleaned(approved), id);
     }
 
     function _expectApprovalForAllEvent(address owner, address operator, bool approved) internal {
         vm.expectEmit(true, true, true, true);
-        emit ApprovalForAll(_clean(owner), _clean(operator), approved);
+        emit ApprovalForAll(_cleaned(owner), _cleaned(operator), approved);
     }
 
     function _aux(address owner) internal pure returns (uint224 result) {

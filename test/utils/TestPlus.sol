@@ -234,7 +234,7 @@ contract TestPlus is Brutalizer {
 
     /// @dev Cleans the upper 96 bits of the address.
     /// This is included so that CI passes for older solc versions with --via-ir.
-    function _clean(address a) internal pure returns (address result) {
+    function _cleaned(address a) internal pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := shr(96, shl(96, a))
