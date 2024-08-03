@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {SSTORE2} from "../src/utils/SSTORE2.sol";
 import {LibString} from "../src/utils/LibString.sol";
+import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
 contract SSTORE2Test is SoladyTest {
     uint256 internal constant _DATA_MAX_LENGTH = 0xfffe;
@@ -65,11 +66,37 @@ contract SSTORE2Test is SoladyTest {
         }
     }
 
-    function testWriteRead(bytes32) public {
+    function testSliceTrick(uint256 n, uint256 start, uint256 end) public {
+        n = _bound(n, 1, 0xffff);
+        uint256 d;
+        uint256 l;
+        /// @solidity memory-safe-assembly
+        assembly {
+            d := sub(end, start)
+            d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
+            l := mul(d, lt(start, end))
+        }
+        unchecked {
+            if (start < 0xffffff && end < 0xffffff) {
+                assertLe((end - start) & 0xffff, 0xffff);
+                if (start <= end) {
+                    assertLe((end - start) & 0xffff, 0xffff);
+                }
+            }
+        }
+        uint256 expected = FixedPointMathLib.zeroFloorSub(
+            FixedPointMathLib.clamp(end, 0, n), FixedPointMathLib.clamp(start, 0, n)
+        );
+        assertEq(l, expected);
+    }
+
+    function testWriteRead(bytes32, uint256 startIndex, uint256 endIndex) public {
         bytes memory data = _truncateBytes(_randomBytes(), _DATA_MAX_LENGTH);
 
-        uint256 startIndex = _bound(_random(), 0, data.length + 2);
-        uint256 endIndex = _bound(_random(), 0, data.length + 2);
+        if (_randomChance(2)) {
+            startIndex = _bound(_random(), 0, data.length + 2);
+            endIndex = _bound(_random(), 0, data.length + 2);
+        }
 
         _maybeBrutalizeMemory();
 
