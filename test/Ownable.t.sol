@@ -61,7 +61,7 @@ contract OwnableTest is SoladyTest {
             vm.expectRevert(Ownable.NewOwnerIsZeroAddress.selector);
         } else if (callerIsOwner) {
             vm.expectEmit(true, true, true, true);
-            emit OwnershipTransferred(address(this), newOwner);
+            emit OwnershipTransferred(address(this), _cleaned(newOwner));
         } else {
             vm.prank(newOwner);
             vm.expectRevert(Ownable.Unauthorized.selector);
