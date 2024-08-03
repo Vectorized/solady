@@ -174,7 +174,7 @@ contract ERC1967FactoryTest is SoladyTest {
         address proxy = factory.deploy(implementation0, admin);
 
         vm.expectEmit(true, true, true, true, address(factory));
-        emit AdminChanged(proxy, newAdmin);
+        emit AdminChanged(proxy, _cleaned(newAdmin));
 
         vm.prank(admin);
         factory.changeAdmin(proxy, newAdmin);

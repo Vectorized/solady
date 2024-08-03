@@ -76,11 +76,6 @@ contract SSTORE2Test is SoladyTest {
             d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             l := mul(d, lt(start, end))
         }
-        unchecked {
-            if (start < 0xffffff && end < 0xffffff) {
-                assertLe((end - start) & 0xffff, 0xffff);
-            }
-        }
         uint256 expected = FixedPointMathLib.zeroFloorSub(
             FixedPointMathLib.clamp(end, 0, n), FixedPointMathLib.clamp(start, 0, n)
         );
