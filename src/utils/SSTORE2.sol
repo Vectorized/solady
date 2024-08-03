@@ -242,16 +242,18 @@ library SSTORE2 {
         /// @solidity memory-safe-assembly
         assembly {
             data := mload(0x40)
-            let d := and(0xffff, sub(end, start))
-            extcodecopy(pointer, add(data, 0x1f), start, add(d, 0x01))
-            if iszero(and(0xff, mload(add(data, d)))) {
+            let d := sub(end, start)
+            let l := xor(d, mul(gt(d, 0xffff), xor(0xffff, d)))
+            extcodecopy(pointer, add(data, 0x1f), start, add(l, 0x01))
+            if iszero(and(0xff, mload(add(data, l)))) {
                 let n := sub(extcodesize(pointer), 0x01)
                 returndatacopy(returndatasize(), returndatasize(), shr(64, n))
                 d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
-            mstore(data, mul(d, lt(start, end))) // Store the length.
-            mstore(add(add(data, 0x20), d), 0) // Zeroize the slot after the bytes.
-            mstore(0x40, add(add(data, 0x40), d)) // Allocate memory.
+            l := mul(d, lt(start, end))
+            mstore(data, l) // Store the length.
+            mstore(add(add(data, 0x20), l), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(data, 0x40), l)) // Allocate memory.
         }
     }
 }
