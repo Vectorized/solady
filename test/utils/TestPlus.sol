@@ -78,12 +78,6 @@ contract TestPlus is Brutalizer {
                     r := and(byte(11, y), 3)
                     break
                 }
-                // With a 1/16 chance, set `r` to some random word in the current code.
-                if iszero(and(y, 0xf0000)) {
-                    codecopy(0x00, mod(and(y, 0xffff), add(codesize(), 0x20)), 0x20)
-                    r := mload(0x00)
-                    break
-                }
                 let d := byte(17, y)
                 // With a 1/2 chance, set `r` to near a random power of 2.
                 if iszero(and(2, d)) {
@@ -312,22 +306,18 @@ contract TestPlus is Brutalizer {
                 // Store some fixed word at the start of the string.
                 // We want this function to sometimes return duplicates.
                 mstore(add(result, 0x20), xor(calldataload(0x00), _TESTPLUS_RANDOMNESS_SLOT))
-                // With a 1/2 chance, copy the contract code to the start and the end.
+                // With a 1/2 chance, copy the contract code to the start and end.
                 if iszero(and(t, 0x1000)) {
                     codecopy(add(result, 0x20), byte(1, r), codesize()) // Copy to the start.
                     codecopy(add(result, n), byte(2, r), codesize()) // Copy to the end.
                 }
-                // With a 1/16 chance, randomize the start of the result.
+                // With a 1/16 chance, randomize the start and end.
                 if iszero(and(t, 0xf0000)) {
                     mstore(0x05, 0x592ad1ef6b)
                     mstore(0x00, r)
-                    mstore(add(result, 0x20), keccak256(0x00, 0x30))
-                }
-                // With a 1/16 chance, randomize the end of the result.
-                if iszero(and(t, 0xf00000)) {
-                    mstore(0x05, 0x1addebe197)
-                    mstore(0x00, r)
-                    mstore(add(result, n), keccak256(0x00, 0x30))
+                    let y := keccak256(0x00, 0x30)
+                    mstore(add(result, 0x20), y)
+                    mstore(add(result, n), xor(y, r))
                 }
                 // With a 1/256 chance, make the result entirely zero bytes.
                 if iszero(byte(4, r)) { codecopy(result, codesize(), add(n, 0x20)) }
@@ -383,7 +373,6 @@ contract TestPlus is Brutalizer {
         returns (uint256 result)
     {
         require(min <= max, "Max is less than min.");
-
         /// @solidity memory-safe-assembly
         assembly {
             // prettier-ignore
@@ -396,18 +385,15 @@ contract TestPlus is Brutalizer {
                     result := x
                     break
                 }
-
                 let size := add(sub(max, min), 1)
                 if lt(gt(x, 3), gt(size, x)) {
                     result := add(min, x)
                     break
                 }
-
                 if lt(lt(x, not(3)), gt(size, not(x))) {
                     result := sub(max, not(x))
                     break
                 }
-
                 // Otherwise, wrap x into the range [min, max],
                 // i.e. the range is inclusive.
                 if iszero(lt(x, max)) {
