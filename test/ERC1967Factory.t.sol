@@ -64,6 +64,7 @@ contract ERC1967FactoryTest is SoladyTest {
 
     function testDeployBrutalized(uint256) public withFactories {
         (address admin,) = _randomSigner();
+        admin = _cleaned(admin);
         address implementation = implementation0;
         bool brutalized;
         bool success;
@@ -125,7 +126,7 @@ contract ERC1967FactoryTest is SoladyTest {
             return;
         } else {
             vm.expectEmit(true, true, true, true);
-            emit Deployed(t.predictedProxy, implementation0, admin);
+            emit Deployed(t.predictedProxy, implementation0, _cleaned(admin));
             t.proxy = factory.deployDeterministicAndCall{value: t.msgValue}(
                 implementation0, admin, t.salt, data
             );
@@ -173,7 +174,7 @@ contract ERC1967FactoryTest is SoladyTest {
         address proxy = factory.deploy(implementation0, admin);
 
         vm.expectEmit(true, true, true, true, address(factory));
-        emit AdminChanged(proxy, newAdmin);
+        emit AdminChanged(proxy, _cleaned(newAdmin));
 
         vm.prank(admin);
         factory.changeAdmin(proxy, newAdmin);

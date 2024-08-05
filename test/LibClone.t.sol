@@ -275,7 +275,7 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testCloneDeterministicWithImmutableArgs(bytes32 salt) public {
-        bytes memory args = _randomBytes(salt);
+        bytes memory args = _randomBytes();
         if (args.length > _CLONES_ARGS_MAX_LENGTH) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
             this.cloneDeterministic(address(this), args, salt);
@@ -286,7 +286,7 @@ contract LibCloneTest is SoladyTest {
         _checkArgsOnClone(instance, args);
         if (_randomChance(32)) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
-            this.testCloneDeterministicWithImmutableArgs(salt);
+            this.cloneDeterministic(address(this), args, salt);
         }
     }
 
@@ -310,7 +310,7 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testDeployDeterministicERC1967WithImmutableArgs(bytes32 salt) public {
-        bytes memory args = _randomBytes(salt);
+        bytes memory args = _randomBytes();
         if (args.length > _ERC1967_ARGS_MAX_LENGTH) {
             vm.expectRevert();
             this.deployDeterministicERC1967(address(this), args, salt);
@@ -322,7 +322,7 @@ contract LibCloneTest is SoladyTest {
         _checkERC1967ImplementationSlot(instance);
         if (_randomChance(32)) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
-            this.testDeployDeterministicERC1967WithImmutableArgs(salt);
+            this.deployDeterministicERC1967(address(this), args, salt);
         }
     }
 
@@ -364,7 +364,7 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testCreateDeterministicERC1967WithImmutableArgs(bytes32 salt) public {
-        bytes memory args = _randomBytes(salt);
+        bytes memory args = _randomBytes();
         if (args.length > _ERC1967_ARGS_MAX_LENGTH) {
             vm.expectRevert();
             this.createDeterministicERC1967(address(this), args, salt);
@@ -645,26 +645,6 @@ contract LibCloneTest is SoladyTest {
         }
     }
 
-    function _randomBytes() internal returns (bytes memory result) {
-        result = _randomBytes(bytes32(_random()));
-    }
-
-    function _randomBytes(bytes32 r) internal pure returns (bytes memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let n := and(0xffff, r)
-            result := mload(0x40)
-            mstore(0x00, r)
-            let t := keccak256(0x00, 0x20)
-            if gt(byte(0, r), 16) { n := and(r, 0x7f) }
-            codecopy(add(result, 0x20), byte(0, t), codesize())
-            codecopy(add(result, n), byte(1, t), codesize())
-            mstore(0x40, add(n, add(0x40, result)))
-            mstore(result, n)
-            if iszero(byte(3, t)) { result := 0x60 }
-        }
-    }
-
     function _randomBytesForERC1967BeconProxyImmutableArgs()
         internal
         returns (bytes memory result)
@@ -678,18 +658,6 @@ contract LibCloneTest is SoladyTest {
 
     function _randomBytesForCloneImmutableArgs() internal returns (bytes memory result) {
         return _truncateBytes(_randomBytes(), _CLONES_ARGS_MAX_LENGTH);
-    }
-
-    function _truncateBytes(bytes memory b, uint256 n)
-        internal
-        pure
-        returns (bytes memory result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            if gt(mload(b), n) { mstore(b, n) }
-            result := b
-        }
     }
 
     function _checkArgsOnERC1967BeaconProxy(address instance, bytes memory args) internal {
@@ -755,9 +723,14 @@ contract LibCloneTest is SoladyTest {
 
     function _randomStartAndEnd(bytes memory args) internal returns (uint256 start, uint256 end) {
         unchecked {
-            uint256 n = args.length + 0xf;
-            start = _bound(_random(), 0, n);
-            end = _bound(_random(), 0, n);
+            if (_randomChance(2)) {
+                uint256 n = args.length + 2;
+                start = _bound(_random(), 0, n);
+                end = _bound(_random(), 0, n);
+            } else {
+                start = _random();
+                end = _random();
+            }
         }
     }
 
