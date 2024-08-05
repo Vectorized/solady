@@ -700,6 +700,8 @@ library FixedPointMathLib {
     /// @dev Returns the cube root of `x`, rounded down.
     /// Credit to bout3fiddy and pcaversaccio under AGPLv3 license:
     /// https://github.com/pcaversaccio/snekmate/blob/main/src/utils/Math.vy
+    /// Formally verified by xuwinnie:
+    /// https://github.com/vectorized/solady/blob/main/audits/xuwinnie-solady-cbrt-proof.pdf
     function cbrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -708,9 +710,9 @@ library FixedPointMathLib {
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := or(r, shl(3, lt(0xff, shr(r, x))))
-
+            // Makeshift lookup table to nudge the approximate log2 result.
             z := div(shl(div(r, 3), shl(lt(0xf, shr(r, x)), 0xf)), xor(7, mod(r, 3)))
-
+            // Newton-Raphson's.
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
@@ -718,7 +720,7 @@ library FixedPointMathLib {
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
-
+            // Round down.
             z := sub(z, lt(div(x, mul(z, z)), z))
         }
     }
@@ -732,11 +734,13 @@ library FixedPointMathLib {
         }
         /// @solidity memory-safe-assembly
         assembly {
-            z := sub(z, gt(999999999999999999, sub(mulmod(z, z, x), 1)))
+            z := sub(z, gt(999999999999999999, sub(mulmod(z, z, x), 1))) // Round down.
         }
     }
 
     /// @dev Returns the cube root of `x`, denominated in `WAD`, rounded down.
+    /// Formally verified by xuwinnie:
+    /// https://github.com/vectorized/solady/blob/main/audits/xuwinnie-solady-cbrt-proof.pdf
     function cbrtWad(uint256 x) internal pure returns (uint256 z) {
         unchecked {
             if (x <= type(uint256).max / 10 ** 36) return cbrt(x * 10 ** 36);
@@ -749,17 +753,17 @@ library FixedPointMathLib {
             for {} 1 {} {
                 if iszero(shr(229, p)) {
                     if iszero(shr(199, p)) {
-                        p := mul(p, 100000000000000000)
+                        p := mul(p, 100000000000000000) // 10 ** 17.
                         break
                     }
-                    p := mul(p, 100000000)
+                    p := mul(p, 100000000) // 10 ** 8.
                     break
                 }
                 if iszero(shr(249, p)) { p := mul(p, 100) }
                 break
             }
             let t := mulmod(mul(z, z), z, p)
-            z := sub(z, gt(lt(t, shr(1, p)), iszero(t)))
+            z := sub(z, gt(lt(t, shr(1, p)), iszero(t))) // Round down.
         }
     }
 
