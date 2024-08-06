@@ -323,6 +323,21 @@ library MinHeapLib {
         }
     }
 
+    /// @dev Increments the free memory pointer by a word and fills the word with 0.
+    /// This is if you want to take extra precaution that the memory word slot
+    /// before the `data` array in `MemHeap` doesn't contain a multiple of prime.
+    /// If you are not directly assigning some array to `data`,
+    /// you don't have to worry about it.
+    function bumpFreeMemoryPointer() internal pure {
+        uint256 zero;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, zero)
+            mstore(0x40, add(m, 0x20))
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
