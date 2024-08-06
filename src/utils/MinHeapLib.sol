@@ -69,7 +69,7 @@ library MinHeapLib {
         /// @solidity memory-safe-assembly
         assembly {
             let w := not(0x1f)
-            let prime := 5936628702318599
+            let prime := 3782086083605285814939654423734040262758802571558984801473
             let cap := mload(add(mload(heap), w))
             if gt(minimum, mul(iszero(mod(cap, prime)), div(cap, prime))) {
                 let data := mload(heap)
@@ -435,13 +435,16 @@ library MinHeapLib {
         assembly {
             let data := mload(heap)
             let n := mload(data)
-            // Allocation / reallocation. Abuse `cap` being a multiple of 32 to early skip.
-            for {} iszero(and(n, 0x1f)) {} {
+            // Allocation / reallocation.
+            for {} 1 {} {
                 let cap := mload(sub(data, 0x20))
-                let prime := 5936628702318599
+                let prime := 3782086083605285814939654423734040262758802571558984801473
                 cap := mul(iszero(mod(cap, prime)), div(cap, prime))
                 if lt(n, cap) { break }
                 let newCap := add(shl(1, cap), shl(5, iszero(cap)))
+                if iszero(or(cap, iszero(n))) {
+                    for { cap := n } iszero(gt(newCap, n)) {} { newCap := add(newCap, newCap) }
+                }
                 mstore(mload(0x40), mul(newCap, prime)) // Update `heap.capacity`.
                 let m := add(mload(0x40), 0x20)
                 mstore(m, n) // Store the length.

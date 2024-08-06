@@ -14,6 +14,8 @@ contract MinHeapLibTest is SoladyTest {
 
     MinHeapLib.Heap heap1;
 
+    uint256[] heapDataInStorage;
+
     function testHeapRoot(uint256 x) public {
         if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
@@ -521,6 +523,17 @@ contract MinHeapLibTest is SoladyTest {
             for (uint256 i; i < m; ++i) {
                 uint256 r = _random();
                 (bool success, bool hasPopped, uint256 popped) = heapA.enqueue(r, maxLength);
+                if (_randomChance(8)) {
+                    heapDataInStorage = heapA.data;
+                    heapA = MinHeapLib.MemHeap(heapDataInStorage);
+                    _checkMemory();
+                }
+                if (_randomChance(8)) {
+                    heapDataInStorage = heapA.data;
+                    uint256[] memory data = heapDataInStorage;
+                    heapA = MinHeapLib.MemHeap(data);
+                    _checkMemory();
+                }
                 if (hasPopped) {
                     assertEq(heapA.length(), maxLength);
                     assertEq(success, true);
@@ -616,6 +629,34 @@ contract MinHeapLibTest is SoladyTest {
                 }
             }
             while (heapA.length() != 0) heapA.pop();
+        }
+    }
+
+    function testMemHeapWriteAndReadFromStorage() public {
+        MinHeapLib.MemHeap memory heapA = MinHeapLib.MemHeap(new uint256[](0));
+        MinHeapLib.push(heapA, 9999999999999999999999999999999999999999999999);
+
+        heapDataInStorage = heapA.data;
+
+        MinHeapLib.MemHeap memory heapB = MinHeapLib.MemHeap(heapDataInStorage);
+        for (uint256 i = 0; i < 32; i++) {
+            MinHeapLib.push(heapB, 69 + i);
+        }
+
+        assertEq(MinHeapLib.root(heapB), 69);
+    }
+
+    function testMemHeapWriteAndReadFromStorage2() public {
+        MinHeapLib.MemHeap memory heapA = MinHeapLib.MemHeap(new uint256[](0));
+        MinHeapLib.push(heapA, 9999999999999999999999999999999999999999999999);
+
+        heapDataInStorage = heapA.data;
+
+        uint256[] memory unstore = heapDataInStorage;
+
+        MinHeapLib.MemHeap memory heapB = MinHeapLib.MemHeap(unstore);
+        for (uint256 i = 0; i < 32; i++) {
+            MinHeapLib.push(heapB, 69 + i);
         }
     }
 }
