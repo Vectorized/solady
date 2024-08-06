@@ -516,23 +516,25 @@ contract MinHeapLibTest is SoladyTest {
         MinHeapLib.MemHeap memory heapA;
         unchecked {
             uint256 maxLength = _random() % 64 + 1;
-            uint256 m = _random() % 32 + maxLength;
-            uint256[] memory a = new uint256[](m);
-            uint256[] memory rejected = new uint256[](m);
+            uint256[] memory a = new uint256[](_random() % 32 + maxLength);
+            uint256[] memory rejected = new uint256[](a.length);
             uint256 numRejected;
-            for (uint256 i; i < m; ++i) {
+            bool testReinit = _randomChance(2);
+            for (uint256 i; i < a.length; ++i) {
                 uint256 r = _random();
                 (bool success, bool hasPopped, uint256 popped) = heapA.enqueue(r, maxLength);
-                if (_randomChance(2)) {
-                    heapDataInStorage = heapA.data;
-                    heapA = MinHeapLib.MemHeap(heapDataInStorage);
-                    _checkMemory();
-                }
-                if (_randomChance(2)) {
-                    heapDataInStorage = heapA.data;
-                    uint256[] memory data = heapDataInStorage;
-                    heapA = MinHeapLib.MemHeap(data);
-                    _checkMemory();
+                if (testReinit) {
+                    if (_randomChance(2)) {
+                        heapDataInStorage = heapA.data;
+                        heapA = MinHeapLib.MemHeap(heapDataInStorage);
+                        _checkMemory();
+                    }
+                    if (_randomChance(2)) {
+                        heapDataInStorage = heapA.data;
+                        uint256[] memory data = heapDataInStorage;
+                        heapA = MinHeapLib.MemHeap(data);
+                        _checkMemory();
+                    }
                 }
                 if (hasPopped) {
                     assertEq(heapA.length(), maxLength);
@@ -552,9 +554,9 @@ contract MinHeapLibTest is SoladyTest {
             }
             LibSort.insertionSort(rejected);
             for (uint256 i; i < maxLength; ++i) {
-                assertEq(a[m - maxLength + i], heapA.pop());
+                assertEq(a[a.length - maxLength + i], heapA.pop());
             }
-            assertEq(numRejected + maxLength, m);
+            assertEq(numRejected + maxLength, a.length);
             for (uint256 i; i < numRejected; ++i) {
                 assertEq(a[i], rejected[i]);
             }
