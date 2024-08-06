@@ -523,12 +523,12 @@ contract MinHeapLibTest is SoladyTest {
             for (uint256 i; i < m; ++i) {
                 uint256 r = _random();
                 (bool success, bool hasPopped, uint256 popped) = heapA.enqueue(r, maxLength);
-                if (_randomChance(8)) {
+                if (_randomChance(2)) {
                     heapDataInStorage = heapA.data;
                     heapA = MinHeapLib.MemHeap(heapDataInStorage);
                     _checkMemory();
                 }
-                if (_randomChance(8)) {
+                if (_randomChance(2)) {
                     heapDataInStorage = heapA.data;
                     uint256[] memory data = heapDataInStorage;
                     heapA = MinHeapLib.MemHeap(data);

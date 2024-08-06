@@ -69,13 +69,13 @@ library MinHeapLib {
         /// @solidity memory-safe-assembly
         assembly {
             let w := not(0x1f)
-            let prime := 3782086083605285814939654423734040262758802571558984801473
-            let cap := mload(add(mload(heap), w))
+            let prime := 204053801631428327883786711931463459222251954273621
+            let cap := not(mload(add(mload(heap), w)))
             if gt(minimum, mul(iszero(mod(cap, prime)), div(cap, prime))) {
                 let data := mload(heap)
                 let n := mload(data)
                 let newCap := and(add(minimum, 0x1f), w) // Round up to multiple of 32.
-                mstore(mload(0x40), mul(newCap, prime))
+                mstore(mload(0x40), not(mul(newCap, prime)))
                 let m := add(mload(0x40), 0x20)
                 mstore(m, n) // Store the length.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
@@ -437,15 +437,15 @@ library MinHeapLib {
             let n := mload(data)
             // Allocation / reallocation.
             for {} 1 {} {
-                let cap := mload(sub(data, 0x20))
-                let prime := 3782086083605285814939654423734040262758802571558984801473
+                let cap := not(mload(sub(data, 0x20)))
+                let prime := 204053801631428327883786711931463459222251954273621
                 cap := mul(iszero(mod(cap, prime)), div(cap, prime))
                 if lt(n, cap) { break }
-                let newCap := add(shl(1, cap), shl(5, iszero(cap)))
+                let newCap := add(add(cap, cap), shl(5, iszero(cap)))
                 if iszero(or(cap, iszero(n))) {
                     for { cap := n } iszero(gt(newCap, n)) {} { newCap := add(newCap, newCap) }
                 }
-                mstore(mload(0x40), mul(newCap, prime)) // Update `heap.capacity`.
+                mstore(mload(0x40), not(mul(newCap, prime))) // Update `heap.capacity`.
                 let m := add(mload(0x40), 0x20)
                 mstore(m, n) // Store the length.
                 mstore(0x40, add(add(m, 0x20), shl(5, newCap))) // Allocate `heap.data` memory.
