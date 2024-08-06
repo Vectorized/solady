@@ -324,8 +324,9 @@ library MinHeapLib {
     }
 
     /// @dev Increments the free memory pointer by a word and fills the word with 0.
-    /// This is if you want to take extra precaution that the memory word slot
-    /// before the `data` array in `MemHeap` doesn't contain a multiple of prime.
+    /// This is if you want to take extra precaution that the memory word slot before
+    /// the `data` array in `MemHeap` doesn't contain a non-zero multiple of prime
+    /// to masquerade as a prime-checksummed capacity.
     /// If you are not directly assigning some array to `data`,
     /// you don't have to worry about it.
     function bumpFreeMemoryPointer() internal pure {
