@@ -2140,4 +2140,8 @@ contract FixedPointMathLibTest is SoladyTest {
     function testTernary(bool condition, uint256 x, uint256 y) public {
         assertEq(condition ? x : y, FixedPointMathLib.ternary(condition, x, y));
     }
+
+    function testIsEven(uint256 x) public {
+        assertEq(FixedPointMathLib.isEven(x), x % 2 == 0);
+    }
 }

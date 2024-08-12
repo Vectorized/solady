@@ -1082,6 +1082,11 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns if `x` is an even number. Some people may need this.
+    function isEven(uint256 x) internal pure returns (bool) {
+        return x & uint256(1) == uint256(0);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   RAW NUMBER OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
