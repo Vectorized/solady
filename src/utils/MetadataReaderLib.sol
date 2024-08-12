@@ -107,12 +107,12 @@ library MetadataReaderLib {
     //     - Returns zero.
     //     - `abi.decode` failure.
 
-    /// @dev Equivalent to `uint8(readUint(abi.encodeWithSignature("decimal()")))`.
+    /// @dev Equivalent to `uint8(readUint(abi.encodeWithSignature("decimals()")))`.
     function readDecimals(address target) internal view returns (uint8) {
         return uint8(_uint(target, _ptr(0x313ce567), GAS_STIPEND_NO_GRIEF));
     }
 
-    /// @dev Equivalent to `uint8(readUint(abi.encodeWithSignature("decimal()"), gasStipend))`.
+    /// @dev Equivalent to `uint8(readUint(abi.encodeWithSignature("decimals()"), gasStipend))`.
     function readDecimals(address target, uint256 gasStipend) internal view returns (uint8) {
         return uint8(_uint(target, _ptr(0x313ce567), gasStipend));
     }
