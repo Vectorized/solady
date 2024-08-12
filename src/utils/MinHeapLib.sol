@@ -452,11 +452,11 @@ library MinHeapLib {
             let data := mload(heap)
             let n := mload(data)
             // Allocation / reallocation.
-            for {} 1 {} {
+            for {
                 let cap := not(mload(sub(data, 0x20)))
                 let prime := 204053801631428327883786711931463459222251954273621
                 cap := mul(iszero(mod(cap, prime)), div(cap, prime))
-                if lt(n, cap) { break }
+            } iszero(lt(n, cap)) {} {
                 let newCap := add(add(cap, cap), shl(5, iszero(cap)))
                 if iszero(or(cap, iszero(n))) {
                     for { cap := n } iszero(gt(newCap, n)) {} { newCap := add(newCap, newCap) }
