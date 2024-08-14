@@ -17,22 +17,19 @@ pragma solidity ^0.8.4;
 ///   See: https://eips.ethereum.org/EIPS/eip-2098
 ///   This is for calldata efficiency on smart accounts prevalent on L2s.
 ///
-/// WARNING! Do NOT use signatures as unique identifiers:
+/// WARNING! Do NOT directly use signatures as unique identifiers:
+/// - The recovery operations do NOT check if a signature is non-malleable.
 /// - Use a nonce in the digest to prevent replay attacks on the same contract.
 /// - Use EIP-712 for the digest to prevent replay attacks across different chains and contracts.
 ///   EIP-712 also enables readable signing of typed data for better user safety.
-/// This implementation does NOT check if a signature is non-malleable.
+/// - If you need a unique hash from a signature, please use the `canonicalHash` functions.
 library ECDSA {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The order of the `secp256k1` elliptic curve.
-    bytes32 private constant N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
-
-    /// @dev The value is half of the `secp256k1n`, used for checking signature malleability (N/2).
-    bytes32 private constant N_2 =
-        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+    /// @dev The order of the secp256k1 elliptic curve.
+    bytes32 internal constant N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
@@ -408,35 +405,40 @@ library ECDSA {
         }
     }
 
-    /// @dev Returns an canonical hash of 65 bytes signature.
-    /// If signature is 64 bytes format then it is convert into 65-bytes.
-    /// If `s` is greater than `secp256k1n/2` then it is convert into `secp256k1n - s`
-    /// and flips the `v` value.
-    /// Note : If signature length is not equal `65 bytes` or `64 bytes` it will return corrupt hash.
-    function canonicalHash(bytes memory sig) internal pure returns (bytes32 result) {
+    /// @dev Returns an canonical hash of `signature`.
+    /// 64-byte compact signatures will be canonicalized into the 65-byte format.
+    /// If `s` is greater than `N / 2` then it will be converted to `N - s`
+    /// and the `v` value will be flipped.
+    /// Note : Returns a uniquely corrupted hash if the signature
+    /// is not 64 or 65 bytes long, or if `v` is invalid.
+    function canonicalHash(bytes memory signature) internal pure returns (bytes32 result) {
         // @solidity memory-safe-assembly
         assembly {
-            for { let s := mload(add(sig, 0x40)) } 1 {} {
-                mstore(0x00, mload(add(sig, 0x20)))
-
-                if iszero(eq(mload(sig), 64)) {
-                    let c := gt(s, N_2)
-                    // Replace `s` with `N - s` if `s > N/2`.
-                    mstore(0x20, add(mul(c, sub(N, s)), mul(iszero(c), s)))
-
-                    // Flip `v` value if `s > N/2`
-                    mstore8(0x40, xor(mul(c, 7), byte(0, mload(add(sig, 0x60)))))
+            for { let l := mload(signature) } 1 {} {
+                // If the length is neither 64 nor 65, return a uniquely corrupted hash.
+                if iszero(lt(sub(l, 64), 2)) {
+                    // `bytes4(keccak256("InvalidSignatureLength"))`.
+                    result := xor(keccak256(add(signature, 0x20), l), 0xd62f1ab2)
                     break
                 }
-
+                mstore(0x00, mload(add(signature, 0x20))) // `r`.
+                let s := mload(add(signature, 0x40))
+                let v := mload(add(signature, 0x41))
+                if eq(l, 64) {
+                    v := add(shr(255, s), 27)
+                    s := shr(1, shl(1, s))
+                }
+                let n := N
+                if lt(shr(1, n), s) {
+                    v := xor(v, 7)
+                    s := sub(n, s)
+                }
+                mstore(0x21, v)
                 mstore(0x20, s)
-                let s0 := byte(0, s)
-                mstore8(0x20, and(s0, 0x7f))
-                mstore8(0x40, add(27, shr(7, s0)))
+                result := keccak256(0x00, 0x41)
+                mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
                 break
             }
-            result := keccak256(0x00, add(0x41, gt(sub(mload(sig), 64), 1)))
-            mstore(0x21, 0) // Restore free memory pointer
         }
     }
 
@@ -452,7 +454,7 @@ library ECDSA {
                 mstore(0x00, calldataload(sig.offset))
 
                 if iszero(eq(sig.length, 64)) {
-                    let c := gt(s, N_2)
+                    let c := gt(s, shr(1, N))
                     // Replace `s` with `N - s` if `s` > `N/2`.
                     mstore(0x20, add(mul(c, sub(N, s)), mul(iszero(c), s)))
                     mstore8(0x40, xor(mul(c, 7), byte(0, calldataload(add(sig.offset, 0x40)))))
