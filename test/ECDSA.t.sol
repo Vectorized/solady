@@ -446,6 +446,67 @@ contract ECDSATest is SoladyTest {
         return ECDSA.recover(hash, v, r, s);
     }
 
+    function testCanonicalHashWithRegularSignature() public brutalizeMemory {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        assertEq(ECDSA.canonicalHash(signature), keccak256(signature));
+        signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1c";
+        assertEq(ECDSA.canonicalHash(signature), keccak256(signature));
+    }
+
+    function testCanonicalHashWith64bytesSignature() public brutalizeMemory {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        bytes memory shortsignature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea";
+
+        assertEq(ECDSA.canonicalHash(shortsignature), keccak256(signature));
+        signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1c";
+        shortsignature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe265281ddb01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea";
+
+        assertEq(ECDSA.canonicalHash(shortsignature), keccak256(signature));
+    }
+
+    function testCanonicalHashCalldataWithRegularSignature() public {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        assertEq(this.canonicalHashCalldata(signature), keccak256(signature));
+        assertEq(this.canonicalHashCalldataBrutalizeMemory(signature), keccak256(signature));
+        signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1c";
+        assertEq(this.canonicalHashCalldata(signature), keccak256(signature));
+        assertEq(this.canonicalHashCalldataBrutalizeMemory(signature), keccak256(signature));
+    }
+
+    function testCanonicalHashCalldataWith64bytesSignature() public {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        bytes memory shortsignature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea";
+
+        assertEq(this.canonicalHashCalldata(shortsignature), keccak256(signature));
+        assertEq(this.canonicalHashCalldataBrutalizeMemory(shortsignature), keccak256(signature));
+        signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1c";
+        shortsignature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe265281ddb01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea";
+
+        assertEq(this.canonicalHashCalldata(shortsignature), keccak256(signature));
+        assertEq(this.canonicalHashCalldataBrutalizeMemory(shortsignature), keccak256(signature));
+
+    }
+
+
+    function canonicalHashCalldata(bytes calldata siganture) external pure returns(bytes32) {
+        return ECDSA.canonicalHashCalldata(siganture);
+    }
+
+    function canonicalHashCalldataBrutalizeMemory(bytes calldata siganture) external view brutalizeMemory returns(bytes32) {
+        return ECDSA.canonicalHashCalldata(siganture);
+    }
     function testEmptyCalldataHelpers() public {
         assertFalse(ECDSA.tryRecover(bytes32(0), ECDSA.emptySignature()) == address(1));
     }

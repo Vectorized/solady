@@ -24,6 +24,17 @@ pragma solidity ^0.8.4;
 /// This implementation does NOT check if a signature is non-malleable.
 library ECDSA {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The order of the `secp256k1` elliptic curve.
+    bytes32 private constant N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+
+    /// @dev The value is half of the `secp256k1n`, used for checking signature malleability (N/2).
+    bytes32 private constant N_2 =
+        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -394,6 +405,68 @@ library ECDSA {
             mstore(s, or(mload(0x00), mload(n))) // Temporarily store the header.
             result := keccak256(add(s, sub(0x20, n)), add(n, sLength))
             mstore(s, sLength) // Restore the length.
+        }
+    }
+
+    /// @dev Returns an canonical hash of 65 bytes signature.
+    /// If signature is 64 bytes format then it is convert into 65-bytes.
+    /// If `s` is greater than `secp256k1n/2` then it is convet into `secp256k1n/2 - s`
+    /// and flips the `v` value.
+    /// Note : Signature format must be `65 bytes` or `64 bytes` format else behavier is undefined.
+    function canonicalHash(bytes memory sig) internal pure returns (bytes32 result) {
+        // @solidity memory-safe-assembly
+        assembly {
+            for { let s := mload(add(sig, 0x40)) } 1 {} {
+                mstore(0x00, mload(add(sig, 0x20)))
+                if iszero(eq(mload(sig), 64)) {
+                    let c := gt(s, N_2) // Checks `s > N/2`.
+
+                    // Replace `s` with `N - s` if `c` is ture.
+                    mstore(0x20, add(mul(c, sub(N, s)), mul(iszero(c), s)))
+
+                    // Flip `v` value if `s > N/2`
+                    mstore8(0x40, xor(mul(c, 7), byte(0, mload(add(sig, 0x60)))))
+                    break
+                }
+
+                mstore(0x20, s)
+                let s0 := byte(0, s)
+                mstore8(0x20, and(s0, 0x7f))
+                mstore8(0x40, add(27, shr(7, s0)))
+                break
+            }
+
+            result := keccak256(0x00, 0x41)
+            mstore(0x21, 0) // restore memory pointer
+        }
+    }
+
+    /// @dev Returns an canonical hash of 65 bytes calldata signature.
+    /// If signature is 64 bytes format then it is convert into 65-bytes.
+    /// If `s` is greater than `secp256k1n/2` then it is convet into `secp256k1n - s`
+    /// and flips the `v` value.
+    /// Note : Signature format must be `65 bytes` or `64 bytes` format else behavier is undefined.
+    function canonicalHashCalldata(bytes calldata sig) internal pure returns (bytes32 result) {
+        // @solidity memory-safe-assembly
+        assembly {
+            for { let s := calldataload(add(sig.offset, 0x20)) } 1 {} {
+                mstore(0x00, calldataload(sig.offset))
+                if iszero(eq(sig.length, 64)) {
+                    let c := gt(s, N_2) // Checks `s` > `N/2`.
+                    // Replace `s` with `N - s` if `c` is ture.
+                    mstore(0x20, add(mul(c, sub(N, s)), mul(iszero(c), s)))
+                    mstore8(0x40, xor(mul(c, 7), byte(0, calldataload(add(sig.offset, 0x40)))))
+                    break
+                }
+
+                mstore(0x20, s)
+                let s0 := byte(0, s)
+                mstore8(0x20, and(s0, 0x7f))
+                mstore8(0x40, add(27, shr(7, s0)))
+                break
+            }
+            result := keccak256(0x00, 0x41)
+            mstore(0x21, 0) // restore memory pointer
         }
     }
 
