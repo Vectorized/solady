@@ -436,7 +436,7 @@ library ECDSA {
                 break
             }
             result := keccak256(0x00, add(0x41, gt(sub(mload(sig), 64), 1)))
-            mstore(0x21, 0) // restore memory pointer
+            mstore(0x21, 0) // Restore free memory pointer
         }
     }
 
@@ -466,7 +466,7 @@ library ECDSA {
                 break
             }
             result := keccak256(0x00, add(0x41, gt(sub(sig.length, 64), 1)))
-            mstore(0x21, 0) // restore memory pointer
+            mstore(0x21, 0) // Restore free memory pointer
         }
     }
 
