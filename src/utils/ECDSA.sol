@@ -410,7 +410,7 @@ library ECDSA {
 
     /// @dev Returns an canonical hash of 65 bytes signature.
     /// If signature is 64 bytes format then it is convert into 65-bytes.
-    /// If `s` is greater than `secp256k1n/2` then it is convet into `secp256k1n/2 - s`
+    /// If `s` is greater than `secp256k1n/2` then it is convert into `secp256k1n/2 - s`
     /// and flips the `v` value.
     /// Note : Signature format must be `65 bytes` or `64 bytes` format else behavier is undefined.
     function canonicalHash(bytes memory sig) internal pure returns (bytes32 result) {
@@ -421,7 +421,7 @@ library ECDSA {
                 if iszero(eq(mload(sig), 64)) {
                     let c := gt(s, N_2) // Checks `s > N/2`.
 
-                    // Replace `s` with `N - s` if `c` is ture.
+                    // Replace `s` with `N - s` if `c` is true.
                     mstore(0x20, add(mul(c, sub(N, s)), mul(iszero(c), s)))
 
                     // Flip `v` value if `s > N/2`
@@ -443,7 +443,7 @@ library ECDSA {
 
     /// @dev Returns an canonical hash of 65 bytes calldata signature.
     /// If signature is 64 bytes format then it is convert into 65-bytes.
-    /// If `s` is greater than `secp256k1n/2` then it is convet into `secp256k1n - s`
+    /// If `s` is greater than `secp256k1n/2` then it is convert into `secp256k1n - s`
     /// and flips the `v` value.
     /// Note : Signature format must be `65 bytes` or `64 bytes` format else behavier is undefined.
     function canonicalHashCalldata(bytes calldata sig) internal pure returns (bytes32 result) {
@@ -453,7 +453,7 @@ library ECDSA {
                 mstore(0x00, calldataload(sig.offset))
                 if iszero(eq(sig.length, 64)) {
                     let c := gt(s, N_2) // Checks `s` > `N/2`.
-                    // Replace `s` with `N - s` if `c` is ture.
+                    // Replace `s` with `N - s` if `c` is true.
                     mstore(0x20, add(mul(c, sub(N, s)), mul(iszero(c), s)))
                     mstore8(0x40, xor(mul(c, 7), byte(0, calldataload(add(sig.offset, 0x40)))))
                     break

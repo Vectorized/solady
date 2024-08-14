@@ -496,17 +496,21 @@ contract ECDSATest is SoladyTest {
 
         assertEq(this.canonicalHashCalldata(shortsignature), keccak256(signature));
         assertEq(this.canonicalHashCalldataBrutalizeMemory(shortsignature), keccak256(signature));
-
     }
 
-
-    function canonicalHashCalldata(bytes calldata siganture) external pure returns(bytes32) {
-        return ECDSA.canonicalHashCalldata(siganture);
+    function canonicalHashCalldata(bytes calldata signature) external pure returns (bytes32) {
+        return ECDSA.canonicalHashCalldata(signature);
     }
 
-    function canonicalHashCalldataBrutalizeMemory(bytes calldata siganture) external view brutalizeMemory returns(bytes32) {
-        return ECDSA.canonicalHashCalldata(siganture);
+    function canonicalHashCalldataBrutalizeMemory(bytes calldata signature)
+        external
+        view
+        brutalizeMemory
+        returns (bytes32)
+    {
+        return ECDSA.canonicalHashCalldata(signature);
     }
+
     function testEmptyCalldataHelpers() public {
         assertFalse(ECDSA.tryRecover(bytes32(0), ECDSA.emptySignature()) == address(1));
     }
