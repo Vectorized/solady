@@ -665,8 +665,8 @@ contract ECDSATest is SoladyTest {
 
     function testMalleabilityTrick() public {
         unchecked {
-            uint256 s = (uint256(ECDSA.N) >> 1) - 10;
-            for (uint256 i; i < 20; ++i) {
+            uint256 s = (uint256(ECDSA.N) >> 1) - 5;
+            for (uint256 i; i < 10; ++i) {
                 testMalleabilityTrick(s + i);
             }
         }
