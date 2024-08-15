@@ -510,8 +510,9 @@ contract ECDSATest is SoladyTest {
         bytes memory shortsignature =
             hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea";
 
+        /// @solidity memory-safe-assembly
         assembly {
-            mstore(shortsignature, 63) // corrupt memory length
+            mstore(shortsignature, 63) // Corrupt memory length.
         }
         assertNotEq(ECDSA.canonicalHash(shortsignature), keccak256(signature));
         assertEq(this.canonicalHashCalldata(shortsignature), ECDSA.canonicalHash(shortsignature));
