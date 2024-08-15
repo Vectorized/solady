@@ -507,7 +507,7 @@ contract ECDSATest is SoladyTest {
             v = _brutalizedV(v);
             signature = abi.encodePacked(r, s, v);
             cHash = ECDSA.canonicalHash(signature);
-
+            assertEq(keccak256(signature), cHash);
             assertEq(ECDSA.canonicalHash(r, _vs(v, s)), cHash);
 
             if (_randomChance(2)) {
@@ -515,9 +515,10 @@ contract ECDSATest is SoladyTest {
                 v = v ^ 7;
             }
 
-            if (_randomChance(2)) {
-                assertEq(keccak256(signature), cHash);
+            if (_randomChance(8)) {
                 assertEq(ECDSA.canonicalHash(v, r, s), cHash);
+                assertEq(ECDSA.canonicalHash(abi.encodePacked(r, s, v)), cHash);
+                assertEq(ECDSA.canonicalHash(_shortSignature(abi.encodePacked(r, s, v))), cHash);
                 _checkMemory();
             }
 
@@ -535,6 +536,12 @@ contract ECDSATest is SoladyTest {
                     ECDSA.canonicalHash(abi.encodePacked(r, s, corruptedV)),
                     ECDSA.canonicalHash(corruptedV, r, s)
                 );
+                if (corruptedV == 27 || corruptedV == 28) {
+                    assertEq(
+                        ECDSA.canonicalHash(abi.encodePacked(r, s, corruptedV)),
+                        ECDSA.canonicalHash(r, _vs(corruptedV, s))
+                    );
+                }
                 _checkMemory();
             }
         }
@@ -580,9 +587,15 @@ contract ECDSATest is SoladyTest {
     }
 
     function _vs(uint8 v, bytes32 s) internal pure returns (bytes32 vs) {
+        uint256 n = uint256(ECDSA.N);
         /// @solidity memory-safe-assembly
         assembly {
-            vs := or(s, shl(255, eq(and(0xff, v), 28)))
+            v := and(0xff, v)
+            if lt(shr(1, n), s) {
+                v := xor(v, 7)
+                s := sub(n, s)
+            }
+            vs := or(s, shl(255, eq(v, 28)))
         }
     }
 
