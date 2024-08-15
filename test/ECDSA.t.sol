@@ -446,6 +446,200 @@ contract ECDSATest is SoladyTest {
         return ECDSA.recover(hash, v, r, s);
     }
 
+    function testCanonicalHashWithRegularSignature() public brutalizeMemory {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        assertEq(ECDSA.canonicalHash(signature), keccak256(signature));
+        bytes memory signature_malleable =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe265281a24fe3d37b4f138b91e48b268b8a3a6506db9b47083084edbdf3fbcca4c426571c";
+        assertEq(ECDSA.canonicalHash(signature_malleable), keccak256(signature));
+    }
+
+    function testCanonicalHashWith64bytesSignature() public brutalizeMemory {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        bytes memory shortSignature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea";
+
+        assertEq(ECDSA.canonicalHash(shortSignature), keccak256(signature));
+    }
+
+    function testCanonicalHashCalldataWithRegularSignature() public {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        assertEq(this.canonicalHashCalldata(signature), keccak256(signature));
+        assertEq(this.canonicalHashCalldataBrutalizeMemory(signature), keccak256(signature));
+
+        bytes memory signature_malleable =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe265281a24fe3d37b4f138b91e48b268b8a3a6506db9b47083084edbdf3fbcca4c426571c";
+
+        assertEq(this.canonicalHashCalldata(signature_malleable), keccak256(signature));
+        assertEq(
+            this.canonicalHashCalldataBrutalizeMemory(signature_malleable), keccak256(signature)
+        );
+    }
+
+    function testCanonicalHashCalldataWith64bytesSignature() public {
+        bytes memory signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
+        bytes memory shortSignature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea";
+
+        assertEq(this.canonicalHashCalldata(shortSignature), keccak256(signature));
+        assertEq(this.canonicalHashCalldataBrutalizeMemory(shortSignature), keccak256(signature));
+        signature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1c";
+        shortSignature =
+            hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe265281ddb01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea";
+
+        assertEq(this.canonicalHashCalldata(shortSignature), keccak256(signature));
+        assertEq(this.canonicalHashCalldataBrutalizeMemory(shortSignature), keccak256(signature));
+    }
+
+    function testCanonicalHash(bytes32 digest) public {
+        bytes memory signature;
+        bytes32 cHash;
+        address signer;
+        {
+            uint256 privateKey;
+            (signer, privateKey) = _randomSigner();
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+            v = _brutalizedV(v);
+            signature = abi.encodePacked(r, s, v);
+            cHash = ECDSA.canonicalHash(signature);
+            assertEq(keccak256(signature), cHash);
+            assertEq(ECDSA.canonicalHash(r, _vs(v, s)), cHash);
+
+            if (_randomChance(2)) {
+                s = bytes32(uint256(ECDSA.N) - uint256(s));
+                v = v ^ 7;
+            }
+
+            if (_randomChance(8)) {
+                assertEq(ECDSA.canonicalHash(v, r, s), cHash);
+                assertEq(ECDSA.canonicalHash(abi.encodePacked(r, s, v)), cHash);
+                assertEq(ECDSA.canonicalHash(_shortSignature(abi.encodePacked(r, s, v))), cHash);
+                _checkMemory();
+            }
+
+            if (_randomChance(2)) {
+                bytes memory shortSignature = _shortSignature(signature);
+                assertEq(ECDSA.canonicalHash(shortSignature), cHash);
+                if (_randomChance(8)) {
+                    assertEq(this.canonicalHashCalldataBrutalizeMemory(shortSignature), cHash);
+                }
+            }
+
+            if (_randomChance(4)) {
+                uint8 corruptedV = _brutalizedV(uint8(_random()));
+                assertEq(
+                    ECDSA.canonicalHash(abi.encodePacked(r, s, corruptedV)),
+                    ECDSA.canonicalHash(corruptedV, r, s)
+                );
+                if (corruptedV == 27 || corruptedV == 28) {
+                    assertEq(
+                        ECDSA.canonicalHash(abi.encodePacked(r, s, corruptedV)),
+                        ECDSA.canonicalHash(r, _vs(corruptedV, s))
+                    );
+                }
+                _checkMemory();
+            }
+        }
+
+        bytes memory corruptedSignature = _corruptedSignature(signature);
+        bytes32 corruptedCHash = ECDSA.canonicalHash(corruptedSignature);
+        if (_randomChance(8)) {
+            assertEq(this.canonicalHashCalldata(corruptedSignature), corruptedCHash);
+            if (_randomChance(2)) {
+                assertEq(
+                    this.canonicalHashCalldataBrutalizeMemory(corruptedSignature), corruptedCHash
+                );
+            }
+        }
+
+        if (ECDSA.tryRecover(digest, corruptedSignature) == signer) {
+            assertEq(corruptedCHash, cHash);
+        } else {
+            assertNotEq(corruptedCHash, cHash);
+            if (_randomChance(2)) {
+                bytes memory corruptedSignature2 = _corruptedSignature(signature);
+                if (ECDSA.tryRecover(digest, corruptedSignature2) != signer) {
+                    if (keccak256(corruptedSignature) != keccak256(corruptedSignature2)) {
+                        assertNotEq(corruptedCHash, ECDSA.canonicalHash(corruptedSignature2));
+                    }
+                }
+            }
+        }
+    }
+
+    function _shortSignature(bytes memory signature) internal pure returns (bytes memory) {
+        require(signature.length == 65, "Wrong length");
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := mload(add(signature, 0x20))
+            s := mload(add(signature, 0x40))
+            v := and(0xff, mload(add(signature, 0x41)))
+        }
+        return abi.encodePacked(r, _vs(v, s));
+    }
+
+    function _vs(uint8 v, bytes32 s) internal pure returns (bytes32 vs) {
+        uint256 n = uint256(ECDSA.N);
+        /// @solidity memory-safe-assembly
+        assembly {
+            v := and(0xff, v)
+            if lt(shr(1, n), s) {
+                v := xor(v, 7)
+                s := sub(n, s)
+            }
+            vs := or(s, shl(255, eq(v, 28)))
+        }
+    }
+
+    function _brutalizedV(uint8 v) internal pure returns (uint8 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := xor(shl(8, keccak256(0x00, 0xa0)), v)
+        }
+    }
+
+    function _corruptedSignature(bytes memory signature) internal returns (bytes memory result) {
+        if (_randomChance(2)) {
+            result = abi.encodePacked(signature, uint8(_random()), _random());
+        } else {
+            result = abi.encodePacked(_shortSignature(signature), uint8(_random()), _random());
+        }
+        unchecked {
+            uint256 corruptedLength = _random() % (result.length + 1);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(result, corruptedLength)
+            }
+            if (corruptedLength == 0 && _randomChance(2)) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    result := 0x60
+                }
+            }
+        }
+    }
+
+    function canonicalHashCalldata(bytes calldata signature) external pure returns (bytes32) {
+        return ECDSA.canonicalHashCalldata(signature);
+    }
+
+    function canonicalHashCalldataBrutalizeMemory(bytes calldata signature)
+        external
+        view
+        brutalizeMemory
+        returns (bytes32)
+    {
+        return ECDSA.canonicalHashCalldata(signature);
+    }
+
     function testEmptyCalldataHelpers() public {
         assertFalse(ECDSA.tryRecover(bytes32(0), ECDSA.emptySignature()) == address(1));
     }

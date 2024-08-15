@@ -17,12 +17,20 @@ pragma solidity ^0.8.4;
 ///   See: https://eips.ethereum.org/EIPS/eip-2098
 ///   This is for calldata efficiency on smart accounts prevalent on L2s.
 ///
-/// WARNING! Do NOT use signatures as unique identifiers:
+/// WARNING! Do NOT directly use signatures as unique identifiers:
+/// - The recovery operations do NOT check if a signature is non-malleable.
 /// - Use a nonce in the digest to prevent replay attacks on the same contract.
 /// - Use EIP-712 for the digest to prevent replay attacks across different chains and contracts.
 ///   EIP-712 also enables readable signing of typed data for better user safety.
-/// This implementation does NOT check if a signature is non-malleable.
+/// - If you need a unique hash from a signature, please use the `canonicalHash` functions.
 library ECDSA {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The order of the secp256k1 elliptic curve.
+    bytes32 internal constant N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -394,6 +402,123 @@ library ECDSA {
             mstore(s, or(mload(0x00), mload(n))) // Temporarily store the header.
             result := keccak256(add(s, sub(0x20, n)), add(n, sLength))
             mstore(s, sLength) // Restore the length.
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  CANONICAL HASH FUNCTIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // The following functions returns the hash of the signature in it's canonicalized format,
+    // which is the 65-byte `abi.encodePacked(r, s, uint8(v))`, where `v` is either 27 or 28.
+    // If `s` is greater than `N / 2` then it will be converted to `N - s`
+    // and the `v` value will be flipped.
+    // If the signature has an invalid length, or if `v` is invalid,
+    // a uniquely corrupt hash will be returned.
+    // These functions are useful for "poor-mans-VRF".
+
+    /// @dev Returns the canonical hash of `signature`.
+    function canonicalHash(bytes memory signature) internal pure returns (bytes32 result) {
+        // @solidity memory-safe-assembly
+        assembly {
+            for { let l := mload(signature) } 1 {} {
+                // If the length is neither 64 nor 65, return a uniquely corrupted hash.
+                if iszero(lt(sub(l, 64), 2)) {
+                    // `bytes4(keccak256("InvalidSignatureLength"))`.
+                    result := xor(keccak256(add(signature, 0x20), l), 0xd62f1ab2)
+                    break
+                }
+                let n := N
+                mstore(0x00, mload(add(signature, 0x20))) // `r`.
+                let s := mload(add(signature, 0x40))
+                let v := mload(add(signature, 0x41))
+                if eq(l, 64) {
+                    v := add(shr(255, s), 27)
+                    s := shr(1, shl(1, s))
+                }
+                if lt(shr(1, n), s) {
+                    v := xor(v, 7)
+                    s := sub(n, s)
+                }
+                mstore(0x21, v)
+                mstore(0x20, s)
+                result := keccak256(0x00, 0x41)
+                mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
+                break
+            }
+        }
+    }
+
+    /// @dev Returns the canonical hash of `signature`.
+    function canonicalHashCalldata(bytes calldata signature)
+        internal
+        pure
+        returns (bytes32 result)
+    {
+        // @solidity memory-safe-assembly
+        assembly {
+            for { let l := signature.length } 1 {} {
+                // If the length is neither 64 nor 65, return a uniquely corrupted hash.
+                if iszero(lt(sub(l, 64), 2)) {
+                    calldatacopy(mload(0x40), signature.offset, l)
+                    // `bytes4(keccak256("InvalidSignatureLength"))`.
+                    result := xor(keccak256(mload(0x40), l), 0xd62f1ab2)
+                    break
+                }
+                let n := N
+                mstore(0x00, calldataload(signature.offset)) // `r`.
+                let s := calldataload(add(signature.offset, 0x20))
+                let v := calldataload(add(signature.offset, 0x21))
+                if eq(l, 64) {
+                    v := add(shr(255, s), 27)
+                    s := shr(1, shl(1, s))
+                }
+                if lt(shr(1, n), s) {
+                    v := xor(v, 7)
+                    s := sub(n, s)
+                }
+                mstore(0x21, v)
+                mstore(0x20, s)
+                result := keccak256(0x00, 0x41)
+                mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
+                break
+            }
+        }
+    }
+
+    /// @dev Returns the canonical hash of `signature`.
+    function canonicalHash(bytes32 r, bytes32 vs) internal pure returns (bytes32 result) {
+        // @solidity memory-safe-assembly
+        assembly {
+            let n := N
+            mstore(0x00, r) // `r`.
+            let v := add(shr(255, vs), 27)
+            let s := shr(1, shl(1, vs))
+            if lt(shr(1, n), s) {
+                v := xor(v, 7)
+                s := sub(n, s)
+            }
+            mstore(0x21, v)
+            mstore(0x20, s)
+            result := keccak256(0x00, 0x41)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
+        }
+    }
+
+    /// @dev Returns the canonical hash of `signature`.
+    function canonicalHash(uint8 v, bytes32 r, bytes32 s) internal pure returns (bytes32 result) {
+        // @solidity memory-safe-assembly
+        assembly {
+            let n := N
+            mstore(0x00, r) // `r`.
+            if lt(shr(1, n), s) {
+                v := xor(v, 7)
+                s := sub(n, s)
+            }
+            mstore(0x21, v)
+            mstore(0x20, s)
+            result := keccak256(0x00, 0x41)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
