@@ -503,6 +503,7 @@ contract ECDSATest is SoladyTest {
             hex"8688e590483917863a35ef230c0f839be8418aa4ee765228eddfcea7fe2652815db01c2c84b0ec746e1b74d97475c599b3d3419fa7181b4e01de62c02b721aea1b";
 
         assertNotEq(ECDSA.canonicalHash(longsignature), keccak256(signature));
+        assertEq(this.canonicalHashCalldata(longsignature), ECDSA.canonicalHash(longsignature));
         assertNotEq(this.canonicalHashCalldata(longsignature), keccak256(signature));
         assertNotEq(this.canonicalHashCalldataBrutalizeMemory(longsignature), keccak256(signature));
 
@@ -513,6 +514,7 @@ contract ECDSATest is SoladyTest {
             mstore(shortsignature, 63) // corrupt memory length
         }
         assertNotEq(ECDSA.canonicalHash(shortsignature), keccak256(signature));
+        assertEq(this.canonicalHashCalldata(shortsignature), ECDSA.canonicalHash(shortsignature));
         assertNotEq(this.canonicalHashCalldata(shortsignature), keccak256(signature));
         assertNotEq(this.canonicalHashCalldataBrutalizeMemory(shortsignature), keccak256(signature));
     }

@@ -442,33 +442,45 @@ library ECDSA {
         }
     }
 
-    /// @dev Returns an canonical hash of 65 bytes calldata signature.
-    /// If signature is 64 bytes format then it is convert into 65-bytes.
-    /// If `s` is greater than `secp256k1n/2` then it is convert into `secp256k1n - s`
-    /// and flips the `v` value.
-    /// Note : If signature length is not equal `65 bytes` or `64 bytes` it will return corrupt hash.
-    function canonicalHashCalldata(bytes calldata sig) internal pure returns (bytes32 result) {
+    /// @dev Returns an canonical hash of `signature`.
+    /// 64-byte compact signatures will be canonicalized into the 65-byte format.
+    /// If `s` is greater than `N / 2` then it will be converted to `N - s`
+    /// and the `v` value will be flipped.
+    /// Note : Returns a uniquely corrupted hash if the signature
+    /// is not 64 or 65 bytes long, or if `v` is invalid.
+    function canonicalHashCalldata(bytes calldata signature)
+        internal
+        pure
+        returns (bytes32 result)
+    {
         // @solidity memory-safe-assembly
         assembly {
-            for { let s := calldataload(add(sig.offset, 0x20)) } 1 {} {
-                mstore(0x00, calldataload(sig.offset))
-
-                if iszero(eq(sig.length, 64)) {
-                    let c := gt(s, shr(1, N))
-                    // Replace `s` with `N - s` if `s` > `N/2`.
-                    mstore(0x20, add(mul(c, sub(N, s)), mul(iszero(c), s)))
-                    mstore8(0x40, xor(mul(c, 7), byte(0, calldataload(add(sig.offset, 0x40)))))
+            for { let l := signature.length } 1 {} {
+                // If the length is neither 64 nor 65, return a uniquely corrupted hash.
+                if iszero(lt(sub(l, 64), 2)) {
+                    calldatacopy(mload(0x40), signature.offset, l)
+                    // `bytes4(keccak256("InvalidSignatureLength"))`.
+                    result := xor(keccak256(mload(0x40), l), 0xd62f1ab2)
                     break
                 }
-
+                mstore(0x00, calldataload(signature.offset)) // `r`.
+                let s := calldataload(add(signature.offset, 0x20))
+                let v := calldataload(add(signature.offset, 0x21))
+                if eq(l, 64) {
+                    v := add(shr(255, s), 27)
+                    s := shr(1, shl(1, s))
+                }
+                let n := N
+                if lt(shr(1, n), s) {
+                    v := xor(v, 7)
+                    s := sub(n, s)
+                }
+                mstore(0x21, v)
                 mstore(0x20, s)
-                let s0 := byte(0, s)
-                mstore8(0x20, and(s0, 0x7f))
-                mstore8(0x40, add(27, shr(7, s0)))
+                result := keccak256(0x00, 0x41)
+                mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
                 break
             }
-            result := keccak256(0x00, add(0x41, gt(sub(sig.length, 64), 1)))
-            mstore(0x21, 0) // Restore free memory pointer
         }
     }
 
