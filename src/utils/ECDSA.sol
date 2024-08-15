@@ -405,6 +405,10 @@ library ECDSA {
         }
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  CANONICAL HASH FUNCTIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @dev Returns an canonical hash of `signature`.
     /// 64-byte compact signatures will be canonicalized into the 65-byte format.
     /// If `s` is greater than `N / 2` then it will be converted to `N - s`
@@ -421,6 +425,7 @@ library ECDSA {
                     result := xor(keccak256(add(signature, 0x20), l), 0xd62f1ab2)
                     break
                 }
+                let n := N
                 mstore(0x00, mload(add(signature, 0x20))) // `r`.
                 let s := mload(add(signature, 0x40))
                 let v := mload(add(signature, 0x41))
@@ -428,7 +433,6 @@ library ECDSA {
                     v := add(shr(255, s), 27)
                     s := shr(1, shl(1, s))
                 }
-                let n := N
                 if lt(shr(1, n), s) {
                     v := xor(v, 7)
                     s := sub(n, s)
@@ -463,6 +467,7 @@ library ECDSA {
                     result := xor(keccak256(mload(0x40), l), 0xd62f1ab2)
                     break
                 }
+                let n := N
                 mstore(0x00, calldataload(signature.offset)) // `r`.
                 let s := calldataload(add(signature.offset, 0x20))
                 let v := calldataload(add(signature.offset, 0x21))
@@ -470,7 +475,6 @@ library ECDSA {
                     v := add(shr(255, s), 27)
                     s := shr(1, shl(1, s))
                 }
-                let n := N
                 if lt(shr(1, n), s) {
                     v := xor(v, 7)
                     s := sub(n, s)
