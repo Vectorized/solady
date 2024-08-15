@@ -515,28 +515,26 @@ contract ECDSATest is SoladyTest {
                 }
             }
         }
-        if (_randomChance(2)) {
-            bytes memory corruptedSignature = _corruptedSignature(signature);
-            bytes32 corruptedCHash = ECDSA.canonicalHash(corruptedSignature);
-            if (_randomChance(8)) {
-                assertEq(this.canonicalHashCalldata(corruptedSignature), corruptedCHash);
-                if (_randomChance(2)) {
-                    assertEq(
-                        this.canonicalHashCalldataBrutalizeMemory(corruptedSignature),
-                        corruptedCHash
-                    );
-                }
+
+        bytes memory corruptedSignature = _corruptedSignature(signature);
+        bytes32 corruptedCHash = ECDSA.canonicalHash(corruptedSignature);
+        if (_randomChance(8)) {
+            assertEq(this.canonicalHashCalldata(corruptedSignature), corruptedCHash);
+            if (_randomChance(2)) {
+                assertEq(
+                    this.canonicalHashCalldataBrutalizeMemory(corruptedSignature), corruptedCHash
+                );
             }
-            if (ECDSA.tryRecover(digest, corruptedSignature) == signer) {
-                assertEq(corruptedCHash, cHash);
-            } else {
-                assertNotEq(corruptedCHash, cHash);
-                if (_randomChance(2)) {
-                    bytes memory corruptedSignature2 = _corruptedSignature(signature);
-                    if (ECDSA.tryRecover(digest, corruptedSignature2) != signer) {
-                        if (keccak256(corruptedSignature) != keccak256(corruptedSignature2)) {
-                            assertNotEq(corruptedCHash, ECDSA.canonicalHash(corruptedSignature2));
-                        }
+        }
+        if (ECDSA.tryRecover(digest, corruptedSignature) == signer) {
+            assertEq(corruptedCHash, cHash);
+        } else {
+            assertNotEq(corruptedCHash, cHash);
+            if (_randomChance(2)) {
+                bytes memory corruptedSignature2 = _corruptedSignature(signature);
+                if (ECDSA.tryRecover(digest, corruptedSignature2) != signer) {
+                    if (keccak256(corruptedSignature) != keccak256(corruptedSignature2)) {
+                        assertNotEq(corruptedCHash, ECDSA.canonicalHash(corruptedSignature2));
                     }
                 }
             }
