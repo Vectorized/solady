@@ -409,12 +409,15 @@ library ECDSA {
     /*                  CANONICAL HASH FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns an canonical hash of `signature`.
-    /// 64-byte compact signatures will be canonicalized into the 65-byte format.
-    /// If `s` is greater than `N / 2` then it will be converted to `N - s`
-    /// and the `v` value will be flipped.
-    /// Note : Returns a uniquely corrupted hash if the signature
-    /// is not 64 or 65 bytes long, or if `v` is invalid.
+    // The following functions returns the hash of the signature in it's canonicalized format,
+    // which is the 65-byte `abi.encodePacked(r, s, uint8(v))`, where `v` is either 27 or 28.
+    // If `s` is greater than `N / 2` then it will be converted to `N - s`
+    // and the `v` value will be flipped.
+    // If the signature has an invalid length, or if `v` is invalid,
+    // a uniquely corrupt hash will be returned.
+    // These functions are useful for "poor-mans-VRF".
+
+    /// @dev Returns the canonical hash of `signature`.
     function canonicalHash(bytes memory signature) internal pure returns (bytes32 result) {
         // @solidity memory-safe-assembly
         assembly {
@@ -446,12 +449,7 @@ library ECDSA {
         }
     }
 
-    /// @dev Returns an canonical hash of `signature`.
-    /// 64-byte compact signatures will be canonicalized into the 65-byte format.
-    /// If `s` is greater than `N / 2` then it will be converted to `N - s`
-    /// and the `v` value will be flipped.
-    /// Note : Returns a uniquely corrupted hash if the signature
-    /// is not 64 or 65 bytes long, or if `v` is invalid.
+    /// @dev Returns the canonical hash of `signature`.
     function canonicalHashCalldata(bytes calldata signature)
         internal
         pure
@@ -485,6 +483,42 @@ library ECDSA {
                 mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
                 break
             }
+        }
+    }
+
+    /// @dev Returns the canonical hash of `signature`.
+    function canonicalHash(bytes32 r, bytes32 vs) internal pure returns (bytes32 result) {
+        // @solidity memory-safe-assembly
+        assembly {
+            let n := N
+            mstore(0x00, r) // `r`.
+            let v := add(shr(255, vs), 27)
+            let s := shr(1, shl(1, vs))
+            if lt(shr(1, n), s) {
+                v := xor(v, 7)
+                s := sub(n, s)
+            }
+            mstore(0x21, v)
+            mstore(0x20, s)
+            result := keccak256(0x00, 0x41)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
+        }
+    }
+
+    /// @dev Returns the canonical hash of `signature`.
+    function canonicalHash(uint8 v, bytes32 r, bytes32 s) internal pure returns (bytes32 result) {
+        // @solidity memory-safe-assembly
+        assembly {
+            let n := N
+            mstore(0x00, r) // `r`.
+            if lt(shr(1, n), s) {
+                v := xor(v, 7)
+                s := sub(n, s)
+            }
+            mstore(0x21, v)
+            mstore(0x20, s)
+            result := keccak256(0x00, 0x41)
+            mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 

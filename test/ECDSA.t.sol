@@ -504,15 +504,38 @@ contract ECDSATest is SoladyTest {
             uint256 privateKey;
             (signer, privateKey) = _randomSigner();
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+            v = _brutalizedV(v);
             signature = abi.encodePacked(r, s, v);
             cHash = ECDSA.canonicalHash(signature);
-            assertEq(keccak256(signature), cHash);
+
+            assertEq(ECDSA.canonicalHash(r, _vs(v, s)), cHash);
+
+            if (_randomChance(2)) {
+                s = bytes32(uint256(ECDSA.N) - uint256(s));
+                v = v ^ 7;
+            }
+
+            if (_randomChance(2)) {
+                assertEq(keccak256(signature), cHash);
+                assertEq(ECDSA.canonicalHash(v, r, s), cHash);
+                _checkMemory();
+            }
+
             if (_randomChance(2)) {
                 bytes memory shortSignature = _shortSignature(signature);
                 assertEq(ECDSA.canonicalHash(shortSignature), cHash);
                 if (_randomChance(8)) {
                     assertEq(this.canonicalHashCalldataBrutalizeMemory(shortSignature), cHash);
                 }
+            }
+
+            if (_randomChance(4)) {
+                uint8 corruptedV = _brutalizedV(uint8(_random()));
+                assertEq(
+                    ECDSA.canonicalHash(abi.encodePacked(r, s, corruptedV)),
+                    ECDSA.canonicalHash(corruptedV, r, s)
+                );
+                _checkMemory();
             }
         }
 
@@ -526,6 +549,7 @@ contract ECDSATest is SoladyTest {
                 );
             }
         }
+
         if (ECDSA.tryRecover(digest, corruptedSignature) == signer) {
             assertEq(corruptedCHash, cHash);
         } else {
@@ -552,8 +576,21 @@ contract ECDSATest is SoladyTest {
             s := mload(add(signature, 0x40))
             v := and(0xff, mload(add(signature, 0x41)))
         }
-        bytes32 vs = bytes32((uint256(v == 28 ? 1 : 0) << 255) | uint256(s));
-        return abi.encodePacked(r, vs);
+        return abi.encodePacked(r, _vs(v, s));
+    }
+
+    function _vs(uint8 v, bytes32 s) internal pure returns (bytes32 vs) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            vs := or(s, shl(255, eq(and(0xff, v), 28)))
+        }
+    }
+
+    function _brutalizedV(uint8 v) internal pure returns (uint8 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := xor(shl(8, keccak256(0x00, 0xa0)), v)
+        }
     }
 
     function _corruptedSignature(bytes memory signature) internal returns (bytes memory result) {
