@@ -29,7 +29,11 @@ library ECDSA {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The order of the secp256k1 elliptic curve.
-    bytes32 internal constant N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+    uint256 internal constant N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+
+    /// @dev `N/2 + 1`. Used for checking the malleability of the signature.
+    uint256 private constant _HALF_N_PLUS_1 =
+        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a1;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
@@ -428,7 +432,7 @@ library ECDSA {
                     result := xor(keccak256(add(signature, 0x20), l), 0xd62f1ab2)
                     break
                 }
-                let n := N
+                let halfNPlus1 := _HALF_N_PLUS_1
                 mstore(0x00, mload(add(signature, 0x20))) // `r`.
                 let s := mload(add(signature, 0x40))
                 let v := mload(add(signature, 0x41))
@@ -436,9 +440,9 @@ library ECDSA {
                     v := add(shr(255, s), 27)
                     s := shr(1, shl(1, s))
                 }
-                if lt(shr(1, n), s) {
+                if iszero(lt(s, halfNPlus1)) {
                     v := xor(v, 7)
-                    s := sub(n, s)
+                    s := sub(add(halfNPlus1, halfNPlus1), add(s, 1))
                 }
                 mstore(0x21, v)
                 mstore(0x20, s)
@@ -465,7 +469,7 @@ library ECDSA {
                     result := xor(keccak256(mload(0x40), l), 0xd62f1ab2)
                     break
                 }
-                let n := N
+                let halfNPlus1 := _HALF_N_PLUS_1
                 mstore(0x00, calldataload(signature.offset)) // `r`.
                 let s := calldataload(add(signature.offset, 0x20))
                 let v := calldataload(add(signature.offset, 0x21))
@@ -473,9 +477,9 @@ library ECDSA {
                     v := add(shr(255, s), 27)
                     s := shr(1, shl(1, s))
                 }
-                if lt(shr(1, n), s) {
+                if iszero(lt(s, halfNPlus1)) {
                     v := xor(v, 7)
-                    s := sub(n, s)
+                    s := sub(add(halfNPlus1, halfNPlus1), add(s, 1))
                 }
                 mstore(0x21, v)
                 mstore(0x20, s)
@@ -490,13 +494,13 @@ library ECDSA {
     function canonicalHash(bytes32 r, bytes32 vs) internal pure returns (bytes32 result) {
         // @solidity memory-safe-assembly
         assembly {
-            let n := N
+            let halfNPlus1 := _HALF_N_PLUS_1
             mstore(0x00, r) // `r`.
             let v := add(shr(255, vs), 27)
             let s := shr(1, shl(1, vs))
-            if lt(shr(1, n), s) {
+            if iszero(lt(s, halfNPlus1)) {
                 v := xor(v, 7)
-                s := sub(n, s)
+                s := sub(add(halfNPlus1, halfNPlus1), add(s, 1))
             }
             mstore(0x21, v)
             mstore(0x20, s)
@@ -509,11 +513,11 @@ library ECDSA {
     function canonicalHash(uint8 v, bytes32 r, bytes32 s) internal pure returns (bytes32 result) {
         // @solidity memory-safe-assembly
         assembly {
-            let n := N
+            let halfNPlus1 := _HALF_N_PLUS_1
             mstore(0x00, r) // `r`.
-            if lt(shr(1, n), s) {
+            if iszero(lt(s, halfNPlus1)) {
                 v := xor(v, 7)
-                s := sub(n, s)
+                s := sub(add(halfNPlus1, halfNPlus1), add(s, 1))
             }
             mstore(0x21, v)
             mstore(0x20, s)

@@ -28,9 +28,11 @@ library P256 {
     /// See: https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md
     address internal constant RIP_PRECOMPILE = 0x0000000000000000000000000000000000000100;
 
-    /// @dev P256 curve order `n / 2` for malleability check.
-    /// Included for safety as we have less information on how P256 signatures are being used.
-    uint256 internal constant P256_N_DIV_2 =
+    /// @dev The order of the secp256r1 elliptic curve.
+    uint256 internal constant N = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
+
+    /// @dev `N/2`. Used for checking the malleability of the signature.
+    uint256 private constant _HALF_N =
         0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a8;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -92,7 +94,7 @@ library P256 {
                 }
             }
             // Optimize for happy path. Users are unlikely to pass in malleable signatures.
-            isValid := lt(lt(P256_N_DIV_2, s), and(eq(1, mload(0x00)), success))
+            isValid := lt(gt(s, _HALF_N), and(eq(1, mload(0x00)), success))
         }
     }
 }

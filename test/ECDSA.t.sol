@@ -643,4 +643,32 @@ contract ECDSATest is SoladyTest {
     function testEmptyCalldataHelpers() public {
         assertFalse(ECDSA.tryRecover(bytes32(0), ECDSA.emptySignature()) == address(1));
     }
+
+    function testMalleabilityTrick(uint256 s) public {
+        unchecked {
+            uint256 n = uint256(ECDSA.N);
+            uint256 halfN = n >> 1;
+            uint256 halfNPlus1 = halfN + 1;
+
+            uint256 expected = s;
+            if (expected > halfN) {
+                expected = n - expected;
+            }
+
+            uint256 computed = s;
+            if (!(computed < halfNPlus1)) {
+                computed = (halfNPlus1 + halfNPlus1) - (computed + 1);
+            }
+            assertEq(computed, expected);
+        }
+    }
+
+    function testMalleabilityTrick() public {
+        unchecked {
+            uint256 s = (uint256(ECDSA.N) >> 1) - 10;
+            for (uint256 i; i < 20; ++i) {
+                testMalleabilityTrick(s + i);
+            }
+        }
+    }
 }
