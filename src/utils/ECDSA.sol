@@ -425,14 +425,8 @@ library ECDSA {
     function canonicalHash(bytes memory signature) internal pure returns (bytes32 result) {
         // @solidity memory-safe-assembly
         assembly {
-            for { let l := mload(signature) } 1 {} {
-                // If the length is neither 64 nor 65, return a uniquely corrupted hash.
-                if iszero(lt(sub(l, 64), 2)) {
-                    // `bytes4(keccak256("InvalidSignatureLength"))`.
-                    result := xor(keccak256(add(signature, 0x20), l), 0xd62f1ab2)
-                    break
-                }
-                let halfNPlus1 := _HALF_N_PLUS_1
+            let l := mload(signature)
+            for {} 1 {} {
                 mstore(0x00, mload(add(signature, 0x20))) // `r`.
                 let s := mload(add(signature, 0x40))
                 let v := mload(add(signature, 0x41))
@@ -440,15 +434,21 @@ library ECDSA {
                     v := add(shr(255, s), 27)
                     s := shr(1, shl(1, s))
                 }
-                if iszero(lt(s, halfNPlus1)) {
+                if iszero(lt(s, _HALF_N_PLUS_1)) {
                     v := xor(v, 7)
-                    s := sub(add(halfNPlus1, halfNPlus1), add(s, 1))
+                    s := sub(N, s)
                 }
                 mstore(0x21, v)
                 mstore(0x20, s)
                 result := keccak256(0x00, 0x41)
                 mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
                 break
+            }
+
+            // If the length is neither 64 nor 65, return a uniquely corrupted hash.
+            if iszero(lt(sub(l, 64), 2)) {
+                // `bytes4(keccak256("InvalidSignatureLength"))`.
+                result := xor(keccak256(add(signature, 0x20), l), 0xd62f1ab2)
             }
         }
     }
@@ -461,15 +461,8 @@ library ECDSA {
     {
         // @solidity memory-safe-assembly
         assembly {
-            for { let l := signature.length } 1 {} {
-                // If the length is neither 64 nor 65, return a uniquely corrupted hash.
-                if iszero(lt(sub(l, 64), 2)) {
-                    calldatacopy(mload(0x40), signature.offset, l)
-                    // `bytes4(keccak256("InvalidSignatureLength"))`.
-                    result := xor(keccak256(mload(0x40), l), 0xd62f1ab2)
-                    break
-                }
-                let halfNPlus1 := _HALF_N_PLUS_1
+            let l := signature.length
+            for {} 1 {} {
                 mstore(0x00, calldataload(signature.offset)) // `r`.
                 let s := calldataload(add(signature.offset, 0x20))
                 let v := calldataload(add(signature.offset, 0x21))
@@ -477,15 +470,21 @@ library ECDSA {
                     v := add(shr(255, s), 27)
                     s := shr(1, shl(1, s))
                 }
-                if iszero(lt(s, halfNPlus1)) {
+                if iszero(lt(s, _HALF_N_PLUS_1)) {
                     v := xor(v, 7)
-                    s := sub(add(halfNPlus1, halfNPlus1), add(s, 1))
+                    s := sub(N, s)
                 }
                 mstore(0x21, v)
                 mstore(0x20, s)
                 result := keccak256(0x00, 0x41)
                 mstore(0x21, 0) // Restore the overwritten part of the free memory pointer.
                 break
+            }
+            // If the length is neither 64 nor 65, return a uniquely corrupted hash.
+            if iszero(lt(sub(l, 64), 2)) {
+                calldatacopy(mload(0x40), signature.offset, l)
+                // `bytes4(keccak256("InvalidSignatureLength"))`.
+                result := xor(keccak256(mload(0x40), l), 0xd62f1ab2)
             }
         }
     }
@@ -494,14 +493,9 @@ library ECDSA {
     function canonicalHash(bytes32 r, bytes32 vs) internal pure returns (bytes32 result) {
         // @solidity memory-safe-assembly
         assembly {
-            let halfNPlus1 := _HALF_N_PLUS_1
             mstore(0x00, r) // `r`.
             let v := add(shr(255, vs), 27)
             let s := shr(1, shl(1, vs))
-            if iszero(lt(s, halfNPlus1)) {
-                v := xor(v, 7)
-                s := sub(add(halfNPlus1, halfNPlus1), add(s, 1))
-            }
             mstore(0x21, v)
             mstore(0x20, s)
             result := keccak256(0x00, 0x41)
@@ -513,11 +507,10 @@ library ECDSA {
     function canonicalHash(uint8 v, bytes32 r, bytes32 s) internal pure returns (bytes32 result) {
         // @solidity memory-safe-assembly
         assembly {
-            let halfNPlus1 := _HALF_N_PLUS_1
             mstore(0x00, r) // `r`.
-            if iszero(lt(s, halfNPlus1)) {
+            if iszero(lt(s, _HALF_N_PLUS_1)) {
                 v := xor(v, 7)
-                s := sub(add(halfNPlus1, halfNPlus1), add(s, 1))
+                s := sub(N, s)
             }
             mstore(0x21, v)
             mstore(0x20, s)
