@@ -1095,7 +1095,7 @@ library LibClone {
     // The returned implementation is guaranteed to be valid if the keccak256 of the
     // proxy's code is equal to `ERC1967I_CODE_HASH`.
 
-    /// @dev Deploys a minimal ERC1967I proxy with `implementation`.
+    /// @dev Deploys a ERC1967I proxy with `implementation`.
     function deployERC1967I(address implementation) internal returns (address instance) {
         instance = deployERC1967I(0, implementation);
     }
@@ -1290,7 +1290,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the initialization code of the minimal ERC1967 proxy of `implementation`.
+    /// @dev Returns the initialization code of the ERC1967I proxy of `implementation`.
     function initCodeERC1967I(address implementation) internal pure returns (bytes memory c) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -1306,7 +1306,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the initialization code hash of the minimal ERC1967 proxy of `implementation`.
+    /// @dev Returns the initialization code hash of the ERC1967I proxy of `implementation`.
     function initCodeHashERC1967I(address implementation) internal pure returns (bytes32 hash) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -1330,6 +1330,344 @@ library LibClone {
     ) internal pure returns (address predicted) {
         bytes32 hash = initCodeHashERC1967I(implementation);
         predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*       ERC1967I PROXY WITH IMMUTABLE ARGS OPERATIONS        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Deploys a minimal ERC1967I proxy with `implementation` and `args`.
+    function deployERC1967I(address implementation, bytes memory args) internal returns (address) {
+        return deployERC1967I(0, implementation, args);
+    }
+
+    /// @dev Deploys a minimal ERC1967I proxy with `implementation` and `args`.
+    /// Deposits `value` ETH during deployment.
+    function deployERC1967I(uint256 value, address implementation, bytes memory args)
+        internal
+        returns (address instance)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            /**
+             * ---------------------------------------------------------------------------------+
+             * CREATION (35 bytes)                                                              |
+             * ---------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                          |
+             * ---------------------------------------------------------------------------------|
+             * 61 runSize | PUSH2 runSize  | r                |                                 |
+             * 3d         | RETURNDATASIZE | 0 r              |                                 |
+             * 81         | DUP2           | r 0 r            |                                 |
+             * 60 offset  | PUSH1 offset   | o r 0 r          |                                 |
+             * 3d         | RETURNDATASIZE | 0 o r 0 r        |                                 |
+             * 39         | CODECOPY       | 0 r              | [0..runSize): runtime code      |
+             * 73 impl    | PUSH20 impl    | impl 0 r         | [0..runSize): runtime code      |
+             * 60 slotPos | PUSH1 slotPos  | slotPos impl 0 r | [0..runSize): runtime code      |
+             * 51         | MLOAD          | slot impl 0 r    | [0..runSize): runtime code      |
+             * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
+             * f3         | RETURN         |                  | [0..runSize): runtime code      |
+             * ---------------------------------------------------------------------------------|
+             * RUNTIME (82 bytes + extraLength)                                                 |
+             * ---------------------------------------------------------------------------------|
+             * Opcode     | Mnemonic       | Stack            | Memory                          |
+             * ---------------------------------------------------------------------------------|
+             *                                                                                  |
+             * ::: check calldatasize ::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36         | CALLDATASIZE   | cds              |                                 |
+             * 58         | PC             | 1 cds            |                                 |
+             * 14         | EQ             | eqs              |                                 |
+             * 60 0x43    | PUSH1 0x43     | dest eqs         |                                 |
+             * 57         | JUMPI          |                  |                                 |
+             *                                                                                  |
+             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 36         | CALLDATASIZE   | cds              |                                 |
+             * 3d         | RETURNDATASIZE | 0 cds            |                                 |
+             * 3d         | RETURNDATASIZE | 0 0 cds          |                                 |
+             * 37         | CALLDATACOPY   |                  | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | 0                |                                 |
+             * 3d         | RETURNDATASIZE | 0 0              |                                 |
+             * 36         | CALLDATASIZE   | cds 0 0          | [0..calldatasize): calldata     |
+             * 3d         | RETURNDATASIZE | 0 cds 0 0        | [0..calldatasize): calldata     |
+             * 7f slot    | PUSH32 slot    | s 0 cds 0 0      | [0..calldatasize): calldata     |
+             * 54         | SLOAD          | i 0 cds 0 0      | [0..calldatasize): calldata     |
+             * 5a         | GAS            | g i 0 cds 0 0    | [0..calldatasize): calldata     |
+             * f4         | DELEGATECALL   | succ             | [0..calldatasize): calldata     |
+             *                                                                                  |
+             * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | rds succ         | [0..calldatasize): calldata     |
+             * 60 0x00    | PUSH1 0x00     | 0 rds succ       | [0..calldatasize): calldata     |
+             * 80         | DUP1           | 0 0 rds succ     | [0..calldatasize): calldata     |
+             * 3e         | RETURNDATACOPY | succ             | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::: |
+             * 60 0x3E    | PUSH1 0x3E     | dest succ        | [0..returndatasize): returndata |
+             * 57         | JUMPI          |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
+             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
+             * fd         | REVERT         |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b         | JUMPDEST       |                  | [0..returndatasize): returndata |
+             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
+             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
+             * f3         | RETURN         |                  | [0..returndatasize): returndata |
+             *                                                                                  |
+             * ::: implementation , return :::::::::::::::::::::::::::::::::::::::::::::::::::: |
+             * 5b         | JUMPDEST       |                  |                                 |
+             * 60 0x20    | PUSH1 0x20     | 32               |                                 |
+             * 60 0x0F    | PUSH1 0x0F     | o 32             |                                 |
+             * 3d         | RETURNDATASIZE | 0 o 32           |                                 |
+             * 39         | CODECOPY       |                  | [0..32): implementation slot    |
+             * 3d         | RETURNDATASIZE | 0                | [0..32): implementation slot    |
+             * 51         | MLOAD          | slot             | [0..32): implementation slot    |
+             * 54         | SLOAD          | impl             | [0..32): implementation slot    |
+             * 3d         | RETURNDATASIZE | 0 impl           | [0..32): implementation slot    |
+             * 52         | MSTORE         |                  | [0..32): implementation address |
+             * 59         | MSIZE          | 32               | [0..32): implementation address |
+             * 3d         | RETURNDATASIZE | 0 32             | [0..32): implementation address |
+             * f3         | RETURN         |                  | [0..32): implementation address |
+             * ---------------------------------------------------------------------------------+
+             */
+            let m := mload(0x40)
+            let n := mload(args)
+            pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x8b), n))
+
+            mstore(add(m, 0x6b), 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(add(m, 0x4b), 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(add(m, 0x2b), 0x600f5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(add(m, 0x14), implementation)
+            mstore(m, add(0xfe6100523d8160233d3973, shl(56, n)))
+
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            instance := create(value, add(m, add(0x15, lt(n, 0xffae))), add(0x75, n))
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Deploys a deterministic ERC1967I proxy with `implementation`, `args`, and `salt`.
+    function deployDeterministicERC1967I(address implementation, bytes memory args, bytes32 salt)
+        internal
+        returns (address instance)
+    {
+        instance = deployDeterministicERC1967I(0, implementation, args, salt);
+    }
+
+    /// @dev Deploys a deterministic ERC1967I proxy with `implementation`,`args`,  and `salt`.
+    /// Deposits `value` ETH during deployment.
+    function deployDeterministicERC1967I(
+        uint256 value,
+        address implementation,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (address instance) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let n := mload(args)
+            pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x8b), n))
+
+            mstore(add(m, 0x6b), 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(add(m, 0x4b), 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(add(m, 0x2b), 0x600f5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(add(m, 0x14), implementation)
+            mstore(m, add(0xfe6100523d8160233d3973, shl(56, n)))
+
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            instance := create2(value, add(m, add(0x15, lt(n, 0xffae))), add(0x75, n), salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Creates a deterministic ERC1967I proxy with `implementation`, `args` and `salt`.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967I(address implementation, bytes memory args, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        return createDeterministicERC1967I(0, implementation, args, salt);
+    }
+
+    /// @dev Creates a deterministic ERC1967I proxy with `implementation`,`args` and `salt`.
+    /// Deposits `value` ETH during deployment.
+    /// Note: This method is intended for use in ERC4337 factories,
+    /// which are expected to NOT revert if the proxy is already deployed.
+    function createDeterministicERC1967I(
+        uint256 value,
+        address implementation,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (bool alreadyDeployed, address instance) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let n := mload(args)
+            pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x75), n))
+
+            mstore(add(m, 0x55), 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(add(m, 0x35), 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(add(m, 0x15), 0x5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(0x16, 0x600f)
+            mstore(0x14, implementation)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            mstore(gt(n, 0xffad), add(0xfe6100523d8160233d3973, shl(56, n)))
+            mstore(m, mload(0x16))
+            // Compute and store the bytecode hash.
+            mstore8(0x00, 0xff) // Write the prefix.
+            mstore(0x35, keccak256(m, add(n, 0x75)))
+            mstore(0x01, shl(96, address()))
+            mstore(0x15, salt)
+            instance := keccak256(0x00, 0x55)
+            for {} 1 {} {
+                if iszero(extcodesize(instance)) {
+                    instance := create2(value, m, add(0x75, n), salt)
+                    if iszero(instance) {
+                        mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    break
+                }
+                alreadyDeployed := 1
+                if iszero(value) { break }
+                if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
+                break
+            }
+            mstore(0x35, 0) // Restore the overwritten part of the free memory pointer.
+        }
+    }
+
+    /// @dev Returns the initialization code of the ERC1967I proxy of `implementation`and `args`.
+    function initCodeERC1967I(address implementation, bytes memory args)
+        internal
+        pure
+        returns (bytes memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            c := mload(0x40)
+            let n := mload(args)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffad))
+            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                mstore(add(add(c, 0x95), i), mload(add(add(args, 0x20), i)))
+            }
+
+            mstore(add(c, 0x75), 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(add(c, 0x55), 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(add(c, 0x35), 0x600f5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(add(c, 0x1e), implementation)
+            mstore(add(c, 0x0a), add(0xfe6100523d8160233d3973, shl(56, n)))
+            mstore(add(c, add(n, 0x95)), 0)
+            mstore(c, add(0x75, n)) // Store the length.
+            mstore(0x40, add(c, add(n, 0xb5))) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the ERC1967I proxy of `implementation` and `args.
+    function initCodeHashERC1967I(address implementation, bytes memory args)
+        internal
+        pure
+        returns (bytes32 hash)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            let n := mload(args)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
+            returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffad))
+
+            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                mstore(add(add(m, 0x75), i), mload(add(add(args, 0x20), i)))
+            }
+
+            mstore(add(m, 0x55), 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
+            mstore(add(m, 0x35), 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
+            mstore(add(m, 0x15), 0x5155f3365814604357363d3d373d3d363d7f360894)
+            mstore(0x16, 0x600f)
+            mstore(0x14, implementation)
+            mstore(0x00, add(0xfe6100523d8160233d3973, shl(56, n)))
+            mstore(m, mload(0x16))
+            hash := keccak256(m, add(0x75, n))
+        }
+    }
+
+    /// @dev Returns the address of the ERC1967I proxy of `implementation`, 'args` with `salt` by `deployer`.
+    /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
+    function predictDeterministicAddressERC1967I(
+        address implementation,
+        bytes memory args,
+        bytes32 salt,
+        address deployer
+    ) internal pure returns (address predicted) {
+        bytes32 hash = initCodeHashERC1967I(implementation, args);
+        predicted = predictDeterministicAddress(hash, salt, deployer);
+    }
+
+    /// @dev Equivalent to `argsOnERC1967I(instance, start, 2 ** 256 - 1)`.
+    function argsOnERC1967I(address instance) internal view returns (bytes memory args) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            mstore(args, sub(extcodesize(instance), 0x52)) // Store the length.
+            extcodecopy(instance, add(args, 0x20), 0x52, add(mload(args), 0x20))
+            mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
+        }
+    }
+
+    /// @dev Equivalent to `argsOnERC1967I(instance, start, 2 ** 256 - 1)`.
+    function argsOnERC1967I(address instance, uint256 start)
+        internal
+        view
+        returns (bytes memory args)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            let n := sub(extcodesize(instance), 0x52)
+            extcodecopy(instance, add(args, 0x20), add(start, 0x52), add(n, 0x20))
+            mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
+            mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns a slice of the immutable arguments on `instance` from `start` to `end`.
+    /// `start` and `end` will be clamped to the range `[0, args.length]`.
+    /// The `instance` MUST be deployed via the ERC1967 with immutable args functions.
+    /// Otherwise, the behavior is undefined.
+    /// Out-of-gas reverts if `instance` does not have any code.
+    function argsOnERC1967I(address instance, uint256 start, uint256 end)
+        internal
+        view
+        returns (bytes memory args)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            args := mload(0x40)
+            if iszero(lt(end, 0xffff)) { end := 0xffff }
+            let d := mul(sub(end, start), lt(start, end))
+            extcodecopy(instance, args, add(start, 0x32), add(d, 0x20))
+            if iszero(and(0xff, mload(add(args, d)))) {
+                let n := sub(extcodesize(instance), 0x52)
+                returndatacopy(returndatasize(), returndatasize(), shr(64, n))
+                d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
+            }
+            mstore(args, d) // Store the length.
+            mstore(add(add(args, 0x20), d), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(args, 0x40), d)) // Allocate memory.
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
