@@ -2318,22 +2318,6 @@ library LibClone {
              * f3         | RETURN         |                  | [1..returndatasize): returndata |
              * ---------------------------------------------------------------------------------+
              */
-
-            // 86 + 34 = 120
-            // creation code
-            // 60573d8160223d3973 addresss
-            // 60195155f3
-            //
-
-            // run time
-
-            // 363d3d373d3d363d - 8 bytes
-            // becaon     - 602036600436 635c60da1b60e01b36 527f a3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b3513 3d50 - 17+32
-            // 545afa361460525736515af43d600060013e6052573d6001fd  5b3d6001f3- 25 + 5
-            //
-            // 3d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3
-            // 527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b3513
-            // 60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36
             let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x60, 0x3d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3)
             mstore(0x40, 0x527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b3513)
