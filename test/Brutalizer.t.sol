@@ -51,6 +51,28 @@ contract BrutalizerTest is SoladyTest {
                 assertEq(brutalized, x);
                 if (isBrutalized) break;
             }
+
+            while (true) {
+                bytes1 x = bytes1(uint8(_random() & (2 ** 8 - 1)));
+                bytes1 brutalized = _brutalizedBytes1(x);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    isBrutalized := gt(shl(8, brutalized), 0)
+                }
+                assertEq(brutalized, x);
+                if (isBrutalized) break;
+            }
+
+            while (true) {
+                bytes31 x = bytes31(uint248(_random() & (2 ** 248 - 1)));
+                bytes31 brutalized = _brutalizedBytes31(x);
+                /// @solidity memory-safe-assembly
+                assembly {
+                    isBrutalized := gt(shl(248, brutalized), 0)
+                }
+                assertEq(brutalized, x);
+                if (isBrutalized) break;
+            }
         }
     }
 }

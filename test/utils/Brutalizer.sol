@@ -331,6 +331,192 @@ contract Brutalizer {
         return uint248((__brutalizerRandomness(value) << 248) ^ uint256(value));
     }
 
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes1(bytes1 value) internal pure returns (bytes1) {
+        uint256 v = uint256(bytes32(value));
+        return bytes1(bytes32(uint256((__brutalizerRandomness(v) >> 8) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes2(bytes2 value) internal pure returns (bytes2) {
+        uint256 v = uint256(bytes32(value));
+        return bytes2(bytes32(uint256((__brutalizerRandomness(v) >> 16) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes3(bytes3 value) internal pure returns (bytes3) {
+        uint256 v = uint256(bytes32(value));
+        return bytes3(bytes32(uint256((__brutalizerRandomness(v) >> 24) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes4(bytes4 value) internal pure returns (bytes4) {
+        uint256 v = uint256(bytes32(value));
+        return bytes4(bytes32(uint256((__brutalizerRandomness(v) >> 32) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes5(bytes5 value) internal pure returns (bytes5) {
+        uint256 v = uint256(bytes32(value));
+        return bytes5(bytes32(uint256((__brutalizerRandomness(v) >> 40) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes6(bytes6 value) internal pure returns (bytes6) {
+        uint256 v = uint256(bytes32(value));
+        return bytes6(bytes32(uint256((__brutalizerRandomness(v) >> 48) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes7(bytes7 value) internal pure returns (bytes7) {
+        uint256 v = uint256(bytes32(value));
+        return bytes7(bytes32(uint256((__brutalizerRandomness(v) >> 56) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes8(bytes8 value) internal pure returns (bytes8) {
+        uint256 v = uint256(bytes32(value));
+        return bytes8(bytes32(uint256((__brutalizerRandomness(v) >> 64) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes9(bytes9 value) internal pure returns (bytes9) {
+        uint256 v = uint256(bytes32(value));
+        return bytes9(bytes32(uint256((__brutalizerRandomness(v) >> 72) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes10(bytes10 value) internal pure returns (bytes10) {
+        uint256 v = uint256(bytes32(value));
+        return bytes10(bytes32(uint256((__brutalizerRandomness(v) >> 80) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes11(bytes11 value) internal pure returns (bytes11) {
+        uint256 v = uint256(bytes32(value));
+        return bytes11(bytes32(uint256((__brutalizerRandomness(v) >> 88) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes12(bytes12 value) internal pure returns (bytes12) {
+        uint256 v = uint256(bytes32(value));
+        return bytes12(bytes32(uint256((__brutalizerRandomness(v) >> 96) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes13(bytes13 value) internal pure returns (bytes13) {
+        uint256 v = uint256(bytes32(value));
+        return bytes13(bytes32(uint256((__brutalizerRandomness(v) >> 104) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes14(bytes14 value) internal pure returns (bytes14) {
+        uint256 v = uint256(bytes32(value));
+        return bytes14(bytes32(uint256((__brutalizerRandomness(v) >> 112) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes15(bytes15 value) internal pure returns (bytes15) {
+        uint256 v = uint256(bytes32(value));
+        return bytes15(bytes32(uint256((__brutalizerRandomness(v) >> 120) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes16(bytes16 value) internal pure returns (bytes16) {
+        uint256 v = uint256(bytes32(value));
+        return bytes16(bytes32(uint256((__brutalizerRandomness(v) >> 128) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes17(bytes17 value) internal pure returns (bytes17) {
+        uint256 v = uint256(bytes32(value));
+        return bytes17(bytes32(uint256((__brutalizerRandomness(v) >> 136) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes18(bytes18 value) internal pure returns (bytes18) {
+        uint256 v = uint256(bytes32(value));
+        return bytes18(bytes32(uint256((__brutalizerRandomness(v) >> 144) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes19(bytes19 value) internal pure returns (bytes19) {
+        uint256 v = uint256(bytes32(value));
+        return bytes19(bytes32(uint256((__brutalizerRandomness(v) >> 152) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes20(bytes20 value) internal pure returns (bytes20) {
+        uint256 v = uint256(bytes32(value));
+        return bytes20(bytes32(uint256((__brutalizerRandomness(v) >> 160) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes21(bytes21 value) internal pure returns (bytes21) {
+        uint256 v = uint256(bytes32(value));
+        return bytes21(bytes32(uint256((__brutalizerRandomness(v) >> 168) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes22(bytes22 value) internal pure returns (bytes22) {
+        uint256 v = uint256(bytes32(value));
+        return bytes22(bytes32(uint256((__brutalizerRandomness(v) >> 176) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes23(bytes23 value) internal pure returns (bytes23) {
+        uint256 v = uint256(bytes32(value));
+        return bytes23(bytes32(uint256((__brutalizerRandomness(v) >> 184) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes24(bytes24 value) internal pure returns (bytes24) {
+        uint256 v = uint256(bytes32(value));
+        return bytes24(bytes32(uint256((__brutalizerRandomness(v) >> 192) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes25(bytes25 value) internal pure returns (bytes25) {
+        uint256 v = uint256(bytes32(value));
+        return bytes25(bytes32(uint256((__brutalizerRandomness(v) >> 200) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes26(bytes26 value) internal pure returns (bytes26) {
+        uint256 v = uint256(bytes32(value));
+        return bytes26(bytes32(uint256((__brutalizerRandomness(v) >> 208) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes27(bytes27 value) internal pure returns (bytes27) {
+        uint256 v = uint256(bytes32(value));
+        return bytes27(bytes32(uint256((__brutalizerRandomness(v) >> 216) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes28(bytes28 value) internal pure returns (bytes28) {
+        uint256 v = uint256(bytes32(value));
+        return bytes28(bytes32(uint256((__brutalizerRandomness(v) >> 224) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes29(bytes29 value) internal pure returns (bytes29) {
+        uint256 v = uint256(bytes32(value));
+        return bytes29(bytes32(uint256((__brutalizerRandomness(v) >> 232) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes30(bytes30 value) internal pure returns (bytes30) {
+        uint256 v = uint256(bytes32(value));
+        return bytes30(bytes32(uint256((__brutalizerRandomness(v) >> 240) ^ v)));
+    }
+
+    /// @dev Returns the result with the lower bits dirtied.
+    function _brutalizedBytes31(bytes31 value) internal pure returns (bytes31) {
+        uint256 v = uint256(bytes32(value));
+        return bytes31(bytes32(uint256((__brutalizerRandomness(v) >> 248) ^ v)));
+    }
+
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalized(bool value) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
