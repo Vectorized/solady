@@ -2661,11 +2661,11 @@ library LibClone {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns `address(0)` if the implementation address cannot be determined.
-    function implementationOf(address instance) external view returns (address result) {
+    function implementationOf(address instance) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             for { extcodecopy(instance, 0x00, 0x00, 0x57) } 1 {} {
-                if mload(0x32) {
+                if mload(0x2d) {
                     // ERC1967I and ERC1967IBeaconProxy detection.
                     if or(
                         eq(keccak256(0x00, 0x52), ERC1967I_CODE_HASH),
