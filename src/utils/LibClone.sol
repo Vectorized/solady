@@ -2759,19 +2759,19 @@ library LibClone {
                 }
                 // 0age clone detection.
                 result := mload(0x0b)
-                mstore(0x0b, shr(160, shl(160, result)))
-                if eq(keccak256(0x00, 0x2c), CLONE_CODE_HASH) { break }
-                mstore(0x0b, result) // Restore the overwritten memory.
+                codecopy(0x0b, codesize(), 0x14) // Zeroize the 20 bytes for the address.
+                if iszero(xor(keccak256(0x00, 0x2c), CLONE_CODE_HASH)) { break }
+                mstore(0x0b, result) // Restore the zeroized memory.
                 // CWIA detection.
                 result := mload(0x0a)
-                mstore(0x0a, shr(160, shl(160, result)))
-                if eq(keccak256(0x00, 0x2d), CWIA_CODE_HASH) { break }
-                mstore(0x0a, result) // Restore the overwritten memory.
+                codecopy(0x0a, codesize(), 0x14) // Zeroize the 20 bytes for the address.
+                if iszero(xor(keccak256(0x00, 0x2d), CWIA_CODE_HASH)) { break }
+                mstore(0x0a, result) // Restore the zeroized memory.
                 // PUSH0 clone detection.
                 result := mload(0x09)
-                mstore(0x09, shr(160, shl(160, result)))
-                if eq(keccak256(0x00, 0x2d), PUSH0_CLONE_CODE_HASH) { break }
-                result := 0x00
+                codecopy(0x09, codesize(), 0x14) // Zeroize the 20 bytes for the address.
+                if iszero(xor(keccak256(0x00, 0x2d), PUSH0_CLONE_CODE_HASH)) { break }
+                result := 0
                 break
             }
             result := shr(96, result)

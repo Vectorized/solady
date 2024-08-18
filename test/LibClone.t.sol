@@ -233,9 +233,53 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testImplemenationOf(address implementation) public {
+        _maybeBrutalizeMemory();
         bytes memory args = _truncateBytes(_randomBytes(), _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH);
+        address instance;
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.clone(implementation);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.clone(implementation, args);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.deployERC1967I(implementation);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.deployERC1967I(implementation, args);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.deployERC1967IBeaconProxy(_beacon());
+            assertEq(LibClone.implementationOf(instance), address(this));
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.deployERC1967IBeaconProxy(_beacon(), args);
+            assertEq(LibClone.implementationOf(instance), address(this));
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            assertEq(LibClone.implementationOf(address(this)), address(0));
+            assertEq(LibClone.implementationOf(implementation), address(0));
+        }
+        _checkMemory();
+    }
 
-        address instance = LibClone.clone(implementation);
+    function testImplemenationOfGas() public {
+        address implementation = address(123);
+        bytes memory args = "1234564789";
+        address instance;
+
+        instance = LibClone.clone(implementation);
         assertEq(LibClone.implementationOf(instance), implementation);
 
         instance = LibClone.clone(implementation, args);
@@ -253,8 +297,8 @@ contract LibCloneTest is SoladyTest {
         instance = LibClone.deployERC1967IBeaconProxy(_beacon(), args);
         assertEq(LibClone.implementationOf(instance), address(this));
 
-        assertEq(LibClone.implementationOf(address(this)), address(0x00));
-        assertEq(LibClone.implementationOf(implementation), address(0x00));
+        assertEq(LibClone.implementationOf(address(this)), address(0));
+        assertEq(LibClone.implementationOf(implementation), address(0));
     }
 
     function testClone(uint256) public {
