@@ -2772,8 +2772,7 @@ library LibClone {
                 // PUSH0 clone detection.
                 result := mload(0x09)
                 codecopy(0x09, codesize(), 0x14) // Zeroize the 20 bytes for the address.
-                if iszero(xor(keccak256(0x00, 0x2d), PUSH0_CLONE_CODE_HASH)) { break }
-                result := 0
+                result := shr(xor(keccak256(0x00, 0x2d), PUSH0_CLONE_CODE_HASH), result)
                 break
             }
             result := shr(96, result)
