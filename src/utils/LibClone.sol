@@ -71,6 +71,18 @@ library LibClone {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev The keccak256 of the maksed `implementation` deployed code for the clone proxy.
+    bytes32 internal constant CLONE_CODE_HASH =
+        0x48db2cfdb2853fce0b464f1f93a1996469459df3ab6c812106074c4106a1eb1f;
+
+    /// @dev The keccak256 of the maksed `implementation` deployed code for the push0 proxy.
+    bytes32 internal constant PUSH0_CLONE_CODE_HASH =
+        0x67bc6bde1b84d66e267c718ba44cf3928a615d29885537955cb43d44b3e789dc;
+
+    /// @dev The keccak256 of the maksed `implementation` deployed code for the cwia proxy.
+    bytes32 internal constant CWIA_CODE_HASH =
+        0x3cf92464268225a4513da40a34d967354684c32cd0edd67b5f668dfe3550e940;
+
     /// @dev The keccak256 of the deployed code for the ERC1967 proxy.
     bytes32 internal constant ERC1967_CODE_HASH =
         0xaaa52c8cc8a0e3fd27ce756cc6b4e70c51423e9b597b11f32d3e49f8b1fc890d;
@@ -482,9 +494,10 @@ library LibClone {
             }
         }
     }
-
+    // 0,0x5e17b14ADd6c386305A32928F985b29bbA34Eff5, hex"01020304"
     /// @dev Deploys a deterministic clone of `implementation`
     /// with immutable arguments encoded in `args` and `salt`.
+
     function cloneDeterministic(address implementation, bytes memory args, bytes32 salt)
         internal
         returns (address instance)
@@ -2812,6 +2825,58 @@ library LibClone {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      OTHER OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns `address(0)` if the implementation address cannot be determined,
+    /// due to an unrecognized bytecode.
+    function implementationOf(address instance) external view returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} 1 {} {
+                extcodecopy(instance, 0x00, 0x00, 0x57)
+                // ERC1967I and ERC1967IBeaconProxy detection
+                if or(
+                    eq(keccak256(0x00, 82), ERC1967I_CODE_HASH),
+                    eq(keccak256(0x00, 87), ERC1967I_BEACON_PROXY_CODE_HASH)
+                ) {
+                    pop(staticcall(gas(), instance, 0x00, 0x01, 0x20, 0x20))
+                    result := mload(returndatasize())
+                    break
+                }
+
+                // 0age Clone detection
+                result := mload(0x0b)
+                mstore(0x0b, shr(160, shl(160, result)))
+
+                if eq(keccak256(0x00, 0x2c), CLONE_CODE_HASH) {
+                    result := shr(96, result)
+                    break
+                }
+
+                mstore(0x0b, result) // Restore Over Written Memory
+
+                // CWIA Clone detection
+                result := mload(0x0a)
+                mstore(0x0a, shr(160, shl(160, result)))
+                if eq(keccak256(0x00, 0x2d), CWIA_CODE_HASH) {
+                    result := shr(96, result)
+                    break
+                }
+
+                mstore(0x0a, result) // Restore Over Written Memory
+
+                // PUSH0 clone detection - 9 ( 45 bytes )
+                result := mload(0x09)
+                mstore(0x09, shr(160, shl(160, result)))
+                if eq(keccak256(0x00, 0x2d), PUSH0_CLONE_CODE_HASH) {
+                    result := shr(96, result)
+                    break
+                }
+                result := 0x00
+                break
+            }
+            mstore(0x37, 0x00) // Restore the overwritten part of the free memory pointer.
+        }
+    }
 
     /// @dev Returns the address when a contract with initialization code hash,
     /// `hash`, is deployed with `salt`, by `deployer`.
