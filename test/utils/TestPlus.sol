@@ -250,7 +250,9 @@ contract TestPlus is Brutalizer {
     function __toBrutalizedAddress(address a) private pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := xor(shl(160, xor(keccak256(0x00, 0x88), _ADDRESS_BRUTALIZER)), a)
+            result := keccak256(0x00, 0x88)
+            result := xor(shl(160, xor(result, _ADDRESS_BRUTALIZER)), a)
+            mstore(0x10, result)
         }
     }
 
@@ -258,7 +260,9 @@ contract TestPlus is Brutalizer {
     function __toBrutalizedAddress(uint256 a) private pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := xor(shl(160, xor(keccak256(0x00, 0x88), _ADDRESS_BRUTALIZER)), a)
+            result := keccak256(0x00, 0x88)
+            result := xor(shl(160, xor(result, _ADDRESS_BRUTALIZER)), a)
+            mstore(0x10, result)
         }
     }
 
