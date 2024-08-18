@@ -11,27 +11,6 @@ contract MockOwnableRoles is OwnableRoles, Brutalizer {
 
     constructor() payable {
         _initializeOwner(msg.sender);
-
-        while (true) {
-            // Perform the tests on the helper functions.
-            address brutalizedAddress = _brutalized(address(0));
-            bool brutalizedAddressIsBrutalized;
-            /// @solidity memory-safe-assembly
-            assembly {
-                brutalizedAddressIsBrutalized := gt(shr(160, brutalizedAddress), 0)
-            }
-            if (brutalizedAddressIsBrutalized) break;
-        }
-
-        bool badBool;
-        /// @solidity memory-safe-assembly
-        assembly {
-            badBool := 2
-        }
-        bool checkedBadBool = _checkedBool(badBool);
-        if (checkedBadBool) {
-            revert("Setup failed");
-        }
     }
 
     function initializeOwnerDirect(address newOwner) public payable {

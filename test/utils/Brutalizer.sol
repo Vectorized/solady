@@ -178,164 +178,164 @@ contract Brutalizer {
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint8(uint8 value) internal pure returns (uint8) {
-        return int8((__brutalizerRandomness(value) << 8) ^ uint256(value));
+        return uint8((__brutalizerRandomness(value) << 8) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint16(uint16 value) internal pure returns (uint16) {
-        return int16((__brutalizerRandomness(value) << 16) ^ uint256(value));
+        return uint16((__brutalizerRandomness(value) << 16) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint24(uint24 value) internal pure returns (uint24) {
-        return int24((__brutalizerRandomness(value) << 24) ^ uint256(value));
+        return uint24((__brutalizerRandomness(value) << 24) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint32(uint32 value) internal pure returns (uint32) {
-        return int32((__brutalizerRandomness(value) << 32) ^ uint256(value));
+        return uint32((__brutalizerRandomness(value) << 32) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint40(uint40 value) internal pure returns (uint40) {
-        return int40((__brutalizerRandomness(value) << 40) ^ uint256(value));
+        return uint40((__brutalizerRandomness(value) << 40) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint48(uint48 value) internal pure returns (uint48) {
-        return int48((__brutalizerRandomness(value) << 48) ^ uint256(value));
+        return uint48((__brutalizerRandomness(value) << 48) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint56(uint56 value) internal pure returns (uint56) {
-        return int56((__brutalizerRandomness(value) << 56) ^ uint256(value));
+        return uint56((__brutalizerRandomness(value) << 56) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint64(uint64 value) internal pure returns (uint64) {
-        return int64((__brutalizerRandomness(value) << 64) ^ uint256(value));
+        return uint64((__brutalizerRandomness(value) << 64) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint72(uint72 value) internal pure returns (uint72) {
-        return int72((__brutalizerRandomness(value) << 72) ^ uint256(value));
+        return uint72((__brutalizerRandomness(value) << 72) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint80(uint80 value) internal pure returns (uint80) {
-        return int80((__brutalizerRandomness(value) << 80) ^ uint256(value));
+        return uint80((__brutalizerRandomness(value) << 80) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint88(uint88 value) internal pure returns (uint88) {
-        return int88((__brutalizerRandomness(value) << 88) ^ uint256(value));
+        return uint88((__brutalizerRandomness(value) << 88) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint96(uint96 value) internal pure returns (uint96) {
-        return int96((__brutalizerRandomness(value) << 96) ^ uint256(value));
+        return uint96((__brutalizerRandomness(value) << 96) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint104(uint104 value) internal pure returns (uint104) {
-        return int104((__brutalizerRandomness(value) << 104) ^ uint256(value));
+        return uint104((__brutalizerRandomness(value) << 104) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint112(uint112 value) internal pure returns (uint112) {
-        return int112((__brutalizerRandomness(value) << 112) ^ uint256(value));
+        return uint112((__brutalizerRandomness(value) << 112) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint120(uint120 value) internal pure returns (uint120) {
-        return int120((__brutalizerRandomness(value) << 120) ^ uint256(value));
+        return uint120((__brutalizerRandomness(value) << 120) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint128(uint128 value) internal pure returns (uint128) {
-        return int128((__brutalizerRandomness(value) << 128) ^ uint256(value));
+        return uint128((__brutalizerRandomness(value) << 128) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint136(uint136 value) internal pure returns (uint136) {
-        return int136((__brutalizerRandomness(value) << 136) ^ uint256(value));
+        return uint136((__brutalizerRandomness(value) << 136) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint144(uint144 value) internal pure returns (uint144) {
-        return int144((__brutalizerRandomness(value) << 144) ^ uint256(value));
+        return uint144((__brutalizerRandomness(value) << 144) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint152(uint152 value) internal pure returns (uint152) {
-        return int152((__brutalizerRandomness(value) << 152) ^ uint256(value));
+        return uint152((__brutalizerRandomness(value) << 152) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint160(uint160 value) internal pure returns (uint160) {
-        return int160((__brutalizerRandomness(value) << 160) ^ uint256(value));
+        return uint160((__brutalizerRandomness(value) << 160) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint168(uint168 value) internal pure returns (uint168) {
-        return int168((__brutalizerRandomness(value) << 168) ^ uint256(value));
+        return uint168((__brutalizerRandomness(value) << 168) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint176(uint176 value) internal pure returns (uint176) {
-        return int176((__brutalizerRandomness(value) << 176) ^ uint256(value));
+        return uint176((__brutalizerRandomness(value) << 176) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint184(uint184 value) internal pure returns (uint184) {
-        return int184((__brutalizerRandomness(value) << 184) ^ uint256(value));
+        return uint184((__brutalizerRandomness(value) << 184) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint192(uint192 value) internal pure returns (uint192) {
-        return int192((__brutalizerRandomness(value) << 192) ^ uint256(value));
+        return uint192((__brutalizerRandomness(value) << 192) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint200(uint200 value) internal pure returns (uint200) {
-        return int200((__brutalizerRandomness(value) << 200) ^ uint256(value));
+        return uint200((__brutalizerRandomness(value) << 200) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint208(uint208 value) internal pure returns (uint208) {
-        return int208((__brutalizerRandomness(value) << 208) ^ uint256(value));
+        return uint208((__brutalizerRandomness(value) << 208) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint216(uint216 value) internal pure returns (uint216) {
-        return int216((__brutalizerRandomness(value) << 216) ^ uint256(value));
+        return uint216((__brutalizerRandomness(value) << 216) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint224(uint224 value) internal pure returns (uint224) {
-        return int224((__brutalizerRandomness(value) << 224) ^ uint256(value));
+        return uint224((__brutalizerRandomness(value) << 224) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint232(uint232 value) internal pure returns (uint232) {
-        return int232((__brutalizerRandomness(value) << 232) ^ uint256(value));
+        return uint232((__brutalizerRandomness(value) << 232) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint240(uint240 value) internal pure returns (uint240) {
-        return int240((__brutalizerRandomness(value) << 240) ^ uint256(value));
+        return uint240((__brutalizerRandomness(value) << 240) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint248(uint248 value) internal pure returns (uint248) {
-        return int248((__brutalizerRandomness(value) << 248) ^ uint256(value));
+        return uint248((__brutalizerRandomness(value) << 248) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
     function _brutalized(bool value) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, xor(add(shl(32, value), calldataload(0x00)), mload(0x10)))
+            mstore(0x00, xor(add(value, calldataload(0x00)), mload(0x10)))
             mstore(0x20, calldataload(0x04))
             mstore(0x10, keccak256(0x00, 0x88))
             result := mul(iszero(iszero(value)), mload(0x10))
