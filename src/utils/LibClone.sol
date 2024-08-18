@@ -2748,14 +2748,16 @@ library LibClone {
         assembly {
             for {} 1 {} {
                 extcodecopy(instance, 0x00, 0x00, 0x57)
-                // ERC1967I and ERC1967IBeaconProxy detection.
-                if or(
-                    eq(keccak256(0x00, 0x52), ERC1967I_CODE_HASH),
-                    eq(keccak256(0x00, 0x57), ERC1967I_BEACON_PROXY_CODE_HASH)
-                ) {
-                    pop(staticcall(gas(), instance, 0x00, 0x01, 0x00, 0x20))
-                    result := mload(0x0c)
-                    break
+                if mload(0x32) {
+                    // ERC1967I and ERC1967IBeaconProxy detection.
+                    if or(
+                        eq(keccak256(0x00, 0x52), ERC1967I_CODE_HASH),
+                        eq(keccak256(0x00, 0x57), ERC1967I_BEACON_PROXY_CODE_HASH)
+                    ) {
+                        pop(staticcall(gas(), instance, 0x00, 0x01, 0x00, 0x20))
+                        result := mload(0x0c)
+                        break
+                    }
                 }
                 // 0age clone detection.
                 result := mload(0x0b)
@@ -2775,7 +2777,7 @@ library LibClone {
                 break
             }
             result := shr(96, result)
-            mstore(0x37, 0) // Restore the overwritten part of the free memory pointer.
+            mstore(0x37, 0x00) // Restore the overwritten part of the free memory pointer.
         }
     }
 
