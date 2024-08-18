@@ -1009,7 +1009,7 @@ contract LibCloneTest is SoladyTest {
         maybeBrutalizeMemory
         returns (address instance)
     {
-        instance = LibClone.deployDeterministicERC1967I(_brutalized(implementation),args, salt);
+        instance = LibClone.deployDeterministicERC1967I(_brutalized(implementation), args, salt);
         address predicted =
             LibClone.predictDeterministicAddressERC1967I(implementation, args, salt, address(this));
         assertEq(instance, predicted);
