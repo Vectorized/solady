@@ -171,6 +171,12 @@ contract Brutalizer {
     }
 
     /// @dev Returns the result with the upper bits dirtied.
+    function _brutalized(address value) internal pure returns (address) {
+        uint256 r = uint256(uint160(value));
+        return address(uint160((__brutalizerRandomness(r) << 160) ^ r));
+    }
+
+    /// @dev Returns the result with the upper bits dirtied.
     function _brutalizedUint8(uint8 value) internal pure returns (uint8 result) {
         uint256 r = (__brutalizerRandomness(value) << 8) ^ uint256(value);
         /// @solidity memory-safe-assembly
