@@ -492,8 +492,12 @@ contract Brutalizer {
         assembly {
             mstore(0x00, xor(add(value, calldataload(0x00)), mload(0x10)))
             mstore(0x20, calldataload(0x04))
-            mstore(0x10, keccak256(0x00, 0x88))
-            result := mul(iszero(iszero(value)), mload(0x10))
+            let r := keccak256(0x00, 0x88)
+            mstore(0x10, r)
+            result := mul(iszero(iszero(value)), r)
+            if iszero(and(1, shr(128, mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO)))) {
+                result := iszero(iszero(result))
+            }
         }
     }
 
