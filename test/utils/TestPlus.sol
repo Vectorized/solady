@@ -46,8 +46,7 @@ contract TestPlus is Brutalizer {
         0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
 
     /// @dev Some constant to brutalize the upper bits of addresses.
-    uint256 private constant _ADDRESS_BRUTALIZER =
-        0xc0618c2bfd481dcf3e31738f0000000000000000000000000000000000000000;
+    uint256 private constant _ADDRESS_BRUTALIZER = 0xc0618c2bfd481dcf3e31738f;
 
     /// @dev Multiplier for a mulmod Lehmer psuedorandom number generator.
     /// Prime, and a primitive root of `_LPRNG_MODULO`.
@@ -251,7 +250,7 @@ contract TestPlus is Brutalizer {
     function __toBrutalizedAddress(address a) private pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(_ADDRESS_BRUTALIZER, a)
+            result := xor(shl(160, xor(keccak256(0x00, 0x88), _ADDRESS_BRUTALIZER)), a)
         }
     }
 
@@ -259,7 +258,7 @@ contract TestPlus is Brutalizer {
     function __toBrutalizedAddress(uint256 a) private pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(_ADDRESS_BRUTALIZER, a)
+            result := xor(shl(160, xor(keccak256(0x00, 0x88), _ADDRESS_BRUTALIZER)), a)
         }
     }
 
