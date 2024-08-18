@@ -504,7 +504,7 @@ contract ECDSATest is SoladyTest {
             uint256 privateKey;
             (signer, privateKey) = _randomSigner();
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-            v = _brutalizedV(v);
+            v = _brutalizedUint8(v);
             signature = abi.encodePacked(r, s, v);
             cHash = ECDSA.canonicalHash(signature);
             assertEq(keccak256(signature), cHash);
@@ -531,7 +531,7 @@ contract ECDSATest is SoladyTest {
             }
 
             if (_randomChance(4)) {
-                uint8 corruptedV = _brutalizedV(uint8(_random()));
+                uint8 corruptedV = _brutalizedUint8(uint8(_random()));
                 assertEq(
                     ECDSA.canonicalHash(abi.encodePacked(r, s, corruptedV)),
                     ECDSA.canonicalHash(corruptedV, r, s)
@@ -596,13 +596,6 @@ contract ECDSATest is SoladyTest {
                 s := sub(n, s)
             }
             vs := or(s, shl(255, eq(v, 28)))
-        }
-    }
-
-    function _brutalizedV(uint8 v) internal pure returns (uint8 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := xor(shl(8, keccak256(0x00, 0xa0)), v)
         }
     }
 
