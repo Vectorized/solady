@@ -57,9 +57,9 @@ contract Brutalizer {
                 times := add(times, w) // `sub(times, 1)`.
                 if iszero(times) { break }
             }
-            // With a 1/16 chance, set the scratch space to zero.
+            // With a 1/16 chance, copy the contract's code to the scratch space.
             if iszero(and(0xf00, r)) {
-                codecopy(0x00, codesize(), 0x40)
+                codecopy(0x00, mod(shr(128, r), add(codesize(), codesize())), 0x40)
                 mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
         }
@@ -83,10 +83,9 @@ contract Brutalizer {
             let r := keccak256(offset, add(calldatasize(), 0x40))
             mstore(zero, r)
             mstore(0x20, keccak256(zero, 0x40))
-            // With a 1/16 chance, set the scratch space to zero.
             r := mulmod(mload(0x10), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
             if iszero(and(0xf00, r)) {
-                codecopy(0x00, codesize(), 0x40)
+                codecopy(0x00, mod(shr(128, r), add(codesize(), codesize())), 0x40)
                 mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
         }
@@ -141,9 +140,8 @@ contract Brutalizer {
                 codecopy(offset, byte(0, r), codesize())
                 break
             }
-            // With a 1/4 chance, set the scratch space to zero.
             if iszero(and(0x300, r)) {
-                codecopy(0x00, codesize(), 0x40)
+                codecopy(0x00, mod(shr(128, r), add(codesize(), codesize())), 0x40)
                 mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
         }
