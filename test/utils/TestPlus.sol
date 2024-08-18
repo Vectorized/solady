@@ -46,8 +46,7 @@ contract TestPlus is Brutalizer {
         0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140;
 
     /// @dev Some constant to brutalize the upper bits of addresses.
-    uint256 private constant _ADDRESS_BRUTALIZER =
-        0xc0618c2bfd481dcf3e31738f0000000000000000000000000000000000000000;
+    uint256 private constant _ADDRESS_BRUTALIZER = 0xc0618c2bfd481dcf3e31738f;
 
     /// @dev Multiplier for a mulmod Lehmer psuedorandom number generator.
     /// Prime, and a primitive root of `_LPRNG_MODULO`.
@@ -56,6 +55,26 @@ contract TestPlus is Brutalizer {
     /// @dev Modulo for a mulmod Lehmer psuedorandom number generator. (prime)
     uint256 private constant _LPRNG_MODULO =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff43;
+
+    /// @dev Returns whether the `value` has been generated for `typeId` and `groupId` before.
+    function __markAsGenerated(bytes32 typeId, bytes32 groupId, uint256 value)
+        private
+        returns (bool isSet)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x00, value)
+            mstore(0x20, groupId)
+            mstore(0x40, typeId)
+            mstore(0x60, _TESTPLUS_RANDOMNESS_SLOT)
+            let s := keccak256(0x00, 0x80)
+            isSet := sload(s)
+            sstore(s, 1)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
+        }
+    }
 
     /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
     /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
@@ -122,6 +141,29 @@ contract TestPlus is Brutalizer {
         }
     }
 
+    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
+    /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
+    /// e.g. `testSomething(uint256) public`.
+    function _randomUnique(uint256 groupId) internal returns (uint256 result) {
+        result = _randomUnique(bytes32(groupId));
+    }
+
+    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
+    /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
+    /// e.g. `testSomething(uint256) public`.
+    function _randomUnique(bytes32 groupId) internal returns (uint256 result) {
+        do {
+            result = _random();
+        } while (__markAsGenerated("uint256", groupId, result));
+    }
+
+    /// @dev Returns a pseudorandom random number from [0 .. 2**256 - 1] (inclusive).
+    /// For usage in fuzz tests, please ensure that the function has an unnamed uint256 argument.
+    /// e.g. `testSomething(uint256) public`.
+    function _randomUnique() internal returns (uint256 result) {
+        result = _randomUnique("");
+    }
+
     /// @dev Returns a pseudorandom number, uniformly distributed in [0 .. 2**256 - 1] (inclusive).
     function _randomUniform() internal returns (uint256 result) {
         /// @solidity memory-safe-assembly
@@ -177,6 +219,23 @@ contract TestPlus is Brutalizer {
         }
     }
 
+    /// @dev Returns a random private key that can be used for ECDSA signing.
+    function _randomUniquePrivateKey(uint256 groupId) internal returns (uint256 result) {
+        result = _randomUniquePrivateKey(bytes32(groupId));
+    }
+
+    /// @dev Returns a random private key that can be used for ECDSA signing.
+    function _randomUniquePrivateKey(bytes32 groupId) internal returns (uint256 result) {
+        do {
+            result = _randomPrivateKey();
+        } while (__markAsGenerated("uint256", groupId, result));
+    }
+
+    /// @dev Returns a random private key that can be used for ECDSA signing.
+    function _randomUniquePrivateKey() internal returns (uint256 result) {
+        result = _randomUniquePrivateKey("");
+    }
+
     /// @dev Private helper function to get the signer from a private key.
     function __getSigner(uint256 privateKey) private view returns (uint256 result) {
         /// @solidity memory-safe-assembly
@@ -191,7 +250,9 @@ contract TestPlus is Brutalizer {
     function __toBrutalizedAddress(address a) private pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(_ADDRESS_BRUTALIZER, a)
+            result := keccak256(0x00, 0x88)
+            result := xor(shl(160, xor(result, _ADDRESS_BRUTALIZER)), a)
+            mstore(0x10, result)
         }
     }
 
@@ -199,15 +260,43 @@ contract TestPlus is Brutalizer {
     function __toBrutalizedAddress(uint256 a) private pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := or(_ADDRESS_BRUTALIZER, a)
+            result := keccak256(0x00, 0x88)
+            result := xor(shl(160, xor(result, _ADDRESS_BRUTALIZER)), a)
+            mstore(0x10, result)
         }
     }
 
     /// @dev Returns a pseudorandom signer and its private key.
     /// This function may return a previously returned result.
+    /// The signer may have dirty upper 96 bits.
     function _randomSigner() internal returns (address signer, uint256 privateKey) {
         privateKey = _randomPrivateKey();
         signer = __toBrutalizedAddress(__getSigner(privateKey));
+    }
+
+    /// @dev Returns a pseudorandom signer and its private key.
+    /// The signer may have dirty upper 96 bits.
+    function _randomUniqueSigner(uint256 groupId)
+        internal
+        returns (address signer, uint256 privateKey)
+    {
+        (signer, privateKey) = _randomUniqueSigner(bytes32(groupId));
+    }
+
+    /// @dev Returns a pseudorandom signer and its private key.
+    /// The signer may have dirty upper 96 bits.
+    function _randomUniqueSigner(bytes32 groupId)
+        internal
+        returns (address signer, uint256 privateKey)
+    {
+        privateKey = _randomUniquePrivateKey(groupId);
+        signer = __toBrutalizedAddress(__getSigner(privateKey));
+    }
+
+    /// @dev Returns a pseudorandom signer and its private key.
+    /// The signer may have dirty upper 96 bits.
+    function _randomUniqueSigner() internal returns (address signer, uint256 privateKey) {
+        (signer, privateKey) = _randomUniqueSigner("");
     }
 
     /// @dev Returns a pseudorandom address.
@@ -220,6 +309,29 @@ contract TestPlus is Brutalizer {
         assembly {
             result := xor(shl(158, r), and(sub(7, shr(252, r)), r))
         }
+    }
+
+    /// @dev Returns a pseudorandom address.
+    /// The result may have dirty upper 96 bits.
+    /// This function will not return an existing contract.
+    function _randomUniqueAddress(uint256 groupId) internal returns (address result) {
+        result = _randomUniqueAddress(bytes32(groupId));
+    }
+
+    /// @dev Returns a pseudorandom address.
+    /// The result may have dirty upper 96 bits.
+    /// This function will not return an existing contract.
+    function _randomUniqueAddress(bytes32 groupId) internal returns (address result) {
+        do {
+            result = _randomAddress();
+        } while (__markAsGenerated("address", groupId, uint160(result)));
+    }
+
+    /// @dev Returns a pseudorandom address.
+    /// The result may have dirty upper 96 bits.
+    /// This function will not return an existing contract.
+    function _randomUniqueAddress() internal returns (address result) {
+        result = _randomUniqueAddress("");
     }
 
     /// @dev Returns a pseudorandom non-zero address.
@@ -236,6 +348,29 @@ contract TestPlus is Brutalizer {
                 result := keccak256(0x00, 0x30)
             }
         }
+    }
+
+    /// @dev Returns a pseudorandom non-zero address.
+    /// The result may have dirty upper 96 bits.
+    /// This function will not return an existing contract.
+    function _randomUniqueNonZeroAddress(uint256 groupId) internal returns (address result) {
+        result = _randomUniqueNonZeroAddress(bytes32(groupId));
+    }
+
+    /// @dev Returns a pseudorandom non-zero address.
+    /// The result may have dirty upper 96 bits.
+    /// This function will not return an existing contract.
+    function _randomUniqueNonZeroAddress(bytes32 groupId) internal returns (address result) {
+        do {
+            result = _randomNonZeroAddress();
+        } while (__markAsGenerated("address", groupId, uint160(result)));
+    }
+
+    /// @dev Returns a pseudorandom non-zero address.
+    /// The result may have dirty upper 96 bits.
+    /// This function will not return an existing contract.
+    function _randomUniqueNonZeroAddress() internal returns (address result) {
+        result = _randomUniqueNonZeroAddress("");
     }
 
     /// @dev Cleans the upper 96 bits of the address.
@@ -334,6 +469,23 @@ contract TestPlus is Brutalizer {
             calldatacopy(0x00, 0x00, 0x24)
             result := keccak256(0x00, 0x3f)
         }
+    }
+
+    /// @dev Returns a pseudorandom address.
+    function _randomUniqueHashedAddress(uint256 groupId) internal returns (address result) {
+        result = _randomUniqueHashedAddress(bytes32(groupId));
+    }
+
+    /// @dev Returns a pseudorandom address.
+    function _randomUniqueHashedAddress(bytes32 groupId) internal returns (address result) {
+        do {
+            result = _randomHashedAddress();
+        } while (__markAsGenerated("address", groupId, uint160(result)));
+    }
+
+    /// @dev Returns a pseudorandom address.
+    function _randomUniqueHashedAddress() internal returns (address result) {
+        result = _randomUniqueHashedAddress("");
     }
 
     /// @dev Private helper function for returning random bytes.
