@@ -50,6 +50,11 @@ contract Brutalizer {
                 times := add(times, w) // `sub(times, 1)`.
                 if iszero(times) { break }
             }
+            // With a 1/32 chance, set the scratch space to zero.
+            if iszero(and(31, keccak256(zero, 0x3e))) {
+                mstore(0x20, zero)
+                mstore(zero, zero)
+            }
         }
     }
 
@@ -70,6 +75,11 @@ contract Brutalizer {
             mstore(zero, add(caller(), gas()))
             mstore(0x20, keccak256(offset, calldatasize()))
             mstore(zero, keccak256(zero, 0x40))
+            // With a 1/32 chance, set the scratch space to zero.
+            if iszero(and(31, keccak256(zero, 0x3e))) {
+                mstore(0x20, zero)
+                mstore(zero, zero)
+            }
         }
     }
 
@@ -119,6 +129,11 @@ contract Brutalizer {
                 }
                 codecopy(offset, byte(0, r), codesize())
                 break
+            }
+            // With a 1/32 chance, set the scratch space to zero.
+            if iszero(and(31, keccak256(zero, 0x3e))) {
+                mstore(0x20, zero)
+                mstore(zero, zero)
             }
         }
     }
