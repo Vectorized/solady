@@ -171,291 +171,164 @@ contract Brutalizer {
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalized(address value) internal pure returns (address result) {
-        uint256 t = (__brutalizerRandomness(uint160(value)) << 160) ^ uint256(uint160(value));
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalized(address value) internal pure returns (address) {
+        uint256 r = uint256(uint160(value));
+        return address(uint160((__brutalizerRandomness(r) << 160) ^ r));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint8(uint8 value) internal pure returns (uint8 result) {
-        uint256 t = (__brutalizerRandomness(value) << 8) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint8(uint8 value) internal pure returns (uint8) {
+        return int8((__brutalizerRandomness(value) << 8) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint16(uint16 value) internal pure returns (uint16 result) {
-        uint256 t = (__brutalizerRandomness(value) << 16) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint16(uint16 value) internal pure returns (uint16) {
+        return int16((__brutalizerRandomness(value) << 16) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint24(uint24 value) internal pure returns (uint24 result) {
-        uint256 t = (__brutalizerRandomness(value) << 24) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint24(uint24 value) internal pure returns (uint24) {
+        return int24((__brutalizerRandomness(value) << 24) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint32(uint32 value) internal pure returns (uint32 result) {
-        uint256 t = (__brutalizerRandomness(value) << 32) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint32(uint32 value) internal pure returns (uint32) {
+        return int32((__brutalizerRandomness(value) << 32) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint40(uint40 value) internal pure returns (uint40 result) {
-        uint256 t = (__brutalizerRandomness(value) << 40) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint40(uint40 value) internal pure returns (uint40) {
+        return int40((__brutalizerRandomness(value) << 40) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint48(uint48 value) internal pure returns (uint48 result) {
-        uint256 t = (__brutalizerRandomness(value) << 48) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint48(uint48 value) internal pure returns (uint48) {
+        return int48((__brutalizerRandomness(value) << 48) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint56(uint56 value) internal pure returns (uint56 result) {
-        uint256 t = (__brutalizerRandomness(value) << 56) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint56(uint56 value) internal pure returns (uint56) {
+        return int56((__brutalizerRandomness(value) << 56) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint64(uint64 value) internal pure returns (uint64 result) {
-        uint256 t = (__brutalizerRandomness(value) << 64) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint64(uint64 value) internal pure returns (uint64) {
+        return int64((__brutalizerRandomness(value) << 64) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint72(uint72 value) internal pure returns (uint72 result) {
-        uint256 t = (__brutalizerRandomness(value) << 72) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint72(uint72 value) internal pure returns (uint72) {
+        return int72((__brutalizerRandomness(value) << 72) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint80(uint80 value) internal pure returns (uint80 result) {
-        uint256 t = (__brutalizerRandomness(value) << 80) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint80(uint80 value) internal pure returns (uint80) {
+        return int80((__brutalizerRandomness(value) << 80) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint88(uint88 value) internal pure returns (uint88 result) {
-        uint256 t = (__brutalizerRandomness(value) << 88) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint88(uint88 value) internal pure returns (uint88) {
+        return int88((__brutalizerRandomness(value) << 88) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint96(uint96 value) internal pure returns (uint96 result) {
-        uint256 t = (__brutalizerRandomness(value) << 96) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint96(uint96 value) internal pure returns (uint96) {
+        return int96((__brutalizerRandomness(value) << 96) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint104(uint104 value) internal pure returns (uint104 result) {
-        uint256 t = (__brutalizerRandomness(value) << 104) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint104(uint104 value) internal pure returns (uint104) {
+        return int104((__brutalizerRandomness(value) << 104) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint112(uint112 value) internal pure returns (uint112 result) {
-        uint256 t = (__brutalizerRandomness(value) << 112) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint112(uint112 value) internal pure returns (uint112) {
+        return int112((__brutalizerRandomness(value) << 112) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint120(uint120 value) internal pure returns (uint120 result) {
-        uint256 t = (__brutalizerRandomness(value) << 120) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint120(uint120 value) internal pure returns (uint120) {
+        return int120((__brutalizerRandomness(value) << 120) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint128(uint128 value) internal pure returns (uint128 result) {
-        uint256 t = (__brutalizerRandomness(value) << 128) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint128(uint128 value) internal pure returns (uint128) {
+        return int128((__brutalizerRandomness(value) << 128) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint136(uint136 value) internal pure returns (uint136 result) {
-        uint256 t = (__brutalizerRandomness(value) << 136) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint136(uint136 value) internal pure returns (uint136) {
+        return int136((__brutalizerRandomness(value) << 136) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint144(uint144 value) internal pure returns (uint144 result) {
-        uint256 t = (__brutalizerRandomness(value) << 144) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint144(uint144 value) internal pure returns (uint144) {
+        return int144((__brutalizerRandomness(value) << 144) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint152(uint152 value) internal pure returns (uint152 result) {
-        uint256 t = (__brutalizerRandomness(value) << 152) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint152(uint152 value) internal pure returns (uint152) {
+        return int152((__brutalizerRandomness(value) << 152) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint160(uint160 value) internal pure returns (uint160 result) {
-        uint256 t = (__brutalizerRandomness(value) << 160) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint160(uint160 value) internal pure returns (uint160) {
+        return int160((__brutalizerRandomness(value) << 160) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint168(uint168 value) internal pure returns (uint168 result) {
-        uint256 t = (__brutalizerRandomness(value) << 168) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint168(uint168 value) internal pure returns (uint168) {
+        return int168((__brutalizerRandomness(value) << 168) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint176(uint176 value) internal pure returns (uint176 result) {
-        uint256 t = (__brutalizerRandomness(value) << 176) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint176(uint176 value) internal pure returns (uint176) {
+        return int176((__brutalizerRandomness(value) << 176) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint184(uint184 value) internal pure returns (uint184 result) {
-        uint256 t = (__brutalizerRandomness(value) << 184) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint184(uint184 value) internal pure returns (uint184) {
+        return int184((__brutalizerRandomness(value) << 184) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint192(uint192 value) internal pure returns (uint192 result) {
-        uint256 t = (__brutalizerRandomness(value) << 192) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint192(uint192 value) internal pure returns (uint192) {
+        return int192((__brutalizerRandomness(value) << 192) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint200(uint200 value) internal pure returns (uint200 result) {
-        uint256 t = (__brutalizerRandomness(value) << 200) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint200(uint200 value) internal pure returns (uint200) {
+        return int200((__brutalizerRandomness(value) << 200) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint208(uint208 value) internal pure returns (uint208 result) {
-        uint256 t = (__brutalizerRandomness(value) << 208) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint208(uint208 value) internal pure returns (uint208) {
+        return int208((__brutalizerRandomness(value) << 208) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint216(uint216 value) internal pure returns (uint216 result) {
-        uint256 t = (__brutalizerRandomness(value) << 216) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint216(uint216 value) internal pure returns (uint216) {
+        return int216((__brutalizerRandomness(value) << 216) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint224(uint224 value) internal pure returns (uint224 result) {
-        uint256 t = (__brutalizerRandomness(value) << 224) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint224(uint224 value) internal pure returns (uint224) {
+        return int224((__brutalizerRandomness(value) << 224) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint232(uint232 value) internal pure returns (uint232 result) {
-        uint256 t = (__brutalizerRandomness(value) << 232) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint232(uint232 value) internal pure returns (uint232) {
+        return int232((__brutalizerRandomness(value) << 232) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint240(uint240 value) internal pure returns (uint240 result) {
-        uint256 t = (__brutalizerRandomness(value) << 240) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint240(uint240 value) internal pure returns (uint240) {
+        return int240((__brutalizerRandomness(value) << 240) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
-    function _brutalizedUint248(uint248 value) internal pure returns (uint248 result) {
-        uint256 t = (__brutalizerRandomness(value) << 248) ^ uint256(value);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := t
-        }
+    function _brutalizedUint248(uint248 value) internal pure returns (uint248) {
+        return int248((__brutalizerRandomness(value) << 248) ^ uint256(value));
     }
 
     /// @dev Returns the result with the upper bits dirtied.
@@ -478,6 +351,7 @@ contract Brutalizer {
             mstore(0x20, calldataload(0x04))
             result := keccak256(0x00, 0x88)
             mstore(0x10, result)
+            result := mul(iszero(shr(251, result)), result)
         }
     }
 
