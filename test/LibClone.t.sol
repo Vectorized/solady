@@ -591,7 +591,7 @@ contract LibCloneTest is SoladyTest {
         bytes memory args = _randomBytes();
         if (args.length > _ERC1967_BEACON_PROXY_ARGS_MAX_LENGTH) {
             vm.expectRevert();
-            this.deployDeterministicERC1967(address(this), args, salt);
+            this.deployDeterministicERC1967BeaconProxy(address(this), args, salt);
             return;
         }
         address instance = this.deployDeterministicERC1967BeaconProxy(_beacon(), args, salt);
@@ -608,7 +608,7 @@ contract LibCloneTest is SoladyTest {
         bytes memory args = _randomBytes();
         if (args.length > _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH) {
             vm.expectRevert();
-            this.deployDeterministicERC1967(address(this), args, salt);
+            this.deployDeterministicERC1967IBeaconProxy(address(this), args, salt);
             return;
         }
         address instance = this.deployDeterministicERC1967IBeaconProxy(_beacon(), args, salt);
