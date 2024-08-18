@@ -12,7 +12,7 @@ contract MockERC2981 is ERC2981, Brutalizer {
     }
 
     function setDefaultRoyalty(address receiver, uint96 feeNumerator) external {
-        _setDefaultRoyalty(_brutalized(receiver), _brutalized(feeNumerator));
+        _setDefaultRoyalty(_brutalized(receiver), _brutalizedUint96(feeNumerator));
     }
 
     function deleteDefaultRoyalty() external {
@@ -20,7 +20,7 @@ contract MockERC2981 is ERC2981, Brutalizer {
     }
 
     function setTokenRoyalty(uint256 tokenId, address receiver, uint96 feeNumerator) external {
-        _setTokenRoyalty(tokenId, _brutalized(receiver), _brutalized(feeNumerator));
+        _setTokenRoyalty(tokenId, _brutalized(receiver), _brutalizedUint96(feeNumerator));
     }
 
     function resetTokenRoyalty(uint256 tokenId) external {

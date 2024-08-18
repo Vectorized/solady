@@ -30,7 +30,7 @@ contract MockERC721 is ERC721, Brutalizer {
     }
 
     function mintWithExtraDataUnchecked(address to, uint256 id, uint96 value) public virtual {
-        _mintAndSetExtraDataUnchecked(_brutalized(to), id, _brutalized(value));
+        _mintAndSetExtraDataUnchecked(_brutalized(to), id, _brutalizedUint96(value));
     }
 
     function burn(uint256 id) public virtual {
