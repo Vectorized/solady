@@ -1382,89 +1382,6 @@ library LibClone {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            /**
-             * ---------------------------------------------------------------------------------+
-             * CREATION (35 bytes)                                                              |
-             * ---------------------------------------------------------------------------------|
-             * Opcode     | Mnemonic       | Stack            | Memory                          |
-             * ---------------------------------------------------------------------------------|
-             * 61 runSize | PUSH2 runSize  | r                |                                 |
-             * 3d         | RETURNDATASIZE | 0 r              |                                 |
-             * 81         | DUP2           | r 0 r            |                                 |
-             * 60 offset  | PUSH1 offset   | o r 0 r          |                                 |
-             * 3d         | RETURNDATASIZE | 0 o r 0 r        |                                 |
-             * 39         | CODECOPY       | 0 r              | [0..runSize): runtime code      |
-             * 73 impl    | PUSH20 impl    | impl 0 r         | [0..runSize): runtime code      |
-             * 60 slotPos | PUSH1 slotPos  | slotPos impl 0 r | [0..runSize): runtime code      |
-             * 51         | MLOAD          | slot impl 0 r    | [0..runSize): runtime code      |
-             * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
-             * f3         | RETURN         |                  | [0..runSize): runtime code      |
-             * ---------------------------------------------------------------------------------|
-             * RUNTIME (82 bytes + extraLength)                                                 |
-             * ---------------------------------------------------------------------------------|
-             * Opcode     | Mnemonic       | Stack            | Memory                          |
-             * ---------------------------------------------------------------------------------|
-             *                                                                                  |
-             * ::: check calldatasize ::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 36         | CALLDATASIZE   | cds              |                                 |
-             * 58         | PC             | 1 cds            |                                 |
-             * 14         | EQ             | eqs              |                                 |
-             * 60 0x43    | PUSH1 0x43     | dest eqs         |                                 |
-             * 57         | JUMPI          |                  |                                 |
-             *                                                                                  |
-             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 36         | CALLDATASIZE   | cds              |                                 |
-             * 3d         | RETURNDATASIZE | 0 cds            |                                 |
-             * 3d         | RETURNDATASIZE | 0 0 cds          |                                 |
-             * 37         | CALLDATACOPY   |                  | [0..calldatasize): calldata     |
-             *                                                                                  |
-             * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | 0                |                                 |
-             * 3d         | RETURNDATASIZE | 0 0              |                                 |
-             * 36         | CALLDATASIZE   | cds 0 0          | [0..calldatasize): calldata     |
-             * 3d         | RETURNDATASIZE | 0 cds 0 0        | [0..calldatasize): calldata     |
-             * 7f slot    | PUSH32 slot    | s 0 cds 0 0      | [0..calldatasize): calldata     |
-             * 54         | SLOAD          | i 0 cds 0 0      | [0..calldatasize): calldata     |
-             * 5a         | GAS            | g i 0 cds 0 0    | [0..calldatasize): calldata     |
-             * f4         | DELEGATECALL   | succ             | [0..calldatasize): calldata     |
-             *                                                                                  |
-             * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | rds succ         | [0..calldatasize): calldata     |
-             * 60 0x00    | PUSH1 0x00     | 0 rds succ       | [0..calldatasize): calldata     |
-             * 80         | DUP1           | 0 0 rds succ     | [0..calldatasize): calldata     |
-             * 3e         | RETURNDATACOPY | succ             | [0..returndatasize): returndata |
-             *                                                                                  |
-             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::: |
-             * 60 0x3E    | PUSH1 0x3E     | dest succ        | [0..returndatasize): returndata |
-             * 57         | JUMPI          |                  | [0..returndatasize): returndata |
-             *                                                                                  |
-             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
-             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
-             * fd         | REVERT         |                  | [0..returndatasize): returndata |
-             *                                                                                  |
-             * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::: |
-             * 5b         | JUMPDEST       |                  | [0..returndatasize): returndata |
-             * 3d         | RETURNDATASIZE | rds              | [0..returndatasize): returndata |
-             * 60 0x00    | PUSH1 0x00     | 0 rds            | [0..returndatasize): returndata |
-             * f3         | RETURN         |                  | [0..returndatasize): returndata |
-             *                                                                                  |
-             * ::: implementation , return :::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 5b         | JUMPDEST       |                  |                                 |
-             * 60 0x20    | PUSH1 0x20     | 32               |                                 |
-             * 60 0x0F    | PUSH1 0x0F     | o 32             |                                 |
-             * 3d         | RETURNDATASIZE | 0 o 32           |                                 |
-             * 39         | CODECOPY       |                  | [0..32): implementation slot    |
-             * 3d         | RETURNDATASIZE | 0                | [0..32): implementation slot    |
-             * 51         | MLOAD          | slot             | [0..32): implementation slot    |
-             * 54         | SLOAD          | impl             | [0..32): implementation slot    |
-             * 3d         | RETURNDATASIZE | 0 impl           | [0..32): implementation slot    |
-             * 52         | MSTORE         |                  | [0..32): implementation address |
-             * 59         | MSIZE          | 32               | [0..32): implementation address |
-             * 3d         | RETURNDATASIZE | 0 32             | [0..32): implementation address |
-             * f3         | RETURN         |                  | [0..32): implementation address |
-             * ---------------------------------------------------------------------------------+
-             */
             let m := mload(0x40)
             let n := mload(args)
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x8b), n))
@@ -1546,7 +1463,6 @@ library LibClone {
             let m := mload(0x40)
             let n := mload(args)
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x75), n))
-
             mstore(add(m, 0x55), 0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3)
             mstore(add(m, 0x35), 0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4)
             mstore(add(m, 0x15), 0x5155f3365814604357363d3d373d3d363d7f360894)
@@ -2776,7 +2692,7 @@ library LibClone {
                 break
             }
             result := shr(96, result)
-            mstore(0x37, 0x00) // Restore the overwritten part of the free memory pointer.
+            mstore(0x37, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
