@@ -71,15 +71,15 @@ library LibClone {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The keccak256 of the maksed `implementation` deployed code for the clone proxy.
+    /// @dev The keccak256 of the masked `implementation` deployed code for the clone proxy.
     bytes32 internal constant CLONE_CODE_HASH =
         0x48db2cfdb2853fce0b464f1f93a1996469459df3ab6c812106074c4106a1eb1f;
 
-    /// @dev The keccak256 of the maksed `implementation` deployed code for the push0 proxy.
+    /// @dev The keccak256 of the masked `implementation` deployed code for the PUSH0 proxy.
     bytes32 internal constant PUSH0_CLONE_CODE_HASH =
         0x67bc6bde1b84d66e267c718ba44cf3928a615d29885537955cb43d44b3e789dc;
 
-    /// @dev The keccak256 of the maksed `implementation` deployed code for the cwia proxy.
+    /// @dev The keccak256 of the masked `implementation` deployed code for the ERC-1167 CWIA proxy.
     bytes32 internal constant CWIA_CODE_HASH =
         0x3cf92464268225a4513da40a34d967354684c32cd0edd67b5f668dfe3550e940;
 
@@ -2507,87 +2507,6 @@ library LibClone {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            /**
-             * ---------------------------------------------------------------------------------+
-             * CREATION (35 bytes)                                                              |
-             * ---------------------------------------------------------------------------------|
-             * Opcode     | Mnemonic       | Stack            | Memory                          |
-             * ---------------------------------------------------------------------------------|
-             * 61 runSize | PUSH2 runSize  | r                |                                 |
-             * 3d         | RETURNDATASIZE | 0 r              |                                 |
-             * 81         | DUP2           | r 0 r            |                                 |
-             * 60 offset  | PUSH1 offset   | o r 0 r          |                                 |
-             * 3d         | RETURNDATASIZE | 0 o r 0 r        |                                 |
-             * 39         | CODECOPY       | 0 r              | [0..runSize): runtime code      |
-             * 73 beac    | PUSH20 beac    | beac 0 r         | [0..runSize): runtime code      |
-             * 60 slotPos | PUSH1 slotPos  | slotPos beac 0 r | [0..runSize): runtime code      |
-             * 51         | MLOAD          | slot beac 0 r    | [0..runSize): runtime code      |
-             * 55         | SSTORE         | 0 r              | [0..runSize): runtime code      |
-             * f3         | RETURN         |                  | [0..runSize): runtime code      |
-             * ---------------------------------------------------------------------------------|
-             * RUNTIME (87 bytes + extraLength)                                                 |
-             * ---------------------------------------------------------------------------------|
-             * Opcode     | Mnemonic       | Stack            | Memory                          |
-             * ---------------------------------------------------------------------------------|
-             *                                                                                  |
-             * ::: copy calldata to memory :::::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 36         | CALLDATASIZE   | cds              |                                 |
-             * 3d         | RETURNDATASIZE | 0 cds            |                                 |
-             * 3d         | RETURNDATASIZE | 0 0 cds          |                                 |
-             * 37         | CALLDATACOPY   |                  | [0..calldatasize): calldata     |
-             *                                                                                  |
-             * ::: delegatecall to implementation ::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | 0                |                                 |
-             * 3d         | RETURNDATASIZE | 0 0              |                                 |
-             * 36         | CALLDATASIZE   | cds 0 0          | [0..calldatasize): calldata     |
-             * 3d         | RETURNDATASIZE | 0 cds 0 0        | [0..calldatasize): calldata     |
-             *                                                                                  |
-             * ~~~~~~~ beacon staticcall sub procedure ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
-             * 60 0x20       | PUSH1 0x20       | 32                          |                 |
-             * 36            | CALLDATASIZE     | cds 32                      |                 |
-             * 60 0x04       | PUSH1 0x04       | 4 cds 32                    |                 |
-             * 36            | CALLDATASIZE     | cds 4 cds 32                |                 |
-             * 63 0x5c60da1b | PUSH4 0x5c60da1b | 0x5c60da1b cds 4 cds 32     |                 |
-             * 60 0xe0       | PUSH1 0xe0       | 224 0x5c60da1b cds 4 cds 32 |                 |
-             * 1b            | SHL              | sel cds 4 cds 32            |                 |
-             * 36            | CALLDATASIZE     | cds sel cds 4 cds 32        |                 |
-             * 52            | MSTORE           | cds 4 cds 32                | sel             |
-             * 7f slot       | PUSH32 slot      | s cds 4 cds 32              | sel             |
-             * 54            | SLOAD            | beac cds 4 cds 32           | sel             |
-             * 5a            | GAS              | g beac cds 4 cds 32         | sel             |
-             * fa            | STATICCALL       | succ                        | impl            |
-             * 36            | CALLDATASIZE     | cds                         | impl            |
-             * 14            | EQ               |                             | impl            |
-             * 60 0x52       | PUSH1 0x52       |                             | impl            |
-             * 57            | JUMPI            |                             | impl            |
-             * 36            | CALLDATASIZE     | cds                         | impl            |
-             * 51            | MLOAD            | impl                        | impl            |
-             * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
-             * 5a         | GAS            | g impl 0 cds 0 0 | [0..calldatasize): calldata     |
-             * f4         | DELEGATECALL   | succ             | [0..calldatasize): calldata     |
-             *                                                                                  |
-             * ::: copy returndata to memory :::::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | rds succ         | [0..calldatasize): calldata     |
-             * 60 0x00    | PUSH1 0x00     | 0 rds succ       | [0..calldatasize): calldata     |
-             * 60 0x01    | PUSH1 0x01     | 1 0 rds succ     | [0..calldatasize): calldata     |
-             * 3e         | RETURNDATACOPY | succ             | [1..returndatasize): returndata |
-             *                                                                                  |
-             * ::: branch on delegatecall status :::::::::::::::::::::::::::::::::::::::::::::: |
-             * 60 0x52    | PUSH1 0x52     | dest succ        | [1..returndatasize): returndata |
-             * 57         | JUMPI          |                  | [1..returndatasize): returndata |
-             *                                                                                  |
-             * ::: delegatecall failed, revert :::::::::::::::::::::::::::::::::::::::::::::::: |
-             * 3d         | RETURNDATASIZE | rds              | [1..returndatasize): returndata |
-             * 60 0x01    | PUSH1 0x01     | 1 rds            | [1..returndatasize): returndata |
-             * fd         | REVERT         |                  | [1..returndatasize): returndata |
-             *                                                                                  |
-             * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::: |
-             * 5b         | JUMPDEST       |                  | [1..returndatasize): returndata |
-             * 3d         | RETURNDATASIZE | rds              | [1..returndatasize): returndata |
-             * 60 0x01    | PUSH1 0x01     | 0 rds            | [1..returndatasize): returndata |
-             * f3         | RETURN         |                  | [1..returndatasize): returndata |
-             * ---------------------------------------------------------------------------------+
-             */
             let m := mload(0x40) // Cache the free memory pointer.
             let n := mload(args)
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x90), n))
@@ -2665,7 +2584,6 @@ library LibClone {
             let m := mload(0x40)
             let n := mload(args)
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x90), n))
-
             mstore(add(m, 0x70), 0x3d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3)
             mstore(add(m, 0x50), 0x527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b3513)
             mstore(add(m, 0x30), 0x60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36)
@@ -2711,11 +2629,9 @@ library LibClone {
             let n := mload(args)
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x57 = 0xffa8`.
             returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffa8))
-
             for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                 mstore(add(add(c, 0x9a), i), mload(add(add(args, 0x20), i)))
             }
-
             mstore(add(c, 0x7a), 0x3d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3)
             mstore(add(c, 0x5a), 0x527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b3513)
             mstore(add(c, 0x3a), 0x60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36)
@@ -2739,7 +2655,6 @@ library LibClone {
             let n := mload(args)
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x57 = 0xffa8`.
             returndatacopy(returndatasize(), returndatasize(), gt(n, 0xffa8))
-
             for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                 mstore(add(add(c, 0x90), i), mload(add(add(args, 0x20), i)))
             }
@@ -2833,47 +2748,33 @@ library LibClone {
         assembly {
             for {} 1 {} {
                 extcodecopy(instance, 0x00, 0x00, 0x57)
-                // ERC1967I and ERC1967IBeaconProxy detection
+                // ERC1967I and ERC1967IBeaconProxy detection.
                 if or(
-                    eq(keccak256(0x00, 82), ERC1967I_CODE_HASH),
-                    eq(keccak256(0x00, 87), ERC1967I_BEACON_PROXY_CODE_HASH)
+                    eq(keccak256(0x00, 0x52), ERC1967I_CODE_HASH),
+                    eq(keccak256(0x00, 0x57), ERC1967I_BEACON_PROXY_CODE_HASH)
                 ) {
-                    pop(staticcall(gas(), instance, 0x00, 0x01, 0x20, 0x20))
-                    result := mload(returndatasize())
+                    pop(staticcall(gas(), instance, 0x00, 0x01, 0x00, 0x20))
+                    result := mload(0x0c)
                     break
                 }
-
-                // 0age Clone detection
+                // 0age clone detection.
                 result := mload(0x0b)
                 mstore(0x0b, shr(160, shl(160, result)))
-
-                if eq(keccak256(0x00, 0x2c), CLONE_CODE_HASH) {
-                    result := shr(96, result)
-                    break
-                }
-
-                mstore(0x0b, result) // Restore Over Written Memory
-
-                // CWIA Clone detection
+                if eq(keccak256(0x00, 0x2c), CLONE_CODE_HASH) { break }
+                mstore(0x0b, result) // Restore the overwritten memory.
+                // CWIA detection.
                 result := mload(0x0a)
                 mstore(0x0a, shr(160, shl(160, result)))
-                if eq(keccak256(0x00, 0x2d), CWIA_CODE_HASH) {
-                    result := shr(96, result)
-                    break
-                }
-
-                mstore(0x0a, result) // Restore Over Written Memory
-
-                // PUSH0 clone detection
+                if eq(keccak256(0x00, 0x2d), CWIA_CODE_HASH) { break }
+                mstore(0x0a, result) // Restore the overwritten memory.
+                // PUSH0 clone detection.
                 result := mload(0x09)
                 mstore(0x09, shr(160, shl(160, result)))
-                if eq(keccak256(0x00, 0x2d), PUSH0_CLONE_CODE_HASH) {
-                    result := shr(96, result)
-                    break
-                }
+                if eq(keccak256(0x00, 0x2d), PUSH0_CLONE_CODE_HASH) { break }
                 result := 0x00
                 break
             }
+            result := shr(96, result)
             mstore(0x37, 0x00) // Restore the overwritten part of the free memory pointer.
         }
     }
