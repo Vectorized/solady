@@ -490,8 +490,10 @@ contract Brutalizer {
     function _brutalized(bool value) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, xor(add(value, calldataload(0x00)), mload(0x10)))
-            mstore(0x20, calldataload(0x04))
+            result := mload(0x40)
+            calldatacopy(result, 0x00, calldatasize())
+            mstore(0x20, keccak256(result, calldatasize()))
+            mstore(0x10, xor(value, mload(0x10)))
             let r := keccak256(0x00, 0x88)
             mstore(0x10, r)
             result := mul(iszero(iszero(value)), r)
@@ -510,12 +512,15 @@ contract Brutalizer {
     function __brutalizerRandomness(uint256 seed) private pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mulmod(seed, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
-            mstore(0x00, xor(add(result, calldataload(0x00)), mload(0x10)))
-            mstore(0x20, calldataload(0x04))
+            result := mload(0x40)
+            calldatacopy(result, 0x00, calldatasize())
+            mstore(0x20, keccak256(result, calldatasize()))
+            mstore(0x10, xor(seed, mload(0x10)))
             result := keccak256(0x00, 0x88)
             mstore(0x10, result)
-            result := mul(iszero(shr(251, result)), result)
+            if iszero(and(7, shr(128, mulmod(result, _LPRNG_MULTIPLIER, _LPRNG_MODULO)))) {
+                result := 0
+            }
         }
     }
 
