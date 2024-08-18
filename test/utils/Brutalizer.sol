@@ -28,10 +28,10 @@ contract Brutalizer {
             // Fill the 64 bytes of scratch space with garbage.
             mstore(zero, add(caller(), gas()))
             mstore(0x20, keccak256(offset, calldatasize()))
-            mstore(zero, keccak256(zero, 0x40))
-
-            let r0 := mload(zero)
-            let r1 := mload(0x20)
+            let r0 := keccak256(zero, 0x40)
+            mstore(zero, r0)
+            let r1 := keccak256(zero, 0x40)
+            codecopy(0x20, byte(0, r1), 0x20)
 
             let cSize := add(codesize(), iszero(codesize()))
             if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 0x1f)) }
@@ -58,10 +58,12 @@ contract Brutalizer {
                 times := add(times, w) // `sub(times, 1)`.
                 if iszero(times) { break }
             }
-            // With a 1/32 chance, set the scratch space to zero.
-            if iszero(and(31, keccak256(zero, 0x3e))) {
+            // With a 1/16 chance, set the scratch space to zero.
+            r1 := mulmod(r1, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
+            if iszero(and(0xf00, r1)) {
                 mstore(0x20, zero)
                 mstore(zero, zero)
+                mstore8(and(r1, 0x3f), iszero(and(0x100000, r1)))
             }
         }
     }
@@ -82,11 +84,15 @@ contract Brutalizer {
             // Fill the 64 bytes of scratch space with garbage.
             mstore(zero, add(caller(), gas()))
             mstore(0x20, keccak256(offset, calldatasize()))
-            mstore(zero, keccak256(zero, 0x40))
-            // With a 1/32 chance, set the scratch space to zero.
-            if iszero(and(31, keccak256(zero, 0x3e))) {
+            let r := keccak256(zero, 0x40)
+            mstore(zero, r)
+            // With a 1/16 chance, set the scratch space to zero.
+            r := mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
+            codecopy(0x20, byte(0, r), 0x20)
+            if iszero(and(0xf00, r)) {
                 mstore(0x20, zero)
                 mstore(zero, zero)
+                mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
         }
     }
@@ -108,10 +114,13 @@ contract Brutalizer {
             // Fill the 64 bytes of scratch space with garbage.
             mstore(zero, add(caller(), gas()))
             mstore(0x20, keccak256(offset, calldatasize()))
-            mstore(zero, keccak256(zero, 0x40))
+            let r := keccak256(zero, 0x40)
+            mstore(zero, r)
+            r := mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
+            codecopy(0x20, byte(0, r), 0x20)
 
-            for { let r := keccak256(0x10, 0x20) } 1 {} {
-                if iszero(and(7, r)) {
+            for {} 1 {} {
+                if iszero(and(0x0700, r)) {
                     let x := keccak256(zero, 0x40)
                     mstore(offset, x)
                     mstore(add(0x20, offset), x)
@@ -138,10 +147,11 @@ contract Brutalizer {
                 codecopy(offset, byte(0, r), codesize())
                 break
             }
-            // With a 1/32 chance, set the scratch space to zero.
-            if iszero(and(31, keccak256(zero, 0x3e))) {
+            // With a 1/4 chance, set the scratch space to zero.
+            if iszero(and(0x3000, r)) {
                 mstore(0x20, zero)
                 mstore(zero, zero)
+                mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
         }
     }
