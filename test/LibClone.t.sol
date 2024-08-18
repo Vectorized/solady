@@ -553,7 +553,7 @@ contract LibCloneTest is SoladyTest {
         bytes memory args = _randomBytes();
         if (args.length > _ERC1967I_ARGS_MAX_LENGTH) {
             vm.expectRevert();
-            this.deployDeterministicERC1967(address(this), args, salt);
+            this.deployDeterministicERC1967I(address(this), args, salt);
             return;
         }
         address instance = this.deployDeterministicERC1967I(address(this), args, salt);
