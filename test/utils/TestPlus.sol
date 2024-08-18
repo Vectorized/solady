@@ -64,7 +64,7 @@ contract TestPlus is Brutalizer {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let m := mload(0x40)
+            let m := mload(0x40) // Cache the free memory pointer.
             mstore(0x00, value)
             mstore(0x20, groupId)
             mstore(0x40, typeId)
@@ -72,8 +72,8 @@ contract TestPlus is Brutalizer {
             let s := keccak256(0x00, 0x80)
             isSet := sload(s)
             sstore(s, 1)
-            mstore(0x40, m)
-            mstore(0x60, 0)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
         }
     }
 
