@@ -71,15 +71,18 @@ library LibClone {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The keccak256 of the masked `implementation` deployed code for the clone proxy.
+    /// @dev The keccak256 of deployed code for the clone proxy,
+    /// with the implementation set to `address(0)`.
     bytes32 internal constant CLONE_CODE_HASH =
         0x48db2cfdb2853fce0b464f1f93a1996469459df3ab6c812106074c4106a1eb1f;
 
-    /// @dev The keccak256 of the masked `implementation` deployed code for the PUSH0 proxy.
+    /// @dev The keccak256 of deployed code for the PUSH0 proxy,
+    /// with the implementation set to `address(0)`.
     bytes32 internal constant PUSH0_CLONE_CODE_HASH =
         0x67bc6bde1b84d66e267c718ba44cf3928a615d29885537955cb43d44b3e789dc;
 
-    /// @dev The keccak256 of the masked `implementation` deployed code for the ERC-1167 CWIA proxy.
+    /// @dev The keccak256 of deployed code for the ERC-1167 CWIA proxy,
+    /// with the implementation set to `address(0)`.
     bytes32 internal constant CWIA_CODE_HASH =
         0x3cf92464268225a4513da40a34d967354684c32cd0edd67b5f668dfe3550e940;
 
@@ -2657,13 +2660,11 @@ library LibClone {
     /*                      OTHER OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns `address(0)` if the implementation address cannot be determined,
-    /// due to an unrecognized bytecode.
+    /// @dev Returns `address(0)` if the implementation address cannot be determined.
     function implementationOf(address instance) external view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            for {} 1 {} {
-                extcodecopy(instance, 0x00, 0x00, 0x57)
+            for { extcodecopy(instance, 0x00, 0x00, 0x57) } 1 {} {
                 if mload(0x32) {
                     // ERC1967I and ERC1967IBeaconProxy detection.
                     if or(
