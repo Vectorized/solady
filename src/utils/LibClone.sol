@@ -2864,7 +2864,7 @@ library LibClone {
 
                 mstore(0x0a, result) // Restore Over Written Memory
 
-                // PUSH0 clone detection - 9 ( 45 bytes )
+                // PUSH0 clone detection
                 result := mload(0x09)
                 mstore(0x09, shr(160, shl(160, result)))
                 if eq(keccak256(0x00, 0x2d), PUSH0_CLONE_CODE_HASH) {
