@@ -23,15 +23,14 @@ contract Brutalizer {
         /// @solidity memory-safe-assembly
         assembly {
             let offset := mload(0x40) // Start the offset at the free memory pointer.
-            calldatacopy(offset, zero, calldatasize())
+            calldatacopy(add(offset, 0x20), zero, calldatasize())
+            mstore(offset, add(caller(), gas()))
 
             // Fill the 64 bytes of scratch space with garbage.
-            mstore(zero, add(caller(), gas()))
-            mstore(0x20, keccak256(offset, calldatasize()))
-            let r0 := keccak256(zero, 0x40)
-            mstore(zero, r0)
-            let r1 := keccak256(zero, 0x40)
-            codecopy(0x20, byte(0, r1), 0x20)
+            let r := keccak256(offset, add(calldatasize(), 0x40))
+            mstore(zero, r)
+            mstore(0x20, keccak256(zero, 0x40))
+            r := mulmod(mload(0x10), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
 
             let cSize := add(codesize(), iszero(codesize()))
             if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 0x1f)) }
@@ -42,28 +41,26 @@ contract Brutalizer {
 
             // Occasionally offset the offset by a pseudorandom large amount.
             // Can't be too large, or we will easily get out-of-gas errors.
-            offset := add(offset, mul(iszero(and(r1, 0xf)), and(r0, 0xfffff)))
+            offset := add(offset, mul(iszero(and(r, 0xf00000000)), and(shr(64, r), 0xfffff)))
 
             // Fill the free memory with garbage.
             // prettier-ignore
             for { let w := not(0) } 1 {} {
-                mstore(offset, r0)
-                mstore(add(offset, 0x20), r1)
+                mstore(offset, mload(0x00))
+                mstore(add(offset, 0x20), mload(0x20))
                 offset := add(offset, 0x40)
                 // We use codecopy instead of the identity precompile
                 // to avoid polluting the `forge test -vvvv` output with tons of junk.
                 codecopy(offset, start, size)
-                codecopy(add(offset, size), 0, start)
+                codecopy(add(offset, size), 0x00, start)
                 offset := add(offset, cSize)
                 times := add(times, w) // `sub(times, 1)`.
                 if iszero(times) { break }
             }
             // With a 1/16 chance, set the scratch space to zero.
-            r1 := mulmod(r1, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
-            if iszero(and(0xf00, r1)) {
-                mstore(0x20, zero)
-                mstore(zero, zero)
-                mstore8(and(r1, 0x3f), iszero(and(0x100000, r1)))
+            if iszero(and(0xf00, r)) {
+                codecopy(0x00, codesize(), 0x40)
+                mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
         }
     }
@@ -79,19 +76,17 @@ contract Brutalizer {
         /// @solidity memory-safe-assembly
         assembly {
             let offset := mload(0x40) // Start the offset at the free memory pointer.
-            calldatacopy(offset, zero, calldatasize())
+            calldatacopy(add(offset, 0x20), zero, calldatasize())
+            mstore(offset, add(caller(), gas()))
 
             // Fill the 64 bytes of scratch space with garbage.
-            mstore(zero, add(caller(), gas()))
-            mstore(0x20, keccak256(offset, calldatasize()))
-            let r := keccak256(zero, 0x40)
+            let r := keccak256(offset, add(calldatasize(), 0x40))
             mstore(zero, r)
+            mstore(0x20, keccak256(zero, 0x40))
             // With a 1/16 chance, set the scratch space to zero.
-            r := mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
-            codecopy(0x20, byte(0, r), 0x20)
+            r := mulmod(mload(0x10), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
             if iszero(and(0xf00, r)) {
-                mstore(0x20, zero)
-                mstore(zero, zero)
+                codecopy(0x00, codesize(), 0x40)
                 mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
         }
@@ -109,18 +104,17 @@ contract Brutalizer {
         /// @solidity memory-safe-assembly
         assembly {
             let offset := mload(0x40) // Start the offset at the free memory pointer.
-            calldatacopy(offset, zero, calldatasize())
+            calldatacopy(add(offset, 0x20), zero, calldatasize())
+            mstore(offset, add(caller(), gas()))
 
             // Fill the 64 bytes of scratch space with garbage.
-            mstore(zero, add(caller(), gas()))
-            mstore(0x20, keccak256(offset, calldatasize()))
-            let r := keccak256(zero, 0x40)
+            let r := keccak256(offset, add(calldatasize(), 0x40))
             mstore(zero, r)
-            r := mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO)
-            codecopy(0x20, byte(0, r), 0x20)
+            mstore(0x20, keccak256(zero, 0x40))
+            r := mulmod(mload(0x10), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
 
             for {} 1 {} {
-                if iszero(and(0x0700, r)) {
+                if iszero(and(0x7000, r)) {
                     let x := keccak256(zero, 0x40)
                     mstore(offset, x)
                     mstore(add(0x20, offset), x)
@@ -148,9 +142,8 @@ contract Brutalizer {
                 break
             }
             // With a 1/4 chance, set the scratch space to zero.
-            if iszero(and(0x3000, r)) {
-                mstore(0x20, zero)
-                mstore(zero, zero)
+            if iszero(and(0x300, r)) {
+                codecopy(0x00, codesize(), 0x40)
                 mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
         }
