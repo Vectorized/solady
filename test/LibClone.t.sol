@@ -22,7 +22,11 @@ contract LibCloneTest is SoladyTest {
 
     uint256 internal constant _ERC1967_ARGS_MAX_LENGTH = 0xffc2;
 
+    uint256 internal constant _ERC1967I_ARGS_MAX_LENGTH = 0xffad;
+
     uint256 internal constant _ERC1967_BEACON_PROXY_ARGS_MAX_LENGTH = 0xffad;
+
+    uint256 internal constant _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH = 0xffa8;
 
     address internal _deployedBeacon;
 
@@ -75,8 +79,23 @@ contract LibCloneTest is SoladyTest {
         address instance = this.deployERC1967I(address(this));
         _checkBehavesLikeProxy(instance);
         _checkERC1967ImplementationSlot(instance);
+        _checkERC1967ISpecialPath(instance, address(this));
         assertEq(keccak256(instance.code), LibClone.ERC1967I_CODE_HASH);
         assertEq(instance.code.length, 82);
+    }
+
+    function testDeployERC1967IWithImmutableArgs(bytes32) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967I_ARGS_MAX_LENGTH) {
+            vm.expectRevert();
+            this.deployERC1967I(address(this), args);
+            return;
+        }
+        address instance = this.deployERC1967I(address(this), args);
+        _checkArgsOnERC1967I(instance, args);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967ImplementationSlot(instance);
+        _checkERC1967ISpecialPath(instance, address(this));
     }
 
     function testDeployERC1967BeaconProxy(bytes32) public {
@@ -88,6 +107,16 @@ contract LibCloneTest is SoladyTest {
         assertEq(instance.code.length, 82);
     }
 
+    function testDeployERC1967IBeaconProxy(bytes32) public {
+        address beacon = _beacon();
+        address instance = this.deployERC1967IBeaconProxy(beacon);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967BeaconSlot(instance, beacon);
+        _checkERC1967ISpecialPath(instance, address(this));
+        assertEq(keccak256(instance.code), LibClone.ERC1967I_BEACON_PROXY_CODE_HASH);
+        assertEq(instance.code.length, 87);
+    }
+
     function testDeployERC1967() public {
         testDeployERC1967(bytes32(0));
     }
@@ -96,8 +125,16 @@ contract LibCloneTest is SoladyTest {
         testDeployERC1967WithImmutableArgs(bytes32(0));
     }
 
+    function testDeployERC1967IWithImmutableArgs() public {
+        testDeployERC1967IWithImmutableArgs(bytes32(0));
+    }
+
     function testDeployERC1967I() public {
         testDeployERC1967I(bytes32(0));
+    }
+
+    function testDeployERC1967IBeaconProxy() public {
+        testDeployERC1967IBeaconProxy(bytes32(0));
     }
 
     function testDeployERC1967BeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
@@ -139,11 +176,129 @@ contract LibCloneTest is SoladyTest {
         }
     }
 
+    function testDeployERC1967IBeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH) {
+            if (_randomChance(2)) {
+                vm.expectRevert();
+                this.deployERC1967IBeaconProxy(beacon, args);
+                return;
+            }
+            if (_randomChance(2)) {
+                vm.expectRevert();
+                this.deployDeterministicERC1967IBeaconProxy(beacon, args, salt);
+                return;
+            }
+            vm.expectRevert();
+            this.createDeterministicERC1967IBeaconProxy(beacon, args, salt);
+            return;
+        }
+        address instance = LibClone.deployERC1967IBeaconProxy(beacon);
+        bytes memory expected = abi.encodePacked(instance.code, args);
+        if (_randomChance(2)) {
+            instance = this.deployERC1967IBeaconProxy(beacon, args);
+            assertEq(instance.code, expected);
+        }
+        if (_randomChance(2)) {
+            instance = this.deployDeterministicERC1967IBeaconProxy(beacon, args, salt);
+            assertEq(instance.code, expected);
+            if (_randomChance(2)) {
+                vm.expectRevert();
+                this.deployDeterministicERC1967IBeaconProxy(beacon, args, salt);
+                return;
+            }
+        }
+        if (_randomChance(2)) {
+            instance = this.createDeterministicERC1967IBeaconProxy(beacon, args, salt);
+            assertEq(instance.code, expected);
+            _checkArgsOnERC1967IBeaconProxy(instance, args);
+        }
+    }
+
     function testDeployERC1967BeaconProxyWithImmutableArgs() public {
         address beacon = _beacon();
         bytes memory args = "123456789";
         address instance = LibClone.deployERC1967BeaconProxy(beacon, args);
         _checkBehavesLikeProxy(instance);
+        _checkArgsOnERC1967BeaconProxy(instance, args);
+    }
+
+    function testDeployERC1967IBeaconProxyWithImmutableArgs() public {
+        address beacon = _beacon();
+        bytes memory args = "123456789";
+        address instance = LibClone.deployERC1967IBeaconProxy(beacon, args);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967ISpecialPath(instance, address(this));
+        _checkArgsOnERC1967IBeaconProxy(instance, args);
+    }
+
+    function testImplemenationOf(address implementation) public {
+        _maybeBrutalizeMemory();
+        bytes memory args = _truncateBytes(_randomBytes(), _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH);
+        address instance;
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.clone(implementation);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.clone(implementation, args);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.deployERC1967I(implementation);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.deployERC1967I(implementation, args);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.deployERC1967IBeaconProxy(_beacon());
+            assertEq(LibClone.implementationOf(instance), address(this));
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            instance = LibClone.deployERC1967IBeaconProxy(_beacon(), args);
+            assertEq(LibClone.implementationOf(instance), address(this));
+        }
+        if (_randomChance(8)) {
+            _maybeBrutalizeMemory();
+            assertEq(LibClone.implementationOf(address(this)), address(0));
+            assertEq(LibClone.implementationOf(implementation), address(0));
+        }
+        _checkMemory();
+    }
+
+    function testImplemenationOfGas() public {
+        address implementation = address(123);
+        bytes memory args = "1234564789";
+        address instance;
+
+        instance = LibClone.clone(implementation);
+        assertEq(LibClone.implementationOf(instance), implementation);
+
+        instance = LibClone.clone(implementation, args);
+        assertEq(LibClone.implementationOf(instance), implementation);
+
+        instance = LibClone.deployERC1967I(implementation);
+        assertEq(LibClone.implementationOf(instance), implementation);
+
+        instance = LibClone.deployERC1967I(implementation, args);
+        assertEq(LibClone.implementationOf(instance), implementation);
+
+        instance = LibClone.deployERC1967IBeaconProxy(_beacon());
+        assertEq(LibClone.implementationOf(instance), address(this));
+
+        instance = LibClone.deployERC1967IBeaconProxy(_beacon(), args);
+        assertEq(LibClone.implementationOf(instance), address(this));
+
+        assertEq(LibClone.implementationOf(address(this)), address(0));
+        assertEq(LibClone.implementationOf(implementation), address(0));
     }
 
     function testClone(uint256) public {
@@ -172,19 +327,19 @@ contract LibCloneTest is SoladyTest {
 
     function testSlicingRevertsOnZeroCodeAddress(address instance) public {
         while (instance.code.length != 0) instance = _randomNonZeroAddress();
-        if (_randomChance(2)) {
+        if (_randomChance(4)) {
             _maybeBrutalizeMemory();
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnClone(instance));
                 return;
             }
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnClone(instance, _random()));
                 return;
             }
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnClone(instance, _random(), _random()));
                 return;
@@ -195,19 +350,19 @@ contract LibCloneTest is SoladyTest {
             assertEq(LibClone.argsOnClone(instance, _random(), _random()), "");
             return;
         }
-        if (_randomChance(2)) {
+        if (_randomChance(4)) {
             _maybeBrutalizeMemory();
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnERC1967(instance));
                 return;
             }
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnERC1967(instance, _random()));
                 return;
             }
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnERC1967(instance, _random(), _random()));
                 return;
@@ -218,19 +373,42 @@ contract LibCloneTest is SoladyTest {
             assertEq(LibClone.argsOnERC1967(instance, _random(), _random()), "");
             return;
         }
-        if (_randomChance(2)) {
+        if (_randomChance(4)) {
             _maybeBrutalizeMemory();
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
+                vm.expectRevert();
+                _mustCompute(LibClone.argsOnERC1967I(instance));
+                return;
+            }
+            if (_randomChance(4)) {
+                vm.expectRevert();
+                _mustCompute(LibClone.argsOnERC1967I(instance, _random()));
+                return;
+            }
+            if (_randomChance(4)) {
+                vm.expectRevert();
+                _mustCompute(LibClone.argsOnERC1967I(instance, _random(), _random()));
+                return;
+            }
+            instance = LibClone.deployERC1967I(address(this), "");
+            assertEq(LibClone.argsOnERC1967I(instance), "");
+            assertEq(LibClone.argsOnERC1967I(instance, _random()), "");
+            assertEq(LibClone.argsOnERC1967I(instance, _random(), _random()), "");
+            return;
+        }
+        if (_randomChance(4)) {
+            _maybeBrutalizeMemory();
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnERC1967BeaconProxy(instance));
                 return;
             }
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnERC1967BeaconProxy(instance, _random()));
                 return;
             }
-            if (_randomChance(2)) {
+            if (_randomChance(4)) {
                 vm.expectRevert();
                 _mustCompute(LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random()));
                 return;
@@ -239,6 +417,29 @@ contract LibCloneTest is SoladyTest {
             assertEq(LibClone.argsOnERC1967BeaconProxy(instance), "");
             assertEq(LibClone.argsOnERC1967BeaconProxy(instance, _random()), "");
             assertEq(LibClone.argsOnERC1967BeaconProxy(instance, _random(), _random()), "");
+            return;
+        }
+        if (_randomChance(4)) {
+            _maybeBrutalizeMemory();
+            if (_randomChance(4)) {
+                vm.expectRevert();
+                _mustCompute(LibClone.argsOnERC1967IBeaconProxy(instance));
+                return;
+            }
+            if (_randomChance(4)) {
+                vm.expectRevert();
+                _mustCompute(LibClone.argsOnERC1967IBeaconProxy(instance, _random()));
+                return;
+            }
+            if (_randomChance(4)) {
+                vm.expectRevert();
+                _mustCompute(LibClone.argsOnERC1967IBeaconProxy(instance, _random(), _random()));
+                return;
+            }
+            instance = LibClone.deployERC1967IBeaconProxy(address(this), "");
+            assertEq(LibClone.argsOnERC1967IBeaconProxy(instance), "");
+            assertEq(LibClone.argsOnERC1967IBeaconProxy(instance, _random()), "");
+            assertEq(LibClone.argsOnERC1967IBeaconProxy(instance, _random(), _random()), "");
             return;
         }
     }
@@ -344,6 +545,27 @@ contract LibCloneTest is SoladyTest {
         }
     }
 
+    function testDeployDeterministicERC1967IWithImmutableArgs() public {
+        testDeployDeterministicERC1967I(bytes32(0));
+    }
+
+    function testDeployDeterministicERC1967IWithImmutableArgs(bytes32 salt) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967I_ARGS_MAX_LENGTH) {
+            vm.expectRevert();
+            this.deployDeterministicERC1967I(address(this), args, salt);
+            return;
+        }
+        address instance = this.deployDeterministicERC1967I(address(this), args, salt);
+        _checkArgsOnERC1967I(instance, args);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967ImplementationSlot(instance);
+        if (_randomChance(32)) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            this.deployDeterministicERC1967I(address(this), args, salt);
+        }
+    }
+
     function testDeployDeterministicERC1967BeaconProxy(bytes32 salt) public {
         address instance = this.deployDeterministicERC1967BeaconProxy(_beacon(), salt);
         _checkBehavesLikeProxy(instance);
@@ -351,6 +573,52 @@ contract LibCloneTest is SoladyTest {
         if (_randomChance(32)) {
             vm.expectRevert(LibClone.DeploymentFailed.selector);
             this.testDeployDeterministicERC1967BeaconProxy(salt);
+        }
+    }
+
+    function testDeployDeterministicERC1967IBeaconProxy(bytes32 salt) public {
+        address instance = this.deployDeterministicERC1967IBeaconProxy(_beacon(), salt);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967BeaconSlot(instance, _beacon());
+        _checkERC1967ISpecialPath(instance, address(this));
+        if (_randomChance(32)) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            this.testDeployDeterministicERC1967IBeaconProxy(salt);
+        }
+    }
+
+    function testDeployDeterministicERC1967BeaconProxyWithImmutableArgs(bytes32 salt) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967_BEACON_PROXY_ARGS_MAX_LENGTH) {
+            vm.expectRevert();
+            this.deployDeterministicERC1967BeaconProxy(address(this), args, salt);
+            return;
+        }
+        address instance = this.deployDeterministicERC1967BeaconProxy(_beacon(), args, salt);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967BeaconSlot(instance, _beacon());
+        _checkArgsOnERC1967BeaconProxy(instance, args);
+        if (_randomChance(32)) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            this.deployDeterministicERC1967BeaconProxy(_beacon(), args, salt);
+        }
+    }
+
+    function testDeployDeterministicERC1967IBeaconProxyWithImmutableArgs(bytes32 salt) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH) {
+            vm.expectRevert();
+            this.deployDeterministicERC1967IBeaconProxy(address(this), args, salt);
+            return;
+        }
+        address instance = this.deployDeterministicERC1967IBeaconProxy(_beacon(), args, salt);
+        _checkBehavesLikeProxy(instance);
+        _checkArgsOnERC1967IBeaconProxy(instance, args);
+        _checkERC1967BeaconSlot(instance, _beacon());
+        _checkERC1967ISpecialPath(instance, address(this));
+        if (_randomChance(32)) {
+            vm.expectRevert(LibClone.DeploymentFailed.selector);
+            this.deployDeterministicERC1967IBeaconProxy(_beacon(), args, salt);
         }
     }
 
@@ -373,8 +641,34 @@ contract LibCloneTest is SoladyTest {
         address instance = this.createDeterministicERC1967(address(this), args, salt);
         _checkBehavesLikeProxy(instance);
         _checkERC1967ImplementationSlot(instance);
+        _checkArgsOnERC1967(instance, args);
         if (_randomChance(32)) {
-            this.testCreateDeterministicERC1967WithImmutableArgs(salt);
+            this.createDeterministicERC1967(address(this), args, salt);
+        }
+    }
+
+    function testCreateDeterministicERC1967I(bytes32 salt) public {
+        address instance = this.createDeterministicERC1967I(address(this), salt);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967ImplementationSlot(instance);
+        if (_randomChance(32)) {
+            this.testCreateDeterministicERC1967I(salt);
+        }
+    }
+
+    function testCreateDeterministicERC1967IWithImmutableArgs(bytes32 salt) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967I_ARGS_MAX_LENGTH) {
+            vm.expectRevert();
+            this.createDeterministicERC1967I(address(this), args, salt);
+            return;
+        }
+        address instance = this.createDeterministicERC1967I(address(this), args, salt);
+        _checkBehavesLikeProxy(instance);
+        _checkArgsOnERC1967I(instance, args);
+        _checkERC1967ImplementationSlot(instance);
+        if (_randomChance(32)) {
+            this.createDeterministicERC1967I(address(this), args, salt);
         }
     }
 
@@ -387,12 +681,45 @@ contract LibCloneTest is SoladyTest {
         }
     }
 
-    function testCreateDeterministicERC1967I(bytes32 salt) public {
-        address instance = this.createDeterministicERC1967I(address(this), salt);
+    function testCreateDeterministicERC1967IBeaconProxy(bytes32 salt) public {
+        address instance = this.createDeterministicERC1967IBeaconProxy(_beacon(), salt);
         _checkBehavesLikeProxy(instance);
-        _checkERC1967ImplementationSlot(instance);
+        _checkERC1967BeaconSlot(instance, _beacon());
         if (_randomChance(32)) {
-            this.testCreateDeterministicERC1967I(salt);
+            this.testCreateDeterministicERC1967IBeaconProxy(salt);
+        }
+    }
+
+    function testCreateDeterministicERC1967BeaconProxyWithImmutableArgs(bytes32 salt) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967_BEACON_PROXY_ARGS_MAX_LENGTH) {
+            vm.expectRevert();
+            this.createDeterministicERC1967BeaconProxy(address(this), args, salt);
+            return;
+        }
+
+        address instance = this.createDeterministicERC1967BeaconProxy(_beacon(), args, salt);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967BeaconSlot(instance, _beacon());
+        if (_randomChance(32)) {
+            this.createDeterministicERC1967BeaconProxy(_beacon(), args, salt);
+        }
+    }
+
+    function testCreateDeterministicERC1967IBeaconProxyWithImmutableArgs(bytes32 salt) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH) {
+            vm.expectRevert();
+            this.createDeterministicERC1967IBeaconProxy(address(this), args, salt);
+            return;
+        }
+
+        address instance = this.createDeterministicERC1967IBeaconProxy(_beacon(), args, salt);
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967BeaconSlot(instance, _beacon());
+        _checkERC1967ISpecialPath(instance, address(this));
+        if (_randomChance(32)) {
+            this.createDeterministicERC1967IBeaconProxy(_beacon(), args, salt);
         }
     }
 
@@ -424,9 +751,16 @@ contract LibCloneTest is SoladyTest {
         assertEq(LibClone.deployDeterministicERC1967(123, t, bytes32(gasleft())).balance, 123);
         assertEq(LibClone.deployERC1967I(123, t).balance, 123);
         assertEq(LibClone.deployDeterministicERC1967I(123, t, bytes32(gasleft())).balance, 123);
+        assertEq(LibClone.deployERC1967I(123, t, "").balance, 123);
+        assertEq(LibClone.deployDeterministicERC1967I(123, t, "", bytes32(gasleft())).balance, 123);
         assertEq(LibClone.deployERC1967BeaconProxy(123, t).balance, 123);
         assertEq(
             LibClone.deployDeterministicERC1967BeaconProxy(123, t, bytes32(gasleft())).balance, 123
+        );
+        assertEq(LibClone.deployERC1967IBeaconProxy(123, t, "").balance, 123);
+        assertEq(
+            LibClone.deployDeterministicERC1967IBeaconProxy(123, t, "", bytes32(gasleft())).balance,
+            123
         );
     }
 
@@ -437,8 +771,11 @@ contract LibCloneTest is SoladyTest {
         if (_randomChance(4)) _testInitCodeERC1967(implementation);
         if (_randomChance(4)) _testInitCodeERC1967WithImmutableArgs(implementation);
         if (_randomChance(4)) _testInitCodeERC1967I(implementation);
+        if (_randomChance(4)) _testInitCodeERC1967IWithImmutableArgs(implementation);
         if (_randomChance(4)) _testInitCodeERC1967BeaconProxy(implementation);
         if (_randomChance(4)) _testInitCodeERC1967BeaconProxyWithImmutableArgs(implementation);
+        if (_randomChance(4)) _testInitCodeERC1967IBeaconProxy(implementation);
+        if (_randomChance(4)) _testInitCodeERC1967IBeaconProxyWithImmutableArgs(implementation);
     }
 
     function _testInitCode(address implementation) internal {
@@ -510,6 +847,20 @@ contract LibCloneTest is SoladyTest {
         assertEq(keccak256(initCode), expected);
     }
 
+    function _testInitCodeERC1967IWithImmutableArgs(address implementation) internal {
+        _maybeBrutalizeMemory();
+        bytes memory args = _randomBytesForERC1967IImmutableArgs();
+        bytes memory initCode = LibClone.initCodeERC1967I(_brutalized(implementation), args);
+        _checkMemory(initCode);
+        _maybeBrutalizeMemory();
+        bytes32 expected = LibClone.initCodeHashERC1967I(_brutalized(implementation), args);
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+        if (_randomChance(32)) {
+            assertEq(initCode, _initCodeOfERC1967IWithImmutableArgs(implementation, args));
+        }
+    }
+
     function _testInitCodeERC1967BeaconProxy(address beacon) internal {
         _maybeBrutalizeMemory();
         bytes memory initCode = LibClone.initCodeERC1967BeaconProxy(_brutalized(beacon));
@@ -531,6 +882,30 @@ contract LibCloneTest is SoladyTest {
         assertEq(keccak256(initCode), expected);
         if (_randomChance(32)) {
             assertEq(initCode, _initCodeOfERC1967BeaconProxyWithImmutableArgs(beacon, args));
+        }
+    }
+
+    function _testInitCodeERC1967IBeaconProxy(address beacon) internal {
+        _maybeBrutalizeMemory();
+        bytes memory initCode = LibClone.initCodeERC1967IBeaconProxy(_brutalized(beacon));
+        _checkMemory(initCode);
+        _maybeBrutalizeMemory();
+        bytes32 expected = LibClone.initCodeHashERC1967IBeaconProxy(_brutalized(beacon));
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+    }
+
+    function _testInitCodeERC1967IBeaconProxyWithImmutableArgs(address beacon) internal {
+        _maybeBrutalizeMemory();
+        bytes memory args = _randomBytesForERC1967IBeconProxyImmutableArgs();
+        bytes memory initCode = LibClone.initCodeERC1967IBeaconProxy(_brutalized(beacon), args);
+        _checkMemory(initCode);
+        _maybeBrutalizeMemory();
+        bytes32 expected = LibClone.initCodeHashERC1967IBeaconProxy(_brutalized(beacon), args);
+        _checkMemory(initCode);
+        assertEq(keccak256(initCode), expected);
+        if (_randomChance(32)) {
+            assertEq(initCode, _initCodeOfERC1967IBeaconProxyWithImmutableArgs(beacon, args));
         }
     }
 
@@ -564,6 +939,21 @@ contract LibCloneTest is SoladyTest {
         );
     }
 
+    function _initCodeOfERC1967IWithImmutableArgs(address implementation, bytes memory args)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(
+            hex"61",
+            uint16(args.length + 0x52),
+            hex"3d8160233d3973",
+            implementation,
+            hex"600f5155f3365814604357363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3",
+            args
+        );
+    }
+
     function _initCodeOfERC1967BeaconProxyWithImmutableArgs(address beacon, bytes memory args)
         internal
         pure
@@ -575,6 +965,29 @@ contract LibCloneTest is SoladyTest {
             hex"3d8160233d3973",
             beacon,
             hex"60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3",
+            args
+        );
+    }
+
+    function _initCodeOfERC1967IBeaconProxy(address beacon) internal pure returns (bytes memory) {
+        return abi.encodePacked(
+            hex"60573d8160233d3973",
+            beacon,
+            hex"60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3"
+        );
+    }
+
+    function _initCodeOfERC1967IBeaconProxyWithImmutableArgs(address beacon, bytes memory args)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(
+            hex"61",
+            uint16(args.length + 0x57),
+            hex"3d8160233d3973",
+            beacon,
+            hex"60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3",
             args
         );
     }
@@ -645,6 +1058,30 @@ contract LibCloneTest is SoladyTest {
         }
     }
 
+    function testERC1967IBeaconProxyGasBehavior(uint256 gasBudget, uint256 value_) public {
+        address instance = this.deployERC1967IBeaconProxy(_beacon());
+        LibCloneTest(instance).setValue(value_);
+        gasBudget = _randomChance(2) ? gasBudget % 3000 : gasBudget % 30000;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, value_)
+            let hash := keccak256(0x00, 0x40)
+            mstore(0x20, hash)
+            mstore(0x00, 0x3fa4f245) // `value()`.
+            switch staticcall(gasBudget, instance, 0x1c, 0x04, 0x20, 0x20)
+            case 0 { if iszero(eq(mload(0x20), hash)) { invalid() } }
+            default { if iszero(eq(mload(0x20), value_)) { invalid() } }
+
+            mstore(0x20, hash)
+            mstore(0x00, 0x57eca1a5) // `revertWithError()`.
+            switch staticcall(gasBudget, instance, 0x1c, 0x04, 0x20, 0x20)
+            case 0 {
+                if iszero(or(iszero(returndatasize()), eq(returndatasize(), 0x24))) { invalid() }
+            }
+            default { invalid() }
+        }
+    }
+
     function _randomBytesForERC1967BeconProxyImmutableArgs()
         internal
         returns (bytes memory result)
@@ -652,8 +1089,19 @@ contract LibCloneTest is SoladyTest {
         return _truncateBytes(_randomBytes(), _ERC1967_BEACON_PROXY_ARGS_MAX_LENGTH);
     }
 
+    function _randomBytesForERC1967IBeconProxyImmutableArgs()
+        internal
+        returns (bytes memory result)
+    {
+        return _truncateBytes(_randomBytes(), _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH);
+    }
+
     function _randomBytesForERC1967ImmutableArgs() internal returns (bytes memory result) {
         return _truncateBytes(_randomBytes(), _ERC1967_ARGS_MAX_LENGTH);
+    }
+
+    function _randomBytesForERC1967IImmutableArgs() internal returns (bytes memory result) {
+        return _truncateBytes(_randomBytes(), _ERC1967I_ARGS_MAX_LENGTH);
     }
 
     function _randomBytesForCloneImmutableArgs() internal returns (bytes memory result) {
@@ -671,6 +1119,22 @@ contract LibCloneTest is SoladyTest {
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
         retrievedArgs = LibClone.argsOnERC1967BeaconProxy(instance, start);
+        _maybeBrutalizeMemory();
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
+    }
+
+    function _checkArgsOnERC1967IBeaconProxy(address instance, bytes memory args) internal {
+        _maybeBrutalizeMemory();
+        bytes memory retrievedArgs = LibClone.argsOnERC1967IBeaconProxy(instance);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, args);
+        (uint256 start, uint256 end) = _randomStartAndEnd(args);
+        _maybeBrutalizeMemory();
+        retrievedArgs = LibClone.argsOnERC1967IBeaconProxy(instance, start, end);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
+        retrievedArgs = LibClone.argsOnERC1967IBeaconProxy(instance, start);
         _maybeBrutalizeMemory();
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
@@ -694,6 +1158,29 @@ contract LibCloneTest is SoladyTest {
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
         retrievedArgs = LibClone.argsOnERC1967(instance, start);
+        _maybeBrutalizeMemory();
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
+    }
+
+    function _checkArgsOnERC1967I(address instance, bytes memory args) internal {
+        _maybeBrutalizeMemory();
+        bytes memory retrievedArgs = LibClone.argsOnERC1967I(instance);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, args);
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"365814604357363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3",
+                args
+            )
+        );
+        (uint256 start, uint256 end) = _randomStartAndEnd(args);
+        _maybeBrutalizeMemory();
+        retrievedArgs = LibClone.argsOnERC1967I(instance, start, end);
+        _checkMemory(retrievedArgs);
+        assertEq(retrievedArgs, bytes(LibString.slice(string(args), start, end)));
+        retrievedArgs = LibClone.argsOnERC1967I(instance, start);
         _maybeBrutalizeMemory();
         _checkMemory(retrievedArgs);
         assertEq(retrievedArgs, bytes(LibString.slice(string(args), start)));
@@ -746,6 +1233,11 @@ contract LibCloneTest is SoladyTest {
 
     function _checkERC1967BeaconSlot(address instance, address expected) internal {
         assertEq(vm.load(instance, _ERC1967_BEACON_SLOT), bytes32(uint256(uint160(expected))));
+    }
+
+    function _checkERC1967ISpecialPath(address instance, address expected) internal {
+        (, bytes memory returnData) = instance.call("c");
+        assertEq(abi.decode(returnData, (address)), expected);
     }
 
     function clone(address implementation)
@@ -831,6 +1323,21 @@ contract LibCloneTest is SoladyTest {
         assertEq(instance, predicted);
     }
 
+    function createDeterministicERC1967I(address implementation, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967I(implementation, args, salt, address(this));
+        bool alreadyDeployed = predicted.code.length != 0;
+        bool deployed;
+        (deployed, instance) =
+            LibClone.createDeterministicERC1967I(_brutalized(implementation), args, salt);
+        assertEq(alreadyDeployed, deployed);
+        assertEq(instance, predicted);
+    }
+
     function deployERC1967(address implementation, bytes calldata args)
         external
         maybeBrutalizeMemory
@@ -858,6 +1365,14 @@ contract LibCloneTest is SoladyTest {
         instance = LibClone.deployERC1967I(_brutalized(implementation));
     }
 
+    function deployERC1967I(address implementation, bytes memory args)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        instance = LibClone.deployERC1967I(_brutalized(implementation), args);
+    }
+
     function deployDeterministicERC1967I(address implementation, bytes32 salt)
         external
         maybeBrutalizeMemory
@@ -866,6 +1381,17 @@ contract LibCloneTest is SoladyTest {
         instance = LibClone.deployDeterministicERC1967I(_brutalized(implementation), salt);
         address predicted =
             LibClone.predictDeterministicAddressERC1967I(implementation, salt, address(this));
+        assertEq(instance, predicted);
+    }
+
+    function deployDeterministicERC1967I(address implementation, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        instance = LibClone.deployDeterministicERC1967I(_brutalized(implementation), args, salt);
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967I(implementation, args, salt, address(this));
         assertEq(instance, predicted);
     }
 
@@ -888,6 +1414,14 @@ contract LibCloneTest is SoladyTest {
         instance = LibClone.deployERC1967BeaconProxy(_brutalized(beacon));
     }
 
+    function deployERC1967IBeaconProxy(address beacon)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        instance = LibClone.deployERC1967IBeaconProxy(_brutalized(beacon));
+    }
+
     function deployDeterministicERC1967BeaconProxy(address beacon, bytes32 salt)
         external
         maybeBrutalizeMemory
@@ -896,6 +1430,29 @@ contract LibCloneTest is SoladyTest {
         instance = LibClone.deployDeterministicERC1967BeaconProxy(_brutalized(beacon), salt);
         address predicted =
             LibClone.predictDeterministicAddressERC1967BeaconProxy(beacon, salt, address(this));
+        assertEq(instance, predicted);
+    }
+
+    function deployDeterministicERC1967IBeaconProxy(address beacon, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        instance = LibClone.deployDeterministicERC1967IBeaconProxy(_brutalized(beacon), salt);
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967IBeaconProxy(beacon, salt, address(this));
+        assertEq(instance, predicted);
+    }
+
+    function deployDeterministicERC1967IBeaconProxy(address beacon, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        instance = LibClone.deployDeterministicERC1967IBeaconProxy(_brutalized(beacon), args, salt);
+        address predicted = LibClone.predictDeterministicAddressERC1967IBeaconProxy(
+            beacon, args, salt, address(this)
+        );
         assertEq(instance, predicted);
     }
 
@@ -914,12 +1471,35 @@ contract LibCloneTest is SoladyTest {
         assertEq(instance, predicted);
     }
 
+    function createDeterministicERC1967IBeaconProxy(address beacon, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        address predicted =
+            LibClone.predictDeterministicAddressERC1967IBeaconProxy(beacon, salt, address(this));
+        bool alreadyDeployed = predicted.code.length != 0;
+        bool deployed;
+        (deployed, instance) =
+            LibClone.createDeterministicERC1967IBeaconProxy(_brutalized(beacon), salt);
+        assertEq(deployed, alreadyDeployed);
+        assertEq(instance, predicted);
+    }
+
     function deployERC1967BeaconProxy(address beacon, bytes memory args)
         external
         maybeBrutalizeMemory
         returns (address instance)
     {
         instance = LibClone.deployERC1967BeaconProxy(_brutalized(beacon), args);
+    }
+
+    function deployERC1967IBeaconProxy(address beacon, bytes memory args)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        instance = LibClone.deployERC1967IBeaconProxy(_brutalized(beacon), args);
     }
 
     function deployDeterministicERC1967BeaconProxy(address beacon, bytes memory args, bytes32 salt)
@@ -946,6 +1526,22 @@ contract LibCloneTest is SoladyTest {
         bool deployed;
         (deployed, instance) =
             LibClone.createDeterministicERC1967BeaconProxy(_brutalized(beacon), args, salt);
+        assertEq(deployed, alreadyDeployed);
+        assertEq(instance, predicted);
+    }
+
+    function createDeterministicERC1967IBeaconProxy(address beacon, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        address predicted = LibClone.predictDeterministicAddressERC1967IBeaconProxy(
+            beacon, args, salt, address(this)
+        );
+        bool alreadyDeployed = predicted.code.length != 0;
+        bool deployed;
+        (deployed, instance) =
+            LibClone.createDeterministicERC1967IBeaconProxy(_brutalized(beacon), args, salt);
         assertEq(deployed, alreadyDeployed);
         assertEq(instance, predicted);
     }
