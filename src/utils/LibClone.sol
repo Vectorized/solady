@@ -2775,7 +2775,7 @@ library LibClone {
                 break
             }
             result := shr(96, result)
-            mstore(0x37, 0x00) // Restore the overwritten part of the free memory pointer.
+            mstore(0x37, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
