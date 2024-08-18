@@ -71,9 +71,9 @@ contract OwnableRolesTest is SoladyTest {
         t.rolesA = _random();
         t.rolesB = _random();
         vm.expectEmit(true, true, true, true);
-        emit RolesUpdated(t.userA, t.rolesA);
+        emit RolesUpdated(_cleaned(t.userA), t.rolesA);
         mockOwnableRoles.setRolesDirect(t.userA, t.rolesA);
-        emit RolesUpdated(t.userB, t.rolesB);
+        emit RolesUpdated(_cleaned(t.userB), t.rolesB);
         mockOwnableRoles.setRolesDirect(t.userB, t.rolesB);
         assertEq(mockOwnableRoles.rolesOf(t.userA), t.rolesA);
         assertEq(mockOwnableRoles.rolesOf(t.userB), t.rolesB);
@@ -144,7 +144,7 @@ contract OwnableRolesTest is SoladyTest {
 
         if (granterIsOwner) {
             vm.expectEmit(true, true, true, true);
-            emit RolesUpdated(user, rolesToGrant);
+            emit RolesUpdated(_cleaned(user), rolesToGrant);
         } else {
             vm.prank(user);
             vm.expectRevert(Ownable.Unauthorized.selector);
@@ -157,12 +157,12 @@ contract OwnableRolesTest is SoladyTest {
 
         if (useRenounce) {
             vm.expectEmit(true, true, true, true);
-            emit RolesUpdated(user, rolesAfterRevoke);
+            emit RolesUpdated(_cleaned(user), rolesAfterRevoke);
             vm.prank(user);
             mockOwnableRoles.renounceRoles(rolesToRevoke);
         } else if (revokerIsOwner) {
             vm.expectEmit(true, true, true, true);
-            emit RolesUpdated(user, rolesAfterRevoke);
+            emit RolesUpdated(_cleaned(user), rolesAfterRevoke);
             mockOwnableRoles.revokeRoles(user, rolesToRevoke);
         } else {
             vm.prank(user);
@@ -315,12 +315,12 @@ contract OwnableRolesTest is SoladyTest {
     function testHandoverOwnership(address pendingOwner) public {
         vm.prank(pendingOwner);
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverRequested(pendingOwner);
+        emit OwnershipHandoverRequested(_cleaned(pendingOwner));
         mockOwnableRoles.requestOwnershipHandover();
         assertTrue(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
-        emit OwnershipTransferred(address(this), pendingOwner);
+        emit OwnershipTransferred(address(this), _cleaned(pendingOwner));
 
         mockOwnableRoles.completeOwnershipHandover(pendingOwner);
 
