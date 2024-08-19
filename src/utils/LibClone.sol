@@ -2233,10 +2233,12 @@ library LibClone {
              * 54            | SLOAD            | beac cds 4 cds 32           | sel             |
              * 5a            | GAS              | g beac cds 4 cds 32         | sel             |
              * fa            | STATICCALL       | succ                        | impl            |
-             * 36            | CALLDATASIZE     | cds                         | impl            |
+             * ~~~~~~ check calldatasize ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
+             * 36            | CALLDATASIZE     | cds succ                    |                 |
              * 14            | EQ               |                             | impl            |
              * 60 0x52       | PUSH1 0x52       |                             | impl            |
              * 57            | JUMPI            |                             | impl            |
+             * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
              * 36            | CALLDATASIZE     | cds                         | impl            |
              * 51            | MLOAD            | impl                        | impl            |
              * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |
@@ -2261,7 +2263,7 @@ library LibClone {
              * ::: delegatecall succeeded, return ::::::::::::::::::::::::::::::::::::::::::::: |
              * 5b         | JUMPDEST       |                  | [1..returndatasize): returndata |
              * 3d         | RETURNDATASIZE | rds              | [1..returndatasize): returndata |
-             * 60 0x01    | PUSH1 0x01     | 0 rds            | [1..returndatasize): returndata |
+             * 60 0x01    | PUSH1 0x01     | 1 rds            | [1..returndatasize): returndata |
              * f3         | RETURN         |                  | [1..returndatasize): returndata |
              * ---------------------------------------------------------------------------------+
              */
