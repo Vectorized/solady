@@ -23,14 +23,13 @@ contract Brutalizer {
         /// @solidity memory-safe-assembly
         assembly {
             let offset := mload(0x40) // Start the offset at the free memory pointer.
-            calldatacopy(add(offset, 0x20), zero, calldatasize())
-            mstore(offset, add(caller(), gas()))
+            calldatacopy(offset, zero, calldatasize())
 
             // Fill the 64 bytes of scratch space with garbage.
-            let r := keccak256(offset, add(calldatasize(), 0x40))
-            mstore(zero, r)
-            mstore(0x20, keccak256(zero, 0x40))
-            r := mulmod(mload(0x10), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
+            let r := keccak256(offset, calldatasize())
+            mstore(zero, mulmod(xor(r, gas()), _LPRNG_MULTIPLIER, _LPRNG_MODULO))
+            r := mulmod(xor(r, caller()), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
+            mstore(0x20, r)
 
             let cSize := add(codesize(), iszero(codesize()))
             if iszero(lt(cSize, 32)) { cSize := sub(cSize, and(mload(0x02), 0x1f)) }
@@ -57,8 +56,7 @@ contract Brutalizer {
                 times := add(times, w) // `sub(times, 1)`.
                 if iszero(times) { break }
             }
-            // With a 1/16 chance, copy the contract's code to the scratch space.
-            if iszero(and(0xf00, r)) {
+            if iszero(and(0x300, r)) {
                 codecopy(0x00, mod(shr(128, r), add(codesize(), codesize())), 0x40)
                 mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
@@ -75,16 +73,15 @@ contract Brutalizer {
         uint256 zero;
         /// @solidity memory-safe-assembly
         assembly {
-            let offset := mload(0x40) // Start the offset at the free memory pointer.
-            calldatacopy(add(offset, 0x20), zero, calldatasize())
-            mstore(offset, add(caller(), gas()))
-
+            calldatacopy(0x1c, zero, 0x24)
+            mstore(0x00, add(gas(), mload(0x00)))
             // Fill the 64 bytes of scratch space with garbage.
-            let r := keccak256(offset, add(calldatasize(), 0x40))
+            let r := keccak256(0x00, 0x40)
             mstore(zero, r)
-            mstore(0x20, keccak256(zero, 0x40))
-            r := mulmod(mload(0x10), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
-            if iszero(and(0xf00, r)) {
+            r := mulmod(add(gas(), r), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
+            mstore(0x20, r)
+            r := mulmod(add(gas(), r), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
+            if iszero(and(0x300, r)) {
                 codecopy(0x00, mod(shr(128, r), add(codesize(), codesize())), 0x40)
                 mstore8(and(r, 0x3f), iszero(and(0x100000, r)))
             }
@@ -103,18 +100,17 @@ contract Brutalizer {
         /// @solidity memory-safe-assembly
         assembly {
             let offset := mload(0x40) // Start the offset at the free memory pointer.
-            calldatacopy(add(offset, 0x20), zero, calldatasize())
-            mstore(offset, add(caller(), gas()))
-
+            calldatacopy(0x1c, zero, 0x24)
+            mstore(0x00, add(gas(), mload(0x00)))
             // Fill the 64 bytes of scratch space with garbage.
-            let r := keccak256(offset, add(calldatasize(), 0x40))
+            let r := keccak256(0x00, 0x40)
             mstore(zero, r)
-            mstore(0x20, keccak256(zero, 0x40))
-            r := mulmod(mload(0x10), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
-
+            r := mulmod(add(gas(), r), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
+            mstore(0x20, r)
+            r := mulmod(add(gas(), r), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
             for {} 1 {} {
                 if iszero(and(0x7000, r)) {
-                    let x := keccak256(zero, 0x40)
+                    let x := mulmod(add(gas(), r), _LPRNG_MULTIPLIER, _LPRNG_MODULO)
                     mstore(offset, x)
                     mstore(add(0x20, offset), x)
                     mstore(add(0x40, offset), x)
@@ -743,14 +739,12 @@ contract Brutalizer {
     function _brutalized(bool value) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40)
-            calldatacopy(result, 0x00, calldatasize())
-            mstore(0x20, keccak256(result, calldatasize()))
-            mstore(0x10, xor(value, mload(0x10)))
-            let r := keccak256(0x00, 0x88)
+            mstore8(0x00, value)
+            calldatacopy(0x1c, 0x00, 0x24)
+            let r := keccak256(0x00, 0x40)
             mstore(0x10, r)
             result := mul(iszero(iszero(value)), r)
-            if iszero(and(1, shr(128, mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO)))) {
+            if iszero(and(0x1000000, mulmod(r, _LPRNG_MULTIPLIER, _LPRNG_MODULO))) {
                 result := iszero(iszero(result))
             }
         }
@@ -765,13 +759,11 @@ contract Brutalizer {
     function __brutalizerRandomness(uint256 seed) private pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40)
-            calldatacopy(result, 0x00, calldatasize())
-            mstore(0x20, keccak256(result, calldatasize()))
-            mstore(0x10, xor(seed, mload(0x10)))
-            result := keccak256(0x00, 0x88)
+            calldatacopy(0x00, 0x00, 0x04)
+            mstore(0x20, xor(seed, calldataload(0x04)))
+            result := keccak256(0x00, 0x40)
             mstore(0x10, result)
-            if iszero(and(7, shr(128, mulmod(result, _LPRNG_MULTIPLIER, _LPRNG_MODULO)))) {
+            if iszero(and(0x7000000, mulmod(result, _LPRNG_MULTIPLIER, _LPRNG_MODULO))) {
                 result := 0
             }
         }
