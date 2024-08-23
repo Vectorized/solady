@@ -30,9 +30,15 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ### Overview
 
-All of the following proxies can have optional data bytecode appended to the end.
+All of the following proxies MAY have optional data bytecode appended to the end of their runtime bytecode.
+
+During deployment, the initialization code MUST store the implementation at the ERC-1967 implementation storage slot `0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`.
+
+Emitting the ERC-1967 events during initialization is OPTIONAL. Indexers MUST NOT expect the initialization code to emit the ERC-1967 events.
 
 ### Minimal ERC-1967 transparent upgradeable proxy
+
+This is the runtime bytecode:
 
 ```
 3d3d336d________________________________________14605157363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e604c573d6000fd5b3d6000f35b3d3560203555604080361115604c5736038060403d373d3d355af43d6000803e604c573d6000fd
@@ -40,9 +46,9 @@ All of the following proxies can have optional data bytecode appended to the end
 
 where `________________________________________` is the 20-byte factory address.
 
-The transparent upgradeable proxy is to be deployed by a factory that is responsible for authenticating upgrades.
+The transparent upgradeable proxy MUST be deployed by a factory that is responsible for authenticating upgrades.
 
-During upgrades, the factory must call the upgradeable proxy with following calldata:
+During upgrades, the factory MUST call the upgradeable proxy with following calldata:
 
 ```solidity
 abi.encode(
@@ -52,33 +58,51 @@ abi.encode(
 )
 ```
 
-#### Minimal ERC-1967 transparent upgradeable proxy (6 leading zero bytes factory variant)
+#### Minimal ERC-1967 transparent upgradeable proxy (14-byte factory address variant)
 
-We provide a variant for a factory with a 6 leading zero bytes address.
+We provide a variant for a 14-byte factory address.
 
 It is beneficial to install the factory at a vanity address with leading zero bytes so that the proxy's bytecode can be optimized to be shorter. 
+
+This is the runtime bytecode:
 
 ```
 3d3d3373____________________________14605757363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6052573d6000fd5b3d6000f35b3d356020355560408036111560525736038060403d373d3d355af43d6000803e6052573d6000fd
 ```
 
-where `____________________________` is lower 14 bytes of the factory address.
+where `____________________________` is the 14-byte factory address.
 
 ### Minimal ERC-1967 UUPS proxy
 
-<!-- Insert runtime bytecode here, no need for the table -->
+This is the runtime bytecode:
+
+```
+363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3
+```
 
 #### Minimal ERC-1967 UUPS proxy (I-variant)
 
-<!-- Insert runtime bytecode here, no need for the table -->
+This is the runtime bytecode:
+
+```
+365814604357363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3
+```
 
 ### Minimal ERC-1967 beacon proxy
 
-<!-- Insert runtime bytecode here, no need for the table -->
+This is the runtime bytecode:
+
+```
+363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3
+```
 
 #### Minimal ERC-1967 beacon proxy (I-variant)
 
-<!-- Insert runtime bytecode here, no need for the table -->
+This is the runtime bytecode:
+
+```
+363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3
+```
 
 ## Rationale
 
