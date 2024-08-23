@@ -38,12 +38,19 @@ library ERC1967MinimalTransparentUpgradeableProxyLib {
         }
     }
 
-    function deploy(address implementation) internal returns (address instance) {
+    function deploy(address implementation, bytes memory initializationData)
+        internal
+        returns (address instance)
+    {
         bytes memory m = initCode();
         assembly {
             instance := create(0, add(m, 0x20), mload(m))
         }
         require(instance != address(0), "Deployment failed.");
+        upgrade(instance, implementation, initializationData);
+    }
+
+    function upgrade(address instance, address implementation, bytes memory upgradeData) internal {
         (bool success,) = instance.call(
             abi.encodePacked(
                 // The new implementation address, converted to a 32-byte word.
@@ -52,16 +59,20 @@ library ERC1967MinimalTransparentUpgradeableProxyLib {
                 bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc),
                 // Optional calldata to be forwarded to the implementation
                 // via delegatecall after setting the implementation slot.
-                ""
+                upgradeData
             )
         );
-        require(success, "Initialization failed.");
+        require(success, "Upgrade failed.");
     }
 }
 
 contract ERC1967MinimalTransparentUpgradeableProxyFactory {
     function deploy(address implementation) public returns (address) {
-        return ERC1967MinimalTransparentUpgradeableProxyLib.deploy(implementation);
+        return ERC1967MinimalTransparentUpgradeableProxyLib.deploy(implementation, "");
+    }
+
+    function upgrade(address instance, address implementation) public {
+        ERC1967MinimalTransparentUpgradeableProxyLib.upgrade(instance, implementation, "");
     }
 }
 
@@ -96,12 +107,19 @@ library ERC1967IMinimalTransparentUpgradeableProxyLib {
         }
     }
 
-    function deploy(address implementation) internal returns (address instance) {
+    function deploy(address implementation, bytes memory initializationData)
+        internal
+        returns (address instance)
+    {
         bytes memory m = initCode();
         assembly {
             instance := create(0, add(m, 0x20), mload(m))
         }
         require(instance != address(0), "Deployment failed.");
+        upgrade(instance, implementation, initializationData);
+    }
+
+    function upgrade(address instance, address implementation, bytes memory upgradeData) internal {
         (bool success,) = instance.call(
             abi.encodePacked(
                 // The new implementation address, converted to a 32-byte word.
@@ -110,19 +128,20 @@ library ERC1967IMinimalTransparentUpgradeableProxyLib {
                 bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc),
                 // Optional calldata to be forwarded to the implementation
                 // via delegatecall after setting the implementation slot.
-                ""
+                upgradeData
             )
         );
-        require(success, "Initialization failed.");
-
+        require(success, "Upgrade failed.");
     }
 }
 
-
-
 contract ERC1967IMinimalTransparentUpgradeableProxyFactory {
     function deploy(address implementation) public returns (address) {
-        return ERC1967IMinimalTransparentUpgradeableProxyLib.deploy(implementation);
+        return ERC1967IMinimalTransparentUpgradeableProxyLib.deploy(implementation, "");
+    }
+
+    function upgrade(address instance, address implementation) public {
+        ERC1967IMinimalTransparentUpgradeableProxyLib.upgrade(instance, implementation, "");
     }
 }
 
