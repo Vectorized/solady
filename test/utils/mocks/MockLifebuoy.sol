@@ -50,6 +50,17 @@ contract MockLifebuoy is Lifebuoy, Brutalizer {
         _checkMemory();
     }
 
+    function rescueERC6909(address token, address to, uint256 tokenId, uint256 amount)
+        public
+        payable
+        virtual
+        override
+    {
+        _brutalizeScratchSpace();
+        super.rescueERC6909(_brutalized(token), _brutalized(to), tokenId, amount);
+        _checkMemory();
+    }
+
     function onERC1155Received(address, address, uint256, uint256, bytes calldata)
         external
         virtual
