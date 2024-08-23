@@ -32,10 +32,6 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 All of the following proxies MAY have optional data bytecode appended to the end of their runtime bytecode.
 
-During deployment, the initialization code MUST store the implementation at the ERC-1967 implementation storage slot `0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`.
-
-Emitting the ERC-1967 events during initialization is OPTIONAL. Indexers MUST NOT expect the initialization code to emit the ERC-1967 events.
-
 ### Minimal ERC-1967 transparent upgradeable proxy
 
 This is the runtime bytecode:
@@ -48,13 +44,19 @@ where `________________________________________` is the 20-byte factory address.
 
 The transparent upgradeable proxy MUST be deployed by a factory that is responsible for authenticating upgrades.
 
+As the proxy's runtime bytecode contains logic to allow the factory to set any storage slot with any value, the initialization code does not need to store the implementation slot.
+
 During upgrades, the factory MUST call the upgradeable proxy with following calldata:
 
 ```solidity
-abi.encode(
-	newImplementation,
-	// ERC-1967 implementation slot.
-	0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
+abi.encodePacked(
+    // The new implementation address, converted to a 32-byte word.
+    uint256(uint160(implementation)),
+    // ERC-1967 implementation slot.
+    bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc),
+    // Optional calldata to be forwarded to the implementation 
+    // via delegatecall after setting the implementation slot.
+    data
 )
 ```
 
@@ -80,6 +82,10 @@ This is the runtime bytecode:
 363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3
 ```
 
+During deployment, the initialization code MUST store the implementation at the ERC-1967 implementation storage slot `0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`.
+
+Emitting the ERC-1967 events during initialization is OPTIONAL. Indexers MUST NOT expect the initialization code to emit the ERC-1967 events.
+
 #### Minimal ERC-1967 UUPS proxy (I-variant)
 
 This is the runtime bytecode:
@@ -90,6 +96,10 @@ This is the runtime bytecode:
 
 When called with any 1-byte calldata, the I-variant returns the address of the implementation, and will not forward the calldata to the implementation.
 
+During deployment, the initialization code MUST store the implementation at the ERC-1967 implementation storage slot `0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`.
+
+Emitting the ERC-1967 events during initialization is OPTIONAL. Indexers MUST NOT expect the initialization code to emit the ERC-1967 events.
+
 ### Minimal ERC-1967 beacon proxy
 
 This is the runtime bytecode:
@@ -97,6 +107,10 @@ This is the runtime bytecode:
 ```
 363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3
 ```
+
+During deployment, the initialization code MUST store the implementation at the ERC-1967 implementation storage slot `0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`.
+
+Emitting the ERC-1967 events during initialization is OPTIONAL. Indexers MUST NOT expect the initialization code to emit the ERC-1967 events.
 
 #### Minimal ERC-1967 beacon proxy (I-variant)
 
@@ -108,30 +122,49 @@ This is the runtime bytecode:
 
 When called with any 1-byte calldata, the I-variant returns the address of the implementation, and will not forward the calldata to the implementation.
 
+During deployment, the initialization code MUST store the implementation at the ERC-1967 implementation storage slot `0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc`.
+
+Emitting the ERC-1967 events during initialization is OPTIONAL. Indexers MUST NOT expect the initialization code to emit the ERC-1967 events.
+
 ## Rationale
 
 ### Optimization priorities
 
-<!-- Bytecode size before runtime gas. -->
-<!-- No PUSH0 for widespread compatibility. -->
+The proxies are first optimized for minimal bytecode size, then runtime gas.
 
-### Immutable admin in transparent upgradeable proxy
+For more widespread EVM compatibility, they deliberately do not use the `PUSH0` opcode.
 
-<!-- Insert explanation about saving deployment and runtime costs. -->
-<!-- Insert argument that the admin can be a multisig or a factory, which can allow for keys to be rotated. -->
+### Transparent upgradeable proxy
+
+The factory address in the transparent upgradeable proxy is baked into the immutable bytecode of the minimal transparent upgradeable proxy.
+
+This is to save a `SLOAD` for every proxy call.
+
+As the factory can contain custom authorization logic that allows for admin rotation, we do not lose any flexibility.
+
+The upgrade logic takes in any 32 byte value and 32 byte storage slot. This is for flexibility and bytecode conciseness.
+
+We do not lose any security as the implementation can still modify any storage slot.
 
 ### I-variants 
 
-<!-- Insert explanation the implementation being able to spoof the implementation. -->
+The so-called "I-variants" contain logic that returns the implementation address baked into the proxy bytecode.
+
+This allows contracts to retrieve the implementation of the proxy onchain in a verifiable way.
+
+As long as the proxy's runtime bytecode starts with the bytecode in this standard, we can be sure that the implementation address is not spoofed.
 
 ### Omission of events in bytecode
 
-<!-- Insert explanation about events being optional. -->
+This is for minimal bytecode size and deployment costs. 
+
+Most block explorers and indexers are able to deduce the latest implementation without the use of events simply by reading the slots.
 
 ### Immutable arguments are not appended to forwarded calldata
 
-<!-- Insert explanation about potential danger with ERC-2771. -->
-<!-- Insert explanation about extcodecopy. -->
+This is to avoid compatibility and safety issues with other ERC standards that append extra data to the calldata.
+
+The `EXTCODECOPY` opcode can be used to retrieve the immutable arguments.
 
 ## Backwards Compatibility
 
@@ -141,8 +174,54 @@ No backward compatibility issues found.
 
 ### Minimal ERC-1967 transparent upgradeable proxy implementation
 
-<!-- Insert solidity function to return the creation code here. Add in the table. -->
 
+```solidity
+pragma solidity ^0.8.4;
+
+library ERC1967TransparentUpgradeableProxyLib {
+    function initCode() internal pure returns (bytes memory) {
+        if (uint160(address(this)) >> 112 != 0) {
+            return abi.encodePacked(
+                hex"607f3d8160093d39f33d3d3373",
+                address(this),
+                hex"14605757363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc",
+                hex"3735a920a3ca505d382bbc545af43d6000803e6052573d6000fd5b3d6000f35b",
+                hex"3d356020355560408036111560525736038060403d373d3d355af43d6000803e",
+                hex"6052573d6000fd"
+            );
+        } else {
+            return abi.encodePacked(
+                hex"60793d8160093d39f33d3d336d",
+                address(this), 
+                hex"14605157363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc",
+                hex"3735a920a3ca505d382bbc545af43d6000803e604c573d6000fd5b3d6000f35b",
+                hex"3d3560203555604080361115604c5736038060403d373d3d355af43d6000803e",
+                hex"604c573d6000fd"
+            );
+        }
+    }
+
+    function deploy(address implementation) internal returns (address instance) {
+        bytes memory m = initCode();
+        assembly {
+            instance := create(0, mload(m), add(m, 0x20))
+        }
+        require(instance != address(0), "Deployment failed.");
+        (bool success,) = instance.call(
+            abi.encodePacked(
+                // The new implementation address, converted to a 32-byte word.
+                uint256(uint160(implementation)),
+                // ERC-1967 implementation slot.
+                bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc),
+                // Optional calldata to be forwarded to the implementation 
+                // via delegatecall after setting the implementation slot.
+                ""
+            )
+        );
+        require(success, "Initialization failed.");
+    }
+}
+```
 
 ### Minimal ERC-1967 UUPS proxy implementation
 
