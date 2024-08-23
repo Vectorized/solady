@@ -65,6 +65,67 @@ contract ERC1967MinimalTransparentUpgradeableProxyFactory {
     }
 }
 
+library ERC1967IMinimalTransparentUpgradeableProxyLib {
+    function initCodeFor20ByteFactoryAddress() internal view returns (bytes memory) {
+        return abi.encodePacked(
+            bytes19(0x60923d8160093d39f33658146083573d3d3373),
+            address(this),
+            bytes20(0x14605D57363d3d37363D7f360894a13ba1A32106),
+            bytes32(0x67c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e60),
+            bytes32(0x58573d6000fd5b3d6000f35b3d35602035556040360380156058578060403d37),
+            bytes32(0x3d3d355af43d6000803e6058573d6000fd5b602060293d393d51543d52593df3)
+        );
+    }
+
+    function initCodeFor14ByteFactoryAddress() internal view returns (bytes memory) {
+        return abi.encodePacked(
+            bytes19(0x608c3d8160093d39f3365814607d573d3d336d),
+            uint112(uint160(address(this))),
+            bytes20(0x14605757363d3D37363d7F360894A13Ba1A32106),
+            bytes32(0x67c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e60),
+            bytes32(0x52573d6000fd5b3d6000f35b3d35602035556040360380156052578060403d37),
+            bytes32(0x3d3d355af43d6000803e6052573d6000fd5b602060233d393d51543d52593df3)
+        );
+    }
+
+    function initCode() internal view returns (bytes memory) {
+        if (uint160(address(this)) >> 112 != 0) {
+            return initCodeFor20ByteFactoryAddress();
+        } else {
+            return initCodeFor14ByteFactoryAddress();
+        }
+    }
+
+    function deploy(address implementation) internal returns (address instance) {
+        bytes memory m = initCode();
+        assembly {
+            instance := create(0, add(m, 0x20), mload(m))
+        }
+        require(instance != address(0), "Deployment failed.");
+        (bool success,) = instance.call(
+            abi.encodePacked(
+                // The new implementation address, converted to a 32-byte word.
+                uint256(uint160(implementation)),
+                // ERC-1967 implementation slot.
+                bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc),
+                // Optional calldata to be forwarded to the implementation
+                // via delegatecall after setting the implementation slot.
+                ""
+            )
+        );
+        require(success, "Initialization failed.");
+
+    }
+}
+
+
+
+contract ERC1967IMinimalTransparentUpgradeableProxyFactory {
+    function deploy(address implementation) public returns (address) {
+        return ERC1967IMinimalTransparentUpgradeableProxyLib.deploy(implementation);
+    }
+}
+
 library ERC1967MinimalUUPSProxyLib {
     function initCode(address implementation, bytes memory args)
         internal
