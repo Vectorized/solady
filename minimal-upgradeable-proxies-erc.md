@@ -1,7 +1,7 @@
 ---
 eip: 9999
 title: Minimal Upgradeable Proxies
-description: Minimal bytecode ERC-1967 upgradeable proxies (transparent, UUPS, beacon) with immutable arguments and verifiable onchain implementation query support
+description: Minimal upgradeable proxies with immutable arguments and support for onchain implementation queries
 author: Atarpara (@Atarpara), JT Riley (@jtriley-eth), xiaobaiskill (@xiaobaiskill), Vectorized (@Vectorized)
 discussions-to: https://ethereum-magicians.org/t/minimal-upgradeable-proxies/20868
 status: Draft
