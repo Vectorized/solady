@@ -7,6 +7,178 @@ import {LibString} from "../src/utils/LibString.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 import {UpgradeableBeaconTestLib} from "./UpgradeableBeacon.t.sol";
 
+library ERC1967MinimalTransparentUpgradeableProxyLib {
+    function initCodeFor20ByteFactoryAddress() internal view returns (bytes memory) {
+        return abi.encodePacked(
+            bytes13(0x607f3d8160093d39f33d3d3373),
+            address(this),
+            bytes32(0x14605757363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc),
+            bytes32(0x3735a920a3ca505d382bbc545af43d6000803e6052573d6000fd5b3d6000f35b),
+            bytes32(0x3d356020355560408036111560525736038060403d373d3d355af43d6000803e),
+            bytes7(0x6052573d6000fd)
+        );
+    }
+
+    function initCodeFor14ByteFactoryAddress() internal view returns (bytes memory) {
+        return abi.encodePacked(
+            bytes13(0x60793d8160093d39f33d3d336d),
+            uint112(uint160(address(this))),
+            bytes32(0x14605157363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc),
+            bytes32(0x3735a920a3ca505d382bbc545af43d6000803e604c573d6000fd5b3d6000f35b),
+            bytes32(0x3d3560203555604080361115604c5736038060403d373d3d355af43d6000803e),
+            bytes7(0x604c573d6000fd)
+        );
+    }
+
+    function initCode() internal view returns (bytes memory) {
+        if (uint160(address(this)) >> 112 != 0) {
+            return initCodeFor20ByteFactoryAddress();
+        } else {
+            return initCodeFor14ByteFactoryAddress();
+        }
+    }
+
+    function deploy(address implementation) internal returns (address instance) {
+        bytes memory m = initCode();
+        assembly {
+            instance := create(0, add(m, 0x20), mload(m))
+        }
+        require(instance != address(0), "Deployment failed.");
+        (bool success,) = instance.call(
+            abi.encodePacked(
+                // The new implementation address, converted to a 32-byte word.
+                uint256(uint160(implementation)),
+                // ERC-1967 implementation slot.
+                bytes32(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc),
+                // Optional calldata to be forwarded to the implementation
+                // via delegatecall after setting the implementation slot.
+                ""
+            )
+        );
+        require(success, "Initialization failed.");
+    }
+}
+
+contract ERC1967MinimalTransparentUpgradeableProxyFactory {
+    function deploy(address implementation) public returns (address) {
+        return ERC1967MinimalTransparentUpgradeableProxyLib.deploy(implementation);
+    }
+}
+
+library ERC1967MinimalUUPSProxyLib {
+    function initCode(address implementation, bytes memory args)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        uint256 n = 0x003d + args.length;
+        require(n <= 0xffff, "Immutable args too long.");
+        return abi.encodePacked(
+            bytes1(0x61),
+            uint16(n),
+            bytes7(0x3d8160233d3973),
+            implementation,
+            bytes2(0x6009),
+            bytes32(0x5155f3363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076),
+            bytes32(0xcc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3),
+            args
+        );
+    }
+
+    function deploy(address implementation, bytes memory args)
+        internal
+        returns (address instance)
+    {
+        bytes memory m = initCode(implementation, args);
+        assembly {
+            instance := create(0, add(m, 0x20), mload(m))
+        }
+        require(instance != address(0), "Deployment failed.");
+    }
+}
+
+library ERC1967IMinimalUUPSProxyLib {
+    function initCode(address implementation, bytes memory args)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        uint256 n = 0x0052 + args.length;
+        require(n <= 0xffff, "Immutable args too long.");
+        return abi.encodePacked(
+            bytes1(0x61),
+            uint16(n),
+            bytes7(0x3d8160233d3973),
+            implementation,
+            bytes23(0x600f5155f3365814604357363d3d373d3d363d7f360894),
+            bytes32(0xa13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af4),
+            bytes32(0x3d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3),
+            args
+        );
+    }
+
+    function deploy(address implementation, bytes memory args)
+        internal
+        returns (address instance)
+    {
+        bytes memory m = initCode(implementation, args);
+        assembly {
+            instance := create(0, add(m, 0x20), mload(m))
+        }
+        require(instance != address(0), "Deployment failed.");
+    }
+}
+
+library ERC1967MinimalBeaconProxyLib {
+    function initCode(address beacon, bytes memory args) internal pure returns (bytes memory) {
+        uint256 n = 0x0052 + args.length;
+        require(n <= 0xffff, "Immutable args too long.");
+        return abi.encodePacked(
+            bytes1(0x61),
+            uint16(n),
+            bytes7(0x3d8160233d3973),
+            beacon,
+            bytes23(0x60195155f3363d3d373d3d363d602036600436635c60da),
+            bytes32(0x1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6c),
+            bytes32(0xb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3),
+            args
+        );
+    }
+
+    function deploy(address beacon, bytes memory args) internal returns (address instance) {
+        bytes memory m = initCode(beacon, args);
+        assembly {
+            instance := create(0, add(m, 0x20), mload(m))
+        }
+        require(instance != address(0), "Deployment failed.");
+    }
+}
+
+library ERC1967IMinimalBeaconProxyLib {
+    function initCode(address beacon, bytes memory args) internal pure returns (bytes memory) {
+        uint256 n = 0x0057 + args.length;
+        require(n <= 0xffff, "Immutable args too long.");
+        return abi.encodePacked(
+            bytes1(0x61),
+            uint16(n),
+            bytes7(0x3d8160233d3973),
+            beacon,
+            bytes28(0x60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36),
+            bytes32(0x527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b3513),
+            bytes32(0x3d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3),
+            args
+        );
+    }
+
+    function deploy(address beacon, bytes memory args) internal returns (address instance) {
+        bytes memory m = initCode(beacon, args);
+        assembly {
+            instance := create(0, add(m, 0x20), mload(m))
+        }
+        require(instance != address(0), "Deployment failed.");
+    }
+}
+
 contract LibCloneTest is SoladyTest {
     error CustomError(uint256 currentValue);
 
@@ -29,6 +201,41 @@ contract LibCloneTest is SoladyTest {
     uint256 internal constant _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH = 0xffa8;
 
     address internal _deployedBeacon;
+
+    function testERC1967MinimalTransparentUpgradeableProxyLib() public {
+        address factoryImpl = address(new ERC1967MinimalTransparentUpgradeableProxyFactory());
+        vm.etch(address(0x112233), factoryImpl.code);
+        address instance = ERC1967MinimalTransparentUpgradeableProxyFactory(address(0x112233))
+            .deploy(address(this));
+        _checkBehavesLikeProxy(instance);
+        instance =
+            ERC1967MinimalTransparentUpgradeableProxyFactory(factoryImpl).deploy(address(this));
+        _checkBehavesLikeProxy(instance);
+    }
+
+    function testERC1967MinimalUUPSProxyLib() public {
+        bytes memory args = "12345";
+        address instance = ERC1967MinimalUUPSProxyLib.deploy(address(this), args);
+        _checkBehavesLikeProxy(instance);
+    }
+
+    function testERC1967IMinimalUUPSProxyLib() public {
+        bytes memory args = "12345";
+        address instance = ERC1967IMinimalUUPSProxyLib.deploy(address(this), args);
+        _checkBehavesLikeProxy(instance);
+    }
+
+    function testERC1967MinimalBeaconProxyLib() public {
+        bytes memory args = "12345";
+        address instance = ERC1967MinimalBeaconProxyLib.deploy(_beacon(), args);
+        _checkBehavesLikeProxy(instance);
+    }
+
+    function testERC1967IMinimalBeaconProxyLib() public {
+        bytes memory args = "12345";
+        address instance = ERC1967IMinimalBeaconProxyLib.deploy(_beacon(), args);
+        _checkBehavesLikeProxy(instance);
+    }
 
     function setValue(uint256 value_) public {
         value = value_;
