@@ -28,17 +28,41 @@ The minimal nature of the proxies enables cheaper deployment and runtime costs.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and RFC 8174.
 
+### Overview
+
+All of the following proxies can have optional data bytecode appended to the end.
+
 ### Minimal ERC-1967 transparent upgradeable proxy
 
-<!-- Insert runtime bytecode for 20-byte factory address here, no need for the table -->
+```
+3d3d336d________________________________________14605157363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e604c573d6000fd5b3d6000f35b3d3560203555604080361115604c5736038060403d373d3d355af43d6000803e604c573d6000fd
+```
 
-<!-- Insert runtime bytecode for 14-byte factory address here, no need for the table -->
+where `________________________________________` is the 20-byte factory address.
 
-#### Minimal ERC-1967 transparent upgradeable proxy (I-variant)
+The transparent upgradeable proxy is to be deployed by a factory that is responsible for authenticating upgrades.
 
-<!-- Insert runtime bytecode for 20-byte factory address here, no need for the table -->
+During upgrades, the factory must call the upgradeable proxy with following calldata:
 
-<!-- Insert runtime bytecode for 14-byte factory address here, no need for the table -->
+```solidity
+abi.encode(
+	newImplementation,
+	// ERC-1967 implementation slot.
+	0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
+)
+```
+
+#### Minimal ERC-1967 transparent upgradeable proxy (6 leading zero bytes factory variant)
+
+We provide a variant for a factory with a 6 leading zero bytes address.
+
+It is beneficial to install the factory at a vanity address with leading zero bytes so that the proxy's bytecode can be optimized to be shorter. 
+
+```
+3d3d3373____________________________14605757363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6052573d6000fd5b3d6000f35b3d356020355560408036111560525736038060403d373d3d355af43d6000803e6052573d6000fd
+```
+
+where `____________________________` is lower 14 bytes of the factory address.
 
 ### Minimal ERC-1967 UUPS proxy
 
@@ -91,9 +115,6 @@ No backward compatibility issues found.
 
 <!-- Insert solidity function to return the creation code here. Add in the table. -->
 
-#### Minimal ERC-1967 transparent upgradeable proxy implementation (I-variant)
-
-<!-- Insert solidity function to return the creation code here. Add in the table. -->
 
 ### Minimal ERC-1967 UUPS proxy implementation
 
