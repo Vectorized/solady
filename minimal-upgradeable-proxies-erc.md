@@ -12,14 +12,14 @@ requires: 1967
 
 ## Abstract
 
-This standard defines minimal [ERC-1967](./eip-1967.md) proxies for three patterns: (1) transparent, (2) UUPS, (3) beacon. The proxies support optional immutable arguments which are appended to the end of their runtime bytecode. Additional variants which support onchain implementation querying are provided.
+This standard defines minimal [ERC-1967](./eip-1967.md) proxies for three patterns: (1) transparent upgradeable proxy, (2) UUPS proxy, (3) beacon proxy. The proxies support optional immutable arguments which are appended to the end of their runtime bytecode. Additional variants which support onchain implementation querying are provided.
 
 ## Motivation
 
 Having standardized minimal bytecode for upgradeable proxies enables the following:
 
 1. Automatic verification on block explorers.
-2. Ability for immutable arguments to be queried onchain, as these arguments are stored in the same bytecode offset,
+2. Ability for immutable arguments to be queried onchain, as these arguments are stored at the same bytecode offset,
 3. Ability for the implementation to be queried and verified onchain.
 
 The minimal nature of the proxies enables cheaper deployment and runtime costs.
