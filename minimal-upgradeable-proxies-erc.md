@@ -2,7 +2,7 @@
 eip: 9999
 title: Minimal Upgradeable Proxies
 author: Atarpara (@Atarpara), JT Riley (@jtriley-eth), xiaobaiskill (@xiaobaiskill), Vectorized (@Vectorized)
-discussions-to: https://ethereum-magicians.org/t/minimal-upgradeable-proxies
+discussions-to: https://ethereum-magicians.org/t/minimal-upgradeable-proxies/20868
 status: Draft
 type: Standards Track
 category: ERC
