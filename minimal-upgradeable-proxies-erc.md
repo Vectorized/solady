@@ -2,7 +2,7 @@
 eip: 9999
 title: Minimal Upgradeable Proxies
 author: Atarpara (@Atarpara), JT Riley (@jtriley-eth), Vectorized (@Vectorized)
-discussions-to: https://ethereum-magicians.org/t/minimal-upgrad
+discussions-to: https://ethereum-magicians.org/t/minimal-upgradeable-proxies
 status: Draft
 type: Standards Track
 category: ERC
@@ -134,11 +134,15 @@ Emitting the ERC-1967 events during initialization is OPTIONAL. Indexers MUST NO
 
 ## Rationale
 
+### No usage of `PUSH0` opcode
+
+For more widespread EVM compatibility, the proxies deliberately do not use the `PUSH0` opcode proposed in [EIP-3855](./eip-3855.md).
+
+Converting the proxies to `PUSH0` variants may be done in a separate future ERC.
+
 ### Optimization priorities
 
-The proxies are first optimized for minimal bytecode size, then runtime gas.
-
-For more widespread EVM compatibility, they deliberately do not use the `PUSH0` opcode.
+The proxies are first optimized for minimal runtime gas before minimal bytecode size.
 
 ### Transparent upgradeable proxy
 
@@ -184,7 +188,7 @@ No backward compatibility issues found.
 
 
 ```solidity
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 library ERC1967MinimalTransparentUpgradeableProxyLib {
     function initCodeFor20ByteFactoryAddress() internal view returns (bytes memory) {
@@ -242,7 +246,7 @@ library ERC1967MinimalTransparentUpgradeableProxyLib {
 ### Minimal ERC-1967 UUPS proxy implementation
 
 ```solidity
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 library ERC1967MinimalUUPSProxyLib {
     function initCode(address implementation, bytes memory args)
@@ -280,7 +284,7 @@ library ERC1967MinimalUUPSProxyLib {
 #### Minimal ERC-1967 UUPS proxy implementation (I-variant)
 
 ```solidity
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 library ERC1967IMinimalUUPSProxyLib {
     function initCode(address implementation, bytes memory args)
@@ -318,7 +322,7 @@ library ERC1967IMinimalUUPSProxyLib {
 ### Minimal ERC-1967 beacon proxy implementation
 
 ```solidity
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 library ERC1967MinimalBeaconProxyLib {
     function initCode(address beacon, bytes memory args) internal pure returns (bytes memory) {
@@ -349,7 +353,7 @@ library ERC1967MinimalBeaconProxyLib {
 #### Minimal ERC-1967 beacon proxy implementation (I-variant)
 
 ```solidity
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 library ERC1967IMinimalBeaconProxyLib {
     function initCode(address beacon, bytes memory args) internal pure returns (bytes memory) {
