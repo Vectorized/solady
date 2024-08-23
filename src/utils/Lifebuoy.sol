@@ -237,10 +237,10 @@ contract Lifebuoy {
             // `RescueTransferFailed()` and `transfer(address,uint256,uint256)`.
             mstore(0x00, shl(96, 0x7ec62e76095bcdb6))
             // Perform the transfer, reverting upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                eq(mload(0x00), 1), call(gas(), token, callvalue(), 0x10, 0x64, 0x00, 0x20))
-            ) { revert(0x0c, 0x04) }
+            if iszero( // The arguments of `and` are evaluated from right to left.
+            and(eq(mload(0x00), 1), call(gas(), token, callvalue(), 0x10, 0x64, 0x00, 0x20))) {
+                revert(0x0c, 0x04)
+            }
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
         }
