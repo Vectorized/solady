@@ -6,6 +6,8 @@ import {Lifebuoy, MockLifebuoy, MockLifebuoyOwned} from "./utils/mocks/MockLifeb
 import {MockETHRecipient} from "./utils/mocks/MockETHRecipient.sol";
 import {MockERC20} from "./utils/mocks/MockERC20.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
+import {MockERC1155} from "./utils/mocks/MockERC1155.sol";
+import {MockERC6909} from "./utils/mocks/MockERC6909.sol";
 import {LibRLP} from "../src/utils/LibRLP.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
@@ -31,10 +33,14 @@ contract LifebuoyTest is SoladyTest {
 
     MockERC20 erc20;
     MockERC721 erc721;
+    MockERC1155 erc1155;
+    MockERC6909 erc6909;
 
     function setUp() public {
         erc20 = new MockERC20("Name", "SYMBOL", 18);
         erc721 = new MockERC721();
+        erc1155 = new MockERC1155();
+        erc6909 = new MockERC6909();
     }
 
     function _deployViaCreate(address deployer, bytes memory initcode) internal returns (address) {
@@ -78,11 +84,19 @@ contract LifebuoyTest is SoladyTest {
         MockLifebuoyOwned lifebuoyOwned;
         MockLifebuoyOwned lifebuoyOwnedClone;
         uint256 tokenId;
-        uint256 erc20Amount;
+        uint256 amount;
     }
 
     function _erc20BalanceOf(address holder) internal view returns (uint256) {
         return SafeTransferLib.balanceOf(address(erc20), holder);
+    }
+
+    function _erc1155BalanceOf(address holder, uint256 tokenId) internal view returns (uint256) {
+        return erc1155.balanceOf(holder, tokenId);
+    }
+
+    function _erc6909BalanceOf(address holder, uint256 tokenId) internal view returns (uint256) {
+        return erc6909.balanceOf(holder, tokenId);
     }
 
     function _testTempsBase() internal returns (_TestTemps memory t) {
@@ -102,12 +116,13 @@ contract LifebuoyTest is SoladyTest {
 
     function _testTempsForRescue() internal returns (_TestTemps memory t) {
         t = _testTempsBase();
-
-        t.erc20Amount = _random();
-        erc20.mint(address(t.lifebuoyOwned), t.erc20Amount);
-
+        t.amount = _random();
         t.tokenId = _random();
+
+        erc20.mint(address(t.lifebuoyOwned), t.amount);
         erc721.mint(address(t.lifebuoyOwned), t.tokenId);
+        erc1155.mint(address(t.lifebuoyOwned), t.tokenId, t.amount, "");
+        erc6909.mint(address(t.lifebuoyOwned), t.tokenId, t.amount);
     }
 
     function _testTempsForRescuePermissions() internal returns (_TestTemps memory t) {
@@ -214,8 +229,17 @@ contract LifebuoyTest is SoladyTest {
         t.lifebuoyOwnedClone.rescueETH(t.recipient, 1);
     }
 
-    function testRescueETH(uint256 amount) public {
+    function testRescueAll(bytes32) public {
         _TestTemps memory t = _testTempsForRescue();
+        if (_randomChance(2)) _testRescueETH(t);
+        if (_randomChance(2)) _testRescueERC20(t);
+        if (_randomChance(2)) _testRescueERC721(t);
+        if (_randomChance(2)) _testRescueERC1155(t);
+        if (_randomChance(2)) _testRescueERC6909(t);
+    }
+
+    function _testRescueETH(_TestTemps memory t) internal {
+        uint256 amount = _random();
         if (_randomChance(2)) {
             amount = _bound(amount, 0, address(t.lifebuoyOwned).balance);
             uint256 expectedRemaining = address(t.lifebuoyOwned).balance - amount;
@@ -233,13 +257,13 @@ contract LifebuoyTest is SoladyTest {
         }
     }
 
-    function testRescueERC20(uint256 amount) public {
-        _TestTemps memory t = _testTempsForRescue();
+    function _testRescueERC20(_TestTemps memory t) internal {
+        uint256 amount = _random();
         if (_randomChance(2)) {
-            amount = _bound(amount, 0, t.erc20Amount);
+            amount = _bound(amount, 0, t.amount);
             vm.prank(t.owner);
             t.lifebuoyOwned.rescueERC20(address(erc20), t.recipient, amount);
-            assertEq(_erc20BalanceOf(address(t.lifebuoyOwned)), t.erc20Amount - amount);
+            assertEq(_erc20BalanceOf(address(t.lifebuoyOwned)), t.amount - amount);
             assertEq(_erc20BalanceOf(t.recipient), amount);
         } else if (amount > _erc20BalanceOf(address(t.lifebuoyOwned))) {
             vm.prank(t.owner);
@@ -251,8 +275,7 @@ contract LifebuoyTest is SoladyTest {
         }
     }
 
-    function testRescueERC721(bytes32) public {
-        _TestTemps memory t = _testTempsForRescue();
+    function _testRescueERC721(_TestTemps memory t) internal {
         vm.prank(t.owner);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
         assertEq(erc721.balanceOf(address(t.lifebuoyOwned)), 0);
@@ -261,10 +284,48 @@ contract LifebuoyTest is SoladyTest {
         vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
 
-        (address eoa,) = _randomSigner();
+        address eoa = _randomHashedAddress();
         vm.prank(t.owner);
         vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
         t.lifebuoyOwned.rescueERC721(eoa, t.recipient, t.tokenId);
+    }
+
+    function _testRescueERC1155(_TestTemps memory t) public {
+        uint256 amount = _random();
+        if (_randomChance(2)) {
+            amount = _bound(amount, 0, t.amount);
+            vm.prank(t.owner);
+            t.lifebuoyOwned.rescueERC1155(address(erc1155), t.recipient, t.tokenId, amount, "");
+            assertEq(_erc1155BalanceOf(address(t.lifebuoyOwned), t.tokenId), t.amount - amount);
+            assertEq(_erc1155BalanceOf(t.recipient, t.tokenId), amount);
+        } else if (amount > _erc1155BalanceOf(address(t.lifebuoyOwned), t.tokenId)) {
+            vm.prank(t.owner);
+            vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
+            t.lifebuoyOwned.rescueERC1155(address(erc1155), t.recipient, t.tokenId, amount, "");
+        } else {
+            bytes memory data = _randomBytes();
+            vm.prank(t.owner);
+            t.lifebuoyOwned.rescueERC1155(address(erc1155), t.recipient, t.tokenId, amount, data);
+            assertEq(erc1155.lastDataHash(), keccak256(data));
+        }
+    }
+
+    function _testRescueERC6909(_TestTemps memory t) public {
+        uint256 amount = _random();
+        if (_randomChance(2)) {
+            amount = _bound(amount, 0, t.amount);
+            vm.prank(t.owner);
+            t.lifebuoyOwned.rescueERC6909(address(erc6909), t.recipient, t.tokenId, amount);
+            assertEq(_erc6909BalanceOf(address(t.lifebuoyOwned), t.tokenId), t.amount - amount);
+            assertEq(_erc6909BalanceOf(t.recipient, t.tokenId), amount);
+        } else if (amount > _erc6909BalanceOf(address(t.lifebuoyOwned), t.tokenId)) {
+            vm.prank(t.owner);
+            vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
+            t.lifebuoyOwned.rescueERC6909(address(erc6909), t.recipient, t.tokenId, amount);
+        } else {
+            vm.prank(t.owner);
+            t.lifebuoyOwned.rescueERC6909(address(erc6909), t.recipient, t.tokenId, amount);
+        }
     }
 
     function testLockRescueETH() public {
@@ -294,6 +355,10 @@ contract LifebuoyTest is SoladyTest {
         t.lifebuoyOwned.lockRescue(_LIFEBUOY_LOCK_RESCUE_LOCK);
         vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
         t.lifebuoyOwned.rescueETH(t.recipient, 1);
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoyOwned.rescueERC6909(address(erc6909), t.recipient, t.tokenId, _random());
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoyOwned.rescueERC1155(address(erc1155), t.recipient, t.tokenId, _random(), "");
         vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
         vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
