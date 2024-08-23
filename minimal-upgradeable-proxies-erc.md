@@ -88,6 +88,8 @@ This is the runtime bytecode:
 365814604357363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3
 ```
 
+When called with any 1-byte calldata, the I-variant returns the address of the implementation, and will not forward the calldata to the implementation.
+
 ### Minimal ERC-1967 beacon proxy
 
 This is the runtime bytecode:
@@ -103,6 +105,8 @@ This is the runtime bytecode:
 ```
 363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3
 ```
+
+When called with any 1-byte calldata, the I-variant returns the address of the implementation, and will not forward the calldata to the implementation.
 
 ## Rationale
 
