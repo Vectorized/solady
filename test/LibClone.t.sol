@@ -293,6 +293,18 @@ contract LibCloneTest is SoladyTest {
         _checkBehavesLikeProxy(instance);
     }
 
+    function testERC1967IMinimalTransparentUpgradeableProxyLib() public {
+        address factoryImpl = address(new ERC1967IMinimalTransparentUpgradeableProxyFactory());
+        vm.etch(address(0x112233), factoryImpl.code);
+        address instance = ERC1967IMinimalTransparentUpgradeableProxyFactory(address(0x112233))
+            .deploy(address(this));
+        _checkBehavesLikeProxy(instance);
+        instance =
+            ERC1967IMinimalTransparentUpgradeableProxyFactory(factoryImpl).deploy(address(this));
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967ISpecialPath(instance, address(this));
+    }
+
     function testERC1967MinimalUUPSProxyLib() public {
         bytes memory args = "12345";
         address instance = ERC1967MinimalUUPSProxyLib.deploy(address(this), args);
