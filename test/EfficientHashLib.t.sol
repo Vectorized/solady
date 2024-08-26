@@ -119,22 +119,25 @@ contract EfficientHashLibTest is SoladyTest {
                     bMem := 0x60
                 }
             }
-            if (_randomChance(2)) {
-                bytes32 h = EfficientHashLib.hashCalldata(b);
-                assertEq(h, keccak256(bMem));
-                assertEq(EfficientHashLib.hash(bMem), h);
-            }
-            if (_randomChance(2)) {
-                bytes32 h = EfficientHashLib.hashCalldata(b, start);
-                assertEq(h, keccak256(bytes(LibString.slice(string(bMem), start))));
-                assertEq(EfficientHashLib.hash(bMem, start), h);
-            }
-            if (_randomChance(2)) {
-                bytes32 h = EfficientHashLib.hashCalldata(b, start, end);
-                assertEq(h, keccak256(bytes(LibString.slice(string(bMem), start, end))));
-                assertEq(EfficientHashLib.hash(bMem, start, end), h);
-            }
+            bytes32 h;
+
+            h = EfficientHashLib.hashCalldata(b);
+            assertEq(h, keccak256(bMem));
+            assertEq(EfficientHashLib.hash(bMem), h);
+
+            h = EfficientHashLib.hashCalldata(b, start);
+            assertEq(h, keccak256(bytes(LibString.slice(string(bMem), start))));
+            assertEq(EfficientHashLib.hash(bMem, start), h);
+
+            h = EfficientHashLib.hashCalldata(b, start, end);
+            assertEq(h, keccak256(bytes(LibString.slice(string(bMem), start, end))));
+            assertEq(EfficientHashLib.hash(bMem, start, end), h);
+
             _checkMemory();
         }
+    }
+
+    function testEfficientHashBytesSlice() public {
+        this.testEfficientHashBytesSlice(bytes32(0), "0123456789");
     }
 }
