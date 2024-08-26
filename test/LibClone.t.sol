@@ -368,24 +368,52 @@ contract LibCloneTest is SoladyTest {
         bytes memory args = "12345";
         address instance = ERC1967MinimalUUPSProxyLib.deploy(address(this), args);
         _checkBehavesLikeProxy(instance);
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6038573d6000fd5b3d6000f3",
+                args
+            )
+        );
     }
 
     function testERC1967IMinimalUUPSProxyLib() public {
         bytes memory args = "12345";
         address instance = ERC1967IMinimalUUPSProxyLib.deploy(address(this), args);
         _checkBehavesLikeProxy(instance);
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"365814604357363d3d373d3d363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e603e573d6000fd5b3d6000f35b6020600f3d393d51543d52593df3",
+                args
+            )
+        );
     }
 
     function testERC1967MinimalBeaconProxyLib() public {
         bytes memory args = "12345";
         address instance = ERC1967MinimalBeaconProxyLib.deploy(_beacon(), args);
         _checkBehavesLikeProxy(instance);
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa5036515af43d6000803e604d573d6000fd5b3d6000f3",
+                args
+            )
+        );
     }
 
     function testERC1967IMinimalBeaconProxyLib() public {
         bytes memory args = "12345";
         address instance = ERC1967IMinimalBeaconProxyLib.deploy(_beacon(), args);
         _checkBehavesLikeProxy(instance);
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"363d3d373d3d363d602036600436635c60da1b60e01b36527fa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50545afa361460525736515af43d600060013e6052573d6001fd5b3d6001f3",
+                args
+            )
+        );
     }
 
     function setValue(uint256 value_) public {
