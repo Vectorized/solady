@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {EfficientHashLib} from "../src/utils/EfficientHashLib.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract EfficientHashLibTest is SoladyTest {
     using EfficientHashLib for bytes32[];
@@ -104,5 +105,12 @@ contract EfficientHashLibTest is SoladyTest {
         assembly {
             result := mload(0x40)
         }
+    }
+
+    function testEfficientHashBytesSlice(bytes memory subject) public {
+        uint256 start = _random() & 0x1ff;
+        uint256 end = _random() & 0x1ff;
+        bytes32 expected = keccak256(bytes(LibString.slice(string(subject), start, end)));
+        assertEq(EfficientHashLib.hash(subject, start, end), expected);
     }
 }
