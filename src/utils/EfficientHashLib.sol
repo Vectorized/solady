@@ -366,7 +366,11 @@ library EfficientHashLib {
 
     /// @dev Returns the keccak256 of the slice from `start` to `end` (exclusive).
     /// `start` and `end` are byte offsets.
-    function hash(bytes memory b, uint256 start, uint256 end) internal pure returns (bytes32 result) {
+    function hash(bytes memory b, uint256 start, uint256 end)
+        internal
+        pure
+        returns (bytes32 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let n := mload(b)
@@ -377,12 +381,57 @@ library EfficientHashLib {
     }
 
     /// @dev Returns the keccak256 of the slice from `start` to the end of the bytes.
-    function hash(bytes memory subject, uint256 start) internal pure returns (bytes32 result) {
+    function hash(bytes memory b, uint256 start) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := mload(subject)
+            let n := mload(b)
             start := xor(start, mul(xor(start, n), lt(n, start)))
-            result := keccak256(add(add(subject, 0x20), start), mul(gt(n, start), sub(n, start)))
+            result := keccak256(add(add(b, 0x20), start), mul(gt(n, start), sub(n, start)))
+        }
+    }
+
+    /// @dev Returns the keccak256 of the bytes.
+    function hash(bytes memory b) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := keccak256(add(b, 0x20), mload(b))
+        }
+    }
+
+    /// @dev Returns the keccak256 of the slice from `start` to `end` (exclusive).
+    /// `start` and `end` are byte offsets.
+    function hashCalldata(bytes calldata b, uint256 start, uint256 end)
+        internal
+        pure
+        returns (bytes32 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            end := xor(end, mul(xor(end, b.length), lt(b.length, end)))
+            start := xor(start, mul(xor(start, b.length), lt(b.length, start)))
+            let n := mul(gt(end, start), sub(end, start))
+            calldatacopy(mload(0x40), add(b.offset, start), n)
+            result := keccak256(mload(0x40), n)
+        }
+    }
+
+    /// @dev Returns the keccak256 of the slice from `start` to the end of the bytes.
+    function hashCalldata(bytes calldata b, uint256 start) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            start := xor(start, mul(xor(start, b.length), lt(b.length, start)))
+            let n := mul(gt(b.length, start), sub(b.length, start))
+            calldatacopy(mload(0x40), add(b.offset, start), n)
+            result := keccak256(mload(0x40), n)
+        }
+    }
+
+    /// @dev Returns the keccak256 of the bytes.
+    function hashCalldata(bytes calldata b) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            calldatacopy(mload(0x40), b.offset, b.length)
+            result := keccak256(mload(0x40), b.length)
         }
     }
 }

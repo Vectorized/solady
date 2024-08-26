@@ -107,10 +107,34 @@ contract EfficientHashLibTest is SoladyTest {
         }
     }
 
-    function testEfficientHashBytesSlice(bytes memory subject) public {
-        uint256 start = _random() & 0x1ff;
-        uint256 end = _random() & 0x1ff;
-        bytes32 expected = keccak256(bytes(LibString.slice(string(subject), start, end)));
-        assertEq(EfficientHashLib.hash(subject, start, end), expected);
+    function testEfficientHashBytesSlice(bytes32, bytes calldata b) public {
+        unchecked {
+            uint256 n = b.length + 100;
+            uint256 start = _bound(_random(), 0, n);
+            uint256 end = _bound(_random(), 0, n);
+            bytes memory bMem = b;
+            if (b.length == 0 && _randomChance(2)) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    bMem := 0x60
+                }
+            }
+            if (_randomChance(2)) {
+                bytes32 h = EfficientHashLib.hashCalldata(b);
+                assertEq(h, keccak256(bMem));
+                assertEq(EfficientHashLib.hash(bMem), h);
+            }
+            if (_randomChance(2)) {
+                bytes32 h = EfficientHashLib.hashCalldata(b, start);
+                assertEq(h, keccak256(bytes(LibString.slice(string(bMem), start))));
+                assertEq(EfficientHashLib.hash(bMem, start), h);
+            }
+            if (_randomChance(2)) {
+                bytes32 h = EfficientHashLib.hashCalldata(b, start, end);
+                assertEq(h, keccak256(bytes(LibString.slice(string(bMem), start, end))));
+                assertEq(EfficientHashLib.hash(bMem, start, end), h);
+            }
+            _checkMemory();
+        }
     }
 }
