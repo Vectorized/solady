@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {EfficientHashLib} from "../src/utils/EfficientHashLib.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract EfficientHashLibTest is SoladyTest {
     using EfficientHashLib for bytes32[];
@@ -104,5 +105,39 @@ contract EfficientHashLibTest is SoladyTest {
         assembly {
             result := mload(0x40)
         }
+    }
+
+    function testEfficientHashBytesSlice(bytes32, bytes calldata b) public {
+        unchecked {
+            uint256 n = b.length + 100;
+            uint256 start = _bound(_random(), 0, n);
+            uint256 end = _bound(_random(), 0, n);
+            bytes memory bMem = b;
+            if (b.length == 0 && _randomChance(2)) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    bMem := 0x60
+                }
+            }
+            bytes32 h;
+
+            h = EfficientHashLib.hashCalldata(b);
+            assertEq(h, keccak256(bMem));
+            assertEq(EfficientHashLib.hash(bMem), h);
+
+            h = EfficientHashLib.hashCalldata(b, start);
+            assertEq(h, keccak256(bytes(LibString.slice(string(bMem), start))));
+            assertEq(EfficientHashLib.hash(bMem, start), h);
+
+            h = EfficientHashLib.hashCalldata(b, start, end);
+            assertEq(h, keccak256(bytes(LibString.slice(string(bMem), start, end))));
+            assertEq(EfficientHashLib.hash(bMem, start, end), h);
+
+            _checkMemory();
+        }
+    }
+
+    function testEfficientHashBytesSlice() public {
+        this.testEfficientHashBytesSlice(bytes32(0), "0123456789");
     }
 }
