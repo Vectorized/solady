@@ -285,24 +285,83 @@ contract LibCloneTest is SoladyTest {
     function testERC1967MinimalTransparentUpgradeableProxyLib() public {
         address factoryImpl = address(new ERC1967MinimalTransparentUpgradeableProxyFactory());
         vm.etch(address(0x112233), factoryImpl.code);
-        address instance = ERC1967MinimalTransparentUpgradeableProxyFactory(address(0x112233))
-            .deploy(address(this));
-        _checkBehavesLikeProxy(instance);
+
+        address instance;
+
         instance =
             ERC1967MinimalTransparentUpgradeableProxyFactory(factoryImpl).deploy(address(this));
         _checkBehavesLikeProxy(instance);
+        ERC1967MinimalTransparentUpgradeableProxyFactory(factoryImpl).upgrade(
+            instance, address(222)
+        );
+        assertEq(vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(222))));
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"3d3d3373",
+                uint160(address(factoryImpl)),
+                hex"14605757363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6052573d6000fd5b3d6000f35b3d356020355560408036111560525736038060403d373d3d355af43d6000803e6052573d6000fd"
+            )
+        );
+
+        instance = ERC1967MinimalTransparentUpgradeableProxyFactory(address(0x112233)).deploy(
+            address(this)
+        );
+        _checkBehavesLikeProxy(instance);
+        ERC1967MinimalTransparentUpgradeableProxyFactory(address(0x112233)).upgrade(
+            instance, address(222)
+        );
+        assertEq(vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(222))));
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"3d3d336d",
+                uint112(uint160(address(0x112233))),
+                hex"14605157363d3d37363d7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e604c573d6000fd5b3d6000f35b3d3560203555604080361115604c5736038060403d373d3d355af43d6000803e604c573d6000fd"
+            )
+        );
     }
 
     function testERC1967IMinimalTransparentUpgradeableProxyLib() public {
         address factoryImpl = address(new ERC1967IMinimalTransparentUpgradeableProxyFactory());
         vm.etch(address(0x112233), factoryImpl.code);
-        address instance = ERC1967IMinimalTransparentUpgradeableProxyFactory(address(0x112233))
-            .deploy(address(this));
-        _checkBehavesLikeProxy(instance);
+
+        address instance;
+
         instance =
             ERC1967IMinimalTransparentUpgradeableProxyFactory(factoryImpl).deploy(address(this));
         _checkBehavesLikeProxy(instance);
         _checkERC1967ISpecialPath(instance, address(this));
+        ERC1967IMinimalTransparentUpgradeableProxyFactory(factoryImpl).upgrade(
+            instance, address(222)
+        );
+        assertEq(vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(222))));
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"3658146083573d3d3373",
+                uint160(address(factoryImpl)),
+                hex"14605D57363d3d37363D7f360894a13ba1A3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6058573d6000fd5b3d6000f35b3d35602035556040360380156058578060403d373d3d355af43d6000803e6058573d6000fd5b602060293d393d51543d52593df3"
+            )
+        );
+
+        instance = ERC1967IMinimalTransparentUpgradeableProxyFactory(address(0x112233)).deploy(
+            address(this)
+        );
+        _checkBehavesLikeProxy(instance);
+        _checkERC1967ISpecialPath(instance, address(this));
+        ERC1967IMinimalTransparentUpgradeableProxyFactory(address(0x112233)).upgrade(
+            instance, address(222)
+        );
+        assertEq(vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT), bytes32(uint256(uint160(222))));
+        assertEq(
+            instance.code,
+            abi.encodePacked(
+                hex"365814607d573d3d336d",
+                uint112(uint160(address(0x112233))),
+                hex"14605757363d3D37363d7F360894A13Ba1A3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545af43d6000803e6052573d6000fd5b3d6000f35b3d35602035556040360380156052578060403d373d3d355af43d6000803e6052573d6000fd5b602060233d393d51543d52593df3"
+            )
+        );
     }
 
     function testERC1967MinimalUUPSProxyLib() public {
