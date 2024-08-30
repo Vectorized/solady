@@ -1570,6 +1570,18 @@ contract FixedPointMathLibTest is SoladyTest {
         assertTrue(FixedPointMathLib.zeroFloorSub(x, y) == z);
     }
 
+    function testDist(uint256 x, uint256 y) public {
+        uint256 z;
+        unchecked {
+            if (x > y) {
+                z = uint256(x - y);
+            } else {
+                z = uint256(y - x);
+            }
+        }
+        assertEq(FixedPointMathLib.dist(x, y), z);
+    }
+
     function testDist(int256 x, int256 y) public {
         uint256 z;
         unchecked {

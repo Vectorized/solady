@@ -957,7 +957,7 @@ library FixedPointMathLib {
     function dist(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := xor(mul(xor(sub(y, x), sub(x, y)), gt(x, y)), sub(y, x))
+            z := add(xor(sub(0, gt(x, y)), sub(y, x)), gt(x, y))
         }
     }
 
@@ -965,7 +965,7 @@ library FixedPointMathLib {
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := xor(mul(xor(sub(y, x), sub(x, y)), sgt(x, y)), sub(y, x))
+            z := add(xor(sub(0, sgt(x, y)), sub(y, x)), sgt(x, y))
         }
     }
 
