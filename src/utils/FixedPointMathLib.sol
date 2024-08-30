@@ -947,9 +947,8 @@ library FixedPointMathLib {
 
     /// @dev Returns the absolute value of `x`.
     function abs(int256 x) internal pure returns (uint256 z) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            z := xor(sar(255, x), add(sar(255, x), x))
+        unchecked {
+            z = (uint256(x) + uint256(x >> 255)) ^ uint256(x >> 255);
         }
     }
 
@@ -1044,11 +1043,7 @@ library FixedPointMathLib {
         pure
         returns (uint256)
     {
-        if (begin > end) {
-            t = ~t;
-            begin = ~begin;
-            end = ~end;
-        }
+        if (begin > end) (t, begin, end) = (~t, ~begin, ~end);
         if (t <= begin) return a;
         if (t >= end) return b;
         unchecked {
@@ -1066,19 +1061,15 @@ library FixedPointMathLib {
         pure
         returns (int256)
     {
-        if (begin > end) {
-            t = int256(~uint256(t));
-            begin = int256(~uint256(begin));
-            end = int256(~uint256(end));
-        }
+        if (begin > end) (t, begin, end) = (~t, ~begin, ~end);
         if (t <= begin) return a;
         if (t >= end) return b;
         // forgefmt: disable-next-item
         unchecked {
-            if (b >= a) return int256(uint256(a) + fullMulDiv(uint256(b) - uint256(a),
-                uint256(t) - uint256(begin), uint256(end) - uint256(begin)));
-            return int256(uint256(a) - fullMulDiv(uint256(a) - uint256(b),
-                uint256(t) - uint256(begin), uint256(end) - uint256(begin)));
+            if (b >= a) return int256(uint256(a) + fullMulDiv(uint256(b - a),
+                uint256(t - begin), uint256(end - begin)));
+            return int256(uint256(a) - fullMulDiv(uint256(a - b),
+                uint256(t - begin), uint256(end - begin)));
         }
     }
 

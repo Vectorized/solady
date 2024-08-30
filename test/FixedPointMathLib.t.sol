@@ -1587,8 +1587,10 @@ contract FixedPointMathLibTest is SoladyTest {
         unchecked {
             if (x > y) {
                 z = uint256(x - y);
+                assert(uint256(x) - uint256(y) == z);
             } else {
                 z = uint256(y - x);
+                assert(uint256(y) - uint256(x) == z);
             }
         }
         assertEq(FixedPointMathLib.dist(x, y), z);
