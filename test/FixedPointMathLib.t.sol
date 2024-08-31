@@ -1169,23 +1169,25 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function _sampleEdgeCases(int256 x, int256 y) internal returns (int256, int256) {
         uint256 r = _randomUniform();
-        if (r & 0xf00000 == uint256(0)) y = -1;
-        if (r & 0x0f0000 == uint256(0)) y = type(int256).min;
-        if (r & 0x00f000 == uint256(0)) x = -1;
-        if (r & 0x000f00 == uint256(0)) x = type(int256).min;
-        if (r & 0x0000f0 == uint256(0)) y = 0;
-        if (r & 0x00000f == uint256(0)) x = 0;
+        if (r & 0xf000000 == uint256(0)) y = -1;
+        if (r & 0x0f00000 == uint256(0)) y = type(int256).min;
+        if (r & 0x00f0000 == uint256(0)) x = -1;
+        if (r & 0x000f000 == uint256(0)) x = type(int256).min;
+        if (r & 0x0000f00 == uint256(0)) y = 0;
+        if (r & 0x00000f0 == uint256(0)) x = 0;
+        if (r & 0x000000f == uint256(0)) (x, y) = (int256(_random()), int256(_random()));
         return (x, y);
     }
 
     function _sampleEdgeCases(uint256 x, uint256 y) internal returns (uint256, uint256) {
         uint256 r = _randomUniform();
-        if (r & 0xf00000 == uint256(0)) y = uint256(int256(-1));
-        if (r & 0x0f0000 == uint256(0)) y = uint256(type(int256).min);
-        if (r & 0x00f000 == uint256(0)) x = uint256(int256(-1));
-        if (r & 0x000f00 == uint256(0)) x = uint256(type(int256).min);
-        if (r & 0x0000f0 == uint256(0)) y = 0;
-        if (r & 0x00000f == uint256(0)) x = 0;
+        if (r & 0xf000000 == uint256(0)) y = uint256(int256(-1));
+        if (r & 0x0f00000 == uint256(0)) y = uint256(type(int256).min);
+        if (r & 0x00f0000 == uint256(0)) x = uint256(int256(-1));
+        if (r & 0x000f000 == uint256(0)) x = uint256(type(int256).min);
+        if (r & 0x0000f00 == uint256(0)) y = 0;
+        if (r & 0x00000f0 == uint256(0)) x = 0;
+        if (r & 0x000000f == uint256(0)) (x, y) = (uint256(_random()), uint256(_random()));
         return (x, y);
     }
 
