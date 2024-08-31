@@ -23,12 +23,16 @@ abstract contract Multicallable {
     /// If any of the `delegatecall`s reverts, the entire context is reverted,
     /// and the error is bubbled up.
     ///
-    /// This function is deliberately made non-payable to guard against double-spending.
-    /// (See: https://www.paradigm.xyz/2021/08/two-rights-might-make-a-wrong)
-    ///
     /// By default, this function directly returns the results and terminates the call context.
     /// If you need to add before and after actions to the multicall, please override this function.
-    function multicall(bytes[] calldata data) public virtual returns (bytes[] memory) {
+    function multicall(bytes[] calldata data) public payable virtual returns (bytes[] memory) {
+        // Revert if `msg.value` is non-zero by default to guard against double-spending.
+        // (See: https://www.paradigm.xyz/2021/08/two-rights-might-make-a-wrong)
+        //
+        // If you really need to pass in a `msg.value`, then you will have to
+        // override this function and add in any relevant before and after checks.
+        if (msg.value != 0) revert();
+
         _multicallDirectReturn(_multicallInner(data));
     }
 
