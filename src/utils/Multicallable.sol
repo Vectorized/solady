@@ -32,14 +32,14 @@ abstract contract Multicallable {
         // If you really need to pass in a `msg.value`, then you will have to
         // override this function and add in any relevant before and after checks.
         if (msg.value != 0) revert();
-
-        _multicallDirectReturn(_multicallInner(data));
+        // `_multicallDirectReturn` returns the results directly and terminates the call context.
+        _multicallDirectReturn(_multicall(data));
     }
 
     /// @dev The inner logic of `multicall`.
     /// This function is included so that you can override `multicall`
     /// to add before and after actions, and use the `_multicallDirectReturn` function.
-    function _multicallInner(bytes[] calldata data) internal virtual returns (bytes32 ptr) {
+    function _multicall(bytes[] calldata data) internal virtual returns (bytes32 ptr) {
         /// @solidity memory-safe-assembly
         assembly {
             ptr := mload(0x40)
@@ -102,7 +102,7 @@ abstract contract Multicallable {
     }
 
     /// @dev Directly returns the `ptr` and terminates the current call context.
-    /// `ptr` must be from `_multicallInner`, else behavior is undefined.
+    /// `ptr` must be from `_multicall`, else behavior is undefined.
     function _multicallDirectReturn(bytes32 ptr) internal pure virtual {
         /// @solidity memory-safe-assembly
         assembly {
