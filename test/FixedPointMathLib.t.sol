@@ -1061,6 +1061,10 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
+    function fullMulDiv(uint256 x, uint256 y, uint256 d) public pure returns (uint256) {
+        return FixedPointMathLib.fullMulDiv(x, y, d);
+    }
+
     function testFullMulDiv() public {
         assertEq(FixedPointMathLib.fullMulDiv(0, 0, 1), 0);
         assertEq(FixedPointMathLib.fullMulDiv(4, 4, 2), 8);
@@ -1163,160 +1167,105 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
-    function testMulWad(uint256 x, uint256 y) public {
-        // Ignore cases where x * y overflows.
+    function _mulWadWillFail(uint256 x, uint256 y) internal pure returns (bool) {
         unchecked {
-            if (x != 0 && (x * y) / x != y) return;
+            if (x == 0) return false;
+            if (y == 0) return false;
+            return (x * y) / x != y;
+        }
+    }
+
+    function testMulWad(uint256 x, uint256 y) public {
+        if (_mulWadWillFail(x, y)) {
+            vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
+            FixedPointMathLib.mulWad(x, y);
+            return;
         }
         uint256 result = FixedPointMathLib.mulWad(x, y);
         assertEq(result, (x * y) / 1e18);
         assertEq(FixedPointMathLib.rawMulWad(x, y), result);
     }
 
-    function testSMulWad(int256 x, int256 y) public {
-        // Ignore cases where x * y overflows.
+    function _sMulWadWillFail(int256 x, int256 y) internal pure returns (bool) {
         unchecked {
-            if ((x != 0 && (x * y) / x != y) || (x == -1 && y == type(int256).min)) return;
+            if (x == 0) return false;
+            if (y == 0) return false;
+            if ((x * y) / x != y) return true;
+            if (x == -1 && y == type(int256).min) return true;
+            if (y == -1 && x == type(int256).min) return true;
+            return false;
+        }
+    }
+
+    function testSMulWad(int256 x, int256 y) public {
+        if (_randomChance(16)) y = -1;
+        if (_randomChance(16)) y = type(int256).min;
+        if (_randomChance(16)) x = -1;
+        if (_randomChance(16)) x = type(int256).min;
+        if (_sMulWadWillFail(x, y)) {
+            vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
+            FixedPointMathLib.sMulWad(x, y);
+            return;
         }
         int256 result = FixedPointMathLib.sMulWad(x, y);
         assertEq(result, int256((x * y) / 1e18));
         assertEq(FixedPointMathLib.rawSMulWad(x, y), result);
     }
 
-    function testMulWadOverflowReverts(uint256 x, uint256 y) public {
-        unchecked {
-            while (!(x != 0 && (x * y) / x != y)) {
-                x = _random();
-                y = _random();
-            }
-        }
-        vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
-        FixedPointMathLib.mulWad(x, y);
-    }
-
-    function testSMulWadOverflowRevertsOnCondition1(int256 x, int256 y) public {
-        unchecked {
-            while (!(x != 0 && (x * y) / x != y)) {
-                x = int256(_random());
-                y = int256(_random());
-            }
-        }
-        vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
-        FixedPointMathLib.sMulWad(x, y);
-    }
-
-    function testSMulWadOverflowRevertsOnCondition2(int256 x) public {
-        while (!(x < 0)) x = int256(_random());
-        vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
-        FixedPointMathLib.sMulWad(x, type(int256).min);
-    }
-
     function testMulWadUp(uint256 x, uint256 y) public {
-        // Ignore cases where x * y overflows.
-        unchecked {
-            while (x != 0 && (x * y) / x != y) {
-                x = _random();
-                y = _random();
-            }
+        if (_mulWadWillFail(x, y)) {
+            vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
+            FixedPointMathLib.mulWadUp(x, y);
+            return;
         }
-
         assertEq(FixedPointMathLib.mulWadUp(x, y), x * y == 0 ? 0 : (x * y - 1) / 1e18 + 1);
     }
 
-    function testMulWadUpOverflowReverts(uint256 x, uint256 y) public {
+    function _divWadWillFail(uint256 x, uint256 y) internal pure returns (bool) {
         unchecked {
-            while (!(x != 0 && !((x * y) / x == y))) {
-                x = _random();
-                y = _random();
-            }
+            if (y == 0) return true;
+            if (x == 0) return false;
+            return (x * 1e18) / 1e18 != x;
         }
-        vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
-        FixedPointMathLib.mulWadUp(x, y);
     }
 
     function testDivWad(uint256 x, uint256 y) public {
-        // Ignore cases where x * WAD overflows or y is 0.
-        unchecked {
-            while (y == 0 || (x * 1e18) / 1e18 != x) {
-                x = _random();
-                y = _random();
-            }
+        if (_divWadWillFail(x, y)) {
+            vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
+            FixedPointMathLib.divWad(x, y);
+            return;
         }
         uint256 result = FixedPointMathLib.divWad(x, y);
         assertEq(result, (x * 1e18) / y);
         assertEq(FixedPointMathLib.rawDivWad(x, y), result);
     }
 
-    function testSDivWad(int256 x, int256 y) public {
-        // Ignore cases where x * WAD overflows or y is 0.
+    function _sDivWadWillFail(int256 x, int256 y) internal pure returns (bool) {
         unchecked {
-            while (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) {
-                x = int256(_random());
-                y = int256(_random());
-            }
+            if (y == 0) return true;
+            if (x == 0) return false;
+            return (x * 1e18) / 1e18 != x;
+        }
+    }
+
+    function testSDivWad(int256 x, int256 y) public {
+        if (_sDivWadWillFail(x, y)) {
+            vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
+            FixedPointMathLib.sDivWad(x, y);
+            return;
         }
         int256 result = FixedPointMathLib.sDivWad(x, y);
         assertEq(result, int256((x * 1e18) / y));
         assertEq(FixedPointMathLib.rawSDivWad(x, y), result);
     }
 
-    function testDivWadOverflowReverts(uint256 x, uint256 y) public {
-        unchecked {
-            while (!(y != 0 && (x * 1e18) / 1e18 != x)) {
-                x = _random();
-                y = _random();
-            }
-        }
-        vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
-        FixedPointMathLib.divWad(x, y);
-    }
-
-    function testSDivWadOverflowReverts(int256 x, int256 y) public {
-        unchecked {
-            while (!(y != 0 && (x * 1e18) / 1e18 != x)) {
-                x = int256(_random());
-                y = int256(_random());
-            }
-        }
-        vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
-        FixedPointMathLib.sDivWad(x, y);
-    }
-
-    function testDivWadZeroDenominatorReverts(uint256 x) public {
-        vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
-        FixedPointMathLib.divWad(x, 0);
-    }
-
-    function testSDivWadZeroDenominatorReverts(int256 x) public {
-        vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
-        FixedPointMathLib.sDivWad(x, 0);
-    }
-
     function testDivWadUp(uint256 x, uint256 y) public {
-        // Ignore cases where x * WAD overflows or y is 0.
-        unchecked {
-            while (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) {
-                x = _random();
-                y = _random();
-            }
+        if (_divWadWillFail(x, y)) {
+            vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
+            FixedPointMathLib.divWadUp(x, y);
+            return;
         }
         assertEq(FixedPointMathLib.divWadUp(x, y), x == 0 ? 0 : (x * 1e18 - 1) / y + 1);
-    }
-
-    function testDivWadUpOverflowReverts(uint256 x, uint256 y) public {
-        unchecked {
-            while (!(y != 0 && (x * 1e18) / 1e18 != x)) {
-                x = _random();
-                y = _random();
-            }
-        }
-        vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
-        FixedPointMathLib.divWadUp(x, y);
-    }
-
-    function testDivWadUpZeroDenominatorReverts(uint256 x) public {
-        vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
-        FixedPointMathLib.divWadUp(x, 0);
     }
 
     function testMulDiv(uint256 x, uint256 y, uint256 denominator) public {
