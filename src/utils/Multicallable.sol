@@ -39,65 +39,74 @@ abstract contract Multicallable {
     /// @dev The inner logic of `multicall`.
     /// This function is included so that you can override `multicall`
     /// to add before and after actions, and use the `_multicallDirectReturn` function.
-    function _multicallInner(bytes[] calldata data)
-        internal
-        virtual
-        returns (bytes[] memory results)
-    {
-        if (data.length == uint256(0)) return results;
+    function _multicallInner(bytes[] calldata data) internal virtual returns (bytes32 ptr) {
         /// @solidity memory-safe-assembly
         assembly {
-            results := mload(0x40)
-            mstore(results, data.length)
-            let p := add(results, 0x20)
+            ptr := mload(0x40)
+            mstore(ptr, 0x20)
+            mstore(add(0x20, ptr), data.length)
+            let c := add(0x40, ptr)
+            let s := c
             let end := shl(5, data.length)
-            calldatacopy(p, data.offset, end)
-            end := add(p, end)
+            calldatacopy(c, data.offset, end)
+            end := add(c, end)
             let m := end
-            for {} 1 {} {
-                let o := add(data.offset, mload(p))
-                calldatacopy(m, add(o, 0x20), calldataload(o))
-                if iszero(delegatecall(gas(), address(), m, calldataload(o), codesize(), 0x00)) {
-                    // Bubble up the revert if the delegatecall reverts.
-                    returndatacopy(results, 0x00, returndatasize())
-                    revert(results, returndatasize())
+            if data.length {
+                for {} 1 {} {
+                    let o := add(data.offset, mload(c))
+                    calldatacopy(m, add(o, 0x20), calldataload(o))
+                    // forgefmt: disable-next-item
+                    if iszero(delegatecall(gas(), address(), m, calldataload(o), codesize(), 0x00)) {
+                        // Bubble up the revert if the delegatecall reverts.
+                        returndatacopy(ptr, 0x00, returndatasize())
+                        revert(ptr, returndatasize())
+                    }
+                    mstore(c, sub(m, s))
+                    c := add(0x20, c)
+                    // Append the `returndatasize()`, and the return data.
+                    mstore(m, returndatasize())
+                    let b := add(m, 0x20)
+                    returndatacopy(b, 0x00, returndatasize())
+                    // Advance `m` by `returndatasize() + 0x20`,
+                    // rounded up to the next multiple of 32.
+                    m := and(add(add(b, returndatasize()), 0x1f), 0xffffffffffffffe0)
+                    mstore(add(b, returndatasize()), 0) // Zeroize the slot after the returndata.
+                    if iszero(lt(c, end)) { break }
                 }
-                mstore(p, m)
-                p := add(p, 0x20)
-                // Append the `returndatasize()`, and the return data.
-                mstore(m, returndatasize())
-                let b := add(m, 0x20)
-                returndatacopy(b, 0x00, returndatasize())
-                // Advance `m` by `returndatasize() + 0x20`,
-                // rounded up to the next multiple of 32.
-                m := and(add(add(b, returndatasize()), 0x1f), 0xffffffffffffffe0)
-                // Zeroize the slot after the returndata.
-                mstore(add(b, returndatasize()), 0)
-                if iszero(lt(p, end)) { break }
             }
-            mstore(0x40, m)
+            mstore(0x40, m) // Allocate memory.
+            ptr := or(shl(64, m), ptr) // Pack the bytes length into `ptr`.
         }
     }
 
-    /// @dev Directly returns the `results` and terminates the current call context.
-    /// This is more efficient than Solidity's implicit return.
-    function _multicallDirectReturn(bytes[] memory results) internal pure virtual {
+    /// @dev Returns the `ptr` converted to an array of bytes.
+    /// This could be useful if you need to access the results.
+    function _multicallResultsToBytesArray(bytes32 ptr)
+        internal
+        pure
+        virtual
+        returns (bytes[] memory results)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(mload(results)) {
-                mstore(0x40, 0x20)
-                return(0x40, 0x40)
-            }
-            let s := add(0x20, results)
-            let m := s
-            for { let end := add(m, shl(5, mload(results))) } 1 {} {
-                mstore(m, sub(mload(m), s))
-                m := add(m, 0x20)
-                if eq(m, end) { break }
-            }
-            let o := sub(results, 0x20)
-            mstore(o, 0x20)
-            return(o, sub(mload(0x40), o))
+            results := mload(0x40)
+            let c := and(0xffffffffffffffff, ptr) // Extract the offset.
+            mstore(results, mload(add(c, 0x20))) // Store the length.
+            let o := add(results, 0x20) // Start of elements in `results`.
+            let end := add(o, shl(5, mload(results)))
+            mstore(0x40, end) // Allocate memory.
+            let s := add(c, 0x40) // Start of elements in `ptr`.
+            let d := sub(s, o) // Difference between input and output pointers.
+            for {} iszero(eq(o, end)) { o := add(o, 0x20) } { mstore(o, add(mload(add(d, o)), s)) }
+        }
+    }
+
+    /// @dev Directly returns the `ptr` and terminates the current call context.
+    /// `ptr` must be from `_multicallInner`, else behavior is undefined.
+    function _multicallDirectReturn(bytes32 ptr) internal pure virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            return(and(0xffffffffffffffff, ptr), shr(64, ptr))
         }
     }
 }
