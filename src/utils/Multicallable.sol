@@ -32,71 +32,81 @@ abstract contract Multicallable {
         // If you really need to pass in a `msg.value`, then you will have to
         // override this function and add in any relevant before and after checks.
         if (msg.value != 0) revert();
-
-        _multicallDirectReturn(_multicallInner(data));
+        // `_multicallDirectReturn` returns the results directly and terminates the call context.
+        _multicallDirectReturn(_multicall(data));
     }
 
     /// @dev The inner logic of `multicall`.
     /// This function is included so that you can override `multicall`
     /// to add before and after actions, and use the `_multicallDirectReturn` function.
-    function _multicallInner(bytes[] calldata data)
-        internal
-        virtual
-        returns (bytes[] memory results)
-    {
-        if (data.length == uint256(0)) return results;
+    function _multicall(bytes[] calldata data) internal virtual returns (bytes32 results) {
         /// @solidity memory-safe-assembly
         assembly {
             results := mload(0x40)
-            mstore(results, data.length)
-            let m := add(results, 0x20)
-            let p := m
-            calldatacopy(p, data.offset, shl(5, data.length))
-            let end := add(p, shl(5, data.length))
-            for { m := end } 1 {} {
-                let o := add(data.offset, mload(p))
-                calldatacopy(m, add(o, 0x20), calldataload(o))
-                if iszero(delegatecall(gas(), address(), m, calldataload(o), codesize(), 0x00)) {
-                    // Bubble up the revert if the delegatecall reverts.
-                    returndatacopy(results, 0x00, returndatasize())
-                    revert(results, returndatasize())
+            mstore(results, 0x20)
+            mstore(add(0x20, results), data.length)
+            let c := add(0x40, results)
+            let s := c
+            let end := shl(5, data.length)
+            calldatacopy(c, data.offset, end)
+            end := add(c, end)
+            let m := end
+            if data.length {
+                for {} 1 {} {
+                    let o := add(data.offset, mload(c))
+                    calldatacopy(m, add(o, 0x20), calldataload(o))
+                    // forgefmt: disable-next-item
+                    if iszero(delegatecall(gas(), address(), m, calldataload(o), codesize(), 0x00)) {
+                        // Bubble up the revert if the delegatecall reverts.
+                        returndatacopy(results, 0x00, returndatasize())
+                        revert(results, returndatasize())
+                    }
+                    mstore(c, sub(m, s))
+                    c := add(0x20, c)
+                    // Append the `returndatasize()`, and the return data.
+                    mstore(m, returndatasize())
+                    let b := add(m, 0x20)
+                    returndatacopy(b, 0x00, returndatasize())
+                    // Advance `m` by `returndatasize() + 0x20`,
+                    // rounded up to the next multiple of 32.
+                    m := and(add(add(b, returndatasize()), 0x1f), 0xffffffffffffffe0)
+                    mstore(add(b, returndatasize()), 0) // Zeroize the slot after the returndata.
+                    if iszero(lt(c, end)) { break }
                 }
-                mstore(p, m)
-                p := add(p, 0x20)
-                // Append the `returndatasize()`, and the return data.
-                mstore(m, returndatasize())
-                o := add(m, 0x20)
-                returndatacopy(o, 0x00, returndatasize())
-                // Zeroize the slot after the returndata.
-                mstore(add(o, returndatasize()), 0x00)
-                // Advance `m` by `returndatasize() + 0x20`,
-                // rounded up to the next multiple of 32.
-                m := and(add(add(m, returndatasize()), 0x3f), 0xffffffffffffffe0)
-                if iszero(lt(p, end)) { break }
             }
-            mstore(0x40, m)
+            mstore(0x40, m) // Allocate memory.
+            results := or(shl(64, m), results) // Pack the bytes length into `results`.
+        }
+    }
+
+    /// @dev Decodes the `results` into an array of bytes.
+    /// This can be useful if you need to access the results or re-encode it.
+    function _multicallResultsToBytesArray(bytes32 results)
+        internal
+        pure
+        virtual
+        returns (bytes[] memory decoded)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            decoded := mload(0x40)
+            let c := and(0xffffffffffffffff, results) // Extract the offset.
+            mstore(decoded, mload(add(c, 0x20))) // Store the length.
+            let o := add(decoded, 0x20) // Start of elements in `decoded`.
+            let end := add(o, shl(5, mload(decoded)))
+            mstore(0x40, end) // Allocate memory.
+            let s := add(c, 0x40) // Start of elements in `results`.
+            let d := sub(s, o) // Difference between input and output pointers.
+            for {} iszero(eq(o, end)) { o := add(o, 0x20) } { mstore(o, add(mload(add(d, o)), s)) }
         }
     }
 
     /// @dev Directly returns the `results` and terminates the current call context.
-    /// This is more efficient than Solidity's implicit return.
-    function _multicallDirectReturn(bytes[] memory results) internal pure virtual {
+    /// `results` must be from `_multicall`, else behavior is undefined.
+    function _multicallDirectReturn(bytes32 results) internal pure virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(mload(results)) {
-                mstore(0x40, 0x20)
-                return(0x40, 0x40)
-            }
-            let s := add(0x20, results)
-            let m := s
-            for { let end := add(m, shl(5, mload(results))) } 1 {} {
-                mstore(m, sub(mload(m), s))
-                m := add(m, 0x20)
-                if eq(m, end) { break }
-            }
-            let o := sub(results, 0x20)
-            mstore(o, 0x20)
-            return(o, sub(mload(0x40), o))
+            return(and(0xffffffffffffffff, results), shr(64, results))
         }
     }
 }
