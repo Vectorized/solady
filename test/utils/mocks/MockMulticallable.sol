@@ -64,10 +64,11 @@ contract MockMulticallable is Multicallable, Brutalizer {
         return msg.sender;
     }
 
-    function multicallBrutalized(bytes[] calldata data) public returns (bytes[] memory results) {
+    function multicallBrutalized(bytes[] calldata data) public returns (bytes[] memory) {
         _brutalizeMemory();
-        results = _multicallInner(data);
+        bytes[] memory results = _multicallInner(data);
         _checkMemory();
+        _multicallDirectReturn(results);
     }
 
     function multicallOriginal(bytes[] calldata data)
