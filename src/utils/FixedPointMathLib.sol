@@ -65,9 +65,11 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
-            if mul(y, gt(x, div(not(0), y))) {
-                mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
-                revert(0x1c, 0x04)
+            if gt(x, div(not(0), y)) {
+                if y {
+                    mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             z := div(mul(x, y), WAD)
         }
@@ -108,9 +110,11 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
-            if mul(y, gt(x, div(not(0), y))) {
-                mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
-                revert(0x1c, 0x04)
+            if gt(x, div(not(0), y)) {
+                if y {
+                    mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
         }
@@ -128,8 +132,8 @@ library FixedPointMathLib {
     function divWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
-            if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
+            // Equivalent to `require(y != 0 && x <= type(uint256).max / WAD)`.
+            if or(iszero(y), gt(x, div(not(0), WAD))) {
                 mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
                 revert(0x1c, 0x04)
             }

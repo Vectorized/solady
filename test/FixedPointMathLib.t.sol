@@ -1168,7 +1168,6 @@ contract FixedPointMathLibTest is SoladyTest {
         unchecked {
             if (x != 0 && (x * y) / x != y) return;
         }
-
         uint256 result = FixedPointMathLib.mulWad(x, y);
         assertEq(result, (x * y) / 1e18);
         assertEq(FixedPointMathLib.rawMulWad(x, y), result);
@@ -1179,7 +1178,6 @@ contract FixedPointMathLibTest is SoladyTest {
         unchecked {
             if ((x != 0 && (x * y) / x != y) || (x == -1 && y == type(int256).min)) return;
         }
-
         int256 result = FixedPointMathLib.sMulWad(x, y);
         assertEq(result, int256((x * y) / 1e18));
         assertEq(FixedPointMathLib.rawSMulWad(x, y), result);
@@ -1239,7 +1237,7 @@ contract FixedPointMathLibTest is SoladyTest {
     function testDivWad(uint256 x, uint256 y) public {
         // Ignore cases where x * WAD overflows or y is 0.
         unchecked {
-            while (y == 0 || (x != 0 && (x * 1e18) / 1e18 != x)) {
+            while (y == 0 || (x * 1e18) / 1e18 != x) {
                 x = _random();
                 y = _random();
             }
