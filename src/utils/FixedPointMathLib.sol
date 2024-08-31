@@ -353,8 +353,7 @@ library FixedPointMathLib {
         // forgefmt: disable-next-item
         unchecked {
             if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-            int256 wad = int256(WAD);
-            int256 p = x;
+            (int256 wad, int256 p) = (int256(WAD), x);
             uint256 c; // Whether we need to avoid catastrophic cancellation.
             uint256 i = 4; // Number of iterations.
             if (w <= 0x1ffffffffffff) {
