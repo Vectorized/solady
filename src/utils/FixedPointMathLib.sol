@@ -65,9 +65,11 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
-            if mul(y, gt(x, div(not(0), y))) {
-                mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
-                revert(0x1c, 0x04)
+            if gt(x, div(not(0), y)) {
+                if y {
+                    mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             z := div(mul(x, y), WAD)
         }
@@ -108,9 +110,11 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
-            if mul(y, gt(x, div(not(0), y))) {
-                mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
-                revert(0x1c, 0x04)
+            if gt(x, div(not(0), y)) {
+                if y {
+                    mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
         }
@@ -128,8 +132,8 @@ library FixedPointMathLib {
     function divWad(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
-            if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
+            // Equivalent to `require(y != 0 && x <= type(uint256).max / WAD)`.
+            if iszero(mul(y, lt(x, add(1, div(not(0), WAD))))) {
                 mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -143,11 +147,11 @@ library FixedPointMathLib {
         assembly {
             z := mul(x, WAD)
             // Equivalent to `require(y != 0 && ((x * WAD) / WAD == x))`.
-            if iszero(and(iszero(iszero(y)), eq(sdiv(z, WAD), x))) {
+            if iszero(mul(y, eq(sdiv(z, WAD), x))) {
                 mstore(0x00, 0x5c43740d) // `SDivWadFailed()`.
                 revert(0x1c, 0x04)
             }
-            z := sdiv(mul(x, WAD), y)
+            z := sdiv(z, y)
         }
     }
 
@@ -171,8 +175,8 @@ library FixedPointMathLib {
     function divWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
-            if iszero(mul(y, iszero(mul(WAD, gt(x, div(not(0), WAD)))))) {
+            // Equivalent to `require(y != 0 && x <= type(uint256).max / WAD)`.
+            if iszero(mul(y, lt(x, add(1, div(not(0), WAD))))) {
                 mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -349,8 +353,7 @@ library FixedPointMathLib {
         // forgefmt: disable-next-item
         unchecked {
             if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
-            int256 wad = int256(WAD);
-            int256 p = x;
+            (int256 wad, int256 p) = (int256(WAD), x);
             uint256 c; // Whether we need to avoid catastrophic cancellation.
             uint256 i = 4; // Number of iterations.
             if (w <= 0x1ffffffffffff) {
@@ -947,9 +950,8 @@ library FixedPointMathLib {
 
     /// @dev Returns the absolute value of `x`.
     function abs(int256 x) internal pure returns (uint256 z) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            z := xor(sar(255, x), add(sar(255, x), x))
+        unchecked {
+            z = (uint256(x) + uint256(x >> 255)) ^ uint256(x >> 255);
         }
     }
 
@@ -957,7 +959,7 @@ library FixedPointMathLib {
     function dist(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := xor(mul(xor(sub(y, x), sub(x, y)), gt(x, y)), sub(y, x))
+            z := add(xor(sub(0, gt(x, y)), sub(y, x)), gt(x, y))
         }
     }
 
@@ -965,7 +967,7 @@ library FixedPointMathLib {
     function dist(int256 x, int256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            z := xor(mul(xor(sub(y, x), sub(x, y)), sgt(x, y)), sub(y, x))
+            z := add(xor(sub(0, sgt(x, y)), sub(y, x)), sgt(x, y))
         }
     }
 
@@ -1044,11 +1046,7 @@ library FixedPointMathLib {
         pure
         returns (uint256)
     {
-        if (begin > end) {
-            t = ~t;
-            begin = ~begin;
-            end = ~end;
-        }
+        if (begin > end) (t, begin, end) = (~t, ~begin, ~end);
         if (t <= begin) return a;
         if (t >= end) return b;
         unchecked {
@@ -1066,19 +1064,15 @@ library FixedPointMathLib {
         pure
         returns (int256)
     {
-        if (begin > end) {
-            t = int256(~uint256(t));
-            begin = int256(~uint256(begin));
-            end = int256(~uint256(end));
-        }
+        if (begin > end) (t, begin, end) = (~t, ~begin, ~end);
         if (t <= begin) return a;
         if (t >= end) return b;
         // forgefmt: disable-next-item
         unchecked {
-            if (b >= a) return int256(uint256(a) + fullMulDiv(uint256(b) - uint256(a),
-                uint256(t) - uint256(begin), uint256(end) - uint256(begin)));
-            return int256(uint256(a) - fullMulDiv(uint256(a) - uint256(b),
-                uint256(t) - uint256(begin), uint256(end) - uint256(begin)));
+            if (b >= a) return int256(uint256(a) + fullMulDiv(uint256(b - a),
+                uint256(t - begin), uint256(end - begin)));
+            return int256(uint256(a) - fullMulDiv(uint256(a - b),
+                uint256(t - begin), uint256(end - begin)));
         }
     }
 
