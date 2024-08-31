@@ -39,13 +39,13 @@ abstract contract Multicallable {
     /// @dev The inner logic of `multicall`.
     /// This function is included so that you can override `multicall`
     /// to add before and after actions, and use the `_multicallDirectReturn` function.
-    function _multicall(bytes[] calldata data) internal virtual returns (bytes32 ptr) {
+    function _multicall(bytes[] calldata data) internal virtual returns (bytes32 results) {
         /// @solidity memory-safe-assembly
         assembly {
-            ptr := mload(0x40)
-            mstore(ptr, 0x20)
-            mstore(add(0x20, ptr), data.length)
-            let c := add(0x40, ptr)
+            results := mload(0x40)
+            mstore(results, 0x20)
+            mstore(add(0x20, results), data.length)
+            let c := add(0x40, results)
             let s := c
             let end := shl(5, data.length)
             calldatacopy(c, data.offset, end)
@@ -58,8 +58,8 @@ abstract contract Multicallable {
                     // forgefmt: disable-next-item
                     if iszero(delegatecall(gas(), address(), m, calldataload(o), codesize(), 0x00)) {
                         // Bubble up the revert if the delegatecall reverts.
-                        returndatacopy(ptr, 0x00, returndatasize())
-                        revert(ptr, returndatasize())
+                        returndatacopy(results, 0x00, returndatasize())
+                        revert(results, returndatasize())
                     }
                     mstore(c, sub(m, s))
                     c := add(0x20, c)
@@ -75,38 +75,38 @@ abstract contract Multicallable {
                 }
             }
             mstore(0x40, m) // Allocate memory.
-            ptr := or(shl(64, m), ptr) // Pack the bytes length into `ptr`.
+            results := or(shl(64, m), results) // Pack the bytes length into `results`.
         }
     }
 
-    /// @dev Returns the `ptr` converted to an array of bytes.
-    /// This could be useful if you need to access the results.
-    function _multicallResultsToBytesArray(bytes32 ptr)
+    /// @dev Decodes the `results` into an array of bytes.
+    /// This can be useful if you need to access the results or re-encode it.
+    function _multicallResultsToBytesArray(bytes32 results)
         internal
         pure
         virtual
-        returns (bytes[] memory results)
+        returns (bytes[] memory decoded)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            results := mload(0x40)
-            let c := and(0xffffffffffffffff, ptr) // Extract the offset.
-            mstore(results, mload(add(c, 0x20))) // Store the length.
-            let o := add(results, 0x20) // Start of elements in `results`.
-            let end := add(o, shl(5, mload(results)))
+            decoded := mload(0x40)
+            let c := and(0xffffffffffffffff, results) // Extract the offset.
+            mstore(decoded, mload(add(c, 0x20))) // Store the length.
+            let o := add(decoded, 0x20) // Start of elements in `decoded`.
+            let end := add(o, shl(5, mload(decoded)))
             mstore(0x40, end) // Allocate memory.
-            let s := add(c, 0x40) // Start of elements in `ptr`.
+            let s := add(c, 0x40) // Start of elements in `results`.
             let d := sub(s, o) // Difference between input and output pointers.
             for {} iszero(eq(o, end)) { o := add(o, 0x20) } { mstore(o, add(mload(add(d, o)), s)) }
         }
     }
 
-    /// @dev Directly returns the `ptr` and terminates the current call context.
-    /// `ptr` must be from `_multicall`, else behavior is undefined.
-    function _multicallDirectReturn(bytes32 ptr) internal pure virtual {
+    /// @dev Directly returns the `results` and terminates the current call context.
+    /// `results` must be from `_multicall`, else behavior is undefined.
+    function _multicallDirectReturn(bytes32 results) internal pure virtual {
         /// @solidity memory-safe-assembly
         assembly {
-            return(and(0xffffffffffffffff, ptr), shr(64, ptr))
+            return(and(0xffffffffffffffff, results), shr(64, results))
         }
     }
 }
