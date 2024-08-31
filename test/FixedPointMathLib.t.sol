@@ -1273,62 +1273,43 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.divWadUp(x, y), x == 0 ? 0 : (x * 1e18 - 1) / y + 1);
     }
 
+    function mulDivOriginal(uint256 x, uint256 y, uint256 denominator)
+        public
+        pure
+        returns (uint256)
+    {
+        return (x * y) / denominator;
+    }
+
+    function _mulDivWillFail(uint256 x, uint256 y, uint256 denominator)
+        internal
+        view
+        returns (bool)
+    {
+        bytes memory data =
+            abi.encodeWithSignature("mulDivOriginal(uint256,uint256,uint256)", x, y, denominator);
+        (bool success,) = address(this).staticcall(data);
+        return !success;
+    }
+
     function testMulDiv(uint256 x, uint256 y, uint256 denominator) public {
-        unchecked {
-            if (denominator == 0 || (x != 0 && (x * y) / x != y)) {
-                vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-                FixedPointMathLib.mulDiv(x, y, denominator);
-                return;
-            }
+        if (_mulDivWillFail(x, y, denominator)) {
+            vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
+            FixedPointMathLib.mulDiv(x, y, denominator);
+            return;
         }
         assertEq(FixedPointMathLib.mulDiv(x, y, denominator), (x * y) / denominator);
     }
 
-    function testMulDivOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
-        unchecked {
-            while (!(denominator != 0 && x != 0 && (x * y) / x != y)) {
-                x = _random();
-                y = _random();
-                denominator = _random();
-            }
-        }
-        vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-        FixedPointMathLib.mulDiv(x, y, denominator);
-    }
-
-    function testMulDivZeroDenominatorReverts(uint256 x, uint256 y) public {
-        vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-        FixedPointMathLib.mulDiv(x, y, 0);
-    }
-
     function testMulDivUp(uint256 x, uint256 y, uint256 denominator) public {
-        unchecked {
-            if (denominator == 0 || (x != 0 && (x * y) / x != y)) {
-                vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-                FixedPointMathLib.mulDivUp(x, y, denominator);
-            }
+        if (_mulDivWillFail(x, y, denominator)) {
+            vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
+            FixedPointMathLib.mulDivUp(x, y, denominator);
         }
         assertEq(
             FixedPointMathLib.mulDivUp(x, y, denominator),
             x * y == 0 ? 0 : (x * y - 1) / denominator + 1
         );
-    }
-
-    function testMulDivUpOverflowReverts(uint256 x, uint256 y, uint256 denominator) public {
-        unchecked {
-            while (!(denominator != 0 && x != 0 && (x * y) / x != y)) {
-                x = _random();
-                y = _random();
-                denominator = _random();
-            }
-        }
-        vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-        FixedPointMathLib.mulDivUp(x, y, denominator);
-    }
-
-    function testMulDivUpZeroDenominatorReverts(uint256 x, uint256 y) public {
-        vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-        FixedPointMathLib.mulDivUp(x, y, 0);
     }
 
     function testCbrt(uint256 x) public {
