@@ -49,11 +49,12 @@ abstract contract Multicallable {
         assembly {
             results := mload(0x40)
             mstore(results, data.length)
-            let m := add(results, 0x20)
-            let p := m
-            calldatacopy(p, data.offset, shl(5, data.length))
-            let end := add(p, shl(5, data.length))
-            for { m := end } 1 {} {
+            let p := add(results, 0x20)
+            let end := shl(5, data.length)
+            calldatacopy(p, data.offset, end)
+            end := add(p, end)
+            let m := end
+            for {} 1 {} {
                 let o := add(data.offset, mload(p))
                 calldatacopy(m, add(o, 0x20), calldataload(o))
                 if iszero(delegatecall(gas(), address(), m, calldataload(o), codesize(), 0x00)) {
@@ -65,13 +66,13 @@ abstract contract Multicallable {
                 p := add(p, 0x20)
                 // Append the `returndatasize()`, and the return data.
                 mstore(m, returndatasize())
-                o := add(m, 0x20)
-                returndatacopy(o, 0x00, returndatasize())
-                // Zeroize the slot after the returndata.
-                mstore(add(o, returndatasize()), 0x00)
+                let b := add(m, 0x20)
+                returndatacopy(b, 0x00, returndatasize())
                 // Advance `m` by `returndatasize() + 0x20`,
                 // rounded up to the next multiple of 32.
-                m := and(add(add(m, returndatasize()), 0x3f), 0xffffffffffffffe0)
+                m := and(add(add(b, returndatasize()), 0x1f), 0xffffffffffffffe0)
+                // Zeroize the slot after the returndata.
+                mstore(add(b, returndatasize()), 0)
                 if iszero(lt(p, end)) { break }
             }
             mstore(0x40, m)
