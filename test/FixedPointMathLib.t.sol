@@ -1167,37 +1167,6 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
-    function mulWadOriginal(uint256 x, uint256 y) public pure returns (uint256) {
-        return (x * y) / 1e18;
-    }
-
-    function _mulWadWillFail(uint256 x, uint256 y) internal view returns (bool) {
-        bytes memory data = abi.encodeWithSignature("mulWadOriginal(uint256,uint256)", x, y);
-        (bool success,) = address(this).staticcall(data);
-        return !success;
-    }
-
-    function testMulWad(uint256 x, uint256 y) public {
-        if (_mulWadWillFail(x, y)) {
-            vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
-            FixedPointMathLib.mulWad(x, y);
-            return;
-        }
-        uint256 result = FixedPointMathLib.mulWad(x, y);
-        assertEq(result, (x * y) / 1e18);
-        assertEq(FixedPointMathLib.rawMulWad(x, y), result);
-    }
-
-    function sMulWadOriginal(int256 x, int256 y) public pure returns (int256) {
-        return (x * y) / 1e18;
-    }
-
-    function _sMulWadWillFail(int256 x, int256 y) internal view returns (bool) {
-        bytes memory data = abi.encodeWithSignature("sMulWadOriginal(int256,int256)", x, y);
-        (bool success,) = address(this).staticcall(data);
-        return !success;
-    }
-
     function _sampleEdgeCases(int256 x, int256 y) internal returns (int256, int256) {
         uint256 r = _randomUniform();
         if (r & 0xf00000 == uint256(0)) y = -1;
@@ -1218,6 +1187,38 @@ contract FixedPointMathLibTest is SoladyTest {
         if (r & 0x0000f0 == uint256(0)) y = 0;
         if (r & 0x00000f == uint256(0)) x = 0;
         return (x, y);
+    }
+
+    function mulWadOriginal(uint256 x, uint256 y) public pure returns (uint256) {
+        return (x * y) / 1e18;
+    }
+
+    function _mulWadWillFail(uint256 x, uint256 y) internal view returns (bool) {
+        bytes memory data = abi.encodeWithSignature("mulWadOriginal(uint256,uint256)", x, y);
+        (bool success,) = address(this).staticcall(data);
+        return !success;
+    }
+
+    function testMulWad(uint256 x, uint256 y) public {
+        (x, y) = _sampleEdgeCases(x, y);
+        if (_mulWadWillFail(x, y)) {
+            vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
+            FixedPointMathLib.mulWad(x, y);
+            return;
+        }
+        uint256 result = FixedPointMathLib.mulWad(x, y);
+        assertEq(result, (x * y) / 1e18);
+        assertEq(FixedPointMathLib.rawMulWad(x, y), result);
+    }
+
+    function sMulWadOriginal(int256 x, int256 y) public pure returns (int256) {
+        return (x * y) / 1e18;
+    }
+
+    function _sMulWadWillFail(int256 x, int256 y) internal view returns (bool) {
+        bytes memory data = abi.encodeWithSignature("sMulWadOriginal(int256,int256)", x, y);
+        (bool success,) = address(this).staticcall(data);
+        return !success;
     }
 
     function testSMulWad(int256 x, int256 y) public {
