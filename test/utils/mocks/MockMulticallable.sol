@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "../../../src/utils/Multicallable.sol";
+import {Multicallable} from "../../../src/utils/Multicallable.sol";
+import {Brutalizer} from "../Brutalizer.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockMulticallable is Multicallable {
+contract MockMulticallable is Multicallable, Brutalizer {
     error CustomError();
 
     struct Tuple {
@@ -61,6 +62,13 @@ contract MockMulticallable is Multicallable {
 
     function returnsSender() external view returns (address) {
         return msg.sender;
+    }
+
+    function multicallBrutalized(bytes[] calldata data) public returns (bytes[] memory) {
+        _brutalizeMemory();
+        bytes[] memory results = _multicallInner(data);
+        _checkMemory();
+        _multicallDirectReturn(results);
     }
 
     function multicallOriginal(bytes[] calldata data)

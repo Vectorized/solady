@@ -46,7 +46,12 @@ contract MulticallableTest is SoladyTest {
         bytes[] memory data = new bytes[](2);
         data[0] = abi.encodeWithSelector(MockMulticallable.returnsTuple.selector, a0, b0);
         data[1] = abi.encodeWithSelector(MockMulticallable.returnsTuple.selector, a1, b1);
-        bytes[] memory returnedData = multicallable.multicall(data);
+        bytes[] memory returnedData;
+        if (_randomChance(2)) {
+            returnedData = multicallable.multicall(data);
+        } else {
+            returnedData = multicallable.multicallBrutalized(data);
+        }
         MockMulticallable.Tuple memory t0 = abi.decode(returnedData[0], (MockMulticallable.Tuple));
         MockMulticallable.Tuple memory t1 = abi.decode(returnedData[1], (MockMulticallable.Tuple));
         assertEq(t0.a, a0);
@@ -70,7 +75,12 @@ contract MulticallableTest is SoladyTest {
             dataIn[1] =
                 abi.encodeWithSelector(MockMulticallable.returnsRandomizedString.selector, sIn1);
         }
-        bytes[] memory dataOut = multicallable.multicall(dataIn);
+        bytes[] memory dataOut;
+        if (_randomChance(2)) {
+            dataOut = multicallable.multicall(dataIn);
+        } else {
+            dataOut = multicallable.multicallBrutalized(dataIn);
+        }
         if (n > 0) {
             assertEq(abi.decode(dataOut[0], (string)), multicallable.returnsRandomizedString(sIn0));
         }
