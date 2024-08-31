@@ -1167,12 +1167,14 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
-    function _mulWadWillFail(uint256 x, uint256 y) internal pure returns (bool) {
-        unchecked {
-            if (x == 0) return false;
-            if (y == 0) return false;
-            return (x * y) / x != y;
-        }
+    function mulWadOriginal(uint256 x, uint256 y) public pure returns (uint256) {
+        return (x * y) / 1e18;
+    }
+
+    function _mulWadWillFail(uint256 x, uint256 y) internal view returns (bool) {
+        bytes memory data = abi.encodeWithSignature("mulWadOriginal(uint256,uint256)", x, y);
+        (bool success,) = address(this).staticcall(data);
+        return !success;
     }
 
     function testMulWad(uint256 x, uint256 y) public {
@@ -1186,15 +1188,14 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.rawMulWad(x, y), result);
     }
 
-    function _sMulWadWillFail(int256 x, int256 y) internal pure returns (bool) {
-        unchecked {
-            if (x == 0) return false;
-            if (y == 0) return false;
-            if ((x * y) / x != y) return true;
-            if (x == -1 && y == type(int256).min) return true;
-            if (y == -1 && x == type(int256).min) return true;
-            return false;
-        }
+    function sMulWadOriginal(int256 x, int256 y) public pure returns (int256) {
+        return (x * y) / 1e18;
+    }
+
+    function _sMulWadWillFail(int256 x, int256 y) internal view returns (bool) {
+        bytes memory data = abi.encodeWithSignature("sMulWadOriginal(int256,int256)", x, y);
+        (bool success,) = address(this).staticcall(data);
+        return !success;
     }
 
     function testSMulWad(int256 x, int256 y) public {
@@ -1221,12 +1222,14 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.mulWadUp(x, y), x * y == 0 ? 0 : (x * y - 1) / 1e18 + 1);
     }
 
-    function _divWadWillFail(uint256 x, uint256 y) internal pure returns (bool) {
-        unchecked {
-            if (y == 0) return true;
-            if (x == 0) return false;
-            return (x * 1e18) / 1e18 != x;
-        }
+    function divWadOriginal(uint256 x, uint256 y) public pure returns (uint256) {
+        return (x * 1e18) / y;
+    }
+
+    function _divWadWillFail(uint256 x, uint256 y) internal view returns (bool) {
+        bytes memory data = abi.encodeWithSignature("divWadOriginal(uint256,uint256)", x, y);
+        (bool success,) = address(this).staticcall(data);
+        return !success;
     }
 
     function testDivWad(uint256 x, uint256 y) public {
@@ -1240,12 +1243,14 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.rawDivWad(x, y), result);
     }
 
-    function _sDivWadWillFail(int256 x, int256 y) internal pure returns (bool) {
-        unchecked {
-            if (y == 0) return true;
-            if (x == 0) return false;
-            return (x * 1e18) / 1e18 != x;
-        }
+    function sDivWadOriginal(int256 x, int256 y) public pure returns (int256) {
+        return (x * 1e18) / y;
+    }
+
+    function _sDivWadWillFail(int256 x, int256 y) internal view returns (bool) {
+        bytes memory data = abi.encodeWithSignature("sDivWadOriginal(int256,int256)", x, y);
+        (bool success,) = address(this).staticcall(data);
+        return !success;
     }
 
     function testSDivWad(int256 x, int256 y) public {
