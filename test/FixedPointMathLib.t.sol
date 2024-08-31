@@ -1167,6 +1167,30 @@ contract FixedPointMathLibTest is SoladyTest {
         }
     }
 
+    function _sampleEdgeCases(int256 x, int256 y) internal returns (int256, int256) {
+        uint256 r = _randomUniform();
+        if (r & 0xf000000 == uint256(0)) y = -1;
+        if (r & 0x0f00000 == uint256(0)) y = type(int256).min;
+        if (r & 0x00f0000 == uint256(0)) x = -1;
+        if (r & 0x000f000 == uint256(0)) x = type(int256).min;
+        if (r & 0x0000f00 == uint256(0)) y = 0;
+        if (r & 0x00000f0 == uint256(0)) x = 0;
+        if (r & 0x000000f == uint256(0)) (x, y) = (int256(_random()), int256(_random()));
+        return (x, y);
+    }
+
+    function _sampleEdgeCases(uint256 x, uint256 y) internal returns (uint256, uint256) {
+        uint256 r = _randomUniform();
+        if (r & 0xf000000 == uint256(0)) y = uint256(int256(-1));
+        if (r & 0x0f00000 == uint256(0)) y = uint256(type(int256).min);
+        if (r & 0x00f0000 == uint256(0)) x = uint256(int256(-1));
+        if (r & 0x000f000 == uint256(0)) x = uint256(type(int256).min);
+        if (r & 0x0000f00 == uint256(0)) y = 0;
+        if (r & 0x00000f0 == uint256(0)) x = 0;
+        if (r & 0x000000f == uint256(0)) (x, y) = (uint256(_random()), uint256(_random()));
+        return (x, y);
+    }
+
     function mulWadOriginal(uint256 x, uint256 y) public pure returns (uint256) {
         return (x * y) / 1e18;
     }
@@ -1178,6 +1202,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulWad(uint256 x, uint256 y) public {
+        (x, y) = _sampleEdgeCases(x, y);
         if (_mulWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
             FixedPointMathLib.mulWad(x, y);
@@ -1199,10 +1224,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testSMulWad(int256 x, int256 y) public {
-        if (_randomChance(16)) y = -1;
-        if (_randomChance(16)) y = type(int256).min;
-        if (_randomChance(16)) x = -1;
-        if (_randomChance(16)) x = type(int256).min;
+        (x, y) = _sampleEdgeCases(x, y);
         if (_sMulWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
             FixedPointMathLib.sMulWad(x, y);
@@ -1214,6 +1236,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulWadUp(uint256 x, uint256 y) public {
+        (x, y) = _sampleEdgeCases(x, y);
         if (_mulWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
             FixedPointMathLib.mulWadUp(x, y);
@@ -1233,6 +1256,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testDivWad(uint256 x, uint256 y) public {
+        (x, y) = _sampleEdgeCases(x, y);
         if (_divWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
             FixedPointMathLib.divWad(x, y);
@@ -1254,6 +1278,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testSDivWad(int256 x, int256 y) public {
+        (x, y) = _sampleEdgeCases(x, y);
         if (_sDivWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
             FixedPointMathLib.sDivWad(x, y);
@@ -1265,6 +1290,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testDivWadUp(uint256 x, uint256 y) public {
+        (x, y) = _sampleEdgeCases(x, y);
         if (_divWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
             FixedPointMathLib.divWadUp(x, y);
@@ -1293,6 +1319,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulDiv(uint256 x, uint256 y, uint256 denominator) public {
+        (x, y) = _sampleEdgeCases(x, y);
         if (_mulDivWillFail(x, y, denominator)) {
             vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
             FixedPointMathLib.mulDiv(x, y, denominator);
@@ -1302,6 +1329,7 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testMulDivUp(uint256 x, uint256 y, uint256 denominator) public {
+        (x, y) = _sampleEdgeCases(x, y);
         if (_mulDivWillFail(x, y, denominator)) {
             vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
             FixedPointMathLib.mulDivUp(x, y, denominator);

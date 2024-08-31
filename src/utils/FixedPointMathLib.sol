@@ -109,14 +109,15 @@ library FixedPointMathLib {
     function mulWadUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
+            z := mul(x, y)
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
-            if gt(x, div(not(0), y)) {
+            if iszero(eq(div(z, y), x)) {
                 if y {
                     mstore(0x00, 0xbac65e5b) // `MulWadFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
-            z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
+            z := add(iszero(iszero(mod(z, WAD))), div(z, WAD))
         }
     }
 
