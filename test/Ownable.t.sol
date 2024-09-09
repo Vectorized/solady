@@ -31,7 +31,7 @@ contract OwnableTest is SoladyTest {
 
     function testSetOwnerDirect(address newOwner) public {
         vm.expectEmit(true, true, true, true);
-        emit OwnershipTransferred(address(this), newOwner);
+        emit OwnershipTransferred(address(this), _cleaned(newOwner));
         mockOwnable.setOwnerDirect(newOwner);
         assertEq(mockOwnable.owner(), newOwner);
     }
@@ -91,12 +91,12 @@ contract OwnableTest is SoladyTest {
     function testHandoverOwnership(address pendingOwner) public {
         vm.prank(pendingOwner);
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverRequested(pendingOwner);
+        emit OwnershipHandoverRequested(_cleaned(pendingOwner));
         mockOwnable.requestOwnershipHandover();
         assertTrue(mockOwnable.ownershipHandoverExpiresAt(pendingOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
-        emit OwnershipTransferred(address(this), pendingOwner);
+        emit OwnershipTransferred(address(this), _cleaned(pendingOwner));
 
         mockOwnable.completeOwnershipHandover(pendingOwner);
 
@@ -122,12 +122,12 @@ contract OwnableTest is SoladyTest {
 
         vm.prank(pendingOwner);
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverRequested(pendingOwner);
+        emit OwnershipHandoverRequested(_cleaned(pendingOwner));
         mockOwnable.requestOwnershipHandover();
         assertTrue(mockOwnable.ownershipHandoverExpiresAt(pendingOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverCanceled(pendingOwner);
+        emit OwnershipHandoverCanceled(_cleaned(pendingOwner));
         vm.prank(pendingOwner);
         mockOwnable.cancelOwnershipHandover();
         assertEq(mockOwnable.ownershipHandoverExpiresAt(pendingOwner), 0);
