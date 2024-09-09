@@ -33,7 +33,7 @@ contract OwnableRolesTest is SoladyTest {
 
     function testSetOwnerDirect(address newOwner) public {
         vm.expectEmit(true, true, true, true);
-        emit OwnershipTransferred(address(this), newOwner);
+        emit OwnershipTransferred(address(this), _cleaned(newOwner));
         mockOwnableRoles.setOwnerDirect(newOwner);
         assertEq(mockOwnableRoles.owner(), newOwner);
     }
@@ -104,7 +104,7 @@ contract OwnableRolesTest is SoladyTest {
             vm.expectRevert(Ownable.NewOwnerIsZeroAddress.selector);
         } else if (callerIsOwner) {
             vm.expectEmit(true, true, true, true);
-            emit OwnershipTransferred(address(this), newOwner);
+            emit OwnershipTransferred(address(this), _cleaned(newOwner));
         } else {
             vm.prank(newOwner);
             vm.expectRevert(Ownable.Unauthorized.selector);
@@ -346,12 +346,12 @@ contract OwnableRolesTest is SoladyTest {
 
         vm.prank(pendingOwner);
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverRequested(pendingOwner);
+        emit OwnershipHandoverRequested(_cleaned(pendingOwner));
         mockOwnableRoles.requestOwnershipHandover();
         assertTrue(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner) > block.timestamp);
 
         vm.expectEmit(true, true, true, true);
-        emit OwnershipHandoverCanceled(pendingOwner);
+        emit OwnershipHandoverCanceled(_cleaned(pendingOwner));
         vm.prank(pendingOwner);
         mockOwnableRoles.cancelOwnershipHandover();
         assertEq(mockOwnableRoles.ownershipHandoverExpiresAt(pendingOwner), 0);
