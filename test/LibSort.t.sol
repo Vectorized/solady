@@ -1264,4 +1264,34 @@ contract LibSortTest is SoladyTest {
             r = _randomArrayLength();
         } while (r == 0);
     }
+
+    function testClean(uint256 n) public {
+        address[] memory a;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, n)
+            n := and(n, 7)
+            a := mload(0x40)
+            mstore(a, n)
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                mstore(0x20, i)
+                mstore(add(add(a, 0x20), shl(5, i)), keccak256(0x00, 0x40))
+            }
+            mstore(0x40, add(add(a, 0x20), shl(5, n)))
+        }
+        address[] memory aCopy = LibSort.copy(a);
+        assertEq(a, aCopy);
+        LibSort.clean(a);
+        assertEq(a, aCopy);
+        assertEq(a.length, n);
+        uint256 orAll;
+        /// @solidity memory-safe-assembly
+        assembly {
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                mstore(0x20, i)
+                orAll := or(orAll, mload(add(add(a, 0x20), shl(5, i))))
+            }
+        }
+        assertEq(orAll >> 160, 0);
+    }
 }

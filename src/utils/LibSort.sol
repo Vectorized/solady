@@ -65,139 +65,108 @@ library LibSort {
     function sort(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
-            let w := not(0x1f)
-            let s := 0x20
-            let n := mload(a) // Length of `a`.
-            mstore(a, 0) // For insertion sort's inner loop to terminate.
-
-            // Let the stack be the start of the free memory.
-            let stack := mload(0x40)
-
-            for {} iszero(lt(n, 2)) {} {
-                // Push `l` and `h` to the stack.
-                // The `shl` by 5 is equivalent to multiplying by `0x20`.
-                let l := add(a, s)
-                let h := add(a, shl(5, n))
-
-                let j := l
-                // forgefmt: disable-next-item
-                for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, s))))) {} {
-                    j := add(j, s)
-                }
-                // If the array is already sorted.
-                if eq(j, h) { break }
-
-                j := h
-                // forgefmt: disable-next-item
-                for {} iszero(gt(mload(j), mload(add(j, w)))) {} {
-                    j := add(j, w) // `sub(j, 0x20)`.
-                }
-                // If the array is reversed sorted.
-                if eq(j, l) {
-                    for {} 1 {} {
-                        let t := mload(l)
-                        mstore(l, mload(h))
-                        mstore(h, t)
-                        h := add(h, w) // `sub(h, 0x20)`.
-                        l := add(l, s)
-                        if iszero(lt(l, h)) { break }
-                    }
-                    break
-                }
-
-                // Push `l` and `h` onto the stack.
-                mstore(stack, l)
-                mstore(add(stack, s), h)
-                stack := add(stack, 0x40)
-                break
+            function swap(a_, b_) -> _a, _b {
+                _b := a_
+                _a := b_
             }
-
-            for { let stackBottom := mload(0x40) } iszero(eq(stack, stackBottom)) {} {
-                // Pop `l` and `h` from the stack.
-                stack := sub(stack, 0x40)
-                let l := mload(stack)
-                let h := mload(add(stack, s))
-
-                // Do insertion sort if `h - l <= 0x20 * 12`.
+            function mswap(i_, j_) {
+                let t_ := mload(i_)
+                mstore(i_, mload(j_))
+                mstore(j_, t_)
+            }
+            function sortInner(l_, h_) {
+                let w_ := not(0x1f)
+                // Do insertion sort if `h_ - l_ <= 0x20 * 12`.
                 // Threshold is fine-tuned via trial and error.
-                if iszero(gt(sub(h, l), 0x180)) {
+                if iszero(gt(sub(h_, l_), 0x180)) {
                     // Hardcode sort the first 2 elements.
-                    let i := add(l, s)
-                    if iszero(lt(mload(l), mload(i))) {
-                        let t := mload(i)
-                        mstore(i, mload(l))
-                        mstore(l, t)
-                    }
+                    let i_ := add(l_, 0x20)
+                    if iszero(lt(mload(l_), mload(i_))) { mswap(i_, l_) }
                     for {} 1 {} {
-                        i := add(i, s)
-                        if gt(i, h) { break }
-                        let k := mload(i) // Key.
-                        let j := add(i, w) // The slot before the current slot.
-                        let v := mload(j) // The value of `j`.
-                        if iszero(gt(v, k)) { continue }
+                        i_ := add(i_, 0x20)
+                        if gt(i_, h_) { break }
+                        let k_ := mload(i_) // Key.
+                        let j_ := add(i_, w_) // The slot before the current slot.
+                        let v_ := mload(j_) // The value of `j_`.
+                        if iszero(gt(v_, k_)) { continue }
                         for {} 1 {} {
-                            mstore(add(j, s), v)
-                            j := add(j, w)
-                            v := mload(j)
-                            if iszero(gt(v, k)) { break }
+                            mstore(add(j_, 0x20), v_)
+                            j_ := add(j_, w_)
+                            v_ := mload(j_)
+                            if iszero(gt(v_, k_)) { break }
                         }
-                        mstore(add(j, s), k)
+                        mstore(add(j_, 0x20), k_)
                     }
-                    continue
+                    leave
                 }
-                // Pivot slot is the average of `l` and `h`.
-                let p := add(shl(5, shr(6, add(l, h))), and(31, l))
+                // Pivot slot is the average of `l_` and `h_`.
+                let p_ := add(shl(5, shr(6, add(l_, h_))), and(31, l_))
                 // Median of 3 with sorting.
                 {
-                    function swap(a_, b_) -> _b, _a {
-                        _b := a_
-                        _a := b_
+                    let e0_ := mload(l_)
+                    let e1_ := mload(p_)
+                    if iszero(lt(e0_, e1_)) { e0_, e1_ := swap(e0_, e1_) }
+                    let e2_ := mload(h_)
+                    if iszero(lt(e1_, e2_)) {
+                        e1_, e2_ := swap(e1_, e2_)
+                        if iszero(lt(e0_, e1_)) { e0_, e1_ := swap(e0_, e1_) }
                     }
-                    let e0 := mload(l)
-                    let e1 := mload(h)
-                    if iszero(lt(e0, e1)) { e1, e0 := swap(e0, e1) }
-                    let e2 := mload(p)
-                    if iszero(lt(e2, e1)) { e2, e1 := swap(e1, e2) }
-                    if iszero(lt(e0, e2)) { e2, e0 := swap(e0, e2) }
-                    mstore(p, e2)
-                    mstore(h, e1)
-                    mstore(l, e0)
+                    mstore(h_, e2_)
+                    mstore(p_, e1_)
+                    mstore(l_, e0_)
                 }
                 // Hoare's partition.
                 {
                     // The value of the pivot slot.
-                    let x := mload(p)
-                    p := h
-                    for { let i := l } 1 {} {
+                    let x_ := mload(p_)
+                    p_ := h_
+                    for { let i_ := l_ } 1 {} {
                         for {} 1 {} {
-                            i := add(i, s)
-                            if iszero(gt(x, mload(i))) { break }
+                            i_ := add(0x20, i_)
+                            if iszero(gt(x_, mload(i_))) { break }
                         }
-                        let j := p
+                        let j_ := p_
                         for {} 1 {} {
-                            j := add(j, w)
-                            if iszero(lt(x, mload(j))) { break }
+                            j_ := add(w_, j_)
+                            if iszero(lt(x_, mload(j_))) { break }
                         }
-                        p := j
-                        if iszero(lt(i, p)) { break }
-                        // Swap slots `i` and `p`.
-                        let t := mload(i)
-                        mstore(i, mload(p))
-                        mstore(p, t)
+                        p_ := j_
+                        if iszero(lt(i_, p_)) { break }
+                        mswap(i_, p_)
                     }
                 }
-                // If slice on right of pivot is non-empty, push onto stack.
-                {
-                    mstore(stack, add(p, s))
-                    // Skip `mstore(add(stack, 0x20), h)`, as it is already on the stack.
-                    stack := add(stack, shl(6, lt(add(p, s), h)))
+                if iszero(eq(add(p_, 0x20), h_)) { sortInner(add(p_, 0x20), h_) }
+                if iszero(eq(p_, l_)) { sortInner(l_, p_) }
+            }
+
+            let n := mload(a) // Length of `a`.
+            mstore(a, 0) // For insertion sort's inner loop to terminate.
+
+            for {} iszero(lt(n, 2)) {} {
+                let w := not(0x1f) // `-0x20`.
+                let l := add(a, 0x20) // Low slot.
+                let h := add(a, shl(5, n)) // High slot.
+                let j := l
+                for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, 0x20))))) {} {
+                    j := add(j, 0x20)
                 }
-                // If slice on left of pivot is non-empty, push onto stack.
-                {
-                    mstore(stack, l)
-                    mstore(add(stack, s), p)
-                    stack := add(stack, shl(6, gt(p, l)))
+                if eq(j, h) { break } // If the array is already sorted.
+
+                for { j := h } iszero(gt(mload(j), mload(add(j, w)))) {} { j := add(w, j) }
+                if iszero(eq(j, l)) {
+                    sortInner(l, h)
+                    break
                 }
+                // If the array is reversed sorted.
+                for {} 1 {} {
+                    let t := mload(l)
+                    mstore(l, mload(h))
+                    mstore(h, t)
+                    h := add(w, h)
+                    l := add(l, 0x20)
+                    if iszero(lt(l, h)) { break }
+                }
+                break
             }
             mstore(a, n) // Restore the length of `a`.
         }
@@ -506,6 +475,19 @@ library LibSort {
         returns (address[] memory c)
     {
         c = _toAddresses(_union(_toUints(a), _toUints(b), 0));
+    }
+
+    /// @dev Cleans the upper 96 bits of the addresses.
+    /// In case `a` is produced via assembly and might have dirty upper bits.
+    function clean(address[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let addressMask := shr(96, not(0))
+            for { let end := add(a, shl(5, mload(a))) } iszero(eq(a, end)) {} {
+                a := add(a, 0x20)
+                mstore(a, and(mload(a), addressMask))
+            }
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
