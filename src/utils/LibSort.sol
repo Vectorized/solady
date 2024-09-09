@@ -104,13 +104,15 @@ library LibSort {
                 // Median of 3 with sorting.
                 {
                     let e0_ := mload(l_)
-                    let e1_ := mload(h_)
+                    let e1_ := mload(p_)
                     if iszero(lt(e0_, e1_)) { e0_, e1_ := swap(e0_, e1_) }
-                    let e2_ := mload(p_)
-                    if iszero(lt(e2_, e1_)) { e1_, e2_ := swap(e1_, e2_) }
-                    if iszero(lt(e0_, e2_)) { e0_, e2_ := swap(e0_, e2_) }
-                    mstore(p_, e2_)
-                    mstore(h_, e1_)
+                    let e2_ := mload(h_)
+                    if iszero(lt(e1_, e2_)) {
+                        e1_, e2_ := swap(e1_, e2_)
+                        if iszero(lt(e0_, e1_)) { e0_, e1_ := swap(e0_, e1_) }
+                    }
+                    mstore(h_, e2_)
+                    mstore(p_, e1_)
                     mstore(l_, e0_)
                 }
                 // Hoare's partition.
