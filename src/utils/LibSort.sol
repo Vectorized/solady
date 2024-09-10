@@ -74,8 +74,7 @@ library LibSort {
                 mstore(i_, mload(j_))
                 mstore(j_, t_)
             }
-            function sortInner(l_, h_) {
-                let w_ := not(0x1f)
+            function sortInner(w_, l_, h_) {
                 // Do insertion sort if `h_ - l_ <= 0x20 * 12`.
                 // Threshold is fine-tuned via trial and error.
                 if iszero(gt(sub(h_, l_), 0x180)) {
@@ -135,40 +134,36 @@ library LibSort {
                         mswap(i_, p_)
                     }
                 }
-                if iszero(eq(add(p_, 0x20), h_)) { sortInner(add(p_, 0x20), h_) }
-                if iszero(eq(p_, l_)) { sortInner(l_, p_) }
+                if iszero(eq(add(p_, 0x20), h_)) { sortInner(w_, add(p_, 0x20), h_) }
+                if iszero(eq(p_, l_)) { sortInner(w_, l_, p_) }
             }
 
-            let n := mload(a) // Length of `a`.
-            mstore(a, 0) // For insertion sort's inner loop to terminate.
-
-            for {} iszero(lt(n, 2)) {} {
+            for { let n := mload(a) } iszero(lt(n, 2)) {} {
                 let w := not(0x1f) // `-0x20`.
                 let l := add(a, 0x20) // Low slot.
                 let h := add(a, shl(5, n)) // High slot.
-                let j := l
-                for {} iszero(or(eq(j, h), gt(mload(j), mload(add(j, 0x20))))) {} {
-                    j := add(j, 0x20)
-                }
-                if eq(j, h) { break } // If the array is already sorted.
+                let j := h
+                for {} iszero(lt(mload(j), mload(add(w, j)))) {} { j := add(w, j) }
+                if iszero(gt(j, l)) { break } // If the array is already sorted.
 
-                for { j := h } iszero(gt(mload(j), mload(add(j, w)))) {} { j := add(w, j) }
-                if iszero(eq(j, l)) {
-                    sortInner(l, h)
+                for { j := h } iszero(gt(mload(j), mload(add(w, j)))) {} { j := add(w, j) }
+                // If the array is reversed sorted.
+                if iszero(gt(j, l)) {
+                    for {} 1 {} {
+                        let t := mload(l)
+                        mstore(l, mload(h))
+                        mstore(h, t)
+                        h := add(w, h)
+                        l := add(l, 0x20)
+                        if iszero(lt(l, h)) { break }
+                    }
                     break
                 }
-                // If the array is reversed sorted.
-                for {} 1 {} {
-                    let t := mload(l)
-                    mstore(l, mload(h))
-                    mstore(h, t)
-                    h := add(w, h)
-                    l := add(l, 0x20)
-                    if iszero(lt(l, h)) { break }
-                }
+                mstore(a, 0) // For insertion sort's inner loop to terminate.
+                sortInner(w, l, h)
+                mstore(a, n) // Restore the length of `a`.
                 break
             }
-            mstore(a, n) // Restore the length of `a`.
         }
     }
 
