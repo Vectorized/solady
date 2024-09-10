@@ -143,10 +143,12 @@ library LibSort {
                 let l := add(a, 0x20) // Low slot.
                 let h := add(a, shl(5, n)) // High slot.
                 let j := h
-                for {} iszero(lt(mload(j), mload(add(w, j)))) {} { j := add(w, j) }
-                if iszero(gt(j, l)) { break } // If the array is already sorted.
-
-                for { j := h } iszero(gt(mload(j), mload(add(w, j)))) {} { j := add(w, j) }
+                // While `mload(j - 0x20) <= mload(j): j -= 0x20`.
+                for {} iszero(gt(mload(add(w, j)), mload(j))) {} { j := add(w, j) }
+                // If the array is already sorted, break.
+                if iszero(gt(j, l)) { break }
+                // While `mload(j - 0x20) >= mload(j): j -= 0x20`.
+                for { j := h } iszero(lt(mload(add(w, j)), mload(j))) {} { j := add(w, j) }
                 // If the array is reversed sorted.
                 if iszero(gt(j, l)) {
                     for {} 1 {} {
