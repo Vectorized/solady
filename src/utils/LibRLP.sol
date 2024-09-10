@@ -40,7 +40,7 @@ library LibRLP {
     /// (e.g. no dirty bits after packing / unpacking).
     ///
     /// This is equivalent to:
-    /// `address(uint160(uint256(keccak256(LibRLP.l(deployer).p(nonce).encode()))))`.
+    /// `address(uint160(uint256(keccak256(LibRLP.p(deployer).p(nonce).encode()))))`.
     ///
     /// Note: The returned result has dirty upper 96 bits. Please clean if used in assembly.
     function computeAddress(address deployer, uint256 nonce)
@@ -98,30 +98,30 @@ library LibRLP {
     //   with `abi.encodePacked(x)` before encoding.
 
     /// @dev Returns a new empty list.
-    function l() internal pure returns (List memory result) {}
+    function p() internal pure returns (List memory result) {}
 
-    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
-    function l(uint256 x) internal pure returns (List memory result) {
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
+    function p(uint256 x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
-    function l(address x) internal pure returns (List memory result) {
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
+    function p(address x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
-    function l(bool x) internal pure returns (List memory result) {
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
+    function p(bool x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
-    function l(bytes memory x) internal pure returns (List memory result) {
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
+    function p(bytes memory x) internal pure returns (List memory result) {
         p(result, x);
     }
 
-    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.l().p(x)`.
-    function l(List memory x) internal pure returns (List memory result) {
+    /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
+    function p(List memory x) internal pure returns (List memory result) {
         p(result, x);
     }
 
