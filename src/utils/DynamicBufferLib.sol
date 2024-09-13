@@ -23,6 +23,11 @@ library DynamicBufferLib {
     // Some of these functions returns the same buffer for function chaining.
     // `e.g. `buffer.p("1").p("2")`.
 
+    /// @dev Shorthand for `buffer.data.length`.
+    function length(DynamicBuffer memory buffer) internal pure returns (uint256) {
+        return buffer.data.length;
+    }
+
     /// @dev Reserves at least `minimum` amount of contiguous memory.
     function reserve(DynamicBuffer memory buffer, uint256 minimum)
         internal

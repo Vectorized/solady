@@ -22,6 +22,41 @@ library DynamicArrayLib {
     // Some of these functions returns the same array for function chaining.
     // `e.g. `array.p("1").p("2")`.
 
+    /// @dev Shorthand for `array.data.length`.
+    function length(DynamicArray memory array) internal pure returns (uint256) {
+        return array.data.length;
+    }
+
+    /// @dev Clears the array without deallocating the memory.
+    function clear(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
+        _deallocate(result);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(mload(array), 0)
+        }
+        result = array;
+    }
+
+    /// @dev Resizes the array to contain `n` elements. New elements will be zeroized.
+    function resize(DynamicArray memory array, uint256 n)
+        internal
+        pure
+        returns (DynamicArray memory result)
+    {
+        _deallocate(result);
+        result = reserve(array, n);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let arrData := mload(result)
+            let arrLen := mload(arrData)
+            if gt(n, arrLen) {
+                let o := add(add(0x20, arrData), shl(5, arrLen))
+                codecopy(o, codesize(), shl(5, sub(n, arrLen)))
+            }
+            mstore(arrData, n)
+        }
+    }
+
     /// @dev Reserves at least `minimum` amount of contiguous memory.
     function reserve(DynamicArray memory array, uint256 minimum)
         internal
@@ -67,41 +102,6 @@ library DynamicArrayLib {
                 mstore(newArrData, mload(arrData)) // Store the length.
                 break
             }
-        }
-    }
-
-    /// @dev Shorthand for `array.data.length`.
-    function length(DynamicArray memory array) internal pure returns (uint256) {
-        return array.data.length;
-    }
-
-    /// @dev Clears the array without deallocating the memory.
-    function clear(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
-        _deallocate(result);
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(mload(array), 0)
-        }
-        result = array;
-    }
-
-    /// @dev Resizes the array to contain `n` elements. New elements will be zeroized.
-    function resize(DynamicArray memory array, uint256 n)
-        internal
-        pure
-        returns (DynamicArray memory result)
-    {
-        _deallocate(result);
-        result = reserve(array, n);
-        /// @solidity memory-safe-assembly
-        assembly {
-            let arrData := mload(result)
-            let arrLen := mload(arrData)
-            if gt(n, arrLen) {
-                let o := add(add(0x20, arrData), shl(5, arrLen))
-                codecopy(o, codesize(), shl(5, sub(n, arrLen)))
-            }
-            mstore(arrData, n)
         }
     }
 
@@ -160,16 +160,6 @@ library DynamicArrayLib {
     }
 
     /// @dev Appends `data` to `array`.
-    function p(DynamicArray memory array, int256 data)
-        internal
-        pure
-        returns (DynamicArray memory result)
-    {
-        _deallocate(result);
-        result = p(array, uint256(data));
-    }
-
-    /// @dev Appends `data` to `array`.
     function p(DynamicArray memory array, address data)
         internal
         pure
@@ -208,11 +198,6 @@ library DynamicArrayLib {
     }
 
     /// @dev Shorthand for `p(p(), data)`.
-    function p(int256 data) internal pure returns (DynamicArray memory result) {
-        p(result, uint256(data));
-    }
-
-    /// @dev Shorthand for `p(p(), data)`.
     function p(address data) internal pure returns (DynamicArray memory result) {
         p(result, uint256(uint160(data)));
     }
@@ -240,18 +225,6 @@ library DynamicArrayLib {
         internal
         pure
         returns (uint256 result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(add(add(mload(array), 0x20), shl(5, i)))
-        }
-    }
-
-    /// @dev Returns the element at `array.data[i]`, without bounds checking.
-    function getInt256(DynamicArray memory array, uint256 i)
-        internal
-        pure
-        returns (int256 result)
     {
         /// @solidity memory-safe-assembly
         assembly {
@@ -293,20 +266,6 @@ library DynamicArrayLib {
 
     /// @dev Sets `array.data[i]` to `data`, without bounds checking.
     function set(DynamicArray memory array, uint256 i, uint256 data)
-        internal
-        pure
-        returns (DynamicArray memory result)
-    {
-        _deallocate(result);
-        result = array;
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(add(add(mload(array), 0x20), shl(5, i)), data)
-        }
-    }
-
-    /// @dev Sets `array.data[i]` to `data`, without bounds checking.
-    function set(DynamicArray memory array, uint256 i, int256 data)
         internal
         pure
         returns (DynamicArray memory result)
