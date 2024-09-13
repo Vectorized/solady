@@ -21,7 +21,7 @@ library DynamicBufferLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Some of these functions returns the same buffer for function chaining.
-    // `e.g. buffer.p("1").p("2", "3")`.
+    // `e.g. `buffer.p("1").p("2")`.
 
     /// @dev Reserves at least `minimum` amount of contiguous memory.
     function reserve(DynamicBuffer memory buffer, uint256 minimum)
@@ -876,12 +876,12 @@ library DynamicBufferLib {
     /// @dev Shorthand for returning a new buffer.
     function p() internal pure returns (DynamicBuffer memory result) {}
 
-    /// @dev Shorthand for `p(buffer, data)`.
+    /// @dev Shorthand for `p(p(), data)`.
     function p(bytes memory data) internal pure returns (DynamicBuffer memory result) {
         p(result, data);
     }
 
-    /// @dev Shorthand for `p(buffer, data0, data1)`.
+    /// @dev Shorthand for `p(p(), data0, data1)`.
     function p(bytes memory data0, bytes memory data1)
         internal
         pure
@@ -890,7 +890,7 @@ library DynamicBufferLib {
         p(p(result, data0), data1);
     }
 
-    /// @dev Shorthand for `p(buffer, data0, .., data2)`.
+    /// @dev Shorthand for `p(p(), data0, .., data2)`.
     function p(bytes memory data0, bytes memory data1, bytes memory data2)
         internal
         pure
@@ -899,7 +899,7 @@ library DynamicBufferLib {
         p(p(p(result, data0), data1), data2);
     }
 
-    /// @dev Shorthand for `p(buffer, data0, .., data3)`.
+    /// @dev Shorthand for `p(p(), data0, .., data3)`.
     function p(bytes memory data0, bytes memory data1, bytes memory data2, bytes memory data3)
         internal
         pure
@@ -908,7 +908,7 @@ library DynamicBufferLib {
         p(p(p(p(result, data0), data1), data2), data3);
     }
 
-    /// @dev Shorthand for `p(buffer, data0, .., data4)`.
+    /// @dev Shorthand for `p(p(), data0, .., data4)`.
     function p(
         bytes memory data0,
         bytes memory data1,
@@ -919,7 +919,7 @@ library DynamicBufferLib {
         p(p(p(p(p(result, data0), data1), data2), data3), data4);
     }
 
-    /// @dev Shorthand for `p(buffer, data0, .., data5)`.
+    /// @dev Shorthand for `p(p(), data0, .., data5)`.
     function p(
         bytes memory data0,
         bytes memory data1,
@@ -931,7 +931,7 @@ library DynamicBufferLib {
         p(p(p(p(p(p(result, data0), data1), data2), data3), data4), data5);
     }
 
-    /// @dev Shorthand for `p(buffer, data0, .., data6)`.
+    /// @dev Shorthand for `p(p(), data0, .., data6)`.
     function p(
         bytes memory data0,
         bytes memory data1,
@@ -944,332 +944,332 @@ library DynamicBufferLib {
         p(p(p(p(p(p(p(result, data0), data1), data2), data3), data4), data5), data6);
     }
 
-    /// @dev Shorthand for `pBool(buffer, data)`.
+    /// @dev Shorthand for `pBool(p(), data)`.
     function pBool(bool data) internal pure returns (DynamicBuffer memory result) {
         pBool(result, data);
     }
 
-    /// @dev Shorthand for `pAddress(buffer, data)`.
+    /// @dev Shorthand for `pAddress(p(), data)`.
     function pAddress(address data) internal pure returns (DynamicBuffer memory result) {
         pAddress(result, data);
     }
 
-    /// @dev Shorthand for `pUint8(buffer, data)`.
+    /// @dev Shorthand for `pUint8(p(), data)`.
     function pUint8(uint8 data) internal pure returns (DynamicBuffer memory result) {
         pUint8(result, data);
     }
 
-    /// @dev Shorthand for `pUint16(buffer, data)`.
+    /// @dev Shorthand for `pUint16(p(), data)`.
     function pUint16(uint16 data) internal pure returns (DynamicBuffer memory result) {
         pUint16(result, data);
     }
 
-    /// @dev Shorthand for `pUint24(buffer, data)`.
+    /// @dev Shorthand for `pUint24(p(), data)`.
     function pUint24(uint24 data) internal pure returns (DynamicBuffer memory result) {
         pUint24(result, data);
     }
 
-    /// @dev Shorthand for `pUint32(buffer, data)`.
+    /// @dev Shorthand for `pUint32(p(), data)`.
     function pUint32(uint32 data) internal pure returns (DynamicBuffer memory result) {
         pUint32(result, data);
     }
 
-    /// @dev Shorthand for `pUint40(buffer, data)`.
+    /// @dev Shorthand for `pUint40(p(), data)`.
     function pUint40(uint40 data) internal pure returns (DynamicBuffer memory result) {
         pUint40(result, data);
     }
 
-    /// @dev Shorthand for `pUint48(buffer, data)`.
+    /// @dev Shorthand for `pUint48(p(), data)`.
     function pUint48(uint48 data) internal pure returns (DynamicBuffer memory result) {
         pUint48(result, data);
     }
 
-    /// @dev Shorthand for `pUint56(buffer, data)`.
+    /// @dev Shorthand for `pUint56(p(), data)`.
     function pUint56(uint56 data) internal pure returns (DynamicBuffer memory result) {
         pUint56(result, data);
     }
 
-    /// @dev Shorthand for `pUint64(buffer, data)`.
+    /// @dev Shorthand for `pUint64(p(), data)`.
     function pUint64(uint64 data) internal pure returns (DynamicBuffer memory result) {
         pUint64(result, data);
     }
 
-    /// @dev Shorthand for `pUint72(buffer, data)`.
+    /// @dev Shorthand for `pUint72(p(), data)`.
     function pUint72(uint72 data) internal pure returns (DynamicBuffer memory result) {
         pUint72(result, data);
     }
 
-    /// @dev Shorthand for `pUint80(buffer, data)`.
+    /// @dev Shorthand for `pUint80(p(), data)`.
     function pUint80(uint80 data) internal pure returns (DynamicBuffer memory result) {
         pUint80(result, data);
     }
 
-    /// @dev Shorthand for `pUint88(buffer, data)`.
+    /// @dev Shorthand for `pUint88(p(), data)`.
     function pUint88(uint88 data) internal pure returns (DynamicBuffer memory result) {
         pUint88(result, data);
     }
 
-    /// @dev Shorthand for `pUint96(buffer, data)`.
+    /// @dev Shorthand for `pUint96(p(), data)`.
     function pUint96(uint96 data) internal pure returns (DynamicBuffer memory result) {
         pUint96(result, data);
     }
 
-    /// @dev Shorthand for `pUint104(buffer, data)`.
+    /// @dev Shorthand for `pUint104(p(), data)`.
     function pUint104(uint104 data) internal pure returns (DynamicBuffer memory result) {
         pUint104(result, data);
     }
 
-    /// @dev Shorthand for `pUint112(buffer, data)`.
+    /// @dev Shorthand for `pUint112(p(), data)`.
     function pUint112(uint112 data) internal pure returns (DynamicBuffer memory result) {
         pUint112(result, data);
     }
 
-    /// @dev Shorthand for `pUint120(buffer, data)`.
+    /// @dev Shorthand for `pUint120(p(), data)`.
     function pUint120(uint120 data) internal pure returns (DynamicBuffer memory result) {
         pUint120(result, data);
     }
 
-    /// @dev Shorthand for `pUint128(buffer, data)`.
+    /// @dev Shorthand for `pUint128(p(), data)`.
     function pUint128(uint128 data) internal pure returns (DynamicBuffer memory result) {
         pUint128(result, data);
     }
 
-    /// @dev Shorthand for `pUint136(buffer, data)`.
+    /// @dev Shorthand for `pUint136(p(), data)`.
     function pUint136(uint136 data) internal pure returns (DynamicBuffer memory result) {
         pUint136(result, data);
     }
 
-    /// @dev Shorthand for `pUint144(buffer, data)`.
+    /// @dev Shorthand for `pUint144(p(), data)`.
     function pUint144(uint144 data) internal pure returns (DynamicBuffer memory result) {
         pUint144(result, data);
     }
 
-    /// @dev Shorthand for `pUint152(buffer, data)`.
+    /// @dev Shorthand for `pUint152(p(), data)`.
     function pUint152(uint152 data) internal pure returns (DynamicBuffer memory result) {
         pUint152(result, data);
     }
 
-    /// @dev Shorthand for `pUint160(buffer, data)`.
+    /// @dev Shorthand for `pUint160(p(), data)`.
     function pUint160(uint160 data) internal pure returns (DynamicBuffer memory result) {
         pUint160(result, data);
     }
 
-    /// @dev Shorthand for `pUint168(buffer, data)`.
+    /// @dev Shorthand for `pUint168(p(), data)`.
     function pUint168(uint168 data) internal pure returns (DynamicBuffer memory result) {
         pUint168(result, data);
     }
 
-    /// @dev Shorthand for `pUint176(buffer, data)`.
+    /// @dev Shorthand for `pUint176(p(), data)`.
     function pUint176(uint176 data) internal pure returns (DynamicBuffer memory result) {
         pUint176(result, data);
     }
 
-    /// @dev Shorthand for `pUint184(buffer, data)`.
+    /// @dev Shorthand for `pUint184(p(), data)`.
     function pUint184(uint184 data) internal pure returns (DynamicBuffer memory result) {
         pUint184(result, data);
     }
 
-    /// @dev Shorthand for `pUint192(buffer, data)`.
+    /// @dev Shorthand for `pUint192(p(), data)`.
     function pUint192(uint192 data) internal pure returns (DynamicBuffer memory result) {
         pUint192(result, data);
     }
 
-    /// @dev Shorthand for `pUint200(buffer, data)`.
+    /// @dev Shorthand for `pUint200(p(), data)`.
     function pUint200(uint200 data) internal pure returns (DynamicBuffer memory result) {
         pUint200(result, data);
     }
 
-    /// @dev Shorthand for `pUint208(buffer, data)`.
+    /// @dev Shorthand for `pUint208(p(), data)`.
     function pUint208(uint208 data) internal pure returns (DynamicBuffer memory result) {
         pUint208(result, data);
     }
 
-    /// @dev Shorthand for `pUint216(buffer, data)`.
+    /// @dev Shorthand for `pUint216(p(), data)`.
     function pUint216(uint216 data) internal pure returns (DynamicBuffer memory result) {
         pUint216(result, data);
     }
 
-    /// @dev Shorthand for `pUint224(buffer, data)`.
+    /// @dev Shorthand for `pUint224(p(), data)`.
     function pUint224(uint224 data) internal pure returns (DynamicBuffer memory result) {
         pUint224(result, data);
     }
 
-    /// @dev Shorthand for `pUint232(buffer, data)`.
+    /// @dev Shorthand for `pUint232(p(), data)`.
     function pUint232(uint232 data) internal pure returns (DynamicBuffer memory result) {
         pUint232(result, data);
     }
 
-    /// @dev Shorthand for `pUint240(buffer, data)`.
+    /// @dev Shorthand for `pUint240(p(), data)`.
     function pUint240(uint240 data) internal pure returns (DynamicBuffer memory result) {
         pUint240(result, data);
     }
 
-    /// @dev Shorthand for `pUint248(buffer, data)`.
+    /// @dev Shorthand for `pUint248(p(), data)`.
     function pUint248(uint248 data) internal pure returns (DynamicBuffer memory result) {
         pUint248(result, data);
     }
 
-    /// @dev Shorthand for `pUint256(buffer, data)`.
+    /// @dev Shorthand for `pUint256(p(), data)`.
     function pUint256(uint256 data) internal pure returns (DynamicBuffer memory result) {
         pUint256(result, data);
     }
 
-    /// @dev Shorthand for `pBytes1(buffer, data)`.
+    /// @dev Shorthand for `pBytes1(p(), data)`.
     function pBytes1(bytes1 data) internal pure returns (DynamicBuffer memory result) {
         pBytes1(result, data);
     }
 
-    /// @dev Shorthand for `pBytes2(buffer, data)`.
+    /// @dev Shorthand for `pBytes2(p(), data)`.
     function pBytes2(bytes2 data) internal pure returns (DynamicBuffer memory result) {
         pBytes2(result, data);
     }
 
-    /// @dev Shorthand for `pBytes3(buffer, data)`.
+    /// @dev Shorthand for `pBytes3(p(), data)`.
     function pBytes3(bytes3 data) internal pure returns (DynamicBuffer memory result) {
         pBytes3(result, data);
     }
 
-    /// @dev Shorthand for `pBytes4(buffer, data)`.
+    /// @dev Shorthand for `pBytes4(p(), data)`.
     function pBytes4(bytes4 data) internal pure returns (DynamicBuffer memory result) {
         pBytes4(result, data);
     }
 
-    /// @dev Shorthand for `pBytes5(buffer, data)`.
+    /// @dev Shorthand for `pBytes5(p(), data)`.
     function pBytes5(bytes5 data) internal pure returns (DynamicBuffer memory result) {
         pBytes5(result, data);
     }
 
-    /// @dev Shorthand for `pBytes6(buffer, data)`.
+    /// @dev Shorthand for `pBytes6(p(), data)`.
     function pBytes6(bytes6 data) internal pure returns (DynamicBuffer memory result) {
         pBytes6(result, data);
     }
 
-    /// @dev Shorthand for `pBytes7(buffer, data)`.
+    /// @dev Shorthand for `pBytes7(p(), data)`.
     function pBytes7(bytes7 data) internal pure returns (DynamicBuffer memory result) {
         pBytes7(result, data);
     }
 
-    /// @dev Shorthand for `pBytes8(buffer, data)`.
+    /// @dev Shorthand for `pBytes8(p(), data)`.
     function pBytes8(bytes8 data) internal pure returns (DynamicBuffer memory result) {
         pBytes8(result, data);
     }
 
-    /// @dev Shorthand for `pBytes9(buffer, data)`.
+    /// @dev Shorthand for `pBytes9(p(), data)`.
     function pBytes9(bytes9 data) internal pure returns (DynamicBuffer memory result) {
         pBytes9(result, data);
     }
 
-    /// @dev Shorthand for `pBytes10(buffer, data)`.
+    /// @dev Shorthand for `pBytes10(p(), data)`.
     function pBytes10(bytes10 data) internal pure returns (DynamicBuffer memory result) {
         pBytes10(result, data);
     }
 
-    /// @dev Shorthand for `pBytes11(buffer, data)`.
+    /// @dev Shorthand for `pBytes11(p(), data)`.
     function pBytes11(bytes11 data) internal pure returns (DynamicBuffer memory result) {
         pBytes11(result, data);
     }
 
-    /// @dev Shorthand for `pBytes12(buffer, data)`.
+    /// @dev Shorthand for `pBytes12(p(), data)`.
     function pBytes12(bytes12 data) internal pure returns (DynamicBuffer memory result) {
         pBytes12(result, data);
     }
 
-    /// @dev Shorthand for `pBytes13(buffer, data)`.
+    /// @dev Shorthand for `pBytes13(p(), data)`.
     function pBytes13(bytes13 data) internal pure returns (DynamicBuffer memory result) {
         pBytes13(result, data);
     }
 
-    /// @dev Shorthand for `pBytes14(buffer, data)`.
+    /// @dev Shorthand for `pBytes14(p(), data)`.
     function pBytes14(bytes14 data) internal pure returns (DynamicBuffer memory result) {
         pBytes14(result, data);
     }
 
-    /// @dev Shorthand for `pBytes15(buffer, data)`.
+    /// @dev Shorthand for `pBytes15(p(), data)`.
     function pBytes15(bytes15 data) internal pure returns (DynamicBuffer memory result) {
         pBytes15(result, data);
     }
 
-    /// @dev Shorthand for `pBytes16(buffer, data)`.
+    /// @dev Shorthand for `pBytes16(p(), data)`.
     function pBytes16(bytes16 data) internal pure returns (DynamicBuffer memory result) {
         pBytes16(result, data);
     }
 
-    /// @dev Shorthand for `pBytes17(buffer, data)`.
+    /// @dev Shorthand for `pBytes17(p(), data)`.
     function pBytes17(bytes17 data) internal pure returns (DynamicBuffer memory result) {
         pBytes17(result, data);
     }
 
-    /// @dev Shorthand for `pBytes18(buffer, data)`.
+    /// @dev Shorthand for `pBytes18(p(), data)`.
     function pBytes18(bytes18 data) internal pure returns (DynamicBuffer memory result) {
         pBytes18(result, data);
     }
 
-    /// @dev Shorthand for `pBytes19(buffer, data)`.
+    /// @dev Shorthand for `pBytes19(p(), data)`.
     function pBytes19(bytes19 data) internal pure returns (DynamicBuffer memory result) {
         pBytes19(result, data);
     }
 
-    /// @dev Shorthand for `pBytes20(buffer, data)`.
+    /// @dev Shorthand for `pBytes20(p(), data)`.
     function pBytes20(bytes20 data) internal pure returns (DynamicBuffer memory result) {
         pBytes20(result, data);
     }
 
-    /// @dev Shorthand for `pBytes21(buffer, data)`.
+    /// @dev Shorthand for `pBytes21(p(), data)`.
     function pBytes21(bytes21 data) internal pure returns (DynamicBuffer memory result) {
         pBytes21(result, data);
     }
 
-    /// @dev Shorthand for `pBytes22(buffer, data)`.
+    /// @dev Shorthand for `pBytes22(p(), data)`.
     function pBytes22(bytes22 data) internal pure returns (DynamicBuffer memory result) {
         pBytes22(result, data);
     }
 
-    /// @dev Shorthand for `pBytes23(buffer, data)`.
+    /// @dev Shorthand for `pBytes23(p(), data)`.
     function pBytes23(bytes23 data) internal pure returns (DynamicBuffer memory result) {
         pBytes23(result, data);
     }
 
-    /// @dev Shorthand for `pBytes24(buffer, data)`.
+    /// @dev Shorthand for `pBytes24(p(), data)`.
     function pBytes24(bytes24 data) internal pure returns (DynamicBuffer memory result) {
         pBytes24(result, data);
     }
 
-    /// @dev Shorthand for `pBytes25(buffer, data)`.
+    /// @dev Shorthand for `pBytes25(p(), data)`.
     function pBytes25(bytes25 data) internal pure returns (DynamicBuffer memory result) {
         pBytes25(result, data);
     }
 
-    /// @dev Shorthand for `pBytes26(buffer, data)`.
+    /// @dev Shorthand for `pBytes26(p(), data)`.
     function pBytes26(bytes26 data) internal pure returns (DynamicBuffer memory result) {
         pBytes26(result, data);
     }
 
-    /// @dev Shorthand for `pBytes27(buffer, data)`.
+    /// @dev Shorthand for `pBytes27(p(), data)`.
     function pBytes27(bytes27 data) internal pure returns (DynamicBuffer memory result) {
         pBytes27(result, data);
     }
 
-    /// @dev Shorthand for `pBytes28(buffer, data)`.
+    /// @dev Shorthand for `pBytes28(p(), data)`.
     function pBytes28(bytes28 data) internal pure returns (DynamicBuffer memory result) {
         pBytes28(result, data);
     }
 
-    /// @dev Shorthand for `pBytes29(buffer, data)`.
+    /// @dev Shorthand for `pBytes29(p(), data)`.
     function pBytes29(bytes29 data) internal pure returns (DynamicBuffer memory result) {
         pBytes29(result, data);
     }
 
-    /// @dev Shorthand for `pBytes30(buffer, data)`.
+    /// @dev Shorthand for `pBytes30(p(), data)`.
     function pBytes30(bytes30 data) internal pure returns (DynamicBuffer memory result) {
         pBytes30(result, data);
     }
 
-    /// @dev Shorthand for `pBytes31(buffer, data)`.
+    /// @dev Shorthand for `pBytes31(p(), data)`.
     function pBytes31(bytes31 data) internal pure returns (DynamicBuffer memory result) {
         pBytes31(result, data);
     }
 
-    /// @dev Shorthand for `pBytes32(buffer, data)`.
+    /// @dev Shorthand for `pBytes32(p(), data)`.
     function pBytes32(bytes32 data) internal pure returns (DynamicBuffer memory result) {
         pBytes32(result, data);
     }
