@@ -96,3 +96,19 @@ jobs:
           check_filenames: true
           ignore_words_list: usera
           skip: ./.git,package-lock.json,ackee-blockchain-solady-report.pdf,EIP712Mock.sol
+  
+  gas-diff:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate gas diff
+        uses: atarpara/foundry-gas-diff-action@v0.1
+        with:
+          include-fuzz-tests: 'false'
