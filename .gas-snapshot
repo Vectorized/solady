@@ -83,7 +83,7 @@ DeploylessPredeployQueryerTest:testPredeployQueryer(bytes32) (runs: 324, μ: 264
 DeploylessPredeployQueryerTest:testTargetGenerate() (gas: 364315)
 DeploylessPredeployQueryerTest:test__codesize() (gas: 8284)
 DynamicArrayLibTest:testDynamicArrayPush() (gas: 40722)
-DynamicArrayLibTest:testDynamicArrayPush(uint256,uint256) (runs: 324, μ: 83126, ~: 80942)
+DynamicArrayLibTest:testDynamicArrayPush(uint256,uint256) (runs: 324, μ: 83163, ~: 80942)
 DynamicArrayLibTest:testDynamicArrayPushAfterReserve() (gas: 40125)
 DynamicArrayLibTest:testDynamicArraySlice() (gas: 11019)
 DynamicArrayLibTest:test__codesize() (gas: 3860)

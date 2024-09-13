@@ -37,6 +37,25 @@ library DynamicArrayLib {
         result = array;
     }
 
+    /// @dev Clears the array and attempts to free the memory if possible.
+    function free(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
+        _deallocate(result);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let arrData := mload(array)
+            let prime := 8188386068317523
+            let cap := mload(sub(arrData, 0x20))
+            // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
+            cap := mul(div(cap, prime), iszero(mod(cap, prime)))
+            // If the memory is contiguous, we can free it.
+            if iszero(or(xor(mload(0x40), add(arrData, add(0x20, cap))), eq(arrData, 0x60))) {
+                mstore(0x40, sub(arrData, 0x20))
+            }
+            mstore(array, 0x60)
+        }
+        result = array;
+    }
+
     /// @dev Resizes the array to contain `n` elements. New elements will be zeroized.
     function resize(DynamicArray memory array, uint256 n)
         internal
@@ -67,8 +86,7 @@ library DynamicArrayLib {
         result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            let arrData := mload(array)
-            for {} gt(minimum, mload(arrData)) {} {
+            for { let arrData := mload(array) } gt(minimum, mload(arrData)) {} {
                 let w := not(0x1f)
                 // Some random prime number to multiply `cap`, so that
                 // we know that the `cap` is for a dynamic array.
@@ -325,18 +343,6 @@ library DynamicArrayLib {
         internal
         pure
         returns (uint256[] memory result)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(array)
-        }
-    }
-
-    /// @dev Returns the underlying array as a `int256[]`.
-    function asInt256Array(DynamicArray memory array)
-        internal
-        pure
-        returns (int256[] memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
