@@ -7,7 +7,7 @@ import {DynamicArrayLib} from "../src/utils/DynamicArrayLib.sol";
 contract DynamicArrayLibTest is SoladyTest {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
-    function testDynamicArrayPush() public {
+    function testDynamicArrayPushAndPop() public {
         uint256 n = 100;
         DynamicArrayLib.DynamicArray memory a;
         unchecked {
@@ -16,6 +16,10 @@ contract DynamicArrayLibTest is SoladyTest {
             }
             for (uint256 i; i != n; ++i) {
                 assertEq(a.get(i), i);
+            }
+            for (uint256 i; i != n; ++i) {
+                assertEq(a.length(), 100 - i);
+                assertEq(a.pop(), 99 - i);
             }
         }
     }
@@ -34,7 +38,7 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
-    function testDynamicArrayPush(uint256 n, uint256 r) public {
+    function testDynamicArrayPushPop(uint256 n, uint256 r) public {
         n = _bound(n, 0, 50);
         DynamicArrayLib.DynamicArray memory a;
         assertEq(a.data.length, 0);
@@ -64,15 +68,23 @@ contract DynamicArrayLibTest is SoladyTest {
                 a.clear();
                 assertEq(a.length(), 0);
             } else {
-                uint256 newLength = _bound(_random(), 0, 50);
-                a.resize(newLength);
-                assertEq(a.length(), newLength);
-                _checkMemory();
-                for (uint256 i; i != newLength; ++i) {
-                    if (i < n) {
-                        assertEq(a.get(i), i ^ r);
-                    } else {
-                        assertEq(a.getBytes32(i), bytes32(0));
+                if (_randomChance(2)) {
+                    uint256 newLength = _bound(_random(), 0, 50);
+                    a.resize(newLength);
+                    assertEq(a.length(), newLength);
+                    _checkMemory();
+                    for (uint256 i; i != newLength; ++i) {
+                        if (i < n) {
+                            assertEq(a.get(i), i ^ r);
+                        } else {
+                            assertEq(a.getBytes32(i), bytes32(0));
+                        }
+                    }
+                } else {
+                    uint256 length = a.length();
+                    for (uint256 i = 1; i == length; ++i) {
+                        assertEq(a.pop(), (n - i) ^ r);
+                        assertEq(a.length(), length - i);
                     }
                 }
             }

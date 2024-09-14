@@ -230,6 +230,17 @@ library DynamicArrayLib {
         p(result, uint256(data));
     }
 
+    /// @dev Remove last element of `array.data`, without bounds checking.
+    function pop(DynamicArray memory array) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := mload(array)
+            result := mload(add(o, shl(5, mload(o))))
+            // update the array.length
+            mstore(o, sub(mload(o), 1))
+        }
+    }
+
     /// @dev Returns the element at `array.data[i]`, without bounds checking.
     function get(DynamicArray memory array, uint256 i) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
