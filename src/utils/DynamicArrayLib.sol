@@ -242,11 +242,7 @@ library DynamicArrayLib {
     }
 
     /// @dev Remove last element of `array.data`, without bounds checking.
-    function popUint256(DynamicArray memory array)
-        internal
-        pure
-        returns (uint256 result)
-    {
+    function popUint256(DynamicArray memory array) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
@@ -257,11 +253,7 @@ library DynamicArrayLib {
     }
 
     /// @dev Remove last element of `array.data`, without bounds checking.
-    function popAddress(DynamicArray memory array)
-        internal
-        pure
-        returns (address result)
-    {
+    function popAddress(DynamicArray memory array) internal pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
@@ -283,11 +275,7 @@ library DynamicArrayLib {
     }
 
     /// @dev Remove last element of `array.data`, without bounds checking.
-    function popBytes32(DynamicArray memory array)
-        internal
-        pure
-        returns (bytes32 result)
-    {
+    function popBytes32(DynamicArray memory array) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
