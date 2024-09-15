@@ -95,7 +95,7 @@ library DynamicArrayLib {
                 let cap := mload(add(arrData, w)) // `mload(sub(arrData, w))`.
                 // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
                 cap := mul(div(cap, prime), iszero(mod(cap, prime)))
-                let newCap := shl(5, add(1, minimum))
+                let newCap := shl(5, minimum)
                 // If we don't need to grow the memory.
                 if iszero(gt(newCap, cap)) { break }
                 // If the memory is contiguous, we can simply expand it.
@@ -232,6 +232,62 @@ library DynamicArrayLib {
 
     /// @dev Remove last element of `array.data`, without bounds checking.
     function pop(DynamicArray memory array) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := mload(array)
+            result := mload(add(o, shl(5, mload(o))))
+            // update the array.length
+            mstore(o, sub(mload(o), 1))
+        }
+    }
+
+    /// @dev Remove last element of `array.data`, without bounds checking.
+    function popUint256(DynamicArray memory array)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := mload(array)
+            result := mload(add(o, shl(5, mload(o))))
+            // update the array.length
+            mstore(o, sub(mload(o), 1))
+        }
+    }
+
+    /// @dev Remove last element of `array.data`, without bounds checking.
+    function popAddress(DynamicArray memory array)
+        internal
+        pure
+        returns (address result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := mload(array)
+            result := mload(add(o, shl(5, mload(o))))
+            // update the array.length
+            mstore(o, sub(mload(o), 1))
+        }
+    }
+
+    /// @dev Remove last element of `array.data`, without bounds checking.
+    function popBool(DynamicArray memory array) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := mload(array)
+            result := mload(add(o, shl(5, mload(o))))
+            // update the array.length
+            mstore(o, sub(mload(o), 1))
+        }
+    }
+
+    /// @dev Remove last element of `array.data`, without bounds checking.
+    function popBytes32(DynamicArray memory array)
+        internal
+        pure
+        returns (bytes32 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
