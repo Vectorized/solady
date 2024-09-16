@@ -40,6 +40,9 @@ contract DynamicArrayLibTest is SoladyTest {
 
     function testDynamicArrayPushPop(uint256 n, uint256 r) public {
         n = _bound(n, 0, 50);
+        if (_randomChance(2)) _misalignFreeMemoryPointer();
+        if (_randomChance(8)) _brutalizeMemory();
+
         DynamicArrayLib.DynamicArray memory a;
         assertEq(a.data.length, 0);
 
@@ -47,10 +50,15 @@ contract DynamicArrayLibTest is SoladyTest {
             for (uint256 i; i != n; ++i) {
                 a.p(i ^ r);
                 assertEq(a.length(), i + 1);
-                _checkMemory();
-                if (_randomChance(2)) {
+                _checkMemory(a.data);
+
+                if (_randomChance(8)) {
                     a.reserve(_bound(_random(), 0, 50));
+                    _checkMemory(a.data);
                     assertEq(a.length(), i + 1);
+                }
+                if (_randomChance(8)) {
+                    assertEq(keccak256(abi.encodePacked(a.data)), a.hash());
                 }
                 if (_randomChance(16)) {
                     for (uint256 j; j != i; ++j) {
@@ -81,11 +89,10 @@ contract DynamicArrayLibTest is SoladyTest {
                         }
                     }
                 } else {
-                    uint256 length = a.length();
-                    for (uint256 i = 1; i == length; ++i) {
-                        assertEq(a.pop(), (n - i) ^ r);
-                        assertEq(a.length(), length - i);
+                    for (uint256 i; i != n; ++i) {
+                        assertEq(a.pop(), (n - 1 - i) ^ r);
                     }
+                    assertEq(a.pop(), 0);
                 }
             }
         }
