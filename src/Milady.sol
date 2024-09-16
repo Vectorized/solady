@@ -21,6 +21,7 @@ import "./utils/Base64.sol";
 import "./utils/CREATE3.sol";
 import "./utils/DateTimeLib.sol";
 import "./utils/DeploylessPredeployQueryer.sol";
+import "./utils/DynamicArrayLib.sol";
 import "./utils/DynamicBufferLib.sol";
 import "./utils/ECDSA.sol";
 import "./utils/EIP712.sol";

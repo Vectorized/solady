@@ -78,6 +78,7 @@ utils
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
 ├─ GasBurnerLib — "Library for burning gas without reverting"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
+├─ DynamicArrayLib — "Library for memory arrays with automatic capacity resizing"
 ├─ DynamicBufferLib — "Library for buffers with automatic capacity resizing"
 ├─ EfficientHashLib — "Library for efficiently performing keccak256 hashes"
 ├─ MetadataReaderLib — "Library for reading contract metadata robustly"
