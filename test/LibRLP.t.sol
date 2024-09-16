@@ -47,7 +47,7 @@ contract LibRLPTest is SoladyTest {
         pure
         returns (address)
     {
-        return address(uint160(uint256(keccak256(LibRLP.l(deployer).p(nonce).encode()))));
+        return address(uint160(uint256(keccak256(LibRLP.p(deployer).p(nonce).encode()))));
     }
 
     function computeAddressOriginal(address deployer, uint256 nonce)
@@ -242,16 +242,16 @@ contract LibRLPTest is SoladyTest {
 
     function testRLPEncodeAddressViaList(address a0, address a1) public {
         _maybeBzztMemory();
-        bytes memory computed = LibRLP.l(_brutalized(a0)).p(_brutalized(a1)).encode();
+        bytes memory computed = LibRLP.p(_brutalized(a0)).p(_brutalized(a1)).encode();
         _checkMemory(computed);
         _maybeBzztMemory();
-        bytes memory expected = LibRLP.l(abi.encodePacked(a0)).p(abi.encodePacked(a1)).encode();
+        bytes memory expected = LibRLP.p(abi.encodePacked(a0)).p(abi.encodePacked(a1)).encode();
         assertEq(computed, expected);
     }
 
     function testRLPEncodeListDifferential(bytes memory x0, uint256 x1) public {
         _maybeBzztMemory();
-        LibRLP.List memory list = LibRLP.l(x0).p(x1).p(x1).p(x0);
+        LibRLP.List memory list = LibRLP.p(x0).p(x1).p(x1).p(x0);
         _checkMemory(list);
         _maybeBzztMemory();
         bytes memory computed = LibRLP.encode(list);
@@ -304,7 +304,7 @@ contract LibRLPTest is SoladyTest {
         bytes memory expected = bytes(x ? hex"01" : hex"80");
         assertEq(computed, expected);
         uint256 y = x ? 1 : 0;
-        assertEq(LibRLP.l(y).p(y ^ 1).p(y).encode(), LibRLP.l(x).p(!x).p(x).encode());
+        assertEq(LibRLP.p(y).p(y ^ 1).p(y).encode(), LibRLP.p(x).p(!x).p(x).encode());
     }
 
     function _maybeBzztMemory() internal {
@@ -476,11 +476,11 @@ contract LibRLPTest is SoladyTest {
         LibRLP.List memory l;
         _bzztMemory();
         assertEq(LibRLP.encode(l), hex"c0");
-        l.p(LibRLP.l());
+        l.p(LibRLP.p());
         _checkMemory(l);
-        l.p(LibRLP.l(LibRLP.l()));
+        l.p(LibRLP.p(LibRLP.p()));
         _checkMemory(l);
-        l.p(LibRLP.l(LibRLP.l()).p(LibRLP.l(LibRLP.l())));
+        l.p(LibRLP.p(LibRLP.p()).p(LibRLP.p(LibRLP.p())));
         _checkMemory(l);
         _bzztMemory();
         bytes memory computed = LibRLP.encode(l);
