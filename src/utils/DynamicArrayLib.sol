@@ -230,58 +230,63 @@ library DynamicArrayLib {
         p(result, uint256(data));
     }
 
-    /// @dev Remove last element of `array.data`, without bounds checking.
+    /// @dev Removes and returns the last element of `array`.
+    /// Returns 0 and does not pop anything if the array is empty.
     function pop(DynamicArray memory array) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
-            result := mload(add(o, shl(5, mload(o))))
-            // update the array.length
-            mstore(o, sub(mload(o), 1))
+            let n := mload(o)
+            result := mload(add(o, shl(5, n)))
+            mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Remove last element of `array.data`, without bounds checking.
+    /// @dev Removes and returns the last element of `array`.
+    /// Returns 0 and does not pop anything if the array is empty.
     function popUint256(DynamicArray memory array) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
-            result := mload(add(o, shl(5, mload(o))))
-            // update the array.length
-            mstore(o, sub(mload(o), 1))
+            let n := mload(o)
+            result := mload(add(o, shl(5, n)))
+            mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Remove last element of `array.data`, without bounds checking.
+    /// @dev Removes and returns the last element of `array`.
+    /// Returns 0 and does not pop anything if the array is empty.
     function popAddress(DynamicArray memory array) internal pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
-            result := mload(add(o, shl(5, mload(o))))
-            // update the array.length
-            mstore(o, sub(mload(o), 1))
+            let n := mload(o)
+            result := mload(add(o, shl(5, n)))
+            mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Remove last element of `array.data`, without bounds checking.
+    /// @dev Removes and returns the last element of `array`.
+    /// Returns 0 and does not pop anything if the array is empty.
     function popBool(DynamicArray memory array) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
-            result := mload(add(o, shl(5, mload(o))))
-            // update the array.length
-            mstore(o, sub(mload(o), 1))
+            let n := mload(o)
+            result := mload(add(o, shl(5, n)))
+            mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Remove last element of `array.data`, without bounds checking.
+    /// @dev Removes and returns the last element of `array`.
+    /// Returns 0 and does not pop anything if the array is empty.
     function popBytes32(DynamicArray memory array) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
             let o := mload(array)
-            result := mload(add(o, shl(5, mload(o))))
-            // update the array.length
-            mstore(o, sub(mload(o), 1))
+            let n := mload(o)
+            result := mload(add(o, shl(5, n)))
+            mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
