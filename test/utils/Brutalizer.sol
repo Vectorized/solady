@@ -836,4 +836,53 @@ contract Brutalizer {
     function _checkMemory(string memory s) internal pure {
         _checkMemory(bytes(s));
     }
+
+    /// @dev Check if `a`:
+    /// - Has sufficient memory allocated.
+    function _checkMemory(uint256[] memory a) internal pure {
+        bool insufficientMalloc;
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Write ones to the free memory, to make subsequent checks fail if
+            // insufficient memory is allocated.
+            mstore(mload(0x40), not(0))
+            // Check if the memory allocated is sufficient.
+            insufficientMalloc := gt(add(add(a, 0x20), shl(5, mload(a))), mload(0x40))
+        }
+        if (insufficientMalloc) revert("Insufficient memory allocation!");
+        _checkMemory();
+    }
+
+    /// @dev Check if `a`:
+    /// - Has sufficient memory allocated.
+    function _checkMemory(bytes32[] memory a) internal pure {
+        uint256[] memory casted;
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+        _checkMemory(casted);
+    }
+
+    /// @dev Check if `a`:
+    /// - Has sufficient memory allocated.
+    function _checkMemory(address[] memory a) internal pure {
+        uint256[] memory casted;
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+        _checkMemory(casted);
+    }
+
+    /// @dev Check if `a`:
+    /// - Has sufficient memory allocated.
+    function _checkMemory(bool[] memory a) internal pure {
+        uint256[] memory casted;
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+        _checkMemory(casted);
+    }
 }
