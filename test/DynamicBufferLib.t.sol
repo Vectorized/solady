@@ -441,6 +441,33 @@ contract DynamicBufferLibTest is SoladyTest {
         assertEq(bufferB.data, "010120123012340123450123456");
     }
 
+    function testDynamicBufferShorthands() public {
+        assertEq(DynamicBufferLib.p().s(), "");
+        assertEq(DynamicBufferLib.p("0").s(), "0");
+        assertEq(DynamicBufferLib.p("0", "1").s(), "01");
+        assertEq(DynamicBufferLib.p("0", "1", "2").s(), "012");
+        assertEq(DynamicBufferLib.p("0", "1", "2", "3").s(), "0123");
+        assertEq(DynamicBufferLib.p("0", "1", "2", "3", "4").s(), "01234");
+        assertEq(DynamicBufferLib.p("0", "1", "2", "3", "4", "5").s(), "012345");
+        assertEq(DynamicBufferLib.p("0", "1", "2", "3", "4", "5", "6").s(), "0123456");
+        assertEq(DynamicBufferLib.pBool(true).s(), DynamicBufferLib.p().pBool(true).s());
+        assertEq(DynamicBufferLib.pBool(false).s(), DynamicBufferLib.p().pBool(false).s());
+        assertEq(
+            DynamicBufferLib.pAddress(address(this)).s(),
+            DynamicBufferLib.p().pAddress(address(this)).s()
+        );
+        assertEq(DynamicBufferLib.pUint8(11).s(), DynamicBufferLib.p().pUint8(11).s());
+        assertEq(DynamicBufferLib.pUint256(11).s(), DynamicBufferLib.p().pUint256(11).s());
+        assertEq(
+            DynamicBufferLib.pBytes1(bytes1(uint8(2))).s(),
+            DynamicBufferLib.p().pBytes1(bytes1(uint8(2))).s()
+        );
+        assertEq(
+            DynamicBufferLib.pBytes32(bytes32(uint256(2))).s(),
+            DynamicBufferLib.p().pBytes32(bytes32(uint256(2))).s()
+        );
+    }
+
     function _checkSamePointers(
         DynamicBufferLib.DynamicBuffer memory a,
         DynamicBufferLib.DynamicBuffer memory b
