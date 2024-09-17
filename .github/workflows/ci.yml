@@ -103,7 +103,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -121,7 +121,7 @@ jobs:
         id : gas_diff
       
       - name: Add gas diff to sticky comment
-        if: (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') && steps.gas_diff.outputs.markdown != ''
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           # delete the comment in case changes no longer impact gas costs
