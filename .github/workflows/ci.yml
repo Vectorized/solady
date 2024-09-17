@@ -117,7 +117,7 @@ jobs:
         run: forge install
 
       - name: Generate gas diff
-        uses: atarpara/foundry-gas-diff-action@v0.2
+        uses: atarpara/foundry-snapshot-diff@v0.2
         id : gas_diff
       
       - name: Add gas diff to sticky comment
