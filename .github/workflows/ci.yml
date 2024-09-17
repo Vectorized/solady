@@ -108,6 +108,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Fetch all branches
+        run: git fetch --all
+    
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -117,7 +120,7 @@ jobs:
         run: forge install
 
       - name: Generate gas diff
-        uses: atarpara/foundry-snapshot-diff@v0.2
+        uses: atarpara/foundry-snapshot-diff@v0.4
         id : gas_diff
       
       - name: Add gas diff to sticky comment
