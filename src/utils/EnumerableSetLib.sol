@@ -83,6 +83,11 @@ library EnumerableSetLib {
         uint256 _spacer;
     }
 
+    /// @dev An enumerable uint8 set in storage. Useful for enums.
+    struct Uint8Set {
+        uint256 data;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     GETTERS / SETTERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -134,6 +139,16 @@ library EnumerableSetLib {
     /// @dev Returns the number of elements in the set.
     function length(Int256Set storage set) internal view returns (uint256 result) {
         result = length(_toBytes32Set(set));
+    }
+
+    /// @dev Returns the number of elements in the set.
+    function length(Uint8Set storage set) internal view returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for { let packed := sload(set.slot) } packed { result := add(1, result) } {
+                packed := xor(packed, and(packed, add(1, not(packed))))
+            }
+        }
     }
 
     /// @dev Returns whether `value` is in the set.
@@ -200,6 +215,14 @@ library EnumerableSetLib {
     /// @dev Returns whether `value` is in the set.
     function contains(Int256Set storage set, int256 value) internal view returns (bool result) {
         result = contains(_toBytes32Set(set), bytes32(uint256(value)));
+    }
+
+    /// @dev Returns whether `value` is in the set.
+    function contains(Uint8Set storage set, uint8 value) internal view returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(1, shr(and(0xff, value), sload(set.slot)))
+        }
     }
 
     /// @dev Adds `value` to the set. Returns whether `value` was not in the set.
@@ -329,6 +352,17 @@ library EnumerableSetLib {
         result = add(_toBytes32Set(set), bytes32(uint256(value)));
     }
 
+    /// @dev Adds `value` to the set. Returns whether `value` was not in the set.
+    function add(Uint8Set storage set, uint8 value) internal returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := sload(set.slot)
+            let mask := shl(and(0xff, value), 1)
+            sstore(set.slot, or(result, mask))
+            result := iszero(and(result, mask))
+        }
+    }
+
     /// @dev Removes `value` from the set. Returns whether `value` was in the set.
     function remove(AddressSet storage set, address value) internal returns (bool result) {
         bytes32 rootSlot = _rootSlot(set);
@@ -445,6 +479,17 @@ library EnumerableSetLib {
         result = remove(_toBytes32Set(set), bytes32(uint256(value)));
     }
 
+    /// @dev Removes `value` from the set. Returns whether `value` was in the set.
+    function remove(Uint8Set storage set, uint8 value) internal returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := sload(set.slot)
+            let mask := shl(and(0xff, value), 1)
+            sstore(set.slot, and(result, not(mask)))
+            result := iszero(iszero(and(result, mask)))
+        }
+    }
+
     /// @dev Returns all of the values in the set.
     /// Note: This can consume more gas than the block gas limit for large sets.
     function values(AddressSet storage set) internal view returns (address[] memory result) {
@@ -540,6 +585,29 @@ library EnumerableSetLib {
         result = _toInts(values(_toBytes32Set(set)));
     }
 
+    /// @dev Returns all of the values in the set.
+    function values(Uint8Set storage set) internal view returns (uint8[] memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let ptr := add(result, 0x20)
+            let o := 0
+            for { let packed := sload(set.slot) } packed {} {
+                if iszero(and(packed, 0xffff)) {
+                    o := add(o, 16)
+                    packed := shr(16, packed)
+                    continue
+                }
+                mstore(ptr, o)
+                ptr := add(ptr, shl(5, and(packed, 1)))
+                o := add(o, 1)
+                packed := shr(1, packed)
+            }
+            mstore(result, shr(5, sub(ptr, add(result, 0x20))))
+            mstore(0x40, ptr)
+        }
+    }
+
     /// @dev Returns the element at index `i` in the set.
     function at(AddressSet storage set, uint256 i) internal view returns (address result) {
         bytes32 rootSlot = _rootSlot(set);
@@ -570,6 +638,36 @@ library EnumerableSetLib {
     /// @dev Returns the element at index `i` in the set.
     function at(Int256Set storage set, uint256 i) internal view returns (int256 result) {
         result = int256(uint256(at(_toBytes32Set(set), i)));
+    }
+
+    /// @dev Returns the element at index `i` in the set.
+    function at(Uint8Set storage set, uint256 i) internal view returns (uint8 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let packed := sload(set.slot)
+            for {} i {
+                mstore(0x00, 0x4e23d035) // `IndexOutOfBounds()`.
+                revert(0x1c, 0x04)
+            } {
+                if iszero(lt(i, 256)) { continue }
+                for { let j := 0 } 1 {} {
+                    packed := xor(packed, and(packed, add(1, not(packed))))
+                    j := add(j, 1)
+                    if iszero(xor(i, j)) { break }
+                }
+                if iszero(packed) { continue }
+                break
+            }
+            // Find first set subroutine, optimized for smaller bytecode size.
+            let x := and(packed, add(1, not(packed)))
+            let r := shl(7, iszero(iszero(shr(128, x))))
+            r := or(r, shl(6, iszero(iszero(shr(64, shr(r, x))))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            // For the lower 5 bits of the result, use a De Bruijn lookup.
+            // forgefmt: disable-next-item
+            result := or(r, byte(and(div(0xd76453e0, shr(r, x)), 0x1f),
+                0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

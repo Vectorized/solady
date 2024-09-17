@@ -21,6 +21,8 @@ contract EnumerableSetLibTest is SoladyTest {
     EnumerableSetLib.Uint256Set uint256Set;
     EnumerableSetLib.Int256Set int256Set;
 
+    EnumerableSetLib.Uint8Set uint8Set;
+
     function testEnumerableAddressSetNoStorageCollision() public {
         addressSet.add(address(1));
         assertEq(addressSet2.contains(address(1)), false);
@@ -537,6 +539,94 @@ contract EnumerableSetLibTest is SoladyTest {
                 this.removeFromBytes32Set(a);
             }
         } while (!_randomChance(2));
+    }
+
+    function testEnumerableUint8Set() public {
+        uint8[] memory ordinals = _flagsToOrdinals(0xff00000000ff);
+        unchecked {
+            for (uint256 i; i != ordinals.length; ++i) {
+                uint8Set.add(ordinals[i]);
+            }
+            uint8[] memory values = uint8Set.values();
+            for (uint256 i; i != ordinals.length; ++i) {
+                assertEq(uint8Set.at(i), values[i]);
+            }
+            assertEq(values.length, 16);
+        }
+    }
+
+    function testEnumerableUint8Set(uint256 flags, bytes32) public {
+        uint8[] memory ordinals = _flagsToOrdinals(flags);
+        bytes32 sortedHash = keccak256(abi.encodePacked(ordinals));
+        _shuffle(ordinals);
+        unchecked {
+            for (uint256 i; i != ordinals.length; ++i) {
+                assertTrue(uint8Set.add(ordinals[i]));
+            }
+            if (_randomChance(16)) {
+                _shuffle(ordinals);
+                for (uint256 i; i != ordinals.length; ++i) {
+                    assertFalse(uint8Set.add(ordinals[i]));
+                }
+            }
+            if (_randomChance(16)) {
+                for (uint256 i; i != 256; ++i) {
+                    assertEq(uint8Set.contains(uint8(i)), flags & (1 << i) != 0);
+                }
+            }
+            uint8[] memory values = uint8Set.values();
+            assertEq(keccak256(abi.encodePacked(values)), sortedHash);
+            assertEq(values.length, uint8Set.length());
+            if (_randomChance(16)) {
+                for (uint256 i; i != ordinals.length; ++i) {
+                    assertEq(uint8Set.at(i), values[i]);
+                }
+                vm.expectRevert(EnumerableSetLib.IndexOutOfBounds.selector);
+                this.uint8SetAt(_bound(_random(), ordinals.length, type(uint256).max));
+            }
+            if (_randomChance(16)) {
+                _shuffle(ordinals);
+                for (uint256 i; i != ordinals.length; ++i) {
+                    assertTrue(uint8Set.remove(ordinals[i]));
+                    assertFalse(uint8Set.remove(ordinals[i]));
+                }
+                if (_randomChance(32)) {
+                    for (uint256 i; i != 256; ++i) {
+                        assertFalse(uint8Set.contains(uint8(i)));
+                    }
+                }
+                assertEq(uint8Set.length(), 0);
+            }
+        }
+    }
+
+    function _shuffle(uint8[] memory a) internal {
+        LibPRNG.PRNG memory prng;
+        prng.state = _random();
+        uint256[] memory casted;
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+        prng.shuffle(casted);
+    }
+
+    function _flagsToOrdinals(uint256 flags) internal pure returns (uint8[] memory ordinals) {
+        ordinals = new uint8[](256);
+        uint256 n;
+        unchecked {
+            for (uint256 i; i != 256; ++i) {
+                if (flags & (1 << i) != 0) ordinals[n++] = uint8(i);
+            }
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(ordinals, n)
+        }
+    }
+
+    function uint8SetAt(uint256 i) public view returns (uint8) {
+        return uint8Set.at(i);
     }
 
     function addToAddressSet(address a) public returns (bool) {
