@@ -38,24 +38,42 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
-    function testDynamicArrayGas() public {
-        uint256 n = 100;
+    function testDynamicArrayExpandAndTruncate(bytes32) public {
+        uint256 n = _bound(_random(), 0, 0xff);
         DynamicArrayLib.DynamicArray memory a;
-        a.reserve(n);
-        unchecked {
-            for (uint256 i; i != n; ++i) {
-                a.set(i, i);
+        uint256 lengthBefore = a.expand(n).length();
+        assertEq(lengthBefore, n);
+        _checkMemory(a.data);
+        n = _bound(_random(), 0, 0xff);
+        a.expand(n);
+        if (n > lengthBefore) {
+            assertEq(a.length(), n);
+        } else {
+            assertEq(a.length(), lengthBefore);
+        }
+        bool hasValues;
+        if (_randomChance(32)) {
+            hasValues = true;
+            unchecked {
+                for (uint256 i; i != a.length(); ++i) {
+                    a.set(i, i);
+                }
             }
         }
-        a.resize(n);
-    }
-
-    function testStaticArrayGas() public {
-        uint256 n = 100;
-        uint256[] memory a = new uint256[](n);
-        unchecked {
-            for (uint256 i; i != n; ++i) {
-                a[i] = i;
+        lengthBefore = a.length();
+        n = _bound(_random(), 0, 0xff);
+        a.truncate(n);
+        if (n < lengthBefore) {
+            assertEq(a.length(), n);
+        } else {
+            assertEq(a.length(), lengthBefore);
+        }
+        _checkMemory(a.data);
+        if (hasValues) {
+            unchecked {
+                for (uint256 i; i != a.length(); ++i) {
+                    assertEq(a.get(i), i);
+                }
             }
         }
     }

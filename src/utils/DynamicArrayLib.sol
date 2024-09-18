@@ -66,7 +66,7 @@ library DynamicArrayLib {
     {
         _deallocate(result);
         result = array;
-        if (n > result.data.length) reserve(result, n);
+        reserve(result, n);
         /// @solidity memory-safe-assembly
         assembly {
             let arrData := mload(result)
@@ -75,6 +75,40 @@ library DynamicArrayLib {
                 codecopy(add(arrData, shl(5, add(1, arrLen))), codesize(), shl(5, sub(n, arrLen)))
             }
             mstore(arrData, n)
+        }
+    }
+
+    /// @dev Increases the size of `array` to `n`.
+    /// If `n` is less than the size of `array`, this will be a no-op.
+    /// This method does not zeroize any newly created elements.
+    function expand(DynamicArray memory array, uint256 n)
+        internal
+        pure
+        returns (DynamicArray memory result)
+    {
+        _deallocate(result);
+        result = array;
+        if (n >= array.data.length) {
+            reserve(result, n);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(mload(result), n)
+            }
+        }
+    }
+
+    /// @dev Reduces the size of `array` to `n`.
+    /// If `n` is greater than the size of `array`, this will be a no-op.
+    function truncate(DynamicArray memory array, uint256 n)
+        internal
+        pure
+        returns (DynamicArray memory result)
+    {
+        _deallocate(result);
+        result = array;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(mul(lt(n, mload(mload(result))), mload(result)), n)
         }
     }
 
