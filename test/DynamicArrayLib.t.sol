@@ -77,6 +77,19 @@ contract DynamicArrayLibTest is SoladyTest {
 
             assertEq(keccak256(abi.encodePacked(a.data)), a.hash());
 
+            if (_randomChance(16)) {
+                assertEq(a.free().length(), 0);
+                if (_randomChance(16)) a.reserve(_bound(_random(), 0, 50));
+                if (_randomChance(2)) _checkMemory(a.data);
+                for (uint256 i; i != n; ++i) {
+                    a.p(i ^ r);
+                    _checkMemory(a.data);
+                }
+                for (uint256 i; i != n; ++i) {
+                    assertEq(a.get(i), i ^ r);
+                }
+            }
+
             if (_randomChance(2)) {
                 a.clear();
                 assertEq(a.length(), 0);
@@ -98,19 +111,6 @@ contract DynamicArrayLibTest is SoladyTest {
                         assertEq(a.pop(), (n - 1 - i) ^ r);
                     }
                     assertEq(a.pop(), 0);
-                }
-            }
-
-            if (_randomChance(16)) {
-                assertEq(a.free().length(), 0);
-                if (_randomChance(16)) a.reserve(_bound(_random(), 0, 50));
-                if (_randomChance(2)) _checkMemory(a.data);
-                for (uint256 i; i != n; ++i) {
-                    a.p(i ^ r);
-                    _checkMemory(a.data);
-                }
-                for (uint256 i; i != n; ++i) {
-                    assertEq(a.get(i), i ^ r);
                 }
             }
         }

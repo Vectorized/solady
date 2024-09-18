@@ -70,9 +70,8 @@ library DynamicArrayLib {
         assembly {
             let arrData := mload(result)
             let arrLen := mload(arrData)
-            if gt(n, arrLen) {
-                let o := add(add(0x20, arrData), shl(5, arrLen))
-                codecopy(o, codesize(), shl(5, sub(n, arrLen)))
+            if iszero(lt(n, arrLen)) {
+                codecopy(add(arrData, shl(5, add(1, arrLen))), codesize(), shl(5, sub(n, arrLen)))
             }
             mstore(arrData, n)
         }
