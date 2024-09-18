@@ -20,6 +20,9 @@ library DynamicArrayLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Low level minimalist uint256 array operations.
+    // If you don't need syntax sugar, it's recommended to use these.
+    // Some of these functions returns the same array for function chaining.
+    // `e.g. `array.set(0, 1).set(1, 2)`.
 
     /// @dev Returns a uint256 array with `n` elements. The elements are not zeroized.
     function malloc(uint256 n) internal pure returns (uint256[] memory result) {
@@ -33,10 +36,11 @@ library DynamicArrayLib {
     }
 
     /// @dev Zeroizes all the elements of `array`.
-    function zeroize(uint256[] memory array) internal pure {
+    function zeroize(uint256[] memory array) internal pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            codecopy(add(array, 0x20), codesize(), shl(5, mload(array)))
+            result := array
+            codecopy(add(result, 0x20), codesize(), shl(5, mload(result)))
         }
     }
 
@@ -49,28 +53,48 @@ library DynamicArrayLib {
     }
 
     /// @dev Sets `array[i]` to `data`, without bounds checking.
-    function set(uint256[] memory array, uint256 i, uint256 data) internal pure {
+    function set(uint256[] memory array, uint256 i, uint256 data)
+        internal
+        pure
+        returns (uint256[] memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(add(add(array, 0x20), shl(5, i)), data)
+            result := array
+            mstore(add(add(result, 0x20), shl(5, i)), data)
         }
     }
 
     /// @dev Reduces the size of `array` to `n`.
     /// If `n` is greater than the size of `array`, this will be a no-op.
-    function truncate(uint256[] memory array, uint256 n) internal pure {
+    function truncate(uint256[] memory array, uint256 n)
+        internal
+        pure
+        returns (uint256[] memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(mul(lt(n, mload(array)), array), n)
+            result := array
+            mstore(mul(lt(n, mload(result)), result), n)
         }
     }
 
     /// @dev Clears the array and attempts to free the memory if possible.
-    function free(uint256[] memory array) internal pure {
+    function free(uint256[] memory array) internal pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := mload(array)
-            mstore(shl(6, lt(iszero(n), eq(add(shl(5, add(1, n)), array), mload(0x40)))), array)
+            result := array
+            let n := mload(result)
+            mstore(shl(6, lt(iszero(n), eq(add(shl(5, add(1, n)), result), mload(0x40)))), result)
+            mstore(result, 0)
+        }
+    }
+
+    /// @dev Equivalent to `keccak256(abi.encodePacked(array))`.
+    function hash(uint256[] memory array) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := keccak256(add(array, 0x20), shl(5, mload(array)))
         }
     }
 
@@ -108,8 +132,10 @@ library DynamicArrayLib {
                 let cap := mload(sub(arrData, 0x20))
                 // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
                 cap := mul(div(cap, prime), iszero(mod(cap, prime)))
-                // If the memory is contiguous, we can free it.
-                if eq(mload(0x40), add(arrData, add(0x20, cap))) { mstore(0x40, arrData) }
+                // If `cap` is non-zero and the memory is contiguous, we can free it.
+                if lt(iszero(cap), eq(mload(0x40), add(arrData, add(0x20, cap)))) {
+                    mstore(0x40, sub(arrData, 0x20))
+                }
                 mstore(result, 0x60)
             }
         }

@@ -6,6 +6,7 @@ import {DynamicArrayLib} from "../src/utils/DynamicArrayLib.sol";
 
 contract DynamicArrayLibTest is SoladyTest {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+    using DynamicArrayLib for uint256[];
 
     function testDynamicArrayPushAndPop() public {
         uint256 n = 100;
@@ -210,6 +211,47 @@ contract DynamicArrayLibTest is SoladyTest {
             DynamicArrayLib.DynamicArray memory slice = a.slice(start, end);
             _checkMemory(slice.data);
             assertEq(slice.data, _sliceOriginal(data, start, end));
+        }
+    }
+
+    function testUint256ArrayOperations(uint256 n, uint256 r) public {
+        unchecked {
+            n = _bound(n, 0, 50);
+            uint256[] memory a = DynamicArrayLib.malloc(n);
+            assertEq(a.length, n);
+            _checkMemory(a);
+            for (uint256 i; i != n; ++i) {
+                a.set(i, i ^ r);
+            }
+            for (uint256 i; i != n; ++i) {
+                assertEq(a.get(i), i ^ r);
+            }
+            if (_randomChance(32)) {
+                DynamicArrayLib.DynamicArray memory b;
+                for (uint256 i; i != n; ++i) {
+                    b.p(i ^ r);
+                }
+                assertEq(b.hash(), a.hash());
+                if (_randomChance(2)) {
+                    assertEq(b.resize(0).resize(n).hash(), a.zeroize().hash());
+                }
+            }
+            if (n > 5 && _randomChance(8)) {
+                a.set(0, 1).set(1, 2);
+                assertEq(a.get(0), 1);
+                assertEq(a.get(1), 2);
+            }
+            uint256 lengthBefore = n;
+            n = _bound(_random(), 0, 50);
+            if (n < lengthBefore) {
+                assertEq(a.truncate(n).length, n);
+            } else {
+                assertEq(a.truncate(n).length, lengthBefore);
+            }
+            if (_randomChance(2)) {
+                assertEq(a.free().length, 0);
+                _checkMemory(a);
+            }
         }
     }
 
