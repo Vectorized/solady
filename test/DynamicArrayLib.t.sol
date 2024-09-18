@@ -43,9 +43,25 @@ contract DynamicArrayLibTest is SoladyTest {
         a.data = data;
         n = _bound(_random(), 0, 0xff);
         a.resize(n);
+        assertEq(a.data.length, n);
+        _checkMemory(a.data);
         unchecked {
             for (uint256 i; i != n; ++i) {
                 if (i < data.length) {
+                    assertEq(a.get(i), data[i]);
+                } else {
+                    assertEq(a.get(i), 0);
+                }
+            }
+        }
+        uint256 lengthBefore = n;
+        n = _bound(_random(), 0, 0xff);
+        a.resize(n);
+        assertEq(a.data.length, n);
+        _checkMemory(a.data);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                if (i < lengthBefore && i < data.length) {
                     assertEq(a.get(i), data[i]);
                 } else {
                     assertEq(a.get(i), 0);
