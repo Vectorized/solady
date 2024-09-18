@@ -201,14 +201,33 @@ contract DynamicArrayLibTest is SoladyTest {
         assertEq(a.slice(1, 1).hash(), DynamicArrayLib.p().hash());
     }
 
-    function testDynamicArraySlice(uint256[] calldata data, uint256 start, uint256 end) public {
+    function testDynamicArraySlice(uint256[] memory data, uint256 start, uint256 end) public {
         DynamicArrayLib.DynamicArray memory a;
         a.data = data;
-        start = _bound(start, 0, a.data.length);
-        end = _bound(end, 0, a.data.length);
-        if (end < start) {
-            (start, end) = (end, start);
+        unchecked {
+            start = _bound(start, 0, a.data.length + 2);
+            end = _bound(end, 0, a.data.length + 2);
+            DynamicArrayLib.DynamicArray memory slice = a.slice(start, end);
+            _checkMemory(slice.data);
+            assertEq(slice.data, _sliceOriginal(data, start, end));
         }
-        assertEq(a.slice(start, end).asUint256Array(), data[start:end]);
+    }
+
+    function _sliceOriginal(uint256[] memory a, uint256 start, uint256 end)
+        internal
+        pure
+        returns (uint256[] memory result)
+    {
+        if (start > a.length) start = a.length;
+        if (end > a.length) end = a.length;
+        unchecked {
+            if (start < end) {
+                uint256 n = end - start;
+                result = new uint256[](n);
+                for (uint256 i; i != n; ++i) {
+                    result[i] = a[start + i];
+                }
+            }
+        }
     }
 }
