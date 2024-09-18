@@ -38,6 +38,78 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testDynamicArrayResize(uint256[] memory data, uint256 n) public {
+        DynamicArrayLib.DynamicArray memory a;
+        a.data = data;
+        n = _bound(_random(), 0, 0xff);
+        a.resize(n);
+        assertEq(a.data.length, n);
+        _checkMemory(a.data);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                if (i < data.length) {
+                    assertEq(a.get(i), data[i]);
+                } else {
+                    assertEq(a.get(i), 0);
+                }
+            }
+        }
+        uint256 lengthBefore = n;
+        n = _bound(_random(), 0, 0xff);
+        a.resize(n);
+        assertEq(a.data.length, n);
+        _checkMemory(a.data);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                if (i < lengthBefore && i < data.length) {
+                    assertEq(a.get(i), data[i]);
+                } else {
+                    assertEq(a.get(i), 0);
+                }
+            }
+        }
+    }
+
+    function testDynamicArrayExpandAndTruncate(bytes32) public {
+        uint256 n = _bound(_random(), 0, 0xff);
+        DynamicArrayLib.DynamicArray memory a;
+        uint256 lengthBefore = a.expand(n).length();
+        assertEq(lengthBefore, n);
+        _checkMemory(a.data);
+        n = _bound(_random(), 0, 0xff);
+        a.expand(n);
+        if (n > lengthBefore) {
+            assertEq(a.length(), n);
+        } else {
+            assertEq(a.length(), lengthBefore);
+        }
+        bool hasValues;
+        if (_randomChance(32)) {
+            hasValues = true;
+            unchecked {
+                for (uint256 i; i != a.length(); ++i) {
+                    a.set(i, i);
+                }
+            }
+        }
+        lengthBefore = a.length();
+        n = _bound(_random(), 0, 0xff);
+        a.truncate(n);
+        if (n < lengthBefore) {
+            assertEq(a.length(), n);
+        } else {
+            assertEq(a.length(), lengthBefore);
+        }
+        _checkMemory(a.data);
+        if (hasValues) {
+            unchecked {
+                for (uint256 i; i != a.length(); ++i) {
+                    assertEq(a.get(i), i);
+                }
+            }
+        }
+    }
+
     function testDynamicArrayPushPop(uint256 n, uint256 r) public {
         n = _bound(n, 0, 50);
         if (_randomChance(2)) _misalignFreeMemoryPointer();
@@ -47,9 +119,10 @@ contract DynamicArrayLibTest is SoladyTest {
         assertEq(a.data.length, 0);
 
         unchecked {
-            if (_randomChance(16)) {
-                assertEq(a.pop(), 0);
-            }
+            if (_randomChance(16)) a.free();
+            if (_randomChance(16)) assertEq(a.pop(), 0);
+            if (_randomChance(16)) a.reserve(_bound(_random(), 0, 50));
+            if (_randomChance(2)) _checkMemory(a.data);
 
             for (uint256 i; i != n; ++i) {
                 a.p(i ^ r);
@@ -75,6 +148,19 @@ contract DynamicArrayLibTest is SoladyTest {
             }
 
             assertEq(keccak256(abi.encodePacked(a.data)), a.hash());
+
+            if (_randomChance(16)) {
+                assertEq(a.free().length(), 0);
+                if (_randomChance(16)) a.reserve(_bound(_random(), 0, 50));
+                if (_randomChance(2)) _checkMemory(a.data);
+                for (uint256 i; i != n; ++i) {
+                    a.p(i ^ r);
+                    _checkMemory(a.data);
+                }
+                for (uint256 i; i != n; ++i) {
+                    assertEq(a.get(i), i ^ r);
+                }
+            }
 
             if (_randomChance(2)) {
                 a.clear();
@@ -113,5 +199,16 @@ contract DynamicArrayLibTest is SoladyTest {
         assertEq(a.slice(0, 0).hash(), DynamicArrayLib.p().hash());
         assertEq(a.slice(1, 2).hash(), DynamicArrayLib.p("b").hash());
         assertEq(a.slice(1, 1).hash(), DynamicArrayLib.p().hash());
+    }
+
+    function testDynamicArraySlice(uint256[] calldata data, uint256 start, uint256 end) public {
+        DynamicArrayLib.DynamicArray memory a;
+        a.data = data;
+        start = _bound(start, 0, a.data.length);
+        end = _bound(end, 0, a.data.length);
+        if (end < start) {
+            (start, end) = (end, start);
+        }
+        assertEq(a.slice(start, end).asUint256Array(), data[start:end]);
     }
 }

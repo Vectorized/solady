@@ -30,30 +30,32 @@ library DynamicArrayLib {
     /// @dev Clears the array without deallocating the memory.
     function clear(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
         _deallocate(result);
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(mload(array), 0)
+            mstore(mload(result), 0)
         }
-        result = array;
     }
 
     /// @dev Clears the array and attempts to free the memory if possible.
     function free(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
         _deallocate(result);
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            let arrData := mload(array)
-            let prime := 8188386068317523
-            let cap := mload(sub(arrData, 0x20))
-            // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
-            cap := mul(div(cap, prime), iszero(mod(cap, prime)))
-            // If the memory is contiguous, we can free it.
-            if iszero(or(xor(mload(0x40), add(arrData, add(0x20, cap))), eq(arrData, 0x60))) {
-                mstore(0x40, sub(arrData, 0x20))
+            let arrData := mload(result)
+            if iszero(eq(arrData, 0x60)) {
+                let prime := 8188386068317523
+                let cap := mload(sub(arrData, 0x20))
+                // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
+                cap := mul(div(cap, prime), iszero(mod(cap, prime)))
+                // If the memory is contiguous, we can free it.
+                if eq(mload(0x40), add(arrData, add(0x20, cap))) {
+                    mstore(0x40, sub(arrData, 0x20))
+                }
+                mstore(result, 0x60)
             }
-            mstore(array, 0x60)
         }
-        result = array;
     }
 
     /// @dev Resizes the array to contain `n` elements. New elements will be zeroized.
@@ -63,16 +65,50 @@ library DynamicArrayLib {
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = reserve(array, n);
+        result = array;
+        reserve(result, n);
         /// @solidity memory-safe-assembly
         assembly {
             let arrData := mload(result)
             let arrLen := mload(arrData)
-            if gt(n, arrLen) {
-                let o := add(add(0x20, arrData), shl(5, arrLen))
-                codecopy(o, codesize(), shl(5, sub(n, arrLen)))
+            if iszero(lt(n, arrLen)) {
+                codecopy(add(arrData, shl(5, add(1, arrLen))), codesize(), shl(5, sub(n, arrLen)))
             }
             mstore(arrData, n)
+        }
+    }
+
+    /// @dev Increases the size of `array` to `n`.
+    /// If `n` is less than the size of `array`, this will be a no-op.
+    /// This method does not zeroize any newly created elements.
+    function expand(DynamicArray memory array, uint256 n)
+        internal
+        pure
+        returns (DynamicArray memory result)
+    {
+        _deallocate(result);
+        result = array;
+        if (n >= array.data.length) {
+            reserve(result, n);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(mload(result), n)
+            }
+        }
+    }
+
+    /// @dev Reduces the size of `array` to `n`.
+    /// If `n` is greater than the size of `array`, this will be a no-op.
+    function truncate(DynamicArray memory array, uint256 n)
+        internal
+        pure
+        returns (DynamicArray memory result)
+    {
+        _deallocate(result);
+        result = array;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(mul(lt(n, mload(mload(result))), mload(result)), n)
         }
     }
 
@@ -86,27 +122,38 @@ library DynamicArrayLib {
         result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            for { let arrData := mload(array) } gt(minimum, mload(arrData)) {} {
-                let w := not(0x1f)
+            if iszero(lt(minimum, 0xffffffff)) { invalid() } // For extra safety.
+            for { let arrData := mload(array) } 1 {} {
                 // Some random prime number to multiply `cap`, so that
                 // we know that the `cap` is for a dynamic array.
                 // Selected to be larger than any memory pointer realistically.
                 let prime := 8188386068317523
+                // Special case for `arrData` pointing to zero pointer.
+                if eq(arrData, 0x60) {
+                    let newCap := shl(5, add(1, minimum))
+                    let capSlot := mload(0x40)
+                    mstore(capSlot, mul(prime, newCap)) // Store the capacity.
+                    let newArrData := add(0x20, capSlot)
+                    mstore(newArrData, 0) // Store the length.
+                    mstore(0x40, add(newArrData, add(0x20, newCap))) // Allocate memory.
+                    mstore(array, newArrData)
+                    break
+                }
+                let w := not(0x1f)
                 let cap := mload(add(arrData, w)) // `mload(sub(arrData, w))`.
                 // Extract `cap`, initializing it to zero if it is not a multiple of `prime`.
                 cap := mul(div(cap, prime), iszero(mod(cap, prime)))
                 let newCap := shl(5, minimum)
                 // If we don't need to grow the memory.
-                if iszero(gt(newCap, cap)) { break }
+                if iszero(and(gt(minimum, mload(arrData)), gt(newCap, cap))) { break }
                 // If the memory is contiguous, we can simply expand it.
-                if iszero(or(xor(mload(0x40), add(arrData, add(0x20, cap))), eq(arrData, 0x60))) {
-                    // Store `cap * prime` in the word before the length.
-                    mstore(add(arrData, w), mul(prime, newCap))
+                if eq(mload(0x40), add(arrData, add(0x20, cap))) {
+                    mstore(add(arrData, w), mul(prime, newCap)) // Store the capacity.
                     mstore(0x40, add(arrData, add(0x20, newCap))) // Expand the memory allocation.
                     break
                 }
-                // Set the `newArrData` to point to the word after `cap`.
-                let newArrData := add(mload(0x40), 0x20)
+                let capSlot := mload(0x40)
+                let newArrData := add(capSlot, 0x20)
                 mstore(0x40, add(newArrData, add(0x20, newCap))) // Reallocate the memory.
                 mstore(array, newArrData) // Store the `newArrData`.
                 // Copy `arrData` one word at a time, backwards.
@@ -115,8 +162,7 @@ library DynamicArrayLib {
                     o := add(o, w) // `sub(o, 0x20)`.
                     if iszero(o) { break }
                 }
-                // Store `cap * prime` in the word before the length.
-                mstore(add(newArrData, w), mul(prime, newCap))
+                mstore(capSlot, mul(prime, newCap)) // Store the capacity.
                 mstore(newArrData, mload(arrData)) // Store the length.
                 break
             }
@@ -151,8 +197,7 @@ library DynamicArrayLib {
                 let newCap := add(cap, or(cap, newArrBytesLen))
                 // If the memory is contiguous, we can simply expand it.
                 if iszero(or(xor(mload(0x40), add(arrData, add(0x20, cap))), eq(arrData, 0x60))) {
-                    // Store `cap * prime` in the word before the length.
-                    mstore(sub(arrData, 0x20), mul(prime, newCap))
+                    mstore(sub(arrData, 0x20), mul(prime, newCap)) // Store the capacity.
                     mstore(0x40, add(arrData, add(0x20, newCap))) // Expand the memory allocation.
                     break
                 }
@@ -167,8 +212,7 @@ library DynamicArrayLib {
                     o := add(o, w) // `sub(o, 0x20)`.
                     if iszero(o) { break }
                 }
-                // Store `cap * prime` in the word before the length.
-                mstore(add(newArrData, w), mul(prime, newCap))
+                mstore(add(newArrData, w), mul(prime, newCap)) // Store the memory.
                 arrData := newArrData // Assign `newArrData` to `arrData`.
                 break
             }
