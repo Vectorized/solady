@@ -20,22 +20,21 @@ library LibSort {
             let n := mload(a) // Length of `a`.
             mstore(a, 0) // For insertion sort's inner loop to terminate.
             let h := add(a, shl(5, n)) // High slot.
-            let s := 0x20
             let w := not(0x1f)
-            for { let i := add(a, s) } 1 {} {
-                i := add(i, s)
+            for { let i := add(a, 0x20) } 1 {} {
+                i := add(i, 0x20)
                 if gt(i, h) { break }
                 let k := mload(i) // Key.
                 let j := add(i, w) // The slot before the current slot.
                 let v := mload(j) // The value of `j`.
                 if iszero(gt(v, k)) { continue }
                 for {} 1 {} {
-                    mstore(add(j, s), v)
+                    mstore(add(j, 0x20), v)
                     j := add(j, w) // `sub(j, 0x20)`.
                     v := mload(j)
                     if iszero(gt(v, k)) { break }
                 }
-                mstore(add(j, s), k)
+                mstore(add(j, 0x20), k)
             }
             mstore(a, n) // Restore the length of `a`.
         }
