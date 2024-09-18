@@ -38,6 +38,28 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testDynamicArrayGas() public {
+        uint256 n = 100;
+        DynamicArrayLib.DynamicArray memory a;
+        a.reserve(n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                a.set(i, i);
+            }
+        }
+        a.resize(n);
+    }
+
+    function testStaticArrayGas() public {
+        uint256 n = 100;
+        uint256[] memory a = new uint256[](n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                a[i] = i;
+            }
+        }
+    }
+
     function testDynamicArrayPushPop(uint256 n, uint256 r) public {
         n = _bound(n, 0, 50);
         if (_randomChance(2)) _misalignFreeMemoryPointer();

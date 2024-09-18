@@ -30,19 +30,20 @@ library DynamicArrayLib {
     /// @dev Clears the array without deallocating the memory.
     function clear(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
         _deallocate(result);
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(mload(array), 0)
+            mstore(mload(result), 0)
         }
-        result = array;
     }
 
     /// @dev Clears the array and attempts to free the memory if possible.
     function free(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
         _deallocate(result);
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            let arrData := mload(array)
+            let arrData := mload(result)
             if iszero(eq(arrData, 0x60)) {
                 let prime := 8188386068317523
                 let cap := mload(sub(arrData, 0x20))
@@ -52,10 +53,9 @@ library DynamicArrayLib {
                 if eq(mload(0x40), add(arrData, add(0x20, cap))) {
                     mstore(0x40, sub(arrData, 0x20))
                 }
-                mstore(array, 0x60)
+                mstore(result, 0x60)
             }
         }
-        result = array;
     }
 
     /// @dev Resizes the array to contain `n` elements. New elements will be zeroized.
@@ -65,7 +65,8 @@ library DynamicArrayLib {
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = reserve(array, n);
+        result = array;
+        reserve(result, n);
         /// @solidity memory-safe-assembly
         assembly {
             let arrData := mload(result)
@@ -88,7 +89,7 @@ library DynamicArrayLib {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(minimum, 0xffffffff)) { invalid() } // For extra safety.
-            for { let arrData := mload(array) } gt(minimum, mload(arrData)) {} {
+            for { let arrData := mload(array) } 1 {} {
                 // Some random prime number to multiply `cap`, so that
                 // we know that the `cap` is for a dynamic array.
                 // Selected to be larger than any memory pointer realistically.
@@ -110,7 +111,7 @@ library DynamicArrayLib {
                 cap := mul(div(cap, prime), iszero(mod(cap, prime)))
                 let newCap := shl(5, minimum)
                 // If we don't need to grow the memory.
-                if iszero(gt(newCap, cap)) { break }
+                if iszero(and(gt(minimum, mload(arrData)), gt(newCap, cap))) { break }
                 // If the memory is contiguous, we can simply expand it.
                 if eq(mload(0x40), add(arrData, add(0x20, cap))) {
                     mstore(add(arrData, w), mul(prime, newCap)) // Store the capacity.
