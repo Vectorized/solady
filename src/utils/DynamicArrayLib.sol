@@ -66,7 +66,7 @@ library DynamicArrayLib {
     {
         _deallocate(result);
         result = array;
-        reserve(result, n);
+        if (n > result.data.length) reserve(result, n);
         /// @solidity memory-safe-assembly
         assembly {
             let arrData := mload(result)
