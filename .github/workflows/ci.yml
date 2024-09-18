@@ -97,6 +97,7 @@ jobs:
           skip: ./.git,package-lock.json,ackee-blockchain-solady-report.pdf,EIP712Mock.sol
 
   gas-diff:
+    if: github.event_name == 'pull_request'
     permissions: write-all
     runs-on: ${{ matrix.os }}
     strategy:
