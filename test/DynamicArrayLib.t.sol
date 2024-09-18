@@ -38,6 +38,22 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testDynamicArrayResize(uint256[] memory data, uint256 n) public {
+        DynamicArrayLib.DynamicArray memory a;
+        a.data = data;
+        n = _bound(_random(), 0, 0xff);
+        a.resize(n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                if (i < data.length) {
+                    assertEq(a.get(i), data[i]);
+                } else {
+                    assertEq(a.get(i), 0);
+                }
+            }
+        }
+    }
+
     function testDynamicArrayExpandAndTruncate(bytes32) public {
         uint256 n = _bound(_random(), 0, 0xff);
         DynamicArrayLib.DynamicArray memory a;
