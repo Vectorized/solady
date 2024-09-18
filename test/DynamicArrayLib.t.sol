@@ -220,11 +220,13 @@ contract DynamicArrayLibTest is SoladyTest {
     {
         if (start > a.length) start = a.length;
         if (end > a.length) end = a.length;
-        if (start < end) {
-            uint256 n = end - start;
-            result = new uint256[](n);
-            for (uint256 i; i != n; ++i) {
-                result[i] = a[start + i];
+        unchecked {
+            if (start < end) {
+                uint256 n = end - start;
+                result = new uint256[](n);
+                for (uint256 i; i != n; ++i) {
+                    result[i] = a[start + i];
+                }
             }
         }
     }
