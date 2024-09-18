@@ -15,7 +15,6 @@ jobs:
   tests:
     name: Forge Testing
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         profile: [post-cancun,post-cancun-via-ir,solc-past-versions-0,solc-past-versions-1,via-ir,min-solc,min-solc-via-ir,intense]
@@ -96,3 +95,36 @@ jobs:
           check_filenames: true
           ignore_words_list: usera
           skip: ./.git,package-lock.json,ackee-blockchain-solady-report.pdf,EIP712Mock.sol
+
+  gas-diff:
+    permissions: write-all
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Fetch all branches
+        run: git fetch --all
+    
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Generate gas diff
+        uses: atarpara/foundry-snapshot-diff@v0.4
+        id : gas_diff
+      
+      - name: Add gas diff to sticky comment
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          delete: ${{ !steps.gas_diff.outputs.markdown }}
+          message: ${{ steps.gas_diff.outputs.markdown }}
