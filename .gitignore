@@ -39,3 +39,6 @@ __pycache__/
 *.py[cod]
 .hypothesis/
 wake-coverage.cov
+
+# We will use the CI to check for the gas difference
+.gas-snapshot
