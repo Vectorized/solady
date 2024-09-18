@@ -214,6 +214,36 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testUint256ArrayPopulate() public {
+        unchecked {
+            uint256 n = 100;
+            uint256[] memory a = DynamicArrayLib.malloc(n);
+            for (uint256 i; i != n; ++i) {
+                a.set(i, i);
+            }
+            uint256 sum;
+            for (uint256 i; i != n; ++i) {
+                sum += a.get(i);
+            }
+            assertEq(sum, 4950);
+        }
+    }
+
+    function testUint256ArrayPopulateOriginal() public {
+        unchecked {
+            uint256 n = 100;
+            uint256[] memory a = new uint256[](n);
+            for (uint256 i; i != n; ++i) {
+                a[i] = i;
+            }
+            uint256 sum;
+            for (uint256 i; i != n; ++i) {
+                sum += a[i];
+            }
+            assertEq(sum, 4950);
+        }
+    }
+
     function testUint256ArrayOperations(uint256 n, uint256 r) public {
         unchecked {
             n = _bound(n, 0, 50);
