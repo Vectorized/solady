@@ -102,10 +102,6 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-        env:
-          # make fuzzing semi-deterministic to avoid noisy gas cost estimation
-          # due to non-deterministic fuzzing (but still use pseudo-random fuzzing seeds)
-          FOUNDRY_FUZZ_SEED: 0x${{ github.event.pull_request.base.sha || github.sha }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
