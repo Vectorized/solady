@@ -479,7 +479,7 @@ library DynamicArrayLib {
         result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(add(add(mload(array), 0x20), shl(5, i)), data)
+            mstore(add(add(mload(result), 0x20), shl(5, i)), data)
         }
     }
 
@@ -493,7 +493,7 @@ library DynamicArrayLib {
         result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(add(add(mload(array), 0x20), shl(5, i)), shr(96, shl(96, data)))
+            mstore(add(add(mload(result), 0x20), shl(5, i)), shr(96, shl(96, data)))
         }
     }
 
@@ -507,7 +507,7 @@ library DynamicArrayLib {
         result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(add(add(mload(array), 0x20), shl(5, i)), iszero(iszero(data)))
+            mstore(add(add(mload(result), 0x20), shl(5, i)), iszero(iszero(data)))
         }
     }
 
@@ -521,7 +521,7 @@ library DynamicArrayLib {
         result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(add(add(mload(array), 0x20), shl(5, i)), data)
+            mstore(add(add(mload(result), 0x20), shl(5, i)), data)
         }
     }
 

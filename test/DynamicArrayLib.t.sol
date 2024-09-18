@@ -255,6 +255,32 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testDynamicArraySetAndGet(bytes32, uint256 i, uint256 n) public {
+        DynamicArrayLib.DynamicArray memory a;
+        n = _bound(n, 1, 5);
+        a.resize(n);
+        {
+            i = _bound(i, 0, n - 1);
+            address data = _randomHashedAddress();
+            assertEq(a.set(i, data).getAddress(i), data);
+        }
+        {
+            i = _bound(i, 0, n - 1);
+            bool data = _randomChance(2);
+            assertEq(a.set(i, data).getBool(i), data);
+        }
+        {
+            i = _bound(i, 0, n - 1);
+            bytes32 data = bytes32(_random());
+            assertEq(a.set(i, data).getBytes32(i), data);
+        }
+        {
+            i = _bound(i, 0, n - 1);
+            uint256 data = _random();
+            assertEq(a.set(i, data).get(i), data);
+        }
+    }
+
     function _sliceOriginal(uint256[] memory a, uint256 start, uint256 end)
         internal
         pure
