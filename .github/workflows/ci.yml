@@ -120,7 +120,7 @@ jobs:
         run: forge install
 
       - name: Generate gas diff
-        uses: atarpara/foundry-snapshot-diff@v0.4
+        uses: atarpara/foundry-snapshot-diff@v0.5
         id : gas_diff
       
       - name: Add gas diff to sticky comment
