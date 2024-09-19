@@ -28,10 +28,9 @@ library DynamicArrayLib {
     function malloc(uint256 n) internal pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40)
+            result := or(sub(0, shr(32, n)), mload(0x40))
             mstore(result, n)
             mstore(0x40, add(add(result, 0x20), shl(5, n)))
-            if iszero(lt(n, 0xffffffff)) { invalid() }
         }
     }
 

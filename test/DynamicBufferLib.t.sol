@@ -211,20 +211,6 @@ contract DynamicBufferLibTest is SoladyTest {
         assertEq(_freeMemoryPointer(), m);
     }
 
-    function _incrementFreeMemoryPointer() internal pure {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x40, add(mload(0x40), 0x20))
-        }
-    }
-
-    function _freeMemoryPointer() internal pure returns (uint256 m) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            m := mload(0x40)
-        }
-    }
-
     function _bufferLocation(DynamicBufferLib.DynamicBuffer memory buffer)
         internal
         pure

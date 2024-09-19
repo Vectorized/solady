@@ -565,6 +565,23 @@ contract TestPlus is Brutalizer {
         }
     }
 
+    /// @dev Returns the free memory pointer.
+    function _freeMemoryPointer() internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+        }
+    }
+
+    /// @dev Increments the free memory pointer by a world.
+    function _incrementFreeMemoryPointer() internal pure {
+        uint256 word = 0x20;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, add(mload(0x40), word))
+        }
+    }
+
     /// @dev Adapted from `bound`:
     /// https://github.com/foundry-rs/forge-std/blob/ff4bf7db008d096ea5a657f2c20516182252a3ed/src/StdUtils.sol#L10
     /// Differentially fuzzed tested against the original implementation.
