@@ -66,7 +66,7 @@ abstract contract Pod is Receiver {
     }
 
     /// @dev Sets the mothership directly without any emitting event.
-    /// Expose this is a guarded public function if needed.
+    /// Expose this in a guarded public function if needed.
     function _setMothership(address newMothership) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
