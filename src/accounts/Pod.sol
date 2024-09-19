@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import {Receiver} from "./Receiver.sol";
 
 /// @notice Hyper minimal sub account contract that is intended to be controlled by a mothership contract.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/LibERC6551.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/Pod.sol)
 abstract contract Pod is Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
