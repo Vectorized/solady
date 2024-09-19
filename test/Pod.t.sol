@@ -122,7 +122,7 @@ contract PodTest is SoladyTest {
         } else {
             vm.expectRevert(Pod.FnSelectorNotRecognized.selector);
             (bool s,) = address(pod).call(abi.encodePacked(selector));
-            s; // supressed complier warning
+            s; // suppressed compiler warning
         }
     }
 
