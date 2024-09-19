@@ -311,6 +311,15 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testDynamicArrayFree(uint256 n) public {
+        DynamicArrayLib.DynamicArray memory a;
+        uint256 m = _freeMemoryPointer();
+        n = _bound(n, 0, 50);
+        if (_randomChance(16)) a.reserve(n);
+        a.free();
+        assertEq(m, _freeMemoryPointer());
+    }
+
     function _sliceOriginal(uint256[] memory a, uint256 start, uint256 end)
         internal
         pure
