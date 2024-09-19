@@ -28,9 +28,9 @@ library DynamicArrayLib {
     function malloc(uint256 n) internal pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40)
+            result := or(sub(0, shr(32, n)), mload(0x40))
             mstore(result, n)
-            mstore(or(sub(0, shr(32, n)), 0x40), add(add(result, 0x20), shl(5, n)))
+            mstore(0x40, add(add(result, 0x20), shl(5, n)))
         }
     }
 
@@ -204,7 +204,8 @@ library DynamicArrayLib {
         result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            for { let arrData := mload(or(sub(0, shr(32, minimum)), array)) } 1 {} {
+            if iszero(lt(minimum, 0xffffffff)) { invalid() } // For extra safety.
+            for { let arrData := mload(array) } 1 {} {
                 // Some random prime number to multiply `cap`, so that
                 // we know that the `cap` is for a dynamic array.
                 // Selected to be larger than any memory pointer realistically.
