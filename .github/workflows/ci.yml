@@ -97,7 +97,7 @@ jobs:
           skip: ./.git,package-lock.json,ackee-blockchain-solady-report.pdf,EIP712Mock.sol
 
   gas-diff:
-    if: github.event_name == 'pull_request'
+    if: contains(github.event.pull_request.changed_files, '*.sol') # Run only if .sol files are changed
     permissions: write-all
     runs-on: ${{ matrix.os }}
     strategy:
@@ -129,3 +129,4 @@ jobs:
         with:
           delete: ${{ !steps.gas_diff.outputs.markdown }}
           message: ${{ steps.gas_diff.outputs.markdown }}
+    
