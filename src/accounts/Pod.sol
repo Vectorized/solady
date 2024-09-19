@@ -3,12 +3,13 @@ pragma solidity ^0.8.4;
 
 import {Receiver} from "./Receiver.sol";
 
-/// @notice Hyper minimal sub account contract that is intended to be controlled by a mothership contract.
+/// @notice Minimal account to be spawned and controlled by a mothership.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/Pod.sol)
 abstract contract Pod is Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @dev Call struct for the `executeBatch` function.
     struct Call {
         address target;
@@ -26,41 +27,61 @@ abstract contract Pod is Receiver {
     /// @dev The caller is not mothership.
     error CallerNotMothership();
 
+    /// @dev The mothership is already been initialized.
+    error MothershipAlreadyInitialized();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  CONSTANTS AND IMMUTABLES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The Pod `Mothership` slot is given by:
-    ///         `bytes9(keccak256("_MOTHERSHIP_SLOT"))`.
+    /// `uint72(bytes9(keccak256("_MOTHERSHIP_SLOT")))`.
     uint256 internal constant _MOTHERSHIP_SLOT = 0xe40cb4b49e7f0723b2;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     INTERNAL FUNCTIONS                     */
+    /*                   MOTHERSHIP OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Sets the mothership directly without any emitting event.
-    function _setMothership(address newMothership) internal virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            sstore(_MOTHERSHIP_SLOT, shr(96, shl(96, newMothership)))
-        }
-    }
 
     /// @dev Returns the mothership contract.
     function mothership() public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := sload(_MOTHERSHIP_SLOT)
+            result := shr(96, sload(_MOTHERSHIP_SLOT))
+        }
+    }
+
+    /// @dev Sets the mothership directly without any emitting event.
+    /// Call this function in the initializer or constructor, if any.
+    /// Reverts if the mothership has already been initialized.
+    function _initializeMothership(address initialMothership) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := _MOTHERSHIP_SLOT
+            if sload(s) {
+                mstore(0x00, 0xcc62e56e) // `MothershipAlreadyInitialized()`.
+                revert(0x1c, 0x04)
+            }
+            sstore(s, or(s, shl(96, initialMothership)))
+        }
+    }
+
+    /// @dev Sets the mothership directly without any emitting event.
+    /// Expose this is a guarded public function if needed.
+    function _setMothership(address newMothership) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := _MOTHERSHIP_SLOT
+            sstore(s, or(s, shl(96, newMothership)))
         }
     }
 
     /// @dev Requires that the caller is the mothership.
-    /// This override affects the `onlyMothership` modifier.
+    /// This is called in the `onlyMothership` modifier.
     function _checkMothership() internal view virtual {
         if (msg.sender != mothership()) revert CallerNotMothership();
     }
 
-    /// @dev Requires that the current mothership.
+    /// @dev Requires that the caller is the mothership.
     modifier onlyMothership() virtual {
         _checkMothership();
         _;
@@ -133,6 +154,10 @@ abstract contract Pod is Receiver {
             mstore(0x40, m) // Allocate the memory.
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         OVERRIDES                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Handle token callbacks. Reverts If no token callback is triggered.
     fallback() external payable virtual override(Receiver) receiverFallback {

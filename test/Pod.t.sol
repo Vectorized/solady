@@ -33,13 +33,19 @@ contract PodTest is SoladyTest {
     MockPod pod;
 
     function setUp() public {
-        pod = new MockPod(address(this));
+        pod = new MockPod();
+        pod.initializeMothership(address(this));
     }
 
     function testSetMothership() public {
         assertEq(pod.mothership(), address(this));
         pod.setMothership(address(0xABCD));
         assertEq(pod.mothership(), address(0xABCD));
+    }
+
+    function testInitializeMothership() public {
+        vm.expectRevert(Pod.MothershipAlreadyInitialized.selector);
+        pod.initializeMothership(address(this));
     }
 
     function testExecute() public {

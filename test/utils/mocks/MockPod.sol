@@ -7,13 +7,12 @@ import {Brutalizer} from "../Brutalizer.sol";
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockPod is Pod, Brutalizer {
-    constructor(address _mothership) {
-        _setMothership(_mothership);
+    function initializeMothership(address initialMothership) public {
+        _initializeMothership(_brutalized(initialMothership));
     }
 
     function setMothership(address newMothership) external {
-        newMothership = _brutalized(newMothership);
-        _setMothership(newMothership);
+        _setMothership(_brutalized(newMothership));
     }
 
     function executeBatch(uint256 filler, Call[] calldata calls)
