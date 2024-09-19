@@ -645,15 +645,14 @@ library EnumerableSetLib {
         /// @solidity memory-safe-assembly
         assembly {
             let packed := sload(set.slot)
-            for {} i {
+            for {} 1 {
                 mstore(0x00, 0x4e23d035) // `IndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             } {
                 if iszero(lt(i, 256)) { continue }
-                for { let j := 0 } 1 {} {
+                for { let j := 0 } iszero(eq(i, j)) {} {
                     packed := xor(packed, and(packed, add(1, not(packed))))
                     j := add(j, 1)
-                    if iszero(xor(i, j)) { break }
                 }
                 if iszero(packed) { continue }
                 break
