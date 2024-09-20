@@ -134,7 +134,7 @@ library LibString {
 
     /// @dev Returns the hexadecimal representation of `value`,
     /// left-padded to an input length of `length` bytes.
-    /// The output is prefixed with "0x" encoded using 2 hexadecimal digits per byte,
+    /// The output is not prefixed with "0x" and is encoded using 2 hexadecimal digits per byte,
     /// giving a total length of `length * 2` bytes.
     /// Reverts if `length` is too small for the output to contain all the digits.
     function toHexStringNoPrefix(uint256 value, uint256 length)
