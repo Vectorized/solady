@@ -31,7 +31,7 @@ contract ERC20ForPermit2Test is SoladyTest {
         } else {
             vm.expectRevert(ERC20.InvalidPermit.selector);
         }
-        token.permit(owner, _PERMIT2, amount, _random(), 0, bytes32(0), bytes32(0));
+        token.permit(owner, _PERMIT2, amount, block.timestamp, 0, bytes32(0), bytes32(0));
     }
 
     function testTransferFrom(address owner, uint256 amount) public {
