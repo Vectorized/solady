@@ -255,7 +255,7 @@ abstract contract ERC20 {
     /// Emits a {Transfer} event.
     function transferFrom(address from, address to, uint256 amount) public virtual returns (bool) {
         _beforeTokenTransfer(from, to, amount);
-        // We have to duplicate the code for zero-cost abstraction.
+        // Code duplication is for zero-cost abstraction if possible.
         if (_givePermit2InfiniteAllowance()) {
             /// @solidity memory-safe-assembly
             assembly {
@@ -640,7 +640,11 @@ abstract contract ERC20 {
     /*                          PERMIT2                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns whether to fix the Permit2 contract's allowance for at infinity.
+    /// @dev Returns whether to fix the Permit2 contract's allowance at infinity.
+    ///
+    /// This value should be kept constant after contract initialization,
+    /// or else the actual allowance values may not match with the {Approval} events.
+    /// For best performance, return a compile-time constant for zero-cost abstraction.
     function _givePermit2InfiniteAllowance() internal view virtual returns (bool) {
         return false;
     }
