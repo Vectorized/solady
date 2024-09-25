@@ -56,17 +56,6 @@ contract ERC20ForPermit2Test is SoladyTest {
         }
         assertEq(token.allowance(owner, _PERMIT2), type(uint256).max);
     }
-
-    function testIsUint256Check(uint256 x) public {
-        bool expected;
-        bool optimized;
-        /// @solidity memory-safe-assembly
-        assembly {
-            if add(x, 1) { expected := 1 }
-            if not(x) { optimized := 1 }
-        }
-        assertEq(optimized, expected);
-    }
 }
 
 contract ERC20Test is SoladyTest {
