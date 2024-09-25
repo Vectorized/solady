@@ -16,17 +16,22 @@ contract ERC20ForPermit2Test is SoladyTest {
         token = new MockERC20ForPermit2("Token", "TKN", 18);
     }
 
-    function testApproveToPermit2Reverts(address owner, uint256 amount) public {
-        vm.expectRevert(ERC20.Permit2AllowanceIsFixedAtInfinity.selector);
+    function testApproveToPermit2(address owner, uint256 amount) public {
         vm.prank(owner);
+        if (amount != type(uint256).max) {
+            vm.expectRevert(ERC20.Permit2AllowanceIsFixedAtInfinity.selector);
+        }
         token.approve(_PERMIT2, amount);
     }
 
-    function testPermitToPermit2Reverts() public {
-        vm.expectRevert(ERC20.Permit2AllowanceIsFixedAtInfinity.selector);
-        token.permit(
-            _randomHashedAddress(), _PERMIT2, _random(), _random(), 0, bytes32(0), bytes32(0)
-        );
+    function testPermitToPermit2(address owner, uint256 amount) public {
+        vm.prank(owner);
+        if (amount != type(uint256).max) {
+            vm.expectRevert(ERC20.Permit2AllowanceIsFixedAtInfinity.selector);
+        } else {
+            vm.expectRevert(ERC20.InvalidPermit.selector);
+        }
+        token.permit(owner, _PERMIT2, amount, _random(), 0, bytes32(0), bytes32(0));
     }
 
     function testTransferFrom(address owner, uint256 amount) public {
@@ -50,6 +55,17 @@ contract ERC20ForPermit2Test is SoladyTest {
             assertEq(token.balanceOf(owner), amount);
         }
         assertEq(token.allowance(owner, _PERMIT2), type(uint256).max);
+    }
+
+    function testIsUint256Check(uint256 x) public {
+        bool expected;
+        bool optimized;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if add(x, 1) { expected := 1 }
+            if not(x) { optimized := 1 }
+        }
+        assertEq(optimized, expected);
     }
 }
 

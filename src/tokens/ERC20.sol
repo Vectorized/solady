@@ -184,7 +184,14 @@ abstract contract ERC20 {
     /// Emits a {Approval} event.
     function approve(address spender, uint256 amount) public virtual returns (bool) {
         if (_givePermit2InfiniteAllowance()) {
-            if (spender == _PERMIT2) revert Permit2AllowanceIsFixedAtInfinity();
+            /// @solidity memory-safe-assembly
+            assembly {
+                // If `spender == _PERMIT2 && amount != type(uint256).max`.
+                if iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(amount)))) {
+                    mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
+                    revert(0x1c, 0x04)
+                }
+            }
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -260,7 +267,7 @@ abstract contract ERC20 {
                     let allowanceSlot := keccak256(0x0c, 0x34)
                     let allowance_ := sload(allowanceSlot)
                     // If the allowance is not the maximum uint256 value.
-                    if add(allowance_, 1) {
+                    if not(allowance_) {
                         // Revert if the amount to be transferred exceeds the allowance.
                         if gt(amount, allowance_) {
                             mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
@@ -302,7 +309,7 @@ abstract contract ERC20 {
                 let allowanceSlot := keccak256(0x0c, 0x34)
                 let allowance_ := sload(allowanceSlot)
                 // If the allowance is not the maximum uint256 value.
-                if add(allowance_, 1) {
+                if not(allowance_) {
                     // Revert if the amount to be transferred exceeds the allowance.
                     if gt(amount, allowance_) {
                         mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
@@ -372,7 +379,14 @@ abstract contract ERC20 {
         bytes32 s
     ) public virtual {
         if (_givePermit2InfiniteAllowance()) {
-            if (spender == _PERMIT2) revert Permit2AllowanceIsFixedAtInfinity();
+            /// @solidity memory-safe-assembly
+            assembly {
+                // If `spender == _PERMIT2 && value != type(uint256).max`.
+                if iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(value)))) {
+                    mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
+                    revert(0x1c, 0x04)
+                }
+            }
         }
         bytes32 nameHash = _constantNameHash();
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
@@ -560,7 +574,7 @@ abstract contract ERC20 {
     /// @dev Updates the allowance of `owner` for `spender` based on spent `amount`.
     function _spendAllowance(address owner, address spender, uint256 amount) internal virtual {
         if (_givePermit2InfiniteAllowance()) {
-            if (spender == _PERMIT2) revert Permit2AllowanceIsFixedAtInfinity();
+            if (spender == _PERMIT2) return; // Do nothing, as allowance is infinite.
         }
         /// @solidity memory-safe-assembly
         assembly {
@@ -571,7 +585,7 @@ abstract contract ERC20 {
             let allowanceSlot := keccak256(0x0c, 0x34)
             let allowance_ := sload(allowanceSlot)
             // If the allowance is not the maximum uint256 value.
-            if add(allowance_, 1) {
+            if not(allowance_) {
                 // Revert if the amount to be transferred exceeds the allowance.
                 if gt(amount, allowance_) {
                     mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
@@ -588,7 +602,14 @@ abstract contract ERC20 {
     /// Emits a {Approval} event.
     function _approve(address owner, address spender, uint256 amount) internal virtual {
         if (_givePermit2InfiniteAllowance()) {
-            if (spender == _PERMIT2) revert Permit2AllowanceIsFixedAtInfinity();
+            /// @solidity memory-safe-assembly
+            assembly {
+                // If `spender == _PERMIT2 && amount != type(uint256).max`.
+                if iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(amount)))) {
+                    mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
+                    revert(0x1c, 0x04)
+                }
+            }
         }
         /// @solidity memory-safe-assembly
         assembly {
