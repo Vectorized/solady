@@ -248,7 +248,7 @@ abstract contract ERC20 {
     /// Emits a {Transfer} event.
     function transferFrom(address from, address to, uint256 amount) public virtual returns (bool) {
         _beforeTokenTransfer(from, to, amount);
-        // We have to do this for zero-cost abstraction.
+        // We have to duplicate the code for zero-cost abstraction.
         if (_givePermit2InfiniteAllowance()) {
             /// @solidity memory-safe-assembly
             assembly {
