@@ -56,6 +56,34 @@ contract ERC20ForPermit2Test is SoladyTest {
         }
         assertEq(token.allowance(owner, _PERMIT2), type(uint256).max);
     }
+
+    function check_IsNotUint256MaxTrickEquivalence(uint256 x) public pure {
+        bool expected;
+        bool optimized;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if add(x, 1) { expected := 1 }
+            if not(x) { optimized := 1 }
+        }
+        assert(optimized == expected);
+        expected = x != type(uint256).max;
+        assert(optimized == expected);
+    }
+
+    function check_IsPermit2AndValueIsNotInfinityTrickEquivalence(address spender, uint256 amount)
+        public
+        pure
+    {
+        bool expected = spender == _PERMIT2 && amount != type(uint256).max;
+        bool optimized;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(amount)))) {
+                optimized := 1
+            }
+        }
+        assert(optimized == expected);
+    }
 }
 
 contract ERC20Test is SoladyTest {
