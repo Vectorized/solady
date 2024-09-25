@@ -109,7 +109,8 @@ abstract contract ERC20 {
         0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
     /// @dev `keccak256("1")`.
-    bytes32 private constant _VERSION_HASH =
+    /// If you need to use a different version, override `_versionHash`.
+    bytes32 private constant _DEFAULT_VERSION_HASH =
         0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
 
     /// @dev `keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")`.
@@ -353,6 +354,11 @@ abstract contract ERC20 {
     /// of `keccak256(bytes(name()))` if `name()` will never change.
     function _constantNameHash() internal view virtual returns (bytes32 result) {}
 
+    /// @dev If you need a different value, override this function.
+    function _versionHash() internal view virtual returns (bytes32 result) {
+        result = _DEFAULT_VERSION_HASH;
+    }
+
     /// @dev Returns the current nonce for `owner`.
     /// This value is used to compute the signature for EIP-2612 permit.
     function nonces(address owner) public view virtual returns (uint256 result) {
@@ -391,6 +397,7 @@ abstract contract ERC20 {
         bytes32 nameHash = _constantNameHash();
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
         if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
+        bytes32 versionHash = _versionHash();
         /// @solidity memory-safe-assembly
         assembly {
             // Revert if the block timestamp is greater than `deadline`.
@@ -410,7 +417,7 @@ abstract contract ERC20 {
             // Prepare the domain separator.
             mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), nameHash)
-            mstore(add(m, 0x40), _VERSION_HASH)
+            mstore(add(m, 0x40), versionHash)
             mstore(add(m, 0x60), chainid())
             mstore(add(m, 0x80), address())
             mstore(0x2e, keccak256(m, 0xa0))
@@ -455,12 +462,13 @@ abstract contract ERC20 {
         bytes32 nameHash = _constantNameHash();
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
         if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
+        bytes32 versionHash = _versionHash();
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Grab the free memory pointer.
             mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), nameHash)
-            mstore(add(m, 0x40), _VERSION_HASH)
+            mstore(add(m, 0x40), versionHash)
             mstore(add(m, 0x60), chainid())
             mstore(add(m, 0x80), address())
             result := keccak256(m, 0xa0)
