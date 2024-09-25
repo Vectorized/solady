@@ -640,7 +640,7 @@ abstract contract ERC20 {
     /*                          PERMIT2                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns whether to let the Permit2 contract have infinite allowance.
+    /// @dev Returns whether to fix the Permit2 contract's allowance for at infinity.
     function _givePermit2InfiniteAllowance() internal view virtual returns (bool) {
         return false;
     }
