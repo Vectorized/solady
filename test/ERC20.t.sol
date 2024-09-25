@@ -5,6 +5,53 @@ import "./utils/SoladyTest.sol";
 import "./utils/InvariantTest.sol";
 
 import {ERC20, MockERC20} from "./utils/mocks/MockERC20.sol";
+import {MockERC20ForPermit2} from "./utils/mocks/MockERC20ForPermit2.sol";
+
+contract ERC20ForPermit2Test is SoladyTest {
+    MockERC20ForPermit2 token;
+
+    address internal constant _PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
+    function setUp() public {
+        token = new MockERC20ForPermit2("Token", "TKN", 18);
+    }
+
+    function testApproveToPermit2Reverts(address owner, uint256 amount) public {
+        vm.expectRevert(ERC20.Permit2AllowanceIsFixedAtInfinity.selector);
+        vm.prank(owner);
+        token.approve(_PERMIT2, amount);
+    }
+
+    function testPermitToPermit2Reverts() public {
+        vm.expectRevert(ERC20.Permit2AllowanceIsFixedAtInfinity.selector);
+        token.permit(
+            _randomHashedAddress(), _PERMIT2, _random(), _random(), 0, bytes32(0), bytes32(0)
+        );
+    }
+
+    function testTransferFrom(address owner, uint256 amount) public {
+        assertEq(token.allowance(owner, _PERMIT2), type(uint256).max);
+        token.mint(owner, amount);
+        uint256 amountToTransfer = _bound(_random(), 0, amount);
+        address notPermit2 = _randomHashedAddress();
+        address recipient = _randomHashedAddress();
+        vm.prank(notPermit2);
+        if (amountToTransfer != 0) {
+            vm.expectRevert(ERC20.InsufficientAllowance.selector);
+        }
+        token.transferFrom(owner, recipient, amountToTransfer);
+
+        vm.prank(_PERMIT2);
+        token.transferFrom(owner, recipient, amountToTransfer);
+        if (recipient != owner) {
+            assertEq(token.balanceOf(recipient), amountToTransfer);
+            assertEq(token.balanceOf(owner), amount - amountToTransfer);
+        } else {
+            assertEq(token.balanceOf(owner), amount);
+        }
+        assertEq(token.allowance(owner, _PERMIT2), type(uint256).max);
+    }
+}
 
 contract ERC20Test is SoladyTest {
     MockERC20 token;
