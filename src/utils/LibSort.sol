@@ -249,6 +249,21 @@ library LibSort {
         (found, index) = _searchSorted(_toUints(a), uint256(uint160(needle)), 0);
     }
 
+    /// @dev Returns whether `a` contains `needle`.
+    function inSorted(uint256[] memory a, uint256 needle) internal pure returns (bool found) {
+        (found,) = searchSorted(a, needle);
+    }
+
+    /// @dev Returns whether `a` contains `needle`.
+    function inSorted(int256[] memory a, int256 needle) internal pure returns (bool found) {
+        (found,) = searchSorted(a, needle);
+    }
+
+    /// @dev Returns whether `a` contains `needle`.
+    function inSorted(address[] memory a, address needle) internal pure returns (bool found) {
+        (found,) = searchSorted(a, needle);
+    }
+
     /// @dev Reverses the array in-place.
     function reverse(uint256[] memory a) internal pure {
         /// @solidity memory-safe-assembly
