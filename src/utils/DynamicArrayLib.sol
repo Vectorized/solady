@@ -134,7 +134,7 @@ library DynamicArrayLib {
 
     /// @dev Returns if `needle` is in `array`.
     function contains(uint256[] memory array, uint256 needle) internal pure returns (bool) {
-        return indexOf(array, needle, 0) != NOT_FOUND;
+        return ~indexOf(array, needle, 0) != 0;
     }
 
     /// @dev Returns the first index of `needle`, scanning forward from `from`.
@@ -696,17 +696,17 @@ library DynamicArrayLib {
 
     /// @dev Returns if `needle` is in `array`.
     function contains(DynamicArray memory array, uint256 needle) internal pure returns (bool) {
-        return indexOf(array.data, needle, 0) != NOT_FOUND;
+        return ~indexOf(array.data, needle, 0) != 0;
     }
 
     /// @dev Returns if `needle` is in `array`.
     function contains(DynamicArray memory array, address needle) internal pure returns (bool) {
-        return indexOf(array.data, uint160(needle), 0) != NOT_FOUND;
+        return ~indexOf(array.data, uint160(needle), 0) != 0;
     }
 
     /// @dev Returns if `needle` is in `array`.
     function contains(DynamicArray memory array, bytes32 needle) internal pure returns (bool) {
-        return indexOf(array.data, uint256(needle), 0) != NOT_FOUND;
+        return ~indexOf(array.data, uint256(needle), 0) != 0;
     }
 
     /// @dev Returns the first index of `needle`, scanning forward from `from`.

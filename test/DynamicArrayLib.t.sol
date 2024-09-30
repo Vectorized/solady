@@ -214,6 +214,36 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testUint256Contains() public {
+        uint256 n = 50;
+        uint256[] memory a;
+        assertEq(DynamicArrayLib.contains(a, 0), false);
+        assertEq(DynamicArrayLib.contains(a, 1), false);
+        assertEq(DynamicArrayLib.contains(a, 2), false);
+        a = new uint256[](0);
+        assertEq(DynamicArrayLib.contains(a, 0), false);
+        assertEq(DynamicArrayLib.contains(a, 1), false);
+        assertEq(DynamicArrayLib.contains(a, 2), false);
+        a = new uint256[](1);
+        assertEq(DynamicArrayLib.contains(a, 0), true);
+        assertEq(DynamicArrayLib.contains(a, 1), false);
+        assertEq(DynamicArrayLib.contains(a, 2), false);
+        a = DynamicArrayLib.malloc(n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                a.set(i, i);
+            }
+        }
+        assertEq(DynamicArrayLib.contains(a, 0), true);
+        assertEq(DynamicArrayLib.contains(a, 1), true);
+        assertEq(DynamicArrayLib.contains(a, 10), true);
+        assertEq(DynamicArrayLib.contains(a, 31), true);
+        assertEq(DynamicArrayLib.contains(a, 32), true);
+        assertEq(DynamicArrayLib.contains(a, 49), true);
+        assertEq(DynamicArrayLib.contains(a, 50), false);
+        assertEq(DynamicArrayLib.contains(a, 100), false);
+    }
+
     function testUint256ArrayIndexOf() public {
         uint256 n = 50;
         uint256[] memory a;
