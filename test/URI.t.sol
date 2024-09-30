@@ -18,22 +18,21 @@ contract Base64Test is SoladyTest {
         _testURIEncodeComponentAndDecodeComponent("Wizar", "Wizar");
         _testURIEncodeComponentAndDecodeComponent("Wizard", "Wizard");
         _testURIEncodeComponentAndDecodeComponent("Wizards", "Wizards");
-        _testURIEncodeComponentAndDecodeComponent("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789");
+        _testURIEncodeComponentAndDecodeComponent(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789"
+        );
     }
 
     function testURIEncodeAndDecodeWithUnreservedMarks() public {
         // None of these characters are encoded, they are not reserved by URI standard
-        _testURIEncodeComponentAndDecodeComponent(
-            "-.!~*'()",
-            "-.!~*'()"
-        );
+        _testURIEncodeComponentAndDecodeComponent("-.!~*'()", "-.!~*'()");
     }
 
     function testURIEncodeAndDecodeWithReservedMarks() public {
         // All of these characters are encoded, they are reserved by URI standard
         _testURIEncodeComponentAndDecodeComponent(
-            ";/?:@&=+$,# ",
-            "%3B%2F%3F%3A%40%26%3D%2B%24%2C%23%20"
+            ";/?:@&=+$,# ", "%3B%2F%3F%3A%40%26%3D%2B%24%2C%23%20"
         );
     }
 
@@ -64,7 +63,9 @@ contract Base64Test is SoladyTest {
         URI.decodeComponent(";;;");
     }
 
-    function _testURIEncodeComponentAndDecodeComponent(string memory input, string memory output) internal {
+    function _testURIEncodeComponentAndDecodeComponent(string memory input, string memory output)
+        internal
+    {
         assertEq(URI.encodeComponent(input), output);
         assertEq(URI.decodeComponent(output), input);
     }
