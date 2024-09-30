@@ -440,6 +440,9 @@ contract LibSortTest is SoladyTest {
             uint256 randomIndex = _random() % a.length;
             uint256 value = a[randomIndex];
             (bool found, uint256 index) = LibSort.searchSorted(a, value);
+            if (_randomChance(16)) {
+                assertEq(LibSort.inSorted(a, value), found);
+            }
             assertTrue(found);
             assertEq(a[index], value);
         }
