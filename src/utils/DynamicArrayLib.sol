@@ -133,6 +133,11 @@ library DynamicArrayLib {
         }
     }
 
+    /// @dev Returns if `needle` is in `array`.
+    function contains(uint256[] memory array, uint256 needle) internal pure returns (bool) {
+        return indexOf(array, needle, 0) != NOT_FOUND;
+    }
+
     /// @dev Returns the first index of `needle` in `array`,
     /// searching from left to right, starting from `from`.
     /// If `needle` is not in `array`, returns `NOT_FOUND`.
@@ -694,6 +699,21 @@ library DynamicArrayLib {
         result.data = slice(array.data, start, type(uint256).max);
     }
 
+    /// @dev Returns if `needle` is in `array`.
+    function contains(DynamicArray memory array, uint256 needle) internal pure returns (bool) {
+        return indexOf(array.data, needle, 0) != NOT_FOUND;
+    }
+
+    /// @dev Returns if `needle` is in `array`.
+    function contains(DynamicArray memory array, int256 needle) internal pure returns (bool) {
+        return indexOf(array.data, uint256(needle), 0) != NOT_FOUND;
+    }
+
+    /// @dev Returns if `needle` is in `array`.
+    function contains(DynamicArray memory array, address needle) internal pure returns (bool) {
+        return indexOf(array.data, uint160(needle), 0) != NOT_FOUND;
+    }
+
     /// @dev Returns the first index of `needle` in `array`.
     /// If `needle` is not in `array`, returns `NOT_FOUND`.
     function indexOf(DynamicArray memory array, uint256 needle, uint256 from)
@@ -733,13 +753,13 @@ library DynamicArrayLib {
         pure
         returns (uint256)
     {
-        return indexOf(array.data, uint256(uint160(needle)), from);
+        return indexOf(array.data, uint160(needle), from);
     }
 
     /// @dev Returns the first index of `needle` in `array`.
     /// If `needle` is not in `array`, returns `NOT_FOUND`.
     function indexOf(DynamicArray memory array, address needle) internal pure returns (uint256) {
-        return indexOf(array.data, uint256(uint160(needle)), 0);
+        return indexOf(array.data, uint160(needle), 0);
     }
 
     /// @dev Returns the last index of `needle` in `array`.
@@ -789,7 +809,7 @@ library DynamicArrayLib {
         pure
         returns (uint256)
     {
-        return lastIndexOf(array.data, uint256(uint160(needle)), from);
+        return lastIndexOf(array.data, uint160(needle), from);
     }
 
     /// @dev Returns the last index of `needle` in `array`.
@@ -799,7 +819,7 @@ library DynamicArrayLib {
         pure
         returns (uint256)
     {
-        return lastIndexOf(array.data, uint256(uint160(needle)), uint256(int256(-1)));
+        return lastIndexOf(array.data, uint160(needle), uint256(int256(-1)));
     }
 
     /// @dev Equivalent to `keccak256(abi.encodePacked(array.data))`.
