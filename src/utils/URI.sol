@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Library to encode and decode strings in URI format.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/URIEncode.sol)
-/// @author Johnny Shankman aka White Lights - <johnny@white-lights.net>
+/// @author John Shankman aka White Lights - johnny@white-lights.net (whitelights.eth)
 library URI {
     /**
      * @dev URI Encoding/Decoding Hex Table
