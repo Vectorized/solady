@@ -120,13 +120,12 @@ library DynamicArrayLib {
                 let resultLen := sub(end, start)
                 mstore(result, resultLen)
                 array := add(array, shl(5, start))
-                let w := not(0x1f)
                 // Copy the `array` one word at a time, backwards.
                 let o := add(shl(5, resultLen), 0x20)
                 mstore(0x40, add(result, o)) // Allocate memory.
                 for {} 1 {} {
                     mstore(add(result, o), mload(add(array, o)))
-                    o := add(o, w) // `sub(o, 0x20)`.
+                    o := sub(o, 0x20)
                     if iszero(o) { break }
                 }
             }
