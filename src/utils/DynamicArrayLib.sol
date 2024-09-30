@@ -133,9 +133,10 @@ library DynamicArrayLib {
         }
     }
 
-    /// @dev Returns the first index of `needle` in `array`.
+    /// @dev Returns the first index of `needle` in `array`,
+    /// searching from left to right, starting from `from`.
     /// If `needle` is not in `array`, returns `NOT_FOUND`.
-    function indexOf(uint256[] memory array, uint256 needle)
+    function indexOf(uint256[] memory array, uint256 needle, uint256 from)
         internal
         pure
         returns (uint256 result)
@@ -143,9 +144,9 @@ library DynamicArrayLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := not(0)
-            if mload(array) {
-                let o := array
-                let end := add(shl(5, add(1, mload(o))), o)
+            if lt(from, mload(array)) {
+                let o := add(array, shl(5, from))
+                let end := add(shl(5, add(1, mload(array))), array)
                 let c := mload(end) // Cache the word after the array.
                 mstore(end, needle)
                 for {} 1 {} {
@@ -158,9 +159,20 @@ library DynamicArrayLib {
         }
     }
 
-    /// @dev Returns the last index of `needle` in `array`.
+    /// @dev Returns the first index of `needle` in `array`.
     /// If `needle` is not in `array`, returns `NOT_FOUND`.
-    function lastIndexOf(uint256[] memory array, uint256 needle)
+    function indexOf(uint256[] memory array, uint256 needle)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        result = indexOf(array, needle, 0);
+    }
+
+    /// @dev Returns the last index of `needle` in `array`,
+    /// searching from right to left, starting from `from`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(uint256[] memory array, uint256 needle, uint256 from)
         internal
         pure
         returns (uint256 result)
@@ -168,9 +180,10 @@ library DynamicArrayLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := not(0)
-            if mload(array) {
-                let n := mload(array)
-                let o := add(shl(5, add(1, n)), array)
+            let n := mload(array)
+            if gt(from, n) { from := n }
+            if from {
+                let o := add(shl(5, add(1, from)), array)
                 mstore(array, needle)
                 for {} 1 {} {
                     o := sub(o, 0x20)
@@ -180,6 +193,16 @@ library DynamicArrayLib {
                 result := or(sub(0, eq(o, array)), shr(5, sub(o, add(0x20, array))))
             }
         }
+    }
+
+    /// @dev Returns the first index of `needle` in `array`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(uint256[] memory array, uint256 needle)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        result = lastIndexOf(array, needle, uint256(int256(-1)));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -673,20 +696,60 @@ library DynamicArrayLib {
 
     /// @dev Returns the first index of `needle` in `array`.
     /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, uint256 needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
+        return indexOf(array.data, needle, from);
+    }
+
+    /// @dev Returns the first index of `needle` in `array`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
     function indexOf(DynamicArray memory array, uint256 needle) internal pure returns (uint256) {
-        return indexOf(array.data, needle);
+        return indexOf(array.data, needle, 0);
+    }
+
+    /// @dev Returns the first index of `needle` in `array`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, int256 needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
+        return indexOf(array.data, uint256(needle), from);
     }
 
     /// @dev Returns the first index of `needle` in `array`.
     /// If `needle` is not in `array`, returns `NOT_FOUND`.
     function indexOf(DynamicArray memory array, int256 needle) internal pure returns (uint256) {
-        return indexOf(array.data, uint256(needle));
+        return indexOf(array.data, uint256(needle), 0);
+    }
+
+    /// @dev Returns the first index of `needle` in `array`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, address needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
+        return indexOf(array.data, uint256(uint160(needle)), from);
     }
 
     /// @dev Returns the first index of `needle` in `array`.
     /// If `needle` is not in `array`, returns `NOT_FOUND`.
     function indexOf(DynamicArray memory array, address needle) internal pure returns (uint256) {
-        return indexOf(array.data, uint256(uint160(needle)));
+        return indexOf(array.data, uint256(uint160(needle)), 0);
+    }
+
+    /// @dev Returns the last index of `needle` in `array`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, uint256 needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
+        return lastIndexOf(array.data, needle, from);
     }
 
     /// @dev Returns the last index of `needle` in `array`.
@@ -696,7 +759,17 @@ library DynamicArrayLib {
         pure
         returns (uint256)
     {
-        return lastIndexOf(array.data, needle);
+        return lastIndexOf(array.data, needle, uint256(int256(-1)));
+    }
+
+    /// @dev Returns the last index of `needle` in `array`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, int256 needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
+        return lastIndexOf(array.data, uint256(needle), from);
     }
 
     /// @dev Returns the last index of `needle` in `array`.
@@ -706,7 +779,17 @@ library DynamicArrayLib {
         pure
         returns (uint256)
     {
-        return lastIndexOf(array.data, uint256(needle));
+        return lastIndexOf(array.data, uint256(needle), uint256(int256(-1)));
+    }
+
+    /// @dev Returns the last index of `needle` in `array`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, address needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
+        return lastIndexOf(array.data, uint256(uint160(needle)), from);
     }
 
     /// @dev Returns the last index of `needle` in `array`.
@@ -716,7 +799,7 @@ library DynamicArrayLib {
         pure
         returns (uint256)
     {
-        return lastIndexOf(array.data, uint256(uint160(needle)));
+        return lastIndexOf(array.data, uint256(uint160(needle)), uint256(int256(-1)));
     }
 
     /// @dev Equivalent to `keccak256(abi.encodePacked(array.data))`.

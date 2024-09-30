@@ -244,11 +244,22 @@ contract DynamicArrayLibTest is SoladyTest {
         assertEq(DynamicArrayLib.indexOf(a, 100), DynamicArrayLib.NOT_FOUND);
     }
 
-    function testUint256ArrayIndexOfDifferential(uint256[] memory array, uint256 needle) public {
+    function testUint256ArrayIndexOfDifferential(
+        uint256[] memory array,
+        uint256 needle,
+        uint256 from
+    ) public {
         if (_randomChance(2)) _misalignFreeMemoryPointer();
         if (_randomChance(8)) _brutalizeMemory();
-        uint256 computed = DynamicArrayLib.indexOf(array, needle);
-        assertEq(computed, _indexOfOriginal(array, needle));
+        from = _bound(from, 0, array.length + 10);
+        uint256 computed = DynamicArrayLib.indexOf(array, needle, from);
+        assertEq(computed, _indexOfOriginal(array, needle, from));
+        if (_randomChance(16)) {
+            computed = DynamicArrayLib.indexOf(array, needle);
+            assertEq(computed, _indexOfOriginal(array, needle));
+            computed = DynamicArrayLib.indexOf(DynamicArrayLib.DynamicArray(array), needle);
+            assertEq(computed, _indexOfOriginal(array, needle));
+        }
     }
 
     function _indexOfOriginal(uint256[] memory array, uint256 needle)
@@ -256,9 +267,17 @@ contract DynamicArrayLibTest is SoladyTest {
         pure
         returns (uint256)
     {
+        return _indexOfOriginal(array, needle, 0);
+    }
+
+    function _indexOfOriginal(uint256[] memory array, uint256 needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
         unchecked {
             uint256 n = array.length;
-            for (uint256 i; i != n; ++i) {
+            for (uint256 i = from; i < n; ++i) {
                 if (array[i] == needle) return i;
             }
         }
@@ -295,13 +314,22 @@ contract DynamicArrayLibTest is SoladyTest {
         assertEq(DynamicArrayLib.lastIndexOf(a, 100), DynamicArrayLib.NOT_FOUND);
     }
 
-    function testUint256ArrayLastIndexOfDifferential(uint256[] memory array, uint256 needle)
-        public
-    {
+    function testUint256ArrayLastIndexOfDifferential(
+        uint256[] memory array,
+        uint256 needle,
+        uint256 from
+    ) public {
         if (_randomChance(2)) _misalignFreeMemoryPointer();
         if (_randomChance(8)) _brutalizeMemory();
-        uint256 computed = DynamicArrayLib.lastIndexOf(array, needle);
-        assertEq(computed, _lastIndexOfOriginal(array, needle));
+        from = _bound(from, 0, array.length + 10);
+        uint256 computed = DynamicArrayLib.lastIndexOf(array, needle, from);
+        assertEq(computed, _lastIndexOfOriginal(array, needle, from));
+        if (_randomChance(16)) {
+            computed = DynamicArrayLib.lastIndexOf(array, needle);
+            assertEq(computed, _lastIndexOfOriginal(array, needle));
+            computed = DynamicArrayLib.lastIndexOf(DynamicArrayLib.DynamicArray(array), needle);
+            assertEq(computed, _lastIndexOfOriginal(array, needle));
+        }
     }
 
     function _lastIndexOfOriginal(uint256[] memory array, uint256 needle)
@@ -309,11 +337,20 @@ contract DynamicArrayLibTest is SoladyTest {
         pure
         returns (uint256)
     {
+        return _lastIndexOfOriginal(array, needle, type(uint256).max);
+    }
+
+    function _lastIndexOfOriginal(uint256[] memory array, uint256 needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
         unchecked {
             uint256 n = array.length;
-            for (uint256 i; i != n; ++i) {
-                uint256 j = n - 1 - i;
-                if (array[j] == needle) return j;
+            if (from > n) from = n;
+            for (uint256 i = from; i != 0;) {
+                --i;
+                if (array[i] == needle) return i;
             }
         }
         return type(uint256).max;
