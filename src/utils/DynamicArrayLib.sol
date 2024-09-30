@@ -151,13 +151,12 @@ library DynamicArrayLib {
                 let o := add(array, shl(5, from))
                 let end := add(shl(5, add(1, mload(array))), array)
                 let c := mload(end) // Cache the word after the array.
-                mstore(end, needle)
-                for {} 1 {} {
+                for { mstore(end, needle) } 1 {} {
                     o := add(o, 0x20)
                     if eq(mload(o), needle) { break }
                 }
                 mstore(end, c) // Restore the word after the array.
-                result := or(sub(0, eq(o, end)), shr(5, sub(o, add(0x20, array))))
+                if iszero(eq(o, end)) { result := shr(5, sub(o, add(0x20, array))) }
             }
         }
     }
@@ -183,16 +182,15 @@ library DynamicArrayLib {
         assembly {
             result := not(0)
             let n := mload(array)
-            if gt(from, n) { from := n }
+            if iszero(lt(from, n)) { from := n }
             if from {
                 let o := add(shl(5, add(1, from)), array)
-                mstore(array, needle)
-                for {} 1 {} {
+                for { mstore(array, needle) } 1 {} {
                     o := sub(o, 0x20)
                     if eq(mload(o), needle) { break }
                 }
                 mstore(array, n) // Restore the length of the array.
-                result := or(sub(0, eq(o, array)), shr(5, sub(o, add(0x20, array))))
+                if iszero(eq(o, array)) { result := shr(5, sub(o, add(0x20, array))) }
             }
         }
     }
