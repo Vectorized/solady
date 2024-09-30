@@ -82,6 +82,7 @@ library URI {
      * @dev Decodes the provided URI-encoded string just like decodeURIComponent
      *      in JavsScript. Strings which are incorrectly encoded cannot be parsed
      *      and will typically revert.
+     * See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent
      * See: https://datatracker.ietf.org/doc/html/rfc2396
      * See: https://datatracker.ietf.org/doc/html/rfc3986
      * @param str The string to decode
