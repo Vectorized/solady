@@ -214,6 +214,111 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testUint256ArrayIndexOf() public {
+        uint256 n = 50;
+        uint256[] memory a;
+        assertEq(DynamicArrayLib.indexOf(a, 0), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.indexOf(a, 1), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.indexOf(a, 2), DynamicArrayLib.NOT_FOUND);
+        a = new uint256[](0);
+        assertEq(DynamicArrayLib.indexOf(a, 0), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.indexOf(a, 1), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.indexOf(a, 2), DynamicArrayLib.NOT_FOUND);
+        a = new uint256[](1);
+        assertEq(DynamicArrayLib.indexOf(a, 0), 0);
+        assertEq(DynamicArrayLib.indexOf(a, 1), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.indexOf(a, 2), DynamicArrayLib.NOT_FOUND);
+        a = DynamicArrayLib.malloc(n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                a.set(i, i);
+            }
+        }
+        assertEq(DynamicArrayLib.indexOf(a, 0), 0);
+        assertEq(DynamicArrayLib.indexOf(a, 1), 1);
+        assertEq(DynamicArrayLib.indexOf(a, 10), 10);
+        assertEq(DynamicArrayLib.indexOf(a, 31), 31);
+        assertEq(DynamicArrayLib.indexOf(a, 32), 32);
+        assertEq(DynamicArrayLib.indexOf(a, 49), 49);
+        assertEq(DynamicArrayLib.indexOf(a, 50), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.indexOf(a, 100), DynamicArrayLib.NOT_FOUND);
+    }
+
+    function testUint256ArrayIndexOfDifferential(uint256[] memory array, uint256 needle) public {
+        if (_randomChance(2)) _misalignFreeMemoryPointer();
+        if (_randomChance(8)) _brutalizeMemory();
+        uint256 computed = DynamicArrayLib.indexOf(array, needle);
+        assertEq(computed, _indexOfOriginal(array, needle));
+    }
+
+    function _indexOfOriginal(uint256[] memory array, uint256 needle)
+        internal
+        pure
+        returns (uint256)
+    {
+        unchecked {
+            uint256 n = array.length;
+            for (uint256 i; i != n; ++i) {
+                if (array[i] == needle) return i;
+            }
+        }
+        return type(uint256).max;
+    }
+
+    function testUint256ArrayLastIndexOf() public {
+        uint256 n = 50;
+        uint256[] memory a;
+        assertEq(DynamicArrayLib.lastIndexOf(a, 0), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 1), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 2), DynamicArrayLib.NOT_FOUND);
+        a = new uint256[](0);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 0), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 1), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 2), DynamicArrayLib.NOT_FOUND);
+        a = new uint256[](1);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 0), 0);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 1), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 2), DynamicArrayLib.NOT_FOUND);
+        a = DynamicArrayLib.malloc(n);
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                a.set(i, i);
+            }
+        }
+        assertEq(DynamicArrayLib.lastIndexOf(a, 0), 0);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 1), 1);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 10), 10);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 31), 31);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 32), 32);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 49), 49);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 50), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 100), DynamicArrayLib.NOT_FOUND);
+    }
+
+    function testUint256ArrayLastIndexOfDifferential(uint256[] memory array, uint256 needle)
+        public
+    {
+        if (_randomChance(2)) _misalignFreeMemoryPointer();
+        if (_randomChance(8)) _brutalizeMemory();
+        uint256 computed = DynamicArrayLib.lastIndexOf(array, needle);
+        assertEq(computed, _lastIndexOfOriginal(array, needle));
+    }
+
+    function _lastIndexOfOriginal(uint256[] memory array, uint256 needle)
+        internal
+        pure
+        returns (uint256)
+    {
+        unchecked {
+            uint256 n = array.length;
+            for (uint256 i; i != n; ++i) {
+                uint256 j = n - 1 - i;
+                if (array[j] == needle) return j;
+            }
+        }
+        return type(uint256).max;
+    }
+
     function testUint256ArrayPopulate() public {
         unchecked {
             uint256 n = 100;
