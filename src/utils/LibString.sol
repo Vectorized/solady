@@ -1108,6 +1108,7 @@ library LibString {
         assembly {
             result := mload(0x40)
             // Store "0123456789ABCDEF" in scratch space.
+            // Uppercased to be consistent with JavaScript's implementation.
             mstore(0x0f, 0x30313233343536373839414243444546)
             let o := add(result, 0x20)
             for { let end := add(s, mload(s)) } iszero(eq(s, end)) {} {
@@ -1116,8 +1117,8 @@ library LibString {
                 // If not in `[0-9A-Z-a-z-.!~*'()]`.
                 if iszero(and(1, shr(c, 0x47fffffe07fffffe03ff678200000000))) {
                     mstore8(o, 0x25) // '%'.
-                    mstore8(add(o, 2), mload(and(c, 15)))
                     mstore8(add(o, 1), mload(and(shr(4, c), 15)))
+                    mstore8(add(o, 2), mload(and(c, 15)))
                     o := add(o, 3)
                     continue
                 }
