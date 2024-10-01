@@ -1098,6 +1098,39 @@ library LibString {
         result = escapeJSON(s, false);
     }
 
+    /// @dev Encodes `s` so that it can be safely used in a URI,
+    /// just like `encodeURIComponent` in JavaScript.
+    /// See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent
+    /// See: https://datatracker.ietf.org/doc/html/rfc2396
+    /// See: https://datatracker.ietf.org/doc/html/rfc3986
+    function encodeURIComponent(string memory s) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            // Store "0123456789ABCDEF" in scratch space.
+            // Uppercased to be consistent with JavaScript's implementation.
+            mstore(0x0f, 0x30313233343536373839414243444546)
+            let o := add(result, 0x20)
+            for { let end := add(s, mload(s)) } iszero(eq(s, end)) {} {
+                s := add(s, 1)
+                let c := and(mload(s), 0xff)
+                // If not in `[0-9A-Z-a-z-.!~*'()]`.
+                if iszero(and(1, shr(c, 0x47fffffe07fffffe03ff678200000000))) {
+                    mstore8(o, 0x25) // '%'.
+                    mstore8(add(o, 1), mload(and(shr(4, c), 15)))
+                    mstore8(add(o, 2), mload(and(c, 15)))
+                    o := add(o, 3)
+                    continue
+                }
+                mstore8(o, c)
+                o := add(o, 1)
+            }
+            mstore(result, sub(o, add(result, 0x20))) // Store the length.
+            mstore(o, 0) // Zeroize the slot after the string.
+            mstore(0x40, add(o, 0x20)) // Allocate memory.
+        }
+    }
+
     /// @dev Returns whether `a` equals `b`.
     function eq(string memory a, string memory b) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
