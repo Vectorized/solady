@@ -1097,6 +1097,180 @@ contract LibStringTest is SoladyTest {
         }
     }
 
+    function testStringEncodeURIComponent() public {
+        string memory emptyString;
+        _testEncodeURIComponent(emptyString, "");
+        _testEncodeURIComponent("", "");
+        _testEncodeURIComponent("a", "a");
+        _testEncodeURIComponent("ab", "ab");
+        _testEncodeURIComponent(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789"
+        );
+        // All of these characters are encoded, they are reserved by URI standard
+        _testEncodeURIComponent(";/?:@&=+$,# ", "%3B%2F%3F%3A%40%26%3D%2B%24%2C%23%20");
+        // Test unicode.
+        _testEncodeURIComponent(unicode"шеллы", "%D1%88%D0%B5%D0%BB%D0%BB%D1%8B");
+        _testEncodeURIComponent(unicode"😃", "%F0%9F%98%83");
+        // Test space.
+        _testEncodeURIComponent("Hello World", "Hello%20World");
+        _testEncodeURIComponent("Hello World!", "Hello%20World!");
+    }
+
+    function _testEncodeURIComponent(string memory input, string memory expectedOutput) internal {
+        assertEq(LibString.encodeURIComponent(input), expectedOutput);
+    }
+
+    function testEncodeURIComponentDifferential(string memory s) public {
+        if (_randomChance(8)) _misalignFreeMemoryPointer();
+        if (_randomChance(16)) _brutalizeMemory();
+        string memory encoded = LibString.encodeURIComponent(s);
+        _checkMemory(encoded);
+        assertEq(encoded, _encodeURIComponentOriginal(s));
+        if (_randomChance(8)) {
+            assertEq(_decodeURIComponentOriginal(encoded), s);
+        }
+        _checkMemory(encoded);
+    }
+
+    // Original implementation of `_encodeURIComponentOriginal`
+    // credit to John Shankman aka White Lights - johnny@white-lights.net (whitelights.eth).
+    function _encodeURIComponentOriginal(string memory str) internal pure returns (string memory) {
+        bytes memory input = bytes(str);
+        uint256 inputLength = input.length;
+        uint256 outputLength = 0;
+        bytes memory TABLE = "0123456789ABCDEF";
+        unchecked {
+            for (uint256 i = 0; i < inputLength; i++) {
+                bytes1 b = input[i];
+
+                if (
+                    (b >= 0x30 && b <= 0x39) // 0-9
+                        || (b >= 0x41 && b <= 0x5a) // A-Z
+                        || (b >= 0x61 && b <= 0x7a) // a-z
+                        || b == 0x2D // -
+                        || b == 0x2E // .
+                        || b == 0x21 // !
+                        || b == 0x7E // ~
+                        || b == 0x2A // *
+                        || b == 0x27 // '
+                        || b == 0x28 // (
+                        || b == 0x29 // )
+                ) {
+                    outputLength++;
+                } else {
+                    outputLength += 3;
+                }
+            }
+
+            bytes memory output = new bytes(outputLength);
+            uint256 j = 0;
+
+            for (uint256 i = 0; i < inputLength; i++) {
+                bytes1 b = input[i];
+
+                if (
+                    (b >= 0x30 && b <= 0x39) // 0-9
+                        || (b >= 0x41 && b <= 0x5a) // A-Z
+                        || (b >= 0x61 && b <= 0x7a) // a-z
+                        || b == 0x2D // -
+                        || b == 0x2E // .
+                        || b == 0x21 // !
+                        || b == 0x7E // ~
+                        || b == 0x2A // *
+                        || b == 0x27 // '
+                        || b == 0x28 // (
+                        || b == 0x29 // )
+                ) {
+                    output[j++] = b;
+                } else {
+                    bytes1 b1 = TABLE[uint8(b) / 16];
+                    bytes1 b2 = TABLE[uint8(b) % 16];
+                    output[j++] = 0x25; // '%'
+                    output[j++] = b1;
+                    output[j++] = b2;
+                }
+            }
+
+            return string(output);
+        }
+    }
+
+    // Original implementation of `_decodeURIComponentOriginal`
+    // credit to John Shankman aka White Lights - johnny@white-lights.net (whitelights.eth).
+    //
+    // Since we don't currently have a clear onchain use case for decoding,
+    // we'll include this function in the test suite for completeness.
+    function _decodeURIComponentOriginal(string memory str) internal pure returns (string memory) {
+        string memory result = "";
+        uint256 bytelength = bytes(str).length;
+        unchecked {
+            for (uint256 i = 0; i < bytelength; i++) {
+                bytes1 b = bytes(str)[i];
+                // check if that character (as a byte1) is the "%" sign delimiter
+                if (b == bytes1("%")) {
+                    // parse the two characters following the % delimiter
+                    uint8 byteU8_1 = uint8(bytes(str)[++i]);
+                    uint8 byteU8_2 = uint8(bytes(str)[++i]);
+
+                    // ensure they are characters 0-9 or A-F or a-f and therefore hexadecimal
+                    require(
+                        (
+                            (byteU8_1 >= 48 && byteU8_1 <= 57) || (byteU8_1 >= 65 && byteU8_1 <= 70)
+                                || (byteU8_1 >= 97 && byteU8_1 <= 102)
+                        ),
+                        "invalid encoded string"
+                    );
+                    require(
+                        (
+                            (byteU8_2 >= 48 && byteU8_2 <= 57) || (byteU8_2 >= 65 && byteU8_2 <= 70)
+                                || (byteU8_2 >= 97 && byteU8_2 <= 102)
+                        ),
+                        "invalid encoded string"
+                    );
+
+                    // convert the 1st char representing a hexadecimal to decimal
+                    uint8 hexCharAsDecimal;
+                    if (byteU8_1 >= 48 && byteU8_1 <= 57) {
+                        // 0-9
+                        hexCharAsDecimal = byteU8_1 - 48;
+                    } else if (byteU8_1 >= 65 && byteU8_1 <= 70) {
+                        // A-F
+                        hexCharAsDecimal = byteU8_1 - 55;
+                    } else {
+                        // a-f
+                        hexCharAsDecimal = byteU8_1 - 87;
+                    }
+
+                    // convert the 2nd char representing a hexadecimal to decimal
+                    uint8 hexCharAsDecimal2;
+                    if (byteU8_2 >= 48 && byteU8_2 <= 57) {
+                        // 0-9
+                        hexCharAsDecimal2 = byteU8_2 - 48;
+                    } else if (byteU8_2 >= 65 && byteU8_2 <= 70) {
+                        // A-F
+                        hexCharAsDecimal2 = byteU8_2 - 55;
+                    } else {
+                        // a-f
+                        hexCharAsDecimal2 = byteU8_2 - 87;
+                    }
+
+                    // 1st hex-char is a number words to move over
+                    // 2nd hex-char is byte offset from there
+                    // ex: %3E or %3e we move (3 * 16) + 14 bytes over
+                    result = string(
+                        abi.encodePacked(
+                            result, bytes1((hexCharAsDecimal * 16) + hexCharAsDecimal2)
+                        )
+                    );
+                } else {
+                    result = string(abi.encodePacked(result, string(abi.encodePacked(b))));
+                }
+            }
+            return result;
+        }
+    }
+
     function testStringEq(string memory a, string memory b) public {
         assertEq(LibString.eq(a, b), keccak256(bytes(a)) == keccak256(bytes(b)));
     }
