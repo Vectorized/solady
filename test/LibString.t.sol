@@ -1124,6 +1124,7 @@ contract LibStringTest is SoladyTest {
     function testEncodeURIComponentDifferential(string memory s) public {
         if (_randomChance(8)) _misalignFreeMemoryPointer();
         if (_randomChance(16)) _brutalizeMemory();
+        bytes32 hashBefore = keccak256(bytes(s));
         string memory encoded = LibString.encodeURIComponent(s);
         _checkMemory(encoded);
         assertEq(encoded, _encodeURIComponentOriginal(s));
@@ -1131,6 +1132,7 @@ contract LibStringTest is SoladyTest {
             assertEq(_decodeURIComponentOriginal(encoded), s);
         }
         _checkMemory(encoded);
+        assertEq(keccak256(bytes(s)), hashBefore);
     }
 
     // Original implementation of `_encodeURIComponentOriginal`
