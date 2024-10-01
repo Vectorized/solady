@@ -352,7 +352,6 @@ contract DynamicArrayLibTest is SoladyTest {
         assertEq(DynamicArrayLib.lastIndexOf(a, 49, 49), 49);
         assertEq(DynamicArrayLib.lastIndexOf(a, 50, 50), DynamicArrayLib.NOT_FOUND);
         assertEq(DynamicArrayLib.lastIndexOf(a, 100, 100), DynamicArrayLib.NOT_FOUND);
-
     }
 
     function testUint256ArrayLastIndexOfDifferential(
