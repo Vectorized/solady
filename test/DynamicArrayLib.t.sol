@@ -342,6 +342,17 @@ contract DynamicArrayLibTest is SoladyTest {
         assertEq(DynamicArrayLib.lastIndexOf(a, 49), 49);
         assertEq(DynamicArrayLib.lastIndexOf(a, 50), DynamicArrayLib.NOT_FOUND);
         assertEq(DynamicArrayLib.lastIndexOf(a, 100), DynamicArrayLib.NOT_FOUND);
+
+        // edge case
+        assertEq(DynamicArrayLib.lastIndexOf(a, 0, 0), 0);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 1, 1), 1);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 10, 10), 10);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 31, 31), 31);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 32, 32), 32);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 49, 49), 49);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 50, 50), DynamicArrayLib.NOT_FOUND);
+        assertEq(DynamicArrayLib.lastIndexOf(a, 100, 100), DynamicArrayLib.NOT_FOUND);
+
     }
 
     function testUint256ArrayLastIndexOfDifferential(
@@ -377,10 +388,12 @@ contract DynamicArrayLibTest is SoladyTest {
     {
         unchecked {
             uint256 n = array.length;
-            if (from > n) from = n;
-            for (uint256 i = from; i != 0;) {
-                --i;
-                if (array[i] == needle) return i;
+            if (n > 0) {
+                if (from >= n) from = (n - 1);
+                for (uint256 i = (from + 1); i != 0;) {
+                    --i;
+                    if (array[i] == needle) return i;
+                }
             }
         }
         return type(uint256).max;

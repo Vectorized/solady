@@ -182,9 +182,9 @@ library DynamicArrayLib {
         assembly {
             result := not(0)
             let n := mload(array)
-            if iszero(lt(from, n)) { from := n }
-            if from {
-                let o := add(shl(5, add(1, from)), array)
+            if n {
+                if iszero(lt(from, n)) { from := sub(n, 1) }
+                let o := add(shl(5, add(2, from)), array)
                 for { mstore(array, needle) } 1 {} {
                     o := sub(o, 0x20)
                     if eq(mload(o), needle) { break }
