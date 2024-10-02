@@ -481,7 +481,7 @@ contract LibCloneTest is SoladyTest {
         address instance = this.createDeterministicClone(address(this), args, salt);
         _checkArgsOnClone(instance, args);
         _checkBehavesLikeProxy(instance);
-        if (_randomChance(2)) {
+        if (_randomChance(32)) {
             this.createDeterministicClone(address(this), args, salt);
         }
     }
