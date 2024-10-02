@@ -217,6 +217,35 @@ library DynamicArrayLib {
         return array.data.length;
     }
 
+    /// @dev Wraps `array` in a dynamic array struct.
+    function wrap(uint256[] memory array) internal pure returns (DynamicArray memory result) {
+        result.data = array;
+    }
+
+    /// @dev Wraps `array` in a dynamic array struct.
+    function wrap(address[] memory array) internal pure returns (DynamicArray memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, array)
+        }
+    }
+
+    /// @dev Wraps `array` in a dynamic array struct.
+    function wrap(bool[] memory array) internal pure returns (DynamicArray memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, array)
+        }
+    }
+
+    /// @dev Wraps `array` in a dynamic array struct.
+    function wrap(bytes32[] memory array) internal pure returns (DynamicArray memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, array)
+        }
+    }
+
     /// @dev Clears the array without deallocating the memory.
     function clear(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
         _deallocate(result);

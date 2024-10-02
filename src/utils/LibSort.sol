@@ -52,6 +52,11 @@ library LibSort {
         insertionSort(_toUints(a));
     }
 
+    /// @dev Sorts the array in-place with insertion sort.
+    function insertionSort(bytes32[] memory a) internal pure {
+        insertionSort(_toUints(a));
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      INTRO-QUICKSORT                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -180,6 +185,11 @@ library LibSort {
         sort(_toUints(a));
     }
 
+    /// @dev Sorts the array in-place with intro-quicksort.
+    function sort(bytes32[] memory a) internal pure {
+        sort(_toUints(a));
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  OTHER USEFUL OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -219,6 +229,11 @@ library LibSort {
         uniquifySorted(_toUints(a));
     }
 
+    /// @dev Removes duplicate elements from a ascendingly sorted memory array.
+    function uniquifySorted(bytes32[] memory a) internal pure {
+        uniquifySorted(_toUints(a));
+    }
+
     /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
     /// `index` precedence: equal to > nearest before > nearest after.
     function searchSorted(uint256[] memory a, uint256 needle)
@@ -246,7 +261,17 @@ library LibSort {
         pure
         returns (bool found, uint256 index)
     {
-        (found, index) = _searchSorted(_toUints(a), uint256(uint160(needle)), 0);
+        (found, index) = _searchSorted(_toUints(a), uint160(needle), 0);
+    }
+
+    /// @dev Returns whether `a` contains `needle`, and the index of `needle`.
+    /// `index` precedence: equal to > nearest before > nearest after.
+    function searchSorted(bytes32[] memory a, bytes32 needle)
+        internal
+        pure
+        returns (bool found, uint256 index)
+    {
+        (found, index) = _searchSorted(_toUints(a), uint256(needle), 0);
     }
 
     /// @dev Returns whether `a` contains `needle`.
@@ -261,6 +286,11 @@ library LibSort {
 
     /// @dev Returns whether `a` contains `needle`.
     function inSorted(address[] memory a, address needle) internal pure returns (bool found) {
+        (found,) = searchSorted(a, needle);
+    }
+
+    /// @dev Returns whether `a` contains `needle`.
+    function inSorted(bytes32[] memory a, bytes32 needle) internal pure returns (bool found) {
         (found,) = searchSorted(a, needle);
     }
 
@@ -294,6 +324,11 @@ library LibSort {
         reverse(_toUints(a));
     }
 
+    /// @dev Reverses the array in-place.
+    function reverse(bytes32[] memory a) internal pure {
+        reverse(_toUints(a));
+    }
+
     /// @dev Returns a copy of the array.
     function copy(uint256[] memory a) internal pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
@@ -318,6 +353,11 @@ library LibSort {
     /// @dev Returns a copy of the array.
     function copy(address[] memory a) internal pure returns (address[] memory result) {
         result = _toAddresses(copy(_toUints(a)));
+    }
+
+    /// @dev Returns a copy of the array.
+    function copy(bytes32[] memory a) internal pure returns (bytes32[] memory result) {
+        result = _toBytes32s(copy(_toUints(a)));
     }
 
     /// @dev Returns whether the array is sorted in ascending order.
@@ -356,6 +396,11 @@ library LibSort {
 
     /// @dev Returns whether the array is sorted in ascending order.
     function isSorted(address[] memory a) internal pure returns (bool result) {
+        result = isSorted(_toUints(a));
+    }
+
+    /// @dev Returns whether the array is sorted in ascending order.
+    function isSorted(bytes32[] memory a) internal pure returns (bool result) {
         result = isSorted(_toUints(a));
     }
 
@@ -398,6 +443,11 @@ library LibSort {
         result = isSortedAndUniquified(_toUints(a));
     }
 
+    /// @dev Returns whether the array is strictly ascending (sorted and uniquified).
+    function isSortedAndUniquified(bytes32[] memory a) internal pure returns (bool result) {
+        result = isSortedAndUniquified(_toUints(a));
+    }
+
     /// @dev Returns the sorted set difference of `a` and `b`.
     /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
     function difference(uint256[] memory a, uint256[] memory b)
@@ -426,6 +476,16 @@ library LibSort {
         returns (address[] memory c)
     {
         c = _toAddresses(_difference(_toUints(a), _toUints(b), 0));
+    }
+
+    /// @dev Returns the sorted set difference between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function difference(bytes32[] memory a, bytes32[] memory b)
+        internal
+        pure
+        returns (bytes32[] memory c)
+    {
+        c = _toBytes32s(_difference(_toUints(a), _toUints(b), 0));
     }
 
     /// @dev Returns the sorted set intersection between `a` and `b`.
@@ -458,6 +518,16 @@ library LibSort {
         c = _toAddresses(_intersection(_toUints(a), _toUints(b), 0));
     }
 
+    /// @dev Returns the sorted set intersection between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function intersection(bytes32[] memory a, bytes32[] memory b)
+        internal
+        pure
+        returns (bytes32[] memory c)
+    {
+        c = _toBytes32s(_intersection(_toUints(a), _toUints(b), 0));
+    }
+
     /// @dev Returns the sorted set union of `a` and `b`.
     /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
     function union(uint256[] memory a, uint256[] memory b)
@@ -486,6 +556,16 @@ library LibSort {
         returns (address[] memory c)
     {
         c = _toAddresses(_union(_toUints(a), _toUints(b), 0));
+    }
+
+    /// @dev Returns the sorted set union between `a` and `b`.
+    /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
+    function union(bytes32[] memory a, bytes32[] memory b)
+        internal
+        pure
+        returns (bytes32[] memory c)
+    {
+        c = _toBytes32s(_union(_toUints(a), _toUints(b), 0));
     }
 
     /// @dev Cleans the upper 96 bits of the addresses.
@@ -524,6 +604,14 @@ library LibSort {
         }
     }
 
+    /// @dev Reinterpret cast to an uint256 array.
+    function _toUints(bytes32[] memory a) private pure returns (uint256[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+    }
+
     /// @dev Reinterpret cast to an int array.
     function _toInts(uint256[] memory a) private pure returns (int256[] memory casted) {
         /// @solidity memory-safe-assembly
@@ -534,6 +622,14 @@ library LibSort {
 
     /// @dev Reinterpret cast to an address array.
     function _toAddresses(uint256[] memory a) private pure returns (address[] memory casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted := a
+        }
+    }
+
+    /// @dev Reinterpret cast to an bytes32 array.
+    function _toBytes32s(uint256[] memory a) private pure returns (bytes32[] memory casted) {
         /// @solidity memory-safe-assembly
         assembly {
             casted := a
