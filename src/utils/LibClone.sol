@@ -488,7 +488,7 @@ library LibClone {
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x43), n))
             mstore(add(m, 0x23), 0x5af43d82803e903d91602b57fd5bf3)
             mstore(add(m, 0x14), implementation)
-            mstore(m, add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(0x88, n)))
+            mstore(m, add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(136, n)))
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
             instance := create(value, add(m, add(0x0b, lt(n, 0xffd3))), add(n, 0x37))
             if iszero(instance) {
@@ -497,10 +497,9 @@ library LibClone {
             }
         }
     }
-    // 0,0x5e17b14ADd6c386305A32928F985b29bbA34Eff5, hex"01020304"
+
     /// @dev Deploys a deterministic clone of `implementation`
     /// with immutable arguments encoded in `args` and `salt`.
-
     function cloneDeterministic(address implementation, bytes memory args, bytes32 salt)
         internal
         returns (address instance)
@@ -523,13 +522,69 @@ library LibClone {
             pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x43), n))
             mstore(add(m, 0x23), 0x5af43d82803e903d91602b57fd5bf3)
             mstore(add(m, 0x14), implementation)
-            mstore(m, add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(0x88, n)))
+            mstore(m, add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(136, n)))
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
             instance := create2(value, add(m, add(0x0b, lt(n, 0xffd3))), add(n, 0x37), salt)
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
+        }
+    }
+
+    /// @dev Deploys a deterministic clone of `implementation`
+    /// with immutable arguments encoded in `args` and `salt`.
+    /// This method does not revert if the clone has already been deployed.
+    function createDeterministicClone(address implementation, bytes memory args, bytes32 salt)
+        internal
+        returns (bool alreadyDeployed, address instance)
+    {
+        return createDeterministicClone(0, implementation, args, salt);
+    }
+
+    /// @dev Deploys a deterministic clone of `implementation`
+    /// with immutable arguments encoded in `args` and `salt`.
+    /// This method does not revert if the clone has already been deployed.
+    function createDeterministicClone(
+        uint256 value,
+        address implementation,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (bool alreadyDeployed, address instance) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            let n := mload(args)
+            pop(staticcall(gas(), 4, add(args, 0x20), n, add(m, 0x43), n))
+            mstore(add(m, 0x23), 0x5af43d82803e903d91602b57fd5bf3)
+            mstore(add(m, 0x14), implementation)
+            // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
+            // forgefmt: disable-next-item
+            mstore(add(m, gt(n, 0xffd2)), add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(136, n)))
+            // Compute and store the bytecode hash.
+            mstore8(0x00, 0xff) // Write the prefix.
+            mstore(0x35, keccak256(add(m, 0x0c), add(n, 0x37)))
+            mstore(0x01, shl(96, address()))
+            mstore(0x15, salt)
+            instance := keccak256(0x00, 0x55)
+            for {} 1 {} {
+                if iszero(extcodesize(instance)) {
+                    instance := create2(value, add(m, 0x0c), add(n, 0x37), salt)
+                    if iszero(instance) {
+                        mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    break
+                }
+                alreadyDeployed := 1
+                if iszero(value) { break }
+                if iszero(call(gas(), instance, value, codesize(), 0x00, codesize(), 0x00)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
+                break
+            }
+            mstore(0x35, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 
@@ -551,7 +606,7 @@ library LibClone {
             }
             mstore(add(c, 0x37), 0x5af43d82803e903d91602b57fd5bf3)
             mstore(add(c, 0x28), implementation)
-            mstore(add(c, 0x14), add(0x61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(0x88, n)))
+            mstore(add(c, 0x14), add(0x61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(136, n)))
             mstore(c, add(0x37, n)) // Store the length.
             mstore(add(c, add(n, 0x57)), 0) // Zeroize the slot after the bytes.
             mstore(0x40, add(c, add(n, 0x77))) // Allocate memory.
@@ -576,7 +631,7 @@ library LibClone {
             }
             mstore(add(m, 0x23), 0x5af43d82803e903d91602b57fd5bf3)
             mstore(add(m, 0x14), implementation)
-            mstore(m, add(0x61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(0x88, n)))
+            mstore(m, add(0x61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(136, n)))
             hash := keccak256(add(m, 0x0c), add(n, 0x37))
         }
     }

@@ -471,6 +471,21 @@ contract LibCloneTest is SoladyTest {
         }
     }
 
+    function testCreateDeterministicCloneWithImmutableArgs(bytes32 salt) public {
+        bytes memory args = _randomBytes();
+        if (args.length > _CLONES_ARGS_MAX_LENGTH) {
+            vm.expectRevert();
+            this.createDeterministicClone(address(this), args, salt);
+            return;
+        }
+        address instance = this.createDeterministicClone(address(this), args, salt);
+        _checkArgsOnClone(instance, args);
+        _checkBehavesLikeProxy(instance);
+        if (_randomChance(32)) {
+            this.createDeterministicClone(address(this), args, salt);
+        }
+    }
+
     function testCloneDeterministicWithImmutableArgs() public {
         testCloneDeterministicWithImmutableArgs(bytes32(0));
     }
@@ -1275,6 +1290,21 @@ contract LibCloneTest is SoladyTest {
         instance = LibClone.cloneDeterministic(_brutalized(implementation), args, salt);
         address predicted =
             LibClone.predictDeterministicAddress(implementation, args, salt, address(this));
+        assertEq(instance, predicted);
+    }
+
+    function createDeterministicClone(address implementation, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
+        address predicted =
+            LibClone.predictDeterministicAddress(implementation, args, salt, address(this));
+        bool alreadyDeployed = predicted.code.length != 0;
+        bool deployed;
+        (deployed, instance) =
+            LibClone.createDeterministicClone(_brutalized(implementation), args, salt);
+        assertEq(alreadyDeployed, deployed);
         assertEq(instance, predicted);
     }
 
