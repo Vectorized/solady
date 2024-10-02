@@ -39,6 +39,16 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
+    function testDynamicArrayWrap() public {
+        address[] memory a = new address[](3);
+        a[0] = address(0);
+        a[1] = address(1);
+        a[2] = address(2);
+        assertEq(DynamicArrayLib.wrap(a).get(0), 0);
+        assertEq(DynamicArrayLib.wrap(a).get(1), 1);
+        assertEq(DynamicArrayLib.wrap(a).get(2), 2);
+    }
+
     function testDynamicArrayResize(uint256[] memory data, uint256 n) public {
         DynamicArrayLib.DynamicArray memory a;
         a.data = data;
