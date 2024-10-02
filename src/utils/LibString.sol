@@ -66,49 +66,49 @@ library LibString {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the base 10 decimal representation of `value`.
-    function toString(uint256 value) internal pure returns (string memory str) {
+    function toString(uint256 value) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
             // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.
             // We will need 1 word for the trailing zeros padding, 1 word for the length,
             // and 3 words for a maximum of 78 digits.
-            str := add(mload(0x40), 0x80)
-            mstore(0x40, add(str, 0x20)) // Allocate the memory.
-            mstore(str, 0) // Zeroize the slot after the string.
+            result := add(mload(0x40), 0x80)
+            mstore(0x40, add(result, 0x20)) // Allocate memory.
+            mstore(result, 0) // Zeroize the slot after the string.
 
-            let end := str // Cache the end of the memory to calculate the length later.
+            let end := result // Cache the end of the memory to calculate the length later.
             let w := not(0) // Tsk.
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             for { let temp := value } 1 {} {
-                str := add(str, w) // `sub(str, 1)`.
+                result := add(result, w) // `sub(result, 1)`.
                 // Store the character to the pointer.
                 // The ASCII index of the '0' character is 48.
-                mstore8(str, add(48, mod(temp, 10)))
+                mstore8(result, add(48, mod(temp, 10)))
                 temp := div(temp, 10) // Keep dividing `temp` until zero.
                 if iszero(temp) { break }
             }
-            let length := sub(end, str)
-            str := sub(str, 0x20) // Move the pointer 32 bytes back to make room for the length.
-            mstore(str, length) // Store the length.
+            let n := sub(end, result)
+            result := sub(result, 0x20) // Move the pointer 32 bytes back to make room for the length.
+            mstore(result, n) // Store the length.
         }
     }
 
     /// @dev Returns the base 10 decimal representation of `value`.
-    function toString(int256 value) internal pure returns (string memory str) {
+    function toString(int256 value) internal pure returns (string memory result) {
         if (value >= 0) return toString(uint256(value));
         unchecked {
-            str = toString(~uint256(value) + 1);
+            result = toString(~uint256(value) + 1);
         }
         /// @solidity memory-safe-assembly
         assembly {
             // We still have some spare memory space on the left,
             // as we have allocated 3 words (96 bytes) for up to 78 digits.
-            let length := mload(str) // Load the string length.
-            mstore(str, 0x2d) // Store the '-' character.
-            str := sub(str, 1) // Move back the string pointer by a byte.
-            mstore(str, add(length, 1)) // Update the string length.
+            let n := mload(result) // Load the string length.
+            mstore(result, 0x2d) // Store the '-' character.
+            result := sub(result, 1) // Move back the string pointer by a byte.
+            mstore(result, add(n, 1)) // Update the string length.
         }
     }
 
@@ -121,14 +121,18 @@ library LibString {
     /// The output is prefixed with "0x" encoded using 2 hexadecimal digits per byte,
     /// giving a total length of `length * 2 + 2` bytes.
     /// Reverts if `length` is too small for the output to contain all the digits.
-    function toHexString(uint256 value, uint256 length) internal pure returns (string memory str) {
-        str = toHexStringNoPrefix(value, length);
+    function toHexString(uint256 value, uint256 length)
+        internal
+        pure
+        returns (string memory result)
+    {
+        result = toHexStringNoPrefix(value, length);
         /// @solidity memory-safe-assembly
         assembly {
-            let strLength := add(mload(str), 2) // Compute the length.
-            mstore(str, 0x3078) // Store the "0x" prefix.
-            str := sub(str, 2) // Move the pointer.
-            mstore(str, strLength) // Store the length.
+            let n := add(mload(result), 2) // Compute the length.
+            mstore(result, 0x3078) // Store the "0x" prefix.
+            result := sub(result, 2) // Move the pointer.
+            mstore(result, n) // Store the length.
         }
     }
 
@@ -140,7 +144,7 @@ library LibString {
     function toHexStringNoPrefix(uint256 value, uint256 length)
         internal
         pure
-        returns (string memory str)
+        returns (string memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
@@ -148,33 +152,33 @@ library LibString {
             // for the digits, 0x02 bytes for the prefix, and 0x20 bytes for the length.
             // We add 0x20 to the total and round down to a multiple of 0x20.
             // (0x20 + 0x20 + 0x02 + 0x20) = 0x62.
-            str := add(mload(0x40), and(add(shl(1, length), 0x42), not(0x1f)))
-            mstore(0x40, add(str, 0x20)) // Allocate the memory.
-            mstore(str, 0) // Zeroize the slot after the string.
+            result := add(mload(0x40), and(add(shl(1, length), 0x42), not(0x1f)))
+            mstore(0x40, add(result, 0x20)) // Allocate memory.
+            mstore(result, 0) // Zeroize the slot after the string.
 
-            let end := str // Cache the end to calculate the length later.
+            let end := result // Cache the end to calculate the length later.
             // Store "0123456789abcdef" in scratch space.
             mstore(0x0f, 0x30313233343536373839616263646566)
 
-            let start := sub(str, add(length, length))
+            let start := sub(result, add(length, length))
             let w := not(1) // Tsk.
             let temp := value
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             for {} 1 {} {
-                str := add(str, w) // `sub(str, 2)`.
-                mstore8(add(str, 1), mload(and(temp, 15)))
-                mstore8(str, mload(and(shr(4, temp), 15)))
+                result := add(result, w) // `sub(result, 2)`.
+                mstore8(add(result, 1), mload(and(temp, 15)))
+                mstore8(result, mload(and(shr(4, temp), 15)))
                 temp := shr(8, temp)
-                if iszero(xor(str, start)) { break }
+                if iszero(xor(result, start)) { break }
             }
             if temp {
                 mstore(0x00, 0x2194895a) // `HexLengthInsufficient()`.
                 revert(0x1c, 0x04)
             }
-            let strLength := sub(end, str)
-            str := sub(str, 0x20)
-            mstore(str, strLength) // Store the length.
+            let n := sub(end, result)
+            result := sub(result, 0x20)
+            mstore(result, n) // Store the length.
         }
     }
 
@@ -182,14 +186,14 @@ library LibString {
     /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
     /// As address are 20 bytes long, the output will left-padded to have
     /// a length of `20 * 2 + 2` bytes.
-    function toHexString(uint256 value) internal pure returns (string memory str) {
-        str = toHexStringNoPrefix(value);
+    function toHexString(uint256 value) internal pure returns (string memory result) {
+        result = toHexStringNoPrefix(value);
         /// @solidity memory-safe-assembly
         assembly {
-            let strLength := add(mload(str), 2) // Compute the length.
-            mstore(str, 0x3078) // Store the "0x" prefix.
-            str := sub(str, 2) // Move the pointer.
-            mstore(str, strLength) // Store the length.
+            let n := add(mload(result), 2) // Compute the length.
+            mstore(result, 0x3078) // Store the "0x" prefix.
+            result := sub(result, 2) // Move the pointer.
+            mstore(result, n) // Store the length.
         }
     }
 
@@ -197,29 +201,33 @@ library LibString {
     /// The output is prefixed with "0x".
     /// The output excludes leading "0" from the `toHexString` output.
     /// `0x00: "0x0", 0x01: "0x1", 0x12: "0x12", 0x123: "0x123"`.
-    function toMinimalHexString(uint256 value) internal pure returns (string memory str) {
-        str = toHexStringNoPrefix(value);
+    function toMinimalHexString(uint256 value) internal pure returns (string memory result) {
+        result = toHexStringNoPrefix(value);
         /// @solidity memory-safe-assembly
         assembly {
-            let o := eq(byte(0, mload(add(str, 0x20))), 0x30) // Whether leading zero is present.
-            let strLength := add(mload(str), 2) // Compute the length.
-            mstore(add(str, o), 0x3078) // Store the "0x" prefix, accounting for leading zero.
-            str := sub(add(str, o), 2) // Move the pointer, accounting for leading zero.
-            mstore(str, sub(strLength, o)) // Store the length, accounting for leading zero.
+            let o := eq(byte(0, mload(add(result, 0x20))), 0x30) // Whether leading zero is present.
+            let n := add(mload(result), 2) // Compute the length.
+            mstore(add(result, o), 0x3078) // Store the "0x" prefix, accounting for leading zero.
+            result := sub(add(result, o), 2) // Move the pointer, accounting for leading zero.
+            mstore(result, sub(n, o)) // Store the length, accounting for leading zero.
         }
     }
 
     /// @dev Returns the hexadecimal representation of `value`.
     /// The output excludes leading "0" from the `toHexStringNoPrefix` output.
     /// `0x00: "0", 0x01: "1", 0x12: "12", 0x123: "123"`.
-    function toMinimalHexStringNoPrefix(uint256 value) internal pure returns (string memory str) {
-        str = toHexStringNoPrefix(value);
+    function toMinimalHexStringNoPrefix(uint256 value)
+        internal
+        pure
+        returns (string memory result)
+    {
+        result = toHexStringNoPrefix(value);
         /// @solidity memory-safe-assembly
         assembly {
-            let o := eq(byte(0, mload(add(str, 0x20))), 0x30) // Whether leading zero is present.
-            let strLength := mload(str) // Get the length.
-            str := add(str, o) // Move the pointer, accounting for leading zero.
-            mstore(str, sub(strLength, o)) // Store the length, accounting for leading zero.
+            let o := eq(byte(0, mload(add(result, 0x20))), 0x30) // Whether leading zero is present.
+            let n := mload(result) // Get the length.
+            result := add(result, o) // Move the pointer, accounting for leading zero.
+            mstore(result, sub(n, o)) // Store the length, accounting for leading zero.
         }
     }
 
@@ -227,32 +235,32 @@ library LibString {
     /// The output is encoded using 2 hexadecimal digits per byte.
     /// As address are 20 bytes long, the output will left-padded to have
     /// a length of `20 * 2` bytes.
-    function toHexStringNoPrefix(uint256 value) internal pure returns (string memory str) {
+    function toHexStringNoPrefix(uint256 value) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             // We need 0x20 bytes for the trailing zeros padding, 0x20 bytes for the length,
             // 0x02 bytes for the prefix, and 0x40 bytes for the digits.
             // The next multiple of 0x20 above (0x20 + 0x20 + 0x02 + 0x40) is 0xa0.
-            str := add(mload(0x40), 0x80)
-            mstore(0x40, add(str, 0x20)) // Allocate the memory.
-            mstore(str, 0) // Zeroize the slot after the string.
+            result := add(mload(0x40), 0x80)
+            mstore(0x40, add(result, 0x20)) // Allocate memory.
+            mstore(result, 0) // Zeroize the slot after the string.
 
-            let end := str // Cache the end to calculate the length later.
+            let end := result // Cache the end to calculate the length later.
             mstore(0x0f, 0x30313233343536373839616263646566) // Store the "0123456789abcdef" lookup.
 
             let w := not(1) // Tsk.
             // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
             for { let temp := value } 1 {} {
-                str := add(str, w) // `sub(str, 2)`.
-                mstore8(add(str, 1), mload(and(temp, 15)))
-                mstore8(str, mload(and(shr(4, temp), 15)))
+                result := add(result, w) // `sub(result, 2)`.
+                mstore8(add(result, 1), mload(and(temp, 15)))
+                mstore8(result, mload(and(shr(4, temp), 15)))
                 temp := shr(8, temp)
                 if iszero(temp) { break }
             }
-            let strLength := sub(end, str)
-            str := sub(str, 0x20)
-            mstore(str, strLength) // Store the length.
+            let n := sub(end, result)
+            result := sub(result, 0x20)
+            mstore(result, n) // Store the length.
         }
     }
 
@@ -260,12 +268,12 @@ library LibString {
     /// The output is prefixed with "0x", encoded using 2 hexadecimal digits per byte,
     /// and the alphabets are capitalized conditionally according to
     /// https://eips.ethereum.org/EIPS/eip-55
-    function toHexStringChecksummed(address value) internal pure returns (string memory str) {
-        str = toHexString(value);
+    function toHexStringChecksummed(address value) internal pure returns (string memory result) {
+        result = toHexString(value);
         /// @solidity memory-safe-assembly
         assembly {
             let mask := shl(6, div(not(0), 255)) // `0b010000000100000000 ...`
-            let o := add(str, 0x22)
+            let o := add(result, 0x22)
             let hashed := and(keccak256(o, 40), mul(34, mask)) // `0b10001000 ... `
             let t := shl(240, 136) // `0b10001000 << 240`
             for { let i := 0 } 1 {} {
@@ -281,33 +289,33 @@ library LibString {
 
     /// @dev Returns the hexadecimal representation of `value`.
     /// The output is prefixed with "0x" and encoded using 2 hexadecimal digits per byte.
-    function toHexString(address value) internal pure returns (string memory str) {
-        str = toHexStringNoPrefix(value);
+    function toHexString(address value) internal pure returns (string memory result) {
+        result = toHexStringNoPrefix(value);
         /// @solidity memory-safe-assembly
         assembly {
-            let strLength := add(mload(str), 2) // Compute the length.
-            mstore(str, 0x3078) // Store the "0x" prefix.
-            str := sub(str, 2) // Move the pointer.
-            mstore(str, strLength) // Store the length.
+            let n := add(mload(result), 2) // Compute the length.
+            mstore(result, 0x3078) // Store the "0x" prefix.
+            result := sub(result, 2) // Move the pointer.
+            mstore(result, n) // Store the length.
         }
     }
 
     /// @dev Returns the hexadecimal representation of `value`.
     /// The output is encoded using 2 hexadecimal digits per byte.
-    function toHexStringNoPrefix(address value) internal pure returns (string memory str) {
+    function toHexStringNoPrefix(address value) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            str := mload(0x40)
-            // Allocate the memory.
+            result := mload(0x40)
+            // Allocate memory.
             // We need 0x20 bytes for the trailing zeros padding, 0x20 bytes for the length,
             // 0x02 bytes for the prefix, and 0x28 bytes for the digits.
             // The next multiple of 0x20 above (0x20 + 0x20 + 0x02 + 0x28) is 0x80.
-            mstore(0x40, add(str, 0x80))
+            mstore(0x40, add(result, 0x80))
             mstore(0x0f, 0x30313233343536373839616263646566) // Store the "0123456789abcdef" lookup.
 
-            str := add(str, 2)
-            mstore(str, 40) // Store the length.
-            let o := add(str, 0x20)
+            result := add(result, 2)
+            mstore(result, 40) // Store the length.
+            let o := add(result, 0x20)
             mstore(add(o, 40), 0) // Zeroize the slot after the string.
             value := shl(96, value)
             // We write the string from rightmost digit to leftmost digit.
@@ -325,29 +333,29 @@ library LibString {
 
     /// @dev Returns the hex encoded string from the raw bytes.
     /// The output is encoded using 2 hexadecimal digits per byte.
-    function toHexString(bytes memory raw) internal pure returns (string memory str) {
-        str = toHexStringNoPrefix(raw);
+    function toHexString(bytes memory raw) internal pure returns (string memory result) {
+        result = toHexStringNoPrefix(raw);
         /// @solidity memory-safe-assembly
         assembly {
-            let strLength := add(mload(str), 2) // Compute the length.
-            mstore(str, 0x3078) // Store the "0x" prefix.
-            str := sub(str, 2) // Move the pointer.
-            mstore(str, strLength) // Store the length.
+            let n := add(mload(result), 2) // Compute the length.
+            mstore(result, 0x3078) // Store the "0x" prefix.
+            result := sub(result, 2) // Move the pointer.
+            mstore(result, n) // Store the length.
         }
     }
 
     /// @dev Returns the hex encoded string from the raw bytes.
     /// The output is encoded using 2 hexadecimal digits per byte.
-    function toHexStringNoPrefix(bytes memory raw) internal pure returns (string memory str) {
+    function toHexStringNoPrefix(bytes memory raw) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let length := mload(raw)
-            str := add(mload(0x40), 2) // Skip 2 bytes for the optional prefix.
-            mstore(str, add(length, length)) // Store the length of the output.
+            let n := mload(raw)
+            result := add(mload(0x40), 2) // Skip 2 bytes for the optional prefix.
+            mstore(result, add(n, n)) // Store the length of the output.
 
             mstore(0x0f, 0x30313233343536373839616263646566) // Store the "0123456789abcdef" lookup.
-            let o := add(str, 0x20)
-            let end := add(raw, length)
+            let o := add(result, 0x20)
+            let end := add(raw, n)
             for {} iszero(eq(raw, end)) {} {
                 raw := add(raw, 1)
                 mstore8(add(o, 1), mload(and(mload(raw), 15)))
@@ -355,7 +363,7 @@ library LibString {
                 o := add(o, 2)
             }
             mstore(o, 0) // Zeroize the slot after the string.
-            mstore(0x40, add(o, 0x20)) // Allocate the memory.
+            mstore(0x40, add(o, 0x20)) // Allocate memory.
         }
     }
 
@@ -385,8 +393,8 @@ library LibString {
     function is7BitASCII(string memory s) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let mask := shl(7, div(not(0), 255))
             result := 1
+            let mask := shl(7, div(not(0), 255))
             let n := mload(s)
             if n {
                 let o := add(s, 0x20)
@@ -416,8 +424,7 @@ library LibString {
             if mload(s) {
                 let allowed_ := shr(128, shl(128, allowed))
                 let o := add(s, 0x20)
-                let end := add(o, mload(s))
-                for {} 1 {} {
+                for { let end := add(o, mload(s)) } 1 {} {
                     result := and(result, shr(byte(0, mload(o)), allowed_))
                     o := add(o, 1)
                     if iszero(and(result, lt(o, end))) { break }
@@ -434,8 +441,7 @@ library LibString {
         assembly {
             if mload(s) {
                 let o := add(s, 0x20)
-                let end := add(o, mload(s))
-                for {} 1 {} {
+                for { let end := add(o, mload(s)) } 1 {} {
                     result := or(result, shl(byte(0, mload(o)), 1))
                     o := add(o, 1)
                     if iszero(lt(o, end)) { break }
@@ -457,116 +463,97 @@ library LibString {
     // Usage of byte string operations on charsets with runes spanning two or more bytes
     // can lead to undefined behavior.
 
-    /// @dev Returns `subject` all occurrences of `search` replaced with `replacement`.
-    function replace(string memory subject, string memory search, string memory replacement)
+    /// @dev Returns `subject` all occurrences of `needle` replaced with `replacement`.
+    function replace(string memory subject, string memory needle, string memory replacement)
         internal
         pure
         returns (string memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let subjectLength := mload(subject)
-            let searchLength := mload(search)
-            let replacementLength := mload(replacement)
-
-            subject := add(subject, 0x20)
-            search := add(search, 0x20)
-            replacement := add(replacement, 0x20)
-            result := add(mload(0x40), 0x20)
-
-            let subjectEnd := add(subject, subjectLength)
-            if iszero(gt(searchLength, subjectLength)) {
-                let subjectSearchEnd := add(sub(subjectEnd, searchLength), 1)
-                let h := 0
-                if iszero(lt(searchLength, 0x20)) { h := keccak256(search, searchLength) }
-                let m := shl(3, sub(0x20, and(searchLength, 0x1f)))
-                let s := mload(search)
-                for {} 1 {} {
-                    let t := mload(subject)
-                    // Whether the first `searchLength % 32` bytes of
-                    // `subject` and `search` matches.
+            result := mload(0x40)
+            let needleLen := mload(needle)
+            let replacementLen := mload(replacement)
+            let d := sub(result, subject) // Memory difference.
+            let i := add(subject, 0x20) // Subject bytes pointer.
+            let end := add(i, mload(subject))
+            if iszero(gt(needleLen, mload(subject))) {
+                let subjectSearchEnd := add(sub(end, needleLen), 1)
+                let h := 0 // The hash of `needle`.
+                if iszero(lt(needleLen, 0x20)) { h := keccak256(add(needle, 0x20), needleLen) }
+                let s := mload(add(needle, 0x20))
+                for { let m := shl(3, sub(0x20, and(needleLen, 0x1f))) } 1 {} {
+                    let t := mload(i)
+                    // Whether the first `needleLen % 32` bytes of `subject` and `needle` matches.
                     if iszero(shr(m, xor(t, s))) {
                         if h {
-                            if iszero(eq(keccak256(subject, searchLength), h)) {
-                                mstore(result, t)
-                                result := add(result, 1)
-                                subject := add(subject, 1)
-                                if iszero(lt(subject, subjectSearchEnd)) { break }
+                            if iszero(eq(keccak256(i, needleLen), h)) {
+                                mstore(add(i, d), t)
+                                i := add(i, 1)
+                                if iszero(lt(i, subjectSearchEnd)) { break }
                                 continue
                             }
                         }
                         // Copy the `replacement` one word at a time.
-                        for { let o := 0 } 1 {} {
-                            mstore(add(result, o), mload(add(replacement, o)))
-                            o := add(o, 0x20)
-                            if iszero(lt(o, replacementLength)) { break }
+                        for { let j := 0 } 1 {} {
+                            mstore(add(add(i, d), j), mload(add(add(replacement, 0x20), j)))
+                            j := add(j, 0x20)
+                            if iszero(lt(j, replacementLen)) { break }
                         }
-                        result := add(result, replacementLength)
-                        subject := add(subject, searchLength)
-                        if searchLength {
-                            if iszero(lt(subject, subjectSearchEnd)) { break }
+                        d := sub(add(d, replacementLen), needleLen)
+                        if needleLen {
+                            i := add(i, needleLen)
+                            if iszero(lt(i, subjectSearchEnd)) { break }
                             continue
                         }
                     }
-                    mstore(result, t)
-                    result := add(result, 1)
-                    subject := add(subject, 1)
-                    if iszero(lt(subject, subjectSearchEnd)) { break }
+                    mstore(add(i, d), t)
+                    i := add(i, 1)
+                    if iszero(lt(i, subjectSearchEnd)) { break }
                 }
             }
-
-            let resultRemainder := result
-            result := add(mload(0x40), 0x20)
-            let k := add(sub(resultRemainder, result), sub(subjectEnd, subject))
+            let n := add(sub(d, add(result, 0x20)), end)
             // Copy the rest of the string one word at a time.
-            for {} lt(subject, subjectEnd) {} {
-                mstore(resultRemainder, mload(subject))
-                resultRemainder := add(resultRemainder, 0x20)
-                subject := add(subject, 0x20)
-            }
-            result := sub(result, 0x20)
-            let last := add(add(result, 0x20), k) // Zeroize the slot after the string.
-            mstore(last, 0)
-            mstore(0x40, add(last, 0x20)) // Allocate the memory.
-            mstore(result, k) // Store the length.
+            for {} lt(i, end) { i := add(i, 0x20) } { mstore(add(i, d), mload(i)) }
+            let o := add(i, d)
+            mstore(o, 0) // Zeroize the slot after the string.
+            mstore(0x40, add(o, 0x20)) // Allocate memory.
+            mstore(result, n) // Store the length.
         }
     }
 
-    /// @dev Returns the byte index of the first location of `search` in `subject`,
-    /// searching from left to right, starting from `from`.
-    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
-    function indexOf(string memory subject, string memory search, uint256 from)
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from left to right, starting from `from`.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function indexOf(string memory subject, string memory needle, uint256 from)
         internal
         pure
         returns (uint256 result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            for { let subjectLength := mload(subject) } 1 {} {
-                if iszero(mload(search)) {
-                    if iszero(gt(from, subjectLength)) {
-                        result := from
-                        break
-                    }
-                    result := subjectLength
+            result := not(0) // Initialize to `NOT_FOUND`.
+            for { let subjectLen := mload(subject) } 1 {} {
+                if iszero(mload(needle)) {
+                    result := from
+                    if iszero(gt(from, subjectLen)) { break }
+                    result := subjectLen
                     break
                 }
-                let searchLength := mload(search)
+                let needleLen := mload(needle)
                 let subjectStart := add(subject, 0x20)
 
-                result := not(0) // Initialize to `NOT_FOUND`.
                 subject := add(subjectStart, from)
-                let end := add(sub(add(subjectStart, subjectLength), searchLength), 1)
+                let end := add(sub(add(subjectStart, subjectLen), needleLen), 1)
+                let m := shl(3, sub(0x20, and(needleLen, 0x1f)))
+                let s := mload(add(needle, 0x20))
 
-                let m := shl(3, sub(0x20, and(searchLength, 0x1f)))
-                let s := mload(add(search, 0x20))
+                if iszero(and(lt(subject, end), lt(from, subjectLen))) { break }
 
-                if iszero(and(lt(subject, end), lt(from, subjectLength))) { break }
-
-                if iszero(lt(searchLength, 0x20)) {
-                    for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
+                if iszero(lt(needleLen, 0x20)) {
+                    for { let h := keccak256(add(needle, 0x20), needleLen) } 1 {} {
                         if iszero(shr(m, xor(mload(subject), s))) {
-                            if eq(keccak256(subject, searchLength), h) {
+                            if eq(keccak256(subject, needleLen), h) {
                                 result := sub(subject, subjectStart)
                                 break
                             }
@@ -589,21 +576,21 @@ library LibString {
         }
     }
 
-    /// @dev Returns the byte index of the first location of `search` in `subject`,
-    /// searching from left to right.
-    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
-    function indexOf(string memory subject, string memory search)
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from left to right.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function indexOf(string memory subject, string memory needle)
         internal
         pure
         returns (uint256 result)
     {
-        result = indexOf(subject, search, 0);
+        result = indexOf(subject, needle, 0);
     }
 
-    /// @dev Returns the byte index of the first location of `search` in `subject`,
-    /// searching from right to left, starting from `from`.
-    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
-    function lastIndexOf(string memory subject, string memory search, uint256 from)
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from right to left, starting from `from`.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function lastIndexOf(string memory subject, string memory needle, uint256 from)
         internal
         pure
         returns (uint256 result)
@@ -612,11 +599,11 @@ library LibString {
         assembly {
             for {} 1 {} {
                 result := not(0) // Initialize to `NOT_FOUND`.
-                let searchLength := mload(search)
-                if gt(searchLength, mload(subject)) { break }
+                let needleLen := mload(needle)
+                if gt(needleLen, mload(subject)) { break }
                 let w := result
 
-                let fromMax := sub(mload(subject), searchLength)
+                let fromMax := sub(mload(subject), needleLen)
                 if iszero(gt(fromMax, from)) { from := fromMax }
 
                 let end := add(add(subject, 0x20), w)
@@ -624,8 +611,8 @@ library LibString {
                 if iszero(gt(subject, end)) { break }
                 // As this function is not too often used,
                 // we shall simply use keccak256 for smaller bytecode size.
-                for { let h := keccak256(add(search, 0x20), searchLength) } 1 {} {
-                    if eq(keccak256(subject, searchLength), h) {
+                for { let h := keccak256(add(needle, 0x20), needleLen) } 1 {} {
+                    if eq(keccak256(subject, needleLen), h) {
                         result := sub(subject, add(end, 1))
                         break
                     }
@@ -637,67 +624,66 @@ library LibString {
         }
     }
 
-    /// @dev Returns the byte index of the first location of `search` in `subject`,
-    /// searching from right to left.
-    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `search` is not found.
-    function lastIndexOf(string memory subject, string memory search)
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from right to left.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function lastIndexOf(string memory subject, string memory needle)
         internal
         pure
         returns (uint256 result)
     {
-        result = lastIndexOf(subject, search, uint256(int256(-1)));
+        result = lastIndexOf(subject, needle, type(uint256).max);
     }
 
-    /// @dev Returns true if `search` is found in `subject`, false otherwise.
-    function contains(string memory subject, string memory search) internal pure returns (bool) {
-        return indexOf(subject, search) != NOT_FOUND;
+    /// @dev Returns true if `needle` is found in `subject`, false otherwise.
+    function contains(string memory subject, string memory needle) internal pure returns (bool) {
+        return indexOf(subject, needle) != NOT_FOUND;
     }
 
-    /// @dev Returns whether `subject` starts with `search`.
-    function startsWith(string memory subject, string memory search)
+    /// @dev Returns whether `subject` starts with `needle`.
+    function startsWith(string memory subject, string memory needle)
         internal
         pure
         returns (bool result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let searchLength := mload(search)
+            let needleLen := mload(needle)
             // Just using keccak256 directly is actually cheaper.
             // forgefmt: disable-next-item
             result := and(
-                iszero(gt(searchLength, mload(subject))),
+                iszero(gt(needleLen, mload(subject))),
                 eq(
-                    keccak256(add(subject, 0x20), searchLength),
-                    keccak256(add(search, 0x20), searchLength)
+                    keccak256(add(subject, 0x20), needleLen),
+                    keccak256(add(needle, 0x20), needleLen)
                 )
             )
         }
     }
 
-    /// @dev Returns whether `subject` ends with `search`.
-    function endsWith(string memory subject, string memory search)
+    /// @dev Returns whether `subject` ends with `needle`.
+    function endsWith(string memory subject, string memory needle)
         internal
         pure
         returns (bool result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let searchLength := mload(search)
-            let subjectLength := mload(subject)
-            // Whether `search` is not longer than `subject`.
-            let withinRange := iszero(gt(searchLength, subjectLength))
+            let needleLen := mload(needle)
+            // Whether `needle` is not longer than `subject`.
+            let inRange := iszero(gt(needleLen, mload(subject)))
             // Just using keccak256 directly is actually cheaper.
             // forgefmt: disable-next-item
             result := and(
-                withinRange,
                 eq(
                     keccak256(
-                        // `subject + 0x20 + max(subjectLength - searchLength, 0)`.
-                        add(add(subject, 0x20), mul(withinRange, sub(subjectLength, searchLength))),
-                        searchLength
+                        // `subject + 0x20 + max(subjectLen - needleLen, 0)`.
+                        add(add(subject, 0x20), mul(inRange, sub(mload(subject), needleLen))),
+                        needleLen
                     ),
-                    keccak256(add(search, 0x20), searchLength)
-                )
+                    keccak256(add(needle, 0x20), needleLen)
+                ),
+                inRange
             )
         }
     }
@@ -710,26 +696,25 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let subjectLength := mload(subject)
-            if iszero(or(iszero(times), iszero(subjectLength))) {
-                subject := add(subject, 0x20)
+            let subjectLen := mload(subject)
+            if iszero(or(iszero(times), iszero(subjectLen))) {
                 result := mload(0x40)
-                let output := add(result, 0x20)
+                subject := add(subject, 0x20)
+                let o := add(result, 0x20)
                 for {} 1 {} {
                     // Copy the `subject` one word at a time.
-                    for { let o := 0 } 1 {} {
-                        mstore(add(output, o), mload(add(subject, o)))
-                        o := add(o, 0x20)
-                        if iszero(lt(o, subjectLength)) { break }
+                    for { let j := 0 } 1 {} {
+                        mstore(add(o, j), mload(add(subject, j)))
+                        j := add(j, 0x20)
+                        if iszero(lt(j, subjectLen)) { break }
                     }
-                    output := add(output, subjectLength)
+                    o := add(o, subjectLen)
                     times := sub(times, 1)
                     if iszero(times) { break }
                 }
-                mstore(output, 0) // Zeroize the slot after the string.
-                let resultLength := sub(output, add(result, 0x20))
-                mstore(result, resultLength) // Store the length.
-                mstore(0x40, add(result, add(resultLength, 0x40))) // Allocate the memory.
+                mstore(o, 0) // Zeroize the slot after the string.
+                mstore(0x40, add(o, 0x20)) // Allocate memory.
+                mstore(result, sub(o, add(result, 0x20))) // Store the length.
             }
         }
     }
@@ -743,24 +728,24 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let subjectLength := mload(subject)
-            if iszero(gt(subjectLength, end)) { end := subjectLength }
-            if iszero(gt(subjectLength, start)) { start := subjectLength }
+            let subjectLen := mload(subject)
+            if iszero(gt(subjectLen, end)) { end := subjectLen }
+            if iszero(gt(subjectLen, start)) { start := subjectLen }
             if lt(start, end) {
                 result := mload(0x40)
-                let resultLength := sub(end, start)
-                mstore(result, resultLength)
-                subject := add(subject, start)
+                let n := sub(end, start)
+                let i := add(subject, start)
                 let w := not(0x1f)
                 // Copy the `subject` one word at a time, backwards.
-                for { let o := and(add(resultLength, 0x1f), w) } 1 {} {
-                    mstore(add(result, o), mload(add(subject, o)))
-                    o := add(o, w) // `sub(o, 0x20)`.
-                    if iszero(o) { break }
+                for { let j := and(add(n, 0x1f), w) } 1 {} {
+                    mstore(add(result, j), mload(add(i, j)))
+                    j := add(j, w) // `sub(j, 0x20)`.
+                    if iszero(j) { break }
                 }
-                // Zeroize the slot after the string.
-                mstore(add(add(result, 0x20), resultLength), 0)
-                mstore(0x40, add(result, add(resultLength, 0x40))) // Allocate the memory.
+                let o := add(add(result, 0x20), n)
+                mstore(o, 0) // Zeroize the slot after the string.
+                mstore(0x40, add(o, 0x20)) // Allocate memory.
+                mstore(result, n) // Store the length.
             }
         }
     }
@@ -772,65 +757,53 @@ library LibString {
         pure
         returns (string memory result)
     {
-        result = slice(subject, start, uint256(int256(-1)));
+        result = slice(subject, start, type(uint256).max);
     }
 
-    /// @dev Returns all the indices of `search` in `subject`.
+    /// @dev Returns all the indices of `needle` in `subject`.
     /// The indices are byte offsets.
-    function indicesOf(string memory subject, string memory search)
+    function indicesOf(string memory subject, string memory needle)
         internal
         pure
         returns (uint256[] memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let subjectLength := mload(subject)
-            let searchLength := mload(search)
-
-            if iszero(gt(searchLength, subjectLength)) {
-                subject := add(subject, 0x20)
-                search := add(search, 0x20)
-                result := add(mload(0x40), 0x20)
-
-                let subjectStart := subject
-                let subjectSearchEnd := add(sub(add(subject, subjectLength), searchLength), 1)
-                let h := 0
-                if iszero(lt(searchLength, 0x20)) { h := keccak256(search, searchLength) }
-                let m := shl(3, sub(0x20, and(searchLength, 0x1f)))
-                let s := mload(search)
-                for {} 1 {} {
-                    let t := mload(subject)
-                    // Whether the first `searchLength % 32` bytes of
-                    // `subject` and `search` matches.
+            let searchLen := mload(needle)
+            if iszero(gt(searchLen, mload(subject))) {
+                result := mload(0x40)
+                let i := add(subject, 0x20)
+                let o := add(result, 0x20)
+                let subjectSearchEnd := add(sub(add(i, mload(subject)), searchLen), 1)
+                let h := 0 // The hash of `needle`.
+                if iszero(lt(searchLen, 0x20)) { h := keccak256(add(needle, 0x20), searchLen) }
+                let s := mload(add(needle, 0x20))
+                for { let m := shl(3, sub(0x20, and(searchLen, 0x1f))) } 1 {} {
+                    let t := mload(i)
+                    // Whether the first `searchLen % 32` bytes of `subject` and `needle` matches.
                     if iszero(shr(m, xor(t, s))) {
                         if h {
-                            if iszero(eq(keccak256(subject, searchLength), h)) {
-                                subject := add(subject, 1)
-                                if iszero(lt(subject, subjectSearchEnd)) { break }
+                            if iszero(eq(keccak256(i, searchLen), h)) {
+                                i := add(i, 1)
+                                if iszero(lt(i, subjectSearchEnd)) { break }
                                 continue
                             }
                         }
-                        // Append to `result`.
-                        mstore(result, sub(subject, subjectStart))
-                        result := add(result, 0x20)
-                        // Advance `subject` by `searchLength`.
-                        subject := add(subject, searchLength)
-                        if searchLength {
-                            if iszero(lt(subject, subjectSearchEnd)) { break }
+                        mstore(o, sub(i, add(subject, 0x20))) // Append to `result`.
+                        o := add(o, 0x20)
+                        i := add(i, searchLen) // Advance `i` by `searchLen`.
+                        if searchLen {
+                            if iszero(lt(i, subjectSearchEnd)) { break }
                             continue
                         }
                     }
-                    subject := add(subject, 1)
-                    if iszero(lt(subject, subjectSearchEnd)) { break }
+                    i := add(i, 1)
+                    if iszero(lt(i, subjectSearchEnd)) { break }
                 }
-                let resultEnd := result
-                // Assign `result` to the free memory pointer.
-                result := mload(0x40)
-                // Store the length of `result`.
-                mstore(result, shr(5, sub(resultEnd, add(result, 0x20))))
+                mstore(result, shr(5, sub(o, add(result, 0x20)))) // Store the length of `result`.
                 // Allocate memory for result.
                 // We allocate one more word, so this array can be recycled for {split}.
-                mstore(0x40, add(resultEnd, 0x20))
+                mstore(0x40, add(o, 0x20))
             }
         }
     }
@@ -849,27 +822,23 @@ library LibString {
             let indicesEnd := add(indexPtr, shl(5, add(mload(indices), 1)))
             mstore(add(indicesEnd, w), mload(subject))
             mstore(indices, add(mload(indices), 1))
-            let prevIndex := 0
-            for {} 1 {} {
+            for { let prevIndex := 0 } 1 {} {
                 let index := mload(indexPtr)
                 mstore(indexPtr, 0x60)
                 if iszero(eq(index, prevIndex)) {
                     let element := mload(0x40)
-                    let elementLength := sub(index, prevIndex)
-                    mstore(element, elementLength)
+                    let l := sub(index, prevIndex)
+                    mstore(element, l) // Store the length of the element.
                     // Copy the `subject` one word at a time, backwards.
-                    for { let o := and(add(elementLength, 0x1f), w) } 1 {} {
+                    for { let o := and(add(l, 0x1f), w) } 1 {} {
                         mstore(add(element, o), mload(add(add(subject, prevIndex), o)))
                         o := add(o, w) // `sub(o, 0x20)`.
                         if iszero(o) { break }
                     }
-                    // Zeroize the slot after the string.
-                    mstore(add(add(element, 0x20), elementLength), 0)
-                    // Allocate memory for the length and the bytes,
-                    // rounded up to a multiple of 32.
-                    mstore(0x40, add(element, and(add(elementLength, 0x3f), w)))
-                    // Store the `element` into the array.
-                    mstore(indexPtr, element)
+                    mstore(add(add(element, 0x20), l), 0) // Zeroize the slot after the string.
+                    // Allocate memory for the length and the bytes, rounded up to a multiple of 32.
+                    mstore(0x40, add(element, and(add(l, 0x3f), w)))
+                    mstore(indexPtr, element) // Store the `element` into the array.
                 }
                 prevIndex := add(index, mload(delimiter))
                 indexPtr := add(indexPtr, 0x20)
@@ -892,28 +861,28 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let w := not(0x1f)
             result := mload(0x40)
-            let aLength := mload(a)
+            let w := not(0x1f)
+            let aLen := mload(a)
             // Copy `a` one word at a time, backwards.
-            for { let o := and(add(aLength, 0x20), w) } 1 {} {
+            for { let o := and(add(aLen, 0x20), w) } 1 {} {
                 mstore(add(result, o), mload(add(a, o)))
                 o := add(o, w) // `sub(o, 0x20)`.
                 if iszero(o) { break }
             }
-            let bLength := mload(b)
-            let output := add(result, aLength)
+            let bLen := mload(b)
+            let output := add(result, aLen)
             // Copy `b` one word at a time, backwards.
-            for { let o := and(add(bLength, 0x20), w) } 1 {} {
+            for { let o := and(add(bLen, 0x20), w) } 1 {} {
                 mstore(add(output, o), mload(add(b, o)))
                 o := add(o, w) // `sub(o, 0x20)`.
                 if iszero(o) { break }
             }
-            let totalLength := add(aLength, bLength)
-            let last := add(add(result, 0x20), totalLength)
+            let totalLen := add(aLen, bLen)
+            let last := add(add(result, 0x20), totalLen)
             mstore(last, 0) // Zeroize the slot after the string.
-            mstore(result, totalLength) // Store the length.
-            mstore(0x40, add(last, 0x20)) // Allocate the memory.
+            mstore(result, totalLen) // Store the length.
+            mstore(0x40, add(last, 0x20)) // Allocate memory.
         }
     }
 
@@ -926,23 +895,21 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let length := mload(subject)
-            if length {
-                result := add(mload(0x40), 0x20)
-                subject := add(subject, 1)
-                let flags := shl(add(70, shl(5, toUpper)), 0x3ffffff)
-                let w := not(0)
-                for { let o := length } 1 {} {
-                    o := add(o, w)
-                    let b := and(0xff, mload(add(subject, o)))
-                    mstore8(add(result, o), xor(b, and(shr(b, flags), 0x20)))
-                    if iszero(o) { break }
-                }
+            let n := mload(subject)
+            if n {
                 result := mload(0x40)
-                mstore(result, length) // Store the length.
-                let last := add(add(result, 0x20), length)
-                mstore(last, 0) // Zeroize the slot after the string.
-                mstore(0x40, add(last, 0x20)) // Allocate the memory.
+                let o := add(result, 0x20)
+                let d := sub(subject, result)
+                let flags := shl(add(70, shl(5, toUpper)), 0x3ffffff)
+                for { let end := add(o, n) } 1 {} {
+                    let b := byte(0, mload(add(d, o)))
+                    mstore8(o, xor(and(shr(b, flags), 0x20), b))
+                    o := add(o, 1)
+                    if eq(o, end) { break }
+                }
+                mstore(result, n) // Store the length.
+                mstore(o, 0) // Zeroize the slot after the string.
+                mstore(0x40, add(o, 0x20)) // Allocate memory.
             }
         }
     }
@@ -959,7 +926,7 @@ library LibString {
             let o := add(result, 0x20)
             mstore(o, s) // Store the bytes of the string.
             mstore(add(o, n), 0) // Zeroize the slot after the string.
-            mstore(0x40, add(result, 0x40)) // Allocate the memory.
+            mstore(0x40, add(result, 0x40)) // Allocate memory.
         }
     }
 
@@ -1003,8 +970,9 @@ library LibString {
     function escapeHTML(string memory s) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
+            result := mload(0x40)
             let end := add(s, mload(s))
-            result := add(mload(0x40), 0x20)
+            let o := add(result, 0x20)
             // Store the bytes of the packed offsets and strides into the scratch space.
             // `packed = (stride << 5) | offset`. Max offset is 20. Max stride is 6.
             mstore(0x1f, 0x900094)
@@ -1016,19 +984,17 @@ library LibString {
                 let c := and(mload(s), 0xff)
                 // Not in `["\"","'","&","<",">"]`.
                 if iszero(and(shl(c, 1), 0x500000c400000000)) {
-                    mstore8(result, c)
-                    result := add(result, 1)
+                    mstore8(o, c)
+                    o := add(o, 1)
                     continue
                 }
                 let t := shr(248, mload(c))
-                mstore(result, mload(and(t, 0x1f)))
-                result := add(result, shr(5, t))
+                mstore(o, mload(and(t, 0x1f)))
+                o := add(o, shr(5, t))
             }
-            let last := result
-            mstore(last, 0) // Zeroize the slot after the string.
-            result := mload(0x40)
-            mstore(result, sub(last, add(result, 0x20))) // Store the length.
-            mstore(0x40, add(last, 0x20)) // Allocate the memory.
+            mstore(o, 0) // Zeroize the slot after the string.
+            mstore(result, sub(o, add(result, 0x20))) // Store the length.
+            mstore(0x40, add(o, 0x20)) // Allocate memory.
         }
     }
 
@@ -1041,11 +1007,11 @@ library LibString {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let end := add(s, mload(s))
-            result := add(mload(0x40), 0x20)
+            result := mload(0x40)
+            let o := add(result, 0x20)
             if addDoubleQuotes {
-                mstore8(result, 34)
-                result := add(1, result)
+                mstore8(o, 34)
+                o := add(1, o)
             }
             // Store "\\u0000" in scratch space.
             // Store "0123456789abcdef" in scratch space.
@@ -1054,42 +1020,40 @@ library LibString {
             mstore(0x15, 0x5c75303030303031323334353637383961626364656662746e006672)
             // Bitmask for detecting `["\"","\\"]`.
             let e := or(shl(0x22, 1), shl(0x5c, 1))
-            for {} iszero(eq(s, end)) {} {
+            for { let end := add(s, mload(s)) } iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
                 if iszero(lt(c, 0x20)) {
                     if iszero(and(shl(c, 1), e)) {
                         // Not in `["\"","\\"]`.
-                        mstore8(result, c)
-                        result := add(result, 1)
+                        mstore8(o, c)
+                        o := add(o, 1)
                         continue
                     }
-                    mstore8(result, 0x5c) // "\\".
-                    mstore8(add(result, 1), c)
-                    result := add(result, 2)
+                    mstore8(o, 0x5c) // "\\".
+                    mstore8(add(o, 1), c)
+                    o := add(o, 2)
                     continue
                 }
                 if iszero(and(shl(c, 1), 0x3700)) {
                     // Not in `["\b","\t","\n","\f","\d"]`.
                     mstore8(0x1d, mload(shr(4, c))) // Hex value.
                     mstore8(0x1e, mload(and(c, 15))) // Hex value.
-                    mstore(result, mload(0x19)) // "\\u00XX".
-                    result := add(result, 6)
+                    mstore(o, mload(0x19)) // "\\u00XX".
+                    o := add(o, 6)
                     continue
                 }
-                mstore8(result, 0x5c) // "\\".
-                mstore8(add(result, 1), mload(add(c, 8)))
-                result := add(result, 2)
+                mstore8(o, 0x5c) // "\\".
+                mstore8(add(o, 1), mload(add(c, 8)))
+                o := add(o, 2)
             }
             if addDoubleQuotes {
-                mstore8(result, 34)
-                result := add(1, result)
+                mstore8(o, 34)
+                o := add(1, o)
             }
-            let last := result
-            mstore(last, 0) // Zeroize the slot after the string.
-            result := mload(0x40)
-            mstore(result, sub(last, add(result, 0x20))) // Store the length.
-            mstore(0x40, add(last, 0x20)) // Allocate the memory.
+            mstore(o, 0) // Zeroize the slot after the string.
+            mstore(result, sub(o, add(result, 0x20))) // Store the length.
+            mstore(0x40, add(o, 0x20)) // Allocate memory.
         }
     }
 
@@ -1194,18 +1158,16 @@ library LibString {
     function packTwo(string memory a, string memory b) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let aLength := mload(a)
+            let aLen := mload(a)
             // We don't need to zero right pad the strings,
             // since this is our own custom non-standard packing scheme.
             result :=
                 mul(
                     or( // Load the length and the bytes of `a` and `b`.
-                        shl(shl(3, sub(0x1f, aLength)), mload(add(a, aLength))),
-                        mload(sub(add(b, 0x1e), aLength))
-                    ),
-                    // `totalLength != 0 && totalLength < 31`. Abuses underflow.
+                    shl(shl(3, sub(0x1f, aLen)), mload(add(a, aLen))), mload(sub(add(b, 0x1e), aLen))),
+                    // `totalLen != 0 && totalLen < 31`. Abuses underflow.
                     // Assumes that the lengths are valid and within the block gas limit.
-                    lt(sub(add(aLength, mload(b)), 1), 0x1e)
+                    lt(sub(add(aLen, mload(b)), 1), 0x1e)
                 )
         }
     }
