@@ -53,7 +53,7 @@ utils
 ├─ ECDSA — "Library for verification of ECDSA signatures"
 ├─ P256 — "Gas optimized P256 wrapper"
 ├─ EIP712 — "Contract for EIP-712 typed structured data hashing and signing"
-├─ DeploylessPredeployQueryer — "Deployless queryer for predeploys"
+├─ DeploylessPredeployQueryer — "Deployless querier for predeploys"
 ├─ ERC1967Factory — "Factory for deploying and managing ERC1967 proxy contracts"
 ├─ ERC1967FactoryConstants — "The address and bytecode of the canonical ERC1967Factory"
 ├─ JSONParserLib — "Library for parsing JSONs"
