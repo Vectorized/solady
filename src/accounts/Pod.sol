@@ -43,7 +43,7 @@ abstract contract Pod is Receiver {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the mothership contract.
-    function mothership() public view virtual returns (address result) {
+    function _mothership() internal view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := shr(96, sload(_MOTHERSHIP_SLOT))
@@ -78,7 +78,7 @@ abstract contract Pod is Receiver {
     /// @dev Requires that the caller is the mothership.
     /// This is called in the `onlyMothership` modifier.
     function _checkMothership() internal view virtual {
-        if (msg.sender != mothership()) revert CallerNotMothership();
+        if (msg.sender != _mothership()) revert CallerNotMothership();
     }
 
     /// @dev Requires that the caller is the mothership.
