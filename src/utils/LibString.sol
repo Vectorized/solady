@@ -1078,8 +1078,8 @@ library LibString {
             for { let end := add(s, mload(s)) } iszero(eq(s, end)) {} {
                 s := add(s, 1)
                 let c := and(mload(s), 0xff)
-                // If not in `[0-9A-Z-a-z-.!~*'()]`.
-                if iszero(and(1, shr(c, 0x47fffffe07fffffe03ff678200000000))) {
+                // If not in `[0-9A-Z-a-z-_.!~*'()]`.
+                if iszero(and(1, shr(c, 0x47fffffe87fffffe03ff678200000000))) {
                     mstore8(o, 0x25) // '%'.
                     mstore8(add(o, 1), mload(and(shr(4, c), 15)))
                     mstore8(add(o, 2), mload(and(c, 15)))
