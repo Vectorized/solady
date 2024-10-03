@@ -5,8 +5,7 @@ import "./utils/SoladyTest.sol";
 import {DynamicArrayLib} from "../src/utils/DynamicArrayLib.sol";
 
 contract DynamicArrayLibTest is SoladyTest {
-    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
-    using DynamicArrayLib for uint256[];
+    using DynamicArrayLib for *;
 
     function testDynamicArrayPushAndPop() public {
         uint256 n = 100;
@@ -40,13 +39,24 @@ contract DynamicArrayLibTest is SoladyTest {
     }
 
     function testDynamicArrayWrap() public {
-        address[] memory a = new address[](3);
-        a[0] = address(0);
-        a[1] = address(1);
-        a[2] = address(2);
-        assertEq(DynamicArrayLib.wrap(a).get(0), 0);
-        assertEq(DynamicArrayLib.wrap(a).get(1), 1);
-        assertEq(DynamicArrayLib.wrap(a).get(2), 2);
+        {
+            address[] memory a = new address[](2);
+            a[1] = address(1);
+            assertEq(DynamicArrayLib.wrap(a).get(0), 0);
+            assertEq(DynamicArrayLib.wrap(a).get(1), 1);
+        }
+        {
+            bytes32[] memory a = new bytes32[](2);
+            a[1] = bytes32(uint256(1));
+            assertEq(DynamicArrayLib.wrap(a).get(0), 0);
+            assertEq(DynamicArrayLib.wrap(a).get(1), 1);
+        }
+        {
+            bool[] memory a = new bool[](2);
+            a[1] = true;
+            assertEq(DynamicArrayLib.wrap(a).get(0), 0);
+            assertEq(DynamicArrayLib.wrap(a).get(1), 1);
+        }
     }
 
     function testDynamicArrayResize(uint256[] memory data, uint256 n) public {
@@ -477,6 +487,16 @@ contract DynamicArrayLibTest is SoladyTest {
                 _checkMemory(a);
             }
         }
+    }
+
+    function testUint256ArrayMisc() public {
+        uint256[] memory a = DynamicArrayLib.malloc(1);
+        assertEq(a.set(0, address(3)).get(0), 3);
+        assertEq(a.set(0, bytes32(uint256(9))).get(0), 9);
+        assertEq(a.set(0, bytes32(uint256(9))).getUint256(0), 9);
+        assertEq(a.set(0, bytes32(uint256(9))).getAddress(0), address(9));
+        assertEq(a.set(0, bytes32(uint256(9))).getBool(0), true);
+        assertEq(a.set(0, true).get(0), 1);
     }
 
     function testDynamicArraySetAndGet(bytes32, uint256 i, uint256 n) public {
