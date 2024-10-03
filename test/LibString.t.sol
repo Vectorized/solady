@@ -1103,9 +1103,10 @@ contract LibStringTest is SoladyTest {
         _testEncodeURIComponent("", "");
         _testEncodeURIComponent("a", "a");
         _testEncodeURIComponent("ab", "ab");
+        string memory encodeURIComponentSkippedCharacters =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.!~*'()";
         _testEncodeURIComponent(
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789",
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789"
+            encodeURIComponentSkippedCharacters, encodeURIComponentSkippedCharacters
         );
         // All of these characters are encoded, they are reserved by URI standard
         _testEncodeURIComponent(";/?:@&=+$,# ", "%3B%2F%3F%3A%40%26%3D%2B%24%2C%23%20");
@@ -1145,12 +1146,12 @@ contract LibStringTest is SoladyTest {
         unchecked {
             for (uint256 i = 0; i < inputLength; i++) {
                 bytes1 b = input[i];
-
                 if (
                     (b >= 0x30 && b <= 0x39) // 0-9
                         || (b >= 0x41 && b <= 0x5a) // A-Z
                         || (b >= 0x61 && b <= 0x7a) // a-z
                         || b == 0x2D // -
+                        || b == 0x5F // '_'
                         || b == 0x2E // .
                         || b == 0x21 // !
                         || b == 0x7E // ~
@@ -1176,6 +1177,7 @@ contract LibStringTest is SoladyTest {
                         || (b >= 0x41 && b <= 0x5a) // A-Z
                         || (b >= 0x61 && b <= 0x7a) // a-z
                         || b == 0x2D // -
+                        || b == 0x5F // '_'
                         || b == 0x2E // .
                         || b == 0x21 // !
                         || b == 0x7E // ~
