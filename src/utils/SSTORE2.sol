@@ -210,7 +210,7 @@ library SSTORE2 {
         /// @solidity memory-safe-assembly
         assembly {
             data := mload(0x40)
-            let n := and(sub(extcodesize(pointer), 0x01), 0xffffffffff)
+            let n := and(0xffffffffff, sub(extcodesize(pointer), 0x01))
             extcodecopy(pointer, add(data, 0x1f), 0x00, add(n, 0x21))
             mstore(data, n) // Store the length.
             mstore(0x40, add(n, add(data, 0x40))) // Allocate memory.
@@ -222,7 +222,7 @@ library SSTORE2 {
         /// @solidity memory-safe-assembly
         assembly {
             data := mload(0x40)
-            let n := and(sub(extcodesize(pointer), 0x01), 0xffffffffff)
+            let n := and(0xffffffffff, sub(extcodesize(pointer), 0x01))
             extcodecopy(pointer, add(data, 0x1f), start, add(n, 0x21))
             mstore(data, mul(sub(n, start), lt(start, n))) // Store the length.
             mstore(0x40, add(data, add(0x40, mload(data)))) // Allocate memory.
@@ -247,7 +247,7 @@ library SSTORE2 {
             extcodecopy(pointer, add(data, 0x1f), start, add(d, 0x01))
             if iszero(and(0xff, mload(add(data, d)))) {
                 let n := sub(extcodesize(pointer), 0x01)
-                returndatacopy(returndatasize(), returndatasize(), shr(64, n))
+                returndatacopy(returndatasize(), returndatasize(), shr(40, n))
                 d := mul(gt(n, start), sub(d, mul(gt(end, n), sub(end, n))))
             }
             mstore(data, d) // Store the length.
