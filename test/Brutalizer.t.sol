@@ -71,7 +71,7 @@ contract BrutalizerTest is SoladyTest {
         }
     }
 
-    function testBrutalizedBytes31(bytes32, bytes31 x) public {
+    function testBrutalizedBytes31(uint256, bytes31 x) public {
         bytes31 brutalized = _brutalizedBytes31(x);
         assertEq(brutalized, x);
         for (bool isBrutalized; !isBrutalized;) {
