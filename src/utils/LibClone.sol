@@ -1678,53 +1678,48 @@ library LibClone {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*            CONSTANT ERC1967 BOOTSTRAP OPERATIONS           */
+    /*                ERC1967 BOOTSTRAP OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: This enables an ERC1967 proxy to be deployed at a deterministic address
-    // independent of the implementation:
+    // A bootstrap is a minimal UUPS implementation that allows an ERC1967 proxy
+    // pointing to it to be upgraded. The ERC1967 proxy can then be deployed to a
+    // deterministic address independent of the implementation:
     // ```
-    //     address bootstrap = LibClone.constantERC1967Bootstrap();
+    //     address bootstrap = LibClone.erc1967Bootstrap();
     //     address instance = LibClone.deployDeterministicERC1967(0, bootstrap, salt);
-    //     LibClone.bootstrapConstantERC1967(bootstrap, implementation);
+    //     LibClone.bootstrapERC1967(bootstrap, implementation);
     // ```
 
-    /// @dev Deploys the constant ERC1967 bootstrap if it has not been deployed.
-    function constantERC1967Bootstrap() internal returns (address bootstrap) {
-        bootstrap = constantERC1967Bootstrap(address(this));
+    /// @dev Deploys the ERC1967 bootstrap if it has not been deployed.
+    function erc1967Bootstrap() internal returns (address) {
+        return erc1967Bootstrap(address(this));
     }
 
-    /// @dev Deploys the constant ERC1967 bootstrap if it has not been deployed.
-    function constantERC1967Bootstrap(address authorizedUpgrader)
-        internal
-        returns (address bootstrap)
-    {
-        bytes memory c = initCodeConstantERC1967Bootstrap(authorizedUpgrader);
-        bootstrap = predictDeterministicAddress(keccak256(c), bytes32(0), address(this));
+    /// @dev Deploys the ERC1967 bootstrap if it has not been deployed.
+    function erc1967Bootstrap(address authorizedUpgrader) internal returns (address) {
+        bytes memory c = initCodeERC1967Bootstrap(authorizedUpgrader);
+        address result = predictDeterministicAddress(keccak256(c), bytes32(0), address(this));
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(extcodesize(bootstrap)) {
+            if iszero(extcodesize(result)) {
                 if iszero(create2(0, add(c, 0x20), mload(c), 0)) {
                     mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
         }
+        return result;
     }
 
     /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
-    function constantERC1967BootstrapAddress() internal view returns (address bootstrap) {
-        bootstrap = constantERC1967BootstrapAddress(address(this));
+    function erc1967BootstrapAddress() internal view returns (address) {
+        return erc1967BootstrapAddress(address(this));
     }
 
     /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
-    function constantERC1967BootstrapAddress(address authorizedUpgrader)
-        internal
-        view
-        returns (address bootstrap)
-    {
-        bytes32 hash = initCodeHashConstantERC1967Bootstrap(authorizedUpgrader);
-        bootstrap = predictDeterministicAddress(hash, bytes32(0), address(this));
+    function erc1967BootstrapAddress(address authorizedUpgrader) internal view returns (address) {
+        bytes32 hash = initCodeHashERC1967Bootstrap(authorizedUpgrader);
+        return predictDeterministicAddress(hash, bytes32(0), address(this));
     }
 
     /// @dev Replaces the implementation at `instance`.
@@ -1740,7 +1735,7 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code of the ERC1967 bootstrap.
-    function initCodeConstantERC1967Bootstrap(address authorizedUpgrader)
+    function initCodeERC1967Bootstrap(address authorizedUpgrader)
         internal
         pure
         returns (bytes memory c)
@@ -1758,12 +1753,12 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code hash of the ERC1967 bootstrap.
-    function initCodeHashConstantERC1967Bootstrap(address authorizedUpgrader)
+    function initCodeHashERC1967Bootstrap(address authorizedUpgrader)
         internal
         pure
         returns (bytes32)
     {
-        return keccak256(initCodeConstantERC1967Bootstrap(authorizedUpgrader));
+        return keccak256(initCodeERC1967Bootstrap(authorizedUpgrader));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

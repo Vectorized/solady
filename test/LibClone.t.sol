@@ -1007,8 +1007,8 @@ contract LibCloneTest is SoladyTest {
         );
     }
 
-    function testERC1967ConstantBootstrapInitCode(address authorizedUpgrader) public {
-        bytes memory c = LibClone.initCodeConstantERC1967Bootstrap(authorizedUpgrader);
+    function testERC1967BootstrapInitCode(address authorizedUpgrader) public {
+        bytes memory c = LibClone.initCodeERC1967Bootstrap(authorizedUpgrader);
         bytes memory expected = abi.encodePacked(
             hex"603d80600a3d393df3fe3373",
             authorizedUpgrader,
@@ -1017,9 +1017,9 @@ contract LibCloneTest is SoladyTest {
         assertEq(c, expected);
     }
 
-    function testERC1967ConstantBootstrapGuard(address implementation, bytes32 salt) public {
+    function testERC1967BootstrapGuard(address implementation, bytes32 salt) public {
         address authorizedUpgrader = _randomNonZeroAddress();
-        address bootstrap = LibClone.constantERC1967Bootstrap(authorizedUpgrader);
+        address bootstrap = LibClone.erc1967Bootstrap(authorizedUpgrader);
         address instance = this.deployDeterministicERC1967I(bootstrap, salt);
         assertEq(LibClone.implementationOf(instance), bootstrap);
         if (_randomChance(2)) {
@@ -1032,11 +1032,11 @@ contract LibCloneTest is SoladyTest {
         }
     }
 
-    function testERC1967ConstantBootstrap(address implementation, bytes32 salt) public {
-        address bootstrap = LibClone.constantERC1967BootstrapAddress();
-        assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
+    function testERC1967Bootstrap(address implementation, bytes32 salt) public {
+        address bootstrap = LibClone.erc1967BootstrapAddress();
+        assertEq(LibClone.erc1967Bootstrap(), bootstrap);
         if (_randomChance(2)) {
-            assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);
+            assertEq(LibClone.erc1967Bootstrap(), bootstrap);
         }
 
         address instance;
