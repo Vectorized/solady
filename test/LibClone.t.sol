@@ -1007,6 +1007,21 @@ contract LibCloneTest is SoladyTest {
         );
     }
 
+    function testERC1967ConstantBootstrapGuard(address implementation, bytes32 salt) public {
+        address authorizedUpgrader = _randomNonZeroAddress();
+        address bootstrap = LibClone.constantERC1967Bootstrap(authorizedUpgrader);
+        address instance = this.deployDeterministicERC1967I(bootstrap, salt);
+        assertEq(LibClone.implementationOf(instance), bootstrap);
+        if (_randomChance(2)) {
+            vm.prank(authorizedUpgrader);
+            LibClone.bootstrapERC1967(instance, implementation);
+            assertEq(LibClone.implementationOf(instance), implementation);
+        } else {
+            vm.expectRevert();
+            LibClone.bootstrapERC1967(instance, implementation);
+        }
+    }
+
     function testERC1967ConstantBootstrap(address implementation, bytes32 salt) public {
         address bootstrap = LibClone.constantERC1967BootstrapAddress();
         assertEq(LibClone.constantERC1967Bootstrap(), bootstrap);

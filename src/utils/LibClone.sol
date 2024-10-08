@@ -1748,11 +1748,11 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             c := mload(0x40)
-            mstore(add(c, 0x60), 0xa3ca505d382bbc55000000000000000000000000000000000000000000000000)
-            mstore(add(c, 0x40), 0x183d3d3e3d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920)
+            mstore(add(c, 0x60), 0xca505d382bbc5500000000000000000000000000000000000000000000000000)
+            mstore(add(c, 0x40), 0x0338573d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3)
             mstore(add(c, 0x20), authorizedUpgrader)
-            mstore(add(c, 0x0c), 0x603f80600a3d393df3fe3373)
-            mstore(c, 0x48)
+            mstore(add(c, 0x0c), 0x603d80600a3d393df3fe3373)
+            mstore(c, 0x47)
             mstore(0x40, add(c, 0x80))
         }
     }
