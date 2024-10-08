@@ -1696,19 +1696,18 @@ library LibClone {
     }
 
     /// @dev Deploys the ERC1967 bootstrap if it has not been deployed.
-    function erc1967Bootstrap(address authorizedUpgrader) internal returns (address) {
+    function erc1967Bootstrap(address authorizedUpgrader) internal returns (address bootstrap) {
         bytes memory c = initCodeERC1967Bootstrap(authorizedUpgrader);
-        address result = predictDeterministicAddress(keccak256(c), bytes32(0), address(this));
+        bootstrap = predictDeterministicAddress(keccak256(c), bytes32(0), address(this));
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(extcodesize(result)) {
+            if iszero(extcodesize(bootstrap)) {
                 if iszero(create2(0, add(c, 0x20), mload(c), 0)) {
                     mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
         }
-        return result;
     }
 
     /// @dev Replaces the implementation at `instance`.
@@ -1725,17 +1724,16 @@ library LibClone {
 
     /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
     function predictDeterministicAddressERC1967Bootstrap() internal view returns (address) {
-        return predictDeterministicAddressERC1967Bootstrap(address(this));
+        return predictDeterministicAddressERC1967Bootstrap(address(this), address(this));
     }
 
     /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
-    function predictDeterministicAddressERC1967Bootstrap(address authorizedUpgrader)
-        internal
-        view
-        returns (address)
-    {
+    function predictDeterministicAddressERC1967Bootstrap(
+        address authorizedUpgrader,
+        address deployer
+    ) internal pure returns (address) {
         bytes32 hash = initCodeHashERC1967Bootstrap(authorizedUpgrader);
-        return predictDeterministicAddress(hash, bytes32(0), address(this));
+        return predictDeterministicAddress(hash, bytes32(0), deployer);
     }
 
     /// @dev Returns the initialization code of the ERC1967 bootstrap.
