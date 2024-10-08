@@ -323,8 +323,9 @@ library DynamicArrayLib {
     /// @dev Directly returns `a` without copying.
     function directReturn(uint256[] memory a) internal pure {
         assembly {
-            mstore(sub(a, 0x20), 0x20)
-            return(sub(a, 0x20), add(0x40, shl(5, mload(a))))
+            let retStart := sub(a, 0x20)
+            mstore(retStart, 0x20)
+            return(retStart, add(0x40, shl(5, mload(a))))
         }
     }
 
@@ -956,9 +957,10 @@ library DynamicArrayLib {
     /// @dev Directly returns `a` without copying.
     function directReturn(DynamicArray memory a) internal pure {
         assembly {
-            a := mload(a)
-            mstore(sub(a, 0x20), 0x20)
-            return(sub(a, 0x20), add(0x40, shl(5, mload(a))))
+            let arrData := mload(a)
+            let retStart := sub(arrData, 0x20)
+            mstore(retStart, 0x20)
+            return(retStart, add(0x40, shl(5, mload(arrData))))
         }
     }
 
