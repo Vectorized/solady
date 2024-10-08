@@ -1690,6 +1690,11 @@ library LibClone {
     // ```
 
     /// @dev Deploys the constant ERC1967 bootstrap if it has not been deployed.
+    function constantERC1967Bootstrap() internal returns (address bootstrap) {
+        bootstrap = constantERC1967Bootstrap(address(this));
+    }
+
+    /// @dev Deploys the constant ERC1967 bootstrap if it has not been deployed.
     function constantERC1967Bootstrap(address authorizedUpgrader)
         internal
         returns (address bootstrap)
@@ -1705,6 +1710,11 @@ library LibClone {
                 }
             }
         }
+    }
+
+    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
+    function constantERC1967BootstrapAddress() internal view returns (address bootstrap) {
+        bootstrap = constantERC1967BootstrapAddress(address(this));
     }
 
     /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
