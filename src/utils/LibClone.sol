@@ -1678,37 +1678,37 @@ library LibClone {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*            CONSTANT ERC1967 BOOTSTRAP OPERATIONS           */
+    /*                ERC1967 BOOTSTRAP OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: This enables an ERC1967 proxy to be deployed at a deterministic address
-    // independent of the implementation:
+    // A bootstrap is a minimal UUPS implementation that allows an ERC1967 proxy
+    // pointing to it to be upgraded. The ERC1967 proxy can then be deployed to a
+    // deterministic address independent of the implementation:
     // ```
-    //     address bootstrap = LibClone.constantERC1967Bootstrap();
+    //     address bootstrap = LibClone.erc1967Bootstrap();
     //     address instance = LibClone.deployDeterministicERC1967(0, bootstrap, salt);
-    //     LibClone.bootstrapConstantERC1967(bootstrap, implementation);
+    //     LibClone.bootstrapERC1967(bootstrap, implementation);
     // ```
 
-    /// @dev Deploys the constant ERC1967 bootstrap if it has not been deployed.
-    function constantERC1967Bootstrap() internal returns (address bootstrap) {
-        bootstrap = constantERC1967BootstrapAddress();
+    /// @dev Deploys the ERC1967 bootstrap if it has not been deployed.
+    function erc1967Bootstrap() internal returns (address) {
+        return erc1967Bootstrap(address(this));
+    }
+
+    /// @dev Deploys the ERC1967 bootstrap if it has not been deployed.
+    function erc1967Bootstrap(address authorizedUpgrader) internal returns (address) {
+        bytes memory c = initCodeERC1967Bootstrap(authorizedUpgrader);
+        address result = predictDeterministicAddress(keccak256(c), bytes32(0), address(this));
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(extcodesize(bootstrap)) {
-                mstore(0x20, 0x0894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc55)
-                mstore(0x00, 0x60258060093d393df358357f36)
-                if iszero(create2(0, 0x13, 0x2e, 0)) {
+            if iszero(extcodesize(result)) {
+                if iszero(create2(0, add(c, 0x20), mload(c), 0)) {
                     mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
         }
-    }
-
-    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
-    function constantERC1967BootstrapAddress() internal view returns (address bootstrap) {
-        bytes32 hash = 0xfe1a42b9c571a6a8c083c94ac67b9cfd74e2582923426aa3b762e3431d717cd1;
-        bootstrap = predictDeterministicAddress(hash, bytes32(0), address(this));
+        return result;
     }
 
     /// @dev Replaces the implementation at `instance`.
@@ -1721,6 +1721,48 @@ library LibClone {
                 revert(0x1c, 0x04)
             }
         }
+    }
+
+    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
+    function predictDeterministicAddressERC1967Bootstrap() internal view returns (address) {
+        return predictDeterministicAddressERC1967Bootstrap(address(this));
+    }
+
+    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
+    function predictDeterministicAddressERC1967Bootstrap(address authorizedUpgrader)
+        internal
+        view
+        returns (address)
+    {
+        bytes32 hash = initCodeHashERC1967Bootstrap(authorizedUpgrader);
+        return predictDeterministicAddress(hash, bytes32(0), address(this));
+    }
+
+    /// @dev Returns the initialization code of the ERC1967 bootstrap.
+    function initCodeERC1967Bootstrap(address authorizedUpgrader)
+        internal
+        pure
+        returns (bytes memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            c := mload(0x40)
+            mstore(add(c, 0x60), 0xca505d382bbc5500000000000000000000000000000000000000000000000000)
+            mstore(add(c, 0x40), 0x0338573d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3)
+            mstore(add(c, 0x20), authorizedUpgrader)
+            mstore(add(c, 0x0c), 0x603d80600a3d393df3fe3373)
+            mstore(c, 0x47)
+            mstore(0x40, add(c, 0x80))
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the ERC1967 bootstrap.
+    function initCodeHashERC1967Bootstrap(address authorizedUpgrader)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(initCodeERC1967Bootstrap(authorizedUpgrader));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
