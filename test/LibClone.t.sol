@@ -1007,6 +1007,16 @@ contract LibCloneTest is SoladyTest {
         );
     }
 
+    function testERC1967ConstantBootstrapInitCode(address authorizedUpgrader) public {
+        bytes memory c = LibClone.initCodeConstantERC1967Bootstrap(authorizedUpgrader);
+        bytes memory expected = abi.encodePacked(
+            hex"603d80600a3d393df3fe3373",
+            authorizedUpgrader,
+            hex"0338573d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc55"
+        );
+        assertEq(c, expected);
+    }
+
     function testERC1967ConstantBootstrapGuard(address implementation, bytes32 salt) public {
         address authorizedUpgrader = _randomNonZeroAddress();
         address bootstrap = LibClone.constantERC1967Bootstrap(authorizedUpgrader);

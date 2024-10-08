@@ -1699,7 +1699,7 @@ library LibClone {
         internal
         returns (address bootstrap)
     {
-        bytes memory c = initCodeERC1967Bootstrap(authorizedUpgrader);
+        bytes memory c = initCodeConstantERC1967Bootstrap(authorizedUpgrader);
         bootstrap = predictDeterministicAddress(keccak256(c), bytes32(0), address(this));
         /// @solidity memory-safe-assembly
         assembly {
@@ -1723,7 +1723,7 @@ library LibClone {
         view
         returns (address bootstrap)
     {
-        bytes32 hash = initCodeHashERC1967Bootstrap(authorizedUpgrader);
+        bytes32 hash = initCodeHashConstantERC1967Bootstrap(authorizedUpgrader);
         bootstrap = predictDeterministicAddress(hash, bytes32(0), address(this));
     }
 
@@ -1740,7 +1740,7 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code of the ERC1967 bootstrap.
-    function initCodeERC1967Bootstrap(address authorizedUpgrader)
+    function initCodeConstantERC1967Bootstrap(address authorizedUpgrader)
         internal
         pure
         returns (bytes memory c)
@@ -1758,12 +1758,12 @@ library LibClone {
     }
 
     /// @dev Returns the initialization code hash of the ERC1967 bootstrap.
-    function initCodeHashERC1967Bootstrap(address authorizedUpgrader)
+    function initCodeHashConstantERC1967Bootstrap(address authorizedUpgrader)
         internal
         pure
         returns (bytes32)
     {
-        return keccak256(initCodeERC1967Bootstrap(authorizedUpgrader));
+        return keccak256(initCodeConstantERC1967Bootstrap(authorizedUpgrader));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
