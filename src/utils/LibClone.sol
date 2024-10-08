@@ -1690,14 +1690,16 @@ library LibClone {
     // ```
 
     /// @dev Deploys the constant ERC1967 bootstrap if it has not been deployed.
-    function constantERC1967Bootstrap() internal returns (address bootstrap) {
-        bootstrap = constantERC1967BootstrapAddress();
+    function constantERC1967Bootstrap(address authorizedUpgrader)
+        internal
+        returns (address bootstrap)
+    {
+        bytes memory c = initCodeERC1967Bootstrap(authorizedUpgrader);
+        bootstrap = predictDeterministicAddress(keccak256(c), bytes32(0), address(this));
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(extcodesize(bootstrap)) {
-                mstore(0x20, 0x0894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc55)
-                mstore(0x00, 0x60258060093d393df358357f36)
-                if iszero(create2(0, 0x13, 0x2e, 0)) {
+                if iszero(create2(0, add(c, 0x20), mload(c), 0)) {
                     mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                     revert(0x1c, 0x04)
                 }
@@ -1706,8 +1708,12 @@ library LibClone {
     }
 
     /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
-    function constantERC1967BootstrapAddress() internal view returns (address bootstrap) {
-        bytes32 hash = 0xfe1a42b9c571a6a8c083c94ac67b9cfd74e2582923426aa3b762e3431d717cd1;
+    function constantERC1967BootstrapAddress(address authorizedUpgrader)
+        internal
+        view
+        returns (address bootstrap)
+    {
+        bytes32 hash = initCodeHashERC1967Bootstrap(authorizedUpgrader);
         bootstrap = predictDeterministicAddress(hash, bytes32(0), address(this));
     }
 
@@ -1721,6 +1727,33 @@ library LibClone {
                 revert(0x1c, 0x04)
             }
         }
+    }
+
+    /// @dev Returns the initialization code of the ERC1967 bootstrap.
+    function initCodeERC1967Bootstrap(address authorizedUpgrader)
+        internal
+        pure
+        returns (bytes memory c)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            c := mload(0x40)
+            mstore(add(c, 0x60), 0xa3ca505d382bbc55000000000000000000000000000000000000000000000000)
+            mstore(add(c, 0x40), 0x183d3d3e3d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920)
+            mstore(add(c, 0x20), authorizedUpgrader)
+            mstore(add(c, 0x0c), 0x603f80600a3d393df3fe3373)
+            mstore(c, 0x48)
+            mstore(0x40, add(c, 0x80))
+        }
+    }
+
+    /// @dev Returns the initialization code hash of the ERC1967 bootstrap.
+    function initCodeHashERC1967Bootstrap(address authorizedUpgrader)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(initCodeERC1967Bootstrap(authorizedUpgrader));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
