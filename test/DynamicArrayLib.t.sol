@@ -534,6 +534,44 @@ contract DynamicArrayLibTest is SoladyTest {
         assertEq(m, _freeMemoryPointer());
     }
 
+    function testUint256ArrayDirectReturn(uint256 seed) public {
+        unchecked {
+            uint256[] memory a = this.uint256ArrayDirectReturn(seed);
+            assertEq(a[0], seed + 0);
+            assertEq(a[1], seed + 1);
+            assertEq(a[2], seed + 2);
+            assertEq(a.length, 3);
+            _checkMemory(a);
+        }
+    }
+
+    function uint256ArrayDirectReturn(uint256 seed) external pure returns (uint256[] memory) {
+        unchecked {
+            uint256[] memory result = DynamicArrayLib.malloc(3);
+            result.set(0, seed + 0);
+            result.set(1, seed + 1);
+            result.set(2, seed + 2);
+            DynamicArrayLib.directReturn(result);
+        }
+    }
+
+    function testDynamicArrayDirectReturn(uint256 seed) public {
+        unchecked {
+            uint256[] memory a = this.dynamicArrayDirectReturn(seed);
+            assertEq(a[0], seed + 0);
+            assertEq(a[1], seed + 1);
+            assertEq(a[2], seed + 2);
+            assertEq(a.length, 3);
+            _checkMemory(a);
+        }
+    }
+
+    function dynamicArrayDirectReturn(uint256 seed) external pure returns (uint256[] memory) {
+        unchecked {
+            DynamicArrayLib.p(seed + 0).p(seed + 1).p(seed + 2).directReturn();
+        }
+    }
+
     function _sliceOriginal(uint256[] memory a, uint256 start, uint256 end)
         internal
         pure
