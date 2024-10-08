@@ -320,6 +320,14 @@ library DynamicArrayLib {
         result = lastIndexOf(a, needle, NOT_FOUND);
     }
 
+    /// @dev Directly returns `a` without copying.
+    function directReturn(uint256[] memory a) internal pure {
+        assembly {
+            mstore(sub(a, 0x20), 0x20)
+            return(sub(a, 0x20), add(0x40, shl(5, mload(a))))
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  DYNAMIC ARRAY OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -942,6 +950,15 @@ library DynamicArrayLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := keccak256(add(mload(a), 0x20), shl(5, mload(mload(a))))
+        }
+    }
+
+    /// @dev Directly returns `a` without copying.
+    function directReturn(DynamicArray memory a) internal pure {
+        assembly {
+            a := mload(a)
+            mstore(sub(a, 0x20), 0x20)
+            return(sub(a, 0x20), add(0x40, shl(5, mload(a))))
         }
     }
 
