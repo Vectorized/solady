@@ -1033,7 +1033,7 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testERC1967Bootstrap(address implementation, bytes32 salt) public {
-        address bootstrap = LibClone.erc1967BootstrapAddress();
+        address bootstrap = LibClone.predictDeterministicAddressERC1967Bootstrap();
         assertEq(LibClone.erc1967Bootstrap(), bootstrap);
         if (_randomChance(2)) {
             assertEq(LibClone.erc1967Bootstrap(), bootstrap);

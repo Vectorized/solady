@@ -1711,17 +1711,6 @@ library LibClone {
         return result;
     }
 
-    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
-    function erc1967BootstrapAddress() internal view returns (address) {
-        return erc1967BootstrapAddress(address(this));
-    }
-
-    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
-    function erc1967BootstrapAddress(address authorizedUpgrader) internal view returns (address) {
-        bytes32 hash = initCodeHashERC1967Bootstrap(authorizedUpgrader);
-        return predictDeterministicAddress(hash, bytes32(0), address(this));
-    }
-
     /// @dev Replaces the implementation at `instance`.
     function bootstrapERC1967(address instance, address implementation) internal {
         /// @solidity memory-safe-assembly
@@ -1732,6 +1721,21 @@ library LibClone {
                 revert(0x1c, 0x04)
             }
         }
+    }
+
+    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
+    function predictDeterministicAddressERC1967Bootstrap() internal view returns (address) {
+        return predictDeterministicAddressERC1967Bootstrap(address(this));
+    }
+
+    /// @dev Returns the implementation address of the ERC1967 bootstrap for this contract.
+    function predictDeterministicAddressERC1967Bootstrap(address authorizedUpgrader)
+        internal
+        view
+        returns (address)
+    {
+        bytes32 hash = initCodeHashERC1967Bootstrap(authorizedUpgrader);
+        return predictDeterministicAddress(hash, bytes32(0), address(this));
     }
 
     /// @dev Returns the initialization code of the ERC1967 bootstrap.
