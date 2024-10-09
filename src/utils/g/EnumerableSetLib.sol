@@ -1,17 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for managing enumerable sets in storage.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/EnumerableSetLib.g.sol)
-///
-/// @dev Note:
-/// In many applications, the number of elements in an enumerable set is small.
-/// This enumerable set implementation avoids storing the length and indices
-/// for up to 3 elements. Once the length exceeds 3 for the first time, the length
-/// and indices will be initialized. The amortized cost of adding elements is O(1).
-///
-/// The AddressSet implementation packs the length with the 0th entry.
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -47,6 +36,16 @@ using EnumerableSetLib for Uint256Set global;
 using EnumerableSetLib for Int256Set global;
 using EnumerableSetLib for Uint8Set global;
 
+/// @notice Library for managing enumerable sets in storage.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/EnumerableSetLib.sol)
+///
+/// @dev Note:
+/// In many applications, the number of elements in an enumerable set is small.
+/// This enumerable set implementation avoids storing the length and indices
+/// for up to 3 elements. Once the length exceeds 3 for the first time, the length
+/// and indices will be initialized. The amortized cost of adding elements is O(1).
+///
+/// The AddressSet implementation packs the length with the 0th entry.
 library EnumerableSetLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */

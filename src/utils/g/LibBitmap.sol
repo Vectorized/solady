@@ -3,11 +3,6 @@ pragma solidity ^0.8.4;
 
 import {LibBit} from "../LibBit.sol";
 
-/// @notice Library for storage of packed unsigned booleans.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibBitmap.g.sol)
-/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibBitmap.sol)
-/// @author Modified from Solidity-Bits (https://github.com/estarriolvetch/solidity-bits/blob/main/contracts/BitMaps.sol)
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -19,6 +14,10 @@ struct Bitmap {
 
 using LibBitmap for Bitmap global;
 
+/// @notice Library for storage of packed unsigned booleans.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibBitmap.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibBitmap.sol)
+/// @author Modified from Solidity-Bits (https://github.com/estarriolvetch/solidity-bits/blob/main/contracts/BitMaps.sol)
 library LibBitmap {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */

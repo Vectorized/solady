@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for storage of packed unsigned integers.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibMap.g.sol)
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -45,6 +42,8 @@ using LibMap for Uint40Map global;
 using LibMap for Uint64Map global;
 using LibMap for Uint128Map global;
 
+/// @notice Library for storage of packed unsigned integers.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibMap.sol)
 library LibMap {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     GETTERS / SETTERS                      */

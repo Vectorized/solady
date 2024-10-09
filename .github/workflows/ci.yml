@@ -39,14 +39,14 @@ jobs:
             forge test --use 0.8.27 --evm-version "cancun" --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
-            forge test --use 0.8.5 --fuzz-runs 16 --skip "*.g.sol" &&
-            forge test --use 0.8.6 --fuzz-runs 16 --skip "*.g.sol" &&
-            forge test --use 0.8.7 --fuzz-runs 16 --skip "*.g.sol"&&
-            forge test --use 0.8.8 --fuzz-runs 16 --skip "*.g.sol" &&
-            forge test --use 0.8.9 --fuzz-runs 16 --skip "*.g.sol" &&
-            forge test --use 0.8.10 --fuzz-runs 16 --skip "*.g.sol" &&
-            forge test --use 0.8.11 --fuzz-runs 16 --skip "*.g.sol" &&
-            forge test --use 0.8.12 --fuzz-runs 16 --skip "*.g.sol"
+            forge test --use 0.8.5 --fuzz-runs 16 --skip "*/g/*" &&
+            forge test --use 0.8.6 --fuzz-runs 16 --skip "*/g/*" &&
+            forge test --use 0.8.7 --fuzz-runs 16 --skip "*/g/*"&&
+            forge test --use 0.8.8 --fuzz-runs 16 --skip "*/g/*" &&
+            forge test --use 0.8.9 --fuzz-runs 16 --skip "*/g/*" &&
+            forge test --use 0.8.10 --fuzz-runs 16 --skip "*/g/*" &&
+            forge test --use 0.8.11 --fuzz-runs 16 --skip "*/g/*" &&
+            forge test --use 0.8.12 --fuzz-runs 16 --skip "*/g/*"
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] &&
             forge test --use 0.8.13 --fuzz-runs 16 &&
@@ -61,7 +61,7 @@ jobs:
             forge test --use 0.8.22 --fuzz-runs 16 &&
             forge test --use 0.8.23 --fuzz-runs 16 &&
             forge test --use 0.8.24 --fuzz-runs 16 &&
-            forge test --use 0.8.25 --fuzz-runs 16  &&
+            forge test --use 0.8.25 --fuzz-runs 16 &&
             forge test --use 0.8.26 --fuzz-runs 16
           ) ||
           ( [ "${{ matrix.profile }}" = "via-ir" ] &&
@@ -69,10 +69,10 @@ jobs:
           ) ||
           ( [ "${{ matrix.profile }}" = "min-solc" ] &&
             forge fmt --check &&
-            forge test --use 0.8.4 --skip "*.g.sol"
+            forge test --use 0.8.4 --skip "*/g/*"
           ) ||
           ( [ "${{ matrix.profile }}" = "min-solc-via-ir" ] &&
-            forge test --use 0.8.4 --skip "*.g.sol" --via-ir
+            forge test --use 0.8.4 --skip "*/g/*" --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "intense" ] &&
             forge test --fuzz-runs 5000

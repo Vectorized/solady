@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for managing a min-heap in storage or memory.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MinHeapLib.g.sol)
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -21,6 +18,8 @@ struct MemHeap {
 using MinHeapLib for Heap global;
 using MinHeapLib for MemHeap global;
 
+/// @notice Library for managing a min-heap in storage or memory.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/MinHeapLib.sol)
 library MinHeapLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */

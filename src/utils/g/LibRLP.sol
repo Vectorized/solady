@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for RLP encoding and CREATE address computation.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibRLP.g.sol)
-/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibRLP.sol)
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -17,6 +13,9 @@ struct RLPList {
 
 using LibRLP for RLPList global;
 
+/// @notice Library for RLP encoding and CREATE address computation.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibRLP.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibRLP.sol)
 library LibRLP {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                 CREATE ADDRESS PREDICTION                  */

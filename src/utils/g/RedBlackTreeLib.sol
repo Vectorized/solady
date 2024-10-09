@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for managing a red-black-tree in storage.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/RedBlackTreeLib.g.sol)
-/// @author Modified from BokkyPooBahsRedBlackTreeLibrary (https://github.com/bokkypoobah/BokkyPooBahsRedBlackTreeLibrary)
-/// @dev This implementation does not support the zero (i.e. empty) value.
-///      This implementation supports up to 2147483647 values.
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -18,6 +12,11 @@ struct Tree {
 
 using RedBlackTreeLib for Tree global;
 
+/// @notice Library for managing a red-black-tree in storage.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/RedBlackTreeLib.sol)
+/// @author Modified from BokkyPooBahsRedBlackTreeLibrary (https://github.com/bokkypoobah/BokkyPooBahsRedBlackTreeLibrary)
+/// @dev This implementation does not support the zero (i.e. empty) value.
+///      This implementation supports up to 2147483647 values.
 library RedBlackTreeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
