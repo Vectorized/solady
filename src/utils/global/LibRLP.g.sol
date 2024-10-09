@@ -177,7 +177,11 @@ library LibRLP {
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
-    function p(RLPList memory list, RLPList memory x) internal pure returns (RLPList memory result) {
+    function p(RLPList memory list, RLPList memory x)
+        internal
+        pure
+        returns (RLPList memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(3, shl(8, x))))
