@@ -31,7 +31,7 @@ async function main() {
         
         var structSectionText = '';
         src = src.replace(structSectionRegex, m => {
-          structSectionText = m.replace(/\n    /g, '\n');
+          structSectionText = m;
           return '';
         });
         var libraryStartMatch;
@@ -42,6 +42,7 @@ async function main() {
           globalUsingsText += 'using ' + libraryStartMatch[1] + ' for ' + structStartMatch[1] + ' global;';
         }
         if (globalUsingsText == '') return;
+        structSectionText = '\n' + (structSectionText.replace(/\n    /g, '\n')).replace(/\n\n+/g, '');
         src = src.replace(
           pragmaSolidityRegex, 
           'pragma solidity ^0.8.13;' + structSectionText + '\n' + globalUsingsText

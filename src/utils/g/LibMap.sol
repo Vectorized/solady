@@ -1,35 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
 /// @dev A uint8 map in storage.
 struct Uint8Map {
     mapping(uint256 => uint256) map;
 }
-
 /// @dev A uint16 map in storage.
+
 struct Uint16Map {
     mapping(uint256 => uint256) map;
 }
-
 /// @dev A uint32 map in storage.
+
 struct Uint32Map {
     mapping(uint256 => uint256) map;
 }
-
 /// @dev A uint40 map in storage. Useful for storing timestamps up to 34841 A.D.
+
 struct Uint40Map {
     mapping(uint256 => uint256) map;
 }
-
 /// @dev A uint64 map in storage.
+
 struct Uint64Map {
     mapping(uint256 => uint256) map;
 }
-
 /// @dev A uint128 map in storage.
+
 struct Uint128Map {
     mapping(uint256 => uint256) map;
 }
