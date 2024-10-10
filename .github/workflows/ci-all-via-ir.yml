@@ -10,7 +10,7 @@ jobs:
     
     strategy:
       matrix:
-        profile: [via-ir-0,via-ir-1,via-ir-2,via-ir-3]
+        profile: [via-ir-0,via-ir-1,via-ir-2,via-ir-3,via-ir-4]
 
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +46,7 @@ jobs:
             forge test --use 0.8.17 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "via-ir-3" ] &&
+            forge test --use 0.8.28 --via-ir &&
             forge test --use 0.8.27 --via-ir &&
             forge test --use 0.8.26 --via-ir &&
             forge test --use 0.8.25 --via-ir &&
