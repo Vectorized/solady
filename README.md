@@ -98,6 +98,7 @@ src — "Solidity smart contracts"
 test — "Foundry Forge tests"
 js — "Accompanying JavaScript helper library"
 ext — "Extra tests"
+prep — "Preprocessing scripts"
 audits — "Audit reports"
 ```
 
