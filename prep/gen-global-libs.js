@@ -19,17 +19,16 @@ async function main() {
       const libraryStartMatch = src.match(/library\s+([A-Za-z0-9]+)\s+\{/);
       if (!libraryStartMatch) return;
       
-      let structsSrc = '';
+      let structsSrc = '', usings = [];
       src = src.replace(
         /\s*\/\*\S+?\*\/\s*\/\*\s+STRUCTS?\s+\*\/\s*\/\*\S+?\*\/([\s\S]+?struct\s+[A-Za-z0-9]+\s+\{[\s\S]+?\})+/, 
         m => (structsSrc = m, '')
       );
 
-      let usings = [];
       for (let m, r = /struct\s+([A-Za-z0-9]+)\s+\{/g; m = r.exec(structsSrc); ) {
         usings.push('using ' + libraryStartMatch[1] + ' for ' + m[1] + ' global;');
       }
-      if (structsSrc === '' || usings.length === 0) return;
+      if (usings.length === 0 || structsSrc === '') return;
 
       const dstPath = srcPath.replace(/([A-Za-z0-9]+\.sol)/, 'g/$1');
       console.log(dstPath);
@@ -40,6 +39,7 @@ async function main() {
           /pragma\s+solidity\s+\^0\.8\.\d+;/, 
           [
             'pragma solidity ^0.8.13;',
+            '// This file is auto-generated.',
             structsSrc.replace(/\n    /g, '\n').replace(/^\s*\n+|\n+\s*$/g, ''),
             usings.join('\n').replace(/^\s*\n+|\n+\s*$/g, '')
           ].join('\n\n')
