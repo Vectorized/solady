@@ -29,7 +29,7 @@ async function main() {
       for (let m, r = /struct\s+([A-Za-z0-9]+)\s+\{/g; m = r.exec(structsSrc); ) {
         usings.push('using ' + libraryStartMatch[1] + ' for ' + m[1] + ' global;');
       }
-      if (structsSrc == '' || usings.length == 0) return;
+      if (structsSrc === '' || usings.length === 0) return;
 
       const dstPath = srcPath.replace(/([A-Za-z0-9]+\.sol)/, 'g/$1');
       console.log(dstPath);
@@ -46,10 +46,10 @@ async function main() {
         )
         .replace(/(https\:\/\/\S+?\/solady\/\S+?\/)([A-Za-z0-9]+\.sol)/, '$1g/$2')
         .replace(/(import\s[\s\S]*?["'])\.\/([\s\S]+["'])/g, '$1../$2')
-      );  
+      );
     });
   });
-}
+};
 
 main().catch(e => {
   console.error(e);
