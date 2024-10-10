@@ -1010,9 +1010,9 @@ contract LibCloneTest is SoladyTest {
     function testERC1967BootstrapInitCode(address authorizedUpgrader) public {
         bytes memory c = LibClone.initCodeERC1967Bootstrap(authorizedUpgrader);
         bytes memory expected = abi.encodePacked(
-            hex"603d80600a3d393df3fe3373",
+            hex"606380600a3d393df3fe3373",
             authorizedUpgrader,
-            hex"0338573d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc55"
+            hex"0338573d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc55602036116046575b005b363d3d373d3d6020360360203d355af46044573d6000383e3d38fd"
         );
         assertEq(c, expected);
     }
@@ -1054,14 +1054,40 @@ contract LibCloneTest is SoladyTest {
                 vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
                 bytes32(uint256(uint160(implementation)))
             );
-        } else {
+        } else if (_randomChance(2)) {
             LibClone.bootstrapERC1967(instance, address(this));
             assertEq(
                 vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
                 bytes32(uint256(uint160(address(this))))
             );
             _checkBehavesLikeProxy(instance);
+        } else if (_randomChance(2)) {
+            uint256 x = _random();
+            this.bootstrapERC1967AndCall(
+                instance, address(this), abi.encodeWithSignature("setValue(uint256)", x)
+            );
+            assertEq(LibCloneTest(instance).value(), x);
+            assertEq(
+                vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
+                bytes32(uint256(uint160(address(this))))
+            );
+            _checkBehavesLikeProxy(instance);
+        } else {
+            vm.expectRevert(abi.encodeWithSelector(CustomError.selector, uint256(0)));
+            this.bootstrapERC1967AndCall(
+                instance, address(this), abi.encodeWithSignature("revertWithError()")
+            );
+            assertEq(
+                vm.load(instance, _ERC1967_IMPLEMENTATION_SLOT),
+                bytes32(uint256(uint160(bootstrap)))
+            );
         }
+    }
+
+    function bootstrapERC1967AndCall(address instance, address implementation, bytes memory data)
+        public
+    {
+        LibClone.bootstrapERC1967AndCall(instance, implementation, data);
     }
 
     function _beacon() internal returns (address result) {
