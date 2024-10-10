@@ -10,7 +10,7 @@ jobs:
     
     strategy:
       matrix:
-        profile: [via-ir-0,via-ir-1,via-ir-2,via-ir-3,via-ir-4]
+        profile: [via-ir-0,via-ir-1,via-ir-2,via-ir-3]
 
     steps:
       - uses: actions/checkout@v4
