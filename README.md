@@ -87,6 +87,7 @@ utils
 ├─ SafeCastLib — "Library for integer casting that reverts on overflow"
 ├─ DateTimeLib — "Library for date time operations"
 ├─ Lifebuoy — "Class that allows for rescue of ETH, ERC20, ERC721 tokens"
+├─ g — "Variants with global structs"
 ├─ legacy — "Legacy support"
 └─ ext — "Utilities for external protocols"
 ```
