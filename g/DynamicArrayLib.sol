@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.4;
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -42,209 +43,90 @@ library DynamicArrayLib {
         }
     }
 
-    /// @dev Zeroizes all the elements of `a`.
-    function zeroize(uint256[] memory a) internal pure returns (uint256[] memory result) {
+    /// @dev Zeroizes all the elements of `array`.
+    function zeroize(uint256[] memory array) internal pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := a
+            result := array
             codecopy(add(result, 0x20), codesize(), shl(5, mload(result)))
         }
     }
 
-    /// @dev Returns the element at `a[i]`, without bounds checking.
-    function get(uint256[] memory a, uint256 i) internal pure returns (uint256 result) {
+    /// @dev Returns the element at `array[i]`, without bounds checking.
+    function get(uint256[] memory array, uint256 i) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(add(add(a, 0x20), shl(5, i)))
+            result := mload(add(add(array, 0x20), shl(5, i)))
         }
     }
 
-    /// @dev Returns the element at `a[i]`, without bounds checking.
-    function getUint256(uint256[] memory a, uint256 i) internal pure returns (uint256 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(add(add(a, 0x20), shl(5, i)))
-        }
-    }
-
-    /// @dev Returns the element at `a[i]`, without bounds checking.
-    function getAddress(uint256[] memory a, uint256 i) internal pure returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(add(add(a, 0x20), shl(5, i)))
-        }
-    }
-
-    /// @dev Returns the element at `a[i]`, without bounds checking.
-    function getBool(uint256[] memory a, uint256 i) internal pure returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(add(add(a, 0x20), shl(5, i)))
-        }
-    }
-
-    /// @dev Returns the element at `a[i]`, without bounds checking.
-    function getBytes32(uint256[] memory a, uint256 i) internal pure returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := mload(add(add(a, 0x20), shl(5, i)))
-        }
-    }
-
-    /// @dev Sets `a.data[i]` to `data`, without bounds checking.
-    function set(uint256[] memory a, uint256 i, uint256 data)
+    /// @dev Sets `array[i]` to `data`, without bounds checking.
+    function set(uint256[] memory array, uint256 i, uint256 data)
         internal
         pure
         returns (uint256[] memory result)
     {
-        result = a;
         /// @solidity memory-safe-assembly
         assembly {
+            result := array
             mstore(add(add(result, 0x20), shl(5, i)), data)
         }
     }
 
-    /// @dev Sets `a.data[i]` to `data`, without bounds checking.
-    function set(uint256[] memory a, uint256 i, address data)
-        internal
-        pure
-        returns (uint256[] memory result)
-    {
-        result = a;
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(add(add(result, 0x20), shl(5, i)), shr(96, shl(96, data)))
-        }
-    }
-
-    /// @dev Sets `a.data[i]` to `data`, without bounds checking.
-    function set(uint256[] memory a, uint256 i, bool data)
-        internal
-        pure
-        returns (uint256[] memory result)
-    {
-        result = a;
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(add(add(result, 0x20), shl(5, i)), iszero(iszero(data)))
-        }
-    }
-
-    /// @dev Sets `a.data[i]` to `data`, without bounds checking.
-    function set(uint256[] memory a, uint256 i, bytes32 data)
-        internal
-        pure
-        returns (uint256[] memory result)
-    {
-        result = a;
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(add(add(result, 0x20), shl(5, i)), data)
-        }
-    }
-
-    /// @dev Casts `a` to `address[]`.
-    function asAddressArray(uint256[] memory a) internal pure returns (address[] memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := a
-        }
-    }
-
-    /// @dev Casts `a` to `bool[]`.
-    function asBoolArray(uint256[] memory a) internal pure returns (bool[] memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := a
-        }
-    }
-
-    /// @dev Casts `a` to `bytes32[]`.
-    function asBytes32Array(uint256[] memory a) internal pure returns (bytes32[] memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := a
-        }
-    }
-
-    /// @dev Casts `a` to `uint256[]`.
-    function toUint256Array(address[] memory a) internal pure returns (uint256[] memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := a
-        }
-    }
-
-    /// @dev Casts `a` to `uint256[]`.
-    function toUint256Array(bool[] memory a) internal pure returns (uint256[] memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := a
-        }
-    }
-
-    /// @dev Casts `a` to `uint256[]`.
-    function toUint256Array(bytes32[] memory a) internal pure returns (uint256[] memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := a
-        }
-    }
-
-    /// @dev Reduces the size of `a` to `n`.
-    /// If `n` is greater than the size of `a`, this will be a no-op.
-    function truncate(uint256[] memory a, uint256 n)
+    /// @dev Reduces the size of `array` to `n`.
+    /// If `n` is greater than the size of `array`, this will be a no-op.
+    function truncate(uint256[] memory array, uint256 n)
         internal
         pure
         returns (uint256[] memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            result := a
+            result := array
             mstore(mul(lt(n, mload(result)), result), n)
         }
     }
 
     /// @dev Clears the array and attempts to free the memory if possible.
-    function free(uint256[] memory a) internal pure returns (uint256[] memory result) {
+    function free(uint256[] memory array) internal pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := a
+            result := array
             let n := mload(result)
             mstore(shl(6, lt(iszero(n), eq(add(shl(5, add(1, n)), result), mload(0x40)))), result)
             mstore(result, 0)
         }
     }
 
-    /// @dev Equivalent to `keccak256(abi.encodePacked(a))`.
-    function hash(uint256[] memory a) internal pure returns (bytes32 result) {
+    /// @dev Equivalent to `keccak256(abi.encodePacked(array))`.
+    function hash(uint256[] memory array) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := keccak256(add(a, 0x20), shl(5, mload(a)))
+            result := keccak256(add(array, 0x20), shl(5, mload(array)))
         }
     }
 
-    /// @dev Returns a copy of `a` sliced from `start` to `end` (exclusive).
-    function slice(uint256[] memory a, uint256 start, uint256 end)
+    /// @dev Returns a copy of `array` sliced from `start` to `end` (exclusive).
+    function slice(uint256[] memory array, uint256 start, uint256 end)
         internal
         pure
         returns (uint256[] memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let arrayLen := mload(a)
+            let arrayLen := mload(array)
             if iszero(gt(arrayLen, end)) { end := arrayLen }
             if iszero(gt(arrayLen, start)) { start := arrayLen }
             if lt(start, end) {
                 result := mload(0x40)
                 let resultLen := sub(end, start)
                 mstore(result, resultLen)
-                a := add(a, shl(5, start))
-                // Copy the `a` one word at a time, backwards.
+                array := add(array, shl(5, start))
+                // Copy the `array` one word at a time, backwards.
                 let o := add(shl(5, resultLen), 0x20)
                 mstore(0x40, add(result, o)) // Allocate memory.
                 for {} 1 {} {
-                    mstore(add(result, o), mload(add(a, o)))
+                    mstore(add(result, o), mload(add(array, o)))
                     o := sub(o, 0x20)
                     if iszero(o) { break }
                 }
@@ -252,14 +134,14 @@ library DynamicArrayLib {
         }
     }
 
-    /// @dev Returns if `needle` is in `a`.
-    function contains(uint256[] memory a, uint256 needle) internal pure returns (bool) {
-        return ~indexOf(a, needle, 0) != 0;
+    /// @dev Returns if `needle` is in `array`.
+    function contains(uint256[] memory array, uint256 needle) internal pure returns (bool) {
+        return ~indexOf(array, needle, 0) != 0;
     }
 
     /// @dev Returns the first index of `needle`, scanning forward from `from`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function indexOf(uint256[] memory a, uint256 needle, uint256 from)
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(uint256[] memory array, uint256 needle, uint256 from)
         internal
         pure
         returns (uint256 result)
@@ -267,29 +149,33 @@ library DynamicArrayLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := not(0)
-            if lt(from, mload(a)) {
-                let o := add(a, shl(5, from))
-                let end := add(shl(5, add(1, mload(a))), a)
+            if lt(from, mload(array)) {
+                let o := add(array, shl(5, from))
+                let end := add(shl(5, add(1, mload(array))), array)
                 let c := mload(end) // Cache the word after the array.
                 for { mstore(end, needle) } 1 {} {
                     o := add(o, 0x20)
                     if eq(mload(o), needle) { break }
                 }
                 mstore(end, c) // Restore the word after the array.
-                if iszero(eq(o, end)) { result := shr(5, sub(o, add(0x20, a))) }
+                if iszero(eq(o, end)) { result := shr(5, sub(o, add(0x20, array))) }
             }
         }
     }
 
     /// @dev Returns the first index of `needle`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function indexOf(uint256[] memory a, uint256 needle) internal pure returns (uint256 result) {
-        result = indexOf(a, needle, 0);
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(uint256[] memory array, uint256 needle)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        result = indexOf(array, needle, 0);
     }
 
     /// @dev Returns the last index of `needle`, scanning backwards from `from`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function lastIndexOf(uint256[] memory a, uint256 needle, uint256 from)
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(uint256[] memory array, uint256 needle, uint256 from)
         internal
         pure
         returns (uint256 result)
@@ -297,37 +183,28 @@ library DynamicArrayLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := not(0)
-            let n := mload(a)
+            let n := mload(array)
             if n {
                 if iszero(lt(from, n)) { from := sub(n, 1) }
-                let o := add(shl(5, add(2, from)), a)
-                for { mstore(a, needle) } 1 {} {
+                let o := add(shl(5, add(2, from)), array)
+                for { mstore(array, needle) } 1 {} {
                     o := sub(o, 0x20)
                     if eq(mload(o), needle) { break }
                 }
-                mstore(a, n) // Restore the length.
-                if iszero(eq(o, a)) { result := shr(5, sub(o, add(0x20, a))) }
+                mstore(array, n) // Restore the length of the array.
+                if iszero(eq(o, array)) { result := shr(5, sub(o, add(0x20, array))) }
             }
         }
     }
 
     /// @dev Returns the first index of `needle`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function lastIndexOf(uint256[] memory a, uint256 needle)
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(uint256[] memory array, uint256 needle)
         internal
         pure
         returns (uint256 result)
     {
-        result = lastIndexOf(a, needle, NOT_FOUND);
-    }
-
-    /// @dev Directly returns `a` without copying.
-    function directReturn(uint256[] memory a) internal pure {
-        assembly {
-            let retStart := sub(a, 0x20)
-            mstore(retStart, 0x20)
-            return(retStart, add(0x40, shl(5, mload(a))))
-        }
+        result = lastIndexOf(array, needle, NOT_FOUND);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -335,46 +212,17 @@ library DynamicArrayLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Some of these functions returns the same array for function chaining.
-    // `e.g. `a.p("1").p("2")`.
+    // `e.g. `array.p("1").p("2")`.
 
-    /// @dev Shorthand for `a.data.length`.
-    function length(DynamicArray memory a) internal pure returns (uint256) {
-        return a.data.length;
-    }
-
-    /// @dev Wraps `a` in a dynamic array struct.
-    function wrap(uint256[] memory a) internal pure returns (DynamicArray memory result) {
-        result.data = a;
-    }
-
-    /// @dev Wraps `a` in a dynamic array struct.
-    function wrap(address[] memory a) internal pure returns (DynamicArray memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(result, a)
-        }
-    }
-
-    /// @dev Wraps `a` in a dynamic array struct.
-    function wrap(bool[] memory a) internal pure returns (DynamicArray memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(result, a)
-        }
-    }
-
-    /// @dev Wraps `a` in a dynamic array struct.
-    function wrap(bytes32[] memory a) internal pure returns (DynamicArray memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(result, a)
-        }
+    /// @dev Shorthand for `array.data.length`.
+    function length(DynamicArray memory array) internal pure returns (uint256) {
+        return array.data.length;
     }
 
     /// @dev Clears the array without deallocating the memory.
-    function clear(DynamicArray memory a) internal pure returns (DynamicArray memory result) {
+    function clear(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(mload(result), 0)
@@ -382,9 +230,9 @@ library DynamicArrayLib {
     }
 
     /// @dev Clears the array and attempts to free the memory if possible.
-    function free(DynamicArray memory a) internal pure returns (DynamicArray memory result) {
+    function free(DynamicArray memory array) internal pure returns (DynamicArray memory result) {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
             let arrData := mload(result)
@@ -403,13 +251,13 @@ library DynamicArrayLib {
     }
 
     /// @dev Resizes the array to contain `n` elements. New elements will be zeroized.
-    function resize(DynamicArray memory a, uint256 n)
+    function resize(DynamicArray memory array, uint256 n)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
+        result = array;
         reserve(result, n);
         /// @solidity memory-safe-assembly
         assembly {
@@ -422,17 +270,17 @@ library DynamicArrayLib {
         }
     }
 
-    /// @dev Increases the size of `a` to `n`.
-    /// If `n` is less than the size of `a`, this will be a no-op.
+    /// @dev Increases the size of `array` to `n`.
+    /// If `n` is less than the size of `array`, this will be a no-op.
     /// This method does not zeroize any newly created elements.
-    function expand(DynamicArray memory a, uint256 n)
+    function expand(DynamicArray memory array, uint256 n)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
-        if (n >= a.data.length) {
+        result = array;
+        if (n >= array.data.length) {
             reserve(result, n);
             /// @solidity memory-safe-assembly
             assembly {
@@ -441,15 +289,15 @@ library DynamicArrayLib {
         }
     }
 
-    /// @dev Reduces the size of `a` to `n`.
-    /// If `n` is greater than the size of `a`, this will be a no-op.
-    function truncate(DynamicArray memory a, uint256 n)
+    /// @dev Reduces the size of `array` to `n`.
+    /// If `n` is greater than the size of `array`, this will be a no-op.
+    function truncate(DynamicArray memory array, uint256 n)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(mul(lt(n, mload(mload(result))), mload(result)), n)
@@ -457,17 +305,17 @@ library DynamicArrayLib {
     }
 
     /// @dev Reserves at least `minimum` amount of contiguous memory.
-    function reserve(DynamicArray memory a, uint256 minimum)
+    function reserve(DynamicArray memory array, uint256 minimum)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(minimum, 0xffffffff)) { invalid() } // For extra safety.
-            for { let arrData := mload(a) } 1 {} {
+            for { let arrData := mload(array) } 1 {} {
                 // Some random prime number to multiply `cap`, so that
                 // we know that the `cap` is for a dynamic array.
                 // Selected to be larger than any memory pointer realistically.
@@ -480,7 +328,7 @@ library DynamicArrayLib {
                     let newArrData := add(0x20, capSlot)
                     mstore(newArrData, 0) // Store the length.
                     mstore(0x40, add(newArrData, add(0x20, newCap))) // Allocate memory.
-                    mstore(a, newArrData)
+                    mstore(array, newArrData)
                     break
                 }
                 let w := not(0x1f)
@@ -499,7 +347,7 @@ library DynamicArrayLib {
                 let capSlot := mload(0x40)
                 let newArrData := add(capSlot, 0x20)
                 mstore(0x40, add(newArrData, add(0x20, newCap))) // Reallocate the memory.
-                mstore(a, newArrData) // Store the `newArrData`.
+                mstore(array, newArrData) // Store the `newArrData`.
                 // Copy `arrData` one word at a time, backwards.
                 for { let o := add(0x20, shl(5, mload(arrData))) } 1 {} {
                     mstore(add(newArrData, o), mload(add(arrData, o)))
@@ -513,17 +361,17 @@ library DynamicArrayLib {
         }
     }
 
-    /// @dev Appends `data` to `a`.
-    function p(DynamicArray memory a, uint256 data)
+    /// @dev Appends `data` to `array`.
+    function p(DynamicArray memory array, uint256 data)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
-            let arrData := mload(a)
+            let arrData := mload(array)
             let newArrLen := add(mload(arrData), 1)
             let newArrBytesLen := shl(5, newArrLen)
             // Some random prime number to multiply `cap`, so that
@@ -548,7 +396,7 @@ library DynamicArrayLib {
                 // Set the `newArrData` to point to the word after `cap`.
                 let newArrData := add(mload(0x40), 0x20)
                 mstore(0x40, add(newArrData, add(0x20, newCap))) // Reallocate the memory.
-                mstore(a, newArrData) // Store the `newArrData`.
+                mstore(array, newArrData) // Store the `newArrData`.
                 let w := not(0x1f)
                 // Copy `arrData` one word at a time, backwards.
                 for { let o := newArrBytesLen } 1 {} {
@@ -565,34 +413,34 @@ library DynamicArrayLib {
         }
     }
 
-    /// @dev Appends `data` to `a`.
-    function p(DynamicArray memory a, address data)
+    /// @dev Appends `data` to `array`.
+    function p(DynamicArray memory array, address data)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = p(a, uint256(uint160(data)));
+        result = p(array, uint256(uint160(data)));
     }
 
-    /// @dev Appends `data` to `a`.
-    function p(DynamicArray memory a, bool data)
+    /// @dev Appends `data` to `array`.
+    function p(DynamicArray memory array, bool data)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = p(a, _toUint(data));
+        result = p(array, _toUint(data));
     }
 
-    /// @dev Appends `data` to `a`.
-    function p(DynamicArray memory a, bytes32 data)
+    /// @dev Appends `data` to `array`.
+    function p(DynamicArray memory array, bytes32 data)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = p(a, uint256(data));
+        result = p(array, uint256(data));
     }
 
     /// @dev Shorthand for returning an empty array.
@@ -618,156 +466,168 @@ library DynamicArrayLib {
         p(result, uint256(data));
     }
 
-    /// @dev Removes and returns the last element of `a`.
+    /// @dev Removes and returns the last element of `array`.
     /// Returns 0 and does not pop anything if the array is empty.
-    function pop(DynamicArray memory a) internal pure returns (uint256 result) {
+    function pop(DynamicArray memory array) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let o := mload(a)
+            let o := mload(array)
             let n := mload(o)
             result := mload(add(o, shl(5, n)))
             mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Removes and returns the last element of `a`.
+    /// @dev Removes and returns the last element of `array`.
     /// Returns 0 and does not pop anything if the array is empty.
-    function popUint256(DynamicArray memory a) internal pure returns (uint256 result) {
+    function popUint256(DynamicArray memory array) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let o := mload(a)
+            let o := mload(array)
             let n := mload(o)
             result := mload(add(o, shl(5, n)))
             mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Removes and returns the last element of `a`.
+    /// @dev Removes and returns the last element of `array`.
     /// Returns 0 and does not pop anything if the array is empty.
-    function popAddress(DynamicArray memory a) internal pure returns (address result) {
+    function popAddress(DynamicArray memory array) internal pure returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let o := mload(a)
+            let o := mload(array)
             let n := mload(o)
             result := mload(add(o, shl(5, n)))
             mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Removes and returns the last element of `a`.
+    /// @dev Removes and returns the last element of `array`.
     /// Returns 0 and does not pop anything if the array is empty.
-    function popBool(DynamicArray memory a) internal pure returns (bool result) {
+    function popBool(DynamicArray memory array) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let o := mload(a)
+            let o := mload(array)
             let n := mload(o)
             result := mload(add(o, shl(5, n)))
             mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Removes and returns the last element of `a`.
+    /// @dev Removes and returns the last element of `array`.
     /// Returns 0 and does not pop anything if the array is empty.
-    function popBytes32(DynamicArray memory a) internal pure returns (bytes32 result) {
+    function popBytes32(DynamicArray memory array) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let o := mload(a)
+            let o := mload(array)
             let n := mload(o)
             result := mload(add(o, shl(5, n)))
             mstore(o, sub(n, iszero(iszero(n))))
         }
     }
 
-    /// @dev Returns the element at `a.data[i]`, without bounds checking.
-    function get(DynamicArray memory a, uint256 i) internal pure returns (uint256 result) {
+    /// @dev Returns the element at `array.data[i]`, without bounds checking.
+    function get(DynamicArray memory array, uint256 i) internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(add(add(mload(a), 0x20), shl(5, i)))
+            result := mload(add(add(mload(array), 0x20), shl(5, i)))
         }
     }
 
-    /// @dev Returns the element at `a.data[i]`, without bounds checking.
-    function getUint256(DynamicArray memory a, uint256 i) internal pure returns (uint256 result) {
+    /// @dev Returns the element at `array.data[i]`, without bounds checking.
+    function getUint256(DynamicArray memory array, uint256 i)
+        internal
+        pure
+        returns (uint256 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(add(add(mload(a), 0x20), shl(5, i)))
+            result := mload(add(add(mload(array), 0x20), shl(5, i)))
         }
     }
 
-    /// @dev Returns the element at `a.data[i]`, without bounds checking.
-    function getAddress(DynamicArray memory a, uint256 i) internal pure returns (address result) {
+    /// @dev Returns the element at `array.data[i]`, without bounds checking.
+    function getAddress(DynamicArray memory array, uint256 i)
+        internal
+        pure
+        returns (address result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(add(add(mload(a), 0x20), shl(5, i)))
+            result := mload(add(add(mload(array), 0x20), shl(5, i)))
         }
     }
 
-    /// @dev Returns the element at `a.data[i]`, without bounds checking.
-    function getBool(DynamicArray memory a, uint256 i) internal pure returns (bool result) {
+    /// @dev Returns the element at `array.data[i]`, without bounds checking.
+    function getBool(DynamicArray memory array, uint256 i) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(add(add(mload(a), 0x20), shl(5, i)))
+            result := mload(add(add(mload(array), 0x20), shl(5, i)))
         }
     }
 
-    /// @dev Returns the element at `a.data[i]`, without bounds checking.
-    function getBytes32(DynamicArray memory a, uint256 i) internal pure returns (bytes32 result) {
+    /// @dev Returns the element at `array.data[i]`, without bounds checking.
+    function getBytes32(DynamicArray memory array, uint256 i)
+        internal
+        pure
+        returns (bytes32 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(add(add(mload(a), 0x20), shl(5, i)))
+            result := mload(add(add(mload(array), 0x20), shl(5, i)))
         }
     }
 
-    /// @dev Sets `a.data[i]` to `data`, without bounds checking.
-    function set(DynamicArray memory a, uint256 i, uint256 data)
+    /// @dev Sets `array.data[i]` to `data`, without bounds checking.
+    function set(DynamicArray memory array, uint256 i, uint256 data)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(add(add(mload(result), 0x20), shl(5, i)), data)
         }
     }
 
-    /// @dev Sets `a.data[i]` to `data`, without bounds checking.
-    function set(DynamicArray memory a, uint256 i, address data)
+    /// @dev Sets `array.data[i]` to `data`, without bounds checking.
+    function set(DynamicArray memory array, uint256 i, address data)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(add(add(mload(result), 0x20), shl(5, i)), shr(96, shl(96, data)))
         }
     }
 
-    /// @dev Sets `a.data[i]` to `data`, without bounds checking.
-    function set(DynamicArray memory a, uint256 i, bool data)
+    /// @dev Sets `array.data[i]` to `data`, without bounds checking.
+    function set(DynamicArray memory array, uint256 i, bool data)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(add(add(mload(result), 0x20), shl(5, i)), iszero(iszero(data)))
         }
     }
 
-    /// @dev Sets `a.data[i]` to `data`, without bounds checking.
-    function set(DynamicArray memory a, uint256 i, bytes32 data)
+    /// @dev Sets `array.data[i]` to `data`, without bounds checking.
+    function set(DynamicArray memory array, uint256 i, bytes32 data)
         internal
         pure
         returns (DynamicArray memory result)
     {
         _deallocate(result);
-        result = a;
+        result = array;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(add(add(mload(result), 0x20), shl(5, i)), data)
@@ -775,193 +635,195 @@ library DynamicArrayLib {
     }
 
     /// @dev Returns the underlying array as a `uint256[]`.
-    function asUint256Array(DynamicArray memory a)
+    function asUint256Array(DynamicArray memory array)
         internal
         pure
         returns (uint256[] memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(a)
+            result := mload(array)
         }
     }
 
     /// @dev Returns the underlying array as a `address[]`.
-    function asAddressArray(DynamicArray memory a)
+    function asAddressArray(DynamicArray memory array)
         internal
         pure
         returns (address[] memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(a)
+            result := mload(array)
         }
     }
 
     /// @dev Returns the underlying array as a `bool[]`.
-    function asBoolArray(DynamicArray memory a) internal pure returns (bool[] memory result) {
+    function asBoolArray(DynamicArray memory array) internal pure returns (bool[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(a)
+            result := mload(array)
         }
     }
 
     /// @dev Returns the underlying array as a `bytes32[]`.
-    function asBytes32Array(DynamicArray memory a)
+    function asBytes32Array(DynamicArray memory array)
         internal
         pure
         returns (bytes32[] memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(a)
+            result := mload(array)
         }
     }
 
-    /// @dev Returns a copy of `a` sliced from `start` to `end` (exclusive).
-    function slice(DynamicArray memory a, uint256 start, uint256 end)
+    /// @dev Returns a copy of `array` sliced from `start` to `end` (exclusive).
+    function slice(DynamicArray memory array, uint256 start, uint256 end)
         internal
         pure
         returns (DynamicArray memory result)
     {
-        result.data = slice(a.data, start, end);
+        result.data = slice(array.data, start, end);
     }
 
-    /// @dev Returns a copy of `a` sliced from `start` to the end of the array.
-    function slice(DynamicArray memory a, uint256 start)
+    /// @dev Returns a copy of `array` sliced from `start` to the end of the array.
+    function slice(DynamicArray memory array, uint256 start)
         internal
         pure
         returns (DynamicArray memory result)
     {
-        result.data = slice(a.data, start, type(uint256).max);
+        result.data = slice(array.data, start, type(uint256).max);
     }
 
-    /// @dev Returns if `needle` is in `a`.
-    function contains(DynamicArray memory a, uint256 needle) internal pure returns (bool) {
-        return ~indexOf(a.data, needle, 0) != 0;
+    /// @dev Returns if `needle` is in `array`.
+    function contains(DynamicArray memory array, uint256 needle) internal pure returns (bool) {
+        return ~indexOf(array.data, needle, 0) != 0;
     }
 
-    /// @dev Returns if `needle` is in `a`.
-    function contains(DynamicArray memory a, address needle) internal pure returns (bool) {
-        return ~indexOf(a.data, uint160(needle), 0) != 0;
+    /// @dev Returns if `needle` is in `array`.
+    function contains(DynamicArray memory array, address needle) internal pure returns (bool) {
+        return ~indexOf(array.data, uint160(needle), 0) != 0;
     }
 
-    /// @dev Returns if `needle` is in `a`.
-    function contains(DynamicArray memory a, bytes32 needle) internal pure returns (bool) {
-        return ~indexOf(a.data, uint256(needle), 0) != 0;
-    }
-
-    /// @dev Returns the first index of `needle`, scanning forward from `from`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function indexOf(DynamicArray memory a, uint256 needle, uint256 from)
-        internal
-        pure
-        returns (uint256)
-    {
-        return indexOf(a.data, needle, from);
+    /// @dev Returns if `needle` is in `array`.
+    function contains(DynamicArray memory array, bytes32 needle) internal pure returns (bool) {
+        return ~indexOf(array.data, uint256(needle), 0) != 0;
     }
 
     /// @dev Returns the first index of `needle`, scanning forward from `from`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function indexOf(DynamicArray memory a, address needle, uint256 from)
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, uint256 needle, uint256 from)
         internal
         pure
         returns (uint256)
     {
-        return indexOf(a.data, uint160(needle), from);
+        return indexOf(array.data, needle, from);
     }
 
     /// @dev Returns the first index of `needle`, scanning forward from `from`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function indexOf(DynamicArray memory a, bytes32 needle, uint256 from)
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, address needle, uint256 from)
         internal
         pure
         returns (uint256)
     {
-        return indexOf(a.data, uint256(needle), from);
+        return indexOf(array.data, uint160(needle), from);
+    }
+
+    /// @dev Returns the first index of `needle`, scanning forward from `from`.
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, bytes32 needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
+        return indexOf(array.data, uint256(needle), from);
     }
 
     /// @dev Returns the first index of `needle`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function indexOf(DynamicArray memory a, uint256 needle) internal pure returns (uint256) {
-        return indexOf(a.data, needle, 0);
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, uint256 needle) internal pure returns (uint256) {
+        return indexOf(array.data, needle, 0);
     }
 
     /// @dev Returns the first index of `needle`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function indexOf(DynamicArray memory a, address needle) internal pure returns (uint256) {
-        return indexOf(a.data, uint160(needle), 0);
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, address needle) internal pure returns (uint256) {
+        return indexOf(array.data, uint160(needle), 0);
     }
 
     /// @dev Returns the first index of `needle`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function indexOf(DynamicArray memory a, bytes32 needle) internal pure returns (uint256) {
-        return indexOf(a.data, uint256(needle), 0);
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function indexOf(DynamicArray memory array, bytes32 needle) internal pure returns (uint256) {
+        return indexOf(array.data, uint256(needle), 0);
     }
 
     /// @dev Returns the last index of `needle`, scanning backwards from `from`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function lastIndexOf(DynamicArray memory a, uint256 needle, uint256 from)
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, uint256 needle, uint256 from)
         internal
         pure
         returns (uint256)
     {
-        return lastIndexOf(a.data, needle, from);
+        return lastIndexOf(array.data, needle, from);
     }
 
     /// @dev Returns the last index of `needle`, scanning backwards from `from`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function lastIndexOf(DynamicArray memory a, address needle, uint256 from)
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, address needle, uint256 from)
         internal
         pure
         returns (uint256)
     {
-        return lastIndexOf(a.data, uint160(needle), from);
+        return lastIndexOf(array.data, uint160(needle), from);
     }
 
     /// @dev Returns the last index of `needle`, scanning backwards from `from`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function lastIndexOf(DynamicArray memory a, bytes32 needle, uint256 from)
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, bytes32 needle, uint256 from)
         internal
         pure
         returns (uint256)
     {
-        return lastIndexOf(a.data, uint256(needle), from);
+        return lastIndexOf(array.data, uint256(needle), from);
     }
 
     /// @dev Returns the last index of `needle`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function lastIndexOf(DynamicArray memory a, uint256 needle) internal pure returns (uint256) {
-        return lastIndexOf(a.data, needle, NOT_FOUND);
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, uint256 needle)
+        internal
+        pure
+        returns (uint256)
+    {
+        return lastIndexOf(array.data, needle, NOT_FOUND);
     }
 
     /// @dev Returns the last index of `needle`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function lastIndexOf(DynamicArray memory a, address needle) internal pure returns (uint256) {
-        return lastIndexOf(a.data, uint160(needle), NOT_FOUND);
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, address needle)
+        internal
+        pure
+        returns (uint256)
+    {
+        return lastIndexOf(array.data, uint160(needle), NOT_FOUND);
     }
 
     /// @dev Returns the last index of `needle`.
-    /// If `needle` is not in `a`, returns `NOT_FOUND`.
-    function lastIndexOf(DynamicArray memory a, bytes32 needle) internal pure returns (uint256) {
-        return lastIndexOf(a.data, uint256(needle), NOT_FOUND);
+    /// If `needle` is not in `array`, returns `NOT_FOUND`.
+    function lastIndexOf(DynamicArray memory array, bytes32 needle)
+        internal
+        pure
+        returns (uint256)
+    {
+        return lastIndexOf(array.data, uint256(needle), NOT_FOUND);
     }
 
-    /// @dev Equivalent to `keccak256(abi.encodePacked(a.data))`.
-    function hash(DynamicArray memory a) internal pure returns (bytes32 result) {
+    /// @dev Equivalent to `keccak256(abi.encodePacked(array.data))`.
+    function hash(DynamicArray memory array) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := keccak256(add(mload(a), 0x20), shl(5, mload(mload(a))))
-        }
-    }
-
-    /// @dev Directly returns `a` without copying.
-    function directReturn(DynamicArray memory a) internal pure {
-        assembly {
-            let arrData := mload(a)
-            let retStart := sub(arrData, 0x20)
-            mstore(retStart, 0x20)
-            return(retStart, add(0x40, shl(5, mload(arrData))))
+            result := keccak256(add(mload(array), 0x20), shl(5, mload(mload(array))))
         }
     }
 

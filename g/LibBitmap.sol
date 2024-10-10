@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.4;
+
+import {LibBit} from "../LibBit.sol";
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
@@ -11,8 +13,6 @@ struct Bitmap {
 }
 
 using LibBitmap for Bitmap global;
-
-import {LibBit} from "../LibBit.sol";
 
 /// @notice Library for storage of packed unsigned booleans.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibBitmap.sol)

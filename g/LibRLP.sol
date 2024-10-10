@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.4;
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// @dev A pointer to a RLP item list in memory.
-struct List {
+struct RLPList {
     // Do NOT modify the `_data` directly.
     uint256 _data;
 }
 
-using LibRLP for List global;
+using LibRLP for RLPList global;
 
 /// @notice Library for RLP encoding and CREATE address computation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibRLP.sol)
@@ -99,35 +100,35 @@ library LibRLP {
     //   with `abi.encodePacked(x)` before encoding.
 
     /// @dev Returns a new empty list.
-    function p() internal pure returns (List memory result) {}
+    function p() internal pure returns (RLPList memory result) {}
 
     /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
-    function p(uint256 x) internal pure returns (List memory result) {
+    function p(uint256 x) internal pure returns (RLPList memory result) {
         p(result, x);
     }
 
     /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
-    function p(address x) internal pure returns (List memory result) {
+    function p(address x) internal pure returns (RLPList memory result) {
         p(result, x);
     }
 
     /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
-    function p(bool x) internal pure returns (List memory result) {
+    function p(bool x) internal pure returns (RLPList memory result) {
         p(result, x);
     }
 
     /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
-    function p(bytes memory x) internal pure returns (List memory result) {
+    function p(bytes memory x) internal pure returns (RLPList memory result) {
         p(result, x);
     }
 
     /// @dev Returns a new list with `x` as the only element. Equivalent to `LibRLP.p().p(x)`.
-    function p(List memory x) internal pure returns (List memory result) {
+    function p(RLPList memory x) internal pure returns (RLPList memory result) {
         p(result, x);
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
-    function p(List memory list, uint256 x) internal pure returns (List memory result) {
+    function p(RLPList memory list, uint256 x) internal pure returns (RLPList memory result) {
         result._data = x << 48;
         _updateTail(list, result);
         /// @solidity memory-safe-assembly
@@ -145,7 +146,7 @@ library LibRLP {
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
-    function p(List memory list, address x) internal pure returns (List memory result) {
+    function p(RLPList memory list, address x) internal pure returns (RLPList memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(4, shl(8, x))))
@@ -155,7 +156,7 @@ library LibRLP {
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
-    function p(List memory list, bool x) internal pure returns (List memory result) {
+    function p(RLPList memory list, bool x) internal pure returns (RLPList memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(48, iszero(iszero(x))))
@@ -165,7 +166,7 @@ library LibRLP {
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
-    function p(List memory list, bytes memory x) internal pure returns (List memory result) {
+    function p(RLPList memory list, bytes memory x) internal pure returns (RLPList memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(2, shl(8, x))))
@@ -175,7 +176,11 @@ library LibRLP {
     }
 
     /// @dev Appends `x` to `list`. Returns `list` for function chaining.
-    function p(List memory list, List memory x) internal pure returns (List memory result) {
+    function p(RLPList memory list, RLPList memory x)
+        internal
+        pure
+        returns (RLPList memory result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(result, shl(40, or(3, shl(8, x))))
@@ -185,7 +190,7 @@ library LibRLP {
     }
 
     /// @dev Returns the RLP encoding of `list`.
-    function encode(List memory list) internal pure returns (bytes memory result) {
+    function encode(RLPList memory list) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             function encodeUint(x_, o_) -> _o {
@@ -372,7 +377,7 @@ library LibRLP {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Updates the tail in `list`.
-    function _updateTail(List memory list, List memory result) private pure {
+    function _updateTail(RLPList memory list, RLPList memory result) private pure {
         /// @solidity memory-safe-assembly
         assembly {
             let v := or(shr(mload(list), result), mload(list))

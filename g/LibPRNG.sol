@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.4;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
@@ -20,7 +20,7 @@ struct LazyShuffler {
 }
 
 using LibPRNG for PRNG global;
-using LibPRNG for LazyShuffler global;
+using LibPRNG for LazyShuffler;
 
 /// @notice Library for generating pseudorandom numbers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibPRNG.sol)
