@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
 /// @dev Type to represent a dynamic buffer in memory.
 /// You can directly assign to `data`, and the `p` function will
 /// take care of the memory allocation.

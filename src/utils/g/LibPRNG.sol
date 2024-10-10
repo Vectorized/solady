@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-/// @dev A pseudorandom number state in memory.
 
+/// @dev A pseudorandom number state in memory.
 struct PRNG {
     uint256 state;
 }
-/// @dev A lazy Fisher-Yates shuffler for a range `[0..n)` in storage.
 
+/// @dev A lazy Fisher-Yates shuffler for a range `[0..n)` in storage.
 struct LazyShuffler {
     // Bits Layout:
     // - [0..31]    `numShuffled`

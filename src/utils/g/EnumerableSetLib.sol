@@ -1,30 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-/// @dev An enumerable address set in storage.
 
+/// @dev An enumerable address set in storage.
 struct AddressSet {
     uint256 _spacer;
 }
-/// @dev An enumerable bytes32 set in storage.
 
+/// @dev An enumerable bytes32 set in storage.
 struct Bytes32Set {
     uint256 _spacer;
 }
-/// @dev An enumerable uint256 set in storage.
 
+/// @dev An enumerable uint256 set in storage.
 struct Uint256Set {
     uint256 _spacer;
 }
-/// @dev An enumerable int256 set in storage.
 
+/// @dev An enumerable int256 set in storage.
 struct Int256Set {
     uint256 _spacer;
 }
-/// @dev An enumerable uint8 set in storage. Useful for enums.
 
+/// @dev An enumerable uint8 set in storage. Useful for enums.
 struct Uint8Set {
     uint256 data;
 }
