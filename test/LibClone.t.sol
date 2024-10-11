@@ -1010,9 +1010,9 @@ contract LibCloneTest is SoladyTest {
     function testERC1967BootstrapInitCode(address authorizedUpgrader) public {
         bytes memory c = LibClone.initCodeERC1967Bootstrap(authorizedUpgrader);
         bytes memory expected = abi.encodePacked(
-            hex"606380600a3d393df3fe3373",
+            hex"606880600a3d393df3fe3373",
             authorizedUpgrader,
-            hex"0338573d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc55602036116046575b005b363d3d373d3d6020360360203d355af46044573d6000383e3d38fd"
+            hex"0338573d3560601c7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc55601436116049575b005b363d3d373d3d6014360360143d3560601c5af46047573d6000383e3d38fd"
         );
         assertEq(c, expected);
     }
@@ -1022,6 +1022,8 @@ contract LibCloneTest is SoladyTest {
         address bootstrap = LibClone.erc1967Bootstrap(authorizedUpgrader);
         address instance = this.deployDeterministicERC1967I(bootstrap, salt);
         assertEq(LibClone.implementationOf(instance), bootstrap);
+        bytes memory bootstrapCode = address(bootstrap).code;
+        assertEq(uint8(bootstrapCode[bootstrapCode.length - 1]), uint8(0xfd));
         if (_randomChance(2)) {
             vm.prank(authorizedUpgrader);
             LibClone.bootstrapERC1967(instance, implementation);

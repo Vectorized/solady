@@ -1714,8 +1714,8 @@ library LibClone {
     function bootstrapERC1967(address instance, address implementation) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, shr(96, shl(96, implementation)))
-            if iszero(call(gas(), instance, 0, 0x00, 0x20, codesize(), 0x00)) {
+            mstore(0x00, implementation)
+            if iszero(call(gas(), instance, 0, 0x0c, 0x14, codesize(), 0x00)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -1729,8 +1729,8 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             let n := mload(data)
-            mstore(data, shr(96, shl(96, implementation)))
-            if iszero(call(gas(), instance, 0, data, add(n, 0x20), codesize(), 0x00)) {
+            mstore(data, implementation)
+            if iszero(call(gas(), instance, 0, add(data, 0x0c), add(n, 0x14), codesize(), 0x00)) {
                 if iszero(returndatasize()) {
                     mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                     revert(0x1c, 0x04)
@@ -1765,12 +1765,12 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             c := mload(0x40)
-            mstore(add(c, 0x80), 0xf46044573d6000383e3d38fd0000000000000000000000000000000000000000)
-            mstore(add(c, 0x60), 0xca505d382bbc55602036116046575b005b363d3d373d3d6020360360203d355a)
-            mstore(add(c, 0x40), 0x0338573d357f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3)
+            mstore(add(c, 0x80), 0x3d3560601c5af46047573d6000383e3d38fd0000000000000000000000000000)
+            mstore(add(c, 0x60), 0xa920a3ca505d382bbc55601436116049575b005b363d3d373d3d601436036014)
+            mstore(add(c, 0x40), 0x0338573d3560601c7f360894a13ba1a3210667c828492db98dca3e2076cc3735)
             mstore(add(c, 0x20), authorizedUpgrader)
-            mstore(add(c, 0x0c), 0x606380600a3d393df3fe3373)
-            mstore(c, 0x6c)
+            mstore(add(c, 0x0c), 0x606880600a3d393df3fe3373)
+            mstore(c, 0x72)
             mstore(0x40, add(c, 0xa0))
         }
     }
