@@ -79,16 +79,17 @@ contract EnumerableRolesTest is SoladyTest {
                 mockEnumerableRoles.setRole(user1, uint8(user1Roles.get(i)), true);
             }
             _checkRoles(user0, user0Roles);
-            if (_randomChance(8)) _checkRoles(user1, user1Roles);
+            _checkRoles(user1, user1Roles);
             if (_randomChance(32)) {
-                for (uint256 i; i < 256; ++i) {
+                uint256[] memory user0RolesLookup = _sortedAndUniquifiedCopy(user0Roles);
+                uint256[] memory user1RolesLookup = _sortedAndUniquifiedCopy(user1Roles);
+                for (uint256 role; role < 256; ++role) {
                     if (!_randomChance(8)) continue;
-                    uint8 role = uint8(i);
                     DynamicArrayLib.DynamicArray memory expected;
-                    if (user0Roles.contains(role)) expected.p(user0);
-                    if (user1Roles.contains(role)) expected.p(user1);
+                    if (LibSort.inSorted(user0RolesLookup, role)) expected.p(user0);
+                    if (LibSort.inSorted(user1RolesLookup, role)) expected.p(user1);
                     LibSort.sort(expected.data);
-                    address[] memory roleHolders = mockEnumerableRoles.roleHolders(role);
+                    address[] memory roleHolders = mockEnumerableRoles.roleHolders(uint8(role));
                     LibSort.sort(roleHolders);
                     assertEq(abi.encodePacked(expected.data), abi.encodePacked(roleHolders));
                 }
@@ -110,13 +111,20 @@ contract EnumerableRolesTest is SoladyTest {
         }
     }
 
+    function _sortedAndUniquifiedCopy(uint256[] memory a)
+        internal
+        pure
+        returns (uint256[] memory result)
+    {
+        result = LibSort.copy(a);
+        LibSort.sort(result);
+        LibSort.uniquifySorted(result);
+    }
+
     function _checkRoles(address user, uint256[] memory sampledRoles) internal {
         uint8[] memory roles = mockEnumerableRoles.rolesOf(user);
         LibSort.sort(_toUint256Array(roles));
-        sampledRoles = LibSort.copy(sampledRoles);
-        LibSort.sort(sampledRoles);
-        LibSort.uniquifySorted(sampledRoles);
-        assertEq(_toUint256Array(roles), sampledRoles);
+        assertEq(_toUint256Array(roles), _sortedAndUniquifiedCopy(sampledRoles));
     }
 
     function _toUint256Array(uint8[] memory a) internal pure returns (uint256[] memory result) {
