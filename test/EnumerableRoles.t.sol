@@ -40,7 +40,7 @@ contract EnumerableRolesTest is SoladyTest {
             mockEnumerableRoles.setRoleDirect(holder, role, active);
         } else {
             vm.expectEmit(true, true, true, true);
-            emit RoleSet(holder, role, active);
+            emit RoleSet(_cleaned(holder), role, active);
             mockEnumerableRoles.setRoleDirect(holder, role, active);
         }
     }
