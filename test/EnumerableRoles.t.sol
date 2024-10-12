@@ -25,11 +25,15 @@ contract EnumerableRolesTest is SoladyTest {
         mockEnumerableRoles.setOwner(address(this));
     }
 
-    function testIsContractOwner(address owner, address sender, bool ownerReverts) public {
+    function testIsContractOwner(address owner, address pranker, bool ownerReverts) public {
         mockEnumerableRoles.setOwner(owner);
         mockEnumerableRoles.setOwnerReverts(ownerReverts);
-        while (sender == address(0)) sender = _randomNonZeroAddress();
-        assertEq(mockEnumerableRoles.isContractOwner(sender), sender == owner && !ownerReverts);
+        while (pranker == address(0)) pranker = _randomNonZeroAddress();
+        if (pranker != owner || ownerReverts) {
+            vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+        }
+        vm.prank(pranker);
+        mockEnumerableRoles.setRole(address(1), 0, true);
     }
 
     function testSetRoleReverts(address holder, uint256 role, uint256 maxRole, bool maxRoleReverts)

@@ -208,20 +208,6 @@ abstract contract EnumerableRoles {
         (holder, role, active) = (holder, role, active);
     }
 
-    /// @dev Returns if `sender` is equal to `owner()` on this contract.
-    /// If the contract does not have `owner()` implemented, returns false.
-    function _isContractOwner(address sender) internal view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, 0x8da5cb5b) // `owner()`.
-            result :=
-                and(
-                    lt(shl(96, xor(sender, mload(0x00))), gt(returndatasize(), 0x1f)),
-                    staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
-                )
-        }
-    }
-
     /// @dev Returns if `holder` has any roles in `encodedRoles`.
     /// `encodedRoles` is `abi.encode(SAMPLE_ROLE_0, SAMPLE_ROLE_1, ...)`.
     function _hasAnyRoles(address holder, bytes memory encodedRoles)
@@ -253,15 +239,6 @@ abstract contract EnumerableRoles {
         if (!_isContractOwner(msg.sender)) _checkRoles(encodedRoles);
     }
 
-    /// @dev Reverts with `EnumerableRolesUnauthorized()`.
-    function _revertEnumerableRolesUnauthorized() internal pure virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, 0x99152cca) // `EnumerableRolesUnauthorized()`.
-            revert(0x1c, 0x04)
-        }
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         MODIFIERS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -280,5 +257,32 @@ abstract contract EnumerableRoles {
     modifier onlyOwnerOrRoles(bytes memory encodedRoles) virtual {
         _checkOwnerOrRoles(encodedRoles);
         _;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns if `sender` is equal to `owner()` on this contract.
+    /// If the contract does not have `owner()` implemented, returns false.
+    function _isContractOwner(address sender) private view returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0x8da5cb5b) // `owner()`.
+            result :=
+                and(
+                    lt(shl(96, xor(sender, mload(0x00))), gt(returndatasize(), 0x1f)),
+                    staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
+                )
+        }
+    }
+
+    /// @dev Reverts with `EnumerableRolesUnauthorized()`.
+    function _revertEnumerableRolesUnauthorized() private pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0x99152cca) // `EnumerableRolesUnauthorized()`.
+            revert(0x1c, 0x04)
+        }
     }
 }

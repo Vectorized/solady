@@ -49,10 +49,6 @@ contract MockEnumerableRoles is EnumerableRoles, Brutalizer {
         _setRole(_brutalized(holder), role, active);
     }
 
-    function isContractOwner(address sender) public view returns (bool) {
-        return _isContractOwner(_brutalized(sender));
-    }
-
     function hasAnyRoles(address holder, bytes memory encodedRoles) public view returns (bool) {
         return _hasAnyRoles(_brutalized(holder), encodedRoles);
     }
