@@ -33,10 +33,16 @@ contract EnumerableRolesTest is SoladyTest {
         maxRole = _bound(maxRole, 0, 512);
         mockEnumerableRoles.setMaxRole(maxRole);
         mockEnumerableRoles.setMaxRoleReverts(maxRoleReverts);
+        address holder = _randomNonZeroAddress();
+        bool active = _randomChance(2);
         if (role > maxRole && !maxRoleReverts) {
             vm.expectRevert(EnumerableRoles.RoleExceedsMaxRole.selector);
+            mockEnumerableRoles.setRoleDirect(holder, role, active);
+        } else {
+            vm.expectEmit(true, true, true, true);
+            emit RoleSet(holder, role, active);
+            mockEnumerableRoles.setRoleDirect(holder, role, active);
         }
-        mockEnumerableRoles.setRoleDirect(_randomNonZeroAddress(), role, _randomChance(2));
     }
 
     function testSetAndGetRoles(bytes32, address user0, address user1) public {
