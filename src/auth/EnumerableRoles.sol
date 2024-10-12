@@ -32,7 +32,7 @@ abstract contract EnumerableRoles {
     event RoleSet(address indexed holder, uint256 indexed role, bool indexed active);
 
     /// @dev `keccak256(bytes("RoleSet(address,uint256,bool)"))`.
-    uint256 private constant _ROLES_SET_EVENT_SIGNATURE =
+    uint256 private constant _ROLE_SET_EVENT_SIGNATURE =
         0xaddc47d7e02c95c00ec667676636d772a589ffbf0663cfd7cd4dd3d4758201b8;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -155,8 +155,7 @@ abstract contract EnumerableRoles {
             mstore(0x00, or(holder_, _ENUMERABLE_ROLES_SLOT_SEED))
             mstore(0x20, role)
             let rootSlot := keccak256(0x1c, 0x24)
-            let rootPacked := sload(rootSlot)
-            let n := shr(160, shl(160, rootPacked))
+            let n := shr(160, shl(160, sload(rootSlot)))
             let positionSlot := keccak256(0x00, 0x40)
             for {} 1 {} {
                 if iszero(active) {
@@ -174,20 +173,15 @@ abstract contract EnumerableRoles {
                     sstore(positionSlot, 0)
                     break
                 }
-                active := 1
-                if iszero(n) {
-                    sstore(positionSlot, 1)
-                    sstore(rootSlot, or(holder_, 1))
-                    break
-                }
                 if iszero(sload(positionSlot)) {
                     sstore(add(rootSlot, n), holder_)
                     sstore(positionSlot, add(n, 1))
-                    sstore(rootSlot, add(rootPacked, 1))
+                    sstore(rootSlot, add(sload(rootSlot), 1))
                 }
                 break
             }
-            log4(0x00, 0x00, _ROLES_SET_EVENT_SIGNATURE, shr(96, holder_), role, active)
+            // forgefmt: disable-next-item
+            log4(0x00, 0x00, _ROLE_SET_EVENT_SIGNATURE, shr(96, holder_), role, iszero(iszero(active)))
         }
     }
 
