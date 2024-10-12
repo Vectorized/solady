@@ -116,23 +116,24 @@ contract EnumerableRolesTest is SoladyTest {
         uint256[] memory roles;
         address[] memory users;
         while (roles.length == 0 || users.length == 0) {
-            roles = _sampleRoles(8);
-            users = _sampleUniqueAddresses(32);
+            roles = _sampleRoles(1 + (_randomUniform() & 7));
+            users = _sampleUniqueAddresses(16 + (_randomUniform() & 15));
         }
-        uint256 q;
         do {
-            uint256 role = roles[_randomUniform() % roles.length];
-            address user = users[_randomUniform() % users.length];
-            bool active = _randomChance(2);
-            mockEnumerableRoles.setRoleDirect(user, role, active);
-            if (active) {
-                roleHolders[role].add(user);
-            } else {
-                roleHolders[role].remove(user);
+            for (uint256 q = _randomUniform() & 7; q != 0; --q) {
+                uint256 role = roles[_randomUniform() % roles.length];
+                address user = users[_randomUniform() % users.length];
+                bool active = _randomChance(2);
+                mockEnumerableRoles.setRoleDirect(user, role, active);
+                if (active) {
+                    roleHolders[role].add(user);
+                } else {
+                    roleHolders[role].remove(user);
+                }
+                assertEq(mockEnumerableRoles.hasRole(user, role), active);
+                if (_randomChance(8)) _checkRoleHolders(roles);
             }
-            assertEq(mockEnumerableRoles.hasRole(user, role), active);
-            if (_randomChance(8)) _checkRoleHolders(roles);
-        } while (++q < 8 || _randomChance(2));
+        } while (_randomChance(2));
         _checkRoleHolders(roles);
     }
 
@@ -142,6 +143,9 @@ contract EnumerableRolesTest is SoladyTest {
             address[] memory expected = roleHolders[role].values();
             LibSort.insertionSort(expected);
             assertEq(_sortedRoleHolders(role), expected);
+            uint256 n = roleHolders[role].length();
+            assertEq(mockEnumerableRoles.roleHolderCount(role), n);
+            assertEq(expected.length, n);
         }
     }
 
