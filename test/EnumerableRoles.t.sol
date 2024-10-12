@@ -32,23 +32,28 @@ contract EnumerableRolesTest is SoladyTest {
         assertEq(mockEnumerableRoles.isContractOwner(sender), sender == owner && !ownerReverts);
     }
 
-    function testSetRoleOverMaxRoleReverts(
-        bytes32,
-        uint256 role,
-        uint256 maxRole,
-        bool maxRoleReverts
-    ) public {
+    function testSetRoleReverts(address holder, uint256 role, uint256 maxRole, bool maxRoleReverts)
+        public
+    {
         mockEnumerableRoles.setMaxRole(maxRole);
         mockEnumerableRoles.setMaxRoleReverts(maxRoleReverts);
-        address holder = _randomNonZeroAddress();
         bool active = _randomChance(2);
+        if (_randomChance(64)) {
+            mockEnumerableRoles.setOwner(address(1));
+            vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+            mockEnumerableRoles.setRole(holder, role, active);
+            return;
+        }
         if (role > maxRole && !maxRoleReverts) {
             vm.expectRevert(EnumerableRoles.RoleExceedsMaxRole.selector);
-            mockEnumerableRoles.setRoleDirect(holder, role, active);
+            mockEnumerableRoles.setRole(holder, role, active);
+        } else if (holder == address(0)) {
+            vm.expectRevert(EnumerableRoles.RoleHolderIsZeroAddress.selector);
+            mockEnumerableRoles.setRole(holder, role, active);
         } else {
             vm.expectEmit(true, true, true, true);
             emit RoleSet(_cleaned(holder), role, active);
-            mockEnumerableRoles.setRoleDirect(holder, role, active);
+            mockEnumerableRoles.setRole(holder, role, active);
         }
     }
 
@@ -85,6 +90,26 @@ contract EnumerableRolesTest is SoladyTest {
             mockEnumerableRoles.hasAnyRoles(user, abi.encodePacked(rolesToCheck)),
             intersectionLength != 0
         );
+
+        if (_randomChance(8)) {
+            mockEnumerableRoles.setAllowedRolesEncoded(abi.encodePacked(rolesToCheck));
+            address pranker = address(this);
+            if (_randomChance(2)) pranker = user;
+            if (_randomChance(2)) pranker = _randomNonZeroAddress();
+            vm.startPrank(pranker);
+            if (pranker == address(this)) {
+                mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+            } else if (pranker == user && pranker != address(this)) {
+                if (intersectionLength == 0) {
+                    vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+                }
+                mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+            } else {
+                vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+                mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+            }
+            vm.stopPrank();
+        }
     }
 
     function testSetAndGetRolesDifferential(bytes32) public {
@@ -182,6 +207,13 @@ contract EnumerableRolesTest is SoladyTest {
                 uint256 j = _randomUniform() % result.length;
                 assertEq(mockEnumerableRoles.roleHolderAt(role, j), result[j]);
                 assertEq(mockEnumerableRoles.roleHolderCount(role), result.length);
+                if (_randomChance(8)) {
+                    j = _bound(_randomUniform(), 0, result.length + 10);
+                    if (j >= result.length) {
+                        vm.expectRevert(EnumerableRoles.RoleHoldersIndexOutOfBounds.selector);
+                        mockEnumerableRoles.roleHolderAt(role, j);
+                    }
+                }
             }
             LibSort.insertionSort(result);
         }

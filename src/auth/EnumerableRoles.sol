@@ -214,11 +214,8 @@ abstract contract EnumerableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x8da5cb5b) // `owner()`.
-            result :=
-                and(
-                    lt(shl(96, xor(sender, mload(0x00))), gt(returndatasize(), 0x1f)),
-                    staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
-                )
+            let t := staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
+            result := and(lt(shl(96, xor(sender, mload(0x00))), gt(returndatasize(), 0x1f)), t)
         }
     }
 
