@@ -565,11 +565,26 @@ contract TestPlus is Brutalizer {
         }
     }
 
+    /// @dev Wraps a functions such that allocated memory will be freed at the end of its scope.
+    modifier tempMemory() {
+        uint256 m = _freeMemoryPointer();
+        _;
+        _setFreeMemoryPointer(m);
+    }
+
     /// @dev Returns the free memory pointer.
     function _freeMemoryPointer() internal pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
+        }
+    }
+
+    /// @dev Sets the free memory pointer.
+    function _setFreeMemoryPointer(uint256 m) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x40, m)
         }
     }
 

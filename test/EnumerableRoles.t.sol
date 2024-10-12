@@ -94,8 +94,7 @@ contract EnumerableRolesTest is SoladyTest {
         if (_randomChance(32)) {
             uint256 numFound;
             for (uint256 i; i != rolesToCheck.length; ++i) {
-                uint256 role = rolesToCheck.get(i);
-                if (mockEnumerableRoles.hasRole(holder, role)) ++numFound;
+                if (mockEnumerableRoles.hasRole(holder, rolesToCheck.get(i))) ++numFound;
             }
             assertEq(intersectionLength, numFound);
         }
@@ -112,14 +111,24 @@ contract EnumerableRolesTest is SoladyTest {
             vm.startPrank(pranker);
             if (pranker == address(this)) {
                 mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+                if (pranker != holder) {
+                    vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+                }
+                mockEnumerableRoles.guardedByOnlyRoles();
             } else if (pranker == holder && pranker != address(this)) {
                 if (intersectionLength == 0) {
                     vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
                 }
                 mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+                if (intersectionLength == 0) {
+                    vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+                }
+                mockEnumerableRoles.guardedByOnlyRoles();
             } else {
                 vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
                 mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+                vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+                mockEnumerableRoles.guardedByOnlyRoles();
             }
             vm.stopPrank();
         }
@@ -168,7 +177,7 @@ contract EnumerableRolesTest is SoladyTest {
         _checkRoleHolders(roles);
     }
 
-    function _checkRoleHolders(uint256[] memory roles) internal {
+    function _checkRoleHolders(uint256[] memory roles) internal tempMemory {
         for (uint256 i; i != roles.length; ++i) {
             uint256 role = roles[i];
             address[] memory expected = _roleHolders(role).values();
@@ -254,13 +263,10 @@ contract EnumerableRolesTest is SoladyTest {
 
     function _sampleUniqueAddresses(uint256 n) internal returns (address[] memory) {
         unchecked {
-            DynamicArrayLib.DynamicArray memory a;
+            uint256[] memory a = DynamicArrayLib.malloc(n);
             for (uint256 i; i != n; ++i) {
-                a.p(_randomNonZeroAddress());
+                a.set(i, _randomUniqueHashedAddress());
             }
-            LibSort.insertionSort(a.data);
-            LibSort.uniquifySorted(a.data);
-            _shuffle(a.data);
             return a.asAddressArray();
         }
     }
@@ -272,13 +278,6 @@ contract EnumerableRolesTest is SoladyTest {
             for (uint256 i; i != n; ++i) {
                 roles.set(i, _randomUniform() & m);
             }
-            _shuffle(roles);
         }
-    }
-
-    function _shuffle(uint256[] memory a) internal {
-        LibPRNG.PRNG memory prng;
-        prng.state = _randomUniform();
-        LibPRNG.shuffle(prng, a);
     }
 }
