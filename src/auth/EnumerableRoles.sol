@@ -81,7 +81,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Sets the status of `role` of `holder` to `active`.
     function setRole(address holder, uint8 role, bool active) public payable virtual {
-        if (!_isContractOwner(msg.sender)) _revertEnumerableRolesUnauthorized();
+        _authorizeSetRole(holder, role, active);
         _setRole(holder, role, active);
     }
 
@@ -201,24 +201,15 @@ abstract contract EnumerableRoles {
 
     /// @dev Set the role for holder directly without authorization guard.
     function _setRole(address holder, uint8 role, bool active) internal virtual {
+        _validateRole(role);
         /// @solidity memory-safe-assembly
         assembly {
             role := and(0xff, role)
-            mstore(0x00, 0xd24f19d5) // `MAX_ROLE()`.
-            if and(
-                and(gt(role, mload(0x00)), gt(returndatasize(), 0x1f)),
-                staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
-            ) {
-                mstore(0x00, 0xcd1bae22) // `RoleExceedsMaxRole()`.
-                revert(0x1c, 0x04)
-            }
-
             holder := shr(96, shl(96, holder))
             if iszero(holder) {
                 mstore(0x00, 0x82550143) // `RoleHolderIsZeroAddress()`.
                 revert(0x1c, 0x04)
             }
-
             let rootSlot := or(shl(248, role), _ENUMERABLE_ROLES_SLOT_SEED)
             let rootPacked := sload(rootSlot)
             let n := shr(160, shl(160, rootPacked))
@@ -311,6 +302,29 @@ abstract contract EnumerableRoles {
             }
             log4(0x00, 0x00, _ROLES_SET_EVENT_SIGNATURE, holder, role, iszero(iszero(active)))
         }
+    }
+
+    /// @dev Requires the role is not greater than `MAX_ROLE()`.
+    /// If `MAX_ROLE()` is not implemented, this is an no-op.
+    function _validateRole(uint8 role) internal view virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0xd24f19d5) // `MAX_ROLE()`.
+            if and(
+                and(gt(and(0xff, role), mload(0x00)), gt(returndatasize(), 0x1f)),
+                staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
+            ) {
+                mstore(0x00, 0xcd1bae22) // `RoleExceedsMaxRole()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Checks that the caller is authorized to set the role.
+    function _authorizeSetRole(address holder, uint8 role, bool active) internal virtual {
+        if (!_isContractOwner(msg.sender)) _revertEnumerableRolesUnauthorized();
+        // Silence compiler warning on unused variables.
+        (holder, role, active) = (holder, role, active);
     }
 
     /// @dev Returns if `sender` is equal to `owner()` on this contract.
