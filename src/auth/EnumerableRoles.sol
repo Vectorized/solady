@@ -203,7 +203,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Checks that the caller is authorized to set the role.
     function _authorizeSetRole(address holder, uint256 role, bool active) internal virtual {
-        if (!_isContractOwner(msg.sender)) _revertEnumerableRolesUnauthorized();
+        if (!_senderIsContractOwner()) _revertEnumerableRolesUnauthorized();
         // Silence compiler warning on unused variables.
         (holder, role, active) = (holder, role, active);
     }
@@ -236,7 +236,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Throws if the sender does not have any roles in `encodedRoles`.
     function _checkOwnerOrRoles(bytes memory encodedRoles) internal view virtual {
-        if (!_isContractOwner(msg.sender)) _checkRoles(encodedRoles);
+        if (!_senderIsContractOwner()) _checkRoles(encodedRoles);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -263,15 +263,15 @@ abstract contract EnumerableRoles {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns if `sender` is equal to `owner()` on this contract.
+    /// @dev Returns if the `msg.sender` is equal to `owner()` on this contract.
     /// If the contract does not have `owner()` implemented, returns false.
-    function _isContractOwner(address sender) private view returns (bool result) {
+    function _senderIsContractOwner() private view returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x8da5cb5b) // `owner()`.
             result :=
                 and(
-                    lt(shl(96, xor(sender, mload(0x00))), gt(returndatasize(), 0x1f)),
+                    and(eq(caller(), mload(0x00)), gt(returndatasize(), 0x1f)),
                     staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
                 )
         }
