@@ -62,7 +62,7 @@ contract EnumerableRolesTest is SoladyTest {
     }
 
     struct _TestTemps {
-        address[] users;
+        address[] holders;
         uint256[][] roles;
         uint256[][] rolesLookup;
         uint256[] combinedRoles;
@@ -71,10 +71,10 @@ contract EnumerableRolesTest is SoladyTest {
     function testHasAnyRoles(bytes32) public {
         uint256[] memory rolesToSet = _sampleRoles(_randomUniform() & 7);
         uint256[] memory rolesToCheck = _sampleRoles(_randomUniform() & 7);
-        address user = _randomNonZeroAddress();
+        address holder = _randomNonZeroAddress();
         unchecked {
             for (uint256 i; i != rolesToSet.length; ++i) {
-                mockEnumerableRoles.setRole(user, rolesToSet.get(i), true);
+                mockEnumerableRoles.setRole(holder, rolesToSet.get(i), true);
             }
         }
         LibSort.insertionSort(rolesToSet);
@@ -86,24 +86,24 @@ contract EnumerableRolesTest is SoladyTest {
             uint256 numFound;
             for (uint256 i; i != rolesToCheck.length; ++i) {
                 uint256 role = rolesToCheck.get(i);
-                if (mockEnumerableRoles.hasRole(user, role)) ++numFound;
+                if (mockEnumerableRoles.hasRole(holder, role)) ++numFound;
             }
             assertEq(intersectionLength, numFound);
         }
         assertEq(
-            mockEnumerableRoles.hasAnyRoles(user, abi.encodePacked(rolesToCheck)),
+            mockEnumerableRoles.hasAnyRoles(holder, abi.encodePacked(rolesToCheck)),
             intersectionLength != 0
         );
 
         if (_randomChance(8)) {
             mockEnumerableRoles.setAllowedRolesEncoded(abi.encodePacked(rolesToCheck));
             address pranker = address(this);
-            if (_randomChance(2)) pranker = user;
+            if (_randomChance(2)) pranker = holder;
             if (_randomChance(2)) pranker = _randomNonZeroAddress();
             vm.startPrank(pranker);
             if (pranker == address(this)) {
                 mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
-            } else if (pranker == user && pranker != address(this)) {
+            } else if (pranker == holder && pranker != address(this)) {
                 if (intersectionLength == 0) {
                     vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
                 }
@@ -118,23 +118,23 @@ contract EnumerableRolesTest is SoladyTest {
 
     function testSetAndGetRolesDifferential(bytes32) public {
         uint256[] memory roles;
-        address[] memory users;
-        while (roles.length == 0 || users.length == 0) {
+        address[] memory holders;
+        while (roles.length == 0 || holders.length == 0) {
             roles = _sampleRoles(1 + (_randomUniform() & 7));
-            users = _sampleUniqueAddresses(16 + (_randomUniform() & 15));
+            holders = _sampleUniqueAddresses(16 + (_randomUniform() & 15));
         }
         do {
             for (uint256 q = _randomUniform() & 7; q != 0; --q) {
                 uint256 role = roles[_randomUniform() % roles.length];
-                address user = users[_randomUniform() % users.length];
+                address holder = holders[_randomUniform() % holders.length];
                 bool active = _randomChance(2);
-                mockEnumerableRoles.setRoleDirect(user, role, active);
+                mockEnumerableRoles.setRoleDirect(holder, role, active);
                 if (active) {
-                    roleHolders[role].add(user);
+                    roleHolders[role].add(holder);
                 } else {
-                    roleHolders[role].remove(user);
+                    roleHolders[role].remove(holder);
                 }
-                assertEq(mockEnumerableRoles.hasRole(user, role), active);
+                assertEq(mockEnumerableRoles.hasRole(holder, role), active);
                 if (_randomChance(8)) _checkRoleHolders(roles);
             }
         } while (_randomChance(2));
@@ -155,11 +155,11 @@ contract EnumerableRolesTest is SoladyTest {
 
     function testSetAndGetRoles(bytes32) public {
         _TestTemps memory t;
-        t.users = _sampleUniqueAddresses(_randomUniform() & 7);
-        t.roles = new uint256[][](t.users.length);
-        t.rolesLookup = new uint256[][](t.users.length);
+        t.holders = _sampleUniqueAddresses(_randomUniform() & 7);
+        t.roles = new uint256[][](t.holders.length);
+        t.rolesLookup = new uint256[][](t.holders.length);
         unchecked {
-            for (uint256 i; i != t.users.length; ++i) {
+            for (uint256 i; i != t.holders.length; ++i) {
                 uint256[] memory roles = _sampleRoles(_randomUniform() & 7);
                 t.roles[i] = roles;
                 roles = LibSort.copy(roles);
@@ -169,10 +169,10 @@ contract EnumerableRolesTest is SoladyTest {
                 t.combinedRoles = LibSort.union(roles, t.combinedRoles);
             }
 
-            for (uint256 i; i != t.users.length; ++i) {
+            for (uint256 i; i != t.holders.length; ++i) {
                 uint256[] memory roles = t.roles[i];
                 for (uint256 j; j != roles.length; ++j) {
-                    mockEnumerableRoles.setRoleDirect(t.users[i], roles[j], true);
+                    mockEnumerableRoles.setRoleDirect(t.holders[i], roles[j], true);
                 }
             }
 
@@ -181,9 +181,9 @@ contract EnumerableRolesTest is SoladyTest {
                     if (!_randomChance(8)) continue;
                     uint256 role = t.combinedRoles.get(i);
                     DynamicArrayLib.DynamicArray memory expected;
-                    for (uint256 j; j != t.users.length; ++j) {
+                    for (uint256 j; j != t.holders.length; ++j) {
                         if (LibSort.inSorted(t.rolesLookup[j], role)) {
-                            expected.p(t.users[j]);
+                            expected.p(t.holders[j]);
                         }
                     }
                     LibSort.insertionSort(expected.data);
@@ -192,10 +192,10 @@ contract EnumerableRolesTest is SoladyTest {
             }
 
             if (_randomChance(2)) {
-                for (uint256 i; i != t.users.length; ++i) {
+                for (uint256 i; i != t.holders.length; ++i) {
                     uint256[] memory roles = t.roles[i];
                     for (uint256 j; j != roles.length; ++j) {
-                        mockEnumerableRoles.setRoleDirect(t.users[i], roles[j], false);
+                        mockEnumerableRoles.setRoleDirect(t.holders[i], roles[j], false);
                     }
                 }
 
