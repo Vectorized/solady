@@ -39,6 +39,7 @@ accounts
 auth
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
+├─ EnumerableRoles — "Enumerable multiroles authorization mixin"
 tokens
 ├─ WETH — "Simple Wrapped Ether implementation"
 ├─ ERC20 — "Simple ERC20 + EIP-2612 implementation"

@@ -11,6 +11,7 @@ import "./accounts/Pod.sol";
 import "./accounts/Receiver.sol";
 import "./auth/Ownable.sol";
 import "./auth/OwnableRoles.sol";
+import "./auth/EnumerableRoles.sol";
 import "./tokens/ERC1155.sol";
 import "./tokens/ERC20.sol";
 import "./tokens/ERC2981.sol";
