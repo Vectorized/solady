@@ -81,7 +81,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Sets the status of `role` of `holder` to `active`.
     function setRole(address holder, uint8 role, bool active) public payable virtual {
-        if (!_isContactOwner(msg.sender)) _revertEnumerableRolesUnauthorized();
+        if (!_isContractOwner(msg.sender)) _revertEnumerableRolesUnauthorized();
         _setRole(holder, role, active);
     }
 
@@ -315,7 +315,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Returns if `sender` is equal to `owner()` on this contract.
     /// If the contract does not have `owner()` implemented, returns false.
-    function _isContactOwner(address sender) internal view virtual returns (bool result) {
+    function _isContractOwner(address sender) internal view virtual returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x8da5cb5b) // `owner()`.
@@ -355,7 +355,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Throws if the sender does not have any roles in `encodedRoles`.
     function _checkOwnerOrRoles(bytes memory encodedRoles) internal view virtual {
-        if (!_isContactOwner(msg.sender)) _checkRoles(encodedRoles);
+        if (!_isContractOwner(msg.sender)) _checkRoles(encodedRoles);
     }
 
     /// @dev Reverts with `EnumerableRolesUnauthorized()`.
