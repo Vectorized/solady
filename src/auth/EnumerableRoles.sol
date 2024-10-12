@@ -129,12 +129,12 @@ abstract contract EnumerableRoles {
             mstore(0x20, role)
             let rootSlot := keccak256(0x1c, 0x24)
             let rootPacked := sload(rootSlot)
-            if iszero(lt(i, shr(160, shl(160, rootPacked)))) {
+            result := shr(96, rootPacked)
+            if i { result := shr(96, sload(add(rootSlot, i))) }
+            if iszero(result) {
                 mstore(0x00, 0x5694da8e) // `RoleHoldersIndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
-            result := shr(96, rootPacked)
-            if i { result := shr(96, sload(add(rootSlot, i))) }
         }
     }
 
@@ -161,15 +161,15 @@ abstract contract EnumerableRoles {
                 if iszero(active) {
                     let position := sload(positionSlot)
                     if iszero(position) { break }
-                    n := sub(n, 1)
-                    if iszero(eq(sub(position, 1), n)) {
-                        let lastHolder := shr(96, sload(add(rootSlot, n)))
+                    let nSub := sub(n, 1)
+                    if iszero(eq(sub(position, 1), nSub)) {
+                        let lastHolder := shr(96, sload(add(rootSlot, nSub)))
                         sstore(add(rootSlot, sub(position, 1)), shl(96, lastHolder))
-                        sstore(add(rootSlot, n), 0)
+                        sstore(add(rootSlot, nSub), 0)
                         mstore(0x00, or(shl(96, lastHolder), _ENUMERABLE_ROLES_SLOT_SEED))
                         sstore(keccak256(0x00, 0x40), position)
                     }
-                    sstore(rootSlot, or(shl(96, shr(96, sload(rootSlot))), n))
+                    sstore(rootSlot, or(shl(96, shr(96, sload(rootSlot))), nSub))
                     sstore(positionSlot, 0)
                     break
                 }
@@ -214,8 +214,11 @@ abstract contract EnumerableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x8da5cb5b) // `owner()`.
-            let t := staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
-            result := and(lt(shl(96, xor(sender, mload(0x00))), gt(returndatasize(), 0x1f)), t)
+            result :=
+                and(
+                    lt(shl(96, xor(sender, mload(0x00))), gt(returndatasize(), 0x1f)),
+                    staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
+                )
         }
     }
 
