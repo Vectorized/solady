@@ -94,8 +94,7 @@ contract EnumerableRolesTest is SoladyTest {
         if (_randomChance(32)) {
             uint256 numFound;
             for (uint256 i; i != rolesToCheck.length; ++i) {
-                uint256 role = rolesToCheck.get(i);
-                if (mockEnumerableRoles.hasRole(holder, role)) ++numFound;
+                if (mockEnumerableRoles.hasRole(holder, rolesToCheck.get(i))) ++numFound;
             }
             assertEq(intersectionLength, numFound);
         }
