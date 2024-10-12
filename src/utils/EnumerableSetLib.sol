@@ -274,10 +274,14 @@ library EnumerableSetLib {
                 let p := keccak256(0x00, 0x40)
                 if iszero(sload(p)) {
                     n := shr(1, n)
-                    sstore(add(rootSlot, n), shl(96, value))
-                    sstore(p, add(1, n))
-                    sstore(rootSlot, add(2, rootPacked))
                     result := 1
+                    sstore(p, add(1, n))
+                    if iszero(n) {
+                        sstore(rootSlot, or(3, shl(96, value)))
+                        break
+                    }
+                    sstore(add(rootSlot, n), shl(96, value))
+                    sstore(rootSlot, add(2, rootPacked))
                     break
                 }
                 break
