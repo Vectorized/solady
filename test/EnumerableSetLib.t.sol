@@ -485,6 +485,50 @@ contract EnumerableSetLibTest is SoladyTest {
         }
     }
 
+    function testEnumerableUint256SetAddressSetDifferential(bytes32) public {
+        address[] memory a;
+        while (a.length == 0) {
+            a = _sampleUniqueAddresses(_randomUniform() & 0xf);
+        }
+        do {
+            for (uint256 q = _randomUniform() & 7; q != 0; --q) {
+                address x = a[_randomUniform() % a.length];
+                if (_randomChance(2)) {
+                    uint256Set.add(uint160(x));
+                    addressSet.add(x);
+                } else {
+                    uint256Set.remove(uint160(x));
+                    addressSet.remove(x);
+                }
+                uint256[] memory uint256s = uint256Set.values();
+                address[] memory addresses = addressSet.values();
+                unchecked {
+                    for (uint256 i; i < uint256s.length; ++i) {
+                        assertEq(uint256Set.at(i), uint256s[i]);
+                    }
+                    for (uint256 i; i < addresses.length; ++i) {
+                        assertEq(addressSet.at(i), addresses[i]);
+                    }
+                }
+                LibSort.insertionSort(uint256s);
+                LibSort.insertionSort(addresses);
+                assertEq(abi.encode(addresses), abi.encode(uint256s));
+            }
+        } while (_randomChance(2));
+    }
+
+    function _sampleUniqueAddresses(uint256 n) internal returns (address[] memory result) {
+        unchecked {
+            result = new address[](n);
+            for (uint256 i; i != n; ++i) {
+                result[i] = _randomHashedAddress();
+            }
+            LibSort.insertionSort(result);
+            LibSort.uniquifySorted(result);
+            _shuffle(result);
+        }
+    }
+
     function testEnumerableAddressSetRevertsOnSentinel(uint256) public {
         do {
             address a = address(uint160(_random()));
@@ -598,6 +642,12 @@ contract EnumerableSetLibTest is SoladyTest {
                 assertEq(uint8Set.length(), 0);
             }
         }
+    }
+
+    function _shuffle(address[] memory a) internal {
+        LibPRNG.PRNG memory prng;
+        prng.state = _random();
+        prng.shuffle(a);
     }
 
     function _shuffle(uint8[] memory a) internal {
