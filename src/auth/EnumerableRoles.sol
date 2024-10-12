@@ -161,7 +161,6 @@ abstract contract EnumerableRoles {
             for {} 1 {} {
                 if iszero(active) {
                     if iszero(position) { break }
-                    if iszero(n) { invalid() }
                     let nSub := sub(n, 1)
                     if iszero(eq(sub(position, 1), nSub)) {
                         let lastHolder_ := shl(96, shr(96, sload(add(rootSlot, nSub))))
