@@ -279,13 +279,6 @@ contract EnumerableRolesTest is SoladyTest {
             for (uint256 i; i != n; ++i) {
                 roles.set(i, _randomUniform() & m);
             }
-            _shuffle(roles);
         }
-    }
-
-    function _shuffle(uint256[] memory a) internal {
-        LibPRNG.PRNG memory prng;
-        prng.state = _randomUniform();
-        LibPRNG.shuffle(prng, a);
     }
 }
