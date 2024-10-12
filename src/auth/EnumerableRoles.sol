@@ -157,23 +157,23 @@ abstract contract EnumerableRoles {
             let rootSlot := keccak256(0x1c, 0x24)
             let n := shr(160, shl(160, sload(rootSlot)))
             let positionSlot := keccak256(0x00, 0x40)
+            let position := sload(positionSlot)
             for {} 1 {} {
                 if iszero(active) {
-                    let position := sload(positionSlot)
                     if iszero(position) { break }
                     let nSub := sub(n, 1)
                     if iszero(eq(sub(position, 1), nSub)) {
-                        let lastHolder := shr(96, sload(add(rootSlot, nSub)))
-                        sstore(add(rootSlot, sub(position, 1)), shl(96, lastHolder))
+                        let lastHolder_ := shl(96, shr(96, sload(add(rootSlot, nSub))))
+                        sstore(add(rootSlot, sub(position, 1)), lastHolder_)
                         sstore(add(rootSlot, nSub), 0)
-                        mstore(0x00, or(shl(96, lastHolder), _ENUMERABLE_ROLES_SLOT_SEED))
+                        mstore(0x00, or(lastHolder_, _ENUMERABLE_ROLES_SLOT_SEED))
                         sstore(keccak256(0x00, 0x40), position)
                     }
                     sstore(rootSlot, or(shl(96, shr(96, sload(rootSlot))), nSub))
                     sstore(positionSlot, 0)
                     break
                 }
-                if iszero(sload(positionSlot)) {
+                if iszero(position) {
                     sstore(add(rootSlot, n), holder_)
                     sstore(positionSlot, add(n, 1))
                     sstore(rootSlot, add(sload(rootSlot), 1))
