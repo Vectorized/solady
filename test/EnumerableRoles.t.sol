@@ -17,8 +17,6 @@ contract EnumerableRolesTest is SoladyTest {
 
     MockEnumerableRoles mockEnumerableRoles;
 
-    mapping(uint256 => EnumerableSetLib.AddressSet) roleHolders;
-
     function setUp() public {
         mockEnumerableRoles = new MockEnumerableRoles();
         mockEnumerableRoles.setMaxRole(type(uint256).max);
@@ -34,6 +32,17 @@ contract EnumerableRolesTest is SoladyTest {
         }
         vm.prank(pranker);
         mockEnumerableRoles.setRole(address(1), 0, true);
+    }
+
+    function _roleHolders(uint256 role)
+        internal
+        pure
+        returns (EnumerableSetLib.AddressSet storage holders)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            holders.slot := add(role, 0x97)
+        }
     }
 
     function testSetRoleReverts(address holder, uint256 role, uint256 maxRole, bool maxRoleReverts)
@@ -148,9 +157,9 @@ contract EnumerableRolesTest is SoladyTest {
                 bool active = _randomChance(2);
                 mockEnumerableRoles.setRoleDirect(holder, role, active);
                 if (active) {
-                    roleHolders[role].add(holder);
+                    _roleHolders(role).add(holder);
                 } else {
-                    roleHolders[role].remove(holder);
+                    _roleHolders(role).remove(holder);
                 }
                 assertEq(mockEnumerableRoles.hasRole(holder, role), active);
                 if (_randomChance(8)) _checkRoleHolders(roles);
@@ -162,10 +171,10 @@ contract EnumerableRolesTest is SoladyTest {
     function _checkRoleHolders(uint256[] memory roles) internal {
         for (uint256 i; i != roles.length; ++i) {
             uint256 role = roles[i];
-            address[] memory expected = roleHolders[role].values();
+            address[] memory expected = _roleHolders(role).values();
             LibSort.insertionSort(expected);
             assertEq(_sortedRoleHolders(role), expected);
-            uint256 n = roleHolders[role].length();
+            uint256 n = _roleHolders(role).length();
             assertEq(mockEnumerableRoles.roleHolderCount(role), n);
             assertEq(expected.length, n);
         }
