@@ -91,12 +91,12 @@ contract EnumerableRolesTest is SoladyTest {
             assertEq(intersectionLength, numFound);
         }
         assertEq(
-            mockEnumerableRoles.hasAnyRoles(holder, abi.encodePacked(rolesToCheck)),
+            mockEnumerableRoles.hasAnyRoles(holder, _encodeRolesToCheck(rolesToCheck)),
             intersectionLength != 0
         );
 
         if (_randomChance(8)) {
-            mockEnumerableRoles.setAllowedRolesEncoded(abi.encodePacked(rolesToCheck));
+            mockEnumerableRoles.setAllowedRolesEncoded(_encodeRolesToCheck(rolesToCheck));
             address pranker = address(this);
             if (_randomChance(2)) pranker = holder;
             if (_randomChance(2)) pranker = _randomNonZeroAddress();
@@ -113,6 +113,24 @@ contract EnumerableRolesTest is SoladyTest {
                 mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
             }
             vm.stopPrank();
+        }
+    }
+
+    function _encodeRolesToCheck(uint256[] memory roles) internal returns (bytes memory) {
+        if (_randomChance(2)) {
+            bytes memory dirt;
+            uint256 dirtLength = _randomUniform() & 31;
+            uint256 dirtBits = _random();
+            /// @solidity memory-safe-assembly
+            assembly {
+                dirt := mload(0x40)
+                mstore(dirt, dirtLength)
+                mstore(add(dirt, 0x20), dirtBits)
+                mstore(0x40, add(dirt, 0x40))
+            }
+            return abi.encodePacked(roles, dirt);
+        } else {
+            return abi.encodePacked(roles);
         }
     }
 
