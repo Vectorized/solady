@@ -28,7 +28,7 @@ abstract contract EnumerableRoles {
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The holder's role has been set to `active`.
+    /// @dev The status of `role` for `holder` has been set to `active`.
     event RoleSet(address indexed holder, uint256 indexed role, bool indexed active);
 
     /// @dev `keccak256(bytes("RoleSet(address,uint256,bool)"))`.
@@ -46,7 +46,7 @@ abstract contract EnumerableRoles {
     error RoleHolderIsZeroAddress();
 
     /// @dev The role has exceeded the maximum role.
-    error RoleExceedsMaxRole();
+    error InvalidRole();
 
     /// @dev Unauthorized to perform the action.
     error EnumerableRolesUnauthorized();
@@ -81,7 +81,7 @@ abstract contract EnumerableRoles {
     /*                   PUBLIC READ FUNCTIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns if `holder` has `role`.
+    /// @dev Returns if `holder` has active `role`.
     function hasRole(address holder, uint256 role) public view virtual returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -195,7 +195,7 @@ abstract contract EnumerableRoles {
                 and(gt(role, mload(0x00)), gt(returndatasize(), 0x1f)),
                 staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
             ) {
-                mstore(0x00, 0xcd1bae22) // `RoleExceedsMaxRole()`.
+                mstore(0x00, 0xd954416a) // `InvalidRole()`.
                 revert(0x1c, 0x04)
             }
         }

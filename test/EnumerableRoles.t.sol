@@ -45,7 +45,7 @@ contract EnumerableRolesTest is SoladyTest {
             return;
         }
         if (role > maxRole && !maxRoleReverts) {
-            vm.expectRevert(EnumerableRoles.RoleExceedsMaxRole.selector);
+            vm.expectRevert(EnumerableRoles.InvalidRole.selector);
             mockEnumerableRoles.setRole(holder, role, active);
         } else if (holder == address(0)) {
             vm.expectRevert(EnumerableRoles.RoleHolderIsZeroAddress.selector);
