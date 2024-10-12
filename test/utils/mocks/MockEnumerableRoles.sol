@@ -42,7 +42,7 @@ contract MockEnumerableRoles is EnumerableRoles, Brutalizer {
         return $.owner;
     }
 
-    function setRoleDirect(address holder, uint8 role, bool active) public {
+    function setRoleDirect(address holder, uint256 role, bool active) public {
         _setRole(_brutalized(holder), role, active);
     }
 

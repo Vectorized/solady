@@ -2,19 +2,27 @@
 pragma solidity ^0.8.4;
 
 import {LibSort} from "../src/utils/LibSort.sol";
+import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {DynamicArrayLib} from "../src/utils/DynamicArrayLib.sol";
+import {EnumerableSetLib} from "../src/utils/EnumerableSetLib.sol";
 import "./utils/SoladyTest.sol";
 import "./utils/mocks/MockEnumerableRoles.sol";
 
 contract EnumerableRolesTest is SoladyTest {
     using DynamicArrayLib for *;
+    using EnumerableSetLib for EnumerableSetLib.AddressSet;
+    using EnumerableSetLib for EnumerableSetLib.Uint256Set;
 
-    event RoleSet(address indexed holder, uint8 indexed role, bool indexed active);
+    event RoleSet(address indexed holder, uint256 indexed role, bool indexed active);
 
     MockEnumerableRoles mockEnumerableRoles;
 
+    mapping(uint256 => EnumerableSetLib.AddressSet) roleHolders;
+
     function setUp() public {
         mockEnumerableRoles = new MockEnumerableRoles();
+        mockEnumerableRoles.setMaxRole(type(uint256).max);
+        mockEnumerableRoles.setOwner(address(this));
     }
 
     function testIsContractOwner(address owner, address sender, bool ownerReverts) public {
@@ -26,11 +34,10 @@ contract EnumerableRolesTest is SoladyTest {
 
     function testSetRoleOverMaxRoleReverts(
         bytes32,
-        uint8 role,
+        uint256 role,
         uint256 maxRole,
         bool maxRoleReverts
     ) public {
-        maxRole = _bound(maxRole, 0, 512);
         mockEnumerableRoles.setMaxRole(maxRole);
         mockEnumerableRoles.setMaxRoleReverts(maxRoleReverts);
         address holder = _randomNonZeroAddress();
@@ -45,105 +52,139 @@ contract EnumerableRolesTest is SoladyTest {
         }
     }
 
-    function testSetAndGetRoles(bytes32, address user0, address user1) public {
-        while (user0 == address(0) || user1 == address(0) || user0 == user1) {
-            user0 = _randomNonZeroAddress();
-            user1 = _randomNonZeroAddress();
-        }
-        _testSetAndGetRoles(user0, user1, _sampleRoles(), _sampleRoles());
+    struct _TestTemps {
+        address[] users;
+        uint256[][] roles;
+        uint256[][] rolesLookup;
+        uint256[] combinedRoles;
     }
 
-    function testSetAndGetRoles() public {
-        uint256[] memory allRoles = DynamicArrayLib.malloc(256);
-        unchecked {
-            for (uint256 i; i < 256; ++i) {
-                allRoles.set(i, i);
-            }
+    function testSetAndGetRolesDifferential(bytes32) public {
+        uint256[] memory roles;
+        address[] memory users;
+        while (roles.length == 0 || users.length == 0) {
+            roles = _sampleRoles(8);
+            users = _sampleUniqueAddresses(32);
         }
-        _testSetAndGetRoles(address(1), address(2), allRoles, allRoles);
+        uint256 q;
+        do {
+            uint256 role = roles[_randomUniform() % roles.length];
+            address user = users[_randomUniform() % users.length];
+            bool active = _randomChance(2);
+            mockEnumerableRoles.setRoleDirect(user, role, active);
+            if (active) {
+                roleHolders[role].add(user);
+            } else {
+                roleHolders[role].remove(user);
+            }
+            if (_randomChance(8)) _checkRoleHolders(roles);
+        } while (++q < 8 || _randomChance(2));
+        _checkRoleHolders(roles);
     }
 
-    function _testSetAndGetRoles(
-        address user0,
-        address user1,
-        uint256[] memory user0Roles,
-        uint256[] memory user1Roles
-    ) internal {
-        mockEnumerableRoles.setMaxRole(255);
-        mockEnumerableRoles.setOwner(address(this));
+    function _checkRoleHolders(uint256[] memory roles) internal {
+        for (uint256 i; i != roles.length; ++i) {
+            uint256 role = roles[i];
+            address[] memory expected = roleHolders[role].values();
+            LibSort.insertionSort(expected);
+            assertEq(_sortedRoleHolders(role), expected);
+        }
+    }
+
+    function testSetAndGetRoles(bytes32) public {
+        _TestTemps memory t;
+        t.users = _sampleUniqueAddresses(_randomUniform() & 7);
+        t.roles = new uint256[][](t.users.length);
+        t.rolesLookup = new uint256[][](t.users.length);
         unchecked {
-            for (uint256 i; i != user0Roles.length; ++i) {
-                mockEnumerableRoles.setRole(user0, uint8(user0Roles.get(i)), true);
+            for (uint256 i; i != t.users.length; ++i) {
+                uint256[] memory roles = _sampleRoles(_randomUniform() & 7);
+                t.roles[i] = roles;
+                roles = LibSort.copy(roles);
+                LibSort.insertionSort(roles);
+                LibSort.uniquifySorted(roles);
+                t.rolesLookup[i] = roles;
+                t.combinedRoles = LibSort.union(roles, t.combinedRoles);
             }
-            for (uint256 i; i != user1Roles.length; ++i) {
-                mockEnumerableRoles.setRole(user1, uint8(user1Roles.get(i)), true);
+
+            for (uint256 i; i != t.users.length; ++i) {
+                uint256[] memory roles = t.roles[i];
+                for (uint256 j; j != roles.length; ++j) {
+                    mockEnumerableRoles.setRoleDirect(t.users[i], roles[j], true);
+                }
             }
-            _checkRoles(user0, user0Roles);
-            _checkRoles(user1, user1Roles);
-            if (_randomChance(32)) {
-                uint256[] memory user0RolesLookup = _sortedAndUniquifiedCopy(user0Roles);
-                uint256[] memory user1RolesLookup = _sortedAndUniquifiedCopy(user1Roles);
-                for (uint256 role; role < 256; ++role) {
+
+            if (_randomChance(2)) {
+                for (uint256 i; i < t.combinedRoles.length; ++i) {
                     if (!_randomChance(8)) continue;
+                    uint256 role = t.combinedRoles.get(i);
                     DynamicArrayLib.DynamicArray memory expected;
-                    if (LibSort.inSorted(user0RolesLookup, role)) expected.p(user0);
-                    if (LibSort.inSorted(user1RolesLookup, role)) expected.p(user1);
-                    LibSort.sort(expected.data);
-                    address[] memory roleHolders = mockEnumerableRoles.roleHolders(uint8(role));
-                    LibSort.sort(roleHolders);
-                    assertEq(abi.encodePacked(expected.data), abi.encodePacked(roleHolders));
+                    for (uint256 j; j != t.users.length; ++j) {
+                        if (LibSort.inSorted(t.rolesLookup[j], role)) {
+                            expected.p(t.users[j]);
+                        }
+                    }
+                    LibSort.insertionSort(expected.data);
+                    assertEq(abi.encode(expected.data), abi.encode(_sortedRoleHolders(role)));
                 }
             }
-            for (uint256 i; i != user0Roles.length; ++i) {
-                mockEnumerableRoles.setRole(user0, uint8(user0Roles.get(i)), false);
-            }
-            for (uint256 i; i != user1Roles.length; ++i) {
-                mockEnumerableRoles.setRole(user1, uint8(user1Roles.get(i)), false);
-            }
-            assertEq(mockEnumerableRoles.rolesOf(user0).length, 0);
-            assertEq(mockEnumerableRoles.rolesOf(user1).length, 0);
-            if (_randomChance(32)) {
-                for (uint256 i; i < 256; ++i) {
-                    uint8 role = uint8(i);
+
+            if (_randomChance(2)) {
+                for (uint256 i; i != t.users.length; ++i) {
+                    uint256[] memory roles = t.roles[i];
+                    for (uint256 j; j != roles.length; ++j) {
+                        mockEnumerableRoles.setRoleDirect(t.users[i], roles[j], false);
+                    }
+                }
+
+                for (uint256 i; i < t.combinedRoles.length; ++i) {
+                    uint256 role = t.combinedRoles.get(i);
                     assertEq(mockEnumerableRoles.roleHolders(role).length, 0);
+                    assertEq(mockEnumerableRoles.roleHolderCount(role), 0);
                 }
             }
         }
     }
 
-    function _sortedAndUniquifiedCopy(uint256[] memory a)
-        internal
-        pure
-        returns (uint256[] memory result)
-    {
-        result = LibSort.copy(a);
-        LibSort.sort(result);
-        LibSort.uniquifySorted(result);
+    function _sortedRoleHolders(uint256 role) internal returns (address[] memory result) {
+        result = mockEnumerableRoles.roleHolders(role);
+        if (result.length != 0) {
+            if (_randomChance(8)) {
+                uint256 j = _randomUniform() % result.length;
+                assertEq(mockEnumerableRoles.roleHolderAt(role, j), result[j]);
+                assertEq(mockEnumerableRoles.roleHolderCount(role), result.length);
+            }
+            LibSort.insertionSort(result);
+        }
     }
 
-    function _checkRoles(address user, uint256[] memory sampledRoles) internal {
-        uint8[] memory roles = mockEnumerableRoles.rolesOf(user);
-        LibSort.sort(_toUint256Array(roles));
-        assertEq(_toUint256Array(roles), _sortedAndUniquifiedCopy(sampledRoles));
-    }
-
-    function _toUint256Array(uint8[] memory a) internal pure returns (uint256[] memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := a
+    function _sampleUniqueAddresses(uint256 n) internal returns (address[] memory) {
+        unchecked {
+            DynamicArrayLib.DynamicArray memory a;
+            for (uint256 i; i != n; ++i) {
+                a.p(_randomNonZeroAddress());
+            }
+            LibSort.insertionSort(a.data);
+            LibSort.uniquifySorted(a.data);
+            _shuffle(a.data);
+            return a.asAddressArray();
         }
     }
 
     function _sampleRoles(uint256 n) internal returns (uint256[] memory roles) {
         unchecked {
+            uint256 m = 0xf00000000000000000000000000000000000000000000000000000000000000f;
             roles = DynamicArrayLib.malloc(n);
             for (uint256 i; i != n; ++i) {
-                roles.set(i, _randomUniform() & 0xff);
+                roles.set(i, _randomUniform() & m);
             }
+            _shuffle(roles);
         }
     }
 
-    function _sampleRoles() internal returns (uint256[] memory roles) {
-        return _sampleRoles(_randomUniform() & 0xf);
+    function _shuffle(uint256[] memory a) internal {
+        LibPRNG.PRNG memory prng;
+        prng.state = _randomUniform();
+        LibPRNG.shuffle(prng, a);
     }
 }
