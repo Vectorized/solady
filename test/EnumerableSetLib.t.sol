@@ -485,8 +485,9 @@ contract EnumerableSetLibTest is SoladyTest {
         }
     }
 
-    function testEnumerableUint256SetAddressSetDifferential(bytes32) public {
+    function testEnumerableSetDifferential(bytes32) public {
         address[] memory a;
+        uint256[] memory s = _makeArray(0);
         while (a.length == 0) {
             a = _sampleUniqueAddresses(_randomUniform() & 0xf);
         }
@@ -496,25 +497,33 @@ contract EnumerableSetLibTest is SoladyTest {
                 if (_randomChance(2)) {
                     uint256Set.add(uint160(x));
                     addressSet.add(x);
+                    _addToArray(s, uint160(x));
                 } else {
                     uint256Set.remove(uint160(x));
                     addressSet.remove(x);
+                    _removeFromArray(s, uint160(x));
                 }
-                uint256[] memory uint256s = uint256Set.values();
-                address[] memory addresses = addressSet.values();
-                unchecked {
-                    for (uint256 i; i < uint256s.length; ++i) {
-                        assertEq(uint256Set.at(i), uint256s[i]);
-                    }
-                    for (uint256 i; i < addresses.length; ++i) {
-                        assertEq(addressSet.at(i), addresses[i]);
-                    }
-                }
-                LibSort.insertionSort(uint256s);
-                LibSort.insertionSort(addresses);
-                assertEq(abi.encode(addresses), abi.encode(uint256s));
             }
         } while (_randomChance(2));
+    }
+
+    function _checkDifferential(uint256[] memory s) internal tempMemory {
+        uint256[] memory uint256s = uint256Set.values();
+        address[] memory addresses = addressSet.values();
+        unchecked {
+            for (uint256 i; i < uint256s.length; ++i) {
+                assertEq(uint256Set.at(i), uint256s[i]);
+            }
+            for (uint256 i; i < addresses.length; ++i) {
+                assertEq(addressSet.at(i), addresses[i]);
+            }
+        }
+        LibSort.insertionSort(uint256s);
+        LibSort.insertionSort(addresses);
+        bytes memory encoded = abi.encode(addresses);
+        assertEq(encoded, abi.encode(uint256s));
+        LibSort.insertionSort(s);
+        assertEq(encoded, abi.encode(s));
     }
 
     function _sampleUniqueAddresses(uint256 n) internal returns (address[] memory result) {

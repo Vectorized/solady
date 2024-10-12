@@ -168,7 +168,7 @@ contract EnumerableRolesTest is SoladyTest {
         _checkRoleHolders(roles);
     }
 
-    function _checkRoleHolders(uint256[] memory roles) internal {
+    function _checkRoleHolders(uint256[] memory roles) internal tempMemory {
         for (uint256 i; i != roles.length; ++i) {
             uint256 role = roles[i];
             address[] memory expected = _roleHolders(role).values();
