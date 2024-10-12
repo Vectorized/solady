@@ -239,12 +239,13 @@ abstract contract EnumerableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, or(shl(96, holder), _ENUMERABLE_ROLES_SLOT_SEED))
-            let end := add(encodedRoles, shl(5, mload(encodedRoles)))
-            for {} and(iszero(result), lt(encodedRoles, end)) {} {
+            let end := add(encodedRoles, shl(5, shr(5, mload(encodedRoles))))
+            for {} lt(result, lt(encodedRoles, end)) {} {
                 encodedRoles := add(0x20, encodedRoles)
                 mstore(0x20, mload(encodedRoles))
-                result := iszero(iszero(sload(keccak256(0x00, 0x40))))
+                result := sload(keccak256(0x00, 0x40))
             }
+            result := iszero(iszero(result))
         }
     }
 

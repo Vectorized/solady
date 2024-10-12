@@ -59,6 +59,34 @@ contract EnumerableRolesTest is SoladyTest {
         uint256[] combinedRoles;
     }
 
+    function testHasAnyRoles(bytes32) public {
+        uint256[] memory rolesToSet = _sampleRoles(_randomUniform() & 7);
+        uint256[] memory rolesToCheck = _sampleRoles(_randomUniform() & 7);
+        address user = _randomNonZeroAddress();
+        unchecked {
+            for (uint256 i; i != rolesToSet.length; ++i) {
+                mockEnumerableRoles.setRole(user, rolesToSet.get(i), true);
+            }
+        }
+        LibSort.insertionSort(rolesToSet);
+        LibSort.uniquifySorted(rolesToSet);
+        LibSort.insertionSort(rolesToCheck);
+        LibSort.uniquifySorted(rolesToCheck);
+        uint256 intersectionLength = LibSort.intersection(rolesToSet, rolesToCheck).length;
+        if (_randomChance(32)) {
+            uint256 numFound;
+            for (uint256 i; i != rolesToCheck.length; ++i) {
+                uint256 role = rolesToCheck.get(i);
+                if (mockEnumerableRoles.hasRole(user, role)) ++numFound;
+            }
+            assertEq(intersectionLength, numFound);
+        }
+        assertEq(
+            mockEnumerableRoles.hasAnyRoles(user, abi.encodePacked(rolesToCheck)),
+            intersectionLength != 0
+        );
+    }
+
     function testSetAndGetRolesDifferential(bytes32) public {
         uint256[] memory roles;
         address[] memory users;
@@ -77,6 +105,7 @@ contract EnumerableRolesTest is SoladyTest {
             } else {
                 roleHolders[role].remove(user);
             }
+            assertEq(mockEnumerableRoles.hasRole(user, role), active);
             if (_randomChance(8)) _checkRoleHolders(roles);
         } while (++q < 8 || _randomChance(2));
         _checkRoleHolders(roles);
