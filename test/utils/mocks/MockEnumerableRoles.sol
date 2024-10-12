@@ -60,4 +60,8 @@ contract MockEnumerableRoles is EnumerableRoles, Brutalizer {
     function guardedByOnlyOwnerOrRoles() public onlyOwnerOrRoles($.allowedRolesEncoded) {
         emit Yo();
     }
+
+    function guardedByOnlyRoles() public onlyRoles($.allowedRolesEncoded) {
+        emit Yo();
+    }
 }

@@ -112,14 +112,24 @@ contract EnumerableRolesTest is SoladyTest {
             vm.startPrank(pranker);
             if (pranker == address(this)) {
                 mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+                if (pranker != holder) {
+                    vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+                }
+                mockEnumerableRoles.guardedByOnlyRoles();
             } else if (pranker == holder && pranker != address(this)) {
                 if (intersectionLength == 0) {
                     vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
                 }
                 mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+                if (intersectionLength == 0) {
+                    vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+                }
+                mockEnumerableRoles.guardedByOnlyRoles();
             } else {
                 vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
                 mockEnumerableRoles.guardedByOnlyOwnerOrRoles();
+                vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+                mockEnumerableRoles.guardedByOnlyRoles();
             }
             vm.stopPrank();
         }
