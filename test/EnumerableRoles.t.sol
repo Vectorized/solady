@@ -264,13 +264,10 @@ contract EnumerableRolesTest is SoladyTest {
 
     function _sampleUniqueAddresses(uint256 n) internal returns (address[] memory) {
         unchecked {
-            DynamicArrayLib.DynamicArray memory a;
+            uint256[] memory a = DynamicArrayLib.malloc(n);
             for (uint256 i; i != n; ++i) {
-                a.p(_randomNonZeroAddress());
+                a.set(i, _randomUniqueHashedAddress());
             }
-            LibSort.insertionSort(a.data);
-            LibSort.uniquifySorted(a.data);
-            _shuffle(a.data);
             return a.asAddressArray();
         }
     }

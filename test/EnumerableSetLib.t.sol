@@ -530,11 +530,8 @@ contract EnumerableSetLibTest is SoladyTest {
         unchecked {
             result = new address[](n);
             for (uint256 i; i != n; ++i) {
-                result[i] = _randomHashedAddress();
+                result[i] = _randomUniqueHashedAddress();
             }
-            LibSort.insertionSort(result);
-            LibSort.uniquifySorted(result);
-            _shuffle(result);
         }
     }
 
@@ -651,12 +648,6 @@ contract EnumerableSetLibTest is SoladyTest {
                 assertEq(uint8Set.length(), 0);
             }
         }
-    }
-
-    function _shuffle(address[] memory a) internal {
-        LibPRNG.PRNG memory prng;
-        prng.state = _random();
-        prng.shuffle(a);
     }
 
     function _shuffle(uint8[] memory a) internal {
