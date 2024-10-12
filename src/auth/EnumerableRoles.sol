@@ -129,12 +129,12 @@ abstract contract EnumerableRoles {
             mstore(0x20, role)
             let rootSlot := keccak256(0x1c, 0x24)
             let rootPacked := sload(rootSlot)
-            result := shr(96, rootPacked)
-            if i { result := shr(96, sload(add(rootSlot, i))) }
-            if iszero(result) {
+            if iszero(lt(i, shr(160, shl(160, rootPacked)))) {
                 mstore(0x00, 0x5694da8e) // `RoleHoldersIndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
+            result := shr(96, rootPacked)
+            if i { result := shr(96, sload(add(rootSlot, i))) }
         }
     }
 
@@ -161,6 +161,7 @@ abstract contract EnumerableRoles {
             for {} 1 {} {
                 if iszero(active) {
                     if iszero(position) { break }
+                    if iszero(n) { invalid() }
                     let nSub := sub(n, 1)
                     if iszero(eq(sub(position, 1), nSub)) {
                         let lastHolder_ := shl(96, shr(96, sload(add(rootSlot, nSub))))

@@ -242,12 +242,10 @@ contract EnumerableRolesTest is SoladyTest {
                 uint256 j = _randomUniform() % result.length;
                 assertEq(mockEnumerableRoles.roleHolderAt(role, j), result[j]);
                 assertEq(mockEnumerableRoles.roleHolderCount(role), result.length);
-                if (_randomChance(8)) {
-                    j = _bound(_randomUniform(), 0, result.length + 10);
-                    if (j >= result.length) {
-                        vm.expectRevert(EnumerableRoles.RoleHoldersIndexOutOfBounds.selector);
-                        mockEnumerableRoles.roleHolderAt(role, j);
-                    }
+                j = _bound(_randomUniform(), 0, result.length + 10);
+                if (j >= result.length) {
+                    vm.expectRevert(EnumerableRoles.RoleHoldersIndexOutOfBounds.selector);
+                    mockEnumerableRoles.roleHolderAt(role, j);
                 }
             }
             LibSort.insertionSort(result);
