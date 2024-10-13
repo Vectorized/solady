@@ -139,7 +139,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run global libs generator script
-        uses: node prep/gen-globalized-libs
+        run: node prep/gen-globalized-libs
 
       - name: Check for file changes
         run: |
