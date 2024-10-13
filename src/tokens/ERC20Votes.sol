@@ -37,6 +37,12 @@ abstract contract ERC20Votes is ERC20 {
         }
     }
 
+    // Note: Actually testing this for all kinds of input will be pretty crazy,
+    // since we will actually need to populate a LOT of values in order to test.
+    // I think around 700 checkpoints should be good?
+
+    // Just copy and paste these functions into the test class.
+
     function _checkpointPushDiff(uint256 lengthSlot, uint256 key, uint256 amount, bool isAdd)
         private
         returns (uint256 oldValue, uint256 newValue)
