@@ -70,7 +70,6 @@ jobs:
             forge test --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "min-solc" ] &&
-            forge fmt --check &&
             forge test --use 0.8.4 --skip "*/g/*"
           ) ||
           ( [ "${{ matrix.profile }}" = "min-solc-via-ir" ] &&
@@ -127,4 +126,34 @@ jobs:
         with:
           delete: ${{ !steps.gas_diff.outputs.markdown }}
           message: ${{ steps.gas_diff.outputs.markdown }}
-    
+
+  prep-checker: 
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Run prep scripts and forge fmt
+        run: >
+          ( node prep/gen-globalized-libs &&
+            forge fmt
+          )
+
+      - name: Check for file changes
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            echo "Please run 'node prep/gen-globalized-libs.js' and commit the changes."
+            exit 1
+          fi
