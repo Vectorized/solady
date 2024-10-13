@@ -23,6 +23,27 @@ contract EnumerableRolesTest is SoladyTest {
         mockEnumerableRoles.setOwner(address(this));
     }
 
+    function testStorageLayoutTrick(uint256 role, uint32 slotSeed, address holder) public {
+        bytes32 rootSlot;
+        bytes32 positionSlot;
+        holder = _brutalized(holder);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(0x18, holder)
+            mstore(0x04, slotSeed)
+            mstore(0x00, role)
+            rootSlot := keccak256(0x00, 0x24)
+            positionSlot := keccak256(0x00, 0x38)
+            mstore(0x24, shl(96, holder))
+            if iszero(eq(keccak256(0x00, 0x24), rootSlot)) { invalid() }
+            if iszero(eq(keccak256(0x00, 0x38), positionSlot)) { invalid() }
+            if iszero(eq(mload(0x40), m)) { invalid() }
+        }
+        assertEq(positionSlot, keccak256(abi.encodePacked(role, slotSeed, holder)));
+        assertEq(rootSlot, keccak256(abi.encodePacked(role, slotSeed)));
+    }
+
     function testIsContractOwner(address owner, address pranker, bool ownerReverts) public {
         mockEnumerableRoles.setOwner(owner);
         mockEnumerableRoles.setOwnerReverts(ownerReverts);

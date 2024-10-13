@@ -57,10 +57,11 @@ abstract contract EnumerableRoles {
 
     /// @dev The storage layout of the holders enumerable mapping is given by:
     /// ```
-    ///     mstore(0x00, or(shl(96, holder), _ENUMERABLE_ROLES_SLOT_SEED))
-    ///     mstore(0x20, role)
-    ///     let rootSlot := keccak256(0x1c, 0x24)
-    ///     let positionSlot := keccak256(0x00, 0x40)
+    ///     mstore(0x18, holder)
+    ///     mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
+    ///     mstore(0x00, role)
+    ///     let rootSlot := keccak256(0x00, 0x24)
+    ///     let positionSlot := keccak256(0x00, 0x38)
     ///     let holderSlot := add(rootSlot, sload(positionSlot))
     ///     let holderInStorage := shr(96, sload(holderSlot))
     ///     let length := shr(160, shl(160, sload(rootSlot)))
@@ -85,9 +86,10 @@ abstract contract EnumerableRoles {
     function hasRole(address holder, uint256 role) public view virtual returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, or(shl(96, holder), _ENUMERABLE_ROLES_SLOT_SEED))
-            mstore(0x20, role)
-            result := iszero(iszero(sload(keccak256(0x00, 0x40))))
+            mstore(0x18, holder)
+            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
+            mstore(0x00, role)
+            result := iszero(iszero(sload(keccak256(0x00, 0x38))))
         }
     }
 
@@ -96,9 +98,9 @@ abstract contract EnumerableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            mstore(0x00, _ENUMERABLE_ROLES_SLOT_SEED)
-            mstore(0x20, role)
-            let rootSlot := keccak256(0x1c, 0x24)
+            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
+            mstore(0x00, role)
+            let rootSlot := keccak256(0x00, 0x24)
             let rootPacked := sload(rootSlot)
             let n := shr(160, shl(160, rootPacked))
             let o := add(0x20, result)
@@ -115,9 +117,9 @@ abstract contract EnumerableRoles {
     function roleHolderCount(uint256 role) public view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, _ENUMERABLE_ROLES_SLOT_SEED)
-            mstore(0x20, role)
-            result := shr(160, shl(160, sload(keccak256(0x1c, 0x24))))
+            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
+            mstore(0x00, role)
+            result := shr(160, shl(160, sload(keccak256(0x00, 0x24))))
         }
     }
 
@@ -125,9 +127,9 @@ abstract contract EnumerableRoles {
     function roleHolderAt(uint256 role, uint256 i) public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, _ENUMERABLE_ROLES_SLOT_SEED)
-            mstore(0x20, role)
-            let rootSlot := keccak256(0x1c, 0x24)
+            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
+            mstore(0x00, role)
+            let rootSlot := keccak256(0x00, 0x24)
             let rootPacked := sload(rootSlot)
             if iszero(lt(i, shr(160, shl(160, rootPacked)))) {
                 mstore(0x00, 0x5694da8e) // `RoleHoldersIndexOutOfBounds()`.
@@ -152,11 +154,12 @@ abstract contract EnumerableRoles {
                 mstore(0x00, 0x82550143) // `RoleHolderIsZeroAddress()`.
                 revert(0x1c, 0x04)
             }
-            mstore(0x00, or(holder_, _ENUMERABLE_ROLES_SLOT_SEED))
-            mstore(0x20, role)
-            let rootSlot := keccak256(0x1c, 0x24)
+            mstore(0x18, holder)
+            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
+            mstore(0x00, role)
+            let rootSlot := keccak256(0x00, 0x24)
             let n := shr(160, shl(160, sload(rootSlot)))
-            let positionSlot := keccak256(0x00, 0x40)
+            let positionSlot := keccak256(0x00, 0x38)
             let position := sload(positionSlot)
             for {} 1 {} {
                 if iszero(active) {
@@ -166,8 +169,8 @@ abstract contract EnumerableRoles {
                         let lastHolder_ := shl(96, shr(96, sload(add(rootSlot, nSub))))
                         sstore(add(rootSlot, sub(position, 1)), lastHolder_)
                         sstore(add(rootSlot, nSub), 0)
-                        mstore(0x00, or(lastHolder_, _ENUMERABLE_ROLES_SLOT_SEED))
-                        sstore(keccak256(0x00, 0x40), position)
+                        mstore(0x24, lastHolder_)
+                        sstore(keccak256(0x00, 0x38), position)
                     }
                     sstore(rootSlot, or(shl(96, shr(96, sload(rootSlot))), nSub))
                     sstore(positionSlot, 0)
@@ -218,12 +221,13 @@ abstract contract EnumerableRoles {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, or(shl(96, holder), _ENUMERABLE_ROLES_SLOT_SEED))
+            mstore(0x18, holder)
+            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
             let end := add(encodedRoles, shl(5, shr(5, mload(encodedRoles))))
             for {} lt(result, lt(encodedRoles, end)) {} {
                 encodedRoles := add(0x20, encodedRoles)
-                mstore(0x20, mload(encodedRoles))
-                result := sload(keccak256(0x00, 0x40))
+                mstore(0x00, mload(encodedRoles))
+                result := sload(keccak256(0x00, 0x38))
             }
             result := iszero(iszero(result))
         }
