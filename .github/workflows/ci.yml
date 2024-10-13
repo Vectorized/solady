@@ -126,7 +126,7 @@ jobs:
         with:
           delete: ${{ !steps.gas_diff.outputs.markdown }}
           message: ${{ steps.gas_diff.outputs.markdown }}
-    
+
   prep-checker: 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -136,7 +136,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
