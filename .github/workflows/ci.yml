@@ -128,3 +128,22 @@ jobs:
           delete: ${{ !steps.gas_diff.outputs.markdown }}
           message: ${{ steps.gas_diff.outputs.markdown }}
     
+  global-lib-checker : 
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run global libs generator script
+        uses: node prep/gen-globalized-libs
+
+      - name: Check for file changes
+        run: |
+          if [[ $(git status --porcelain) ]]; then
+            echo "Please run 'node prep/gen-globalized-libs.js' and commit the changes."
+            exit 1
+          fi
