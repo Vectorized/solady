@@ -359,6 +359,17 @@ abstract contract ERC20 {
         result = _DEFAULT_VERSION_HASH;
     }
 
+    /// @dev For inheriting contracts to increment the nonce.
+    function _incrementNonce(address owner) internal virtual {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x0c, _NONCES_SLOT_SEED)
+            mstore(0x00, owner)
+            let nonceSlot := keccak256(0x0c, 0x20)
+            sstore(nonceSlot, add(1, sload(nonceSlot)))
+        }
+    }
+
     /// @dev Returns the current nonce for `owner`.
     /// This value is used to compute the signature for EIP-2612 permit.
     function nonces(address owner) public view virtual returns (uint256 result) {
@@ -434,7 +445,7 @@ abstract contract ERC20 {
             mstore(0x20, and(0xff, v))
             mstore(0x40, r)
             mstore(0x60, s)
-            let t := staticcall(gas(), 1, 0, 0x80, 0x20, 0x20)
+            let t := staticcall(gas(), 1, 0x00, 0x80, 0x20, 0x20)
             // If the ecrecover fails, the returndatasize will be 0x00,
             // `owner` will be checked if it equals the hash at 0x00,
             // which evaluates to false (i.e. 0), and we will revert.

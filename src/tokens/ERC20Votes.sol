@@ -14,6 +14,10 @@ abstract contract ERC20Votes is ERC20 {
     /// @dev The ETH transfer has failed.
     error ERC5805FutureLookup();
 
+    error ERC5805VoteSignatureExpired();
+
+    error ERC5805VoteInvalidSignature();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -31,6 +35,18 @@ abstract contract ERC20Votes is ERC20 {
     /// @dev `keccak256(bytes("DelegateVotesChanged(address,uint256,uint256)"))`.
     uint256 private constant _DELEGATE_VOTES_CHANGED_EVENT_SIGNATURE =
         0xdec2bacdd2f05b59de34da9b523dff8be42e5e38e818c82fdb0bae774387a724;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
+    bytes32 private constant _DOMAIN_TYPEHASH =
+        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+
+    /// @dev `keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)")`.
+    bytes32 private constant _ERC5805_DELEGATION_TYPEHASH =
+        0xe48329057bfd03d55e49b547132e39cffd9c1820ad7b9d4c5307691425d15adf;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -60,8 +76,31 @@ abstract contract ERC20Votes is ERC20 {
     }
 
     function clock() public view returns (uint48) {
-        if (block.number >= 2 ** 48) revert();
+        if (block.number >= 1 << 48) revert();
         return uint48(block.number);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          ERC5805                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function getVotes(address account) public view virtual returns (uint256) {
+        return _checkpointLatest(_delegateCheckpointsSlot(account));
+    }
+
+    function getPastVotes(address account, uint256 timepoint)
+        public
+        view
+        virtual
+        returns (uint256)
+    {
+        if (timepoint >= clock()) _revertERC5805FutureLookup();
+        return _checkpointUpperLookupRecent(_delegateCheckpointsSlot(account), timepoint);
+    }
+
+    function getPastTotalSupply(uint256 timepoint) public view virtual returns (uint256) {
+        if (timepoint >= clock()) _revertERC5805FutureLookup();
+        return _checkpointUpperLookupRecent(_ERC20_VOTES_MASTER_SLOT_SEED, timepoint);
     }
 
     function delegates(address delegator) public view virtual returns (address result) {
@@ -73,8 +112,65 @@ abstract contract ERC20Votes is ERC20 {
         }
     }
 
-    function delegate(address to) public virtual {
-        _delegate(msg.sender, to);
+    function delegate(address delegatee) public virtual {
+        _delegate(msg.sender, delegatee);
+    }
+
+    function delegateBySig(
+        address delegatee,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public virtual {
+        address signer;
+        bytes32 nameHash = _constantNameHash();
+        //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
+        if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
+        bytes32 versionHash = _versionHash();
+        uint256 currentNonce = nonces(delegatee);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(eq(nonce, currentNonce)) {
+                mstore(0x00, 0x15ab7ab9) // `ERC5805VoteInvalidSignature()`.
+                revert(0x1c, 0x04)
+            }
+            if gt(timestamp(), expiry) {
+                mstore(0x00, 0x87044139) // `ERC5805VoteSignatureExpired()`.
+                revert(0x1c, 0x04)
+            }
+            let m := mload(0x40)
+            mstore(0x0e, 0x1901)
+            // Prepare the domain separator.
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), nameHash)
+            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x60), chainid())
+            mstore(add(m, 0x80), address())
+            mstore(0x2e, keccak256(m, 0xa0))
+            // Prepare the struct hash.
+            mstore(m, _ERC5805_DELEGATION_TYPEHASH)
+            mstore(add(m, 0x20), shr(96, shl(96, delegatee)))
+            mstore(add(m, 0x40), nonce)
+            mstore(add(m, 0x60), expiry)
+            mstore(0x4e, keccak256(m, 0x80))
+            // Prepare the ecrecover calldata.
+            mstore(0x00, keccak256(0x2c, 0x42))
+            mstore(0x20, and(0xff, v))
+            mstore(0x40, r)
+            mstore(0x60, s)
+            signer := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+            // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
+            if iszero(returndatasize()) {
+                mstore(0x00, 0x15ab7ab9) // `ERC5805VoteInvalidSignature()`.
+                revert(0x1c, 0x04)
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
+        }
+        _incrementNonce(signer);
+        _delegate(signer, delegatee);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -85,11 +181,16 @@ abstract contract ERC20Votes is ERC20 {
         return balanceOf(delegator);
     }
 
-    function _delegate(address delegator, address to) internal virtual {
+    function _getTotalSupply() internal view virtual returns (uint256) {
+        return _checkpointLatest(_ERC20_VOTES_MASTER_SLOT_SEED);
+    }
+
+    function _delegate(address delegator, address delegatee) internal virtual {
         address from;
+        address to;
         /// @solidity memory-safe-assembly
         assembly {
-            to := shr(96, shl(96, to))
+            to := shr(96, shl(96, delegatee))
             mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
             mstore(0x00, delegator)
             let delegateSlot := keccak256(0x0c, 0x18)
@@ -266,6 +367,14 @@ abstract contract ERC20Votes is ERC20 {
                 result := shr(48, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
+        }
+    }
+
+    function _revertERC5805FutureLookup() private pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0xf9874464) // `ERC5805FutureLookup()`.
+            revert(0x1c, 0x04)
         }
     }
 }
