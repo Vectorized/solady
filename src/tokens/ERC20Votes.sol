@@ -111,48 +111,6 @@ abstract contract ERC20Votes is ERC20 {
         return _checkpointUpperLookupRecent(_delegateCheckpointsSlot(account), timepoint);
     }
 
-    /// @dev Returns the number of checkpoints for `account`.
-    function checkpointCount(address account) public view virtual returns (uint256 result) {
-        result = _delegateCheckpointsSlot(account);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := sload(result)
-        }
-    }
-
-    /// @dev Returns the voting checkpoint for `account` at index `i`.
-    function checkpointAt(address account, uint256 i)
-        public
-        view
-        virtual
-        returns (uint48 checkpointClock, uint256 checkpointValue)
-    {
-        uint256 lengthSlot = _delegateCheckpointsSlot(account);
-        /// @solidity memory-safe-assembly
-        assembly {
-            if iszero(lt(i, sload(lengthSlot))) {
-                mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
-                revert(0x1c, 0x04)
-            }
-            let checkpointSlot := add(i, shl(96, lengthSlot))
-            let checkpointPacked := sload(checkpointSlot)
-            checkpointClock := and(0xffffffffffff, checkpointPacked)
-            checkpointValue := shr(48, checkpointPacked)
-            if eq(checkpointValue, address()) { checkpointValue := sload(not(checkpointSlot)) }
-        }
-    }
-
-    /// @dev Returns the latest total voting supply.
-    function getTotalVotesSupply() public view virtual returns (uint256) {
-        return _checkpointLatest(_ERC20_VOTES_MASTER_SLOT_SEED);
-    }
-
-    /// @dev Returns the latest amount of total voting units before `timepoint`.
-    function getPastTotalVotesSupply(uint256 timepoint) public view virtual returns (uint256) {
-        if (timepoint >= clock()) _revertERC5805FutureLookup();
-        return _checkpointUpperLookupRecent(_ERC20_VOTES_MASTER_SLOT_SEED, timepoint);
-    }
-
     /// @dev Returns the current voting delegate of `delegator`.
     function delegates(address delegator) public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
@@ -226,6 +184,52 @@ abstract contract ERC20Votes is ERC20 {
         }
         _incrementNonce(signer);
         _delegate(signer, delegatee);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              OTHER VOTE PUBLIC VIEW FUNCTIONS              */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the number of checkpoints for `account`.
+    function checkpointCount(address account) public view virtual returns (uint256 result) {
+        result = _delegateCheckpointsSlot(account);
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := sload(result)
+        }
+    }
+
+    /// @dev Returns the voting checkpoint for `account` at index `i`.
+    function checkpointAt(address account, uint256 i)
+        public
+        view
+        virtual
+        returns (uint48 checkpointClock, uint256 checkpointValue)
+    {
+        uint256 lengthSlot = _delegateCheckpointsSlot(account);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(i, sload(lengthSlot))) {
+                mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
+                revert(0x1c, 0x04)
+            }
+            let checkpointSlot := add(i, shl(96, lengthSlot))
+            let checkpointPacked := sload(checkpointSlot)
+            checkpointClock := and(0xffffffffffff, checkpointPacked)
+            checkpointValue := shr(48, checkpointPacked)
+            if eq(checkpointValue, address()) { checkpointValue := sload(not(checkpointSlot)) }
+        }
+    }
+
+    /// @dev Returns the latest total voting supply.
+    function getTotalVotesSupply() public view virtual returns (uint256) {
+        return _checkpointLatest(_ERC20_VOTES_MASTER_SLOT_SEED);
+    }
+
+    /// @dev Returns the latest amount of total voting units before `timepoint`.
+    function getPastTotalVotesSupply(uint256 timepoint) public view virtual returns (uint256) {
+        if (timepoint >= clock()) _revertERC5805FutureLookup();
+        return _checkpointUpperLookupRecent(_ERC20_VOTES_MASTER_SLOT_SEED, timepoint);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -410,6 +414,7 @@ abstract contract ERC20Votes is ERC20 {
             let checkpointSlot := shl(96, lengthSlot)
             let l := 0 // Low.
             let h := n // High.
+            // Start the binary search nearer to the right to optimize for recent checkpoints.
             for {} iszero(lt(n, 6)) {} {
                 let m := shl(4, lt(0xffff, n))
                 m := shl(shr(1, or(m, shl(3, lt(0xff, shr(m, n))))), 16)
@@ -426,6 +431,7 @@ abstract contract ERC20Votes is ERC20 {
                 h := m
                 break
             }
+            // Binary search.
             for {} lt(l, h) {} {
                 let m := shr(1, add(l, h)) // Won't overflow in practice.
                 if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
