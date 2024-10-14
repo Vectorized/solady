@@ -49,6 +49,11 @@ contract ERC20VotesTest is SoladyTest {
         erc20Votes.burn(_ALICE, 0.1 ether);
         assertEq(erc20Votes.getVotes(_BOB), 0.6 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
+
+        vm.prank(_CHARLIE);
+        erc20Votes.delegate(_BOB);
+        assertEq(erc20Votes.getVotes(_BOB), 0.9 ether);
+        assertEq(erc20Votes.getVotes(_DAVID), 0 ether);
     }
 
     // struct _TestTemps {
