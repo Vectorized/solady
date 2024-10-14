@@ -100,6 +100,13 @@ contract ERC20VotesTest is SoladyTest {
         (t.v, t.r, t.s) = vm.sign(t.privateKey, outerHash);
     }
 
+    function testClockTrick(uint48 x) public pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(0, shr(48, x)))
+        }
+    }
+
     function testDelegateBySig(bytes32) public {
         _TestDelegateBySigTemps memory t;
         t.delegatee = _randomHashedAddress();
