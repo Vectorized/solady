@@ -155,7 +155,7 @@ abstract contract ERC20Votes is ERC20 {
                 revert(0x1c, 0x04)
             }
             let m := mload(0x40)
-            mstore(0x0e, 0x1901)
+            mstore(0x0e, 0x1901) // Store "\x19\x01".
             // Prepare the domain separator.
             mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), nameHash)
@@ -401,9 +401,9 @@ abstract contract ERC20Votes is ERC20 {
     function _checkpointLatest(uint256 lengthSlot) private view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := sload(lengthSlot) // Checkpoint length.
-            if n {
-                let checkpointSlot := add(sub(n, 1), shl(96, lengthSlot))
+            result := sload(lengthSlot) // Checkpoint length.
+            if result {
+                let checkpointSlot := add(sub(result, 1), shl(96, lengthSlot))
                 result := shr(48, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }

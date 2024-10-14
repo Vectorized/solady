@@ -376,9 +376,9 @@ contract ERC20VotesTest is SoladyTest {
     function _checkpointLatest(uint256 lengthSlot) private view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := sload(lengthSlot) // Checkpoint length.
-            if n {
-                let checkpointSlot := add(sub(n, 1), shl(96, lengthSlot))
+            result := sload(lengthSlot) // Checkpoint length.
+            if result {
+                let checkpointSlot := add(sub(result, 1), shl(96, lengthSlot))
                 result := shr(48, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
