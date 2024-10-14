@@ -2,9 +2,65 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
+import {ERC20, ERC20Votes, MockERC20Votes} from "./utils/mocks/MockERC20Votes.sol";
 import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
 contract ERC20VotesTest is SoladyTest {
+    MockERC20Votes erc20Votes;
+
+    address internal constant _ALICE = address(111);
+    address internal constant _BOB = address(222);
+    address internal constant _CHARLIE = address(333);
+    address internal constant _DAVID = address(444);
+
+    function setUp() public {
+        erc20Votes = new MockERC20Votes();
+    }
+
+    function testSetAndGetDelegate(address delegator, address delegatee) public {
+        erc20Votes.directDelegate(delegator, delegatee);
+        assertEq(erc20Votes.delegates(delegator), delegatee);
+    }
+
+    function testMintAndTransfer() public {
+        uint256 amount = 1 ether;
+        erc20Votes.mint(_ALICE, amount);
+
+        // Minting does not automatically give one votes.
+        assertEq(erc20Votes.getVotes(_ALICE), 0);
+        assertEq(erc20Votes.getVotes(_BOB), 0);
+        assertEq(erc20Votes.getTotalSupply(), 1 ether);
+
+        vm.prank(_ALICE);
+        erc20Votes.delegate(_BOB);
+
+        assertEq(erc20Votes.getVotes(_BOB), 1 ether);
+        assertEq(erc20Votes.getVotes(_DAVID), 0 ether);
+
+        vm.prank(_CHARLIE);
+        erc20Votes.delegate(_DAVID);
+
+        vm.prank(_ALICE);
+        erc20Votes.transfer(_CHARLIE, 0.3 ether);
+
+        assertEq(erc20Votes.getVotes(_BOB), 0.7 ether);
+        assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
+
+        erc20Votes.burn(_ALICE, 0.1 ether);
+        assertEq(erc20Votes.getVotes(_BOB), 0.6 ether);
+        assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
+    }
+
+    // struct _TestTemps {
+    //     uint256 amountToMint;
+    //     uint256 amountToDelegate;
+    //     uint256 amountToBurn;
+    // }
+
+    // function testLatestVote(bytes32) public {
+
+    // }
+
     struct Checkpoint {
         uint256 key;
         uint256 value;
@@ -46,7 +102,7 @@ contract ERC20VotesTest is SoladyTest {
     function testCheckpointDifferential(uint256 lengthSlot, uint256 n) public {
         lengthSlot = uint256(keccak256(abi.encode(lengthSlot, "hehe")));
         unchecked {
-            n = _randomChance(64) ? _bound(n, 1, 32) : _bound(n, 1, 8);
+            n = _randomChance(32) ? _bound(n, 1, 70) : _bound(n, 1, 8);
             _TestCheckpointTemps memory t;
             for (uint256 i; i != n; ++i) {
                 uint256 lastKey = _checkpointLatestKeyOriginal();
@@ -126,6 +182,7 @@ contract ERC20VotesTest is SoladyTest {
     function _checkpointUpperLookupRecentOriginal(uint256 key)
         private
         view
+        tempMemory
         returns (uint256 result)
     {
         unchecked {
@@ -140,6 +197,7 @@ contract ERC20VotesTest is SoladyTest {
 
     function _checkpointPushDiffOriginal(uint256 key, uint256 amount, bool isAdd)
         private
+        tempMemory
         returns (uint256 oldValue, uint256 newValue)
     {
         if (_trace.length == 0) {
@@ -166,6 +224,24 @@ contract ERC20VotesTest is SoladyTest {
         return _trace.length == 0 ? 0 : _trace[_trace.length - 1].value;
     }
 
+    function _checkpointAt(uint256 lengthSlot, uint256 i)
+        private
+        view
+        returns (uint256 key, uint256 value)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := sload(lengthSlot) // Checkpoint length.
+            if iszero(lt(i, n)) { invalid() }
+            let checkpointSlot := add(i, shl(96, lengthSlot))
+            let checkpointPacked := sload(checkpointSlot)
+            key := and(0xffffffffffff, checkpointPacked)
+            value := shr(48, checkpointPacked)
+            if eq(value, address()) { value := sload(not(checkpointSlot)) }
+        }
+    }
+
+    /// @dev Pushes a checkpoint.
     function _checkpointPushDiff(uint256 lengthSlot, uint256 key, uint256 amount, bool isAdd)
         private
         returns (uint256 oldValue, uint256 newValue)
@@ -177,7 +253,7 @@ contract ERC20VotesTest is SoladyTest {
             for {} 1 {} {
                 if iszero(n) {
                     if iszero(or(isAdd, iszero(amount))) {
-                        mstore(0x00, 0x8ec8c748) // `ERC20VoteCheckpointUnderflow()`.
+                        mstore(0x00, 0xef529cb2) // `ERC5805VoteCheckpointUnderflow()`.
                         revert(0x1c, 0x04)
                     }
                     newValue := amount
@@ -197,7 +273,7 @@ contract ERC20VotesTest is SoladyTest {
                 for {} 1 {} {
                     if iszero(isAdd) {
                         if gt(amount, oldValue) {
-                            mstore(0x00, 0x8ec8c748) // `ERC20VoteCheckpointUnderflow()`.
+                            mstore(0x00, 0xef529cb2) // `ERC5805VoteCheckpointUnderflow()`.
                             revert(0x1c, 0x04)
                         }
                         newValue := sub(oldValue, amount)
@@ -205,14 +281,14 @@ contract ERC20VotesTest is SoladyTest {
                     }
                     newValue := add(oldValue, amount)
                     if lt(newValue, oldValue) {
-                        mstore(0x00, 0x888051e3) // `ERC20VoteCheckpointOverflow()`.
+                        mstore(0x00, 0x4a15589d) // `ERC5805VoteCheckpointOverflow()`.
                         revert(0x1c, 0x04)
                     }
                     break
                 }
                 let lastKey := and(0xffffffffffff, lastPacked)
                 if gt(lastKey, key) {
-                    mstore(0x00, 0x24a526cc) // `ERC20VoteCheckpointUnorderedInsertion()`
+                    mstore(0x00, 0xce3d39b5) // `ERC5805VoteCheckpointUnorderedInsertion()`.
                     revert(0x1c, 0x04)
                 }
                 if iszero(eq(lastKey, key)) {
@@ -230,6 +306,7 @@ contract ERC20VotesTest is SoladyTest {
         }
     }
 
+    /// @dev Returns the latest value in the checkpoints.
     function _checkpointLatest(uint256 lengthSlot) private view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -242,6 +319,7 @@ contract ERC20VotesTest is SoladyTest {
         }
     }
 
+    /// @dev Returns the value in the checkpoints with the largest key that is less than `key`.
     function _checkpointUpperLookupRecent(uint256 lengthSlot, uint256 key)
         private
         view
@@ -282,23 +360,6 @@ contract ERC20VotesTest is SoladyTest {
                 result := shr(48, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
-        }
-    }
-
-    function _checkpointAt(uint256 lengthSlot, uint256 i)
-        private
-        view
-        returns (uint256 key, uint256 value)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let n := sload(lengthSlot) // Checkpoint length.
-            if iszero(lt(i, n)) { invalid() }
-            let checkpointSlot := add(i, shl(96, lengthSlot))
-            let checkpointPacked := sload(checkpointSlot)
-            key := and(0xffffffffffff, checkpointPacked)
-            value := shr(48, checkpointPacked)
-            if eq(value, address()) { value := sload(not(checkpointSlot)) }
         }
     }
 }
