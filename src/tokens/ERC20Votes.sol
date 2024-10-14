@@ -63,13 +63,21 @@ abstract contract ERC20Votes is ERC20 {
     ///     mstore(0x00, account)
     ///     let delegateSlot := keccak256(0x0c, 0x1d)
     /// ```
-    /// The checkpoints slot of a delegate is given by:
+    /// The checkpoints length slot of a delegate is given by:
     /// ```
     ///     mstore(0x09, _ERC20_VOTES_MASTER_SLOT_SEED)
     ///     mstore(0x00, delegate)
-    ///     let delegateCheckpointsSlot := keccak256(0x0c, 0x1c)
+    ///     let lengthSlot := keccak256(0x0c, 0x1c)
     /// ```
-    /// The total checkpoints slot is `_ERC20_VOTES_MASTER_SLOT_SEED`.
+    /// The total checkpoints length slot is `_ERC20_VOTES_MASTER_SLOT_SEED`.
+    ///
+    /// The `i`-th checkpoint slot is given by:
+    /// ```
+    ///     let checkpointSlot := add(i, shl(96, lengthSlot))
+    ///     let key := and(sload(checkpointSlot), 0xffffffffffff)
+    ///     let value := shr(48, sload(checkpointSlot))
+    ///     if eq(value, address()) { value := sload(not(checkpointSlot)) }
+    /// ```
     uint256 private constant _ERC20_VOTES_MASTER_SLOT_SEED = 0xff466c9ff7631d35c7;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
