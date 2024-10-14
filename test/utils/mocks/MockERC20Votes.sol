@@ -34,4 +34,8 @@ contract MockERC20Votes is ERC20Votes, Brutalizer {
     function directDelegate(address delegator, address delegatee) public {
         _delegate(delegator, delegatee);
     }
+
+    function directIncrementNonce(address owner) public {
+        _incrementNonce(owner);
+    }
 }

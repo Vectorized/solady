@@ -69,6 +69,62 @@ contract ERC20VotesTest is SoladyTest {
         assertEq(erc20Votes.getVotes(_DAVID), 0 ether);
     }
 
+    struct _TestDelegateBySigTemps {
+        address signer;
+        uint256 privateKey;
+        uint256 nonce;
+        uint256 expiry;
+        address delegatee;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
+    function _signDelegate(_TestDelegateBySigTemps memory t) internal view {
+        bytes32 ERC5805_DELEGATION_TYPEHASH =
+            keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
+        bytes32 innerHash =
+            keccak256(abi.encode(ERC5805_DELEGATION_TYPEHASH, t.delegatee, t.nonce, t.expiry));
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256(bytes(erc20Votes.name())),
+                keccak256("1"),
+                block.chainid,
+                address(erc20Votes)
+            )
+        );
+        bytes32 outerHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, innerHash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, outerHash);
+    }
+
+    function testDelegateBySig(bytes32) public {
+        _TestDelegateBySigTemps memory t;
+        t.delegatee = _randomHashedAddress();
+        (t.signer, t.privateKey) = _randomSigner();
+        t.nonce = _randomUniform() & 7;
+        t.expiry = _bound(_randomUniform(), 10, 2 ** 32 - 1);
+        unchecked {
+            for (uint256 i; i != t.nonce; ++i) {
+                erc20Votes.directIncrementNonce(t.signer);
+            }
+            assertEq(t.nonce, erc20Votes.nonces(t.signer));
+        }
+        _signDelegate(t);
+        uint256 timestamp = _bound(_randomUniform(), 10, 2 ** 32 - 1);
+        vm.warp(timestamp);
+        if (timestamp > t.expiry) {
+            vm.expectRevert(ERC20Votes.ERC5805VoteSignatureExpired.selector);
+            erc20Votes.delegateBySig(t.delegatee, t.nonce, t.expiry, t.v, t.r, t.s);
+        } else {
+            erc20Votes.delegateBySig(t.delegatee, t.nonce, t.expiry, t.v, t.r, t.s);
+            assertEq(t.nonce + 1, erc20Votes.nonces(t.signer));
+            assertEq(erc20Votes.delegates(t.signer), t.delegatee);
+        }
+    }
+
     struct Checkpoint {
         uint256 key;
         uint256 value;

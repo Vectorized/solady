@@ -130,15 +130,15 @@ abstract contract ERC20Votes is ERC20 {
         uint256 lengthSlot = _delegateCheckpointsSlot(account);
         /// @solidity memory-safe-assembly
         assembly {
+            if iszero(lt(i, sload(lengthSlot))) {
+                mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
+                revert(0x1c, 0x04)
+            }
             let checkpointSlot := add(i, shl(96, lengthSlot))
             let checkpointPacked := sload(checkpointSlot)
             checkpointClock := and(0xffffffffffff, checkpointPacked)
             checkpointValue := shr(48, checkpointPacked)
             if eq(checkpointValue, address()) { checkpointValue := sload(not(checkpointSlot)) }
-            if iszero(lt(i, sload(lengthSlot))) {
-                mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
-                revert(0x1c, 0x04)
-            }
         }
     }
 
@@ -179,7 +179,6 @@ abstract contract ERC20Votes is ERC20 {
     ) public virtual {
         address signer;
         bytes32 nameHash = _constantNameHash();
-        uint256 nonceDiff = nonces(delegatee) ^ nonce;
         //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
         if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
         bytes32 versionHash = _versionHash();
@@ -210,13 +209,20 @@ abstract contract ERC20Votes is ERC20 {
             mstore(0x40, r)
             mstore(0x60, s)
             signer := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
             // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-            if or(iszero(returndatasize()), nonceDiff) {
+            if iszero(returndatasize()) {
                 mstore(0x00, 0x15ab7ab9) // `ERC5805VoteInvalidSignature()`.
                 revert(0x1c, 0x04)
             }
-            mstore(0x40, m) // Restore the free memory pointer.
-            mstore(0x60, 0) // Restore the zero pointer.
+        }
+        if (nonces(signer) != nonce) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, 0x15ab7ab9) // `ERC5805VoteInvalidSignature()`.
+                revert(0x1c, 0x04)
+            }
         }
         _incrementNonce(signer);
         _delegate(signer, delegatee);
