@@ -59,26 +59,27 @@ abstract contract ERC20Votes is ERC20 {
 
     /// @dev The slot of a delegate is given by:
     /// ```
-    ///     mstore(0x09, _ERC20_VOTES_MASTER_SLOT_SEED)
+    ///     mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
     ///     mstore(0x00, account)
-    ///     let delegateSlot := keccak256(0x0c, 0x1d)
+    ///     let delegateSlot := keccak256(0x0c, 0x18)
     /// ```
     /// The checkpoints length slot of a delegate is given by:
     /// ```
-    ///     mstore(0x09, _ERC20_VOTES_MASTER_SLOT_SEED)
+    ///     mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
     ///     mstore(0x00, delegate)
-    ///     let lengthSlot := keccak256(0x0c, 0x1c)
+    ///     let lengthSlot := keccak256(0x0c, 0x17)
+    ///     let length := and(0xffffffffffff, shr(48, sload(lengthSlot)))
     /// ```
-    /// The total checkpoints length slot is `_ERC20_VOTES_MASTER_SLOT_SEED`.
+    /// The total checkpoints length slot is `_ERC20_VOTES_MASTER_SLOT_SEED << 96`.
     ///
     /// The `i`-th checkpoint slot is given by:
     /// ```
-    ///     let checkpointSlot := add(i, shl(96, lengthSlot))
+    ///     let checkpointSlot := add(i, lengthSlot)
     ///     let key := and(sload(checkpointSlot), 0xffffffffffff)
-    ///     let value := shr(48, sload(checkpointSlot))
+    ///     let value := shr(96, sload(checkpointSlot))
     ///     if eq(value, address()) { value := sload(not(checkpointSlot)) }
     /// ```
-    uint256 private constant _ERC20_VOTES_MASTER_SLOT_SEED = 0xff466c9ff7631d35c7;
+    uint256 private constant _ERC20_VOTES_MASTER_SLOT_SEED = 0xff466c9f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          ERC6372                           */
@@ -123,9 +124,9 @@ abstract contract ERC20Votes is ERC20 {
     function delegates(address delegator) public view virtual returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x09, _ERC20_VOTES_MASTER_SLOT_SEED)
+            mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
             mstore(0x00, delegator)
-            result := sload(keccak256(0x0c, 0x1d))
+            result := sload(keccak256(0x0c, 0x18))
         }
     }
 
@@ -217,27 +218,27 @@ abstract contract ERC20Votes is ERC20 {
         uint256 lengthSlot = _delegateCheckpointsSlot(account);
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(i, sload(lengthSlot))) {
+            if iszero(lt(i, and(0xffffffffffff, shr(48, sload(lengthSlot))))) {
                 mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
-            let checkpointSlot := add(i, shl(96, lengthSlot))
+            let checkpointSlot := add(i, lengthSlot)
             let checkpointPacked := sload(checkpointSlot)
             checkpointClock := and(0xffffffffffff, checkpointPacked)
-            checkpointValue := shr(48, checkpointPacked)
+            checkpointValue := shr(96, checkpointPacked)
             if eq(checkpointValue, address()) { checkpointValue := sload(not(checkpointSlot)) }
         }
     }
 
     /// @dev Returns the latest total voting supply.
     function getTotalVotesSupply() public view virtual returns (uint256) {
-        return _checkpointLatest(_ERC20_VOTES_MASTER_SLOT_SEED);
+        return _checkpointLatest(_ERC20_VOTES_MASTER_SLOT_SEED << 96);
     }
 
     /// @dev Returns the latest amount of total voting units before `timepoint`.
     function getPastTotalVotesSupply(uint256 timepoint) public view virtual returns (uint256) {
         if (timepoint >= clock()) _revertERC5805FutureLookup();
-        return _checkpointUpperLookupRecent(_ERC20_VOTES_MASTER_SLOT_SEED, timepoint);
+        return _checkpointUpperLookupRecent(_ERC20_VOTES_MASTER_SLOT_SEED << 96, timepoint);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -262,10 +263,10 @@ abstract contract ERC20Votes is ERC20 {
     /// @dev Used in `_afterTokenTransfer(address from, address to, uint256 amount)`.
     function _transferVotingUnits(address from, address to, uint256 amount) internal virtual {
         if (from == address(0)) {
-            _checkpointPushDiff(_ERC20_VOTES_MASTER_SLOT_SEED, clock(), amount, true);
+            _checkpointPushDiff(_ERC20_VOTES_MASTER_SLOT_SEED << 96, clock(), amount, true);
         }
         if (to == address(0)) {
-            _checkpointPushDiff(_ERC20_VOTES_MASTER_SLOT_SEED, clock(), amount, false);
+            _checkpointPushDiff(_ERC20_VOTES_MASTER_SLOT_SEED << 96, clock(), amount, false);
         }
         _moveDelegateVotes(delegates(from), delegates(to), amount);
     }
@@ -307,9 +308,9 @@ abstract contract ERC20Votes is ERC20 {
         /// @solidity memory-safe-assembly
         assembly {
             let to := shr(96, shl(96, delegatee))
-            mstore(0x09, _ERC20_VOTES_MASTER_SLOT_SEED)
+            mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
             mstore(0x00, account)
-            let delegateSlot := keccak256(0x0c, 0x1d)
+            let delegateSlot := keccak256(0x0c, 0x18)
             from := sload(delegateSlot)
             sstore(delegateSlot, to)
             // Emit the {DelegateChanged} event.
@@ -326,9 +327,9 @@ abstract contract ERC20Votes is ERC20 {
     function _delegateCheckpointsSlot(address account) private pure returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x09, _ERC20_VOTES_MASTER_SLOT_SEED)
+            mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
             mstore(0x00, account)
-            result := keccak256(0x0c, 0x1c)
+            result := keccak256(0x0c, 0x17)
         }
     }
 
@@ -339,8 +340,7 @@ abstract contract ERC20Votes is ERC20 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := sload(lengthSlot) // Checkpoint length. Must always be less than 2 ** 48.
-            let checkpointSlot := shl(96, lengthSlot) // `lengthSlot` must never be zero.
+            let n := and(0xffffffffffff, shr(48, sload(lengthSlot)))
             for {} 1 {} {
                 if iszero(n) {
                     if iszero(or(isAdd, iszero(amount))) {
@@ -348,18 +348,17 @@ abstract contract ERC20Votes is ERC20 {
                         revert(0x1c, 0x04)
                     }
                     newValue := amount
-                    sstore(lengthSlot, 1)
-                    if iszero(or(eq(newValue, address()), shr(208, newValue))) {
-                        sstore(checkpointSlot, or(key, shl(48, newValue)))
+                    if iszero(or(eq(newValue, address()), shr(160, newValue))) {
+                        sstore(lengthSlot, or(or(key, shl(48, 1)), shl(96, newValue)))
                         break
                     }
-                    sstore(checkpointSlot, or(key, shl(48, address())))
-                    sstore(not(checkpointSlot), newValue)
+                    sstore(lengthSlot, or(or(key, shl(48, 1)), shl(96, address())))
+                    sstore(not(lengthSlot), newValue)
                     break
                 }
-                checkpointSlot := add(sub(n, 1), checkpointSlot)
+                let checkpointSlot := add(sub(n, 1), lengthSlot)
                 let lastPacked := sload(checkpointSlot)
-                oldValue := shr(48, lastPacked)
+                oldValue := shr(96, lastPacked)
                 if eq(oldValue, address()) { oldValue := sload(not(checkpointSlot)) }
                 for {} 1 {} {
                     if iszero(isAdd) {
@@ -383,14 +382,16 @@ abstract contract ERC20Votes is ERC20 {
                     revert(0x1c, 0x04)
                 }
                 if iszero(eq(lastKey, key)) {
-                    sstore(lengthSlot, add(n, 1))
+                    n := add(1, n)
                     checkpointSlot := add(1, checkpointSlot)
+                    sstore(lengthSlot, add(shl(48, 1), sload(lengthSlot)))
+                    if shr(48, n) { invalid() }
                 }
-                if iszero(or(eq(newValue, address()), shr(208, newValue))) {
-                    sstore(checkpointSlot, or(key, shl(48, newValue)))
+                if iszero(or(eq(newValue, address()), shr(160, newValue))) {
+                    sstore(checkpointSlot, or(or(key, shl(48, n)), shl(96, newValue)))
                     break
                 }
-                sstore(checkpointSlot, or(key, shl(48, address())))
+                sstore(checkpointSlot, or(or(key, shl(48, n)), shl(96, address())))
                 sstore(not(checkpointSlot), newValue)
                 break
             }
@@ -401,10 +402,10 @@ abstract contract ERC20Votes is ERC20 {
     function _checkpointLatest(uint256 lengthSlot) private view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := sload(lengthSlot) // Checkpoint length.
+            result := and(0xffffffffffff, shr(48, sload(lengthSlot)))
             if result {
-                let checkpointSlot := add(sub(result, 1), shl(96, lengthSlot))
-                result := shr(48, sload(checkpointSlot))
+                let checkpointSlot := add(sub(result, 1), lengthSlot)
+                result := shr(96, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
         }
@@ -418,8 +419,7 @@ abstract contract ERC20Votes is ERC20 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := sload(lengthSlot)
-            let checkpointSlot := shl(96, lengthSlot)
+            let n := and(0xffffffffffff, shr(48, sload(lengthSlot)))
             let l := 0 // Low.
             let h := n // High.
             // Start the binary search nearer to the right to optimize for recent checkpoints.
@@ -432,7 +432,7 @@ abstract contract ERC20Votes is ERC20 {
                 m := shr(1, add(m, div(n, m)))
                 m := shr(1, add(m, div(n, m)))
                 m := sub(n, shr(1, add(m, div(n, m)))) // Approx `n - sqrt(n)`.
-                if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
+                if iszero(lt(key, and(sload(add(m, lengthSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     break
                 }
@@ -442,15 +442,15 @@ abstract contract ERC20Votes is ERC20 {
             // Binary search.
             for {} lt(l, h) {} {
                 let m := shr(1, add(l, h)) // Won't overflow in practice.
-                if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
+                if iszero(lt(key, and(sload(add(m, lengthSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     continue
                 }
                 h := m
             }
             if h {
-                checkpointSlot := add(sub(h, 1), checkpointSlot)
-                result := shr(48, sload(checkpointSlot))
+                let checkpointSlot := add(sub(h, 1), lengthSlot)
+                result := shr(96, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
         }

@@ -302,14 +302,14 @@ contract ERC20VotesTest is SoladyTest {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(i, sload(lengthSlot))) {
+            if iszero(lt(i, and(0xffffffffffff, shr(48, sload(lengthSlot))))) {
                 mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
-            let checkpointSlot := add(i, shl(96, lengthSlot))
+            let checkpointSlot := add(i, lengthSlot)
             let checkpointPacked := sload(checkpointSlot)
             checkpointClock := and(0xffffffffffff, checkpointPacked)
-            checkpointValue := shr(48, checkpointPacked)
+            checkpointValue := shr(96, checkpointPacked)
             if eq(checkpointValue, address()) { checkpointValue := sload(not(checkpointSlot)) }
         }
     }
@@ -321,8 +321,7 @@ contract ERC20VotesTest is SoladyTest {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := sload(lengthSlot) // Checkpoint length. Must always be less than 2 ** 48.
-            let checkpointSlot := shl(96, lengthSlot) // `lengthSlot` must never be zero.
+            let n := and(0xffffffffffff, shr(48, sload(lengthSlot)))
             for {} 1 {} {
                 if iszero(n) {
                     if iszero(or(isAdd, iszero(amount))) {
@@ -330,18 +329,17 @@ contract ERC20VotesTest is SoladyTest {
                         revert(0x1c, 0x04)
                     }
                     newValue := amount
-                    sstore(lengthSlot, 1)
-                    if iszero(or(eq(newValue, address()), shr(208, newValue))) {
-                        sstore(checkpointSlot, or(key, shl(48, newValue)))
+                    if iszero(or(eq(newValue, address()), shr(160, newValue))) {
+                        sstore(lengthSlot, or(or(key, shl(48, 1)), shl(96, newValue)))
                         break
                     }
-                    sstore(checkpointSlot, or(key, shl(48, address())))
-                    sstore(not(checkpointSlot), newValue)
+                    sstore(lengthSlot, or(or(key, shl(48, 1)), shl(96, address())))
+                    sstore(not(lengthSlot), newValue)
                     break
                 }
-                checkpointSlot := add(sub(n, 1), checkpointSlot)
+                let checkpointSlot := add(sub(n, 1), lengthSlot)
                 let lastPacked := sload(checkpointSlot)
-                oldValue := shr(48, lastPacked)
+                oldValue := shr(96, lastPacked)
                 if eq(oldValue, address()) { oldValue := sload(not(checkpointSlot)) }
                 for {} 1 {} {
                     if iszero(isAdd) {
@@ -365,14 +363,15 @@ contract ERC20VotesTest is SoladyTest {
                     revert(0x1c, 0x04)
                 }
                 if iszero(eq(lastKey, key)) {
-                    sstore(lengthSlot, add(n, 1))
+                    n := add(1, n)
                     checkpointSlot := add(1, checkpointSlot)
+                    sstore(lengthSlot, add(shl(48, 1), sload(lengthSlot)))
                 }
-                if iszero(or(eq(newValue, address()), shr(208, newValue))) {
-                    sstore(checkpointSlot, or(key, shl(48, newValue)))
+                if iszero(or(eq(newValue, address()), shr(160, newValue))) {
+                    sstore(checkpointSlot, or(or(key, shl(48, n)), shl(96, newValue)))
                     break
                 }
-                sstore(checkpointSlot, or(key, shl(48, address())))
+                sstore(checkpointSlot, or(or(key, shl(48, n)), shl(96, address())))
                 sstore(not(checkpointSlot), newValue)
                 break
             }
@@ -383,10 +382,10 @@ contract ERC20VotesTest is SoladyTest {
     function _checkpointLatest(uint256 lengthSlot) private view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := sload(lengthSlot) // Checkpoint length.
+            result := and(0xffffffffffff, shr(48, sload(lengthSlot)))
             if result {
-                let checkpointSlot := add(sub(result, 1), shl(96, lengthSlot))
-                result := shr(48, sload(checkpointSlot))
+                let checkpointSlot := add(sub(result, 1), lengthSlot)
+                result := shr(96, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
         }
@@ -400,10 +399,10 @@ contract ERC20VotesTest is SoladyTest {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := sload(lengthSlot)
-            let checkpointSlot := shl(96, lengthSlot)
+            let n := and(0xffffffffffff, shr(48, sload(lengthSlot)))
             let l := 0 // Low.
             let h := n // High.
+            // Start the binary search nearer to the right to optimize for recent checkpoints.
             for {} iszero(lt(n, 6)) {} {
                 let m := shl(4, lt(0xffff, n))
                 m := shl(shr(1, or(m, shl(3, lt(0xff, shr(m, n))))), 16)
@@ -413,24 +412,25 @@ contract ERC20VotesTest is SoladyTest {
                 m := shr(1, add(m, div(n, m)))
                 m := shr(1, add(m, div(n, m)))
                 m := sub(n, shr(1, add(m, div(n, m)))) // Approx `n - sqrt(n)`.
-                if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
+                if iszero(lt(key, and(sload(add(m, lengthSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     break
                 }
                 h := m
                 break
             }
+            // Binary search.
             for {} lt(l, h) {} {
                 let m := shr(1, add(l, h)) // Won't overflow in practice.
-                if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
+                if iszero(lt(key, and(sload(add(m, lengthSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     continue
                 }
                 h := m
             }
             if h {
-                checkpointSlot := add(sub(h, 1), checkpointSlot)
-                result := shr(48, sload(checkpointSlot))
+                let checkpointSlot := add(sub(h, 1), lengthSlot)
+                result := shr(96, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
         }
