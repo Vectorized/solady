@@ -12,7 +12,44 @@ abstract contract ERC20Votes is ERC20 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The ETH transfer has failed.
-    error ETHTransferFailed();
+    error ERC5805FutureLookup();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           EVENTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The delegate of `delegator` is changed from `from` to `to`.
+    event DelegateChanged(address indexed delegator, address indexed from, address indexed to);
+
+    /// @dev The votes balance of `delegate` is changed from `oldValue` to `newValue`.
+    event DelegateVotesChanged(address indexed delegate, uint256 oldValue, uint256 newValue);
+
+    /// @dev `keccak256(bytes("DelegateChanged(address,address,address)"))`.
+    uint256 private constant _DELEGATE_CHANGED_EVENT_SIGNATURE =
+        0x3134e8a2e6d97e929a7e54011ea5485d7d196dd5f0ba4d4ef95803e8e3fc257f;
+
+    /// @dev `keccak256(bytes("DelegateVotesChanged(address,uint256,uint256)"))`.
+    uint256 private constant _DELEGATE_VOTES_CHANGED_EVENT_SIGNATURE =
+        0xdec2bacdd2f05b59de34da9b523dff8be42e5e38e818c82fdb0bae774387a724;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          STORAGE                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The slot of a delegate is given by:
+    /// ```
+    ///     mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
+    ///     mstore(0x00, account)
+    ///     let delegateSlot := keccak256(0x0c, 0x18)
+    /// ```
+    /// The checkpoints slot of a delegate is given by:
+    /// ```
+    ///     mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
+    ///     mstore(0x00, delegate)
+    ///     let delegateCheckpointsSlot := keccak256(0x0c, 0x17)
+    /// ```
+    /// The total checkpoints slot is `_ERC20_VOTES_MASTER_SLOT_SEED`.
+    uint256 private constant _ERC20_VOTES_MASTER_SLOT_SEED = 0xff466c9f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          ERC6372                           */
@@ -27,21 +64,91 @@ abstract contract ERC20Votes is ERC20 {
         return uint48(block.number);
     }
 
-    /// @dev Used in `_afterTokenTransfer(address from, address to, uint256 amount)`.
-    function _transferVotingUnits(address from, address to, uint256 amount) internal virtual {
-        if (from == address(0)) {
-            // _totalCheckpointPush(amount);
-        }
-        if (to == address(0)) {
-            // _totalCheckpointPush(amount);
+    function delegates(address delegator) public view virtual returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
+            mstore(0x00, delegator)
+            result := sload(keccak256(0x0c, 0x18))
         }
     }
 
-    // Note: Actually testing this for all kinds of input will be pretty crazy,
-    // since we will actually need to populate a LOT of values in order to test.
-    // I think around 700 checkpoints should be good?
+    function delegate(address to) public virtual {
+        _delegate(msg.sender, to);
+    }
 
-    // Just copy and paste these functions into the test class.
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     INTERNAL FUNCTIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _getVotingUnits(address delegator) internal virtual returns (uint256) {
+        return balanceOf(delegator);
+    }
+
+    function _delegate(address delegator, address to) internal virtual {
+        address from;
+        /// @solidity memory-safe-assembly
+        assembly {
+            to := shr(96, shl(96, to))
+            mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
+            mstore(0x00, delegator)
+            let delegateSlot := keccak256(0x0c, 0x18)
+            from := sload(delegateSlot)
+            sstore(delegateSlot, to)
+            log4(0x00, 0x00, _DELEGATE_CHANGED_EVENT_SIGNATURE, shr(96, mload(0x0c)), from, to)
+        }
+        _transferVotingUnits(from, to, _getVotingUnits(delegator));
+    }
+
+    /// @dev Used in `_afterTokenTransfer(address from, address to, uint256 amount)`.
+    function _transferVotingUnits(address from, address to, uint256 amount) internal virtual {
+        if (from == address(0)) {
+            _checkpointPushDiff(_ERC20_VOTES_MASTER_SLOT_SEED, clock(), amount, true);
+        }
+        if (to == address(0)) {
+            _checkpointPushDiff(_ERC20_VOTES_MASTER_SLOT_SEED, clock(), amount, false);
+        }
+        _moveDelegateVotes(delegates(from), delegates(to), amount);
+    }
+
+    function _moveDelegateVotes(address from, address to, uint256 amount) internal virtual {
+        if (amount == uint256(0)) return;
+        (uint256 fromCleaned, uint256 toCleaned) = (uint256(uint160(from)), uint256(uint160(to)));
+        if (fromCleaned == toCleaned) return;
+        if (fromCleaned != 0) {
+            (uint256 oldValue, uint256 newValue) =
+                _checkpointPushDiff(_delegateCheckpointsSlot(from), clock(), amount, false);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, oldValue)
+                mstore(0x20, newValue)
+                log2(0x00, 0x40, _DELEGATE_VOTES_CHANGED_EVENT_SIGNATURE, fromCleaned)
+            }
+        }
+        if (toCleaned != 0) {
+            (uint256 oldValue, uint256 newValue) =
+                _checkpointPushDiff(_delegateCheckpointsSlot(to), clock(), amount, true);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, oldValue)
+                mstore(0x20, newValue)
+                log2(0x00, 0x40, _DELEGATE_VOTES_CHANGED_EVENT_SIGNATURE, toCleaned)
+            }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _delegateCheckpointsSlot(address account) private pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x04, _ERC20_VOTES_MASTER_SLOT_SEED)
+            mstore(0x00, account)
+            result := keccak256(0x0c, 0x17)
+        }
+    }
 
     function _checkpointPushDiff(uint256 lengthSlot, uint256 key, uint256 amount, bool isAdd)
         private
@@ -50,11 +157,11 @@ abstract contract ERC20Votes is ERC20 {
         /// @solidity memory-safe-assembly
         assembly {
             let n := sload(lengthSlot) // Checkpoint length. Must always be less than 2 ** 48.
-            let checkpointSlot := shl(50, lengthSlot) // `lengthSlot` must never be zero.
+            let checkpointSlot := shl(96, lengthSlot) // `lengthSlot` must never be zero.
             for {} 1 {} {
                 if iszero(n) {
                     if iszero(or(isAdd, iszero(amount))) {
-                        mstore(0x00, 0x8ec8c748) // `ERC20VoteCheckpointUnderflow()`.
+                        mstore(0x00, 0xef529cb2) // `ERC5805VoteCheckpointUnderflow()`.
                         revert(0x1c, 0x04)
                     }
                     newValue := amount
@@ -64,17 +171,17 @@ abstract contract ERC20Votes is ERC20 {
                         break
                     }
                     sstore(checkpointSlot, or(key, shl(48, address())))
-                    sstore(add(1, checkpointSlot), newValue)
+                    sstore(not(checkpointSlot), newValue)
                     break
                 }
-                checkpointSlot := add(add(n, n), checkpointSlot)
+                checkpointSlot := add(sub(n, 1), checkpointSlot)
                 let lastPacked := sload(checkpointSlot)
                 oldValue := shr(48, lastPacked)
-                if eq(oldValue, address()) { oldValue := sload(add(1, checkpointSlot)) }
+                if eq(oldValue, address()) { oldValue := sload(not(checkpointSlot)) }
                 for {} 1 {} {
                     if iszero(isAdd) {
                         if gt(amount, oldValue) {
-                            mstore(0x00, 0x8ec8c748) // `ERC20VoteCheckpointUnderflow()`.
+                            mstore(0x00, 0xef529cb2) // `ERC5805VoteCheckpointUnderflow()`.
                             revert(0x1c, 0x04)
                         }
                         newValue := sub(oldValue, amount)
@@ -82,26 +189,26 @@ abstract contract ERC20Votes is ERC20 {
                     }
                     newValue := add(oldValue, amount)
                     if lt(newValue, oldValue) {
-                        mstore(0x00, 0x888051e3) // `ERC20VoteCheckpointOverflow()`.
+                        mstore(0x00, 0x4a15589d) // `ERC5805VoteCheckpointOverflow()`.
                         revert(0x1c, 0x04)
                     }
                     break
                 }
                 let lastKey := and(0xffffffffffff, lastPacked)
                 if gt(lastKey, key) {
-                    mstore(0x00, 0x24a526cc) // `ERC20VoteCheckpointUnorderedInsertion()`
+                    mstore(0x00, 0xce3d39b5) // `ERC5805VoteCheckpointUnorderedInsertion()`.
                     revert(0x1c, 0x04)
                 }
                 if iszero(eq(lastKey, key)) {
                     sstore(lengthSlot, add(n, 1))
-                    checkpointSlot := add(2, checkpointSlot)
+                    checkpointSlot := add(1, checkpointSlot)
                 }
                 if iszero(or(eq(newValue, address()), shr(208, newValue))) {
                     sstore(checkpointSlot, or(key, shl(48, newValue)))
                     break
                 }
                 sstore(checkpointSlot, or(key, shl(48, address())))
-                sstore(add(1, checkpointSlot), newValue)
+                sstore(not(checkpointSlot), newValue)
                 break
             }
         }
@@ -112,9 +219,9 @@ abstract contract ERC20Votes is ERC20 {
         assembly {
             let n := sload(lengthSlot) // Checkpoint length.
             if n {
-                let checkpointSlot := add(sub(add(n, n), 2), shl(50, lengthSlot))
+                let checkpointSlot := add(sub(n, 1), shl(96, lengthSlot))
                 result := shr(48, sload(checkpointSlot))
-                if eq(result, address()) { result := sload(add(1, checkpointSlot)) }
+                if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
         }
     }
@@ -127,7 +234,7 @@ abstract contract ERC20Votes is ERC20 {
         /// @solidity memory-safe-assembly
         assembly {
             let n := sload(lengthSlot)
-            let checkpointSlot := shl(50, lengthSlot)
+            let checkpointSlot := shl(96, lengthSlot)
             let l := 0 // Low.
             let h := n // High.
             for {} iszero(lt(n, 6)) {} {
@@ -139,7 +246,7 @@ abstract contract ERC20Votes is ERC20 {
                 m := shr(1, add(m, div(n, m)))
                 m := shr(1, add(m, div(n, m)))
                 m := sub(n, shr(1, add(m, div(n, m)))) // Approx `n - sqrt(n)`.
-                if iszero(lt(key, and(sload(add(add(m, m), checkpointSlot)), 0xffffffffffff))) {
+                if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     break
                 }
@@ -148,16 +255,16 @@ abstract contract ERC20Votes is ERC20 {
             }
             for {} lt(l, h) {} {
                 let m := shr(1, add(l, h)) // Won't overflow in practice.
-                if iszero(lt(key, and(sload(add(add(m, m), checkpointSlot)), 0xffffffffffff))) {
+                if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     continue
                 }
                 h := m
             }
             if h {
-                checkpointSlot := add(sub(add(h, h), 2), checkpointSlot)
+                checkpointSlot := add(sub(h, 1), checkpointSlot)
                 result := shr(48, sload(checkpointSlot))
-                if eq(result, address()) { result := sload(add(1, checkpointSlot)) }
+                if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
         }
     }

@@ -46,7 +46,7 @@ contract ERC20VotesTest is SoladyTest {
     function testCheckpointDifferential(uint256 lengthSlot, uint256 n) public {
         lengthSlot = uint256(keccak256(abi.encode(lengthSlot, "hehe")));
         unchecked {
-            n = _bound(n, 1, 8);
+            n = _randomChance(64) ? _bound(n, 1, 32) : _bound(n, 1, 8);
             _TestCheckpointTemps memory t;
             for (uint256 i; i != n; ++i) {
                 uint256 lastKey = _checkpointLatestKeyOriginal();
@@ -68,8 +68,10 @@ contract ERC20VotesTest is SoladyTest {
                 assertEq(_checkpointLatestOriginal(), _checkpointLatest(lengthSlot));
 
                 if (_randomChance(8)) _checkCheckpoints(lengthSlot);
+                if (_randomChance(8)) _checkCheckpointUpperLookupRecent(lengthSlot);
             }
             _checkCheckpoints(lengthSlot);
+            _checkCheckpointUpperLookupRecent(lengthSlot);
         }
     }
 
@@ -83,6 +85,13 @@ contract ERC20VotesTest is SoladyTest {
                 assertEq(value, c.value);
             }
         }
+    }
+
+    function _checkCheckpointUpperLookupRecent(uint256 lengthSlot) internal tempMemory {
+        uint256 key = _bound(_randomUniform(), 0, _checkpointLatestKeyOriginal() + 3);
+        assertEq(
+            _checkpointUpperLookupRecent(lengthSlot, key), _checkpointUpperLookupRecentOriginal(key)
+        );
     }
 
     function _checkpointPushDiffOriginalReverts(uint256 key, uint256 amount, bool isAdd)
@@ -111,6 +120,21 @@ contract ERC20VotesTest is SoladyTest {
             oldValue = last.value;
             newValue = isAdd ? oldValue + amount : oldValue - amount;
             if (last.key > key) revert("Unordered insertion");
+        }
+    }
+
+    function _checkpointUpperLookupRecentOriginal(uint256 key)
+        private
+        view
+        returns (uint256 result)
+    {
+        unchecked {
+            uint256 n = _trace.length;
+            for (uint256 i; i != n; ++i) {
+                Checkpoint storage c = _trace[i];
+                if (c.key > key) break;
+                result = c.value;
+            }
         }
     }
 
@@ -149,7 +173,7 @@ contract ERC20VotesTest is SoladyTest {
         /// @solidity memory-safe-assembly
         assembly {
             let n := sload(lengthSlot) // Checkpoint length. Must always be less than 2 ** 48.
-            let checkpointSlot := shl(50, lengthSlot) // `lengthSlot` must never be zero.
+            let checkpointSlot := shl(96, lengthSlot) // `lengthSlot` must never be zero.
             for {} 1 {} {
                 if iszero(n) {
                     if iszero(or(isAdd, iszero(amount))) {
@@ -211,7 +235,7 @@ contract ERC20VotesTest is SoladyTest {
         assembly {
             let n := sload(lengthSlot) // Checkpoint length.
             if n {
-                let checkpointSlot := add(sub(n, 1), shl(50, lengthSlot))
+                let checkpointSlot := add(sub(n, 1), shl(96, lengthSlot))
                 result := shr(48, sload(checkpointSlot))
                 if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
@@ -226,7 +250,7 @@ contract ERC20VotesTest is SoladyTest {
         /// @solidity memory-safe-assembly
         assembly {
             let n := sload(lengthSlot)
-            let checkpointSlot := shl(50, lengthSlot)
+            let checkpointSlot := shl(96, lengthSlot)
             let l := 0 // Low.
             let h := n // High.
             for {} iszero(lt(n, 6)) {} {
@@ -270,7 +294,7 @@ contract ERC20VotesTest is SoladyTest {
         assembly {
             let n := sload(lengthSlot) // Checkpoint length.
             if iszero(lt(i, n)) { invalid() }
-            let checkpointSlot := add(i, shl(50, lengthSlot))
+            let checkpointSlot := add(i, shl(96, lengthSlot))
             let checkpointPacked := sload(checkpointSlot)
             key := and(0xffffffffffff, checkpointPacked)
             value := shr(48, checkpointPacked)
