@@ -31,10 +31,6 @@ contract MockERC20Votes is ERC20Votes, Brutalizer {
         _spendAllowance(owner, spender, amount);
     }
 
-    function getTotalSupply() public view returns (uint256) {
-        return _getTotalSupply();
-    }
-
     function directDelegate(address delegator, address delegatee) public {
         _delegate(delegator, delegatee);
     }

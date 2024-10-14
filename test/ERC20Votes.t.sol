@@ -8,6 +8,9 @@ import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 contract ERC20VotesTest is SoladyTest {
     MockERC20Votes erc20Votes;
 
+    event DelegateChanged(address indexed delegator, address indexed from, address indexed to);
+    event DelegateVotesChanged(address indexed delegate, uint256 oldValue, uint256 newValue);
+
     address internal constant _ALICE = address(111);
     address internal constant _BOB = address(222);
     address internal constant _CHARLIE = address(333);
@@ -22,21 +25,25 @@ contract ERC20VotesTest is SoladyTest {
         assertEq(erc20Votes.delegates(delegator), delegatee);
     }
 
-    function testMintAndTransfer() public {
+    function testMintTransferBurnDelegate() public {
         uint256 amount = 1 ether;
         erc20Votes.mint(_ALICE, amount);
 
         // Minting does not automatically give one votes.
         assertEq(erc20Votes.getVotes(_ALICE), 0);
         assertEq(erc20Votes.getVotes(_BOB), 0);
-        assertEq(erc20Votes.getTotalSupply(), 1 ether);
+        assertEq(erc20Votes.getTotalVotesSupply(), 1 ether);
 
+        vm.expectEmit(true, true, true, true);
+        emit DelegateChanged(_ALICE, address(0), _BOB);
         vm.prank(_ALICE);
         erc20Votes.delegate(_BOB);
 
         assertEq(erc20Votes.getVotes(_BOB), 1 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0 ether);
 
+        vm.expectEmit(true, true, true, true);
+        emit DelegateChanged(_CHARLIE, address(0), _DAVID);
         vm.prank(_CHARLIE);
         erc20Votes.delegate(_DAVID);
 
@@ -50,21 +57,17 @@ contract ERC20VotesTest is SoladyTest {
         assertEq(erc20Votes.getVotes(_BOB), 0.6 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
 
+        vm.expectEmit(true, true, true, true);
+        emit DelegateChanged(_CHARLIE, _DAVID, _BOB);
+        vm.expectEmit(true, true, true, true);
+        emit DelegateVotesChanged(_DAVID, 0.3 ether, 0 ether);
+        vm.expectEmit(true, true, true, true);
+        emit DelegateVotesChanged(_BOB, 0.6 ether, 0.9 ether);
         vm.prank(_CHARLIE);
         erc20Votes.delegate(_BOB);
         assertEq(erc20Votes.getVotes(_BOB), 0.9 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0 ether);
     }
-
-    // struct _TestTemps {
-    //     uint256 amountToMint;
-    //     uint256 amountToDelegate;
-    //     uint256 amountToBurn;
-    // }
-
-    // function testLatestVote(bytes32) public {
-
-    // }
 
     struct Checkpoint {
         uint256 key;
@@ -232,17 +235,19 @@ contract ERC20VotesTest is SoladyTest {
     function _checkpointAt(uint256 lengthSlot, uint256 i)
         private
         view
-        returns (uint256 key, uint256 value)
+        returns (uint48 checkpointClock, uint256 checkpointValue)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := sload(lengthSlot) // Checkpoint length.
-            if iszero(lt(i, n)) { invalid() }
+            if iszero(lt(i, sload(lengthSlot))) {
+                mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
+                revert(0x1c, 0x04)
+            }
             let checkpointSlot := add(i, shl(96, lengthSlot))
             let checkpointPacked := sload(checkpointSlot)
-            key := and(0xffffffffffff, checkpointPacked)
-            value := shr(48, checkpointPacked)
-            if eq(value, address()) { value := sload(not(checkpointSlot)) }
+            checkpointClock := and(0xffffffffffff, checkpointPacked)
+            checkpointValue := shr(48, checkpointPacked)
+            if eq(checkpointValue, address()) { checkpointValue := sload(not(checkpointSlot)) }
         }
     }
 
