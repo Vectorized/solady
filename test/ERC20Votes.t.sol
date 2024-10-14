@@ -5,6 +5,13 @@ import "./utils/SoladyTest.sol";
 import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
 contract ERC20VotesTest is SoladyTest {
+    struct Checkpoint {
+        uint256 key;
+        uint256 value;
+    }
+
+    Checkpoint[] internal _trace;
+
     function testSmallSqrtApprox(uint32 n) public {
         uint256 approx = _smallSqrtApprox(n);
         uint256 groundTruth = FixedPointMathLib.sqrt(n);
@@ -27,47 +34,85 @@ contract ERC20VotesTest is SoladyTest {
     }
 
     struct _TestCheckpointTemps {
-        uint48 prevKey;
-        uint48 key;
-        uint256 lastValue;
+        uint256 key;
         uint256 amount;
         bool isAdd;
+        uint256 oldValueOriginal;
+        uint256 oldValue;
+        uint256 newValueOriginal;
+        uint256 newValue;
     }
-
-    event CheckpointChanged(uint256 oldValue, uint256 newValue);
 
     function testCheckpointDifferential(uint256 lengthSlot, uint256 n) public {
         lengthSlot = uint256(keccak256(abi.encode(lengthSlot, "hehe")));
         unchecked {
-            n = _bound(n, 1, 32);
+            n = _bound(n, 1, 8);
             _TestCheckpointTemps memory t;
             for (uint256 i; i != n; ++i) {
-                do {
-                    t.key = uint48(_random());
-                } while (t.key > t.prevKey);
-
+                uint256 lastKey = _checkpointLatestKeyOriginal();
                 while (true) {
+                    t.key = lastKey + _randomUniform() & 0xf;
                     t.amount = _random();
                     t.isAdd = _randomChance(2);
-                    if (t.isAdd && type(uint256).max - t.lastValue >= t.amount) break;
-                    if (!t.isAdd && t.lastValue >= t.amount) break;
+                    if (!_checkpointPushDiffOriginalReverts(t.key, t.amount, t.isAdd)) break;
                 }
 
-                (uint256 oldValue, uint256 newValue) =
+                (t.oldValueOriginal, t.newValueOriginal) =
                     _checkpointPushDiffOriginal(t.key, t.amount, t.isAdd);
-                emit CheckpointChanged(oldValue, newValue);
-                _checkpointPushDiff(lengthSlot, t.key, t.amount, t.isAdd);
-                t.prevKey = t.key;
+
+                (t.oldValue, t.newValue) = _checkpointPushDiff(lengthSlot, t.key, t.amount, t.isAdd);
+
+                assertEq(t.oldValue, t.oldValueOriginal);
+                assertEq(t.newValue, t.newValueOriginal);
+
+                assertEq(_checkpointLatestOriginal(), _checkpointLatest(lengthSlot));
+
+                if (_randomChance(8)) _checkCheckpoints(lengthSlot);
+            }
+            _checkCheckpoints(lengthSlot);
+        }
+    }
+
+    function _checkCheckpoints(uint256 lengthSlot) internal tempMemory {
+        unchecked {
+            uint256 n = _trace.length;
+            for (uint256 i; i != n; ++i) {
+                (uint256 key, uint256 value) = _checkpointAt(lengthSlot, i);
+                Checkpoint storage c = _trace[i];
+                assertEq(key, c.key);
+                assertEq(value, c.value);
             }
         }
     }
 
-    struct Checkpoint {
-        uint256 key;
-        uint256 value;
+    function _checkpointPushDiffOriginalReverts(uint256 key, uint256 amount, bool isAdd)
+        internal
+        tempMemory
+        returns (bool)
+    {
+        (bool success,) = address(this).call(
+            abi.encodeWithSignature(
+                "checkpointPushDiffOriginalCheck(uint256,uint256,bool)", key, amount, isAdd
+            )
+        );
+        return !success;
     }
 
-    Checkpoint[] internal _trace;
+    function checkpointPushDiffOriginalCheck(uint256 key, uint256 amount, bool isAdd)
+        external
+        view
+    {
+        uint256 oldValue;
+        uint256 newValue;
+        if (_trace.length == 0) {
+            newValue = isAdd ? oldValue + amount : oldValue - amount;
+        } else {
+            Checkpoint storage last = _trace[_trace.length - 1];
+            oldValue = last.value;
+            newValue = isAdd ? oldValue + amount : oldValue - amount;
+            if (last.key > key) revert("Unordered insertion");
+        }
+    }
 
     function _checkpointPushDiffOriginal(uint256 key, uint256 amount, bool isAdd)
         private
@@ -78,6 +123,7 @@ contract ERC20VotesTest is SoladyTest {
             _trace.push(Checkpoint(key, newValue));
         } else {
             Checkpoint storage last = _trace[_trace.length - 1];
+            oldValue = last.value;
             newValue = isAdd ? oldValue + amount : oldValue - amount;
             if (last.key > key) revert("Unordered insertion");
             if (last.key == key) {
@@ -86,6 +132,14 @@ contract ERC20VotesTest is SoladyTest {
                 _trace.push(Checkpoint(key, newValue));
             }
         }
+    }
+
+    function _checkpointLatestKeyOriginal() private view returns (uint256) {
+        return _trace.length == 0 ? 0 : _trace[_trace.length - 1].key;
+    }
+
+    function _checkpointLatestOriginal() private view returns (uint256) {
+        return _trace.length == 0 ? 0 : _trace[_trace.length - 1].value;
     }
 
     function _checkpointPushDiff(uint256 lengthSlot, uint256 key, uint256 amount, bool isAdd)
@@ -109,13 +163,13 @@ contract ERC20VotesTest is SoladyTest {
                         break
                     }
                     sstore(checkpointSlot, or(key, shl(48, address())))
-                    sstore(add(1, checkpointSlot), newValue)
+                    sstore(not(checkpointSlot), newValue)
                     break
                 }
-                checkpointSlot := add(add(n, n), checkpointSlot)
+                checkpointSlot := add(sub(n, 1), checkpointSlot)
                 let lastPacked := sload(checkpointSlot)
                 oldValue := shr(48, lastPacked)
-                if eq(oldValue, address()) { oldValue := sload(add(1, checkpointSlot)) }
+                if eq(oldValue, address()) { oldValue := sload(not(checkpointSlot)) }
                 for {} 1 {} {
                     if iszero(isAdd) {
                         if gt(amount, oldValue) {
@@ -139,34 +193,16 @@ contract ERC20VotesTest is SoladyTest {
                 }
                 if iszero(eq(lastKey, key)) {
                     sstore(lengthSlot, add(n, 1))
-                    checkpointSlot := add(2, checkpointSlot)
+                    checkpointSlot := add(1, checkpointSlot)
                 }
-                log1(0x00, 0x00, newValue)
                 if iszero(or(eq(newValue, address()), shr(208, newValue))) {
                     sstore(checkpointSlot, or(key, shl(48, newValue)))
                     break
                 }
                 sstore(checkpointSlot, or(key, shl(48, address())))
-                sstore(add(1, checkpointSlot), newValue)
+                sstore(not(checkpointSlot), newValue)
                 break
             }
-        }
-    }
-
-    function _checkpointAt(uint256 lengthSlot, uint256 i)
-        private
-        view
-        returns (uint256 key, uint256 value)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let n := sload(lengthSlot) // Checkpoint length.
-            if iszero(lt(i, n)) { invalid() }
-            let checkpointSlot := add(sub(add(i, i), 2), shl(50, lengthSlot))
-            let checkpointPacked := sload(checkpointSlot)
-            key := and(0xffffffffffff, checkpointPacked)
-            value := shr(48, checkpointPacked)
-            if eq(value, address()) { value := sload(add(1, checkpointSlot)) }
         }
     }
 
@@ -175,9 +211,9 @@ contract ERC20VotesTest is SoladyTest {
         assembly {
             let n := sload(lengthSlot) // Checkpoint length.
             if n {
-                let checkpointSlot := add(sub(add(n, n), 2), shl(50, lengthSlot))
+                let checkpointSlot := add(sub(n, 1), shl(50, lengthSlot))
                 result := shr(48, sload(checkpointSlot))
-                if eq(result, address()) { result := sload(add(1, checkpointSlot)) }
+                if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
         }
     }
@@ -202,7 +238,7 @@ contract ERC20VotesTest is SoladyTest {
                 m := shr(1, add(m, div(n, m)))
                 m := shr(1, add(m, div(n, m)))
                 m := sub(n, shr(1, add(m, div(n, m)))) // Approx `n - sqrt(n)`.
-                if iszero(lt(key, and(sload(add(add(m, m), checkpointSlot)), 0xffffffffffff))) {
+                if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     break
                 }
@@ -211,17 +247,34 @@ contract ERC20VotesTest is SoladyTest {
             }
             for {} lt(l, h) {} {
                 let m := shr(1, add(l, h)) // Won't overflow in practice.
-                if iszero(lt(key, and(sload(add(add(m, m), checkpointSlot)), 0xffffffffffff))) {
+                if iszero(lt(key, and(sload(add(m, checkpointSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     continue
                 }
                 h := m
             }
             if h {
-                checkpointSlot := add(sub(add(h, h), 2), checkpointSlot)
+                checkpointSlot := add(sub(h, 1), checkpointSlot)
                 result := shr(48, sload(checkpointSlot))
-                if eq(result, address()) { result := sload(add(1, checkpointSlot)) }
+                if eq(result, address()) { result := sload(not(checkpointSlot)) }
             }
+        }
+    }
+
+    function _checkpointAt(uint256 lengthSlot, uint256 i)
+        private
+        view
+        returns (uint256 key, uint256 value)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := sload(lengthSlot) // Checkpoint length.
+            if iszero(lt(i, n)) { invalid() }
+            let checkpointSlot := add(i, shl(50, lengthSlot))
+            let checkpointPacked := sload(checkpointSlot)
+            key := and(0xffffffffffff, checkpointPacked)
+            value := shr(48, checkpointPacked)
+            if eq(value, address()) { value := sload(not(checkpointSlot)) }
         }
     }
 }
