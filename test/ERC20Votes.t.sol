@@ -26,7 +26,7 @@ contract ERC20VotesTest is SoladyTest {
     }
 
     function testMintTransferBurnDelegate() public {
-        uint256[] memory blockNumbers = new uint256[](2);
+        uint256 initialBlockNumber = vm.getBlockNumber();
         erc20Votes.mint(_ALICE, 1 ether);
 
         // Minting does not automatically give one votes.
@@ -53,15 +53,13 @@ contract ERC20VotesTest is SoladyTest {
         assertEq(erc20Votes.getVotes(_BOB), 0.7 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
 
-        blockNumbers[0] = vm.getBlockNumber();
-        vm.roll(blockNumbers[0] + 10);
+        vm.roll(initialBlockNumber + 1);
 
         erc20Votes.burn(_ALICE, 0.1 ether);
         assertEq(erc20Votes.getVotes(_BOB), 0.6 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
 
-        blockNumbers[1] = vm.getBlockNumber();
-        vm.roll(blockNumbers[1] + 10);
+        vm.roll(initialBlockNumber + 2);
 
         vm.expectEmit(true, true, true, true);
         emit DelegateChanged(_CHARLIE, _DAVID, _BOB);
@@ -71,20 +69,38 @@ contract ERC20VotesTest is SoladyTest {
         emit DelegateVotesChanged(_BOB, 0.6 ether, 0.9 ether);
         vm.prank(_CHARLIE);
         erc20Votes.delegate(_BOB);
+
+        vm.roll(initialBlockNumber + 3);
+
         assertEq(erc20Votes.getVotes(_BOB), 0.9 ether);
-        assertEq(erc20Votes.getPastVotes(_BOB, blockNumbers[0]), 0.7 ether);
-        assertEq(erc20Votes.getPastVotes(_BOB, blockNumbers[1]), 0.6 ether);
+        assertEq(erc20Votes.getPastVotes(_BOB, initialBlockNumber + 0), 0.7 ether);
+        assertEq(erc20Votes.getPastVotes(_BOB, initialBlockNumber + 1), 0.6 ether);
+        _checkCheckpointAt(_BOB, 0, initialBlockNumber + 0, 0.7 ether);
+        _checkCheckpointAt(_BOB, 1, initialBlockNumber + 1, 0.6 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0 ether);
-        assertEq(erc20Votes.getPastVotes(_DAVID, blockNumbers[0]), 0.3 ether);
-        assertEq(erc20Votes.getPastVotes(_DAVID, blockNumbers[1]), 0.3 ether);
+        assertEq(erc20Votes.getPastVotes(_DAVID, initialBlockNumber + 0), 0.3 ether);
+        assertEq(erc20Votes.getPastVotes(_DAVID, initialBlockNumber + 1), 0.3 ether);
+        _checkCheckpointAt(_DAVID, 0, initialBlockNumber + 0, 0.3 ether);
+        _checkCheckpointAt(_DAVID, 1, initialBlockNumber + 2, 0 ether);
 
         assertEq(erc20Votes.getVotesTotalSupply(), 0.9 ether);
-        assertEq(erc20Votes.getPastVotesTotalSupply(blockNumbers[0]), 1 ether);
-        assertEq(erc20Votes.getPastVotesTotalSupply(blockNumbers[1]), 0.9 ether);
+        assertEq(erc20Votes.getPastVotesTotalSupply(initialBlockNumber + 0), 1 ether);
+        assertEq(erc20Votes.getPastVotesTotalSupply(initialBlockNumber + 1), 0.9 ether);
 
         uint256 currentBlockNumber = vm.getBlockNumber();
         vm.expectRevert(ERC20Votes.ERC5805FutureLookup.selector);
         erc20Votes.getPastVotesTotalSupply(currentBlockNumber);
+    }
+
+    function _checkCheckpointAt(
+        address account,
+        uint256 i,
+        uint256 expectedClock,
+        uint256 expectedValue
+    ) internal {
+        (uint48 checkpointClock, uint256 checkpointValue) = erc20Votes.checkpointAt(account, i);
+        assertEq(checkpointClock, expectedClock);
+        assertEq(checkpointValue, expectedValue);
     }
 
     function _advanceBlockNumber() internal {
