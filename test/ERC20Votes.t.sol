@@ -521,15 +521,15 @@ contract ERC20VotesTest is SoladyTest {
             let l := 0 // Low.
             let h := shr(208, shl(160, sload(lengthSlot))) // High.
             // Start the binary search nearer to the right to optimize for recent checkpoints.
-            for { let n := h } iszero(lt(n, 6)) {} {
-                let m := shl(4, lt(0xffff, n))
-                m := shl(shr(1, or(m, shl(3, lt(0xff, shr(m, n))))), 16)
-                m := shr(1, add(m, div(n, m)))
-                m := shr(1, add(m, div(n, m)))
-                m := shr(1, add(m, div(n, m)))
-                m := shr(1, add(m, div(n, m)))
-                m := shr(1, add(m, div(n, m)))
-                m := sub(n, shr(1, add(m, div(n, m)))) // Approx `n - sqrt(n)`.
+            for {} iszero(lt(h, 6)) {} {
+                let m := shl(4, lt(0xffff, h))
+                m := shl(shr(1, or(m, shl(3, lt(0xff, shr(m, h))))), 16)
+                m := shr(1, add(m, div(h, m)))
+                m := shr(1, add(m, div(h, m)))
+                m := shr(1, add(m, div(h, m)))
+                m := shr(1, add(m, div(h, m)))
+                m := shr(1, add(m, div(h, m)))
+                m := sub(h, shr(1, add(m, div(h, m)))) // Approx `h - sqrt(h)`.
                 if iszero(lt(key, and(sload(add(m, lengthSlot)), 0xffffffffffff))) {
                     l := add(1, m)
                     break
