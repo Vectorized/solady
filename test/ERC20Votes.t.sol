@@ -188,32 +188,27 @@ contract ERC20VotesTest is SoladyTest {
         uint8 v;
         bytes32 r;
         bytes32 s;
-        bytes32 innerHash;
-        bytes32 outerHash;
-        bytes32 domainSeparator;
-        bytes32 nameHash;
-        bytes32 versionHash;
-        bytes32 domainTypeHash;
     }
 
     bytes32 internal constant _ERC5805_DELEGATION_TYPEHASH =
         keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 
     function _signDelegate(_TestDelegateBySigTemps memory t) internal view {
-        t.innerHash =
+        bytes32 innerHash =
             keccak256(abi.encode(_ERC5805_DELEGATION_TYPEHASH, t.delegatee, t.nonce, t.expiry));
-        t.domainTypeHash = keccak256(
-            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-        );
-        t.nameHash = keccak256(bytes(erc20Votes.name()));
-        t.versionHash = keccak256("1");
-        t.domainSeparator = keccak256(
+        bytes32 domainSeparator = keccak256(
             abi.encode(
-                t.domainTypeHash, t.nameHash, t.versionHash, block.chainid, address(erc20Votes)
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256(bytes(erc20Votes.name())),
+                keccak256("1"),
+                block.chainid,
+                address(erc20Votes)
             )
         );
-        t.outerHash = keccak256(abi.encodePacked("\x19\x01", t.domainSeparator, t.innerHash));
-        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.outerHash);
+        bytes32 outerHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, innerHash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, outerHash);
     }
 
     function _delegateBySig(_TestDelegateBySigTemps memory t) internal {
