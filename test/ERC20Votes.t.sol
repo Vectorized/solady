@@ -172,6 +172,13 @@ contract ERC20VotesTest is SoladyTest {
         }
     }
 
+    function testClockTrick(uint48 x) public pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            returndatacopy(returndatasize(), returndatasize(), sub(0, shr(48, x)))
+        }
+    }
+
     struct _TestDelegateBySigTemps {
         address signer;
         uint256 privateKey;
@@ -184,6 +191,9 @@ contract ERC20VotesTest is SoladyTest {
         bytes32 innerHash;
         bytes32 outerHash;
         bytes32 domainSeparator;
+        bytes32 nameHash;
+        bytes32 versionHash;
+        bytes32 domainTypeHash;
     }
 
     bytes32 internal constant _ERC5805_DELEGATION_TYPEHASH =
@@ -192,26 +202,32 @@ contract ERC20VotesTest is SoladyTest {
     function _signDelegate(_TestDelegateBySigTemps memory t) internal view {
         t.innerHash =
             keccak256(abi.encode(_ERC5805_DELEGATION_TYPEHASH, t.delegatee, t.nonce, t.expiry));
+        t.domainTypeHash = keccak256(
+            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+        );
+        t.nameHash = keccak256(bytes(erc20Votes.name()));
+        t.versionHash = keccak256("1");
         t.domainSeparator = keccak256(
             abi.encode(
-                keccak256(
-                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                ),
-                keccak256(bytes(erc20Votes.name())),
-                keccak256("1"),
-                block.chainid,
-                address(erc20Votes)
+                t.domainTypeHash, t.nameHash, t.versionHash, block.chainid, address(erc20Votes)
             )
         );
         t.outerHash = keccak256(abi.encodePacked("\x19\x01", t.domainSeparator, t.innerHash));
         (t.v, t.r, t.s) = vm.sign(t.privateKey, t.outerHash);
     }
 
-    function testClockTrick(uint48 x) public pure {
-        /// @solidity memory-safe-assembly
-        assembly {
-            returndatacopy(returndatasize(), returndatasize(), sub(0, shr(48, x)))
-        }
+    function _delegateBySig(_TestDelegateBySigTemps memory t) internal {
+        bytes memory data = abi.encodeWithSignature(
+            "delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)",
+            t.delegatee,
+            t.nonce,
+            t.expiry,
+            t.v,
+            t.r,
+            t.s
+        );
+        (bool success,) = address(erc20Votes).call(data);
+        assert(success);
     }
 
     function testDelegateBySig(bytes32) public {
@@ -233,12 +249,12 @@ contract ERC20VotesTest is SoladyTest {
         vm.warp(timestamp);
         if (timestamp > t.expiry) {
             vm.expectRevert(ERC20Votes.ERC5805VoteSignatureExpired.selector);
-            erc20Votes.delegateBySig(t.delegatee, t.nonce, t.expiry, t.v, t.r, t.s);
+            _delegateBySig(t);
         } else if (t.nonce != erc20Votes.nonces(t.signer)) {
             vm.expectRevert(ERC20Votes.ERC5805VoteInvalidSignature.selector);
-            erc20Votes.delegateBySig(t.delegatee, t.nonce, t.expiry, t.v, t.r, t.s);
+            _delegateBySig(t);
         } else {
-            erc20Votes.delegateBySig(t.delegatee, t.nonce, t.expiry, t.v, t.r, t.s);
+            _delegateBySig(t);
             assertEq(t.nonce + 1, erc20Votes.nonces(t.signer));
             assertEq(erc20Votes.delegates(t.signer), t.delegatee);
         }
