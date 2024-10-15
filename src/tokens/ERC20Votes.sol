@@ -156,22 +156,22 @@ abstract contract ERC20Votes is ERC20 {
                 revert(0x1c, 0x04)
             }
             let m := mload(0x40)
-            mstore(0x0e, 0x1901) // Store "\x19\x01".
+            // Prepare the struct hash.
+            mstore(0x00, _ERC5805_DELEGATION_TYPEHASH)
+            mstore(0x20, shr(96, shl(96, delegatee)))
+            mstore(0x40, nonce)
+            mstore(0x60, expiry)
+            mstore(0x40, keccak256(0x00, 0x80))
+            mstore(0x00, 0x1901) // Store "\x19\x01".
             // Prepare the domain separator.
             mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), nameHash)
             mstore(add(m, 0x40), versionHash)
             mstore(add(m, 0x60), chainid())
             mstore(add(m, 0x80), address())
-            mstore(0x2e, keccak256(m, 0xa0))
-            // Prepare the struct hash.
-            mstore(m, _ERC5805_DELEGATION_TYPEHASH)
-            mstore(add(m, 0x20), shr(96, shl(96, delegatee)))
-            mstore(add(m, 0x40), nonce)
-            mstore(add(m, 0x60), expiry)
-            mstore(0x4e, keccak256(m, 0x80))
+            mstore(0x20, keccak256(m, 0xa0))
             // Prepare the ecrecover calldata.
-            mstore(0x00, keccak256(0x2c, 0x42))
+            mstore(0x00, keccak256(0x1e, 0x42))
             mstore(0x20, and(0xff, v))
             mstore(0x40, r)
             mstore(0x60, s)
