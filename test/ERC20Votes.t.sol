@@ -186,17 +186,22 @@ contract ERC20VotesTest is SoladyTest {
         (t.signer, t.privateKey) = _randomSigner();
         t.nonce = _randomUniform() & 7;
         t.expiry = _bound(_randomUniform(), 10, 2 ** 32 - 1);
-        unchecked {
-            for (uint256 i; i != t.nonce; ++i) {
-                erc20Votes.directIncrementNonce(t.signer);
+        if (!_randomChance(32)) {
+            unchecked {
+                for (uint256 i; i != t.nonce; ++i) {
+                    erc20Votes.directIncrementNonce(t.signer);
+                }
+                assertEq(t.nonce, erc20Votes.nonces(t.signer));
             }
-            assertEq(t.nonce, erc20Votes.nonces(t.signer));
         }
         _signDelegate(t);
         uint256 timestamp = _bound(_randomUniform(), 10, 2 ** 32 - 1);
         vm.warp(timestamp);
         if (timestamp > t.expiry) {
             vm.expectRevert(ERC20Votes.ERC5805VoteSignatureExpired.selector);
+            erc20Votes.delegateBySig(t.delegatee, t.nonce, t.expiry, t.v, t.r, t.s);
+        } else if (t.nonce != erc20Votes.nonces(t.signer)) {
+            vm.expectRevert(ERC20Votes.ERC5805VoteInvalidSignature.selector);
             erc20Votes.delegateBySig(t.delegatee, t.nonce, t.expiry, t.v, t.r, t.s);
         } else {
             erc20Votes.delegateBySig(t.delegatee, t.nonce, t.expiry, t.v, t.r, t.s);
