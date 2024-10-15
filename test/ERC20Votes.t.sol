@@ -76,62 +76,51 @@ contract ERC20VotesTest is SoladyTest {
     struct _TestVoteInvariantsTemps {
         address[] accounts;
         address[] delegates;
-        address account;
-        uint256 amount;
-        address delegator;
-        address delegate;
-        address from;
-        address to;
-        uint256 checkpointCount;
-        uint256 totalBalanceForDelegate;
-        uint256 totalVotes;
-        uint256 n;
     }
 
     function testVoteInvariants(bytes32) public {
         vm.pauseGasMetering();
         unchecked {
             _TestVoteInvariantsTemps memory t;
-            t.n = 1 + (_randomUniform() & 3);
-            t.accounts = new address[](t.n);
-            t.delegates = new address[](t.n + 1);
+            t.accounts = new address[](1 + (_randomUniform() & 3));
+            t.delegates = new address[](t.accounts.length + 1);
             for (uint256 i; i != t.accounts.length; ++i) {
-                t.account = _randomUniqueHashedAddress();
-                t.accounts[i] = t.account;
-                t.delegates[i + 1] = t.account;
+                address account = _randomUniqueHashedAddress();
+                t.accounts[i] = account;
+                t.delegates[i + 1] = account;
                 if (!_randomChance(4)) {
-                    erc20Votes.mint(t.account, _bound(_random(), 0, 2 ** 161 - 1));
+                    erc20Votes.mint(account, _bound(_random(), 0, 2 ** 161 - 1));
                 }
             }
             do {
                 if (_randomChance(2)) {
-                    t.delegator = t.accounts[_randomUniform() % t.accounts.length];
-                    t.delegate = t.delegates[_randomUniform() % t.delegates.length];
-                    vm.prank(t.delegator);
-                    erc20Votes.delegate(t.delegate);
-                    if (erc20Votes.balanceOf(t.delegator) != 0 && t.delegate != address(0)) {
-                        assertGt(erc20Votes.getVotes(t.delegate), 0);
+                    address delegator = t.accounts[_randomUniform() % t.accounts.length];
+                    address delegate = t.delegates[_randomUniform() % t.delegates.length];
+                    vm.prank(delegator);
+                    erc20Votes.delegate(delegate);
+                    if (erc20Votes.balanceOf(delegator) != 0 && delegate != address(0)) {
+                        assertGt(erc20Votes.getVotes(delegate), 0);
                     }
                 }
                 if (_randomChance(4)) _advanceBlockNumber();
                 if (_randomChance(2)) {
-                    t.from = t.accounts[_randomUniform() % t.accounts.length];
-                    t.to = t.accounts[_randomUniform() % t.accounts.length];
-                    t.amount = _bound(_random(), 0, erc20Votes.balanceOf(t.from));
-                    vm.prank(t.from);
-                    erc20Votes.transfer(t.to, t.amount);
+                    address from = t.accounts[_randomUniform() % t.accounts.length];
+                    address to = t.accounts[_randomUniform() % t.accounts.length];
+                    uint256 amount = _bound(_random(), 0, erc20Votes.balanceOf(from));
+                    vm.prank(from);
+                    erc20Votes.transfer(to, amount);
                 }
                 if (_randomChance(4)) _advanceBlockNumber();
                 if (_randomChance(4)) {
-                    t.account = t.accounts[_randomUniform() % t.accounts.length];
-                    t.amount = _bound(_random(), 0, erc20Votes.balanceOf(t.account));
-                    erc20Votes.burn(t.account, t.amount);
+                    address account = t.accounts[_randomUniform() % t.accounts.length];
+                    uint256 amount = _bound(_random(), 0, erc20Votes.balanceOf(account));
+                    erc20Votes.burn(account, amount);
                 }
                 if (_randomChance(4)) _advanceBlockNumber();
                 if (_randomChance(4)) {
-                    t.account = t.accounts[_randomUniform() % t.accounts.length];
-                    t.amount = _bound(_random(), 0, 2 ** 161 - 1);
-                    erc20Votes.mint(t.account, t.amount);
+                    address account = t.accounts[_randomUniform() % t.accounts.length];
+                    uint256 amount = _bound(_random(), 0, 2 ** 161 - 1);
+                    erc20Votes.mint(account, amount);
                 }
                 if (_randomChance(4)) _advanceBlockNumber();
                 if (_randomChance(8)) _checkVoteInvariants(t);
@@ -143,30 +132,30 @@ contract ERC20VotesTest is SoladyTest {
 
     function _checkVoteInvariants(_TestVoteInvariantsTemps memory t) internal {
         unchecked {
-            t.totalVotes = 0;
+            uint256 totalVotes = 0;
             for (uint256 j; j != t.delegates.length; ++j) {
-                t.totalVotes += erc20Votes.getVotes(t.delegates[j]);
+                totalVotes += erc20Votes.getVotes(t.delegates[j]);
             }
             for (uint256 j; j != t.delegates.length; ++j) {
-                t.totalBalanceForDelegate = 0;
+                uint256 totalBalanceForDelegate = 0;
                 for (uint256 i; i != t.accounts.length; ++i) {
                     if (erc20Votes.delegates(t.accounts[i]) == t.delegates[j]) {
-                        t.totalBalanceForDelegate += erc20Votes.balanceOf(t.accounts[i]);
+                        totalBalanceForDelegate += erc20Votes.balanceOf(t.accounts[i]);
                     }
                 }
-                assertLe(erc20Votes.getVotes(t.delegates[j]), t.totalBalanceForDelegate);
+                assertLe(erc20Votes.getVotes(t.delegates[j]), totalBalanceForDelegate);
             }
-            assertLe(t.totalVotes, erc20Votes.getTotalVotesSupply());
+            assertLe(totalVotes, erc20Votes.getTotalVotesSupply());
             assertEq(erc20Votes.getTotalVotesSupply(), erc20Votes.totalSupply());
         }
         unchecked {
             for (uint256 j; j != t.delegates.length; ++j) {
-                t.checkpointCount = erc20Votes.checkpointCount(t.delegates[j]);
-                if (_randomChance(2) && t.checkpointCount != 0) {
-                    uint256 i = _bound(_random(), 0, t.checkpointCount - 1);
+                uint256 checkpointCount = erc20Votes.checkpointCount(t.delegates[j]);
+                if (_randomChance(2) && checkpointCount != 0) {
+                    uint256 i = _bound(_random(), 0, checkpointCount - 1);
                     erc20Votes.checkpointAt(t.delegates[j], i);
-                } else if (t.checkpointCount != 0) {
-                    uint256 i = _bound(_random(), t.checkpointCount, t.checkpointCount + 10);
+                } else if (checkpointCount != 0) {
+                    uint256 i = _bound(_random(), checkpointCount, checkpointCount + 10);
                     vm.expectRevert(ERC20Votes.ERC5805VoteCheckpointIndexOutOfBounds.selector);
                     erc20Votes.checkpointAt(t.delegates[j], i);
                 }
