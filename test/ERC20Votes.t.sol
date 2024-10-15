@@ -88,10 +88,9 @@ contract ERC20VotesTest is SoladyTest {
             do {
                 if (_randomChance(2)) {
                     address delegator = accounts[_randomUniform() % accounts.length];
-                    address delegatee = delegates[_randomUniform() % delegates.length];
-                    if (_randomChance(8)) delegatee = address(0);
+                    address delegate = delegates[_randomUniform() % delegates.length];
                     vm.prank(delegator);
-                    erc20Votes.delegate(delegatee);
+                    erc20Votes.delegate(delegate);
                 }
                 if (_randomChance(4)) _advanceBlockNumber();
                 if (_randomChance(2)) {
@@ -114,7 +113,7 @@ contract ERC20VotesTest is SoladyTest {
                     erc20Votes.mint(account, amount);
                 }
                 if (_randomChance(4)) _advanceBlockNumber();
-                if (_randomChance(16)) _checkVoteInvariants(accounts, delegates);
+                if (_randomChance(8)) _checkVoteInvariants(accounts, delegates);
             } while (!_randomChance(4));
             _checkVoteInvariants(accounts, delegates);
         }
@@ -136,9 +135,21 @@ contract ERC20VotesTest is SoladyTest {
                 assertLe(erc20Votes.getVotes(delegates[j]), totalBalanceForDelegate);
             }
             totalVotes += erc20Votes.getVotes(address(0));
-            uint256 totalVotesSupply = erc20Votes.getTotalVotesSupply();
-            assertLe(totalVotes, totalVotesSupply);
-            assertEq(totalVotesSupply, erc20Votes.totalSupply());
+
+            assertLe(totalVotes, erc20Votes.getTotalVotesSupply());
+            assertEq(erc20Votes.getTotalVotesSupply(), erc20Votes.totalSupply());
+
+            for (uint256 j; j != delegates.length; ++j) {
+                uint256 checkpointCount = erc20Votes.checkpointCount(delegates[j]);
+                if (_randomChance(2) && checkpointCount != 0) {
+                    uint256 i = _bound(_random(), 0, checkpointCount - 1);
+                    erc20Votes.checkpointAt(delegates[j], i);
+                } else if (checkpointCount != 0) {
+                    uint256 i = _bound(_random(), checkpointCount, checkpointCount + 10);
+                    vm.expectRevert(ERC20Votes.ERC5805VoteCheckpointIndexOutOfBounds.selector);
+                    erc20Votes.checkpointAt(delegates[j], i);
+                }
+            }
         }
     }
 

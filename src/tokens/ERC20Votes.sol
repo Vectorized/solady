@@ -204,7 +204,7 @@ abstract contract ERC20Votes is ERC20 {
         result = _delegateCheckpointsSlot(account);
         /// @solidity memory-safe-assembly
         assembly {
-            result := sload(result)
+            result := shr(208, shl(160, sload(result)))
         }
     }
 
