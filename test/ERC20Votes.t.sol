@@ -89,6 +89,7 @@ contract ERC20VotesTest is SoladyTest {
     }
 
     function testVoteInvariants(bytes32) public {
+        vm.pauseGasMetering();
         unchecked {
             _TestVoteInvariantsTemps memory t;
             t.n = 1 + (_randomUniform() & 3);
@@ -137,6 +138,7 @@ contract ERC20VotesTest is SoladyTest {
             } while (!_randomChance(4));
             _checkVoteInvariants(t);
         }
+        vm.resumeGasMetering();
     }
 
     function _checkVoteInvariants(_TestVoteInvariantsTemps memory t) internal {
@@ -188,27 +190,32 @@ contract ERC20VotesTest is SoladyTest {
         uint8 v;
         bytes32 r;
         bytes32 s;
+        bytes32 innerHash;
+        bytes32 outerHash;
+        bytes32 domainSeparator;
+        bytes32 nameHash;
+        bytes32 versionHash;
+        bytes32 domainTypeHash;
     }
 
     bytes32 internal constant _ERC5805_DELEGATION_TYPEHASH =
         keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 
     function _signDelegate(_TestDelegateBySigTemps memory t) internal view {
-        bytes32 innerHash =
+        t.innerHash =
             keccak256(abi.encode(_ERC5805_DELEGATION_TYPEHASH, t.delegatee, t.nonce, t.expiry));
-        bytes32 domainSeparator = keccak256(
+        t.domainTypeHash = keccak256(
+            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+        );
+        t.nameHash = keccak256(bytes(erc20Votes.name()));
+        t.versionHash = keccak256("1");
+        t.domainSeparator = keccak256(
             abi.encode(
-                keccak256(
-                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                ),
-                keccak256(bytes(erc20Votes.name())),
-                keccak256("1"),
-                block.chainid,
-                address(erc20Votes)
+                t.domainTypeHash, t.nameHash, t.versionHash, block.chainid, address(erc20Votes)
             )
         );
-        bytes32 outerHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, innerHash));
-        (t.v, t.r, t.s) = vm.sign(t.privateKey, outerHash);
+        t.outerHash = keccak256(abi.encodePacked("\x19\x01", t.domainSeparator, t.innerHash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.outerHash);
     }
 
     function _delegateBySig(_TestDelegateBySigTemps memory t) internal {
@@ -294,11 +301,12 @@ contract ERC20VotesTest is SoladyTest {
     }
 
     function testCheckpointDifferential(uint256 lengthSlot, uint256 n) public {
+        vm.pauseGasMetering();
         lengthSlot = uint256(keccak256(abi.encode(lengthSlot, "hehe")));
         unchecked {
-            n = _randomChance(32) ? _bound(n, 1, 70) : _bound(n, 1, 8);
+            n = _bound(n, 1, _randomChance(32) ? 70 : 8);
             _TestCheckpointTemps memory t;
-            for (uint256 i; i != n; ++i) {
+            do {
                 uint256 lastKey = _checkpointLatestKeyOriginal();
                 while (true) {
                     t.key = lastKey + _randomUniform() & 0xf;
@@ -319,10 +327,11 @@ contract ERC20VotesTest is SoladyTest {
 
                 if (_randomChance(8)) _checkCheckpoints(lengthSlot);
                 if (_randomChance(8)) _checkCheckpointUpperLookupRecent(lengthSlot);
-            }
+            } while (!_randomChance(n));
             _checkCheckpoints(lengthSlot);
             _checkCheckpointUpperLookupRecent(lengthSlot);
         }
+        vm.resumeGasMetering();
     }
 
     function _checkCheckpoints(uint256 lengthSlot) internal tempMemory {
@@ -339,9 +348,8 @@ contract ERC20VotesTest is SoladyTest {
 
     function _checkCheckpointUpperLookupRecent(uint256 lengthSlot) internal tempMemory {
         uint256 key = _bound(_randomUniform(), 0, _checkpointLatestKeyOriginal() + 3);
-        assertEq(
-            _checkpointUpperLookupRecent(lengthSlot, key), _checkpointUpperLookupRecentOriginal(key)
-        );
+        uint256 expected = _checkpointUpperLookupRecentOriginal(key);
+        assertEq(_checkpointUpperLookupRecent(lengthSlot, key), expected);
     }
 
     function _checkpointPushDiffOriginalReverts(uint256 key, uint256 amount, bool isAdd)
