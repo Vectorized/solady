@@ -232,13 +232,13 @@ abstract contract ERC20Votes is ERC20 {
         }
     }
 
-    /// @dev Returns the latest total voting supply.
-    function getTotalVotesSupply() public view virtual returns (uint256) {
+    /// @dev Returns the latest amount of total voting units.
+    function getVotesTotalSupply() public view virtual returns (uint256) {
         return _checkpointLatest(_ERC20_VOTES_MASTER_SLOT_SEED << 96);
     }
 
     /// @dev Returns the latest amount of total voting units before `timepoint`.
-    function getPastTotalVotesSupply(uint256 timepoint) public view virtual returns (uint256) {
+    function getPastVotesTotalSupply(uint256 timepoint) public view virtual returns (uint256) {
         if (timepoint >= clock()) _revertERC5805FutureLookup();
         return _checkpointUpperLookupRecent(_ERC20_VOTES_MASTER_SLOT_SEED << 96, timepoint);
     }

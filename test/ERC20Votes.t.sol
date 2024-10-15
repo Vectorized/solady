@@ -32,7 +32,7 @@ contract ERC20VotesTest is SoladyTest {
         // Minting does not automatically give one votes.
         assertEq(erc20Votes.getVotes(_ALICE), 0);
         assertEq(erc20Votes.getVotes(_BOB), 0);
-        assertEq(erc20Votes.getTotalVotesSupply(), 1 ether);
+        assertEq(erc20Votes.getVotesTotalSupply(), 1 ether);
 
         vm.expectEmit(true, true, true, true);
         emit DelegateChanged(_ALICE, address(0), _BOB);
@@ -53,6 +53,9 @@ contract ERC20VotesTest is SoladyTest {
         assertEq(erc20Votes.getVotes(_BOB), 0.7 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
 
+        uint256 oldBlockNumber = vm.getBlockNumber();
+        vm.roll(oldBlockNumber + 10);
+
         erc20Votes.burn(_ALICE, 0.1 ether);
         assertEq(erc20Votes.getVotes(_BOB), 0.6 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
@@ -67,6 +70,12 @@ contract ERC20VotesTest is SoladyTest {
         erc20Votes.delegate(_BOB);
         assertEq(erc20Votes.getVotes(_BOB), 0.9 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0 ether);
+
+        assertEq(erc20Votes.getVotesTotalSupply(), 0.9 ether);
+        assertEq(erc20Votes.getPastVotesTotalSupply(oldBlockNumber), 1 ether);
+        uint256 currentBlockNumber = vm.getBlockNumber();
+        vm.expectRevert(ERC20Votes.ERC5805FutureLookup.selector);
+        erc20Votes.getPastVotesTotalSupply(currentBlockNumber);
     }
 
     function _advanceBlockNumber() internal {
@@ -145,8 +154,8 @@ contract ERC20VotesTest is SoladyTest {
                 }
                 assertLe(erc20Votes.getVotes(t.delegates[j]), totalBalanceForDelegate);
             }
-            assertLe(totalVotes, erc20Votes.getTotalVotesSupply());
-            assertEq(erc20Votes.getTotalVotesSupply(), erc20Votes.totalSupply());
+            assertLe(totalVotes, erc20Votes.getVotesTotalSupply());
+            assertEq(erc20Votes.getVotesTotalSupply(), erc20Votes.totalSupply());
         }
         unchecked {
             for (uint256 j; j != t.delegates.length; ++j) {
