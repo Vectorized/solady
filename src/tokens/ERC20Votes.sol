@@ -179,12 +179,9 @@ abstract contract ERC20Votes is ERC20 {
             mstore(0x40, m) // Restore the free memory pointer.
             mstore(0x60, 0) // Restore the zero pointer.
             // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-            if iszero(returndatasize()) {
-                mstore(0x00, 0x15ab7ab9) // `ERC5805VoteInvalidSignature()`.
-                revert(0x1c, 0x04)
-            }
+            expiry := iszero(returndatasize()) // Reuse `expiry` to denote `ecrecover` failure.
         }
-        if (nonces(signer) != nonce) {
+        if ((nonces(signer) ^ nonce) | expiry != 0) {
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(0x00, 0x15ab7ab9) // `ERC5805VoteInvalidSignature()`.
