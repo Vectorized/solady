@@ -23,6 +23,12 @@ abstract contract ERC20Votes is ERC20 {
     /// @dev Out-of-bounds access for the checkpoints.
     error ERC5805VoteCheckpointIndexOutOfBounds();
 
+    /// @dev Arithmetic overflow when pushing a new checkpoint.
+    error ERC5805VoteCheckpointOverflow();
+
+    /// @dev Arithmetic underflow when pushing a new checkpoint.
+    error ERC5805VoteCheckpointUnderflow();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

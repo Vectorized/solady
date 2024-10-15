@@ -284,37 +284,65 @@ contract ERC20VotesTest is SoladyTest {
         uint256 newValue;
     }
 
+    function testCheckpointPush(uint256 lengthSlot) public {
+        lengthSlot = uint256(keccak256(abi.encode(lengthSlot, "hehe")));
+        uint256 key = _randomUniform() & 0xf;
+        if (_randomChance(2)) {
+            _checkpointPushDiff(lengthSlot, key, type(uint256).max - 10, true);
+            key += _randomUniform() & 0xf;
+            uint256 amount = _randomUniform() % 20;
+            if (amount <= 10) {
+                _checkpointPushDiff(lengthSlot, key, amount, true);
+                assertEq(_checkpointLatest(lengthSlot), type(uint256).max - 10 + amount);
+            } else {
+                vm.expectRevert(ERC20Votes.ERC5805VoteCheckpointOverflow.selector);
+                _checkpointPushDiff(lengthSlot, key, amount, true);
+            }
+        } else {
+            _checkpointPushDiff(lengthSlot, key, 10, true);
+            key += _randomUniform() & 0xf;
+            uint256 amount = _randomUniform() % 20;
+            if (amount <= 10) {
+                _checkpointPushDiff(lengthSlot, key, amount, false);
+                assertEq(_checkpointLatest(lengthSlot), 10 - amount);
+            } else {
+                vm.expectRevert(ERC20Votes.ERC5805VoteCheckpointUnderflow.selector);
+                _checkpointPushDiff(lengthSlot, key, amount, false);
+            }
+        }
+    }
+
     function testCheckpointDifferential(uint256 lengthSlot, uint256 n) public {
         vm.pauseGasMetering();
         lengthSlot = uint256(keccak256(abi.encode(lengthSlot, "hehe")));
-        unchecked {
-            n = _bound(n, 1, _randomChance(32) ? 70 : 8);
-            _TestCheckpointTemps memory t;
-            do {
-                uint256 lastKey = _checkpointLatestKeyOriginal();
-                while (true) {
-                    t.key = lastKey + _randomUniform() & 0xf;
-                    t.amount = _random();
-                    t.isAdd = _randomChance(2);
-                    if (!_checkpointPushDiffOriginalReverts(t.key, t.amount, t.isAdd)) break;
-                }
 
-                (t.oldValueOriginal, t.newValueOriginal) =
-                    _checkpointPushDiffOriginal(t.key, t.amount, t.isAdd);
+        n = _bound(n, 1, _randomChance(32) ? 70 : 8);
+        _TestCheckpointTemps memory t;
+        do {
+            t.key = _checkpointLatestKeyOriginal() + (_randomUniform() & 0xf);
+            t.isAdd = _randomChance(2);
+            if (t.isAdd) {
+                t.amount = _bound(_random(), 0, type(uint256).max - _checkpointLatestOriginal());
+            } else {
+                t.amount = _bound(_random(), 0, _checkpointLatestOriginal());
+            }
 
-                (t.oldValue, t.newValue) = _checkpointPushDiff(lengthSlot, t.key, t.amount, t.isAdd);
+            (t.oldValueOriginal, t.newValueOriginal) =
+                _checkpointPushDiffOriginal(t.key, t.amount, t.isAdd);
 
-                assertEq(t.oldValue, t.oldValueOriginal);
-                assertEq(t.newValue, t.newValueOriginal);
+            (t.oldValue, t.newValue) = _checkpointPushDiff(lengthSlot, t.key, t.amount, t.isAdd);
 
-                assertEq(_checkpointLatestOriginal(), _checkpointLatest(lengthSlot));
+            assertEq(t.oldValue, t.oldValueOriginal);
+            assertEq(t.newValue, t.newValueOriginal);
 
-                if (_randomChance(8)) _checkCheckpoints(lengthSlot);
-                if (_randomChance(8)) _checkCheckpointUpperLookupRecent(lengthSlot);
-            } while (!_randomChance(n));
-            _checkCheckpoints(lengthSlot);
-            _checkCheckpointUpperLookupRecent(lengthSlot);
-        }
+            assertEq(_checkpointLatestOriginal(), _checkpointLatest(lengthSlot));
+
+            if (_randomChance(8)) _checkCheckpoints(lengthSlot);
+            if (_randomChance(8)) _checkCheckpointUpperLookupRecent(lengthSlot);
+        } while (!_randomChance(n));
+
+        _checkCheckpoints(lengthSlot);
+        _checkCheckpointUpperLookupRecent(lengthSlot);
         vm.resumeGasMetering();
     }
 
@@ -334,35 +362,6 @@ contract ERC20VotesTest is SoladyTest {
         uint256 key = _bound(_randomUniform(), 0, _checkpointLatestKeyOriginal() + 3);
         uint256 expected = _checkpointUpperLookupRecentOriginal(key);
         assertEq(_checkpointUpperLookupRecent(lengthSlot, key), expected);
-    }
-
-    function _checkpointPushDiffOriginalReverts(uint256 key, uint256 amount, bool isAdd)
-        internal
-        tempMemory
-        returns (bool)
-    {
-        (bool success,) = address(this).call(
-            abi.encodeWithSignature(
-                "checkpointPushDiffOriginalCheck(uint256,uint256,bool)", key, amount, isAdd
-            )
-        );
-        return !success;
-    }
-
-    function checkpointPushDiffOriginalCheck(uint256 key, uint256 amount, bool isAdd)
-        external
-        view
-    {
-        uint256 oldValue;
-        uint256 newValue;
-        if (_trace.length == 0) {
-            newValue = isAdd ? oldValue + amount : oldValue - amount;
-        } else {
-            Checkpoint storage last = _trace[_trace.length - 1];
-            oldValue = last.value;
-            newValue = isAdd ? oldValue + amount : oldValue - amount;
-            if (last.key > key) revert("Unordered insertion");
-        }
     }
 
     function _checkpointUpperLookupRecentOriginal(uint256 key)
