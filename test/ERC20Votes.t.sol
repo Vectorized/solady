@@ -465,19 +465,15 @@ contract ERC20VotesTest is SoladyTest {
                 if eq(oldValue, address()) { oldValue := sload(not(checkpointSlot)) }
                 for {} 1 {} {
                     if iszero(isAdd) {
-                        if gt(amount, oldValue) {
-                            mstore(0x00, 0x5915f686) // `ERC5805CheckpointValueUnderflow()`.
-                            revert(0x1c, 0x04)
-                        }
                         newValue := sub(oldValue, amount)
-                        break
-                    }
-                    newValue := add(oldValue, amount)
-                    if lt(newValue, oldValue) {
-                        mstore(0x00, 0x9dbbeb75) // `ERC5805CheckpointValueOverflow()`.
+                        if iszero(gt(newValue, oldValue)) { break }
+                        mstore(0x00, 0x5915f686) // `ERC5805CheckpointValueUnderflow()`.
                         revert(0x1c, 0x04)
                     }
-                    break
+                    newValue := add(oldValue, amount)
+                    if iszero(lt(newValue, oldValue)) { break }
+                    mstore(0x00, 0x9dbbeb75) // `ERC5805CheckpointValueOverflow()`.
+                    revert(0x1c, 0x04)
                 }
                 let lastKey := and(0xffffffffffff, lastPacked)
                 if iszero(eq(lastKey, key)) {
