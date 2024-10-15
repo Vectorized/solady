@@ -74,11 +74,13 @@ contract ERC20VotesTest is SoladyTest {
     }
 
     function testVoteInvariants(bytes32) public {
-        address[] memory accounts = new address[](_bound(_randomUniform(), 1, 8));
         unchecked {
+            address[] memory accounts = new address[](1 + (_randomUniform() & 3));
+            address[] memory delegates = new address[](accounts.length + 1);
             for (uint256 i; i != accounts.length; ++i) {
                 address account = _randomUniqueHashedAddress();
                 accounts[i] = account;
+                delegates[i] = account;
                 if (!_randomChance(4)) {
                     erc20Votes.mint(account, _bound(_random(), 0, 2 ** 161 - 1));
                 }
@@ -86,7 +88,7 @@ contract ERC20VotesTest is SoladyTest {
             do {
                 if (_randomChance(2)) {
                     address delegator = accounts[_randomUniform() % accounts.length];
-                    address delegatee = accounts[_randomUniform() % accounts.length];
+                    address delegatee = delegates[_randomUniform() % delegates.length];
                     if (_randomChance(8)) delegatee = address(0);
                     vm.prank(delegator);
                     erc20Votes.delegate(delegatee);
@@ -112,17 +114,26 @@ contract ERC20VotesTest is SoladyTest {
                     erc20Votes.mint(account, amount);
                 }
                 if (_randomChance(4)) _advanceBlockNumber();
-                if (_randomChance(8)) _checkVoteInvariants(accounts);
+                if (_randomChance(16)) _checkVoteInvariants(accounts, delegates);
             } while (!_randomChance(4));
-            _checkVoteInvariants(accounts);
+            _checkVoteInvariants(accounts, delegates);
         }
     }
 
-    function _checkVoteInvariants(address[] memory accounts) internal {
+    function _checkVoteInvariants(address[] memory accounts, address[] memory delegates) internal {
         unchecked {
             uint256 totalVotes;
-            for (uint256 i; i != accounts.length; ++i) {
-                totalVotes += erc20Votes.getVotes(accounts[i]);
+            for (uint256 j; j != delegates.length; ++j) {
+                totalVotes += erc20Votes.getVotes(delegates[j]);
+            }
+            for (uint256 j; j != delegates.length; ++j) {
+                uint256 totalBalanceForDelegate;
+                for (uint256 i; i != accounts.length; ++i) {
+                    if (erc20Votes.delegates(accounts[i]) == delegates[j]) {
+                        totalBalanceForDelegate += erc20Votes.balanceOf(accounts[i]);
+                    }
+                }
+                assertLe(erc20Votes.getVotes(delegates[j]), totalBalanceForDelegate);
             }
             totalVotes += erc20Votes.getVotes(address(0));
             uint256 totalVotesSupply = erc20Votes.getTotalVotesSupply();
