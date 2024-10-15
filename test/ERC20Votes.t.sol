@@ -108,6 +108,9 @@ contract ERC20VotesTest is SoladyTest {
                     t.delegate = t.delegates[_randomUniform() % t.delegates.length];
                     vm.prank(t.delegator);
                     erc20Votes.delegate(t.delegate);
+                    if (erc20Votes.balanceOf(t.delegator) != 0 && t.delegate != address(0)) {
+                        assertGt(erc20Votes.getVotes(t.delegate), 0);
+                    }
                 }
                 if (_randomChance(4)) _advanceBlockNumber();
                 if (_randomChance(2)) {
