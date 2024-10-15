@@ -396,11 +396,10 @@ contract ERC20VotesTest is SoladyTest {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := shr(208, shl(160, sload(lengthSlot)))
             let l := 0 // Low.
-            let h := n // High.
+            let h := shr(208, shl(160, sload(lengthSlot))) // High.
             // Start the binary search nearer to the right to optimize for recent checkpoints.
-            for {} iszero(lt(n, 6)) {} {
+            for { let n := h } iszero(lt(n, 6)) {} {
                 let m := shl(4, lt(0xffff, n))
                 m := shl(shr(1, or(m, shl(3, lt(0xff, shr(m, n))))), 16)
                 m := shr(1, add(m, div(n, m)))
