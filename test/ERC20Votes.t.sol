@@ -26,8 +26,8 @@ contract ERC20VotesTest is SoladyTest {
     }
 
     function testMintTransferBurnDelegate() public {
-        uint256 amount = 1 ether;
-        erc20Votes.mint(_ALICE, amount);
+        uint256[] memory blockNumbers = new uint256[](2);
+        erc20Votes.mint(_ALICE, 1 ether);
 
         // Minting does not automatically give one votes.
         assertEq(erc20Votes.getVotes(_ALICE), 0);
@@ -53,12 +53,15 @@ contract ERC20VotesTest is SoladyTest {
         assertEq(erc20Votes.getVotes(_BOB), 0.7 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
 
-        uint256 oldBlockNumber = vm.getBlockNumber();
-        vm.roll(oldBlockNumber + 10);
+        blockNumbers[0] = vm.getBlockNumber();
+        vm.roll(blockNumbers[0] + 10);
 
         erc20Votes.burn(_ALICE, 0.1 ether);
         assertEq(erc20Votes.getVotes(_BOB), 0.6 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0.3 ether);
+
+        blockNumbers[1] = vm.getBlockNumber();
+        vm.roll(blockNumbers[1] + 10);
 
         vm.expectEmit(true, true, true, true);
         emit DelegateChanged(_CHARLIE, _DAVID, _BOB);
@@ -69,10 +72,16 @@ contract ERC20VotesTest is SoladyTest {
         vm.prank(_CHARLIE);
         erc20Votes.delegate(_BOB);
         assertEq(erc20Votes.getVotes(_BOB), 0.9 ether);
+        assertEq(erc20Votes.getPastVotes(_BOB, blockNumbers[0]), 0.7 ether);
+        assertEq(erc20Votes.getPastVotes(_BOB, blockNumbers[1]), 0.6 ether);
         assertEq(erc20Votes.getVotes(_DAVID), 0 ether);
+        assertEq(erc20Votes.getPastVotes(_DAVID, blockNumbers[0]), 0.3 ether);
+        assertEq(erc20Votes.getPastVotes(_DAVID, blockNumbers[1]), 0.3 ether);
 
         assertEq(erc20Votes.getVotesTotalSupply(), 0.9 ether);
-        assertEq(erc20Votes.getPastVotesTotalSupply(oldBlockNumber), 1 ether);
+        assertEq(erc20Votes.getPastVotesTotalSupply(blockNumbers[0]), 1 ether);
+        assertEq(erc20Votes.getPastVotesTotalSupply(blockNumbers[1]), 0.9 ether);
+
         uint256 currentBlockNumber = vm.getBlockNumber();
         vm.expectRevert(ERC20Votes.ERC5805FutureLookup.selector);
         erc20Votes.getPastVotesTotalSupply(currentBlockNumber);
