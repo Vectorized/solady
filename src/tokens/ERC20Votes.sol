@@ -21,13 +21,13 @@ abstract contract ERC20Votes is ERC20 {
     error ERC5805DelegateInvalidSignature();
 
     /// @dev Out-of-bounds access for the checkpoints.
-    error ERC5805VoteCheckpointIndexOutOfBounds();
+    error ERC5805CheckpointIndexOutOfBounds();
 
     /// @dev Arithmetic overflow when pushing a new checkpoint.
-    error ERC5805VoteCheckpointOverflow();
+    error ERC5805CheckpointValueOverflow();
 
     /// @dev Arithmetic underflow when pushing a new checkpoint.
-    error ERC5805VoteCheckpointUnderflow();
+    error ERC5805CheckpointValueUnderflow();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -222,7 +222,7 @@ abstract contract ERC20Votes is ERC20 {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(i, shr(208, shl(160, sload(lengthSlot))))) {
-                mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
+                mstore(0x00, 0x86df9d10) // `ERC5805CheckpointIndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
             let checkpointPacked := sload(add(i, lengthSlot))
@@ -346,7 +346,7 @@ abstract contract ERC20Votes is ERC20 {
             for { let n := shr(208, shl(160, lengthSlotPacked)) } 1 {} {
                 if iszero(n) {
                     if iszero(or(isAdd, iszero(amount))) {
-                        mstore(0x00, 0xef529cb2) // `ERC5805VoteCheckpointUnderflow()`.
+                        mstore(0x00, 0x5915f686) // `ERC5805CheckpointValueUnderflow()`.
                         revert(0x1c, 0x04)
                     }
                     newValue := amount
@@ -365,7 +365,7 @@ abstract contract ERC20Votes is ERC20 {
                 for {} 1 {} {
                     if iszero(isAdd) {
                         if gt(amount, oldValue) {
-                            mstore(0x00, 0xef529cb2) // `ERC5805VoteCheckpointUnderflow()`.
+                            mstore(0x00, 0x5915f686) // `ERC5805CheckpointValueUnderflow()`.
                             revert(0x1c, 0x04)
                         }
                         newValue := sub(oldValue, amount)
@@ -373,7 +373,7 @@ abstract contract ERC20Votes is ERC20 {
                     }
                     newValue := add(oldValue, amount)
                     if lt(newValue, oldValue) {
-                        mstore(0x00, 0x4a15589d) // `ERC5805VoteCheckpointOverflow()`.
+                        mstore(0x00, 0x9dbbeb75) // `ERC5805CheckpointValueOverflow()`.
                         revert(0x1c, 0x04)
                     }
                     break

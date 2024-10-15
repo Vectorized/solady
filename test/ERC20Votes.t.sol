@@ -156,7 +156,7 @@ contract ERC20VotesTest is SoladyTest {
                     erc20Votes.checkpointAt(t.delegates[j], i);
                 } else if (checkpointCount != 0) {
                     uint256 i = _bound(_random(), checkpointCount, checkpointCount + 10);
-                    vm.expectRevert(ERC20Votes.ERC5805VoteCheckpointIndexOutOfBounds.selector);
+                    vm.expectRevert(ERC20Votes.ERC5805CheckpointIndexOutOfBounds.selector);
                     erc20Votes.checkpointAt(t.delegates[j], i);
                 }
             }
@@ -295,7 +295,7 @@ contract ERC20VotesTest is SoladyTest {
                 _checkpointPushDiff(lengthSlot, key, amount, true);
                 assertEq(_checkpointLatest(lengthSlot), type(uint256).max - 10 + amount);
             } else {
-                vm.expectRevert(ERC20Votes.ERC5805VoteCheckpointOverflow.selector);
+                vm.expectRevert(ERC20Votes.ERC5805CheckpointValueOverflow.selector);
                 _checkpointPushDiff(lengthSlot, key, amount, true);
             }
         } else {
@@ -306,7 +306,7 @@ contract ERC20VotesTest is SoladyTest {
                 _checkpointPushDiff(lengthSlot, key, amount, false);
                 assertEq(_checkpointLatest(lengthSlot), 10 - amount);
             } else {
-                vm.expectRevert(ERC20Votes.ERC5805VoteCheckpointUnderflow.selector);
+                vm.expectRevert(ERC20Votes.ERC5805CheckpointValueUnderflow.selector);
                 _checkpointPushDiff(lengthSlot, key, amount, false);
             }
         }
@@ -426,7 +426,7 @@ contract ERC20VotesTest is SoladyTest {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(i, shr(208, shl(160, sload(lengthSlot))))) {
-                mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
+                mstore(0x00, 0x86df9d10) // `ERC5805CheckpointIndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
             let checkpointPacked := sload(add(i, lengthSlot))
@@ -447,7 +447,7 @@ contract ERC20VotesTest is SoladyTest {
             for { let n := shr(208, shl(160, lengthSlotPacked)) } 1 {} {
                 if iszero(n) {
                     if iszero(or(isAdd, iszero(amount))) {
-                        mstore(0x00, 0xef529cb2) // `ERC5805VoteCheckpointUnderflow()`.
+                        mstore(0x00, 0x5915f686) // `ERC5805CheckpointValueUnderflow()`.
                         revert(0x1c, 0x04)
                     }
                     newValue := amount
@@ -466,7 +466,7 @@ contract ERC20VotesTest is SoladyTest {
                 for {} 1 {} {
                     if iszero(isAdd) {
                         if gt(amount, oldValue) {
-                            mstore(0x00, 0xef529cb2) // `ERC5805VoteCheckpointUnderflow()`.
+                            mstore(0x00, 0x5915f686) // `ERC5805CheckpointValueUnderflow()`.
                             revert(0x1c, 0x04)
                         }
                         newValue := sub(oldValue, amount)
@@ -474,7 +474,7 @@ contract ERC20VotesTest is SoladyTest {
                     }
                     newValue := add(oldValue, amount)
                     if lt(newValue, oldValue) {
-                        mstore(0x00, 0x4a15589d) // `ERC5805VoteCheckpointOverflow()`.
+                        mstore(0x00, 0x9dbbeb75) // `ERC5805CheckpointValueOverflow()`.
                         revert(0x1c, 0x04)
                     }
                     break
