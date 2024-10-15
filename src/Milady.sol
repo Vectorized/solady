@@ -14,6 +14,7 @@ import "./auth/OwnableRoles.sol";
 import "./auth/EnumerableRoles.sol";
 import "./tokens/ERC1155.sol";
 import "./tokens/ERC20.sol";
+import "./tokens/ERC20Votes.sol";
 import "./tokens/ERC2981.sol";
 import "./tokens/ERC4626.sol";
 import "./tokens/ERC6909.sol";
