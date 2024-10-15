@@ -319,7 +319,7 @@ contract ERC20VotesTest is SoladyTest {
         n = _bound(n, 1, _randomChance(32) ? 70 : 8);
         _TestCheckpointTemps memory t;
         do {
-            t.key = _checkpointLatestKeyOriginal() + (_randomUniform() & 0xf);
+            t.key += _randomUniform() & 0xf;
             t.isAdd = _randomChance(2);
             if (t.isAdd) {
                 t.amount = _bound(_random(), 0, type(uint256).max - _checkpointLatestOriginal());
@@ -334,7 +334,8 @@ contract ERC20VotesTest is SoladyTest {
 
             assertEq(t.oldValue, t.oldValueOriginal);
             assertEq(t.newValue, t.newValueOriginal);
-
+            assertEq(t.key, _checkpointLatestKeyOriginal());
+            assertEq(t.key, _checkpointLatestKey(lengthSlot));
             assertEq(_checkpointLatestOriginal(), _checkpointLatest(lengthSlot));
 
             if (_randomChance(8)) _checkCheckpoints(lengthSlot);
@@ -407,6 +408,14 @@ contract ERC20VotesTest is SoladyTest {
 
     function _checkpointLatestOriginal() private view returns (uint256) {
         return _trace.length == 0 ? 0 : _trace[_trace.length - 1].value;
+    }
+
+    function _checkpointLatestKey(uint256 lengthSlot) private view returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := shr(208, shl(160, sload(lengthSlot)))
+            if result { result := and(0xffffffffffff, sload(add(sub(result, 1), lengthSlot))) }
+        }
     }
 
     function _checkpointAt(uint256 lengthSlot, uint256 i)
