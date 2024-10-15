@@ -234,10 +234,10 @@ contract ERC20VotesTest is SoladyTest {
         uint256 timestamp = _bound(_randomUniform(), 10, 2 ** 32 - 1);
         vm.warp(timestamp);
         if (timestamp > t.expiry) {
-            vm.expectRevert(ERC20Votes.ERC5805VoteSignatureExpired.selector);
+            vm.expectRevert(ERC20Votes.ERC5805DelegateSignatureExpired.selector);
             _delegateBySig(t);
         } else if (t.nonce != erc20Votes.nonces(t.signer)) {
-            vm.expectRevert(ERC20Votes.ERC5805VoteInvalidSignature.selector);
+            vm.expectRevert(ERC20Votes.ERC5805DelegateInvalidSignature.selector);
             _delegateBySig(t);
         } else {
             _delegateBySig(t);
@@ -421,11 +421,10 @@ contract ERC20VotesTest is SoladyTest {
                 mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
-            let checkpointSlot := add(i, lengthSlot)
-            let checkpointPacked := sload(checkpointSlot)
+            let checkpointPacked := sload(add(i, lengthSlot))
             checkpointClock := and(0xffffffffffff, checkpointPacked)
             checkpointValue := shr(96, checkpointPacked)
-            if eq(checkpointValue, address()) { checkpointValue := sload(not(checkpointSlot)) }
+            if eq(checkpointValue, address()) { checkpointValue := sload(not(add(i, lengthSlot))) }
         }
     }
 
@@ -496,9 +495,9 @@ contract ERC20VotesTest is SoladyTest {
         assembly {
             result := shr(208, shl(160, sload(lengthSlot)))
             if result {
-                let checkpointSlot := add(sub(result, 1), lengthSlot)
-                result := shr(96, sload(checkpointSlot))
-                if eq(result, address()) { result := sload(not(checkpointSlot)) }
+                lengthSlot := add(sub(result, 1), lengthSlot) // Reuse for `checkpointSlot`.
+                result := shr(96, sload(lengthSlot))
+                if eq(result, address()) { result := sload(not(lengthSlot)) }
             }
         }
     }

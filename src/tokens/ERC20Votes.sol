@@ -14,11 +14,11 @@ abstract contract ERC20Votes is ERC20 {
     /// @dev The timepoint is in the future.
     error ERC5805FutureLookup();
 
-    /// @dev The ERC5805 signature to delegate votes has expired.
-    error ERC5805VoteSignatureExpired();
+    /// @dev The ERC5805 signature to set a delegate has expired.
+    error ERC5805DelegateSignatureExpired();
 
-    /// @dev The ERC5805 signature to delegate votes is invalid.
-    error ERC5805VoteInvalidSignature();
+    /// @dev The ERC5805 signature to set a delegate is invalid.
+    error ERC5805DelegateInvalidSignature();
 
     /// @dev Out-of-bounds access for the checkpoints.
     error ERC5805VoteCheckpointIndexOutOfBounds();
@@ -152,7 +152,7 @@ abstract contract ERC20Votes is ERC20 {
         /// @solidity memory-safe-assembly
         assembly {
             if gt(timestamp(), expiry) {
-                mstore(0x00, 0x87044139) // `ERC5805VoteSignatureExpired()`.
+                mstore(0x00, 0x3480e9e1) // `ERC5805DelegateSignatureExpired()`.
                 revert(0x1c, 0x04)
             }
             let m := mload(0x40)
@@ -184,7 +184,7 @@ abstract contract ERC20Votes is ERC20 {
         if ((nonces(signer) ^ nonce) | expiry != 0) {
             /// @solidity memory-safe-assembly
             assembly {
-                mstore(0x00, 0x15ab7ab9) // `ERC5805VoteInvalidSignature()`.
+                mstore(0x00, 0x1838d95c) // `ERC5805DelegateInvalidSignature()`.
                 revert(0x1c, 0x04)
             }
         }
@@ -219,11 +219,10 @@ abstract contract ERC20Votes is ERC20 {
                 mstore(0x00, 0x30607f04) // `ERC5805VoteCheckpointIndexOutOfBounds()`.
                 revert(0x1c, 0x04)
             }
-            let checkpointSlot := add(i, lengthSlot)
-            let checkpointPacked := sload(checkpointSlot)
+            let checkpointPacked := sload(add(i, lengthSlot))
             checkpointClock := and(0xffffffffffff, checkpointPacked)
             checkpointValue := shr(96, checkpointPacked)
-            if eq(checkpointValue, address()) { checkpointValue := sload(not(checkpointSlot)) }
+            if eq(checkpointValue, address()) { checkpointValue := sload(not(add(i, lengthSlot))) }
         }
     }
 
@@ -397,9 +396,9 @@ abstract contract ERC20Votes is ERC20 {
         assembly {
             result := shr(208, shl(160, sload(lengthSlot)))
             if result {
-                let checkpointSlot := add(sub(result, 1), lengthSlot)
-                result := shr(96, sload(checkpointSlot))
-                if eq(result, address()) { result := sload(not(checkpointSlot)) }
+                lengthSlot := add(sub(result, 1), lengthSlot) // Reuse for `checkpointSlot`.
+                result := shr(96, sload(lengthSlot))
+                if eq(result, address()) { result := sload(not(lengthSlot)) }
             }
         }
     }
