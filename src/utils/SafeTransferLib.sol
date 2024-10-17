@@ -8,8 +8,6 @@ pragma solidity ^0.8.4;
 ///
 /// @dev Note:
 /// - For ETH transfers, please use `forceSafeTransferETH` for DoS protection.
-/// - For ERC20s, this implementation won't check that a token has code,
-///   responsibility is delegated to the caller.
 library SafeTransferLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -202,15 +200,12 @@ library SafeTransferLib {
             mstore(0x40, to) // Store the `to` argument.
             mstore(0x2c, shl(96, from)) // Store the `from` argument.
             mstore(0x0c, 0x23b872dd000000000000000000000000) // `transferFrom(address,address,uint256)`.
-            // Perform the transfer, reverting upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
-                )
-            ) {
-                mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
-                revert(0x1c, 0x04)
+            let success := call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
+            if iszero(and(eq(mload(0x00), 1), success)) {
+                if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
+                    mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
@@ -231,11 +226,10 @@ library SafeTransferLib {
             mstore(0x40, to) // Store the `to` argument.
             mstore(0x2c, shl(96, from)) // Store the `from` argument.
             mstore(0x0c, 0x23b872dd000000000000000000000000) // `transferFrom(address,address,uint256)`.
-            success :=
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
-                )
+            success := call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
+            if iszero(and(eq(mload(0x00), 1), success)) {
+                success := lt(or(iszero(extcodesize(token)), returndatasize()), success)
+            }
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
         }
@@ -268,14 +262,12 @@ library SafeTransferLib {
             mstore(0x00, 0x23b872dd) // `transferFrom(address,address,uint256)`.
             amount := mload(0x60) // The `amount` is already at 0x60. We'll need to return it.
             // Perform the transfer, reverting upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
-                )
-            ) {
-                mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
-                revert(0x1c, 0x04)
+            let success := call(gas(), token, 0, 0x1c, 0x64, 0x00, 0x20)
+            if iszero(and(eq(mload(0x00), 1), success)) {
+                if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
+                    mstore(0x00, 0x7939f424) // `TransferFromFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
@@ -291,14 +283,12 @@ library SafeTransferLib {
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0xa9059cbb000000000000000000000000) // `transfer(address,uint256)`.
             // Perform the transfer, reverting upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
-                )
-            ) {
-                mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
-                revert(0x1c, 0x04)
+            let success := call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
+            if iszero(and(eq(mload(0x00), 1), success)) {
+                if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
+                    mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
@@ -325,14 +315,12 @@ library SafeTransferLib {
             amount := mload(0x34) // The `amount` is already at 0x34. We'll need to return it.
             mstore(0x00, 0xa9059cbb000000000000000000000000) // `transfer(address,uint256)`.
             // Perform the transfer, reverting upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
-                )
-            ) {
-                mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
-                revert(0x1c, 0x04)
+            let success := call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
+            if iszero(and(eq(mload(0x00), 1), success)) {
+                if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
+                    mstore(0x00, 0x90b8ec18) // `TransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
@@ -346,15 +334,12 @@ library SafeTransferLib {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
-            // Perform the approval, reverting upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
-                )
-            ) {
-                mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
-                revert(0x1c, 0x04)
+            let success := call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
+            if iszero(and(eq(mload(0x00), 1), success)) {
+                if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
+                    mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
+                    revert(0x1c, 0x04)
+                }
             }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
@@ -371,25 +356,22 @@ library SafeTransferLib {
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
             // Perform the approval, retrying upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
-                )
-            ) {
-                mstore(0x34, 0) // Store 0 for the `amount`.
-                mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
-                pop(call(gas(), token, 0, 0x10, 0x44, codesize(), 0x00)) // Reset the approval.
-                mstore(0x34, amount) // Store back the original `amount`.
-                // Retry the approval, reverting upon failure.
-                if iszero(
-                    and(
-                        or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                        call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
-                    )
-                ) {
-                    mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
-                    revert(0x1c, 0x04)
+            let success := call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
+            if iszero(and(eq(mload(0x00), 1), success)) {
+                if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
+                    mstore(0x34, 0) // Store 0 for the `amount`.
+                    mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
+                    pop(call(gas(), token, 0, 0x10, 0x44, codesize(), 0x00)) // Reset the approval.
+                    mstore(0x34, amount) // Store back the original `amount`.
+                    // Retry the approval, reverting upon failure.
+                    success := call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
+                    if iszero(and(eq(mload(0x00), 1), success)) {
+                        // Check the `extcodesize` again just in case the token selfdestructs lol.
+                        if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
+                            mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
+                            revert(0x1c, 0x04)
+                        }
+                    }
                 }
             }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
