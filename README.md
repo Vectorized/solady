@@ -43,6 +43,7 @@ auth
 tokens
 ├─ WETH — "Simple Wrapped Ether implementation"
 ├─ ERC20 — "Simple ERC20 + EIP-2612 implementation"
+├─ ERC20Votes — "ERC20 with votes based on ERC5805 and ERC6372"
 ├─ ERC4626 — "Simple ERC4626 tokenized Vault implementation"
 ├─ ERC721 — "Simple ERC721 implementation with storage hitchhiking"
 ├─ ERC2981 — "Simple ERC2981 NFT Royalty Standard implementation"
