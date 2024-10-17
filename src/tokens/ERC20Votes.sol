@@ -441,11 +441,9 @@ abstract contract ERC20Votes is ERC20 {
                 }
                 h := m
             }
-            if h {
-                let checkpointSlot := add(sub(h, 1), lengthSlot)
-                result := shr(96, sload(checkpointSlot))
-                if eq(result, address()) { result := sload(not(checkpointSlot)) }
-            }
+            let checkpointSlot := add(sub(h, 1), lengthSlot)
+            result := mul(iszero(iszero(h)), shr(96, sload(checkpointSlot)))
+            if eq(result, address()) { result := sload(not(checkpointSlot)) }
         }
     }
 
