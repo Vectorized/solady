@@ -358,21 +358,19 @@ library SafeTransferLib {
             // Perform the approval, retrying upon failure.
             let success := call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
             if iszero(and(eq(mload(0x00), 1), success)) {
-                let noCode := iszero(extcodesize(token))
-                if iszero(lt(or(noCode, returndatasize()), success)) {
+                if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
                     mstore(0x34, 0) // Store 0 for the `amount`.
                     mstore(0x00, 0x095ea7b3000000000000000000000000) // `approve(address,uint256)`.
                     pop(call(gas(), token, 0, 0x10, 0x44, codesize(), 0x00)) // Reset the approval.
                     mstore(0x34, amount) // Store back the original `amount`.
                     // Retry the approval, reverting upon failure.
-                    if iszero(
-                        and(
-                            or(eq(mload(0x00), 1), iszero(or(noCode, returndatasize()))),
-                            call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
-                        )
-                    ) {
-                        mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
-                        revert(0x1c, 0x04)
+                    success := call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
+                    if iszero(and(eq(mload(0x00), 1), success)) {
+                        // Check the `extcodesize` again just in case the token selfdestructs lol.
+                        if iszero(lt(or(iszero(extcodesize(token)), returndatasize()), success)) {
+                            mstore(0x00, 0x3e3f8f73) // `ApproveFailed()`.
+                            revert(0x1c, 0x04)
+                        }
                     }
                 }
             }
