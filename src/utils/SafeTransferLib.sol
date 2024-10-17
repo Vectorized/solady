@@ -424,7 +424,12 @@ library SafeTransferLib {
             let p := PERMIT2
             let exists := eq(chainid(), 1)
             if iszero(exists) { exists := iszero(iszero(extcodesize(p))) }
-            if iszero(and(call(gas(), p, 0, add(m, 0x10), 0x84, codesize(), 0x00), exists)) {
+            if iszero(
+                and(
+                    call(gas(), p, 0, add(m, 0x10), 0x84, codesize(), 0x00),
+                    lt(iszero(extcodesize(token)), exists)
+                )
+            ) {
                 mstore(0x00, 0x7939f4248757f0fd) // `TransferFromFailed()` or `Permit2AmountOverflow()`.
                 revert(add(0x18, shl(2, iszero(iszero(shr(160, amount))))), 0x04)
             }
@@ -532,7 +537,9 @@ library SafeTransferLib {
             mstore(add(m, 0x140), r)
             mstore(add(m, 0x160), s)
             mstore(add(m, 0x180), shl(248, v))
-            if iszero(call(gas(), p, 0, add(m, 0x1c), 0x184, codesize(), 0x00)) {
+            if iszero(
+                mul(extcodesize(token), call(gas(), p, 0, add(m, 0x1c), 0x184, codesize(), 0x00))
+            ) {
                 mstore(0x00, 0x6b836e6b) // `Permit2Failed()`.
                 revert(0x1c, 0x04)
             }
