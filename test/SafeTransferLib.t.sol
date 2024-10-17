@@ -961,6 +961,35 @@ contract SafeTransferLibTest is SoladyTest {
         vm.stopPrank();
     }
 
+    function testPermit2AnythingWithNonContractReverts() public {
+        _TestTemps memory t;
+        t.token = _randomHashedAddress();
+        t.deadline = block.timestamp;
+        (t.signer, t.privateKey) = _randomSigner();
+        t.spender = _randomNonZeroAddress();
+        t.amount = type(uint160).max;
+
+        t.permit.details.token = address(t.token);
+        t.permit.details.amount = uint160(t.amount);
+        t.permit.details.expiration = type(uint48).max;
+        (,, t.permit.details.nonce) =
+            IPermit2(_PERMIT2).allowance(t.signer, address(t.token), t.spender);
+        t.permit.spender = t.spender;
+        t.permit.sigDeadline = t.deadline;
+
+        _generatePermitSignatureRaw(t);
+        vm.expectRevert(SafeTransferLib.Permit2Failed.selector);
+        this.simplePermit2(t);
+        vm.expectRevert(SafeTransferLib.Permit2Failed.selector);
+        this.permit2(t);
+        t.to = _randomNonZeroAddress();
+
+        vm.startPrank(t.spender);
+        vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
+        this.permit2TransferFrom(address(t.token), t.signer, t.to, t.amount);
+        vm.stopPrank();
+    }
+
     function testPermit2TransferFromInvalidAmount(uint256) public {
         _TestTemps memory t;
         t.token = address(erc20);
