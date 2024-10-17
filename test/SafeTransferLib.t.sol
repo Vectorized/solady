@@ -544,7 +544,7 @@ contract SafeTransferLibTest is SoladyTest {
             return;
         }
         vm.expectRevert(SafeTransferLib.ApproveFailed.selector);
-        this.safeApprove(nonContract, _brutalized(to), amount);
+        this.safeApprove(nonContract, to, amount);
     }
 
     function testApproveWithRetryWithNonContractReverts(
