@@ -108,6 +108,16 @@ contract SafeTransferLibTest is SoladyTest {
         vm.etch(_PERMIT2, bytecode);
     }
 
+    function testSuccessTrick(bool success, uint256 extCodeSize, uint256 returnDataSize) public {
+        bool expected = success && extCodeSize != 0 && returnDataSize == 0;
+        bool computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            computed := lt(or(iszero(extCodeSize), returnDataSize), success)
+        }
+        assertEq(computed, expected);
+    }
+
     function testTransferWithMissingReturn() public {
         verifySafeTransfer(address(missingReturn), address(0xBEEF), 1e18, _SUCCESS);
     }
@@ -120,8 +130,9 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransfer(address(returnsTooMuch), address(0xBEEF), 1e18, _SUCCESS);
     }
 
-    function testTransferWithNonContract() public {
-        SafeTransferLib.safeTransfer(address(0xBADBEEF), address(0xBEEF), 1e18);
+    function testTransferWithNonContractReverts() public {
+        vm.expectRevert(SafeTransferLib.TransferFailed.selector);
+        this.safeTransfer(address(0xBADBEEF), address(0xBEEF), 1e18);
     }
 
     function testTransferFromWithMissingReturn() public {
@@ -140,8 +151,15 @@ contract SafeTransferLibTest is SoladyTest {
         );
     }
 
-    function testTransferFromWithNonContract() public {
-        SafeTransferLib.safeTransferFrom(address(0xBADBEEF), address(0xFEED), address(0xBEEF), 1e18);
+    function testTransferFromWithNonContractReverts() public {
+        vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
+        this.safeTransferFrom(address(0xBADBEEF), address(0xFEED), address(0xBEEF), 1e18);
+    }
+
+    function safeTransferFrom(address token, address from, address to, uint256 amount) public {
+        SafeTransferLib.safeTransferFrom(
+            _brutalized(token), _brutalized(from), _brutalized(to), amount
+        );
     }
 
     function testApproveWithMissingReturn() public {
@@ -156,12 +174,22 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeApprove(address(returnsTooMuch), address(0xBEEF), 1e18, _SUCCESS);
     }
 
-    function testApproveWithNonContract() public {
-        SafeTransferLib.safeApprove(address(0xBADBEEF), address(0xBEEF), 1e18);
+    function testApproveWithNonContractReverts() public {
+        vm.expectRevert(SafeTransferLib.ApproveFailed.selector);
+        this.safeApprove(address(0xBADBEEF), address(0xBEEF), 1e18);
     }
 
-    function testApproveWithRetryWithNonContract() public {
-        SafeTransferLib.safeApproveWithRetry(address(0xBADBEEF), address(0xBEEF), 1e18);
+    function safeApprove(address token, address to, uint256 amount) public {
+        SafeTransferLib.safeApprove(token, to, amount);
+    }
+
+    function testApproveWithRetryWithNonContractReverts() public {
+        vm.expectRevert(SafeTransferLib.ApproveFailed.selector);
+        this.safeApproveWithRetry(address(0xBADBEEF), address(0xBEEF), 1e18);
+    }
+
+    function safeApproveWithRetry(address token, address to, uint256 amount) public {
+        SafeTransferLib.safeApproveWithRetry(token, to, amount);
     }
 
     function testTransferETH() public {
@@ -441,8 +469,13 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransfer(address(returnsRawBytes), to, amount, _SUCCESS);
     }
 
-    function testTransferWithNonContract(bytes32, address to, uint256 amount) public {
-        SafeTransferLib.safeTransfer(_brutalized(_randomHashedAddress()), _brutalized(to), amount);
+    function testTransferWithNonContractReverts(bytes32, address to, uint256 amount) public {
+        vm.expectRevert(SafeTransferLib.TransferFailed.selector);
+        this.safeTransfer(_randomHashedAddress(), to, amount);
+    }
+
+    function safeTransfer(address token, address to, uint256 amount) public {
+        SafeTransferLib.safeTransfer(token, to, amount);
     }
 
     function testTransferETHToContractWithoutFallbackReverts() public {
@@ -473,7 +506,7 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransferFrom(address(returnsRawBytes), from, to, amount, _SUCCESS);
     }
 
-    function testTransferFromWithNonContract(
+    function testTransferFromWithNonContractReverts(
         address nonContract,
         address from,
         address to,
@@ -482,8 +515,8 @@ contract SafeTransferLibTest is SoladyTest {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
             return;
         }
-
-        SafeTransferLib.safeTransferFrom(nonContract, _brutalized(from), _brutalized(to), amount);
+        vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
+        this.safeTransferFrom(nonContract, from, to, amount);
     }
 
     function testApproveWithMissingReturn(address to, uint256 amount) public {
@@ -504,22 +537,26 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeApprove(address(returnsRawBytes), to, amount, _SUCCESS);
     }
 
-    function testApproveWithNonContract(address nonContract, address to, uint256 amount) public {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
-            return;
-        }
-
-        SafeTransferLib.safeApprove(nonContract, _brutalized(to), amount);
-    }
-
-    function testApproveWithRetryWithNonContract(address nonContract, address to, uint256 amount)
+    function testApproveWithNonContractReverts(address nonContract, address to, uint256 amount)
         public
     {
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
             return;
         }
+        vm.expectRevert(SafeTransferLib.ApproveFailed.selector);
+        this.safeApprove(nonContract, _brutalized(to), amount);
+    }
 
-        SafeTransferLib.safeApproveWithRetry(nonContract, _brutalized(to), amount);
+    function testApproveWithRetryWithNonContractReverts(
+        address nonContract,
+        address to,
+        uint256 amount
+    ) public {
+        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
+            return;
+        }
+        vm.expectRevert(SafeTransferLib.ApproveFailed.selector);
+        this.safeApproveWithRetry(nonContract, to, amount);
     }
 
     function testApproveWithRetry(address to, uint256 amount0, uint256 amount1) public {
