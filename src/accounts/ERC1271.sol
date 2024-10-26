@@ -27,15 +27,15 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bytes4 result)
     {
+        // For automatic detection that the smart account supports the nested EIP-712 workflow,
+        // See: https://eips.ethereum.org/EIPS/eip-7739.
+        // If `hash` is `0x7739...7739`, returns `bytes4(0x77390001)`.
+        // The returned number MAY be increased in future ERC7739 versions.
         unchecked {
-            // For automatic detection that the smart account supports the nested EIP-712 workflow,
-            // See: https://eips.ethereum.org/EIPS/eip-7739.
-            // If `hash` is `0x7739...7739`, returns `bytes4(0x77390001)`.
             if (uint256(hash) == ~(msg.data.length >> msg.data.length) / 0xffff * 0x7739) {
                 return 0x77390001;
-            } // This number should be increased for future ERC7739 versions.
+            }
         }
-
         bool success = _erc1271IsValidSignature(hash, _erc1271UnwrapSignature(signature));
         /// @solidity memory-safe-assembly
         assembly {
