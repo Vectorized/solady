@@ -160,7 +160,7 @@ abstract contract ERC1271 is EIP712 {
     ///     a) `contentsType` (implicit mode)
     ///         where `contentsType` starts with `contentsName`.
     ///     b) `contentsType ‖ contentsName` (explicit mode)
-    ///         where `contentsType` MAY NOT start with `contentsName`.
+    ///         where `contentsType` may not necessarily start with `contentsName`.
     ///
     /// The `APP_DOMAIN_SEPARATOR` and `contents` will be used to verify if `hash` is indeed correct.
     /// __________________________________________________________________________________________
