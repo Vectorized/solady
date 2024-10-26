@@ -232,7 +232,10 @@ contract ERC1271Test is SoladyTest {
         _testIsValidSignature("ABC(bytes32 stuff)", true);
         _testIsValidSignature("C(bytes32 stuff)", true);
 
+        _testIsValidSignature("A(B b)B(bytes32 stuff)", "C", true, true);
         _testIsValidSignature("A(B b)B(bytes32 stuff)", "B", true, true);
+        _testIsValidSignature("A(B b)B(bytes32 stuff)", "", true, false);
+        _testIsValidSignature("A(B b)B(bytes32 stuff)", "c", true, false);
 
         _testIsValidSignature("(bytes32 stuff)", false);
         _testIsValidSignature("contents(bytes32 stuff)", false);
