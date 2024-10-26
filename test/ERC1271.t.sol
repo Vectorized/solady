@@ -24,6 +24,8 @@ contract ERC1271Test is SoladyTest {
 
     address internal _proxy;
 
+    bool internal _fixChance;
+
     // By right, this should be the keccak256 of some long-ass string:
     // (e.g. `keccak256("Parent(bytes32 childHash,Mail child)Mail(Person from,Person to,string contents)Person(string name,address wallet)")`).
     // But I'm lazy and will use something randomish here.
@@ -221,6 +223,7 @@ contract ERC1271Test is SoladyTest {
 
     function testIsValidSignature() public {
         vm.txGasPrice(10);
+        _fixChance = true;
 
         _testIsValidSignature("Contents(bytes32 stuff)", true);
         _testIsValidSignature("ABC(bytes32 stuff)", true);
@@ -269,7 +272,7 @@ contract ERC1271Test is SoladyTest {
             contentsDescription,
             uint16(contentsDescription.length)
         );
-        if (_randomChance(4)) signature = _erc6492Wrap(signature);
+        if (!_fixChance && _randomChance(4)) signature = _erc6492Wrap(signature);
 
         assertEq(
             t.account.isValidSignature(_toContentsHash(contents), signature),
@@ -278,10 +281,10 @@ contract ERC1271Test is SoladyTest {
     }
 
     function _testIsValidSignature(bytes memory contentsType, bool success) internal {
-        if (_randomChance(2)) {
-            _testIsValidSignature(contentsType, _contentsName(contentsType), success);
-        } else {
+        if (_fixChance || _randomChance(2)) {
             _testIsValidSignature(contentsType, "", success);
+        } else {
+            _testIsValidSignature(contentsType, _contentsName(contentsType), success);
         }
     }
 
