@@ -460,28 +460,23 @@ contract ERC4337Test is SoladyTest {
     }
 
     struct _AccountDomainStruct {
-        bytes1 fields;
         string name;
         string version;
         uint256 chainId;
         address verifyingContract;
         bytes32 salt;
-        uint256[] extensions;
     }
 
     function _accountDomainStructFields() internal view returns (bytes memory) {
         _AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
-            account.eip712Domain();
+        (, t.name, t.version, t.chainId, t.verifyingContract, t.salt,) = account.eip712Domain();
 
         return abi.encode(
-            t.fields,
             keccak256(bytes(t.name)),
             keccak256(bytes(t.version)),
             t.chainId,
             t.verifyingContract,
-            t.salt,
-            keccak256(abi.encodePacked(t.extensions))
+            t.salt
         );
     }
 
@@ -490,7 +485,7 @@ contract ERC4337Test is SoladyTest {
             abi.encodePacked(
                 abi.encode(
                     keccak256(
-                        "TypedDataSign(Contents contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)Contents(bytes32 stuff)"
+                        "TypedDataSign(Contents contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)Contents(bytes32 stuff)"
                     ),
                     contents
                 ),
