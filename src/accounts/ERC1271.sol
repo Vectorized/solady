@@ -242,9 +242,9 @@ abstract contract ERC1271 is EIP712 {
                 for {} iszero(eq(byte(0, mload(p)), 40)) { p := add(p, 1) } {
                     d := or(shr(byte(0, mload(p)), 0x120100000001), d) // Has a byte in ", )\x00".
                 }
-                mstore(p, " contents,string name,string ver") // Store the rest of the encoding.
-                mstore(add(p, 0x20), "sion,uint256 chainId,address ver")
-                mstore(add(p, 0x40), "ifyingContract,bytes32 salt)")
+                mstore(p, " contents,string name,string") // Store the rest of the encoding.
+                mstore(add(p, 0x1c), " version,uint256 chainId,address")
+                mstore(add(p, 0x3c), " verifyingContract,bytes32 salt)")
                 p := add(p, 0x5c)
                 calldatacopy(p, add(o, 0x40), c) // Copy `contentsType`.
                 // Fill in the missing fields of the `TypedDataSign`.
