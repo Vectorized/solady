@@ -27,6 +27,15 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bytes4 result)
     {
+        unchecked {
+            // For automatic detection that the smart account supports the nested EIP-712 workflow,
+            // See: https://eips.ethereum.org/EIPS/eip-7739.
+            // If `hash` is `0x7739...7739`, returns `bytes4(0x77390001)`.
+            if (uint256(hash) == ~(msg.data.length >> msg.data.length) / 0xffff * 0x7739) {
+                return 0x77390001;
+            } // This number should be increased for future ERC7739 versions.
+        }
+
         bool success = _erc1271IsValidSignature(hash, _erc1271UnwrapSignature(signature));
         /// @solidity memory-safe-assembly
         assembly {
@@ -34,16 +43,6 @@ abstract contract ERC1271 is EIP712 {
             // We use `0xffffffff` for invalid, in convention with the reference implementation.
             result := shl(224, or(0x1626ba7e, sub(0, iszero(success))))
         }
-    }
-
-    /// @dev For automatic detection that the smart account supports the nested EIP-712 workflow.
-    /// By default, it returns `bytes32(bytes4(keccak256("supportsNestedTypedDataSign()")))`,
-    /// denoting support for the default behavior, as implemented in
-    /// `_erc1271IsValidSignatureViaNestedEIP712`, which is called in `isValidSignature`.
-    /// Future extensions should return a different non-zero `result` to denote different behavior.
-    /// This method intentionally returns bytes32 to allow freedom for future extensions.
-    function supportsNestedTypedDataSign() public view virtual returns (bytes32 result) {
-        result = bytes4(0xd620c85a);
     }
 
     /// @dev Returns the ERC1271 signer.
@@ -85,7 +84,7 @@ abstract contract ERC1271 is EIP712 {
             // See: https://eips.ethereum.org/EIPS/eip-6492
             if eq(
                 calldataload(add(result.offset, sub(result.length, 0x20))),
-                mul(0x6492, div(not(mload(0x60)), 0xffff)) // `0x6492...6492`.
+                mul(0x6492, div(not(shr(address(), address())), 0xffff)) // `0x6492...6492`.
             ) {
                 let o := add(result.offset, calldataload(add(result.offset, 0x40)))
                 result.length := calldataload(o)
