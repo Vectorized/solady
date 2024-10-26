@@ -199,28 +199,7 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        bytes32 t;
-        {
-            (
-                ,
-                string memory name,
-                string memory version,
-                uint256 chainId,
-                address verifyingContract,
-                bytes32 salt,
-            ) = eip712Domain();
-            /// @solidity memory-safe-assembly
-            assembly {
-                t := mload(0x40) // Grab the free memory pointer.
-                // Skip 2 words for the `typedDataSignTypehash` and `contents` struct hash.
-                mstore(add(t, 0x40), keccak256(add(name, 0x20), mload(name)))
-                mstore(add(t, 0x60), keccak256(add(version, 0x20), mload(version)))
-                mstore(add(t, 0x80), chainId)
-                mstore(add(t, 0xa0), shr(96, shl(96, verifyingContract)))
-                mstore(add(t, 0xc0), salt)
-                mstore(0x40, add(t, 0xe0)) // Allocate the memory.
-            }
-        }
+        bytes32 t = _typedDataSignFields();
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
@@ -250,10 +229,10 @@ abstract contract ERC1271 is EIP712 {
                 if iszero(eq(byte(0, mload(sub(add(p, c), 1))), 41)) {
                     let e := 0 // Length of `contentsName` in explicit mode.
                     for { let q := sub(add(p, c), 1) } 1 {} {
-                        e := add(e, 1)
+                        e := add(e, 1) // Scan backwards until we encounter a ')'.
                         if iszero(gt(lt(e, c), eq(byte(0, mload(sub(q, e))), 41))) { break }
                     }
-                    c := sub(c, e)
+                    c := sub(c, e) // Truncate `contentsDescription` to `contentsType`.
                     calldatacopy(p, add(add(o, 0x40), c), e) // Copy `contentsName`.
                     mstore8(add(p, e), 40) // Store a '(' exactly right after the end.
                 }
@@ -298,13 +277,13 @@ abstract contract ERC1271 is EIP712 {
         /// @solidity memory-safe-assembly
         assembly {
             m := mload(0x40) // Grab the free memory pointer.
-            mstore(0x40, add(m, 0xe0)) // Allocate the memory.
             // Skip 2 words for the `typedDataSignTypehash` and `contents` struct hash.
             mstore(add(m, 0x40), keccak256(add(name, 0x20), mload(name)))
             mstore(add(m, 0x60), keccak256(add(version, 0x20), mload(version)))
             mstore(add(m, 0x80), chainId)
             mstore(add(m, 0xa0), shr(96, shl(96, verifyingContract)))
             mstore(add(m, 0xc0), salt)
+            mstore(0x40, add(m, 0xe0)) // Allocate the memory.
         }
     }
 
