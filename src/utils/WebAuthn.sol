@@ -171,7 +171,7 @@ library WebAuthn {
 
     /// @dev Performs a best-effort attempt to `abi.decode(webAuthnAuth)`. Won't revert.
     /// If not all fields can be successfully extracted, the `clientDataJSON`
-    /// will be left as the empty string, which will result in `verify` to return false.
+    /// will be left as the empty string, which will cause `verify` to return false.
     function tryDecodeAuth(bytes memory encodedAuth)
         internal
         pure
@@ -207,7 +207,7 @@ library WebAuthn {
     }
 
     /// @dev Just for reference.
-    /// If the encoding fails due to an overflow, returns the empty bytes string.
+    /// Returns the empty string if any length or index exceeds 16 bits.
     function tryEncodeAuthCompact(WebAuthnAuth memory webAuthnAuth)
         internal
         pure
@@ -233,7 +233,7 @@ library WebAuthn {
 
     /// @dev Approximately the same gas as `tryDecodeAuth`, but helps save on calldata.
     /// If not all fields can be successfully extracted, the `clientDataJSON`
-    /// will be left as the empty string, which will result in `verify` to return false.
+    /// will be left as the empty string, which will cause `verify` to return false.
     function tryDecodeAuthCompact(bytes memory encodedAuth)
         internal
         pure
