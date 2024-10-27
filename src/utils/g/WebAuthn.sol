@@ -112,22 +112,22 @@ library WebAuthn {
         /// @solidity memory-safe-assembly
         assembly {
             let clientDataJSON := mload(add(webAuthnAuth, 0x20))
-            let n := mload(clientDataJSON)
+            let n := mload(clientDataJSON) // Length of `clientDataJSON`.
             let o := add(clientDataJSON, 0x20) // Start of `clientData` bytes.
             {
                 let c := mload(add(webAuthnAuth, 0x40)) // Challenge index in `clientDataJSON`.
                 let t := mload(add(webAuthnAuth, 0x60)) // Type index in `clientDataJSON`.
                 let l := mload(encoded) // Cache the length of `encoded`.
-                let q := add(l, 0x0d)
+                let q := add(l, 0x0d) // Length of `encoded` concatenated with '"challenge":"'.
                 mstore(encoded, shr(152, '"challenge":"'))
                 result :=
                     and(
-                        // 11. Verify the type in the JSON.
+                        // 11. Verify JSON's type. Includes a check for possible addition overflows.
                         and(
                             eq(shr(88, mload(add(o, t))), shr(88, '"type":"webauthn.get"')),
-                            lt(shr(128, or(t, or(q, c))), lt(add(0x14, t), n))
+                            lt(shr(128, or(t, c)), lt(add(0x14, t), n))
                         ),
-                        // 12. Verify the challenge in the JSON.
+                        // 12. Verify JSON's challenge. Includes a check for the closing '"'.
                         and(
                             eq(keccak256(add(o, c), q), keccak256(add(encoded, 0x13), q)),
                             and(eq(byte(0, mload(add(add(o, c), q))), 34), lt(add(q, c), n))
@@ -135,26 +135,31 @@ library WebAuthn {
                     )
                 mstore(encoded, l) // Restore the length of `encoded`.
             }
-            let authData := mload(webAuthnAuth)
             // Skip 13., 14., 15.
+            let authData := mload(webAuthnAuth)
             let l := mload(authData) // Length of `authData`.
-            let f := mul(gt(l, 0x20), byte(0, mload(add(authData, 0x40)))) // Flags in `authData`.
-            // 16. Verify that the UP bit of the flags in `authData` is set.
-            result := and(eq(and(f, _AUTH_DATA_FLAGS_UP), _AUTH_DATA_FLAGS_UP), result)
-            // 17. If user verification is required for this assertion,
-            // verify that the User Verified bit of the flags in `authData` is set.
-            if requireUserVerification {
-                result := and(eq(and(f, _AUTH_DATA_FLAGS_UV), _AUTH_DATA_FLAGS_UV), result)
+            let r :=
+                or(
+                    // 16. Verify that the "User Present" bit of the flags in `authData` is set.
+                    _AUTH_DATA_FLAGS_UP,
+                    // 17. If user verification is required for this assertion,
+                    // verify that the User Verified bit of the flags in `authData` is set.
+                    mul(_AUTH_DATA_FLAGS_UV, iszero(iszero(requireUserVerification)))
+                )
+            result :=
+                and(and(result, gt(l, 0x20)), eq(and(byte(0, mload(add(authData, 0x40))), r), r))
+            if result {
+                let p := add(authData, 0x20) // Start of `authData` bytes.
+                let e := add(p, l) // Location of the word after `authData`.
+                let w := mload(e) // Cache the word after `authData`.
+                // 19. Compute `sha256(clientDataJSON)`.
+                pop(staticcall(gas(), 2, o, n, e, 0x20))
+                // 20. Compute `sha256(authData ‖ sha256(clientDataJSON))`.
+                pop(staticcall(gas(), 2, p, add(l, 0x20), 0x00, 0x20))
+                if iszero(returndatasize()) { invalid() }
+                mstore(e, w) // Restore the word after `authData`.
+                messageHash := mload(0x00)
             }
-            let p := add(authData, 0x20) // Start of `authData` bytes.
-            let e := add(p, l) // Location of the word after `authData`.
-            let w := mload(e) // Cache the word after `authData`.
-            // 19. Compute `sha256(clientDataJSON)`.
-            let s := staticcall(gas(), 2, o, n, e, 0x20)
-            // 20. Compute `sha256(authData ‖ sha256(clientDataJSON))`.
-            if iszero(and(staticcall(gas(), 2, p, add(l, 0x20), 0x00, 0x20), s)) { invalid() }
-            mstore(e, w) // Restore the word after `authData`.
-            messageHash := mload(0x00)
         }
         return result && P256.verifySignature(messageHash, webAuthnAuth.r, webAuthnAuth.s, x, y);
     }
