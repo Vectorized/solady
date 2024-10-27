@@ -1,36 +1,40 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
 
-import {Base64} from "./Base64.sol";
+// This file is auto-generated.
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                          STRUCTS                           */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+/// @dev Helps make encoding and decoding easier, alleviates stack-too-deep.
+struct WebAuthnAuth {
+    // The WebAuthn authenticator data.
+    // See: https://www.w3.org/TR/webauthn-2/#dom-authenticatorassertionresponse-authenticatordata.
+    bytes authenticatorData;
+    // The WebAuthn client data JSON.
+    // See: https://www.w3.org/TR/webauthn-2/#dom-authenticatorresponse-clientdatajson.
+    string clientDataJSON;
+    // The index at which "challenge":"..." occurs in `clientDataJSON`.
+    uint256 challengeIndex;
+    // The index at which "type":"..." occurs in `clientDataJSON`.
+    uint256 typeIndex;
+    // The r value of secp256r1 signature
+    bytes32 r;
+    // The s value of secp256r1 signature
+    bytes32 s;
+}
+
+using WebAuthn for WebAuthnAuth global;
+
+import {Base64} from "../Base64.sol";
 import {P256} from "./P256.sol";
 
 /// @notice WebAuthn helper.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/WebAuthn.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/WebAuthn.sol)
 /// @author Modified from Daimo WebAuthn (https://github.com/daimo-eth/p256-verifier/blob/master/src/WebAuthn.sol)
 /// @author Modified from Coinbase WebAuthn (https://github.com/base-org/webauthn-sol/blob/main/src/WebAuthn.sol)
 library WebAuthn {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STRUCTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Helps make encoding and decoding easier, alleviates stack-too-deep.
-    struct WebAuthnAuth {
-        // The WebAuthn authenticator data.
-        // See: https://www.w3.org/TR/webauthn-2/#dom-authenticatorassertionresponse-authenticatordata.
-        bytes authenticatorData;
-        // The WebAuthn client data JSON.
-        // See: https://www.w3.org/TR/webauthn-2/#dom-authenticatorresponse-clientdatajson.
-        string clientDataJSON;
-        // The index at which "challenge":"..." occurs in `clientDataJSON`.
-        uint256 challengeIndex;
-        // The index at which "type":"..." occurs in `clientDataJSON`.
-        uint256 typeIndex;
-        // The r value of secp256r1 signature
-        bytes32 r;
-        // The s value of secp256r1 signature
-        bytes32 s;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
