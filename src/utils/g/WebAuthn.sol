@@ -61,8 +61,8 @@ library WebAuthn {
     /// Specifically, we do verify the following:
     /// - Verify that authenticatorData (which comes from the authenticator,
     ////  such as iCloud Keychain) indicates a well-formed assertion with the user present
-    ///   bit set. If `requireUV` is set, checks that the authenticator enforced user
-    ///   verification. User verification should be required if, and only if,
+    ///   bit set. If `requireUserVerification` is set, checks that the authenticator
+    ///   enforced user verification. User verification should be required if, and only if,
     ///   `options.userVerification` is set to required in the request.
     /// - Verifies that the client JSON is of type "webauthn.get",
     ///   i.e. the client was responding to a request to assert authentication.
@@ -88,7 +88,7 @@ library WebAuthn {
     ///   credentials to be used only by the correct RP.
     ///   This is generally enforced with features like Apple App Site Association
     ///   and Google Asset Links. To protect from edge cases in which a previously-linked
-    ///   RP ID is removed from the authorised RP IDs, we recommend that messages
+    ///   RP ID is removed from the authorized RP IDs, we recommend that messages
     ///   signed by the authenticator include some expiry mechanism.
     /// - Does NOT verify the credential backup state: this assumes the credential backup
     ///   state is NOT used as part of Relying Party business logic or policy.
@@ -113,9 +113,9 @@ library WebAuthn {
         assembly {
             let clientDataJSON := mload(add(webAuthnAuth, 0x20))
             let n := mload(clientDataJSON)
+            let o := add(clientDataJSON, 0x20) // Start of `clientData` bytes.
             {
                 let c := mload(add(webAuthnAuth, 0x40)) // Challenge index in `clientDataJSON`.
-                let o := add(clientDataJSON, 0x20) // Start of `clientData` bytes.
                 let t := mload(add(webAuthnAuth, 0x60)) // Type index in `clientDataJSON`.
                 let l := mload(encoded) // Cache the length of `encoded`.
                 let q := add(l, 0x0d)
@@ -146,14 +146,13 @@ library WebAuthn {
             if requireUserVerification {
                 result := and(eq(and(f, _AUTH_DATA_FLAGS_UV), _AUTH_DATA_FLAGS_UV), result)
             }
-            let e := add(add(authData, 0x20), l) // Location of the word after `authData`.
+            let p := add(authData, 0x20) // Start of `authData` bytes.
+            let e := add(p, l) // Location of the word after `authData`.
             let w := mload(e) // Cache the word after `authData`.
             // 19. Compute `sha256(clientDataJSON)`.
-            if iszero(staticcall(gas(), 2, add(clientDataJSON, 0x20), n, e, 0x20)) { invalid() }
+            let s := staticcall(gas(), 2, o, n, e, 0x20)
             // 20. Compute `sha256(authData ‖ sha256(clientDataJSON))`.
-            if iszero(staticcall(gas(), 2, add(authData, 0x20), add(l, 0x20), 0x00, 0x20)) {
-                invalid()
-            }
+            if iszero(and(staticcall(gas(), 2, p, add(l, 0x20), 0x00, 0x20), s)) { invalid() }
             mstore(e, w) // Restore the word after `authData`.
             messageHash := mload(0x00)
         }
