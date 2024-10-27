@@ -8,23 +8,6 @@ import {Base64} from "../src/utils/Base64.sol";
 import {WebAuthn} from "../src/utils/WebAuthn.sol";
 
 contract WebAuthnTest is P256VerifierEtcher {
-    // Public key x and y.
-    uint256 private constant _X = 0x65a2fa44daad46eab0278703edb6c4dcf5e30b8a9aec09fdc71a56f52aa392e4;
-    uint256 private constant _Y = 0x4a7a9e4604aa36898209997288e902ac544a555e4b5e0a9efef2b59233f3f437;
-    uint256 private constant _R = 0x01655c1753db6b61a9717e4ccc5d6c4bf7681623dd54c2d6babc55125756661c;
-    uint256 private constant _NON_MALLEABLE_S =
-        0xf8cfdc3921ecf0f7aef50be09b0f98383392dd8079014df95fde2a04b79023a;
-    uint256 private constant _MALLEABLE_S =
-        0xf073023b6de130f18510af41f64f067c39adccd59f8789a55dbbe822b0ea2317;
-    bytes32 private constant _HASH =
-        0x267f9ea080b54bbea2443dff8aa543604564329783b6a515c6663a691c555490;
-    uint256 private constant _N = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551;
-    uint256 private constant _MALLEABILITY_THRESHOLD =
-        0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a8;
-
-    mapping(bytes32 => bool) internal _vectorTested;
-    mapping(bytes32 => bool) internal _vectorResult;
-
     function verify(
         bytes memory challenge,
         bool requireUserVerification,
@@ -201,5 +184,41 @@ contract WebAuthnTest is P256VerifierEtcher {
             mstore(add(0x40, result), keccak256(result, 0x40))
             mstore(0x40, add(result, 0x80))
         }
+    }
+
+    function testTryDecodeAuth(bytes32) public {
+        WebAuthn.WebAuthnAuth memory auth;
+        auth.authenticatorData = _sampleRandomUniformShortBytes();
+        auth.clientDataJSON = string(_sampleRandomUniformShortBytes());
+        auth.challengeIndex = _randomUniform();
+        auth.typeIndex = _randomUniform();
+        auth.r = bytes32(_randomUniform());
+        auth.s = bytes32(_randomUniform());
+        bytes memory encoded = abi.encode(auth);
+        WebAuthn.WebAuthnAuth memory decoded = WebAuthn.tryDecodeAuth(encoded);
+        assertEq(decoded.authenticatorData, auth.authenticatorData);
+        assertEq(decoded.clientDataJSON, auth.clientDataJSON);
+        assertEq(decoded.challengeIndex, auth.challengeIndex);
+        assertEq(decoded.typeIndex, auth.typeIndex);
+        assertEq(decoded.r, auth.r);
+        assertEq(decoded.s, auth.s);
+    }
+
+    function testTryDecodeAuthCompact(bytes32) public {
+        WebAuthn.WebAuthnAuth memory auth;
+        auth.authenticatorData = _sampleRandomUniformShortBytes();
+        auth.clientDataJSON = string(_sampleRandomUniformShortBytes());
+        auth.challengeIndex = uint16(_randomUniform());
+        auth.typeIndex = uint16(_randomUniform());
+        auth.r = bytes32(_randomUniform());
+        auth.s = bytes32(_randomUniform());
+        bytes memory encoded = WebAuthn.tryEncodeAuthCompact(auth);
+        WebAuthn.WebAuthnAuth memory decoded = WebAuthn.tryDecodeAuthCompact(encoded);
+        assertEq(decoded.authenticatorData, auth.authenticatorData);
+        assertEq(decoded.clientDataJSON, auth.clientDataJSON);
+        assertEq(decoded.challengeIndex, auth.challengeIndex);
+        assertEq(decoded.typeIndex, auth.typeIndex);
+        assertEq(decoded.r, auth.r);
+        assertEq(decoded.s, auth.s);
     }
 }
