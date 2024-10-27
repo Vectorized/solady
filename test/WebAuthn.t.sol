@@ -5,7 +5,6 @@ import "./utils/SoladyTest.sol";
 import {LibString} from "../src/utils/LibString.sol";
 import {P256} from "../src/utils/P256.sol";
 import {Base64} from "../src/utils/Base64.sol";
-import {WebAuthn} from "../src/utils/WebAuthn.sol";
 
 contract WebAuthnTest is SoladyTest {
     bytes private constant _VERIFIER_BYTECODE =
@@ -135,7 +134,7 @@ contract WebAuthnTest is SoladyTest {
         uint256 challengeIndex
     ) private pure returns (bool) {
         bytes memory expectedChallenge =
-            bytes(string.concat('"challenge":"', Base64.encode(challenge, true, true), '"'));
+            abi.encodePacked('"challenge":"', Base64.encode(challenge, true, true), '"');
         string memory actualChallenge = LibString.slice(
             clientDataJSON, challengeIndex, challengeIndex + expectedChallenge.length
         );
@@ -144,15 +143,5 @@ contract WebAuthnTest is SoladyTest {
 
     function _randomSmallBytes() private returns (bytes memory) {
         return _truncateBytes(_randomBytes(), 0x1ff);
-    }
-
-    function verify(
-        bytes memory challenge,
-        bool requireUserVerification,
-        WebAuthn.WebAuthnAuth memory webAuthnAuth,
-        bytes32 x,
-        bytes32 y
-    ) public view returns (bool) {
-        return WebAuthn.verify(challenge, requireUserVerification, webAuthnAuth, x, y);
     }
 }
