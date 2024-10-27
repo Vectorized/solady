@@ -41,11 +41,11 @@ library WebAuthn {
 
     /// @dev Bit 0 of the authenticator data struct, corresponding to the "User Present" bit.
     /// See: https://www.w3.org/TR/webauthn-2/#flags.
-    bytes1 private constant _AUTH_DATA_FLAGS_UP = 0x01;
+    uint256 private constant _AUTH_DATA_FLAGS_UP = 0x01;
 
     /// @dev Bit 2 of the authenticator data struct, corresponding to the "User Verified" bit.
     /// See: https://www.w3.org/TR/webauthn-2/#flags.
-    bytes1 private constant _AUTH_DATA_FLAGS_UV = 0x04;
+    uint256 private constant _AUTH_DATA_FLAGS_UV = 0x04;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*              WEBAUTHN VERIFICATION OPERATIONS              */
@@ -108,48 +108,40 @@ library WebAuthn {
         bytes32 y
     ) internal view returns (bool result) {
         bytes32 messageHash;
-        string memory encodedURL = Base64.encode(challenge, true, true);
+        string memory encoded = Base64.encode(challenge, true, true);
         /// @solidity memory-safe-assembly
         assembly {
             let clientDataJSON := mload(add(webAuthnAuth, 0x20))
             let n := mload(clientDataJSON)
             {
                 let c := mload(add(webAuthnAuth, 0x40)) // Challenge index in `clientDataJSON`.
+                let o := add(add(clientDataJSON, 0x20), c) // Memory offset of challenge.
                 let t := mload(add(webAuthnAuth, 0x60)) // Type index in `clientDataJSON`.
-                let l := mload(encodedURL) // Cache the length of `encodedURL`.
+                let l := mload(encoded) // Cache the length of `encoded`.
                 let q := add(l, 13)
-                mstore(encodedURL, shr(152, '"challenge":"'))
+                mstore(encoded, shr(152, '"challenge":"')) // Length of 13.
                 result :=
                     and(
-                        // 11. Verify that the value of C.type is the string webauthn.get.
-                        // bytes("type":"webauthn.get").length = 21
+                        // 11. Verify the type in the JSON.
                         and(
                             eq(
                                 shr(88, mload(add(add(clientDataJSON, 0x20), t))),
-                                shr(88, '"type":"webauthn.get"')
+                                shr(88, '"type":"webauthn.get"') // Length of 20.
                             ),
-                            lt(add(20, t), n)
+                            lt(shr(128, or(t, or(q, c))), lt(add(20, t), n))
                         ),
-                        // 12. Verify that the value of C.challenge equals the base64url
-                        // encoding of options.challenge.
+                        // 12. Verify the challenge in the JSON.
                         and(
-                            eq(
-                                keccak256(add(add(clientDataJSON, 0x20), c), q),
-                                keccak256(add(encodedURL, 19), q)
-                            ),
-                            and(
-                                eq(and(0xff, mload(add(add(clientDataJSON, c), q))), 34),
-                                lt(add(q, c), n)
-                            )
+                            eq(keccak256(o, q), keccak256(add(encoded, 19), q)),
+                            and(eq(byte(0, mload(add(o, q))), 34), lt(add(q, c), n))
                         )
                     )
-                result := lt(shr(128, or(t, or(q, c))), result)
-                mstore(encodedURL, l) // Restore the length of `encodedURL`.
+                mstore(encoded, l) // Restore the length of `encoded`.
             }
             let authData := mload(webAuthnAuth)
             // Skip 13., 14., 15.
             let l := mload(authData) // Length of `authData`.
-            let f := mul(gt(l, 0x20), byte(0, add(authData, 0x40))) // Flags in `authData`.
+            let f := mul(gt(l, 0x20), byte(0, mload(add(authData, 0x40)))) // Flags in `authData`.
             // 16. Verify that the UP bit of the flags in `authData` is set.
             result := and(eq(and(f, _AUTH_DATA_FLAGS_UP), _AUTH_DATA_FLAGS_UP), result)
             // 17. If user verification is required for this assertion,
@@ -159,10 +151,9 @@ library WebAuthn {
             }
             let e := add(add(authData, 0x20), l) // Location of the word after `authData`.
             let w := mload(e) // Cache the word after `authData`.
-            // 19. Let `hash` be the result of computing a hash over the cData using SHA-256.
+            // 19. Compute `sha256(clientDataJSON)`.
             if iszero(staticcall(gas(), 2, add(clientDataJSON, 0x20), n, e, 0x20)) { invalid() }
-            // 20. Using credentialPublicKey, verify that sig is a valid signature over the
-            // binary concatenation of `authData` and `hash`.
+            // 20. Compute `sha256(authData ‖ sha256(clientDataJSON))`.
             if iszero(staticcall(gas(), 2, add(authData, 0x20), add(l, 0x20), 0x00, 0x20)) {
                 invalid()
             }
