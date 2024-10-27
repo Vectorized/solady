@@ -111,17 +111,17 @@ library WebAuthn {
         /// @solidity memory-safe-assembly
         assembly {
             let clientDataJSON := mload(add(webAuthnAuth, 0x20))
-            let n := mload(clientDataJSON) // Length of `clientDataJSON`.
-            let o := add(clientDataJSON, 0x20) // Start of `clientData` bytes.
+            let n := mload(clientDataJSON) // `clientDataJSON`'s length.
+            let o := add(clientDataJSON, 0x20) // Start of `clientData`'s bytes.
             {
                 let c := mload(add(webAuthnAuth, 0x40)) // Challenge index in `clientDataJSON`.
                 let t := mload(add(webAuthnAuth, 0x60)) // Type index in `clientDataJSON`.
-                let l := mload(encoded) // Cache the length of `encoded`.
-                let q := add(l, 0x0d) // Length of `encoded` concatenated with '"challenge":"'.
-                mstore(encoded, shr(152, '"challenge":"')) // Temporarily prefix.
+                let l := mload(encoded) // Cache `encoded`'s length.
+                let q := add(l, 0x0d) // Length of `encoded` prefixed with '"challenge":"'.
+                mstore(encoded, shr(152, '"challenge":"')) // Temp prefix with '"challenge":"'.
                 result :=
                     and(
-                        // 11. Verify JSON's type. Includes a check for possible addition overflows.
+                        // 11. Verify JSON's type. Also checks for possible addition overflows.
                         and(
                             eq(shr(88, mload(add(o, t))), shr(88, '"type":"webauthn.get"')),
                             lt(shr(128, or(t, c)), lt(add(0x14, t), n))
@@ -132,7 +132,7 @@ library WebAuthn {
                             and(eq(byte(0, mload(add(add(o, c), q))), 34), lt(add(q, c), n))
                         )
                     )
-                mstore(encoded, l) // Restore the length of `encoded`.
+                mstore(encoded, l) // Restore `encoded`'s length, in case of string interning.
             }
             // Skip 13., 14., 15.
             let authData := mload(webAuthnAuth)
@@ -147,15 +147,16 @@ library WebAuthn {
             result :=
                 and(and(result, gt(l, 0x20)), eq(and(byte(0, mload(add(authData, 0x40))), r), r))
             if result {
-                let p := add(authData, 0x20) // Start of `authData` bytes.
+                let p := add(authData, 0x20) // Start of `authData`'s bytes.
                 let e := add(p, l) // Location of the word after `authData`.
                 let w := mload(e) // Cache the word after `authData`.
                 // 19. Compute `sha256(clientDataJSON)`.
                 pop(staticcall(gas(), 2, o, n, e, 0x20))
                 // 20. Compute `sha256(authData ‖ sha256(clientDataJSON))`.
                 pop(staticcall(gas(), 2, p, add(l, 0x20), 0x00, returndatasize()))
-                if iszero(returndatasize()) { invalid() } // returndatasize is zero on failure.
-                mstore(e, w) // Restore the word after `authData`.
+                // `returndatasize()` is `0x20` on `sha256` success, and `0x00` otherwise.
+                if iszero(returndatasize()) { invalid() }
+                mstore(e, w) // Restore the word after `authData`, in case of reuse.
                 messageHash := mload(0x00)
             }
         }
