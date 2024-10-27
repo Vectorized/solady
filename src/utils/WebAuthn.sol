@@ -47,19 +47,18 @@ library WebAuthn {
     /*              WEBAUTHN VERIFICATION OPERATIONS              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Verifies a Webauthn Authentication Assertion as described
-    /// in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion.
+    /// @dev Verifies a Webauthn Authentication Assertion.
+    /// See: https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion.
     ///
-    /// We do not verify all the steps as described in the specification,
-    /// only ones relevant to our context.
-    /// Please carefully read through this list before usage.
+    /// We do not verify all the steps as described in the specification, only ones
+    /// relevant to our context. Please carefully read through this list before usage.
     ///
     /// Specifically, we do verify the following:
-    /// - Verify that authenticatorData (which comes from the authenticator,
-    ////  such as iCloud Keychain) indicates a well-formed assertion with the user present
-    ///   bit set. If `requireUserVerification` is set, checks that the authenticator
-    ///   enforced user verification. User verification should be required if, and only if,
-    ///   `options.userVerification` is set to required in the request.
+    /// - Verify that `authenticatorData` (which comes from the authenticator,
+    ///   such as iCloud Keychain) indicates a well-formed assertion with the
+    ///   "User Present" bit set. If `requireUserVerification` is set, checks that the
+    ///   authenticator enforced user verification. User verification should be required
+    ///   if, and only if, `options.userVerification` is set to required in the request.
     /// - Verifies that the client JSON is of type "webauthn.get",
     ///   i.e. the client was responding to a request to assert authentication.
     /// - Verifies that the client JSON contains the requested challenge.
@@ -76,11 +75,11 @@ library WebAuthn {
     /// - Does NOT verify That `topOrigin` in `clientDataJSON` is well-formed:
     ///   We assume it would never be present, i.e. the credentials are never used in a
     ///   cross-origin/iframe context. The website/app set up should disallow cross-origin
-    ///   usage of the credentials. This is the default behaviour for created credentials
+    ///   usage of the credentials. This is the default behavior for created credentials
     ///   in common settings.
     /// - Does NOT verify that the `rpIdHash` in `authenticatorData` is the SHA-256 hash
-    ///   of the RP ID expected by the Relying
-    ///   Party: this means that we rely on the authenticator to properly enforce
+    ///   of the RP ID expected by the Relying Party:
+    ///   this means that we rely on the authenticator to properly enforce
     ///   credentials to be used only by the correct RP.
     ///   This is generally enforced with features like Apple App Site Association
     ///   and Google Asset Links. To protect from edge cases in which a previously-linked
@@ -115,7 +114,7 @@ library WebAuthn {
                 let t := mload(add(webAuthnAuth, 0x60)) // Type index in `clientDataJSON`.
                 let l := mload(encoded) // Cache the length of `encoded`.
                 let q := add(l, 0x0d) // Length of `encoded` concatenated with '"challenge":"'.
-                mstore(encoded, shr(152, '"challenge":"'))
+                mstore(encoded, shr(152, '"challenge":"')) // Temporarily prefix.
                 result :=
                     and(
                         // 11. Verify JSON's type. Includes a check for possible addition overflows.
@@ -136,10 +135,9 @@ library WebAuthn {
             let l := mload(authData) // Length of `authData`.
             let r :=
                 or(
-                    // 16. Verify that the "User Present" bit of the flags in `authData` is set.
+                    // 16. Verify that the "User Present" flag is set.
                     _AUTH_DATA_FLAGS_UP,
-                    // 17. If user verification is required for this assertion,
-                    // verify that the User Verified bit of the flags in `authData` is set.
+                    // 17. Verify that the "User Verified" flag is set, if required.
                     mul(_AUTH_DATA_FLAGS_UV, iszero(iszero(requireUserVerification)))
                 )
             result :=
@@ -157,6 +155,7 @@ library WebAuthn {
                 messageHash := mload(0x00)
             }
         }
+        // `P256.verifySignature` returns false if `s > N/2` due to the malleability check.
         return result && P256.verifySignature(messageHash, webAuthnAuth.r, webAuthnAuth.s, x, y);
     }
 }
