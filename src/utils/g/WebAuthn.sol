@@ -168,7 +168,7 @@ library WebAuthn {
     /*                ENCODING / DECODING HELPERS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Just for reference.
+    /// @dev For reference. Intended for off-chain usage.
     function encodeAuth(WebAuthnAuth memory webAuthnAuth) internal pure returns (bytes memory) {
         return abi.encode(webAuthnAuth);
     }
@@ -210,7 +210,7 @@ library WebAuthn {
         }
     }
 
-    /// @dev Just for reference.
+    /// @dev For reference. Intended for off-chain usage.
     /// Returns the empty string if any length or index exceeds 16 bits.
     function tryEncodeAuthCompact(WebAuthnAuth memory webAuthnAuth)
         internal
@@ -222,16 +222,19 @@ library WebAuthn {
         n |= webAuthnAuth.challengeIndex;
         n |= webAuthnAuth.typeIndex;
         if (n >= 0x10000) return "";
-
+        // This is equivalent to a single flattened `abi.encodePacked`,
+        // but due to stack-too-deep, we have to do it in two steps.
         return abi.encodePacked(
             uint16(webAuthnAuth.authenticatorData.length),
             webAuthnAuth.authenticatorData,
             uint16(bytes(webAuthnAuth.clientDataJSON).length),
             webAuthnAuth.clientDataJSON,
-            uint16(webAuthnAuth.challengeIndex),
-            uint16(webAuthnAuth.typeIndex),
-            webAuthnAuth.r,
-            webAuthnAuth.s
+            abi.encodePacked(
+                uint16(webAuthnAuth.challengeIndex),
+                uint16(webAuthnAuth.typeIndex),
+                webAuthnAuth.r,
+                webAuthnAuth.s
+            )
         );
     }
 
