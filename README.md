@@ -54,6 +54,7 @@ utils
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
 ├─ ECDSA — "Library for verification of ECDSA signatures"
 ├─ P256 — "Gas optimized P256 wrapper"
+├─ WebAuthn — "WebAuthn helper"
 ├─ EIP712 — "Contract for EIP-712 typed structured data hashing and signing"
 ├─ DeploylessPredeployQueryer — "Deployless queryer for predeploys"
 ├─ ERC1967Factory — "Factory for deploying and managing ERC1967 proxy contracts"
