@@ -111,25 +111,22 @@ library WebAuthn {
             let n := mload(clientDataJSON)
             {
                 let c := mload(add(webAuthnAuth, 0x40)) // Challenge index in `clientDataJSON`.
-                let o := add(add(clientDataJSON, 0x20), c) // Memory offset of challenge.
+                let o := add(clientDataJSON, 0x20) // Start of `clientData` bytes.
                 let t := mload(add(webAuthnAuth, 0x60)) // Type index in `clientDataJSON`.
                 let l := mload(encoded) // Cache the length of `encoded`.
-                let q := add(l, 13)
-                mstore(encoded, shr(152, '"challenge":"')) // Length of 13.
+                let q := add(l, 0x0d)
+                mstore(encoded, shr(152, '"challenge":"'))
                 result :=
                     and(
                         // 11. Verify the type in the JSON.
                         and(
-                            eq(
-                                shr(88, mload(add(add(clientDataJSON, 0x20), t))),
-                                shr(88, '"type":"webauthn.get"') // Length of 20.
-                            ),
-                            lt(shr(128, or(t, or(q, c))), lt(add(20, t), n))
+                            eq(shr(88, mload(add(o, t))), shr(88, '"type":"webauthn.get"')),
+                            lt(shr(128, or(t, or(q, c))), lt(add(0x14, t), n))
                         ),
                         // 12. Verify the challenge in the JSON.
                         and(
-                            eq(keccak256(o, q), keccak256(add(encoded, 19), q)),
-                            and(eq(byte(0, mload(add(o, q))), 34), lt(add(q, c), n))
+                            eq(keccak256(add(o, c), q), keccak256(add(encoded, 0x13), q)),
+                            and(eq(byte(0, mload(add(add(o, c), q))), 34), lt(add(q, c), n))
                         )
                     )
                 mstore(encoded, l) // Restore the length of `encoded`.
