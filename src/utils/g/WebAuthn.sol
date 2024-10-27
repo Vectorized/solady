@@ -156,7 +156,7 @@ library WebAuthn {
                 pop(staticcall(gas(), 2, o, n, e, 0x20))
                 // 20. Compute `sha256(authData ‖ sha256(clientDataJSON))`.
                 pop(staticcall(gas(), 2, p, add(l, 0x20), 0x00, 0x20))
-                if iszero(returndatasize()) { invalid() }
+                if iszero(returndatasize()) { invalid() } // returndatasize is zero on failure.
                 mstore(e, w) // Restore the word after `authData`.
                 messageHash := mload(0x00)
             }
