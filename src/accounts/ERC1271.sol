@@ -243,7 +243,7 @@ abstract contract ERC1271 is EIP712 {
                     break
                 }
                 // Else, use the `TypedDataSign` workflow.
-                // `TypedDataSign({ContentsName} contents,bytes1 fields,...){ContentsType}`.
+                // `TypedDataSign({ContentsName} contents,string name,...){ContentsType}`.
                 mstore(m, "TypedDataSign(") // Store the start of `TypedDataSign`'s type encoding.
                 let p := add(m, 0x0e) // Advance 14 bytes to skip "TypedDataSign(".
                 calldatacopy(p, add(o, 0x40), c) // Copy `contentsName`, optimistically.
