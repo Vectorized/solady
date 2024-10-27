@@ -32,9 +32,9 @@ abstract contract ERC1271 is EIP712 {
         // If `hash` is `0x7739...7739`, returns `bytes4(0x77390001)`.
         // The returned number MAY be increased in future ERC7739 versions.
         unchecked {
-            // Forces the compiler to optimize for smaller bytecode size.
-            if (uint256(hash) == ~(msg.data.length >> msg.data.length) / 0xffff * 0x7739) {
-                return 0x77390001;
+            if (signature.length == uint256(0)) {
+                // Forces the compiler to optimize for smaller bytecode size.
+                if (uint256(hash) == ~signature.length / 0xffff * 0x7739) return 0x77390001;
             }
         }
         bool success = _erc1271IsValidSignature(hash, _erc1271UnwrapSignature(signature));
