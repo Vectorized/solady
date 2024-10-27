@@ -24,6 +24,8 @@ contract ERC1271Test is SoladyTest {
 
     address internal _proxy;
 
+    bool internal _fixChance;
+
     // By right, this should be the keccak256 of some long-ass string:
     // (e.g. `keccak256("Parent(bytes32 childHash,Mail child)Mail(Person from,Person to,string contents)Person(string name,address wallet)")`).
     // But I'm lazy and will use something randomish here.
@@ -48,6 +50,9 @@ contract ERC1271Test is SoladyTest {
         uint8 v;
         bytes32 r;
         bytes32 s;
+        bytes32 contents;
+        bytes contentsDescription;
+        bytes signature;
     }
 
     function setUp() public {
@@ -124,6 +129,26 @@ contract ERC1271Test is SoladyTest {
         string lowercased;
         string rest;
         string banned;
+        bytes contentsType;
+    }
+
+    function _wrongContentsName(_TestIsValidSignatureTemps memory t)
+        internal
+        returns (bytes memory result)
+    {
+        bytes32 h = keccak256(_contentsName(t.contentsType));
+        do {
+            if (_randomChance(2)) {
+                result = abi.encodePacked(
+                    _randomString(t.uppercased, true), _randomString(t.rest, false)
+                );
+            } else if (_randomChance(2)) {
+                result = bytes(_randomString(t.rest, true));
+            } else {
+                result =
+                    abi.encodePacked(_randomString(t.rest, true), _randomString(t.banned, false));
+            }
+        } while (h == keccak256(result));
     }
 
     function testIsValidSignature(uint256 x) public {
@@ -140,30 +165,33 @@ contract ERC1271Test is SoladyTest {
         t.rest = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
         t.banned = "\x00 ,)";
         if (_randomChance(4)) {
-            bytes memory contentsType = abi.encodePacked(
+            t.contentsType = abi.encodePacked(
                 _randomString(t.uppercased, true), _randomString(t.rest, false), "(bytes32 stuff)"
             );
-            _testIsValidSignature(contentsType, true);
+            _testIsValidSignature(t.contentsType, true);
+            if (_randomChance(2)) {
+                _testIsValidSignature(t.contentsType, _wrongContentsName(t), false, false);
+            }
         }
         if (_randomChance(4)) {
-            bytes memory contentsType = abi.encodePacked(
+            t.contentsType = abi.encodePacked(
                 _randomString(t.uppercased, false),
                 _randomString(t.banned, true),
                 _randomString(t.rest, false),
                 "(bytes32 stuff)"
             );
-            _testIsValidSignature(contentsType, false);
+            _testIsValidSignature(t.contentsType, false);
         }
         if (_randomChance(4)) {
-            bytes memory contentsType = abi.encodePacked(
+            t.contentsType = abi.encodePacked(
                 _randomString(t.lowercased, true), _randomString(t.rest, false), "(bytes32 stuff)"
             );
-            _testIsValidSignature(contentsType, false);
+            _testIsValidSignature(t.contentsType, false);
         }
         if (_randomChance(4)) {
-            bytes memory contentsType =
+            t.contentsType =
                 abi.encodePacked(_randomString(t.uppercased, true), _randomString(t.rest, false));
-            _testIsValidSignature(contentsType, false);
+            _testIsValidSignature(t.contentsType, false);
         }
         if (_randomChance(16)) {
             _testIsValidSignatureWontOutOfGas();
@@ -198,10 +226,16 @@ contract ERC1271Test is SoladyTest {
 
     function testIsValidSignature() public {
         vm.txGasPrice(10);
+        _fixChance = true;
 
         _testIsValidSignature("Contents(bytes32 stuff)", true);
         _testIsValidSignature("ABC(bytes32 stuff)", true);
         _testIsValidSignature("C(bytes32 stuff)", true);
+
+        _testIsValidSignature("A(B b)B(bytes32 stuff)", "C", true, true);
+        _testIsValidSignature("A(B b)B(bytes32 stuff)", "B", true, true);
+        _testIsValidSignature("A(B b)B(bytes32 stuff)", "", true, false);
+        _testIsValidSignature("A(B b)B(bytes32 stuff)", "c", true, false);
 
         _testIsValidSignature("(bytes32 stuff)", false);
         _testIsValidSignature("contents(bytes32 stuff)", false);
@@ -211,7 +245,7 @@ contract ERC1271Test is SoladyTest {
         _testIsValidSignature("ABC)(bytes32 stuff)", false);
         _testIsValidSignature("ABC\x00(bytes32 stuff)", false);
 
-        _testIsValidSignature("X(", true);
+        _testIsValidSignature("X(", false);
         _testIsValidSignature("X)", false);
         _testIsValidSignature("X(bytes32 stuff)", true);
         _testIsValidSignature("TheQuickBrownFoxJumpsOverTheLazyDog(bytes32 stuff)", true);
@@ -220,26 +254,59 @@ contract ERC1271Test is SoladyTest {
         _testIsValidSignature("()", false);
     }
 
-    function _testIsValidSignature(bytes memory contentsType, bool success) internal {
-        bytes32 contents = keccak256(abi.encode(_random(), contentsType));
-
+    function _testIsValidSignature(
+        bytes memory contentsType,
+        bytes memory contentsName,
+        bool isExplicit,
+        bool success
+    ) internal {
         _TestTemps memory t = _testTemps();
+
+        t.contents = keccak256(abi.encode(_random(), contentsType));
+
         (t.signer, t.privateKey) = _randomSigner();
-        (t.v, t.r, t.s) =
-            vm.sign(t.privateKey, _toERC1271Hash(address(t.account), contents, contentsType));
+        if (isExplicit) {
+            (t.v, t.r, t.s) = vm.sign(
+                t.privateKey,
+                _toERC1271Hash(address(t.account), t.contents, contentsType, contentsName)
+            );
+        } else {
+            (t.v, t.r, t.s) = vm.sign(
+                t.privateKey,
+                _toERC1271Hash(
+                    address(t.account), t.contents, contentsType, _contentsName(contentsType)
+                )
+            );
+        }
 
         vm.prank(t.owner);
         MockERC721(_erc721).safeTransferFrom(t.owner, t.signer, t.tokenId);
 
-        bytes memory signature = abi.encodePacked(
-            t.r, t.s, t.v, _DOMAIN_SEP_B, contents, contentsType, uint16(contentsType.length)
+        t.contentsDescription = abi.encodePacked(contentsType, contentsName);
+
+        t.signature = abi.encodePacked(
+            t.r,
+            t.s,
+            t.v,
+            _DOMAIN_SEP_B,
+            t.contents,
+            t.contentsDescription,
+            uint16(t.contentsDescription.length)
         );
-        if (_randomChance(4)) signature = _erc6492Wrap(signature);
-        // Success returns `0x1626ba7e`.
+        if (!_fixChance && _randomChance(4)) t.signature = _erc6492Wrap(t.signature);
+
         assertEq(
-            t.account.isValidSignature(_toContentsHash(contents), signature),
+            t.account.isValidSignature(_toContentsHash(t.contents), t.signature),
             success ? bytes4(0x1626ba7e) : bytes4(0xffffffff)
         );
+    }
+
+    function _testIsValidSignature(bytes memory contentsType, bool success) internal {
+        if (_fixChance || _randomChance(2)) {
+            _testIsValidSignature(contentsType, "", false, success);
+        } else {
+            _testIsValidSignature(contentsType, _contentsName(contentsType), false, success);
+        }
     }
 
     function _testIsValidSignatureWontOutOfGas() internal {
@@ -258,51 +325,56 @@ contract ERC1271Test is SoladyTest {
     }
 
     struct _AccountDomainStruct {
-        bytes1 fields;
         string name;
         string version;
         uint256 chainId;
         address verifyingContract;
         bytes32 salt;
-        uint256[] extensions;
     }
 
     function _accountDomainStructFields(address account) internal view returns (bytes memory) {
         _AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+        (, t.name, t.version, t.chainId, t.verifyingContract, t.salt,) =
             EIP712(account).eip712Domain();
 
         return abi.encode(
-            t.fields,
             keccak256(bytes(t.name)),
             keccak256(bytes(t.version)),
             t.chainId,
             t.verifyingContract,
-            t.salt,
-            keccak256(abi.encodePacked(t.extensions))
+            t.salt
         );
     }
 
-    function _typedDataSignTypeHash(bytes memory contentsType) internal pure returns (bytes32) {
-        bytes memory ct = contentsType;
+    function _contentsName(bytes memory contentsType) internal pure returns (bytes memory) {
+        string memory ct = string(contentsType);
+        return bytes(LibString.slice(ct, 0, LibString.indexOf(ct, "(", 0)));
+    }
+
+    function _typedDataSignTypeHash(bytes memory contentsType, bytes memory contentsName)
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(
             abi.encodePacked(
                 "TypedDataSign(",
-                LibString.slice(string(ct), 0, LibString.indexOf(string(ct), "(", 0)),
-                " contents,bytes1 fields,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[] extensions)",
-                ct
+                contentsName,
+                " contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)",
+                contentsType
             )
         );
     }
 
-    function _toERC1271Hash(address account, bytes32 contents, bytes memory contentsType)
-        internal
-        view
-        returns (bytes32)
-    {
+    function _toERC1271Hash(
+        address account,
+        bytes32 contents,
+        bytes memory contentsType,
+        bytes memory contentsName
+    ) internal view returns (bytes32) {
         bytes32 parentStructHash = keccak256(
             abi.encodePacked(
-                abi.encode(_typedDataSignTypeHash(contentsType), contents),
+                abi.encode(_typedDataSignTypeHash(contentsType, contentsName), contents),
                 _accountDomainStructFields(account)
             )
         );
@@ -313,11 +385,13 @@ contract ERC1271Test is SoladyTest {
         return keccak256(abi.encodePacked(hex"1901", _DOMAIN_SEP_B, contents));
     }
 
-    function testSupportsNestedTypedDataSign() public {
+    function testSupportsERC7739() public {
         _TestTemps memory t = _testTemps();
         assertEq(
-            t.account.supportsNestedTypedDataSign(),
-            bytes4(keccak256("supportsNestedTypedDataSign()"))
+            t.account.isValidSignature(
+                0x7739773977397739773977397739773977397739773977397739773977397739, ""
+            ),
+            bytes4(0x77390001)
         );
     }
 }
