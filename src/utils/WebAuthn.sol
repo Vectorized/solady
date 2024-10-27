@@ -113,7 +113,8 @@ library WebAuthn {
             {
                 let c := mload(add(webAuthnAuth, 0x40)) // Challenge index in `clientDataJSON`.
                 let t := mload(add(webAuthnAuth, 0x60)) // Type index in `clientDataJSON`.
-                let q := add(mload(encodedURL), 13)
+                let l := mload(encodedURL) // Cache the length of `encodedURL`.
+                let q := add(l, 13)
                 mstore(encodedURL, shr(152, '"challenge":"'))
                 result :=
                     and(
@@ -139,6 +140,7 @@ library WebAuthn {
                             )
                         )
                     )
+                mstore(encodedURL, l) // Restore the length of `encodedURL`.
             }
             // Skip 13., 14., 15.
             let l := mload(authData) // Length of `authData`.
@@ -150,16 +152,16 @@ library WebAuthn {
             if requireUserVerification {
                 result := and(eq(and(f, _AUTH_DATA_FLAGS_UV), _AUTH_DATA_FLAGS_UV), result)
             }
-            f := add(add(authData, 0x20), l) // Recycle `f` to for location of the word after `authData`.
-            let w := mload(f) // Cache the word after `authData`.
+            let e := add(add(authData, 0x20), l) // Location of the word after `authData`.
+            let w := mload(e) // Cache the word after `authData`.
             // 19. Let `hash` be the result of computing a hash over the cData using SHA-256.
-            if iszero(staticcall(gas(), 2, add(clientDataJSON, 0x20), n, f, 0x20)) { invalid() }
+            if iszero(staticcall(gas(), 2, add(clientDataJSON, 0x20), n, e, 0x20)) { invalid() }
             // 20. Using credentialPublicKey, verify that sig is a valid signature over the
             // binary concatenation of `authData` and `hash`.
             if iszero(staticcall(gas(), 2, add(authData, 0x20), add(l, 0x20), 0x00, 0x20)) {
                 invalid()
             }
-            mstore(f, w) // Restore the word after `authData`.
+            mstore(e, w) // Restore the word after `authData`.
             messageHash := mload(0x00)
         }
         return result && P256.verifySignature(messageHash, webAuthnAuth.r, webAuthnAuth.s, x, y);
