@@ -28,7 +28,7 @@ struct WebAuthnAuth {
 using WebAuthn for WebAuthnAuth global;
 
 import {Base64} from "../Base64.sol";
-import {P256} from "./P256.sol";
+import {P256} from "../P256.sol";
 
 /// @notice WebAuthn helper.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/WebAuthn.sol)

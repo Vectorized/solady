@@ -45,7 +45,7 @@ async function main() {
           ].join('\n\n')
         )
         .replace(/(https\:\/\/\S+?\/solady\/\S+?\/)([A-Za-z0-9]+\.sol)/, '$1g/$2')
-        .replace(/(import\s[\s\S]*?["'])\.\/([\s\S]+["'])/g, '$1../$2')
+        .replace(/(import\s[\s\S]*?["'])\.\/([\s\S]+?["'])/g, '$1../$2')
         .replace(/(library\s+([A-Za-z0-9]+)\s+\{\n)\n*/, '$1')
       );
     });
