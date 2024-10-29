@@ -98,7 +98,7 @@ library WebAuthn {
     function verify(
         bytes memory challenge,
         bool requireUserVerification,
-        WebAuthnAuth memory webAuthnAuth,
+        WebAuthnAuth memory auth,
         bytes32 x,
         bytes32 y
     ) internal view returns (bool result) {
@@ -106,12 +106,12 @@ library WebAuthn {
         string memory encoded = Base64.encode(challenge, true, true);
         /// @solidity memory-safe-assembly
         assembly {
-            let clientDataJSON := mload(add(webAuthnAuth, 0x20))
+            let clientDataJSON := mload(add(auth, 0x20))
             let n := mload(clientDataJSON) // `clientDataJSON`'s length.
             let o := add(clientDataJSON, 0x20) // Start of `clientData`'s bytes.
             {
-                let c := mload(add(webAuthnAuth, 0x40)) // Challenge index in `clientDataJSON`.
-                let t := mload(add(webAuthnAuth, 0x60)) // Type index in `clientDataJSON`.
+                let c := mload(add(auth, 0x40)) // Challenge index in `clientDataJSON`.
+                let t := mload(add(auth, 0x60)) // Type index in `clientDataJSON`.
                 let l := mload(encoded) // Cache `encoded`'s length.
                 let q := add(l, 0x0d) // Length of `encoded` prefixed with '"challenge":"'.
                 mstore(encoded, shr(152, '"challenge":"')) // Temp prefix with '"challenge":"'.
@@ -131,8 +131,7 @@ library WebAuthn {
                 mstore(encoded, l) // Restore `encoded`'s length, in case of string interning.
             }
             // Skip 13., 14., 15.
-            let authData := mload(webAuthnAuth)
-            let l := mload(authData) // Length of `authData`.
+            let l := mload(mload(auth)) // Length of `authenticatorData`.
             let r :=
                 or(
                     // 16. Verify that the "User Present" flag is set.
@@ -141,35 +140,35 @@ library WebAuthn {
                     mul(_AUTH_DATA_FLAGS_UV, iszero(iszero(requireUserVerification)))
                 )
             result :=
-                and(and(result, gt(l, 0x20)), eq(and(byte(0, mload(add(authData, 0x40))), r), r))
+                and(and(result, gt(l, 0x20)), eq(and(byte(0, mload(add(mload(auth), 0x40))), r), r))
             if result {
-                let p := add(authData, 0x20) // Start of `authData`'s bytes.
-                let e := add(p, l) // Location of the word after `authData`.
-                let w := mload(e) // Cache the word after `authData`.
+                let p := add(mload(auth), 0x20) // Start of `authenticatorData`'s bytes.
+                let e := add(p, l) // Location of the word after `authenticatorData`.
+                let w := mload(e) // Cache the word after `authenticatorData`.
                 // 19. Compute `sha256(clientDataJSON)`.
                 pop(staticcall(gas(), 2, o, n, e, 0x20))
-                // 20. Compute `sha256(authData ‖ sha256(clientDataJSON))`.
+                // 20. Compute `sha256(authenticatorData ‖ sha256(clientDataJSON))`.
                 pop(staticcall(gas(), 2, p, add(l, 0x20), 0x00, returndatasize()))
                 // `returndatasize()` is `0x20` on `sha256` success, and `0x00` otherwise.
                 if iszero(returndatasize()) { invalid() }
-                mstore(e, w) // Restore the word after `authData`, in case of reuse.
+                mstore(e, w) // Restore the word after `authenticatorData`, in case of reuse.
                 messageHash := mload(0x00)
             }
         }
         // `P256.verifySignature` returns false if `s > N/2` due to the malleability check.
-        return result && P256.verifySignature(messageHash, webAuthnAuth.r, webAuthnAuth.s, x, y);
+        return result && P256.verifySignature(messageHash, auth.r, auth.s, x, y);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                ENCODING / DECODING HELPERS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns `abi.encode(webAuthnAuth)`.
-    function encodeAuth(WebAuthnAuth memory webAuthnAuth) internal pure returns (bytes memory) {
-        return abi.encode(webAuthnAuth);
+    /// @dev Returns `abi.encode(auth)`.
+    function encodeAuth(WebAuthnAuth memory auth) internal pure returns (bytes memory) {
+        return abi.encode(auth);
     }
 
-    /// @dev Performs a best-effort attempt to `abi.decode(webAuthnAuth)`. Won't revert.
+    /// @dev Performs a best-effort attempt to `abi.decode(auth)`. Won't revert.
     /// If any fields cannot be successfully extracted, `decoded` will not be populated,
     /// which will cause `verify` to return false (as `clientDataJSON` is empty).
     function tryDecodeAuth(bytes memory encodedAuth)
@@ -184,17 +183,17 @@ library WebAuthn {
                 let e := add(o, n) // End of `encodedAuth` in memory.
                 let p := add(mload(o), o) // Start of `encodedAuth`.
                 if or(gt(add(p, 0xc0), e), lt(p, o)) { break }
-                let authData := add(mload(p), p)
+                let authenticatorData := add(mload(p), p)
                 let clientDataJSON := add(mload(add(p, 0x20)), p)
                 if or(
-                    or(gt(authData, e), lt(authData, p)),
+                    or(gt(authenticatorData, e), lt(authenticatorData, p)),
                     or(gt(clientDataJSON, e), lt(clientDataJSON, p))
                 ) { break }
                 if or(
-                    gt(add(add(authData, 0x20), mload(authData)), e),
+                    gt(add(add(authenticatorData, 0x20), mload(authenticatorData)), e),
                     gt(add(add(clientDataJSON, 0x20), mload(clientDataJSON)), e)
                 ) { break }
-                mstore(decoded, authData) // `authenticatorData`.
+                mstore(decoded, authenticatorData) // `authenticatorData`.
                 mstore(add(decoded, 0x20), clientDataJSON) // `clientDataJSON`.
                 mstore(add(decoded, 0x40), mload(add(p, 0x40))) // `challengeIndex`.
                 mstore(add(decoded, 0x60), mload(add(p, 0x60))) // `typeIndex`.
@@ -205,21 +204,21 @@ library WebAuthn {
         }
     }
 
-    /// @dev Returns the compact encoding of `webAuthnAuth`:
+    /// @dev Returns the compact encoding of `auth`:
     /// ```
     ///     abi.encodePacked(
-    ///         uint16(webAuthnAuth.authenticatorData.length),
-    ///         webAuthnAuth.authenticatorData,
-    ///         uint16(bytes(webAuthnAuth.clientDataJSON).length),
-    ///         webAuthnAuth.clientDataJSON,
-    ///         uint16(webAuthnAuth.challengeIndex),
-    ///         uint16(webAuthnAuth.typeIndex),
-    ///         webAuthnAuth.r,
-    ///         webAuthnAuth.s
+    ///         uint16(auth.authenticatorData.length),
+    ///         bytes(auth.authenticatorData),
+    ///         uint16(bytes(auth.clientDataJSON).length),
+    ///         bytes(auth.clientDataJSON),
+    ///         uint16(auth.challengeIndex),
+    ///         uint16(auth.typeIndex),
+    ///         bytes32(auth.r),
+    ///         bytes32(auth.s)
     ///     )
     /// ```
     /// Returns the empty string if any length or index exceeds 16 bits.
-    function tryEncodeAuthCompact(WebAuthnAuth memory webAuthnAuth)
+    function tryEncodeAuthCompact(WebAuthnAuth memory auth)
         internal
         pure
         returns (bytes memory result)
@@ -236,17 +235,17 @@ library WebAuthn {
                     if iszero(lt(o_, _e)) { break }
                 }
             }
-            let authData := mload(webAuthnAuth)
-            let clientDataJSON := mload(add(0x20, webAuthnAuth))
-            let c := mload(add(0x40, webAuthnAuth)) // `challengeIndex`.
-            let t := mload(add(0x60, webAuthnAuth)) // `typeIndex`.
+            let clientDataJSON := mload(add(0x20, auth))
+            let c := mload(add(0x40, auth)) // `challengeIndex`.
+            let t := mload(add(0x60, auth)) // `typeIndex`.
             // If none of the lengths are more than `0xffff`.
-            if iszero(shr(16, or(or(t, c), or(mload(authData), mload(clientDataJSON))))) {
+            if iszero(shr(16, or(or(t, c), or(mload(mload(auth)), mload(clientDataJSON))))) {
                 result := mload(0x40)
-                let o := copyBytes(copyBytes(add(result, 0x20), authData), clientDataJSON)
-                mstore(o, or(shl(240, c), shl(224, t)))
-                mstore(add(o, 0x04), mload(add(0x80, webAuthnAuth))) // `r`.
-                mstore(add(o, 0x24), mload(add(0xa0, webAuthnAuth))) // `s`.
+                // `authenticatorData`, `clientDataJSON`.
+                let o := copyBytes(copyBytes(add(result, 0x20), mload(auth)), clientDataJSON)
+                mstore(o, or(shl(240, c), shl(224, t))) // `challengeIndex`, `typeIndex`.
+                mstore(add(o, 0x04), mload(add(0x80, auth))) // `r`.
+                mstore(add(o, 0x24), mload(add(0xa0, auth))) // `s`.
                 mstore(result, sub(add(o, 0x24), result)) // Store the length.
                 mstore(add(o, 0x44), 0) // Zeroize the slot after the string.
                 mstore(0x40, add(o, 0x64)) // Allocate memory .
@@ -282,12 +281,12 @@ library WebAuthn {
                 let e := add(o, n) // End of `encodedAuth` in memory.
                 n := shr(240, mload(o)) // Length of `authenticatorData`.
                 o := add(o, 0x02)
-                let authData := extractBytes(o, n)
+                let authenticatorData := extractBytes(o, n)
                 o := add(o, n)
                 n := shr(240, mload(o)) // Length of `clientDataJSON`.
                 o := add(o, 0x02)
                 if iszero(gt(add(o, add(0x44, n)), e)) {
-                    mstore(decoded, authData) // `authenticatorData`.
+                    mstore(decoded, authenticatorData) // `authenticatorData`.
                     mstore(add(decoded, 0x20), extractBytes(o, n)) // `clientDataJSON`.
                     o := add(o, n)
                     mstore(add(decoded, 0x40), shr(240, mload(o))) // `challengeIndex`.
