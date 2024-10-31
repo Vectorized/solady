@@ -27,7 +27,7 @@ library SignatureCheckerLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns whether `signature` is valid for `signer` and `hash`.
-    /// It will first try to validate with `ecrecover`, and if the validation fails,
+    /// First, it will try to validate with `ecrecover`, and if the validation fails,
     /// it will try to validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, bytes memory signature)
         internal
@@ -115,7 +115,7 @@ library SignatureCheckerLib {
     }
 
     /// @dev Returns whether `signature` is valid for `signer` and `hash`.
-    /// It will first try to validate with `ecrecover`, and if the validation fails,
+    /// First, it will try to validate with `ecrecover`, and if the validation fails,
     /// it will try to validate with ERC1271 on `signer`.
     function isValidSignatureNowCalldata(address signer, bytes32 hash, bytes calldata signature)
         internal
@@ -203,7 +203,7 @@ library SignatureCheckerLib {
     }
 
     /// @dev Returns whether the signature (`r`, `vs`) is valid for `signer` and `hash`.
-    /// It will first try to validate with `ecrecover`, and if the validation fails,
+    /// First, it will try to validate with `ecrecover`, and if the validation fails,
     /// it will try to validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, bytes32 r, bytes32 vs)
         internal
@@ -269,7 +269,7 @@ library SignatureCheckerLib {
     }
 
     /// @dev Returns whether the signature (`v`, `r`, `s`) is valid for `signer` and `hash`.
-    /// It will first try to validate with `ecrecover`, and if the validation fails,
+    /// First, it will try to validate with `ecrecover`, and if the validation fails,
     /// it will try to validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s)
         internal
