@@ -27,8 +27,8 @@ library SignatureCheckerLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns whether `signature` is valid for `signer` and `hash`.
-    /// If `signer` is a smart contract, the signature is validated with ERC1271.
-    /// Otherwise, the signature is validated with `ECDSA.recover`.
+    /// It will first try to validate with `ecrecover`, and if the validation fails,
+    /// it will try to validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, bytes memory signature)
         internal
         view
@@ -115,8 +115,8 @@ library SignatureCheckerLib {
     }
 
     /// @dev Returns whether `signature` is valid for `signer` and `hash`.
-    /// If `signer` is a smart contract, the signature is validated with ERC1271.
-    /// Otherwise, the signature is validated with `ECDSA.recover`.
+    /// It will first try to validate with `ecrecover`, and if the validation fails,
+    /// it will try to validate with ERC1271 on `signer`.
     function isValidSignatureNowCalldata(address signer, bytes32 hash, bytes calldata signature)
         internal
         view
@@ -203,8 +203,8 @@ library SignatureCheckerLib {
     }
 
     /// @dev Returns whether the signature (`r`, `vs`) is valid for `signer` and `hash`.
-    /// If `signer` is a smart contract, the signature is validated with ERC1271.
-    /// Otherwise, the signature is validated with `ECDSA.recover`.
+    /// It will first try to validate with `ecrecover`, and if the validation fails,
+    /// it will try to validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, bytes32 r, bytes32 vs)
         internal
         view
@@ -269,8 +269,8 @@ library SignatureCheckerLib {
     }
 
     /// @dev Returns whether the signature (`v`, `r`, `s`) is valid for `signer` and `hash`.
-    /// If `signer` is a smart contract, the signature is validated with ERC1271.
-    /// Otherwise, the signature is validated with `ECDSA.recover`.
+    /// It will first try to validate with `ecrecover`, and if the validation fails,
+    /// it will try to validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s)
         internal
         view
