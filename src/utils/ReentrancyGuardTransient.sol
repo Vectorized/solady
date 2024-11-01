@@ -71,7 +71,7 @@ abstract contract ReentrancyGuardTransient {
             } else {
                 /// @solidity memory-safe-assembly
                 assembly {
-                    sstore(s, 1)
+                    sstore(s, s)
                 }
             }
         } else {
