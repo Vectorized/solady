@@ -1529,6 +1529,62 @@ contract LibStringTest is SoladyTest {
         LibString.toSmallString("123456789012345678901234567890123");
     }
 
+    function testSetAndGetStringStorage() public {
+        string memory s = string(address(this).code);
+        string memory emptyString;
+        _testSetAndGetStringStorage(emptyString);
+        _testSetAndGetStringStorage("");
+        _testSetAndGetStringStorage("a");
+        _testSetAndGetStringStorage("ab");
+        unchecked {
+            for (uint256 i = 25; i != 35; ++i) {
+                _testSetAndGetStringStorage(LibString.slice(s, 0, i));
+            }
+            for (uint256 i = 125; i != 135; ++i) {
+                _testSetAndGetStringStorage(LibString.slice(s, 0, i));
+            }
+            for (uint256 i = 250; i != 260; ++i) {
+                _testSetAndGetStringStorage(LibString.slice(s, 0, i));
+            }
+        }
+    }
+
+    function testSetAndGetStringStorage(bytes32) public {
+        LibString.StringStorage storage $ = _getStringStorage();
+        if (_randomChance(32)) assertEq(LibString.get($), "");
+        if (_randomChance(2)) {
+            string memory s0 = string(_randomBytes());
+            _testSetAndGetStringStorage(s0);
+        }
+        if (_randomChance(8)) {
+            delete $._spacer;
+            assertEq(LibString.get($), "");
+        }
+        if (_randomChance(16)) {
+            string memory s1 = string(_randomBytes());
+            _testSetAndGetStringStorage(s1);
+        }
+    }
+
+    function _testSetAndGetStringStorage(string memory s) internal {
+        LibString.StringStorage storage $ = _getStringStorage();
+        LibString.set($, s);
+        if (_randomChance(16)) {
+            _misalignFreeMemoryPointer();
+            _brutalizeMemory();
+        }
+        string memory loaded = LibString.get($);
+        _checkMemory(loaded);
+        assertEq(loaded, s);
+    }
+
+    function _getStringStorage() internal pure returns (LibString.StringStorage storage $) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            $.slot := 0x1122334455
+        }
+    }
+
     function _lowerOriginal(string memory subject) internal pure returns (string memory result) {
         unchecked {
             uint256 n = bytes(subject).length;

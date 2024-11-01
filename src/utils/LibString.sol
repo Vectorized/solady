@@ -12,6 +12,15 @@ pragma solidity ^0.8.4;
 /// can lead to undefined behavior.
 library LibString {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          STRUCTS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev A struct for more efficient string storage.
+    struct StringStorage {
+        uint256 _spacer;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -60,6 +69,83 @@ library LibString {
 
     /// @dev Lookup for ' \t\n\r\x0b\x0c'.
     uint128 internal constant WHITESPACE_7_BIT_ASCII = 0x100003e00;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 STRING STORAGE OPERATIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Sets the value of the string storage `$` to `s`.
+    function set(StringStorage storage $, string memory s) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := add(s, 0x20)
+            for { let n := mload(s) } 1 {} {
+                if iszero(gt(n, 0xfe)) {
+                    sstore($.slot, or(n, shl(8, shr(8, mload(o)))))
+                    if iszero(gt(n, 0x1f)) { break }
+                    mstore(0x00, $.slot)
+                    let p := keccak256(0x00, 0x20)
+                    for { let i := 0x1f } 1 {} {
+                        sstore(add(p, shr(5, i)), mload(add(o, i)))
+                        i := add(i, 0x20)
+                        if iszero(lt(i, n)) { break }
+                    }
+                    break
+                }
+                sstore($.slot, or(0xff, shl(8, n)))
+                mstore(0x00, $.slot)
+                let p := keccak256(0x00, 0x20)
+                for { let i := 0 } 1 {} {
+                    sstore(add(p, shr(5, i)), mload(add(o, i)))
+                    i := add(i, 0x20)
+                    if iszero(lt(i, n)) { break }
+                }
+                break
+            }
+        }
+    }
+
+    /// @dev Sets the value of the string storage `$` to the empty string.
+    function clear(StringStorage storage $) internal {
+        delete $._spacer;
+    }
+
+    /// @dev Returns the value stored in `$`.
+    function get(StringStorage storage $) internal view returns (string memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let o := add(result, 0x20)
+            let n := sload($.slot)
+            for {} 1 {} {
+                if iszero(eq(0xff, and(0xff, n))) {
+                    mstore(o, n)
+                    n := and(0xff, n)
+                    if iszero(gt(n, 0x1f)) { break }
+                    mstore(0x00, $.slot)
+                    let p := keccak256(0x00, 0x20)
+                    for { let i := 0x1f } 1 {} {
+                        mstore(add(o, i), sload(add(p, shr(5, i))))
+                        i := add(i, 0x20)
+                        if iszero(lt(i, n)) { break }
+                    }
+                    break
+                }
+                n := shr(8, n)
+                mstore(0x00, $.slot)
+                let p := keccak256(0x00, 0x20)
+                for { let i := 0 } 1 {} {
+                    mstore(add(o, i), sload(add(p, shr(5, i))))
+                    i := add(i, 0x20)
+                    if iszero(lt(i, n)) { break }
+                }
+                break
+            }
+            mstore(result, n) // Store the length of the memory.
+            mstore(add(o, n), 0) // Zeroize the slot after the string.
+            mstore(0x40, add(add(o, n), 0x20)) // Allocate memory.
+        }
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     DECIMAL OPERATIONS                     */
