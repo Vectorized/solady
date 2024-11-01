@@ -1593,7 +1593,10 @@ contract LibStringTest is SoladyTest {
     }
 
     function testSetAndGetStringStorage(bytes32) public {
-        if (_randomChance(32)) assertEq(_get(_getStringStorage()), "");
+        if (_randomChance(32)) {
+            assertTrue(LibString.isEmpty(_getStringStorage()));
+            assertEq(_get(_getStringStorage()), "");
+        }
         if (_randomChance(2)) _testSetAndGetStringStorage(string(_randomBytes()));
         if (_randomChance(16)) _testSetAndGetStringStorage(string(_randomBytes()));
     }
@@ -1607,11 +1610,11 @@ contract LibStringTest is SoladyTest {
     }
 
     function _testSetAndGetStringStorage(string memory s0, bool writeTo1) internal {
-        LibString.set(_getStringStorage(0), s0);
+        _set(_getStringStorage(0), s0);
         string memory s1;
         if (writeTo1) {
             s1 = string(_randomBytes());
-            LibString.set(_getStringStorage(1), s1);
+            _set(_getStringStorage(1), s1);
         }
         if (_randomChance(16)) {
             _misalignFreeMemoryPointer();
@@ -1630,11 +1633,18 @@ contract LibStringTest is SoladyTest {
             delete $._spacer;
         }
         assertEq(LibString.get($), "");
+        assertTrue(LibString.isEmpty($));
     }
 
-    function _get(LibString.StringStorage storage $) internal view returns (string memory result) {
+    function _set(LibString.StringStorage storage $, string memory s) internal {
+        LibString.set($, s);
+        assertEq(LibString.isEmpty($), bytes(s).length == 0);
+    }
+
+    function _get(LibString.StringStorage storage $) internal returns (string memory result) {
         result = LibString.get($);
         _checkMemory(result);
+        assertEq(LibString.isEmpty($), bytes(result).length == 0);
     }
 
     function _getStringStorage() internal pure returns (LibString.StringStorage storage) {

@@ -116,6 +116,14 @@ library LibString {
         delete $._spacer;
     }
 
+    /// @dev Returns whether the value stored is `$` is the empty string "".
+    function isEmpty(StringStorage storage $) internal view returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := iszero(and(0xff, sload($.slot)))
+        }
+    }
+
     /// @dev Returns the value stored in `$`.
     function get(StringStorage storage $) internal view returns (string memory result) {
         /// @solidity memory-safe-assembly
