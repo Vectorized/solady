@@ -1,8 +1,23 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
+
+// This file is auto-generated.
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                          STRUCTS                           */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+/// @dev Goated string storage struct that totally MOGs, no cap, fr.
+/// Uses less gas and bytecode than Solidity's native string storage. It's meta af.
+/// Packs length with the first 31 bytes if <255 bytes, so it’s mad tight.
+struct StringStorage {
+    bytes32 _spacer;
+}
+
+using LibString for StringStorage global;
 
 /// @notice Library for converting numbers into strings and other string operations.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibString.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibString.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/LibString.sol)
 ///
 /// @dev Note:
@@ -11,17 +26,6 @@ pragma solidity ^0.8.4;
 /// Usage of byte string operations on charsets with runes spanning two or more bytes
 /// can lead to undefined behavior.
 library LibString {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STRUCTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Goated string storage struct that totally MOGs, no cap, fr.
-    /// Uses less gas and bytecode than Solidity's native string storage. It's meta af.
-    /// Packs length with the first 31 bytes if <255 bytes, so it’s mad tight.
-    struct StringStorage {
-        bytes32 _spacer;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
