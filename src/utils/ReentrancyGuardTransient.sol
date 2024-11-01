@@ -31,7 +31,7 @@ abstract contract ReentrancyGuardTransient {
     modifier nonReentrant() virtual {
         if (_useTransientReentrancyGuardOnlyOnMainnet()) {
             uint256 s = _REENTRANCY_GUARD_SLOT;
-            if (block.chainid == uint256(1)) {
+            if (block.chainid == 1) {
                 /// @solidity memory-safe-assembly
                 assembly {
                     if tload(s) {
@@ -63,7 +63,7 @@ abstract contract ReentrancyGuardTransient {
         _;
         if (_useTransientReentrancyGuardOnlyOnMainnet()) {
             uint256 s = _REENTRANCY_GUARD_SLOT;
-            if (block.chainid == uint256(1)) {
+            if (block.chainid == 1) {
                 /// @solidity memory-safe-assembly
                 assembly {
                     tstore(s, 0)
@@ -86,7 +86,7 @@ abstract contract ReentrancyGuardTransient {
     modifier nonReadReentrant() virtual {
         if (_useTransientReentrancyGuardOnlyOnMainnet()) {
             uint256 s = _REENTRANCY_GUARD_SLOT;
-            if (block.chainid == uint256(1)) {
+            if (block.chainid == 1) {
                 /// @solidity memory-safe-assembly
                 assembly {
                     if tload(s) {
