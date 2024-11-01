@@ -7,9 +7,9 @@ pragma solidity ^0.8.13;
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-/// @dev Goated string storage struct that totally MOGs, no cap.
-/// Uses less gas and bytecode than Solidity's native string storage.
-/// Packs length with first 31 bytes if < 255 bytes, so it's mad tight.
+/// @dev Goated string storage struct that totally MOGs, no cap, fr.
+/// Uses less gas and bytecode than Solidity's native string storage. It's meta af.
+/// Packs length with the first 31 bytes if <255 bytes, so it’s mad tight.
 struct StringStorage {
     bytes32 _spacer;
 }
