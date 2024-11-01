@@ -18,10 +18,10 @@ abstract contract ReentrancyGuardTransient {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Equivalent to: `uint72(bytes9(keccak256("_REENTRANCY_GUARD_SLOT")))`.
+    /// @dev Equivalent to: `uint32(bytes4(keccak256("Reentrancy()"))) | 1 << 71`.
     /// 9 bytes is large enough to avoid collisions in practice,
     /// but not too large to result in excessive bytecode bloat.
-    uint256 private constant _REENTRANCY_GUARD_SLOT = 0x929eee149b4bd21268;
+    uint256 private constant _REENTRANCY_GUARD_SLOT = 0x8000000000ab143c06;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      REENTRANCY GUARD                      */
@@ -35,7 +35,7 @@ abstract contract ReentrancyGuardTransient {
                 /// @solidity memory-safe-assembly
                 assembly {
                     if tload(s) {
-                        mstore(0x00, 0xab143c06) // `Reentrancy()`.
+                        mstore(0x00, s) // `Reentrancy()`.
                         revert(0x1c, 0x04)
                     }
                     tstore(s, address())
@@ -44,7 +44,7 @@ abstract contract ReentrancyGuardTransient {
                 /// @solidity memory-safe-assembly
                 assembly {
                     if eq(sload(s), address()) {
-                        mstore(0x00, 0xab143c06) // `Reentrancy()`.
+                        mstore(0x00, s) // `Reentrancy()`.
                         revert(0x1c, 0x04)
                     }
                     sstore(s, address())
@@ -90,7 +90,7 @@ abstract contract ReentrancyGuardTransient {
                 /// @solidity memory-safe-assembly
                 assembly {
                     if tload(s) {
-                        mstore(0x00, 0xab143c06) // `Reentrancy()`.
+                        mstore(0x00, s) // `Reentrancy()`.
                         revert(0x1c, 0x04)
                     }
                 }
@@ -98,7 +98,7 @@ abstract contract ReentrancyGuardTransient {
                 /// @solidity memory-safe-assembly
                 assembly {
                     if eq(sload(s), address()) {
-                        mstore(0x00, 0xab143c06) // `Reentrancy()`.
+                        mstore(0x00, s) // `Reentrancy()`.
                         revert(0x1c, 0x04)
                     }
                 }
