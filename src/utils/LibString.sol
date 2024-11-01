@@ -16,6 +16,8 @@ library LibString {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev A struct for more efficient string storage.
+    /// This mogs Solidity's native string storage in gas and bytecode efficiency. No cap, fr.
+    /// All strings shorter than 255 bytes will have the length packed with the first 31 bytes.
     struct StringStorage {
         bytes32 _spacer;
     }

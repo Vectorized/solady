@@ -4,7 +4,46 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
+contract SimpleStringSetAndGet {
+    string internal _x;
+
+    function setX(string memory x) public {
+        _x = x;
+    }
+
+    function getX() public view returns (string memory) {
+        return _x;
+    }
+}
+
+contract SimpleStringSetAndGetWithStringStorage {
+    LibString.StringStorage internal _x;
+
+    function setX(string memory x) public {
+        LibString.set(_x, x);
+    }
+
+    function getX() public view returns (string memory) {
+        return LibString.get(_x);
+    }
+}
+
 contract LibStringTest is SoladyTest {
+    function testSimpleStringSetAndGetGas() public {
+        SimpleStringSetAndGet ss0 = new SimpleStringSetAndGet();
+        SimpleStringSetAndGetWithStringStorage ss1 = new SimpleStringSetAndGetWithStringStorage();
+        assertGt(address(ss0).code.length, 0);
+        ss0.setX("123456789012345678901234567890");
+        assertGt(bytes(ss0.getX()).length, 0);
+        ss0.setX("123456789012345678901234567890123456789012345678901234567890");
+        assertGt(bytes(ss0.getX()).length, 0);
+        assertGt(address(ss1).code.length, 0);
+        ss1.setX("123456789012345678901234567890");
+        assertGt(bytes(ss1.getX()).length, 0);
+        ss1.setX("123456789012345678901234567890123456789012345678901234567890");
+        assertGt(bytes(ss1.getX()).length, 0);
+    }
+
     function testToStringZero() public {
         assertEq(LibString.toString(uint256(0)), "0");
     }
