@@ -224,16 +224,16 @@ library LibString {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the hexadecimal representation of `value`,
-    /// left-padded to an input length of `hexLength` bytes.
+    /// left-padded to an input length of `byteCount` bytes.
     /// The output is prefixed with "0x" encoded using 2 hexadecimal digits per byte,
-    /// giving a total length of `length * 2 + 2` bytes.
-    /// Reverts if `length` is too small for the output to contain all the digits.
-    function toHexString(uint256 value, uint256 hexLength)
+    /// giving a total length of `byteCount * 2 + 2` bytes.
+    /// Reverts if `byteCount` is too small for the output to contain all the digits.
+    function toHexString(uint256 value, uint256 byteCount)
         internal
         pure
         returns (string memory result)
     {
-        result = toHexStringNoPrefix(value, hexLength);
+        result = toHexStringNoPrefix(value, byteCount);
         /// @solidity memory-safe-assembly
         assembly {
             let n := add(mload(result), 2) // Compute the length.
@@ -244,22 +244,22 @@ library LibString {
     }
 
     /// @dev Returns the hexadecimal representation of `value`,
-    /// left-padded to an input length of `hexLength` bytes.
+    /// left-padded to an input length of `byteCount` bytes.
     /// The output is not prefixed with "0x" and is encoded using 2 hexadecimal digits per byte,
-    /// giving a total length of `hexLength * 2` bytes.
-    /// Reverts if `length` is too small for the output to contain all the digits.
-    function toHexStringNoPrefix(uint256 value, uint256 hexLength)
+    /// giving a total length of `byteCount * 2` bytes.
+    /// Reverts if `byteCount` is too small for the output to contain all the digits.
+    function toHexStringNoPrefix(uint256 value, uint256 byteCount)
         internal
         pure
         returns (string memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // We need 0x20 bytes for the trailing zeros padding, `hexLength * 2` bytes
+            // We need 0x20 bytes for the trailing zeros padding, `byteCount * 2` bytes
             // for the digits, 0x02 bytes for the prefix, and 0x20 bytes for the length.
             // We add 0x20 to the total and round down to a multiple of 0x20.
             // (0x20 + 0x20 + 0x02 + 0x20) = 0x62.
-            result := add(mload(0x40), and(add(shl(1, hexLength), 0x42), not(0x1f)))
+            result := add(mload(0x40), and(add(shl(1, byteCount), 0x42), not(0x1f)))
             mstore(0x40, add(result, 0x20)) // Allocate memory.
             mstore(result, 0) // Zeroize the slot after the string.
 
@@ -267,7 +267,7 @@ library LibString {
             // Store "0123456789abcdef" in scratch space.
             mstore(0x0f, 0x30313233343536373839616263646566)
 
-            let start := sub(result, add(hexLength, hexLength))
+            let start := sub(result, add(byteCount, byteCount))
             let w := not(1) // Tsk.
             let temp := value
             // We write the string from rightmost digit to leftmost digit.
