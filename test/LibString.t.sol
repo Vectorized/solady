@@ -1610,23 +1610,21 @@ contract LibStringTest is SoladyTest {
         _testSetAndGetStringStorage(s, _randomChance(8));
     }
 
-    function _testSetAndGetStringStorage(string memory s, bool writeT) internal {
-        LibString.StringStorage storage $s = _getStringStorage(0);
-        LibString.StringStorage storage $t = _getStringStorage(1);
-        LibString.set($s, s);
-        string memory t;
-        if (writeT) {
-            t = string(_randomBytes());
-            LibString.set($t, t);
+    function _testSetAndGetStringStorage(string memory s0, bool writeTo1) internal {
+        LibString.set(_getStringStorage(0), s0);
+        string memory s1;
+        if (writeTo1) {
+            s1 = string(_randomBytes());
+            LibString.set(_getStringStorage(1), s1);
         }
         if (_randomChance(16)) {
             _misalignFreeMemoryPointer();
             _brutalizeMemory();
         }
-        assertEq(_get($s), s);
-        if (writeT) assertEq(_get($t), t);
-        if (_randomChance(16)) _testClear($s);
-        if (_randomChance(16)) _testClear($t);
+        assertEq(_get(_getStringStorage(0)), s0);
+        if (writeTo1) assertEq(_get(_getStringStorage(1)), s1);
+        if (_randomChance(16)) _testClear(_getStringStorage(0));
+        if (_randomChance(16)) _testClear(_getStringStorage(1));
     }
 
     function _testClear(LibString.StringStorage storage $) internal {
