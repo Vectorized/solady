@@ -126,8 +126,8 @@ library LibString {
         result = uint256($._spacer);
         /// @solidity memory-safe-assembly
         assembly {
-            let t := iszero(eq(0xff, and(0xff, result)))
-            result := or(mul(shr(8, result), iszero(t)), mul(and(0xff, result), t))
+            let n := and(0xff, result)
+            result := or(mul(shr(8, result), eq(0xff, n)), mul(n, iszero(eq(0xff, n))))
         }
     }
 
