@@ -1566,6 +1566,10 @@ contract LibStringTest is SoladyTest {
         }
     }
 
+    function testSetAndGetStringStorage2(string memory s) public {
+        _testSetAndGetStringStorage(s);
+    }
+
     function _testSetAndGetStringStorage(string memory s) internal {
         LibString.StringStorage storage $ = _getStringStorage();
         LibString.set($, s);

@@ -9,7 +9,7 @@ pragma solidity ^0.8.13;
 
 /// @dev A struct for more efficient string storage.
 struct StringStorage {
-    uint256 _spacer;
+    bytes32 _spacer;
 }
 
 using LibString for StringStorage global;

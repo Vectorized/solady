@@ -17,7 +17,7 @@ library LibString {
 
     /// @dev A struct for more efficient string storage.
     struct StringStorage {
-        uint256 _spacer;
+        bytes32 _spacer;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
