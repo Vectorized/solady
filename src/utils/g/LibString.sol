@@ -105,6 +105,29 @@ library LibString {
         }
     }
 
+    /// @dev Sets the value of the string storage `$` to `s`.
+    function setCalldata(StringStorage storage $, string calldata s) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let packed := or(0xff, shl(8, s.length))
+            for { let i := 0 } 1 {} {
+                if iszero(gt(s.length, 0xfe)) {
+                    i := 0x1f
+                    packed := or(s.length, shl(8, shr(8, calldataload(s.offset))))
+                    if iszero(gt(s.length, i)) { break }
+                }
+                mstore(0x00, $.slot)
+                for { let p := keccak256(0x00, 0x20) } 1 {} {
+                    sstore(add(p, shr(5, i)), calldataload(add(s.offset, i)))
+                    i := add(i, 0x20)
+                    if iszero(lt(i, s.length)) { break }
+                }
+                break
+            }
+            sstore($.slot, packed)
+        }
+    }
+
     /// @dev Sets the value of the string storage `$` to the empty string.
     function clear(StringStorage storage $) internal {
         delete $._spacer;
