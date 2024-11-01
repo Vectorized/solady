@@ -33,20 +33,20 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "post-cancun" ] &&
-            forge test --use 0.8.28 --evm-version "cancun"
+            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28
           ) ||
           ( [ "${{ matrix.profile }}" = "post-cancun-via-ir" ] &&
-            forge test --use 0.8.28 --evm-version "cancun" --via-ir
+            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
-            forge test --use 0.8.5 --fuzz-runs 16 --skip "*/g/*" &&
-            forge test --use 0.8.6 --fuzz-runs 16 --skip "*/g/*" &&
-            forge test --use 0.8.7 --fuzz-runs 16 --skip "*/g/*"&&
-            forge test --use 0.8.8 --fuzz-runs 16 --skip "*/g/*" &&
-            forge test --use 0.8.9 --fuzz-runs 16 --skip "*/g/*" &&
-            forge test --use 0.8.10 --fuzz-runs 16 --skip "*/g/*" &&
-            forge test --use 0.8.11 --fuzz-runs 16 --skip "*/g/*" &&
-            forge test --use 0.8.12 --fuzz-runs 16 --skip "*/g/*"
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.5 --fuzz-runs 16 &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.6 --fuzz-runs 16 &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.7 --fuzz-runs 16 &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.8 --fuzz-runs 16 &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.9 --fuzz-runs 16 &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.10 --fuzz-runs 16 &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.11 --fuzz-runs 16 &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.12 --fuzz-runs 16
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] &&
             forge test --use 0.8.13 --fuzz-runs 16 &&
@@ -70,10 +70,10 @@ jobs:
             forge test --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "min-solc" ] &&
-            forge test --use 0.8.4 --skip "*/g/*"
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.4
           ) ||
           ( [ "${{ matrix.profile }}" = "min-solc-via-ir" ] &&
-            forge test --use 0.8.4 --skip "*/g/*" --via-ir
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.4 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "intense" ] &&
             forge test --fuzz-runs 5000

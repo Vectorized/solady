@@ -10,10 +10,18 @@ auto_detect_solc = false
 optimizer = true
 optimizer_runs = 1_000
 gas_limit = 100_000_000 # ETH is 30M, but we use a higher value.
+skip = ["/*Transient*"]
 fs_permissions = [{ access = "read", path = "./test/data"}]
 remappings = [
   "forge-std=test/utils/forge-std/"
 ]
+
+[profile.pre_global_structs]
+skip = ["*/g/*", "/*Transient*"]
+
+[profile.post_cancun]
+evm_version = "cancun"
+skip = []
 
 [fmt]
 line_length = 100 # While we allow up to 120, we lint at 100 for readability.
