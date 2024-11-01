@@ -7,7 +7,7 @@ import {LibString} from "../src/utils/LibString.sol";
 contract SimpleStringSetAndGet {
     string public x;
 
-    function setX(string memory x_) public {
+    function setX(string calldata x_) public {
         x = x_;
     }
 }
@@ -15,8 +15,8 @@ contract SimpleStringSetAndGet {
 contract SimpleStringSetAndGetWithStringStorage {
     LibString.StringStorage internal _x;
 
-    function setX(string memory x_) public {
-        LibString.set(_x, x_);
+    function setX(string calldata x_) public {
+        LibString.setCalldata(_x, x_);
     }
 
     function x() public view returns (string memory) {
@@ -1600,6 +1600,11 @@ contract LibStringTest is SoladyTest {
 
     function testSetAndGetStringStorage2(string memory s) public {
         _testSetAndGetStringStorage(s);
+    }
+
+    function testSetAndGetStringStorageCalldata(string calldata s) public {
+        LibString.setCalldata(_getStringStorage(), s);
+        assertEq(LibString.get(_getStringStorage()), s);
     }
 
     function _testSetAndGetStringStorage(string memory s) internal {
