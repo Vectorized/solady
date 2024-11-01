@@ -41,6 +41,7 @@ abstract contract ERC1155TokenReceiver {
 /// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC1271Wallet is ERC721TokenReceiver, ERC1155TokenReceiver {
     address public signer;
+    bool public useSignaturePassthrough;
 
     constructor(address signer_) {
         signer = signer_;
@@ -55,6 +56,13 @@ contract MockERC1271Wallet is ERC721TokenReceiver, ERC1155TokenReceiver {
         view
         returns (bytes4)
     {
+        if (useSignaturePassthrough) {
+            return keccak256(signature) == hash ? bytes4(0x1626ba7e) : bytes4(0);
+        }
         return ECDSA.recover(hash, signature) == signer ? bytes4(0x1626ba7e) : bytes4(0);
+    }
+
+    function setUseSignaturePassthrough(bool value) public {
+        useSignaturePassthrough = value;
     }
 }

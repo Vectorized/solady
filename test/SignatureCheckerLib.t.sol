@@ -342,6 +342,22 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertEq(SignatureCheckerLib.toEthSignedMessageHash(s), ECDSA.toEthSignedMessageHash(s));
     }
 
+    function testSignatureCheckerPassthrough(bytes calldata signature) public {
+        bytes32 hash = keccak256(signature);
+        mockERC1271Wallet.setUseSignaturePassthrough(true);
+        if (_randomChance(8)) {
+            _misalignFreeMemoryPointer();
+            _brutalizeMemory();
+        }
+        address signer = address(mockERC1271Wallet);
+        assertEq(SignatureCheckerLib.isValidSignatureNowCalldata(signer, hash, signature), true);
+        assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, signature), true);
+
+        hash = bytes32(uint256(hash) ^ 1);
+        assertEq(SignatureCheckerLib.isValidSignatureNowCalldata(signer, hash, signature), false);
+        assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, signature), false);
+    }
+
     function _etchNicksFactory() internal returns (address nicksFactory) {
         nicksFactory = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
         if (nicksFactory.code.length != 0) {
