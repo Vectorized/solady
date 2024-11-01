@@ -117,10 +117,17 @@ library LibString {
     }
 
     /// @dev Returns whether the value stored is `$` is the empty string "".
-    function isEmpty(StringStorage storage $) internal view returns (bool result) {
+    function isEmpty(StringStorage storage $) internal view returns (bool) {
+        return uint256($._spacer) & 0xff == uint256(0);
+    }
+
+    /// @dev Returns the length of the value stored in `$`.
+    function length(StringStorage storage $) internal view returns (uint256 result) {
+        result = uint256($._spacer);
         /// @solidity memory-safe-assembly
         assembly {
-            result := iszero(and(0xff, sload($.slot)))
+            let t := iszero(eq(0xff, and(0xff, result)))
+            result := or(mul(shr(8, result), iszero(t)), mul(and(0xff, result), t))
         }
     }
 
@@ -217,16 +224,16 @@ library LibString {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the hexadecimal representation of `value`,
-    /// left-padded to an input length of `length` bytes.
+    /// left-padded to an input length of `hexLength` bytes.
     /// The output is prefixed with "0x" encoded using 2 hexadecimal digits per byte,
     /// giving a total length of `length * 2 + 2` bytes.
     /// Reverts if `length` is too small for the output to contain all the digits.
-    function toHexString(uint256 value, uint256 length)
+    function toHexString(uint256 value, uint256 hexLength)
         internal
         pure
         returns (string memory result)
     {
-        result = toHexStringNoPrefix(value, length);
+        result = toHexStringNoPrefix(value, hexLength);
         /// @solidity memory-safe-assembly
         assembly {
             let n := add(mload(result), 2) // Compute the length.
@@ -237,22 +244,22 @@ library LibString {
     }
 
     /// @dev Returns the hexadecimal representation of `value`,
-    /// left-padded to an input length of `length` bytes.
+    /// left-padded to an input length of `hexLength` bytes.
     /// The output is not prefixed with "0x" and is encoded using 2 hexadecimal digits per byte,
-    /// giving a total length of `length * 2` bytes.
+    /// giving a total length of `hexLength * 2` bytes.
     /// Reverts if `length` is too small for the output to contain all the digits.
-    function toHexStringNoPrefix(uint256 value, uint256 length)
+    function toHexStringNoPrefix(uint256 value, uint256 hexLength)
         internal
         pure
         returns (string memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // We need 0x20 bytes for the trailing zeros padding, `length * 2` bytes
+            // We need 0x20 bytes for the trailing zeros padding, `hexLength * 2` bytes
             // for the digits, 0x02 bytes for the prefix, and 0x20 bytes for the length.
             // We add 0x20 to the total and round down to a multiple of 0x20.
             // (0x20 + 0x20 + 0x02 + 0x20) = 0x62.
-            result := add(mload(0x40), and(add(shl(1, length), 0x42), not(0x1f)))
+            result := add(mload(0x40), and(add(shl(1, hexLength), 0x42), not(0x1f)))
             mstore(0x40, add(result, 0x20)) // Allocate memory.
             mstore(result, 0) // Zeroize the slot after the string.
 
@@ -260,7 +267,7 @@ library LibString {
             // Store "0123456789abcdef" in scratch space.
             mstore(0x0f, 0x30313233343536373839616263646566)
 
-            let start := sub(result, add(length, length))
+            let start := sub(result, add(hexLength, hexLength))
             let w := not(1) // Tsk.
             let temp := value
             // We write the string from rightmost digit to leftmost digit.

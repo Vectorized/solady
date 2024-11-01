@@ -1595,6 +1595,7 @@ contract LibStringTest is SoladyTest {
     function testSetAndGetStringStorage(bytes32) public {
         if (_randomChance(32)) {
             assertTrue(LibString.isEmpty(_getStringStorage()));
+            assertEq(LibString.length(_getStringStorage()), 0);
             assertEq(_get(_getStringStorage()), "");
         }
         if (_randomChance(2)) _testSetAndGetStringStorage(string(_randomBytes()));
@@ -1638,6 +1639,7 @@ contract LibStringTest is SoladyTest {
 
     function _set(LibString.StringStorage storage $, string memory s) internal {
         LibString.set($, s);
+        assertEq(LibString.length($), bytes(s).length);
         assertEq(LibString.isEmpty($), bytes(s).length == 0);
     }
 
@@ -1645,6 +1647,7 @@ contract LibStringTest is SoladyTest {
         result = LibString.get($);
         _checkMemory(result);
         assertEq(LibString.isEmpty($), bytes(result).length == 0);
+        assertEq(LibString.length($), bytes(result).length);
     }
 
     function _getStringStorage() internal pure returns (LibString.StringStorage storage) {
