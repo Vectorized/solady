@@ -5,43 +5,47 @@ import "./utils/SoladyTest.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
 contract SimpleStringSetAndGet {
-    string internal _x;
+    string public x;
 
-    function setX(string memory x) public {
-        _x = x;
-    }
-
-    function getX() public view returns (string memory) {
-        return _x;
+    function setX(string memory x_) public {
+        x = x_;
     }
 }
 
 contract SimpleStringSetAndGetWithStringStorage {
     LibString.StringStorage internal _x;
 
-    function setX(string memory x) public {
-        LibString.set(_x, x);
+    function setX(string memory x_) public {
+        LibString.set(_x, x_);
     }
 
-    function getX() public view returns (string memory) {
+    function x() public view returns (string memory) {
         return LibString.get(_x);
     }
 }
 
 contract LibStringTest is SoladyTest {
     function testSimpleStringSetAndGetGas() public {
-        SimpleStringSetAndGet ss0 = new SimpleStringSetAndGet();
-        SimpleStringSetAndGetWithStringStorage ss1 = new SimpleStringSetAndGetWithStringStorage();
-        assertGt(address(ss0).code.length, 0);
-        ss0.setX("123456789012345678901234567890");
-        assertGt(bytes(ss0.getX()).length, 0);
-        ss0.setX("123456789012345678901234567890123456789012345678901234567890");
-        assertGt(bytes(ss0.getX()).length, 0);
-        assertGt(address(ss1).code.length, 0);
-        ss1.setX("123456789012345678901234567890");
-        assertGt(bytes(ss1.getX()).length, 0);
-        ss1.setX("123456789012345678901234567890123456789012345678901234567890");
-        assertGt(bytes(ss1.getX()).length, 0);
+        _testSimpleStringSetAndGet(new SimpleStringSetAndGet());
+        _testSimpleStringSetAndGet(
+            SimpleStringSetAndGet(address(new SimpleStringSetAndGetWithStringStorage()))
+        );
+    }
+
+    function _testSimpleStringSetAndGet(SimpleStringSetAndGet ss) internal {
+        _testSimpleStringSetAndGet(ss, string(new bytes(512)));
+        _testSimpleStringSetAndGet(ss, "123456789012345678901234567890");
+        _testSimpleStringSetAndGet(ss, "1234567890123456789012345678901");
+        _testSimpleStringSetAndGet(ss, "12345678901234567890123456789012");
+        _testSimpleStringSetAndGet(ss, "123456789012345678901234567890123");
+        _testSimpleStringSetAndGet(
+            ss, "123456789012345678901234567890123456789012345678901234567890"
+        );
+    }
+
+    function _testSimpleStringSetAndGet(SimpleStringSetAndGet ss, string memory s) internal {
+        ss.setX(s);
+        assertEq(ss.x(), s);
     }
 
     function testToStringZero() public {
@@ -1575,34 +1579,23 @@ contract LibStringTest is SoladyTest {
         _testSetAndGetStringStorage("");
         _testSetAndGetStringStorage("a");
         _testSetAndGetStringStorage("ab");
+        _testSetAndGetStringStorage(0, 40, s);
+        _testSetAndGetStringStorage(125, 135, s);
+        _testSetAndGetStringStorage(250, 260, s);
+    }
+
+    function _testSetAndGetStringStorage(uint256 start, uint256 end, string memory s) internal {
         unchecked {
-            for (uint256 i = 25; i != 35; ++i) {
-                _testSetAndGetStringStorage(LibString.slice(s, 0, i));
-            }
-            for (uint256 i = 125; i != 135; ++i) {
-                _testSetAndGetStringStorage(LibString.slice(s, 0, i));
-            }
-            for (uint256 i = 250; i != 260; ++i) {
-                _testSetAndGetStringStorage(LibString.slice(s, 0, i));
+            for (uint256 i = start; i != end; ++i) {
+                _testSetAndGetStringStorage(LibString.slice(s, 0, i), false);
             }
         }
     }
 
     function testSetAndGetStringStorage(bytes32) public {
-        LibString.StringStorage storage $ = _getStringStorage();
-        if (_randomChance(32)) assertEq(LibString.get($), "");
-        if (_randomChance(2)) {
-            string memory s0 = string(_randomBytes());
-            _testSetAndGetStringStorage(s0);
-        }
-        if (_randomChance(8)) {
-            delete $._spacer;
-            assertEq(LibString.get($), "");
-        }
-        if (_randomChance(16)) {
-            string memory s1 = string(_randomBytes());
-            _testSetAndGetStringStorage(s1);
-        }
+        if (_randomChance(32)) assertEq(_get(_getStringStorage()), "");
+        if (_randomChance(2)) _testSetAndGetStringStorage(string(_randomBytes()));
+        if (_randomChance(16)) _testSetAndGetStringStorage(string(_randomBytes()));
     }
 
     function testSetAndGetStringStorage2(string memory s) public {
@@ -1610,21 +1603,52 @@ contract LibStringTest is SoladyTest {
     }
 
     function _testSetAndGetStringStorage(string memory s) internal {
-        LibString.StringStorage storage $ = _getStringStorage();
-        LibString.set($, s);
+        _testSetAndGetStringStorage(s, _randomChance(8));
+    }
+
+    function _testSetAndGetStringStorage(string memory s0, bool writeTo1) internal {
+        LibString.set(_getStringStorage(0), s0);
+        string memory s1;
+        if (writeTo1) {
+            s1 = string(_randomBytes());
+            LibString.set(_getStringStorage(1), s1);
+        }
         if (_randomChance(16)) {
             _misalignFreeMemoryPointer();
             _brutalizeMemory();
         }
-        string memory loaded = LibString.get($);
-        _checkMemory(loaded);
-        assertEq(loaded, s);
+        assertEq(_get(_getStringStorage(0)), s0);
+        if (writeTo1) assertEq(_get(_getStringStorage(1)), s1);
+        if (_randomChance(16)) _testClear(_getStringStorage(0));
+        if (_randomChance(16)) _testClear(_getStringStorage(1));
     }
 
-    function _getStringStorage() internal pure returns (LibString.StringStorage storage $) {
+    function _testClear(LibString.StringStorage storage $) internal {
+        if (_randomChance(2)) {
+            LibString.clear($);
+        } else {
+            delete $._spacer;
+        }
+        assertEq(LibString.get($), "");
+    }
+
+    function _get(LibString.StringStorage storage $) internal view returns (string memory result) {
+        result = LibString.get($);
+        _checkMemory(result);
+    }
+
+    function _getStringStorage() internal pure returns (LibString.StringStorage storage) {
+        return _getStringStorage(0);
+    }
+
+    function _getStringStorage(uint256 o)
+        internal
+        pure
+        returns (LibString.StringStorage storage $)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            $.slot := 0x1122334455
+            $.slot := add(0x39be4c398aefe47a0e, o)
         }
     }
 
