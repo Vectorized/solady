@@ -1579,14 +1579,14 @@ contract LibStringTest is SoladyTest {
         _testSetAndGetStringStorage("");
         _testSetAndGetStringStorage("a");
         _testSetAndGetStringStorage("ab");
+        _testSetAndGetStringStorage(0, 40, s);
+        _testSetAndGetStringStorage(125, 135, s);
+        _testSetAndGetStringStorage(250, 260, s);
+    }
+
+    function _testSetAndGetStringStorage(uint256 start, uint256 end, string memory s) internal {
         unchecked {
-            for (uint256 i = 0; i != 40; ++i) {
-                _testSetAndGetStringStorage(LibString.slice(s, 0, i), false);
-            }
-            for (uint256 i = 125; i != 135; ++i) {
-                _testSetAndGetStringStorage(LibString.slice(s, 0, i), false);
-            }
-            for (uint256 i = 250; i != 260; ++i) {
+            for (uint256 i = start; i != end; ++i) {
                 _testSetAndGetStringStorage(LibString.slice(s, 0, i), false);
             }
         }
@@ -1594,12 +1594,8 @@ contract LibStringTest is SoladyTest {
 
     function testSetAndGetStringStorage(bytes32) public {
         if (_randomChance(32)) assertEq(_get(_getStringStorage()), "");
-        if (_randomChance(2)) {
-            _testSetAndGetStringStorage(string(_randomBytes()));
-        }
-        if (_randomChance(16)) {
-            _testSetAndGetStringStorage(string(_randomBytes()));
-        }
+        if (_randomChance(2)) _testSetAndGetStringStorage(string(_randomBytes()));
+        if (_randomChance(16)) _testSetAndGetStringStorage(string(_randomBytes()));
     }
 
     function testSetAndGetStringStorage2(string memory s) public {
