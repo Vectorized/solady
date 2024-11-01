@@ -84,30 +84,24 @@ library LibString {
     function set(StringStorage storage $, string memory s) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            let o := add(s, 0x20)
-            for { let n := mload(s) } 1 {} {
+            let n := mload(s)
+            let packed := or(0xff, shl(8, n))
+            for { let i := 0 } 1 {} {
                 if iszero(gt(n, 0xfe)) {
-                    sstore($.slot, or(n, shl(8, shr(8, mload(o)))))
-                    if iszero(gt(n, 0x1f)) { break }
-                    mstore(0x00, $.slot)
-                    let p := keccak256(0x00, 0x20)
-                    for { let i := 0x1f } 1 {} {
-                        sstore(add(p, shr(5, i)), mload(add(o, i)))
-                        i := add(i, 0x20)
-                        if iszero(lt(i, n)) { break }
-                    }
-                    break
+                    i := 0x1f
+                    packed := or(n, shl(8, mload(add(s, i))))
+                    if iszero(gt(n, i)) { break }
                 }
-                sstore($.slot, or(0xff, shl(8, n)))
+                let o := add(s, 0x20)
                 mstore(0x00, $.slot)
-                let p := keccak256(0x00, 0x20)
-                for { let i := 0 } 1 {} {
+                for { let p := keccak256(0x00, 0x20) } 1 {} {
                     sstore(add(p, shr(5, i)), mload(add(o, i)))
                     i := add(i, 0x20)
                     if iszero(lt(i, n)) { break }
                 }
                 break
             }
+            sstore($.slot, packed)
         }
     }
 
@@ -137,25 +131,17 @@ library LibString {
         assembly {
             result := mload(0x40)
             let o := add(result, 0x20)
-            let n := sload($.slot)
-            for {} 1 {} {
-                if iszero(eq(0xff, and(0xff, n))) {
-                    mstore(o, n)
-                    n := and(0xff, n)
-                    if iszero(gt(n, 0x1f)) { break }
-                    mstore(0x00, $.slot)
-                    let p := keccak256(0x00, 0x20)
-                    for { let i := 0x1f } 1 {} {
-                        mstore(add(o, i), sload(add(p, shr(5, i))))
-                        i := add(i, 0x20)
-                        if iszero(lt(i, n)) { break }
-                    }
-                    break
+            let packed := sload($.slot)
+            let n := shr(8, packed)
+            for { let i := 0 } 1 {} {
+                if iszero(eq(and(packed, 0xff), 0xff)) {
+                    mstore(o, packed)
+                    n := and(0xff, packed)
+                    i := 0x1f
+                    if iszero(gt(n, i)) { break }
                 }
-                n := shr(8, n)
                 mstore(0x00, $.slot)
-                let p := keccak256(0x00, 0x20)
-                for { let i := 0 } 1 {} {
+                for { let p := keccak256(0x00, 0x20) } 1 {} {
                     mstore(add(o, i), sload(add(p, shr(5, i))))
                     i := add(i, 0x20)
                     if iszero(lt(i, n)) { break }

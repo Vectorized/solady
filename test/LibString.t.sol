@@ -1573,21 +1573,14 @@ contract LibStringTest is SoladyTest {
     }
 
     function testSetAndGetStringStorage() public {
-        string memory s = string(address(this).code);
         string memory emptyString;
         _testSetAndGetStringStorage(emptyString);
         _testSetAndGetStringStorage("");
         _testSetAndGetStringStorage("a");
         _testSetAndGetStringStorage("ab");
-        _testSetAndGetStringStorage(0, 40, s);
-        _testSetAndGetStringStorage(125, 135, s);
-        _testSetAndGetStringStorage(250, 260, s);
-    }
-
-    function _testSetAndGetStringStorage(uint256 start, uint256 end, string memory s) internal {
         unchecked {
-            for (uint256 i = start; i != end; ++i) {
-                _testSetAndGetStringStorage(LibString.slice(s, 0, i), false);
+            for (uint256 i = 0; i != 300; ++i) {
+                _testSetAndGetStringStorage(_randomUniformString(i), false);
             }
         }
     }
@@ -1600,6 +1593,9 @@ contract LibStringTest is SoladyTest {
         }
         if (_randomChance(2)) _testSetAndGetStringStorage(string(_randomBytes()));
         if (_randomChance(16)) _testSetAndGetStringStorage(string(_randomBytes()));
+        if (_randomChance(32)) {
+            _testSetAndGetStringStorage(_randomUniformString(_randomUniform() & 0xfff));
+        }
     }
 
     function testSetAndGetStringStorage2(string memory s) public {
@@ -1616,15 +1612,17 @@ contract LibStringTest is SoladyTest {
         if (writeTo1) {
             s1 = string(_randomBytes());
             _set(_getStringStorage(1), s1);
-        }
-        if (_randomChance(16)) {
-            _misalignFreeMemoryPointer();
-            _brutalizeMemory();
+            if (_randomChance(16)) {
+                _misalignFreeMemoryPointer();
+                _brutalizeMemory();
+            }
         }
         assertEq(_get(_getStringStorage(0)), s0);
-        if (writeTo1) assertEq(_get(_getStringStorage(1)), s1);
-        if (_randomChance(16)) _testClear(_getStringStorage(0));
-        if (_randomChance(16)) _testClear(_getStringStorage(1));
+        if (writeTo1) {
+            assertEq(_get(_getStringStorage(1)), s1);
+            if (_randomChance(16)) _testClear(_getStringStorage(0));
+            if (_randomChance(16)) _testClear(_getStringStorage(1));
+        }
     }
 
     function _testClear(LibString.StringStorage storage $) internal {
@@ -1789,6 +1787,22 @@ contract LibStringTest is SoladyTest {
                     )
                 }
             }
+        }
+    }
+
+    function _randomUniformString(uint256 n) internal returns (string memory result) {
+        uint256 randomness = _randomUniform();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(0x20, randomness)
+            let o := add(result, 0x20)
+            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                mstore(0x00, i)
+                mstore(add(o, i), keccak256(0x00, 0x40))
+            }
+            mstore(result, n)
+            mstore(0x40, add(o, n))
         }
     }
 
