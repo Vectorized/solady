@@ -385,10 +385,9 @@ library LibTransient {
         /// @solidity memory-safe-assembly
         assembly {
             tstore(ptr.slot, mload(add(value, 0x1c)))
-            let n := mload(value)
-            if iszero(lt(n, 0x1d)) {
+            if iszero(lt(mload(value), 0x1d)) {
                 mstore(0x00, ptr.slot)
-                let e := add(add(value, 0x20), mul(n, lt(n, 0x100000000)))
+                let e := add(add(value, 0x20), mul(gt(0x100000000, mload(value)), mload(value)))
                 let o := add(value, 0x3c)
                 for { let d := sub(keccak256(0x00, 0x20), o) } 1 {} {
                     tstore(add(o, d), mload(o))
@@ -406,7 +405,7 @@ library LibTransient {
             tstore(ptr.slot, calldataload(sub(value.offset, 0x04)))
             if iszero(lt(value.length, 0x1d)) {
                 mstore(0x00, ptr.slot)
-                let e := add(value.offset, mul(value.length, lt(value.length, 0x100000000)))
+                let e := add(value.offset, mul(gt(0x100000000, value.length), value.length))
                 let o := add(value.offset, 0x1c)
                 for { let d := sub(keccak256(0x00, 0x20), o) } 1 {} {
                     tstore(add(o, d), calldataload(o))
