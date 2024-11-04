@@ -46,6 +46,15 @@ contract LibTransientTest is SoladyTest {
             }
             assertEq(p0.get(), data1);
             assertEq(p1.get(), data0);
+            p0.clear();
+            assertEq(p0.length(), 0);
+            assertEq(p0.get(), "");
+            assertEq(p1.get(), data0);
+            p1.clear();
+            assertEq(p1.length(), 0);
+            assertEq(p1.get(), "");
+            assertEq(p0.length(), 0);
+            assertEq(p0.get(), "");
         }
     }
 
