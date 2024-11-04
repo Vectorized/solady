@@ -197,7 +197,13 @@ contract LibTransientTest is SoladyTest {
     }
 
     function testSetBytesTransientRevertsIfLengthTooBig() public {
+        vm.expectRevert();
         this.setBytesTransientWithLengthTooBig();
+    }
+
+    function testSetBytesTransientRevertsIfLengthTooBigCalldata() public {
+        vm.expectRevert();
+        this.setBytesTransientWithLengthTooBigCalldata();
     }
 
     function setBytesTransientWithLengthTooBig() public {
@@ -209,5 +215,15 @@ contract LibTransientTest is SoladyTest {
             mstore(0x40, add(data, 0x20))
         }
         LibTransient.tBytes(uint256(0)).set(data);
+    }
+
+    function setBytesTransientWithLengthTooBigCalldata() public {
+        bytes calldata data;
+        /// @solidity memory-safe-assembly
+        assembly {
+            data.offset := 0
+            data.length := 0x100000000
+        }
+        LibTransient.tBytes(uint256(0)).setCalldata(data);
     }
 }
