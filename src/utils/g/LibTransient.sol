@@ -84,7 +84,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Sets the value at transient `ptr` to zero.
+    /// @dev Clears the value at transient `ptr`.
     function clear(TUint256 storage ptr) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -178,7 +178,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Sets the value at transient `ptr` to zero.
+    /// @dev Clears the value at transient `ptr`.
     function clear(TInt256 storage ptr) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -242,7 +242,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Sets the value at transient `ptr` to zero.
+    /// @dev Clears the value at transient `ptr`.
     function clear(TBytes32 storage ptr) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -286,7 +286,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Sets the value at transient `ptr` to zero.
+    /// @dev Clears the value at transient `ptr`.
     function clear(TAddress storage ptr) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -330,7 +330,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Sets the value at transient `ptr` to zero.
+    /// @dev Clears the value at transient `ptr`.
     function clear(TBool storage ptr) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -396,11 +396,12 @@ library LibTransient {
             tstore(ptr.slot, mload(add(value, 0x1c)))
             if iszero(lt(mload(value), 0x1d)) {
                 mstore(0x00, ptr.slot)
-                let e := add(add(value, 0x20), mul(gt(0x100000000, mload(value)), mload(value)))
+                let w := shl(5, gt(0x100000000, mload(value)))
+                let e := add(add(value, w), mload(value))
                 let o := add(value, 0x3c)
-                for { let d := sub(keccak256(0x00, 0x20), o) } 1 {} {
+                for { let d := sub(keccak256(0x00, w), o) } 1 {} {
                     tstore(add(o, d), mload(o))
-                    o := add(o, 0x20)
+                    o := add(o, w)
                     if iszero(lt(o, e)) { break }
                 }
             }
@@ -414,11 +415,12 @@ library LibTransient {
             tstore(ptr.slot, calldataload(sub(value.offset, 0x04)))
             if iszero(lt(value.length, 0x1d)) {
                 mstore(0x00, ptr.slot)
-                let e := add(value.offset, mul(gt(0x100000000, value.length), value.length))
+                let w := shl(5, gt(0x100000000, value.length))
+                let e := add(value.offset, value.length)
                 let o := add(value.offset, 0x1c)
-                for { let d := sub(keccak256(0x00, 0x20), o) } 1 {} {
+                for { let d := sub(keccak256(0x00, w), o) } 1 {} {
                     tstore(add(o, d), calldataload(o))
-                    o := add(o, 0x20)
+                    o := add(o, w)
                     if iszero(lt(o, e)) { break }
                 }
             }

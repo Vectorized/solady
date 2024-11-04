@@ -195,4 +195,35 @@ contract LibTransientTest is SoladyTest {
     function tIntDec(uint256 tSlot) public returns (int256) {
         return LibTransient.tInt256(tSlot).dec();
     }
+
+    function testSetBytesTransientRevertsIfLengthTooBig() public {
+        vm.expectRevert();
+        this.setBytesTransientWithLengthTooBig();
+    }
+
+    function testSetBytesTransientRevertsIfLengthTooBigCalldata() public {
+        vm.expectRevert();
+        this.setBytesTransientWithLengthTooBigCalldata();
+    }
+
+    function setBytesTransientWithLengthTooBig() public {
+        bytes memory data;
+        /// @solidity memory-safe-assembly
+        assembly {
+            data := mload(0x40)
+            mstore(data, 0x100000000)
+            mstore(0x40, add(data, 0x20))
+        }
+        LibTransient.tBytes(uint256(0)).set(data);
+    }
+
+    function setBytesTransientWithLengthTooBigCalldata() public {
+        bytes calldata data;
+        /// @solidity memory-safe-assembly
+        assembly {
+            data.offset := 0
+            data.length := 0x100000000
+        }
+        LibTransient.tBytes(uint256(0)).setCalldata(data);
+    }
 }
