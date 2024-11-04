@@ -8,6 +8,7 @@ contract LibTransientTest is SoladyTest {
     using LibTransient for *;
 
     function testSetAndGetBytesTransient() public {
+        vm.chainId(2);
         _testSetAndGetBytesTransient("123");
         _testSetAndGetBytesTransient("12345678901234567890123456789012345678901234567890");
         _testSetAndGetBytesTransient("123");
@@ -15,9 +16,9 @@ contract LibTransientTest is SoladyTest {
 
     function _testSetAndGetBytesTransient(bytes memory data) internal {
         LibTransient.TBytes storage p = LibTransient.tBytes(uint256(0));
-        p.set(data);
-        assertEq(p.length(), data.length);
-        assertEq(p.get(), data);
+        p.setCompat(data);
+        assertEq(p.lengthCompat(), data.length);
+        assertEq(p.getCompat(), data);
     }
 
     function testSetAndGetBytesTransientCalldata(
@@ -25,205 +26,226 @@ contract LibTransientTest is SoladyTest {
         bytes calldata data0,
         bytes calldata data1
     ) public {
+        vm.chainId(_randomUniform() & 3);
         unchecked {
             LibTransient.TBytes storage p0 = LibTransient.tBytes(tSlot);
             LibTransient.TBytes storage p1 = LibTransient.tBytes(tSlot + 1);
             if (_randomChance(2)) {
-                p0.setCalldata(data0);
-                p1.setCalldata(data1);
+                p0.setCalldataCompat(data0);
+                p1.setCalldataCompat(data1);
             } else {
-                p0.set(data0);
-                p1.set(data1);
+                p0.setCompat(data0);
+                p1.setCompat(data1);
             }
-            assertEq(p0.get(), data0);
-            assertEq(p1.get(), data1);
+            assertEq(p0.getCompat(), data0);
+            assertEq(p1.getCompat(), data1);
             if (_randomChance(2)) {
-                p0.setCalldata(data1);
-                p1.setCalldata(data0);
+                p0.setCalldataCompat(data1);
+                p1.setCalldataCompat(data0);
             } else {
-                p0.set(data1);
-                p1.set(data0);
+                p0.setCompat(data1);
+                p1.setCompat(data0);
             }
-            assertEq(p0.get(), data1);
-            assertEq(p1.get(), data0);
-            p0.clear();
-            assertEq(p0.length(), 0);
-            assertEq(p0.get(), "");
-            assertEq(p1.get(), data0);
-            p1.clear();
-            assertEq(p1.length(), 0);
-            assertEq(p1.get(), "");
-            assertEq(p0.length(), 0);
-            assertEq(p0.get(), "");
+            assertEq(p0.getCompat(), data1);
+            assertEq(p1.getCompat(), data0);
+            p0.clearCompat();
+            assertEq(p0.lengthCompat(), 0);
+            assertEq(p0.getCompat(), "");
+            assertEq(p1.getCompat(), data0);
+            p1.clearCompat();
+            assertEq(p1.lengthCompat(), 0);
+            assertEq(p1.getCompat(), "");
+            assertEq(p0.lengthCompat(), 0);
+            assertEq(p0.getCompat(), "");
         }
     }
 
     function testSetAndGetBytesTransient(uint256 tSlot, bytes memory data) public {
+        vm.chainId(_randomUniform() & 3);
         LibTransient.TBytes storage p = LibTransient.tBytes(tSlot);
         if (_randomChance(8)) data = _randomBytes();
-        p.set(data);
-        assertEq(p.length(), data.length);
+        p.setCompat(data);
+        assertEq(p.lengthCompat(), data.length);
         if (_randomChance(8)) {
             _misalignFreeMemoryPointer();
             _brutalizeMemory();
         }
-        bytes memory retrieved = p.get();
+        bytes memory retrieved = p.getCompat();
         _checkMemory(retrieved);
         assertEq(retrieved, data);
-        p.clear();
-        assertEq(p.length(), 0);
-        assertEq(p.get(), "");
+        p.clearCompat();
+        assertEq(p.lengthCompat(), 0);
+        assertEq(p.getCompat(), "");
     }
 
     function testSetAndGetBytesTransientCalldata(uint256 tSlot, bytes calldata data) public {
+        vm.chainId(_randomUniform() & 3);
         LibTransient.TBytes storage p = LibTransient.tBytes(tSlot);
-        p.set(data);
-        assertEq(p.length(), data.length);
-        assertEq(p.get(), data);
-        p.clear();
-        assertEq(p.length(), 0);
-        assertEq(p.get(), "");
+        p.setCompat(data);
+        assertEq(p.lengthCompat(), data.length);
+        assertEq(p.getCompat(), data);
+        p.clearCompat();
+        assertEq(p.lengthCompat(), 0);
+        assertEq(p.getCompat(), "");
     }
 
     function testSetAndGetUint256Transient(uint256 tSlot, uint256 value) public {
+        vm.chainId(_randomUniform() & 3);
         LibTransient.TUint256 storage p = LibTransient.tUint256(tSlot);
-        p.set(value);
-        assertEq(p.get(), value);
-        p.clear();
-        assertEq(p.get(), 0);
+        p.setCompat(value);
+        assertEq(p.getCompat(), value);
+        p.clearCompat();
+        assertEq(p.getCompat(), 0);
+    }
+
+    function testSetAndGetInt256Transient(uint256 tSlot, int256 value) public {
+        vm.chainId(_randomUniform() & 3);
+        LibTransient.TInt256 storage p = LibTransient.tInt256(tSlot);
+        p.setCompat(value);
+        assertEq(p.getCompat(), value);
+        p.clearCompat();
+        assertEq(p.getCompat(), 0);
     }
 
     function testSetAndGetAddressTransient(uint256 tSlot, address value) public {
+        vm.chainId(_randomUniform() & 3);
         LibTransient.TAddress storage p = LibTransient.tAddress(tSlot);
-        p.set(_brutalized(value));
-        assertEq(p.get(), value);
-        p.clear();
-        assertEq(p.get(), address(0));
+        p.setCompat(_brutalized(value));
+        assertEq(p.getCompat(), value);
+        p.clearCompat();
+        assertEq(p.getCompat(), address(0));
     }
 
     function testSetAndGetBytes32Transient(uint256 tSlot, bytes32 value) public {
+        vm.chainId(_randomUniform() & 3);
         LibTransient.TBytes32 storage p = LibTransient.tBytes32(tSlot);
-        p.set(value);
-        assertEq(p.get(), value);
-        p.clear();
-        assertEq(p.get(), bytes32(0));
+        p.setCompat(value);
+        assertEq(p.getCompat(), value);
+        p.clearCompat();
+        assertEq(p.getCompat(), bytes32(0));
     }
 
     function testSetAndGetBoolTransient(uint256 tSlot, bool value) public {
+        vm.chainId(_randomUniform() & 3);
         LibTransient.TBool storage p = LibTransient.tBool(tSlot);
-        p.set(_brutalized(value));
-        assertEq(p.get(), value);
-        p.clear();
-        assertEq(p.get(), false);
+        p.setCompat(_brutalized(value));
+        assertEq(p.getCompat(), value);
+        p.clearCompat();
+        assertEq(p.getCompat(), false);
     }
 
     function testUint256IncDecTransient() public {
-        uint256 tSlot;
-        LibTransient.TUint256 storage p = LibTransient.tUint256(tSlot);
-        p.set(10);
-        assertEq(this.tUintInc(tSlot), 11);
-        assertEq(p.get(), 11);
-        assertEq(this.tUintInc(tSlot, 20), 31);
-        assertEq(p.get(), 31);
-        p.set(2 ** 256 - 2);
-        assertEq(this.tUintInc(tSlot), 2 ** 256 - 1);
-        assertEq(p.get(), 2 ** 256 - 1);
+        for (uint256 c; c < 3; ++c) {
+            vm.chainId(c);
+            uint256 tSlot;
+            LibTransient.TUint256 storage p = LibTransient.tUint256(tSlot);
+            p.setCompat(10);
+            assertEq(this.tUintIncCompat(tSlot), 11);
+            assertEq(p.getCompat(), 11);
+            assertEq(this.tUintIncCompat(tSlot, 20), 31);
+            assertEq(p.getCompat(), 31);
+            p.setCompat(2 ** 256 - 2);
+            assertEq(this.tUintIncCompat(tSlot), 2 ** 256 - 1);
+            assertEq(p.getCompat(), 2 ** 256 - 1);
+            vm.expectRevert();
+            this.tUintIncCompat(tSlot);
+            vm.expectRevert();
+            this.tUintIncCompat(tSlot, 10);
+            assertEq(this.tUintDecCompat(tSlot), 2 ** 256 - 2);
+            assertEq(p.getCompat(), 2 ** 256 - 2);
+            p.setCompat(10);
+            assertEq(this.tUintDecCompat(tSlot, 5), 5);
+            assertEq(p.getCompat(), 5);
+            assertEq(this.tUintDecCompat(tSlot, 5), 0);
+            assertEq(p.getCompat(), 0);
+            vm.expectRevert();
+            this.tUintDecCompat(tSlot);
+            vm.expectRevert();
+            this.tUintDecCompat(tSlot, 5);
+            p.setCompat(10);
+            assertEq(this.tUintIncSignedCompat(tSlot, 1), 11);
+            assertEq(p.getCompat(), 11);
+            assertEq(this.tUintIncSignedCompat(tSlot, -1), 10);
+            assertEq(p.getCompat(), 10);
+            assertEq(this.tUintDecSignedCompat(tSlot, 1), 9);
+            assertEq(p.getCompat(), 9);
+            assertEq(this.tUintDecSignedCompat(tSlot, -1), 10);
+            assertEq(p.getCompat(), 10);
+        }
+    }
+
+    function tUintIncSignedCompat(uint256 tSlot, int256 delta) public returns (uint256) {
+        return LibTransient.tUint256(tSlot).incSignedCompat(delta);
+    }
+
+    function tUintDecSignedCompat(uint256 tSlot, int256 delta) public returns (uint256) {
+        return LibTransient.tUint256(tSlot).decSignedCompat(delta);
+    }
+
+    function tUintIncCompat(uint256 tSlot, uint256 delta) public returns (uint256) {
+        return LibTransient.tUint256(tSlot).incCompat(delta);
+    }
+
+    function tUintDecCompat(uint256 tSlot, uint256 delta) public returns (uint256) {
+        return LibTransient.tUint256(tSlot).decCompat(delta);
+    }
+
+    function tUintIncCompat(uint256 tSlot) public returns (uint256) {
+        return LibTransient.tUint256(tSlot).incCompat();
+    }
+
+    function tUintDecCompat(uint256 tSlot) public returns (uint256) {
+        return LibTransient.tUint256(tSlot).decCompat();
+    }
+
+    function tIntIncCompat(uint256 tSlot, int256 delta) public returns (int256) {
+        return LibTransient.tInt256(tSlot).incCompat(delta);
+    }
+
+    function tIntDecCompat(uint256 tSlot, int256 delta) public returns (int256) {
+        return LibTransient.tInt256(tSlot).decCompat(delta);
+    }
+
+    function tIntIncCompat(uint256 tSlot) public returns (int256) {
+        return LibTransient.tInt256(tSlot).incCompat();
+    }
+
+    function tIntDecCompat(uint256 tSlot) public returns (int256) {
+        return LibTransient.tInt256(tSlot).decCompat();
+    }
+
+    function testSetBytesTransientRevertsIfLengthTooBig(uint256 n) public {
+        n = _bound(n, 0x100000000, type(uint256).max);
+        vm.chainId(_randomUniform() & 3);
         vm.expectRevert();
-        this.tUintInc(tSlot);
+        this.setBytesTransientWithLengthTooBig(n);
+    }
+
+    function testSetBytesTransientRevertsIfLengthTooBigCalldata(uint256 n) public {
+        n = _bound(n, 0x100000000, type(uint256).max);
+        vm.chainId(_randomUniform() & 3);
         vm.expectRevert();
-        this.tUintInc(tSlot, 10);
-        assertEq(this.tUintDec(tSlot), 2 ** 256 - 2);
-        assertEq(p.get(), 2 ** 256 - 2);
-        p.set(10);
-        assertEq(this.tUintDec(tSlot, 5), 5);
-        assertEq(p.get(), 5);
-        assertEq(this.tUintDec(tSlot, 5), 0);
-        assertEq(p.get(), 0);
-        vm.expectRevert();
-        this.tUintDec(tSlot);
-        vm.expectRevert();
-        this.tUintDec(tSlot, 5);
-        p.set(10);
-        assertEq(this.tUintIncSigned(tSlot, 1), 11);
-        assertEq(p.get(), 11);
-        assertEq(this.tUintIncSigned(tSlot, -1), 10);
-        assertEq(p.get(), 10);
-        assertEq(this.tUintDecSigned(tSlot, 1), 9);
-        assertEq(p.get(), 9);
-        assertEq(this.tUintDecSigned(tSlot, -1), 10);
-        assertEq(p.get(), 10);
+        this.setBytesTransientWithLengthTooBigCalldata(n);
     }
 
-    function tUintIncSigned(uint256 tSlot, int256 delta) public returns (uint256) {
-        return LibTransient.tUint256(tSlot).incSigned(delta);
-    }
-
-    function tUintDecSigned(uint256 tSlot, int256 delta) public returns (uint256) {
-        return LibTransient.tUint256(tSlot).decSigned(delta);
-    }
-
-    function tUintInc(uint256 tSlot, uint256 delta) public returns (uint256) {
-        return LibTransient.tUint256(tSlot).inc(delta);
-    }
-
-    function tUintDec(uint256 tSlot, uint256 delta) public returns (uint256) {
-        return LibTransient.tUint256(tSlot).dec(delta);
-    }
-
-    function tUintInc(uint256 tSlot) public returns (uint256) {
-        return LibTransient.tUint256(tSlot).inc();
-    }
-
-    function tUintDec(uint256 tSlot) public returns (uint256) {
-        return LibTransient.tUint256(tSlot).dec();
-    }
-
-    function testInt256IncDecTransient() public {}
-
-    function tIntInc(uint256 tSlot, int256 delta) public returns (int256) {
-        return LibTransient.tInt256(tSlot).inc(delta);
-    }
-
-    function tIntDec(uint256 tSlot, int256 delta) public returns (int256) {
-        return LibTransient.tInt256(tSlot).dec(delta);
-    }
-
-    function tIntInc(uint256 tSlot) public returns (int256) {
-        return LibTransient.tInt256(tSlot).inc();
-    }
-
-    function tIntDec(uint256 tSlot) public returns (int256) {
-        return LibTransient.tInt256(tSlot).dec();
-    }
-
-    function testSetBytesTransientRevertsIfLengthTooBig() public {
-        vm.expectRevert();
-        this.setBytesTransientWithLengthTooBig();
-    }
-
-    function testSetBytesTransientRevertsIfLengthTooBigCalldata() public {
-        vm.expectRevert();
-        this.setBytesTransientWithLengthTooBigCalldata();
-    }
-
-    function setBytesTransientWithLengthTooBig() public {
+    function setBytesTransientWithLengthTooBig(uint256 n) public {
         bytes memory data;
         /// @solidity memory-safe-assembly
         assembly {
             data := mload(0x40)
-            mstore(data, 0x100000000)
+            mstore(data, n)
             mstore(0x40, add(data, 0x20))
         }
-        LibTransient.tBytes(uint256(0)).set(data);
+        LibTransient.tBytes(uint256(0)).setCompat(data);
     }
 
-    function setBytesTransientWithLengthTooBigCalldata() public {
+    function setBytesTransientWithLengthTooBigCalldata(uint256 n) public {
         bytes calldata data;
         /// @solidity memory-safe-assembly
         assembly {
             data.offset := 0
-            data.length := 0x100000000
+            data.length := n
         }
-        LibTransient.tBytes(uint256(0)).setCalldata(data);
+        LibTransient.tBytes(uint256(0)).setCalldataCompat(data);
     }
 }
