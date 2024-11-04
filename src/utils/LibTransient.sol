@@ -369,7 +369,7 @@ library LibTransient {
             if iszero(lt(n, 0x1d)) {
                 mstore(0x00, ptr.slot)
                 let o := add(result, 0x3c)
-                for { let d := sub(keccak256(0x00, 0x20), result) } 1 {} {
+                for { let d := sub(keccak256(0x00, 0x20), o) } 1 {} {
                     mstore(o, tload(add(o, d)))
                     o := add(o, 0x20)
                     if iszero(lt(o, e)) { break }
@@ -390,7 +390,7 @@ library LibTransient {
                 mstore(0x00, ptr.slot)
                 let e := add(add(value, 0x20), mul(n, lt(n, 0x100000000)))
                 let o := add(value, 0x3c)
-                for { let d := sub(keccak256(0x00, 0x20), value) } 1 {} {
+                for { let d := sub(keccak256(0x00, 0x20), o) } 1 {} {
                     tstore(add(o, d), mload(o))
                     o := add(o, 0x20)
                     if iszero(lt(o, e)) { break }
@@ -408,7 +408,7 @@ library LibTransient {
                 mstore(0x00, ptr.slot)
                 let e := add(value.offset, mul(value.length, lt(value.length, 0x100000000)))
                 let o := add(value.offset, 0x1c)
-                for { let d := add(sub(keccak256(0x00, 0x20), value.offset), 0x20) } 1 {} {
+                for { let d := sub(keccak256(0x00, 0x20), o) } 1 {} {
                     tstore(add(o, d), calldataload(o))
                     o := add(o, 0x20)
                     if iszero(lt(o, e)) { break }
