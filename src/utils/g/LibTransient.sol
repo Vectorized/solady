@@ -1,44 +1,53 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
+
+// This file is auto-generated.
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                          STRUCTS                           */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+/// @dev Pointer struct to a `uint256` in transient storage.
+struct TUint256 {
+    uint256 _spacer;
+}
+
+/// @dev Pointer struct to a `int256` in transient storage.
+struct TInt256 {
+    uint256 _spacer;
+}
+
+/// @dev Pointer struct to a `bytes32` in transient storage.
+struct TBytes32 {
+    uint256 _spacer;
+}
+
+/// @dev Pointer struct to a `address` in transient storage.
+struct TAddress {
+    uint256 _spacer;
+}
+
+/// @dev Pointer struct to a `bool` in transient storage.
+struct TBool {
+    uint256 _spacer;
+}
+
+/// @dev Pointer struct to a `bytes` in transient storage.
+struct TBytes {
+    uint256 _spacer;
+}
+
+using LibTransient for TUint256 global;
+using LibTransient for TInt256 global;
+using LibTransient for TBytes32 global;
+using LibTransient for TAddress global;
+using LibTransient for TBool global;
+using LibTransient for TBytes global;
 
 /// @notice Library for RLP encoding and CREATE address computation.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibTransient.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibTransient.sol)
 /// @author Modified from Transient Goodies by Philogy (https://github.com/Philogy/transient-goodies/blob/main/src/TransientBytesLib.sol)
 library LibTransient {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STRUCTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Pointer struct to a `uint256` in transient storage.
-    struct TUint256 {
-        uint256 _spacer;
-    }
-
-    /// @dev Pointer struct to a `int256` in transient storage.
-    struct TInt256 {
-        uint256 _spacer;
-    }
-
-    /// @dev Pointer struct to a `bytes32` in transient storage.
-    struct TBytes32 {
-        uint256 _spacer;
-    }
-
-    /// @dev Pointer struct to a `address` in transient storage.
-    struct TAddress {
-        uint256 _spacer;
-    }
-
-    /// @dev Pointer struct to a `bool` in transient storage.
-    struct TBool {
-        uint256 _spacer;
-    }
-
-    /// @dev Pointer struct to a `bytes` in transient storage.
-    struct TBytes {
-        uint256 _spacer;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     UINT256 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

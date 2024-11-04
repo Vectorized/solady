@@ -14,15 +14,39 @@ contract LibTransientTest is SoladyTest {
     }
 
     function _testSetAndGetBytesTransient(bytes memory data) internal {
-        LibTransient.TBytes storage p0 = LibTransient.tBytes(uint256(0));
-        LibTransient.TBytes storage p1 = LibTransient.tBytes(uint256(1));
-        p0.set(data);
-        bytes memory altData = abi.encodePacked("hehe", data, "hehe");
-        p1.set(altData);
-        assertEq(p0.length(), data.length);
-        assertEq(p0.get(), data);
-        assertEq(p1.length(), altData.length);
-        assertEq(p1.get(), altData);
+        LibTransient.TBytes storage p = LibTransient.tBytes(uint256(0));
+        p.set(data);
+        assertEq(p.length(), data.length);
+        assertEq(p.get(), data);
+    }
+
+    function testSetAndGetBytesTransientCalldata(
+        uint256 tSlot,
+        bytes calldata data0,
+        bytes calldata data1
+    ) public {
+        unchecked {
+            LibTransient.TBytes storage p0 = LibTransient.tBytes(tSlot);
+            LibTransient.TBytes storage p1 = LibTransient.tBytes(tSlot + 1);
+            if (_randomChance(2)) {
+                p0.setCalldata(data0);
+                p1.setCalldata(data1);
+            } else {
+                p0.set(data0);
+                p1.set(data1);
+            }
+            assertEq(p0.get(), data0);
+            assertEq(p1.get(), data1);
+            if (_randomChance(2)) {
+                p0.setCalldata(data1);
+                p1.setCalldata(data0);
+            } else {
+                p0.set(data1);
+                p1.set(data0);
+            }
+            assertEq(p0.get(), data1);
+            assertEq(p1.get(), data0);
+        }
     }
 
     function testSetAndGetBytesTransient(uint256 tSlot, bytes memory data) public {
@@ -143,5 +167,23 @@ contract LibTransientTest is SoladyTest {
 
     function tUintDec(uint256 tSlot) public returns (uint256) {
         return LibTransient.tUint256(tSlot).dec();
+    }
+
+    function testInt256IncDecTransient() public {}
+
+    function tIntInc(uint256 tSlot, int256 delta) public returns (int256) {
+        return LibTransient.tInt256(tSlot).inc(delta);
+    }
+
+    function tIntDec(uint256 tSlot, int256 delta) public returns (int256) {
+        return LibTransient.tInt256(tSlot).dec(delta);
+    }
+
+    function tIntInc(uint256 tSlot) public returns (int256) {
+        return LibTransient.tInt256(tSlot).inc();
+    }
+
+    function tIntDec(uint256 tSlot) public returns (int256) {
+        return LibTransient.tInt256(tSlot).dec();
     }
 }
