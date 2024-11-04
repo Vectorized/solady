@@ -6,6 +6,8 @@ pragma solidity ^0.8.4;
 /// @author Modified from Transient Goodies by Philogy (https://github.com/Philogy/transient-goodies/blob/main/src/TransientBytesLib.sol)
 ///
 /// @dev Note: The functions postfixed with `Compat` will only use transient storage on L1.
+/// L2s are super cheap anyway.
+/// For best safety, always clear the storage after use.
 library LibTransient {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -46,6 +48,7 @@ library LibTransient {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The storage slot seed for converting a transient slot to a storage slot.
+    /// `bytes4(keccak256("_LIB_TRANSIENT_COMPAT_SLOT_SEED"))`.
     uint256 private constant _LIB_TRANSIENT_COMPAT_SLOT_SEED = 0x5a0b45f2;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -106,7 +109,7 @@ library LibTransient {
     /// @dev Clears the value at transient `ptr`.
     function clearCompat(TUint256 storage ptr) internal {
         if (block.chainid == 1) return clear(ptr);
-        _compat(ptr)._spacer = uint256(0);
+        _compat(ptr)._spacer = 0;
     }
 
     /// @dev Increments the value at transient `ptr` by 1.
@@ -277,7 +280,7 @@ library LibTransient {
     /// @dev Clears the value at transient `ptr`.
     function clearCompat(TInt256 storage ptr) internal {
         if (block.chainid == 1) return clear(ptr);
-        _compat(ptr)._spacer = uint256(0);
+        _compat(ptr)._spacer = 0;
     }
 
     /// @dev Increments the value at transient `ptr` by 1.
@@ -378,7 +381,7 @@ library LibTransient {
     /// @dev Clears the value at transient `ptr`.
     function clearCompat(TBytes32 storage ptr) internal {
         if (block.chainid == 1) return clear(ptr);
-        _compat(ptr)._spacer = uint256(0);
+        _compat(ptr)._spacer = 0;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -439,7 +442,7 @@ library LibTransient {
     /// @dev Clears the value at transient `ptr`.
     function clearCompat(TAddress storage ptr) internal {
         if (block.chainid == 1) return clear(ptr);
-        _compat(ptr)._spacer = uint256(0);
+        _compat(ptr)._spacer = 0;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -509,7 +512,7 @@ library LibTransient {
     /// @dev Clears the value at transient `ptr`.
     function clearCompat(TBool storage ptr) internal {
         if (block.chainid == 1) return clear(ptr);
-        _compat(ptr)._spacer = uint256(0);
+        _compat(ptr)._spacer = 0;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -689,14 +692,14 @@ library LibTransient {
     /// @dev Clears the value at transient `ptr`.
     function clearCompat(TBytes storage ptr) internal {
         if (block.chainid == 1) return clear(ptr);
-        _compat(ptr)._spacer = uint256(0);
+        _compat(ptr)._spacer = 0;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns a compatibility storage pointer used for L2s.
+    /// @dev Returns a regular storage pointer used for compatibility.
     function _compat(TUint256 storage ptr) private pure returns (TUint256 storage c) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -706,7 +709,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Returns a compatibility storage pointer used for L2s.
+    /// @dev Returns a regular storage pointer used for compatibility.
     function _compat(TInt256 storage ptr) private pure returns (TInt256 storage c) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -716,7 +719,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Returns a compatibility storage pointer used for L2s.
+    /// @dev Returns a regular storage pointer used for compatibility.
     function _compat(TBytes32 storage ptr) private pure returns (TBytes32 storage c) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -726,7 +729,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Returns a compatibility storage pointer used for L2s.
+    /// @dev Returns a regular storage pointer used for compatibility.
     function _compat(TAddress storage ptr) private pure returns (TAddress storage c) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -736,7 +739,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Returns a compatibility storage pointer used for L2s.
+    /// @dev Returns a regular storage pointer used for compatibility.
     function _compat(TBool storage ptr) private pure returns (TBool storage c) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -746,7 +749,7 @@ library LibTransient {
         }
     }
 
-    /// @dev Returns a compatibility storage pointer used for L2s.
+    /// @dev Returns a regular storage pointer used for compatibility.
     function _compat(TBytes storage ptr) private pure returns (TBytes storage c) {
         /// @solidity memory-safe-assembly
         assembly {
