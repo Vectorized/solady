@@ -368,8 +368,8 @@ library LibTransient {
             let e := add(add(result, 0x20), n)
             if iszero(lt(n, 0x1d)) {
                 mstore(0x00, ptr.slot)
-                let o := add(result, 0x3c)
-                for { let d := sub(keccak256(0x00, 0x20), o) } 1 {} {
+                let d := sub(keccak256(0x00, 0x20), result)
+                for { let o := add(result, 0x3c) } 1 {} {
                     mstore(o, tload(add(o, d)))
                     o := add(o, 0x20)
                     if iszero(lt(o, e)) { break }
@@ -388,9 +388,8 @@ library LibTransient {
             if iszero(lt(mload(value), 0x1d)) {
                 mstore(0x00, ptr.slot)
                 let e := add(add(value, 0x20), mload(value))
-                let o := add(value, 0x3c)
-                let d := sub(keccak256(0x00, or(0x20, sub(0, shr(32, mload(value))))), o)
-                for {} 1 {} {
+                let d := sub(keccak256(0x00, or(0x20, sub(0, shr(32, mload(value))))), value)
+                for { let o := add(value, 0x3c) } 1 {} {
                     tstore(add(o, d), mload(o))
                     o := add(o, 0x20)
                     if iszero(lt(o, e)) { break }
@@ -407,9 +406,10 @@ library LibTransient {
             if iszero(lt(value.length, 0x1d)) {
                 mstore(0x00, ptr.slot)
                 let e := add(value.offset, value.length)
-                let o := add(value.offset, 0x1c)
-                let d := sub(keccak256(0x00, or(0x20, sub(0, shr(32, value.length)))), o)
-                for {} 1 {} {
+                // forgefmt: disable-next-item
+                let d := add(sub(keccak256(0x00, or(0x20, sub(0, shr(32, value.length)))),
+                    value.offset), 0x20)
+                for { let o := add(value.offset, 0x1c) } 1 {} {
                     tstore(add(o, d), calldataload(o))
                     o := add(o, 0x20)
                     if iszero(lt(o, e)) { break }
