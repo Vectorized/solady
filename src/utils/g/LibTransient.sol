@@ -484,12 +484,7 @@ library LibTransient {
 
     /// @dev Returns the value at transient `ptr`.
     function getCompat(TBool storage ptr) internal view returns (bool result) {
-        if (block.chainid == 1) return get(ptr);
-        ptr = _compat(ptr);
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := sload(ptr.slot)
-        }
+        result = block.chainid == 1 ? get(ptr) : _compat(ptr)._spacer != 0;
     }
 
     /// @dev Sets the value at transient `ptr`.
