@@ -2852,7 +2852,7 @@ library LibClone {
     function argLoad(bytes memory args, uint256 offset) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            arg := mload(add(add(args, 0x20), offset))
+            result := mload(add(add(args, 0x20), offset))
         }
     }
 }
