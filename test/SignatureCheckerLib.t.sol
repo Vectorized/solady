@@ -620,16 +620,25 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertEq(t.smartAccount.code.length, 0);
     }
 
-    function testEcrecoverTrick(uint256 signer, uint256 recovered) public {
-        // `ecrecover`'s `returndatasize` is always `0x20` on success, `0x00` otherwise.
-        uint256 rds = _randomChance(2) ? 0x20 : 0x00;
+    function check_EcrecoverTrickEquivalance(bool success, uint256 signer, uint256 recovered)
+        public
+        pure
+    {
+        uint256 rds = success ? 0x20 : 0x00;
         bool expected = rds == 0x20 && address(uint160(signer)) == address(uint160(recovered));
         bool optimized;
         /// @solidity memory-safe-assembly
         assembly {
             optimized := gt(rds, shl(96, xor(signer, recovered)))
         }
-        assertEq(optimized, expected);
+        assert(optimized == expected);
+    }
+
+    function testEcrecoverTrickEquivalance(bool success, uint256 signer, uint256 recovered)
+        public
+        pure
+    {
+        check_EcrecoverTrickEquivalance(success, signer, recovered);
     }
 
     function _makeShortSignature(bytes memory signature)
