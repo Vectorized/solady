@@ -403,6 +403,9 @@ contract SignatureCheckerLibTest is SoladyTest {
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
             t.innerSignature = abi.encodePacked(r, s, v);
         }
+        if (_randomChance(2)) {
+            t.innerSignature = _makeShortSignature(t.innerSignature);
+        }
         t.signature = abi.encode(t.factory, t.factoryCalldata, t.innerSignature);
         t.signature = abi.encodePacked(t.signature, _ERC6492_DETECTION_SUFFIX);
     }
@@ -425,13 +428,16 @@ contract SignatureCheckerLibTest is SoladyTest {
         }
     }
 
-    function testERC6492OnECDSA() public {
+    function testERC6492OnECDSA(bytes32) public {
         _ERC6492TestTemps memory t;
         t.digest = keccak256("hehe");
         (t.eoa, t.privateKey) = _randomSigner();
         {
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
             t.signature = abi.encodePacked(r, s, v);
+        }
+        if (_randomChance(2)) {
+            t.signature = _makeShortSignature(t.signature);
         }
         bool result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.signature);
         assertTrue(result);
@@ -441,13 +447,16 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertFalse(result);
     }
 
-    function testERC6492AllowSideEffectsOnECDSA() public {
+    function testERC6492AllowSideEffectsOnECDSA(bytes32) public {
         _ERC6492TestTemps memory t;
         t.digest = keccak256("hehe");
         (t.eoa, t.privateKey) = _randomSigner();
         {
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
             t.signature = abi.encodePacked(r, s, v);
+        }
+        if (_randomChance(2)) {
+            t.signature = _makeShortSignature(t.signature);
         }
         bool result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
             t.eoa, t.digest, t.signature
@@ -613,5 +622,29 @@ contract SignatureCheckerLibTest is SoladyTest {
             optimized := gt(rds, shl(96, xor(signer, recovered)))
         }
         assertEq(optimized, expected);
+    }
+
+    function _makeShortSignature(bytes memory signature)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        require(signature.length == 65);
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let r := mload(add(signature, 0x20))
+            let s := mload(add(signature, 0x40))
+            let v := byte(0, mload(add(signature, 0x60)))
+            let vs := 0
+            switch v
+            case 27 { vs := shr(1, shl(1, s)) }
+            case 28 { vs := or(shl(255, 1), shr(1, shl(1, s))) }
+            default { invalid() }
+            mstore(result, 0x40) // Length.
+            mstore(add(result, 0x20), r)
+            mstore(add(result, 0x40), vs)
+            mstore(0x40, add(result, 0x60)) // Allocate memory.
+        }
     }
 }
