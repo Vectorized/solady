@@ -2846,4 +2846,13 @@ library LibClone {
             }
         }
     }
+
+    /// @dev Returns the `bytes32` at `offset` in `args`, without any bounds checks.
+    /// To load an address, you can use `address(bytes20(argLoad(args, offset)))`.
+    function argLoad(bytes memory args, uint256 offset) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(add(add(args, 0x20), offset))
+        }
+    }
 }
