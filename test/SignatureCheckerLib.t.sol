@@ -646,19 +646,21 @@ contract SignatureCheckerLibTest is SoladyTest {
         bool memoryIsSafe;
         /// @solidity memory-safe-assembly
         assembly {
+            let r := and(0x100, n)
             n := and(0xff, n)
             let signature := mload(0x40)
             mstore(signature, n)
             mstore(0x40, add(n, add(0x20, signature)))
+            if iszero(n) { if r { signature := 0x60 } }
             for { let m := mload(0x40) } 1 {} {
-                switch n
+                switch mload(signature)
                 case 64 {
                     mstore(0x40, not(0))
-                    mstore(0x60, not(1))
+                    mstore(0x60, not(0))
                 }
                 case 65 {
-                    mstore(0x40, not(2))
-                    mstore(0x60, not(3))
+                    mstore(0x40, not(0))
+                    mstore(0x60, not(0))
                 }
                 default { break }
                 isValid := 1
