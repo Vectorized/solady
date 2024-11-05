@@ -602,4 +602,12 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertFalse(t.result);
         assertEq(t.smartAccount.code.length, 0);
     }
+
+    function testEcrecoverTrick(uint256 signer, uint256 recovered) public {
+        // `ecrecover`'s `returndatasize` is always `0x20` on success, `0x00` otherwise.
+        uint256 rds = _randomChance(2) ? 0x20 : 0x00;
+        bool expected = rds == 0x20 && address(uint160(signer)) == address(uint160(recovered));
+        bool optimized = rds > ((signer ^ recovered) << 96);
+        assertEq(optimized, expected);
+    }
 }

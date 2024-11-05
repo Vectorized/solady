@@ -34,8 +34,7 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        uint256 sc = uint160(signer); // Signer, with upper 96 bits cleaned.
-        if (sc == uint256(0)) return isValid;
+        if (signer == address(0)) return isValid;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
@@ -54,7 +53,7 @@ library SignatureCheckerLib {
                 mstore(0x00, hash)
                 mstore(0x40, mload(add(signature, 0x20))) // `r`.
                 let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
-                isValid := gt(returndatasize(), xor(sc, recovered))
+                isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
                 mstore(0x60, 0) // Restore the zero slot.
                 mstore(0x40, m) // Restore the free memory pointer.
                 break
@@ -68,7 +67,7 @@ library SignatureCheckerLib {
                 // Copy the `signature` over.
                 let n := add(0x20, mload(signature))
                 pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
-                isValid := staticcall(gas(), sc, m, add(returndatasize(), 0x44), d, 0x20)
+                isValid := staticcall(gas(), signer, m, add(returndatasize(), 0x44), d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
             }
         }
@@ -82,8 +81,7 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        uint256 sc = uint160(signer); // Signer, with upper 96 bits cleaned.
-        if (sc == uint256(0)) return isValid;
+        if (signer == address(0)) return isValid;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
@@ -102,7 +100,7 @@ library SignatureCheckerLib {
                 default { break }
                 mstore(0x00, hash)
                 let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
-                isValid := gt(returndatasize(), xor(sc, recovered))
+                isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
                 mstore(0x60, 0) // Restore the zero slot.
                 mstore(0x40, m) // Restore the free memory pointer.
                 break
@@ -116,7 +114,7 @@ library SignatureCheckerLib {
                 mstore(add(m, 0x44), signature.length)
                 // Copy the `signature` over.
                 calldatacopy(add(m, 0x64), signature.offset, signature.length)
-                isValid := staticcall(gas(), sc, m, add(signature.length, 0x64), d, 0x20)
+                isValid := staticcall(gas(), signer, m, add(signature.length, 0x64), d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
             }
         }
@@ -130,8 +128,7 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        uint256 sc = uint160(signer); // Signer, with upper 96 bits cleaned.
-        if (sc == uint256(0)) return isValid;
+        if (signer == address(0)) return isValid;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
@@ -140,7 +137,7 @@ library SignatureCheckerLib {
             mstore(0x40, r) // `r`.
             mstore(0x60, shr(1, shl(1, vs))) // `s`.
             let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
-            isValid := gt(returndatasize(), xor(sc, recovered))
+            isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
 
             if iszero(isValid) {
                 let f := shl(224, 0x1626ba7e)
@@ -152,7 +149,7 @@ library SignatureCheckerLib {
                 mstore(add(m, 0x64), r) // `r`.
                 mstore(add(m, 0x84), mload(0x60)) // `s`.
                 mstore8(add(m, 0xa4), mload(0x20)) // `v`.
-                isValid := staticcall(gas(), sc, m, 0xa5, d, 0x20)
+                isValid := staticcall(gas(), signer, m, 0xa5, d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
             }
             mstore(0x60, 0) // Restore the zero slot.
@@ -168,8 +165,7 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
-        uint256 sc = uint160(signer); // Signer, with upper 96 bits cleaned.
-        if (sc == uint256(0)) return isValid;
+        if (signer == address(0)) return isValid;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
@@ -178,7 +174,7 @@ library SignatureCheckerLib {
             mstore(0x40, r) // `r`.
             mstore(0x60, s) // `s`.
             let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
-            isValid := gt(returndatasize(), xor(sc, recovered))
+            isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
 
             if iszero(isValid) {
                 let f := shl(224, 0x1626ba7e)
@@ -190,7 +186,7 @@ library SignatureCheckerLib {
                 mstore(add(m, 0x64), r) // `r`.
                 mstore(add(m, 0x84), s) // `s`.
                 mstore8(add(m, 0xa4), v) // `v`.
-                isValid := staticcall(gas(), sc, m, 0xa5, d, 0x20)
+                isValid := staticcall(gas(), signer, m, 0xa5, d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
             }
             mstore(0x60, 0) // Restore the zero slot.
@@ -203,8 +199,6 @@ library SignatureCheckerLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Note: These ERC1271 operations do NOT have an ECDSA fallback.
-    // These functions are intended to be used with the regular `isValidSignatureNow` functions
-    // or other signature verification functions (e.g. P256).
 
     /// @dev Returns whether `signature` is valid for `hash` for an ERC1271 `signer` contract.
     function isValidERC1271SignatureNow(address signer, bytes32 hash, bytes memory signature)
