@@ -610,7 +610,7 @@ contract SignatureCheckerLibTest is SoladyTest {
         bool optimized;
         /// @solidity memory-safe-assembly
         assembly {
-            optimized := gt(returndatasize(), shl(96, xor(signer, recovered)))
+            optimized := gt(rds, shl(96, xor(signer, recovered)))
         }
         assertEq(optimized, expected);
     }
