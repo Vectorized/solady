@@ -39,15 +39,15 @@ library SignatureCheckerLib {
         assembly {
             let m := mload(0x40)
             for {} 1 {} {
-                let vs := mload(add(signature, 0x40))
                 switch mload(signature)
                 case 64 {
+                    let vs := mload(add(signature, 0x40))
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
                 }
                 case 65 {
                     mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, vs) // `s`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
                 }
                 default { break }
                 mstore(0x00, hash)
@@ -346,15 +346,15 @@ library SignatureCheckerLib {
             }
             // `ecrecover` fallback. Since it only works on EOAs, we can skip the `extcodesize` check.
             for { let m := mload(0x40) } iszero(isValid) {} {
-                let vs := mload(add(signature, 0x40))
                 switch n
                 case 64 {
+                    let vs := mload(add(signature, 0x40))
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
                 }
                 case 65 {
                     mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, vs) // `s`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
                 }
                 default { break }
                 mstore(0x00, hash)
@@ -423,15 +423,15 @@ library SignatureCheckerLib {
             }
             // `ecrecover` fallback. Since it only works on EOAs, we can skip the `extcodesize` check.
             for { let m := mload(0x40) } iszero(isValid) {} {
-                let vs := mload(add(signature, 0x40))
                 switch n
                 case 64 {
+                    let vs := mload(add(signature, 0x40))
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
                 }
                 case 65 {
                     mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, vs) // `s`.
+                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
                 }
                 default { break }
                 mstore(0x00, hash)

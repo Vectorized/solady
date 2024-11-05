@@ -428,7 +428,15 @@ contract SignatureCheckerLibTest is SoladyTest {
         }
     }
 
-    function testERC6492OnECDSA(bytes32) public {
+    function testERC6492OnEOA() public {
+        this.testERC6492OnEOA(bytes32(0));
+    }
+
+    function testERC6492AllowSideEffectsOnEOA() public {
+        this.testERC6492AllowSideEffectsOnEOA(bytes32(0));
+    }
+
+    function testERC6492OnEOA(bytes32) public {
         _ERC6492TestTemps memory t;
         t.digest = keccak256("hehe");
         (t.eoa, t.privateKey) = _randomSigner();
@@ -447,7 +455,7 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertFalse(result);
     }
 
-    function testERC6492AllowSideEffectsOnECDSA(bytes32) public {
+    function testERC6492AllowSideEffectsOnEOA(bytes32) public {
         _ERC6492TestTemps memory t;
         t.digest = keccak256("hehe");
         (t.eoa, t.privateKey) = _randomSigner();
