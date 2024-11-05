@@ -641,6 +641,41 @@ contract SignatureCheckerLibTest is SoladyTest {
         check_EcrecoverTrickEquivalance(success, signer, recovered);
     }
 
+    function check_EcrecoverLoopTrick(uint256 n) public pure {
+        bool isValid;
+        bool memoryIsSafe;
+        /// @solidity memory-safe-assembly
+        assembly {
+            n := and(0xff, n)
+            let signature := mload(0x40)
+            mstore(signature, n)
+            mstore(0x40, add(n, add(0x20, signature)))
+            for { let m := mload(0x40) } 1 {} {
+                switch n
+                case 64 {
+                    mstore(0x40, not(0))
+                    mstore(0x60, not(1))
+                }
+                case 65 {
+                    mstore(0x40, not(2))
+                    mstore(0x60, not(3))
+                }
+                default { break }
+                isValid := 1
+                mstore(0x40, m)
+                mstore(0x60, 0)
+                break
+            }
+            memoryIsSafe := and(iszero(mload(0x60)), lt(mload(0x40), 0xffffffff))
+        }
+        assert(memoryIsSafe);
+        assert(isValid == (n == 64 || n == 65));
+    }
+
+    function testEcrecoverLoopTrick(uint256 n) public pure {
+        check_EcrecoverLoopTrick(n);
+    }
+
     function _makeShortSignature(bytes memory signature)
         internal
         pure
