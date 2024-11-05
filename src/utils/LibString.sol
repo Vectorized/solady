@@ -623,10 +623,10 @@ library LibString {
         pure
         returns (string[] memory result)
     {
-        bytes[] memory splitted = LibBytes.split(bytes(subject), bytes(delimiter));
+        bytes[] memory a = LibBytes.split(bytes(subject), bytes(delimiter));
         /// @solidity memory-safe-assembly
         assembly {
-            result := splitted
+            result := a
         }
     }
 
