@@ -425,6 +425,40 @@ contract SignatureCheckerLibTest is SoladyTest {
         }
     }
 
+    function testERC6492OnECDSA() public {
+        _ERC6492TestTemps memory t;
+        t.digest = keccak256("hehe");
+        (t.eoa, t.privateKey) = _randomSigner();
+        {
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
+            t.signature = abi.encodePacked(r, s, v);
+        }
+        bool result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.signature);
+        assertTrue(result);
+        result = SignatureCheckerLib.isValidERC6492SignatureNow(
+            t.eoa, t.digest, abi.encodePacked(t.signature, " ")
+        );
+        assertFalse(result);
+    }
+
+    function testERC6492AllowSideEffectsOnECDSA() public {
+        _ERC6492TestTemps memory t;
+        t.digest = keccak256("hehe");
+        (t.eoa, t.privateKey) = _randomSigner();
+        {
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
+            t.signature = abi.encodePacked(r, s, v);
+        }
+        bool result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.eoa, t.digest, t.signature
+        );
+        assertTrue(result);
+        result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
+            t.eoa, t.digest, abi.encodePacked(t.signature, " ")
+        );
+        assertFalse(result);
+    }
+
     function testERC6492AllowSideEffectsPostDeploy() public {
         _ERC6492TestTemps memory t = _erc6492TestTemps();
         (bool success,) = t.factory.call(t.factoryCalldata);
@@ -449,11 +483,11 @@ contract SignatureCheckerLibTest is SoladyTest {
             t.smartAccount, t.digest, t.innerSignature
         );
         assertFalse(t.result);
-        // This should return false, as the function does NOT do ECDSA fallback.
+        // This should return true now, as the function does have an ECDSA fallback.
         t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
             t.eoa, t.digest, t.innerSignature
         );
-        assertFalse(t.result);
+        assertTrue(t.result);
         assertEq(t.smartAccount.code.length, 0);
         t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
             t.smartAccount, t.digest, t.signature
@@ -522,9 +556,9 @@ contract SignatureCheckerLibTest is SoladyTest {
             t.smartAccount, t.digest, t.innerSignature
         );
         assertFalse(t.result);
-        // This should return false, as the function does NOT do ECDSA fallback.
+        // This should return true now, as the function does have an ECDSA fallback.
         t.result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.innerSignature);
-        assertFalse(t.result);
+        assertTrue(t.result);
         assertEq(t.smartAccount.code.length, 0);
         t.result =
             SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
@@ -554,9 +588,9 @@ contract SignatureCheckerLibTest is SoladyTest {
             t.smartAccount, t.digest, t.innerSignature
         );
         assertFalse(t.result);
-        // This should return false, as the function does NOT do ECDSA fallback.
+        // This should return true now, as the function does have an ECDSA fallback.
         t.result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.innerSignature);
-        assertFalse(t.result);
+        assertTrue(t.result);
         assertEq(t.smartAccount.code.length, 0);
         // Without the reverting verifier, the function will simply return false.
         t.result =
