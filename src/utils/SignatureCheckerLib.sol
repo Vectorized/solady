@@ -494,9 +494,7 @@ library SignatureCheckerLib {
     /*                     ERC6492 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Note: These ERC6492 operations do NOT have an ECDSA fallback.
-    // These functions are intended to be used with the regular `isValidSignatureNow` functions
-    // or other signature verification functions (e.g. P256).
+    // Note: These ERC6492 operations now include an ECDSA fallback at the very end.
     // The calldata variants are excluded for brevity.
 
     /// @dev Returns whether `signature` is valid for `hash`.
@@ -525,7 +523,8 @@ library SignatureCheckerLib {
                         staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
                     )
             }
-            for { let n := mload(signature) } 1 {} {
+            let n := mload(signature)
+            for {} 1 {} {
                 if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
                     isValid := callIsValidSignature(signer, hash, signature)
                     break
@@ -544,6 +543,27 @@ library SignatureCheckerLib {
                         isValid := callIsValidSignature(signer, hash, s)
                     }
                 }
+                break
+            }
+            // `ecrecover` fallback.
+            for { let m := mload(0x40) } iszero(isValid) {} {
+                let vs := mload(add(signature, 0x40))
+                switch n
+                case 64 {
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                }
+                case 65 {
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x60, vs) // `s`.
+                }
+                default { break }
+                mstore(0x00, hash)
+                mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+                isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
                 break
             }
         }
@@ -578,7 +598,8 @@ library SignatureCheckerLib {
                         staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
                     )
             }
-            for { let n := mload(signature) } 1 {} {
+            let n := mload(signature)
+            for {} 1 {} {
                 if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
                     isValid := callIsValidSignature(signer, hash, signature)
                     break
@@ -602,6 +623,27 @@ library SignatureCheckerLib {
                         0x00 // Length of returndata to write.
                     )
                 isValid := gt(returndatasize(), willBeZeroIfRevertingVerifierExists)
+                break
+            }
+            // `ecrecover` fallback.
+            for { let m := mload(0x40) } iszero(isValid) {} {
+                let vs := mload(add(signature, 0x40))
+                switch n
+                case 64 {
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                }
+                case 65 {
+                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                    mstore(0x60, vs) // `s`.
+                }
+                default { break }
+                mstore(0x00, hash)
+                mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+                isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
+                mstore(0x60, 0) // Restore the zero slot.
+                mstore(0x40, m) // Restore the free memory pointer.
                 break
             }
         }
