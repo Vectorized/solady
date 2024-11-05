@@ -607,7 +607,11 @@ contract SignatureCheckerLibTest is SoladyTest {
         // `ecrecover`'s `returndatasize` is always `0x20` on success, `0x00` otherwise.
         uint256 rds = _randomChance(2) ? 0x20 : 0x00;
         bool expected = rds == 0x20 && address(uint160(signer)) == address(uint160(recovered));
-        bool optimized = rds > ((signer ^ recovered) << 96);
+        bool optimized;
+        /// @solidity memory-safe-assembly
+        assembly {
+            optimized := gt(returndatasize(), shl(96, xor(signer, recovered)))
+        }
         assertEq(optimized, expected);
     }
 }
