@@ -34,57 +34,32 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
+        uint256 sc = uint160(signer); // Signer, with upper 96 bits cleaned.
+        if (sc == uint256(0)) return isValid;
         /// @solidity memory-safe-assembly
         assembly {
-            // Clean the upper 96 bits of `signer` in case they are dirty.
-            for { signer := shr(96, shl(96, signer)) } signer {} {
-                let m := mload(0x40)
-                mstore(0x00, hash)
-                mstore(0x40, mload(add(signature, 0x20))) // `r`.
-                if eq(mload(signature), 64) {
-                    let vs := mload(add(signature, 0x40))
+            let m := mload(0x40)
+            for {} 1 {} {
+                let vs := mload(add(signature, 0x40))
+                switch mload(signature)
+                case 64 {
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
-                    let t :=
-                        staticcall(
-                            gas(), // Amount of gas left for the transaction.
-                            1, // Address of `ecrecover`.
-                            0x00, // Start of input.
-                            0x80, // Size of input.
-                            0x01, // Start of output.
-                            0x20 // Size of output.
-                        )
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
-                        isValid := 1
-                        mstore(0x60, 0) // Restore the zero slot.
-                        mstore(0x40, m) // Restore the free memory pointer.
-                        break
-                    }
                 }
-                if eq(mload(signature), 65) {
+                case 65 {
                     mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
-                    let t :=
-                        staticcall(
-                            gas(), // Amount of gas left for the transaction.
-                            1, // Address of `ecrecover`.
-                            0x00, // Start of input.
-                            0x80, // Size of input.
-                            0x01, // Start of output.
-                            0x20 // Size of output.
-                        )
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
-                        isValid := 1
-                        mstore(0x60, 0) // Restore the zero slot.
-                        mstore(0x40, m) // Restore the free memory pointer.
-                        break
-                    }
+                    mstore(0x60, vs) // `s`.
                 }
+                default { break }
+                mstore(0x00, hash)
+                mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+                isValid := gt(returndatasize(), xor(sc, recovered))
                 mstore(0x60, 0) // Restore the zero slot.
                 mstore(0x40, m) // Restore the free memory pointer.
-
+                break
+            }
+            if iszero(isValid) {
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -93,23 +68,8 @@ library SignatureCheckerLib {
                 // Copy the `signature` over.
                 let n := add(0x20, mload(signature))
                 pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
-                // forgefmt: disable-next-item
-                isValid := and(
-                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(d), f),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer, // The `signer` address.
-                        m, // Offset of calldata in memory.
-                        add(returndatasize(), 0x44), // Length of calldata in memory.
-                        d, // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
-                )
-                break
+                isValid := staticcall(gas(), sc, m, add(returndatasize(), 0x44), d, 0x20)
+                isValid := and(eq(mload(d), f), isValid)
             }
         }
     }
@@ -122,57 +82,32 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
+        uint256 sc = uint160(signer); // Signer, with upper 96 bits cleaned.
+        if (sc == uint256(0)) return isValid;
         /// @solidity memory-safe-assembly
         assembly {
-            // Clean the upper 96 bits of `signer` in case they are dirty.
-            for { signer := shr(96, shl(96, signer)) } signer {} {
-                let m := mload(0x40)
-                mstore(0x00, hash)
-                if eq(signature.length, 64) {
+            let m := mload(0x40)
+            for {} 1 {} {
+                switch signature.length
+                case 64 {
                     let vs := calldataload(add(signature.offset, 0x20))
                     mstore(0x20, add(shr(255, vs), 27)) // `v`.
                     mstore(0x40, calldataload(signature.offset)) // `r`.
                     mstore(0x60, shr(1, shl(1, vs))) // `s`.
-                    let t :=
-                        staticcall(
-                            gas(), // Amount of gas left for the transaction.
-                            1, // Address of `ecrecover`.
-                            0x00, // Start of input.
-                            0x80, // Size of input.
-                            0x01, // Start of output.
-                            0x20 // Size of output.
-                        )
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
-                        isValid := 1
-                        mstore(0x60, 0) // Restore the zero slot.
-                        mstore(0x40, m) // Restore the free memory pointer.
-                        break
-                    }
                 }
-                if eq(signature.length, 65) {
+                case 65 {
                     mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
                     calldatacopy(0x40, signature.offset, 0x40) // `r`, `s`.
-                    let t :=
-                        staticcall(
-                            gas(), // Amount of gas left for the transaction.
-                            1, // Address of `ecrecover`.
-                            0x00, // Start of input.
-                            0x80, // Size of input.
-                            0x01, // Start of output.
-                            0x20 // Size of output.
-                        )
-                    // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                    if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
-                        isValid := 1
-                        mstore(0x60, 0) // Restore the zero slot.
-                        mstore(0x40, m) // Restore the free memory pointer.
-                        break
-                    }
                 }
+                default { break }
+                mstore(0x00, hash)
+                let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+                isValid := gt(returndatasize(), xor(sc, recovered))
                 mstore(0x60, 0) // Restore the zero slot.
                 mstore(0x40, m) // Restore the free memory pointer.
-
+                break
+            }
+            if iszero(isValid) {
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -181,23 +116,8 @@ library SignatureCheckerLib {
                 mstore(add(m, 0x44), signature.length)
                 // Copy the `signature` over.
                 calldatacopy(add(m, 0x64), signature.offset, signature.length)
-                // forgefmt: disable-next-item
-                isValid := and(
-                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(d), f),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer, // The `signer` address.
-                        m, // Offset of calldata in memory.
-                        add(signature.length, 0x64), // Length of calldata in memory.
-                        d, // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
-                )
-                break
+                isValid := staticcall(gas(), sc, m, add(signature.length, 0x64), d, 0x20)
+                isValid := and(eq(mload(d), f), isValid)
             }
         }
     }
@@ -210,32 +130,19 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
+        uint256 sc = uint160(signer); // Signer, with upper 96 bits cleaned.
+        if (sc == uint256(0)) return isValid;
         /// @solidity memory-safe-assembly
         assembly {
-            // Clean the upper 96 bits of `signer` in case they are dirty.
-            for { signer := shr(96, shl(96, signer)) } signer {} {
-                let m := mload(0x40)
-                mstore(0x00, hash)
-                mstore(0x20, add(shr(255, vs), 27)) // `v`.
-                mstore(0x40, r) // `r`.
-                mstore(0x60, shr(1, shl(1, vs))) // `s`.
-                let t :=
-                    staticcall(
-                        gas(), // Amount of gas left for the transaction.
-                        1, // Address of `ecrecover`.
-                        0x00, // Start of input.
-                        0x80, // Size of input.
-                        0x01, // Start of output.
-                        0x20 // Size of output.
-                    )
-                // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
-                    isValid := 1
-                    mstore(0x60, 0) // Restore the zero slot.
-                    mstore(0x40, m) // Restore the free memory pointer.
-                    break
-                }
+            let m := mload(0x40)
+            mstore(0x00, hash)
+            mstore(0x20, add(shr(255, vs), 27)) // `v`.
+            mstore(0x40, r) // `r`.
+            mstore(0x60, shr(1, shl(1, vs))) // `s`.
+            let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+            isValid := gt(returndatasize(), xor(sc, recovered))
 
+            if iszero(isValid) {
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -245,26 +152,11 @@ library SignatureCheckerLib {
                 mstore(add(m, 0x64), r) // `r`.
                 mstore(add(m, 0x84), mload(0x60)) // `s`.
                 mstore8(add(m, 0xa4), mload(0x20)) // `v`.
-                // forgefmt: disable-next-item
-                isValid := and(
-                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(d), f),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer, // The `signer` address.
-                        m, // Offset of calldata in memory.
-                        0xa5, // Length of calldata in memory.
-                        d, // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
-                )
-                mstore(0x60, 0) // Restore the zero slot.
-                mstore(0x40, m) // Restore the free memory pointer.
-                break
+                isValid := staticcall(gas(), sc, m, 0xa5, d, 0x20)
+                isValid := and(eq(mload(d), f), isValid)
             }
+            mstore(0x60, 0) // Restore the zero slot.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -276,32 +168,19 @@ library SignatureCheckerLib {
         view
         returns (bool isValid)
     {
+        uint256 sc = uint160(signer); // Signer, with upper 96 bits cleaned.
+        if (sc == uint256(0)) return isValid;
         /// @solidity memory-safe-assembly
         assembly {
-            // Clean the upper 96 bits of `signer` in case they are dirty.
-            for { signer := shr(96, shl(96, signer)) } signer {} {
-                let m := mload(0x40)
-                mstore(0x00, hash)
-                mstore(0x20, and(v, 0xff)) // `v`.
-                mstore(0x40, r) // `r`.
-                mstore(0x60, s) // `s`.
-                let t :=
-                    staticcall(
-                        gas(), // Amount of gas left for the transaction.
-                        1, // Address of `ecrecover`.
-                        0x00, // Start of input.
-                        0x80, // Size of input.
-                        0x01, // Start of output.
-                        0x20 // Size of output.
-                    )
-                // `returndatasize()` will be `0x20` upon success, and `0x00` otherwise.
-                if iszero(or(iszero(returndatasize()), xor(signer, mload(t)))) {
-                    isValid := 1
-                    mstore(0x60, 0) // Restore the zero slot.
-                    mstore(0x40, m) // Restore the free memory pointer.
-                    break
-                }
+            let m := mload(0x40)
+            mstore(0x00, hash)
+            mstore(0x20, and(v, 0xff)) // `v`.
+            mstore(0x40, r) // `r`.
+            mstore(0x60, s) // `s`.
+            let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+            isValid := gt(returndatasize(), xor(sc, recovered))
 
+            if iszero(isValid) {
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -311,26 +190,11 @@ library SignatureCheckerLib {
                 mstore(add(m, 0x64), r) // `r`.
                 mstore(add(m, 0x84), s) // `s`.
                 mstore8(add(m, 0xa4), v) // `v`.
-                // forgefmt: disable-next-item
-                isValid := and(
-                    // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                    eq(mload(d), f),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        signer, // The `signer` address.
-                        m, // Offset of calldata in memory.
-                        0xa5, // Length of calldata in memory.
-                        d, // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
-                )
-                mstore(0x60, 0) // Restore the zero slot.
-                mstore(0x40, m) // Restore the free memory pointer.
-                break
+                isValid := staticcall(gas(), sc, m, 0xa5, d, 0x20)
+                isValid := and(eq(mload(d), f), isValid)
             }
+            mstore(0x60, 0) // Restore the zero slot.
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -359,22 +223,8 @@ library SignatureCheckerLib {
             // Copy the `signature` over.
             let n := add(0x20, mload(signature))
             pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
-            // forgefmt: disable-next-item
-            isValid := and(
-                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                eq(mload(d), f),
-                // Whether the staticcall does not revert.
-                // This must be placed at the end of the `and` clause,
-                // as the arguments are evaluated from right to left.
-                staticcall(
-                    gas(), // Remaining gas.
-                    signer, // The `signer` address.
-                    m, // Offset of calldata in memory.
-                    add(returndatasize(), 0x44), // Length of calldata in memory.
-                    d, // Offset of returndata.
-                    0x20 // Length of returndata to write.
-                )
-            )
+            isValid := staticcall(gas(), signer, m, add(returndatasize(), 0x44), d, 0x20)
+            isValid := and(eq(mload(d), f), isValid)
         }
     }
 
@@ -395,22 +245,8 @@ library SignatureCheckerLib {
             mstore(add(m, 0x44), signature.length)
             // Copy the `signature` over.
             calldatacopy(add(m, 0x64), signature.offset, signature.length)
-            // forgefmt: disable-next-item
-            isValid := and(
-                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                eq(mload(d), f),
-                // Whether the staticcall does not revert.
-                // This must be placed at the end of the `and` clause,
-                // as the arguments are evaluated from right to left.
-                staticcall(
-                    gas(), // Remaining gas.
-                    signer, // The `signer` address.
-                    m, // Offset of calldata in memory.
-                    add(signature.length, 0x64), // Length of calldata in memory.
-                    d, // Offset of returndata.
-                    0x20 // Length of returndata to write.
-                )
-            )
+            isValid := staticcall(gas(), signer, m, add(signature.length, 0x64), d, 0x20)
+            isValid := and(eq(mload(d), f), isValid)
         }
     }
 
@@ -433,22 +269,8 @@ library SignatureCheckerLib {
             mstore(add(m, 0x64), r) // `r`.
             mstore(add(m, 0x84), shr(1, shl(1, vs))) // `s`.
             mstore8(add(m, 0xa4), add(shr(255, vs), 27)) // `v`.
-            // forgefmt: disable-next-item
-            isValid := and(
-                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                eq(mload(d), f),
-                // Whether the staticcall does not revert.
-                // This must be placed at the end of the `and` clause,
-                // as the arguments are evaluated from right to left.
-                staticcall(
-                    gas(), // Remaining gas.
-                    signer, // The `signer` address.
-                    m, // Offset of calldata in memory.
-                    0xa5, // Length of calldata in memory.
-                    d, // Offset of returndata.
-                    0x20 // Length of returndata to write.
-                )
-            )
+            isValid := staticcall(gas(), signer, m, 0xa5, d, 0x20)
+            isValid := and(eq(mload(d), f), isValid)
         }
     }
 
@@ -471,22 +293,8 @@ library SignatureCheckerLib {
             mstore(add(m, 0x64), r) // `r`.
             mstore(add(m, 0x84), s) // `s`.
             mstore8(add(m, 0xa4), v) // `v`.
-            // forgefmt: disable-next-item
-            isValid := and(
-                // Whether the returndata is the magic value `0x1626ba7e` (left-aligned).
-                eq(mload(d), f),
-                // Whether the staticcall does not revert.
-                // This must be placed at the end of the `and` clause,
-                // as the arguments are evaluated from right to left.
-                staticcall(
-                    gas(), // Remaining gas.
-                    signer, // The `signer` address.
-                    m, // Offset of calldata in memory.
-                    0xa5, // Length of calldata in memory.
-                    d, // Offset of returndata.
-                    0x20 // Length of returndata to write.
-                )
-            )
+            isValid := staticcall(gas(), signer, m, 0xa5, d, 0x20)
+            isValid := and(eq(mload(d), f), isValid)
         }
     }
 
@@ -517,11 +325,8 @@ library SignatureCheckerLib {
                 mstore(d_, 0x40) // The offset of the `signature` in the calldata.
                 let n_ := add(0x20, mload(signature_))
                 pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
-                _isValid :=
-                    and(
-                        eq(mload(d_), f_),
-                        staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
-                    )
+                _isValid := staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
+                _isValid := and(eq(mload(d_), f_), _isValid)
             }
             let n := mload(signature)
             for {} 1 {} {
@@ -545,7 +350,7 @@ library SignatureCheckerLib {
                 }
                 break
             }
-            // `ecrecover` fallback.
+            // `ecrecover` fallback. Since it only works on EOAs, we can skip the `extcodesize` check.
             for { let m := mload(0x40) } iszero(isValid) {} {
                 let vs := mload(add(signature, 0x40))
                 switch n
@@ -592,11 +397,8 @@ library SignatureCheckerLib {
                 mstore(d_, 0x40) // The offset of the `signature` in the calldata.
                 let n_ := add(0x20, mload(signature_))
                 pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
-                _isValid :=
-                    and(
-                        eq(mload(d_), f_),
-                        staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
-                    )
+                _isValid := staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
+                _isValid := and(eq(mload(d_), f_), _isValid)
             }
             let n := mload(signature)
             for {} 1 {} {
@@ -625,7 +427,7 @@ library SignatureCheckerLib {
                 isValid := gt(returndatasize(), willBeZeroIfRevertingVerifierExists)
                 break
             }
-            // `ecrecover` fallback.
+            // `ecrecover` fallback. Since it only works on EOAs, we can skip the `extcodesize` check.
             for { let m := mload(0x40) } iszero(isValid) {} {
                 let vs := mload(add(signature, 0x40))
                 switch n
