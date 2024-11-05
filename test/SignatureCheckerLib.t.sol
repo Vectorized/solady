@@ -403,6 +403,9 @@ contract SignatureCheckerLibTest is SoladyTest {
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
             t.innerSignature = abi.encodePacked(r, s, v);
         }
+        if (_randomChance(2)) {
+            t.innerSignature = _makeShortSignature(t.innerSignature);
+        }
         t.signature = abi.encode(t.factory, t.factoryCalldata, t.innerSignature);
         t.signature = abi.encodePacked(t.signature, _ERC6492_DETECTION_SUFFIX);
     }
@@ -425,13 +428,24 @@ contract SignatureCheckerLibTest is SoladyTest {
         }
     }
 
-    function testERC6492OnECDSA() public {
+    function testERC6492OnEOA() public {
+        this.testERC6492OnEOA(bytes32(0));
+    }
+
+    function testERC6492AllowSideEffectsOnEOA() public {
+        this.testERC6492AllowSideEffectsOnEOA(bytes32(0));
+    }
+
+    function testERC6492OnEOA(bytes32) public {
         _ERC6492TestTemps memory t;
         t.digest = keccak256("hehe");
         (t.eoa, t.privateKey) = _randomSigner();
         {
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
             t.signature = abi.encodePacked(r, s, v);
+        }
+        if (_randomChance(2)) {
+            t.signature = _makeShortSignature(t.signature);
         }
         bool result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.signature);
         assertTrue(result);
@@ -441,13 +455,16 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertFalse(result);
     }
 
-    function testERC6492AllowSideEffectsOnECDSA() public {
+    function testERC6492AllowSideEffectsOnEOA(bytes32) public {
         _ERC6492TestTemps memory t;
         t.digest = keccak256("hehe");
         (t.eoa, t.privateKey) = _randomSigner();
         {
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(t.privateKey, t.digest);
             t.signature = abi.encodePacked(r, s, v);
+        }
+        if (_randomChance(2)) {
+            t.signature = _makeShortSignature(t.signature);
         }
         bool result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
             t.eoa, t.digest, t.signature
@@ -601,5 +618,87 @@ contract SignatureCheckerLibTest is SoladyTest {
             SignatureCheckerLib.isValidERC6492SignatureNow(t.smartAccount, t.digest, t.signature);
         assertFalse(t.result);
         assertEq(t.smartAccount.code.length, 0);
+    }
+
+    function check_EcrecoverTrickEquivalance(bool success, uint256 signer, uint256 recovered)
+        public
+        pure
+    {
+        uint256 rds = success ? 0x20 : 0x00;
+        bool expected = rds == 0x20 && address(uint160(signer)) == address(uint160(recovered));
+        bool optimized;
+        /// @solidity memory-safe-assembly
+        assembly {
+            optimized := gt(rds, shl(96, xor(signer, recovered)))
+        }
+        assert(optimized == expected);
+    }
+
+    function testEcrecoverTrickEquivalance(bool success, uint256 signer, uint256 recovered)
+        public
+        pure
+    {
+        check_EcrecoverTrickEquivalance(success, signer, recovered);
+    }
+
+    function check_EcrecoverLoopTrick(uint256 n) public pure {
+        bool isValid;
+        bool memoryIsSafe;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let r := and(0x100, n)
+            n := and(0xff, n)
+            let signature := mload(0x40)
+            mstore(signature, n)
+            mstore(0x40, add(n, add(0x20, signature)))
+            if iszero(n) { if r { signature := 0x60 } }
+            for { let m := mload(0x40) } 1 {} {
+                switch mload(signature)
+                case 64 {
+                    mstore(0x40, not(0))
+                    mstore(0x60, not(0))
+                }
+                case 65 {
+                    mstore(0x40, not(0))
+                    mstore(0x60, not(0))
+                }
+                default { break }
+                isValid := 1
+                mstore(0x40, m)
+                mstore(0x60, 0)
+                break
+            }
+            memoryIsSafe := and(iszero(mload(0x60)), lt(mload(0x40), 0xffffffff))
+        }
+        assert(memoryIsSafe);
+        assert(isValid == (n == 64 || n == 65));
+    }
+
+    function testEcrecoverLoopTrick(uint256 n) public pure {
+        check_EcrecoverLoopTrick(n);
+    }
+
+    function _makeShortSignature(bytes memory signature)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        require(signature.length == 65);
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let r := mload(add(signature, 0x20))
+            let s := mload(add(signature, 0x40))
+            let v := byte(0, mload(add(signature, 0x60)))
+            let vs := 0
+            switch v
+            case 27 { vs := shr(1, shl(1, s)) }
+            case 28 { vs := or(shl(255, 1), shr(1, shl(1, s))) }
+            default { invalid() }
+            mstore(result, 0x40) // Length.
+            mstore(add(result, 0x20), r)
+            mstore(add(result, 0x40), vs)
+            mstore(0x40, add(result, 0x60)) // Allocate memory.
+        }
     }
 }
