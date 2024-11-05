@@ -158,7 +158,7 @@ library LibTransient {
         assembly {
             let currentValue := tload(ptr.slot)
             newValue := add(currentValue, delta)
-            if iszero(eq(lt(newValue, currentValue), slt(delta, 0))) {
+            if iszero(eq(sub(newValue, delta), newValue)) {
                 mstore(0x00, 0x4e487b71) // `Panic(uint256)`.
                 mstore(0x20, 0x11) // Underflow or overflow panic.
                 revert(0x1c, 0x24)
@@ -178,7 +178,7 @@ library LibTransient {
         assembly {
             let currentValue := sload(ptr.slot)
             newValue := add(currentValue, delta)
-            if iszero(eq(lt(newValue, currentValue), slt(delta, 0))) {
+            if iszero(eq(sub(newValue, delta), newValue)) {
                 mstore(0x00, 0x4e487b71) // `Panic(uint256)`.
                 mstore(0x20, 0x11) // Underflow or overflow panic.
                 revert(0x1c, 0x24)
@@ -193,7 +193,7 @@ library LibTransient {
         assembly {
             let currentValue := tload(ptr.slot)
             newValue := sub(currentValue, delta)
-            if iszero(eq(lt(newValue, currentValue), sgt(delta, 0))) {
+            if iszero(eq(add(newValue, delta), newValue)) {
                 mstore(0x00, 0x4e487b71) // `Panic(uint256)`.
                 mstore(0x20, 0x11) // Underflow or overflow panic.
                 revert(0x1c, 0x24)
@@ -213,7 +213,7 @@ library LibTransient {
         assembly {
             let currentValue := sload(ptr.slot)
             newValue := sub(currentValue, delta)
-            if iszero(eq(lt(newValue, currentValue), sgt(delta, 0))) {
+            if iszero(eq(add(newValue, delta), newValue)) {
                 mstore(0x00, 0x4e487b71) // `Panic(uint256)`.
                 mstore(0x20, 0x11) // Underflow or overflow panic.
                 revert(0x1c, 0x24)
