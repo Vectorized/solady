@@ -25,22 +25,7 @@ struct WebAuthnAuth {
     bytes32 s;
 }
 
-/// @dev Alternative struct for verification (Ithaca style).
-struct WebAuthnMetadata {
-    // The WebAuthn authenticator data.
-    bytes authenticatorData;
-    // The WebAuthn client data JSON.
-    string clientDataJSON;
-    // Start index of "challenge":"..." in `clientDataJSON`.
-    uint256 challengeIndex;
-    // Start index of "type":"..." in `clientDataJSON`.
-    uint256 typeIndex;
-    // Whether to check that the "User Verified" flag in `authenticatorData` is set.
-    bool requireUserVerification;
-}
-
 using WebAuthn for WebAuthnAuth global;
-using WebAuthn for WebAuthnMetadata global;
 
 import {Base64} from "../Base64.sol";
 import {P256} from "../P256.sol";
@@ -185,7 +170,7 @@ library WebAuthn {
         if (result) result = P256.verifySignature(h, r, s, x, y);
     }
 
-    /// @dev Alternative syntax for verification (Ithaca style).
+    /// @dev Returns if the `auth` is valid.
     function verify(
         bytes memory challenge,
         bool requireUserVerification,
