@@ -144,9 +144,9 @@ library LibBytes {
             let replacementLen := mload(replacement)
             let d := sub(result, subject) // Memory difference.
             let i := add(subject, 0x20) // Subject bytes pointer.
-            let end := add(i, mload(subject))
+            mstore(0x00, add(i, mload(subject))) // End of subject.
             if iszero(gt(needleLen, mload(subject))) {
-                let subjectSearchEnd := add(sub(end, needleLen), 1)
+                let subjectSearchEnd := add(sub(mload(0x00), needleLen), 1)
                 let h := 0 // The hash of `needle`.
                 if iszero(lt(needleLen, 0x20)) { h := keccak256(add(needle, 0x20), needleLen) }
                 let s := mload(add(needle, 0x20))
@@ -180,6 +180,7 @@ library LibBytes {
                     if iszero(lt(i, subjectSearchEnd)) { break }
                 }
             }
+            let end := mload(0x00)
             let n := add(sub(d, add(result, 0x20)), end)
             // Copy the rest of the bytes one word at a time.
             for {} lt(i, end) { i := add(i, 0x20) } { mstore(add(i, d), mload(i)) }
