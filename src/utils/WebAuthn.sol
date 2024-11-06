@@ -32,18 +32,6 @@ library WebAuthn {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Bit 0 of the authenticator data struct, corresponding to the "User Present" bit.
-    /// See: https://www.w3.org/TR/webauthn-2/#flags.
-    uint256 private constant _AUTH_DATA_FLAGS_UP = 0x01;
-
-    /// @dev Bit 2 of the authenticator data struct, corresponding to the "User Verified" bit.
-    /// See: https://www.w3.org/TR/webauthn-2/#flags.
-    uint256 private constant _AUTH_DATA_FLAGS_UV = 0x04;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*              WEBAUTHN VERIFICATION OPERATIONS              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -137,14 +125,11 @@ library WebAuthn {
                 b := o // Reuse `b` for `o`, to prevent stack-too-deep.
             }
             // Skip 13., 14., 15.
-            let l := mload(authenticatorData) // Length of `authenticatorData`.
-            let u :=
-                or(
-                    // 16. Verify that the "User Present" flag is set.
-                    _AUTH_DATA_FLAGS_UP,
-                    // 17. Verify that the "User Verified" flag is set, if required.
-                    mul(_AUTH_DATA_FLAGS_UV, iszero(iszero(requireUserVerification)))
-                )
+            let l := mload(authenticatorData) // Length of `authenticatorData`
+            // 16. Verify that the "User Present" flag is set (bit 0).
+            // 17. Verify that the "User Verified" flag is set (bit 2), if required.
+            // See: https://www.w3.org/TR/webauthn-2/#flags.
+            let u := or(1, shl(2, iszero(iszero(requireUserVerification))))
             // forgefmt: disable-next-item
             result := and(and(result, gt(l, 0x20)),
                 eq(and(byte(0, mload(add(authenticatorData, 0x40))), u), u))
