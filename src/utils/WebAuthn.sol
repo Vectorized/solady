@@ -121,8 +121,8 @@ library WebAuthn {
         bytes32 x,
         bytes32 y
     ) internal view returns (bool result) {
-        bytes32 messageHash;
-        string memory encoded = Base64.encode(challenge, true, true);
+        bytes32 h; // The message hash.
+        string memory b = Base64.encode(challenge, true, true);
         /// @solidity memory-safe-assembly
         assembly {
             {
@@ -130,9 +130,9 @@ library WebAuthn {
                 let o := add(clientDataJSON, 0x20) // Start of `clientData`'s bytes.
                 let c := challengeIndex
                 let t := typeIndex
-                let l := mload(encoded) // Cache `encoded`'s length.
-                let q := add(l, 0x0d) // Length of `encoded` prefixed with '"challenge":"'.
-                mstore(encoded, shr(152, '"challenge":"')) // Temp prefix with '"challenge":"'.
+                let l := mload(b) // Cache `b`'s length.
+                let q := add(l, 0x0d) // Length of `b` prefixed with '"challenge":"'.
+                mstore(b, shr(152, '"challenge":"')) // Temp prefix with '"challenge":"'.
                 result :=
                     and(
                         // 11. Verify JSON's type. Also checks for possible addition overflows.
@@ -142,13 +142,13 @@ library WebAuthn {
                         ),
                         // 12. Verify JSON's challenge. Includes a check for the closing '"'.
                         and(
-                            eq(keccak256(add(o, c), q), keccak256(add(encoded, 0x13), q)),
+                            eq(keccak256(add(o, c), q), keccak256(add(b, 0x13), q)),
                             and(eq(byte(0, mload(add(add(o, c), q))), 34), lt(add(q, c), n))
                         )
                     )
-                mstore(encoded, l) // Restore `encoded`'s length, in case of string interning.
-                mstore(0x20, o)
-                mstore(0x00, n)
+                mstore(b, l) // Restore `b`'s length, in case of string interning.
+                h := n // Reuse `h` for `n`, to prevent stack-too-deep.
+                b := o // Reuse `b` for `o`, to prevent stack-too-deep.
             }
             // Skip 13., 14., 15.
             let l := mload(authenticatorData) // Length of `authenticatorData`.
@@ -167,17 +167,17 @@ library WebAuthn {
                 let e := add(p, l) // Location of the word after `authenticatorData`.
                 let w := mload(e) // Cache the word after `authenticatorData`.
                 // 19. Compute `sha256(clientDataJSON)`.
-                pop(staticcall(gas(), 2, mload(0x20), mload(0x00), e, 0x20))
+                pop(staticcall(gas(), 2, b, h, e, 0x20))
                 // 20. Compute `sha256(authenticatorData ‖ sha256(clientDataJSON))`.
                 pop(staticcall(gas(), 2, p, add(l, 0x20), 0x00, returndatasize()))
                 // `returndatasize()` is `0x20` on `sha256` success, and `0x00` otherwise.
                 if iszero(returndatasize()) { invalid() }
                 mstore(e, w) // Restore the word after `authenticatorData`, in case of reuse.
-                messageHash := mload(0x00)
+                h := mload(0x00)
             }
         }
         // `P256.verifySignature` returns false if `s > N/2` due to the malleability check.
-        if (result) result = P256.verifySignature(messageHash, r, s, x, y);
+        if (result) result = P256.verifySignature(h, r, s, x, y);
     }
 
     /// @dev Alternative syntax for verification (Ithaca style).
