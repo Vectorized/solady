@@ -170,7 +170,7 @@ library WebAuthn {
             }
         }
         // `P256.verifySignature` returns false if `s > N/2` due to the malleability check.
-        return result && P256.verifySignature(messageHash, auth.r, auth.s, x, y);
+        if (result) result = P256.verifySignature(messageHash, auth.r, auth.s, x, y);
     }
 
     /// @dev Alternative syntax for verification (Ithaca style).
