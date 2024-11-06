@@ -57,7 +57,11 @@ async function main() {
     });
   });
   flattenedPathsAndScores.sort((a, b) => a.totalScore - b.totalScore);
-  console.log(flattenedPathsAndScores);
+  flattenedPathsAndScores.forEach(x => {
+    if (x.totalScore === 0) delete x.scores;
+    delete x.totalScore;
+  });
+  console.log(JSON.stringify(flattenedPathsAndScores, null, 4));
 };
 
 main().catch(e => {
