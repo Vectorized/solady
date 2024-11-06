@@ -84,12 +84,12 @@ library LibString {
 
     /// @dev Sets the value of the string storage `$` to `s`.
     function set(StringStorage storage $, string memory s) internal {
-        LibBytes.set(_bytesStorage($), bytes(s));
+        LibBytes.set(bytesStorage($), bytes(s));
     }
 
     /// @dev Sets the value of the string storage `$` to `s`.
     function setCalldata(StringStorage storage $, string calldata s) internal {
-        LibBytes.setCalldata(_bytesStorage($), bytes(s));
+        LibBytes.setCalldata(bytesStorage($), bytes(s));
     }
 
     /// @dev Sets the value of the string storage `$` to the empty string.
@@ -104,17 +104,17 @@ library LibString {
 
     /// @dev Returns the length of the value stored in `$`.
     function length(StringStorage storage $) internal view returns (uint256) {
-        return LibBytes.length(_bytesStorage($));
+        return LibBytes.length(bytesStorage($));
     }
 
     /// @dev Returns the value stored in `$`.
     function get(StringStorage storage $) internal view returns (string memory) {
-        return string(LibBytes.get(_bytesStorage($)));
+        return string(LibBytes.get(bytesStorage($)));
     }
 
     /// @dev Helper to cast `$` to a `BytesStorage`.
-    function _bytesStorage(StringStorage storage $)
-        private
+    function bytesStorage(StringStorage storage $)
+        internal
         pure
         returns (LibBytes.BytesStorage storage casted)
     {
