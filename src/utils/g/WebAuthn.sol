@@ -15,17 +15,32 @@ struct WebAuthnAuth {
     // The WebAuthn client data JSON.
     // See: https://www.w3.org/TR/webauthn-2/#dom-authenticatorresponse-clientdatajson.
     string clientDataJSON;
-    // The index at which "challenge":"..." occurs in `clientDataJSON`.
+    // Start index of "challenge":"..." in `clientDataJSON`.
     uint256 challengeIndex;
-    // The index at which "type":"..." occurs in `clientDataJSON`.
+    // Start index of "type":"..." in `clientDataJSON`.
     uint256 typeIndex;
-    // The r value of secp256r1 signature
+    // The r value of secp256r1 signature.
     bytes32 r;
-    // The s value of secp256r1 signature
+    // The s value of secp256r1 signature.
     bytes32 s;
 }
 
+/// @dev Alternative struct for verification (Ithaca style).
+struct WebAuthnMetadata {
+    // The WebAuthn authenticator data.
+    bytes authenticatorData;
+    // The WebAuthn client data JSON.
+    string clientDataJSON;
+    // Start index of "challenge":"..." in `clientDataJSON`.
+    uint256 challengeIndex;
+    // Start index of "type":"..." in `clientDataJSON`.
+    uint256 typeIndex;
+    // Whether to check that the "User Verified" flag in `authenticatorData` is set.
+    bool requireUserVerification;
+}
+
 using WebAuthn for WebAuthnAuth global;
+using WebAuthn for WebAuthnMetadata global;
 
 import {Base64} from "../Base64.sol";
 import {P256} from "../P256.sol";
@@ -161,6 +176,31 @@ library WebAuthn {
         }
         // `P256.verifySignature` returns false if `s > N/2` due to the malleability check.
         return result && P256.verifySignature(messageHash, auth.r, auth.s, x, y);
+    }
+
+    /// @dev Alternative syntax for verification (Ithaca style).
+    function verify(
+        bytes memory challenge,
+        WebAuthnMetadata memory metadata,
+        bytes32 r,
+        bytes32 s,
+        bytes32 x,
+        bytes32 y
+    ) internal view returns (bool) {
+        return verify(
+            challenge,
+            metadata.requireUserVerification,
+            WebAuthnAuth(
+                metadata.authenticatorData,
+                metadata.clientDataJSON,
+                metadata.challengeIndex,
+                metadata.typeIndex,
+                r,
+                s
+            ),
+            x,
+            y
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
