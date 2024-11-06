@@ -51,27 +51,6 @@ contract WebAuthnTest is P256VerifierEtcher {
         assertTrue(WebAuthn.verify(t.challenge, false, auth, t.x, t.y));
     }
 
-    function testSafariAltSyntax() public {
-        _etchRIPPrecompile(true);
-        _etchVerifier(true);
-        _TestTemps memory t = _testTemps();
-        WebAuthn.WebAuthnMetadata memory metadata;
-        metadata.authenticatorData =
-            hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000101";
-        metadata.clientDataJSON = string(
-            abi.encodePacked(
-                '{"type":"webauthn.get","challenge":"',
-                Base64.encode(t.challenge, true, true),
-                '","origin":"http://localhost:3005"}'
-            )
-        );
-        metadata.challengeIndex = 23;
-        metadata.typeIndex = 1;
-        bytes32 r = 0x60946081650523acad13c8eff94996a409b1ed60e923c90f9e366aad619adffa;
-        bytes32 s = 0x3216a237b73765d01b839e0832d73474bc7e63f4c86ef05fbbbfbeb34b35602b;
-        assertTrue(WebAuthn.verify(t.challenge, metadata, r, s, t.x, t.y));
-    }
-
     function testChrome() public {
         _etchRIPPrecompile(true);
         _etchVerifier(true);
@@ -91,27 +70,6 @@ contract WebAuthnTest is P256VerifierEtcher {
         auth.r = 0x41c01ca5ecdfeb23ef70d6cc216fd491ac3aa3d40c480751f3618a3a9ef67b41;
         auth.s = 0x6595569abf76c2777e832a9252bae14efdb77febd0fa3b919aa16f6208469e86;
         assertTrue(WebAuthn.verify(t.challenge, false, auth, t.x, t.y));
-    }
-
-    function testChromeAltSyntax() public {
-        _etchRIPPrecompile(true);
-        _etchVerifier(true);
-        _TestTemps memory t = _testTemps();
-        WebAuthn.WebAuthnMetadata memory metadata;
-        metadata.authenticatorData =
-            hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763050000010a";
-        metadata.clientDataJSON = string(
-            abi.encodePacked(
-                '{"type":"webauthn.get","challenge":"',
-                Base64.encode(t.challenge, true, true),
-                '","origin":"http://localhost:3005","crossOrigin":false}'
-            )
-        );
-        metadata.challengeIndex = 23;
-        metadata.typeIndex = 1;
-        bytes32 r = 0x41c01ca5ecdfeb23ef70d6cc216fd491ac3aa3d40c480751f3618a3a9ef67b41;
-        bytes32 s = 0x6595569abf76c2777e832a9252bae14efdb77febd0fa3b919aa16f6208469e86;
-        assertTrue(WebAuthn.verify(t.challenge, metadata, r, s, t.x, t.y));
     }
 
     function testPassthroughDifferential(bytes32) public {
