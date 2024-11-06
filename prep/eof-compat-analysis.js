@@ -17,23 +17,20 @@ async function main() {
       const output = execSync(`git log -1 --format=%ct -- ${filePath}`, { encoding: 'utf-8' });
       return ~~output.trim();
     } catch (error) {
-      console.error(`Error retrieving last modified time for ${filePath}:`, error);
       return null;
     }
   };
 
   let eofBannedOpcodes = [
-    'extcodesize',
-    'extcodecopy',
-    'codesize',
-    'codecopy',
-    'staticcall',
-    'delegatecall',
-    'call',
-    'create',
-    'create2',
-    'gas'
+    'codesize','codecopy',
+    'extcodesize','extcodecopy','extcodehash',
+    'jump','pc',
+    'gas','gaslimit','gasprice',
+    'create','create2',
+    'delegatecall','staticcall','call',
+    'selfdestruct','callcode'
   ];
+  eofBannedOpcodes.sort();
   let flattenedPathsAndScores = [];
 
   ['src'].forEach(dir => {
@@ -46,7 +43,7 @@ async function main() {
       eofBannedOpcodes.forEach(opcode => {
         const score = (src.match(new RegExp('[^a-zA-z]' + opcode + '\\(', "g")) || []).length;
         totalScore += score;
-        scores[opcode] = score;
+        if (score > 0) scores[opcode] = score;
       });
       const lastModifiedGitTimestamp = getLastModifiedGitTimestamp(srcPath);
       flattenedPathsAndScores.push({srcPath, scores, totalScore, lastModifiedGitTimestamp});
