@@ -597,7 +597,7 @@ library LibBytes {
     }
 
     /// @dev Returns the word at `offset`, without any bounds checks.
-    /// To load an address, you can use `address(bytes20(load(a, offset)))`.
+    /// To load an address, you can use `address(bytes20(loadCalldata(a, offset)))`.
     function loadCalldata(bytes calldata a, uint256 offset)
         internal
         pure
