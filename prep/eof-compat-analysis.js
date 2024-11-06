@@ -27,10 +27,10 @@ async function main() {
     'jump','pc',
     'gas','gaslimit','gasprice',
     'create','create2',
-    'delegatecall','staticcall','call',
+    'call','staticcall','delegatecall',
     'selfdestruct','callcode'
   ];
-  eofBannedOpcodes.sort();
+
   let flattenedPathsAndScores = [];
 
   ['src'].forEach(dir => {
