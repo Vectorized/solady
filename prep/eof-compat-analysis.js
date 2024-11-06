@@ -22,13 +22,13 @@ async function main() {
   };
 
   let eofBannedOpcodes = [
-    'codesize','codecopy',
-    'extcodesize','extcodecopy','extcodehash',
-    'jump','pc',
-    'gas','gaslimit','gasprice',
-    'create','create2',
-    'call','staticcall','delegatecall',
-    'selfdestruct','callcode'
+    'codesize', 'codecopy',
+    'extcodesize', 'extcodecopy', 'extcodehash',
+    'jump', 'pc',
+    'gas', 'gaslimit', 'gasprice',
+    'create', 'create2',
+    'call', 'staticcall', 'delegatecall',
+    'selfdestruct', 'callcode'
   ];
 
   let flattenedPathsAndScores = [];
@@ -38,13 +38,20 @@ async function main() {
       if (!srcPath.match(/\.sol$/i) || srcPath.match(/\/(g|legacy)\//)) return;
 
       const src = fs.readFileSync(srcPath, { encoding: 'utf8', flag: 'r' });
+      const numMatches = reStr => (src.match(new RegExp(reStr, 'g')) || []).length;
       let totalScore = 0;
       let scores = {};
+      let redundantGasCount = 0;
       eofBannedOpcodes.forEach(opcode => {
-        const score = (src.match(new RegExp('[^a-zA-z]' + opcode + '\\(', "g")) || []).length;
+        const score = numMatches('[^a-zA-z]' + opcode + '\\(');
+        if (opcode.match(/call$/)) {
+          redundantGasCount += numMatches('[^a-zA-z]' + opcode + '\\([\\S\\s]*?gas\\s*?\\(');
+        }
         totalScore += score;
-        if (score > 0) scores[opcode] = score;
+        scores[opcode] = score;
       });
+      if (redundantGasCount) scores['gas'] -= redundantGasCount;
+      for (const key in scores) if (scores[key] === 0) delete scores[key];
       const lastModifiedGitTimestamp = getLastModifiedGitTimestamp(srcPath);
       flattenedPathsAndScores.push({srcPath, scores, totalScore, lastModifiedGitTimestamp});
     });
