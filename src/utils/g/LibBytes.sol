@@ -248,12 +248,8 @@ library LibBytes {
     /// @dev Returns the byte index of the first location of `needle` in `subject`,
     /// needleing from left to right.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
-    function indexOf(bytes memory subject, bytes memory needle)
-        internal
-        pure
-        returns (uint256 result)
-    {
-        result = indexOf(subject, needle, 0);
+    function indexOf(bytes memory subject, bytes memory needle) internal pure returns (uint256) {
+        return indexOf(subject, needle, 0);
     }
 
     /// @dev Returns the byte index of the first location of `needle` in `subject`,
@@ -299,9 +295,9 @@ library LibBytes {
     function lastIndexOf(bytes memory subject, bytes memory needle)
         internal
         pure
-        returns (uint256 result)
+        returns (uint256)
     {
-        result = lastIndexOf(subject, needle, type(uint256).max);
+        return lastIndexOf(subject, needle, type(uint256).max);
     }
 
     /// @dev Returns true if `needle` is found in `subject`, false otherwise.
@@ -319,14 +315,8 @@ library LibBytes {
         assembly {
             let n := mload(needle)
             // Just using keccak256 directly is actually cheaper.
-            // forgefmt: disable-next-item
-            result := and(
-                iszero(gt(n, mload(subject))),
-                eq(
-                    keccak256(add(subject, 0x20), n),
-                    keccak256(add(needle, 0x20), n)
-                )
-            )
+            let t := eq(keccak256(add(subject, 0x20), n), keccak256(add(needle, 0x20), n))
+            result := lt(gt(n, mload(subject)), t)
         }
     }
 
@@ -339,21 +329,11 @@ library LibBytes {
         /// @solidity memory-safe-assembly
         assembly {
             let n := mload(needle)
-            // Whether `needle` is not longer than `subject`.
-            let inRange := iszero(gt(n, mload(subject)))
+            let notInRange := gt(n, mload(subject))
+            // `subject + 0x20 + max(subject.length - needle.length, 0)`.
+            let t := add(add(subject, 0x20), mul(iszero(notInRange), sub(mload(subject), n)))
             // Just using keccak256 directly is actually cheaper.
-            result :=
-                and(
-                    eq(
-                        keccak256(
-                            // `subject + 0x20 + max(subject.length - needle.length, 0)`.
-                            add(add(subject, 0x20), mul(inRange, sub(mload(subject), n))),
-                            n
-                        ),
-                        keccak256(add(needle, 0x20), n)
-                    ),
-                    inRange
-                )
+            result := gt(eq(keccak256(t, n), keccak256(add(needle, 0x20), n)), notInRange)
         }
     }
 
