@@ -228,7 +228,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         assembly {
             result := mload(0x40)
             calldatacopy(result, data.offset, data.length)
-            if iszero(call(gas(), target, value, result, data.length, codesize(), 0x00)) {
+            if iszero(call(gas(), target, value, result, data.length, calldatasize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
@@ -267,7 +267,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
                 calldatacopy(m, add(o, 0x20), calldataload(o))
                 // forgefmt: disable-next-item
                 if iszero(call(gas(), calldataload(e), calldataload(add(e, 0x20)),
-                    m, calldataload(o), codesize(), 0x00)) {
+                    m, calldataload(o), calldatasize(), 0x00)) {
                     // Bubble up the revert if the call reverts.
                     returndatacopy(m, 0x00, returndatasize())
                     revert(m, returndatasize())

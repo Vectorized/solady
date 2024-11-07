@@ -44,7 +44,7 @@ contract WETH is ERC20 {
         /// @solidity memory-safe-assembly
         assembly {
             // Transfer the ETH and check if it succeeded or not.
-            if iszero(call(gas(), caller(), amount, codesize(), 0x00, codesize(), 0x00)) {
+            if iszero(call(gas(), caller(), amount, calldatasize(), 0x00, calldatasize(), 0x00)) {
                 mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }

@@ -134,7 +134,7 @@ contract Lifebuoy {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(call(gas(), to, amount, codesize(), 0x00, codesize(), 0x00)) {
+            if iszero(call(gas(), to, amount, calldatasize(), 0x00, calldatasize(), 0x00)) {
                 mstore(0x00, 0x7ec62e76) // `RescueTransferFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -184,9 +184,9 @@ contract Lifebuoy {
             mstore(0x00, 0x7ec62e7623b872dd)
             // Perform the transfer, reverting upon failure.
             // forgefmt: disable-next-item
-            if iszero(
-                mul(extcodesize(token), call(gas(), token, callvalue(), 0x1c, 0x64, codesize(), 0x00))
-            ) { revert(0x18, 0x04) }
+            if iszero(mul(extcodesize(token),
+                call(gas(), token, callvalue(), 0x1c, 0x64, calldatasize(), 0x00)
+            )) { revert(0x18, 0x04) }
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
         }
@@ -215,7 +215,7 @@ contract Lifebuoy {
             // Perform the transfer, reverting upon failure.
             // forgefmt: disable-next-item
             if iszero(mul(extcodesize(token),
-                call(gas(), token, callvalue(), add(m, 0x1c), add(0xc4, data.length), codesize(), 0x00)
+                call(gas(), token, callvalue(), add(m, 0x1c), add(0xc4, data.length), calldatasize(), 0x00)
             )) { revert(add(m, 0x18), 0x04) }
         }
     }

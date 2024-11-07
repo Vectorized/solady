@@ -169,7 +169,8 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         assembly {
             if missingAccountFunds {
                 // Ignore failure (it's EntryPoint's job to verify, not the account's).
-                pop(call(gas(), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))
+                // forgefmt: disable-next-item
+                pop(call(gas(), caller(), missingAccountFunds, calldatasize(), 0x00, calldatasize(), 0x00))
             }
         }
     }
@@ -196,7 +197,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         assembly {
             result := mload(0x40)
             calldatacopy(result, data.offset, data.length)
-            if iszero(call(gas(), target, value, result, data.length, codesize(), 0x00)) {
+            if iszero(call(gas(), target, value, result, data.length, calldatasize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
@@ -229,7 +230,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
                 calldatacopy(m, add(o, 0x20), calldataload(o))
                 // forgefmt: disable-next-item
                 if iszero(call(gas(), calldataload(e), calldataload(add(e, 0x20)),
-                    m, calldataload(o), codesize(), 0x00)) {
+                    m, calldataload(o), calldatasize(), 0x00)) {
                     // Bubble up the revert if the call reverts.
                     returndatacopy(m, 0x00, returndatasize())
                     revert(m, returndatasize())
@@ -258,7 +259,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
             result := mload(0x40)
             calldatacopy(result, data.offset, data.length)
             // Forwards the `data` to `delegate` via delegatecall.
-            if iszero(delegatecall(gas(), delegate, result, data.length, codesize(), 0x00)) {
+            if iszero(delegatecall(gas(), delegate, result, data.length, calldatasize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
@@ -288,7 +289,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
                     eq(implementationSlotValue, sload(_ERC1967_IMPLEMENTATION_SLOT)),
                     eq(ownerSlotValue, sload(_OWNER_SLOT))
                 )
-            ) { revert(codesize(), 0x00) }
+            ) { revert(calldatasize(), 0x00) }
         }
     }
 
@@ -330,7 +331,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         /// @solidity memory-safe-assembly
         assembly {
             if or(eq(storageSlot, _OWNER_SLOT), eq(storageSlot, _ERC1967_IMPLEMENTATION_SLOT)) {
-                revert(codesize(), 0x00)
+                revert(calldatasize(), 0x00)
             }
         }
         _;
@@ -365,8 +366,9 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         assembly {
             // The EntryPoint has balance accounting logic in the `receive()` function.
             // forgefmt: disable-next-item
-            if iszero(mul(extcodesize(ep), call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
-                revert(codesize(), 0x00) // For gas estimation.
+            if iszero(mul(extcodesize(ep),
+                call(gas(), ep, callvalue(), calldatasize(), 0x00, calldatasize(), 0x00))) {
+                revert(calldatasize(), 0x00) // For gas estimation.
             }
         }
     }
@@ -379,7 +381,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
             mstore(0x14, to) // Store the `to` argument.
             mstore(0x34, amount) // Store the `amount` argument.
             mstore(0x00, 0x205c2878000000000000000000000000) // `withdrawTo(address,uint256)`.
-            if iszero(mul(extcodesize(ep), call(gas(), ep, 0, 0x10, 0x44, codesize(), 0x00))) {
+            if iszero(mul(extcodesize(ep), call(gas(), ep, 0, 0x10, 0x44, calldatasize(), 0x00))) {
                 returndatacopy(mload(0x40), 0x00, returndatasize())
                 revert(mload(0x40), returndatasize())
             }

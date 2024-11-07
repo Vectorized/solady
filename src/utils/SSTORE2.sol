@@ -113,7 +113,7 @@ library SSTORE2 {
             if iszero(
                 mul( // The arguments of `mul` are evaluated last to first.
                     extcodesize(pointer),
-                    call(gas(), proxy, 0, add(data, 0x15), add(n, 0xb), codesize(), 0x00)
+                    call(gas(), proxy, 0, add(data, 0x15), add(n, 0xb), calldatasize(), 0x00)
                 )
             ) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.

@@ -71,7 +71,7 @@ library LibZip {
                 _ip := add(ip_, 1)
             }
             result := mload(0x40)
-            codecopy(result, codesize(), 0x8000) // Zeroize the hashmap.
+            calldatacopy(result, calldatasize(), 0x8000) // Zeroize the hashmap.
             let op := add(result, 0x8000)
             let a := add(data, 0x20)
             let ipStart := a
@@ -224,7 +224,7 @@ library LibZip {
                         let d := byte(31, mload(data))
                         // Fill with either 0xff or 0x00.
                         mstore(o, not(0))
-                        if iszero(gt(d, 0x7f)) { codecopy(o, codesize(), add(d, 1)) }
+                        if iszero(gt(d, 0x7f)) { calldatacopy(o, calldatasize(), add(d, 1)) }
                         o := add(o, add(and(d, 0x7f), 1))
                         continue
                     }
@@ -259,14 +259,14 @@ library LibZip {
                     i := add(i, 1)
                     // Fill with either 0xff or 0x00.
                     mstore(o, not(0))
-                    if iszero(gt(d, 0x7f)) { codecopy(o, codesize(), add(d, 1)) }
+                    if iszero(gt(d, 0x7f)) { calldatacopy(o, calldatasize(), add(d, 1)) }
                     o := add(o, add(and(d, 0x7f), 1))
                     continue
                 }
                 mstore8(o, c)
                 o := add(o, 1)
             }
-            let success := delegatecall(gas(), address(), 0x00, o, codesize(), 0x00)
+            let success := delegatecall(gas(), address(), 0x00, o, calldatasize(), 0x00)
             returndatacopy(0x00, 0x00, returndatasize())
             if iszero(success) { revert(0x00, returndatasize()) }
             return(0x00, returndatasize())
