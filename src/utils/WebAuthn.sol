@@ -124,9 +124,7 @@ library WebAuthn {
             // 17. Verify that the "User Verified" flag is set (bit 2), if required.
             // See: https://www.w3.org/TR/webauthn-2/#flags.
             let u := or(1, shl(2, iszero(iszero(requireUserVerification))))
-            // forgefmt: disable-next-item
-            result := and(and(result, gt(l, 0x20)),
-                eq(and(byte(0, mload(add(mload(auth), 0x40))), u), u))
+            result := and(and(result, gt(l, 0x20)), eq(and(mload(add(mload(auth), 0x21)), u), u))
             if result {
                 let p := add(mload(auth), 0x20) // Start of `authenticatorData`'s bytes.
                 let e := add(p, l) // Location of the word after `authenticatorData`.
@@ -135,10 +133,10 @@ library WebAuthn {
                 pop(staticcall(gas(), 2, o, n, e, 0x20))
                 // 20. Compute `sha256(authenticatorData ‖ sha256(clientDataJSON))`.
                 pop(staticcall(gas(), 2, p, add(l, 0x20), 0x00, returndatasize()))
-                // `returndatasize()` is `0x20` on `sha256` success, and `0x00` otherwise.
-                if iszero(returndatasize()) { invalid() }
                 mstore(e, w) // Restore the word after `authenticatorData`, in case of reuse.
                 messageHash := mload(0x00)
+                // `returndatasize()` is `0x20` on `sha256` success, and `0x00` otherwise.
+                if iszero(returndatasize()) { invalid() }
             }
         }
         // `P256.verifySignature` returns false if `s > N/2` due to the malleability check.
