@@ -56,7 +56,7 @@ abstract contract Multicallable {
                     let o := add(data.offset, mload(c))
                     calldatacopy(m, add(o, 0x20), calldataload(o))
                     // forgefmt: disable-next-item
-                    if iszero(delegatecall(gas(), address(), m, calldataload(o), codesize(), 0x00)) {
+                    if iszero(delegatecall(gas(), address(), m, calldataload(o), calldatasize(), 0x00)) {
                         // Bubble up the revert if the delegatecall reverts.
                         returndatacopy(results, 0x00, returndatasize())
                         revert(results, returndatasize())

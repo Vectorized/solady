@@ -64,7 +64,7 @@ contract ERC6551Proxy {
             calldatacopy(returndatasize(), returndatasize(), calldatasize())
             // forgefmt: disable-next-item
             if iszero(delegatecall(gas(), implementation,
-                returndatasize(), calldatasize(), codesize(), returndatasize())) {
+                returndatasize(), calldatasize(), calldatasize(), returndatasize())) {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }

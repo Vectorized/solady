@@ -650,7 +650,7 @@ library RedBlackTreeLib {
                 mstore(0x20, shl(128, sub(last_, 1)))
             }
 
-            mstore(0x00, codesize()) // Zeroize the first 0x10 bytes.
+            mstore(0x00, calldatasize()) // Zeroize the first 0x10 bytes.
             mstore(0x10, sload(nodes))
 
             for {} 1 {} {
