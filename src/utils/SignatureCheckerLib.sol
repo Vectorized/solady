@@ -346,7 +346,7 @@ library SignatureCheckerLib {
             }
             // `ecrecover` fallback.
             for {} iszero(isValid) {} {
-                if extcodesize(signer) { break } // Skip if `signer` is not a contract.
+                if extcodesize(signer) { break } // Skip if `signer` is a contract.
                 switch n
                 case 64 {
                     let vs := mload(add(signature, 0x40))
@@ -425,7 +425,7 @@ library SignatureCheckerLib {
             }
             // `ecrecover` fallback.
             for {} iszero(isValid) {} {
-                if extcodesize(signer) { break } // Skip if `signer` is not a contract.
+                if extcodesize(signer) { break } // Skip if `signer` is a contract.
                 switch n
                 case 64 {
                     let vs := mload(add(signature, 0x40))
