@@ -346,7 +346,7 @@ library SignatureCheckerLib {
                 }
                 break
             }
-            // `ecrecover` fallback.
+            // Do `ecrecover` fallback if `noCode && !isValid`.
             for {} gt(noCode, isValid) {} {
                 switch n
                 case 64 {
@@ -425,7 +425,7 @@ library SignatureCheckerLib {
                 isValid := gt(returndatasize(), willBeZeroIfRevertingVerifierExists)
                 break
             }
-            // `ecrecover` fallback.
+            // Do `ecrecover` fallback if `noCode && !isValid`.
             for {} gt(noCode, isValid) {} {
                 switch n
                 case 64 {
