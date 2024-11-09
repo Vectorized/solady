@@ -345,7 +345,7 @@ library SignatureCheckerLib {
                 break
             }
             // `ecrecover` fallback.
-            for { let m := mload(0x40) } iszero(isValid) {} {
+            for {} iszero(isValid) {} {
                 if extcodesize(signer) { break } // Skip if `signer` is not a contract.
                 switch n
                 case 64 {
@@ -358,6 +358,7 @@ library SignatureCheckerLib {
                     mstore(0x60, mload(add(signature, 0x40))) // `s`.
                 }
                 default { break }
+                let m := mload(0x40)
                 mstore(0x00, hash)
                 mstore(0x40, mload(add(signature, 0x20))) // `r`.
                 let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
@@ -423,7 +424,7 @@ library SignatureCheckerLib {
                 break
             }
             // `ecrecover` fallback.
-            for { let m := mload(0x40) } iszero(isValid) {} {
+            for {} iszero(isValid) {} {
                 if extcodesize(signer) { break } // Skip if `signer` is not a contract.
                 switch n
                 case 64 {
@@ -436,6 +437,7 @@ library SignatureCheckerLib {
                     mstore(0x60, mload(add(signature, 0x40))) // `s`.
                 }
                 default { break }
+                let m := mload(0x40)
                 mstore(0x00, hash)
                 mstore(0x40, mload(add(signature, 0x20))) // `r`.
                 let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
