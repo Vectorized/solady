@@ -453,6 +453,9 @@ contract SignatureCheckerLibTest is SoladyTest {
             t.eoa, t.digest, abi.encodePacked(t.signature, " ")
         );
         assertFalse(result);
+        vm.etch(t.eoa, hex"00");
+        result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.signature);
+        assertFalse(result);
     }
 
     function testERC6492AllowSideEffectsOnEOA(bytes32) public {
@@ -473,6 +476,9 @@ contract SignatureCheckerLibTest is SoladyTest {
         result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
             t.eoa, t.digest, abi.encodePacked(t.signature, " ")
         );
+        assertFalse(result);
+        vm.etch(t.eoa, hex"00");
+        result = SignatureCheckerLib.isValidERC6492SignatureNow(t.eoa, t.digest, t.signature);
         assertFalse(result);
     }
 
