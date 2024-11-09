@@ -140,4 +140,17 @@ contract EfficientHashLibTest is SoladyTest {
     function testEfficientHashBytesSlice() public {
         this.testEfficientHashBytesSlice(bytes32(0), "0123456789");
     }
+
+    function testEfficientHashEq(bytes32 a, uint256 n) public {
+        bytes memory encoded = abi.encode(a);
+        bytes memory sliced = abi.encode(a);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(sliced, mod(n, 0x20))
+        }
+        assertTrue(EfficientHashLib.eq(a, encoded));
+        assertTrue(EfficientHashLib.eq(encoded, a));
+        assertFalse(EfficientHashLib.eq(a, sliced));
+        assertFalse(EfficientHashLib.eq(sliced, a));
+    }
 }

@@ -361,6 +361,26 @@ library EfficientHashLib {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      EQUALITY CHECKS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns `a == abi.decode(b, (bytes32))`.
+    function eq(bytes32 a, bytes memory b) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(eq(0x20, mload(b)), eq(a, mload(add(b, 0x20))))
+        }
+    }
+
+    /// @dev Returns `abi.decode(a, (bytes32)) == a`.
+    function eq(bytes memory a, bytes32 b) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(eq(0x20, mload(a)), eq(b, mload(add(a, 0x20))))
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               BYTE SLICE HASHING OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
