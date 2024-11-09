@@ -1586,6 +1586,7 @@ contract LibStringTest is SoladyTest {
     }
 
     function testSetAndGetStringStorage(bytes32) public {
+        vm.pauseGasMetering();
         if (_randomChance(32)) {
             assertTrue(LibString.isEmpty(_getStringStorage()));
             assertEq(LibString.length(_getStringStorage()), 0);
@@ -1596,6 +1597,7 @@ contract LibStringTest is SoladyTest {
         if (_randomChance(32)) {
             _testSetAndGetStringStorage(_randomUniformString(_randomUniform() & 0xfff));
         }
+        vm.resumeGasMetering();
     }
 
     function testSetAndGetStringStorage2(string memory s) public {
