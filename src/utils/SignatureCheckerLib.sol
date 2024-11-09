@@ -322,15 +322,16 @@ library SignatureCheckerLib {
                 _isValid := staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
                 _isValid := and(eq(mload(d_), f_), _isValid)
             }
+            let noCode := iszero(extcodesize(signer))
             let n := mload(signature)
             for {} 1 {} {
                 if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
-                    isValid := callIsValidSignature(signer, hash, signature)
+                    if iszero(noCode) { isValid := callIsValidSignature(signer, hash, signature) }
                     break
                 }
                 let o := add(signature, 0x20) // Signature bytes.
                 let d := add(o, mload(add(o, 0x20))) // Factory calldata.
-                if iszero(extcodesize(signer)) {
+                if noCode {
                     if iszero(call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00)) {
                         break
                     }
@@ -339,14 +340,14 @@ library SignatureCheckerLib {
                 isValid := callIsValidSignature(signer, hash, s)
                 if iszero(isValid) {
                     if call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00) {
-                        isValid := callIsValidSignature(signer, hash, s)
+                        noCode := iszero(extcodesize(signer))
+                        if iszero(noCode) { isValid := callIsValidSignature(signer, hash, s) }
                     }
                 }
                 break
             }
-            // `ecrecover` fallback.
-            for {} iszero(isValid) {} {
-                if extcodesize(signer) { break } // Skip if `signer` is a contract.
+            // Do `ecrecover` fallback if `noCode && !isValid`.
+            for {} gt(noCode, isValid) {} {
                 switch n
                 case 64 {
                     let vs := mload(add(signature, 0x40))
@@ -396,13 +397,14 @@ library SignatureCheckerLib {
                 _isValid := staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
                 _isValid := and(eq(mload(d_), f_), _isValid)
             }
+            let noCode := iszero(extcodesize(signer))
             let n := mload(signature)
             for {} 1 {} {
                 if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
-                    isValid := callIsValidSignature(signer, hash, signature)
+                    if iszero(noCode) { isValid := callIsValidSignature(signer, hash, signature) }
                     break
                 }
-                if extcodesize(signer) {
+                if iszero(noCode) {
                     let o := add(signature, 0x20) // Signature bytes.
                     isValid := callIsValidSignature(signer, hash, add(o, mload(add(o, 0x40))))
                     if isValid { break }
@@ -423,9 +425,8 @@ library SignatureCheckerLib {
                 isValid := gt(returndatasize(), willBeZeroIfRevertingVerifierExists)
                 break
             }
-            // `ecrecover` fallback.
-            for {} iszero(isValid) {} {
-                if extcodesize(signer) { break } // Skip if `signer` is a contract.
+            // Do `ecrecover` fallback if `noCode && !isValid`.
+            for {} gt(noCode, isValid) {} {
                 switch n
                 case 64 {
                     let vs := mload(add(signature, 0x40))
