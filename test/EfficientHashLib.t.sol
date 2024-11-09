@@ -142,15 +142,23 @@ contract EfficientHashLibTest is SoladyTest {
     }
 
     function testEfficientHashEq(bytes32 a, uint256 n) public {
-        bytes memory encoded = abi.encode(a);
-        bytes memory sliced = abi.encode(a);
+        bytes memory b = abi.encode(a);
+        bytes memory s = abi.encode(a);
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(sliced, mod(n, 0x20))
+            mstore(s, mod(n, 0x20))
         }
-        assertTrue(EfficientHashLib.eq(a, encoded));
-        assertTrue(EfficientHashLib.eq(encoded, a));
-        assertFalse(EfficientHashLib.eq(a, sliced));
-        assertFalse(EfficientHashLib.eq(sliced, a));
+        assertTrue(EfficientHashLib.eq(a, b));
+        assertTrue(EfficientHashLib.eq(b, a));
+        assertFalse(EfficientHashLib.eq(a, s));
+        assertFalse(EfficientHashLib.eq(s, a));
+    }
+
+    function testEfficientHashEq() public {
+        bytes32 a = 0x123456789a123456789a123456789a123456789a123456789a123456789a1234;
+        bytes memory b = hex"123456789a123456789a123456789a123456789a123456789a123456789a1234";
+        assertTrue(EfficientHashLib.eq(a, b));
+        // The following costs approximately 90 more gas:
+        // `assertTrue(a == abi.decode(b, (bytes32)))`;
     }
 }
