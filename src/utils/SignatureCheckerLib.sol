@@ -341,7 +341,7 @@ library SignatureCheckerLib {
                 if iszero(isValid) {
                     if call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00) {
                         noCode := iszero(extcodesize(signer))
-                        isValid := callIsValidSignature(signer, hash, s)
+                        if iszero(noCode) { isValid := callIsValidSignature(signer, hash, s) }
                     }
                 }
                 break
