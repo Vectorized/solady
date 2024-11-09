@@ -344,8 +344,9 @@ library SignatureCheckerLib {
                 }
                 break
             }
-            // `ecrecover` fallback. Since it only works on EOAs, we can skip the `extcodesize` check.
+            // `ecrecover` fallback.
             for { let m := mload(0x40) } iszero(isValid) {} {
+                if extcodesize(signer) { break } // Skip if `signer` is not a contract.
                 switch n
                 case 64 {
                     let vs := mload(add(signature, 0x40))
@@ -421,8 +422,9 @@ library SignatureCheckerLib {
                 isValid := gt(returndatasize(), willBeZeroIfRevertingVerifierExists)
                 break
             }
-            // `ecrecover` fallback. Since it only works on EOAs, we can skip the `extcodesize` check.
+            // `ecrecover` fallback.
             for { let m := mload(0x40) } iszero(isValid) {} {
+                if extcodesize(signer) { break } // Skip if `signer` is not a contract.
                 switch n
                 case 64 {
                     let vs := mload(add(signature, 0x40))
