@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {LibCall} from "../src/utils/LibCall.sol";
+import {LibBytes} from "../src/utils/LibBytes.sol";
 
 contract HashSetter {
     mapping(uint256 => bytes32) public hashes;
@@ -41,9 +42,18 @@ contract LibCallTest is SoladyTest {
 
     function testSetSelector(bytes memory dataWithoutSelector) public {
         bytes4 sel = bytes4(bytes32(_random()));
-        bytes memory data = abi.encodePacked(sel, dataWithoutSelector);
-        bytes memory dataPre = abi.encodePacked(bytes4(bytes32(_random())), dataWithoutSelector);
-        LibCall.setSelector(sel, dataPre);
-        assertEq(dataPre, data);
+        bytes memory data = abi.encodePacked(bytes4(bytes32(_random())), dataWithoutSelector);
+        data = this.copyAndSetSelector(sel, data);
+        assertEq(data, abi.encodePacked(sel, dataWithoutSelector));
+        if (_randomChance(2)) {
+            uint256 n = _random() % 4;
+            vm.expectRevert(LibCall.DataTooShort.selector);
+            this.copyAndSetSelector(sel, LibBytes.slice(data, 0, n));
+        }
+    }
+
+    function copyAndSetSelector(bytes4 sel, bytes memory data) public pure returns (bytes memory) {
+        LibCall.setSelector(sel, data);
+        return data;
     }
 }
