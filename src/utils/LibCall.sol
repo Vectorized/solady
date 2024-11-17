@@ -204,7 +204,7 @@ library LibCall {
     }
 
     /// @dev In-place replaces the function selector of encoded contract call data.
-    function setSelector(bytes memory data, bytes4 newSelector) internal pure {
+    function setSelector(bytes4 newSelector, bytes memory data) internal pure {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(gt(mload(data), 0x03)) {

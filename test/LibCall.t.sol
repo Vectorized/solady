@@ -38,4 +38,12 @@ contract LibCallTest is SoladyTest {
             keccak256(data)
         );
     }
+
+    function testSetSelector(bytes memory dataWithoutSelector) public {
+        bytes4 sel = bytes4(bytes32(_random()));
+        bytes memory data = abi.encodePacked(sel, dataWithoutSelector);
+        bytes memory dataPre = abi.encodePacked(bytes4(bytes32(_random())), dataWithoutSelector);
+        LibCall.setSelector(sel, dataPre);
+        assertEq(dataPre, data);
+    }
 }
