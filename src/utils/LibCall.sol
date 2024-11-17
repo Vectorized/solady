@@ -28,7 +28,7 @@ library LibCall {
     // They will bubble up the revert if the call fails.
 
     /// @dev Makes a call to `target`, with `data` and `value`.
-    function contractCall(address target, uint256 value, bytes memory data)
+    function callContract(address target, uint256 value, bytes memory data)
         internal
         returns (bytes memory result)
     {
@@ -54,7 +54,7 @@ library LibCall {
     }
 
     /// @dev Makes a call to `target`, with `data`.
-    function contractCall(address target, bytes memory data)
+    function callContract(address target, bytes memory data)
         internal
         returns (bytes memory result)
     {
@@ -80,7 +80,7 @@ library LibCall {
     }
 
     /// @dev Makes a static call to `target`, with `data`.
-    function contractStaticCall(address target, bytes memory data)
+    function staticCallContract(address target, bytes memory data)
         internal
         view
         returns (bytes memory result)
@@ -107,7 +107,7 @@ library LibCall {
     }
 
     /// @dev Makes a delegate call to `target`, with `data`.
-    function contractDelegateCall(address target, bytes memory data)
+    function delegateCallContract(address target, bytes memory data)
         internal
         returns (bytes memory result)
     {
