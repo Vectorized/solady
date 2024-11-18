@@ -35,7 +35,7 @@ library LibCall {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            if iszero(call(gas(), target, value, add(data, 0x20), mload(data), 0x00, 0x00)) {
+            if iszero(call(gas(), target, value, add(data, 0x20), mload(data), codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
@@ -61,7 +61,7 @@ library LibCall {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            if iszero(call(gas(), target, 0, add(data, 0x20), mload(data), 0x00, 0x00)) {
+            if iszero(call(gas(), target, 0, add(data, 0x20), mload(data), codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
@@ -88,7 +88,7 @@ library LibCall {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            if iszero(staticcall(gas(), target, add(data, 0x20), mload(data), 0x00, 0x00)) {
+            if iszero(staticcall(gas(), target, add(data, 0x20), mload(data), codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
@@ -114,7 +114,7 @@ library LibCall {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            if iszero(delegatecall(gas(), target, add(data, 0x20), mload(data), 0x00, 0x00)) {
+            if iszero(delegatecall(gas(), target, add(data, 0x20), mload(data), codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
@@ -154,7 +154,8 @@ library LibCall {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            success := call(gasStipend, target, value, add(data, 0x20), mload(data), 0x00, 0x00)
+            success :=
+                call(gasStipend, target, value, add(data, 0x20), mload(data), codesize(), 0x00)
             let n := returndatasize()
             if gt(returndatasize(), and(0xffff, maxCopy)) {
                 n := and(0xffff, maxCopy)
@@ -178,7 +179,8 @@ library LibCall {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            success := staticcall(gasStipend, target, add(data, 0x20), mload(data), 0x00, 0x00)
+            success :=
+                staticcall(gasStipend, target, add(data, 0x20), mload(data), codesize(), 0x00)
             let n := returndatasize()
             if gt(returndatasize(), and(0xffff, maxCopy)) {
                 n := and(0xffff, maxCopy)
@@ -211,8 +213,8 @@ library LibCall {
                 mstore(0x00, 0x0acec8bd) // `DataTooShort()`.
                 revert(0x1c, 0x04)
             }
-            let o := add(data, 0x04)
-            mstore(o, or(shl(32, shr(32, mload(o))), shr(224, newSelector)))
+            let o := add(data, 0x20)
+            mstore(o, or(shr(32, shl(32, mload(o))), newSelector))
         }
     }
 }
