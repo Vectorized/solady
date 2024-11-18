@@ -154,7 +154,8 @@ library LibCall {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            success := call(gasStipend, target, value, add(data, 0x20), mload(data), codesize(), 0x00)
+            success :=
+                call(gasStipend, target, value, add(data, 0x20), mload(data), codesize(), 0x00)
             let n := returndatasize()
             if gt(returndatasize(), and(0xffff, maxCopy)) {
                 n := and(0xffff, maxCopy)
@@ -178,7 +179,8 @@ library LibCall {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            success := staticcall(gasStipend, target, add(data, 0x20), mload(data), codesize(), 0x00)
+            success :=
+                staticcall(gasStipend, target, add(data, 0x20), mload(data), codesize(), 0x00)
             let n := returndatasize()
             if gt(returndatasize(), and(0xffff, maxCopy)) {
                 n := and(0xffff, maxCopy)
