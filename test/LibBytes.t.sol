@@ -18,4 +18,11 @@ contract LibBytesTest is SoladyTest {
         bytes memory expected = LibBytes.slice(a, o, o + 32);
         assertEq(abi.encode(LibBytes.loadCalldata(a, o)), expected);
     }
+
+    function testTruncate(bytes memory a, uint256 n) public {
+        bytes memory sliced = LibBytes.slice(a, 0, n);
+        bytes memory truncated = LibBytes.truncate(a, n);
+        assertEq(truncated, sliced);
+        assertEq(a, sliced);
+    }
 }
