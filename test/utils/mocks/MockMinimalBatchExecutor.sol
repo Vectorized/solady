@@ -12,4 +12,16 @@ contract MockMinimalBatchExecutor is MinimalBatchExecutor, Brutalizer {
         virtual
         override
     {}
+
+    function executeDirect(Call[] calldata calls)
+        public
+        payable
+        virtual
+        returns (bytes[] memory results)
+    {
+        _misalignFreeMemoryPointer();
+        _brutalizeMemory();
+        results = _execute(calls);
+        _checkMemory();
+    }
 }

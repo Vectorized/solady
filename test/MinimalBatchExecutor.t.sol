@@ -20,7 +20,7 @@ contract MinimalBatchExecutorTest is SoladyTest {
         target = LibClone.clone(address(this));
     }
 
-    function revertsWithCustomError() external pure {
+    function revertsWithCustomError() external payable {
         revert CustomError();
     }
 
@@ -62,13 +62,58 @@ contract MinimalBatchExecutorTest is SoladyTest {
         mbe.execute{value: _totalValue(calls)}(calls, "");
     }
 
+    struct Payload {
+        bytes data;
+        uint256 mode;
+    }
+
+    function testMinimalBatchExecutor(bytes32) public {
+        vm.deal(address(this), 1 ether);
+
+        MinimalBatchExecutor.Call[] memory calls =
+            new MinimalBatchExecutor.Call[](_randomUniform() & 3);
+        Payload[] memory payloads = new Payload[](calls.length);
+
+        for (uint256 i; i < calls.length; ++i) {
+            calls[i].target = target;
+            calls[i].value = _randomUniform() & 0xff;
+            bytes memory data = _truncateBytes(_randomBytes(), 0x1ff);
+            payloads[i].data = data;
+            if (_randomChance(2)) {
+                payloads[i].mode = 0;
+                calls[i].data = abi.encodeWithSignature("returnsBytes(bytes)", data);
+            } else {
+                payloads[i].mode = 1;
+                calls[i].data = abi.encodeWithSignature("returnsHash(bytes)", data);
+            }
+        }
+
+        bytes[] memory results = mbe.executeDirect{value: _totalValue(calls)}(calls);
+        for (uint256 i; i < calls.length; ++i) {
+            if (payloads[i].mode == 0) {
+                assertEq(abi.decode(results[i], (bytes)), payloads[i].data);
+            } else {
+                assertEq(abi.decode(results[i], (bytes32)), keccak256(payloads[i].data));
+            }
+        }
+
+        if (calls.length != 0 && _randomChance(32)) {
+            calls[_randomUniform() % calls.length].data =
+                abi.encodeWithSignature("revertsWithCustomError()");
+            vm.expectRevert(CustomError.selector);
+            mbe.executeDirect{value: _totalValue(calls)}(calls);
+        }
+    }
+
     function _totalValue(MinimalBatchExecutor.Call[] memory calls)
         internal
         pure
         returns (uint256 result)
     {
-        for (uint256 i; i < calls.length; ++i) {
-            result += calls[i].value;
+        unchecked {
+            for (uint256 i; i < calls.length; ++i) {
+                result += calls[i].value;
+            }
         }
     }
 }
