@@ -27,6 +27,7 @@ abstract contract MinimalBatchExecutor {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Only supports atomic batched executions.
+    /// For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
     bytes32 internal constant _SUPPORTED_ENCODED_MODE =
         0x0100000000009999000100000000000000000000000000000000000000000000;
 
