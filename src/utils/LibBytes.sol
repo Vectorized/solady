@@ -419,6 +419,20 @@ library LibBytes {
         }
     }
 
+    /// @dev Returns a copy of `subject`, with the length reduced to `n`.
+    /// If `n` is greater than the size of `subject`, this will be a no-op.
+    function truncatedCalldata(bytes calldata subject, uint256 n)
+        internal
+        pure
+        returns (bytes calldata result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result.offset := subject.offset
+            result.length := xor(n, mul(xor(n, subject.length), lt(subject.length, n)))
+        }
+    }
+
     /// @dev Returns all the indices of `needle` in `subject`.
     /// The indices are byte offsets.
     function indicesOf(bytes memory subject, bytes memory needle)
