@@ -114,7 +114,7 @@ abstract contract MinimalBatchExecutor {
             bytes calldata data;
             /// @solidity memory-safe-assembly
             assembly {
-                // Direct extract `calls[i]` without bounds checks.
+                // Directly extract `calls[i]` without bounds checks.
                 let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
                 target := calldataload(c)
                 value := calldataload(add(c, 0x20))
