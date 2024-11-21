@@ -2,23 +2,20 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {
-    MinimalBatchExecutor,
-    MockMinimalBatchExecutor
-} from "./utils/mocks/MockMinimalBatchExecutor.sol";
+import {ERC7821, MockERC7821} from "./utils/mocks/MockERC7821.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
-contract MinimalBatchExecutorTest is SoladyTest {
+contract ERC7821Test is SoladyTest {
     error CustomError();
 
-    MockMinimalBatchExecutor mbe;
+    MockERC7821 mbe;
 
     address target;
 
     bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000099990001);
 
     function setUp() public {
-        mbe = new MockMinimalBatchExecutor();
+        mbe = new MockERC7821();
         target = LibClone.clone(address(this));
     }
 
@@ -34,11 +31,11 @@ contract MinimalBatchExecutorTest is SoladyTest {
         return keccak256(b);
     }
 
-    function testMinimalBatchExecutorGas() public {
+    function testERC7821Gas() public {
         vm.pauseGasMetering();
         vm.deal(address(this), 1 ether);
 
-        MinimalBatchExecutor.Call[] memory calls = new MinimalBatchExecutor.Call[](2);
+        ERC7821.Call[] memory calls = new ERC7821.Call[](2);
 
         calls[0].target = target;
         calls[0].value = 123;
@@ -61,10 +58,10 @@ contract MinimalBatchExecutorTest is SoladyTest {
         vm.resumeGasMetering();
     }
 
-    function testMinimalBatchExecutor(bytes memory opData) public {
+    function testERC7821(bytes memory opData) public {
         vm.deal(address(this), 1 ether);
 
-        MinimalBatchExecutor.Call[] memory calls = new MinimalBatchExecutor.Call[](2);
+        ERC7821.Call[] memory calls = new ERC7821.Call[](2);
 
         calls[0].target = target;
         calls[0].value = 123;
@@ -84,8 +81,8 @@ contract MinimalBatchExecutorTest is SoladyTest {
         assertEq(abi.decode(results[1], (bytes32)), keccak256("lol"));
     }
 
-    function testMinimalBatchExecutorForRevert() public {
-        MinimalBatchExecutor.Call[] memory calls = new MinimalBatchExecutor.Call[](1);
+    function testERC7821ForRevert() public {
+        ERC7821.Call[] memory calls = new ERC7821.Call[](1);
         calls[0].target = target;
         calls[0].value = 0;
         calls[0].data = abi.encodeWithSignature("revertsWithCustomError()");
@@ -94,7 +91,7 @@ contract MinimalBatchExecutorTest is SoladyTest {
         mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, _encode(calls, ""));
     }
 
-    function _encode(MinimalBatchExecutor.Call[] memory calls, bytes memory opData)
+    function _encode(ERC7821.Call[] memory calls, bytes memory opData)
         internal
         returns (bytes memory)
     {
@@ -107,11 +104,10 @@ contract MinimalBatchExecutorTest is SoladyTest {
         uint256 mode;
     }
 
-    function testMinimalBatchExecutor(bytes32) public {
+    function testERC7821(bytes32) public {
         vm.deal(address(this), 1 ether);
 
-        MinimalBatchExecutor.Call[] memory calls =
-            new MinimalBatchExecutor.Call[](_randomUniform() & 3);
+        ERC7821.Call[] memory calls = new ERC7821.Call[](_randomUniform() & 3);
         Payload[] memory payloads = new Payload[](calls.length);
 
         for (uint256 i; i < calls.length; ++i) {
@@ -145,11 +141,7 @@ contract MinimalBatchExecutorTest is SoladyTest {
         }
     }
 
-    function _totalValue(MinimalBatchExecutor.Call[] memory calls)
-        internal
-        pure
-        returns (uint256 result)
-    {
+    function _totalValue(ERC7821.Call[] memory calls) internal pure returns (uint256 result) {
         unchecked {
             for (uint256 i; i < calls.length; ++i) {
                 result += calls[i].value;

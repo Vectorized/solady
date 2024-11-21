@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {MinimalBatchExecutor} from "../../../src/accounts/MinimalBatchExecutor.sol";
+import {ERC7821} from "../../../src/accounts/ERC7821.sol";
 import {Brutalizer} from "../Brutalizer.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockMinimalBatchExecutor is MinimalBatchExecutor, Brutalizer {
+contract MockERC7821 is ERC7821, Brutalizer {
     bytes public lastOpData;
 
     function _authorizeExecute(Call[] calldata, bytes calldata opData) internal virtual override {

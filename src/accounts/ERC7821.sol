@@ -2,8 +2,8 @@
 pragma solidity ^0.8.4;
 
 /// @notice Minimal batch executor mixin.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/MinimalBatchExecutor.sol)
-abstract contract MinimalBatchExecutor {
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC7821.sol)
+abstract contract ERC7821 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -89,10 +89,10 @@ abstract contract MinimalBatchExecutor {
         // - [0]      ( 1 byte )  `0x01` for batch call.
         // - [1]      ( 1 byte )  `0x00` for revert on any failure.
         // - [2..5]   ( 4 bytes)  Reserved by ERC7579 for future standardization.
-        // - [6..7]   ( 2 bytes)  `0x9999`.
+        // - [6..7]   ( 2 bytes)  `0x7821`.
         // - [8..9]   ( 2 bytes)  Version in hex format.
         // - [9..31]  (22 bytes)  Unused. Free for use.
-        return bytes10(mode) & 0xffff00000000ffffffff == 0x01000000000099990001;
+        return bytes10(mode) & 0xffff00000000ffffffff == 0x01000000000078210001;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
