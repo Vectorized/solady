@@ -33,9 +33,23 @@ abstract contract MinimalBatchExecutor {
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Executes the `calls` and returns the results.
+    /// @dev Executes the `calls` in `executionData` and returns the results.
+    /// The `results` are the returned data from each call.
     /// Reverts and bubbles up error if any call fails.
-    /// `executionData` is `abi.encodePacked(abi.encode(calls), opData)`.
+    ///
+    /// `executionData` encoding:
+    /// - If `opData` is empty, `executionData` is simply `abi.encode(calls)`.
+    /// - Else, `executionData` is `abi.encode(calls, opData)`.
+    ///   See: https://eips.ethereum.org/EIPS/eip-7579
+    ///
+    /// Authorization checks:
+    /// - If `opData` is empty, the implementation SHOULD require that
+    ///   `msg.sender == address(this)`.
+    /// - If `opData` is not empty, the implementation SHOULD use the signature
+    ///   encoded in `opData` to determine if the caller can perform the execution.
+    ///
+    /// `opData` may be used to store additional data for authentication,
+    /// paymaster data, gas limits, etc.
     function execute(bytes32 mode, bytes calldata executionData)
         public
         payable
@@ -67,7 +81,7 @@ abstract contract MinimalBatchExecutor {
         return _execute(calls);
     }
 
-    /// @dev This function is provided for frontends to detect support.
+    /// @dev Provided for execution mode support detection.
     function supportsExecutionMode(bytes32 mode) public pure virtual returns (bool result) {
         // Only supports atomic batched executions.
         // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
