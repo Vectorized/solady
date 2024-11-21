@@ -16,6 +16,21 @@ abstract contract MinimalBatchExecutor {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           ERRORS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The execution mode is not supported.
+    error UnsupportedExecutionMode();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Only supports atomic batched executions.
+    bytes32 internal constant _SUPPORTED_ENCODED_MODE =
+        0x0100000000009999000100000000000000000000000000000000000000000000;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   FUNCTIONS TO OVERRIDE                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -28,12 +43,24 @@ abstract contract MinimalBatchExecutor {
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
-    function execute(Call[] calldata calls, bytes calldata opData)
+    function execute(bytes32 encodedMode, bytes calldata executionData)
         public
         payable
         virtual
         returns (bytes[] memory results)
     {
+        if (!supportsExecutionMode(encodedMode)) revert UnsupportedExecutionMode();
+        Call[] calldata calls;
+        bytes calldata opData;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := add(executionData.offset, calldataload(executionData.offset))
+            calls.offset := add(o, 0x20)
+            calls.length := calldataload(o)
+            let e := add(executionData.offset, sub(executionData.length, 0x04))
+            opData.length := shr(224, calldataload(e))
+            opData.offset := sub(e, opData.length)
+        }
         _authorizeExecute(calls, opData);
         return _execute(calls);
     }
@@ -43,8 +70,8 @@ abstract contract MinimalBatchExecutor {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev This function is provided for frontends to detect support.
-    function minimalBatchExecutorVersion() public pure virtual returns (uint256) {
-        return 1; // This number may change.
+    function supportsExecutionMode(bytes32 encodedMode) public pure virtual returns (bool) {
+        return encodedMode == _SUPPORTED_ENCODED_MODE;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
