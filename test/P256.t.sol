@@ -234,6 +234,34 @@ contract P256Test is P256VerifierEtcher {
         assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, p, 1));
         assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, p - 1, 1));
     }
+
+    function testDecodePoint(bytes32 x, bytes32 y) public {
+        bytes memory encoded = abi.encodePacked(x, y);
+        (bytes32 xDecoded, bytes32 yDecoded) = P256.decodePoint(encoded);
+        assertEq(xDecoded, x);
+        assertEq(yDecoded, y);
+        this.decodePointCalldata(encoded, x, y);
+    }
+
+    function decodePointCalldata(bytes calldata encoded, bytes32 x, bytes32 y) public {
+        (bytes32 xDecoded, bytes32 yDecoded) = P256.decodePointCalldata(encoded);
+        assertEq(xDecoded, x);
+        assertEq(yDecoded, y);
+    }
+
+    function testDecodePoint(bytes memory encoded) public {
+        if (encoded.length < 64) {
+            vm.expectRevert(P256.PointDecodeFailed.selector);
+        }
+        P256.decodePoint(encoded);
+    }
+
+    function testDecodePointCalldata(bytes calldata encoded) public {
+        if (encoded.length < 64) {
+            vm.expectRevert(P256.PointDecodeFailed.selector);
+        }
+        P256.decodePointCalldata(encoded);
+    }
 }
 
 /// @dev Library to derive P256 public key from private key

@@ -14,6 +14,9 @@ library P256 {
     /// RIP-7212 P256 verifier precompile and missing Solidity P256 verifier.
     error P256VerificationFailed();
 
+    /// @dev The encoded point must be exactly 64 bytes in length.
+    error PointDecodeFailed();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -95,6 +98,40 @@ library P256 {
             }
             // Optimize for happy path. Users are unlikely to pass in malleable signatures.
             isValid := lt(gt(s, _HALF_N), and(eq(1, mload(0x00)), success))
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      OTHER OPERATIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Helper function for `abi.decode(encoded, (bytes32, bytes32))`.
+    function decodePoint(bytes memory encoded) internal pure returns (bytes32 x, bytes32 y) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(gt(mload(encoded), 0x3f)) {
+                mstore(0x00, 0x93e55926) // `PointDecodeFailed()`.
+                revert(0x1c, 0x04)
+            }
+            x := mload(add(encoded, 0x20))
+            y := mload(add(encoded, 0x40))
+        }
+    }
+
+    /// @dev Helper function for `abi.decode(encoded, (bytes32, bytes32))`.
+    function decodePointCalldata(bytes calldata encoded)
+        internal
+        pure
+        returns (bytes32 x, bytes32 y)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(gt(encoded.length, 0x3f)) {
+                mstore(0x00, 0x93e55926) // `PointDecodeFailed()`.
+                revert(0x1c, 0x04)
+            }
+            x := calldataload(encoded.offset)
+            y := calldataload(add(encoded.offset, 0x20))
         }
     }
 }
