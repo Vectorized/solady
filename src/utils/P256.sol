@@ -97,4 +97,34 @@ library P256 {
             isValid := lt(gt(s, _HALF_N), and(eq(1, mload(0x00)), success))
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      OTHER OPERATIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Helper function for `abi.decode(encoded, (bytes32, bytes32))`.
+    /// If `encoded.length < 64`, `(x, y)` will be `(0, 0)`, which is an invalid point.
+    function decodePoint(bytes memory encoded) internal pure returns (bytes32 x, bytes32 y) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let t := gt(mload(encoded), 0x3f)
+            x := mul(mload(add(encoded, 0x20)), t)
+            y := mul(mload(add(encoded, 0x40)), t)
+        }
+    }
+
+    /// @dev Helper function for `abi.decode(encoded, (bytes32, bytes32))`.
+    /// If `encoded.length < 64`, `(x, y)` will be `(0, 0)`, which is an invalid point.
+    function decodePointCalldata(bytes calldata encoded)
+        internal
+        pure
+        returns (bytes32 x, bytes32 y)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let t := gt(encoded.length, 0x3f)
+            x := mul(calldataload(encoded.offset), t)
+            y := mul(calldataload(add(encoded.offset, 0x20)), t)
+        }
+    }
 }
