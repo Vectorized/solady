@@ -30,19 +30,19 @@ abstract contract MinimalBatchExecutor {
     function _authorizeExecute(Call[] calldata calls, bytes calldata opData) internal virtual;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          EXECUTE                           */
+    /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
     /// `executionData` is `abi.encodePacked(abi.encode(calls), opData)`.
-    function execute(bytes32 encodedMode, bytes calldata executionData)
+    function execute(bytes32 mode, bytes calldata executionData)
         public
         payable
         virtual
         returns (bytes[] memory results)
     {
-        if (!supportsExecutionMode(encodedMode)) {
+        if (!supportsExecutionMode(mode)) {
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(0x00, 0x7f181275) // `UnsupportedExecutionMode()`.
@@ -53,36 +53,32 @@ abstract contract MinimalBatchExecutor {
         bytes calldata opData;
         /// @solidity memory-safe-assembly
         assembly {
+            opData.length := 0
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
             calls.length := calldataload(o)
-            opData.length := 0
             if iszero(lt(calldataload(executionData.offset), 0x40)) {
-                o := add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
-                opData.length := calldataload(o)
-                opData.offset := add(o, 0x20)
+                let p := add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
+                opData.length := calldataload(p)
+                opData.offset := add(p, 0x20)
             }
         }
         _authorizeExecute(calls, opData);
         return _execute(calls);
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         SIGNALING                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @dev This function is provided for frontends to detect support.
-    function supportsExecutionMode(bytes32 encodedMode) public pure virtual returns (bool result) {
+    function supportsExecutionMode(bytes32 mode) public pure virtual returns (bool result) {
         // Only supports atomic batched executions.
         // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
-        // Bits Layout:
-        // - [0]       (1 byte)   `0x01` for batch call.
-        // - [1]       (1 byte)   `0x00` for revert on any failure.
-        // - [2..5]    (4 bytes)  Reserved by ERC7579 for future standardization.
-        // - [6..7]    (2 bytes)  `0x9999`.
-        // - [8..9]    (2 bytes)  Version in hex format.
-        // - [9..31]   (22 bytes) Unused. Free for use.
-        return bytes10(encodedMode) & 0xffff00000000ffffffff == 0x01000000000099990001;
+        // Bytes Layout:
+        // - [0]      ( 1 byte )  `0x01` for batch call.
+        // - [1]      ( 1 byte )  `0x00` for revert on any failure.
+        // - [2..5]   ( 4 bytes)  Reserved by ERC7579 for future standardization.
+        // - [6..7]   ( 2 bytes)  `0x9999`.
+        // - [8..9]   ( 2 bytes)  Version in hex format.
+        // - [9..31]  (22 bytes)  Unused. Free for use.
+        return bytes10(mode) & 0xffff00000000ffffffff == 0x01000000000099990001;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -104,6 +100,7 @@ abstract contract MinimalBatchExecutor {
             bytes calldata data;
             /// @solidity memory-safe-assembly
             assembly {
+                // Direct extract `calls[i]` without bounds checks.
                 let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
                 target := calldataload(c)
                 value := calldataload(add(c, 0x20))
