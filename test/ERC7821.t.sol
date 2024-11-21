@@ -12,8 +12,6 @@ contract ERC7821Test is SoladyTest {
 
     address target;
 
-    bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000078210001);
-
     function setUp() public {
         mbe = new MockERC7821();
         target = LibClone.clone(address(this));
@@ -31,8 +29,7 @@ contract ERC7821Test is SoladyTest {
         return keccak256(b);
     }
 
-    function testERC7821Gas() public {
-        vm.pauseGasMetering();
+    function testERC7821() public {
         vm.deal(address(this), 1 ether);
 
         ERC7821.Call[] memory calls = new ERC7821.Call[](2);
@@ -45,36 +42,7 @@ contract ERC7821Test is SoladyTest {
         calls[1].value = 789;
         calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
-        bytes memory data = abi.encode(calls);
-        vm.resumeGasMetering();
-
-        bytes[] memory results = mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, data);
-
-        vm.pauseGasMetering();
-
-        assertEq(results.length, 2);
-        assertEq(abi.decode(results[0], (bytes)), "hehe");
-        assertEq(abi.decode(results[1], (bytes32)), keccak256("lol"));
-        vm.resumeGasMetering();
-    }
-
-    function testERC7821(bytes memory opData) public {
-        vm.deal(address(this), 1 ether);
-
-        ERC7821.Call[] memory calls = new ERC7821.Call[](2);
-
-        calls[0].target = target;
-        calls[0].value = 123;
-        calls[0].data = abi.encodeWithSignature("returnsBytes(bytes)", "hehe");
-
-        calls[1].target = target;
-        calls[1].value = 789;
-        calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
-
-        bytes[] memory results =
-            mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, _encode(calls, opData));
-
-        assertEq(mbe.lastOpData(), opData);
+        bytes[] memory results = mbe.execute{value: _totalValue(calls)}(calls, "");
 
         assertEq(results.length, 2);
         assertEq(abi.decode(results[0], (bytes)), "hehe");
@@ -88,15 +56,7 @@ contract ERC7821Test is SoladyTest {
         calls[0].data = abi.encodeWithSignature("revertsWithCustomError()");
 
         vm.expectRevert(CustomError.selector);
-        mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, _encode(calls, ""));
-    }
-
-    function _encode(ERC7821.Call[] memory calls, bytes memory opData)
-        internal
-        returns (bytes memory)
-    {
-        if (_randomChance(2) && opData.length == 0) return abi.encode(calls);
-        return abi.encode(calls, opData);
+        mbe.execute{value: _totalValue(calls)}(calls, "");
     }
 
     struct Payload {
