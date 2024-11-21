@@ -56,8 +56,12 @@ abstract contract MinimalBatchExecutor {
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
             calls.length := calldataload(o)
-            opData.length := and(0xffffffff, encodedMode)
-            opData.offset := sub(add(executionData.offset, executionData.length), opData.length)
+            opData.length := 0
+            if iszero(lt(calldataload(executionData.offset), 0x40)) {
+                o := add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
+                opData.length := calldataload(o)
+                opData.offset := add(o, 0x20)
+            }
         }
         _authorizeExecute(calls, opData);
         return _execute(calls);
@@ -77,8 +81,7 @@ abstract contract MinimalBatchExecutor {
         // - [2..5]    (4 bytes)  Reserved by ERC7579 for future standardization.
         // - [6..7]    (2 bytes)  `0x9999`.
         // - [8..9]    (2 bytes)  Version in hex format.
-        // - [9..27]   (18 bytes) Unused. Free for use.
-        // - [28..31]  (4 bytes)  uint32 (big-endian) length of `opData`.
+        // - [9..31]   (22 bytes) Unused. Free for use.
         return bytes10(encodedMode) & 0xffff00000000ffffffff == 0x01000000000099990001;
     }
 
