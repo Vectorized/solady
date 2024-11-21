@@ -12,7 +12,7 @@ contract ERC7821Test is SoladyTest {
 
     address target;
 
-    bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000099990001);
+    bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000078210001);
 
     function setUp() public {
         mbe = new MockERC7821();
