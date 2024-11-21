@@ -35,6 +35,7 @@ abstract contract MinimalBatchExecutor {
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
+    /// `executionData` is `abi.encodePacked(abi.encode(calls), opData)`.
     function execute(bytes32 encodedMode, bytes calldata executionData)
         public
         payable
