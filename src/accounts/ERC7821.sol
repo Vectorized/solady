@@ -72,17 +72,26 @@ abstract contract ERC7821 {
         /// @solidity memory-safe-assembly
         assembly {
             opData.length := 0
-            let o := add(executionData.offset, calldataload(executionData.offset))
+            let end := add(executionData.offset, executionData.length)
+            let o := calldataload(executionData.offset)
+            if or(lt(executionData.length, 0x20), shr(64, o)) { invalid() }
+            o := add(executionData.offset, o)
             calls.offset := add(o, 0x20)
             calls.length := calldataload(o)
+            if or(gt(add(calls.offset, shl(5, calls.length)), end), shr(64, calls.length)) {
+                invalid()
+            }
+
             // If the offset of `executionData` allows for `opData`.
             if iszero(lt(calldataload(executionData.offset), 0x40)) {
                 // If the mode is not the general atomic batch execution mode.
                 if xor(and(shr(mul(22, 8), mode), 0xffff00000000ffffffff), 0x01000000000000000000) {
-                    let p :=
-                        add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
+                    let p := calldataload(add(executionData.offset, 0x20))
+                    if shr(64, p) { invalid() }
+                    p := add(executionData.offset, p)
                     opData.length := calldataload(p)
                     opData.offset := add(p, 0x20)
+                    if or(shr(64, p), gt(add(opData.offset, opData.length), end)) { invalid() }
                 }
             }
         }
