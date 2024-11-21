@@ -70,7 +70,7 @@ abstract contract MinimalBatchExecutor {
             bytes memory r = _execute(c.target, c.value, c.data);
             /// @solidity memory-safe-assembly
             assembly {
-                mstore(add(results, shl(5, i)), r)
+                mstore(add(results, shl(5, i)), r) // Set `results[i]` to `r`.
             }
         }
     }
