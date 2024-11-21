@@ -42,6 +42,10 @@ abstract contract ERC7821 {
     /// - Else, `executionData` is `abi.encode(calls, opData)`.
     ///   See: https://eips.ethereum.org/EIPS/eip-7579
     ///
+    /// Supported modes:
+    /// - `0x01000000000078210001...`: supports optional `opData`.
+    /// - `0x01000000000000000000...`: does not support optional `opData`.
+    ///
     /// Authorization checks:
     /// - If `opData` is empty, the implementation SHOULD require that
     ///   `msg.sender == address(this)`.
@@ -71,10 +75,15 @@ abstract contract ERC7821 {
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
             calls.length := calldataload(o)
+            // If the offset of `executionData` allows for `opData`.
             if iszero(lt(calldataload(executionData.offset), 0x40)) {
-                let p := add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
-                opData.length := calldataload(p)
-                opData.offset := add(p, 0x20)
+                // If the mode is not the general atomic batch execution mode.
+                if xor(and(shr(mul(22, 8), mode), 0xffff00000000ffffffff), 0x01000000000000000000) {
+                    let p :=
+                        add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
+                    opData.length := calldataload(p)
+                    opData.offset := add(p, 0x20)
+                }
             }
         }
         _authorizeExecute(calls, opData);
@@ -89,10 +98,13 @@ abstract contract ERC7821 {
         // - [0]      ( 1 byte )  `0x01` for batch call.
         // - [1]      ( 1 byte )  `0x00` for revert on any failure.
         // - [2..5]   ( 4 bytes)  Reserved by ERC7579 for future standardization.
-        // - [6..7]   ( 2 bytes)  `0x7821`.
-        // - [8..9]   ( 2 bytes)  Version in hex format.
+        // - [6..8]   ( 4 bytes)  `0x78210001` or `0x00000000`.
         // - [9..31]  (22 bytes)  Unused. Free for use.
-        return bytes10(mode) & 0xffff00000000ffffffff == 0x01000000000078210001;
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(shr(mul(22, 8), mode), 0xffff00000000ffffffff)
+            result := or(eq(result, 0x01000000000078210001), eq(result, 0x01000000000000000000))
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
