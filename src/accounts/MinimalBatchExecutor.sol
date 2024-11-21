@@ -23,15 +23,6 @@ abstract contract MinimalBatchExecutor {
     error UnsupportedExecutionMode();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Only supports atomic batched executions.
-    /// For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
-    bytes32 internal constant _SUPPORTED_ENCODED_MODE =
-        0x0100000000009999000100000000000000000000000000000000000000000000;
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   FUNCTIONS TO OVERRIDE                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -58,9 +49,8 @@ abstract contract MinimalBatchExecutor {
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
             calls.length := calldataload(o)
-            let e := add(executionData.offset, sub(executionData.length, 0x04))
-            opData.length := shr(224, calldataload(e))
-            opData.offset := sub(e, opData.length)
+            opData.length := shr(0xffffffff, encodedMode)
+            opData.offset := add(add(executionData.offset, executionData.length), opData.length)
         }
         _authorizeExecute(calls, opData);
         return _execute(calls);
@@ -72,7 +62,11 @@ abstract contract MinimalBatchExecutor {
 
     /// @dev This function is provided for frontends to detect support.
     function supportsExecutionMode(bytes32 encodedMode) public pure virtual returns (bool) {
-        return encodedMode == _SUPPORTED_ENCODED_MODE;
+        // Only supports atomic batched executions.
+        // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
+        // The lower 22 bytes of `encodedMode` is used to pass extra information,
+        // and the lowest 4 bytes of `encodedMode` being used to store the length of `opData`.
+        return uint256(encodedMode) >> 176 == 0x01000000000099990001;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

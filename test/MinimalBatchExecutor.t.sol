@@ -15,9 +15,6 @@ contract MinimalBatchExecutorTest is SoladyTest {
 
     address target;
 
-    bytes32 internal constant _SUPPORTED_ENCODED_MODE =
-        0x0100000000009999000100000000000000000000000000000000000000000000;
-
     function setUp() public {
         mbe = new MockMinimalBatchExecutor();
         target = LibClone.clone(address(this));
@@ -49,7 +46,7 @@ contract MinimalBatchExecutorTest is SoladyTest {
         calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
         bytes[] memory results =
-            mbe.execute{value: _totalValue(calls)}(_SUPPORTED_ENCODED_MODE, _encode(calls, ""));
+            mbe.execute{value: _totalValue(calls)}(_encodedMode(""), _encode(calls, ""));
 
         assertEq(results.length, 2);
         assertEq(abi.decode(results[0], (bytes)), "hehe");
@@ -63,14 +60,19 @@ contract MinimalBatchExecutorTest is SoladyTest {
         calls[0].data = abi.encodeWithSignature("revertsWithCustomError()");
 
         vm.expectRevert(CustomError.selector);
-        mbe.execute{value: _totalValue(calls)}(_SUPPORTED_ENCODED_MODE, _encode(calls, ""));
+        mbe.execute{value: _totalValue(calls)}(_encodedMode(""), _encode(calls, ""));
+    }
+
+    function _encodedMode(bytes memory opData) internal pure returns (bytes32) {
+        return bytes32((0x01000000000099990001 << 176) | opData.length);
     }
 
     function _encode(MinimalBatchExecutor.Call[] memory calls, bytes memory opData)
         internal
+        pure
         returns (bytes memory)
     {
-        return abi.encodePacked(abi.encode(calls), opData, uint32(opData.length));
+        return abi.encodePacked(abi.encode(calls), opData);
     }
 
     struct Payload {
