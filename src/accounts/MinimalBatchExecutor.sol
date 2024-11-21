@@ -19,8 +19,8 @@ abstract contract MinimalBatchExecutor {
     /*                   FUNCTIONS TO OVERRIDE                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Ensures that `execute` can only be called by the correct caller or `authData`.
-    function _authorizeExecute(Call[] calldata calls, bytes calldata authData) internal virtual;
+    /// @dev Ensures that `execute` can only be called by the correct caller or `opData`.
+    function _authorizeExecute(Call[] calldata calls, bytes calldata opData) internal virtual;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          EXECUTE                           */
@@ -28,13 +28,13 @@ abstract contract MinimalBatchExecutor {
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
-    function execute(Call[] calldata calls, bytes calldata authData)
+    function execute(Call[] calldata calls, bytes calldata opData)
         public
         payable
         virtual
         returns (bytes[] memory results)
     {
-        _authorizeExecute(calls, authData);
+        _authorizeExecute(calls, opData);
         return _execute(calls);
     }
 
