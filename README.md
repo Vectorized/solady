@@ -36,6 +36,7 @@ accounts
 ├─ ERC6551 — "Simple ERC6551 account implementation"
 ├─ ERC6551Proxy — "Relay proxy for upgradeable ERC6551 accounts"
 ├─ LibERC6551 — "Library for interacting with ERC6551 accounts"
+├─ ERC7821 — "Minimal batch executor mixin"
 auth
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
