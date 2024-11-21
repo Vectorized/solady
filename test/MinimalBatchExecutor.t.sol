@@ -45,8 +45,11 @@ contract MinimalBatchExecutorTest is SoladyTest {
         calls[1].value = 789;
         calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
+        bytes memory opData = hex"112233";
         bytes[] memory results =
-            mbe.execute{value: _totalValue(calls)}(_encodedMode(""), _encode(calls, ""));
+            mbe.execute{value: _totalValue(calls)}(_encodedMode(opData), _encode(calls, opData));
+
+        assertEq(mbe.lastOpData(), opData);
 
         assertEq(results.length, 2);
         assertEq(abi.decode(results[0], (bytes)), "hehe");
@@ -64,7 +67,7 @@ contract MinimalBatchExecutorTest is SoladyTest {
     }
 
     function _encodedMode(bytes memory opData) internal pure returns (bytes32) {
-        return bytes32((0x01000000000099990001 << 176) | opData.length);
+        return bytes10(0x01000000000099990001) | bytes32(opData.length);
     }
 
     function _encode(MinimalBatchExecutor.Call[] memory calls, bytes memory opData)

@@ -42,7 +42,13 @@ abstract contract MinimalBatchExecutor {
         virtual
         returns (bytes[] memory results)
     {
-        if (!supportsExecutionMode(encodedMode)) revert UnsupportedExecutionMode();
+        if (!supportsExecutionMode(encodedMode)) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, 0x7f181275) // `UnsupportedExecutionMode()`.
+                revert(0x1c, 0x04)
+            }
+        }
         Call[] calldata calls;
         bytes calldata opData;
         /// @solidity memory-safe-assembly
@@ -50,8 +56,8 @@ abstract contract MinimalBatchExecutor {
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
             calls.length := calldataload(o)
-            opData.length := shr(0xffffffff, encodedMode)
-            opData.offset := add(add(executionData.offset, executionData.length), opData.length)
+            opData.length := and(0xffffffff, encodedMode)
+            opData.offset := sub(add(executionData.offset, executionData.length), opData.length)
         }
         _authorizeExecute(calls, opData);
         return _execute(calls);
@@ -62,12 +68,18 @@ abstract contract MinimalBatchExecutor {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev This function is provided for frontends to detect support.
-    function supportsExecutionMode(bytes32 encodedMode) public pure virtual returns (bool) {
+    function supportsExecutionMode(bytes32 encodedMode) public pure virtual returns (bool result) {
         // Only supports atomic batched executions.
         // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
-        // The lower 22 bytes of `encodedMode` is used to pass extra information,
-        // and the lowest 4 bytes of `encodedMode` being used to store the length of `opData`.
-        return uint256(encodedMode) >> 176 == 0x01000000000099990001;
+        // Bits Layout:
+        // - [0]       (1 byte)   `0x01` for batch call.
+        // - [1]       (1 byte)   `0x00` for revert on any failure.
+        // - [2..5]    (4 bytes)  Reserved by ERC7579 for future standardization.
+        // - [6..7]    (2 bytes)  `0x9999`.
+        // - [8..9]    (2 bytes)  Version in hex format.
+        // - [9..27]   (18 bytes) Unused. Free for use.
+        // - [28..31]  (4 bytes)  uint32 (big-endian) length of `opData`.
+        return bytes10(encodedMode) & 0xffff00000000ffffffff == 0x01000000000099990001;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
