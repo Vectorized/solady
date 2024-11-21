@@ -14,9 +14,6 @@ library P256 {
     /// RIP-7212 P256 verifier precompile and missing Solidity P256 verifier.
     error P256VerificationFailed();
 
-    /// @dev The encoded point must be exactly 64 bytes in length.
-    error PointDecodeFailed();
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -106,19 +103,18 @@ library P256 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Helper function for `abi.decode(encoded, (bytes32, bytes32))`.
+    /// If `encoded.length < 64`, `(x, y)` will be `(0, 0)`, which is an invalid point.
     function decodePoint(bytes memory encoded) internal pure returns (bytes32 x, bytes32 y) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(gt(mload(encoded), 0x3f)) {
-                mstore(0x00, 0x93e55926) // `PointDecodeFailed()`.
-                revert(0x1c, 0x04)
-            }
-            x := mload(add(encoded, 0x20))
-            y := mload(add(encoded, 0x40))
+            let t := gt(mload(encoded), 0x3f)
+            x := mul(mload(add(encoded, 0x20)), t)
+            y := mul(mload(add(encoded, 0x40)), t)
         }
     }
 
     /// @dev Helper function for `abi.decode(encoded, (bytes32, bytes32))`.
+    /// If `encoded.length < 64`, `(x, y)` will be `(0, 0)`, which is an invalid point.
     function decodePointCalldata(bytes calldata encoded)
         internal
         pure
@@ -126,12 +122,9 @@ library P256 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(gt(encoded.length, 0x3f)) {
-                mstore(0x00, 0x93e55926) // `PointDecodeFailed()`.
-                revert(0x1c, 0x04)
-            }
-            x := calldataload(encoded.offset)
-            y := calldataload(add(encoded.offset, 0x20))
+            let t := gt(encoded.length, 0x3f)
+            x := mul(calldataload(encoded.offset), t)
+            y := mul(calldataload(add(encoded.offset, 0x20)), t)
         }
     }
 }
