@@ -61,13 +61,20 @@ abstract contract MinimalBatchExecutor {
             mstore(0x40, add(add(results, 0x20), shl(5, calls.length))) // Allocate memory.
         }
         for (uint256 i; i != calls.length;) {
-            Call calldata c;
+            address target;
+            uint256 value;
+            bytes calldata data;
             /// @solidity memory-safe-assembly
             assembly {
-                c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
+                let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
+                target := calldataload(c)
+                value := calldataload(add(c, 0x20))
+                let o := add(c, calldataload(add(c, 0x40)))
+                data.offset := add(o, 0x20)
+                data.length := calldataload(o)
                 i := add(i, 1)
             }
-            bytes memory r = _execute(c.target, c.value, c.data);
+            bytes memory r = _execute(target, value, data);
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(add(results, shl(5, i)), r) // Set `results[i]` to `r`.
