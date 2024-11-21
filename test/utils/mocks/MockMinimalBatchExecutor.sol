@@ -7,11 +7,11 @@ import {Brutalizer} from "../Brutalizer.sol";
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockMinimalBatchExecutor is MinimalBatchExecutor, Brutalizer {
-    function _authorizeExecute(Call[] calldata calls, bytes calldata authData)
-        internal
-        virtual
-        override
-    {}
+    bytes public lastOpData;
+
+    function _authorizeExecute(Call[] calldata, bytes calldata opData) internal virtual override {
+        lastOpData = opData;
+    }
 
     function executeDirect(Call[] calldata calls)
         public

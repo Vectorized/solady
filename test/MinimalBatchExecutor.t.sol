@@ -15,6 +15,8 @@ contract MinimalBatchExecutorTest is SoladyTest {
 
     address target;
 
+    bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000099990001);
+
     function setUp() public {
         mbe = new MockMinimalBatchExecutor();
         target = LibClone.clone(address(this));
@@ -32,7 +34,8 @@ contract MinimalBatchExecutorTest is SoladyTest {
         return keccak256(b);
     }
 
-    function testMinimalBatchExecutor() public {
+    function testMinimalBatchExecutorGas() public {
+        vm.pauseGasMetering();
         vm.deal(address(this), 1 ether);
 
         MinimalBatchExecutor.Call[] memory calls = new MinimalBatchExecutor.Call[](2);
@@ -45,7 +48,36 @@ contract MinimalBatchExecutorTest is SoladyTest {
         calls[1].value = 789;
         calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
-        bytes[] memory results = mbe.execute{value: _totalValue(calls)}(calls, "");
+        bytes memory data = abi.encode(calls);
+        vm.resumeGasMetering();
+
+        bytes[] memory results = mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, data);
+
+        vm.pauseGasMetering();
+
+        assertEq(results.length, 2);
+        assertEq(abi.decode(results[0], (bytes)), "hehe");
+        assertEq(abi.decode(results[1], (bytes32)), keccak256("lol"));
+        vm.resumeGasMetering();
+    }
+
+    function testMinimalBatchExecutor(bytes memory opData) public {
+        vm.deal(address(this), 1 ether);
+
+        MinimalBatchExecutor.Call[] memory calls = new MinimalBatchExecutor.Call[](2);
+
+        calls[0].target = target;
+        calls[0].value = 123;
+        calls[0].data = abi.encodeWithSignature("returnsBytes(bytes)", "hehe");
+
+        calls[1].target = target;
+        calls[1].value = 789;
+        calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
+
+        bytes[] memory results =
+            mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, _encode(calls, opData));
+
+        assertEq(mbe.lastOpData(), opData);
 
         assertEq(results.length, 2);
         assertEq(abi.decode(results[0], (bytes)), "hehe");
@@ -59,7 +91,15 @@ contract MinimalBatchExecutorTest is SoladyTest {
         calls[0].data = abi.encodeWithSignature("revertsWithCustomError()");
 
         vm.expectRevert(CustomError.selector);
-        mbe.execute{value: _totalValue(calls)}(calls, "");
+        mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, _encode(calls, ""));
+    }
+
+    function _encode(MinimalBatchExecutor.Call[] memory calls, bytes memory opData)
+        internal
+        returns (bytes memory)
+    {
+        if (_randomChance(2) && opData.length == 0) return abi.encode(calls);
+        return abi.encode(calls, opData);
     }
 
     struct Payload {
