@@ -409,6 +409,20 @@ library LibBytes {
         result = slice(subject, start, type(uint256).max);
     }
 
+    /// @dev Reduces the size of `subject` to `n`.
+    /// If `n` is greater than the size of `subject`, this will be a no-op.
+    function truncate(bytes memory subject, uint256 n)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := subject
+            mstore(mul(lt(n, mload(result)), result), n)
+        }
+    }
+
     /// @dev Returns all the indices of `needle` in `subject`.
     /// The indices are byte offsets.
     function indicesOf(bytes memory subject, bytes memory needle)
