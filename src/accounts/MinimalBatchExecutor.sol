@@ -65,11 +65,11 @@ abstract contract MinimalBatchExecutor {
             /// @solidity memory-safe-assembly
             assembly {
                 c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
+                i := add(i, 1)
             }
             bytes memory r = _execute(c.target, c.value, c.data);
             /// @solidity memory-safe-assembly
             assembly {
-                i := add(i, 1)
                 mstore(add(results, shl(5, i)), r)
             }
         }
