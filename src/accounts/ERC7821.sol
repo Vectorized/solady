@@ -39,7 +39,7 @@ contract ERC7821 {
 
     /// @dev This function is provided for frontends to detect support.
     function minimalBatchExecutorVersion() public pure virtual returns (uint256) {
-        return 1; // This number may change in the future.
+        return 1; // This number may be updated in the future.
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
