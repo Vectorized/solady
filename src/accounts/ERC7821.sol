@@ -10,9 +10,9 @@ contract ERC7821 {
 
     /// @dev Call struct for the `execute` function.
     struct Call {
-        address target; // Defaults to `address(this)` if `address(0)`.
-        uint256 value;
-        bytes data;
+        address target; // Treated as `address(this)` if `address(0)`.
+        uint256 value; // Amount of native currency (i.e. Ether).
+        bytes data; // The calldata to send with the call.
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
