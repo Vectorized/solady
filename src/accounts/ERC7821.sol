@@ -3,24 +3,17 @@ pragma solidity ^0.8.4;
 
 /// @notice Minimal batch executor mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC7821.sol)
-abstract contract ERC7821 {
+contract ERC7821 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Call struct for the `execute` function.
     struct Call {
-        address target;
+        address target; // Defaults to `address(this)` if `address(0)`.
         uint256 value;
         bytes data;
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                   FUNCTIONS TO OVERRIDE                    */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Ensures that `execute` can only be called by the correct caller or `opData`.
-    function _authorizeExecute(Call[] calldata calls, bytes calldata opData) internal virtual;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    EXECUTION OPERATIONS                    */
@@ -32,15 +25,21 @@ abstract contract ERC7821 {
         public
         payable
         virtual
-        returns (bytes[] memory results)
+        returns (bytes[] memory)
     {
-        _authorizeExecute(calls, opData);
-        return _execute(calls);
+        // Very basic auth to only allow this contract to be called by itself.
+        // Override `execute` to perform more complex auth with `opData`.
+        if (opData.length == uint256(0)) {
+            require(msg.sender == address(this));
+            // Remember to return `_execute(calls)` when you override `execute`.
+            return _execute(calls);
+        }
+        revert(); // In your override, replace this with logic to operate on `opData`.
     }
 
     /// @dev This function is provided for frontends to detect support.
     function minimalBatchExecutorVersion() public pure virtual returns (uint256) {
-        return 1; // This number may change.
+        return 1; // This number may change in the future.
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -62,6 +61,7 @@ abstract contract ERC7821 {
             bytes calldata data;
             /// @solidity memory-safe-assembly
             assembly {
+                // Direct extract the arguments of `call[i]` without bounds checks.
                 let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
                 target := calldataload(c)
                 value := calldataload(add(c, 0x20))
@@ -89,7 +89,10 @@ abstract contract ERC7821 {
         assembly {
             result := mload(0x40) // Grab the free memory pointer.
             calldatacopy(result, data.offset, data.length)
-            if iszero(call(gas(), target, value, result, data.length, codesize(), 0x00)) {
+            // Defaults `target` to `address(this)` if `address(0)` is provided.
+            // forgefmt: disable-next-item
+            if iszero(call(gas(), or(target, mul(iszero(target), address())),
+                value, result, data.length, codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(result, 0x00, returndatasize())
                 revert(result, returndatasize())
