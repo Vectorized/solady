@@ -3,16 +3,16 @@ pragma solidity ^0.8.4;
 
 /// @notice Minimal batch executor mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC7821.sol)
-abstract contract ERC7821 {
+contract ERC7821 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Call struct for the `execute` function.
     struct Call {
-        address target;
-        uint256 value;
-        bytes data;
+        address target; // Replaced as `address(this)` if `address(0)`.
+        uint256 value; // Amount of native currency (i.e. Ether) to send.
+        bytes data; // Calldata to send with the call.
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -21,13 +21,6 @@ abstract contract ERC7821 {
 
     /// @dev The execution mode is not supported.
     error UnsupportedExecutionMode();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                   FUNCTIONS TO OVERRIDE                    */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Ensures that `execute` can only be called by the correct caller or `opData`.
-    function _authorizeExecute(Call[] calldata calls, bytes calldata opData) internal virtual;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    EXECUTION OPERATIONS                    */
@@ -58,7 +51,7 @@ abstract contract ERC7821 {
         public
         payable
         virtual
-        returns (bytes[] memory results)
+        returns (bytes[] memory)
     {
         if (!supportsExecutionMode(mode)) {
             /// @solidity memory-safe-assembly
@@ -72,35 +65,25 @@ abstract contract ERC7821 {
         /// @solidity memory-safe-assembly
         assembly {
             opData.length := 0
-            let end := add(executionData.offset, executionData.length)
-            let o := calldataload(executionData.offset)
-            if or(lt(executionData.length, 0x20), shr(64, o)) { invalid() }
-            o := add(executionData.offset, o)
+            let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
             calls.length := calldataload(o)
-            if or(gt(add(calls.offset, shl(5, calls.length)), end), shr(64, calls.length)) {
-                invalid()
-            }
-
             // If the offset of `executionData` allows for `opData`.
             if iszero(lt(calldataload(executionData.offset), 0x40)) {
                 // If the mode is not the general atomic batch execution mode.
                 if xor(and(shr(mul(22, 8), mode), 0xffff00000000ffffffff), 0x01000000000000000000) {
-                    let p := calldataload(add(executionData.offset, 0x20))
-                    if shr(64, p) { invalid() }
-                    p := add(executionData.offset, p)
+                    let p :=
+                        add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
                     opData.length := calldataload(p)
                     opData.offset := add(p, 0x20)
-                    if or(shr(64, p), gt(add(opData.offset, opData.length), end)) { invalid() }
                 }
             }
         }
-        _authorizeExecute(calls, opData);
-        return _execute(calls);
+        return _execute(calls, opData);
     }
 
     /// @dev Provided for execution mode support detection.
-    function supportsExecutionMode(bytes32 mode) public pure virtual returns (bool result) {
+    function supportsExecutionMode(bytes32 mode) public view virtual returns (bool result) {
         // Only supports atomic batched executions.
         // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
         // Bytes Layout:
@@ -122,6 +105,23 @@ abstract contract ERC7821 {
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
+    function _execute(Call[] calldata calls, bytes calldata opData)
+        internal
+        virtual
+        returns (bytes[] memory)
+    {
+        // Very basic auth to only allow this contract to be called by itself.
+        // Override this function to perform more complex auth with `opData`.
+        if (opData.length == uint256(0)) {
+            require(msg.sender == address(this));
+            // Remember to return `_execute(calls)` when you override this function.
+            return _execute(calls);
+        }
+        revert(); // In your override, replace this with logic to operate on `opData`.
+    }
+
+    /// @dev Executes the `calls` and returns the results.
+    /// Reverts and bubbles up error if any call fails.
     function _execute(Call[] calldata calls) internal virtual returns (bytes[] memory results) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -137,7 +137,8 @@ abstract contract ERC7821 {
             assembly {
                 // Directly extract `calls[i]` without bounds checks.
                 let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
-                target := calldataload(c)
+                // Replaces `target` with `address(this)` if `address(0)` is provided.
+                target := or(mul(address(), iszero(calldataload(c))), calldataload(c))
                 value := calldataload(add(c, 0x20))
                 let o := add(c, calldataload(add(c, 0x40)))
                 data.offset := add(o, 0x20)
