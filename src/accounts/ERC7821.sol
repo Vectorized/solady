@@ -36,8 +36,8 @@ contract ERC7821 {
     ///   See: https://eips.ethereum.org/EIPS/eip-7579
     ///
     /// Supported modes:
-    /// - `0x01000000000000000000...`: does not support optional `opData`.
-    /// - `0x01000000000078210001...`: supports optional `opData`.
+    /// - `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
+    /// - `bytes32(0x01000000000078210001...)`: supports optional `opData`.
     ///
     /// Authorization checks:
     /// - If `opData` is empty, the implementation SHOULD require that
