@@ -53,30 +53,24 @@ contract ERC7821 {
         virtual
         returns (bytes[] memory)
     {
-        if (!supportsExecutionMode(mode)) {
-            /// @solidity memory-safe-assembly
-            assembly {
-                mstore(0x00, 0x7f181275) // `UnsupportedExecutionMode()`.
-                revert(0x1c, 0x04)
-            }
-        }
+        uint256 id = _executionModeId(mode);
         Call[] calldata calls;
         bytes calldata opData;
         /// @solidity memory-safe-assembly
         assembly {
+            if iszero(id) {
+                mstore(0x00, 0x7f181275) // `UnsupportedExecutionMode()`.
+                revert(0x1c, 0x04)
+            }
             opData.length := 0
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
             calls.length := calldataload(o)
-            // If the offset of `executionData` allows for `opData`.
-            if iszero(lt(calldataload(executionData.offset), 0x40)) {
-                // If the mode is not the general atomic batch execution mode.
-                if xor(and(shr(mul(22, 8), mode), 0xffff00000000ffffffff), 0x01000000000000000000) {
-                    let p :=
-                        add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
-                    opData.length := calldataload(p)
-                    opData.offset := add(p, 0x20)
-                }
+            // If the offset of `executionData` allows for `opData`, and the mode supports it.
+            if lt(lt(calldataload(executionData.offset), 0x40), eq(id, 2)) {
+                let p := add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
+                opData.length := calldataload(p)
+                opData.offset := add(p, 0x20)
             }
         }
         return _execute(calls, opData);
@@ -84,6 +78,15 @@ contract ERC7821 {
 
     /// @dev Provided for execution mode support detection.
     function supportsExecutionMode(bytes32 mode) public view virtual returns (bool result) {
+        return _executionModeId(mode) != 0;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      INTERNAL HELPERS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the execution mode id.
+    function _executionModeId(bytes32 mode) internal view virtual returns (uint256 id) {
         // Only supports atomic batched executions.
         // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
         // Bytes Layout:
@@ -94,14 +97,10 @@ contract ERC7821 {
         // - [9..31]  (22 bytes)  Unused. Free for use.
         /// @solidity memory-safe-assembly
         assembly {
-            result := and(shr(mul(22, 8), mode), 0xffff00000000ffffffff)
-            result := or(eq(result, 0x01000000000078210001), eq(result, 0x01000000000000000000))
+            let m := and(shr(mul(22, 8), mode), 0xffff00000000ffffffff)
+            id := or(shl(1, eq(m, 0x01000000000078210001)), eq(m, 0x01000000000000000000))
         }
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      INTERNAL HELPERS                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
