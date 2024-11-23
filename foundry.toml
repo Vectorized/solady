@@ -1,6 +1,6 @@
 # Foundry Configuration File
-# Default definitions: https://github.com/gakonst/foundry/blob/b7917fa8491aedda4dd6db53fbb206ea233cd531/config/src/lib.rs#L782
-# See more config options at: https://github.com/gakonst/foundry/tree/master/config
+# Default definitions: https://github.com/foundry-rs/foundry/blob/b7917fa8491aedda4dd6db53fbb206ea233cd531/config/src/lib.rs#L782
+# See more config options at: https://github.com/foundry-rs/foundry/tree/master/.config
 
 # The Default Profile
 [profile.default]
