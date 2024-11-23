@@ -36,8 +36,8 @@ contract ERC7821 {
     ///   See: https://eips.ethereum.org/EIPS/eip-7579
     ///
     /// Supported modes:
-    /// - `0x01000000000078210001...`: supports optional `opData`.
     /// - `0x01000000000000000000...`: does not support optional `opData`.
+    /// - `0x01000000000078210001...`: supports optional `opData`.
     ///
     /// Authorization checks:
     /// - If `opData` is empty, the implementation SHOULD require that
@@ -62,6 +62,7 @@ contract ERC7821 {
                 mstore(0x00, 0x7f181275) // `UnsupportedExecutionMode()`.
                 revert(0x1c, 0x04)
             }
+            // Use inline assembly to extract the `calls` and optional `opData` efficiently.
             opData.length := 0
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
@@ -85,8 +86,7 @@ contract ERC7821 {
     /*                      INTERNAL HELPERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the execution mode id.
-    /// 0: invalid mode, 1: no `opData` support, 2: with `opData` support.
+    /// @dev 0: invalid mode, 1: no `opData` support, 2: with `opData` support.
     function _executionModeId(bytes32 mode) internal view virtual returns (uint256 id) {
         // Only supports atomic batched executions.
         // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
