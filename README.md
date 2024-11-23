@@ -10,7 +10,7 @@ I'm sooooooOooooooooOoooOoooooooooooooooo...
 
 ## Installation
 
-To install with [**Foundry**](https://github.com/gakonst/foundry):
+To install with [**Foundry**](https://github.com/foundry-rs/foundry):
 
 ```sh
 forge install vectorized/solady
