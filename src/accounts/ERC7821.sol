@@ -86,6 +86,7 @@ contract ERC7821 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the execution mode id.
+    /// 0: invalid mode, 1: no `opData` support, 2: with `opData` support.
     function _executionModeId(bytes32 mode) internal view virtual returns (uint256 id) {
         // Only supports atomic batched executions.
         // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
