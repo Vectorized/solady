@@ -128,4 +128,69 @@ contract LibERC7579Test is SoladyTest {
         }
         return (calls, opData);
     }
+
+    function testDecodeBatchAndOpDataReverts(bytes32) public {
+        bytes memory opData = hex"3232323232323232323232323232323232323232323232323232323232323232";
+        Call[] memory calls = new Call[](1);
+        calls[0].target = address(this);
+        calls[0].value = 1 ether;
+        calls[0].data = hex"5656565656565656565656565656565656565656565656565656565656565656";
+        bytes memory executionData = abi.encode(calls, opData);
+        if (_randomChance(128)) {
+            // Check that it works.
+            this.decodeBatchAndOpData(executionData);
+        }
+        // 0000000000000000000000000000000000000000000000000000000000000040 : 0x20
+        // 0000000000000000000000000000000000000000000000000000000000000120 : 0x40
+        // 0000000000000000000000000000000000000000000000000000000000000001 : 0x60
+        // 0000000000000000000000000000000000000000000000000000000000000020 : 0x80
+        // 0000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496 : 0xa0
+        // 0000000000000000000000000000000000000000000000000de0b6b3a7640000 : 0xc0
+        // 0000000000000000000000000000000000000000000000000000000000000060 : 0xe0
+        // 0000000000000000000000000000000000000000000000000000000000000020 : 0x100
+        // 5656565656565656565656565656565656565656565656565656565656565656 : 0x120
+        // 0000000000000000000000000000000000000000000000000000000000000020 : 0x140
+        // 3232323232323232323232323232323232323232323232323232323232323232 : 0x160
+
+        if (_randomChance(4)) {
+            _testDecodeBatchAndOpDataRevert(executionData, 0x20, 0x140);
+        }
+        if (_randomChance(4)) {
+            _testDecodeBatchAndOpDataRevert(executionData, 0x60, 0x02);
+        }
+        if (_randomChance(4)) {
+            _testDecodeBatchAndOpDataRevert(executionData, 0x40, 0x140);
+        }
+        if (_randomChance(4)) {
+            _testDecodeBatchAndOpDataRevert(executionData, 0x140, 0x21);
+        }
+        if (_randomChance(4)) {
+            _testDecodeBatchAndOpDataRevert(executionData, 0x100, 0x61);
+        }
+        if (_randomChance(4)) {
+            _testDecodeBatchAndOpDataRevert(executionData, 0x80, 0x1c0);
+        }
+    }
+
+    function _testDecodeBatchAndOpDataRevert(
+        bytes memory executionData,
+        uint256 o,
+        uint256 startingFrom
+    ) internal {
+        uint256 r = _randomLengthOrOffset(startingFrom);
+        bytes memory cd = abi.encodeWithSignature("decodeBatchAndOpData(bytes)", executionData);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(add(o, add(cd, 0x44)), r)
+        }
+        (bool success,) = address(this).staticcall{gas: 10000}(cd);
+        assertFalse(success);
+    }
+
+    function _randomLengthOrOffset(uint256 startingFrom) internal returns (uint256) {
+        if (_randomChance(2)) {
+            return _bound(_random(), startingFrom, startingFrom + 0x1ff);
+        }
+        return _bound(_random(), startingFrom, type(uint256).max);
+    }
 }
