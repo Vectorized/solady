@@ -2119,4 +2119,23 @@ contract FixedPointMathLibTest is SoladyTest {
     function testIsEven(uint256 x) public {
         assertEq(FixedPointMathLib.isEven(x), x % 2 == 0);
     }
+
+    function testFullMulEqEquivalence(uint256 a, uint256 b, uint256 x, uint256 y) public {
+        assertEq(_fullMulEqOriginal(a, b, x, y), FixedPointMathLib.fullMulEq(a, b, x, y));
+    }
+
+    function _fullMulEqOriginal(uint256 a, uint256 b, uint256 x, uint256 y)
+        internal
+        pure
+        returns (bool result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let xy := mul(x, y)
+            let z := mulmod(x, y, not(0))
+            let ab := mul(a, b)
+            let c := mulmod(a, b, not(0))
+            result := and(eq(xy, ab), eq(sub(z, add(xy, lt(z, xy))), sub(c, add(ab, lt(c, ab)))))
+        }
+    }
 }
