@@ -6,20 +6,67 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/main/contracts/account/utils/draft-ERC7579Utils.sol)
 library LibERC7579 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STRUCTS                           */
+    /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Call struct for the `execute` function.
-    /// In other places, this struct may be called "Call".
-    /// You can use assembly to reinterpret cast it.
-    struct Execution {
-        address target;
-        uint256 value;
-        bytes data;
+    /// @dev A single execution.
+    bytes1 internal constant CALLTYPE_SINGLE = 0x00;
+
+    /// @dev A batch of executions.
+    bytes1 internal constant CALLTYPE_BATCH = 0x01;
+
+    /// @dev A `delegatecall` execution.
+    bytes1 internal constant CALLTYPE_DELEGATECALL = 0xff;
+
+    /// @dev Default execution type that reverts on failure.
+    bytes1 internal constant EXECTYPE_DEFAULT = 0x00;
+
+    /// @dev Execution type that does not revert on failure.
+    bytes1 internal constant EXECTYPE_TRY = 0x01;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      MODE OPERATIONS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Encodes the fields into a mode.
+    function encodeMode(bytes1 callType, bytes1 execType, bytes4 selector, bytes22 payload)
+        internal
+        pure
+        returns (bytes32 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, callType)
+            mstore(0x01, execType)
+            mstore(0x02, selector)
+            mstore(0x06, 0)
+            mstore(0x0a, payload)
+            result := mload(0x00)
+        }
+    }
+
+    /// @dev Returns the call type of the mode.
+    function getCallType(bytes32 mode) internal pure returns (bytes1) {
+        return bytes1(mode);
+    }
+
+    /// @dev Returns the call type of the mode.
+    function getExecType(bytes32 mode) internal pure returns (bytes1) {
+        return mode[1];
+    }
+
+    /// @dev Returns the selector of the mode.
+    function getSelector(bytes32 mode) internal pure returns (bytes4) {
+        return bytes4(bytes32(uint256(mode) << 16));
+    }
+
+    /// @dev Returns the payload stored in the mode.
+    function getPayload(bytes32 mode) internal pure returns (bytes22) {
+        return bytes22(bytes32(uint256(mode) << 80));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                    DECODING OPERATIONS                     */
+    /*             EXECUTION DATA DECODING OPERATIONS             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Decodes a single call execution.
