@@ -7,13 +7,15 @@ import {Brutalizer} from "../Brutalizer.sol";
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
 contract MockERC7821 is ERC7821, Brutalizer {
-    function execute(Call[] calldata calls, bytes calldata)
-        public
-        payable
+    bytes public lastOpData;
+
+    function _execute(Call[] calldata calls, bytes calldata opData)
+        internal
         virtual
         override
         returns (bytes[] memory)
     {
+        lastOpData = opData;
         return _execute(calls);
     }
 
