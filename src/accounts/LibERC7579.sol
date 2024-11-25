@@ -9,9 +9,6 @@ library LibERC7579 {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Attempt to access an execution that is out of bounds.
-    error OutOfBoundsAccess();
-
     /// @dev Cannot decode `executionData`.
     error DecodingError();
 
@@ -255,7 +252,8 @@ library LibERC7579 {
         }
     }
 
-    /// @dev Returns the `i`th execution at `pointers`.
+    /// @dev Returns the `i`th execution at `pointers`, without bounds checks.
+    /// The bounds check is excluded as this function is intended to be called in a bounded loop.
     function getExecution(bytes32[] calldata pointers, uint256 i)
         internal
         pure
@@ -263,10 +261,6 @@ library LibERC7579 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(i, pointers.length)) {
-                mstore(0x00, 0x3542fe03) // `OutOfBoundsAccess()`.
-                revert(0x1c, 0x04)
-            }
             let c := add(pointers.offset, calldataload(add(pointers.offset, shl(5, i))))
             target := calldataload(c)
             value := calldataload(add(c, 0x20))

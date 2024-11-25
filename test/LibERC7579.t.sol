@@ -101,17 +101,12 @@ contract LibERC7579Test is SoladyTest {
             assertEq(t.opData, opData);
         }
 
-        if (_randomChance(8)) {
-            uint256 i = _bound(_randomUniform(), 0, calls.length + 5);
-            if (i >= calls.length) {
-                vm.expectRevert(LibERC7579.OutOfBoundsAccess.selector);
-                this.decodeBatchAndGetExecution(abi.encode(calls), i);
-            } else {
-                (t.target, t.value, t.data) = this.decodeBatchAndGetExecution(abi.encode(calls), i);
-                assertEq(t.target, calls[i].target);
-                assertEq(t.value, calls[i].value);
-                assertEq(t.data, calls[i].data);
-            }
+        if (calls.length > 0 && _randomChance(8)) {
+            uint256 i = _bound(_randomUniform(), 0, calls.length - 1);
+            (t.target, t.value, t.data) = this.decodeBatchAndGetExecution(abi.encode(calls), i);
+            assertEq(t.target, calls[i].target);
+            assertEq(t.value, calls[i].value);
+            assertEq(t.data, calls[i].data);
         }
     }
 
