@@ -449,6 +449,43 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Calculates `floor(x * y / 2 ** n)` with full precision.
+    /// Throws if result overflows a uint256.
+    /// Credit to Philogy under MIT license:
+    /// https://github.com/SorellaLabs/angstrom/blob/main/contracts/src/libraries/X128MathLib.sol
+    function fullMulDivN(uint256 x, uint256 y, uint8 n) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Temporarily use `result` as `p0` to save gas.
+            result := mul(x, y) // Lower 256 bits of `x * y`.
+            for {} 1 {} {
+                if iszero(or(iszero(x), eq(div(result, x), y))) {
+                    n := and(n, 0xff) // `n`, cleaned.
+                    let mm := mulmod(x, y, not(0))
+                    let p1 := sub(mm, add(result, lt(mm, result))) // Upper 256 bits of `x * y`.
+                    // We now have the 512-bit numerator (`x * y`) in (p1, z):
+                    // numerator:            |        p1        |       z       |
+                    // Chunks:               |  p1_0  ¦   p1_1  |  z_0  ¦  z_1  |
+                    // Right shifted result: |    0   ¦   p1_0  |  p1_1 ¦  z_0  |
+                    // The lower `n` bits of `z` (z_1) are part of the fraction which `floor` discards.
+
+                    // We check the final result doesn't overflow by checking that p1_0 = 0.
+                    if shr(n, p1) {
+                        mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
+                        revert(0x1c, 0x04)
+                    }
+                    // We now know that our result doesn't overflow.
+                    // Non-overflowing result: |    0   ¦    0    |  p1_1  ¦   z_0   |
+                    // We compute p1_1 and z_0 and slice together.
+                    result := add(shl(sub(256, n), p1), shr(n, result))
+                    break
+                }
+                result := shr(and(n, 0xff), result)
+                break
+            }
+        }
+    }
+
     /// @dev Calculates `floor(x * y / d)` with full precision.
     /// Throws if result overflows a uint256 or when `d` is zero.
     /// Credit to Remco Bloemen under MIT license: https://2π.com/21/muldiv
