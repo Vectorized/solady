@@ -460,7 +460,7 @@ library FixedPointMathLib {
             result := mul(x, y) // Lower 256 bits of `x * y`.
             for {} 1 {} {
                 if iszero(or(iszero(x), eq(div(result, x), y))) {
-                    n := and(n, 0xff) // `n`, cleaned.
+                    let k := and(n, 0xff) // `n`, cleaned.
                     let mm := mulmod(x, y, not(0))
                     let p1 := sub(mm, add(result, lt(mm, result))) // Upper 256 bits of `x * y`.
                     // We now have the 512-bit numerator (`x * y`) in (p1, z):
@@ -470,15 +470,15 @@ library FixedPointMathLib {
                     // The lower `n` bits of `z` (z_1) are part of the fraction which `floor` discards.
 
                     // We check the final result doesn't overflow by checking that p1_0 = 0.
-                    if shr(n, p1) {
-                        mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
-                        revert(0x1c, 0x04)
+                    if iszero(shr(k, p1)) {
+                        // We now know that our result doesn't overflow.
+                        // Non-overflowing result: |    0   ¦    0    |  p1_1  ¦   z_0   |
+                        // We compute p1_1 and z_0 and slice together.
+                        result := add(shl(sub(256, k), p1), shr(k, result))
+                        break
                     }
-                    // We now know that our result doesn't overflow.
-                    // Non-overflowing result: |    0   ¦    0    |  p1_1  ¦   z_0   |
-                    // We compute p1_1 and z_0 and slice together.
-                    result := add(shl(sub(256, n), p1), shr(n, result))
-                    break
+                    mstore(0x00, 0xae47f702) // `FullMulDivFailed()`.
+                    revert(0x1c, 0x04)
                 }
                 result := shr(and(n, 0xff), result)
                 break

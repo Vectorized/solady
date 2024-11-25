@@ -1075,6 +1075,12 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.fullMulDiv(2 ** 200, 2 ** 200, 2 ** 200), 2 ** 200);
     }
 
+    function testFullMulDivN() public {
+        assertEq(FixedPointMathLib.fullMulDivN(0, 0, 0), 0);
+        assertEq(FixedPointMathLib.fullMulDivN(4, 4, 1), 8);
+        assertEq(FixedPointMathLib.fullMulDivN(2 ** 200, 2 ** 200, 200), 2 ** 200);
+    }
+
     function testFullMulDivUnchecked() public {
         assertEq(FixedPointMathLib.fullMulDivUnchecked(0, 0, 1), 0);
         assertEq(FixedPointMathLib.fullMulDivUnchecked(4, 4, 2), 8);
