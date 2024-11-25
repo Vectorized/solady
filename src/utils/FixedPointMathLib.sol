@@ -437,6 +437,18 @@ library FixedPointMathLib {
     /*                  GENERAL NUMBER UTILITIES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns if `a * b == x * y`, with full precision.
+    function fullMulEq(uint256 a, uint256 b, uint256 x, uint256 y)
+        internal
+        pure
+        returns (bool result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(eq(mul(a, b), mul(x, y)), eq(mulmod(x, y, not(0)), mulmod(a, b, not(0))))
+        }
+    }
+
     /// @dev Calculates `floor(x * y / d)` with full precision.
     /// Throws if result overflows a uint256 or when `d` is zero.
     /// Credit to Remco Bloemen under MIT license: https://2π.com/21/muldiv
