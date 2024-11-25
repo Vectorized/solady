@@ -100,6 +100,19 @@ contract LibERC7579Test is SoladyTest {
         if (useOpData) {
             assertEq(t.opData, opData);
         }
+
+        if (_randomChance(8)) {
+            uint256 i = _bound(_randomUniform(), 0, calls.length + 5);
+            if (i >= calls.length) {
+                vm.expectRevert(LibERC7579.OutOfBoundsAccess.selector);
+                this.decodeBatchAndGetExecution(abi.encode(calls), i);
+            } else {
+                (t.target, t.value, t.data) = this.decodeBatchAndGetExecution(abi.encode(calls), i);
+                assertEq(t.target, calls[i].target);
+                assertEq(t.value, calls[i].value);
+                assertEq(t.data, calls[i].data);
+            }
+        }
     }
 
     function decodeBatch(bytes calldata executionData) public pure returns (Call[] memory) {
@@ -183,7 +196,7 @@ contract LibERC7579Test is SoladyTest {
         assembly {
             mstore(add(o, add(cd, 0x44)), r)
         }
-        (bool success,) = address(this).staticcall{gas: 10000}(cd);
+        (bool success,) = address(this).staticcall(cd);
         assertFalse(success);
     }
 
@@ -192,5 +205,13 @@ contract LibERC7579Test is SoladyTest {
             return _bound(_random(), startingFrom, startingFrom + 0x1ff);
         }
         return _bound(_random(), startingFrom, type(uint256).max);
+    }
+
+    function decodeBatchAndGetExecution(bytes calldata executionData, uint256 i)
+        public
+        pure
+        returns (address, uint256, bytes memory)
+    {
+        return LibERC7579.getExecution(LibERC7579.decodeBatch(executionData), i);
     }
 }

@@ -6,6 +6,16 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/main/contracts/account/utils/draft-ERC7579Utils.sol)
 library LibERC7579 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Attempt to access an execution that is out of bounds.
+    error OutOfBoundsAccess();
+
+    /// @dev Cannot decode `executionData`.
+    error DecodingError();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -78,7 +88,10 @@ library LibERC7579 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(gt(executionData.length, 0x33)) { invalid() }
+            if iszero(gt(executionData.length, 0x33)) {
+                mstore(0x00, 0xba597e7e) // `DecodingError()`.
+                revert(0x1c, 0x04)
+            }
             target := shr(96, calldataload(executionData.offset))
             value := calldataload(add(executionData.offset, 0x14))
             data.offset := add(executionData.offset, 0x34)
@@ -110,7 +123,10 @@ library LibERC7579 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(gt(executionData.length, 0x13)) { invalid() }
+            if iszero(gt(executionData.length, 0x13)) {
+                mstore(0x00, 0xba597e7e) // `DecodingError()`.
+                revert(0x1c, 0x04)
+            }
             target := shr(96, calldataload(executionData.offset))
             data.offset := add(executionData.offset, 0x14)
             data.length := sub(executionData.length, 0x14)
@@ -141,7 +157,10 @@ library LibERC7579 {
         /// @solidity memory-safe-assembly
         assembly {
             let u := calldataload(executionData.offset)
-            if or(shr(64, u), gt(0x20, executionData.length)) { invalid() }
+            if or(shr(64, u), gt(0x20, executionData.length)) {
+                mstore(0x00, 0xba597e7e) // `DecodingError()`.
+                revert(0x1c, 0x04)
+            }
             pointers.offset := add(add(executionData.offset, u), 0x20)
             pointers.length := calldataload(add(executionData.offset, u))
             if pointers.length {
@@ -149,13 +168,17 @@ library LibERC7579 {
                 // Perform bounds checks on the decoded `pointers`.
                 // Does an out-of-gas revert.
                 for { let i := pointers.length } 1 {} {
-                    let p := calldataload(add(pointers.offset, shl(5, sub(i, 1))))
+                    i := sub(i, 1)
+                    let p := calldataload(add(pointers.offset, shl(5, i)))
                     let c := add(pointers.offset, p)
                     let q := calldataload(add(c, 0x40))
                     let o := add(c, q)
                     // forgefmt: disable-next-item
-                    i := sub(i, iszero(or(shr(64, or(calldataload(o), or(p, q))),
-                        or(gt(add(c, 0x40), e), gt(add(o, calldataload(o)), e)))))
+                    if or(shr(64, or(calldataload(o), or(p, q))),
+                        or(gt(add(c, 0x40), e), gt(add(o, calldataload(o)), e))) {
+                        mstore(0x00, 0xba597e7e) // `DecodingError()`.
+                        revert(0x1c, 0x04)
+                    }
                     if iszero(i) { break }
                 }
             }
@@ -195,7 +218,10 @@ library LibERC7579 {
                 let q := add(executionData.offset, p)
                 opData.offset := add(q, 0x20)
                 opData.length := calldataload(q)
-                if or(shr(64, or(opData.length, p)), gt(add(q, opData.length), e)) { invalid() }
+                if or(shr(64, or(opData.length, p)), gt(add(q, opData.length), e)) {
+                    mstore(0x00, 0xba597e7e) // `DecodingError()`.
+                    revert(0x1c, 0x04)
+                }
             }
         }
     }
@@ -237,7 +263,10 @@ library LibERC7579 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(i, pointers.length)) { invalid() }
+            if iszero(lt(i, pointers.length)) {
+                mstore(0x00, 0x3542fe03) // `OutOfBoundsAccess()`.
+                revert(0x1c, 0x04)
+            }
             let c := add(pointers.offset, calldataload(add(pointers.offset, shl(5, i))))
             target := calldataload(c)
             value := calldataload(add(c, 0x20))
