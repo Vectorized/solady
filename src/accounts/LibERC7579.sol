@@ -89,21 +89,21 @@ library LibERC7579 {
     function decodeBatch(bytes calldata executionData)
         internal
         pure
-        returns (Execution[] calldata batch)
+        returns (bytes32[] calldata pointers)
     {
         /// @solidity memory-safe-assembly
         assembly {
             let u := calldataload(executionData.offset)
             if or(shr(64, u), gt(0x20, executionData.length)) { invalid() }
-            batch.offset := add(add(executionData.offset, u), 0x20)
-            batch.length := calldataload(add(executionData.offset, u))
-            if batch.length {
+            pointers.offset := add(add(executionData.offset, u), 0x20)
+            pointers.length := calldataload(add(executionData.offset, u))
+            if pointers.length {
                 let e := sub(add(executionData.offset, executionData.length), 0x20)
-                // Perform bounds checks on the decoded `batch`.
+                // Perform bounds checks on the decoded `pointers`.
                 // Does an out-of-gas revert.
-                for { let i := batch.length } 1 {} {
-                    let p := calldataload(add(batch.offset, shl(5, sub(i, 1))))
-                    let c := add(batch.offset, p)
+                for { let i := pointers.length } 1 {} {
+                    let p := calldataload(add(pointers.offset, shl(5, sub(i, 1))))
+                    let c := add(pointers.offset, p)
                     let q := calldataload(add(c, 0x40))
                     let o := add(c, q)
                     // forgefmt: disable-next-item
@@ -121,13 +121,13 @@ library LibERC7579 {
     function decodeBatchUnchecked(bytes calldata executionData)
         internal
         pure
-        returns (Execution[] calldata batch)
+        returns (bytes32[] calldata pointers)
     {
         /// @solidity memory-safe-assembly
         assembly {
             let o := add(executionData.offset, calldataload(executionData.offset))
-            batch.offset := add(o, 0x20)
-            batch.length := calldataload(o)
+            pointers.offset := add(o, 0x20)
+            pointers.length := calldataload(o)
         }
     }
 
@@ -136,15 +136,13 @@ library LibERC7579 {
     function decodeBatchAndOpData(bytes calldata executionData)
         internal
         pure
-        returns (Execution[] calldata batch, bytes calldata opData)
+        returns (bytes32[] calldata pointers, bytes calldata opData)
     {
-        batch = decodeBatch(executionData);
-        /// @solidity memory-safe-assembly
-        assembly {
-            opData.length := 0
-            if iszero(
-                or(lt(executionData.length, 0x40), lt(calldataload(executionData.offset), 0x40))
-            ) {
+        opData = emptyCalldataBytes();
+        pointers = decodeBatch(executionData);
+        if (hasOpData(executionData)) {
+            /// @solidity memory-safe-assembly
+            assembly {
                 let e := sub(add(executionData.offset, executionData.length), 0x20)
                 let p := calldataload(add(0x20, executionData.offset))
                 let q := add(executionData.offset, p)
@@ -161,15 +159,13 @@ library LibERC7579 {
     function decodeBatchAndOpDataUnchecked(bytes calldata executionData)
         internal
         pure
-        returns (Execution[] calldata batch, bytes calldata opData)
+        returns (bytes32[] calldata pointers, bytes calldata opData)
     {
-        batch = decodeBatchUnchecked(executionData);
-        /// @solidity memory-safe-assembly
-        assembly {
-            opData.length := 0
-            if iszero(
-                or(lt(executionData.length, 0x40), lt(calldataload(executionData.offset), 0x40))
-            ) {
+        opData = emptyCalldataBytes();
+        pointers = decodeBatchUnchecked(executionData);
+        if (hasOpData(executionData)) {
+            /// @solidity memory-safe-assembly
+            assembly {
                 let q := add(executionData.offset, calldataload(add(0x20, executionData.offset)))
                 opData.offset := add(q, 0x20)
                 opData.length := calldataload(q)
@@ -183,6 +179,37 @@ library LibERC7579 {
         assembly {
             result :=
                 iszero(or(lt(executionData.length, 0x40), lt(calldataload(executionData.offset), 0x40)))
+        }
+    }
+
+    /// @dev Returns the `i`th execution at `pointers`.
+    function getExecution(bytes32[] calldata pointers, uint256 i)
+        internal
+        pure
+        returns (address target, uint256 value, bytes calldata data)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(lt(i, pointers.length)) { invalid() }
+            let c := add(pointers.offset, calldataload(add(pointers.offset, shl(5, i))))
+            target := calldataload(c)
+            value := calldataload(add(c, 0x20))
+            let o := add(c, calldataload(add(c, 0x40)))
+            data.offset := add(o, 0x20)
+            data.length := calldataload(o)
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          HELPERS                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Helper function to return empty calldata bytes.
+    function emptyCalldataBytes() internal pure returns (bytes calldata result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result.offset := 0
+            result.length := 0
         }
     }
 }
