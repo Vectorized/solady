@@ -64,14 +64,33 @@ contract ERC7821 {
             }
             // Use inline assembly to extract the `calls` and optional `opData` efficiently.
             opData.length := 0
-            let o := add(executionData.offset, calldataload(executionData.offset))
-            calls.offset := add(o, 0x20)
-            calls.length := calldataload(o)
+            let u := calldataload(executionData.offset)
+            if or(shr(64, u), lt(executionData.length, 0x20)) { invalid() }
+            calls.offset := add(add(executionData.offset, u), 0x20)
+            calls.length := calldataload(add(executionData.offset, u))
+            let e := sub(add(executionData.offset, executionData.length), 0x20)
+            if calls.length {
+                // Perform bounds checks on the decoded `calls`.
+                for { let i := calls.length } 1 {} {
+                    let p := calldataload(add(calls.offset, shl(5, sub(i, 1))))
+                    let c := add(calls.offset, p)
+                    let q := calldataload(add(c, 0x40))
+                    let o := add(c, q)
+                    // forgefmt: disable-next-item
+                    i := sub(i, iszero(or(or(shr(64, or(calldataload(o), or(p, q))),
+                        gt(add(c, 0x40), e)), gt(add(o, calldataload(o)), e))))
+                    if iszero(i) { break }
+                }
+            }
             // If the offset of `executionData` allows for `opData`, and the mode supports it.
             if lt(lt(calldataload(executionData.offset), 0x40), eq(id, 2)) {
-                let p := add(executionData.offset, calldataload(add(executionData.offset, 0x20)))
-                opData.length := calldataload(p)
-                opData.offset := add(p, 0x20)
+                let p := calldataload(add(executionData.offset, 0x20))
+                let q := add(executionData.offset, p)
+                opData.offset := add(q, 0x20)
+                opData.length := calldataload(q)
+                // forgefmt: disable-next-item
+                if or(or(shr(64, or(opData.length, p)), lt(executionData.length, 0x40)),
+                    gt(add(q, opData.length), e)) { invalid() }
             }
         }
         return _execute(calls, opData);
