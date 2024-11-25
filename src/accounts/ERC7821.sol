@@ -68,7 +68,7 @@ contract ERC7821 {
             if or(shr(64, u), lt(executionData.length, 0x20)) { invalid() }
             calls.offset := add(add(executionData.offset, u), 0x20)
             calls.length := calldataload(add(executionData.offset, u))
-            let e := sub(add(executionData.offset, executionData.length), 0x20)
+            u := sub(add(executionData.offset, executionData.length), 0x20)
             if calls.length {
                 // Perform bounds checks on the decoded `calls`.
                 for { let i := calls.length } 1 {} {
@@ -78,7 +78,7 @@ contract ERC7821 {
                     let o := add(c, q)
                     // forgefmt: disable-next-item
                     i := sub(i, iszero(or(or(shr(64, or(calldataload(o), or(p, q))),
-                        gt(add(c, 0x40), e)), gt(add(o, calldataload(o)), e))))
+                        gt(add(c, 0x40), u)), gt(add(o, calldataload(o)), u))))
                     if iszero(i) { break }
                 }
             }
@@ -90,7 +90,7 @@ contract ERC7821 {
                 opData.length := calldataload(q)
                 // forgefmt: disable-next-item
                 if or(or(shr(64, or(opData.length, p)), lt(executionData.length, 0x40)),
-                    gt(add(q, opData.length), e)) { invalid() }
+                    gt(add(q, opData.length), u)) { invalid() }
             }
         }
         return _execute(calls, opData);
