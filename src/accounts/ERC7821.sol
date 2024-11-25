@@ -83,8 +83,8 @@ contract ERC7821 {
                 }
             }
             // If the offset of `executionData` allows for `opData`, and the mode supports it.
-            if lt(lt(calldataload(executionData.offset), 0x40), eq(id, 2)) {
-                let p := calldataload(add(executionData.offset, 0x20))
+            if gt(eq(id, 2), gt(0x40, calldataload(executionData.offset))) {
+                let p := calldataload(add(0x20, executionData.offset))
                 let q := add(executionData.offset, p)
                 opData.offset := add(q, 0x20)
                 opData.length := calldataload(q)
