@@ -437,7 +437,7 @@ library FixedPointMathLib {
     /*                  GENERAL NUMBER UTILITIES                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns if `a * b == x * y`, with full precision.
+    /// @dev Returns `a * b == x * y`, with full precision.
     function fullMulEq(uint256 a, uint256 b, uint256 x, uint256 y)
         internal
         pure
