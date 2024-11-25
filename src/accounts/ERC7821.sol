@@ -65,10 +65,10 @@ contract ERC7821 {
             // Use inline assembly to extract the `calls` and optional `opData` efficiently.
             opData.length := 0
             let u := calldataload(executionData.offset)
-            if or(shr(64, u), lt(executionData.length, 0x20)) { invalid() }
+            if or(shr(64, u), gt(0x20, executionData.length)) { invalid() }
             calls.offset := add(add(executionData.offset, u), 0x20)
             calls.length := calldataload(add(executionData.offset, u))
-            u := sub(add(executionData.offset, executionData.length), 0x20)
+            let e := sub(add(executionData.offset, executionData.length), 0x20)
             if calls.length {
                 // Perform bounds checks on the decoded `calls`.
                 for { let i := calls.length } 1 {} {
@@ -77,8 +77,8 @@ contract ERC7821 {
                     let q := calldataload(add(c, 0x40))
                     let o := add(c, q)
                     // forgefmt: disable-next-item
-                    i := sub(i, iszero(or(or(shr(64, or(calldataload(o), or(p, q))),
-                        gt(add(c, 0x40), u)), gt(add(o, calldataload(o)), u))))
+                    i := sub(i, iszero(or(shr(64, or(calldataload(o), or(p, q))),
+                        or(gt(add(c, 0x40), e), gt(add(o, calldataload(o)), e)))))
                     if iszero(i) { break }
                 }
             }
@@ -89,8 +89,8 @@ contract ERC7821 {
                 opData.offset := add(q, 0x20)
                 opData.length := calldataload(q)
                 // forgefmt: disable-next-item
-                if or(or(shr(64, or(opData.length, p)), lt(executionData.length, 0x40)),
-                    gt(add(q, opData.length), u)) { invalid() }
+                if or(shr(64, or(opData.length, p)), or(gt(add(q, opData.length), e),
+                    gt(0x40, executionData.length))) { invalid() }
             }
         }
         return _execute(calls, opData);
