@@ -1065,10 +1065,20 @@ contract FixedPointMathLibTest is SoladyTest {
         return FixedPointMathLib.fullMulDiv(x, y, d);
     }
 
+    function fullMulDivN(uint256 x, uint256 y, uint8 n) public pure returns (uint256) {
+        return FixedPointMathLib.fullMulDivN(x, y, n);
+    }
+
     function testFullMulDiv() public {
         assertEq(FixedPointMathLib.fullMulDiv(0, 0, 1), 0);
         assertEq(FixedPointMathLib.fullMulDiv(4, 4, 2), 8);
         assertEq(FixedPointMathLib.fullMulDiv(2 ** 200, 2 ** 200, 2 ** 200), 2 ** 200);
+    }
+
+    function testFullMulDivN() public {
+        assertEq(FixedPointMathLib.fullMulDivN(0, 0, 0), 0);
+        assertEq(FixedPointMathLib.fullMulDivN(4, 4, 1), 8);
+        assertEq(FixedPointMathLib.fullMulDivN(2 ** 200, 2 ** 200, 200), 2 ** 200);
     }
 
     function testFullMulDivUnchecked() public {
@@ -1149,6 +1159,19 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(actualA, expectedA);
         assertEq(actualB, expectedB);
         return q;
+    }
+
+    function testFullMulDivN(uint256 a, uint256 b, uint8 n) public {
+        (bool success0, bytes memory result0) = address(this).staticcall(
+            abi.encodeWithSignature("fullMulDiv(uint256,uint256,uint256)", a, b, 1 << n)
+        );
+        (bool success1, bytes memory result1) = address(this).staticcall(
+            abi.encodeWithSignature("fullMulDivN(uint256,uint256,uint8)", a, b, n)
+        );
+        assertEq(success0, success1);
+        if (success0) {
+            assertEq(abi.decode(result0, (uint256)), abi.decode(result1, (uint256)));
+        }
     }
 
     function testFullMulDivUp(uint256 a, uint256 b, uint256 d) public {
