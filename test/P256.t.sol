@@ -235,16 +235,16 @@ contract P256Test is P256VerifierEtcher {
         assertFalse(_verifyViaVerifier(bytes32(0), 1, 1, p - 1, 1));
     }
 
-    function testDecodePoint(bytes32 x, bytes32 y) public {
+    function testTryDecodePoint(bytes32 x, bytes32 y) public {
         bytes memory encoded = abi.encodePacked(x, y);
-        (bytes32 xDecoded, bytes32 yDecoded) = P256.decodePoint(encoded);
+        (bytes32 xDecoded, bytes32 yDecoded) = P256.tryDecodePoint(encoded);
         assertEq(xDecoded, x);
         assertEq(yDecoded, y);
-        this.decodePointCalldata(encoded, x, y);
+        this.tryDecodePointCalldata(encoded, x, y);
     }
 
-    function decodePointCalldata(bytes calldata encoded, bytes32 x, bytes32 y) public {
-        (bytes32 xDecoded, bytes32 yDecoded) = P256.decodePointCalldata(encoded);
+    function tryDecodePointCalldata(bytes calldata encoded, bytes32 x, bytes32 y) public {
+        (bytes32 xDecoded, bytes32 yDecoded) = P256.tryDecodePointCalldata(encoded);
         assertEq(xDecoded, x);
         assertEq(yDecoded, y);
     }
