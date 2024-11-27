@@ -122,6 +122,7 @@ contract ERC7821 {
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
+    /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
     function _execute(Call[] calldata calls, bytes32 extraData)
         internal
         virtual
@@ -160,6 +161,7 @@ contract ERC7821 {
 
     /// @dev Executes the `calls` and returns the result.
     /// Reverts and bubbles up error if any call fails.
+    /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
     function _execute(address target, uint256 value, bytes calldata data, bytes32 extraData)
         internal
         virtual
