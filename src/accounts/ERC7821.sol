@@ -114,15 +114,19 @@ contract ERC7821 {
         // Override this function to perform more complex auth with `opData`.
         if (opData.length == uint256(0)) {
             require(msg.sender == address(this));
-            // Remember to return `_execute(calls)` when you override this function.
-            return _execute(calls);
+            // Remember to return `_execute(calls, extraData)` when you override this function.
+            return _execute(calls, bytes32(0));
         }
         revert(); // In your override, replace this with logic to operate on `opData`.
     }
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
-    function _execute(Call[] calldata calls) internal virtual returns (bytes[] memory results) {
+    function _execute(Call[] calldata calls, bytes32 extraData)
+        internal
+        virtual
+        returns (bytes[] memory results)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             results := mload(0x40) // Grab the free memory pointer.
@@ -146,7 +150,7 @@ contract ERC7821 {
                 data.length := calldataload(o)
                 j := add(j, 0x20)
             }
-            bytes memory r = _execute(target, value, data);
+            bytes memory r = _execute(target, value, data, extraData);
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(add(results, j), r) // Set `results[i]` to `r`.
@@ -156,7 +160,7 @@ contract ERC7821 {
 
     /// @dev Executes the `calls` and returns the result.
     /// Reverts and bubbles up error if any call fails.
-    function _execute(address target, uint256 value, bytes calldata data)
+    function _execute(address target, uint256 value, bytes calldata data, bytes32 extraData)
         internal
         virtual
         returns (bytes memory result)
@@ -174,6 +178,7 @@ contract ERC7821 {
             let o := add(result, 0x20)
             returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
             mstore(0x40, add(o, returndatasize())) // Allocate the memory.
+            extraData := extraData // Silence unused variable compiler warning.
         }
     }
 }

@@ -16,7 +16,7 @@ contract MockERC7821 is ERC7821, Brutalizer {
         returns (bytes[] memory)
     {
         lastOpData = opData;
-        return _execute(calls);
+        return _execute(calls, bytes32(0));
     }
 
     function executeDirect(Call[] calldata calls)
@@ -27,7 +27,7 @@ contract MockERC7821 is ERC7821, Brutalizer {
     {
         _misalignFreeMemoryPointer();
         _brutalizeMemory();
-        results = _execute(calls);
+        results = _execute(calls, bytes32(0));
         _checkMemory();
     }
 }
