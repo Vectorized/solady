@@ -405,6 +405,37 @@ library LibBytes {
         result = slice(subject, start, type(uint256).max);
     }
 
+    /// @dev Returns a copy of `subject` sliced from `start` to `end` (exclusive).
+    /// `start` and `end` are byte offsets. Faster than Solidity's native slicing.
+    function sliceCalldata(bytes calldata subject, uint256 start, uint256 end)
+        internal
+        pure
+        returns (bytes calldata result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            end := xor(end, mul(xor(end, subject.length), lt(subject.length, end)))
+            start := xor(start, mul(xor(start, subject.length), lt(subject.length, start)))
+            result.offset := add(subject.offset, start)
+            result.length := mul(lt(start, end), sub(end, start))
+        }
+    }
+
+    /// @dev Returns a copy of `subject` sliced from `start` to the end of the bytes.
+    /// `start` is a byte offset. Faster than Solidity's native slicing.
+    function sliceCalldata(bytes calldata subject, uint256 start)
+        internal
+        pure
+        returns (bytes calldata result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            start := xor(start, mul(xor(start, subject.length), lt(subject.length, start)))
+            result.offset := add(subject.offset, start)
+            result.length := mul(lt(start, subject.length), sub(subject.length, start))
+        }
+    }
+
     /// @dev Reduces the size of `subject` to `n`.
     /// If `n` is greater than the size of `subject`, this will be a no-op.
     function truncate(bytes memory subject, uint256 n)
@@ -615,6 +646,14 @@ library LibBytes {
         /// @solidity memory-safe-assembly
         assembly {
             result := calldataload(add(a.offset, offset))
+        }
+    }
+
+    /// @dev Returns empty calldata bytes. For silencing the compiler.
+    function emptyCalldata() internal pure returns (bytes calldata result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result.length := 0
         }
     }
 }
