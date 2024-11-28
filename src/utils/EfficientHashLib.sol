@@ -482,7 +482,7 @@ library EfficientHashLib {
             end := xor(end, mul(xor(end, n), lt(n, end)))
             start := xor(start, mul(xor(start, n), lt(n, start)))
             // forgefmt: disable-next-item
-            result := mload(staticcall(gas(), 2, add(add(b, 0x20), start), 
+            result := mload(staticcall(gas(), 2, add(add(b, 0x20), start),
                 mul(gt(end, start), sub(end, start)), 0x01, 0x20))
             if iszero(returndatasize()) { invalid() }
         }
