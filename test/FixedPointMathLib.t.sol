@@ -2161,4 +2161,19 @@ contract FixedPointMathLibTest is SoladyTest {
             result := and(eq(xy, ab), eq(sub(z, add(xy, lt(z, xy))), sub(c, add(ab, lt(c, ab)))))
         }
     }
+
+    function testInvMod(uint256 a, uint256 p) public {
+        uint256 x = FixedPointMathLib.invMod(a, p);
+        if (x != 0) {
+            assertEq(mulmod(a, x, p), 1);
+        }
+    }
+
+    function testInvMod() public {
+        uint256 a = 0xe1b81abec8db239a5c843eff0a1c4472b02982433bb3f538d4e20eb8463330dc;
+        uint256 n = 0x4b4ecedb4964a40fe416b16c7bd8b46092040ec42ef0aa69e59f09872f105cf3;
+        uint256 x = 0x164a3ce484b95d23ce8552368f477627a85a1fce9882c3011eb38eda8bcc0dd2;
+        assertEq(FixedPointMathLib.invMod(a, n), x);
+        assertEq(FixedPointMathLib.invMod(a, 0), 0);
+    }
 }

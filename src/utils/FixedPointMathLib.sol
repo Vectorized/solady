@@ -620,6 +620,26 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns `x`, the modular multiplicative inverse of `a`, such that `(a * x) % n == 1`.
+    function invMod(uint256 a, uint256 n) internal pure returns (uint256 x) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let g := n
+            let r := mod(a, n)
+            for { let y := 1 } 1 {} {
+                let q := div(g, r)
+                let t := g
+                g := r
+                r := sub(t, mul(r, q))
+                let u := x
+                x := y
+                y := sub(u, mul(y, q))
+                if iszero(r) { break }
+            }
+            x := mul(eq(g, 1), add(x, mul(slt(x, 0), n)))
+        }
+    }
+
     /// @dev Returns `ceil(x / d)`.
     /// Reverts if `d` is zero.
     function divUp(uint256 x, uint256 d) internal pure returns (uint256 z) {
