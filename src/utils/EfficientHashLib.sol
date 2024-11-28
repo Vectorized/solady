@@ -454,4 +454,99 @@ library EfficientHashLib {
             result := keccak256(mload(0x40), b.length)
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      SHA2-256 HELPERS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns `sha256(abi.encode(b))`. Yes, it's more efficient.
+    function sha2(bytes32 b) internal view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, b)
+            result := mload(staticcall(gas(), 2, 0x00, 0x20, 0x01, 0x20))
+            if iszero(returndatasize()) { invalid() }
+        }
+    }
+
+    /// @dev Returns the sha256 of the slice from `start` to `end` (exclusive).
+    /// `start` and `end` are byte offsets.
+    function sha2(bytes memory b, uint256 start, uint256 end)
+        internal
+        view
+        returns (bytes32 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(b)
+            end := xor(end, mul(xor(end, n), lt(n, end)))
+            start := xor(start, mul(xor(start, n), lt(n, start)))
+            // forgefmt: disable-next-item
+            result := mload(staticcall(gas(), 2, add(add(b, 0x20), start), 
+                mul(gt(end, start), sub(end, start)), 0x01, 0x20))
+            if iszero(returndatasize()) { invalid() }
+        }
+    }
+
+    /// @dev Returns the sha256 of the slice from `start` to the end of the bytes.
+    function sha2(bytes memory b, uint256 start) internal view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(b)
+            start := xor(start, mul(xor(start, n), lt(n, start)))
+            // forgefmt: disable-next-item
+            result := mload(staticcall(gas(), 2, add(add(b, 0x20), start),
+                mul(gt(n, start), sub(n, start)), 0x01, 0x20))
+            if iszero(returndatasize()) { invalid() }
+        }
+    }
+
+    /// @dev Returns the sha256 of the bytes.
+    function sha2(bytes memory b) internal view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(staticcall(gas(), 2, add(b, 0x20), mload(b), 0x01, 0x20))
+            if iszero(returndatasize()) { invalid() }
+        }
+    }
+
+    /// @dev Returns the sha256 of the slice from `start` to `end` (exclusive).
+    /// `start` and `end` are byte offsets.
+    function sha2Calldata(bytes calldata b, uint256 start, uint256 end)
+        internal
+        view
+        returns (bytes32 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            end := xor(end, mul(xor(end, b.length), lt(b.length, end)))
+            start := xor(start, mul(xor(start, b.length), lt(b.length, start)))
+            let n := mul(gt(end, start), sub(end, start))
+            calldatacopy(mload(0x40), add(b.offset, start), n)
+            result := mload(staticcall(gas(), 2, mload(0x40), n, 0x01, 0x20))
+            if iszero(returndatasize()) { invalid() }
+        }
+    }
+
+    /// @dev Returns the sha256 of the slice from `start` to the end of the bytes.
+    function sha2Calldata(bytes calldata b, uint256 start) internal view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            start := xor(start, mul(xor(start, b.length), lt(b.length, start)))
+            let n := mul(gt(b.length, start), sub(b.length, start))
+            calldatacopy(mload(0x40), add(b.offset, start), n)
+            result := mload(staticcall(gas(), 2, mload(0x40), n, 0x01, 0x20))
+            if iszero(returndatasize()) { invalid() }
+        }
+    }
+
+    /// @dev Returns the sha256 of the bytes.
+    function sha2Calldata(bytes calldata b) internal view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            calldatacopy(mload(0x40), b.offset, b.length)
+            result := mload(staticcall(gas(), 2, mload(0x40), b.length, 0x01, 0x20))
+            if iszero(returndatasize()) { invalid() }
+        }
+    }
 }
