@@ -161,4 +161,43 @@ contract EfficientHashLibTest is SoladyTest {
         // The following costs approximately 90 more gas:
         // `assertTrue(a == abi.decode(b, (bytes32)))`;
     }
+
+    function testSha2(bytes32 b) public {
+        assertEq(sha256(abi.encode(b)), EfficientHashLib.sha2(b));
+    }
+
+    function testSha2(bytes calldata b) public {
+        assertEq(sha256(b), EfficientHashLib.sha2(b));
+        assertEq(sha256(b), EfficientHashLib.sha2Calldata(b));
+    }
+
+    function testSha2BytesSlice(bytes32, bytes calldata b) public {
+        unchecked {
+            uint256 n = b.length + 100;
+            uint256 start = _bound(_random(), 0, n);
+            uint256 end = _bound(_random(), 0, n);
+            bytes memory bMem = b;
+            if (b.length == 0 && _randomChance(2)) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    bMem := 0x60
+                }
+            }
+            bytes32 h;
+
+            h = EfficientHashLib.sha2Calldata(b);
+            assertEq(h, sha256(bMem));
+            assertEq(EfficientHashLib.sha2(bMem), h);
+
+            h = EfficientHashLib.sha2Calldata(b, start);
+            assertEq(h, sha256(bytes(LibString.slice(string(bMem), start))));
+            assertEq(EfficientHashLib.sha2(bMem, start), h);
+
+            h = EfficientHashLib.sha2Calldata(b, start, end);
+            assertEq(h, sha256(bytes(LibString.slice(string(bMem), start, end))));
+            assertEq(EfficientHashLib.sha2(bMem, start, end), h);
+
+            _checkMemory();
+        }
+    }
 }

@@ -130,11 +130,11 @@ library WebAuthn {
                 let e := add(p, l) // Location of the word after `authenticatorData`.
                 let w := mload(e) // Cache the word after `authenticatorData`.
                 // 19. Compute `sha256(clientDataJSON)`.
-                pop(staticcall(gas(), 2, o, n, e, 0x20))
                 // 20. Compute `sha256(authenticatorData ‖ sha256(clientDataJSON))`.
-                pop(staticcall(gas(), 2, p, add(l, 0x20), 0x00, returndatasize()))
+                // forgefmt: disable-next-item
+                messageHash := mload(staticcall(gas(), 2, p, add(l, 0x20),
+                    staticcall(gas(), 2, o, n, e, 0x20), 0x20))
                 mstore(e, w) // Restore the word after `authenticatorData`, in case of reuse.
-                messageHash := mload(0x00)
                 // `returndatasize()` is `0x20` on `sha256` success, and `0x00` otherwise.
                 if iszero(returndatasize()) { invalid() }
             }
