@@ -129,12 +129,20 @@ contract LibERC7579Test is SoladyTest {
 
     function reencodeBatchAndDecodeBatch(bytes calldata executionData, bytes memory opData)
         public
-        view
         returns (Call[] memory, bytes memory)
     {
-        bytes memory reencoded = LibERC7579.reencodeBatch(executionData, opData);
+        bytes memory reencoded;
+        if (_randomChance(2)) {
+            reencoded = LibERC7579.reencodeBatch(executionData, opData);
+        } else {
+            reencoded = abi.encode(abi.decode(executionData, (Call[])), opData);
+        }
         _checkMemory(reencoded);
-        return this.decodeBatchAndOpData(reencoded);
+        if (_randomChance(2)) {
+            return this.decodeBatchAndOpData(reencoded);
+        } else {
+            return abi.decode(reencoded, (Call[], bytes));
+        }
     }
 
     function decodeBatch(bytes calldata executionData) public pure returns (Call[] memory) {

@@ -271,7 +271,8 @@ library LibERC7579 {
     }
 
     /// @dev Reencodes `executionData` such that it has `opData` added to it.
-    /// Useful for forwarding `executionData` from an entry point to a smart account.
+    /// Like `abi.encode(abi.decode(executionData, (Call[])), opData)`.
+    /// Useful for forwarding `executionData` with extra `opData`.
     /// This function does not perform any check on the validity of `executionData`.
     function reencodeBatch(bytes calldata executionData, bytes memory opData)
         internal
