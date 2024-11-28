@@ -73,7 +73,7 @@ library LibERC7579 {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*             EXECUTION DATA DECODING OPERATIONS             */
+    /*                 EXECUTION DATA OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Decodes a single call execution.
@@ -267,6 +267,35 @@ library LibERC7579 {
             let o := add(c, calldataload(add(c, 0x40)))
             data.offset := add(o, 0x20)
             data.length := calldataload(o)
+        }
+    }
+
+    /// @dev Reencodes `executionData` such that it has `opData` added to it.
+    /// Like `abi.encode(abi.decode(executionData, (Call[])), opData)`.
+    /// Useful for forwarding `executionData` with extra `opData`.
+    /// This function does not perform any check on the validity of `executionData`.
+    function reencodeBatch(bytes calldata executionData, bytes memory opData)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let s := calldataload(executionData.offset) // Offset of `calls`.
+            let n := sub(executionData.length, s) // Byte length of `calls`.
+            mstore(add(result, 0x20), 0x40) // Store the new offset of `calls`.
+            calldatacopy(add(result, 0x60), add(executionData.offset, s), n)
+            mstore(add(result, 0x40), add(0x40, n)) // Store the new offset of `opData`.
+            let o := add(add(result, 0x60), n) // Start offset of `opData` in memory.
+            let d := sub(opData, o) // Offset difference between `opData` and `o`.
+            for { let end := add(mload(opData), add(0x20, o)) } 1 {} {
+                mstore(o, mload(add(o, d)))
+                o := add(o, 0x20)
+                if iszero(lt(o, end)) { break }
+            }
+            mstore(result, sub(o, add(result, 0x20))) // Store the length of `result`.
+            mstore(0x40, o) // Allocate memory.
         }
     }
 
