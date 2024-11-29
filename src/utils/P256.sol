@@ -21,7 +21,9 @@ library P256 {
     /// @dev Address of the Solidity P256 verifier.
     /// Please make sure the contract is deployed onto the chain you are working on.
     /// See: https://gist.github.com/Vectorized/599b0d8a94d21bc74700eb1354e2f55c
-    address internal constant VERIFIER = 0x000000000000E052BBf2730c643462Afb680718A;
+    /// Unlike RIP-7212, this verifier returns `uint256(0)` on failure, to
+    /// facilitate easier existence check. This verifier will also never revert.
+    address internal constant VERIFIER = 0x000000000000cB83347bEB24C695BBb85dBe99b7;
 
     /// @dev Address of the RIP-7212 P256 verifier precompile.
     /// Currently, we don't support EIP-7212's precompile at 0x0b as it has not been finalized.
@@ -56,16 +58,20 @@ library P256 {
             mstore(add(m, 0x40), s)
             mstore(add(m, 0x60), x)
             mstore(add(m, 0x80), y)
-            let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
-            // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
+            mstore(0x00, 0) // Zeroize the return slot before the staticcalls.
+            pop(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20))
+            // RIP-7212 dictates that success returns `uint256(1)`.
+            // But failure returns zero returndata, which is ambiguous.
             if iszero(returndatasize()) {
-                success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
+                pop(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20))
+                // Unlike RIP-7212, the verifier returns `uint256(0)` on failure,
+                // allowing us to use the returndatasize to determine existence.
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
-            isValid := and(eq(1, mload(0x00)), success)
+            isValid := eq(1, mload(0x00))
         }
     }
 
@@ -84,17 +90,21 @@ library P256 {
             mstore(add(m, 0x40), s)
             mstore(add(m, 0x60), x)
             mstore(add(m, 0x80), y)
-            let success := staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20)
-            // `returndatasize` is `0x20` if verifier exists and sufficient gas, else `0x00`.
+            mstore(0x00, 0) // Zeroize the return slot before the staticcalls.
+            pop(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20))
+            // RIP-7212 dictates that success returns `uint256(1)`.
+            // But failure returns zero returndata, which is ambiguous.
             if iszero(returndatasize()) {
-                success := staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)
+                pop(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20))
+                // Unlike RIP-7212, the verifier returns `uint256(0)` on failure,
+                // allowing us to use the returndatasize to determine existence.
                 if iszero(returndatasize()) {
                     mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
                     revert(0x1c, 0x04)
                 }
             }
             // Optimize for happy path. Users are unlikely to pass in malleable signatures.
-            isValid := lt(gt(s, _HALF_N), and(eq(1, mload(0x00)), success))
+            isValid := lt(gt(s, _HALF_N), eq(1, mload(0x00)))
         }
     }
 
