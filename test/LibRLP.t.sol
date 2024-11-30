@@ -468,21 +468,31 @@ contract LibRLPTest is SoladyTest {
 
     function testRLPEncodeListEdgeCases() public {
         for (uint256 i; i < 0x80; ++i) {
+            bytes1 x = bytes1(uint8(i));
+            assertEq(LibRLP.encode(LibRLP.p().p(abi.encodePacked(x))), abi.encodePacked(hex"c1", x));
             assertEq(
-                LibRLP.encode(LibRLP.p().p(abi.encodePacked(bytes1(uint8(i))))),
-                abi.encodePacked(hex"c1", bytes1(uint8(i)))
+                LibRLP.encode(LibRLP.p().p(LibRLP.p().p(abi.encodePacked(x)))),
+                abi.encodePacked(hex"c2c1", x)
             );
         }
         for (uint256 i = 0x80; i <= 0xff; ++i) {
+            bytes1 x = bytes1(uint8(i));
             assertEq(
-                LibRLP.encode(LibRLP.p().p(abi.encodePacked(bytes1(uint8(i))))),
-                abi.encodePacked(hex"c281", bytes1(uint8(i)))
+                LibRLP.encode(LibRLP.p().p(abi.encodePacked(x))), abi.encodePacked(hex"c281", x)
+            );
+            assertEq(
+                LibRLP.encode(LibRLP.p().p(LibRLP.p().p(abi.encodePacked(x)))),
+                abi.encodePacked(hex"c3c281", x)
             );
         }
         for (uint256 i = 0x100; i <= 0x1ff; ++i) {
+            bytes2 x = bytes2(uint16(i));
             assertEq(
-                LibRLP.encode(LibRLP.p().p(abi.encodePacked(bytes2(uint16(i))))),
-                abi.encodePacked(hex"c382", bytes2(uint16(i)))
+                LibRLP.encode(LibRLP.p().p(abi.encodePacked(x))), abi.encodePacked(hex"c382", x)
+            );
+            assertEq(
+                LibRLP.encode(LibRLP.p().p(LibRLP.p().p(abi.encodePacked(x)))),
+                abi.encodePacked(hex"c4c382", x)
             );
         }
     }
