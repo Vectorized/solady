@@ -495,6 +495,30 @@ contract LibRLPTest is SoladyTest {
                 abi.encodePacked(hex"c4c382", x)
             );
         }
+
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(hex"112233445566778899aa")), hex"cb8a112233445566778899aa"
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(new bytes(52))), abi.encodePacked(hex"f5b4", new bytes(52))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(new bytes(53))), abi.encodePacked(hex"f6b5", new bytes(53))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(new bytes(54))), abi.encodePacked(hex"f7b6", new bytes(54))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(new bytes(55))), abi.encodePacked(hex"f838b7", new bytes(55))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(new bytes(56))),
+            abi.encodePacked(hex"f83ab838", new bytes(56))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(new bytes(57))),
+            abi.encodePacked(hex"f83bb839", new bytes(57))
+        );
     }
 
     function _testRLPEncodeUint(uint256 x, bytes memory expected) internal {
