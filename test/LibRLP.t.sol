@@ -543,6 +543,21 @@ contract LibRLPTest is SoladyTest {
         );
     }
 
+    function testRLPEncodeStringEdgeCases() public {
+        assertEq(LibRLP.encode(_repeatFF(3)), abi.encodePacked(hex"83", _repeatFF(3)));
+        assertEq(LibRLP.encode(_repeatFF(7)), abi.encodePacked(hex"87", _repeatFF(7)));
+        assertEq(LibRLP.encode(_repeatFF(52)), abi.encodePacked(hex"b4", _repeatFF(52)));
+        assertEq(LibRLP.encode(_repeatFF(53)), abi.encodePacked(hex"b5", _repeatFF(53)));
+        assertEq(LibRLP.encode(_repeatFF(54)), abi.encodePacked(hex"b6", _repeatFF(54)));
+        assertEq(LibRLP.encode(_repeatFF(55)), abi.encodePacked(hex"b7", _repeatFF(55)));
+        assertEq(LibRLP.encode(_repeatFF(56)), abi.encodePacked(hex"b838", _repeatFF(56)));
+        assertEq(LibRLP.encode(_repeatFF(57)), abi.encodePacked(hex"b839", _repeatFF(57)));
+        assertEq(LibRLP.encode(_repeatFF(254)), abi.encodePacked(hex"b8fe", _repeatFF(254)));
+        assertEq(LibRLP.encode(_repeatFF(255)), abi.encodePacked(hex"b8ff", _repeatFF(255)));
+        assertEq(LibRLP.encode(_repeatFF(256)), abi.encodePacked(hex"b90100", _repeatFF(256)));
+        assertEq(LibRLP.encode(_repeatFF(257)), abi.encodePacked(hex"b90101", _repeatFF(257)));
+    }
+
     function _repeatFF(uint256 n) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
