@@ -223,7 +223,7 @@ library LibRLP {
                     mstore(o_, f_) // Copy `x_`.
                     leave
                 }
-                returndatacopy(returndatasize(), returndatasize(), shr(32, n_))
+                if shr(32, n_) { revert(codesize(), 0x00) }
                 let r_ := add(1, add(lt(0xff, n_), add(lt(0xffff, n_), lt(0xffffff, n_))))
                 mstore(o_, shl(248, add(r_, add(c_, 55)))) // Store the prefix.
                 // Copy `x`.
@@ -265,7 +265,15 @@ library LibRLP {
                     }
                     j_ := encodeAddress(shr(48, mload(h_)), j_)
                 }
-                mstore(o_, sub(j_, add(o_, 0x20)))
+                let n_ := sub(j_, add(o_, 0x20))
+                if iszero(gt(n_, 55)) {
+                    mstore8(o_, add(n_, 0xc0)) // Store the prefix.
+                    mstore(add(0x01, o_), mload(add(0x20, o_)))
+                    mstore(add(0x21, o_), mload(add(0x40, o_)))
+                    _o := add(n_, add(0x01, o_))
+                    leave
+                }
+                mstore(o_, n_)
                 _o := encodeBytes(o_, o_, 0xc0)
             }
             result := mload(0x40)
