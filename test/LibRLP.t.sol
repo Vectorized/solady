@@ -500,25 +500,59 @@ contract LibRLPTest is SoladyTest {
             LibRLP.encode(LibRLP.p().p(hex"112233445566778899aa")), hex"cb8a112233445566778899aa"
         );
         assertEq(
-            LibRLP.encode(LibRLP.p().p(new bytes(52))), abi.encodePacked(hex"f5b4", new bytes(52))
+            LibRLP.encode(LibRLP.p().p(_repeatFF(3))), abi.encodePacked(hex"c483", _repeatFF(3))
         );
         assertEq(
-            LibRLP.encode(LibRLP.p().p(new bytes(53))), abi.encodePacked(hex"f6b5", new bytes(53))
+            LibRLP.encode(LibRLP.p().p(_repeatFF(7))), abi.encodePacked(hex"c887", _repeatFF(7))
         );
         assertEq(
-            LibRLP.encode(LibRLP.p().p(new bytes(54))), abi.encodePacked(hex"f7b6", new bytes(54))
+            LibRLP.encode(LibRLP.p().p(_repeatFF(52))), abi.encodePacked(hex"f5b4", _repeatFF(52))
         );
         assertEq(
-            LibRLP.encode(LibRLP.p().p(new bytes(55))), abi.encodePacked(hex"f838b7", new bytes(55))
+            LibRLP.encode(LibRLP.p().p(_repeatFF(53))), abi.encodePacked(hex"f6b5", _repeatFF(53))
         );
         assertEq(
-            LibRLP.encode(LibRLP.p().p(new bytes(56))),
-            abi.encodePacked(hex"f83ab838", new bytes(56))
+            LibRLP.encode(LibRLP.p().p(_repeatFF(54))), abi.encodePacked(hex"f7b6", _repeatFF(54))
         );
         assertEq(
-            LibRLP.encode(LibRLP.p().p(new bytes(57))),
-            abi.encodePacked(hex"f83bb839", new bytes(57))
+            LibRLP.encode(LibRLP.p().p(_repeatFF(55))), abi.encodePacked(hex"f838b7", _repeatFF(55))
         );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(_repeatFF(56))),
+            abi.encodePacked(hex"f83ab838", _repeatFF(56))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(_repeatFF(57))),
+            abi.encodePacked(hex"f83bb839", _repeatFF(57))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(_repeatFF(254))),
+            abi.encodePacked(hex"f90100b8fe", _repeatFF(254))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(_repeatFF(255))),
+            abi.encodePacked(hex"f90101b8ff", _repeatFF(255))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(_repeatFF(256))),
+            abi.encodePacked(hex"f90103b90100", _repeatFF(256))
+        );
+        assertEq(
+            LibRLP.encode(LibRLP.p().p(_repeatFF(257))),
+            abi.encodePacked(hex"f90104b90101", _repeatFF(257))
+        );
+    }
+
+    function _repeatFF(uint256 n) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, n)
+            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                mstore(add(add(result, 0x20), i), not(0))
+            }
+            mstore(0x40, add(add(result, 0x20), n))
+        }
     }
 
     function _testRLPEncodeUint(uint256 x, bytes memory expected) internal {
