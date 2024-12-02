@@ -37,6 +37,7 @@ accounts
 ├─ LibERC6551 — "Library for interacting with ERC6551 accounts"
 ├─ LibERC7579 — "Library for handling ERC7579 mode and execution data"
 ├─ Receiver — "Receiver mixin for ETH and safe-transferred ERC721 and ERC1155 tokens"
+├─ Timelock — "Simple timelock"
 auth
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"

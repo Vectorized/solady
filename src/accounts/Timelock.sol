@@ -260,18 +260,14 @@ contract Timelock is ERC7821, EnumerableRoles {
         internal
         virtual
     {
-        uint256 j;
-        uint256 n = addresses.length << 5;
-        if (n != uint256(0)) {
-            do {
-                address a;
-                /// @solidity memory-safe-assembly
-                assembly {
-                    a := calldataload(add(addresses.offset, j))
-                    j := add(j, 0x20)
-                }
-                _setRole(a, role, active);
-            } while (j != n);
+        for (uint256 i; i != addresses.length;) {
+            address a;
+            /// @solidity memory-safe-assembly
+            assembly {
+                a := calldataload(add(addresses.offset, shl(5, i)))
+                i := add(i, 1)
+            }
+            _setRole(a, role, active);
         }
     }
 
