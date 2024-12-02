@@ -80,6 +80,16 @@ contract TimelockTest is SoladyTest {
         t.executionData1 = abi.encode(t.calls1, abi.encodePacked(t.id0));
         t.id1 = keccak256(t.executionData1);
 
+        // Must revert if try to execute on an empty id.
+        vm.expectRevert(
+            abi.encodeWithSignature(
+                "TimelockInvalidOperation(bytes32,uint256)",
+                t.id0,
+                _os(Timelock.OperationState.Ready)
+            )
+        );
+        timelock.execute(_SUPPORTED_MODE, t.executionData0);
+
         assertEq(timelock.propose(t.executionData0, _DEFAULT_MIN_DELAY), t.id0);
         assertEq(timelock.propose(t.executionData1, _DEFAULT_MIN_DELAY), t.id1);
 
@@ -280,6 +290,9 @@ contract TimelockTest is SoladyTest {
         public
         pure
     {
+        while (packed & 1 != 0 && packed >> 1 > blockTimestamp) {
+            packed ^= 1;
+        }
         assert(
             _operationStateOptimized(packed, blockTimestamp)
                 == uint8(_operationStateOriginal(packed, blockTimestamp))
@@ -323,7 +336,7 @@ contract TimelockTest is SoladyTest {
         assembly {
             let p := packed
             let t := blockTimestamp
-            result := mul(iszero(iszero(p)), or(mul(3, and(p, 1)), sub(2, lt(t, shr(1, p)))))
+            result := mul(iszero(iszero(p)), add(and(p, 1), sub(2, lt(t, shr(1, p)))))
         }
     }
 
