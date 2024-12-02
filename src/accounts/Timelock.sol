@@ -93,9 +93,9 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// @dev The minimum delay has been set to `newMinDelay`.
     event MinDelaySet(uint256 newMinDelay);
 
-    /// @dev `keccak256(bytes("Proposed(bytes32.bytes.uint256)"))`.
+    /// @dev `keccak256(bytes("Proposed(bytes32,bytes,uint256)"))`.
     uint256 private constant _PROPOSED_EVENT_SIGNATURE =
-        0x669fc92dce88fa911cd7ae8854344e95be1b397d6f4fde0369c400fb11e18c91;
+        0xbebd4e757b91b0f4e9671796f940352b8ce72b4878d18387feb19859ae5c9e25;
 
     /// @dev `keccak256(bytes("Executed(bytes32,bytes)"))`.
     uint256 private constant _EXECUTED_EVENT_SIGNATURE =
@@ -253,18 +253,18 @@ contract Timelock is ERC7821, EnumerableRoles {
         internal
         virtual
     {
-        uint256 i;
+        uint256 j;
         uint256 n = addresses.length << 5;
         if (n != uint256(0)) {
             do {
                 address a;
                 /// @solidity memory-safe-assembly
                 assembly {
-                    a := calldataload(add(addresses.offset, shl(5, i)))
-                    i := add(i, 1)
+                    a := calldataload(add(addresses.offset, j))
+                    j := add(j, 0x20)
                 }
                 _setRole(a, role, active);
-            } while (i != n);
+            } while (j != n);
         }
     }
 
@@ -297,7 +297,7 @@ contract Timelock is ERC7821, EnumerableRoles {
         bytes calldata executionData,
         Call[] calldata calls,
         bytes calldata opData
-    ) internal virtual override(ERC7821) returns (bytes[] memory results) {
+    ) internal virtual override(ERC7821) returns (bytes[] memory) {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
@@ -329,7 +329,7 @@ contract Timelock is ERC7821, EnumerableRoles {
                 }
             }
         }
-        return _execute(calls, opData);
+        return _execute(calls, bytes32(0));
     }
 
     /// @dev This guards the public `setRole` function,

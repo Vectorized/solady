@@ -5,6 +5,52 @@ import "./utils/SoladyTest.sol";
 import {Timelock} from "../src/accounts/Timelock.sol";
 
 contract TimelockTest is SoladyTest {
+    struct Call {
+        address target;
+        int256 value;
+        bytes data;
+    }
+
+    event Proposed(bytes32 indexed id, bytes executionData, uint256 readyTimestamp);
+    event Executed(bytes32 indexed id, bytes executionData);
+    event Cancelled(bytes32 indexed id);
+    event MinDelaySet(uint256 newMinDelay);
+
+    Timelock timelock;
+
+    uint256 internal constant _DEFAULT_MIN_DELAY = 1000;
+    address internal constant _ALICE = address(111);
+    bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000078210001);
+
+    function setUp() public {
+        timelock = new Timelock();
+    }
+
+    function _initializeTimelock() internal {
+        address[] memory a = new address[](2);
+        a[0] = address(this);
+        a[1] = _ALICE;
+        timelock.initialize(_DEFAULT_MIN_DELAY, a, a, a);
+    }
+
+    function testSetAndGetMinDelay(uint256 newMinDelay) public {
+        newMinDelay = _bound(newMinDelay, 0, 2 ** 243 - 1);
+        Call[] memory calls = new Call[](1);
+        calls[0].target = address(timelock);
+        calls[0].data = abi.encodeWithSignature("setMinDelay(uint256)", newMinDelay);
+        _initializeTimelock();
+        bytes memory executionData = abi.encode(calls);
+        vm.expectEmit(true, true, true, true);
+        emit Proposed(keccak256(executionData), executionData, block.timestamp + _DEFAULT_MIN_DELAY);
+        bytes32 id = timelock.propose(executionData, _DEFAULT_MIN_DELAY);
+        vm.warp(block.timestamp + _DEFAULT_MIN_DELAY);
+        vm.expectEmit(true, true, true, true);
+        emit Executed(id, executionData);
+        vm.expectEmit(true, true, true, true);
+        emit MinDelaySet(newMinDelay);
+        timelock.execute(_SUPPORTED_MODE, executionData);
+    }
+
     function testOperationStateDifferentialTrick(uint256 packed, uint256 blockTimestamp)
         public
         pure

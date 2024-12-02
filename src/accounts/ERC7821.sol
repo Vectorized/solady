@@ -107,6 +107,7 @@ contract ERC7821 is Receiver {
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
+    /// The `mode` and `executionData` are passed along in case there's a need to use them.
     function _execute(
         bytes32 mode,
         bytes calldata executionData,
@@ -116,16 +117,6 @@ contract ERC7821 is Receiver {
         // Silence compiler warning on unused variables.
         mode = mode;
         executionData = executionData;
-        return _execute(calls, opData);
-    }
-
-    /// @dev Executes the `calls` and returns the results.
-    /// Reverts and bubbles up error if any call fails.
-    function _execute(Call[] calldata calls, bytes calldata opData)
-        internal
-        virtual
-        returns (bytes[] memory)
-    {
         // Very basic auth to only allow this contract to be called by itself.
         // Override this function to perform more complex auth with `opData`.
         if (opData.length == uint256(0)) {
