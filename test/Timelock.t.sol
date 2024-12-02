@@ -26,7 +26,7 @@ contract TimelockTest is SoladyTest {
     address internal constant _ADMIN = address(777);
     bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000078210001);
 
-    uint256 internal constant _MAX_DELAY = 2 ** 253 - 1;
+    uint256 internal constant _MAX_DELAY = 2 ** 254 - 1;
 
     function setUp() public {
         timelock = new Timelock();
@@ -353,5 +353,25 @@ contract TimelockTest is SoladyTest {
         if (packed & 1 == 1) return Timelock.OperationState.Done;
         if (packed >> 1 > blockTimestamp) return Timelock.OperationState.Waiting;
         return Timelock.OperationState.Ready;
+    }
+
+    function testDelayRestriction(uint256 minDelay, uint256 delay, uint256 blockTimestamp)
+        public
+        pure
+    {
+        check_DelayRestriction(minDelay, delay, blockTimestamp);
+    }
+
+    function check_DelayRestriction(uint256 minDelay, uint256 delay, uint256 blockTimestamp)
+        public
+        pure
+    {
+        uint256 upper = 2 ** 254 - 1;
+        minDelay = minDelay & upper;
+        if (delay < minDelay) delay = minDelay;
+        else delay = delay & upper;
+        blockTimestamp = blockTimestamp & (2 ** 64 - 1);
+        uint256 readyTimestamp = delay + blockTimestamp;
+        assert(readyTimestamp <= 2 ** 255 - 1);
     }
 }
