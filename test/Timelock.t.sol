@@ -22,6 +22,8 @@ contract TimelockTest is SoladyTest {
     address internal constant _ALICE = address(111);
     bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000078210001);
 
+    uint256 internal constant _MAX_DELAY = 2 ** 253 - 1;
+
     function setUp() public {
         timelock = new Timelock();
     }
@@ -34,21 +36,69 @@ contract TimelockTest is SoladyTest {
     }
 
     function testSetAndGetMinDelay(uint256 newMinDelay) public {
-        newMinDelay = _bound(newMinDelay, 0, 2 ** 243 - 1);
+        newMinDelay = _bound(newMinDelay, 0, _MAX_DELAY);
         Call[] memory calls = new Call[](1);
         calls[0].target = address(timelock);
         calls[0].data = abi.encodeWithSignature("setMinDelay(uint256)", newMinDelay);
         _initializeTimelock();
+
         bytes memory executionData = abi.encode(calls);
+
+        if (_randomChance(16)) {
+            uint256 delay = _random();
+            uint256 t = timelock.minDelay();
+            if (delay < t) {
+                vm.expectRevert(
+                    abi.encodeWithSignature("TimelockInsufficientDelay(uint256,uint256)", delay, t)
+                );
+                timelock.propose(executionData, delay);
+                return;
+            } else if (delay > _MAX_DELAY) {
+                vm.expectRevert(Timelock.TimelockDelayOverflow.selector);
+                timelock.propose(executionData, delay);
+                return;
+            }
+        }
+
         vm.expectEmit(true, true, true, true);
         emit Proposed(keccak256(executionData), executionData, block.timestamp + _DEFAULT_MIN_DELAY);
         bytes32 id = timelock.propose(executionData, _DEFAULT_MIN_DELAY);
+
+        if (_randomChance(32)) {
+            vm.warp(block.timestamp + _DEFAULT_MIN_DELAY - 1);
+            vm.expectRevert(
+                abi.encodeWithSignature(
+                    "TimelockInvalidOperation(bytes32,uint256)",
+                    id,
+                    _os(Timelock.OperationState.Ready)
+                )
+            );
+            timelock.execute(_SUPPORTED_MODE, executionData);
+            return;
+        }
+
         vm.warp(block.timestamp + _DEFAULT_MIN_DELAY);
         vm.expectEmit(true, true, true, true);
         emit Executed(id, executionData);
         vm.expectEmit(true, true, true, true);
         emit MinDelaySet(newMinDelay);
         timelock.execute(_SUPPORTED_MODE, executionData);
+        assertEq(timelock.minDelay(), newMinDelay);
+
+        if (_randomChance(8)) {
+            vm.expectRevert(
+                abi.encodeWithSignature(
+                    "TimelockInvalidOperation(bytes32,uint256)",
+                    id,
+                    _os(Timelock.OperationState.Ready)
+                )
+            );
+            timelock.execute(_SUPPORTED_MODE, executionData);
+        }
+    }
+
+    function _os(Timelock.OperationState s) internal pure returns (uint256) {
+        return 1 << uint256(uint8(s));
     }
 
     function testOperationStateDifferentialTrick(uint256 packed, uint256 blockTimestamp)
