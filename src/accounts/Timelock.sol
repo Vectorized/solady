@@ -143,6 +143,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Proposes an `executionData` with `delay`.
+    /// Emits a {Proposed} event.
     function propose(bytes calldata executionData, uint256 delay)
         public
         virtual
@@ -183,6 +184,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     }
 
     /// @dev Cancels the operation with `id`.
+    /// Emits a {Cancelled} event.
     function cancel(bytes32 id) public virtual onlyRole(CANCELLER_ROLE) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -200,6 +202,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     }
 
     /// @dev Allows the timelock itself to set the minimum delay.
+    /// Emits a {MinDelaySet} event.
     function setMinDelay(uint256 newMinDelay) public virtual onlyTimelock {
         /// @solidity memory-safe-assembly
         assembly {
@@ -286,13 +289,13 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// @dev For ERC7821.
     /// To ensure that the function can only be called by the proper role holder.
     /// To ensure that the operation is ready to be executed.
-    /// For updating the operation state.
+    /// Updates the operation state and emits a {Executed} event after the calls.
     function _execute(
         bytes32,
         bytes calldata executionData,
         Call[] calldata calls,
         bytes calldata opData
-    ) internal virtual override(ERC7821) returns (bytes[] memory reuslts) {
+    ) internal virtual override(ERC7821) returns (bytes[] memory results) {
         if (!_hasRole(OPEN_ROLE_HOLDER, EXECUTOR_ROLE)) _checkRole(EXECUTOR_ROLE);
         bytes32 id;
         uint256 s;
@@ -321,7 +324,7 @@ contract Timelock is ERC7821, EnumerableRoles {
                 }
             }
         }
-        reuslts = _execute(calls, id);
+        results = _execute(calls, id);
         /// @solidity memory-safe-assembly
         assembly {
             let p := sload(s)

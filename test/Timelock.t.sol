@@ -20,6 +20,8 @@ contract TimelockTest is SoladyTest {
 
     uint256 internal constant _DEFAULT_MIN_DELAY = 1000;
     address internal constant _ALICE = address(111);
+    address internal constant _BOB = address(222);
+    address internal constant _CHARLIE = address(333);
     bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000078210001);
 
     uint256 internal constant _MAX_DELAY = 2 ** 253 - 1;
@@ -56,16 +58,19 @@ contract TimelockTest is SoladyTest {
     }
 
     function testPredecessor() public {
+        uint256 executorRole = timelock.EXECUTOR_ROLE();
         _PredecessorTestTemps memory t;
         t.calls0 = new Call[](1);
         t.calls0[0].target = address(timelock);
-        t.calls0[0].data = abi.encodeWithSignature("setMinDelay(uint256)", _DEFAULT_MIN_DELAY + 1);
+        t.calls0[0].data =
+            abi.encodeWithSignature("setRole(address,uint256,true)", _BOB, executorRole, true);
         t.executionData0 = abi.encode(t.calls0);
         t.id0 = keccak256(t.executionData0);
 
         t.calls1 = new Call[](1);
         t.calls1[0].target = address(timelock);
-        t.calls1[0].data = abi.encodeWithSignature("setMinDelay(uint256)", _DEFAULT_MIN_DELAY + 2);
+        t.calls1[0].data =
+            abi.encodeWithSignature("setRole(address,uint256,true)", _CHARLIE, executorRole, true);
         t.executionData1 = abi.encode(t.calls1, abi.encodePacked(t.id0));
         t.id1 = keccak256(t.executionData1);
 
@@ -78,9 +83,9 @@ contract TimelockTest is SoladyTest {
         timelock.execute(_SUPPORTED_MODE, t.executionData1);
 
         timelock.execute(_SUPPORTED_MODE, t.executionData0);
-        assertEq(timelock.minDelay(), _DEFAULT_MIN_DELAY + 1);
+        assertEq(timelock.roleHolderCount(executorRole), 3);
         timelock.execute(_SUPPORTED_MODE, t.executionData1);
-        assertEq(timelock.minDelay(), _DEFAULT_MIN_DELAY + 2);
+        assertEq(timelock.roleHolderCount(executorRole), 4);
     }
 
     struct _TestTemps {
