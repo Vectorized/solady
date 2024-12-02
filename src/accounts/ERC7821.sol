@@ -76,7 +76,7 @@ contract ERC7821 is Receiver {
                 opData.length := calldataload(q)
             }
         }
-        return _execute(calls, opData);
+        return _execute(mode, executionData, calls, opData);
     }
 
     /// @dev Provided for execution mode support detection.
@@ -103,6 +103,20 @@ contract ERC7821 is Receiver {
             let m := and(shr(mul(22, 8), mode), 0xffff00000000ffffffff)
             id := or(shl(1, eq(m, 0x01000000000078210001)), eq(m, 0x01000000000000000000))
         }
+    }
+
+    /// @dev Executes the `calls` and returns the results.
+    /// Reverts and bubbles up error if any call fails.
+    function _execute(
+        bytes32 mode,
+        bytes calldata executionData,
+        Call[] calldata calls,
+        bytes calldata opData
+    ) internal virtual returns (bytes[] memory) {
+        // Silence compiler warning on unused variables.
+        mode = mode;
+        executionData = executionData;
+        return _execute(calls, opData);
     }
 
     /// @dev Executes the `calls` and returns the results.

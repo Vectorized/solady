@@ -211,6 +211,17 @@ abstract contract EnumerableRoles {
         (holder, role, active) = (holder, role, active);
     }
 
+    /// @dev Returns if `holder` has `role`.
+    function _hasRole(address holder, uint256 role) internal view virtual returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x18, holder)
+            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
+            mstore(0x00, role)
+            result := sload(keccak256(0x00, 0x38))
+        }
+    }
+
     /// @dev Returns if `holder` has any roles in `encodedRoles`.
     /// `encodedRoles` is `abi.encode(SAMPLE_ROLE_0, SAMPLE_ROLE_1, ...)`.
     function _hasAnyRoles(address holder, bytes memory encodedRoles)
@@ -233,6 +244,11 @@ abstract contract EnumerableRoles {
         }
     }
 
+    /// @dev Throws if the sender does not have `role`.
+    function _checkRole(uint256 role) internal view virtual {
+        if (!_hasRole(msg.sender, role)) _revertEnumerableRolesUnauthorized();
+    }
+
     /// @dev Throws if the sender does not have any roles in `encodedRoles`.
     function _checkRoles(bytes memory encodedRoles) internal view virtual {
         if (!_hasAnyRoles(msg.sender, encodedRoles)) _revertEnumerableRolesUnauthorized();
@@ -246,6 +262,12 @@ abstract contract EnumerableRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         MODIFIERS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Marks a function as only callable by an account with `role`.
+    modifier onlyRole(uint256 role) virtual {
+        _checkRole(role);
+        _;
+    }
 
     /// @dev Marks a function as only callable by an account with any role in `encodedRoles`.
     /// `encodedRoles` is `abi.encode(SAMPLE_ROLE_0, SAMPLE_ROLE_1, ...)`.
