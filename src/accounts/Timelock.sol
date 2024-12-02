@@ -316,7 +316,7 @@ contract Timelock is ERC7821, EnumerableRoles {
             id := keccak256(mload(0x40), executionData.length)
             s := xor(shl(72, id), _TIMELOCK_SLOT)
             let p := sload(s)
-            if or(and(1, p), lt(timestamp(), shr(1, p))) {
+            if or(or(and(1, p), iszero(p)), lt(timestamp(), shr(1, p))) {
                 mstore(0x00, 0xd639b0bf) // `TimelockInvalidOperation(bytes32,uint256)`.
                 mstore(0x20, id)
                 mstore(0x40, 4) // `1 << OperationState.Ready`
@@ -337,7 +337,7 @@ contract Timelock is ERC7821, EnumerableRoles {
         assembly {
             // Recheck the operation after the calls, in case of reentrancy.
             let p := sload(s)
-            if or(and(1, p), lt(timestamp(), shr(1, p))) {
+            if or(or(and(1, p), iszero(p)), lt(timestamp(), shr(1, p))) {
                 mstore(0x00, 0xd639b0bf) // `TimelockInvalidOperation(bytes32,uint256)`.
                 mstore(0x20, id)
                 mstore(0x40, 4) // `1 << OperationState.Ready`
