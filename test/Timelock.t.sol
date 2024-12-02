@@ -23,9 +23,10 @@ contract TimelockTest is SoladyTest {
     address internal constant _ALICE = address(111);
     address internal constant _BOB = address(222);
     address internal constant _CHARLIE = address(333);
+    address internal constant _ADMIN = address(777);
     bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000078210001);
 
-    uint256 internal constant _MAX_DELAY = 2 ** 253 - 1;
+    uint256 internal constant _MAX_DELAY = 2 ** 254 - 1;
 
     function setUp() public {
         timelock = new Timelock();
@@ -34,18 +35,19 @@ contract TimelockTest is SoladyTest {
 
     function _initializeTimelock() internal {
         address[] memory a = new address[](2);
+
         a[0] = address(this);
         a[1] = _ALICE;
-        timelock.initialize(_DEFAULT_MIN_DELAY, a, a, a);
+        timelock.initialize(_DEFAULT_MIN_DELAY, _ADMIN, a, a, a);
     }
 
     function testInitialize() public {
         assertEq(timelock.hasRole(_ALICE, timelock.EXECUTOR_ROLE()), true);
         address[] memory a;
         vm.expectRevert(Timelock.TimelockAlreadyInitialized.selector);
-        timelock.initialize(_MAX_DELAY, a, a, a);
+        timelock.initialize(_MAX_DELAY, _ADMIN, a, a, a);
         vm.expectRevert(Timelock.TimelockDelayOverflow.selector);
-        timelock.initialize(_MAX_DELAY + 1, a, a, a);
+        timelock.initialize(_MAX_DELAY + 1, _ADMIN, a, a, a);
     }
 
     struct _PredecessorTestTemps {
@@ -62,6 +64,7 @@ contract TimelockTest is SoladyTest {
 
     function testPredecessor() public {
         uint256 executorRole = timelock.EXECUTOR_ROLE();
+
         _PredecessorTestTemps memory t;
         t.calls0 = new Call[](1);
         t.calls0[0].target = address(timelock);
@@ -96,12 +99,13 @@ contract TimelockTest is SoladyTest {
         timelock.execute(_SUPPORTED_MODE, t.executionData1);
         assertEq(timelock.roleHolderCount(executorRole), 4);
 
-        vm.expectRevert(Timelock.TimelockUnauthorized.selector);
+        vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
         timelock.setRole(_CHARLIE, executorRole, false);
     }
 
     function testOpenRoleHolder() public {
         uint256 executorRole = timelock.EXECUTOR_ROLE();
+
         _PredecessorTestTemps memory t;
         t.calls0 = new Call[](1);
         t.calls0[0].target = address(timelock);
@@ -133,8 +137,26 @@ contract TimelockTest is SoladyTest {
         timelock.execute(_SUPPORTED_MODE, t.executionData1);
         assertEq(timelock.roleHolderCount(executorRole), 4);
 
-        vm.expectRevert(Timelock.TimelockUnauthorized.selector);
+        vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
         timelock.setRole(_CHARLIE, executorRole, false);
+    }
+
+    function testAdminRole() public {
+        uint256 executorRole = timelock.EXECUTOR_ROLE();
+        uint256 adminRole = timelock.ADMIN_ROLE();
+
+        vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+        timelock.setRole(_CHARLIE, executorRole, false);
+
+        vm.prank(_ADMIN);
+        timelock.setRole(_CHARLIE, executorRole, true);
+
+        vm.prank(_ADMIN);
+        timelock.setRole(_ADMIN, adminRole, false);
+
+        vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+        vm.prank(_ADMIN);
+        timelock.setRole(_ADMIN, adminRole, false);
     }
 
     struct _TestTemps {
@@ -331,5 +353,25 @@ contract TimelockTest is SoladyTest {
         if (packed & 1 == 1) return Timelock.OperationState.Done;
         if (packed >> 1 > blockTimestamp) return Timelock.OperationState.Waiting;
         return Timelock.OperationState.Ready;
+    }
+
+    function testDelayRestriction(uint256 minDelay, uint256 delay, uint256 blockTimestamp)
+        public
+        pure
+    {
+        check_DelayRestriction(minDelay, delay, blockTimestamp);
+    }
+
+    function check_DelayRestriction(uint256 minDelay, uint256 delay, uint256 blockTimestamp)
+        public
+        pure
+    {
+        uint256 upper = 2 ** 254 - 1;
+        minDelay = minDelay & upper;
+        if (delay < minDelay) delay = minDelay;
+        else delay = delay & upper;
+        blockTimestamp = blockTimestamp & (2 ** 64 - 1);
+        uint256 readyTimestamp = delay + blockTimestamp;
+        assert(readyTimestamp <= 2 ** 255 - 1);
     }
 }
