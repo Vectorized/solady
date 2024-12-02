@@ -222,7 +222,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     function minDelay() public view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := sload(_TIMELOCK_SLOT)
+            result := shr(1, sload(_TIMELOCK_SLOT))
         }
     }
 
