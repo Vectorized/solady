@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import {Receiver} from "./Receiver.sol";
+
 /// @notice Minimal batch executor mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC7821.sol)
-contract ERC7821 {
+contract ERC7821 is Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
