@@ -35,6 +35,11 @@ contract TimelockTest is SoladyTest {
         timelock.initialize(_DEFAULT_MIN_DELAY, a, a, a);
     }
 
+    function testInitialize() public {
+        _initializeTimelock();
+        assertEq(timelock.hasRole(_ALICE, timelock.EXECUTOR_ROLE()), true);
+    }
+
     function testSetAndGetMinDelay(uint256 newMinDelay) public {
         newMinDelay = _bound(newMinDelay, 0, _MAX_DELAY);
         Call[] memory calls = new Call[](1);
