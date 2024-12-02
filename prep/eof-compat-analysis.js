@@ -31,6 +31,10 @@ async function main() {
     'selfdestruct', 'callcode'
   ];
 
+  let specialPatterns = [
+    {name: 'returndatacopyOGG', reStr: 'returndatacopy\\([\\s\\S]*?,[\\s\\S]*?returndatasize'}
+  ]
+
   let flattenedPathsAndScores = [];
 
   ['src'].forEach(dir => {
@@ -49,6 +53,11 @@ async function main() {
         }
         totalScore += score;
         scores[opcode] = score;
+      });
+      specialPatterns.forEach(c => {
+        const score = numMatches(c.reStr);
+        totalScore += score;
+        scores[c.name] = score;
       });
       if (redundantGasCount) scores['gas'] -= redundantGasCount;
       for (const key in scores) if (scores[key] === 0) delete scores[key];
