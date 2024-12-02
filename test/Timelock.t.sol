@@ -43,59 +43,72 @@ contract TimelockTest is SoladyTest {
         timelock.initialize(_random(), a, a, a);
     }
 
+    struct _TestTemps {
+        Call[] calls;
+        bytes executionData;
+        bytes32 id;
+        uint256 delay;
+        uint256 minDelay;
+        uint256 readyTimestamp;
+    }
+
     function testSetAndGetMinDelay(uint256 newMinDelay) public {
         newMinDelay = _bound(newMinDelay, 0, _MAX_DELAY);
-        Call[] memory calls = new Call[](1);
-        calls[0].target = address(timelock);
-        calls[0].data = abi.encodeWithSignature("setMinDelay(uint256)", newMinDelay);
+        _TestTemps memory t;
+        t.calls = new Call[](1);
+        t.calls[0].target = address(timelock);
+        t.calls[0].data = abi.encodeWithSignature("setMinDelay(uint256)", newMinDelay);
         _initializeTimelock();
 
-        bytes memory executionData = abi.encode(calls);
-        bytes32 id = keccak256(executionData);
+        t.executionData = abi.encode(t.calls);
+        t.id = keccak256(t.executionData);
 
         if (_randomChance(16)) {
-            uint256 delay = _random();
-            uint256 t = timelock.minDelay();
-            if (delay < t) {
+            t.delay = _random();
+            t.minDelay = timelock.minDelay();
+            if (t.delay < t.minDelay) {
                 vm.expectRevert(
-                    abi.encodeWithSignature("TimelockInsufficientDelay(uint256,uint256)", delay, t)
+                    abi.encodeWithSignature(
+                        "TimelockInsufficientDelay(uint256,uint256)", t.delay, t.minDelay
+                    )
                 );
-                timelock.propose(executionData, delay);
+                timelock.propose(t.executionData, t.delay);
                 return;
-            } else if (delay > _MAX_DELAY) {
+            } else if (t.delay > _MAX_DELAY) {
                 vm.expectRevert(Timelock.TimelockDelayOverflow.selector);
-                timelock.propose(executionData, delay);
+                timelock.propose(t.executionData, t.delay);
                 return;
             }
         }
 
-        assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Unset));
-        assertEq(timelock.readyTimestamp(id), 0);
+        assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Unset));
+        assertEq(timelock.readyTimestamp(t.id), 0);
 
         if (_randomChance(64)) {
             vm.expectRevert(
                 abi.encodeWithSignature(
                     "TimelockInvalidOperation(bytes32,uint256)",
-                    id,
+                    t.id,
                     _os(Timelock.OperationState.Ready) | _os(Timelock.OperationState.Waiting)
                 )
             );
-            timelock.cancel(id);
+            timelock.cancel(t.id);
         }
 
+        t.readyTimestamp = block.timestamp + _DEFAULT_MIN_DELAY;
         vm.expectEmit(true, true, true, true);
-        emit Proposed(id, executionData, block.timestamp + _DEFAULT_MIN_DELAY);
-        assertEq(timelock.propose(executionData, _DEFAULT_MIN_DELAY), id);
+        emit Proposed(t.id, t.executionData, t.readyTimestamp);
+        assertEq(timelock.propose(t.executionData, _DEFAULT_MIN_DELAY), t.id);
 
-        assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Waiting));
-        assertEq(timelock.readyTimestamp(id), block.timestamp + _DEFAULT_MIN_DELAY);
+        assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Waiting));
+        assertEq(timelock.readyTimestamp(t.id), t.readyTimestamp);
 
         if (_randomChance(16)) {
             vm.warp(block.timestamp + _bound(_random(), 0, _DEFAULT_MIN_DELAY * 2));
             vm.expectEmit(true, true, true, true);
-            emit Cancelled(id);
-            timelock.cancel(id);
-            assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Unset));
+            emit Cancelled(t.id);
+            timelock.cancel(t.id);
+            assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Unset));
             return;
         }
 
@@ -104,33 +117,34 @@ contract TimelockTest is SoladyTest {
             vm.expectRevert(
                 abi.encodeWithSignature(
                     "TimelockInvalidOperation(bytes32,uint256)",
-                    id,
+                    t.id,
                     _os(Timelock.OperationState.Ready)
                 )
             );
-            timelock.execute(_SUPPORTED_MODE, executionData);
+            timelock.execute(_SUPPORTED_MODE, t.executionData);
             return;
         }
 
         vm.warp(block.timestamp + _DEFAULT_MIN_DELAY);
-        assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Ready));
+        assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Ready));
         vm.expectEmit(true, true, true, true);
-        emit Executed(id, executionData);
+        emit Executed(t.id, t.executionData);
         vm.expectEmit(true, true, true, true);
         emit MinDelaySet(newMinDelay);
-        timelock.execute(_SUPPORTED_MODE, executionData);
+        timelock.execute(_SUPPORTED_MODE, t.executionData);
         assertEq(timelock.minDelay(), newMinDelay);
-        assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Done));
+        assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Done));
+        assertEq(timelock.readyTimestamp(t.id), t.readyTimestamp);
 
         if (_randomChance(8)) {
             vm.expectRevert(
                 abi.encodeWithSignature(
                     "TimelockInvalidOperation(bytes32,uint256)",
-                    id,
+                    t.id,
                     _os(Timelock.OperationState.Ready)
                 )
             );
-            timelock.execute(_SUPPORTED_MODE, executionData);
+            timelock.execute(_SUPPORTED_MODE, t.executionData);
         }
     }
 
