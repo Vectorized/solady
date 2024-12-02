@@ -8,7 +8,6 @@ import "./accounts/ERC6551.sol";
 import "./accounts/ERC6551Proxy.sol";
 import "./accounts/ERC7821.sol";
 import "./accounts/LibERC6551.sol";
-import "./accounts/Pod.sol";
 import "./accounts/Receiver.sol";
 import "./auth/Ownable.sol";
 import "./auth/OwnableRoles.sol";
