@@ -12,17 +12,22 @@ contract Timelock is ERC7821, EnumerableRoles {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Role that can add / remove roles without wait time.
+    /// This role cannot directly propose, execute, or cancel.
+    /// This role is NOT exempt from the execution wait time.
+    uint256 public constant ADMIN_ROLE = 0;
+
     /// @dev Role that can propose operations.
-    uint256 public constant PROPOSER_ROLE = 0;
+    uint256 public constant PROPOSER_ROLE = 1;
 
     /// @dev Role that can execute operations.
-    uint256 public constant EXECUTOR_ROLE = 1;
+    uint256 public constant EXECUTOR_ROLE = 2;
 
     /// @dev Role that can cancel proposed operations.
-    uint256 public constant CANCELLER_ROLE = 2;
+    uint256 public constant CANCELLER_ROLE = 3;
 
     /// @dev The maximum role.
-    uint256 public constant MAX_ROLE = 2;
+    uint256 public constant MAX_ROLE = 3;
 
     /// @dev Assign this holder to a role to allow anyone to call
     /// the function guarded by `onlyRoleOrOpenRole`.
@@ -118,6 +123,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// @dev Initializes the timelock contract.
     function initialize(
         uint256 initialMinDelay,
+        address initialAdmin,
         address[] calldata proposers,
         address[] calldata executors,
         address[] calldata cancellers
@@ -134,6 +140,9 @@ contract Timelock is ERC7821, EnumerableRoles {
                 revert(0x1c, 0x04)
             }
             sstore(s, or(shl(1, initialMinDelay), 1))
+        }
+        if (initialAdmin != address(0)) {
+            _setRole(initialAdmin, ADMIN_ROLE, true);
         }
         _bulkSetRole(proposers, PROPOSER_ROLE, true);
         _bulkSetRole(executors, EXECUTOR_ROLE, true);
@@ -207,9 +216,13 @@ contract Timelock is ERC7821, EnumerableRoles {
 
     /// @dev Allows the timelock itself to set the minimum delay.
     /// Emits a {MinDelaySet} event.
-    function setMinDelay(uint256 newMinDelay) public virtual onlyTimelock {
+    function setMinDelay(uint256 newMinDelay) public virtual {
         /// @solidity memory-safe-assembly
         assembly {
+            if iszero(eq(caller(), address())) {
+                mstore(0x00, 0x55140ae8) // `TimelockUnauthorized()`.
+                revert(0x1c, 0x04)
+            }
             if shr(253, newMinDelay) {
                 mstore(0x00, 0xd1efaf25) // `TimelockDelayOverflow()`.
                 revert(0x1c, 0x04)
@@ -269,18 +282,6 @@ contract Timelock is ERC7821, EnumerableRoles {
             }
             _setRole(a, role, active);
         }
-    }
-
-    /// @dev Guards a function such that it can only be executed by the timelock itself.
-    modifier onlyTimelock() virtual {
-        /// @solidity memory-safe-assembly
-        assembly {
-            if iszero(eq(caller(), address())) {
-                mstore(0x00, 0x55140ae8) // `TimelockUnauthorized()`.
-                revert(0x1c, 0x04)
-            }
-        }
-        _;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -347,11 +348,8 @@ contract Timelock is ERC7821, EnumerableRoles {
     }
 
     /// @dev This guards the public `setRole` function,
-    /// such that it can only be called by the timelock itself.
-    function _authorizeSetRole(address, uint256, bool)
-        internal
-        virtual
-        override(EnumerableRoles)
-        onlyTimelock
-    {}
+    /// such that it can only be called by the timelock itself, or an admin.
+    function _authorizeSetRole(address, uint256, bool) internal virtual override(EnumerableRoles) {
+        if (msg.sender != address(this)) _checkRole(ADMIN_ROLE);
+    }
 }
