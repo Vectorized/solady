@@ -279,35 +279,29 @@ contract Timelock is ERC7821, EnumerableRoles {
         _;
     }
 
-    /// @dev Guards a function such that it can only be executed by a caller with `role`,
-    /// or by anyone if the `OPEN_ROLE_HOLDER` has been assigned `role`.
-    modifier onlyRoleOrOpenRole(uint256 role) virtual {
-        if (!_hasRole(OPEN_ROLE_HOLDER, role)) _checkRole(role);
-        _;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OVERRIDES                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Overide
+    /// @dev For ERC7821.
+    /// To ensure that the function can only be called by the proper role holder.
+    /// To ensure that the operation is ready to be executed.
+    /// For updating the operation state.
     function _execute(
         bytes32,
         bytes calldata executionData,
         Call[] calldata calls,
         bytes calldata opData
-    ) internal virtual override(ERC7821) returns (bytes[] memory) {
+    ) internal virtual override(ERC7821) returns (bytes[] memory reuslts) {
+        if (!_hasRole(OPEN_ROLE_HOLDER, EXECUTOR_ROLE)) _checkRole(EXECUTOR_ROLE);
+        bytes32 id;
+        uint256 s;
         /// @solidity memory-safe-assembly
         assembly {
-            let m := mload(0x40)
             // Copies the `executionData` for the event and to compute the `id`.
-            calldatacopy(add(m, 0x40), executionData.offset, executionData.length)
-            let id := keccak256(add(m, 0x40), executionData.length)
-            mstore(m, 0x20)
-            mstore(add(m, 0x20), executionData.length)
-            // Emits the {Executed} event. We will just do it here to save gas.
-            log2(m, add(0x40, executionData.length), _EXECUTED_EVENT_SIGNATURE, id)
-            let s := xor(shl(72, id), _TIMELOCK_SLOT)
+            calldatacopy(mload(0x40), executionData.offset, executionData.length)
+            id := keccak256(mload(0x40), executionData.length)
+            s := xor(shl(72, id), _TIMELOCK_SLOT)
             let p := sload(s)
             if or(or(and(1, p), iszero(p)), lt(timestamp(), shr(1, p))) {
                 mstore(0x00, 0xd639b0bf) // `TimelockInvalidOperation(bytes32,uint256)`.
@@ -315,7 +309,6 @@ contract Timelock is ERC7821, EnumerableRoles {
                 mstore(0x40, 4) // `1 << OperationState.Ready`
                 revert(0x1c, 0x44)
             }
-            sstore(s, or(1, p)) // Set the operation as executed in the storage.
             // Check if optional predecessor has been executed.
             if iszero(lt(opData.length, 0x20)) {
                 let predecessor := calldataload(opData.offset)
@@ -328,7 +321,25 @@ contract Timelock is ERC7821, EnumerableRoles {
                 }
             }
         }
-        return _execute(calls, bytes32(0));
+        reuslts = _execute(calls, id);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let p := sload(s)
+            if or(or(and(1, p), iszero(p)), lt(timestamp(), shr(1, p))) {
+                mstore(0x00, 0xd639b0bf) // `TimelockInvalidOperation(bytes32,uint256)`.
+                mstore(0x20, id)
+                mstore(0x40, 4) // `1 << OperationState.Ready`
+                revert(0x1c, 0x44)
+            }
+            let m := mload(0x40)
+            // Copies the `executionData` for the event.
+            calldatacopy(add(m, 0x40), executionData.offset, executionData.length)
+            mstore(m, 0x20)
+            mstore(add(m, 0x20), executionData.length)
+            // Emits the {Executed} event. We will just do it here to save gas.
+            log2(m, add(0x40, executionData.length), _EXECUTED_EVENT_SIGNATURE, id)
+            sstore(s, or(1, p)) // Set the operation as executed in the storage.
+        }
     }
 
     /// @dev This guards the public `setRole` function,

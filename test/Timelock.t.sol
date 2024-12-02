@@ -26,6 +26,7 @@ contract TimelockTest is SoladyTest {
 
     function setUp() public {
         timelock = new Timelock();
+        _initializeTimelock();
     }
 
     function _initializeTimelock() internal {
@@ -36,11 +37,50 @@ contract TimelockTest is SoladyTest {
     }
 
     function testInitialize() public {
-        _initializeTimelock();
         assertEq(timelock.hasRole(_ALICE, timelock.EXECUTOR_ROLE()), true);
         address[] memory a;
         vm.expectRevert(Timelock.TimelockAlreadyInitialized.selector);
         timelock.initialize(_random(), a, a, a);
+    }
+
+    struct _PredecessorTestTemps {
+        Call[] calls0;
+        Call[] calls1;
+        bytes executionData0;
+        bytes executionData1;
+        bytes32 id0;
+        bytes32 id1;
+        uint256 delay;
+        uint256 minDelay;
+        uint256 readyTimestamp;
+    }
+
+    function testPredecessor() public {
+        _PredecessorTestTemps memory t;
+        t.calls0 = new Call[](1);
+        t.calls0[0].target = address(timelock);
+        t.calls0[0].data = abi.encodeWithSignature("setMinDelay(uint256)", _DEFAULT_MIN_DELAY + 1);
+        t.executionData0 = abi.encode(t.calls0);
+        t.id0 = keccak256(t.executionData0);
+
+        t.calls1 = new Call[](1);
+        t.calls1[0].target = address(timelock);
+        t.calls1[0].data = abi.encodeWithSignature("setMinDelay(uint256)", _DEFAULT_MIN_DELAY + 2);
+        t.executionData1 = abi.encode(t.calls1, abi.encodePacked(t.id0));
+        t.id1 = keccak256(t.executionData1);
+
+        assertEq(timelock.propose(t.executionData0, _DEFAULT_MIN_DELAY), t.id0);
+        assertEq(timelock.propose(t.executionData1, _DEFAULT_MIN_DELAY), t.id1);
+
+        t.readyTimestamp = block.timestamp + _DEFAULT_MIN_DELAY;
+        vm.warp(t.readyTimestamp);
+        vm.expectRevert(abi.encodeWithSignature("TimelockUnexecutedPredecessor(bytes32)", t.id0));
+        timelock.execute(_SUPPORTED_MODE, t.executionData1);
+
+        timelock.execute(_SUPPORTED_MODE, t.executionData0);
+        assertEq(timelock.minDelay(), _DEFAULT_MIN_DELAY + 1);
+        timelock.execute(_SUPPORTED_MODE, t.executionData1);
+        assertEq(timelock.minDelay(), _DEFAULT_MIN_DELAY + 2);
     }
 
     struct _TestTemps {
@@ -53,12 +93,13 @@ contract TimelockTest is SoladyTest {
     }
 
     function testSetAndGetMinDelay(uint256 newMinDelay) public {
+        vm.warp(block.timestamp + _bound(_random(), 0, 0xffffffff));
+
         newMinDelay = _bound(newMinDelay, 0, _MAX_DELAY);
         _TestTemps memory t;
         t.calls = new Call[](1);
         t.calls[0].target = address(timelock);
         t.calls[0].data = abi.encodeWithSignature("setMinDelay(uint256)", newMinDelay);
-        _initializeTimelock();
 
         t.executionData = abi.encode(t.calls);
         t.id = keccak256(t.executionData);
@@ -113,7 +154,7 @@ contract TimelockTest is SoladyTest {
         }
 
         if (_randomChance(32)) {
-            vm.warp(block.timestamp + _DEFAULT_MIN_DELAY - 1);
+            vm.warp(t.readyTimestamp - 1);
             vm.expectRevert(
                 abi.encodeWithSignature(
                     "TimelockInvalidOperation(bytes32,uint256)",
@@ -125,12 +166,12 @@ contract TimelockTest is SoladyTest {
             return;
         }
 
-        vm.warp(block.timestamp + _DEFAULT_MIN_DELAY);
+        vm.warp(t.readyTimestamp);
         assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Ready));
         vm.expectEmit(true, true, true, true);
-        emit Executed(t.id, t.executionData);
-        vm.expectEmit(true, true, true, true);
         emit MinDelaySet(newMinDelay);
+        vm.expectEmit(true, true, true, true);
+        emit Executed(t.id, t.executionData);
         timelock.execute(_SUPPORTED_MODE, t.executionData);
         assertEq(timelock.minDelay(), newMinDelay);
         assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Done));
