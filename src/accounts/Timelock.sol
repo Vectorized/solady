@@ -195,8 +195,7 @@ contract Timelock is ERC7821, EnumerableRoles {
                 revert(0x1c, 0x44)
             }
             sstore(s, 0)
-            mstore(0x00, id)
-            log1(0x00, 0x20, _CANCELLED_EVENT_SIGNATURE)
+            log2(0x00, 0x00, _CANCELLED_EVENT_SIGNATURE, id)
         }
     }
 

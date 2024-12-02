@@ -38,6 +38,9 @@ contract TimelockTest is SoladyTest {
     function testInitialize() public {
         _initializeTimelock();
         assertEq(timelock.hasRole(_ALICE, timelock.EXECUTOR_ROLE()), true);
+        address[] memory a;
+        vm.expectRevert(Timelock.TimelockAlreadyInitialized.selector);
+        timelock.initialize(_random(), a, a, a);
     }
 
     function testSetAndGetMinDelay(uint256 newMinDelay) public {
@@ -48,6 +51,7 @@ contract TimelockTest is SoladyTest {
         _initializeTimelock();
 
         bytes memory executionData = abi.encode(calls);
+        bytes32 id = keccak256(executionData);
 
         if (_randomChance(16)) {
             uint256 delay = _random();
@@ -65,9 +69,33 @@ contract TimelockTest is SoladyTest {
             }
         }
 
+        assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Unset));
+
+        if (_randomChance(64)) {
+            vm.expectRevert(
+                abi.encodeWithSignature(
+                    "TimelockInvalidOperation(bytes32,uint256)",
+                    id,
+                    _os(Timelock.OperationState.Ready) | _os(Timelock.OperationState.Waiting)
+                )
+            );
+            timelock.cancel(id);
+        }
+
         vm.expectEmit(true, true, true, true);
-        emit Proposed(keccak256(executionData), executionData, block.timestamp + _DEFAULT_MIN_DELAY);
-        bytes32 id = timelock.propose(executionData, _DEFAULT_MIN_DELAY);
+        emit Proposed(id, executionData, block.timestamp + _DEFAULT_MIN_DELAY);
+        assertEq(timelock.propose(executionData, _DEFAULT_MIN_DELAY), id);
+
+        assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Waiting));
+
+        if (_randomChance(16)) {
+            vm.warp(block.timestamp + _bound(_random(), 0, _DEFAULT_MIN_DELAY * 2));
+            vm.expectEmit(true, true, true, true);
+            emit Cancelled(id);
+            timelock.cancel(id);
+            assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Unset));
+            return;
+        }
 
         if (_randomChance(32)) {
             vm.warp(block.timestamp + _DEFAULT_MIN_DELAY - 1);
@@ -83,12 +111,14 @@ contract TimelockTest is SoladyTest {
         }
 
         vm.warp(block.timestamp + _DEFAULT_MIN_DELAY);
+        assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Ready));
         vm.expectEmit(true, true, true, true);
         emit Executed(id, executionData);
         vm.expectEmit(true, true, true, true);
         emit MinDelaySet(newMinDelay);
         timelock.execute(_SUPPORTED_MODE, executionData);
         assertEq(timelock.minDelay(), newMinDelay);
+        assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Done));
 
         if (_randomChance(8)) {
             vm.expectRevert(
