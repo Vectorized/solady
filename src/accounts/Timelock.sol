@@ -73,8 +73,10 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// Bits layout:
     /// - [0]       `initialized`.
     /// - [1..254]  `minDelay`.
-    /// The location of the `operationState[id]` is given by:
-    /// `xor(shl(72, id), _TIMELOCK_SLOT)`.
+    /// Slot of operation `id` is given by: `xor(shl(72, id), _TIMELOCK_SLOT)`.
+    /// Bits layout:
+    /// - [0]       `done`.
+    /// - [1..254]  `readyTimestamp`.
     uint256 private constant _TIMELOCK_SLOT = 0x477f2812565c76a73f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
