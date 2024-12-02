@@ -122,13 +122,13 @@ contract Timelock is ERC7821, EnumerableRoles {
     ) public virtual {
         /// @solidity memory-safe-assembly
         assembly {
+            if shr(253, initialMinDelay) {
+                mstore(0x00, 0xd1efaf25) // `TimelockDelayOverflow()`.
+                revert(0x1c, 0x04)
+            }
             let s := _TIMELOCK_SLOT
             if and(sload(s), 1) {
                 mstore(0x00, 0xc44f149c) // `TimelockAlreadyInitialized()`.
-                revert(0x1c, 0x04)
-            }
-            if shr(253, initialMinDelay) {
-                mstore(0x00, 0xd1efaf25) // `TimelockDelayOverflow()`.
                 revert(0x1c, 0x04)
             }
             sstore(s, or(shl(1, initialMinDelay), 1))
@@ -153,19 +153,19 @@ contract Timelock is ERC7821, EnumerableRoles {
         uint256 t = minDelay();
         /// @solidity memory-safe-assembly
         assembly {
-            let m := mload(0x40)
-            calldatacopy(add(m, 0x60), executionData.offset, executionData.length)
-            id := keccak256(add(m, 0x60), executionData.length)
+            if shr(253, delay) {
+                mstore(0x00, 0xd1efaf25) // `TimelockDelayOverflow()`.
+                revert(0x1c, 0x04)
+            }
             if lt(delay, t) {
                 mstore(0x00, 0x54336609) // `TimelockInsufficientDelay(uint256,uint256)`.
                 mstore(0x20, delay)
                 mstore(0x40, t)
                 revert(0x1c, 0x44)
             }
-            if shr(253, delay) {
-                mstore(0x00, 0xd1efaf25) // `TimelockDelayOverflow()`.
-                revert(0x1c, 0x04)
-            }
+            let m := mload(0x40)
+            calldatacopy(add(m, 0x60), executionData.offset, executionData.length)
+            id := keccak256(add(m, 0x60), executionData.length)
             let s := xor(shl(72, id), _TIMELOCK_SLOT)
             let p := sload(s)
             if p {
@@ -176,7 +176,8 @@ contract Timelock is ERC7821, EnumerableRoles {
             }
             mstore(m, 0x40)
             t := add(delay, timestamp())
-            sstore(s, shl(1, t))
+            sstore(s, shl(1, t)) // Update the operation in the storage.
+            /// Emits the {Proposed} event.
             mstore(add(m, 0x20), t)
             mstore(add(m, 0x40), executionData.length)
             log2(m, add(0x60, executionData.length), _PROPOSED_EVENT_SIGNATURE, id)
@@ -197,6 +198,7 @@ contract Timelock is ERC7821, EnumerableRoles {
                 revert(0x1c, 0x44)
             }
             sstore(s, 0)
+            /// Emits the {Cancelled} event.
             log2(0x00, 0x00, _CANCELLED_EVENT_SIGNATURE, id)
         }
     }
@@ -211,6 +213,7 @@ contract Timelock is ERC7821, EnumerableRoles {
                 revert(0x1c, 0x04)
             }
             sstore(_TIMELOCK_SLOT, or(shl(1, newMinDelay), 1))
+            /// Emits the {SetMinDelay} event.
             mstore(0x00, newMinDelay)
             log1(0x00, 0x20, _MIN_DELAY_SET_EVENT_SIGNATURE)
         }
@@ -275,7 +278,7 @@ contract Timelock is ERC7821, EnumerableRoles {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(eq(caller(), address())) {
-                mstore(0x00, 0x55140ae8) // ~TimelockUnauthorized()`.
+                mstore(0x00, 0x55140ae8) // `TimelockUnauthorized()`.
                 revert(0x1c, 0x04)
             }
         }
@@ -339,7 +342,7 @@ contract Timelock is ERC7821, EnumerableRoles {
             calldatacopy(add(m, 0x40), executionData.offset, executionData.length)
             mstore(m, 0x20)
             mstore(add(m, 0x20), executionData.length)
-            // Emits the {Executed} event. We will just do it here to save gas.
+            // Emits the {Executed} event.
             log2(m, add(0x40, executionData.length), _EXECUTED_EVENT_SIGNATURE, id)
             sstore(s, or(1, p)) // Set the operation as executed in the storage.
         }

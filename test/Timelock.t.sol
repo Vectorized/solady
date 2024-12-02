@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {Timelock} from "../src/accounts/Timelock.sol";
+import {EnumerableRoles} from "../src/auth/EnumerableRoles.sol";
 
 contract TimelockTest is SoladyTest {
     struct Call {
@@ -42,7 +43,9 @@ contract TimelockTest is SoladyTest {
         assertEq(timelock.hasRole(_ALICE, timelock.EXECUTOR_ROLE()), true);
         address[] memory a;
         vm.expectRevert(Timelock.TimelockAlreadyInitialized.selector);
-        timelock.initialize(_random(), a, a, a);
+        timelock.initialize(_MAX_DELAY, a, a, a);
+        vm.expectRevert(Timelock.TimelockDelayOverflow.selector);
+        timelock.initialize(_MAX_DELAY + 1, a, a, a);
     }
 
     struct _PredecessorTestTemps {
@@ -63,14 +66,55 @@ contract TimelockTest is SoladyTest {
         t.calls0 = new Call[](1);
         t.calls0[0].target = address(timelock);
         t.calls0[0].data =
-            abi.encodeWithSignature("setRole(address,uint256,true)", _BOB, executorRole, true);
+            abi.encodeWithSignature("setRole(address,uint256,bool)", _BOB, executorRole, true);
         t.executionData0 = abi.encode(t.calls0);
         t.id0 = keccak256(t.executionData0);
 
         t.calls1 = new Call[](1);
         t.calls1[0].target = address(timelock);
         t.calls1[0].data =
-            abi.encodeWithSignature("setRole(address,uint256,true)", _CHARLIE, executorRole, true);
+            abi.encodeWithSignature("setRole(address,uint256,bool)", _CHARLIE, executorRole, true);
+        t.executionData1 = abi.encode(t.calls1, abi.encodePacked(t.id0));
+        t.id1 = keccak256(t.executionData1);
+
+        assertEq(timelock.propose(t.executionData0, _DEFAULT_MIN_DELAY), t.id0);
+        assertEq(timelock.propose(t.executionData1, _DEFAULT_MIN_DELAY), t.id1);
+
+        t.readyTimestamp = block.timestamp + _DEFAULT_MIN_DELAY;
+        vm.warp(t.readyTimestamp);
+        vm.expectRevert(abi.encodeWithSignature("TimelockUnexecutedPredecessor(bytes32)", t.id0));
+        timelock.execute(_SUPPORTED_MODE, t.executionData1);
+
+        vm.prank(_BOB);
+        vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+        timelock.execute(_SUPPORTED_MODE, t.executionData0);
+
+        timelock.execute(_SUPPORTED_MODE, t.executionData0);
+        assertEq(timelock.roleHolderCount(executorRole), 3);
+
+        vm.prank(_BOB);
+        timelock.execute(_SUPPORTED_MODE, t.executionData1);
+        assertEq(timelock.roleHolderCount(executorRole), 4);
+
+        vm.expectRevert(Timelock.TimelockUnauthorized.selector);
+        timelock.setRole(_CHARLIE, executorRole, false);
+    }
+
+    function testOpenRoleHolder() public {
+        uint256 executorRole = timelock.EXECUTOR_ROLE();
+        _PredecessorTestTemps memory t;
+        t.calls0 = new Call[](1);
+        t.calls0[0].target = address(timelock);
+        t.calls0[0].data = abi.encodeWithSignature(
+            "setRole(address,uint256,bool)", timelock.OPEN_ROLE_HOLDER(), executorRole, true
+        );
+        t.executionData0 = abi.encode(t.calls0);
+        t.id0 = keccak256(t.executionData0);
+
+        t.calls1 = new Call[](1);
+        t.calls1[0].target = address(timelock);
+        t.calls1[0].data =
+            abi.encodeWithSignature("setRole(address,uint256,bool)", _CHARLIE, executorRole, true);
         t.executionData1 = abi.encode(t.calls1, abi.encodePacked(t.id0));
         t.id1 = keccak256(t.executionData1);
 
@@ -84,8 +128,13 @@ contract TimelockTest is SoladyTest {
 
         timelock.execute(_SUPPORTED_MODE, t.executionData0);
         assertEq(timelock.roleHolderCount(executorRole), 3);
+
+        vm.prank(_BOB);
         timelock.execute(_SUPPORTED_MODE, t.executionData1);
         assertEq(timelock.roleHolderCount(executorRole), 4);
+
+        vm.expectRevert(Timelock.TimelockUnauthorized.selector);
+        timelock.setRole(_CHARLIE, executorRole, false);
     }
 
     struct _TestTemps {
