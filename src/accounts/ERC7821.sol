@@ -76,7 +76,7 @@ contract ERC7821 is Receiver {
                 opData.length := calldataload(q)
             }
         }
-        return _execute(calls, opData);
+        return _execute(mode, executionData, calls, opData);
     }
 
     /// @dev Provided for execution mode support detection.
@@ -107,11 +107,16 @@ contract ERC7821 is Receiver {
 
     /// @dev Executes the `calls` and returns the results.
     /// Reverts and bubbles up error if any call fails.
-    function _execute(Call[] calldata calls, bytes calldata opData)
-        internal
-        virtual
-        returns (bytes[] memory)
-    {
+    /// The `mode` and `executionData` are passed along in case there's a need to use them.
+    function _execute(
+        bytes32 mode,
+        bytes calldata executionData,
+        Call[] calldata calls,
+        bytes calldata opData
+    ) internal virtual returns (bytes[] memory) {
+        // Silence compiler warning on unused variables.
+        mode = mode;
+        executionData = executionData;
         // Very basic auth to only allow this contract to be called by itself.
         // Override this function to perform more complex auth with `opData`.
         if (opData.length == uint256(0)) {

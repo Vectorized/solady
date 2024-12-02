@@ -9,7 +9,7 @@ import {Brutalizer} from "../Brutalizer.sol";
 contract MockERC7821 is ERC7821, Brutalizer {
     bytes public lastOpData;
 
-    function _execute(Call[] calldata calls, bytes calldata opData)
+    function _execute(bytes32, bytes calldata, Call[] calldata calls, bytes calldata opData)
         internal
         virtual
         override
