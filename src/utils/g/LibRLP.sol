@@ -227,7 +227,7 @@ library LibRLP {
                     mstore(o_, f_) // Copy `x_`.
                     leave
                 }
-                if shr(32, n_) { revert(codesize(), 0x00) }
+                returndatacopy(returndatasize(), returndatasize(), shr(32, n_))
                 let r_ := add(1, add(lt(0xff, n_), add(lt(0xffff, n_), lt(0xffffff, n_))))
                 mstore(o_, shl(248, add(r_, add(c_, 55)))) // Store the prefix.
                 // Copy `x`.
@@ -358,7 +358,7 @@ library LibRLP {
                     mstore(add(add(result, 0x21), n), 0) // Zeroize the slot after `result`.
                     break
                 }
-                returndatacopy(returndatasize(), returndatasize(), shr(32, n)) // out of
+                returndatacopy(returndatasize(), returndatasize(), shr(32, n))
                 let r := add(2, add(lt(0xff, n), add(lt(0xffff, n), lt(0xffffff, n))))
                 // Copy `x`.
                 let i := add(r, add(0x20, result))
