@@ -70,6 +70,7 @@ contract TimelockTest is SoladyTest {
         }
 
         assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Unset));
+        assertEq(timelock.readyTimestamp(id), 0);
 
         if (_randomChance(64)) {
             vm.expectRevert(
@@ -87,6 +88,7 @@ contract TimelockTest is SoladyTest {
         assertEq(timelock.propose(executionData, _DEFAULT_MIN_DELAY), id);
 
         assertEq(uint8(timelock.operationState(id)), uint8(Timelock.OperationState.Waiting));
+        assertEq(timelock.readyTimestamp(id), block.timestamp + _DEFAULT_MIN_DELAY);
 
         if (_randomChance(16)) {
             vm.warp(block.timestamp + _bound(_random(), 0, _DEFAULT_MIN_DELAY * 2));
