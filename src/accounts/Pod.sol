@@ -21,9 +21,6 @@ abstract contract Pod is Receiver {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The function selector is not recognized.
-    error FnSelectorNotRecognized();
-
     /// @dev The caller is not mothership.
     error CallerNotMothership();
 
@@ -153,14 +150,5 @@ abstract contract Pod is Receiver {
             }
             mstore(0x40, m) // Allocate the memory.
         }
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         OVERRIDES                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Handle token callbacks. Reverts If no token callback is triggered.
-    fallback() external payable virtual override(Receiver) receiverFallback {
-        revert FnSelectorNotRecognized();
     }
 }
