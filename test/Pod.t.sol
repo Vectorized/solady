@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
+import {Receiver} from "../src/accounts/Receiver.sol";
 import {Pod, MockPod} from "./utils/mocks/MockPod.sol";
 
 contract Target {
@@ -126,7 +127,7 @@ contract PodTest is SoladyTest {
             (, bytes memory rD) = address(pod).call(abi.encodePacked(selector));
             assertEq(abi.decode(rD, (bytes4)), selector);
         } else {
-            vm.expectRevert(Pod.FnSelectorNotRecognized.selector);
+            vm.expectRevert(Receiver.FnSelectorNotRecognized.selector);
             (bool s,) = address(pod).call(abi.encodePacked(selector));
             s; // suppressed compiler warning
         }
