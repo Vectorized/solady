@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for interacting with ERC6551 accounts.
+/// @notice Library for handling ERC7579 mode and execution data.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/LibERC7579.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/main/contracts/account/utils/draft-ERC7579Utils.sol)
 library LibERC7579 {
