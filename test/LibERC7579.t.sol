@@ -64,6 +64,38 @@ contract LibERC7579Test is SoladyTest {
         return LibERC7579.decodeDelegate(executionData);
     }
 
+    function testReencodeBatchAsExecuteCalldata(bytes32 mode) public {
+        Call[] memory calls = new Call[](_randomUniform() & 3);
+        for (uint256 i; i != calls.length; ++i) {
+            Call memory c = calls[i];
+            c.target = address(uint160(_randomUniform()));
+            c.value = _random();
+            c.data = _truncateBytes(_randomBytes(), 0x1ff);
+        }
+        bytes memory executionData;
+        if (_randomChance(2)) {
+            executionData = abi.encode(calls);
+        } else {
+            executionData = abi.encode(calls, _truncateBytes(_randomBytes(), 0xff));
+        }
+        this.subTestReencodeBatchAsExecuteCalldata(mode, executionData);
+    }
+
+    function subTestReencodeBatchAsExecuteCalldata(bytes32 mode, bytes calldata executionData)
+        public
+    {
+        _misalignFreeMemoryPointer();
+        _brutalizeMemory();
+        bytes memory opData = _truncateBytes(_randomBytes(), 0x1ff);
+        bytes memory t = LibERC7579.reencodeBatch(executionData, opData);
+        bytes memory expected = abi.encodeWithSignature("execute(bytes32,bytes)", mode, t);
+        _checkMemory(t);
+        bytes memory computed =
+            LibERC7579.reencodeBatchAsExecuteCalldata(mode, executionData, opData);
+        _checkMemory(computed);
+        assertEq(computed, expected);
+    }
+
     function testDecodeBatchAndOpData(bytes32) public {
         Call[] memory calls = new Call[](_randomUniform() & 3);
         bytes memory opData = _truncateBytes(_randomBytes(), 0x1ff);
