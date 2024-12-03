@@ -88,12 +88,18 @@ contract LibERC7579Test is SoladyTest {
         _brutalizeMemory();
         bytes memory opData = _truncateBytes(_randomBytes(), 0x1ff);
         bytes memory t = LibERC7579.reencodeBatch(executionData, opData);
-        bytes memory expected = abi.encodeWithSignature("execute(bytes32,bytes)", mode, t);
         _checkMemory(t);
         bytes memory computed =
             LibERC7579.reencodeBatchAsExecuteCalldata(mode, executionData, opData);
         _checkMemory(computed);
-        assertEq(computed, expected);
+        assertEq(computed, abi.encodeWithSignature("execute(bytes32,bytes)", mode, t));
+        (bool success, bytes memory results) = address(this).call(computed);
+        assertEq(success, true);
+        assertEq(abi.decode(results, (bytes32)), keccak256(abi.encode(mode, keccak256(t))));
+    }
+
+    function execute(bytes32 mode, bytes calldata executionData) public pure returns (bytes32) {
+        return keccak256(abi.encode(mode, keccak256(executionData)));
     }
 
     function testDecodeBatchAndOpData(bytes32) public {
