@@ -301,7 +301,7 @@ library LibERC7579 {
         }
     }
 
-    /// @dev `abi.encodeWithSignature("execute(bytes32,bytes)", mode, reencodeBatch(exectionData, opData))`.
+    /// @dev `abi.encodeWithSignature("execute(bytes32,bytes)", mode, reencodeBatch(executionData, opData))`.
     function reencodeBatchAsExecuteCalldata(
         bytes32 mode,
         bytes calldata executionData,
