@@ -289,15 +289,50 @@ library WebAuthn {
                 let o := add(encodedAuth, 0x20) // Start of `encodedAuth`'s bytes.
                 let e := add(o, n) // End of `encodedAuth` in memory.
                 n := shr(240, mload(o)) // Length of `authenticatorData`.
-                let c := add(add(o, 0x02), n) // Start of `clientDataJSON` in memory.
-                let j := sub(e, 0x44) // Start of `challengeIndex` in memory.
+                let a := add(o, 0x02) // Start of `authenticatorData`.
+                let c := add(a, n) // Start of `clientDataJSON`.
+                let j := sub(e, 0x44) // Start of `challengeIndex`.
                 if iszero(gt(c, j)) {
-                    mstore(decoded, extractBytes(add(o, 0x02), n)) // `authenticatorData`.
+                    mstore(decoded, extractBytes(a, n)) // `authenticatorData`.
                     mstore(add(decoded, 0x20), extractBytes(c, sub(j, c))) // `clientDataJSON`.
                     mstore(add(decoded, 0x40), shr(240, mload(j))) // `challengeIndex`.
                     mstore(add(decoded, 0x60), shr(240, mload(add(j, 0x02)))) // `typeIndex`.
                     mstore(add(decoded, 0x80), mload(add(j, 0x04))) // `r`.
                     mstore(add(decoded, 0xa0), mload(add(j, 0x24))) // `s`.
+                }
+            }
+        }
+    }
+
+    /// @dev Calldata variant of `tryDecodeAuthCompact`.
+    function tryDecodeAuthCompactCalldata(bytes calldata encodedAuth)
+        internal
+        pure
+        returns (WebAuthnAuth memory decoded)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function extractBytes(o_, l_) -> _m {
+                _m := mload(0x40) // Grab the free memory pointer.
+                let s_ := add(_m, 0x20)
+                calldatacopy(s_, o_, l_)
+                mstore(_m, l_) // Store the length.
+                mstore(add(l_, s_), 0) // Zeroize the slot after the string.
+                mstore(0x40, add(0x20, add(l_, s_))) // Allocate memory.
+            }
+            if iszero(lt(encodedAuth.length, 0x46)) {
+                let e := add(encodedAuth.offset, encodedAuth.length) // End of `encodedAuth`.
+                let n := shr(240, calldataload(encodedAuth.offset)) // Length of `authenticatorData`.
+                let a := add(encodedAuth.offset, 0x02) // Start of `authenticatorData`.
+                let c := add(a, n) // Start of `clientDataJSON`.
+                let j := sub(e, 0x44) // Start of `challengeIndex`.
+                if iszero(gt(c, j)) {
+                    mstore(decoded, extractBytes(a, n)) // `authenticatorData`.
+                    mstore(add(decoded, 0x20), extractBytes(c, sub(j, c))) // `clientDataJSON`.
+                    mstore(add(decoded, 0x40), shr(240, calldataload(j))) // `challengeIndex`.
+                    mstore(add(decoded, 0x60), shr(240, calldataload(add(j, 0x02)))) // `typeIndex`.
+                    mstore(add(decoded, 0x80), calldataload(add(j, 0x04))) // `r`.
+                    mstore(add(decoded, 0xa0), calldataload(add(j, 0x24))) // `s`.
                 }
             }
         }
