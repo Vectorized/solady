@@ -219,7 +219,6 @@ library WebAuthn {
     ///     abi.encodePacked(
     ///         uint16(auth.authenticatorData.length),
     ///         bytes(auth.authenticatorData),
-    ///         uint16(bytes(auth.clientDataJSON).length),
     ///         bytes(auth.clientDataJSON),
     ///         uint16(auth.challengeIndex),
     ///         uint16(auth.typeIndex),
@@ -235,9 +234,11 @@ library WebAuthn {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            function copyBytes(o_, s_) -> _e {
-                mstore(o_, shl(240, mload(s_)))
-                o_ := add(o_, 0x02)
+            function copyBytes(o_, s_, c_) -> _e {
+                if iszero(c_) {
+                    mstore(o_, shl(240, mload(s_)))
+                    o_ := add(o_, 0x02)
+                }
                 _e := add(o_, mload(s_)) // The end of the bytes.
                 for { let d_ := sub(add(0x20, s_), o_) } 1 {} {
                     mstore(o_, mload(add(d_, o_)))
@@ -252,7 +253,7 @@ library WebAuthn {
             if iszero(shr(16, or(or(t, c), or(mload(mload(auth)), mload(clientDataJSON))))) {
                 result := mload(0x40)
                 // `authenticatorData`, `clientDataJSON`.
-                let o := copyBytes(copyBytes(add(result, 0x20), mload(auth)), clientDataJSON)
+                let o := copyBytes(copyBytes(add(result, 0x20), mload(auth), 0), clientDataJSON, 1)
                 mstore(o, or(shl(240, c), shl(224, t))) // `challengeIndex`, `typeIndex`.
                 mstore(add(o, 0x04), mload(add(0x80, auth))) // `r`.
                 mstore(add(o, 0x24), mload(add(0xa0, auth))) // `s`.
@@ -286,23 +287,21 @@ library WebAuthn {
                 mstore(0x40, add(0x20, add(l_, s_))) // Allocate memory.
             }
             let n := mload(encodedAuth)
-            if iszero(lt(n, 0x48)) {
+            if iszero(lt(n, 0x46)) {
                 let o := add(encodedAuth, 0x20) // Start of `encodedAuth`'s bytes.
                 let e := add(o, n) // End of `encodedAuth` in memory.
                 n := shr(240, mload(o)) // Length of `authenticatorData`.
                 o := add(o, 0x02)
                 let authenticatorData := extractBytes(o, n)
                 o := add(o, n)
-                n := shr(240, mload(o)) // Length of `clientDataJSON`.
-                o := add(o, 0x02)
-                if iszero(gt(add(o, add(0x44, n)), e)) {
+                let j := sub(e, 0x44) // Start of `challengeIndex` in memory.
+                if iszero(gt(o, j)) {
                     mstore(decoded, authenticatorData) // `authenticatorData`.
-                    mstore(add(decoded, 0x20), extractBytes(o, n)) // `clientDataJSON`.
-                    o := add(o, n)
-                    mstore(add(decoded, 0x40), shr(240, mload(o))) // `challengeIndex`.
-                    mstore(add(decoded, 0x60), shr(240, mload(add(o, 0x02)))) // `typeIndex`.
-                    mstore(add(decoded, 0x80), mload(add(o, 0x04))) // `r`.
-                    mstore(add(decoded, 0xa0), mload(add(o, 0x24))) // `s`.
+                    mstore(add(decoded, 0x20), extractBytes(o, sub(j, o))) // `clientDataJSON`.
+                    mstore(add(decoded, 0x40), shr(240, mload(j))) // `challengeIndex`.
+                    mstore(add(decoded, 0x60), shr(240, mload(add(j, 0x02)))) // `typeIndex`.
+                    mstore(add(decoded, 0x80), mload(add(j, 0x04))) // `r`.
+                    mstore(add(decoded, 0xa0), mload(add(j, 0x24))) // `s`.
                 }
             }
         }

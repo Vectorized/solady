@@ -233,7 +233,7 @@ library WebAuthn {
             function copyBytes(o_, s_, c_) -> _e {
                 if iszero(c_) {
                     mstore(o_, shl(240, mload(s_)))
-                    o_ := add(o_, 0x02)    
+                    o_ := add(o_, 0x02)
                 }
                 _e := add(o_, mload(s_)) // The end of the bytes.
                 for { let d_ := sub(add(0x20, s_), o_) } 1 {} {
