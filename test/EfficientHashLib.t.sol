@@ -210,14 +210,5 @@ contract EfficientHashLibTest is SoladyTest {
             }
             assertEq(computed, EfficientHashLib.hash(a));
         }
-        unchecked {
-            bytes32 computed = EfficientHashLib.hash(x, x, x, x, x, x, x, x, x, x, x, x, x, x, 1);
-            bytes32[] memory a = EfficientHashLib.malloc(15);
-            for (uint256 i; i != 14; ++i) {
-                EfficientHashLib.set(a, i, x);
-            }
-            EfficientHashLib.set(a, 14, 1);
-            assertEq(computed, EfficientHashLib.hash(a));
-        }
     }
 }

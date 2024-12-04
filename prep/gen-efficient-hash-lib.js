@@ -3,7 +3,7 @@ const { readSync, writeAndFmtSync } = require('./common.js');
 
 async function main() {
   const srcPath = 'src/utils/EfficientHashLib.sol';
-  const maxDepth = 15;
+  const maxDepth = 14;
   let src = readSync(srcPath);
 
   const hexNoPrefix = x => x.toString(16).replace(/^0[xX]/, '');
@@ -21,18 +21,12 @@ async function main() {
       s += 'mstore(0x00, v0)\nresult := keccak256(0x00, 0x20)}}\n'
     } else if (n == 2) {
       s += 'mstore(0x00, v0)\nmstore(0x20, v1)\nresult := keccak256(0x00, 0x40)}}\n'
-    } else if (n <= 14) {
+    } else {
       s += 'let m := mload(0x40)\nmstore(m, v0)\n';
       for (let i = 1; i < n; ++i) {
         s += 'mstore(add(m, 0x' + hexNoPrefix(i << 5) + '), v' + i + ')\n';
       }
       s += 'result := keccak256(m, 0x' + hexNoPrefix(n << 5) +')}}\n';
-    } else {
-      s += 'mstore(mload(0x40), v0)\n';
-      for (let i = 1; i < n; ++i) {
-        s += 'mstore(add(mload(0x40), 0x' + hexNoPrefix(i << 5) + '), v' + i + ')\n';
-      }
-      s += 'result := keccak256(mload(0x40), 0x' + hexNoPrefix(n << 5) +')}}\n';
     }
     return s;
   }
