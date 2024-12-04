@@ -202,12 +202,22 @@ contract EfficientHashLibTest is SoladyTest {
     }
 
     function testEfficientHashMaxStack(uint256 x) public {
-        bytes32 computed = EfficientHashLib.hash(x, x, x, x, x, x, x, x, x, x, x, x, x, x);
-        uint256 n = 14;
-        bytes32[] memory a = EfficientHashLib.malloc(n);
-        for (uint256 i; i < n; ++i) {
-            EfficientHashLib.set(a, i, x);
+        unchecked {
+            bytes32 computed = EfficientHashLib.hash(x, x, x, x, x, x, x, x, x, x, x, x, x, x);
+            bytes32[] memory a = EfficientHashLib.malloc(14);
+            for (uint256 i; i != 14; ++i) {
+                EfficientHashLib.set(a, i, x);
+            }
+            assertEq(computed, EfficientHashLib.hash(a));
         }
-        assertEq(computed, EfficientHashLib.hash(a));
+        unchecked {
+            bytes32 computed = EfficientHashLib.hash(x, x, x, x, x, x, x, x, x, x, x, x, x, x, 1);
+            bytes32[] memory a = EfficientHashLib.malloc(15);
+            for (uint256 i; i != 14; ++i) {
+                EfficientHashLib.set(a, i, x);
+            }
+            EfficientHashLib.set(a, 14, 1);
+            assertEq(computed, EfficientHashLib.hash(a));
+        }
     }
 }

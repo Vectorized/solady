@@ -3,6 +3,7 @@ const { readSync, writeAndFmtSync } = require('./common.js');
 
 async function main() {
   const srcPath = 'src/utils/EfficientHashLib.sol';
+  const maxDepth = 16;
   let src = readSync(srcPath);
 
   const hexNoPrefix = x => x.toString(16).replace(/^0[xX]/, '');
@@ -20,12 +21,18 @@ async function main() {
       s += 'mstore(0x00, v0)\nresult := keccak256(0x00, 0x20)}}\n'
     } else if (n == 2) {
       s += 'mstore(0x00, v0)\nmstore(0x20, v1)\nresult := keccak256(0x00, 0x40)}}\n'
-    } else {
+    } else if (n <= 14) {
       s += 'let m := mload(0x40)\nmstore(m, v0)\n';
       for (let i = 1; i < n; ++i) {
         s += 'mstore(add(m, 0x' + hexNoPrefix(i << 5) + '), v' + i + ')\n';
       }
       s += 'result := keccak256(m, 0x' + hexNoPrefix(n << 5) +')}}\n';
+    } else {
+      s += 'mstore(mload(0x40), v0)\n';
+      for (let i = 1; i < n; ++i) {
+        s += 'mstore(add(mload(0x40), 0x' + hexNoPrefix(i << 5) + '), v' + i + ')\n';
+      }
+      s += 'result := keccak256(mload(0x40), 0x' + hexNoPrefix(n << 5) +')}}\n';
     }
     return s;
   }
@@ -33,7 +40,7 @@ async function main() {
     /(\s*\/\*\S+?\*\/\s*\/\*\s+MALLOC\-LESS HASHING OPERATIONS\s+\*\/\s*\/\*\S+?\*\/)[\s\S]+?(\/\*\S+?\*\/)/, 
     (m0, m1, m2) => {
       let hashDefs = [];
-      for (let i = 1; i <= 16; ++i) {
+      for (let i = 1; i <= maxDepth; ++i) {
         hashDefs.push(genHashDef('bytes32', i));
         hashDefs.push(genHashDef('uint256', i));
       }
