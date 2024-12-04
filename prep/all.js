@@ -5,7 +5,8 @@ const { runCommandSync } = require('./common.js');
 async function main() {
   const scripts = [
     'gen-efficient-hash-lib.js',
-    'gen-globalized-libs.js'
+    'gen-globalized-libs.js',
+    'remove-trailing-whitespace.js'
   ];
   const jsRuntime = process.argv[0];
   scripts.forEach(scriptRelPath => {
