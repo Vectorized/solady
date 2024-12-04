@@ -235,10 +235,8 @@ library WebAuthn {
         /// @solidity memory-safe-assembly
         assembly {
             function copyBytes(o_, s_, c_) -> _e {
-                if iszero(c_) {
-                    mstore(o_, shl(240, mload(s_)))
-                    o_ := add(o_, 0x02)
-                }
+                mstore(o_, shl(240, mload(s_)))
+                o_ := add(o_, c_)
                 _e := add(o_, mload(s_)) // The end of the bytes.
                 for { let d_ := sub(add(0x20, s_), o_) } 1 {} {
                     mstore(o_, mload(add(d_, o_)))
@@ -253,7 +251,7 @@ library WebAuthn {
             if iszero(shr(16, or(or(t, c), or(mload(mload(auth)), mload(clientDataJSON))))) {
                 result := mload(0x40)
                 // `authenticatorData`, `clientDataJSON`.
-                let o := copyBytes(copyBytes(add(result, 0x20), mload(auth), 0), clientDataJSON, 1)
+                let o := copyBytes(copyBytes(add(result, 0x20), mload(auth), 2), clientDataJSON, 0)
                 mstore(o, or(shl(240, c), shl(224, t))) // `challengeIndex`, `typeIndex`.
                 mstore(add(o, 0x04), mload(add(0x80, auth))) // `r`.
                 mstore(add(o, 0x24), mload(add(0xa0, auth))) // `s`.
@@ -291,13 +289,11 @@ library WebAuthn {
                 let o := add(encodedAuth, 0x20) // Start of `encodedAuth`'s bytes.
                 let e := add(o, n) // End of `encodedAuth` in memory.
                 n := shr(240, mload(o)) // Length of `authenticatorData`.
-                o := add(o, 0x02)
-                let authenticatorData := extractBytes(o, n)
-                o := add(o, n)
+                let c := add(add(o, 0x02), n) // Start of `clientDataJSON` in memory.
                 let j := sub(e, 0x44) // Start of `challengeIndex` in memory.
-                if iszero(gt(o, j)) {
-                    mstore(decoded, authenticatorData) // `authenticatorData`.
-                    mstore(add(decoded, 0x20), extractBytes(o, sub(j, o))) // `clientDataJSON`.
+                if iszero(gt(c, j)) {
+                    mstore(decoded, extractBytes(add(o, 0x02), n)) // `authenticatorData`.
+                    mstore(add(decoded, 0x20), extractBytes(c, sub(j, c))) // `clientDataJSON`.
                     mstore(add(decoded, 0x40), shr(240, mload(j))) // `challengeIndex`.
                     mstore(add(decoded, 0x60), shr(240, mload(add(j, 0x02)))) // `typeIndex`.
                     mstore(add(decoded, 0x80), mload(add(j, 0x04))) // `r`.
