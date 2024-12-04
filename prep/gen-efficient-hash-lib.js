@@ -3,7 +3,7 @@ const { readSync, writeAndFmtSync } = require('./common.js');
 
 async function main() {
   const srcPath = 'src/utils/EfficientHashLib.sol';
-  const maxDepth = 16;
+  const maxDepth = 15;
   let src = readSync(srcPath);
 
   const hexNoPrefix = x => x.toString(16).replace(/^0[xX]/, '');
