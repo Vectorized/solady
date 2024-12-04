@@ -200,4 +200,14 @@ contract EfficientHashLibTest is SoladyTest {
             _checkMemory();
         }
     }
+
+    function testEfficientHashMaxStack(uint256 x) public {
+        bytes32 computed = EfficientHashLib.hash(x, x, x, x, x, x, x, x, x, x, x, x, x, x);
+        uint256 n = 14;
+        bytes32[] memory a = EfficientHashLib.malloc(n);
+        for (uint256 i; i < n; ++i) {
+            EfficientHashLib.set(a, i, x);
+        }
+        assertEq(computed, EfficientHashLib.hash(a));
+    }
 }

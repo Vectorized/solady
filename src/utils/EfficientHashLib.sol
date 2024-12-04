@@ -300,6 +300,566 @@ library EfficientHashLib {
         }
     }
 
+    /// @dev Returns `keccak256(abi.encode(value0, .., value8))`.
+    function hash(
+        bytes32 value0,
+        bytes32 value1,
+        bytes32 value2,
+        bytes32 value3,
+        bytes32 value4,
+        bytes32 value5,
+        bytes32 value6,
+        bytes32 value7,
+        bytes32 value8
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            result := keccak256(m, 0x120)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value8))`.
+    function hash(
+        uint256 value0,
+        uint256 value1,
+        uint256 value2,
+        uint256 value3,
+        uint256 value4,
+        uint256 value5,
+        uint256 value6,
+        uint256 value7,
+        uint256 value8
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            result := keccak256(m, 0x120)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value9))`.
+    function hash(
+        bytes32 value0,
+        bytes32 value1,
+        bytes32 value2,
+        bytes32 value3,
+        bytes32 value4,
+        bytes32 value5,
+        bytes32 value6,
+        bytes32 value7,
+        bytes32 value8,
+        bytes32 value9
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            result := keccak256(m, 0x140)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value9))`.
+    function hash(
+        uint256 value0,
+        uint256 value1,
+        uint256 value2,
+        uint256 value3,
+        uint256 value4,
+        uint256 value5,
+        uint256 value6,
+        uint256 value7,
+        uint256 value8,
+        uint256 value9
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            result := keccak256(m, 0x140)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value10))`.
+    function hash(
+        bytes32 value0,
+        bytes32 value1,
+        bytes32 value2,
+        bytes32 value3,
+        bytes32 value4,
+        bytes32 value5,
+        bytes32 value6,
+        bytes32 value7,
+        bytes32 value8,
+        bytes32 value9,
+        bytes32 value10
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            result := keccak256(m, 0x160)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value10))`.
+    function hash(
+        uint256 value0,
+        uint256 value1,
+        uint256 value2,
+        uint256 value3,
+        uint256 value4,
+        uint256 value5,
+        uint256 value6,
+        uint256 value7,
+        uint256 value8,
+        uint256 value9,
+        uint256 value10
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            result := keccak256(m, 0x160)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value11))`.
+    function hash(
+        bytes32 value0,
+        bytes32 value1,
+        bytes32 value2,
+        bytes32 value3,
+        bytes32 value4,
+        bytes32 value5,
+        bytes32 value6,
+        bytes32 value7,
+        bytes32 value8,
+        bytes32 value9,
+        bytes32 value10,
+        bytes32 value11
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            result := keccak256(m, 0x180)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value11))`.
+    function hash(
+        uint256 value0,
+        uint256 value1,
+        uint256 value2,
+        uint256 value3,
+        uint256 value4,
+        uint256 value5,
+        uint256 value6,
+        uint256 value7,
+        uint256 value8,
+        uint256 value9,
+        uint256 value10,
+        uint256 value11
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            result := keccak256(m, 0x180)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value12))`.
+    function hash(
+        bytes32 value0,
+        bytes32 value1,
+        bytes32 value2,
+        bytes32 value3,
+        bytes32 value4,
+        bytes32 value5,
+        bytes32 value6,
+        bytes32 value7,
+        bytes32 value8,
+        bytes32 value9,
+        bytes32 value10,
+        bytes32 value11,
+        bytes32 value12
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            mstore(add(m, 0x180), value12)
+            result := keccak256(m, 0x1a0)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value12))`.
+    function hash(
+        uint256 value0,
+        uint256 value1,
+        uint256 value2,
+        uint256 value3,
+        uint256 value4,
+        uint256 value5,
+        uint256 value6,
+        uint256 value7,
+        uint256 value8,
+        uint256 value9,
+        uint256 value10,
+        uint256 value11,
+        uint256 value12
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            mstore(add(m, 0x180), value12)
+            result := keccak256(m, 0x1a0)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value13))`.
+    function hash(
+        bytes32 value0,
+        bytes32 value1,
+        bytes32 value2,
+        bytes32 value3,
+        bytes32 value4,
+        bytes32 value5,
+        bytes32 value6,
+        bytes32 value7,
+        bytes32 value8,
+        bytes32 value9,
+        bytes32 value10,
+        bytes32 value11,
+        bytes32 value12,
+        bytes32 value13
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            mstore(add(m, 0x180), value12)
+            mstore(add(m, 0x1a0), value13)
+            result := keccak256(m, 0x1c0)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value13))`.
+    function hash(
+        uint256 value0,
+        uint256 value1,
+        uint256 value2,
+        uint256 value3,
+        uint256 value4,
+        uint256 value5,
+        uint256 value6,
+        uint256 value7,
+        uint256 value8,
+        uint256 value9,
+        uint256 value10,
+        uint256 value11,
+        uint256 value12,
+        uint256 value13
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            mstore(add(m, 0x180), value12)
+            mstore(add(m, 0x1a0), value13)
+            result := keccak256(m, 0x1c0)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value14))`.
+    function hash(
+        bytes32 value0,
+        bytes32 value1,
+        bytes32 value2,
+        bytes32 value3,
+        bytes32 value4,
+        bytes32 value5,
+        bytes32 value6,
+        bytes32 value7,
+        bytes32 value8,
+        bytes32 value9,
+        bytes32 value10,
+        bytes32 value11,
+        bytes32 value12,
+        bytes32 value13,
+        bytes32 value14
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            mstore(add(m, 0x180), value12)
+            mstore(add(m, 0x1a0), value13)
+            mstore(add(m, 0x1c0), value14)
+            result := keccak256(m, 0x1e0)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value14))`.
+    function hash(
+        uint256 value0,
+        uint256 value1,
+        uint256 value2,
+        uint256 value3,
+        uint256 value4,
+        uint256 value5,
+        uint256 value6,
+        uint256 value7,
+        uint256 value8,
+        uint256 value9,
+        uint256 value10,
+        uint256 value11,
+        uint256 value12,
+        uint256 value13,
+        uint256 value14
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            mstore(add(m, 0x180), value12)
+            mstore(add(m, 0x1a0), value13)
+            mstore(add(m, 0x1c0), value14)
+            result := keccak256(m, 0x1e0)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value15))`.
+    function hash(
+        bytes32 value0,
+        bytes32 value1,
+        bytes32 value2,
+        bytes32 value3,
+        bytes32 value4,
+        bytes32 value5,
+        bytes32 value6,
+        bytes32 value7,
+        bytes32 value8,
+        bytes32 value9,
+        bytes32 value10,
+        bytes32 value11,
+        bytes32 value12,
+        bytes32 value13,
+        bytes32 value14,
+        bytes32 value15
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            mstore(add(m, 0x180), value12)
+            mstore(add(m, 0x1a0), value13)
+            mstore(add(m, 0x1c0), value14)
+            mstore(add(m, 0x1e0), value15)
+            result := keccak256(m, 0x200)
+        }
+    }
+
+    /// @dev Returns `keccak256(abi.encode(value0, .., value15))`.
+    function hash(
+        uint256 value0,
+        uint256 value1,
+        uint256 value2,
+        uint256 value3,
+        uint256 value4,
+        uint256 value5,
+        uint256 value6,
+        uint256 value7,
+        uint256 value8,
+        uint256 value9,
+        uint256 value10,
+        uint256 value11,
+        uint256 value12,
+        uint256 value13,
+        uint256 value14,
+        uint256 value15
+    ) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, value0)
+            mstore(add(m, 0x20), value1)
+            mstore(add(m, 0x40), value2)
+            mstore(add(m, 0x60), value3)
+            mstore(add(m, 0x80), value4)
+            mstore(add(m, 0xa0), value5)
+            mstore(add(m, 0xc0), value6)
+            mstore(add(m, 0xe0), value7)
+            mstore(add(m, 0x100), value8)
+            mstore(add(m, 0x120), value9)
+            mstore(add(m, 0x140), value10)
+            mstore(add(m, 0x160), value11)
+            mstore(add(m, 0x180), value12)
+            mstore(add(m, 0x1a0), value13)
+            mstore(add(m, 0x1c0), value14)
+            mstore(add(m, 0x1e0), value15)
+            result := keccak256(m, 0x200)
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*             BYTES32 BUFFER HASHING OPERATIONS              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
