@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
+const normalizeNewlines = s => s.replace(/\n(\n\s*)+/g, '\n\n');
+
+const hexNoPrefix = x => x.toString(16).replace(/^0[xX]/, '');
+
 const readSync = (srcPath) => {
   return fs.readFileSync(srcPath, { encoding: 'utf8', flag: 'r' });
 };
@@ -40,6 +44,8 @@ const forEachWalkSync = (dirs, callback) => {
 };
 
 module.exports = {
+  hexNoPrefix,
+  normalizeNewlines,
   readSync,
   runCommandSync,
   writeSync,

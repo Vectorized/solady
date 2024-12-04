@@ -1,12 +1,10 @@
 #!/usr/bin/env node
-const { readSync, writeAndFmtSync } = require('./common.js');
+const { readSync, writeAndFmtSync, normalizeNewlines, hexNoPrefix } = require('./common.js');
 
 async function main() {
   const srcPath = 'src/utils/EfficientHashLib.sol';
   const maxDepth = 14;
   let src = readSync(srcPath);
-
-  const hexNoPrefix = x => x.toString(16).replace(/^0[xX]/, '');
 
   const genHashDef = (t, n) => {
     let s = '/// @dev Returns `keccak256(abi.encode(';
@@ -33,12 +31,13 @@ async function main() {
   src = src.replace(
     /(\s*\/\*\S+?\*\/\s*\/\*\s+MALLOC\-LESS HASHING OPERATIONS\s+\*\/\s*\/\*\S+?\*\/)[\s\S]+?(\/\*\S+?\*\/)/, 
     (m0, m1, m2) => {
-      let hashDefs = [];
+      let chunks = [m1];
       for (let i = 1; i <= maxDepth; ++i) {
-        hashDefs.push(genHashDef('bytes32', i));
-        hashDefs.push(genHashDef('uint256', i));
+        chunks.push(genHashDef('bytes32', i));
+        chunks.push(genHashDef('uint256', i));
       }
-      return m1 + '\n' + hashDefs.join('\n') + '    ' + m2;
+      chunks.push(m2);
+      return normalizeNewlines(chunks.join('\n\n\n'));
     }
   );
   writeAndFmtSync(srcPath, src);
