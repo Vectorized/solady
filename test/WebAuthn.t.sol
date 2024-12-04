@@ -213,12 +213,37 @@ contract WebAuthnTest is P256VerifierEtcher {
         auth.r = bytes32(_randomUniform());
         auth.s = bytes32(_randomUniform());
         bytes memory encoded = WebAuthn.tryEncodeAuthCompact(auth);
-        WebAuthn.WebAuthnAuth memory decoded = WebAuthn.tryDecodeAuthCompact(encoded);
+        assertEq(
+            encoded,
+            abi.encodePacked(
+                uint16(auth.authenticatorData.length),
+                bytes(auth.authenticatorData),
+                bytes(auth.clientDataJSON),
+                uint16(auth.challengeIndex),
+                uint16(auth.typeIndex),
+                bytes32(auth.r),
+                bytes32(auth.s)
+            )
+        );
+        WebAuthn.WebAuthnAuth memory decoded;
+        if (_randomChance(2)) {
+            decoded = WebAuthn.tryDecodeAuthCompact(encoded);
+        } else {
+            decoded = this.tryDecodeAuthCompactCalldata(encoded);
+        }
         assertEq(decoded.authenticatorData, auth.authenticatorData);
         assertEq(decoded.clientDataJSON, auth.clientDataJSON);
         assertEq(decoded.challengeIndex, auth.challengeIndex);
         assertEq(decoded.typeIndex, auth.typeIndex);
         assertEq(decoded.r, auth.r);
         assertEq(decoded.s, auth.s);
+    }
+
+    function tryDecodeAuthCompactCalldata(bytes calldata encoded)
+        public
+        pure
+        returns (WebAuthn.WebAuthnAuth memory)
+    {
+        return WebAuthn.tryDecodeAuthCompactCalldata(encoded);
     }
 }
