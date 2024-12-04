@@ -10,20 +10,20 @@ async function main() {
   const genHashDef = (t, n) => {
     let s = '/// @dev Returns `keccak256(abi.encode(';
     let a = [];
-    for (let i = 0; i < n; ++i) a.push(t + ' value' + i);
+    for (let i = 0; i < n; ++i) a.push(t + ' v' + i);
     let b = (n > 4 ? [a[0], '..', a[n - 1]] : a).join(', ');
     s += b.replace(new RegExp(t + ' ', 'g'), '');
     s += '))`.\nfunction hash(' + a.join(', ');
     s += ') internal pure returns (bytes32 result) {\n';
     s += '/// @solidity memory-safe-assembly\nassembly {\n';
     if (n == 1) {
-      s += 'mstore(0x00, value0)\nresult := keccak256(0x00, 0x20)}}\n'
+      s += 'mstore(0x00, v0)\nresult := keccak256(0x00, 0x20)}}\n'
     } else if (n == 2) {
-      s += 'mstore(0x00, value0)\nmstore(0x20, value1)\nresult := keccak256(0x00, 0x40)}}\n'
+      s += 'mstore(0x00, v0)\nmstore(0x20, v1)\nresult := keccak256(0x00, 0x40)}}\n'
     } else {
-      s += 'let m := mload(0x40)\nmstore(m, value0)\n';
+      s += 'let m := mload(0x40)\nmstore(m, v0)\n';
       for (let i = 1; i < n; ++i) {
-        s += 'mstore(add(m, 0x' + hexNoPrefix(i << 5) + '), value' + i + ')\n';
+        s += 'mstore(add(m, 0x' + hexNoPrefix(i << 5) + '), v' + i + ')\n';
       }
       s += 'result := keccak256(m, 0x' + hexNoPrefix(n << 5) +')}}\n';
     }
