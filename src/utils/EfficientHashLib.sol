@@ -15,7 +15,6 @@ library EfficientHashLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               MALLOC-LESS HASHING OPERATIONS               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @dev Returns `keccak256(abi.encode(value0))`.
     function hash(bytes32 value0) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
@@ -859,7 +858,6 @@ library EfficientHashLib {
             result := keccak256(m, 0x200)
         }
     }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*             BYTES32 BUFFER HASHING OPERATIONS              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
