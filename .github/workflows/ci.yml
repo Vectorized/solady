@@ -147,13 +147,13 @@ jobs:
 
       - name: Run prep scripts and forge fmt
         run: >
-          ( node prep/gen-globalized-libs &&
+          ( node prep/all &&
             forge fmt
           )
 
       - name: Check for file changes
         run: |
           if [[ $(git status --porcelain) ]]; then
-            echo "Please run 'node prep/gen-globalized-libs.js' and commit the changes."
+            echo "Please run 'node prep/all.js' and commit the changes."
             exit 1
           fi

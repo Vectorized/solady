@@ -281,21 +281,41 @@ library LibERC7579 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40)
+            result := add(0x64, mload(0x40)) // Give some space for `reencodeBatchAsExecuteCalldata`.
             let s := calldataload(executionData.offset) // Offset of `calls`.
             let n := sub(executionData.length, s) // Byte length of `calls`.
             mstore(add(result, 0x20), 0x40) // Store the new offset of `calls`.
             calldatacopy(add(result, 0x60), add(executionData.offset, s), n)
             mstore(add(result, 0x40), add(0x40, n)) // Store the new offset of `opData`.
-            let o := add(add(result, 0x60), n) // Start offset of `opData` in memory.
-            let d := sub(opData, o) // Offset difference between `opData` and `o`.
-            for { let end := add(mload(opData), add(0x20, o)) } 1 {} {
+            let o := add(add(result, 0x60), n) // Start offset of `opData` destination in memory.
+            let d := sub(opData, o) // Offset difference between `opData` source and `o`.
+            let end := add(mload(opData), add(0x20, o)) // End of `opData` destination in memory.
+            for {} 1 {} {
                 mstore(o, mload(add(o, d)))
                 o := add(o, 0x20)
                 if iszero(lt(o, end)) { break }
             }
             mstore(result, sub(o, add(result, 0x20))) // Store the length of `result`.
-            mstore(0x40, o) // Allocate memory.
+            calldatacopy(end, calldatasize(), 0x40) // Zeroize the bytes after `end`.
+            mstore(0x40, add(0x20, o)) // Allocate memory.
+        }
+    }
+
+    /// @dev `abi.encodeWithSignature("execute(bytes32,bytes)", mode, reencodeBatch(executionData, opData))`.
+    function reencodeBatchAsExecuteCalldata(
+        bytes32 mode,
+        bytes calldata executionData,
+        bytes memory opData
+    ) internal pure returns (bytes memory result) {
+        result = reencodeBatch(executionData, opData);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(result)
+            result := sub(result, 0x64)
+            mstore(add(result, 0x44), 0x40) // Offset of `executionData`.
+            mstore(add(result, 0x24), mode)
+            mstore(add(result, 0x04), 0xe9ae5c53) // `execute(bytes32,bytes)`.
+            mstore(result, add(0x64, n))
         }
     }
 
