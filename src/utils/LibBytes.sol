@@ -634,22 +634,20 @@ library LibBytes {
             let o := add(a, 0x20)
             let u := a
             let w := not(0x1f)
-            for { let i := 0 } iszero(eq(i, n)) {} {
+            for { let i := 0 } iszero(eq(i, n)) { i := add(i, 1) } {
                 let c := add(o, shl(5, i)) // Location of pointer to `a[i]`.
                 let s := mload(c) // Memory location `a[i]`.
                 let l := mload(s) // Length of `a[i]`.
-                i := add(i, 1)
                 let r := and(l, 0x1f)
+                let z := add(0x20, and(l, w)) // Index of of last word in `a[i]`.
                 // If `s` comes before `o`, or `s` is not zero right padded.
-                // forgefmt: disable-next-item
-                if iszero(lt(lt(s, o), or(iszero(r),
-                    iszero(shl(shl(3, r), mload(add(add(s, 0x20), and(l, w)))))))) {
+                if iszero(lt(lt(s, o), or(iszero(r), iszero(shl(shl(3, r), mload(add(s, z))))))) {
                     let m := mload(0x40)
                     mstore(m, l)
-                    for { let p := and(add(l, 0x20), w) } 1 {} {
-                        mstore(add(m, p), mload(add(s, p)))
-                        p := add(p, w) // `sub(p, 0x20)`.
-                        if iszero(p) { break }
+                    for {} 1 {} {
+                        mstore(add(m, z), mload(add(s, z)))
+                        z := add(z, w) // `sub(z, 0x20)`.
+                        if iszero(z) { break }
                     }
                     let e := add(add(m, 0x20), l)
                     mstore(e, 0) // Zeroize the slot after the copied bytes.
