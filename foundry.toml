@@ -17,11 +17,11 @@ remappings = [
 ]
 
 [profile.pre_global_structs]
-skip = ["*/g/*", "/*Transient*"]
+skip = ["*/g/*", "/*Transient*", "*/ext/ithaca/*"]
 
 [profile.post_cancun]
 evm_version = "cancun"
-skip = []
+skip = ["*/ext/ithaca/*"]
 
 [fmt]
 line_length = 100 # While we allow up to 120, we lint at 100 for readability.

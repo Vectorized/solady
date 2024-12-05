@@ -155,18 +155,17 @@ library BLS {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let t := mload(add(point, 0x80))
-            mstore(add(point, 0x80), scalar)
+            mcopy(result, point, 0x80)
+            mstore(add(result, 0x80), scalar)
             if iszero(
                 and(
                     eq(returndatasize(), 0x80),
-                    staticcall(gas(), BLS12_G1MUL, point, 0xa0, result, 0x80)
+                    staticcall(gas(), BLS12_G1MUL, result, 0xa0, result, 0x80)
                 )
             ) {
                 mstore(0x00, 0x82e1cf54) // `G1MulFailed()`.
                 revert(0x1c, 0x04)
             }
-            mstore(add(point, 0x80), t)
         }
     }
 
@@ -228,18 +227,17 @@ library BLS {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let t := mload(add(point, 0x100))
-            mstore(add(point, 0x100), scalar)
+            mcopy(result, point, 0x100)
+            mstore(add(result, 0x100), scalar)
             if iszero(
                 and(
                     eq(returndatasize(), 0x100),
-                    staticcall(gas(), BLS12_G2MUL, point, 0x120, result, 0x100)
+                    staticcall(gas(), BLS12_G2MUL, result, 0x120, result, 0x100)
                 )
             ) {
                 mstore(0x00, 0x82e1cf54) // `G1MulFailed()`.
                 revert(0x1c, 0x04)
             }
-            mstore(add(point, 0x100), t)
         }
     }
 
