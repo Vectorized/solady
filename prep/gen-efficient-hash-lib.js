@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { readSync, writeAndFmtSync, normalizeNewlines, hexNoPrefix } = require('./common.js');
+const { genSectionRegex, readSync, writeAndFmtSync, normalizeNewlines, hexNoPrefix } = require('./common.js');
 
 async function main() {
   const srcPath = 'src/utils/EfficientHashLib.sol';
@@ -30,7 +30,7 @@ async function main() {
   };
 
   src = src.replace(
-    /(\s*\/\*\S+?\*\/\s*\/\*\s+MALLOC.?LESS HASHING OPERATIONS\s+\*\/\s*\/\*\S+?\*\/)[\s\S]+?(\/\*\S+?\*\/)/, 
+    genSectionRegex('MALLOC-LESS HASHING OPERATIONS'),
     (m0, m1, m2) => {
       let chunks = [m1];
       for (let i = 1; i <= maxDepth; ++i) {

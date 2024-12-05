@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { readSync, writeAndFmtSync, normalizeNewlines, hexNoPrefix } = require('./common.js');
+const { genSectionRegex, readSync, writeAndFmtSync, normalizeNewlines, hexNoPrefix } = require('./common.js');
 
 async function main() {
   const srcPath = 'src/utils/SafeCastLib.sol';
@@ -33,7 +33,7 @@ async function main() {
   };
 
   src = src.replace(
-    /(\s*\/\*\S+?\*\/\s*\/\*\s+UNSIGNED INTEGER SAFE CASTING OPERATIONS\s+\*\/\s*\/\*\S+?\*\/)[\s\S]+?(\/\*\S+?\*\/)/, 
+    genSectionRegex('UNSIGNED INTEGER SAFE CASTING OPERATIONS'),
     (m0, m1, m2) => {
       let chunks = [m1];
       for (let i = 1; i <= 31; ++i) {
@@ -43,7 +43,7 @@ async function main() {
       return normalizeNewlines(chunks.join('\n\n\n'));
     }
   ).replace(
-    /(\s*\/\*\S+?\*\/\s*\/\*\s+SIGNED INTEGER SAFE CASTING OPERATIONS\s+\*\/\s*\/\*\S+?\*\/)[\s\S]+?(\/\*\S+?\*\/)/, 
+    genSectionRegex('SIGNED INTEGER SAFE CASTING OPERATIONS'),
     (m0, m1, m2) => {
       let chunks = [m1];
       for (let i = 1; i <= 31; ++i) {
@@ -53,7 +53,7 @@ async function main() {
       return normalizeNewlines(chunks.join('\n\n\n'));
     }
   ).replace(
-    /(\s*\/\*\S+?\*\/\s*\/\*\s+OTHER SAFE CASTING OPERATIONS\s+\*\/\s*\/\*\S+?\*\/)[\s\S]+?(\/\*\S+?\*\/)/, 
+    genSectionRegex('OTHER SAFE CASTING OPERATIONS'),
     (m0, m1, m2) => {
       let chunks = [m1];
       for (let i = 1; i <= 31; ++i) {
