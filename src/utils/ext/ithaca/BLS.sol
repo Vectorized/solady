@@ -41,6 +41,7 @@ library BLS {
         bytes32 y_b;
     }
 
+    /// @dev A representation of a point on the G2 curve of BLS12-381.
     struct G2Point {
         bytes32 x_c0_a;
         bytes32 x_c0_b;
@@ -131,17 +132,8 @@ library BLS {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // G1 addition call expects 256 bytes as an input that is the
-            // byte concatenation of two G1 points (128 bytes each).
-            // Output is an encoding of a single G1 point (128 bytes).
-            mstore(add(result, 0x00), mload(add(point0, 0x00)))
-            mstore(add(result, 0x20), mload(add(point0, 0x20)))
-            mstore(add(result, 0x40), mload(add(point0, 0x40)))
-            mstore(add(result, 0x60), mload(add(point0, 0x60)))
-            mstore(add(result, 0x80), mload(add(point1, 0x00)))
-            mstore(add(result, 0xa0), mload(add(point1, 0x20)))
-            mstore(add(result, 0xc0), mload(add(point1, 0x40)))
-            mstore(add(result, 0xe0), mload(add(point1, 0x60)))
+            pop(staticcall(gas(), 4, point0, 0x80, result, 0x80))
+            pop(staticcall(gas(), 4, point1, 0x80, add(result, 0x80), 0x80))
             if iszero(
                 and(
                     eq(returndatasize(), 0x80),
@@ -161,24 +153,18 @@ library BLS {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // G1 multiplication call expects 160 bytes as an input that is the
-            // byte concatenation of encoding of a G1 point (128 bytes) and
-            // encoding of a scalar value (32 bytes).
-            // Output is an encoding of a single G1 point (128 bytes).
-            mstore(add(result, 0x00), mload(add(point, 0x00)))
-            mstore(add(result, 0x20), mload(add(point, 0x20)))
-            mstore(add(result, 0x40), mload(add(point, 0x40)))
-            mstore(add(result, 0x60), mload(add(point, 0x60)))
-            mstore(add(result, 0x80), scalar)
+            let t := mload(add(point, 0x80))
+            mstore(add(point, 0x80), scalar)
             if iszero(
                 and(
                     eq(returndatasize(), 0x80),
-                    staticcall(gas(), BLS12_G1MUL, result, 0xa0, result, 0x80)
+                    staticcall(gas(), BLS12_G1MUL, point, 0xa0, result, 0x80)
                 )
             ) {
                 mstore(0x00, 0x82e1cf54) // `G1MulFailed()`.
                 revert(0x1c, 0x04)
             }
+            mstore(add(point, 0x80), t)
         }
     }
 
@@ -190,27 +176,16 @@ library BLS {
         /// @solidity memory-safe-assembly
         assembly {
             let k := mload(points)
-            if iszero(eq(k, mload(scalars))) {
-                mstore(0x00, 0x5f776986) // `G1MSMFailed()`.
-                revert(0x1c, 0x04)
-            }
-            // G1 MSM call expects `160 * k` (`k` being a positive integer) bytes as an input
-            // that is the byte concatenation of `k` slices each of them being a
-            // byte concatenation of encoding of a G1 point (128 bytes)
-            // and encoding of a scalar value (32 bytes).
-            // Output is an encoding of a single G1 point (128 bytes).
+            let d := sub(scalars, points)
             for { let i := 0 } iszero(eq(i, k)) { i := add(i, 1) } {
+                points := add(points, 0x20)
                 let o := add(result, mul(0xa0, i))
-                let point := mload(add(add(points, 0x20), shl(5, i)))
-                mstore(add(o, 0x00), mload(add(point, 0x00)))
-                mstore(add(o, 0x20), mload(add(point, 0x20)))
-                mstore(add(o, 0x40), mload(add(point, 0x40)))
-                mstore(add(o, 0x60), mload(add(point, 0x60)))
-                mstore(add(o, 0x80), mload(add(add(scalars, 0x20), shl(5, i))))
+                pop(staticcall(gas(), 4, mload(points), 0x80, o, 0x80))
+                mstore(add(o, 0x80), mload(add(points, d)))
             }
             if iszero(
                 and(
-                    eq(returndatasize(), 0x80),
+                    and(eq(k, mload(scalars)), eq(returndatasize(), 0x80)),
                     staticcall(gas(), BLS12_G1MSM, result, mul(0xa0, k), result, 0x80)
                 )
             ) {
@@ -227,25 +202,8 @@ library BLS {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // G2 addition call expects 512 bytes as an input that is the
-            // byte concatenation of two G2 points (256 bytes each).
-            // Output is an encoding of a single G2 point (256 bytes).
-            mstore(add(result, 0x00), mload(add(point0, 0x00)))
-            mstore(add(result, 0x20), mload(add(point0, 0x20)))
-            mstore(add(result, 0x40), mload(add(point0, 0x40)))
-            mstore(add(result, 0x60), mload(add(point0, 0x60)))
-            mstore(add(result, 0x80), mload(add(point0, 0x80)))
-            mstore(add(result, 0xa0), mload(add(point0, 0xa0)))
-            mstore(add(result, 0xc0), mload(add(point0, 0xc0)))
-            mstore(add(result, 0xe0), mload(add(point0, 0xe0)))
-            mstore(add(result, 0x00), mload(add(point1, 0x100)))
-            mstore(add(result, 0x20), mload(add(point1, 0x120)))
-            mstore(add(result, 0x40), mload(add(point1, 0x140)))
-            mstore(add(result, 0x60), mload(add(point1, 0x160)))
-            mstore(add(result, 0x80), mload(add(point1, 0x180)))
-            mstore(add(result, 0xa0), mload(add(point1, 0x1a0)))
-            mstore(add(result, 0xc0), mload(add(point1, 0x1c0)))
-            mstore(add(result, 0xe0), mload(add(point1, 0x1e0)))
+            pop(staticcall(gas(), 4, point0, 0x100, result, 0x100))
+            pop(staticcall(gas(), 4, point1, 0x100, add(result, 0x100), 0x100))
             if iszero(
                 and(
                     eq(returndatasize(), 0x100),
@@ -265,28 +223,18 @@ library BLS {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // G2 multiplication call expects 160 bytes as an input that is the
-            // byte concatenation of encoding of a G2 point (256 bytes) and
-            // encoding of a scalar value (32 bytes).
-            // Output is an encoding of a single G2 point (256 bytes).
-            mstore(add(result, 0x00), mload(add(point, 0x00)))
-            mstore(add(result, 0x20), mload(add(point, 0x20)))
-            mstore(add(result, 0x40), mload(add(point, 0x40)))
-            mstore(add(result, 0x60), mload(add(point, 0x60)))
-            mstore(add(result, 0x80), mload(add(point, 0x80)))
-            mstore(add(result, 0xa0), mload(add(point, 0xa0)))
-            mstore(add(result, 0xc0), mload(add(point, 0xc0)))
-            mstore(add(result, 0xe0), mload(add(point, 0xe0)))
-            mstore(add(result, 0x100), scalar)
+            let t := mload(add(point, 0x100))
+            mstore(add(point, 0x100), scalar)
             if iszero(
                 and(
                     eq(returndatasize(), 0x100),
-                    staticcall(gas(), BLS12_G2MUL, result, 0x120, result, 0x100)
+                    staticcall(gas(), BLS12_G2MUL, point, 0x120, result, 0x100)
                 )
             ) {
                 mstore(0x00, 0x82e1cf54) // `G1MulFailed()`.
                 revert(0x1c, 0x04)
             }
+            mstore(add(point, 0x100), t)
         }
     }
 
@@ -298,31 +246,16 @@ library BLS {
         /// @solidity memory-safe-assembly
         assembly {
             let k := mload(points)
-            if iszero(eq(k, mload(scalars))) {
-                mstore(0x00, 0xe3dc5425) // `G2MSMFailed()`.
-                revert(0x1c, 0x04)
-            }
-            // G2 MSM call expects `288 * k` (`k` being a positive integer) bytes as an input
-            // that is the byte concatenation of `k` slices each of them being a
-            // byte concatenation of encoding of a G2 point (256 bytes)
-            // and encoding of a scalar value (32 bytes).
-            // Output is an encoding of a single G2 point (256 bytes).
+            let d := sub(scalars, points)
             for { let i := 0 } iszero(eq(i, k)) { i := add(i, 1) } {
+                points := add(points, 0x20)
                 let o := add(result, mul(0x120, i))
-                let point := mload(add(add(points, 0x20), shl(5, i)))
-                mstore(add(o, 0x00), mload(add(point, 0x00)))
-                mstore(add(o, 0x20), mload(add(point, 0x20)))
-                mstore(add(o, 0x40), mload(add(point, 0x40)))
-                mstore(add(o, 0x60), mload(add(point, 0x60)))
-                mstore(add(o, 0x80), mload(add(point, 0x80)))
-                mstore(add(o, 0xa0), mload(add(point, 0xa0)))
-                mstore(add(o, 0xc0), mload(add(point, 0xc0)))
-                mstore(add(o, 0xe0), mload(add(point, 0xe0)))
-                mstore(add(o, 0x100), mload(add(add(scalars, 0x20), shl(5, i))))
+                pop(staticcall(gas(), 4, mload(points), 0x100, o, 0x100))
+                mstore(add(o, 0x100), mload(add(d, points)))
             }
             if iszero(
                 and(
-                    eq(returndatasize(), 0x100),
+                    and(eq(k, mload(scalars)), eq(returndatasize(), 0x100)),
                     staticcall(gas(), BLS12_G2MSM, result, mul(0x120, k), result, 0x100)
                 )
             ) {
@@ -340,35 +273,17 @@ library BLS {
         /// @solidity memory-safe-assembly
         assembly {
             let k := mload(g1Points)
-            if iszero(eq(k, mload(g1Points))) {
-                mstore(0x00, 0x4df45e2f) // `PairingFailed()`.
-                revert(0x1c, 0x04)
-            }
             let m := mload(0x40)
-            // Pairing check call expects `384 * k` (`k` being a positive integer) bytes as input
-            // that is the byte concatenation of `k` slices. Each slice has the following structure:
-            // - 128 bytes of G1 point encoding
-            // - 256 bytes of G2 point encoding
+            let d := sub(g2Points, g1Points)
             for { let i := 0 } iszero(eq(i, k)) { i := add(i, 1) } {
+                g1Points := add(g1Points, 0x20)
                 let o := add(m, mul(0x180, i))
-                let g1Point := mload(add(add(g1Points, 0x20), shl(5, i)))
-                let g2Point := mload(add(add(g2Points, 0x20), shl(5, i)))
-                mstore(add(o, 0x00), mload(add(g1Point, 0x00)))
-                mstore(add(o, 0x20), mload(add(g1Point, 0x20)))
-                mstore(add(o, 0x40), mload(add(g1Point, 0x40)))
-                mstore(add(o, 0x60), mload(add(g1Point, 0x60)))
-                mstore(add(o, 0x80), mload(add(g2Point, 0x00)))
-                mstore(add(o, 0xa0), mload(add(g2Point, 0x20)))
-                mstore(add(o, 0xc0), mload(add(g2Point, 0x40)))
-                mstore(add(o, 0xe0), mload(add(g2Point, 0x60)))
-                mstore(add(o, 0x100), mload(add(g2Point, 0x80)))
-                mstore(add(o, 0x120), mload(add(g2Point, 0xa0)))
-                mstore(add(o, 0x140), mload(add(g2Point, 0xc0)))
-                mstore(add(o, 0x160), mload(add(g2Point, 0xe0)))
+                pop(staticcall(gas(), 4, mload(g1Points), 0x80, o, 0x80))
+                pop(staticcall(gas(), 4, mload(add(d, g1Points)), 0x100, add(o, 0x80), 0x100))
             }
             if iszero(
                 and(
-                    eq(returndatasize(), 0x20),
+                    and(eq(k, mload(g2Points)), eq(returndatasize(), 0x20)),
                     staticcall(gas(), BLS12_PAIRING_CHECK, m, mul(0x180, k), 0x00, 0x20)
                 )
             ) {
@@ -376,6 +291,36 @@ library BLS {
                 revert(0x1c, 0x04)
             }
             result := mload(0x00)
+        }
+    }
+
+    function mapFpToG1(Fp memory element) internal view returns (G1Point memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(
+                and(
+                    eq(returndatasize(), 0x80),
+                    staticcall(gas(), BLS12_MAP_FP_TO_G1, element, 0x40, result, 0x80)
+                )
+            ) {
+                mstore(0x00, 0x24a289fc) // `MapFpToG1Failed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    function mapFp2ToG2(Fp2 memory element) internal view returns (G2Point memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(
+                and(
+                    eq(returndatasize(), 0x100),
+                    staticcall(gas(), BLS12_MAP_FP2_TO_G2, element, 0x80, result, 0x100)
+                )
+            ) {
+                mstore(0x00, 0x89083b91) // `MapFp2ToG2Failed()`.
+                revert(0x1c, 0x04)
+            }
         }
     }
 }
