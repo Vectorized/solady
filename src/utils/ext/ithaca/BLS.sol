@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.24;
 
 /// @notice BLS wrapper.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/BLS.sol)
@@ -133,8 +133,8 @@ library BLS {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            pop(staticcall(gas(), 4, point0, 0x80, result, 0x80))
-            pop(staticcall(gas(), 4, point1, 0x80, add(result, 0x80), 0x80))
+            mcopy(result, point0, 0x80)
+            mcopy(add(result, 0x80), point1, 0x80)
             if iszero(
                 and(
                     eq(returndatasize(), 0x80),
@@ -183,7 +183,7 @@ library BLS {
             for { let i := 0 } iszero(eq(i, k)) { i := add(i, 1) } {
                 points := add(points, 0x20)
                 let o := add(result, mul(0xa0, i))
-                pop(staticcall(gas(), 4, mload(points), 0x80, o, 0x80))
+                mcopy(o, mload(points), 0x80)
                 mstore(add(o, 0x80), mload(add(points, d)))
             }
             if iszero(
@@ -206,8 +206,8 @@ library BLS {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            pop(staticcall(gas(), 4, point0, 0x100, result, 0x100))
-            pop(staticcall(gas(), 4, point1, 0x100, add(result, 0x100), 0x100))
+            mcopy(result, point0, 0x100)
+            mcopy(add(result, 0x100), point1, 0x100)
             if iszero(
                 and(
                     eq(returndatasize(), 0x100),
@@ -256,7 +256,7 @@ library BLS {
             for { let i := 0 } iszero(eq(i, k)) { i := add(i, 1) } {
                 points := add(points, 0x20)
                 let o := add(result, mul(0x120, i))
-                pop(staticcall(gas(), 4, mload(points), 0x100, o, 0x100))
+                mcopy(o, mload(points), 0x100)
                 mstore(add(o, 0x100), mload(add(d, points)))
             }
             if iszero(
@@ -285,8 +285,8 @@ library BLS {
             for { let i := 0 } iszero(eq(i, k)) { i := add(i, 1) } {
                 g1Points := add(g1Points, 0x20)
                 let o := add(m, mul(0x180, i))
-                pop(staticcall(gas(), 4, mload(g1Points), 0x80, o, 0x80))
-                pop(staticcall(gas(), 4, mload(add(d, g1Points)), 0x100, add(o, 0x80), 0x100))
+                mcopy(o, mload(g1Points), 0x80)
+                mcopy(add(o, 0x80), mload(add(d, g1Points)), 0x100)
             }
             if iszero(
                 and(
@@ -294,7 +294,7 @@ library BLS {
                     staticcall(gas(), BLS12_PAIRING_CHECK, m, mul(0x180, k), 0x00, 0x20)
                 )
             ) {
-                mstore(0x00, 0xe3dc5425) // `G2MSMFailed()`.
+                mstore(0x00, 0x4df45e2f) // `PairingFailed()`.
                 revert(0x1c, 0x04)
             }
             result := mload(0x00)

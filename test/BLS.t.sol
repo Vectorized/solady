@@ -27,32 +27,29 @@ contract BLSTest is SoladyTest {
         return bytes32(x);
     }
 
-    // We need to figure out a way to run with Odyssey features.
-    // Ideally, it should be `forge test --some-odyssey-flag`.
+    function test() public {
+        // Obtain the private key as a random scalar.
+        bytes32 privateKey = bytes32(_randomUniform());
 
-    // function test() public {
-    //     // Obtain the private key as a random scalar.
-    //     bytes32 privateKey = bytes32(_randomUniform());
+        // Public key is the generator point multiplied by the private key.
+        BLS.G1Point memory publicKey = BLS.mul(G1_GENERATOR(), privateKey);
 
-    //     // Public key is the generator point multiplied by the private key.
-    //     BLS.G1Point memory publicKey = BLS.mul(G1_GENERATOR(), privateKey);
+        // Compute the message point by mapping message's keccak256 hash to a point in G2.
+        bytes memory message = "hello world";
+        BLS.G2Point memory messagePoint = BLS.toG2(BLS.Fp2(0, 0, 0, keccak256(message)));
 
-    //     // Compute the message point by mapping message's keccak256 hash to a point in G2.
-    //     bytes memory message = "hello world";
-    //     BLS.G2Point memory messagePoint = BLS.toG2(BLS.Fp2(0, 0, 0, keccak256(message)));
+        // Obtain the signature by multiplying the message point by the private key.
+        BLS.G2Point memory signature = BLS.mul(messagePoint, privateKey);
 
-    //     // Obtain the signature by multiplying the message point by the private key.
-    //     BLS.G2Point memory signature = BLS.mul(messagePoint, privateKey);
+        // Invoke the pairing check to verify the signature.
+        BLS.G1Point[] memory g1Points = new BLS.G1Point[](2);
+        g1Points[0] = NEGATED_G1_GENERATOR();
+        g1Points[1] = publicKey;
 
-    //     // Invoke the pairing check to verify the signature.
-    //     BLS.G1Point[] memory g1Points = new BLS.G1Point[](2);
-    //     g1Points[0] = NEGATED_G1_GENERATOR();
-    //     g1Points[1] = publicKey;
+        BLS.G2Point[] memory g2Points = new BLS.G2Point[](2);
+        g2Points[0] = signature;
+        g2Points[1] = messagePoint;
 
-    //     BLS.G2Point[] memory g2Points = new BLS.G2Point[](2);
-    //     g2Points[0] = signature;
-    //     g2Points[1] = messagePoint;
-
-    //     assertTrue(BLS.pairing(g1Points, g2Points));
-    // }
+        assertTrue(BLS.pairing(g1Points, g2Points));
+    }
 }
