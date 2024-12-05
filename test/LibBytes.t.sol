@@ -82,6 +82,9 @@ contract LibBytesTest is SoladyTest {
             }
             assertEq(computed.length, expected.length);
         }
+        if (seed & 0xf == 0) {
+            assertEq(abi.encode(expected), abi.encode(this.generateBytesArray(seed)));
+        }
     }
 
     function generateBytesArray(uint256 seed) public pure returns (bytes[] memory) {
