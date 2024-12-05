@@ -660,7 +660,7 @@ library LibBytes {
                 let t := add(l, add(s, 0x20))
                 if iszero(lt(t, u)) { u := t }
             }
-            let retStart := sub(a, 0x20)
+            let retStart := add(a, w)
             mstore(retStart, 0x20) // Store the return offset.
             return(retStart, add(0x40, sub(u, retStart)))
         }
