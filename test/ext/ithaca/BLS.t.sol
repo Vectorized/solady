@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/SoladyTest.sol";
-import {BLS} from "../src/utils/ext/ithaca/BLS.sol";
+import "./../../utils/SoladyTest.sol";
+import {BLS} from "../../../src/utils/ext/ithaca/BLS.sol";
 
 contract BLSTest is SoladyTest {
     function G1_GENERATOR() internal pure returns (BLS.G1Point memory) {
