@@ -125,6 +125,7 @@ library BLS {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Adds two G1 points. Returns a new G1 point.
     function add(G1Point memory point0, G1Point memory point1)
         internal
         view
@@ -146,6 +147,7 @@ library BLS {
         }
     }
 
+    /// @dev Multiplies a G1 point by a scalar. Returns a new G1 point.
     function mul(G1Point memory point, bytes32 scalar)
         internal
         view
@@ -168,7 +170,8 @@ library BLS {
         }
     }
 
-    function msm(G1Point[] memory points, uint256[] memory scalars)
+    /// @dev Multi-scalar multiplication of G1 points with scalars. Returns a new G1 point.
+    function msm(G1Point[] memory points, bytes32[] memory scalars)
         internal
         view
         returns (G1Point memory result)
@@ -195,6 +198,7 @@ library BLS {
         }
     }
 
+    /// @dev Adds two G2 points. Returns a new G2 point.
     function add(G2Point memory point0, G2Point memory point1)
         internal
         view
@@ -216,6 +220,7 @@ library BLS {
         }
     }
 
+    /// @dev Multiplies a G2 point by a scalar. Returns a new G2 point.
     function mul(G2Point memory point, bytes32 scalar)
         internal
         view
@@ -238,7 +243,8 @@ library BLS {
         }
     }
 
-    function msm(G2Point[] memory points, uint256[] memory scalars)
+    /// @dev Multi-scalar multiplication of G2 points with scalars. Returns a new G2 point.
+    function msm(G2Point[] memory points, bytes32[] memory scalars)
         internal
         view
         returns (G2Point memory result)
@@ -265,6 +271,7 @@ library BLS {
         }
     }
 
+    /// @dev Checks the pairing of G1 points with G2 points. Returns whether the pairing is valid.
     function pairing(G1Point[] memory g1Points, G2Point[] memory g2Points)
         internal
         view
@@ -294,7 +301,8 @@ library BLS {
         }
     }
 
-    function mapFpToG1(Fp memory element) internal view returns (G1Point memory result) {
+    /// @dev Maps a Fp element to a G1 point.
+    function toG1(Fp memory element) internal view returns (G1Point memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(
@@ -309,7 +317,8 @@ library BLS {
         }
     }
 
-    function mapFp2ToG2(Fp2 memory element) internal view returns (G2Point memory result) {
+    /// @dev Maps a Fp2 element to a G2 point.
+    function toG2(Fp2 memory element) internal view returns (G2Point memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(
