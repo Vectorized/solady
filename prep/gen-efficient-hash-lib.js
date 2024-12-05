@@ -27,9 +27,10 @@ async function main() {
       s += 'result := keccak256(m, 0x' + hexNoPrefix(n << 5) +')}}\n';
     }
     return s;
-  }
+  };
+
   src = src.replace(
-    /(\s*\/\*\S+?\*\/\s*\/\*\s+MALLOC\-LESS HASHING OPERATIONS\s+\*\/\s*\/\*\S+?\*\/)[\s\S]+?(\/\*\S+?\*\/)/, 
+    /(\s*\/\*\S+?\*\/\s*\/\*\s+MALLOC.?LESS HASHING OPERATIONS\s+\*\/\s*\/\*\S+?\*\/)[\s\S]+?(\/\*\S+?\*\/)/, 
     (m0, m1, m2) => {
       let chunks = [m1];
       for (let i = 1; i <= maxDepth; ++i) {

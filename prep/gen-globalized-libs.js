@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { readSync, writeAndFmtSync, forEachWalkSync } = require('./common.js');
+const { readSync, writeSync, forEachWalkSync } = require('./common.js');
 
 async function main() {
   forEachWalkSync(['src/utils'], srcPath => {
@@ -22,7 +22,7 @@ async function main() {
 
     const dstPath = srcPath.replace(/([A-Za-z0-9]+\.sol)/, 'g/$1');
     console.log(dstPath);
-    writeAndFmtSync(
+    writeSync(
       dstPath, 
       src.replace(
         /pragma\s+solidity\s+\^0\.8\.\d+;/, 
