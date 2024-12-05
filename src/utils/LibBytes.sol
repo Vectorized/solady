@@ -641,7 +641,7 @@ library LibBytes {
                 let r := and(l, 0x1f) // `a[i].length % 32`.
                 let z := add(0x20, and(l, w)) // Offset of last word in `a[i]` from `s`.
                 // If `s` comes before `o`, or `s` is not zero right padded.
-                if iszero(lt(lt(s, o), iszero(shl(shl(3, r), mload(add(s, z)))))) {
+                if iszero(lt(lt(s, o), or(iszero(r), iszero(shl(shl(3, r), mload(add(s, z))))))) {
                     let m := mload(0x40)
                     mstore(m, l) // Copy `a[i].length`.
                     for {} 1 {} {
