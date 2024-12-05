@@ -23,6 +23,12 @@ skip = ["*/g/*", "/*Transient*", "*/ext/ithaca/*"]
 evm_version = "cancun"
 skip = ["*/ext/ithaca/*"]
 
+[profile.ithaca]
+match_path = "*/ext/ithaca/*"
+evm_version = "cancun"
+odyssey = true
+skip = []
+
 [fmt]
 line_length = 100 # While we allow up to 120, we lint at 100 for readability.
 
