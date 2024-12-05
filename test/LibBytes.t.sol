@@ -50,7 +50,7 @@ contract LibBytesTest is SoladyTest {
     function testDirectReturn() public {
         uint256 seed = 123;
         bytes[] memory expected = _generateBytesArray(seed);
-        bytes[] memory computed = this.generateBytesArray(seed);
+        bytes[] memory computed = this.generateBytesArray(seed, false);
         unchecked {
             for (uint256 i; i != expected.length; ++i) {
                 _checkMemory(computed[i]);
@@ -62,8 +62,9 @@ contract LibBytesTest is SoladyTest {
 
     function testDirectReturn(uint256 seed) public {
         bytes[] memory expected = _generateBytesArray(seed);
-        (bool success, bytes memory encoded) =
-            address(this).call(abi.encodeWithSignature("generateBytesArray(uint256)", seed));
+        (bool success, bytes memory encoded) = address(this).call(
+            abi.encodeWithSignature("generateBytesArray(uint256,bool)", seed, true)
+        );
         assertTrue(success);
         bytes[] memory computed;
         /// @solidity memory-safe-assembly
@@ -83,11 +84,19 @@ contract LibBytesTest is SoladyTest {
             assertEq(computed.length, expected.length);
         }
         if (seed & 0xf == 0) {
-            assertEq(abi.encode(expected), abi.encode(this.generateBytesArray(seed)));
+            assertEq(abi.encode(expected), abi.encode(this.generateBytesArray(seed, true)));
         }
     }
 
-    function generateBytesArray(uint256 seed) public pure returns (bytes[] memory) {
+    function generateBytesArray(uint256 seed, bool brutalized)
+        public
+        view
+        returns (bytes[] memory)
+    {
+        if (brutalized) {
+            _misalignFreeMemoryPointer();
+            _brutalizeMemory();
+        }
         LibBytes.directReturn(_generateBytesArray(seed));
     }
 
