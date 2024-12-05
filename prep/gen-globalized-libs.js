@@ -1,9 +1,12 @@
 #!/usr/bin/env node
-const { readSync, writeSync, forEachWalkSync } = require('./common.js');
+const { hasAnyPathSequence, readSync, writeSync, forEachWalkSync } = require('./common.js');
 
 async function main() {
+  const pathSequencesToIgnore = ['g', 'utils/ext/ithaca'];
+
   forEachWalkSync(['src/utils'], srcPath => {
-    if (!srcPath.match(/\.sol$/i) || srcPath.match(/\/g\//)) return;
+    if (!srcPath.match(/\.sol$/i)) return;
+    if (hasAnyPathSequence(srcPath, pathSequencesToIgnore)) return;
 
     let src = readSync(srcPath);
     const libraryStartMatch = src.match(/library\s+([A-Za-z0-9]+)\s+\{/);
