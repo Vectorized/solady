@@ -37,7 +37,8 @@ jobs:
             FOUNDRY_PROFILE=ithaca forge test --use 0.8.28
           ) ||
           ( [ "${{ matrix.profile }}" = "post-cancun-via-ir" ] &&
-            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 --via-ir
+            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 --via-ir &&
+            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
             FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.5 --fuzz-runs 16 &&
