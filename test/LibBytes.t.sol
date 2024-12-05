@@ -46,4 +46,83 @@ contract LibBytesTest is SoladyTest {
     function testEmptyCalldata() public {
         assertEq(LibBytes.emptyCalldata(), "");
     }
+
+    function testDirectReturn() public {
+        uint256 seed = 123;
+        bytes[] memory expected = _generateBytesArray(seed);
+        bytes[] memory computed = this.generateBytesArray(seed);
+        unchecked {
+            for (uint256 i; i != expected.length; ++i) {
+                _checkMemory(computed[i]);
+                assertEq(computed[i], expected[i]);
+            }
+            assertEq(computed.length, expected.length);
+        }
+    }
+
+    function testDirectReturn(uint256 seed) public {
+        bytes[] memory expected = _generateBytesArray(seed);
+        (bool success, bytes memory encoded) =
+            address(this).call(abi.encodeWithSignature("generateBytesArray(uint256)", seed));
+        assertTrue(success);
+        bytes[] memory computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := add(encoded, 0x20)
+            computed := add(o, mload(o))
+            for { let i := 0 } lt(i, mload(computed)) { i := add(i, 1) } {
+                let c := add(add(0x20, computed), shl(5, i))
+                mstore(c, add(add(0x20, computed), mload(c)))
+            }
+        }
+        unchecked {
+            for (uint256 i; i != expected.length; ++i) {
+                _checkMemory(computed[i]);
+                assertEq(computed[i], expected[i]);
+            }
+            assertEq(computed.length, expected.length);
+        }
+    }
+
+    function generateBytesArray(uint256 seed) public pure returns (bytes[] memory) {
+        LibBytes.directReturn(_generateBytesArray(seed));
+    }
+
+    function _generateBytesArray(uint256 seed) internal pure returns (bytes[] memory a) {
+        bytes memory before = "hehe";
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, seed)
+            mstore(0x20, 0)
+            function _next() -> _r {
+                _r := keccak256(0x00, 0x40)
+                mstore(0x20, _r)
+            }
+            function _nextBytes() -> _b {
+                _b := mload(0x40)
+                let n_ := and(_next(), 0x7f)
+                mstore(_b, n_)
+                for { let i_ := 0 } lt(i_, n_) { i_ := add(i_, 0x20) } {
+                    mstore(add(add(_b, 0x20), i_), _next())
+                }
+                if and(1, _next()) {
+                    mstore(0x40, add(n_, add(_b, 0x20)))
+                    leave
+                }
+                mstore(add(n_, add(_b, 0x20)), 0)
+                mstore(0x40, add(n_, add(_b, 0x40)))
+            }
+            let n := and(_next(), 7)
+            a := mload(0x40)
+            mstore(a, n)
+            mstore(0x40, add(add(a, 0x20), shl(5, n)))
+            for { let i := 0 } lt(i, n) { i := add(1, i) } {
+                if iszero(and(7, _next())) {
+                    mstore(add(add(a, 0x20), shl(5, i)), before)
+                    continue
+                }
+                mstore(add(add(a, 0x20), shl(5, i)), _nextBytes())
+            }
+        }
+    }
 }
