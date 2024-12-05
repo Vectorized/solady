@@ -7,9 +7,7 @@ const normalizeNewlines = s => s.replace(/\n(\n\s*)+/g, '\n\n');
 
 const hexNoPrefix = x => x.toString(16).replace(/^0[xX]/, '');
 
-const readSync = (srcPath) => {
-  return fs.readFileSync(srcPath, { encoding: 'utf8', flag: 'r' });
-};
+const readSync = srcPath => fs.readFileSync(srcPath, { encoding: 'utf8', flag: 'r' });
 
 const runCommandSync = (command, args) => {
   const result = spawnSync(command, args, { encoding:'utf-8' });
@@ -19,6 +17,18 @@ const runCommandSync = (command, args) => {
     return result.stdout;
   }
 };
+
+const hasAnyPathSequence = (srcPath, paths) => {
+  const d = '\0', norm = p => d + path.normalize(p).split(path.sep).join(d) + d;
+  return paths.some(p => norm(srcPath).indexOf(norm(p)) !== -1);
+};
+
+const genSectionRegex = name =>
+  new RegExp(
+    '(\\s*\\/\\*\\S+?\\*\\/\\s*\\/\\*\\s+' +
+    name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+    '\\s+\\*\\/\\s*\\/\\*\\S+?\\*\\/)[\\s\\S]+?(\\/\\*\\S+?\\*\\/)'
+  );
 
 const writeSync = (srcPath, src) => {
   const dir = path.dirname(srcPath);
@@ -44,7 +54,9 @@ const forEachWalkSync = (dirs, callback) => {
 };
 
 module.exports = {
+  genSectionRegex,
   hexNoPrefix,
+  hasAnyPathSequence,
   normalizeNewlines,
   readSync,
   runCommandSync,
