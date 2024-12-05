@@ -643,7 +643,7 @@ library LibBytes {
                 let s := mload(c) // Memory location `a[i]`.
                 let l := mload(s) // Length of `a[i]`.
                 let r := and(l, 0x1f)
-                let z := add(0x20, and(l, w)) // Index of of last word in `a[i]`.
+                let z := add(0x20, and(l, w)) // Offset of last word in `a[i]` from `s`.
                 // If `s` comes before `o`, or `s` is not zero right padded.
                 if iszero(lt(lt(s, o), or(iszero(r), iszero(shl(shl(3, r), mload(add(s, z))))))) {
                     let m := mload(0x40)
