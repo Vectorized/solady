@@ -317,7 +317,7 @@ contract TimelockTest is SoladyTest {
         }
     }
 
-    function _isOperationDoneOptimized(uint256 packed, uint256 blockTimestamp)
+    function _isOperationDoneOptimized(uint256 packed, uint256)
         internal
         pure
         returns (bool result)
