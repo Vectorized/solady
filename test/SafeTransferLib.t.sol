@@ -1091,4 +1091,16 @@ contract SafeTransferLibTest is SoladyTest {
             t.s
         );
     }
+
+    function testTotalSupplyQuery() public {
+        uint256 totalSupplyBefore = this.totalSupplyQuery(address(erc20));
+        erc20.burn(address(this), 123);
+        assertEq(this.totalSupplyQuery(address(erc20)), totalSupplyBefore - 123);
+        vm.expectRevert(SafeTransferLib.TotalSupplyQueryFailed.selector);
+        this.totalSupplyQuery(address(0));
+    }
+
+    function totalSupplyQuery(address token) public view returns (uint256) {
+        return SafeTransferLib.totalSupply(token);
+    }
 }

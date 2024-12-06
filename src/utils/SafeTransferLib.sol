@@ -25,6 +25,9 @@ library SafeTransferLib {
     /// @dev The ERC20 `approve` has failed.
     error ApproveFailed();
 
+    /// @dev The ERC20 `totalSupply` query has failed.
+    error TotalSupplyQueryFailed();
+
     /// @dev The Permit2 operation has failed.
     error Permit2Failed();
 
@@ -393,6 +396,21 @@ library SafeTransferLib {
                         staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
                     )
                 )
+        }
+    }
+
+    /// @dev Returns the total supply of the `token`.
+    function totalSupply(address token) internal view returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0x18160ddd) // `totalSupply()`.
+            if iszero(
+                and(gt(returndatasize(), 0x1f), staticcall(gas(), token, 0x1c, 0x04, 0x00, 0x20))
+            ) {
+                mstore(0x00, 0x54cd9435) // `TotalSupplyQueryFailed()`.
+                revert(0x1c, 0x04)
+            }
+            result := mload(0x00)
         }
     }
 
