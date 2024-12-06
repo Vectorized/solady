@@ -290,6 +290,12 @@ contract TimelockTest is SoladyTest {
         public
         pure
     {
+        if (!_isOperationReadyOptimized(packed ^ 1, blockTimestamp)) {
+            if (_isOperationDoneOptimized(packed, blockTimestamp)) {
+                packed ^= 1;
+                assert(!_isOperationReadyOptimized(packed, blockTimestamp));
+            }
+        }
         assert(
             _operationStateOptimized(packed, blockTimestamp)
                 == uint8(_operationStateOriginal(packed, blockTimestamp))
@@ -349,7 +355,7 @@ contract TimelockTest is SoladyTest {
         assembly {
             let p := packed
             let t := blockTimestamp
-            result := mul(iszero(iszero(p)), or(mul(3, and(p, 1)), sub(2, lt(t, shr(1, p)))))
+            result := mul(iszero(iszero(p)), add(and(p, 1), sub(2, lt(t, shr(1, p)))))
         }
     }
 
