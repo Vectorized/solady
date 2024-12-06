@@ -25,6 +25,9 @@ library SafeTransferLib {
     /// @dev The ERC20 `approve` has failed.
     error ApproveFailed();
 
+    /// @dev The ERC20 `totalSupply` query has failed.
+    error TotalSupplyQueryFailed();
+
     /// @dev The Permit2 operation has failed.
     error Permit2Failed();
 
@@ -396,20 +399,19 @@ library SafeTransferLib {
         }
     }
 
-    /// @dev Returns the total supply of ERC20 `token`.
-    /// Returns zero if the `token` does not exist.
-    function totalSupply(address token) internal view returns (uint256 supply) {
+    /// @dev Returns the total supply of the `token`.
+    /// Reverts if the token does not exist or does not implement `totalSupply()`.
+    function totalSupply(address token) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x18160ddd) // `totalSupply()`.
-            supply :=
-                mul( // The arguments of `mul` are evaluated from right to left.
-                    mload(0x20),
-                    and( // The arguments of `and` are evaluated from right to left.
-                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), token, 0x1c, 0x04, 0x20, 0x20)
-                    )
-                )
+            if iszero(
+                and(gt(returndatasize(), 0x1f), staticcall(gas(), token, 0x1c, 0x04, 0x00, 0x20))
+            ) {
+                mstore(0x00, 0x54cd9435) // `TotalSupplyQueryFailed()`.
+                revert(0x1c, 0x04)
+            }
+            result := mload(0x00)
         }
     }
 
