@@ -396,6 +396,23 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Returns the total supply of ERC20 `token`.
+    /// Returns zero if the `token` does not exist.
+    function totalSupply(address token) internal view returns (uint256 supply) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0x18160ddd) // `totalSupply()`.
+            supply :=
+                mul( // The arguments of `mul` are evaluated from right to left.
+                    mload(0x20),
+                    and( // The arguments of `and` are evaluated from right to left.
+                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                        staticcall(gas(), token, 0x1c, 0x04, 0x20, 0x20)
+                    )
+                )
+        }
+    }
+
     /// @dev Sends `amount` of ERC20 `token` from `from` to `to`.
     /// If the initial attempt fails, try to use Permit2 to transfer the token.
     /// Reverts upon failure.
