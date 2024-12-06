@@ -290,13 +290,21 @@ contract TimelockTest is SoladyTest {
         public
         pure
     {
-        while (packed & 1 != 0 && packed >> 1 > blockTimestamp) {
-            packed ^= 1;
+        if (!_isOperationReadyOriginal(packed ^ 1, blockTimestamp)) {
+            if (_isOperationDoneOriginal(packed, blockTimestamp)) {
+                packed ^= 1;
+                assert(!_isOperationReadyOriginal(packed, blockTimestamp));
+            }
         }
         assert(
             _operationStateOptimized(packed, blockTimestamp)
                 == uint8(_operationStateOriginal(packed, blockTimestamp))
         );
+        assert(
+            _isOperationDoneOptimized(packed, blockTimestamp)
+                == _isOperationDoneOriginal(packed, blockTimestamp)
+        );
+
         assert(
             _isOperationPendingOptimized(packed)
                 == _isOperationPendingOriginal(packed, blockTimestamp)
@@ -312,6 +320,17 @@ contract TimelockTest is SoladyTest {
         assembly {
             let p := packed
             result := iszero(or(and(1, p), iszero(p)))
+        }
+    }
+
+    function _isOperationDoneOptimized(uint256 packed, uint256)
+        internal
+        pure
+        returns (bool result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := and(1, packed)
         }
     }
 
@@ -347,6 +366,14 @@ contract TimelockTest is SoladyTest {
     {
         return _operationStateOriginal(packed, blockTimestamp) == Timelock.OperationState.Waiting
             || _operationStateOriginal(packed, blockTimestamp) == Timelock.OperationState.Ready;
+    }
+
+    function _isOperationDoneOriginal(uint256 packed, uint256 blockTimestamp)
+        internal
+        pure
+        returns (bool)
+    {
+        return _operationStateOriginal(packed, blockTimestamp) == Timelock.OperationState.Done;
     }
 
     function _isOperationReadyOriginal(uint256 packed, uint256 blockTimestamp)
