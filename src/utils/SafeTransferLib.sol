@@ -400,6 +400,7 @@ library SafeTransferLib {
     }
 
     /// @dev Returns the total supply of the `token`.
+    /// Reverts if the token does not exist or does not implement `totalSupply()`.
     function totalSupply(address token) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
