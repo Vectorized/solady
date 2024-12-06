@@ -290,10 +290,10 @@ contract TimelockTest is SoladyTest {
         public
         pure
     {
-        if (!_isOperationReadyOptimized(packed ^ 1, blockTimestamp)) {
-            if (_isOperationDoneOptimized(packed, blockTimestamp)) {
+        if (!_isOperationReadyOriginal(packed ^ 1, blockTimestamp)) {
+            if (_isOperationDoneOriginal(packed, blockTimestamp)) {
                 packed ^= 1;
-                assert(!_isOperationReadyOptimized(packed, blockTimestamp));
+                assert(!_isOperationReadyOriginal(packed, blockTimestamp));
             }
         }
         assert(
