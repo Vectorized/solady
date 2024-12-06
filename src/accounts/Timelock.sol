@@ -268,7 +268,7 @@ contract Timelock is ERC7821, EnumerableRoles {
             result := sload(xor(shl(72, id), _TIMELOCK_SLOT))
             // forgefmt: disable-next-item
             result := mul(iszero(iszero(result)),
-                add(and(result, 1), sub(2, lt(timestamp(), shr(1, result)))))
+                or(mul(3, and(result, 1)), sub(2, lt(timestamp(), shr(1, result)))))
         }
     }
 
