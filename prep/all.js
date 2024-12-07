@@ -5,6 +5,7 @@ const { runCommandSync } = require('./common.js');
 async function main() {
   const scripts = [
     'gen-efficient-hash-lib.js',
+    'gen-enumerable-set-lib.js',
     'gen-safe-cast-lib.js',
     'gen-globalized-libs.js',
     'remove-trailing-whitespace.js'

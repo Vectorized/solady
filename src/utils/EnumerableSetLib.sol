@@ -612,7 +612,7 @@ library EnumerableSetLib {
         }
     }
 
-    /// @dev Returns the element at index `i` in the set.
+    /// @dev Returns the element at index `i` in the set. Reverts if `i` is out-of-bounds.
     function at(AddressSet storage set, uint256 i) internal view returns (address result) {
         bytes32 rootSlot = _rootSlot(set);
         /// @solidity memory-safe-assembly
@@ -623,7 +623,7 @@ library EnumerableSetLib {
         if (i >= length(set)) revert IndexOutOfBounds();
     }
 
-    /// @dev Returns the element at index `i` in the set.
+    /// @dev Returns the element at index `i` in the set. Reverts if `i` is out-of-bounds.
     function at(Bytes32Set storage set, uint256 i) internal view returns (bytes32 result) {
         result = _rootSlot(set);
         /// @solidity memory-safe-assembly
@@ -634,17 +634,17 @@ library EnumerableSetLib {
         if (i >= length(set)) revert IndexOutOfBounds();
     }
 
-    /// @dev Returns the element at index `i` in the set.
+    /// @dev Returns the element at index `i` in the set. Reverts if `i` is out-of-bounds.
     function at(Uint256Set storage set, uint256 i) internal view returns (uint256 result) {
         result = uint256(at(_toBytes32Set(set), i));
     }
 
-    /// @dev Returns the element at index `i` in the set.
+    /// @dev Returns the element at index `i` in the set. Reverts if `i` is out-of-bounds.
     function at(Int256Set storage set, uint256 i) internal view returns (int256 result) {
         result = int256(uint256(at(_toBytes32Set(set), i)));
     }
 
-    /// @dev Returns the element at index `i` in the set.
+    /// @dev Returns the element at index `i` in the set. Reverts if `i` is out-of-bounds.
     function at(Uint8Set storage set, uint256 i) internal view returns (uint8 result) {
         /// @solidity memory-safe-assembly
         assembly {
