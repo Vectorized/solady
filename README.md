@@ -63,6 +63,7 @@ utils
 ├─ ERC1967Factory — "Factory for deploying and managing ERC1967 proxy contracts"
 ├─ ERC1967FactoryConstants — "The address and bytecode of the canonical ERC1967Factory"
 ├─ EfficientHashLib — "Library for efficiently performing keccak256 hashes"
+├─ EnumerableMapLib — "Library for managing enumerable maps in storage"
 ├─ EnumerableSetLib — "Library for managing enumerable sets in storage"
 ├─ FixedPointMathLib — "Arithmetic library with operations for fixed-point numbers"
 ├─ GasBurnerLib — "Library for burning gas without reverting"
