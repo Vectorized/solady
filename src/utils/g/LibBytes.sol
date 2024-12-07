@@ -631,6 +631,43 @@ library LibBytes {
         }
     }
 
+    /// @dev Directly returns `a` with minimal copying.
+    function directReturn(bytes[] memory a) internal pure {
+        assembly {
+            let n := mload(a) // `a.length`.
+            let o := add(a, 0x20) // Start of elements in `a`.
+            let u := a // Highest memory slot.
+            let w := not(0x1f)
+            for { let i := 0 } iszero(eq(i, n)) { i := add(i, 1) } {
+                let c := add(o, shl(5, i)) // Location of pointer to `a[i]`.
+                let s := mload(c) // `a[i]`.
+                let l := mload(s) // `a[i].length`.
+                let r := and(l, 0x1f) // `a[i].length % 32`.
+                let z := add(0x20, and(l, w)) // Offset of last word in `a[i]` from `s`.
+                // If `s` comes before `o`, or `s` is not zero right padded.
+                if iszero(lt(lt(s, o), or(iszero(r), iszero(shl(shl(3, r), mload(add(s, z))))))) {
+                    let m := mload(0x40)
+                    mstore(m, l) // Copy `a[i].length`.
+                    for {} 1 {} {
+                        mstore(add(m, z), mload(add(s, z))) // Copy `a[i]`, backwards.
+                        z := add(z, w) // `sub(z, 0x20)`.
+                        if iszero(z) { break }
+                    }
+                    let e := add(add(m, 0x20), l)
+                    mstore(e, 0) // Zeroize the slot after the copied bytes.
+                    mstore(0x40, add(e, 0x20)) // Allocate memory.
+                    s := m
+                }
+                mstore(c, sub(s, o)) // Convert to calldata offset.
+                let t := add(l, add(s, 0x20))
+                if iszero(lt(t, u)) { u := t }
+            }
+            let retStart := add(a, w) // Assumes `a` doesn't start from scratch space.
+            mstore(retStart, 0x20) // Store the return offset.
+            return(retStart, add(0x40, sub(u, retStart))) // End the transaction.
+        }
+    }
+
     /// @dev Returns the word at `offset`, without any bounds checks.
     /// To load an address, you can use `address(bytes20(load(a, offset)))`.
     function load(bytes memory a, uint256 offset) internal pure returns (bytes32 result) {
