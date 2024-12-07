@@ -100,9 +100,12 @@ contract BLSTest is SoladyTest {
     function hashToCurveG2Optimized(bytes memory message)
         public
         view
-        returns (BLS.G2Point memory)
+        returns (BLS.G2Point memory result)
     {
-        return BLS.hashToG2(message);
+        _misalignFreeMemoryPointer();
+        _brutalizeMemory();
+        result = BLS.hashToG2(message);
+        _checkMemory();
     }
 
     /// @notice Computes a point in G2 from a message
