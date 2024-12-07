@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/SoladyTest.sol";
-import {DelegateCheckerLib} from "../src/utils/ext/delegatexyz/DelegateCheckerLib.sol";
-import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
+import "./../../utils/SoladyTest.sol";
+import {DelegateCheckerLib} from "../../../src/utils/ext/delegatexyz/DelegateCheckerLib.sol";
+import {FixedPointMathLib} from "../../../src/utils/FixedPointMathLib.sol";
 
 interface IDelegateRegistryV1 {
     function delegateForAll(address delegate, bool value) external;
