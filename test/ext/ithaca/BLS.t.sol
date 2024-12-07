@@ -93,11 +93,19 @@ contract BLSTest is SoladyTest {
 
     function testHashToCurveG2(bytes memory message) public {
         bytes memory expected = abi.encode(this.hashToCurveG2Original(message));
-        bytes memory computed = abi.encode(this.hashToCurveG2Optimized(message));
+        bytes memory computed = abi.encode(this.hashToCurveG2OptimizedBrutalized(message));
         assertEq(computed, expected);
     }
 
     function hashToCurveG2Optimized(bytes memory message)
+        public
+        view
+        returns (BLS.G2Point memory result)
+    {
+        result = BLS.hashToG2(message);
+    }
+
+    function hashToCurveG2OptimizedBrutalized(bytes memory message)
         public
         view
         returns (BLS.G2Point memory result)
