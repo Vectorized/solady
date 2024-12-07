@@ -7,6 +7,13 @@ pragma solidity ^0.8.24;
 ///
 /// @dev Precompile addresses come from the BLS addresses submodule in AlphaNet, see
 /// See: (https://github.com/paradigmxyz/alphanet/blob/main/crates/precompile/src/addresses.rs)
+///
+/// Note:
+/// - This implementation uses `mcopy`, since any chain that is edgy enough to
+///   implement the BLS precompiles will definitely have implemented cancun.
+/// - For efficiency, we use the legacy `staticcall` to call the precompiles.
+///   For the intended use case in an entry points that requires gas-introspection,
+///   which requires legacy bytecode, this won't be a blocker.
 library BLS {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
@@ -84,15 +91,11 @@ library BLS {
     /// @dev For mapping a Fp2 to a point on the BLS12-381 G2 curve.
     address internal constant BLS12_MAP_FP2_TO_G2 = 0x0000000000000000000000000000000000000013;
 
-    /// @dev For modular exponentiation.
-    address internal constant MOD_EXP = 0x0000000000000000000000000000000000000005;
-
-    /// @dev For sha2-256.
-    address internal constant SHA2_256 = 0x0000000000000000000000000000000000000002;
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // A custom error for each precompile helps us in debugging which precompile has failed.
 
     /// @dev The G1Add operation failed.
     error G1AddFailed();
@@ -131,8 +134,7 @@ library BLS {
         view
         returns (G1Point memory result)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             mcopy(result, point0, 0x80)
             mcopy(add(result, 0x80), point1, 0x80)
             if iszero(
@@ -153,8 +155,7 @@ library BLS {
         view
         returns (G1Point memory result)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             mcopy(result, point, 0x80)
             mstore(add(result, 0x80), scalar)
             if iszero(
@@ -175,8 +176,7 @@ library BLS {
         view
         returns (G1Point memory result)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             let k := mload(points)
             let d := sub(scalars, points)
             for { let i := 0 } iszero(eq(i, k)) { i := add(i, 1) } {
@@ -203,8 +203,7 @@ library BLS {
         view
         returns (G2Point memory result)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             mcopy(result, point0, 0x100)
             mcopy(add(result, 0x100), point1, 0x100)
             if iszero(
@@ -225,8 +224,7 @@ library BLS {
         view
         returns (G2Point memory result)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             mcopy(result, point, 0x100)
             mstore(add(result, 0x100), scalar)
             if iszero(
@@ -247,8 +245,7 @@ library BLS {
         view
         returns (G2Point memory result)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             let k := mload(points)
             let d := sub(scalars, points)
             for { let i := 0 } iszero(eq(i, k)) { i := add(i, 1) } {
@@ -275,8 +272,7 @@ library BLS {
         view
         returns (bool result)
     {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             let k := mload(g1Points)
             let m := mload(0x40)
             let d := sub(g2Points, g1Points)
@@ -301,8 +297,7 @@ library BLS {
 
     /// @dev Maps a Fp element to a G1 point.
     function toG1(Fp memory element) internal view returns (G1Point memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             if iszero(
                 and(
                     eq(returndatasize(), 0x80),
@@ -317,8 +312,7 @@ library BLS {
 
     /// @dev Maps a Fp2 element to a G2 point.
     function toG2(Fp2 memory element) internal view returns (G2Point memory result) {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             if iszero(
                 and(
                     eq(returndatasize(), 0x100),
@@ -326,6 +320,87 @@ library BLS {
                 )
             ) {
                 mstore(0x00, 0x89083b91) // `MapFp2ToG2Failed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Computes a point in G2 from a message.
+    function hashToG2(bytes memory message) internal view returns (G2Point memory result) {
+        assembly ("memory-safe") {
+            function dstPrime(o_, i_) -> _o {
+                mstore8(o_, i_) // 1.
+                mstore(add(o_, 0x01), "BLS_SIG_BLS12381G2_XMD:SHA-256_S") // 32.
+                mstore(add(o_, 0x21), "SWU_RO_NUL_\x2b") // 12.
+                _o := add(0x2d, o_)
+            }
+
+            function sha2(data_, n_) -> _h {
+                if iszero(
+                    and(eq(returndatasize(), 0x20), staticcall(gas(), 2, data_, n_, 0x00, 0x20))
+                ) { revert(codesize(), 0x00) }
+                _h := mload(0x00)
+            }
+
+            function modfield(s_, b_) {
+                mcopy(add(s_, 0x60), b_, 0x40)
+                if iszero(
+                    and(eq(returndatasize(), 0x40), staticcall(gas(), 5, s_, 0x100, b_, 0x40))
+                ) { revert(codesize(), 0x00) }
+            }
+
+            function mapToG2(s_, r_) {
+                if iszero(
+                    and(
+                        eq(returndatasize(), 0x100),
+                        staticcall(gas(), BLS12_MAP_FP2_TO_G2, s_, 0x80, r_, 0x100)
+                    )
+                ) {
+                    mstore(0x00, 0x89083b91) // `MapFp2ToG2Failed()`.
+                    revert(0x1c, 0x04)
+                }
+            }
+
+            let b := mload(0x40)
+            let s := add(b, 0x100)
+            calldatacopy(s, calldatasize(), 0x40)
+            mcopy(add(0x40, s), add(0x20, message), mload(message))
+            let o := add(add(0x40, s), mload(message))
+            mstore(o, shl(240, 256))
+            let b0 := sha2(s, sub(dstPrime(add(0x02, o), 0), s))
+            mstore(0x20, b0)
+            mstore(s, b0)
+            mstore(b, sha2(s, sub(dstPrime(add(0x20, s), 1), s)))
+            let j := b
+            for { let i := 2 } 1 {} {
+                mstore(s, xor(b0, mload(j)))
+                j := add(j, 0x20)
+                mstore(j, sha2(s, sub(dstPrime(add(0x20, s), i), s)))
+                i := add(i, 1)
+                if eq(i, 9) { break }
+            }
+
+            mstore(add(s, 0x00), 0x40)
+            mstore(add(s, 0x20), 0x20)
+            mstore(add(s, 0x40), 0x40)
+            mstore(add(s, 0xa0), 1)
+            mstore(add(s, 0xc0), 0x000000000000000000000000000000001a0111ea397fe69a4b1ba7b6434bacd7)
+            mstore(add(s, 0xe0), 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab)
+            modfield(s, add(b, 0x00))
+            modfield(s, add(b, 0x40))
+            modfield(s, add(b, 0x80))
+            modfield(s, add(b, 0xc0))
+
+            mapToG2(b, result)
+            mapToG2(add(0x80, b), add(0x100, result))
+
+            if iszero(
+                and(
+                    eq(returndatasize(), 0x100),
+                    staticcall(gas(), BLS12_G2ADD, result, 0x200, result, 0x100)
+                )
+            ) {
+                mstore(0x00, 0xc55e5e33) // `G2AddFailed()`.
                 revert(0x1c, 0x04)
             }
         }
