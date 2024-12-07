@@ -338,7 +338,7 @@ library BLS {
             function sha2(data_, n_) -> _h {
                 if iszero(
                     and(eq(returndatasize(), 0x20), staticcall(gas(), 2, data_, n_, 0x00, 0x20))
-                ) { revert(codesize(), 0x00) }
+                ) { revert(calldatasize(), 0x00) }
                 _h := mload(0x00)
             }
 
@@ -346,7 +346,7 @@ library BLS {
                 mcopy(add(s_, 0x60), b_, 0x40)
                 if iszero(
                     and(eq(returndatasize(), 0x40), staticcall(gas(), 5, s_, 0x100, b_, 0x40))
-                ) { revert(codesize(), 0x00) }
+                ) { revert(calldatasize(), 0x00) }
             }
 
             function mapToG2(s_, r_) {
