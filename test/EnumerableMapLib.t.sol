@@ -9,23 +9,31 @@ contract EnumerableMapLibTest is SoladyTest {
 
     EnumerableMapLib.AddressToUint256Map map;
 
+    struct _TestTemps {
+        bool exists;
+        address key;
+        uint256 value;
+        address[] keys;
+    }
+
     function testEnumerableMap(bytes32) public {
         address key0 = _randomNonZeroAddress();
         address key1 = _randomNonZeroAddress();
         uint256 value0 = _random();
         uint256 value1 = _random();
+        _TestTemps memory t;
 
         assertFalse(map.contains(key0));
         assertTrue(map.set(key0, value0));
         assertTrue(map.contains(key0));
 
         if (key0 != key1) {
-            (bool exists, uint256 retrieved) = map.tryGet(key0);
-            assertTrue(exists);
-            assertEq(retrieved, value0);
-            (exists, retrieved) = map.tryGet(key1);
-            assertFalse(exists);
-            assertEq(retrieved, 0);
+            (t.exists, t.value) = map.tryGet(key0);
+            assertTrue(t.exists);
+            assertEq(t.value, value0);
+            (t.exists, t.value) = map.tryGet(key1);
+            assertFalse(t.exists);
+            assertEq(t.value, 0);
             vm.expectRevert(EnumerableMapLib.EnumerableMapKeyNotFound.selector);
             this.get(key1);
             assertEq(this.get(key0), value0);
@@ -39,26 +47,26 @@ contract EnumerableMapLibTest is SoladyTest {
             assertTrue(map.set(key1, value1));
             assertEq(map.length(), 2);
 
-            (address retrievedKey, uint256 retrieved) = map.at(0);
-            assertEq(retrievedKey, key0);
-            assertEq(retrieved, value0);
-            (retrievedKey, retrieved) = map.at(1);
-            assertEq(retrievedKey, key1);
-            assertEq(retrieved, value1);
+            (t.key, t.value) = map.at(0);
+            assertEq(t.key, key0);
+            assertEq(t.value, value0);
+            (t.key, t.value) = map.at(1);
+            assertEq(t.key, key1);
+            assertEq(t.value, value1);
 
-            address[] memory retrievedKeys = map.keys();
-            assertEq(retrievedKeys.length, 2);
-            assertEq(retrievedKeys[0], key0);
-            assertEq(retrievedKeys[1], key1);
+            t.keys = map.keys();
+            assertEq(t.keys.length, 2);
+            assertEq(t.keys[0], key0);
+            assertEq(t.keys[1], key1);
 
             assertTrue(map.remove(key0));
             assertEq(map.length(), 1);
             assertFalse(map.remove(key0));
             assertEq(map.length(), 1);
         } else {
-            address[] memory retrievedKeys = map.keys();
-            assertEq(retrievedKeys.length, 1);
-            assertEq(retrievedKeys[0], key0);
+            t.keys = map.keys();
+            assertEq(t.keys.length, 1);
+            assertEq(t.keys[0], key0);
 
             assertTrue(map.remove(key0));
             assertEq(map.length(), 0);
