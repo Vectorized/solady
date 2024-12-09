@@ -303,6 +303,7 @@ library SignatureCheckerLib {
     /// If the signature is postfixed with the ERC6492 magic number, it will attempt to
     /// deploy / prepare the `signer` smart account before doing a regular ERC1271 check.
     /// Note: This function is NOT reentrancy safe.
+    /// See: https://gist.github.com/Vectorized/011d6becff6e0a73e42fe100f8d7ef04
     function isValidERC6492SignatureNowAllowSideEffects(
         address signer,
         bytes32 hash,
@@ -329,21 +330,26 @@ library SignatureCheckerLib {
                     if iszero(noCode) { isValid := callIsValidSignature(signer, hash, signature) }
                     break
                 }
-                let o := add(signature, 0x20) // Signature bytes.
-                let d := add(o, mload(add(o, 0x20))) // Factory calldata.
-                if noCode {
-                    if iszero(call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00)) {
-                        break
-                    }
+                if iszero(noCode) {
+                    let o := add(signature, 0x20) // Signature bytes.
+                    isValid := callIsValidSignature(signer, hash, add(o, mload(add(o, 0x40))))
+                    if isValid { break }
                 }
-                let s := add(o, mload(add(o, 0x40))) // Inner signature.
-                isValid := callIsValidSignature(signer, hash, s)
-                if iszero(isValid) {
-                    if call(gas(), mload(o), 0, add(d, 0x20), mload(d), codesize(), 0x00) {
-                        noCode := iszero(extcodesize(signer))
-                        if iszero(noCode) { isValid := callIsValidSignature(signer, hash, s) }
-                    }
-                }
+                let m := mload(0x40)
+                mstore(m, signer)
+                mstore(add(m, 0x20), hash)
+                pop(
+                    call(
+                        gas(), // Remaining gas.
+                        0x0000bc370E4DC924F427d84e2f4B9Ec81626ba7E, // Verifier.
+                        0, // Send zero ETH.
+                        m, // Start of memory.
+                        add(returndatasize(), 0x40), // Length of calldata in memory.
+                        staticcall(gas(), 4, add(signature, 0x20), n, add(m, 0x40), n), // 1.
+                        0x00 // Length of returndata to write.
+                    )
+                )
+                isValid := returndatasize()
                 break
             }
             // Do `ecrecover` fallback if `noCode && !isValid`.

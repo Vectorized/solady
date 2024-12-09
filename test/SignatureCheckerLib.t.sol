@@ -473,6 +473,7 @@ contract SignatureCheckerLibTest is SoladyTest {
     }
 
     function testERC6492AllowSideEffectsPostDeploy() public {
+        _etchERC6492Verifier();
         _ERC6492TestTemps memory t = _erc6492TestTemps();
         (bool success,) = t.factory.call(t.factoryCalldata);
         require(success);
@@ -491,6 +492,7 @@ contract SignatureCheckerLibTest is SoladyTest {
     }
 
     function testERC6492AllowSideEffectsPreDeploy() public {
+        _etchERC6492Verifier();
         _ERC6492TestTemps memory t = _erc6492TestTemps();
         t.result = SignatureCheckerLib.isValidERC6492SignatureNowAllowSideEffects(
             t.smartAccount, t.digest, t.innerSignature
@@ -520,6 +522,19 @@ contract SignatureCheckerLibTest is SoladyTest {
         );
         assertTrue(t.result);
         assertEq(MockERC1271Wallet(t.smartAccount).signer(), t.eoa);
+    }
+
+    function _etchERC6492Verifier() internal returns (address verifier) {
+        _ERC6492TestTemps memory t;
+        t.initcode =
+            hex"6040600b3d3960403df3fe36383d373d3d6020515160208051013d3d515af160203851516084018038385101606037303452813582523838523490601c34355afa34513060e01b141634f3";
+        t.factory = _NICKS_FACTORY;
+        t.salt = 0x0000000000000000000000000000000000000000ebfa269e1c28e801a0dc87e2;
+        verifier = LibClone.predictDeterministicAddress(keccak256(t.initcode), t.salt, t.factory);
+        assertEq(_nicksCreate2(0, t.salt, t.initcode), verifier);
+        assertGt(verifier.code.length, 0);
+        emit LogBytes32(keccak256(t.initcode));
+        emit LogBytes(verifier.code);
     }
 
     function _etchERC6492RevertingVerifier() internal returns (address revertingVerifier) {
