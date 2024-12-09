@@ -28,7 +28,7 @@ contract ERC7821 is Receiver {
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Executes the `calls` in `executionData`.
+    /// @dev Executes the calls in `executionData`.
     /// Reverts and bubbles up error if any call fails.
     ///
     /// `executionData` encoding:
@@ -58,7 +58,7 @@ contract ERC7821 is Receiver {
                 mstore(0x00, 0x7f181275) // `UnsupportedExecutionMode()`.
                 revert(0x1c, 0x04)
             }
-            // Use inline assembly to extract the `calls` and optional `opData` efficiently.
+            // Use inline assembly to extract the calls and optional `opData` efficiently.
             opData.length := 0
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
@@ -99,7 +99,7 @@ contract ERC7821 is Receiver {
         }
     }
 
-    /// @dev Executes the `calls` and returns the results.
+    /// @dev Executes the calls.
     /// Reverts and bubbles up error if any call fails.
     /// The `mode` and `executionData` are passed along in case there's a need to use them.
     function _execute(
@@ -121,7 +121,7 @@ contract ERC7821 is Receiver {
         revert(); // In your override, replace this with logic to operate on `opData`.
     }
 
-    /// @dev Executes the `calls` and returns the results.
+    /// @dev Executes the calls.
     /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
     function _execute(Call[] calldata calls, bytes32 extraData) internal virtual {
