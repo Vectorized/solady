@@ -28,8 +28,7 @@ contract ERC7821 is Receiver {
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Executes the `calls` in `executionData` and returns the results.
-    /// The `results` are the returned data from each call.
+    /// @dev Executes the calls in `executionData`.
     /// Reverts and bubbles up error if any call fails.
     ///
     /// `executionData` encoding:
@@ -49,12 +48,7 @@ contract ERC7821 is Receiver {
     ///
     /// `opData` may be used to store additional data for authentication,
     /// paymaster data, gas limits, etc.
-    function execute(bytes32 mode, bytes calldata executionData)
-        public
-        payable
-        virtual
-        returns (bytes[] memory)
-    {
+    function execute(bytes32 mode, bytes calldata executionData) public payable virtual {
         uint256 id = _executionModeId(mode);
         Call[] calldata calls;
         bytes calldata opData;
@@ -64,7 +58,7 @@ contract ERC7821 is Receiver {
                 mstore(0x00, 0x7f181275) // `UnsupportedExecutionMode()`.
                 revert(0x1c, 0x04)
             }
-            // Use inline assembly to extract the `calls` and optional `opData` efficiently.
+            // Use inline assembly to extract the calls and optional `opData` efficiently.
             opData.length := 0
             let o := add(executionData.offset, calldataload(executionData.offset))
             calls.offset := add(o, 0x20)
@@ -76,7 +70,7 @@ contract ERC7821 is Receiver {
                 opData.length := calldataload(q)
             }
         }
-        return _execute(mode, executionData, calls, opData);
+        _execute(mode, executionData, calls, opData);
     }
 
     /// @dev Provided for execution mode support detection.
@@ -105,7 +99,7 @@ contract ERC7821 is Receiver {
         }
     }
 
-    /// @dev Executes the `calls` and returns the results.
+    /// @dev Executes the calls.
     /// Reverts and bubbles up error if any call fails.
     /// The `mode` and `executionData` are passed along in case there's a need to use them.
     function _execute(
@@ -113,7 +107,7 @@ contract ERC7821 is Receiver {
         bytes calldata executionData,
         Call[] calldata calls,
         bytes calldata opData
-    ) internal virtual returns (bytes[] memory) {
+    ) internal virtual {
         // Silence compiler warning on unused variables.
         mode = mode;
         executionData = executionData;
@@ -127,20 +121,10 @@ contract ERC7821 is Receiver {
         revert(); // In your override, replace this with logic to operate on `opData`.
     }
 
-    /// @dev Executes the `calls` and returns the results.
+    /// @dev Executes the calls.
     /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
-    function _execute(Call[] calldata calls, bytes32 extraData)
-        internal
-        virtual
-        returns (bytes[] memory results)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            results := mload(0x40) // Grab the free memory pointer.
-            mstore(results, calls.length) // Store the length of results.
-            mstore(0x40, add(add(results, 0x20), shl(5, calls.length))) // Allocate memory.
-        }
+    function _execute(Call[] calldata calls, bytes32 extraData) internal virtual {
         uint256 n = calls.length << 5;
         for (uint256 j; j != n;) {
             address target;
@@ -158,36 +142,27 @@ contract ERC7821 is Receiver {
                 data.length := calldataload(o)
                 j := add(j, 0x20)
             }
-            bytes memory r = _execute(target, value, data, extraData);
-            /// @solidity memory-safe-assembly
-            assembly {
-                mstore(add(results, j), r) // Set `results[i]` to `r`.
-            }
+            _execute(target, value, data, extraData);
         }
     }
 
-    /// @dev Executes the `calls` and returns the result.
+    /// @dev Executes the call.
     /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
     function _execute(address target, uint256 value, bytes calldata data, bytes32 extraData)
         internal
         virtual
-        returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40) // Grab the free memory pointer.
-            calldatacopy(result, data.offset, data.length)
-            if iszero(call(gas(), target, value, result, data.length, codesize(), 0x00)) {
-                // Bubble up the revert if the call reverts.
-                returndatacopy(result, 0x00, returndatasize())
-                revert(result, returndatasize())
-            }
-            mstore(result, returndatasize()) // Store the length.
-            let o := add(result, 0x20)
-            returndatacopy(o, 0x00, returndatasize()) // Copy the returndata.
-            mstore(0x40, add(o, returndatasize())) // Allocate the memory.
             extraData := extraData // Silence unused variable compiler warning.
+            let m := mload(0x40) // Grab the free memory pointer.
+            calldatacopy(m, data.offset, data.length)
+            if iszero(call(gas(), target, value, m, data.length, codesize(), 0x00)) {
+                // Bubble up the revert if the call reverts.
+                returndatacopy(m, 0x00, returndatasize())
+                revert(m, returndatasize())
+            }
         }
     }
 }

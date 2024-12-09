@@ -48,14 +48,7 @@ contract ERC7821Test is SoladyTest {
         bytes memory data = abi.encode(calls);
         vm.resumeGasMetering();
 
-        bytes[] memory results = mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, data);
-
-        vm.pauseGasMetering();
-
-        assertEq(results.length, 2);
-        assertEq(abi.decode(results[0], (bytes)), "hehe");
-        assertEq(abi.decode(results[1], (bytes32)), keccak256("lol"));
-        vm.resumeGasMetering();
+        mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, data);
     }
 
     function testERC7821(bytes memory opData) public {
@@ -71,14 +64,9 @@ contract ERC7821Test is SoladyTest {
         calls[1].value = 789;
         calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
-        bytes[] memory results =
-            mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, _encode(calls, opData));
+        mbe.execute{value: _totalValue(calls)}(_SUPPORTED_MODE, _encode(calls, opData));
 
         assertEq(mbe.lastOpData(), opData);
-
-        assertEq(results.length, 2);
-        assertEq(abi.decode(results[0], (bytes)), "hehe");
-        assertEq(abi.decode(results[1], (bytes32)), keccak256("lol"));
     }
 
     function testERC7821ForRevert() public {
@@ -124,14 +112,7 @@ contract ERC7821Test is SoladyTest {
             }
         }
 
-        bytes[] memory results = mbe.executeDirect{value: _totalValue(calls)}(calls);
-        for (uint256 i; i < calls.length; ++i) {
-            if (payloads[i].mode == 0) {
-                assertEq(abi.decode(results[i], (bytes)), payloads[i].data);
-            } else {
-                assertEq(abi.decode(results[i], (bytes32)), keccak256(payloads[i].data));
-            }
-        }
+        mbe.executeDirect{value: _totalValue(calls)}(calls);
 
         if (calls.length != 0 && _randomChance(32)) {
             calls[_randomUniform() % calls.length].data =
