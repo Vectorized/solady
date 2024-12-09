@@ -306,6 +306,8 @@ library SignatureCheckerLib {
     /// The verifier must be deployed.
     /// Otherwise, the function will return false if `signer` is not yet deployed / prepared.
     /// See: https://gist.github.com/Vectorized/011d6becff6e0a73e42fe100f8d7ef04
+    /// With a dedicated verifier, this function is safe to use in contracts
+    /// that have been granted special permissions.
     function isValidERC6492SignatureNowAllowSideEffects(
         address signer,
         bytes32 hash,
