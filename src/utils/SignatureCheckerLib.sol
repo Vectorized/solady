@@ -303,6 +303,8 @@ library SignatureCheckerLib {
     /// If the signature is postfixed with the ERC6492 magic number, it will attempt to
     /// deploy / prepare the `signer` smart account before doing a regular ERC1271 check.
     /// Note: This function is NOT reentrancy safe.
+    /// The verifier must be deployed.
+    /// Otherwise, the function will return false if `signer` is not yet deployed / prepared.
     /// See: https://gist.github.com/Vectorized/011d6becff6e0a73e42fe100f8d7ef04
     function isValidERC6492SignatureNowAllowSideEffects(
         address signer,
