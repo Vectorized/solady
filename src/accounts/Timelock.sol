@@ -305,7 +305,7 @@ contract Timelock is ERC7821, EnumerableRoles {
         bytes calldata executionData,
         Call[] calldata calls,
         bytes calldata opData
-    ) internal virtual override(ERC7821) returns (bytes[] memory results) {
+    ) internal virtual override(ERC7821) {
         if (!_hasRole(OPEN_ROLE_HOLDER, EXECUTOR_ROLE)) _checkRole(EXECUTOR_ROLE);
         bytes32 id;
         uint256 s;
@@ -332,7 +332,7 @@ contract Timelock is ERC7821, EnumerableRoles {
                 }
             }
         }
-        results = _execute(calls, id);
+        _execute(calls, id);
         /// @solidity memory-safe-assembly
         assembly {
             // Recheck the operation after the calls, in case of reentrancy.
