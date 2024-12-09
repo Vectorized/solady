@@ -1,7 +1,7 @@
 {
   "name": "solady",
   "license": "MIT",
-  "version": "0.0.279",
+  "version": "0.0.280",
   "description": "Optimized Solidity snippets.",
   "files": [
     "src/**/*.sol",
