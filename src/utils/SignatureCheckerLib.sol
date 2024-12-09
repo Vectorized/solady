@@ -345,7 +345,7 @@ library SignatureCheckerLib {
                 pop(
                     call(
                         gas(), // Remaining gas.
-                        0x0000bc370E4DC924F427d84e2f4B9Ec81626ba7E, // Verifier.
+                        0x0000bc370E4DC924F427d84e2f4B9Ec81626ba7E, // Non-reverting verifier.
                         0, // Send zero ETH.
                         m, // Start of memory.
                         add(returndatasize(), 0x40), // Length of calldata in memory.
