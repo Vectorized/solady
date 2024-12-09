@@ -13,6 +13,7 @@ contract MockEnumerableRoles is EnumerableRoles, Brutalizer {
         address owner;
         bool ownerReverts;
         bytes allowedRolesEncoded;
+        uint256 allowedRole;
     }
 
     event Yo();
@@ -57,7 +58,15 @@ contract MockEnumerableRoles is EnumerableRoles, Brutalizer {
         $.allowedRolesEncoded = value;
     }
 
+    function setAllowedRole(uint256 role) public {
+        $.allowedRole = role;
+    }
+
     function guardedByOnlyOwnerOrRoles() public onlyOwnerOrRoles($.allowedRolesEncoded) {
+        emit Yo();
+    }
+
+    function guardedByOnlyOwnerOrRole() public onlyOwnerOrRole($.allowedRole) {
         emit Yo();
     }
 

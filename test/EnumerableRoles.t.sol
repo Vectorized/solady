@@ -210,6 +210,25 @@ contract EnumerableRolesTest is SoladyTest {
         }
     }
 
+    function testOnlyOwnerOrRole(uint256 allowedRole, uint256 holderRole) public {
+        address holder = _randomUniqueHashedAddress();
+        assertEq(mockEnumerableRoles.owner(), address(this));
+        if (holder == address(this)) return;
+        mockEnumerableRoles.setAllowedRole(allowedRole);
+        mockEnumerableRoles.setRoleDirect(holder, holderRole, true);
+        if (_randomChance(32)) {
+            mockEnumerableRoles.guardedByOnlyOwnerOrRole();
+        }
+        if (holderRole != allowedRole) {
+            vm.prank(holder);
+            vm.expectRevert(EnumerableRoles.EnumerableRolesUnauthorized.selector);
+            mockEnumerableRoles.guardedByOnlyOwnerOrRole();
+        } else {
+            vm.prank(holder);
+            mockEnumerableRoles.guardedByOnlyOwnerOrRole();
+        }
+    }
+
     function testSetAndGetRoles(bytes32) public {
         _TestTemps memory t;
         t.holders = _sampleUniqueAddresses(_randomUniform() & 7);
