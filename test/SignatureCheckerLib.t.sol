@@ -358,16 +358,6 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertEq(SignatureCheckerLib.isValidSignatureNow(signer, hash, signature), false);
     }
 
-    function _etchNicksFactory() internal returns (address nicksFactory) {
-        nicksFactory = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
-        if (nicksFactory.code.length != 0) {
-            vm.etch(
-                nicksFactory,
-                hex"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3"
-            );
-        }
-    }
-
     bytes32 private constant _ERC6492_DETECTION_SUFFIX =
         0x6492649264926492649264926492649264926492649264926492649264926492;
 
@@ -388,7 +378,7 @@ contract SignatureCheckerLibTest is SoladyTest {
     }
 
     function _erc6492TestTemps() internal returns (_ERC6492TestTemps memory t) {
-        t.factory = _etchNicksFactory();
+        t.factory = _NICKS_FACTORY;
         assertGt(t.factory.code.length, 0);
         (t.eoa, t.privateKey) = _randomSigner();
         t.initcode = abi.encodePacked(type(MockERC1271Wallet).creationCode, uint256(uint160(t.eoa)));
@@ -536,12 +526,11 @@ contract SignatureCheckerLibTest is SoladyTest {
         _ERC6492TestTemps memory t;
         t.initcode =
             hex"6040600b3d3960403df3fe36383d373d3d6020515160208051013d3d515af160203851516084018038385101606037303452813582523838523490601c34355afa34513060e01b141634fd";
-        t.factory = _etchNicksFactory();
+        t.factory = _NICKS_FACTORY;
         t.salt = 0x000000000000000000000000000000000000000068f35e1510740001fd13984a;
-        (bool success,) = t.factory.call(abi.encodePacked(t.salt, t.initcode));
         revertingVerifier =
             LibClone.predictDeterministicAddress(keccak256(t.initcode), t.salt, t.factory);
-        assertTrue(success);
+        assertEq(_nicksCreate2(0, t.salt, t.initcode), revertingVerifier);
         assertGt(revertingVerifier.code.length, 0);
         emit LogBytes32(keccak256(t.initcode));
         emit LogBytes(revertingVerifier.code);
