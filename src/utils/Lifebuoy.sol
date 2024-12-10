@@ -11,6 +11,9 @@ pragma solidity ^0.8.4;
 ///   script misfire / misconfiguration.
 /// - Careless dev forgets to add a withdraw function to a NFT sale contract.
 ///
+/// Note: if you are deploying via a untrusted `tx.origin`,
+/// you MUST override `_lifebuoyDefaultDeployer` to return a trusted address.
+///
 /// For best safety:
 /// - For non-escrow contracts, inherit Lifebuoy as much as possible,
 ///   and leave it unlocked.
@@ -21,7 +24,6 @@ pragma solidity ^0.8.4;
 ///
 /// All rescue and rescue authorization functions require either:
 /// - Caller is the deployer
-///   AND caller is an EOA
 ///   AND the contract is not a proxy
 ///   AND `rescueLocked() & _LIFEBUOY_DEPLOYER_ACCESS_LOCK == 0`.
 /// - Caller is `owner()`
@@ -102,9 +104,12 @@ contract Lifebuoy {
 
     constructor() payable {
         bytes32 hash;
-        uint256 deployer = uint160(_lifebuoyUseTxOriginAsDeployer() ? tx.origin : msg.sender);
+        uint256 deployer = uint160(_lifebuoyDefaultDeployer());
         /// @solidity memory-safe-assembly
         assembly {
+            // I know about EIP7645, and I will stop it if it gets traction.
+            // Worse case, I will add an `ecrecover` method. But not today.
+            if iszero(deployer) { deployer := origin() }
             mstore(0x00, address())
             mstore(0x20, deployer)
             hash := keccak256(0x00, 0x40)
@@ -112,12 +117,13 @@ contract Lifebuoy {
         _lifebuoyDeployerHash = hash;
     }
 
-    /// @dev Override to return true if the contract is to be deployed via a factory
-    /// in a transaction initiated by a trusted EOA that is NEVER shared.
-    /// If your contract is deployed by someone else's EOA (e.g. sponsored transactions),
-    /// this function MUST return false, as per default.
-    function _lifebuoyUseTxOriginAsDeployer() internal view virtual returns (bool) {
-        return false;
+    /// @dev Override to return a non-zero address if you want to set it as the deployer.
+    /// Otherwise, the deployer will be set to `tx.origin`.
+    ///
+    /// Note: If you are deploying via a untrusted `tx.origin` (e.g. ERC4337 bundler)
+    /// you MUST override this function to return a trusted address.
+    function _lifebuoyDefaultDeployer() internal view virtual returns (address) {
+        return address(0);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -292,12 +298,11 @@ contract Lifebuoy {
                 // If the `modeLock` flag is true, set all bits in `locks` to true.
                 locks := or(sub(0, iszero(iszero(and(modeLock, locks)))), locks)
                 // Caller is the deployer
-                // AND caller is an EOA
                 // AND the contract is not a proxy
                 // AND `locks & _LIFEBUOY_DEPLOYER_ACCESS_LOCK` is false.
                 mstore(0x20, caller())
                 mstore(and(locks, _LIFEBUOY_DEPLOYER_ACCESS_LOCK), address())
-                if iszero(or(extcodesize(caller()), xor(keccak256(0x00, 0x40), h))) { break }
+                if eq(keccak256(0x00, 0x40), h) { break }
                 // If the caller is `owner()`
                 // AND `locks & _LIFEBUOY_OWNER_ACCESS_LOCK` is false.
                 mstore(0x08, 0x8da5cb5b0a0362e0) // `owner()` and `RescueUnauthorizedOrLocked()`.
