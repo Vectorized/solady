@@ -114,8 +114,7 @@ contract Lifebuoy {
         _lifebuoyDeployerHash = hash;
     }
 
-    /// @dev By default, this returns `tx.origin`.
-    /// Override to return another address if needed.
+    /// @dev Returns `tx.origin` by default. Override to return another address if needed.
     ///
     /// Note: If you are deploying via a untrusted `tx.origin` (e.g. ERC4337 bundler)
     /// you MUST override this function to return a trusted address.
