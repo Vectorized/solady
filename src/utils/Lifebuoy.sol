@@ -107,9 +107,6 @@ contract Lifebuoy {
         uint256 deployer = uint160(_lifebuoyDefaultDeployer());
         /// @solidity memory-safe-assembly
         assembly {
-            // I know about EIP7645, and I will stop it if it gets traction.
-            // Worse case, I will add an `ecrecover` method. But not today.
-            if iszero(deployer) { deployer := origin() }
             mstore(0x00, address())
             mstore(0x20, deployer)
             hash := keccak256(0x00, 0x40)
@@ -117,13 +114,15 @@ contract Lifebuoy {
         _lifebuoyDeployerHash = hash;
     }
 
-    /// @dev Override to return a non-zero address if you want to set it as the deployer.
-    /// Otherwise, the deployer will be set to `tx.origin`.
+    /// @dev By default, this returns `tx.origin`.
+    /// Override to return another address if needed.
     ///
     /// Note: If you are deploying via a untrusted `tx.origin` (e.g. ERC4337 bundler)
     /// you MUST override this function to return a trusted address.
     function _lifebuoyDefaultDeployer() internal view virtual returns (address) {
-        return address(0);
+        // I know about EIP7645, and I will stop it if it gets traction.
+        // Worse case, I will add an `ecrecover` method. But not today.
+        return tx.origin;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
