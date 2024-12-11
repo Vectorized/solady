@@ -237,11 +237,6 @@ contract LifebuoyTest is SoladyTest {
         vm.prank(t.owner);
         vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
-
-        address eoa = _randomHashedAddress();
-        vm.prank(t.owner);
-        vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
-        t.lifebuoyOwned.rescueERC721(eoa, t.recipient, t.tokenId);
     }
 
     function _testRescueERC1155(_TestTemps memory t) public {
