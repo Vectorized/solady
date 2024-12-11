@@ -159,7 +159,6 @@ contract Lifebuoy {
             mstore(0x34, amount) // Store the `amount` argument.
             // `RescueTransferFailed()` and `transfer(address,uint256)`.
             mstore(0x00, shl(96, 0x7ec62e76a9059cbb))
-            // Perform the transfer, reverting upon failure.
             if iszero(call(gas(), token, callvalue(), 0x10, 0x44, 0x00, 0x20)) {
                 revert(0x0c, 0x04)
             }
@@ -183,7 +182,6 @@ contract Lifebuoy {
             mstore(0x20, address()) // Store the `from` argument.
             // `RescueTransferFailed()` and `transferFrom(address,address,uint256)`.
             mstore(0x00, 0x7ec62e7623b872dd)
-            // Perform the transfer, reverting upon failure.
             if iszero(call(gas(), token, callvalue(), 0x1c, 0x64, codesize(), 0x00)) {
                 revert(0x18, 0x04)
             }
@@ -212,17 +210,9 @@ contract Lifebuoy {
             mstore(add(0x80, m), amount) // Store the `amount` argument.
             mstore(add(0xa0, m), 0xa0) // Store the offset to `data`.
             calldatacopy(add(m, 0xc0), sub(data.offset, 0x20), add(0x20, data.length))
-            // Perform the transfer, reverting upon failure.
+            // forgefmt: disable-next-item
             if iszero(
-                call(
-                    gas(),
-                    token,
-                    callvalue(),
-                    add(m, 0x1c),
-                    add(0xc4, data.length),
-                    codesize(),
-                    0x00
-                )
+                call(gas(), token, callvalue(), add(m, 0x1c), add(0xc4, data.length), codesize(), 0x00)
             ) { revert(add(m, 0x18), 0x04) }
         }
     }
@@ -243,7 +233,6 @@ contract Lifebuoy {
             mstore(0x54, amount) // Store the `amount` argument.
             // `RescueTransferFailed()` and `transfer(address,uint256,uint256)`.
             mstore(0x00, shl(96, 0x7ec62e76095bcdb6))
-            // Perform the transfer, reverting upon failure.
             if iszero(call(gas(), token, callvalue(), 0x10, 0x64, 0x00, 0x20)) {
                 revert(0x0c, 0x04)
             }
