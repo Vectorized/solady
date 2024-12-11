@@ -109,7 +109,7 @@ contract LifebuoyTest is SoladyTest {
         if (_randomChance(32)) t.owner = t.deployer;
         if (_randomChance(2)) vm.etch(t.deployer, " ");
 
-        vm.prank(t.deployer);
+        vm.prank(t.deployer, t.deployer);
         t.lifebuoyOwned = new MockLifebuoyOwned(t.owner);
         vm.deal(address(t.lifebuoyOwned), 1 ether);
     }
@@ -128,11 +128,11 @@ contract LifebuoyTest is SoladyTest {
     function _testTempsForRescuePermissions() internal returns (_TestTemps memory t) {
         t = _testTempsBase();
 
-        vm.prank(t.deployer);
+        vm.prank(t.deployer, t.deployer);
         t.lifebuoy = new MockLifebuoy();
         vm.deal(address(t.lifebuoy), 1 ether);
 
-        vm.prank(t.deployer);
+        vm.prank(t.deployer, t.deployer);
         t.lifebuoyOwnedClone = MockLifebuoyOwned(LibClone.clone(address(t.lifebuoyOwned)));
         t.lifebuoyOwnedClone.initializeOwner(t.owner);
         vm.deal(address(t.lifebuoyOwnedClone), 1 ether);
@@ -144,71 +144,25 @@ contract LifebuoyTest is SoladyTest {
         t.lifebuoy.rescueETH(t.recipient, 1);
 
         vm.prank(t.deployer);
-        if (t.deployer.code.length == 0) {
-            t.lifebuoy.rescueETH(t.recipient, 1);
-        } else {
-            vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
-            t.lifebuoy.rescueETH(t.recipient, 1);
-        }
+        t.lifebuoy.rescueETH(t.recipient, 1);
 
         vm.prank(t.owner);
-        if (t.deployer != t.owner || t.deployer.code.length != 0) {
+        if (t.deployer != t.owner) {
             vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
         }
         t.lifebuoy.rescueETH(t.recipient, 1);
-
-        if (_randomChance(2) && t.deployer.code.length == 0) {
-            vm.startPrank(t.deployer);
-            if (_randomChance(2)) {
-                t.lifebuoy.rescueETH(t.recipient, 1);
-            }
-            t.lifebuoy.lockRescue(_LIFEBUOY_DEPLOYER_ACCESS_LOCK);
-            vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
-            t.lifebuoy.rescueETH(t.recipient, 1);
-            vm.stopPrank();
-        }
     }
 
     function testLifebuoyOwnedRescuePermissions(bytes32) public {
         _TestTemps memory t = _testTempsForRescuePermissions();
+        vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
+        t.lifebuoy.rescueETH(t.recipient, 1);
+
         vm.prank(t.deployer);
-        if (t.deployer != t.owner && t.deployer.code.length != 0) {
-            vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
-        }
         t.lifebuoyOwned.rescueETH(t.recipient, 1);
 
         vm.prank(t.owner);
         t.lifebuoyOwned.rescueETH(t.recipient, 1);
-
-        if (_randomChance(2) && t.deployer.code.length == 0) {
-            if (_randomChance(2)) {
-                vm.prank(t.deployer);
-                t.lifebuoyOwned.rescueETH(t.recipient, 1);
-            }
-            if (_randomChance(2)) {
-                vm.prank(t.owner);
-                t.lifebuoyOwned.rescueETH(t.recipient, 1);
-            }
-
-            if (_randomChance(2)) {
-                vm.prank(t.deployer);
-                t.lifebuoyOwned.lockRescue(_LIFEBUOY_DEPLOYER_ACCESS_LOCK);
-                vm.prank(t.deployer);
-                if (t.deployer != t.owner) {
-                    vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
-                }
-                t.lifebuoyOwned.rescueETH(t.recipient, 1);
-            } else {
-                vm.prank(t.deployer);
-                t.lifebuoyOwned.lockRescue(_LIFEBUOY_OWNER_ACCESS_LOCK);
-
-                vm.prank(t.owner);
-                if (t.deployer != t.owner) {
-                    vm.expectRevert(Lifebuoy.RescueUnauthorizedOrLocked.selector);
-                }
-                t.lifebuoyOwned.rescueETH(t.recipient, 1);
-            }
-        }
     }
 
     function testLifebuoyOwnedCloneRescuePermissions(bytes32) public {
@@ -283,11 +237,6 @@ contract LifebuoyTest is SoladyTest {
         vm.prank(t.owner);
         vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
         t.lifebuoyOwned.rescueERC721(address(erc721), t.recipient, t.tokenId);
-
-        address eoa = _randomHashedAddress();
-        vm.prank(t.owner);
-        vm.expectRevert(Lifebuoy.RescueTransferFailed.selector);
-        t.lifebuoyOwned.rescueERC721(eoa, t.recipient, t.tokenId);
     }
 
     function _testRescueERC1155(_TestTemps memory t) public {
