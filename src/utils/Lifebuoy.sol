@@ -159,7 +159,7 @@ contract Lifebuoy {
             mstore(0x34, amount) // Store the `amount` argument.
             // `RescueTransferFailed()` and `transfer(address,uint256)`.
             mstore(0x00, shl(96, 0x7ec62e76a9059cbb))
-            if iszero(call(gas(), token, callvalue(), 0x10, 0x44, 0x00, 0x20)) {
+            if iszero(call(gas(), token, callvalue(), 0x10, 0x44, codesize(), 0x00)) {
                 revert(0x0c, 0x04)
             }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
@@ -233,7 +233,7 @@ contract Lifebuoy {
             mstore(0x54, amount) // Store the `amount` argument.
             // `RescueTransferFailed()` and `transfer(address,uint256,uint256)`.
             mstore(0x00, shl(96, 0x7ec62e76095bcdb6))
-            if iszero(call(gas(), token, callvalue(), 0x10, 0x64, 0x00, 0x20)) {
+            if iszero(call(gas(), token, callvalue(), 0x10, 0x64, codesize(), 0x00)) {
                 revert(0x0c, 0x04)
             }
             mstore(0x60, 0) // Restore the zero slot to zero.
