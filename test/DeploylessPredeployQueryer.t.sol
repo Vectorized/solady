@@ -124,11 +124,13 @@ contract DeploylessPredeployQueryerTest is SoladyTest {
     }
 
     function testTargetGenerate() public {
+        vm.pauseGasMetering();
         Target target = new Target();
         for (uint256 i; i < 16; ++i) {
             bytes memory seed = _randomBytes();
             assertEq(target.generate(seed), RandomBytesGeneratorLib.generate(seed));
         }
+        vm.resumeGasMetering();
     }
 
     function testPredeployQueryer(bytes32 salt) public {
