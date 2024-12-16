@@ -670,7 +670,8 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := and(0xffffffffff, sub(extcodesize(instance), 0x2d))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), add(n, 0x20))
+            let l := sub(n, mul(start, lt(start, n)))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), add(l, 0x20))
             mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
             mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
@@ -1144,7 +1145,8 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := and(0xffffffffff, sub(extcodesize(instance), 0x3d))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x3d), add(n, 0x20))
+            let l := sub(n, mul(start, lt(start, n)))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x3d), add(l, 0x20))
             mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
             mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
@@ -1644,7 +1646,8 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := and(0xffffffffff, sub(extcodesize(instance), 0x52))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x52), add(n, 0x20))
+            let l := sub(n, mul(start, lt(start, n)))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x52), add(l, 0x20))
             mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
             mstore(0x40, add(mload(args), add(args, 0x40))) // Allocate memory.
         }
@@ -2239,7 +2242,8 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := and(0xffffffffff, sub(extcodesize(instance), 0x52))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x52), add(n, 0x20))
+            let l := sub(n, mul(start, lt(start, n)))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x52), add(l, 0x20))
             mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
             mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
@@ -2741,7 +2745,8 @@ library LibClone {
         assembly {
             args := mload(0x40)
             let n := and(0xffffffffff, sub(extcodesize(instance), 0x57))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x57), add(n, 0x20))
+            let l := sub(n, mul(start, lt(start, n)))
+            extcodecopy(instance, add(args, 0x20), add(start, 0x57), add(l, 0x20))
             mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
             mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
