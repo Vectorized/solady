@@ -154,14 +154,15 @@ library LibERC7579 {
         /// @solidity memory-safe-assembly
         assembly {
             let u := calldataload(executionData.offset)
-            if or(shr(64, u), gt(0x20, executionData.length)) {
+            let s := add(executionData.offset, u)
+            let e := sub(add(executionData.offset, executionData.length), 0x20)
+            pointers.offset := add(s, 0x20)
+            pointers.length := calldataload(s)
+            if or(shr(64, u), gt(s, e)) {
                 mstore(0x00, 0xba597e7e) // `DecodingError()`.
                 revert(0x1c, 0x04)
             }
-            pointers.offset := add(add(executionData.offset, u), 0x20)
-            pointers.length := calldataload(add(executionData.offset, u))
             if pointers.length {
-                let e := sub(add(executionData.offset, executionData.length), 0x20)
                 // Perform bounds checks on the decoded `pointers`.
                 // Does an out-of-gas revert.
                 for { let i := pointers.length } 1 {} {
