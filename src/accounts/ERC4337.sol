@@ -400,6 +400,12 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         return owner();
     }
 
+    /// @dev Override to make the entry point skip the ERC7739 nested typed data workflow.
+    /// This is safe since the entry point already includes the smart account in the user op.
+    function _erc1271CallerIsSafe() internal view virtual override(ERC1271) returns (bool) {
+        return msg.sender == entryPoint() || ERC1271._erc1271CallerIsSafe();
+    }
+
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
     function _authorizeUpgrade(address) internal virtual override(UUPSUpgradeable) onlyOwner {}
 
