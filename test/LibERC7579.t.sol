@@ -210,6 +210,43 @@ contract LibERC7579Test is SoladyTest {
         return (calls, opData);
     }
 
+    struct S {
+        bytes executionData;
+        bytes garbage;
+    }
+
+    function testDecodeBatchEdgeCase() public {
+        /*
+        Calldata is as follows when S is passed to a function:
+
+        9988592b (function selector)
+        0000000000000000000000000000000000000000000000000000000000000020 (offset of s)
+        0000000000000000000000000000000000000000000000000000000000000040 (offset of s.executionData)
+        0000000000000000000000000000000000000000000000000000000000000080 (offset of s.garbage)
+        0000000000000000000000000000000000000000000000000000000000000020 (s.executionData.length)
+        0000000000000000000000000000000000000000000000000000000000000040 (s.executionData)
+        0000000000000000000000000000000000000000000000000000000000000020 (s.garbage.length)
+        0000000000000000000000000000000000000000000000000000000000000000 (s.garbage)
+        */
+        S memory s = S({executionData: abi.encode(uint256(0x40)), garbage: abi.encode(uint256(0))});
+
+        vm.expectRevert(LibERC7579.DecodingError.selector);
+        this.decodeBatch(s);
+
+        vm.expectRevert();
+        this.abiDecodeBatch(s);
+    }
+
+    function decodeBatch(S calldata s) public pure returns (uint256) {
+        bytes32[] calldata pointers = LibERC7579.decodeBatch(s.executionData);
+        return pointers.length;
+    }
+
+    function abiDecodeBatch(S calldata s) public pure returns (uint256) {
+        Call[] memory pointers = abi.decode(s.executionData, (Call[]));
+        return pointers.length;
+    }
+
     function testDecodeBatchAndOpDataReverts(bytes32) public {
         bytes memory opData = hex"3232323232323232323232323232323232323232323232323232323232323232";
         Call[] memory calls = new Call[](1);
