@@ -136,8 +136,8 @@ library WebAuthn {
                 // 19. Compute `sha256(clientDataJSON)`.
                 // 20. Compute `sha256(authenticatorData ‖ sha256(clientDataJSON))`.
                 // forgefmt: disable-next-item
-                messageHash := mload(staticcall(gas(), 2, p, add(l, 0x20),
-                    staticcall(gas(), 2, o, n, e, 0x20), 0x20))
+                messageHash := mload(staticcall(gas(),
+                    shl(1, staticcall(gas(), 2, o, n, e, 0x20)), p, add(l, 0x20), 0x01, 0x20))
                 mstore(e, w) // Restore the word after `authenticatorData`, in case of reuse.
                 // `returndatasize()` is `0x20` on `sha256` success, and `0x00` otherwise.
                 if iszero(returndatasize()) { invalid() }
