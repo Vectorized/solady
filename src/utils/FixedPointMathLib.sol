@@ -669,6 +669,22 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns `condition ? x : y`, without branching.
+    function ternary(bool condition, bytes32 x, bytes32 y) internal pure returns (bytes32 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := xor(x, mul(xor(x, y), iszero(condition)))
+        }
+    }
+
+    /// @dev Returns `condition ? x : y`, without branching.
+    function ternary(bool condition, address x, address y) internal pure returns (address z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := xor(x, mul(xor(x, y), iszero(condition)))
+        }
+    }
+
     /// @dev Exponentiate `x` to `y` by squaring, denominated in base `b`.
     /// Reverts if the computation overflows.
     function rpow(uint256 x, uint256 y, uint256 b) internal pure returns (uint256 z) {
