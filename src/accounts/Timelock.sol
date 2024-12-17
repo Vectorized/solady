@@ -17,12 +17,11 @@ import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 ///   1. `abi.encode(calls)`.
 ///   2. `abi.encode(calls, abi.encode(predecessor))`.
 ///   3. `abi.encode(calls, abi.encode(predecessor, salt))`.
-///   Where `calls` is of type `(address,uint256,bytes)[]`.
-///   `predecessor` is the id of the proposal that must be executed before.
-///   If `predecessor` is `bytes32(0)`, it will be ignored
-///   (treated as if no predecessor requirements).
-///   The optional `salt` allows for multiple proposals of the same effective payload.
-/// - The id of a proposal can be computed as:
+/// - Where `calls` is of type `(address,uint256,bytes)[]`, and
+///   `predecessor` is the id of the proposal that is required to be already executed.
+/// - If `predecessor` is `bytes32(0)`, it will be ignored (treated as if not required).
+/// - The optional `salt` allows for multiple proposals representing the same payload.
+/// - The proposal id is given by:
 ///   `keccak256(abi.encode(mode, keccak256(executionData)))`.
 ///
 /// Supported modes:
