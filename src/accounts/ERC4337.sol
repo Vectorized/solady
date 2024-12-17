@@ -317,7 +317,7 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         }
     }
 
-    /// @dev Ensures that the `storageSlot` is not prohibited for direct storage writes.
+    /// @dev Ensures that the `storageSlot` is prohibited for direct storage writes.
     /// You can override this modifier to ensure the sanctity of other storage slots too.
     modifier storageStoreGuard(bytes32 storageSlot) virtual {
         /// @solidity memory-safe-assembly
