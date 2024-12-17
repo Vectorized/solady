@@ -164,7 +164,7 @@ library LibERC7579 {
             }
             if pointers.length {
                 // Perform bounds checks on the decoded `pointers`.
-                // Does an out-of-gas revert.
+                // Loop runs out-of-gas if `pointers.length` is big enough to cause overflows.
                 for { let i := pointers.length } 1 {} {
                     i := sub(i, 1)
                     let p := calldataload(add(pointers.offset, shl(5, i)))
