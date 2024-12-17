@@ -240,8 +240,8 @@ library DynamicArrayLib {
                 mstore(result, resultLen)
                 a := add(a, shl(5, start))
                 // Copy the `a` one word at a time, backwards.
-                let o := add(shl(5, resultLen), 0x20)
-                mstore(0x40, add(result, o)) // Allocate memory.
+                let o := shl(5, resultLen)
+                mstore(0x40, add(add(result, o), 0x20)) // Allocate memory.
                 for {} 1 {} {
                     mstore(add(result, o), mload(add(a, o)))
                     o := sub(o, 0x20)
