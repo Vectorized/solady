@@ -21,6 +21,7 @@ import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 ///   `predecessor` is the id of the proposal that must be executed before.
 ///   If `predecessor` is `bytes32(0)`, it will be ignored
 ///   (treated as if no predecessor requirements).
+///   The optional `salt` allows for multiple proposals of the same effective payload.
 /// - The id of a proposal can be computed as:
 ///   `keccak256(abi.encode(mode, keccak256(executionData)))`.
 contract Timelock is ERC7821, EnumerableRoles {
@@ -356,7 +357,7 @@ contract Timelock is ERC7821, EnumerableRoles {
             // Check if optional predecessor has been executed.
             if iszero(lt(opData.length, 0x20)) {
                 let b := calldataload(opData.offset) // Predecessor's id.
-                mstore(0x00, b)
+                mstore(0x00, b) // `_TIMELOCK_SLOT` is already at `0x09`.
                 if iszero(or(iszero(b), and(1, sload(keccak256(0x00, 0x29))))) {
                     mstore(0x00, 0x90a9a618) // `TimelockUnexecutedPredecessor(bytes32)`.
                     mstore(0x20, b)
