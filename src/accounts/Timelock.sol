@@ -28,7 +28,10 @@ import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 /// Supported modes:
 /// - `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
 /// - `bytes32(0x01000000000078210001...)`: supports optional `opData`.
-/// Where `opData` is `abi.encode(predecessor)` or `abi.encode(predecessor, salt)`.
+/// Where `opData` is `abi.encode(predecessor)` or `abi.encode(predecessor, salt)`,
+/// and `...` is the remaining 22 bytes which can be anything.
+/// For ease of mind, just use:
+/// `0x0100000000007821000100000000000000000000000000000000000000000000`.
 contract Timelock is ERC7821, EnumerableRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
