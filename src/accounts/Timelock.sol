@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {ERC7821} from "./ERC7821.sol";
+import {LibERC7579} from "./LibERC7579.sol";
 import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 
 /// @notice Simple timelock.
@@ -12,6 +13,24 @@ import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 /// - This implementation only supports ERC7821 style execution.
 /// - This implementation uses EnumerableRoles for better auditability.
 /// - This implementation uses custom errors with arguments for easier debugging.
+/// - `executionData` can be encoded in three different ways:
+///   1. `abi.encode(calls)`.
+///   2. `abi.encode(calls, abi.encode(predecessor))`.
+///   3. `abi.encode(calls, abi.encode(predecessor, salt))`.
+/// - Where `calls` is of type `(address,uint256,bytes)[]`, and
+///   `predecessor` is the id of the proposal that is required to be already executed.
+/// - If `predecessor` is `bytes32(0)`, it will be ignored (treated as if not required).
+/// - The optional `salt` allows for multiple proposals representing the same payload.
+/// - The proposal id is given by:
+///   `keccak256(abi.encode(mode, keccak256(executionData)))`.
+///
+/// Supported modes:
+/// - `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
+/// - `bytes32(0x01000000000078210001...)`: supports optional `opData`.
+/// Where `opData` is `abi.encode(predecessor)` or `abi.encode(predecessor, salt)`,
+/// and `...` is the remaining 22 bytes which can be anything.
+/// For ease of mind, just use:
+/// `0x0100000000007821000100000000000000000000000000000000000000000000`.
 contract Timelock is ERC7821, EnumerableRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -82,7 +101,12 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// @dev The storage slot for the timelock's minimum delay.
     /// We restrict the `minDelay` to be less than `2 ** 254 - 1`, and store the negation of it.
     /// This allows us to check if it has been initialized via a non-zero check.
-    /// Slot of operation `id` is given by: `xor(shl(72, id), _TIMELOCK_SLOT)`.
+    /// Slot of operation `id` is given by:
+    /// ```
+    ///     mstore(0x09, _TIMELOCK_SLOT)
+    ///     mstore(0x00, id)
+    ///     let operationIdSlot := keccak256(0x00, 0x29)
+    /// ```
     /// Bits layout:
     /// - [0]       `done`.
     /// - [1..255]  `readyTimestamp`.
@@ -93,10 +117,10 @@ contract Timelock is ERC7821, EnumerableRoles {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The proposal `id` has been created.
-    event Proposed(bytes32 indexed id, bytes executionData, uint256 readyTimestamp);
+    event Proposed(bytes32 indexed id, bytes32 mode, bytes executionData, uint256 readyTimestamp);
 
     /// @dev The proposal `id` has been executed.
-    event Executed(bytes32 indexed id, bytes executionData);
+    event Executed(bytes32 indexed id, bytes32 mode, bytes executionData);
 
     /// @dev The proposal `id` has been cancelled.
     event Cancelled(bytes32 indexed id);
@@ -104,13 +128,13 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// @dev The minimum delay has been set to `newMinDelay`.
     event MinDelaySet(uint256 newMinDelay);
 
-    /// @dev `keccak256(bytes("Proposed(bytes32,bytes,uint256)"))`.
+    /// @dev `keccak256(bytes("Proposed(bytes32,bytes32,bytes,uint256)"))`.
     uint256 private constant _PROPOSED_EVENT_SIGNATURE =
-        0xbebd4e757b91b0f4e9671796f940352b8ce72b4878d18387feb19859ae5c9e25;
+        0x9b40ebcd599cbeb62eedb5e0c1db0879688a09d169ab92dbed4957d49a44b671;
 
-    /// @dev `keccak256(bytes("Executed(bytes32,bytes)"))`.
+    /// @dev `keccak256(bytes("Executed(bytes32,bytes32,bytes)"))`.
     uint256 private constant _EXECUTED_EVENT_SIGNATURE =
-        0xda66fcfe5711520a570ced34d4cdebbe652fe74713bf2bc9db4ba54357e5a96f;
+        0xb1fdd61c3a5405a73ea1f8fb29bfd62c6152241cb59843d3def17bfadb7cb0bf;
 
     /// @dev `keccak256(bytes("Cancelled(bytes32)"))`.
     uint256 private constant _CANCELLED_EVENT_SIGNATURE =
@@ -157,14 +181,15 @@ contract Timelock is ERC7821, EnumerableRoles {
     /*                  PUBLIC UPDATE FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Proposes an `executionData` with `delay`.
+    /// @dev Proposes an execute payload (`mode`, `executionData`) with `delay`.
     /// Emits a {Proposed} event.
-    function propose(bytes calldata executionData, uint256 delay)
+    function propose(bytes32 mode, bytes calldata executionData, uint256 delay)
         public
         virtual
         onlyRole(PROPOSER_ROLE)
         returns (bytes32 id)
     {
+        LibERC7579.decodeBatchAndOpData(executionData); // Check if properly encoded.
         uint256 t = minDelay();
         /// @solidity memory-safe-assembly
         assembly {
@@ -179,25 +204,30 @@ contract Timelock is ERC7821, EnumerableRoles {
                 revert(0x1c, 0x44)
             }
             let m := mload(0x40)
-            calldatacopy(add(m, 0x60), executionData.offset, executionData.length)
-            id := keccak256(add(m, 0x60), executionData.length)
-            let s := xor(shl(72, id), _TIMELOCK_SLOT) // Operation slot.
+            calldatacopy(add(m, 0x80), executionData.offset, executionData.length)
+            mstore(0x00, mode)
+            mstore(0x20, keccak256(add(m, 0x80), executionData.length))
+            id := keccak256(0x00, 0x40)
+            mstore(0x09, _TIMELOCK_SLOT)
+            mstore(0x00, id)
+            let s := keccak256(0x00, 0x29) // Operation slot.
             if sload(s) {
                 mstore(0x00, 0xd639b0bf) // `TimelockInvalidOperation(bytes32,uint256)`.
                 mstore(0x20, id)
                 mstore(0x40, 1) // `1 << OperationState.Unset`
                 revert(0x1c, 0x44)
             }
-            mstore(m, 0x40)
+            // Emits the {Proposed} event.
+            mstore(m, mode)
+            mstore(add(m, 0x20), 0x60)
             let r := add(delay, timestamp()) // `readyTimestamp`.
             sstore(s, shl(1, r)) // Update the operation in the storage.
-            // Emits the {Proposed} event.
-            mstore(add(m, 0x20), r)
-            mstore(add(m, 0x40), executionData.length)
+            mstore(add(m, 0x40), r)
+            mstore(add(m, 0x60), executionData.length)
             // Some indexers require the bytes to be zero-right padded.
-            mstore(add(add(m, 0x60), executionData.length), 0) // Zeroize the slot after the end.
+            mstore(add(add(m, 0x80), executionData.length), 0) // Zeroize the slot after the end.
             // forgefmt: disable-next-item
-            log2(m, add(0x60, and(not(0x1f), add(0x1f, executionData.length))),
+            log2(m, add(0x80, and(not(0x1f), add(0x1f, executionData.length))),
                 _PROPOSED_EVENT_SIGNATURE, id)
         }
     }
@@ -207,7 +237,9 @@ contract Timelock is ERC7821, EnumerableRoles {
     function cancel(bytes32 id) public virtual onlyRole(CANCELLER_ROLE) {
         /// @solidity memory-safe-assembly
         assembly {
-            let s := xor(shl(72, id), _TIMELOCK_SLOT) // Operation slot.
+            mstore(0x09, _TIMELOCK_SLOT)
+            mstore(0x00, id)
+            let s := keccak256(0x00, 0x29) // Operation slot.
             let p := sload(s)
             if or(and(1, p), iszero(p)) {
                 mstore(0x00, 0xd639b0bf) // `TimelockInvalidOperation(bytes32,uint256)`.
@@ -257,7 +289,9 @@ contract Timelock is ERC7821, EnumerableRoles {
     function readyTimestamp(bytes32 id) public view virtual returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := shr(1, sload(xor(shl(72, id), _TIMELOCK_SLOT)))
+            mstore(0x09, _TIMELOCK_SLOT)
+            mstore(0x00, id)
+            result := shr(1, sload(keccak256(0x00, 0x29)))
         }
     }
 
@@ -265,7 +299,9 @@ contract Timelock is ERC7821, EnumerableRoles {
     function operationState(bytes32 id) public view virtual returns (OperationState result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := sload(xor(shl(72, id), _TIMELOCK_SLOT))
+            mstore(0x09, _TIMELOCK_SLOT)
+            mstore(0x00, id)
+            result := sload(keccak256(0x00, 0x29))
             // forgefmt: disable-next-item
             result := mul(iszero(iszero(result)),
                 add(and(result, 1), sub(2, lt(timestamp(), shr(1, result)))))
@@ -301,7 +337,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// To ensure that the operation is ready to be executed.
     /// Updates the operation state and emits a {Executed} event after the calls.
     function _execute(
-        bytes32,
+        bytes32 mode,
         bytes calldata executionData,
         Call[] calldata calls,
         bytes calldata opData
@@ -313,8 +349,12 @@ contract Timelock is ERC7821, EnumerableRoles {
         assembly {
             // Copies the `executionData` for the event and to compute the `id`.
             calldatacopy(mload(0x40), executionData.offset, executionData.length)
-            id := keccak256(mload(0x40), executionData.length)
-            s := xor(shl(72, id), _TIMELOCK_SLOT)
+            mstore(0x00, mode)
+            mstore(0x20, keccak256(mload(0x40), executionData.length))
+            id := keccak256(0x00, 0x40)
+            mstore(0x09, _TIMELOCK_SLOT)
+            mstore(0x00, id)
+            s := keccak256(0x00, 0x29)
             let p := sload(s)
             if or(or(and(1, p), iszero(p)), lt(timestamp(), shr(1, p))) {
                 mstore(0x00, 0xd639b0bf) // `TimelockInvalidOperation(bytes32,uint256)`.
@@ -325,7 +365,8 @@ contract Timelock is ERC7821, EnumerableRoles {
             // Check if optional predecessor has been executed.
             if iszero(lt(opData.length, 0x20)) {
                 let b := calldataload(opData.offset) // Predecessor's id.
-                if iszero(or(iszero(b), and(1, sload(xor(shl(72, xor(b, id)), s))))) {
+                mstore(0x00, b) // `_TIMELOCK_SLOT` is already at `0x09`.
+                if iszero(or(iszero(b), and(1, sload(keccak256(0x00, 0x29))))) {
                     mstore(0x00, 0x90a9a618) // `TimelockUnexecutedPredecessor(bytes32)`.
                     mstore(0x20, b)
                     revert(0x1c, 0x24)
@@ -345,14 +386,15 @@ contract Timelock is ERC7821, EnumerableRoles {
             }
             let m := mload(0x40)
             // Copies the `executionData` for the event.
-            calldatacopy(add(m, 0x40), executionData.offset, executionData.length)
+            calldatacopy(add(m, 0x60), executionData.offset, executionData.length)
             // Emits the {Executed} event.
-            mstore(m, 0x20)
-            mstore(add(m, 0x20), executionData.length)
+            mstore(m, mode)
+            mstore(add(m, 0x20), 0x40)
+            mstore(add(m, 0x40), executionData.length)
             // Some indexers require the bytes to be zero-right padded.
             mstore(add(add(m, 0x60), executionData.length), 0) // Zeroize the slot after the end.
             // forgefmt: disable-next-item
-            log2(m, add(0x40, and(not(0x1f), add(0x1f, executionData.length))),
+            log2(m, add(0x60, and(not(0x1f), add(0x1f, executionData.length))),
                 _EXECUTED_EVENT_SIGNATURE, id)
             sstore(s, or(1, p)) // Set the operation as executed in the storage.
         }
