@@ -103,7 +103,7 @@ library LibBytes {
             let packed := sload($.slot)
             let n := shr(8, packed)
             for { let i := 0 } 1 {} {
-                if iszero(eq(and(packed, 0xff), 0xff)) {
+                if iszero(eq(or(packed, 0xff), packed)) {
                     mstore(o, packed)
                     n := and(0xff, packed)
                     i := 0x1f
