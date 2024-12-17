@@ -261,7 +261,8 @@ abstract contract ERC1155 {
                 mstore(add(m, 0x60), id)
                 mstore(add(m, 0x80), amount)
                 mstore(add(m, 0xa0), 0xa0)
-                calldatacopy(add(m, 0xc0), sub(data.offset, 0x20), add(0x20, data.length))
+                mstore(add(m, 0xc0), data.length)
+                calldatacopy(add(m, 0xe0), data.offset, data.length)
                 // Revert if the call reverts.
                 if iszero(call(gas(), to, 0, add(m, 0x1c), add(0xc4, data.length), m, 0x20)) {
                     if returndatasize() {
@@ -362,14 +363,16 @@ abstract contract ERC1155 {
                 let m := mload(0x40)
                 // Copy the `ids`.
                 mstore(m, 0x40)
-                let n := add(0x20, shl(5, ids.length))
-                let o := add(m, 0x40)
-                calldatacopy(o, sub(ids.offset, 0x20), n)
+                let n := shl(5, ids.length)
+                mstore(add(m, 0x40), ids.length)
+                calldatacopy(add(m, 0x60), ids.offset, n)
                 // Copy the `amounts`.
-                mstore(add(m, 0x20), add(0x40, n))
-                calldatacopy(add(o, n), sub(amounts.offset, 0x20), n)
+                mstore(add(m, 0x20), add(0x60, n))
+                let o := add(add(m, n), 0x60)
+                mstore(o, ids.length)
+                calldatacopy(add(o, 0x20), amounts.offset, n)
                 // Do the emit.
-                log4(m, add(add(n, n), 0x40), _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, to)
+                log4(m, add(add(n, n), 0x80), _TRANSFER_BATCH_EVENT_SIGNATURE, caller(), from, to)
             }
         }
         if (_useAfterTokenTransfer()) {
@@ -388,17 +391,20 @@ abstract contract ERC1155 {
                 mstore(add(m, 0x40), from)
                 // Copy the `ids`.
                 mstore(add(m, 0x60), 0xa0)
-                let n := add(0x20, shl(5, ids.length))
-                let o := add(m, 0xc0)
-                calldatacopy(o, sub(ids.offset, 0x20), n)
+                let n := shl(5, ids.length)
+                mstore(add(m, 0xc0), ids.length)
+                calldatacopy(add(m, 0xe0), ids.offset, n)
                 // Copy the `amounts`.
-                let s := add(0xa0, n)
-                mstore(add(m, 0x80), s)
-                calldatacopy(add(o, n), sub(amounts.offset, 0x20), n)
+                mstore(add(m, 0x80), add(0xc0, n))
+                let o := add(add(m, n), 0xe0)
+                mstore(o, ids.length)
+                calldatacopy(add(o, 0x20), amounts.offset, n)
                 // Copy the `data`.
-                mstore(add(m, 0xa0), add(s, n))
-                calldatacopy(add(o, add(n, n)), sub(data.offset, 0x20), add(0x20, data.length))
-                let nAll := add(0xc4, add(data.length, add(n, n)))
+                mstore(add(m, 0xa0), add(add(0xe0, n), n))
+                o := add(add(o, n), 0x20)
+                mstore(o, data.length)
+                calldatacopy(add(o, 0x20), data.offset, data.length)
+                let nAll := add(0x104, add(data.length, add(n, n)))
                 // Revert if the call reverts.
                 if iszero(call(gas(), mload(0x00), 0, add(m, 0x1c), nAll, m, 0x20)) {
                     if returndatasize() {
