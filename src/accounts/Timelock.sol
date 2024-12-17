@@ -24,6 +24,11 @@ import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 ///   The optional `salt` allows for multiple proposals of the same effective payload.
 /// - The id of a proposal can be computed as:
 ///   `keccak256(abi.encode(mode, keccak256(executionData)))`.
+///
+/// Supported modes:
+/// - `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
+/// - `bytes32(0x01000000000078210001...)`: supports optional `opData`.
+/// Where `opData` is `abi.encode(predecessor)` or `abi.encode(predecessor, salt)`.
 contract Timelock is ERC7821, EnumerableRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
