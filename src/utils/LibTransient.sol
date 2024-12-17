@@ -638,7 +638,7 @@ library LibTransient {
     function setCalldata(TBytes storage ptr, bytes calldata value) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            tstore(ptr.slot, calldataload(sub(value.offset, 0x04)))
+            tstore(ptr.slot, or(shl(224, value.length), shr(32, calldataload(value.offset))))
             if iszero(lt(value.length, 0x1d)) {
                 mstore(0x00, ptr.slot)
                 let e := add(value.offset, value.length)
@@ -660,7 +660,7 @@ library LibTransient {
         ptr = _compat(ptr);
         /// @solidity memory-safe-assembly
         assembly {
-            sstore(ptr.slot, calldataload(sub(value.offset, 0x04)))
+            sstore(ptr.slot, or(shl(224, value.length), shr(32, calldataload(value.offset))))
             if iszero(lt(value.length, 0x1d)) {
                 mstore(0x00, ptr.slot)
                 let e := add(value.offset, value.length)
