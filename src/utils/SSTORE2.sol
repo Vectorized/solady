@@ -223,7 +223,8 @@ library SSTORE2 {
         assembly {
             data := mload(0x40)
             let n := and(0xffffffffff, sub(extcodesize(pointer), 0x01))
-            extcodecopy(pointer, add(data, 0x1f), start, add(n, 0x21))
+            let l := sub(n, and(0xffffff, mul(lt(start, n), start)))
+            extcodecopy(pointer, add(data, 0x1f), start, add(l, 0x21))
             mstore(data, mul(sub(n, start), lt(start, n))) // Store the length.
             mstore(0x40, add(data, add(0x40, mload(data)))) // Allocate memory.
         }
