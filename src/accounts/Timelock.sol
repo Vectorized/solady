@@ -15,7 +15,7 @@ import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 /// - This implementation uses custom errors with arguments for easier debugging.
 /// - `executionData` can be encoded in three different ways:
 ///   1. `abi.encode(calls)`.
-///   2. `abi.encode(calls, abi.encode(predecessor)`.
+///   2. `abi.encode(calls, abi.encode(predecessor))`.
 ///   3. `abi.encode(calls, abi.encode(predecessor, salt))`.
 ///   Where `calls` is of type `(address,uint256,bytes)[]`.
 ///   `predecessor` is the id of the proposal that must be executed before.
