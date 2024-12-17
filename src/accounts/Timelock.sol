@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {ERC7821} from "./ERC7821.sol";
+import {LibERC7579} from "./LibERC7579.sol";
 import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 
 /// @notice Simple timelock.
@@ -157,14 +158,15 @@ contract Timelock is ERC7821, EnumerableRoles {
     /*                  PUBLIC UPDATE FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Proposes an `executionData` with `delay`.
+    /// @dev Proposes an execute payload (`mode`, `executionData`) with `delay`.
     /// Emits a {Proposed} event.
-    function propose(bytes calldata executionData, uint256 delay)
+    function propose(bytes32 mode, bytes calldata executionData, uint256 delay)
         public
         virtual
         onlyRole(PROPOSER_ROLE)
         returns (bytes32 id)
     {
+        LibERC7579.decodeBatchAndOpData(executionData); // Check if properly encoded.
         uint256 t = minDelay();
         /// @solidity memory-safe-assembly
         assembly {
@@ -180,7 +182,9 @@ contract Timelock is ERC7821, EnumerableRoles {
             }
             let m := mload(0x40)
             calldatacopy(add(m, 0x60), executionData.offset, executionData.length)
-            id := keccak256(add(m, 0x60), executionData.length)
+            mstore(0x00, mode)
+            mstore(0x20, keccak256(add(m, 0x60), executionData.length))
+            id := keccak256(0x00, 0x40)
             let s := xor(shl(72, id), _TIMELOCK_SLOT) // Operation slot.
             if sload(s) {
                 mstore(0x00, 0xd639b0bf) // `TimelockInvalidOperation(bytes32,uint256)`.
@@ -301,7 +305,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// To ensure that the operation is ready to be executed.
     /// Updates the operation state and emits a {Executed} event after the calls.
     function _execute(
-        bytes32,
+        bytes32 mode,
         bytes calldata executionData,
         Call[] calldata calls,
         bytes calldata opData
@@ -313,7 +317,9 @@ contract Timelock is ERC7821, EnumerableRoles {
         assembly {
             // Copies the `executionData` for the event and to compute the `id`.
             calldatacopy(mload(0x40), executionData.offset, executionData.length)
-            id := keccak256(mload(0x40), executionData.length)
+            mstore(0x00, mode)
+            mstore(0x20, keccak256(mload(0x40), executionData.length))
+            id := keccak256(0x00, 0x40)
             s := xor(shl(72, id), _TIMELOCK_SLOT)
             let p := sload(s)
             if or(or(and(1, p), iszero(p)), lt(timestamp(), shr(1, p))) {

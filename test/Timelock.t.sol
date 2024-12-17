@@ -71,14 +71,14 @@ contract TimelockTest is SoladyTest {
         t.calls0[0].data =
             abi.encodeWithSignature("setRole(address,uint256,bool)", _BOB, executorRole, true);
         t.executionData0 = abi.encode(t.calls0);
-        t.id0 = keccak256(t.executionData0);
+        t.id0 = _id(t.executionData0);
 
         t.calls1 = new Call[](1);
         t.calls1[0].target = address(timelock);
         t.calls1[0].data =
             abi.encodeWithSignature("setRole(address,uint256,bool)", _CHARLIE, executorRole, true);
         t.executionData1 = abi.encode(t.calls1, abi.encodePacked(t.id0));
-        t.id1 = keccak256(t.executionData1);
+        t.id1 = _id(t.executionData1);
 
         // Must revert if try to execute on an empty id.
         vm.expectRevert(
@@ -90,8 +90,8 @@ contract TimelockTest is SoladyTest {
         );
         timelock.execute(_SUPPORTED_MODE, t.executionData0);
 
-        assertEq(timelock.propose(t.executionData0, _DEFAULT_MIN_DELAY), t.id0);
-        assertEq(timelock.propose(t.executionData1, _DEFAULT_MIN_DELAY), t.id1);
+        assertEq(timelock.propose(_SUPPORTED_MODE, t.executionData0, _DEFAULT_MIN_DELAY), t.id0);
+        assertEq(timelock.propose(_SUPPORTED_MODE, t.executionData1, _DEFAULT_MIN_DELAY), t.id1);
 
         t.readyTimestamp = block.timestamp + _DEFAULT_MIN_DELAY;
         vm.warp(t.readyTimestamp);
@@ -123,17 +123,17 @@ contract TimelockTest is SoladyTest {
             "setRole(address,uint256,bool)", timelock.OPEN_ROLE_HOLDER(), executorRole, true
         );
         t.executionData0 = abi.encode(t.calls0);
-        t.id0 = keccak256(t.executionData0);
+        t.id0 = _id(t.executionData0);
 
         t.calls1 = new Call[](1);
         t.calls1[0].target = address(timelock);
         t.calls1[0].data =
             abi.encodeWithSignature("setRole(address,uint256,bool)", _CHARLIE, executorRole, true);
         t.executionData1 = abi.encode(t.calls1, abi.encodePacked(t.id0));
-        t.id1 = keccak256(t.executionData1);
+        t.id1 = _id(t.executionData1);
 
-        assertEq(timelock.propose(t.executionData0, _DEFAULT_MIN_DELAY), t.id0);
-        assertEq(timelock.propose(t.executionData1, _DEFAULT_MIN_DELAY), t.id1);
+        assertEq(timelock.propose(_SUPPORTED_MODE, t.executionData0, _DEFAULT_MIN_DELAY), t.id0);
+        assertEq(timelock.propose(_SUPPORTED_MODE, t.executionData1, _DEFAULT_MIN_DELAY), t.id1);
 
         t.readyTimestamp = block.timestamp + _DEFAULT_MIN_DELAY;
         vm.warp(t.readyTimestamp);
@@ -188,7 +188,7 @@ contract TimelockTest is SoladyTest {
         t.calls[0].data = abi.encodeWithSignature("setMinDelay(uint256)", newMinDelay);
 
         t.executionData = abi.encode(t.calls);
-        t.id = keccak256(t.executionData);
+        t.id = _id(t.executionData);
 
         if (_randomChance(16)) {
             t.delay = _random();
@@ -199,11 +199,11 @@ contract TimelockTest is SoladyTest {
                         "TimelockInsufficientDelay(uint256,uint256)", t.delay, t.minDelay
                     )
                 );
-                timelock.propose(t.executionData, t.delay);
+                timelock.propose(_SUPPORTED_MODE, t.executionData, t.delay);
                 return;
             } else if (t.delay > _MAX_DELAY) {
                 vm.expectRevert(Timelock.TimelockDelayOverflow.selector);
-                timelock.propose(t.executionData, t.delay);
+                timelock.propose(_SUPPORTED_MODE, t.executionData, t.delay);
                 return;
             }
         }
@@ -225,7 +225,7 @@ contract TimelockTest is SoladyTest {
         t.readyTimestamp = block.timestamp + _DEFAULT_MIN_DELAY;
         vm.expectEmit(true, true, true, true);
         emit Proposed(t.id, t.executionData, t.readyTimestamp);
-        assertEq(timelock.propose(t.executionData, _DEFAULT_MIN_DELAY), t.id);
+        assertEq(timelock.propose(_SUPPORTED_MODE, t.executionData, _DEFAULT_MIN_DELAY), t.id);
 
         assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Waiting));
         assertEq(timelock.readyTimestamp(t.id), t.readyTimestamp);
@@ -413,5 +413,9 @@ contract TimelockTest is SoladyTest {
         blockTimestamp = blockTimestamp & (2 ** 64 - 1);
         uint256 readyTimestamp = delay + blockTimestamp;
         assert(readyTimestamp <= 2 ** 255 - 1);
+    }
+
+    function _id(bytes memory executionData) internal pure returns (bytes32) {
+        return keccak256(abi.encode(_SUPPORTED_MODE, keccak256(executionData)));
     }
 }
