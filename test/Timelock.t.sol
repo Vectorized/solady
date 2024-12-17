@@ -12,8 +12,8 @@ contract TimelockTest is SoladyTest {
         bytes data;
     }
 
-    event Proposed(bytes32 indexed id, bytes executionData, uint256 readyTimestamp);
-    event Executed(bytes32 indexed id, bytes executionData);
+    event Proposed(bytes32 indexed id, bytes32 mode, bytes executionData, uint256 readyTimestamp);
+    event Executed(bytes32 indexed id, bytes32 mode, bytes executionData);
     event Cancelled(bytes32 indexed id);
     event MinDelaySet(uint256 newMinDelay);
 
@@ -224,7 +224,7 @@ contract TimelockTest is SoladyTest {
 
         t.readyTimestamp = block.timestamp + _DEFAULT_MIN_DELAY;
         vm.expectEmit(true, true, true, true);
-        emit Proposed(t.id, t.executionData, t.readyTimestamp);
+        emit Proposed(t.id, _SUPPORTED_MODE, t.executionData, t.readyTimestamp);
         assertEq(timelock.propose(_SUPPORTED_MODE, t.executionData, _DEFAULT_MIN_DELAY), t.id);
 
         assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Waiting));
@@ -257,7 +257,7 @@ contract TimelockTest is SoladyTest {
         vm.expectEmit(true, true, true, true);
         emit MinDelaySet(newMinDelay);
         vm.expectEmit(true, true, true, true);
-        emit Executed(t.id, t.executionData);
+        emit Executed(t.id, _SUPPORTED_MODE, t.executionData);
         timelock.execute(_SUPPORTED_MODE, t.executionData);
         assertEq(timelock.minDelay(), newMinDelay);
         assertEq(uint8(timelock.operationState(t.id)), uint8(Timelock.OperationState.Done));

@@ -115,10 +115,10 @@ contract Timelock is ERC7821, EnumerableRoles {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The proposal `id` has been created.
-    event Proposed(bytes32 indexed id, bytes executionData, uint256 readyTimestamp);
+    event Proposed(bytes32 indexed id, bytes32 mode, bytes executionData, uint256 readyTimestamp);
 
     /// @dev The proposal `id` has been executed.
-    event Executed(bytes32 indexed id, bytes executionData);
+    event Executed(bytes32 indexed id, bytes32 mode, bytes executionData);
 
     /// @dev The proposal `id` has been cancelled.
     event Cancelled(bytes32 indexed id);
@@ -126,13 +126,13 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// @dev The minimum delay has been set to `newMinDelay`.
     event MinDelaySet(uint256 newMinDelay);
 
-    /// @dev `keccak256(bytes("Proposed(bytes32,bytes,uint256)"))`.
+    /// @dev `keccak256(bytes("Proposed(bytes32,bytes32,bytes,uint256)"))`.
     uint256 private constant _PROPOSED_EVENT_SIGNATURE =
-        0xbebd4e757b91b0f4e9671796f940352b8ce72b4878d18387feb19859ae5c9e25;
+        0x9b40ebcd599cbeb62eedb5e0c1db0879688a09d169ab92dbed4957d49a44b671;
 
-    /// @dev `keccak256(bytes("Executed(bytes32,bytes)"))`.
+    /// @dev `keccak256(bytes("Executed(bytes32,bytes32,bytes)"))`.
     uint256 private constant _EXECUTED_EVENT_SIGNATURE =
-        0xda66fcfe5711520a570ced34d4cdebbe652fe74713bf2bc9db4ba54357e5a96f;
+        0xb1fdd61c3a5405a73ea1f8fb29bfd62c6152241cb59843d3def17bfadb7cb0bf;
 
     /// @dev `keccak256(bytes("Cancelled(bytes32)"))`.
     uint256 private constant _CANCELLED_EVENT_SIGNATURE =
@@ -202,9 +202,9 @@ contract Timelock is ERC7821, EnumerableRoles {
                 revert(0x1c, 0x44)
             }
             let m := mload(0x40)
-            calldatacopy(add(m, 0x60), executionData.offset, executionData.length)
+            calldatacopy(add(m, 0x80), executionData.offset, executionData.length)
             mstore(0x00, mode)
-            mstore(0x20, keccak256(add(m, 0x60), executionData.length))
+            mstore(0x20, keccak256(add(m, 0x80), executionData.length))
             id := keccak256(0x00, 0x40)
             mstore(0x09, _TIMELOCK_SLOT)
             mstore(0x00, id)
@@ -215,16 +215,17 @@ contract Timelock is ERC7821, EnumerableRoles {
                 mstore(0x40, 1) // `1 << OperationState.Unset`
                 revert(0x1c, 0x44)
             }
-            mstore(m, 0x40)
+            // Emits the {Proposed} event.
+            mstore(m, mode)
+            mstore(add(m, 0x20), 0x60)
             let r := add(delay, timestamp()) // `readyTimestamp`.
             sstore(s, shl(1, r)) // Update the operation in the storage.
-            // Emits the {Proposed} event.
-            mstore(add(m, 0x20), r)
-            mstore(add(m, 0x40), executionData.length)
+            mstore(add(m, 0x40), r)
+            mstore(add(m, 0x60), executionData.length)
             // Some indexers require the bytes to be zero-right padded.
-            mstore(add(add(m, 0x60), executionData.length), 0) // Zeroize the slot after the end.
+            mstore(add(add(m, 0x80), executionData.length), 0) // Zeroize the slot after the end.
             // forgefmt: disable-next-item
-            log2(m, add(0x60, and(not(0x1f), add(0x1f, executionData.length))),
+            log2(m, add(0x80, and(not(0x1f), add(0x1f, executionData.length))),
                 _PROPOSED_EVENT_SIGNATURE, id)
         }
     }
@@ -383,14 +384,15 @@ contract Timelock is ERC7821, EnumerableRoles {
             }
             let m := mload(0x40)
             // Copies the `executionData` for the event.
-            calldatacopy(add(m, 0x40), executionData.offset, executionData.length)
+            calldatacopy(add(m, 0x60), executionData.offset, executionData.length)
             // Emits the {Executed} event.
-            mstore(m, 0x20)
-            mstore(add(m, 0x20), executionData.length)
+            mstore(m, mode)
+            mstore(add(m, 0x20), 0x40)
+            mstore(add(m, 0x40), executionData.length)
             // Some indexers require the bytes to be zero-right padded.
             mstore(add(add(m, 0x60), executionData.length), 0) // Zeroize the slot after the end.
             // forgefmt: disable-next-item
-            log2(m, add(0x40, and(not(0x1f), add(0x1f, executionData.length))),
+            log2(m, add(0x60, and(not(0x1f), add(0x1f, executionData.length))),
                 _EXECUTED_EVENT_SIGNATURE, id)
             sstore(s, or(1, p)) // Set the operation as executed in the storage.
         }
