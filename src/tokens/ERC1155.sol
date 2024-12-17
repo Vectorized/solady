@@ -406,7 +406,7 @@ abstract contract ERC1155 {
                 calldatacopy(add(o, 0x20), data.offset, data.length)
                 let nAll := add(0x104, add(data.length, add(n, n)))
                 // Revert if the call reverts.
-                if iszero(call(gas(), mload(0x00), 0, add(m, 0x1c), nAll, m, 0x20)) {
+                if iszero(call(gas(), mload(0x00), 0, add(mload(0x40), 0x1c), nAll, m, 0x20)) {
                     if returndatasize() {
                         // Bubble up the revert if the call reverts.
                         returndatacopy(m, 0x00, returndatasize())
