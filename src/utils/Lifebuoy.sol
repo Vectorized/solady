@@ -11,6 +11,9 @@ pragma solidity ^0.8.4;
 ///   script misfire / misconfiguration.
 /// - Careless dev forgets to add a withdraw function to a NFT sale contract.
 ///
+/// Note: if you are deploying via a untrusted `tx.origin`,
+/// you MUST override `_lifebuoyDefaultDeployer` to return a trusted address.
+///
 /// For best safety:
 /// - For non-escrow contracts, inherit Lifebuoy as much as possible,
 ///   and leave it unlocked.
@@ -21,7 +24,6 @@ pragma solidity ^0.8.4;
 ///
 /// All rescue and rescue authorization functions require either:
 /// - Caller is the deployer
-///   AND caller is an EOA
 ///   AND the contract is not a proxy
 ///   AND `rescueLocked() & _LIFEBUOY_DEPLOYER_ACCESS_LOCK == 0`.
 /// - Caller is `owner()`
@@ -102,7 +104,7 @@ contract Lifebuoy {
 
     constructor() payable {
         bytes32 hash;
-        uint256 deployer = uint160(_lifebuoyUseTxOriginAsDeployer() ? tx.origin : msg.sender);
+        uint256 deployer = uint160(_lifebuoyDefaultDeployer());
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, address())
@@ -112,12 +114,14 @@ contract Lifebuoy {
         _lifebuoyDeployerHash = hash;
     }
 
-    /// @dev Override to return true if the contract is to be deployed via a factory
-    /// in a transaction initiated by a trusted EOA that is NEVER shared.
-    /// If your contract is deployed by someone else's EOA (e.g. sponsored transactions),
-    /// this function MUST return false, as per default.
-    function _lifebuoyUseTxOriginAsDeployer() internal view virtual returns (bool) {
-        return false;
+    /// @dev Returns `tx.origin` by default. Override to return another address if needed.
+    ///
+    /// Note: If you are deploying via a untrusted `tx.origin` (e.g. ERC4337 bundler)
+    /// you MUST override this function to return a trusted address.
+    function _lifebuoyDefaultDeployer() internal view virtual returns (address) {
+        // I know about EIP7645, and I will stop it if it gets traction.
+        // Worse case, I will add an `ecrecover` method. But not today.
+        return tx.origin;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -142,7 +146,7 @@ contract Lifebuoy {
     }
 
     /// @dev Sends `amount` of ERC20 `token` from the current contract to `to`.
-    /// Reverts upon failure.
+    /// Does not check for existence of token or return data. Reverts upon failure.
     function rescueERC20(address token, address to, uint256 amount)
         public
         payable
@@ -155,19 +159,15 @@ contract Lifebuoy {
             mstore(0x34, amount) // Store the `amount` argument.
             // `RescueTransferFailed()` and `transfer(address,uint256)`.
             mstore(0x00, shl(96, 0x7ec62e76a9059cbb))
-            // Perform the transfer, reverting upon failure.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    or(eq(mload(0x00), 1), iszero(returndatasize())), // Returned 1 or nothing.
-                    call(gas(), token, callvalue(), 0x10, 0x44, 0x00, 0x20)
-                )
-            ) { revert(0x0c, 0x04) }
+            if iszero(call(gas(), token, callvalue(), 0x10, 0x44, codesize(), 0x00)) {
+                revert(0x0c, 0x04)
+            }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
     }
 
     /// @dev Sends `id` of ERC721 `token` from the current contract to `to`.
-    /// Reverts upon failure.
+    /// Does not check for existence of token or return data. Reverts upon failure.
     function rescueERC721(address token, address to, uint256 id)
         public
         payable
@@ -182,18 +182,16 @@ contract Lifebuoy {
             mstore(0x20, address()) // Store the `from` argument.
             // `RescueTransferFailed()` and `transferFrom(address,address,uint256)`.
             mstore(0x00, 0x7ec62e7623b872dd)
-            // Perform the transfer, reverting upon failure.
-            // forgefmt: disable-next-item
-            if iszero(
-                mul(extcodesize(token), call(gas(), token, callvalue(), 0x1c, 0x64, codesize(), 0x00))
-            ) { revert(0x18, 0x04) }
+            if iszero(call(gas(), token, callvalue(), 0x1c, 0x64, codesize(), 0x00)) {
+                revert(0x18, 0x04)
+            }
             mstore(0x60, 0) // Restore the zero slot to zero.
             mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
     /// @dev Sends `amount` of `id` of ERC1155 `token` from the current contract to `to`.
-    /// Reverts upon failure.
+    /// Does not check for existence of token or return data. Reverts upon failure.
     function rescueERC1155(
         address token,
         address to,
@@ -212,16 +210,15 @@ contract Lifebuoy {
             mstore(add(0x80, m), amount) // Store the `amount` argument.
             mstore(add(0xa0, m), 0xa0) // Store the offset to `data`.
             calldatacopy(add(m, 0xc0), sub(data.offset, 0x20), add(0x20, data.length))
-            // Perform the transfer, reverting upon failure.
             // forgefmt: disable-next-item
-            if iszero(mul(extcodesize(token),
+            if iszero(
                 call(gas(), token, callvalue(), add(m, 0x1c), add(0xc4, data.length), codesize(), 0x00)
-            )) { revert(add(m, 0x18), 0x04) }
+            ) { revert(add(m, 0x18), 0x04) }
         }
     }
 
     /// @dev Sends `amount` of `id` of ERC6909 `token` from the current contract to `to`.
-    /// Reverts upon failure.
+    /// Does not check for existence of token or return data. Reverts upon failure.
     function rescueERC6909(address token, address to, uint256 id, uint256 amount)
         public
         payable
@@ -236,9 +233,7 @@ contract Lifebuoy {
             mstore(0x54, amount) // Store the `amount` argument.
             // `RescueTransferFailed()` and `transfer(address,uint256,uint256)`.
             mstore(0x00, shl(96, 0x7ec62e76095bcdb6))
-            // Perform the transfer, reverting upon failure.
-            if iszero( // The arguments of `and` are evaluated from right to left.
-            and(eq(mload(0x00), 1), call(gas(), token, callvalue(), 0x10, 0x64, 0x00, 0x20))) {
+            if iszero(call(gas(), token, callvalue(), 0x10, 0x64, codesize(), 0x00)) {
                 revert(0x0c, 0x04)
             }
             mstore(0x60, 0) // Restore the zero slot to zero.
@@ -292,12 +287,11 @@ contract Lifebuoy {
                 // If the `modeLock` flag is true, set all bits in `locks` to true.
                 locks := or(sub(0, iszero(iszero(and(modeLock, locks)))), locks)
                 // Caller is the deployer
-                // AND caller is an EOA
                 // AND the contract is not a proxy
                 // AND `locks & _LIFEBUOY_DEPLOYER_ACCESS_LOCK` is false.
                 mstore(0x20, caller())
                 mstore(and(locks, _LIFEBUOY_DEPLOYER_ACCESS_LOCK), address())
-                if iszero(or(extcodesize(caller()), xor(keccak256(0x00, 0x40), h))) { break }
+                if eq(keccak256(0x00, 0x40), h) { break }
                 // If the caller is `owner()`
                 // AND `locks & _LIFEBUOY_OWNER_ACCESS_LOCK` is false.
                 mstore(0x08, 0x8da5cb5b0a0362e0) // `owner()` and `RescueUnauthorizedOrLocked()`.
