@@ -155,15 +155,14 @@ library LibERC7579 {
             let e := sub(add(executionData.offset, executionData.length), 0x20)
             pointers.offset := add(s, 0x20)
             pointers.length := calldataload(s)
-            if or(shr(64, u), gt(s, e)) {
+            if or(
+                or(shr(64, u), gt(s, e)),
+                gt(add(pointers.offset, shl(5, pointers.length)), add(e, 0x20))
+            ) {
                 mstore(0x00, 0xba597e7e) // `DecodingError()`.
                 revert(0x1c, 0x04)
             }
             if pointers.length {
-                if iszero(lt(add(pointers.offset, shl(5, pointers.length)), add(e, 0x21))) {
-                    mstore(0x00, 0xba597e7e) // `DecodingError()`.
-                    revert(0x1c, 0x04)
-                }
                 // Perform bounds checks on the decoded `pointers`.
                 // Loop runs out-of-gas if `pointers.length` is big enough to cause overflows.
                 for { let i := pointers.length } 1 {} {
