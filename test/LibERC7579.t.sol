@@ -252,6 +252,34 @@ contract LibERC7579Test is SoladyTest {
         return pointers.length;
     }
 
+    function testDecodeBatchEdgeCase2() public {
+        (bool success,) = address(this).call(
+            abi.encodePacked(
+                bytes4(keccak256("propose2(bytes32,bytes,uint256)")),
+                hex"0100000000007821000100000000000000000000000000000000000000000000",
+                hex"0000000000000000000000000000000000000000000000000000000000000060", // offset to executionData
+                _randomUniform(),
+                uint256(32 * 5), // length of executionData (THIS SHOULD ACTUALLY BE 32 * 6 BUT WE REDUCE TO 32 * 5)
+                hex"0000000000000000000000000000000000000000000000000000000000000020", // offset to pointers array
+                hex"0000000000000000000000000000000000000000000000000000000000000004", // pointers array length
+                hex"0000000000000000000000000000000000000000000000000000000000000000", // offset to pointers[0]
+                hex"0000000000000000000000000000000000000000000000000000000000000000", // offset to pointers[1]
+                hex"0000000000000000000000000000000000000000000000000000000000000000", // offset to pointers[2]
+                hex"0000000000000000000000000000000000000000000000000000000000000000" // offset to pointers[3]
+            )
+        );
+        assertFalse(success);
+    }
+
+    function propose2(bytes32, bytes calldata executionData, uint256)
+        public
+        pure
+        returns (uint256)
+    {
+        bytes32[] memory pointers = LibERC7579.decodeBatch(executionData);
+        return pointers.length;
+    }
+
     function abiDecodeBatch(S calldata s) public pure returns (uint256) {
         Call[] memory pointers = abi.decode(s.executionData, (Call[]));
         return pointers.length;
