@@ -41,10 +41,20 @@ library LibERC7579 {
         pure
         returns (bytes32 result)
     {
-        return bytes32(
-            uint256(bytes32(callType)) | (uint256(bytes32(execType)) >> 8)
-                | (uint256(bytes32(selector)) >> 48) | (uint256(uint176(payload)))
-        );
+        /// @solidity memory-safe-assembly
+        assembly {
+            result :=
+                or(
+                    shl(
+                        176,
+                        or(
+                            shr(224, selector),
+                            shl(64, or(shl(8, byte(0, callType)), byte(0, execType)))
+                        )
+                    ),
+                    shr(80, payload)
+                )
+        }
     }
 
     /// @dev Returns the call type of the mode.
