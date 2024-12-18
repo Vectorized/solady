@@ -155,7 +155,7 @@ library LibERC7579 {
             let e := sub(add(executionData.offset, executionData.length), 0x20)
             pointers.offset := add(s, 0x20)
             pointers.length := calldataload(s)
-            if or(shr(64, u), gt(s, e)) {
+            if or(shr(64, u), gt(add(s, shl(5, pointers.length)), e)) {
                 mstore(0x00, 0xba597e7e) // `DecodingError()`.
                 revert(0x1c, 0x04)
             }
@@ -164,13 +164,12 @@ library LibERC7579 {
                 // Loop runs out-of-gas if `pointers.length` is big enough to cause overflows.
                 for { let i := pointers.length } 1 {} {
                     i := sub(i, 1)
-                    let t := add(pointers.offset, shl(5, i))
-                    let p := calldataload(t)
+                    let p := calldataload(add(pointers.offset, shl(5, i)))
                     let c := add(pointers.offset, p)
                     let q := calldataload(add(c, 0x40))
                     let o := add(c, q)
                     // forgefmt: disable-next-item
-                    if or(or(shr(64, or(calldataload(o), or(p, q))), gt(t, e)),
+                    if or(shr(64, or(calldataload(o), or(p, q))),
                         or(gt(add(c, 0x40), e), gt(add(o, calldataload(o)), e))) {
                         mstore(0x00, 0xba597e7e) // `DecodingError()`.
                         revert(0x1c, 0x04)
