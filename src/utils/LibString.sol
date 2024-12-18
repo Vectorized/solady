@@ -871,6 +871,12 @@ library LibString {
         }
     }
 
+    /// @dev Returns 0 if `a == b`, -1 if `a < b`, +1 if `a > b`.
+    /// If `a` == b[:a.length]`, and `a.length < b.length`, returns -1.
+    function cmp(string memory a, string memory b) internal pure returns (int256) {
+        return LibBytes.cmp(bytes(a), bytes(b));
+    }
+
     /// @dev Packs a single string with its length into a single word.
     /// Returns `bytes32(0)` if the length is zero or greater than 31.
     function packOne(string memory a) internal pure returns (bytes32 result) {

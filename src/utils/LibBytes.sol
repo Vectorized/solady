@@ -617,12 +617,9 @@ library LibBytes {
     function cmp(bytes memory a, bytes memory b) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            function min(x_, y_) -> _z {
-                _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
-            }
             let aLen := mload(a)
             let bLen := mload(b)
-            let n := and(min(aLen, bLen), not(0x1f))
+            let n := and(xor(aLen, mul(xor(aLen, bLen), lt(bLen, aLen))), not(0x1f))
             if n {
                 for { let i := 0 } 1 {} {
                     i := add(i, 0x20)
@@ -634,13 +631,12 @@ library LibBytes {
                     }
                 }
             }
+            // forgefmt: disable-next-item
             if iszero(result) {
-                mstore(0x00, mload(add(add(a, 0x20), n)))
-                mstore(min(0x20, sub(aLen, n)), 0)
-                let x := mul(gt(aLen, n), mload(0x00))
-                mstore(0x00, mload(add(add(b, 0x20), n)))
-                mstore(min(0x20, sub(bLen, n)), 0)
-                let y := mul(gt(bLen, n), mload(0x00))
+                let x := mul(gt(aLen, n), and(not(shr(shl(3, sub(aLen, n)), not(0))), 
+                    mload(add(add(a, 0x20), n))))
+                let y := mul(gt(bLen, n), and(not(shr(shl(3, sub(bLen, n)), not(0))), 
+                    mload(add(add(b, 0x20), n))))
                 result := sub(gt(x, y), lt(x, y))
                 if iszero(result) { result := sub(gt(aLen, bLen), lt(aLen, bLen)) }
             }

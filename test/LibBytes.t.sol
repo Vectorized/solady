@@ -153,7 +153,20 @@ contract LibBytesTest is SoladyTest {
     }
 
     function testCmpDifferential(bytes memory a, bytes memory b) public {
-        assertEq(LibBytes.cmp(a, b), cmpOriginal(a, b));
+        if (_randomChance(8)) {
+            _misalignFreeMemoryPointer();
+            _brutalizeMemory();
+        }
+        if (_randomChance(256)) {
+            a = b;
+        }
+        bytes32 aHash = keccak256(a);
+        bytes32 bHash = keccak256(b);
+        int256 computed = LibBytes.cmp(a, b);
+        int256 expected = cmpOriginal(a, b);
+        assertEq(computed, expected);
+        assertEq(keccak256(a), aHash);
+        assertEq(keccak256(b), bHash);
     }
 
     function cmpOriginal(bytes memory a, bytes memory b) internal pure returns (int256) {
