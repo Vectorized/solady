@@ -43,11 +43,9 @@ library LibERC7579 {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x00, callType)
-            mstore(0x01, execType)
-            mstore(0x02, shr(32, selector)) // Clean the lower bytes of `execType`.
-            mstore(0x0a, payload)
-            result := mload(0x00)
+            result := or(shl(8, byte(0, callType)), byte(0, execType))
+            result := or(shr(224, selector), shl(64, result))
+            result := or(shr(80, payload), shl(176, result))
         }
     }
 
