@@ -15,6 +15,9 @@ contract LibERC7579Test is SoladyTest {
         assertEq(LibERC7579.getExecType(mode), execType);
         assertEq(LibERC7579.getSelector(mode), selector);
         assertEq(LibERC7579.getPayload(mode), payload);
+        for (uint256 i = 2; i < 2 + 4; ++i) {
+            assertEq(bytes1(mode[i]), 0);
+        }
     }
 
     struct Call {
