@@ -45,8 +45,7 @@ library LibERC7579 {
         assembly {
             mstore(0x00, callType)
             mstore(0x01, execType)
-            mstore(0x02, selector)
-            mstore(0x06, 0)
+            mstore(0x06, selector)
             mstore(0x0a, payload)
             result := mload(0x00)
         }
@@ -64,7 +63,7 @@ library LibERC7579 {
 
     /// @dev Returns the selector of the mode.
     function getSelector(bytes32 mode) internal pure returns (bytes4) {
-        return bytes4(bytes32(uint256(mode) << 16));
+        return bytes4(bytes32(uint256(mode) << 48));
     }
 
     /// @dev Returns the payload stored in the mode.
