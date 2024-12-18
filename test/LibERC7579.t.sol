@@ -20,6 +20,13 @@ contract LibERC7579Test is SoladyTest {
         }
     }
 
+    function testEncodeAndDecodeMode() public {
+        bytes32 mode = LibERC7579.encodeMode(
+            0x01, 0x00, 0x11223344, 0xffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabb
+        );
+        assertEq(mode, 0x01000000000011223344ffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabb);
+    }
+
     struct Call {
         address target;
         uint256 value;
