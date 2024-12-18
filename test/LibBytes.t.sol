@@ -137,4 +137,35 @@ contract LibBytesTest is SoladyTest {
             }
         }
     }
+
+    function testCmp() public {
+        assertEq(LibBytes.cmp("", ""), 0);
+        assertEq(LibBytes.cmp("abc", "abc"), 0);
+        assertEq(LibBytes.cmp("abcd", "abc"), 1);
+        assertEq(LibBytes.cmp("abb", "abc"), -1);
+        assertEq(
+            LibBytes.cmp(
+                "0123456789012345678901234567890123456789abb",
+                "0123456789012345678901234567890123456789abc"
+            ),
+            -1
+        );
+    }
+
+    function testCmpDifferential(bytes memory a, bytes memory b) public {
+        assertEq(LibBytes.cmp(a, b), cmpOriginal(a, b));
+    }
+
+    function cmpOriginal(bytes memory a, bytes memory b) internal pure returns (int256) {
+        uint256 minLen = a.length < b.length ? a.length : b.length;
+        for (uint256 i; i < minLen; ++i) {
+            uint8 x = uint8(a[i]);
+            uint8 y = uint8(b[i]);
+            if (x < y) return -1;
+            if (x > y) return 1;
+        }
+        if (a.length < b.length) return -1;
+        if (a.length > b.length) return 1;
+        return 0;
+    }
 }
