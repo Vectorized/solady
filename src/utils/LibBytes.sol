@@ -623,13 +623,15 @@ library LibBytes {
             let aLen := mload(a)
             let bLen := mload(b)
             let n := and(min(aLen, bLen), not(0x1f))
-            for { let i := 0 } iszero(eq(i, n)) {} {
-                i := add(i, 0x20)
-                let x := mload(add(a, i))
-                let y := mload(add(b, i))
-                if xor(x, y) {
-                    result := sub(gt(x, y), lt(x, y))
-                    break
+            if n {
+                for { let i := 0 } 1 {} {
+                    i := add(i, 0x20)
+                    let x := mload(add(a, i))
+                    let y := mload(add(b, i))
+                    if or(xor(x, y), eq(i, n)) {
+                        result := sub(gt(x, y), lt(x, y))
+                        break
+                    }
                 }
             }
             if iszero(result) {
