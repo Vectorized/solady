@@ -206,20 +206,9 @@ abstract contract EnumerableRoles {
 
     /// @dev Checks that the caller is authorized to set the role.
     function _authorizeSetRole(address holder, uint256 role, bool active) internal virtual {
-        if (!_senderIsContractOwner()) _revertEnumerableRolesUnauthorized();
+        if (!_enumerableRolesSenderIsContractOwner()) _revertEnumerableRolesUnauthorized();
         // Silence compiler warning on unused variables.
         (holder, role, active) = (holder, role, active);
-    }
-
-    /// @dev Returns if `holder` has `role`.
-    function _hasRole(address holder, uint256 role) internal view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x18, holder)
-            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
-            mstore(0x00, role)
-            result := sload(keccak256(0x00, 0x38))
-        }
     }
 
     /// @dev Returns if `holder` has any roles in `encodedRoles`.
@@ -246,7 +235,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Reverts if `msg.sender` does not have `role`.
     function _checkRole(uint256 role) internal view virtual {
-        if (!_hasRole(msg.sender, role)) _revertEnumerableRolesUnauthorized();
+        if (!hasRole(msg.sender, role)) _revertEnumerableRolesUnauthorized();
     }
 
     /// @dev Reverts if `msg.sender` does not have any role in `encodedRoles`.
@@ -256,13 +245,13 @@ abstract contract EnumerableRoles {
 
     /// @dev Reverts if `msg.sender` is not the contract owner and does not have `role`.
     function _checkOwnerOrRole(uint256 role) internal view virtual {
-        if (!_senderIsContractOwner()) _checkRole(role);
+        if (!_enumerableRolesSenderIsContractOwner()) _checkRole(role);
     }
 
     /// @dev Reverts if `msg.sender` is not the contract owner and
     /// does not have any role in `encodedRoles`.
     function _checkOwnerOrRoles(bytes memory encodedRoles) internal view virtual {
-        if (!_senderIsContractOwner()) _checkRoles(encodedRoles);
+        if (!_enumerableRolesSenderIsContractOwner()) _checkRoles(encodedRoles);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -303,7 +292,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Returns if the `msg.sender` is equal to `owner()` on this contract.
     /// If the contract does not have `owner()` implemented, returns false.
-    function _senderIsContractOwner() private view returns (bool result) {
+    function _enumerableRolesSenderIsContractOwner() private view returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x8da5cb5b) // `owner()`.
