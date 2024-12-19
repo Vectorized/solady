@@ -612,6 +612,37 @@ library LibBytes {
         }
     }
 
+    /// @dev Returns 0 if `a == b`, -1 if `a < b`, +1 if `a > b`.
+    /// If `a` == b[:a.length]`, and `a.length < b.length`, returns -1.
+    function cmp(bytes memory a, bytes memory b) internal pure returns (int256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let aLen := mload(a)
+            let bLen := mload(b)
+            let n := and(xor(aLen, mul(xor(aLen, bLen), lt(bLen, aLen))), not(0x1f))
+            if n {
+                for { let i := 0x20 } 1 {} {
+                    let x := mload(add(a, i))
+                    let y := mload(add(b, i))
+                    if or(xor(x, y), eq(i, n)) {
+                        result := sub(gt(x, y), lt(x, y))
+                        break
+                    }
+                    i := add(i, 0x20)
+                }
+            }
+            // forgefmt: disable-next-item
+            if iszero(result) {
+                let x := and(mload(add(add(a, 0x20), n)),
+                    not(shr(mul(7, sub(aLen, n)), shr(sub(aLen, n), not(result)))))
+                let y := and(mload(add(add(b, 0x20), n)),
+                    not(shr(mul(7, sub(bLen, n)), shr(sub(bLen, n), not(result)))))
+                result := sub(gt(x, y), lt(x, y))
+                if iszero(result) { result := sub(gt(aLen, bLen), lt(aLen, bLen)) }
+            }
+        }
+    }
+
     /// @dev Directly returns `a` without copying.
     function directReturn(bytes memory a) internal pure {
         assembly {

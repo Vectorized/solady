@@ -137,4 +137,69 @@ contract LibBytesTest is SoladyTest {
             }
         }
     }
+
+    function testCmp() public {
+        assertEq(LibBytes.cmp("", ""), 0);
+        assertEq(LibBytes.cmp("abc", "abc"), 0);
+        assertEq(LibBytes.cmp("abcd", "abc"), 1);
+        assertEq(LibBytes.cmp("abb", "abc"), -1);
+        assertEq(
+            LibBytes.cmp(
+                "0123456789012345678901234567890123456789abb",
+                "0123456789012345678901234567890123456789abc"
+            ),
+            -1
+        );
+    }
+
+    function testCmpDifferential(bytes memory a, bytes memory b) public {
+        if (_randomChance(32)) {
+            _misalignFreeMemoryPointer();
+            _brutalizeMemory();
+        }
+        if (_randomChance(256)) {
+            a = b;
+        }
+        if (_randomChance(16)) {
+            a = abi.encodePacked(a, b);
+        }
+        if (_randomChance(16)) {
+            b = abi.encodePacked(b, a);
+        }
+        bytes32 aHash = keccak256(a);
+        bytes32 bHash = keccak256(b);
+        if (_randomChance(8)) {
+            a = _brutalizeRightPadding(a);
+        }
+        if (_randomChance(8)) {
+            b = _brutalizeRightPadding(b);
+        }
+        int256 computed = LibBytes.cmp(a, b);
+        int256 expected = cmpOriginal(a, b);
+        assertEq(computed, expected);
+        assertEq(keccak256(a), aHash);
+        assertEq(keccak256(b), bHash);
+    }
+
+    function _brutalizeRightPadding(bytes memory s) internal returns (bytes memory result) {
+        uint256 n = s.length;
+        result = abi.encodePacked(s, _randomUniform(), _randomUniform());
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, n)
+        }
+    }
+
+    function cmpOriginal(bytes memory a, bytes memory b) internal pure returns (int256) {
+        uint256 minLen = a.length < b.length ? a.length : b.length;
+        for (uint256 i; i < minLen; ++i) {
+            uint8 x = uint8(a[i]);
+            uint8 y = uint8(b[i]);
+            if (x < y) return -1;
+            if (x > y) return 1;
+        }
+        if (a.length < b.length) return -1;
+        if (a.length > b.length) return 1;
+        return 0;
+    }
 }
