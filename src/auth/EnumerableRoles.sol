@@ -211,17 +211,6 @@ abstract contract EnumerableRoles {
         (holder, role, active) = (holder, role, active);
     }
 
-    /// @dev Returns if `holder` has `role`.
-    function _hasRole(address holder, uint256 role) internal view virtual returns (bool result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x18, holder)
-            mstore(0x04, _ENUMERABLE_ROLES_SLOT_SEED)
-            mstore(0x00, role)
-            result := sload(keccak256(0x00, 0x38))
-        }
-    }
-
     /// @dev Returns if `holder` has any roles in `encodedRoles`.
     /// `encodedRoles` is `abi.encode(SAMPLE_ROLE_0, SAMPLE_ROLE_1, ...)`.
     function _hasAnyRoles(address holder, bytes memory encodedRoles)
@@ -246,7 +235,7 @@ abstract contract EnumerableRoles {
 
     /// @dev Reverts if `msg.sender` does not have `role`.
     function _checkRole(uint256 role) internal view virtual {
-        if (!_hasRole(msg.sender, role)) _revertEnumerableRolesUnauthorized();
+        if (!hasRole(msg.sender, role)) _revertEnumerableRolesUnauthorized();
     }
 
     /// @dev Reverts if `msg.sender` does not have any role in `encodedRoles`.
