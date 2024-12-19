@@ -621,19 +621,22 @@ library LibBytes {
             let bLen := mload(b)
             let n := and(xor(aLen, mul(xor(aLen, bLen), lt(bLen, aLen))), not(0x1f))
             if n {
-                for { let i := 0 } 1 {} {
-                    i := add(i, 0x20)
+                for { let i := 0x20 } 1 {} {
                     let x := mload(add(a, i))
                     let y := mload(add(b, i))
                     if or(xor(x, y), eq(i, n)) {
                         result := sub(gt(x, y), lt(x, y))
                         break
                     }
+                    i := add(i, 0x20)
                 }
             }
+            // forgefmt: disable-next-item
             if iszero(result) {
-                let x := and(not(shr(shl(3, sub(aLen, n)), not(0))), mload(add(add(a, 0x20), n)))
-                let y := and(not(shr(shl(3, sub(bLen, n)), not(0))), mload(add(add(b, 0x20), n)))
+                let x := and(mload(add(add(a, 0x20), n)),
+                    not(shr(mul(7, sub(aLen, n)), shr(sub(aLen, n), not(result)))))
+                let y := and(mload(add(add(b, 0x20), n)),
+                    not(shr(mul(7, sub(bLen, n)), shr(sub(bLen, n), not(result)))))
                 result := sub(gt(x, y), lt(x, y))
                 if iszero(result) { result := sub(gt(aLen, bLen), lt(aLen, bLen)) }
             }
