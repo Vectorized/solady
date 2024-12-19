@@ -19,7 +19,40 @@ contract TimedRolesTest is SoladyTest {
         mockTimedRoles.setOwner(address(this));
     }
 
-    // function testSetAndGetRoles(bytes32) public {
+    struct TimedRoleConfig {
+        address holder;
+        uint256 role;
+        uint40 start;
+        uint40 end;
+    }
+
+    function _sampleTimedRoleConfigs() internal returns (TimedRoleConfig[] memory a) {
+        a = new TimedRoleConfig[](_randomUniform() & 7);
+        unchecked {
+            uint256 m = 0xf00000000000000000000000000000000000000000000000000000000000000f;
+            for (uint256 i; i != a.length; ++i) {
+                TimedRoleConfig memory c = a[i];
+                c.holder = _randomUniqueHashedAddress();
+                c.role = _randomUniform() & m;
+                (c.start, c.end) = _sampleValidActiveTimeRange();
+            }
+        }
+    }
+
+    function _sampleValidActiveTimeRange() internal returns (uint40 start, uint40 end) {
+        do {
+            start = uint40(_random());
+            end = uint40(_random());
+        } while (end < start);
+    }
+
+    function testSetAndGetRoles(bytes32) public {
+        TimedRoleConfig[] memory a = _sampleTimedRoleConfigs();
+        for (uint256 i; i != a.length; ++i) {
+            TimedRoleConfig memory c = a[i];
+            mockTimedRoles.setTimedRoleDirect(c.holder, c.role, c.start, c.end);
+        }
+    }
     //     _TestTemps memory t;
     //     t.holders = _sampleUniqueAddresses(_randomUniform() & 7);
     //     t.roles = new uint256[][](t.holders.length);
