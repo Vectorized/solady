@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Timed multiroles authorization mixin.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/EnumerableRoles.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/auth/TimedRoles.sol)
 ///
 /// @dev Note:
 /// This implementation is agnostic to the Ownable that the contract inherits from.
@@ -28,14 +28,14 @@ pragma solidity ^0.8.4;
 /// to add enumeration here.
 ///
 /// Names are deliberately prefixed with "Timed", so that this contract
-/// can be used in conjunction with `EnumerableRoles`.
+/// can be used in conjunction with `EnumerableRoles` without collisions.
 abstract contract TimedRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The active time range of `role` for `holder` has been set.
-    event TimedRoleSet(address indexed holder, uint256 indexed role, uint40 start, uint40 until);
+    /// @dev The active time range of the timed role has been set.
+    event TimedRoleSet(address indexed holder, uint256 indexed timedRole, uint40 start, uint40 end);
 
     /// @dev `keccak256(bytes("TimedRoleSet(address,uint256,uint40,uint40)"))`.
     uint256 private constant _TIMED_ROLE_SET_EVENT_SIGNATURE =
@@ -45,10 +45,10 @@ abstract contract TimedRoles {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Cannot set the role of the zero address.
+    /// @dev Cannot set the timed role of the zero address.
     error TimedRoleHolderIsZeroAddress();
 
-    /// @dev The role has exceeded the maximum role.
+    /// @dev The timed role has exceeded the maximum timed role.
     error InvalidTimedRole();
 
     /// @dev Unauthorized to perform the action.
@@ -66,31 +66,34 @@ abstract contract TimedRoles {
     /// ```
     ///     mstore(0x18, holder)
     ///     mstore(0x04, _TIMED_ROLES_SLOT_SEED)
-    ///     mstore(0x00, role)
-    ///     let timeRangeSlot := keccak256(0x00, 0x38)
+    ///     mstore(0x00, timedRole)
+    ///     let activeTimeRangeSlot := keccak256(0x00, 0x38)
     /// ```
+    /// Bits Layout:
+    /// - [0..39]   `end`.
+    /// - [216..255] `start`.
     uint256 private constant _TIMED_ROLES_SLOT_SEED = 0x28900261;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  PUBLIC UPDATE FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Sets the active time range of `role` of `holder` to [`start`, `end`).
-    function setTimedRole(address holder, uint256 role, uint40 start, uint40 end)
+    /// @dev Sets the active time range of `timedRole` of `holder` to [`start`, `end`).
+    function setTimedRole(address holder, uint256 timedRole, uint40 start, uint40 end)
         public
         payable
         virtual
     {
-        _authorizeSetTimedRole(holder, role, start, end);
-        _setTimedRole(holder, role, start, end);
+        _authorizeSetTimedRole(holder, timedRole, start, end);
+        _setTimedRole(holder, timedRole, start, end);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   PUBLIC READ FUNCTIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns whether the `role` is active for `holder`, as well as the active time range.
-    function timedRoleActive(address holder, uint256 role)
+    /// @dev Returns whether the `timedRole` is active for `holder` and the active time range.
+    function timedRoleActive(address holder, uint256 timedRole)
         public
         view
         virtual
@@ -100,9 +103,9 @@ abstract contract TimedRoles {
         assembly {
             mstore(0x18, holder)
             mstore(0x04, _TIMED_ROLES_SLOT_SEED)
-            mstore(0x00, role)
+            mstore(0x00, timedRole)
             let packed := sload(keccak256(0x00, 0x38))
-            start := and(0xffffffffff, shr(40, packed))
+            start := shr(216, packed)
             end := and(0xffffffffff, packed)
             isActive := lt(lt(timestamp(), start), lt(timestamp(), end))
         }
@@ -112,12 +115,12 @@ abstract contract TimedRoles {
     /*                     INTERNAL FUNCTIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Set the role for holder directly without authorization guard.
-    function _setTimedRole(address holder, uint256 role, uint40 start, uint40 end)
+    /// @dev Set the timed role for holder directly without authorization guard.
+    function _setTimedRole(address holder, uint256 timedRole, uint40 start, uint40 end)
         internal
         virtual
     {
-        _validateTimedRole(role);
+        _validateTimedRole(timedRole);
         /// @solidity memory-safe-assembly
         assembly {
             let holder_ := shl(96, holder)
@@ -136,23 +139,23 @@ abstract contract TimedRoles {
             // Store the range.
             mstore(0x18, holder)
             mstore(0x04, _TIMED_ROLES_SLOT_SEED)
-            mstore(0x00, role)
-            sstore(keccak256(0x00, 0x38), or(shl(40, start), end))
+            mstore(0x00, timedRole)
+            sstore(keccak256(0x00, 0x38), or(shl(216, start), end))
             // Emit the {TimedRoleSet} event.
             mstore(0x00, start)
             mstore(0x20, end)
-            log3(0x00, 0x40, _TIMED_ROLE_SET_EVENT_SIGNATURE, shr(96, holder_), role)
+            log3(0x00, 0x40, _TIMED_ROLE_SET_EVENT_SIGNATURE, shr(96, holder_), timedRole)
         }
     }
 
-    /// @dev Requires the role is not greater than `MAX_TIMED_ROLE()`.
+    /// @dev Requires the timedRole is not greater than `MAX_TIMED_ROLE()`.
     /// If `MAX_TIMED_ROLE()` is not implemented, this is an no-op.
-    function _validateTimedRole(uint256 role) internal view virtual {
+    function _validateTimedRole(uint256 timedRole) internal view virtual {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x32bc6439) // `MAX_TIMED_ROLE()`.
             if and(
-                and(gt(role, mload(0x00)), gt(returndatasize(), 0x1f)),
+                and(gt(timedRole, mload(0x00)), gt(returndatasize(), 0x1f)),
                 staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
             ) {
                 mstore(0x00, 0x802ee27f) // `InvalidTimedRole()`.
@@ -161,19 +164,19 @@ abstract contract TimedRoles {
         }
     }
 
-    /// @dev Checks that the caller is authorized to set the role.
-    function _authorizeSetTimedRole(address holder, uint256 role, uint40 start, uint40 end)
+    /// @dev Checks that the caller is authorized to set the timed role.
+    function _authorizeSetTimedRole(address holder, uint256 timedRole, uint40 start, uint40 end)
         internal
         virtual
     {
         if (!_timedRolesSenderIsContractOwner()) _revertTimedRolesUnauthorized();
         // Silence compiler warning on unused variables.
-        (holder, role, start, end) = (holder, role, start, end);
+        (holder, timedRole, start, end) = (holder, timedRole, start, end);
     }
 
-    /// @dev Returns if `holder` has any roles in `encodedRoles`.
-    /// `encodedRoles` is `abi.encode(SAMPLE_ROLE_0, SAMPLE_ROLE_1, ...)`.
-    function _hasAnyTimedRoles(address holder, bytes memory encodedRoles)
+    /// @dev Returns if `holder` has any roles in `encodedTimeRoles`.
+    /// `encodedTimeRoles` is `abi.encode(SAMPLE_TIMED_ROLE_0, SAMPLE_TIMED_ROLE_1, ...)`.
+    function _hasAnyTimedRoles(address holder, bytes memory encodedTimeRoles)
         internal
         view
         virtual
@@ -183,71 +186,68 @@ abstract contract TimedRoles {
         assembly {
             mstore(0x18, holder)
             mstore(0x04, _TIMED_ROLES_SLOT_SEED)
-            let end := add(encodedRoles, shl(5, shr(5, mload(encodedRoles))))
-            for {} lt(result, lt(encodedRoles, end)) {} {
-                encodedRoles := add(0x20, encodedRoles)
-                mstore(0x00, mload(encodedRoles))
+            let end := add(encodedTimeRoles, shl(5, shr(5, mload(encodedTimeRoles))))
+            for {} lt(result, lt(encodedTimeRoles, end)) {} {
+                encodedTimeRoles := add(0x20, encodedTimeRoles)
+                mstore(0x00, mload(encodedTimeRoles))
                 let packed := sload(keccak256(0x00, 0x38))
                 result :=
-                    lt(
-                        lt(timestamp(), and(0xffffffffff, shr(40, packed))),
-                        lt(timestamp(), and(0xffffffffff, packed))
-                    )
+                    lt(lt(timestamp(), shr(216, packed)), lt(timestamp(), and(0xffffffffff, packed)))
             }
         }
     }
 
-    /// @dev Reverts if `msg.sender` does not have `role`.
-    function _checkTimedRole(uint256 role) internal view virtual {
-        (bool isActive,,) = timedRoleActive(msg.sender, role);
+    /// @dev Reverts if `msg.sender` does not have `timedRole`.
+    function _checkTimedRole(uint256 timedRole) internal view virtual {
+        (bool isActive,,) = timedRoleActive(msg.sender, timedRole);
         if (!isActive) _revertTimedRolesUnauthorized();
     }
 
-    /// @dev Reverts if `msg.sender` does not have any role in `encodedRoles`.
-    function _checkTimedRoles(bytes memory encodedRoles) internal view virtual {
-        if (!_hasAnyTimedRoles(msg.sender, encodedRoles)) _revertTimedRolesUnauthorized();
+    /// @dev Reverts if `msg.sender` does not have any timed role in `encodedTimedRoles`.
+    function _checkTimedRoles(bytes memory encodedTimedRoles) internal view virtual {
+        if (!_hasAnyTimedRoles(msg.sender, encodedTimedRoles)) _revertTimedRolesUnauthorized();
     }
 
-    /// @dev Reverts if `msg.sender` is not the contract owner and does not have `role`.
-    function _checkOwnerOrTimedRole(uint256 role) internal view virtual {
-        if (!_timedRolesSenderIsContractOwner()) _checkTimedRole(role);
+    /// @dev Reverts if `msg.sender` is not the contract owner and does not have `timedRole`.
+    function _checkOwnerOrTimedRole(uint256 timedRole) internal view virtual {
+        if (!_timedRolesSenderIsContractOwner()) _checkTimedRole(timedRole);
     }
 
     /// @dev Reverts if `msg.sender` is not the contract owner and
-    /// does not have any role in `encodedRoles`.
-    function _checkOwnerOrTimedRoles(bytes memory encodedRoles) internal view virtual {
-        if (!_timedRolesSenderIsContractOwner()) _checkTimedRoles(encodedRoles);
+    /// does not have any timed role in `encodedTimedRoles`.
+    function _checkOwnerOrTimedRoles(bytes memory encodedTimedRoles) internal view virtual {
+        if (!_timedRolesSenderIsContractOwner()) _checkTimedRoles(encodedTimedRoles);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         MODIFIERS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Marks a function as only callable by an account with `role`.
-    modifier onlyTimedRole(uint256 role) virtual {
-        _checkTimedRole(role);
+    /// @dev Marks a function as only callable by an account with `timedRole`.
+    modifier onlyTimedRole(uint256 timedRole) virtual {
+        _checkTimedRole(timedRole);
         _;
     }
 
-    /// @dev Marks a function as only callable by an account with any role in `encodedRoles`.
-    /// `encodedRoles` is `abi.encode(SAMPLE_ROLE_0, SAMPLE_ROLE_1, ...)`.
-    modifier onlyTimedRoles(bytes memory encodedRoles) virtual {
-        _checkTimedRoles(encodedRoles);
+    /// @dev Marks a function as only callable by an account with any role in `encodedTimedRoles`.
+    /// `encodedTimedRoles` is `abi.encode(SAMPLE_TIMED_ROLE_0, SAMPLE_TIMED_ROLE_1, ...)`.
+    modifier onlyTimedRoles(bytes memory encodedTimedRoles) virtual {
+        _checkTimedRoles(encodedTimedRoles);
         _;
     }
 
-    /// @dev Marks a function as only callable by the owner or by an account with `role`.
-    modifier onlyOwnerOrTimedRole(uint256 role) virtual {
-        _checkOwnerOrTimedRole(role);
+    /// @dev Marks a function as only callable by the owner or by an account with `timedRole`.
+    modifier onlyOwnerOrTimedRole(uint256 timedRole) virtual {
+        _checkOwnerOrTimedRole(timedRole);
         _;
     }
 
     /// @dev Marks a function as only callable by the owner or
-    /// by an account with any role in `encodedRoles`.
+    /// by an account with any role in `encodedTimedRoles`.
     /// Checks for ownership first, then checks for roles.
-    /// `encodedRoles` is `abi.encode(SAMPLE_ROLE_0, SAMPLE_ROLE_1, ...)`.
-    modifier onlyOwnerOrTimedRoles(bytes memory encodedRoles) virtual {
-        _checkOwnerOrTimedRoles(encodedRoles);
+    /// `encodedTimedRoles` is `abi.encode(SAMPLE_TIMED_ROLE_0, SAMPLE_TIMED_ROLE_1, ...)`.
+    modifier onlyOwnerOrTimedRoles(bytes memory encodedTimedRoles) virtual {
+        _checkOwnerOrTimedRoles(encodedTimedRoles);
         _;
     }
 
