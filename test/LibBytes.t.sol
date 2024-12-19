@@ -153,20 +153,41 @@ contract LibBytesTest is SoladyTest {
     }
 
     function testCmpDifferential(bytes memory a, bytes memory b) public {
-        if (_randomChance(8)) {
+        if (_randomChance(32)) {
             _misalignFreeMemoryPointer();
             _brutalizeMemory();
         }
         if (_randomChance(256)) {
             a = b;
         }
+        if (_randomChance(16)) {
+            a = abi.encodePacked(a, b);
+        }
+        if (_randomChance(16)) {
+            b = abi.encodePacked(b, a);
+        }
         bytes32 aHash = keccak256(a);
         bytes32 bHash = keccak256(b);
+        if (_randomChance(8)) {
+            a = _brutalizeRightPadding(a);
+        }
+        if (_randomChance(8)) {
+            b = _brutalizeRightPadding(b);
+        }
         int256 computed = LibBytes.cmp(a, b);
         int256 expected = cmpOriginal(a, b);
         assertEq(computed, expected);
         assertEq(keccak256(a), aHash);
         assertEq(keccak256(b), bHash);
+    }
+
+    function _brutalizeRightPadding(bytes memory s) internal returns (bytes memory result) {
+        uint256 n = s.length;
+        result = abi.encodePacked(s, _randomUniform(), _randomUniform());
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(result, n)
+        }
     }
 
     function cmpOriginal(bytes memory a, bytes memory b) internal pure returns (int256) {
