@@ -635,12 +635,9 @@ library LibBytes {
                     }
                 }
             }
-            // forgefmt: disable-next-item
             if iszero(result) {
-                let x := mul(gt(aLen, n), and(not(shr(shl(3, sub(aLen, n)), not(0))), 
-                    mload(add(add(a, 0x20), n))))
-                let y := mul(gt(bLen, n), and(not(shr(shl(3, sub(bLen, n)), not(0))), 
-                    mload(add(add(b, 0x20), n))))
+                let x := and(not(shr(shl(3, sub(aLen, n)), not(0))), mload(add(add(a, 0x20), n)))
+                let y := and(not(shr(shl(3, sub(bLen, n)), not(0))), mload(add(add(b, 0x20), n)))
                 result := sub(gt(x, y), lt(x, y))
                 if iszero(result) { result := sub(gt(aLen, bLen), lt(aLen, bLen)) }
             }
