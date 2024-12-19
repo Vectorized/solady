@@ -155,7 +155,7 @@ library LibERC7579 {
             let e := sub(add(executionData.offset, executionData.length), 0x20)
             pointers.offset := add(s, 0x20)
             pointers.length := calldataload(s)
-            if or(shr(64, u), gt(s, e)) {
+            if or(shr(64, u), gt(add(s, shl(5, pointers.length)), e)) {
                 mstore(0x00, 0xba597e7e) // `DecodingError()`.
                 revert(0x1c, 0x04)
             }
