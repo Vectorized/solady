@@ -89,6 +89,8 @@ contract ERC20ForPermit2Test is SoladyTest {
 contract ERC20Test is SoladyTest {
     MockERC20 token;
 
+    address internal constant _PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
     bytes32 constant PERMIT_TYPEHASH = keccak256(
         "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
     );
@@ -272,8 +274,10 @@ contract ERC20Test is SoladyTest {
     }
 
     function testApprove(address to, uint256 amount) public {
+        if (to == _PERMIT2) {
+            amount = type(uint256).max;
+        }
         assertTrue(token.approve(to, amount));
-
         assertEq(token.allowance(address(this), to), amount);
     }
 
@@ -300,6 +304,7 @@ contract ERC20Test is SoladyTest {
         uint256 approval,
         uint256 amount
     ) public {
+        vm.assume(spender != _PERMIT2);
         amount = _bound(amount, 0, approval);
 
         token.mint(from, amount);
