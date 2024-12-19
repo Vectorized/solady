@@ -2,10 +2,13 @@
 pragma solidity ^0.8.4;
 
 import {LibSort} from "../src/utils/LibSort.sol";
+import {DynamicArrayLib} from "../src/utils/DynamicArrayLib.sol";
 import "./utils/SoladyTest.sol";
 import "./utils/mocks/MockTimedRoles.sol";
 
 contract TimedRolesTest is SoladyTest {
+    using DynamicArrayLib for *;
+
     event TimedRoleSet(address indexed holder, uint256 indexed timedRole, uint40 start, uint40 end);
 
     MockTimedRoles mockTimedRoles;
@@ -61,7 +64,7 @@ contract TimedRolesTest is SoladyTest {
         } while (!(end < start));
     }
 
-    function testSetAndGetRoles(bytes32) public {
+    function testSetAndGetTimedRoles(bytes32) public {
         TimedRoleConfig[] memory a = _sampleTimedRoleConfigs();
 
         uint256 targetTimestamp = _bound(_random(), 0, 2 ** 41 - 1);
@@ -114,6 +117,51 @@ contract TimedRolesTest is SoladyTest {
                 vm.expectRevert(TimedRoles.InvalidTimedRole.selector);
             }
             mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.end);
+        }
+    }
+
+    function testTimedRolesModifiers(bytes32) public {
+        TimedRoleConfig memory c = _sampleTimedRoleConfig();
+        c.start = 0;
+        c.end = 0xffffffffff;
+        mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.end);
+        uint256[] memory allowedTimeRoles = _sampleRoles(3);
+        mockTimedRoles.setAllowedTimedRole(allowedTimeRoles[0]);
+        vm.warp(_randomUniform() & 0xffffffffff);
+
+        if (allowedTimeRoles[0] == c.role) {
+            vm.prank(c.holder);
+            mockTimedRoles.guardedByOnlyOwnerOrTimedRole();
+        } else {
+            vm.prank(c.holder);
+            vm.expectRevert(TimedRoles.TimedRolesUnauthorized.selector);
+            mockTimedRoles.guardedByOnlyOwnerOrTimedRole();
+        }
+
+        mockTimedRoles.setAllowedTimedRolesEncoded(abi.encodePacked(allowedTimeRoles));
+
+        if (allowedTimeRoles.contains(c.role)) {
+            vm.prank(c.holder);
+            mockTimedRoles.guardedByOnlyOwnerOrTimedRoles();
+        } else {
+            vm.prank(c.holder);
+            vm.expectRevert(TimedRoles.TimedRolesUnauthorized.selector);
+            mockTimedRoles.guardedByOnlyOwnerOrTimedRoles();
+        }
+
+        if (_randomChance(128)) {
+            mockTimedRoles.guardedByOnlyOwnerOrTimedRole();
+            mockTimedRoles.guardedByOnlyOwnerOrTimedRoles();
+        }
+    }
+
+    function _sampleRoles(uint256 n) internal returns (uint256[] memory roles) {
+        unchecked {
+            uint256 m = 0xf00000000000000000000000000000000000000000000000000000000000000f;
+            roles = DynamicArrayLib.malloc(n);
+            for (uint256 i; i != n; ++i) {
+                roles.set(i, _randomUniform() & m);
+            }
         }
     }
 }
