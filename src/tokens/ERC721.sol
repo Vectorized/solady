@@ -294,14 +294,14 @@ abstract contract ERC721 {
             {
                 mstore(0x00, to)
                 let toBalanceSlot := keccak256(0x0c, 0x1c)
-                let toBalanceSlotPacked := add(sload(toBalanceSlot), 1)
-                // Revert if `to` is the zero address, or if the account balance overflows.
-                if iszero(mul(to, and(toBalanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
+                let p := sload(toBalanceSlot) // `toBalanceSlotPacked`.
+                // Revert if `to` is the zero address, or if the account balance is maxed.
+                if iszero(mul(to, xor(and(p, _MAX_ACCOUNT_BALANCE), _MAX_ACCOUNT_BALANCE))) {
                     // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
                     mstore(shl(2, iszero(to)), 0xea553b3401336cea)
                     revert(0x1c, 0x04)
                 }
-                sstore(toBalanceSlot, toBalanceSlotPacked)
+                sstore(toBalanceSlot, add(1, p))
             }
             // Emit the {Transfer} event.
             log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
@@ -466,14 +466,14 @@ abstract contract ERC721 {
             {
                 mstore(0x00, to)
                 let balanceSlot := keccak256(0x0c, 0x1c)
-                let balanceSlotPacked := add(sload(balanceSlot), 1)
-                // Revert if `to` is the zero address, or if the account balance overflows.
-                if iszero(mul(to, and(balanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
+                let p := sload(balanceSlot) // `balanceSlotPacked`.
+                // Revert if `to` is the zero address, or if the account balance is maxed.
+                if iszero(mul(to, xor(and(p, _MAX_ACCOUNT_BALANCE), _MAX_ACCOUNT_BALANCE))) {
                     // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
                     mstore(shl(2, iszero(to)), 0xea553b3401336cea)
                     revert(0x1c, 0x04)
                 }
-                sstore(balanceSlot, balanceSlotPacked)
+                sstore(balanceSlot, add(1, p))
             }
             // Emit the {Transfer} event.
             log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, 0, to, id)
@@ -503,14 +503,14 @@ abstract contract ERC721 {
             {
                 mstore(0x00, to)
                 let balanceSlot := keccak256(0x0c, 0x1c)
-                let balanceSlotPacked := add(sload(balanceSlot), 1)
-                // Revert if `to` is the zero address, or if the account balance overflows.
-                if iszero(mul(to, and(balanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
+                let p := sload(balanceSlot) // `balanceSlotPacked`.
+                // Revert if `to` is the zero address, or if the account balance is maxed.
+                if iszero(mul(to, xor(and(p, _MAX_ACCOUNT_BALANCE), _MAX_ACCOUNT_BALANCE))) {
                     // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
                     mstore(shl(2, iszero(to)), 0xea553b3401336cea)
                     revert(0x1c, 0x04)
                 }
-                sstore(balanceSlot, balanceSlotPacked)
+                sstore(balanceSlot, add(1, p))
             }
             // Emit the {Transfer} event.
             log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, 0, to, id)
@@ -788,14 +788,14 @@ abstract contract ERC721 {
             {
                 mstore(0x00, to)
                 let toBalanceSlot := keccak256(0x0c, 0x1c)
-                let toBalanceSlotPacked := add(sload(toBalanceSlot), 1)
-                // Revert if `to` is the zero address, or if the account balance overflows.
-                if iszero(mul(to, and(toBalanceSlotPacked, _MAX_ACCOUNT_BALANCE))) {
+                let p := sload(toBalanceSlot) // `toBalanceSlotPacked`.
+                // Revert if `to` is the zero address, or if the account balance is maxed.
+                if iszero(mul(to, xor(and(p, _MAX_ACCOUNT_BALANCE), _MAX_ACCOUNT_BALANCE))) {
                     // `TransferToZeroAddress()`, `AccountBalanceOverflow()`.
                     mstore(shl(2, iszero(to)), 0xea553b3401336cea)
                     revert(0x1c, 0x04)
                 }
-                sstore(toBalanceSlot, toBalanceSlotPacked)
+                sstore(toBalanceSlot, add(1, p))
             }
             // Emit the {Transfer} event.
             log4(codesize(), 0x00, _TRANSFER_EVENT_SIGNATURE, from, to, id)
