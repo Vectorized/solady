@@ -28,7 +28,7 @@ pragma solidity ^0.8.4;
 /// Querying the number of active timed roles will cost `O(n)` instead of `O(1)`.
 ///
 /// Names are deliberately prefixed with "Timed", so that this contract
-/// can be used in conjunction with `EnumerableRoles` without collisions.
+/// can be used in conjunction with EnumerableRoles without collisions.
 abstract contract TimedRoles {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
