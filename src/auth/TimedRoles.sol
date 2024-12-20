@@ -106,9 +106,9 @@ abstract contract TimedRoles {
             mstore(0x18, holder)
             mstore(0x04, _TIMED_ROLES_SLOT_SEED)
             mstore(0x00, timedRole)
-            let packed := sload(keccak256(0x00, 0x38))
-            start := shr(216, packed)
-            expires := and(0xffffffffff, packed)
+            let p := sload(keccak256(0x00, 0x38))
+            start := shr(216, p)
+            expires := and(0xffffffffff, p)
             isActive := iszero(or(lt(timestamp(), start), gt(timestamp(), expires)))
         }
     }
@@ -188,8 +188,8 @@ abstract contract TimedRoles {
         assembly {
             mstore(0x18, holder)
             mstore(0x04, _TIMED_ROLES_SLOT_SEED)
-            let e := add(encodedTimeRoles, shl(5, shr(5, mload(encodedTimeRoles))))
-            for {} lt(result, lt(encodedTimeRoles, e)) {} {
+            let end := add(encodedTimeRoles, shl(5, shr(5, mload(encodedTimeRoles))))
+            for {} lt(result, lt(encodedTimeRoles, end)) {} {
                 encodedTimeRoles := add(0x20, encodedTimeRoles)
                 mstore(0x00, mload(encodedTimeRoles))
                 let p := sload(keccak256(0x00, 0x38))

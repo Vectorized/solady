@@ -52,22 +52,25 @@ contract TimedRolesTest is SoladyTest {
         }
     }
 
+    function _sampleActiveTimeRange() internal returns (uint40 start, uint40 expires) {
+        if (_randomChance(2)) {
+            start = uint40(_random());
+            expires = uint40(_random());
+        } else {
+            start = uint8(_random());
+            expires = uint8(_random());
+        }
+    }
+
     function _sampleValidActiveTimeRange() internal returns (uint40 start, uint40 expires) {
         do {
-            if (_randomChance(2)) {
-                start = uint40(_random());
-                expires = uint40(_random());
-            } else {
-                start = uint8(_random());
-                expires = uint8(_random());
-            }
+            (start, expires) = _sampleActiveTimeRange();
         } while (expires < start);
     }
 
     function _sampleInvalidActiveTimeRange() internal returns (uint40 start, uint40 expires) {
         do {
-            start = uint40(_random());
-            expires = uint40(_random());
+            (start, expires) = _sampleActiveTimeRange();
         } while (!(expires < start));
     }
 
@@ -134,7 +137,7 @@ contract TimedRolesTest is SoladyTest {
         mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.expires);
         uint256[] memory allowedTimeRoles = _sampleRoles(3);
         mockTimedRoles.setAllowedTimedRole(allowedTimeRoles[0]);
-        vm.warp(_randomUniform() & 0xffffffffff);
+        vm.warp(_bound(_randomUniform(), c.start, c.expires));
 
         if (allowedTimeRoles[0] == c.role) {
             vm.prank(c.holder);
