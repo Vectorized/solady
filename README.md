@@ -39,9 +39,10 @@ accounts
 ├─ Receiver — "Receiver mixin for ETH and safe-transferred ERC721 and ERC1155 tokens"
 ├─ Timelock — "Simple timelock"
 auth
+├─ EnumerableRoles — "Enumerable multiroles authorization mixin"
 ├─ Ownable — "Simple single owner authorization mixin"
 ├─ OwnableRoles — "Simple single owner and multiroles authorization mixin"
-├─ EnumerableRoles — "Enumerable multiroles authorization mixin"
+├─ TimedRoles — "Timed multiroles authorization mixin"
 tokens
 ├─ ERC1155 — "Simple ERC1155 implementation"
 ├─ ERC20 — "Simple ERC20 + EIP-2612 implementation"
