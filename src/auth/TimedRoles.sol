@@ -11,21 +11,21 @@ pragma solidity ^0.8.4;
 /// OpenZeppelin's Ownable, such as in LayerZero's OApp contracts.
 ///
 /// This implementation performs a self-staticcall to `MAX_TIMED_ROLE()` to determine
-/// the maximum role that can be set/unset. If the inheriting contract does not
-/// have `MAX_TIMED_ROLE()`, then any role can be set/unset.
+/// the maximum timed role that can be set/unset. If the inheriting contract does not
+/// have `MAX_TIMED_ROLE()`, then any timed role can be set/unset.
 ///
 /// This implementation allows for any uint256 role,
 /// it does NOT take in a bitmask of roles.
 /// This is to accommodate teams that are allergic to bitwise flags.
 ///
-/// By default, the `owner()` is the only account that is authorized to set roles.
+/// By default, the `owner()` is the only account that is authorized to set timed roles.
 /// This behavior can be changed via overrides.
 ///
 /// This implementation is compatible with any Ownable.
 /// This implementation is NOT compatible with OwnableRoles.
 ///
-/// Since roles can be become active or inactive, it does not make sense
-/// to add enumeration here.
+/// As timed roles can turn active or inactive anytime, enumeration is omitted here.
+/// Querying the number of active timed roles will cost `O(n)` instead of `O(1)`.
 ///
 /// Names are deliberately prefixed with "Timed", so that this contract
 /// can be used in conjunction with `EnumerableRoles` without collisions.
