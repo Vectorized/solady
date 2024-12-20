@@ -2,11 +2,12 @@
 pragma solidity ^0.8.4;
 
 import {TimedRoles} from "../../../src/auth/TimedRoles.sol";
+import {EnumerableRoles} from "../../../src/auth/EnumerableRoles.sol";
 import {Brutalizer} from "../Brutalizer.sol";
 
 /// @dev WARNING! This mock is strictly intended for testing purposes only.
 /// Do NOT copy anything here into production code unless you really know what you are doing.
-contract MockTimedRoles is TimedRoles, Brutalizer {
+contract MockTimedRoles is TimedRoles, EnumerableRoles, Brutalizer {
     struct MockTimedRolesStorage {
         uint256 maxTimedRole;
         bool maxTimedRoleReverts;
