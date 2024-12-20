@@ -35,7 +35,9 @@ abstract contract TimedRoles {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The active time range of the timed role has been set.
-    event TimedRoleSet(address indexed holder, uint256 indexed timedRole, uint40 begin, uint40 end);
+    event TimedRoleSet(
+        address indexed holder, uint256 indexed timedRole, uint40 start, uint40 expires
+    );
 
     /// @dev `keccak256(bytes("TimedRoleSet(address,uint256,uint40,uint40)"))`.
     uint256 private constant _TIMED_ROLE_SET_EVENT_SIGNATURE =
@@ -54,8 +56,7 @@ abstract contract TimedRoles {
     /// @dev Unauthorized to perform the action.
     error TimedRolesUnauthorized();
 
-    /// @dev The `end` cannot be less than the `begin`.
-    /// We allow `begin` to be equal to `end` to allow for a zero range.
+    /// @dev The `expires` cannot be less than the `start`.
     error InvalidTimedRoleRange();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -70,23 +71,23 @@ abstract contract TimedRoles {
     ///     let activeTimeRangeSlot := keccak256(0x00, 0x38)
     /// ```
     /// Bits Layout:
-    /// - [0..39]    `end`.
-    /// - [216..255] `begin`.
+    /// - [0..39]    `expires`.
+    /// - [216..255] `start`.
     uint256 private constant _TIMED_ROLES_SLOT_SEED = 0x28900261;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  PUBLIC UPDATE FUNCTIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Sets the active time range of `timedRole` of `holder` to [`begin`, `end`).
-    /// The `timedRole` is active when `begin <= block.timestamp && block.timestamp < end`.
-    function setTimedRole(address holder, uint256 timedRole, uint40 begin, uint40 end)
+    /// @dev Sets the active time range of `timedRole` of `holder` to [`start`, `expires`].
+    /// The `timedRole` is active when `start <= block.timestamp && block.timestamp <= expires`.
+    function setTimedRole(address holder, uint256 timedRole, uint40 start, uint40 expires)
         public
         payable
         virtual
     {
-        _authorizeSetTimedRole(holder, timedRole, begin, end);
-        _setTimedRole(holder, timedRole, begin, end);
+        _authorizeSetTimedRole(holder, timedRole, start, expires);
+        _setTimedRole(holder, timedRole, start, expires);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -98,7 +99,7 @@ abstract contract TimedRoles {
         public
         view
         virtual
-        returns (bool isActive, uint40 begin, uint40 end)
+        returns (bool isActive, uint40 start, uint40 expires)
     {
         /// @solidity memory-safe-assembly
         assembly {
@@ -106,9 +107,9 @@ abstract contract TimedRoles {
             mstore(0x04, _TIMED_ROLES_SLOT_SEED)
             mstore(0x00, timedRole)
             let packed := sload(keccak256(0x00, 0x38))
-            begin := shr(216, packed)
-            end := and(0xffffffffff, packed)
-            isActive := lt(lt(timestamp(), begin), lt(timestamp(), end))
+            start := shr(216, packed)
+            expires := and(0xffffffffff, packed)
+            isActive := iszero(or(lt(timestamp(), start), gt(timestamp(), expires)))
         }
     }
 
@@ -117,7 +118,7 @@ abstract contract TimedRoles {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Set the timed role for holder directly without authorization guard.
-    function _setTimedRole(address holder, uint256 timedRole, uint40 begin, uint40 end)
+    function _setTimedRole(address holder, uint256 timedRole, uint40 start, uint40 expires)
         internal
         virtual
     {
@@ -130,10 +131,10 @@ abstract contract TimedRoles {
                 revert(0x1c, 0x04)
             }
             // Clean the upper bits.
-            begin := and(0xffffffffff, begin)
-            end := and(0xffffffffff, end)
+            start := and(0xffffffffff, start)
+            expires := and(0xffffffffff, expires)
             // Validate the range.
-            if lt(end, begin) {
+            if lt(expires, start) {
                 mstore(0x00, 0x3304dd8c) // `InvalidTimedRoleRange()`.
                 revert(0x1c, 0x04)
             }
@@ -141,10 +142,10 @@ abstract contract TimedRoles {
             mstore(0x18, holder)
             mstore(0x04, _TIMED_ROLES_SLOT_SEED)
             mstore(0x00, timedRole)
-            sstore(keccak256(0x00, 0x38), or(shl(216, begin), end))
+            sstore(keccak256(0x00, 0x38), or(shl(216, start), expires))
             // Emit the {TimedRoleSet} event.
-            mstore(0x00, begin)
-            mstore(0x20, end)
+            mstore(0x00, start)
+            mstore(0x20, expires)
             log3(0x00, 0x40, _TIMED_ROLE_SET_EVENT_SIGNATURE, shr(96, holder_), timedRole)
         }
     }
@@ -166,13 +167,13 @@ abstract contract TimedRoles {
     }
 
     /// @dev Checks that the caller is authorized to set the timed role.
-    function _authorizeSetTimedRole(address holder, uint256 timedRole, uint40 begin, uint40 end)
+    function _authorizeSetTimedRole(address holder, uint256 timedRole, uint40 start, uint40 expires)
         internal
         virtual
     {
         if (!_timedRolesSenderIsContractOwner()) _revertTimedRolesUnauthorized();
         // Silence compiler warning on unused variables.
-        (holder, timedRole, begin, end) = (holder, timedRole, begin, end);
+        (holder, timedRole, start, expires) = (holder, timedRole, start, expires);
     }
 
     /// @dev Returns if `holder` has any roles in `encodedTimeRoles`.
@@ -192,7 +193,8 @@ abstract contract TimedRoles {
                 encodedTimeRoles := add(0x20, encodedTimeRoles)
                 mstore(0x00, mload(encodedTimeRoles))
                 let p := sload(keccak256(0x00, 0x38))
-                result := lt(lt(timestamp(), shr(216, p)), lt(timestamp(), and(0xffffffffff, p)))
+                result :=
+                    iszero(or(lt(timestamp(), shr(216, p)), gt(timestamp(), and(0xffffffffff, p))))
             }
         }
     }

@@ -9,7 +9,9 @@ import "./utils/mocks/MockTimedRoles.sol";
 contract TimedRolesTest is SoladyTest {
     using DynamicArrayLib for *;
 
-    event TimedRoleSet(address indexed holder, uint256 indexed timedRole, uint40 begin, uint40 end);
+    event TimedRoleSet(
+        address indexed holder, uint256 indexed timedRole, uint40 start, uint40 expires
+    );
 
     MockTimedRoles mockTimedRoles;
 
@@ -22,15 +24,15 @@ contract TimedRolesTest is SoladyTest {
     struct TimedRoleConfig {
         address holder;
         uint256 role;
-        uint40 begin;
-        uint40 end;
+        uint40 start;
+        uint40 expires;
     }
 
     function _sampleTimedRoleConfig() internal returns (TimedRoleConfig memory c) {
         uint256 m = 0xf00000000000000000000000000000000000000000000000000000000000000f;
         c.holder = _randomNonZeroAddress();
         c.role = _randomUniform() & m;
-        (c.begin, c.end) = _sampleValidActiveTimeRange();
+        (c.start, c.expires) = _sampleValidActiveTimeRange();
     }
 
     function _hasDuplicateKeys(TimedRoleConfig[] memory a) internal pure returns (bool) {
@@ -50,64 +52,69 @@ contract TimedRolesTest is SoladyTest {
         }
     }
 
-    function _sampleValidActiveTimeRange() internal returns (uint40 begin, uint40 end) {
+    function _sampleValidActiveTimeRange() internal returns (uint40 start, uint40 expires) {
         do {
-            begin = uint40(_random());
-            end = uint40(_random());
-        } while (end < begin);
+            if (_randomChance(2)) {
+                start = uint40(_random());
+                expires = uint40(_random());
+            } else {
+                start = uint8(_random());
+                expires = uint8(_random());
+            }
+        } while (expires < start);
     }
 
-    function _sampleInvalidActiveTimeRange() internal returns (uint40 begin, uint40 end) {
+    function _sampleInvalidActiveTimeRange() internal returns (uint40 start, uint40 expires) {
         do {
-            begin = uint40(_random());
-            end = uint40(_random());
-        } while (!(end < begin));
+            start = uint40(_random());
+            expires = uint40(_random());
+        } while (!(expires < start));
     }
 
     function testSetAndGetTimedRoles(bytes32) public {
         TimedRoleConfig[] memory a = _sampleTimedRoleConfigs();
 
-        uint256 targetTimestamp = _bound(_random(), 0, 2 ** 41 - 1);
+        uint256 targetTimestamp = _bound(_random(), 0, _randomChance(2) ? 0xff : 2 ** 41 - 1);
         vm.warp(targetTimestamp);
 
         for (uint256 i; i != a.length; ++i) {
             TimedRoleConfig memory c = a[i];
             vm.expectEmit(true, true, true, true);
-            emit TimedRoleSet(c.holder, c.role, c.begin, c.end);
-            mockTimedRoles.setTimedRole(c.holder, c.role, c.begin, c.end);
-            (bool isActive, uint40 begin, uint40 end) =
+            emit TimedRoleSet(c.holder, c.role, c.start, c.expires);
+            mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.expires);
+            (bool isActive, uint40 start, uint40 expires) =
                 mockTimedRoles.timedRoleActive(c.holder, c.role);
-            assertEq(begin, c.begin);
-            assertEq(end, c.end);
-            assertEq(isActive, begin <= targetTimestamp && targetTimestamp < end);
+            assertEq(start, c.start);
+            assertEq(expires, c.expires);
+            assertEq(isActive, start <= targetTimestamp && targetTimestamp <= expires);
         }
         if (!_hasDuplicateKeys(a)) {
             for (uint256 i; i != a.length; ++i) {
                 TimedRoleConfig memory c = a[i];
-                (bool isActive, uint40 begin, uint40 end) =
+                (bool isActive, uint40 start, uint40 expires) =
                     mockTimedRoles.timedRoleActive(c.holder, c.role);
-                assertEq(begin, c.begin);
-                assertEq(end, c.end);
-                assertEq(isActive, begin <= targetTimestamp && targetTimestamp < end);
+                assertEq(start, c.start);
+                assertEq(expires, c.expires);
+                assertEq(isActive, start <= targetTimestamp && targetTimestamp <= expires);
             }
         }
         if (_randomChance(16)) {
             TimedRoleConfig memory c = _sampleTimedRoleConfig();
-            (c.begin, c.end) = _sampleInvalidActiveTimeRange();
+            (c.start, c.expires) = _sampleInvalidActiveTimeRange();
             vm.expectRevert(TimedRoles.InvalidTimedRoleRange.selector);
-            mockTimedRoles.setTimedRole(c.holder, c.role, c.begin, c.end);
+            mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.expires);
         }
         if (_randomChance(16)) {
             TimedRoleConfig memory c = _sampleTimedRoleConfig();
             mockTimedRoles.setOwner(_randomUniqueHashedAddress());
             vm.expectRevert(TimedRoles.TimedRolesUnauthorized.selector);
-            mockTimedRoles.setTimedRole(c.holder, c.role, c.begin, c.end);
+            mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.expires);
             mockTimedRoles.setOwner(address(this));
             if (_randomChance(16)) {
                 c.holder = address(0);
                 vm.expectRevert(TimedRoles.TimedRoleHolderIsZeroAddress.selector);
             }
-            mockTimedRoles.setTimedRole(c.holder, c.role, c.begin, c.end);
+            mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.expires);
         }
         if (_randomChance(16)) {
             uint256 maxTimedRole = _random();
@@ -116,15 +123,15 @@ contract TimedRolesTest is SoladyTest {
             if (c.role > maxTimedRole) {
                 vm.expectRevert(TimedRoles.InvalidTimedRole.selector);
             }
-            mockTimedRoles.setTimedRole(c.holder, c.role, c.begin, c.end);
+            mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.expires);
         }
     }
 
     function testTimedRolesModifiers(bytes32) public {
         TimedRoleConfig memory c = _sampleTimedRoleConfig();
-        c.begin = 0;
-        c.end = 0xffffffffff;
-        mockTimedRoles.setTimedRole(c.holder, c.role, c.begin, c.end);
+        c.start = 0;
+        c.expires = 0xffffffffff;
+        mockTimedRoles.setTimedRole(c.holder, c.role, c.start, c.expires);
         uint256[] memory allowedTimeRoles = _sampleRoles(3);
         mockTimedRoles.setAllowedTimedRole(allowedTimeRoles[0]);
         vm.warp(_randomUniform() & 0xffffffffff);
