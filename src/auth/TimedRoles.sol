@@ -187,13 +187,12 @@ abstract contract TimedRoles {
         assembly {
             mstore(0x18, holder)
             mstore(0x04, _TIMED_ROLES_SLOT_SEED)
-            let end := add(encodedTimeRoles, shl(5, shr(5, mload(encodedTimeRoles))))
-            for {} lt(result, lt(encodedTimeRoles, end)) {} {
+            let e := add(encodedTimeRoles, shl(5, shr(5, mload(encodedTimeRoles))))
+            for {} lt(result, lt(encodedTimeRoles, e)) {} {
                 encodedTimeRoles := add(0x20, encodedTimeRoles)
                 mstore(0x00, mload(encodedTimeRoles))
-                let packed := sload(keccak256(0x00, 0x38))
-                result :=
-                    lt(lt(timestamp(), shr(216, packed)), lt(timestamp(), and(0xffffffffff, packed)))
+                let p := sload(keccak256(0x00, 0x38))
+                result := lt(lt(timestamp(), shr(216, p)), lt(timestamp(), and(0xffffffffff, p)))
             }
         }
     }
