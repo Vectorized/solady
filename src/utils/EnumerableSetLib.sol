@@ -614,10 +614,10 @@ library EnumerableSetLib {
 
     /// @dev Returns the element at index `i` in the set. Reverts if `i` is out-of-bounds.
     function at(AddressSet storage set, uint256 i) internal view returns (address result) {
-        bytes32 rootSlot = _rootSlot(set);
+        result = _rootSlot(set);
         /// @solidity memory-safe-assembly
         assembly {
-            result := shr(96, sload(add(rootSlot, i)))
+            result := shr(96, sload(add(result, i)))
             result := mul(result, iszero(eq(result, _ZERO_SENTINEL)))
         }
         if (i >= length(set)) revert IndexOutOfBounds();
