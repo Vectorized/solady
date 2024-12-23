@@ -45,6 +45,8 @@ contract ERC7821 is Receiver {
     ///   `msg.sender == address(this)`.
     /// - If `opData` is not empty, the implementation SHOULD use the signature
     ///   encoded in `opData` to determine if the caller can perform the execution.
+    /// - If `msg.sender` is an authorized entry point, then `execute` MAY accept
+    ///   calls from the entry point, and MAY use `opData` for specialized logic.
     ///
     /// `opData` may be used to store additional data for authentication,
     /// paymaster data, gas limits, etc.
