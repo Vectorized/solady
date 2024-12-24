@@ -54,8 +54,6 @@ const forEachWalkSync = (dirs, callback) => {
   dirs.forEach(dir => walkSync(dir, callback));
 };
 
-<<<<<<< HEAD
-=======
 const readSolWithLineLengthSync = (srcPath, lineLength) => {
   const withModifiedToml = callback => {
     const originalFile = path.resolve('foundry.toml');

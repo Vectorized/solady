@@ -9,6 +9,16 @@ Optimized for runtime gas for very high number of optimizer runs (i.e. >= 100000
 
 <!-- customintro:start --><!-- customintro:end -->
 
+## Custom Errors
+
+### Overflow()
+
+```solidity
+error Overflow()
+```
+
+Unable to cast to the target type due to overflow.
+
 ## Unsigned Integer Safe Casting Operations
 
 ### toUint8(uint256)
