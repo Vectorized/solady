@@ -665,6 +665,6 @@ abstract contract ERC20 {
     /// or else the actual allowance values may not match with the {Approval} events.
     /// For best performance, return a compile-time constant for zero-cost abstraction.
     function _givePermit2InfiniteAllowance() internal view virtual returns (bool) {
-        return false;
+        return true;
     }
 }
