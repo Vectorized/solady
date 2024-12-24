@@ -1,0 +1,32 @@
+# ERC6551Proxy
+
+Relay proxy for upgradeable ERC6551 accounts.
+
+
+
+
+
+
+<!-- customintro:start --><!-- customintro:end -->
+
+## Immutables
+
+### _defaultImplementation
+
+```solidity
+bytes32 internal immutable _defaultImplementation
+```
+
+The default implementation.
+
+## Storage
+
+### _ERC1967_IMPLEMENTATION_SLOT
+
+```solidity
+bytes32 internal constant _ERC1967_IMPLEMENTATION_SLOT =
+    0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
+```
+
+The ERC-1967 storage slot for the implementation in the proxy.   
+`uint256(keccak256("eip1967.proxy.implementation")) - 1`.

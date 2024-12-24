@@ -7,7 +7,8 @@ const normalizeNewlines = s => s.replace(/\n(\n\s*)+/g, '\n\n');
 
 const hexNoPrefix = x => x.toString(16).replace(/^0[xX]/, '');
 
-const readSync = srcPath => fs.readFileSync(srcPath, { encoding: 'utf8', flag: 'r' });
+const readSync = srcPath => 
+  fs.existsSync(srcPath) ? fs.readFileSync(srcPath, { encoding: 'utf8', flag: 'r' }) : '';
 
 const runCommandSync = (command, args) => {
   const result = spawnSync(command, args, { encoding:'utf-8' });
@@ -53,6 +54,34 @@ const forEachWalkSync = (dirs, callback) => {
   dirs.forEach(dir => walkSync(dir, callback));
 };
 
+const readSolWithLineLengthSync = (srcPath, lineLength) => {
+  const withModifiedToml = callback => {
+    const originalFile = path.resolve('foundry.toml');
+    const backupFile = path.resolve('__tmp_foundry.toml');
+    try {
+      fs.copyFileSync(originalFile, backupFile);
+      let content = fs.readFileSync(originalFile, 'utf8');
+      content = content.replace(/line_length\s*=\s*\d+/g, 'line_length = ' + lineLength);
+      fs.writeFileSync(originalFile, content, 'utf8');
+      return callback();
+    } catch (err) {
+    } finally {
+      if (fs.existsSync(backupFile)) {
+        fs.copyFileSync(backupFile, originalFile);
+        fs.unlinkSync(backupFile);
+      }
+    }
+  };
+  return withModifiedToml(() => {
+    const tempFile = '__tmp.sol';
+    fs.copyFileSync(srcPath, tempFile);
+    runCommandSync('forge', ['fmt', tempFile]);
+    let content = fs.readFileSync(tempFile, 'utf8');
+    fs.unlinkSync(tempFile);
+    return content;
+  });
+};
+
 module.exports = {
   genSectionRegex,
   hexNoPrefix,
@@ -63,5 +92,6 @@ module.exports = {
   writeSync,
   writeAndFmtSync,
   walkSync,
-  forEachWalkSync
+  forEachWalkSync,
+  readSolWithLineLengthSync
 };
