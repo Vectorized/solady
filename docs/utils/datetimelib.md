@@ -4,17 +4,17 @@ Library for date time operations.
 
 
 <b>Conventions:</b>
---------------------------------------------------------------------+
-Unit      | Range                | Notes                            |
---------------------------------------------------------------------|
-timestamp | 0..0x1e18549868c76ff | Unix timestamp.                  |
-epochDay  | 0..0x16d3e098039     | Days since 1970-01-01.           |
-year      | 1970..0xffffffff     | Gregorian calendar year.         |
-month     | 1..12                | Gregorian calendar month.        |
-day       | 1..31                | Gregorian calendar day of month. |
-weekday   | 1..7                 | The day of the week (1-indexed). |
---------------------------------------------------------------------+
-<b>All timestamps of days are rounded down to 00:00:</b>00 UTC.
+
+| Unit      | Range                | Notes                            |
+| -- | -- | -- |
+| timestamp | 0..0x1e18549868c76ff | Unix timestamp.                  |
+| epochDay  | 0..0x16d3e098039     | Days since 1970-01-01.           |
+| year      | 1970..0xffffffff     | Gregorian calendar year.         |
+| month     | 1..12                | Gregorian calendar month.        |
+| day       | 1..31                | Gregorian calendar day of month. |
+| weekday   | 1..7                 | The day of the week (1-indexed). |
+
+All timestamps of days are rounded down to 00&#58;00&#58;00 UTC.
 
 
 

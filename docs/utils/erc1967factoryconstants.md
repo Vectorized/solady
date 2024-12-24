@@ -16,12 +16,12 @@ please refer to 0age's ImmutableCreate2Factory deployment instructions at:
 https://github.com/ProjectOpenSea/seaport/blob/main/docs/Deployment.md
 
 <b>Contract verification:</b>
-<b>- Source code:</b>
+- Source code&#58;
 https://github.com/Vectorized/solady/blob/5212e50fef1f2ff1b1b5e03a5d276a0d23c02713/src/utils/ERC1967Factory.sol
 (The EXACT source code is required. Use the file at the commit instead of the latest copy.)
-<b>- Optimization Enabled:</b> Yes with 1000000 runs
-<b>- Compiler Version:</b> v0.8.19+commit.7dd6d404
-<b>- Other Settings:</b> default evmVersion, MIT license
+- Optimization Enabled&#58; Yes with 1000000 runs
+- Compiler Version&#58; v0.8.19+commit.7dd6d404
+- Other Settings&#58; default evmVersion, MIT license
 
 
 

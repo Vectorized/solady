@@ -5,7 +5,8 @@ Library for compressing and decompressing bytes.
 
 <b>Note:</b>
 
-The accompanying solady.js
+The accompanying solady.js library includes implementations of
+FastLZ and calldata operations for convenience.
 
 
 

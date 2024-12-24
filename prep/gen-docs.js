@@ -140,16 +140,26 @@ async function main() {
   };
 
   const getTopIntro = s => coalesce(
-    s.match(/\/\/\/\s+@notice\s+[\s\S]+?(?:\/\/\/\s?@author\s+[\s\S]+?\n|\/\/\/\s+\([\s\S]+?\)\n)+([\s\S]*?)(?:library|(?:abstract\s+?)contract)\s[\s\S]+?\{/), 
+    s.match(/\/\/\/\s+@notice\s+[\s\S]+?(?:\/\/\/\s?@author\s+[\s\S]+?\n|\/\/\/\s+\([\s\S]+?\)\n)+([\s\S]*?)(?:library|abstract\s+contract|contract)\s[^.]+\{/), 
     m => normalizeNewlines(strip(
       m[1].replace('\n\n', '\n\n\n').split('\n')
       .map(l => l
-        .replace(/^\/\/\/\s*/, '')
+        .replace(/(\d\d)\:(\d\d)\:/g, '$1&#58;$2&#58;')
+        .replace(/^\/{2,3}\s{2,3}([1-9][0-9]*?)\.\s/, '    $1. ')
+        .replace(/^\/{2,3}\s*/, '')
+        .replace(/^(-\s+[\s\S]{1,64})\:/, '$1&#58;')
         .replace(/^@dev\s?([\s\S]+?)\:/, '$1:\n\n')
         .replace(/^Note\:/, 'Note:\n\n')
         .replace(/^[\s\S]{1,64}\:/, m => has(m, 'http') ? m : '<b>' + m + '</b>')
       ).join('\n')
+      .replace(/\.\n\<b\>([\s\S]+?)\:\<\/b\>/, '. $1:')
       .replace(/@dev\s/g, '')
+      .replace(/\-{32,}\s?\+\s*?([\s\S]+)\-{32,}\s?\+/g, (m0, m1) => {
+        const lines = strip(m1.replace(/\-+\s*$/g, '')).split('\n');
+        const n = Math.max.apply(null, lines.map(l => l.split('|').map(strip).filter(c => c.length).length));
+        const h = '|' + Array(n + 1).join(' -- |');
+        return '\n\n' + lines.map(l => l.match(/\-{32,}\s?\|/) ? h : '| ' + l).join('\n') + '\n\n';
+      })
     ))
   );
 
@@ -224,6 +234,17 @@ async function main() {
   });
 
   if (docSrcPaths.length) {
+    docSrcPaths.forEach(p => {
+      writeSync(
+        getDocPath(p),
+        readSync(getDocPath(p))
+        .replace(/((?:See\:)?\s)`([A-Za-z0-9\/]+?\.sol)`/ig, (m0, m1, m2) => {
+          if (!m0.match(/^See\:/i) && !m2.match(/\.sol$/i)) return m0;
+          let l = docSrcPaths.filter(q => has(q, getTitle(m2)));
+          return l.length ? m1 + '[`' + m2 + '`](' + getDocSubPath(l[0]) + ')' : m0;
+        })
+      );
+    });
     const sidebarDocPath = path.join('docs', 'sidebar.md');
     writeSync(
       sidebarDocPath, 

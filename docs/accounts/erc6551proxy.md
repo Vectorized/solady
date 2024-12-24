@@ -3,7 +3,18 @@
 Relay proxy for upgradeable ERC6551 accounts.
 
 
+<b>Note:</b>
 
+This relay proxy is required for upgradeable ERC6551 accounts.
+
+ERC6551 clone -> ERC6551Proxy (relay) -> ERC6551 account implementation.
+
+This relay proxy also allows for correctly revealing the
+"Read as Proxy" and "Write as Proxy" tabs on Etherscan.
+
+After using the registry to deploy a ERC6551 clone pointing to this relay proxy,
+users must send 0 ETH to the clone before clicking on "Is this a proxy?" on Etherscan.
+Verification of this relay proxy on Etherscan is optional.
 
 
 

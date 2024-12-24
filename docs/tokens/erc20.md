@@ -12,7 +12,7 @@ Please add any checks with overrides if desired.
 - The `permit` function uses the ecrecover precompile (0x1).
 
 <b>If you are overriding:</b>
-<b>- NEVER violate the ERC20 invariant:</b>
+- NEVER violate the ERC20 invariant&#58;
 the total sum of all balances must be equal to `totalSupply()`.
 - Check that the overridden function is actually used in the function you want to
 change the behavior of. Much of the code has been manually inlined for performance.
