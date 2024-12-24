@@ -33,7 +33,7 @@ library DynamicArrayLib {
     // Low level minimalist uint256 array operations.
     // If you don't need syntax sugar, it's recommended to use these.
     // Some of these functions returns the same array for function chaining.
-    // `e.g. `array.set(0, 1).set(1, 2)`.
+    // e.g. `array.set(0, 1).set(1, 2)`.
 
     /// @dev Returns a uint256 array with `n` elements. The elements are not zeroized.
     function malloc(uint256 n) internal pure returns (uint256[] memory result) {
@@ -338,7 +338,7 @@ library DynamicArrayLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Some of these functions returns the same array for function chaining.
-    // `e.g. `a.p("1").p("2")`.
+    // e.g. `a.p("1").p("2")`.
 
     /// @dev Shorthand for `a.data.length`.
     function length(DynamicArray memory a) internal pure returns (uint256) {
