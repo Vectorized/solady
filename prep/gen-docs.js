@@ -78,7 +78,7 @@ async function main() {
     return a
       .filter(x => !has(x.h2, 'private'))
       .map(item => {
-        const m = (/^((\s+\/\/\s[^\n]+)+)/).exec(item.src);
+        const m = item.src.match(/^((\s+\/\/\s[^\n]+)+)/);
         if (m) item.note = cleanNatspecOrNote(m[0]);
         return item;
       });
@@ -133,7 +133,7 @@ async function main() {
     const r = /import\s[\s\S]*?(["'][\s\S]+?["'])/g;
     let a = [];
     for (let m = null; (m = r.exec(s)) !== null; ) {
-      const p = path.normalize(path.dirname(srcPath) + path.sep + m[1].slice(1, -1));
+      const p = path.normalize(path.join(path.dirname(srcPath), m[1].slice(1, -1)));
       a.push(p.split(path.sep).slice(-2).join(path.sep));
     }
     return a;
@@ -163,8 +163,8 @@ async function main() {
 
   const getSrcDir = srcPath => srcPath.split(path.sep).slice(-2)[0];
   const getTitle = srcPath => path.parse(srcPath).name;
-  const getDocSubPath = srcPath => getSrcDir(srcPath) + path.sep + getTitle(srcPath).toLowerCase() + '.md';
-  const getDocPath = srcPath => 'docs' + path.sep + getDocSubPath(srcPath);
+  const getDocSubPath = srcPath => path.join(getSrcDir(srcPath), getTitle(srcPath).toLowerCase() + '.md');
+  const getDocPath = srcPath => path.join('docs', getDocSubPath(srcPath));
 
   let docSrcPaths = [];
 
@@ -224,7 +224,7 @@ async function main() {
   });
 
   if (docSrcPaths.length) {
-    const sidebarDocPath = 'docs' + path.sep + 'sidebar.md';
+    const sidebarDocPath = path.join('docs', 'sidebar.md');
     writeSync(
       sidebarDocPath, 
       replaceInTag(
