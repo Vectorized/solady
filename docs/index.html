@@ -17,7 +17,7 @@
 <meta property="og:image:alt" content="Solady Documentation">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital@0;1&&family=Overpass+Mono:wght@700&family=Overpass:ital,wght@0,400;0,600;0,700&display=swap" rel="stylesheet"> 
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700&family=Overpass:ital,wght@0,400;0,600;0,700&display=swap" rel="stylesheet"> 
 <link rel="stylesheet" href="//unpkg.com/docsify-themeable@0.8.6/dist/css/theme-simple.css" crossorigin="anonymous"/>
 <link rel="stylesheet" href="assets/fontello/css/fontello.css"/>
 <style type="text/css">
@@ -36,9 +36,17 @@
 	--sidebar-nav-pagelink-background-image--active: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11.2' height='7' viewBox='0 0 11.2 7'%3E%3Cpath d='M1.5 1.5l4.1 4 4.1-4' stroke-width='1.5' stroke='rgb%2851,102,153%29' fill='none' stroke-linecap='square' stroke-linejoin='miter' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
 	--sidebar-nav-pagelink-background-image--collapse: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='11.2' viewBox='0 0 7 11.2'%3E%3Cpath d='M1.5 1.5l4 4.1 -4 4.1' stroke-width='1.5' stroke='rgb%2851,102,153%29' fill='none' stroke-linecap='square' stroke-linejoin='miter' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
 	--search-input-background-image: url("data:image/svg+xml,%3Csvg height='20px' width='20px' viewBox='0 0 24 24' fill='none' stroke='rgba%28128,128,128,0.6%29' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10.5' cy='10.5' r='7.5' vector-effect='non-scaling-stroke'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='15.8' y2='15.8' vector-effect='non-scaling-stroke'%3E%3C/line%3E%3C/svg%3E");
+	--sidebar-nav-indent: 0.6em;
+	--sidebar-nav-strong-font-size: 0.8em;
+	--code-block-padding: 1.39em;
+	--code-block-line-height: 1.39;
 }
 .clear-button.show svg circle {
 	fill: rgba(128,128,128,0.5) !important;
+}
+.sidebar .sidebar-nav {
+	margin-top: 18px !important;
+	margin-left: -8px !important;
 }
 .sidebar .search input:focus  {
 	box-shadow: none !important;
@@ -54,8 +62,25 @@ html, body, main {
 	border-color: rgba(51,102,153,0.7);
 	box-shadow: 0 0 3px 1px rgba(51,102,153,0.3);
 }
+.sidebar-nav li {
+	font-style: italic;
+}
+.sidebar-nav li * {
+	font-style: normal;
+}
+.sidebar-nav > ul > li > ul > li > ul {
+	margin-left: 0 !important;
+}
 .sidebar-nav > ul > li > ul > li > ul > li > a {
-	font-weight: 600 !important;
+	font-weight: 700 !important;
+	text-transform: uppercase;
+	font-size: 0.8em;
+	line-height: 2;
+}
+.sidebar-nav > ul > li > ul > li > ul > ul > li > a {
+	font-family: "JetBrains Mono";
+	font-family: var(--code-font-family) !important;
+	font-size: 0.9em;
 }
 .sidebar-nav > ul > li > ul > li > ul > li > a::before {
 	display: none !important;
@@ -82,7 +107,8 @@ html, body, main {
 	-webkit-backdrop-filter: blur(5px);
 }
 .markdown-section h3 {
-	font-family : "Overpass Mono";
+	font-family: "JetBrains Mono";
+	font-family: var(--code-font-family);
 	font-weight: 700;
 }
 .markdown-section h2 {

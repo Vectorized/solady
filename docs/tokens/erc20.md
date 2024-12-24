@@ -1,340 +1,347 @@
 # ERC20
 
-Source: [`tokens/ERC20.sol`](https://github.com/Vectorized/solady/blob/main/src/tokens/ERC20.sol)
+Simple ERC20 + EIP-2612 implementation.
 
-Solady's ERC20 token implementation is an opinionated and highly optimized implementation of the [ERC20 standard](https://eips.ethereum.org/EIPS/eip-20). It also inherits the [ERC2612 standard](https://eips.ethereum.org/EIPS/eip-2612) which enables permit-based approvals.
 
-## Things to note
+<b>Note:</b>
 
-- The ERC20 standard does not impose any restriction on the addresses and amounts used. As such, this implementation **WILL NOT** revert for the following:
-    - mint to the zero address
-    - transfer to and from the zero address
-    - transfer zero tokens
-    - self approvals
-- Every function can be overridden with the `override` keyword if a custom implementation is required.
-- The `permit` function uses the ecrecover precompile (0x1). 
+- The ERC20 standard allows minting and transferring to and from the zero address,
+minting and transferring zero tokens, as well as self-approvals.
+For performance, this implementation WILL NOT revert for such actions.
+Please add any checks with overrides if desired.
+- The `permit` function uses the ecrecover precompile (0x1).
 
-## API Reference
+<b>If you are overriding:</b>
+<b>- NEVER violate the ERC20 invariant:</b>
+the total sum of all balances must be equal to `totalSupply()`.
+- Check that the overridden function is actually used in the function you want to
+change the behavior of. Much of the code has been manually inlined for performance.
 
-### name
 
-Returns the name of the token.
 
-```solidity
-function name() public view virtual returns (string memory)
-```
+<!-- customintro:start --><!-- customintro:end -->
 
-#### Parameter(s)
+## Custom Errors
 
-- None
-
-#### Return Value(s)
-
-- string: The name of the token.
-
-#### Note(s)
-
-- Must override or the contract will not compile.
-
----
-
-### symbol
-
-Returns the symbol of the token.
+### TotalSupplyOverflow()
 
 ```solidity
-function symbol() public view virtual returns (string memory)
+error TotalSupplyOverflow()
 ```
 
-#### Parameter(s)
+The total supply has overflowed.
 
-- None
-
-#### Return Value(s)
-
-- string: The symbol of the token.
-
-#### Note(s)
-
-- Must override or the contract will not compile.
-
----
-
-### decimals
-
-Returns the number of decimals of the token.
+### AllowanceOverflow()
 
 ```solidity
-function decimals() public view virtual returns (uint8)
+error AllowanceOverflow()
 ```
 
-#### Parameter(s)
+The allowance has overflowed.
 
-- None
+### AllowanceUnderflow()
 
-#### Return Value(s)
+```solidity
+error AllowanceUnderflow()
+```
 
-- uint8: The number of decimals of the token.
+The allowance has underflowed.
 
-#### Note(s)
+### InsufficientBalance()
 
-- None
+```solidity
+error InsufficientBalance()
+```
 
----
+Insufficient balance.
 
-### totalSupply
+### InsufficientAllowance()
+
+```solidity
+error InsufficientAllowance()
+```
+
+Insufficient allowance.
+
+### InvalidPermit()
+
+```solidity
+error InvalidPermit()
+```
+
+The permit is invalid.
+
+### PermitExpired()
+
+```solidity
+error PermitExpired()
+```
+
+The permit has expired.
+
+### Permit2AllowanceIsFixedAtInfinity()
+
+```solidity
+error Permit2AllowanceIsFixedAtInfinity()
+```
+
+The allowance of Permit2 is fixed at infinity.
+
+## Constants
+
+### _PERMIT2
+
+```solidity
+address internal constant _PERMIT2 =
+    0x000000000022D473030F116dDEE9F6B43aC78BA3
+```
+
+The canonical Permit2 address.   
+For signature-based allowance granting for single transaction ERC20 `transferFrom`.   
+To enable, override `_givePermit2InfiniteAllowance()`.   
+[Github](https://github.com/Uniswap/permit2)   
+[Etherscan](https://etherscan.io/address/0x000000000022D473030F116dDEE9F6B43aC78BA3)
+
+## ERC20
+
+### totalSupply()
+
+```solidity
+function totalSupply() public view virtual returns (uint256 result)
+```
 
 Returns the amount of tokens in existence.
 
-```solidity
-function totalSupply() public view virtual returns (uint256)
-```
-
-#### Parameter(s)
-
-- None
-
-#### Return Value(s)
-
-- uint256: The number of tokens in existence.
-
-#### Note(s)
-
-- None
-
----
-
-### balanceOf
-
-Returns the amount of tokens owned by an address.
+### balanceOf(address)
 
 ```solidity
-function balanceOf(address) public view virtual returns (uint256)
+function balanceOf(address owner)
+    public
+    view
+    virtual
+    returns (uint256 result)
 ```
 
-#### Parameter(s)
+Returns the amount of tokens owned by `owner`.
 
-- address: The address to query the token balance of.
-
-#### Return Value(s)
-
-- uint256: The amount of tokens owned by the input address.
-
-#### Note(s)
-
-- None
-
----
-
-### allowance
-
-Returns the amount of tokens that a spender can spend on behalf of an owner.
+### allowance(address,address)
 
 ```solidity
-function allowance(address,address) public view virtual returns (uint256)
+function allowance(address owner, address spender)
+    public
+    view
+    virtual
+    returns (uint256 result)
 ```
 
-#### Parameter(s)
+Returns the amount of tokens that `spender` can spend on behalf of `owner`.
 
-- address: The owner of the tokens.
-- address: The spender of the tokens.
-
-#### Return Value(s)
-
-- uint256: The amount of tokens that the input spender can spend on behalf of the input owner.
-
-#### Note(s)
-
-- None
-
----
-
-### approve
-
-Sets an amount of allowance for a spender over the caller's tokens.
+### approve(address,uint256)
 
 ```solidity
-function approve(address,uint256) public virtual returns (bool)
+function approve(address spender, uint256 amount)
+    public
+    virtual
+    returns (bool)
 ```
 
-#### Parameter(s)
+Sets `amount` as the allowance of `spender` over the caller's tokens.   
+Emits a {Approval} event.
 
-- address: The spender of the tokens.
-- uint256: The amount to set as spender's allowance.
-
-#### Return Value(s)
-
-- bool: `true`
-
-#### Note(s)
-
-- Emits the `Approval` event.
-
----
-
-### transfer
-
-Transfer an amount of tokens from the caller to a recipient.
+### transfer(address,uint256)
 
 ```solidity
-function transfer(address,uint256) public virtual returns (bool)
+function transfer(address to, uint256 amount)
+    public
+    virtual
+    returns (bool)
 ```
 
-#### Parameter(s)
+Transfer `amount` tokens from the caller to `to`.   
+Requirements:   
+- `from` must at least have `amount`.   
+Emits a {Transfer} event.
 
-- address: The recipient address to receive the tokens.
-- uint256: The amount of tokens to transfer from the caller.
-
-#### Return Value(s)
-
-- bool: `true` if it does not revert with `InsufficientBalance`.
-
-#### Note(s)
-
-- Emits the `Transfer` event.
-- Reverts with the `InsufficientBalance` error if caller does not have enough tokens.
-
----
-
-### transferFrom
-
-Transfers an amount of tokens from an owner to a recipient.
+### transferFrom(address,address,uint256)
 
 ```solidity
-transferFrom(address,address,uint256) public virtual returns (bool)
+function transferFrom(address from, address to, uint256 amount)
+    public
+    virtual
+    returns (bool)
 ```
 
-#### Parameter(s)
+Transfers `amount` tokens from `from` to `to`.   
+Note: Does not update the allowance if it is the maximum uint256 value.   
+Requirements:   
+- `from` must at least have `amount`.   
+- The caller must have at least `amount` of allowance to transfer the tokens of `from`.   
+Emits a {Transfer} event.
 
-- address: The owner address to transfer the tokens from.
-- address: The recipient address to receive the tokens.
-- uint256: The amount of tokens to be transferred.
+## EIP-2612
 
-#### Return Value(s)
-
-- bool: `true` if it does not revert with `InsufficientAllowance` or `InsufficientBalance`.
-
-#### Note(s)
-
-- Emits the `Transfer` event.
-- Does not update caller's allowance if allowance is `type(uint256).max`.
-- Reverts with `InsufficientAllowance` error if the caller does not have enough allowance.
-- Reverts with `InsufficientBalance` error if the input owner does not have enough tokens.
-
----
-
-### nonces
-
-Returns the current nonce of an address.
+### _constantNameHash()
 
 ```solidity
-function nonces(address) public view virtual returns (uint256)
+function _constantNameHash()
+    internal
+    view
+    virtual
+    returns (bytes32 result)
 ```
 
-#### Parameter(s)
+For more performance, override to return the constant value   
+of `keccak256(bytes(name()))` if `name()` will never change.
 
-- address: The address to query the nonce of.
-
-#### Return Value(s)
-
-- uint256: The current nonce of the input address.
-
-#### Note(s)
-
-- This value is used to compute the signature for [EIP-2612 permit](https://eips.ethereum.org/EIPS/eip-2612).
-
----
-
-### permit
-
-Sets an amount of allowance for a spender over an owner's tokens, authorized by a signed approval by the owner.
+### _versionHash()
 
 ```solidity
-function permit(address,address,uint256,uint256,uint8,bytes32,bytes32) public virtual
+function _versionHash() internal view virtual returns (bytes32 result)
 ```
 
-#### Parameter(s)
+If you need a different value, override this function.
 
-- address: The owner of the tokens.
-- address: The spender of the tokens.
-- uint256: The amount to set as spender's allowance.
-- uint256: The deadline of the signature.
-- uint8: The v component of the signature.
-- bytes32: The r component of the signature.
-- bytes32: The s component of the signature.
+### _incrementNonce(address)
 
-#### Return Value(s)
+```solidity
+function _incrementNonce(address owner) internal virtual
+```
 
-- None
+For inheriting contracts to increment the nonce.
 
-#### Note(s)
+### nonces(address)
 
-- Emits the `Approval` if it does not revert with `PermitExpired` or `InvalidPermit`.
-- The input owner's nonce will be incremented by 1 if `permit` is successful.
-- Reverts with `PermitExpired` error if the current timestamp is greater than the input deadline.
-- Reverts with `InvalidPermit` error if the address recovered does not match the input owner.
+```solidity
+function nonces(address owner)
+    public
+    view
+    virtual
+    returns (uint256 result)
+```
 
----
+Returns the current nonce for `owner`.   
+This value is used to compute the signature for EIP-2612 permit.
 
-### DOMAIN_SEPERATOR
+### permit(address,address,uint256,uint256,uint8,bytes32,bytes32)
+
+```solidity
+function permit(
+    address owner,
+    address spender,
+    uint256 value,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+) public virtual
+```
+
+Sets `value` as the allowance of `spender` over the tokens of `owner`,   
+authorized by a signed approval by `owner`.   
+Emits a {Approval} event.
+
+### DOMAIN_SEPARATOR()
+
+```solidity
+function DOMAIN_SEPARATOR() public view virtual returns (bytes32 result)
+```
 
 Returns the EIP-712 domain separator for the EIP-2612 permit.
 
+## Internal Mint Functions
+
+### _mint(address,uint256)
+
 ```solidity
-function DOMAIN_SEPARATOR() public view virtual returns (bytes32)
+function _mint(address to, uint256 amount) internal virtual
 ```
 
-#### Parameter(s)
+Mints `amount` tokens to `to`, increasing the total supply.   
+Emits a {Transfer} event.
 
-- None
+## Internal Burn Functions
 
-#### Return Value(s)
+### _burn(address,uint256)
 
-- bytes32: The EIP-712 domain separator for the EIP-2612 permit.
+```solidity
+function _burn(address from, uint256 amount) internal virtual
+```
 
-#### Note(s)
+Burns `amount` tokens from `from`, reducing the total supply.   
+Emits a {Transfer} event.
 
-- None
+## Internal Transfer Functions
 
----
+### _transfer(address,address,uint256)
 
-### Errors
+```solidity
+function _transfer(address from, address to, uint256 amount)
+    internal
+    virtual
+```
 
-| Name                | Description                                  | Selector     |
-| ------------------- | -------------------------------------------- | ------------ |
-| TotalSupplyOverflow | Thrown when the total supply has overflowed. | `0xe5cfe957` |
-| AllowanceOverflow   | Thrown when the allowance has overflowed.    | `0xf9067066` |
-| AllowanceUnderflow  | Thrown when the allowance has underflowed.   | `0x8301ab38` |
-| InsufficientBalance | Thrown when there is insufficient balance.   | `0xf4d678b8` |
-| InvalidPermit       | Thrown when the permit is invalid.           | `0xddafbaef` |
-| PermitExpired       | Thrown when the permit has expired.          | `0x1a15a3cc` |
+Moves `amount` of tokens from `from` to `to`.
 
----
+## Internal Allowance Functions
 
-### Events
+### _spendAllowance(address,address,uint256)
 
-| Name                              | Description                          |
-| --------------------------------- | ------------------------------------ |
-| Transfer(address,address,uint256) | Emitted when tokens are transferred. |
-| Approval(address,address,uint256) | Emitted when allowances are updated. |
+```solidity
+function _spendAllowance(address owner, address spender, uint256 amount)
+    internal
+    virtual
+```
 
----
+Updates the allowance of `owner` for `spender` based on spent `amount`.
 
+### _approve(address,address,uint256)
 
-### Constants
+```solidity
+function _approve(address owner, address spender, uint256 amount)
+    internal
+    virtual
+```
 
-| Name                                     | Value                                                              |
-| ---------------------------------------- | ------------------------------------------------------------------ |
-| \_TRANSFER_EVENT_SIGNATURE               | 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef |
-| \_APPROVAL_EVENT_SIGNATURE               | 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925 |
-| \_TOTAL_SUPPLY_SLOT                      | 0x05345cdf77eb68f44c                                               |
-| \_BALANCE_SLOT_SEED                      | 0x87a211a2                                                         |
-| \_ALLOWANCE_SLOT_SEED                    | 0x7f5e9f20                                                         |
-| \_NONCES_SLOT_SEED                       | 0x38377508                                                         |
-| \_NONCES_SLOT_SEED_WITH_SIGNATURE_PREFIX | 0x383775081901                                                     |
-| \_DOMAIN_TYPEHASH                        | 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f |
-| \_VERSION_HASH                           | 0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6 |
-| \_PERMIT_TYPEHASH                        | 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9 |
+Sets `amount` as the allowance of `spender` over the tokens of `owner`.   
+Emits a {Approval} event.
 
+## Hooks To Override
 
----
+### _beforeTokenTransfer(address,address,uint256)
+
+```solidity
+function _beforeTokenTransfer(address from, address to, uint256 amount)
+    internal
+    virtual
+```
+
+Hook that is called before any transfer of tokens.   
+This includes minting and burning.
+
+### _afterTokenTransfer(address,address,uint256)
+
+```solidity
+function _afterTokenTransfer(address from, address to, uint256 amount)
+    internal
+    virtual
+```
+
+Hook that is called after any transfer of tokens.   
+This includes minting and burning.
+
+## Permit2
+
+### _givePermit2InfiniteAllowance()
+
+```solidity
+function _givePermit2InfiniteAllowance()
+    internal
+    view
+    virtual
+    returns (bool)
+```
+
+Returns whether to fix the Permit2 contract's allowance at infinity.   
+This value should be kept constant after contract initialization,   
+or else the actual allowance values may not match with the {Approval} events.   
+For best performance, return a compile-time constant for zero-cost abstraction.
