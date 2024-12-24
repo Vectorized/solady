@@ -78,7 +78,7 @@ async function main() {
     return a
       .filter(x => !has(x.h2, 'private'))
       .map(item => {
-        const m = (/^((\s+\/\/\s[^\n]+)+)/).exec(item.src);
+        const m = item.src.match(/^((\s+\/\/\s[^\n]+)+)/);
         if (m) item.note = cleanNatspecOrNote(m[0]);
         return item;
       });
