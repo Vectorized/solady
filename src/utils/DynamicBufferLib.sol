@@ -21,7 +21,7 @@ library DynamicBufferLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // Some of these functions returns the same buffer for function chaining.
-    // `e.g. `buffer.p("1").p("2")`.
+    // e.g. `buffer.p("1").p("2")`.
 
     /// @dev Shorthand for `buffer.data.length`.
     function length(DynamicBuffer memory buffer) internal pure returns (uint256) {
