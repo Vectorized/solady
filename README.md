@@ -3,6 +3,7 @@
 [![NPM][npm-shield]][npm-url]
 [![CI][ci-shield]][ci-url]
 [![Solidity][solidity-shield]][solidity-ci-url]
+[![Docs][docs-shield]][docs-url]
 
 Gas optimized Solidity snippets.
 
@@ -21,6 +22,10 @@ To install with [**Hardhat**](https://github.com/nomiclabs/hardhat):
 ```sh
 npm install solady
 ```
+
+## Documentation
+
+https://vectorized.github.io/solady
 
 ## Contracts
 
@@ -158,3 +163,6 @@ This repository is inspired by or directly modified from many sources, primarily
 
 [solidity-shield]: https://img.shields.io/badge/solidity-%3E=0.8.4%20%3C=0.8.28-aa6746
 [solidity-ci-url]: https://github.com/Vectorized/solady/actions/workflows/ci-all-via-ir.yml
+
+[docs-shield]: https://img.shields.io/badge/docs-%F0%9F%93%84-blue
+[docs-url]: https://vectorized.github.io/solady
