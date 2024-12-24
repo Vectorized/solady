@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawnSync, execSync } = require('child_process');
 
 const normalizeNewlines = s => s.replace(/\n(\n\s*)+/g, '\n\n');
 
@@ -55,31 +55,17 @@ const forEachWalkSync = (dirs, callback) => {
 };
 
 const readSolWithLineLengthSync = (srcPath, lineLength) => {
-  const withModifiedToml = callback => {
-    const originalFile = path.resolve('foundry.toml');
-    const backupFile = path.resolve('__tmp_foundry.toml');
-    try {
-      fs.copyFileSync(originalFile, backupFile);
-      let content = fs.readFileSync(originalFile, 'utf8');
-      content = content.replace(/line_length\s*=\s*\d+/g, 'line_length = ' + lineLength);
-      fs.writeFileSync(originalFile, content, 'utf8');
-      return callback();
-    } catch (err) {
-    } finally {
-      if (fs.existsSync(backupFile)) {
-        fs.copyFileSync(backupFile, originalFile);
-        fs.unlinkSync(backupFile);
-      }
-    }
-  };
-  return withModifiedToml(() => {
-    const tempFile = '__tmp.sol';
-    fs.copyFileSync(srcPath, tempFile);
-    runCommandSync('forge', ['fmt', tempFile]);
-    let content = fs.readFileSync(tempFile, 'utf8');
-    fs.unlinkSync(tempFile);
-    return content;
-  });
+  const tmpDir = path.join(__dirname, 'out', ('__t' + Math.random()).replace(/\./g, '_'));
+  writeSync(
+    path.resolve(path.join(tmpDir, 'foundry.toml')),
+    fs.readFileSync(path.resolve('foundry.toml'), 'utf8')
+    .replace(/line_length\s*=\s*\d+/g, 'line_length = ' + lineLength)
+  );
+  fs.copyFileSync(srcPath, path.join(tmpDir, 'x.sol'));
+  execSync('forge fmt x.sol', { cwd: tmpDir, stdio: 'inherit' });
+  const content = fs.readFileSync(path.join(tmpDir, 'x.sol'), 'utf8');
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+  return content;
 };
 
 module.exports = {
