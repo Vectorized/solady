@@ -3,7 +3,15 @@
 Simple ERC4337 account factory implementation.
 
 
+<b>Note:</b>
 
+- Unlike the ERC1967Factory, this factory does NOT store any admin info on the factory itself.
+The deployed ERC4337 accounts are minimal ERC1967 proxies to an ERC4337 implementation.
+The proxy bytecode does NOT contain any upgrading logic.
+- This factory does NOT contain any logic for upgrading the ERC4337 accounts.
+Upgrading must be done via UUPS logic on the accounts themselves.
+- The ERC4337 standard expects the factory to use deterministic deployment.
+As such, this factory does not include any non-deterministic deployment methods.
 
 
 

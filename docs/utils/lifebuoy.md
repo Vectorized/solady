@@ -3,7 +3,38 @@
 Class that allows for rescue of ETH, ERC20, ERC721 tokens.
 
 
+<b>This contract is created to mitigate the following disasters:</b>
 
+- Careless user sends tokens to the wrong chain or wrong contract.
+- Careless dev deploys a contract without a withdraw function in attempt to rescue
+careless user's tokens, due to deployment nonce mismatch caused by
+script misfire / misconfiguration.
+- Careless dev forgets to add a withdraw function to a NFT sale contract.
+
+<b>Note:</b>
+
+if you are deploying via a untrusted `tx.origin`,
+you MUST override `_lifebuoyDefaultDeployer` to return a trusted address.
+
+<b>For best safety:</b>
+- For non-escrow contracts, inherit Lifebuoy as much as possible,
+and leave it unlocked.
+- For escrow contracts, lock access as tight as possible,
+as soon as possible. Or simply don't inherit Lifebuoy. Escrow: Your contract is designed to hold ETH, ERC20s, ERC721s
+(e.g. liquidity pools).
+
+<b>All rescue and rescue authorization functions require either:</b>
+- Caller is the deployer
+AND the contract is not a proxy
+AND `rescueLocked() & _LIFEBUOY_DEPLOYER_ACCESS_LOCK == 0`.
+- Caller is `owner()`
+AND `rescueLocked() & _LIFEBUOY_OWNER_ACCESS_LOCK == 0`.
+
+The choice of using bit flags to represent locked statuses is for
+efficiency, flexibility, convenience.
+
+This contract is optimized with a priority on minimal bytecode size,
+as the methods are not intended to be called often.
 
 
 

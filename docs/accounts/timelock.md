@@ -3,12 +3,33 @@
 Simple timelock.
 
 
+<b>Note:</b>
 
+- This implementation only supports ERC7821 style execution.
+- This implementation uses EnumerableRoles for better auditability.
+- This implementation uses custom errors with arguments for easier debugging.
+- `executionData` can be encoded in three different ways&#58;
+    1. `abi.encode(calls)`.
+    2. `abi.encode(calls, abi.encode(predecessor))`.
+    3. `abi.encode(calls, abi.encode(predecessor, salt))`.
+- Where `calls` is of type `(address,uint256,bytes)[]`, and
+`predecessor` is the id of the proposal that is required to be already executed.
+- If `predecessor` is `bytes32(0)`, it will be ignored (treated as if not required).
+- The optional `salt` allows for multiple proposals representing the same payload.
+- The proposal id is given by&#58;
+`keccak256(abi.encode(mode, keccak256(executionData)))`.
+
+<b>Supported modes:</b>
+- `bytes32(0x01000000000000000000...)`&#58; does not support optional `opData`.
+- `bytes32(0x01000000000078210001...)`&#58; supports optional `opData`.
+Where `opData` is `abi.encode(predecessor)` or `abi.encode(predecessor, salt)`,
+and `...` is the remaining 22 bytes which can be anything. For ease of mind, just use:
+`0x0100000000007821000100000000000000000000000000000000000000000000`.
 
 <b>Inherits:</b>  
 
-- `accounts/ERC7821.sol`  
-- `auth/EnumerableRoles.sol`  
+- [`accounts/ERC7821.sol`](accounts/erc7821.md)  
+- [`auth/EnumerableRoles.sol`](auth/enumerableroles.md)  
 
 
 <!-- customintro:start --><!-- customintro:end -->

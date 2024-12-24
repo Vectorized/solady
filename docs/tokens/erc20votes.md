@@ -7,7 +7,7 @@ ERC20 with votes based on ERC5805 and ERC6372.
 
 <b>Inherits:</b>  
 
-- `tokens/ERC20.sol`  
+- [`tokens/ERC20.sol`](tokens/erc20.md)  
 
 
 <!-- customintro:start --><!-- customintro:end -->
