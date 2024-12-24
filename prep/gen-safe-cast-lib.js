@@ -7,7 +7,8 @@ async function main() {
 
   const genUint256ToUintXCastDef = i => {
     const n = i * 8;
-    let s = 'function toUint' + n + '(uint256 x) internal pure returns (uint' + n + ') {';
+    let s = '/// @dev Casts `x` to a uint' + n + '. Reverts on overflow.\n'
+    s += 'function toUint' + n + '(uint256 x) internal pure returns (uint' + n + ') {';
     s += 'if (x >= 1 << ' + n + ') _revertOverflow();'
     s += 'return uint' + n + '(x);}\n';
     return s;
@@ -16,7 +17,8 @@ async function main() {
   const genInt256ToIntXCastDef = i => {
     const n = i * 8;
     const m = n - 1;
-    let s = 'function toInt' + n + '(int256 x) internal pure returns (int' + n + ') {';
+    let s = '/// @dev Casts `x` to a int' + n + '. Reverts on overflow.\n'
+    s += 'function toInt' + n + '(int256 x) internal pure returns (int' + n + ') {';
     s += 'unchecked {';
     s += 'if (((1 << ' + m + ') + uint256(x)) >> ' + n + ' == uint256(0)) return int' + n + '(x);';
     s += '_revertOverflow();}}\n';
@@ -26,7 +28,8 @@ async function main() {
   const genUInt256ToIntXCastDef = i => {
     const n = i * 8;
     const m = n - 1;
-    let s = 'function toInt' + n + '(uint256 x) internal pure returns (int' + n + ') {';
+    let s = '/// @dev Casts `x` to a int' + n + '. Reverts on overflow.\n'
+    s += 'function toInt' + n + '(uint256 x) internal pure returns (int' + n + ') {';
     s += 'if (x >= 1 << ' + m + ') _revertOverflow();';
     s += 'return int' + n + '(int256(x));}\n';
     return s;
@@ -60,11 +63,13 @@ async function main() {
         chunks.push(genUInt256ToIntXCastDef(i));
       }
       chunks.push(
+        '/// @dev Casts `x` to a int256. Reverts on overflow.\n' +
         'function toInt256(uint256 x) internal pure returns (int256) {' +
         'if (int256(x) >= 0) return int256(x);'+
         '_revertOverflow();}'
       );
       chunks.push(
+        '/// @dev Casts `x` to a uint256. Reverts on overflow.\n' +
         'function toUint256(int256 x) internal pure returns (uint256) {' +
         'if (x >= 0) return uint256(x);'+
         '_revertOverflow();}'
