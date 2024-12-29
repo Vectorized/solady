@@ -624,11 +624,12 @@ library LibBytes {
                 for { let i := 0x20 } 1 {} {
                     let x := mload(add(a, i))
                     let y := mload(add(b, i))
-                    if or(xor(x, y), eq(i, n)) {
-                        result := sub(gt(x, y), lt(x, y))
-                        break
+                    if iszero(or(xor(x, y), eq(i, n))) {
+                        i := add(i, 0x20)
+                        continue
                     }
-                    i := add(i, 0x20)
+                    result := sub(gt(x, y), lt(x, y))
+                    break
                 }
             }
             // forgefmt: disable-next-item
