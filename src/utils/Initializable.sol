@@ -98,23 +98,24 @@ abstract contract Initializable {
         bytes32 s = _initializableSlot();
         /// @solidity memory-safe-assembly
         assembly {
-            version := and(version, 0xffffffffffffffff) // Clean upper bits.
+            // Clean upper bits, and shift left by 1 to make space for the initializing bit.
+            version := shl(1, and(version, 0xffffffffffffffff))
             let i := sload(s)
             // If `initializing == 1 || initializedVersion >= version`.
-            if iszero(lt(and(i, 1), lt(shr(1, i), version))) {
+            if iszero(lt(and(i, 1), lt(i, version))) {
                 mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
                 revert(0x1c, 0x04)
             }
             // Set `initializing` to 1, `initializedVersion` to `version`.
-            sstore(s, or(1, shl(1, version)))
+            sstore(s, or(1, version))
         }
         _;
         /// @solidity memory-safe-assembly
         assembly {
             // Set `initializing` to 0, `initializedVersion` to `version`.
-            sstore(s, shl(1, version))
+            sstore(s, version)
             // Emit the {Initialized} event.
-            mstore(0x20, version)
+            mstore(0x20, shr(1, version))
             log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
         }
     }
@@ -154,7 +155,7 @@ abstract contract Initializable {
                 mstore(0x00, 0xf92ee8a9) // `InvalidInitialization()`.
                 revert(0x1c, 0x04)
             }
-            let uint64max := shr(192, s) // Computed to save bytecode.
+            let uint64max := 0xffffffffffffffff
             if iszero(eq(shr(1, i), uint64max)) {
                 // Set `initializing` to 0, `initializedVersion` to `2**64 - 1`.
                 sstore(s, shl(1, uint64max))
