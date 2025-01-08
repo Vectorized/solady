@@ -97,7 +97,7 @@ abstract contract ERC20Votes is ERC20 {
     }
 
     /// @dev Retusn the current clock.
-    function clock() public view returns (uint48 result) {
+    function clock() public view virtual returns (uint48 result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := number()
