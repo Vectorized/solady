@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Simple ERC721 implementation with storage hitchhiking.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC721.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ext/zksync/ZKsyncERC721.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC721/ERC721.sol)
 ///
@@ -20,7 +20,7 @@ pragma solidity ^0.8.4;
 ///   (e.g. the bool value for `isApprovedForAll` MUST be either 1 or 0 under the hood).
 /// - Check that the overridden function is actually used in the function you want to
 ///   change the behavior of. Much of the code has been manually inlined for performance.
-abstract contract ERC721 {
+abstract contract ZKsyncERC721 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
