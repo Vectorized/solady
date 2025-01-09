@@ -57,9 +57,12 @@ contract SignatureCheckerLibTest is SoladyTest {
     }
 
     function testSignatureCheckerOnWalletWithMatchingSignerAndSignature() public {
-        _checkSignatureBothModes(
-            address(mockERC1271Wallet), TEST_SIGNED_MESSAGE_HASH, SIGNATURE, true
-        );
+        address signer = address(mockERC1271Wallet);
+        bytes32 hash = TEST_SIGNED_MESSAGE_HASH;
+        bytes memory signature = SIGNATURE;
+        _checkSignature(true, signer, hash, signature, true);
+        vm.etch(signer, "");
+        _checkSignature(false, signer, hash, signature, false);
     }
 
     function testSignatureCheckerOnWalletWithInvalidSigner() public {
