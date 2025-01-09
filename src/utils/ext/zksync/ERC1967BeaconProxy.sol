@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice A sufficiently minimal ERC1967 beacon proxy tailored made for ZKsync.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ZKsyncERC1967BeaconProxy.sol)
-contract ZKsyncERC1967BeaconProxy {
+/// @notice A sufficiently minimal ERC1967 beacon proxy tailored made for .
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ERC1967BeaconProxy.sol)
+contract ERC1967BeaconProxy {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -25,9 +25,9 @@ contract ZKsyncERC1967BeaconProxy {
         0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
 
     /// @dev The storage slot for the deployer.
-    /// `uint256(keccak256("ZKsyncERC1967BeaconProxy.deployer")) - 1`.
-    bytes32 internal constant _ZKSYNC_ERC1967_BEACON_PROXY_DEPLOYER_SLOT =
-        0xa08abcd16f24dd6a09927c103ca70de95c1c04921998d0dac6edddd21549ba2d;
+    /// `uint256(keccak256("ERC1967BeaconProxy.deployer")) - 1`.
+    bytes32 internal constant _ERC1967_BEACON_PROXY_DEPLOYER_SLOT =
+        0xabc1f855dddf3277214739f5a08d8b9db61505a97fd0c09e835a2d800705b3bc;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
@@ -36,7 +36,7 @@ contract ZKsyncERC1967BeaconProxy {
     constructor() payable {
         /// @solidity memory-safe-assembly
         assembly {
-            sstore(_ZKSYNC_ERC1967_BEACON_PROXY_DEPLOYER_SLOT, caller())
+            sstore(_ERC1967_BEACON_PROXY_DEPLOYER_SLOT, caller())
         }
     }
 
@@ -56,7 +56,7 @@ contract ZKsyncERC1967BeaconProxy {
                 return(0x00, 0x20) // Return the implementation.
             }
             // Deployer workflow.
-            if eq(caller(), sload(_ZKSYNC_ERC1967_BEACON_PROXY_DEPLOYER_SLOT)) {
+            if eq(caller(), sload(_ERC1967_BEACON_PROXY_DEPLOYER_SLOT)) {
                 sstore(_ERC1967_BEACON_SLOT, calldataload(0x00))
                 // Emit the {Upgraded} event.
                 log2(0x00, 0x00, _BEACON_UPGRADED_EVENT_SIGNATURE, calldataload(0x00))

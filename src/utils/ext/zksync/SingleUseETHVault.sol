@@ -2,8 +2,8 @@
 pragma solidity ^0.8.4;
 
 /// @notice A single-use vault that allows a designated caller to withdraw all ETH in it.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ZKsyncSingleUseETHVault.sol)
-contract ZKsyncSingleUseETHVault {
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/SingleUseETHVault.sol)
+contract SingleUseETHVault {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

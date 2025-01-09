@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {ZKsyncERC1967Proxy} from "./ZKsyncERC1967Proxy.sol";
-import {ZKsyncUpgradeableBeacon} from "./ZKsyncUpgradeableBeacon.sol";
-import {ZKsyncERC1967BeaconProxy} from "./ZKsyncERC1967BeaconProxy.sol";
+import {ERC1967Proxy} from "./ERC1967Proxy.sol";
+import {UpgradeableBeacon} from "./UpgradeableBeacon.sol";
+import {ERC1967BeaconProxy} from "./ERC1967BeaconProxy.sol";
 
 /// @notice A factory for deploying minimal ERC1967 proxies on ZKsync.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ZKsyncERC1967Factory.sol)
-contract ZKsyncERC1967Factory {
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ERC1967Factory.sol)
+contract ERC1967Factory {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -319,9 +319,9 @@ contract ZKsyncERC1967Factory {
         bytes calldata data
     ) internal returns (address instance) {
         bytes memory c;
-        if (codeType == 0) c = type(ZKsyncERC1967Proxy).creationCode;
-        else if (codeType == 1) c = type(ZKsyncUpgradeableBeacon).creationCode;
-        else c = type(ZKsyncERC1967BeaconProxy).creationCode;
+        if (codeType == 0) c = type(ERC1967Proxy).creationCode;
+        else if (codeType == 1) c = type(UpgradeableBeacon).creationCode;
+        else c = type(ERC1967BeaconProxy).creationCode;
         /// @solidity memory-safe-assembly
         assembly {
             switch useSalt

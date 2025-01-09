@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Signature verification helper that supports both ECDSA signatures from EOAs
 /// and ERC1271 signatures from smart contract wallets like Argent and Gnosis safe.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ZKsyncSignatureCheckerLib.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/SignatureCheckerLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
 ///
 /// @dev Note:
@@ -19,7 +19,7 @@ pragma solidity ^0.8.4;
 /// - Use EIP-712 for the digest to prevent replay attacks across different chains and contracts.
 ///   EIP-712 also enables readable signing of typed data for better user safety.
 /// This implementation does NOT check if a signature is non-malleable.
-library ZKsyncSignatureCheckerLib {
+library SignatureCheckerLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               SIGNATURE CHECKING OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

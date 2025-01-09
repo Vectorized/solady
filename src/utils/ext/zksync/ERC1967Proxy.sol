@@ -2,8 +2,8 @@
 pragma solidity ^0.8.4;
 
 /// @notice A sufficiently minimal ERC1967 proxy tailored made for ZKsync.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ZKsyncERC1967Proxy.sol)
-contract ZKsyncERC1967Proxy {
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ERC1967Proxy.sol)
+contract ERC1967Proxy {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -25,9 +25,9 @@ contract ZKsyncERC1967Proxy {
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     /// @dev The storage slot for the deployer.
-    /// `uint256(keccak256("ZKsyncERC1967Proxy.deployer")) - 1`.
-    bytes32 internal constant _ZKSYNC_ERC1967_PROXY_DEPLOYER_SLOT =
-        0x83aea57e05b1947e389ff216588717a5ffa47e2175df535893bc27b10acffeb2;
+    /// `uint256(keccak256("ERC1967Proxy.deployer")) - 1`.
+    bytes32 internal constant _ERC1967_PROXY_DEPLOYER_SLOT =
+        0xc20b8dda59e1f49cae9bbc6c3744edc7900ba02880cd7b33b5b82a96197202ba;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
@@ -36,7 +36,7 @@ contract ZKsyncERC1967Proxy {
     constructor() payable {
         /// @solidity memory-safe-assembly
         assembly {
-            sstore(_ZKSYNC_ERC1967_PROXY_DEPLOYER_SLOT, caller())
+            sstore(_ERC1967_PROXY_DEPLOYER_SLOT, caller())
         }
     }
 
@@ -54,7 +54,7 @@ contract ZKsyncERC1967Proxy {
                 return(0x00, 0x20)
             }
             // Deployer workflow.
-            if eq(caller(), sload(_ZKSYNC_ERC1967_PROXY_DEPLOYER_SLOT)) {
+            if eq(caller(), sload(_ERC1967_PROXY_DEPLOYER_SLOT)) {
                 let newImplementation := calldataload(0x00)
                 sstore(_ERC1967_IMPLEMENTATION_SLOT, newImplementation)
                 if gt(calldatasize(), 0x20) {
