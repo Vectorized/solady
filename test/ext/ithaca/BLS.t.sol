@@ -32,14 +32,14 @@ contract BLSTest is SoladyTest {
         bytes32 privateKey = bytes32(_randomUniform());
 
         // Public key is the generator point multiplied by the private key.
-        BLS.G1Point memory publicKey = BLS.mul(G1_GENERATOR(), privateKey);
+        BLS.G1Point memory publicKey = _blsg1mul(G1_GENERATOR(), privateKey);
 
         // Compute the message point by mapping message's keccak256 hash to a point in G2.
         bytes memory message = "hello world";
         BLS.G2Point memory messagePoint = BLS.toG2(BLS.Fp2(0, 0, 0, keccak256(message)));
 
         // Obtain the signature by multiplying the message point by the private key.
-        BLS.G2Point memory signature = BLS.mul(messagePoint, privateKey);
+        BLS.G2Point memory signature = _blsg2mul(messagePoint, privateKey);
 
         // Invoke the pairing check to verify the signature.
         BLS.G1Point[] memory g1Points = new BLS.G1Point[](2);
@@ -59,16 +59,16 @@ contract BLSTest is SoladyTest {
         bytes32 sk2 = bytes32(_randomUniform());
 
         // public keys
-        BLS.G1Point memory pk1 = BLS.mul(G1_GENERATOR(), sk1);
-        BLS.G1Point memory pk2 = BLS.mul(G1_GENERATOR(), sk2);
+        BLS.G1Point memory pk1 = _blsg1mul(G1_GENERATOR(), sk1);
+        BLS.G1Point memory pk2 = _blsg1mul(G1_GENERATOR(), sk2);
 
         // Compute the message point by mapping message's keccak256 hash to a point in G2.
         bytes memory message = "hello world";
         BLS.G2Point memory messagePoint = BLS.toG2(BLS.Fp2(0, 0, 0, keccak256(message)));
 
         // signatures
-        BLS.G2Point memory sig1 = BLS.mul(messagePoint, sk1);
-        BLS.G2Point memory sig2 = BLS.mul(messagePoint, sk2);
+        BLS.G2Point memory sig1 = _blsg2mul(messagePoint, sk1);
+        BLS.G2Point memory sig2 = _blsg2mul(messagePoint, sk2);
 
         // aggregated signature
         BLS.G2Point memory sig = BLS.add(sig1, sig2);
@@ -261,5 +261,33 @@ contract BLSTest is SoladyTest {
         );
         require(success, "MODEXP failed");
         return abi.decode(output, (BLS.Fp));
+    }
+
+    function _blsg1mul(BLS.G1Point memory g1, bytes32 scalar)
+        private
+        view
+        returns (BLS.G1Point memory)
+    {
+        BLS.G1Point[] memory points = new BLS.G1Point[](1);
+        bytes32[] memory scalars = new bytes32[](1);
+
+        points[0] = g1;
+        scalars[0] = scalar;
+
+        return BLS.msm(points, scalars);
+    }
+
+    function _blsg2mul(BLS.G2Point memory g2, bytes32 scalar)
+        private
+        view
+        returns (BLS.G2Point memory)
+    {
+        BLS.G2Point[] memory points = new BLS.G2Point[](1);
+        bytes32[] memory scalars = new bytes32[](1);
+
+        points[0] = g2;
+        scalars[0] = scalar;
+
+        return BLS.msm(points, scalars);
     }
 }

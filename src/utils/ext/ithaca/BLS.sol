@@ -67,29 +67,23 @@ library BLS {
     /// @dev For addition of two points on the BLS12-381 G1 curve,
     address internal constant BLS12_G1ADD = 0x000000000000000000000000000000000000000b;
 
-    /// @dev For scalar multiplication of a point on the BLS12-381 G1 curve.
-    address internal constant BLS12_G1MUL = 0x000000000000000000000000000000000000000C;
-
     /// @dev For multi-scalar multiplication (MSM) on the BLS12-381 G1 curve.
-    address internal constant BLS12_G1MSM = 0x000000000000000000000000000000000000000d;
+    address internal constant BLS12_G1MSM = 0x000000000000000000000000000000000000000C;
 
     /// @dev For addition of two points on the BLS12-381 G2 curve.
-    address internal constant BLS12_G2ADD = 0x000000000000000000000000000000000000000E;
-
-    /// @dev For scalar multiplication of a point on the BLS12-381 G2 curve,
-    address internal constant BLS12_G2MUL = 0x000000000000000000000000000000000000000F;
+    address internal constant BLS12_G2ADD = 0x000000000000000000000000000000000000000d;
 
     /// @dev For multi-scalar multiplication (MSM) on the BLS12-381 G2 curve.
-    address internal constant BLS12_G2MSM = 0x0000000000000000000000000000000000000010;
+    address internal constant BLS12_G2MSM = 0x000000000000000000000000000000000000000E;
 
     /// @dev For performing a pairing check on the BLS12-381 curve.
-    address internal constant BLS12_PAIRING_CHECK = 0x0000000000000000000000000000000000000011;
+    address internal constant BLS12_PAIRING_CHECK = 0x000000000000000000000000000000000000000F;
 
     /// @dev For mapping a Fp to a point on the BLS12-381 G1 curve.
-    address internal constant BLS12_MAP_FP_TO_G1 = 0x0000000000000000000000000000000000000012;
+    address internal constant BLS12_MAP_FP_TO_G1 = 0x0000000000000000000000000000000000000010;
 
     /// @dev For mapping a Fp2 to a point on the BLS12-381 G2 curve.
-    address internal constant BLS12_MAP_FP2_TO_G2 = 0x0000000000000000000000000000000000000013;
+    address internal constant BLS12_MAP_FP2_TO_G2 = 0x0000000000000000000000000000000000000011;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CUSTOM ERRORS                       */
@@ -100,17 +94,11 @@ library BLS {
     /// @dev The G1Add operation failed.
     error G1AddFailed();
 
-    /// @dev The G1Mul operation failed.
-    error G1MulFailed();
-
     /// @dev The G1MSM operation failed.
     error G1MSMFailed();
 
     /// @dev The G2Add operation failed.
     error G2AddFailed();
-
-    /// @dev The G2Mul operation failed.
-    error G2MulFailed();
 
     /// @dev The G2MSM operation failed.
     error G2MSMFailed();
@@ -144,27 +132,6 @@ library BLS {
                 )
             ) {
                 mstore(0x00, 0xd6cc76eb) // `G1AddFailed()`.
-                revert(0x1c, 0x04)
-            }
-        }
-    }
-
-    /// @dev Multiplies a G1 point by a scalar. Returns a new G1 point.
-    function mul(G1Point memory point, bytes32 scalar)
-        internal
-        view
-        returns (G1Point memory result)
-    {
-        assembly ("memory-safe") {
-            mcopy(result, point, 0x80)
-            mstore(add(result, 0x80), scalar)
-            if iszero(
-                and(
-                    eq(returndatasize(), 0x80),
-                    staticcall(gas(), BLS12_G1MUL, result, 0xa0, result, 0x80)
-                )
-            ) {
-                mstore(0x00, 0x82e1cf54) // `G1MulFailed()`.
                 revert(0x1c, 0x04)
             }
         }
@@ -213,27 +180,6 @@ library BLS {
                 )
             ) {
                 mstore(0x00, 0xc55e5e33) // `G2AddFailed()`.
-                revert(0x1c, 0x04)
-            }
-        }
-    }
-
-    /// @dev Multiplies a G2 point by a scalar. Returns a new G2 point.
-    function mul(G2Point memory point, bytes32 scalar)
-        internal
-        view
-        returns (G2Point memory result)
-    {
-        assembly ("memory-safe") {
-            mcopy(result, point, 0x100)
-            mstore(add(result, 0x100), scalar)
-            if iszero(
-                and(
-                    eq(returndatasize(), 0x100),
-                    staticcall(gas(), BLS12_G2MUL, result, 0x120, result, 0x100)
-                )
-            ) {
-                mstore(0x00, 0x82e1cf54) // `G1MulFailed()`.
                 revert(0x1c, 0x04)
             }
         }
