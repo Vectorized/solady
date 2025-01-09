@@ -59,7 +59,6 @@ library SignatureCheckerLib {
                     mstore(0x40, m) // Restore the free memory pointer.
                     break
                 }
-
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -135,16 +134,18 @@ library SignatureCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(0x00, hash)
-            mstore(0x20, add(shr(255, vs), 27)) // `v`.
-            mstore(0x40, r) // `r`.
-            mstore(0x60, shr(1, shl(1, vs))) // `s`.
-            let noCode := iszero(extcodesize(signer))
-
-            let recovered := mload(staticcall(gas(), noCode, 0x00, 0x80, 0x01, 0x20))
-            isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
-
-            if iszero(noCode) {
+            for {} 1 {} {
+                if iszero(extcodesize(signer)) {
+                    mstore(0x00, hash)
+                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                    mstore(0x40, r) // `r`.
+                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+                    isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
+                    mstore(0x60, 0) // Restore the zero slot.
+                    mstore(0x40, m) // Restore the free memory pointer.
+                    break
+                }
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -156,9 +157,8 @@ library SignatureCheckerLib {
                 mstore8(add(m, 0xa4), mload(0x20)) // `v`.
                 isValid := staticcall(gas(), signer, m, 0xa5, d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
+                break
             }
-            mstore(0x60, 0) // Restore the zero slot.
-            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
@@ -174,15 +174,18 @@ library SignatureCheckerLib {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            mstore(0x00, hash)
-            mstore(0x20, and(v, 0xff)) // `v`.
-            mstore(0x40, r) // `r`.
-            mstore(0x60, s) // `s`.
-            let noCode := iszero(extcodesize(signer))
-            let recovered := mload(staticcall(gas(), noCode, 0x00, 0x80, 0x01, 0x20))
-            isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
-
-            if iszero(noCode) {
+            for {} 1 {} {
+                if iszero(extcodesize(signer)) {
+                    mstore(0x00, hash)
+                    mstore(0x20, and(v, 0xff)) // `v`.
+                    mstore(0x40, r) // `r`.
+                    mstore(0x60, s) // `s`.
+                    let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+                    isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
+                    mstore(0x60, 0) // Restore the zero slot.
+                    mstore(0x40, m) // Restore the free memory pointer.
+                    break
+                }
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -194,9 +197,8 @@ library SignatureCheckerLib {
                 mstore8(add(m, 0xa4), v) // `v`.
                 isValid := staticcall(gas(), signer, m, 0xa5, d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
+                break
             }
-            mstore(0x60, 0) // Restore the zero slot.
-            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 
