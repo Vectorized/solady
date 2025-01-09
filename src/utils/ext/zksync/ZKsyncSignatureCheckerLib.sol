@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 /// @notice Signature verification helper that supports both ECDSA signatures from EOAs
 /// and ERC1271 signatures from smart contract wallets like Argent and Gnosis safe.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SignatureCheckerLib.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ZKsyncSignatureCheckerLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/SignatureChecker.sol)
 ///
 /// @dev Note:
@@ -19,7 +19,7 @@ pragma solidity ^0.8.4;
 /// - Use EIP-712 for the digest to prevent replay attacks across different chains and contracts.
 ///   EIP-712 also enables readable signing of typed data for better user safety.
 /// This implementation does NOT check if a signature is non-malleable.
-library SignatureCheckerLib {
+library ZKsyncSignatureCheckerLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               SIGNATURE CHECKING OPERATIONS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -305,186 +305,6 @@ library SignatureCheckerLib {
             mstore8(add(m, 0xa4), v) // `v`.
             isValid := staticcall(gas(), signer, m, 0xa5, d, 0x20)
             isValid := and(eq(mload(d), f), isValid)
-        }
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                     ERC6492 OPERATIONS                     */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // Note: These ERC6492 operations now include an ECDSA fallback at the very end.
-    // The calldata variants are excluded for brevity.
-
-    /// @dev Returns whether `signature` is valid for `hash`.
-    /// If the signature is postfixed with the ERC6492 magic number, it will attempt to
-    /// deploy / prepare the `signer` smart account before doing a regular ERC1271 check.
-    /// Note: This function is NOT reentrancy safe.
-    /// The verifier must be deployed.
-    /// Otherwise, the function will return false if `signer` is not yet deployed / prepared.
-    /// See: https://gist.github.com/Vectorized/011d6becff6e0a73e42fe100f8d7ef04
-    /// With a dedicated verifier, this function is safe to use in contracts
-    /// that have been granted special permissions.
-    function isValidERC6492SignatureNowAllowSideEffects(
-        address signer,
-        bytes32 hash,
-        bytes memory signature
-    ) internal returns (bool isValid) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            function copy(dst_, src_, n_) {
-                for { let i_ := 0 } lt(i_, n_) { i_ := add(0x20, i_) } {
-                    mstore(add(dst_, i_), mload(add(src_, i_)))
-                }
-            }
-            function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
-                let m_ := mload(0x40)
-                let f_ := shl(224, 0x1626ba7e)
-                mstore(m_, f_) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-                mstore(add(m_, 0x04), hash_)
-                let d_ := add(m_, 0x24)
-                mstore(d_, 0x40) // The offset of the `signature` in the calldata.
-                let n_ := add(0x20, mload(signature_))
-                copy(add(m_, 0x44), signature_, n_)
-                _isValid := staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
-                _isValid := and(eq(mload(d_), f_), _isValid)
-            }
-            let noCode := iszero(extcodesize(signer))
-            let n := mload(signature)
-            for {} 1 {} {
-                if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
-                    if iszero(noCode) { isValid := callIsValidSignature(signer, hash, signature) }
-                    break
-                }
-                if iszero(noCode) {
-                    let o := add(signature, 0x20) // Signature bytes.
-                    isValid := callIsValidSignature(signer, hash, add(o, mload(add(o, 0x40))))
-                    if isValid { break }
-                }
-                let m := mload(0x40)
-                mstore(m, signer)
-                mstore(add(m, 0x20), hash)
-                copy(add(m, 0x40), add(signature, 0x20), n)
-                pop(
-                    call(
-                        gas(), // Remaining gas.
-                        0x0000bc370E4DC924F427d84e2f4B9Ec81626ba7E, // Non-reverting verifier.
-                        0, // Send zero ETH.
-                        m, // Start of memory.
-                        add(returndatasize(), 0x40), // Length of calldata in memory.
-                        1,
-                        0x00 // Length of returndata to write.
-                    )
-                )
-                isValid := returndatasize()
-                break
-            }
-            // Do `ecrecover` fallback if `noCode && !isValid`.
-            for {} gt(noCode, isValid) {} {
-                switch n
-                case 64 {
-                    let vs := mload(add(signature, 0x40))
-                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
-                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
-                }
-                case 65 {
-                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
-                }
-                default { break }
-                let m := mload(0x40)
-                mstore(0x00, hash)
-                mstore(0x40, mload(add(signature, 0x20))) // `r`.
-                let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
-                isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
-                mstore(0x60, 0) // Restore the zero slot.
-                mstore(0x40, m) // Restore the free memory pointer.
-                break
-            }
-        }
-    }
-
-    /// @dev Returns whether `signature` is valid for `hash`.
-    /// If the signature is postfixed with the ERC6492 magic number, it will attempt
-    /// to use a reverting verifier to deploy / prepare the `signer` smart account
-    /// and do a `isValidSignature` check via the reverting verifier.
-    /// Note: This function is reentrancy safe.
-    /// The reverting verifier must be deployed.
-    /// Otherwise, the function will return false if `signer` is not yet deployed / prepared.
-    /// See: https://gist.github.com/Vectorized/846a474c855eee9e441506676800a9ad
-    function isValidERC6492SignatureNow(address signer, bytes32 hash, bytes memory signature)
-        internal
-        returns (bool isValid)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            function copy(dst_, src_, n_) {
-                for { let i_ := 0 } lt(i_, n_) { i_ := add(0x20, i_) } {
-                    mstore(add(dst_, i_), mload(add(src_, i_)))
-                }
-            }
-            function callIsValidSignature(signer_, hash_, signature_) -> _isValid {
-                let m_ := mload(0x40)
-                let f_ := shl(224, 0x1626ba7e)
-                mstore(m_, f_) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
-                mstore(add(m_, 0x04), hash_)
-                let d_ := add(m_, 0x24)
-                mstore(d_, 0x40) // The offset of the `signature` in the calldata.
-                let n_ := add(0x20, mload(signature_))
-                copy(add(m_, 0x44), signature_, n_)
-                _isValid := staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
-                _isValid := and(eq(mload(d_), f_), _isValid)
-            }
-            let noCode := iszero(extcodesize(signer))
-            let n := mload(signature)
-            for {} 1 {} {
-                if iszero(eq(mload(add(signature, n)), mul(0x6492, div(not(isValid), 0xffff)))) {
-                    if iszero(noCode) { isValid := callIsValidSignature(signer, hash, signature) }
-                    break
-                }
-                if iszero(noCode) {
-                    let o := add(signature, 0x20) // Signature bytes.
-                    isValid := callIsValidSignature(signer, hash, add(o, mload(add(o, 0x40))))
-                    if isValid { break }
-                }
-                let m := mload(0x40)
-                mstore(m, signer)
-                mstore(add(m, 0x20), hash)
-                copy(add(m, 0x40), add(signature, 0x20), n)
-                let willBeZeroIfRevertingVerifierExists :=
-                    call(
-                        gas(), // Remaining gas.
-                        0x00007bd799e4A591FeA53f8A8a3E9f931626Ba7e, // Reverting verifier.
-                        0, // Send zero ETH.
-                        m, // Start of memory.
-                        add(returndatasize(), 0x40), // Length of calldata in memory.
-                        1,
-                        0x00 // Length of returndata to write.
-                    )
-                isValid := gt(returndatasize(), willBeZeroIfRevertingVerifierExists)
-                break
-            }
-            // Do `ecrecover` fallback if `noCode && !isValid`.
-            for {} gt(noCode, isValid) {} {
-                switch n
-                case 64 {
-                    let vs := mload(add(signature, 0x40))
-                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
-                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
-                }
-                case 65 {
-                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
-                }
-                default { break }
-                let m := mload(0x40)
-                mstore(0x00, hash)
-                mstore(0x40, mload(add(signature, 0x20))) // `r`.
-                let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
-                isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
-                mstore(0x60, 0) // Restore the zero slot.
-                mstore(0x40, m) // Restore the free memory pointer.
-                break
-            }
         }
     }
 
