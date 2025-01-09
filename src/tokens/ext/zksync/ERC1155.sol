@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /// @notice Simple ERC1155 implementation.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ext/zksync/ZKsyncERC1155.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ext/zksync/ERC1155.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC1155.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC1155/ERC1155.sol)
 ///
@@ -16,7 +16,7 @@ pragma solidity ^0.8.4;
 //    (e.g. the bool value for `isApprovedForAll` MUST be either 1 or 0 under the hood).
 /// - Check that the overridden function is actually used in the function you want to
 ///   change the behavior of. Much of the code has been manually inlined for performance.
-abstract contract ZKsyncERC1155 {
+abstract contract ERC1155 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
