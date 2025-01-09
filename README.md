@@ -147,7 +147,7 @@ Please always check and test for compatibility accordingly.
 If you are deploying on ZKsync stack (e.g. Abstract) with partial EVM equivalence:
 
 - Run `node prep/zksync-compat-analysis.js` to scan the files.
-- For files that have incompatibilities (i.e. non-zero scores), look into the `ext/zksync` directories for substitutes (if any).
+- For files that have incompatibilities (i.e. non-zero scores), look into the `ext/zksync` directories for substitutes. The substitutes may only have a subset of the original features. If there is no substitute, it means that the file is incompatible and infeasible to be implemented for ZKsync.
 
 ## Acknowledgements
 
