@@ -144,6 +144,11 @@ Some parts of Solady may not be compatible with chains with partial EVM equivale
 
 Please always check and test for compatibility accordingly.
 
+If you are deploying on ZKsync stack (e.g. Abstract) with partial EVM equivalence:
+
+- Run `node prep/zksync-compat-analysis.js` to scan the files.
+- For files that have incompatibilities, look into the `ext/zksync` directories for substitutes (if any).
+
 ## Acknowledgements
 
 This repository is inspired by or directly modified from many sources, primarily:
