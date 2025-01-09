@@ -27,8 +27,8 @@ library SignatureCheckerLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns whether `signature` is valid for `signer` and `hash`.
-    /// First, it will try to validate with `ecrecover`, and if the validation fails,
-    /// it will try to validate with ERC1271 on `signer`.
+    /// If `signer.code.length == 0`, then validate with `ecrecover`, else
+    /// it will validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, bytes memory signature)
         internal
         view
@@ -39,26 +39,27 @@ library SignatureCheckerLib {
         assembly {
             let m := mload(0x40)
             for {} 1 {} {
-                switch mload(signature)
-                case 64 {
-                    let vs := mload(add(signature, 0x40))
-                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
-                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                if iszero(extcodesize(signer)) {
+                    switch mload(signature)
+                    case 64 {
+                        let vs := mload(add(signature, 0x40))
+                        mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                        mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    }
+                    case 65 {
+                        mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
+                        mstore(0x60, mload(add(signature, 0x40))) // `s`.
+                    }
+                    default { break }
+                    mstore(0x00, hash)
+                    mstore(0x40, mload(add(signature, 0x20))) // `r`.
+                    let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+                    isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
+                    mstore(0x60, 0) // Restore the zero slot.
+                    mstore(0x40, m) // Restore the free memory pointer.
+                    break
                 }
-                case 65 {
-                    mstore(0x20, byte(0, mload(add(signature, 0x60)))) // `v`.
-                    mstore(0x60, mload(add(signature, 0x40))) // `s`.
-                }
-                default { break }
-                mstore(0x00, hash)
-                mstore(0x40, mload(add(signature, 0x20))) // `r`.
-                let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
-                isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
-                mstore(0x60, 0) // Restore the zero slot.
-                mstore(0x40, m) // Restore the free memory pointer.
-                break
-            }
-            if iszero(isValid) {
+
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -69,13 +70,14 @@ library SignatureCheckerLib {
                 pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
                 isValid := staticcall(gas(), signer, m, add(returndatasize(), 0x44), d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
+                break
             }
         }
     }
 
     /// @dev Returns whether `signature` is valid for `signer` and `hash`.
-    /// First, it will try to validate with `ecrecover`, and if the validation fails,
-    /// it will try to validate with ERC1271 on `signer`.
+    /// If `signer.code.length == 0`, then validate with `ecrecover`, else
+    /// it will validate with ERC1271 on `signer`.
     function isValidSignatureNowCalldata(address signer, bytes32 hash, bytes calldata signature)
         internal
         view
@@ -86,26 +88,26 @@ library SignatureCheckerLib {
         assembly {
             let m := mload(0x40)
             for {} 1 {} {
-                switch signature.length
-                case 64 {
-                    let vs := calldataload(add(signature.offset, 0x20))
-                    mstore(0x20, add(shr(255, vs), 27)) // `v`.
-                    mstore(0x40, calldataload(signature.offset)) // `r`.
-                    mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                if iszero(extcodesize(signer)) {
+                    switch signature.length
+                    case 64 {
+                        let vs := calldataload(add(signature.offset, 0x20))
+                        mstore(0x20, add(shr(255, vs), 27)) // `v`.
+                        mstore(0x40, calldataload(signature.offset)) // `r`.
+                        mstore(0x60, shr(1, shl(1, vs))) // `s`.
+                    }
+                    case 65 {
+                        mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
+                        calldatacopy(0x40, signature.offset, 0x40) // `r`, `s`.
+                    }
+                    default { break }
+                    mstore(0x00, hash)
+                    let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+                    isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
+                    mstore(0x60, 0) // Restore the zero slot.
+                    mstore(0x40, m) // Restore the free memory pointer.
+                    break
                 }
-                case 65 {
-                    mstore(0x20, byte(0, calldataload(add(signature.offset, 0x40)))) // `v`.
-                    calldatacopy(0x40, signature.offset, 0x40) // `r`, `s`.
-                }
-                default { break }
-                mstore(0x00, hash)
-                let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
-                isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
-                mstore(0x60, 0) // Restore the zero slot.
-                mstore(0x40, m) // Restore the free memory pointer.
-                break
-            }
-            if iszero(isValid) {
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -116,13 +118,14 @@ library SignatureCheckerLib {
                 calldatacopy(add(m, 0x64), signature.offset, signature.length)
                 isValid := staticcall(gas(), signer, m, add(signature.length, 0x64), d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
+                break
             }
         }
     }
 
     /// @dev Returns whether the signature (`r`, `vs`) is valid for `signer` and `hash`.
-    /// First, it will try to validate with `ecrecover`, and if the validation fails,
-    /// it will try to validate with ERC1271 on `signer`.
+    /// If `signer.code.length == 0`, then validate with `ecrecover`, else
+    /// it will validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, bytes32 r, bytes32 vs)
         internal
         view
@@ -136,10 +139,12 @@ library SignatureCheckerLib {
             mstore(0x20, add(shr(255, vs), 27)) // `v`.
             mstore(0x40, r) // `r`.
             mstore(0x60, shr(1, shl(1, vs))) // `s`.
-            let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+            let noCode := iszero(extcodesize(signer))
+
+            let recovered := mload(staticcall(gas(), noCode, 0x00, 0x80, 0x01, 0x20))
             isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
 
-            if iszero(isValid) {
+            if iszero(noCode) {
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
@@ -158,8 +163,8 @@ library SignatureCheckerLib {
     }
 
     /// @dev Returns whether the signature (`v`, `r`, `s`) is valid for `signer` and `hash`.
-    /// First, it will try to validate with `ecrecover`, and if the validation fails,
-    /// it will try to validate with ERC1271 on `signer`.
+    /// If `signer.code.length == 0`, then validate with `ecrecover`, else
+    /// it will validate with ERC1271 on `signer`.
     function isValidSignatureNow(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s)
         internal
         view
@@ -173,10 +178,11 @@ library SignatureCheckerLib {
             mstore(0x20, and(v, 0xff)) // `v`.
             mstore(0x40, r) // `r`.
             mstore(0x60, s) // `s`.
-            let recovered := mload(staticcall(gas(), 1, 0x00, 0x80, 0x01, 0x20))
+            let noCode := iszero(extcodesize(signer))
+            let recovered := mload(staticcall(gas(), noCode, 0x00, 0x80, 0x01, 0x20))
             isValid := gt(returndatasize(), shl(96, xor(signer, recovered)))
 
-            if iszero(isValid) {
+            if iszero(noCode) {
                 let f := shl(224, 0x1626ba7e)
                 mstore(m, f) // `bytes4(keccak256("isValidSignature(bytes32,bytes)"))`.
                 mstore(add(m, 0x04), hash)
