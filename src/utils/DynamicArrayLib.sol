@@ -46,7 +46,7 @@ library DynamicArrayLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := a
-            codecopy(add(result, 0x20), codesize(), shl(5, mload(result)))
+            calldatacopy(add(result, 0x20), calldatasize(), shl(5, mload(result)))
         }
     }
 
@@ -415,7 +415,9 @@ library DynamicArrayLib {
             let arrData := mload(result)
             let arrLen := mload(arrData)
             if iszero(lt(n, arrLen)) {
-                codecopy(add(arrData, shl(5, add(1, arrLen))), codesize(), shl(5, sub(n, arrLen)))
+                calldatacopy(
+                    add(arrData, shl(5, add(1, arrLen))), calldatasize(), shl(5, sub(n, arrLen))
+                )
             }
             mstore(arrData, n)
         }
