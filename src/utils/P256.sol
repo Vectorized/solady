@@ -23,7 +23,7 @@ library P256 {
     /// See: https://gist.github.com/Vectorized/599b0d8a94d21bc74700eb1354e2f55c
     /// Unlike RIP-7212, this verifier returns `uint256(0)` on failure, to
     /// facilitate easier existence check. This verifier will also never revert.
-    address internal constant VERIFIER = 0x000000000000cB83347bEB24C695BBb85dBe99b7;
+    address internal constant VERIFIER = 0x000000000000Bb23bd78a8af991cfb0b438121d7;
 
     /// @dev Address of the RIP-7212 P256 verifier precompile.
     /// Currently, we don't support EIP-7212's precompile at 0x0b as it has not been finalized.
