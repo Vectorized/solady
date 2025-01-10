@@ -47,41 +47,28 @@ contract ERC1967Factory {
     /// @dev A beacon proxy has been deployed.
     event BeaconProxyDeployed(address indexed beaconProxy, address indexed beacon);
 
-    /// @dev `keccak256(bytes("AdminChanged(address,address)"))`.
-    uint256 internal constant _ADMIN_CHANGED_EVENT_SIGNATURE =
-        0x7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f;
-
-    /// @dev `keccak256(bytes("Upgraded(address,address)"))`.
-    uint256 internal constant _UPGRADED_EVENT_SIGNATURE =
-        0x5d611f318680d00598bb735d61bacf0c514c6b50e1e5ad30040a4df2b12791c7;
-
-    /// @dev `keccak256(bytes("ProxyDeployed(address,address,address)"))`.
-    uint256 internal constant _PROXY_DEPLOYED_EVENT_SIGNATURE =
-        0x9e0862c4ebff2150fbbfd3f8547483f55bdec0c34fd977d3fccaa55d6c4ce784;
-
-    /// @dev `keccak256(bytes("BeaconDeployed(address,address,address)"))`.
-    uint256 internal constant _BEACON_DEPLOYED_EVENT_SIGNATURE =
-        0xf53ff7c8fa39204521b1e348ab2a7ad0397471eefade072522e79552bf633726;
-
-    /// @dev `keccak256(bytes("BeaconProxyDeployed(address,address)"))`.
-    uint256 internal constant _BEACON_PROXY_DEPLOYED_EVENT_SIGNATURE =
-        0xfa8e336138457120a1572efbe25f72698abd5cca1c9be0bce42ad406ff350a2b;
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
+    /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The hash of the proxy.
-    bytes32 public constant PROXY_HASH =
-        0x01000041235eb6c6e003c5e0191695f009ed2590e899a662cb693bf85e8fb022;
+    bytes32 public proxyHash;
 
     /// @dev The hash of the upgradeable beacon.
-    bytes32 public constant BEACON_HASH =
-        0x0100001901442d36d6e35ba0454223ed52727c75cb12e9646ea46ee78a24ae62;
+    bytes32 public beaconHash;
 
     /// @dev The hash of the beacon proxy.
-    bytes32 public constant BEACON_PROXY_HASH =
-        0x0100004dd6ba616b61acec35fbf9874af5fbc2691cfba34f6f47877ac601955a;
+    bytes32 public beaconProxyHash;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    constructor() payable {
+        proxyHash = _extcodehash(address(new ERC1967Proxy()));
+        beaconHash = _extcodehash(address(new UpgradeableBeacon()));
+        beaconProxyHash = _extcodehash(address(new ERC1967BeaconProxy()));
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      ADMIN FUNCTIONS                       */
@@ -93,7 +80,7 @@ contract ERC1967Factory {
     function adminOf(address instance) public view returns (address admin) {
         /// @solidity memory-safe-assembly
         assembly {
-            admin := sload(instance)
+            admin := mul(sload(instance), gt(instance, 0xff))
         }
     }
 
@@ -108,9 +95,8 @@ contract ERC1967Factory {
                 revert(0x1c, 0x04)
             }
             sstore(instance, admin)
-            // Emit the {AdminChanged} event.
-            log3(0x00, 0x00, _ADMIN_CHANGED_EVENT_SIGNATURE, instance, admin)
         }
+        emit AdminChanged(instance, admin);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -149,9 +135,8 @@ contract ERC1967Factory {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
-            // Emit the {Upgraded} event.
-            log3(0x00, 0x00, _UPGRADED_EVENT_SIGNATURE, instance, implementation)
         }
+        emit Upgraded(instance, implementation);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -172,7 +157,7 @@ contract ERC1967Factory {
         payable
         returns (address)
     {
-        return _deploy(0, uint160(implementation), uint160(admin), "", 0, data);
+        return _deploy(0, uint160(implementation), uint160(admin), "", false, data);
     }
 
     /// @dev Deploys a proxy for `implementation`, with `admin`, `salt`,
@@ -196,7 +181,7 @@ contract ERC1967Factory {
         bytes32 salt,
         bytes calldata data
     ) public payable returns (address) {
-        return _deploy(0, uint160(implementation), uint160(admin), salt, 1, data);
+        return _deploy(0, uint160(implementation), uint160(admin), salt, true, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -205,7 +190,7 @@ contract ERC1967Factory {
 
     /// @dev Deploys a beacon with `implementation` and `admin`, and returns its address.
     function deployBeacon(address implementation, address admin) public returns (address) {
-        return _deploy(1, uint160(implementation), uint160(admin), "", 0, _emptyData());
+        return _deploy(1, uint160(implementation), uint160(admin), "", false, _emptyData());
     }
 
     /// @dev Deploys a beacon with `implementation` and `admin`, with `salt`,
@@ -215,7 +200,7 @@ contract ERC1967Factory {
         payable
         returns (address)
     {
-        return _deploy(1, uint160(implementation), uint160(admin), salt, 1, _emptyData());
+        return _deploy(1, uint160(implementation), uint160(admin), salt, true, _emptyData());
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -236,7 +221,7 @@ contract ERC1967Factory {
         payable
         returns (address)
     {
-        return _deploy(2, uint160(beacon), 0, "", 0, data);
+        return _deploy(2, uint160(beacon), 0, "", false, data);
     }
 
     /// @dev Deploys a beacon proxy referring to `beacon`, with `salt`,
@@ -259,7 +244,7 @@ contract ERC1967Factory {
         bytes32 salt,
         bytes calldata data
     ) public payable returns (address) {
-        return _deploy(2, uint160(beacon), 0, salt, 1, data);
+        return _deploy(2, uint160(beacon), 0, salt, true, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -267,7 +252,7 @@ contract ERC1967Factory {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the address of the instance deployed with `salt`.
-    /// `instanceHash` is one of `PROXY_HASH`, `BEACON_PROXY_HASH`, `BEACON_HASH`.
+    /// `instanceHash` is one of `proxyHash`, `beaconProxyHash`, `beaconHash`.
     function predictDeterministicAddress(bytes32 instanceHash, bytes32 salt)
         public
         view
@@ -288,15 +273,17 @@ contract ERC1967Factory {
     /// @dev Returns the implementation of `instance`.
     /// If `instance` is not deployed, returns `address(0)`.
     function implementationOf(address instance) public view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let h := extcodehash(instance)
-            if or(eq(h, PROXY_HASH), eq(h, BEACON_PROXY_HASH)) {
+        bytes32 h = _extcodehash(instance);
+        if (h == proxyHash || h == beaconProxyHash) {
+            /// @solidity memory-safe-assembly
+            assembly {
                 let s := staticcall(gas(), instance, 0x00, 0x01, 0x00, 0x20)
                 if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
                 result := mload(0x00)
             }
-            if eq(h, BEACON_HASH) {
+        } else if (h == beaconHash) {
+            /// @solidity memory-safe-assembly
+            assembly {
                 mstore(0x00, 0x5c60da1b) // `implementation()`.
                 let s := staticcall(gas(), instance, 0x1c, 0x04, 0x00, 0x20)
                 if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
@@ -309,37 +296,63 @@ contract ERC1967Factory {
     /*                      INTERNAL HELPERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Validates the salt and returns it.
+    function _validateSalt(bytes32 salt) internal view returns (bytes32) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the salt does not start with the zero address or the caller.
+            if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
+                mstore(0x00, 0x2f634836) // `SaltDoesNotStartWithCaller()`.
+                revert(0x1c, 0x04)
+            }
+        }
+        return salt;
+    }
+
     /// @dev Performs the deployment optionality to deploy deterministically with a `salt`.
     function _deploy(
         uint256 codeType,
         uint256 target,
         uint256 admin,
         bytes32 salt,
-        uint256 useSalt,
+        bool useSalt,
         bytes calldata data
     ) internal returns (address instance) {
-        bytes memory c;
-        if (codeType == 0) c = type(ERC1967Proxy).creationCode;
-        else if (codeType == 1) c = type(UpgradeableBeacon).creationCode;
-        else c = type(ERC1967BeaconProxy).creationCode;
+        if (codeType == 0) {
+            instance = address(
+                useSalt ? new ERC1967Proxy{salt: _validateSalt(salt)}() : new ERC1967Proxy()
+            );
+            /// @solidity memory-safe-assembly
+            assembly {
+                sstore(instance, admin)
+            }
+            emit ProxyDeployed(instance, address(uint160(target)), address(uint160(admin)));
+        } else if (codeType == 1) {
+            instance = address(
+                useSalt
+                    ? new UpgradeableBeacon{salt: _validateSalt(salt)}()
+                    : new UpgradeableBeacon()
+            );
+            /// @solidity memory-safe-assembly
+            assembly {
+                sstore(instance, admin)
+            }
+            emit BeaconDeployed(instance, address(uint160(target)), address(uint160(admin)));
+        } else {
+            instance = address(
+                useSalt
+                    ? new ERC1967BeaconProxy{salt: _validateSalt(salt)}()
+                    : new ERC1967BeaconProxy()
+            );
+            emit BeaconProxyDeployed(instance, address(uint160(target)));
+        }
         /// @solidity memory-safe-assembly
         assembly {
-            switch useSalt
-            case 0 { instance := create(0, add(c, 0x20), mload(c)) }
-            default {
-                // If the salt does not start with the zero address or the caller.
-                if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
-                    mstore(0x00, 0x2f634836) // `SaltDoesNotStartWithCaller()`.
-                    revert(0x1c, 0x04)
-                }
-                instance := create2(0, add(c, 0x20), mload(c), salt)
-            }
             // Revert if the creation fails.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-
             // Make the initialization call.
             let m := mload(0x40)
             mstore(m, target)
@@ -354,22 +367,14 @@ contract ERC1967Factory {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
+        }
+    }
 
-            switch codeType
-            case 0 {
-                sstore(instance, admin)
-                // Emit the {ProxyDeployed} event.
-                log4(0x00, 0x00, _PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
-            }
-            case 1 {
-                sstore(instance, admin)
-                // Emit the {BeaconDeployed} event.
-                log4(0x00, 0x00, _BEACON_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
-            }
-            default {
-                // Emit the {BeaconProxyDeployed} event.
-                log3(0x00, 0x00, _BEACON_PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target)
-            }
+    /// @dev Returns the `extcodehash` of `instance`.
+    function _extcodehash(address instance) internal view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := extcodehash(instance)
         }
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice A sufficiently minimal ERC1967 proxy tailored made for ZKsync.
+/// @notice A sufficiently minimal ERC1967 proxy tailor-made for ZKsync.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ERC1967Proxy.sol)
 contract ERC1967Proxy {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
