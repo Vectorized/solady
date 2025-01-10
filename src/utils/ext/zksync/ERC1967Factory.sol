@@ -68,20 +68,33 @@ contract ERC1967Factory {
         0xfa8e336138457120a1572efbe25f72698abd5cca1c9be0bce42ad406ff350a2b;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         CONSTANTS                          */
+    /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The hash of the proxy.
-    bytes32 public constant PROXY_HASH =
-        0x01000041235eb6c6e003c5e0191695f009ed2590e899a662cb693bf85e8fb022;
+    /// @dev The slot of the hash of the proxy.
+    uint256 internal constant _PROXY_HASH_SLOT = 1 << 160;
 
-    /// @dev The hash of the upgradeable beacon.
-    bytes32 public constant BEACON_HASH =
-        0x0100001901442d36d6e35ba0454223ed52727c75cb12e9646ea46ee78a24ae62;
+    /// @dev The slot of the hash of the upgradeable beacon.
+    uint256 internal constant _BEACON_HASH_SLOT = 2 << 160;
 
-    /// @dev The hash of the beacon proxy.
-    bytes32 public constant BEACON_PROXY_HASH =
-        0x0100004dd6ba616b61acec35fbf9874af5fbc2691cfba34f6f47877ac601955a;
+    /// @dev The slot of the hash of the beacon proxy.
+    uint256 internal constant _BEACON_PROXY_HASH_SLOT = 3 << 160;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    constructor() payable {
+        bytes32 proxyHashValue = _extcodehash(address(new ERC1967Proxy()));
+        bytes32 beaconProxyHashValue = _extcodehash(address(new ERC1967BeaconProxy()));
+        bytes32 beaconHashValue = _extcodehash(address(new UpgradeableBeacon()));
+        /// @solidity memory-safe-assembly
+        assembly {
+            sstore(_PROXY_HASH_SLOT, proxyHashValue)
+            sstore(_BEACON_HASH_SLOT, beaconHashValue)
+            sstore(_BEACON_PROXY_HASH_SLOT, beaconProxyHashValue)
+        }
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      ADMIN FUNCTIONS                       */
@@ -267,7 +280,7 @@ contract ERC1967Factory {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the address of the instance deployed with `salt`.
-    /// `instanceHash` is one of `PROXY_HASH`, `BEACON_PROXY_HASH`, `BEACON_HASH`.
+    /// `instanceHash` is one of `proxyHash`, `beaconProxyHash`, `beaconHash`.
     function predictDeterministicAddress(bytes32 instanceHash, bytes32 salt)
         public
         view
@@ -287,27 +300,52 @@ contract ERC1967Factory {
 
     /// @dev Returns the implementation of `instance`.
     /// If `instance` is not deployed, returns `address(0)`.
-    function implementationOf(address instance) public view returns (address result) {
+    function implementationOf(address instance) public view returns (address) {
+        bytes32 h = _extcodehash(instance);
+        if (h == proxyHash() || h == beaconProxyHash()) return _proxyImplementation(instance);
+        if (h == beaconHash()) return _beaconImplementation(instance);
+        return address(0);
+    }
+
+    /// @dev Returns the proxy hash.
+    function proxyHash() public view returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let h := extcodehash(instance)
-            if or(eq(h, PROXY_HASH), eq(h, BEACON_PROXY_HASH)) {
-                let s := staticcall(gas(), instance, 0x00, 0x01, 0x00, 0x20)
-                if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
-                result := mload(0x00)
-            }
-            if eq(h, BEACON_HASH) {
-                mstore(0x00, 0x5c60da1b) // `implementation()`.
-                let s := staticcall(gas(), instance, 0x1c, 0x04, 0x00, 0x20)
-                if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
-                result := mload(0x00)
-            }
+            result := sload(_PROXY_HASH_SLOT)
+        }
+    }
+
+    /// @dev Returns the beacon hash.
+    function beaconHash() public view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := sload(_BEACON_HASH_SLOT)
+        }
+    }
+
+    /// @dev Returns the beacon proxy hash.
+    function beaconProxyHash() public view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := sload(_BEACON_PROXY_HASH_SLOT)
         }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      INTERNAL HELPERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Validates the salt.
+    function _validateSalt(bytes32 salt) internal view {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // If the salt does not start with the zero address or the caller.
+            if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
+                mstore(0x00, 0x2f634836) // `SaltDoesNotStartWithCaller()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
 
     /// @dev Performs the deployment optionality to deploy deterministically with a `salt`.
     function _deploy(
@@ -318,28 +356,52 @@ contract ERC1967Factory {
         uint256 useSalt,
         bytes calldata data
     ) internal returns (address instance) {
-        bytes memory c;
-        if (codeType == 0) c = type(ERC1967Proxy).creationCode;
-        else if (codeType == 1) c = type(UpgradeableBeacon).creationCode;
-        else c = type(ERC1967BeaconProxy).creationCode;
+        if (codeType == 0) {
+            if (useSalt == 0) {
+                instance = address(new ERC1967Proxy());
+            } else {
+                _validateSalt(salt);
+                instance = address(new ERC1967Proxy{salt: salt}());
+            }
+            /// @solidity memory-safe-assembly
+            assembly {
+                sstore(instance, admin)
+                // Emit the {ProxyDeployed} event.
+                log4(0x00, 0x00, _PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
+            }
+        } else if (codeType == 1) {
+            if (useSalt == 0) {
+                instance = address(new UpgradeableBeacon());
+            } else {
+                _validateSalt(salt);
+                instance = address(new UpgradeableBeacon{salt: salt}());
+            }
+            /// @solidity memory-safe-assembly
+            assembly {
+                sstore(instance, admin)
+                // Emit the {BeaconDeployed} event.
+                log4(0x00, 0x00, _BEACON_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
+            }
+        } else {
+            if (useSalt == 0) {
+                instance = address(new ERC1967BeaconProxy());
+            } else {
+                _validateSalt(salt);
+                instance = address(new ERC1967BeaconProxy{salt: salt}());
+            }
+            /// @solidity memory-safe-assembly
+            assembly {
+                // Emit the {BeaconProxyDeployed} event.
+                log3(0x00, 0x00, _BEACON_PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target)
+            }
+        }
         /// @solidity memory-safe-assembly
         assembly {
-            switch useSalt
-            case 0 { instance := create(0, add(c, 0x20), mload(c)) }
-            default {
-                // If the salt does not start with the zero address or the caller.
-                if iszero(or(iszero(shr(96, salt)), eq(caller(), shr(96, salt)))) {
-                    mstore(0x00, 0x2f634836) // `SaltDoesNotStartWithCaller()`.
-                    revert(0x1c, 0x04)
-                }
-                instance := create2(0, add(c, 0x20), mload(c), salt)
-            }
             // Revert if the creation fails.
             if iszero(instance) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
-
             // Make the initialization call.
             let m := mload(0x40)
             mstore(m, target)
@@ -354,22 +416,35 @@ contract ERC1967Factory {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
+        }
+    }
 
-            switch codeType
-            case 0 {
-                sstore(instance, admin)
-                // Emit the {ProxyDeployed} event.
-                log4(0x00, 0x00, _PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
-            }
-            case 1 {
-                sstore(instance, admin)
-                // Emit the {BeaconDeployed} event.
-                log4(0x00, 0x00, _BEACON_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
-            }
-            default {
-                // Emit the {BeaconProxyDeployed} event.
-                log3(0x00, 0x00, _BEACON_PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target)
-            }
+    /// @dev Returns the implementation on a proxy.
+    function _proxyImplementation(address instance) internal view returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := staticcall(gas(), instance, 0x00, 0x01, 0x00, 0x20)
+            if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
+            result := mload(0x00)
+        }
+    }
+
+    /// @dev Returns the implementation on a beacon.
+    function _beaconImplementation(address instance) internal view returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0x5c60da1b) // `implementation()`.
+            let s := staticcall(gas(), instance, 0x1c, 0x04, 0x00, 0x20)
+            if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
+            result := mload(0x00)
+        }
+    }
+
+    /// @dev Returns the `extcodehash` of `instance`.
+    function _extcodehash(address instance) internal view returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := extcodehash(instance)
         }
     }
 
