@@ -81,6 +81,22 @@ jobs:
             forge test --fuzz-runs 5000
           )
 
+  tests-zksync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry-ZKsync
+        uses: dutterbutter/foundry-zksync-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Run Forge tests
+        run: FOUNDRY_PROFILE=zksync forge test --zksync
+
   codespell:
     runs-on: ${{ matrix.os }}
     strategy:
