@@ -44,7 +44,7 @@ using LibTransient for TAddress global;
 using LibTransient for TBool global;
 using LibTransient for TBytes global;
 
-/// @notice Library for RLP encoding and CREATE address computation.
+/// @notice Library for transient storage operations.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/LibTransient.sol)
 /// @author Modified from Transient Goodies by Philogy (https://github.com/Philogy/transient-goodies/blob/main/src/TransientBytesLib.sol)
 ///

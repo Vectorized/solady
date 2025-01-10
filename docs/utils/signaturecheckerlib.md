@@ -37,8 +37,8 @@ function isValidSignatureNow(
 ```
 
 Returns whether `signature` is valid for `signer` and `hash`.   
-First, it will try to validate with `ecrecover`, and if the validation fails,   
-it will try to validate with ERC1271 on `signer`.
+If `signer.code.length == 0`, then validate with `ecrecover`, else   
+it will validate with ERC1271 on `signer`.
 
 ### isValidSignatureNowCalldata(address,bytes32,bytes)
 
@@ -51,8 +51,8 @@ function isValidSignatureNowCalldata(
 ```
 
 Returns whether `signature` is valid for `signer` and `hash`.   
-First, it will try to validate with `ecrecover`, and if the validation fails,   
-it will try to validate with ERC1271 on `signer`.
+If `signer.code.length == 0`, then validate with `ecrecover`, else   
+it will validate with ERC1271 on `signer`.
 
 ### isValidSignatureNow(address,bytes32,bytes32,bytes32)
 
@@ -66,8 +66,8 @@ function isValidSignatureNow(
 ```
 
 Returns whether the signature (`r`, `vs`) is valid for `signer` and `hash`.   
-First, it will try to validate with `ecrecover`, and if the validation fails,   
-it will try to validate with ERC1271 on `signer`.
+If `signer.code.length == 0`, then validate with `ecrecover`, else   
+it will validate with ERC1271 on `signer`.
 
 ### isValidSignatureNow(address,bytes32,uint8,bytes32,bytes32)
 
@@ -82,8 +82,8 @@ function isValidSignatureNow(
 ```
 
 Returns whether the signature (`v`, `r`, `s`) is valid for `signer` and `hash`.   
-First, it will try to validate with `ecrecover`, and if the validation fails,   
-it will try to validate with ERC1271 on `signer`.
+If `signer.code.length == 0`, then validate with `ecrecover`, else   
+it will validate with ERC1271 on `signer`.
 
 ## ERC1271 Operations
 

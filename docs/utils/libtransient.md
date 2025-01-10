@@ -1,6 +1,6 @@
 # LibTransient
 
-Library for RLP encoding and CREATE address computation.
+Library for transient storage operations.
 
 
 <b>Note:</b>
