@@ -153,8 +153,8 @@ library SignatureCheckerLib {
                 mstore(d, 0x40) // The offset of the `signature` in the calldata.
                 mstore(add(m, 0x44), 65) // Length of the signature.
                 mstore(add(m, 0x64), r) // `r`.
-                mstore(add(m, 0x84), mload(0x60)) // `s`.
-                mstore8(add(m, 0xa4), mload(0x20)) // `v`.
+                mstore(add(m, 0x84), shr(1, shl(1, vs))) // `s`.
+                mstore8(add(m, 0xa4), add(shr(255, vs), 27)) // `v`.
                 isValid := staticcall(gas(), signer, m, 0xa5, d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
                 break

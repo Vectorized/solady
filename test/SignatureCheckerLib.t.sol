@@ -61,6 +61,7 @@ contract SignatureCheckerLibTest is SoladyTest {
         bytes32 hash = TEST_SIGNED_MESSAGE_HASH;
         bytes memory signature = SIGNATURE;
         _checkSignature(true, signer, hash, signature, true);
+        _checkSignature(false, signer, hash, signature, true);
         vm.etch(signer, "");
         _checkSignature(false, signer, hash, signature, false);
     }
