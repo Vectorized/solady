@@ -47,26 +47,6 @@ contract ERC1967Factory {
     /// @dev A beacon proxy has been deployed.
     event BeaconProxyDeployed(address indexed beaconProxy, address indexed beacon);
 
-    /// @dev `keccak256(bytes("AdminChanged(address,address)"))`.
-    uint256 internal constant _ADMIN_CHANGED_EVENT_SIGNATURE =
-        0x7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f;
-
-    /// @dev `keccak256(bytes("Upgraded(address,address)"))`.
-    uint256 internal constant _UPGRADED_EVENT_SIGNATURE =
-        0x5d611f318680d00598bb735d61bacf0c514c6b50e1e5ad30040a4df2b12791c7;
-
-    /// @dev `keccak256(bytes("ProxyDeployed(address,address,address)"))`.
-    uint256 internal constant _PROXY_DEPLOYED_EVENT_SIGNATURE =
-        0x9e0862c4ebff2150fbbfd3f8547483f55bdec0c34fd977d3fccaa55d6c4ce784;
-
-    /// @dev `keccak256(bytes("BeaconDeployed(address,address,address)"))`.
-    uint256 internal constant _BEACON_DEPLOYED_EVENT_SIGNATURE =
-        0xf53ff7c8fa39204521b1e348ab2a7ad0397471eefade072522e79552bf633726;
-
-    /// @dev `keccak256(bytes("BeaconProxyDeployed(address,address)"))`.
-    uint256 internal constant _BEACON_PROXY_DEPLOYED_EVENT_SIGNATURE =
-        0xfa8e336138457120a1572efbe25f72698abd5cca1c9be0bce42ad406ff350a2b;
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -115,9 +95,8 @@ contract ERC1967Factory {
                 revert(0x1c, 0x04)
             }
             sstore(instance, admin)
-            // Emit the {AdminChanged} event.
-            log3(0x00, 0x00, _ADMIN_CHANGED_EVENT_SIGNATURE, instance, admin)
         }
+        emit AdminChanged(instance, admin);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -156,9 +135,8 @@ contract ERC1967Factory {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
-            // Emit the {Upgraded} event.
-            log3(0x00, 0x00, _UPGRADED_EVENT_SIGNATURE, instance, implementation)
         }
+        emit Upgraded(instance, implementation);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -347,9 +325,8 @@ contract ERC1967Factory {
             /// @solidity memory-safe-assembly
             assembly {
                 sstore(instance, admin)
-                // Emit the {ProxyDeployed} event.
-                log4(0x00, 0x00, _PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
             }
+            emit ProxyDeployed(instance, address(uint160(target)), address(uint160(admin)));
         } else if (codeType == 1) {
             instance = address(
                 useSalt
@@ -359,20 +336,15 @@ contract ERC1967Factory {
             /// @solidity memory-safe-assembly
             assembly {
                 sstore(instance, admin)
-                // Emit the {BeaconDeployed} event.
-                log4(0x00, 0x00, _BEACON_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
             }
+            emit BeaconDeployed(instance, address(uint160(target)), address(uint160(admin)));
         } else {
             instance = address(
                 useSalt
                     ? new ERC1967BeaconProxy{salt: _validateSalt(salt)}()
                     : new ERC1967BeaconProxy()
             );
-            /// @solidity memory-safe-assembly
-            assembly {
-                // Emit the {BeaconProxyDeployed} event.
-                log3(0x00, 0x00, _BEACON_PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target)
-            }
+            emit BeaconProxyDeployed(instance, address(uint160(target)));
         }
         /// @solidity memory-safe-assembly
         assembly {
