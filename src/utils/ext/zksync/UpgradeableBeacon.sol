@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice A sufficiently minimal upgradeable beacon tailored made for ZKsync.
+/// @notice A sufficiently minimal upgradeable beacon tailor-made for ZKsync.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/UpgradeableBeacon.sol)
 contract UpgradeableBeacon {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
