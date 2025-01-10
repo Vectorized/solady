@@ -70,7 +70,7 @@ library SignatureCheckerLib {
                 // Copy the `signature` over.
                 let n := add(0x20, mload(signature))
                 copy(add(m, 0x44), signature, n)
-                isValid := staticcall(gas(), signer, m, add(returndatasize(), 0x44), d, 0x20)
+                isValid := staticcall(gas(), signer, m, add(n, 0x44), d, 0x20)
                 isValid := and(eq(mload(d), f), isValid)
                 break
             }
@@ -233,7 +233,7 @@ library SignatureCheckerLib {
             // Copy the `signature` over.
             let n := add(0x20, mload(signature))
             copy(add(m, 0x44), signature, n)
-            isValid := staticcall(gas(), signer, m, add(returndatasize(), 0x44), d, 0x20)
+            isValid := staticcall(gas(), signer, m, add(n, 0x44), d, 0x20)
             isValid := and(eq(mload(d), f), isValid)
         }
     }
