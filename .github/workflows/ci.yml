@@ -82,6 +82,7 @@ jobs:
           )
 
   tests-zksync:
+    name: Forge Testing (zksync)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
