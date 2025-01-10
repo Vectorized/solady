@@ -71,29 +71,23 @@ contract ERC1967Factory {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The slot of the hash of the proxy.
-    uint256 internal constant _PROXY_HASH_SLOT = 1 << 160;
+    /// @dev The hash of the proxy.
+    bytes32 public proxyHash;
 
-    /// @dev The slot of the hash of the upgradeable beacon.
-    uint256 internal constant _BEACON_HASH_SLOT = 2 << 160;
+    /// @dev The hash of the upgradeable beacon.
+    bytes32 public beaconHash;
 
-    /// @dev The slot of the hash of the beacon proxy.
-    uint256 internal constant _BEACON_PROXY_HASH_SLOT = 3 << 160;
+    /// @dev The hash of the beacon proxy.
+    bytes32 public beaconProxyHash;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor() payable {
-        bytes32 proxyHashValue = _extcodehash(address(new ERC1967Proxy()));
-        bytes32 beaconProxyHashValue = _extcodehash(address(new ERC1967BeaconProxy()));
-        bytes32 beaconHashValue = _extcodehash(address(new UpgradeableBeacon()));
-        /// @solidity memory-safe-assembly
-        assembly {
-            sstore(_PROXY_HASH_SLOT, proxyHashValue)
-            sstore(_BEACON_HASH_SLOT, beaconHashValue)
-            sstore(_BEACON_PROXY_HASH_SLOT, beaconProxyHashValue)
-        }
+        proxyHash = _extcodehash(address(new ERC1967Proxy()));
+        beaconHash = _extcodehash(address(new UpgradeableBeacon()));
+        beaconProxyHash = _extcodehash(address(new ERC1967BeaconProxy()));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -106,7 +100,7 @@ contract ERC1967Factory {
     function adminOf(address instance) public view returns (address admin) {
         /// @solidity memory-safe-assembly
         assembly {
-            admin := sload(instance)
+            admin := mul(sload(instance), gt(instance, 0xff))
         }
     }
 
@@ -185,7 +179,7 @@ contract ERC1967Factory {
         payable
         returns (address)
     {
-        return _deploy(0, uint160(implementation), uint160(admin), "", 0, data);
+        return _deploy(0, uint160(implementation), uint160(admin), "", false, data);
     }
 
     /// @dev Deploys a proxy for `implementation`, with `admin`, `salt`,
@@ -209,7 +203,7 @@ contract ERC1967Factory {
         bytes32 salt,
         bytes calldata data
     ) public payable returns (address) {
-        return _deploy(0, uint160(implementation), uint160(admin), salt, 1, data);
+        return _deploy(0, uint160(implementation), uint160(admin), salt, true, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -218,7 +212,7 @@ contract ERC1967Factory {
 
     /// @dev Deploys a beacon with `implementation` and `admin`, and returns its address.
     function deployBeacon(address implementation, address admin) public returns (address) {
-        return _deploy(1, uint160(implementation), uint160(admin), "", 0, _emptyData());
+        return _deploy(1, uint160(implementation), uint160(admin), "", false, _emptyData());
     }
 
     /// @dev Deploys a beacon with `implementation` and `admin`, with `salt`,
@@ -228,7 +222,7 @@ contract ERC1967Factory {
         payable
         returns (address)
     {
-        return _deploy(1, uint160(implementation), uint160(admin), salt, 1, _emptyData());
+        return _deploy(1, uint160(implementation), uint160(admin), salt, true, _emptyData());
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -249,7 +243,7 @@ contract ERC1967Factory {
         payable
         returns (address)
     {
-        return _deploy(2, uint160(beacon), 0, "", 0, data);
+        return _deploy(2, uint160(beacon), 0, "", false, data);
     }
 
     /// @dev Deploys a beacon proxy referring to `beacon`, with `salt`,
@@ -272,7 +266,7 @@ contract ERC1967Factory {
         bytes32 salt,
         bytes calldata data
     ) public payable returns (address) {
-        return _deploy(2, uint160(beacon), 0, salt, 1, data);
+        return _deploy(2, uint160(beacon), 0, salt, true, data);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -300,34 +294,23 @@ contract ERC1967Factory {
 
     /// @dev Returns the implementation of `instance`.
     /// If `instance` is not deployed, returns `address(0)`.
-    function implementationOf(address instance) public view returns (address) {
+    function implementationOf(address instance) public view returns (address result) {
         bytes32 h = _extcodehash(instance);
-        if (h == proxyHash() || h == beaconProxyHash()) return _proxyImplementation(instance);
-        if (h == beaconHash()) return _beaconImplementation(instance);
-        return address(0);
-    }
-
-    /// @dev Returns the proxy hash.
-    function proxyHash() public view returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := sload(_PROXY_HASH_SLOT)
-        }
-    }
-
-    /// @dev Returns the beacon hash.
-    function beaconHash() public view returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := sload(_BEACON_HASH_SLOT)
-        }
-    }
-
-    /// @dev Returns the beacon proxy hash.
-    function beaconProxyHash() public view returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            result := sload(_BEACON_PROXY_HASH_SLOT)
+        if (h == proxyHash || h == beaconProxyHash) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                let s := staticcall(gas(), instance, 0x00, 0x01, 0x00, 0x20)
+                if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
+                result := mload(0x00)
+            }
+        } else if (h == beaconHash) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, 0x5c60da1b) // `implementation()`.
+                let s := staticcall(gas(), instance, 0x1c, 0x04, 0x00, 0x20)
+                if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
+                result := mload(0x00)
+            }
         }
     }
 
@@ -335,8 +318,8 @@ contract ERC1967Factory {
     /*                      INTERNAL HELPERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Validates the salt.
-    function _validateSalt(bytes32 salt) internal view {
+    /// @dev Validates the salt and returns it.
+    function _validateSalt(bytes32 salt) internal view returns (bytes32) {
         /// @solidity memory-safe-assembly
         assembly {
             // If the salt does not start with the zero address or the caller.
@@ -345,6 +328,7 @@ contract ERC1967Factory {
                 revert(0x1c, 0x04)
             }
         }
+        return salt;
     }
 
     /// @dev Performs the deployment optionality to deploy deterministically with a `salt`.
@@ -353,16 +337,13 @@ contract ERC1967Factory {
         uint256 target,
         uint256 admin,
         bytes32 salt,
-        uint256 useSalt,
+        bool useSalt,
         bytes calldata data
     ) internal returns (address instance) {
         if (codeType == 0) {
-            if (useSalt == 0) {
-                instance = address(new ERC1967Proxy());
-            } else {
-                _validateSalt(salt);
-                instance = address(new ERC1967Proxy{salt: salt}());
-            }
+            instance = address(
+                useSalt ? new ERC1967Proxy{salt: _validateSalt(salt)}() : new ERC1967Proxy()
+            );
             /// @solidity memory-safe-assembly
             assembly {
                 sstore(instance, admin)
@@ -370,12 +351,11 @@ contract ERC1967Factory {
                 log4(0x00, 0x00, _PROXY_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
             }
         } else if (codeType == 1) {
-            if (useSalt == 0) {
-                instance = address(new UpgradeableBeacon());
-            } else {
-                _validateSalt(salt);
-                instance = address(new UpgradeableBeacon{salt: salt}());
-            }
+            instance = address(
+                useSalt
+                    ? new UpgradeableBeacon{salt: _validateSalt(salt)}()
+                    : new UpgradeableBeacon()
+            );
             /// @solidity memory-safe-assembly
             assembly {
                 sstore(instance, admin)
@@ -383,12 +363,11 @@ contract ERC1967Factory {
                 log4(0x00, 0x00, _BEACON_DEPLOYED_EVENT_SIGNATURE, instance, target, admin)
             }
         } else {
-            if (useSalt == 0) {
-                instance = address(new ERC1967BeaconProxy());
-            } else {
-                _validateSalt(salt);
-                instance = address(new ERC1967BeaconProxy{salt: salt}());
-            }
+            instance = address(
+                useSalt
+                    ? new ERC1967BeaconProxy{salt: _validateSalt(salt)}()
+                    : new ERC1967BeaconProxy()
+            );
             /// @solidity memory-safe-assembly
             assembly {
                 // Emit the {BeaconProxyDeployed} event.
@@ -416,27 +395,6 @@ contract ERC1967Factory {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
-        }
-    }
-
-    /// @dev Returns the implementation on a proxy.
-    function _proxyImplementation(address instance) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let s := staticcall(gas(), instance, 0x00, 0x01, 0x00, 0x20)
-            if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
-            result := mload(0x00)
-        }
-    }
-
-    /// @dev Returns the implementation on a beacon.
-    function _beaconImplementation(address instance) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, 0x5c60da1b) // `implementation()`.
-            let s := staticcall(gas(), instance, 0x1c, 0x04, 0x00, 0x20)
-            if iszero(and(gt(returndatasize(), 0x1f), s)) { revert(0x00, 0x00) }
-            result := mload(0x00)
         }
     }
 
