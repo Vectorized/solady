@@ -66,9 +66,9 @@ library SignatureCheckerLib {
                 mstore(d, 0x40) // The offset of the `signature` in the calldata.
                 // Copy the `signature` over.
                 let n := add(0x20, mload(signature))
-                pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
+                let copied := staticcall(gas(), 4, signature, n, add(m, 0x44), n)
                 isValid := staticcall(gas(), signer, m, add(returndatasize(), 0x44), d, 0x20)
-                isValid := and(eq(mload(d), f), isValid)
+                isValid := and(eq(mload(d), f), and(isValid, copied))
                 break
             }
         }
