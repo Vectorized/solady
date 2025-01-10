@@ -34,11 +34,13 @@ jobs:
         run: >
           ( [ "${{ matrix.profile }}" = "post-cancun" ] &&
             FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 &&
-            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28
+            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 &&
+            FOUNDRY_PROFILE=zksync forge test --use 0.8.28
           ) ||
           ( [ "${{ matrix.profile }}" = "post-cancun-via-ir" ] &&
             FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 --via-ir &&
-            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 --via-ir
+            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 --via-ir &&
+            FOUNDRY_PROFILE=zksync forge test --use 0.8.28 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
             FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.5 --fuzz-runs 16 &&
@@ -80,23 +82,6 @@ jobs:
           ( [ "${{ matrix.profile }}" = "intense" ] &&
             forge test --fuzz-runs 5000
           )
-
-  tests-zksync:
-    name: Forge Testing (zksync)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Foundry-ZKsync
-        uses: dutterbutter/foundry-zksync-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Install Dependencies
-        run: forge install
-
-      - name: Run Forge tests
-        run: FOUNDRY_PROFILE=zksync forge test --zksync
 
   codespell:
     runs-on: ${{ matrix.os }}
