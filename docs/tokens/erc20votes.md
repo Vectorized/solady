@@ -75,10 +75,10 @@ Returns the clock mode.
 ### clock()
 
 ```solidity
-function clock() public view returns (uint48 result)
+function clock() public view virtual returns (uint48 result)
 ```
 
-Retusn the current clock.
+Returns the current clock.
 
 ## ERC5805
 

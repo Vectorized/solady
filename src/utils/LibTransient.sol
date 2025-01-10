@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for RLP encoding and CREATE address computation.
+/// @notice Library for transient storage operations.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/LibTransient.sol)
 /// @author Modified from Transient Goodies by Philogy (https://github.com/Philogy/transient-goodies/blob/main/src/TransientBytesLib.sol)
 ///

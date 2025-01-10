@@ -83,6 +83,7 @@ utils
 ├─ LibRLP — "Library for RLP encoding and CREATE address computation"
 ├─ LibSort — "Library for efficient sorting of memory arrays"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
+├─ LibTransient — "Library for transient storage operations"
 ├─ LibZip — "Library for compressing and decompressing bytes"
 ├─ Lifebuoy — "Class that allows for rescue of ETH, ERC20, ERC721 tokens"
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
