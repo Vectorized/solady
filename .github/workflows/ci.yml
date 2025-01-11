@@ -84,7 +84,7 @@ jobs:
           )
   
   zksync-test:
-    name: ZkSync Testing
+    name: Zksync Testing
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -92,6 +92,9 @@ jobs:
           - ubuntu-latest
     
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Install Foundry-ZKsync
         uses: dutterbutter/foundry-zksync-toolchain@v1
         with:
