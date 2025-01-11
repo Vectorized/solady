@@ -82,6 +82,29 @@ jobs:
           ( [ "${{ matrix.profile }}" = "intense" ] &&
             forge test --fuzz-runs 5000
           )
+  
+  zksync-test:
+    name: ZkSync Testing
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+    
+    steps:
+      - name: Install Foundry-ZKsync
+        uses: dutterbutter/foundry-zksync-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Run Forge tests
+        run: |
+          FOUNDRY_PROFILE=zksync forge test --use 0.8.28 --zksync -vvv &&
+          FOUNDRY_PROFILE=zksync forge test --use 0.8.28 --zksync --via-ir -vvv
+        id: zksync-test
 
   codespell:
     runs-on: ${{ matrix.os }}
