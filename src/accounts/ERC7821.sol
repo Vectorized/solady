@@ -5,6 +5,14 @@ import {Receiver} from "./Receiver.sol";
 
 /// @notice Minimal batch executor mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC7821.sol)
+///
+/// @dev This contract can be inherited to create fully-fledged smart accounts.
+/// If you merely want to combine approve-swap transactions into a single transaction
+/// using [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702), you will need to implement basic
+/// [ERC-1271](https://eips.ethereum.org/EIPS/eip-1271) `isValidSignature` functionality to
+/// validate signatures with `ecrecover` against the EOA address. This is necessary because some
+/// signature checks skip `ecrecover` if the signer has code. For a basic EOA batch executor,
+/// please refer to [BEBE](https://github.com/vectorized/bebe), which inherits from this class.
 contract ERC7821 is Receiver {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STRUCTS                           */
