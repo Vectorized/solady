@@ -7,6 +7,17 @@ import {ERC1967BeaconProxy} from "./ERC1967BeaconProxy.sol";
 
 /// @notice A factory for deploying minimal ERC1967 proxies on ZKsync.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ext/zksync/ERC1967Factory.sol)
+///
+/// @dev This factory can be used in one of the following ways:
+/// 1. Deploying a fresh copy with each contract.
+///    Easier to test. In ZKsync VM, factory dependency bytecode is not included in the
+///    factory bytecode, so you do not need to worry too much about bytecode size limits.
+/// 2. Loading it from a storage variable which is set to the canonical address.
+///    See: ERC1967FactoryConstants.ADDRESS.
+///
+/// This factory is crafted to be compatible with both ZKsync VM and regular EVM.
+/// This is so that when ZKsync achieves full EVM equivalence,
+/// this factory can still be used via the fresh copy per contract way.
 contract ERC1967Factory {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -23,6 +34,9 @@ contract ERC1967Factory {
 
     /// @dev The salt does not start with the caller.
     error SaltDoesNotStartWithCaller();
+
+    /// @dev No initialization code hash exists for the instance hash.
+    error NoInitCodeHashFound();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -60,14 +74,31 @@ contract ERC1967Factory {
     /// @dev The hash of the beacon proxy.
     bytes32 public beaconProxyHash;
 
+    /// @dev Whether to use the CREATE2 address prediction workflow for ZKsync VM.
+    bool internal _useZKsyncCreate2Prediction;
+
+    /// @dev Maps the instance hash to the initialization code hash.
+    mapping(bytes32 => bytes32) internal _initCodeHashes;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor() payable {
-        proxyHash = _extcodehash(address(new ERC1967Proxy()));
+        bytes32 proxySalt = keccak256(abi.encode(address(this), bytes32("proxySalt")));
+        address proxyAddress = address(new ERC1967Proxy{salt: proxySalt}());
+
+        proxyHash = _extcodehash(proxyAddress);
         beaconHash = _extcodehash(address(new UpgradeableBeacon()));
         beaconProxyHash = _extcodehash(address(new ERC1967BeaconProxy()));
+
+        if (_predictDeterministicAddressZKsync(proxyHash, proxySalt) == proxyAddress) {
+            _useZKsyncCreate2Prediction = true;
+        } else {
+            _initCodeHashes[proxyHash] = keccak256(type(ERC1967Proxy).creationCode);
+            _initCodeHashes[beaconHash] = keccak256(type(UpgradeableBeacon).creationCode);
+            _initCodeHashes[beaconProxyHash] = keccak256(type(ERC1967BeaconProxy).creationCode);
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -258,16 +289,10 @@ contract ERC1967Factory {
         view
         returns (address)
     {
-        bytes32 h = keccak256(
-            abi.encode(
-                keccak256("zksyncCreate2"),
-                bytes32(uint256(uint160(address(this)))),
-                salt,
-                instanceHash,
-                keccak256("")
-            )
-        );
-        return address(uint160(uint256(h)));
+        if (_useZKsyncCreate2Prediction) {
+            return _predictDeterministicAddressZKsync(instanceHash, salt);
+        }
+        return _predictDeterministicAddressRegularEVM(instanceHash, salt);
     }
 
     /// @dev Returns the implementation of `instance`.
@@ -383,6 +408,50 @@ contract ERC1967Factory {
         /// @solidity memory-safe-assembly
         assembly {
             data.length := 0
+        }
+    }
+
+    /// @dev Returns the predicted `CREATE2` address on ZKsync VM.
+    function _predictDeterministicAddressZKsync(bytes32 instanceHash, bytes32 salt)
+        internal
+        view
+        returns (address predicted)
+    {
+        bytes32 prefix = keccak256("zksyncCreate2");
+        bytes32 emptyStringHash = keccak256("");
+        /// @solidity memory-safe-assembly
+        assembly {
+            // The following is `keccak256(abi.encode(...))`.
+            let m := mload(0x40)
+            mstore(m, prefix)
+            mstore(add(m, 0x20), address())
+            mstore(add(m, 0x40), salt)
+            mstore(add(m, 0x60), instanceHash)
+            mstore(add(m, 0x80), emptyStringHash)
+            predicted := keccak256(m, 0xa0)
+        }
+    }
+
+    /// @dev Returns the predicted `CREATE2` address on regular EVM.
+    function _predictDeterministicAddressRegularEVM(bytes32 instanceHash, bytes32 salt)
+        internal
+        view
+        returns (address predicted)
+    {
+        bytes32 initCodeHash = _initCodeHashes[instanceHash];
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(initCodeHash) {
+                mstore(0x00, 0xa3a58d1c) // `NoInitCodeHashFound()`.
+                revert(0x1c, 0x04)
+            }
+            // The following is `keccak256(abi.encodePacked(...))`.
+            mstore8(0x00, 0xff) // Write the prefix.
+            mstore(0x35, initCodeHash)
+            mstore(0x01, shl(96, address()))
+            mstore(0x15, salt)
+            predicted := keccak256(0x00, 0x55)
+            mstore(0x35, 0) // Restore the overwritten part of the free memory pointer.
         }
     }
 }
