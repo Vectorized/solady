@@ -100,8 +100,8 @@ contract ERC7821 is Receiver {
         // - [0]      ( 1 byte )  `0x01` for batch call.
         // - [1]      ( 1 byte )  `0x00` for revert on any failure.
         // - [2..5]   ( 4 bytes)  Reserved by ERC7579 for future standardization.
-        // - [6..8]   ( 4 bytes)  `0x78210001` or `0x00000000`.
-        // - [9..31]  (22 bytes)  Unused. Free for use.
+        // - [6..9]   ( 4 bytes)  `0x78210001` or `0x00000000`.
+        // - [10..31] (22 bytes)  Unused. Free for use.
         /// @solidity memory-safe-assembly
         assembly {
             let m := and(shr(mul(22, 8), mode), 0xffff00000000ffffffff)
