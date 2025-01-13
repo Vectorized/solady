@@ -224,9 +224,9 @@ library SignatureCheckerLib {
             mstore(d, 0x40) // The offset of the `signature` in the calldata.
             // Copy the `signature` over.
             let n := add(0x20, mload(signature))
-            pop(staticcall(gas(), 4, signature, n, add(m, 0x44), n))
+            let copied := staticcall(gas(), 4, signature, n, add(m, 0x44), n)
             isValid := staticcall(gas(), signer, m, add(returndatasize(), 0x44), d, 0x20)
-            isValid := and(eq(mload(d), f), isValid)
+            isValid := and(eq(mload(d), f), and(isValid, copied))
         }
     }
 
@@ -331,9 +331,9 @@ library SignatureCheckerLib {
                 let d_ := add(m_, 0x24)
                 mstore(d_, 0x40) // The offset of the `signature` in the calldata.
                 let n_ := add(0x20, mload(signature_))
-                pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
+                let copied_ := staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_)
                 _isValid := staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
-                _isValid := and(eq(mload(d_), f_), _isValid)
+                _isValid := and(eq(mload(d_), f_), and(_isValid, copied_))
             }
             let noCode := iszero(extcodesize(signer))
             let n := mload(signature)
@@ -411,9 +411,9 @@ library SignatureCheckerLib {
                 let d_ := add(m_, 0x24)
                 mstore(d_, 0x40) // The offset of the `signature` in the calldata.
                 let n_ := add(0x20, mload(signature_))
-                pop(staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_))
+                let copied_ := staticcall(gas(), 4, signature_, n_, add(m_, 0x44), n_)
                 _isValid := staticcall(gas(), signer_, m_, add(returndatasize(), 0x44), d_, 0x20)
-                _isValid := and(eq(mload(d_), f_), _isValid)
+                _isValid := and(eq(mload(d_), f_), and(_isValid, copied_))
             }
             let noCode := iszero(extcodesize(signer))
             let n := mload(signature)
