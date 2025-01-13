@@ -34,22 +34,21 @@ contract ERC4337Factory {
     /*                      DEPLOY FUNCTIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Deploys an ERC4337 account with `salt` and returns its deterministic address.
+    /// @dev Deploys an ERC4337 account with `ownSalt` and returns its deterministic address.
+    /// The `owner` is encoded in the upper 160 bits of `ownSalt`.
     /// If the account is already deployed, it will simply return its address.
     /// Any `msg.value` will simply be forwarded to the account, regardless.
-    function createAccount(address owner, bytes32 salt) public payable virtual returns (address) {
-        // Check that the salt is tied to the owner if required, regardless.
-        LibClone.checkStartsWith(salt, owner);
+    function createAccount(bytes32 ownSalt) public payable virtual returns (address) {
         // Constructor data is optional, and is omitted for easier Etherscan verification.
         (bool alreadyDeployed, address account) =
-            LibClone.createDeterministicERC1967(msg.value, implementation, salt);
+            LibClone.createDeterministicERC1967(msg.value, implementation, ownSalt);
 
         if (!alreadyDeployed) {
             /// @solidity memory-safe-assembly
             assembly {
-                mstore(0x14, owner) // Store the `owner` argument.
-                mstore(0x00, 0xc4d66de8000000000000000000000000) // `initialize(address)`.
-                if iszero(call(gas(), account, 0, 0x10, 0x24, codesize(), 0x00)) {
+                mstore(0x20, shr(96, ownSalt)) // Store the `owner` argument.
+                mstore(0x00, 0xc4d66de8) // `initialize(address)`.
+                if iszero(call(gas(), account, 0, 0x1c, 0x24, codesize(), 0x00)) {
                     returndatacopy(mload(0x40), 0x00, returndatasize())
                     revert(mload(0x40), returndatasize())
                 }
@@ -59,8 +58,8 @@ contract ERC4337Factory {
     }
 
     /// @dev Returns the deterministic address of the account created via `createAccount`.
-    function getAddress(bytes32 salt) public view virtual returns (address) {
-        return LibClone.predictDeterministicAddressERC1967(implementation, salt, address(this));
+    function getAddress(bytes32 ownSalt) public view virtual returns (address) {
+        return LibClone.predictDeterministicAddressERC1967(implementation, ownSalt, address(this));
     }
 
     /// @dev Returns the initialization code hash of the ERC4337 account (a minimal ERC1967 proxy).
