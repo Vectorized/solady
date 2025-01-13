@@ -292,7 +292,7 @@ library MinHeapLib {
     /// conditionally popping the minimum value if `value` is greater than it.
     ///
     /// Under normal usage, which keeps `maxLength` constant throughout
-    /// the lifetime of a heap, this abnormal edge case will not be triggered.
+    /// the lifetime of a heap, this out-of-spec edge case will not be triggered.
     function enqueue(Heap storage heap, uint256 value, uint256 maxLength)
         internal
         returns (bool success, bool hasPopped, uint256 popped)
