@@ -38,6 +38,8 @@ contract TimelockTest is SoladyTest {
 
         a[0] = address(this);
         a[1] = _ALICE;
+        vm.expectEmit(true, true, true, true);
+        emit MinDelaySet(_DEFAULT_MIN_DELAY);
         timelock.initialize(_DEFAULT_MIN_DELAY, _ADMIN, a, a, a);
     }
 
