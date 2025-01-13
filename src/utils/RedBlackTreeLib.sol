@@ -459,15 +459,14 @@ library RedBlackTreeLib {
                         if eq(key_, getKey(parentPacked_, R)) {
                             key_ := parent_
                             rotate(nodes_, key_, L, R)
+                            parent_ := getKey(sload(or(nodes_, key_)), _BITPOS_PARENT)
+                            parentPacked_ := sload(or(nodes_, parent_))
                         }
-                        parent_ := getKey(sload(or(nodes_, key_)), _BITPOS_PARENT)
-                        parentPacked_ := sload(or(nodes_, parent_))
                         sstore(or(nodes_, parent_), and(parentPacked_, not(BR)))
-                        grandParent_ := getKey(parentPacked_, _BITPOS_PARENT)
                         let s_ := or(nodes_, grandParent_)
                         sstore(s_, or(sload(s_), BR))
                         rotate(nodes_, grandParent_, R, L)
-                        continue
+                        break
                     }
                     sstore(or(nodes_, parent_), and(parentPacked_, not(BR)))
                     sstore(or(nodes_, c_), and(cPacked_, not(BR)))
@@ -544,6 +543,8 @@ library RedBlackTreeLib {
                 sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), a_))
             }
 
+            // In `remove`, the parent of the null value (index 0) may be temporarily set
+            // to a non-zero value. This is an optimization that unifies the removal cases.
             function remove(nodes_, key_) -> err_ {
                 if gt(key_, shr(128, mload(0x20))) {
                     err_ := ERROR_POINTER_OUT_OF_BOUNDS
@@ -587,7 +588,7 @@ library RedBlackTreeLib {
                     let rightSlot_ := or(nodes_, getKey(packed_, _BITPOS_RIGHT))
                     sstore(rightSlot_, setKey(sload(rightSlot_), _BITPOS_PARENT, cursor_))
 
-                    // Copy `left`, `right`, `red` from `cursor_` to `key_`.
+                    // Copy `left`, `right`, `red` from `key_` to `cursor_`.
                     // forgefmt: disable-next-item
                     sstore(or(nodes_, cursor_), xor(cursorPacked_,
                         and(xor(packed_, cursorPacked_), sub(shl(_BITPOS_PACKED_VALUE, 1), 1))))
