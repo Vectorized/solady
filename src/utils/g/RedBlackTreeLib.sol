@@ -463,11 +463,10 @@ library RedBlackTreeLib {
                         if eq(key_, getKey(parentPacked_, R)) {
                             key_ := parent_
                             rotate(nodes_, key_, L, R)
+                            parent_ := getKey(sload(or(nodes_, key_)), _BITPOS_PARENT)
+                            parentPacked_ := sload(or(nodes_, parent_))
                         }
-                        parent_ := getKey(sload(or(nodes_, key_)), _BITPOS_PARENT)
-                        parentPacked_ := sload(or(nodes_, parent_))
                         sstore(or(nodes_, parent_), and(parentPacked_, not(BR)))
-                        grandParent_ := getKey(parentPacked_, _BITPOS_PARENT)
                         let s_ := or(nodes_, grandParent_)
                         sstore(s_, or(sload(s_), BR))
                         rotate(nodes_, grandParent_, R, L)
