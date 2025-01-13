@@ -168,6 +168,8 @@ contract Timelock is ERC7821, EnumerableRoles {
                 revert(0x1c, 0x04)
             }
             sstore(s, not(initialMinDelay))
+            mstore(0x00, initialMinDelay)
+            log1(0x00, 0x20, _MIN_DELAY_SET_EVENT_SIGNATURE)
         }
         if (initialAdmin != address(0)) {
             _setRole(initialAdmin, ADMIN_ROLE, true);
