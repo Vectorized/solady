@@ -547,6 +547,8 @@ library RedBlackTreeLib {
                 sstore(s_, setKey(p_, mul(t_, _BITPOS_RIGHT), a_))
             }
 
+            // In `remove`, the parent of the null value (index 0) may be temporarily set
+            // to a non-zero value. This is an optimization that unifies the removal cases.
             function remove(nodes_, key_) -> err_ {
                 if gt(key_, shr(128, mload(0x20))) {
                     err_ := ERROR_POINTER_OUT_OF_BOUNDS
