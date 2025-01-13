@@ -669,9 +669,14 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
+            // If the extcodesize is too small,
+            // `n` will be a big number that is around 0xffffffffff.
             let n := and(0xffffffffff, sub(extcodesize(instance), 0x2d))
+            // We shall subtract `start` from `n`, so as to copy less bytes.
+            // The and `0xffffff` ensures that no underflow can happen.
+            // If start is greater than `0xffffff`, we will still copy `n`. Doesn't change the logic.
             let l := sub(n, and(0xffffff, mul(lt(start, n), start)))
-            extcodecopy(instance, add(args, 0x20), add(start, 0x2d), add(l, 0x20))
+            extcodecopy(instance, args, add(start, 0x0d), add(l, 0x40))
             mstore(args, mul(sub(n, start), lt(start, n))) // Store the length.
             mstore(0x40, add(args, add(0x40, mload(args)))) // Allocate memory.
         }
