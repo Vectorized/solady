@@ -145,6 +145,7 @@ contract ERC7821 is Receiver {
                 // Directly extract `calls[i]` without bounds checks.
                 let c := add(calls.offset, calldataload(add(calls.offset, j)))
                 // Replaces `target` with `address(this)` if `address(0)` is provided.
+                // We'll skip cleaning the upper 96 bits of `target` as it is ignored in `call`.
                 target := or(mul(address(), iszero(calldataload(c))), calldataload(c))
                 value := calldataload(add(c, 0x20))
                 let o := add(c, calldataload(add(c, 0x40)))
