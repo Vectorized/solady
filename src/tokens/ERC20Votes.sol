@@ -405,7 +405,7 @@ abstract contract ERC20Votes is ERC20 {
         }
     }
 
-    /// @dev Returns the value in the checkpoints with the largest key that is less than `key`.
+    /// @dev Returns checkpoint value with the largest key that is less than or equal to `key`.
     function _checkpointUpperLookupRecent(uint256 lengthSlot, uint256 key)
         private
         view
