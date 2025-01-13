@@ -45,7 +45,7 @@ abstract contract Initializable {
 
     constructor() {
         // Construction time check to ensure that `_initializableSlot()` is not
-        // overriden to zero. Will be optimized away if there is no revert.
+        // overridden to zero. Will be optimized away if there is no revert.
         require(_initializableSlot() != bytes32(0));
     }
 
