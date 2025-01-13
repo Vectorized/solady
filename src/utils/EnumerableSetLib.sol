@@ -409,7 +409,6 @@ library EnumerableSetLib {
                 if iszero(eq(sub(position, 1), n)) {
                     let lastValue := shr(96, sload(add(rootSlot, n)))
                     sstore(add(rootSlot, sub(position, 1)), shl(96, lastValue))
-                    sstore(add(rootSlot, n), 0)
                     mstore(0x00, lastValue)
                     sstore(keccak256(0x00, 0x40), position)
                 }
@@ -461,7 +460,6 @@ library EnumerableSetLib {
                 if iszero(eq(sub(position, 1), n)) {
                     let lastValue := sload(add(rootSlot, n))
                     sstore(add(rootSlot, sub(position, 1)), lastValue)
-                    sstore(add(rootSlot, n), 0)
                     mstore(0x00, lastValue)
                     sstore(keccak256(0x00, 0x40), position)
                 }
