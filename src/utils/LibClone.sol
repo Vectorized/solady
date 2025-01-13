@@ -669,7 +669,6 @@ library LibClone {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)
-            // If the extcodesize is too small,
             let n := and(0xffffffffff, sub(extcodesize(instance), 0x2d))
             let l := sub(n, and(0xffffff, mul(lt(start, n), start)))
             extcodecopy(instance, args, add(start, 0x0d), add(l, 0x40))
