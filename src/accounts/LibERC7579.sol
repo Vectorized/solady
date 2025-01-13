@@ -22,6 +22,9 @@ library LibERC7579 {
     /// @dev A batch of executions.
     bytes1 internal constant CALLTYPE_BATCH = 0x01;
 
+    /// @dev A single `staticcall` execution.
+    bytes1 internal constant CALLTYPE_STATICCALL = 0xfe;
+
     /// @dev A `delegatecall` execution.
     bytes1 internal constant CALLTYPE_DELEGATECALL = 0xff;
 
