@@ -49,7 +49,7 @@ using EnumerableSetLib for Uint8Set global;
 ///
 /// The AddressSet implementation packs the length with the 0th entry.
 ///
-/// All enumerable sets except Uint8Set, use a pop and swap mechanism to remove elements.
+/// All enumerable sets except Uint8Set use a pop and swap mechanism to remove elements.
 /// This means that the iteration order of elements can change between element removals.
 library EnumerableSetLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
