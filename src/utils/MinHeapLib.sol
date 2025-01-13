@@ -285,6 +285,14 @@ library MinHeapLib {
     ///   (`success` = true, `hasPopped` = true, `popped` = <minimum value>)
     ///
     /// Useful for implementing a bounded priority queue.
+    ///
+    /// It is technically possible for the heap size to exceed `maxLength`
+    /// if `enqueue` has been previous called with a larger `maxLength`.
+    /// In such a case, the heap will be treated the same as if it is full,
+    /// conditionally popping the minimum value if `value` is greater than it.
+    ///
+    /// Under normal usage, which keeps `maxLength` constant throughout
+    /// the lifetime of a heap, this edge case will not be triggered.
     function enqueue(Heap storage heap, uint256 value, uint256 maxLength)
         internal
         returns (bool success, bool hasPopped, uint256 popped)
@@ -364,20 +372,20 @@ library MinHeapLib {
                 // Mode: `enqueue`.
                 if iszero(mode) {
                     if iszero(maxLength) { continue }
-                    // If queue is not full.
-                    if iszero(eq(n, maxLength)) {
-                        status := 1
-                        pos := n
-                        // Increment and update the length.
-                        sstore(heap.slot, add(pos, 1))
-                        childPos := sOffset
+                    // If queue is full.
+                    if iszero(lt(n, maxLength)) {
+                        let r := sload(sOffset)
+                        if iszero(lt(r, value)) { break }
+                        status := 3
+                        childPos := 1
+                        popped := r
                         break
                     }
-                    let r := sload(sOffset)
-                    if iszero(lt(r, value)) { break }
-                    status := 3
-                    childPos := 1
-                    popped := r
+                    status := 1
+                    pos := n
+                    // Increment and update the length.
+                    sstore(heap.slot, add(pos, 1))
+                    childPos := sOffset
                     break
                 }
                 if iszero(gt(mode, 2)) {
@@ -488,19 +496,19 @@ library MinHeapLib {
                 // Mode: `enqueue`.
                 if iszero(mode) {
                     if iszero(maxLength) { continue }
-                    // If queue is not full.
-                    if iszero(eq(n, maxLength)) {
-                        status := 1
-                        pos := n
-                        // Increment and update the length.
-                        mstore(data, add(pos, 1))
-                        childPos := 0xff0000000000000000
+                    // If the queue is full.
+                    if iszero(lt(n, maxLength)) {
+                        if iszero(lt(mload(sOffset), value)) { break }
+                        status := 3
+                        childPos := 1
+                        popped := mload(sOffset)
                         break
                     }
-                    if iszero(lt(mload(sOffset), value)) { break }
-                    status := 3
-                    childPos := 1
-                    popped := mload(sOffset)
+                    status := 1
+                    pos := n
+                    // Increment and update the length.
+                    mstore(data, add(pos, 1))
+                    childPos := 0xff0000000000000000
                     break
                 }
                 if iszero(gt(mode, 2)) {
