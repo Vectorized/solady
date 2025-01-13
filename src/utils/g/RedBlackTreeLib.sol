@@ -470,7 +470,7 @@ library RedBlackTreeLib {
                         let s_ := or(nodes_, grandParent_)
                         sstore(s_, or(sload(s_), BR))
                         rotate(nodes_, grandParent_, R, L)
-                        continue
+                        break
                     }
                     sstore(or(nodes_, parent_), and(parentPacked_, not(BR)))
                     sstore(or(nodes_, c_), and(cPacked_, not(BR)))
