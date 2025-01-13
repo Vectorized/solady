@@ -415,6 +415,7 @@ library MinHeapLib {
                     // Increment and update the length.
                     pos := n
                     sstore(heap.slot, add(pos, 1))
+                    // `sOffset` is used as a value that is `>= n` and `< not(0)`.
                     childPos := sOffset
                     break
                 }
