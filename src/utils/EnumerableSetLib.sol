@@ -11,6 +11,9 @@ pragma solidity ^0.8.4;
 /// and indices will be initialized. The amortized cost of adding elements is O(1).
 ///
 /// The AddressSet implementation packs the length with the 0th entry.
+///
+/// All enumerable sets except Uint8Set use a pop and swap mechanism to remove elements.
+/// This means that the iteration order of elements can change between element removals.
 library EnumerableSetLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
