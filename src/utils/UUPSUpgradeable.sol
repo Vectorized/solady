@@ -84,10 +84,11 @@ abstract contract UUPSUpgradeable {
         /// @solidity memory-safe-assembly
         assembly {
             newImplementation := shr(96, shl(96, newImplementation)) // Clears upper 96 bits.
-            mstore(0x00, 0x52d1902d) // `proxiableUUID()`.
+            mstore(0x00, returndatasize())
+            mstore(0x01, 0x52d1902d) // `proxiableUUID()`.
             let s := _ERC1967_IMPLEMENTATION_SLOT
             // Check if `newImplementation` implements `proxiableUUID` correctly.
-            if iszero(eq(mload(staticcall(gas(), newImplementation, 0x1c, 0x04, 0x01, 0x20)), s)) {
+            if iszero(eq(mload(staticcall(gas(), newImplementation, 0x1d, 0x04, 0x01, 0x20)), s)) {
                 mstore(0x01, 0x55299b49) // `UpgradeFailed()`.
                 revert(0x1d, 0x04)
             }
