@@ -75,7 +75,7 @@ abstract contract Multicallable {
                 }
             }
             mstore(0x40, m) // Allocate memory.
-            results := or(shl(64, m), results) // Pack the bytes length into `results`.
+            results := or(shl(64, sub(m, results)), results) // Pack the bytes length into `results`.
         }
     }
 
