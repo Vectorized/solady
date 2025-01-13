@@ -40,10 +40,20 @@ abstract contract Initializable {
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffbf601132;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    constructor() {
+        // Construction time check to ensure that `_initializableSlot()` is not
+        // overridden to zero. Will be optimized away if there is no revert.
+        require(_initializableSlot() != bytes32(0));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Override to return a custom storage slot if required.
+    /// @dev Override to return a non-zero custom storage slot if required.
     function _initializableSlot() internal pure virtual returns (bytes32) {
         return _INITIALIZABLE_SLOT;
     }
