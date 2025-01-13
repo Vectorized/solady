@@ -87,7 +87,8 @@ abstract contract UUPSUpgradeable {
             mstore(0x01, 0x52d1902d) // `proxiableUUID()`.
             let s := _ERC1967_IMPLEMENTATION_SLOT
             // Check if `newImplementation` implements `proxiableUUID` correctly.
-            if iszero(eq(mload(staticcall(gas(), newImplementation, 0x1d, 0x04, 0x01, 0x20)), s)) {
+            let t := staticcall(gas(), newImplementation, 0x1d, 0x04, 0x00, 0x20)
+            if iszero(and(eq(mload(0x00), s), t)) {
                 mstore(0x01, 0x55299b49) // `UpgradeFailed()`.
                 revert(0x1d, 0x04)
             }
