@@ -292,12 +292,12 @@ library MinHeapLib {
     /// Useful for implementing a bounded priority queue.
     ///
     /// It is technically possible for the heap size to exceed `maxLength`
-    /// if `enqueue` has been previous called with a larger `maxLength`.
-    /// In such a case, the heap will be treated the same as if it is full,
+    /// if `enqueue` has been previously called with a larger `maxLength`.
+    /// In such a case, the heap will be treated exactly as if it is full,
     /// conditionally popping the minimum value if `value` is greater than it.
     ///
     /// Under normal usage, which keeps `maxLength` constant throughout
-    /// the lifetime of a heap, this edge case will not be triggered.
+    /// the lifetime of a heap, this abnormal edge case will not be triggered.
     function enqueue(Heap storage heap, uint256 value, uint256 maxLength)
         internal
         returns (bool success, bool hasPopped, uint256 popped)
