@@ -590,7 +590,7 @@ library RedBlackTreeLib {
                     let rightSlot_ := or(nodes_, getKey(packed_, _BITPOS_RIGHT))
                     sstore(rightSlot_, setKey(sload(rightSlot_), _BITPOS_PARENT, cursor_))
 
-                    // Copy `left`, `right`, `red` from `cursor_` to `key_`.
+                    // Copy `left`, `right`, `red` from `key_` to `cursor_`.
                     // forgefmt: disable-next-item
                     sstore(or(nodes_, cursor_), xor(cursorPacked_,
                         and(xor(packed_, cursorPacked_), sub(shl(_BITPOS_PACKED_VALUE, 1), 1))))
