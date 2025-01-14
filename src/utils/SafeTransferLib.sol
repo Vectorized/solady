@@ -489,10 +489,13 @@ library SafeTransferLib {
                 if eq(mload(0x00), DAI_DOMAIN_SEPARATOR) {
                     mstore(0x14, owner)
                     mstore(0x00, 0x7ecebe00000000000000000000000000) // `nonces(address)`.
-                    mstore(add(m, 0x94), staticcall(gas(), token, 0x10, 0x24, add(m, 0x54), 0x20))
+                    mstore(
+                        add(m, 0x94),
+                        lt(iszero(amount), staticcall(gas(), token, 0x10, 0x24, add(m, 0x54), 0x20))
+                    )
                     mstore(m, 0x8fcbaf0c000000000000000000000000) // `IDAIPermit.permit`.
                     // `nonces` is already at `add(m, 0x54)`.
-                    // `1` is already stored at `add(m, 0x94)`.
+                    // `amount != 0` is already stored at `add(m, 0x94)`.
                     mstore(add(m, 0xb4), and(0xff, v))
                     mstore(add(m, 0xd4), r)
                     mstore(add(m, 0xf4), s)
