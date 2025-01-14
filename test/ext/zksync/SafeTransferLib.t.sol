@@ -703,6 +703,52 @@ contract SafeTransferLibTest is SoladyTest {
         return SafeTransferLib.totalSupply(token);
     }
 
+    function testForceSafeTransferETH(uint256 amount) public {
+        address vault;
+        amount = _bound(amount, 0, 1 ether);
+        vm.deal(address(this), 1 ether);
+        griefer.setReceiveNumLoops(1 << 128);
+
+        vault = SafeTransferLib.forceSafeTransferETH(address(griefer), 1 ether);
+        assertNotEq(vault, address(0));
+        assertEq(vault.balance, 1 ether);
+
+        griefer.setReceiveNumLoops(0);
+
+        if (_randomChance(2)) {
+            vm.prank(address(griefer));
+            (bool success,) = vault.call("");
+            assertTrue(success);
+            assertEq(address(griefer).balance, 1 ether);
+        } else {
+            (address to, bytes memory data) = _sampleToAndVaultCalldata();
+            vm.prank(address(griefer));
+            (bool success,) = vault.call(data);
+            assertTrue(success);
+            assertEq(to.balance, 1 ether);
+        }
+    }
+
+    function _sampleToAndVaultCalldata() internal returns (address to, bytes memory data) {
+        if (_randomChance(2)) {
+            to = _randomHashedAddress();
+            data = abi.encodePacked(abi.encode(to), new bytes(_randomUniform() % 64));
+            return (to, data);
+        }
+        uint256 r = _randomUniform();
+        uint256 n = _bound(_randomUniform(), 1, 32);
+        /// @solidity memory-safe-assembly
+        assembly {
+            data := mload(0x40)
+            mstore(add(data, 0x20), r)
+            mstore(data, n)
+            mstore(0x40, add(n, add(0x20, data)))
+            mstore(0x00, 0)
+            mstore(sub(0x20, n), r)
+            to := mload(0x00)
+        }
+    }
+
     function testForceSafeTransferETH() public {
         address vault;
         vm.deal(address(this), 1 ether);
