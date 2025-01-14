@@ -356,9 +356,11 @@ abstract contract ERC4337 is Ownable, UUPSUpgradeable, Receiver, ERC1271 {
         address ep = entryPoint();
         /// @solidity memory-safe-assembly
         assembly {
-            // The EntryPoint has balance accounting logic in the `receive()` function.
+            // Call `depositTo(address)` instead of `receive()` for better standard compliance.
+            mstore(0x00, 0xb760faf9) // `depositTo(address)`.
+            mstore(0x20, address()) // `account`.
             // forgefmt: disable-next-item
-            if iszero(mul(extcodesize(ep), call(gas(), ep, callvalue(), codesize(), 0x00, codesize(), 0x00))) {
+            if iszero(mul(extcodesize(ep), call(gas(), ep, callvalue(), 0x1c, 0x24, codesize(), 0x00))) {
                 revert(codesize(), 0x00) // For gas estimation.
             }
         }
