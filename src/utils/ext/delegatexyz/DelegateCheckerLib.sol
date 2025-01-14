@@ -271,7 +271,7 @@ library DelegateCheckerLib {
     /// that `to` is granted rights to act on the behalf of `from`.
     /// ```
     ///     max(
-    ///         v2.checkDelegateForERC1155(to, from, contract_, id, rights),
+    ///         v2.checkDelegateForERC1155(to, from, contract_, id, ""),
     ///         v1.checkDelegateForContract(to, from, contract_, id) ? type(uint256).max : 0
     ///     )
     /// ```
