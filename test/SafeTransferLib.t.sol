@@ -878,7 +878,7 @@ contract SafeTransferLibTest is SoladyTest {
         t.deadline = block.timestamp;
         (t.signer, t.privateKey) = _randomSigner();
         t.spender = _randomNonZeroAddress();
-        t.amount = _bound(_random(), 0, type(uint160).max);
+        t.amount = _bound(_random(), 1, type(uint160).max);
         t.nonce = ERC20(_DAI).nonces(t.signer);
         t.hash = keccak256(
             abi.encode(_DAI_PERMIT_TYPEHASH, t.signer, t.spender, t.nonce, t.deadline, true)
@@ -886,6 +886,25 @@ contract SafeTransferLibTest is SoladyTest {
         t.hash =
             keccak256(abi.encodePacked("\x19\x01", SafeTransferLib.DAI_DOMAIN_SEPARATOR, t.hash));
         (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
+        this.permit2(t);
+
+        t.amount = 0;
+        t.nonce = ERC20(_DAI).nonces(t.signer);
+        t.hash = keccak256(
+            abi.encode(_DAI_PERMIT_TYPEHASH, t.signer, t.spender, t.nonce, t.deadline, false)
+        );
+        t.hash =
+            keccak256(abi.encodePacked("\x19\x01", SafeTransferLib.DAI_DOMAIN_SEPARATOR, t.hash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
+        this.permit2(t);
+
+        t.hash = keccak256(
+            abi.encode(_DAI_PERMIT_TYPEHASH, t.signer, t.spender, t.nonce, t.deadline, true)
+        );
+        t.hash =
+            keccak256(abi.encodePacked("\x19\x01", SafeTransferLib.DAI_DOMAIN_SEPARATOR, t.hash));
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.hash);
+        vm.expectRevert(SafeTransferLib.Permit2Failed.selector);
         this.permit2(t);
     }
 
