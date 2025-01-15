@@ -588,7 +588,7 @@ library LibClone {
         }
     }
 
-    /// @dev Returns the initialization code hash of the clone of `implementation`
+    /// @dev Returns the initialization code of the clone of `implementation`
     /// using immutable arguments encoded in `args`.
     function initCode(address implementation, bytes memory args)
         internal
