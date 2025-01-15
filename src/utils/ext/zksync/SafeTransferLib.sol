@@ -92,7 +92,7 @@ library SafeTransferLib {
         internal
         returns (address vault)
     {
-        if (amount == 0) return address(0); // Early return if `amount` is zero.
+        if (amount == uint256(0)) return address(0); // Early return if `amount` is zero.
         uint256 selfBalanceBefore = address(this).balance;
         /// @solidity memory-safe-assembly
         assembly {
@@ -102,7 +102,7 @@ library SafeTransferLib {
             }
             pop(call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00))
         }
-        if (address(this).balance >= selfBalanceBefore) {
+        if (address(this).balance == selfBalanceBefore) {
             vault = address(new SingleUseETHVault());
             /// @solidity memory-safe-assembly
             assembly {
