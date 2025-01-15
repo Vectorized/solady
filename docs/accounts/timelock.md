@@ -19,6 +19,8 @@ Simple timelock.
 - The proposal id is given by&#58;
 `keccak256(abi.encode(mode, keccak256(executionData)))`.
 
+We recommended including the salt, even though it is optional for convenience.
+
 <b>Supported modes:</b>
 - `bytes32(0x01000000000000000000...)`&#58; does not support optional `opData`.
 - `bytes32(0x01000000000078210001...)`&#58; supports optional `opData`.
@@ -171,6 +173,21 @@ function initialize(
 ```
 
 Initializes the timelock contract.
+
+### _initializeTimelockAuthorizationCheck()
+
+```solidity
+function _initializeTimelockAuthorizationCheck() internal virtual
+```
+
+The Timelock is best used via a minimal proxy.   
+But in case it is not, we want to guard `initialize` from frontrun griefing.   
+Authorizing both `msg.sender` and `tx.origin` caters to the use case where   
+the Timelock is being deployed via a factory (e.g. Nicks, CreateX).   
+Always call `initialize` as soon as possible after deployment.   
+In the rare case where `msg.sender` or `tx.origin` are untrusted   
+and abused to frontrun, `initialize` will revert on reinitialization,   
+so you will know that the deployment is compromised and must be discarded.
 
 ## Public Update Functions
 

@@ -35,7 +35,7 @@ The contract is not initializing.
 function _initializableSlot() internal pure virtual returns (bytes32)
 ```
 
-Override to return a custom storage slot if required.
+Override to return a non-zero custom storage slot if required.
 
 ### initializer()
 

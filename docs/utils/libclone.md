@@ -421,7 +421,7 @@ function initCode(address implementation, bytes memory args)
     returns (bytes memory c)
 ```
 
-Returns the initialization code hash of the clone of `implementation`   
+Returns the initialization code of the clone of `implementation`   
 using immutable arguments encoded in `args`.
 
 ### initCodeHash(address,bytes)
