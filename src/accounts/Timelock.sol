@@ -24,6 +24,8 @@ import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 /// - The proposal id is given by:
 ///   `keccak256(abi.encode(mode, keccak256(executionData)))`.
 ///
+/// We recommended including the salt, even though it is optional for convenience.
+///
 /// Supported modes:
 /// - `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
 /// - `bytes32(0x01000000000078210001...)`: supports optional `opData`.
