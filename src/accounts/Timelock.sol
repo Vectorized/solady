@@ -196,9 +196,11 @@ contract Timelock is ERC7821, EnumerableRoles {
     }
 
     /// @dev The Timelock is best used via a minimal proxy.
-    /// But in case it is not, we want to guard the `initialize` function from front-running.
+    /// But in case it is not, we want to guard `initialize` from frontrun griefing.
     /// Authorizing both `msg.sender` and `tx.origin` caters to the use case where
     /// the Timelock is being deployed via a factory (e.g. Nicks, CreateX).
+    /// Not fully watertight, but in the rare case where `msg.sender` or `tx.origin`
+    /// are abused to frontrun grief, `initialize` will revert.
     function _initializeTimelockAuthorizationCheck() internal virtual {
         uint256 self = __timelockSelf;
         uint256 deployer = __timelockDeployer;
