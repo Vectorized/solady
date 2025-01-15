@@ -24,6 +24,8 @@ import {EnumerableRoles} from "../auth/EnumerableRoles.sol";
 /// - The proposal id is given by:
 ///   `keccak256(abi.encode(mode, keccak256(executionData)))`.
 ///
+/// We recommended including the salt, even though it is optional for convenience.
+///
 /// Supported modes:
 /// - `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
 /// - `bytes32(0x01000000000078210001...)`: supports optional `opData`.
@@ -113,6 +115,19 @@ contract Timelock is ERC7821, EnumerableRoles {
     uint256 private constant _TIMELOCK_SLOT = 0x477f2812565c76a73f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         IMMUTABLES                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev For guarding `initialize` if not via a delegate call.
+    uint256 private immutable __timelockSelf = uint256(uint160(address(this)));
+
+    /// @dev For guarding `initialize` if not via a delegate call.
+    uint256 private immutable __timelockDeployer = uint256(uint160(address(msg.sender)));
+
+    /// @dev For guarding `initialize` if not via a delegate call.
+    uint256 private immutable __timelockDeployerOrigin = uint256(uint160(address(tx.origin)));
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -156,6 +171,7 @@ contract Timelock is ERC7821, EnumerableRoles {
         address[] calldata executors,
         address[] calldata cancellers
     ) public virtual {
+        _initializeTimelockAuthorizationCheck();
         /// @solidity memory-safe-assembly
         assembly {
             if shr(254, initialMinDelay) {
@@ -177,6 +193,30 @@ contract Timelock is ERC7821, EnumerableRoles {
         _bulkSetRole(proposers, PROPOSER_ROLE, true);
         _bulkSetRole(executors, EXECUTOR_ROLE, true);
         _bulkSetRole(cancellers, CANCELLER_ROLE, true);
+    }
+
+    /// @dev The Timelock is best used via a minimal proxy.
+    /// But in case it is not, we want to guard `initialize` from frontrun griefing.
+    /// Authorizing both `msg.sender` and `tx.origin` caters to the use case where
+    /// the Timelock is being deployed via a factory (e.g. Nicks, CreateX).
+    ///
+    /// Always call `initialize` as soon as possible after deployment.
+    /// In the rare case where `msg.sender` or `tx.origin` are untrusted
+    /// and abused to frontrun, `initialize` will revert on reinitialization,
+    /// so you will know that the deployment is compromised and must be discarded.
+    function _initializeTimelockAuthorizationCheck() internal virtual {
+        uint256 self = __timelockSelf;
+        uint256 deployer = __timelockDeployer;
+        uint256 deployerOrigin = __timelockDeployerOrigin;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if eq(self, address()) {
+                if iszero(or(eq(caller(), deployer), eq(caller(), deployerOrigin))) {
+                    mstore(0x00, 0x55140ae8) // `TimelockUnauthorized()`.
+                    revert(0x1c, 0x04)
+                }
+            }
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
