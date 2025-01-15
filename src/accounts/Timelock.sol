@@ -201,6 +201,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// the Timelock is being deployed via a factory (e.g. Nicks, CreateX).
     /// Not fully watertight, but in the rare case where `msg.sender` or `tx.origin`
     /// are abused to frontrun grief, `initialize` will revert.
+    /// Always call `initialize` as soon as possible after deployment.
     function _initializeTimelockAuthorizationCheck() internal virtual {
         uint256 self = __timelockSelf;
         uint256 deployer = __timelockDeployer;
