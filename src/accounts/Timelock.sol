@@ -113,6 +113,19 @@ contract Timelock is ERC7821, EnumerableRoles {
     uint256 private constant _TIMELOCK_SLOT = 0x477f2812565c76a73f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         IMMUTABLES                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev For guarding `initialize` if not via a delegate call.
+    uint256 private immutable __timelockSelf = uint256(uint160(address(this)));
+
+    /// @dev For guarding `initialize` if not via a delegate call.
+    uint256 private immutable __timelockDeployer = uint256(uint160(address(msg.sender)));
+
+    /// @dev For guarding `initialize` if not via a delegate call.
+    uint256 private immutable __timelockDeployerOrigin = uint256(uint160(address(tx.origin)));
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -156,6 +169,7 @@ contract Timelock is ERC7821, EnumerableRoles {
         address[] calldata executors,
         address[] calldata cancellers
     ) public virtual {
+        _initializeTimelockAuthorizationCheck();
         /// @solidity memory-safe-assembly
         assembly {
             if shr(254, initialMinDelay) {
@@ -177,6 +191,25 @@ contract Timelock is ERC7821, EnumerableRoles {
         _bulkSetRole(proposers, PROPOSER_ROLE, true);
         _bulkSetRole(executors, EXECUTOR_ROLE, true);
         _bulkSetRole(cancellers, CANCELLER_ROLE, true);
+    }
+
+    /// @dev The Timelock is best used via a minimal proxy.
+    /// But in case it is not, we want to guard the `initialize` function from front-running.
+    /// Authorizing both `msg.sender` and `tx.origin` caters to the use case where
+    /// the Timelock is being deployed via a factory (e.g. Nicks, CreateX).
+    function _initializeTimelockAuthorizationCheck() internal virtual {
+        uint256 self = __timelockSelf;
+        uint256 deployer = __timelockDeployer;
+        uint256 deployerOrigin = __timelockDeployerOrigin;
+        /// @solidity memory-safe-assembly
+        assembly {
+            if eq(self, address()) {
+                if iszero(or(eq(caller(), deployer), eq(caller(), deployerOrigin))) {
+                    mstore(0x00, 0x55140ae8) // `TimelockUnauthorized()`.
+                    revert(0x1c, 0x04)
+                }
+            }
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
