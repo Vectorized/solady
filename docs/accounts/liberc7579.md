@@ -37,6 +37,14 @@ bytes1 internal constant CALLTYPE_BATCH = 0x01
 
 A batch of executions.
 
+### CALLTYPE_STATICCALL
+
+```solidity
+bytes1 internal constant CALLTYPE_STATICCALL = 0xfe
+```
+
+A single `staticcall` execution.
+
 ### CALLTYPE_DELEGATECALL
 
 ```solidity

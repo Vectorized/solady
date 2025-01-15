@@ -213,7 +213,13 @@ Reverts if `maxLength` is zero.
   (`success` = false, `hasPopped` = false, `popped` = 0)   
 - If the queue is full, and `value` is greater than the minimum value:   
   (`success` = true, `hasPopped` = true, `popped` = <minimum value>)   
-Useful for implementing a bounded priority queue.
+Useful for implementing a bounded priority queue.   
+It is technically possible for the heap size to exceed `maxLength`   
+if `enqueue` has been previously called with a larger `maxLength`.   
+In such a case, the heap will be treated exactly as if it is full,   
+conditionally popping the minimum value if `value` is greater than it.   
+Under normal usage, which keeps `maxLength` constant throughout   
+the lifetime of a heap, this out-of-spec edge case will not be triggered.
 
 ### enqueue(MemHeap,uint256,uint256)
 
