@@ -135,25 +135,13 @@ contract ERC7821 is Receiver {
     /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
     function _execute(Call[] calldata calls, bytes32 extraData) internal virtual {
-        uint256 n = calls.length << 5;
-        for (uint256 j; j != n;) {
-            address target;
-            uint256 value;
-            bytes calldata data;
-            /// @solidity memory-safe-assembly
-            assembly {
-                // Directly extract `calls[i]` without bounds checks.
-                let c := add(calls.offset, calldataload(add(calls.offset, j)))
-                // Replaces `target` with `address(this)` if `address(0)` is provided.
-                // We'll skip cleaning the upper 96 bits of `target` as it is ignored in `call`.
-                target := or(mul(address(), iszero(calldataload(c))), calldataload(c))
-                value := calldataload(add(c, 0x20))
-                let o := add(c, calldataload(add(c, 0x40)))
-                data.offset := add(o, 0x20)
-                data.length := calldataload(o)
-                j := add(j, 0x20)
-            }
-            _execute(target, value, data, extraData);
+        unchecked {
+            uint256 i;
+            if (calls.length == uint256(0)) return;
+            do {
+                (address target, uint256 value, bytes calldata data) = _get(calls, i);
+                _execute(target, value, data, extraData);
+            } while (++i != calls.length);
         }
     }
 
@@ -174,6 +162,26 @@ contract ERC7821 is Receiver {
                 returndatacopy(m, 0x00, returndatasize())
                 revert(m, returndatasize())
             }
+        }
+    }
+
+    /// @dev Convenience function for getting `calls[i]`, without bounds checks.
+    function _get(Call[] calldata calls, uint256 i)
+        internal
+        view
+        virtual
+        returns (address target, uint256 value, bytes calldata data)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
+            // Replaces `target` with `address(this)` if `address(0)` is provided.
+            // We'll skip cleaning the upper 96 bits of `target` as it is ignored in `call`.
+            target := or(mul(address(), iszero(calldataload(c))), calldataload(c))
+            value := calldataload(add(c, 0x20))
+            let o := add(c, calldataload(add(c, 0x40)))
+            data.offset := add(o, 0x20)
+            data.length := calldataload(o)
         }
     }
 }
