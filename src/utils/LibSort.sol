@@ -581,6 +581,65 @@ library LibSort {
         }
     }
 
+    /// @dev Performs a sum on `values`, grouped by `keys`.
+    /// `keys` will be insertion-sorted and uniquified,
+    /// `values` will be re-populated with the group sums.
+    /// The arrays must have the same length.
+    function groupSum(uint256[] memory keys, uint256[] memory values) internal pure {
+        uint256 m;
+        /// @solidity memory-safe-assembly
+        assembly {
+            m := mload(0x40) // Cache the free memory pointer, for freeing the memory.
+            if iszero(eq(mload(keys), mload(values))) {
+                mstore(0x00, 0x4e487b71)
+                mstore(0x20, 0x32) // Array out of bounds panic.
+                revert(0x1c, 0x24)
+            }
+        }
+        if (keys.length == uint256(0)) return;
+        uint256[] memory oriKeys = copy(keys);
+        uint256[] memory oriValues = copy(values);
+        insertionSort(keys);
+        uniquifySorted(keys);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(values, mload(keys)) // Truncate.
+            calldatacopy(add(values, 0x20), calldatasize(), shl(5, mload(keys))) // Zeroize.
+            let end := add(0x20, shl(5, mload(oriKeys)))
+            for { let i := 0x20 } 1 {} {
+                let k := mload(add(oriKeys, i))
+                let v := mload(add(oriValues, i))
+                let j := 0x20
+                for {} iszero(eq(mload(add(keys, j)), k)) {} { j := add(j, 0x20) }
+                let s := add(mload(add(values, j)), v)
+                if lt(s, v) {
+                    mstore(0x00, 0x4e487b71)
+                    mstore(0x20, 0x11) // Overflow panic.
+                    revert(0x1c, 0x24)
+                }
+                mstore(add(values, j), s)
+                i := add(i, 0x20)
+                if eq(i, end) { break }
+            }
+            mstore(0x40, m) // Frees the temporary memory.
+        }
+    }
+
+    /// @dev Performs a sum on `values`, grouped by `keys`.
+    function groupSum(address[] memory keys, uint256[] memory values) internal pure {
+        groupSum(_toUints(keys), values);
+    }
+
+    /// @dev Performs a sum on `values`, grouped by `keys`.
+    function groupSum(bytes32[] memory keys, uint256[] memory values) internal pure {
+        groupSum(_toUints(keys), values);
+    }
+
+    /// @dev Performs a sum on `values`, grouped by `keys`.
+    function groupSum(int256[] memory keys, uint256[] memory values) internal pure {
+        groupSum(_toUints(keys), values);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
