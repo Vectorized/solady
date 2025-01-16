@@ -625,6 +625,21 @@ library LibSort {
         }
     }
 
+    /// @dev Performs a sum on `values`, grouped by `keys`.
+    function groupSum(address[] memory keys, uint256[] memory values) internal pure {
+        groupSum(_toUints(keys), values);
+    }
+
+    /// @dev Performs a sum on `values`, grouped by `keys`.
+    function groupSum(bytes32[] memory keys, uint256[] memory values) internal pure {
+        groupSum(_toUints(keys), values);
+    }
+
+    /// @dev Performs a sum on `values`, grouped by `keys`.
+    function groupSum(int256[] memory keys, uint256[] memory values) internal pure {
+        groupSum(_toUints(keys), values);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
