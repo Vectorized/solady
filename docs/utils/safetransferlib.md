@@ -69,6 +69,22 @@ error Permit2AmountOverflow()
 
 The Permit2 amount must be less than `2**160 - 1`.
 
+### Permit2ApproveFailed()
+
+```solidity
+error Permit2ApproveFailed()
+```
+
+The Permit2 approve operation has failed.
+
+### Permit2LockdownFailed()
+
+```solidity
+error Permit2LockdownFailed()
+```
+
+The Permit2 lockdown operation has failed.
+
 ## Constants
 
 ### GAS_STIPEND_NO_STORAGE_WRITES
@@ -380,3 +396,24 @@ function simplePermit2(
 ```
 
 Simple permit on the Permit2 contract.
+
+### permit2Approve(address,address,uint160,uint48)
+
+```solidity
+function permit2Approve(
+    address token,
+    address spender,
+    uint160 amount,
+    uint48 expiration
+) internal
+```
+
+Approves `spender` to spend `amount` of `token` for `address(this)`.
+
+### permit2Lockdown(address,address)
+
+```solidity
+function permit2Lockdown(address token, address spender) internal
+```
+
+Revokes an approval for `token` and `spender` for `address(this)`.

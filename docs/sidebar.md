@@ -81,4 +81,4 @@
 - **Links**
   - [<div class="s0cial"><i class="icon-github"></i>Github</div>](https://github.com/Vectorized/solady)
   - [<div class="s0cial"><i class="icon-x"></i>X</div>](https://x.com/optimizoor)
-  <div class="copyright"><a href="https://solady.org/" target="_blank" title="Solady">© Solady 2023</a></div>
+  <div class="copyright"><a href="https://solady.org/" target="_blank" title="Solady">© Solady <span class="fullyear">2023</span></a></div>

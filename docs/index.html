@@ -71,9 +71,11 @@ html, body, main {
 }
 .sidebar-nav li {
 	font-style: italic;
+	line-height: 1.8;
 }
 .sidebar-nav li * {
 	font-style: normal;
+	line-height: 1.6;
 }
 .sidebar-nav > ul > li > ul > li > ul {
 	margin-left: 0 !important;
@@ -187,7 +189,8 @@ html, body, main {
 .copyright {
 	font-size: 0.7em;
 	text-align: center;
-	margin-top: 23px;
+	margin-top: 15px;
+	margin-bottom: 0px;
 	margin-left: -22px;
 	opacity: 0.6;
 }
@@ -360,7 +363,14 @@ exponentialWait(function () {
 		});
 		searchInput.addEventListener('blur', function () {
 			searchInputWrap.className = searchInputWrap.className.replace(/\s+focus\s*/, '');
-		});	
+		});
+		exponentialWait(function () {
+			var yearElement = document.querySelector('.copyright .fullyear');
+			if (yearElement) {
+				yearElement.innerHTML = new Date().getFullYear();
+				return true;
+			}
+		});
 		return true;
 	}
 });

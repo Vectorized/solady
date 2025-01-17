@@ -269,6 +269,28 @@ function slice(uint256[] memory a, uint256 start, uint256 end)
 
 Returns a copy of `a` sliced from `start` to `end` (exclusive).
 
+### slice(uint256[],uint256)
+
+```solidity
+function slice(uint256[] memory a, uint256 start)
+    internal
+    pure
+    returns (uint256[] memory result)
+```
+
+Returns a copy of `a` sliced from `start` to the end of the array.
+
+### copy(uint256[])
+
+```solidity
+function copy(uint256[] memory a)
+    internal
+    pure
+    returns (uint256[] memory result)
+```
+
+Returns a copy of the array.
+
 ### contains(uint256[],uint256)
 
 ```solidity
@@ -779,6 +801,17 @@ function slice(DynamicArray memory a, uint256 start)
 ```
 
 Returns a copy of `a` sliced from `start` to the end of the array.
+
+### copy(DynamicArray)
+
+```solidity
+function copy(DynamicArray memory a)
+    internal
+    pure
+    returns (DynamicArray memory result)
+```
+
+Returns a copy of `a`.
 
 ### contains(DynamicArray,uint256)
 
