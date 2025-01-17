@@ -853,6 +853,7 @@ contract SafeTransferLibTest is SoladyTest {
         bytes32 hash;
         address token;
         uint256 deadline;
+        uint48 expiration;
         IPermit2.PermitSingle permit;
     }
 
@@ -1061,6 +1062,32 @@ contract SafeTransferLibTest is SoladyTest {
         _generatePermitSignatureRaw(t);
         vm.expectRevert(SafeTransferLib.Permit2AmountOverflow.selector);
         this.simplePermit2(t);
+    }
+
+    function testPermit2ApproveAndLockdown(
+        address token,
+        address spender,
+        uint160 amount,
+        uint48 expiration
+    ) public {
+        _TestTemps memory t;
+        (t.amount, t.expiration,) = IPermit2(_PERMIT2).allowance(address(this), token, spender);
+        assertEq(t.amount, 0);
+        assertEq(t.expiration, 0);
+
+        expiration = uint48(_bound(expiration, block.timestamp, type(uint48).max));
+
+        SafeTransferLib.permit2Approve(token, spender, amount, expiration);
+
+        (t.amount, t.expiration,) = IPermit2(_PERMIT2).allowance(address(this), token, spender);
+        assertEq(t.amount, amount);
+        assertEq(t.expiration, expiration);
+
+        SafeTransferLib.permit2Lockdown(token, spender);
+
+        (t.amount, t.expiration,) = IPermit2(_PERMIT2).allowance(address(this), token, spender);
+        assertEq(t.amount, 0);
+        assertEq(t.expiration, expiration); // Expiration stays the same.
     }
 
     function _generatePermitSignatureRaw(_TestTemps memory t) internal view {

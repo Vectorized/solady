@@ -34,6 +34,12 @@ library SafeTransferLib {
     /// @dev The Permit2 amount must be less than `2**160 - 1`.
     error Permit2AmountOverflow();
 
+    /// @dev The Permit2 approve operation has failed.
+    error Permit2ApproveFailed();
+
+    /// @dev The Permit2 lockdown operation has failed.
+    error Permit2LockdownFailed();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -562,6 +568,43 @@ library SafeTransferLib {
             if iszero( // Revert if token does not have code, or if the call fails.
             mul(extcodesize(token), call(gas(), p, 0, add(m, 0x1c), 0x184, codesize(), 0x00))) {
                 mstore(0x00, 0x6b836e6b) // `Permit2Failed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Approves `spender` to spend `amount` of `token` for `address(this)`.
+    function permit2Approve(address token, address spender, uint160 amount, uint48 expiration)
+        internal
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let addressMask := shr(96, not(0))
+            let m := mload(0x40)
+            mstore(m, 0x87517c45) // `approve(address,address,uint160,uint48)`.
+            mstore(add(m, 0x20), and(addressMask, token))
+            mstore(add(m, 0x40), and(addressMask, spender))
+            mstore(add(m, 0x60), and(addressMask, amount))
+            mstore(add(m, 0x80), and(0xffffffffffff, expiration))
+            if iszero(call(gas(), PERMIT2, 0, add(m, 0x1c), 0xa0, codesize(), 0x00)) {
+                mstore(0x00, 0x324f14ae) // `Permit2ApproveFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Revokes an approval for `token` and `spender` for `address(this)`.
+    function permit2Lockdown(address token, address spender) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, 0xcc53287f) // `Permit2.lockdown`.
+            mstore(add(m, 0x20), 0x20) // Offset of the `approvals`.
+            mstore(add(m, 0x40), 1) // `approvals.length`.
+            mstore(add(m, 0x60), shr(96, shl(96, token)))
+            mstore(add(m, 0x80), shr(96, shl(96, spender)))
+            if iszero(call(gas(), PERMIT2, 0, add(m, 0x1c), 0xa0, codesize(), 0x00)) {
+                mstore(0x00, 0x96b3de23) // `Permit2LockdownFailed()`.
                 revert(0x1c, 0x04)
             }
         }
