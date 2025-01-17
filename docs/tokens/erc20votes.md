@@ -100,7 +100,7 @@ function getPastVotes(address account, uint256 timepoint)
     returns (uint256)
 ```
 
-Returns the latest amount of voting units `account` has before `timepoint`.
+Returns the latest amount of voting units `account` has before or during `timepoint`.
 
 ### delegates(address)
 
@@ -181,7 +181,7 @@ function getPastVotesTotalSupply(uint256 timepoint)
     returns (uint256)
 ```
 
-Returns the latest amount of total voting units before `timepoint`.
+Returns the latest amount of total voting units before or during `timepoint`.
 
 ## Internal Functions
 
