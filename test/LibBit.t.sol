@@ -226,15 +226,20 @@ contract LibBitTest is SoladyTest {
     }
 
     function testCommonPrefix() public {
-        assertEq(LibBit.commonPrefix(0x1, 0x2), 0);
-        assertEq(LibBit.commonPrefix(0x1234abc, 0x1234bbb), 0x1234000);
-        assertEq(LibBit.commonPrefix(0x1234abc, 0x1234abc), 0x1234abc);
+        assertEq(LibBit.commonNibblePrefix(0x1, 0x2), 0);
+        assertEq(LibBit.commonNibblePrefix(0x1234abc, 0x1234bbb), 0x1234000);
+        assertEq(LibBit.commonNibblePrefix(0x1234abc, 0x1234abc), 0x1234abc);
+
+        assertEq(LibBit.commonBytePrefix(0xaabbcc, 0xaabbcc), 0xaabbcc);
+        assertEq(LibBit.commonBytePrefix(0xaabbcc, 0xaabbc0), 0xaabb00);
+        assertEq(LibBit.commonBytePrefix(0xaabbcc, 0xaab0c0), 0xaa0000);
+        assertEq(LibBit.commonBytePrefix(0xaabbcc, 0xa0b0c0), 0x000000);
     }
 
     function testCommonPrefix(uint256 x, uint8 p) public {
         uint256 y = x ^ (1 << p);
         uint256 l = 63 - p / 4;
         uint256 r = l == 0 ? 0 : x & ~((1 << ((64 - l) * 4)) - 1);
-        assertEq(LibBit.commonPrefix(x, y), r);
+        assertEq(LibBit.commonNibblePrefix(x, y), r);
     }
 }

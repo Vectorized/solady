@@ -117,14 +117,25 @@ library LibBit {
         }
     }
 
-    /// @dev Returns the common prefix of `x` and `y` in hex format.
-    function commonPrefix(uint256 x, uint256 y) internal pure returns (uint256 r) {
-        uint256 lz = clz(x ^ y);
-        assembly {
-            let nibbles := div(lz, 4)
-            // Since nibbles is always <= 64, there's no risk of underflow.
-            let bits := mul(sub(64, nibbles), 4)
-            r := shl(bits, shr(bits, x))
+    /// @dev Returns the common prefix of `x` and `y` at the bit level.
+    function commonBitPrefix(uint256 x, uint256 y) internal pure returns (uint256 r) {
+        r = clz(x ^ y);
+        r = (x >> r) << r;
+    }
+
+    /// @dev Returns the common prefix of `x` and `y` at the nibble level.
+    function commonNibblePrefix(uint256 x, uint256 y) internal pure returns (uint256 r) {
+        unchecked {
+            uint256 s = (64 - (clz(x ^ y) >> 2)) << 2;
+            r = (x >> s) << s;
+        }
+    }
+
+    /// @dev Returns the common prefix of `x` and `y` at the byte level.
+    function commonBytePrefix(uint256 x, uint256 y) internal pure returns (uint256 r) {
+        unchecked {
+            uint256 s = (32 - (clz(x ^ y) >> 3)) << 3;
+            r = (x >> s) << s;
         }
     }
 
