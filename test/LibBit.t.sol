@@ -224,4 +224,56 @@ contract LibBitTest is SoladyTest {
             r := mload(0x00)
         }
     }
+
+    function testCommonNibblePrefix() public {
+        assertEq(LibBit.commonNibblePrefix(0x1, 0x2), 0);
+        assertEq(LibBit.commonNibblePrefix(0x1234abc, 0x1234bbb), 0x1234000);
+        assertEq(LibBit.commonNibblePrefix(0x1234abc, 0x1234abc), 0x1234abc);
+    }
+
+    function testCommonNibblePrefixDifferential(uint256 x, uint256 y) public {
+        assertEq(LibBit.commonNibblePrefix(x, y), _commonNibblePrefixOriginal(x, y));
+    }
+
+    function _commonNibblePrefixOriginal(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        uint256 m = 0xf000000000000000000000000000000000000000000000000000000000000000;
+        while (m != 0) {
+            if ((x & m) == (y & m)) z |= x & m;
+            else break;
+            m >>= 4;
+        }
+    }
+
+    function testCommonBytePrefix() public {
+        assertEq(LibBit.commonBytePrefix(0xaabbcc, 0xaabbcc), 0xaabbcc);
+        assertEq(LibBit.commonBytePrefix(0xaabbcc, 0xaabbc0), 0xaabb00);
+        assertEq(LibBit.commonBytePrefix(0xaabbcc, 0xaab0c0), 0xaa0000);
+        assertEq(LibBit.commonBytePrefix(0xaabbcc, 0xa0b0c0), 0x000000);
+    }
+
+    function testCommonBytePrefixDifferential(uint256 x, uint256 y) public {
+        assertEq(LibBit.commonBytePrefix(x, y), _commonBytePrefixOriginal(x, y));
+    }
+
+    function _commonBytePrefixOriginal(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        uint256 m = 0xff00000000000000000000000000000000000000000000000000000000000000;
+        while (m != 0) {
+            if ((x & m) == (y & m)) z |= x & m;
+            else break;
+            m >>= 8;
+        }
+    }
+
+    function testCommonBitPrefixDifferential(uint256 x, uint256 y) public {
+        assertEq(LibBit.commonBitPrefix(x, y), _commonBitPrefixOriginal(x, y));
+    }
+
+    function _commonBitPrefixOriginal(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        uint256 m = 0x8000000000000000000000000000000000000000000000000000000000000000;
+        while (m != 0) {
+            if ((x & m) == (y & m)) z |= x & m;
+            else break;
+            m >>= 1;
+        }
+    }
 }
