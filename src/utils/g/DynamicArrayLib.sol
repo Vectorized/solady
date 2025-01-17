@@ -255,6 +255,31 @@ library DynamicArrayLib {
         }
     }
 
+    /// @dev Returns a copy of `a` sliced from `start` to the end of the array.
+    function slice(uint256[] memory a, uint256 start)
+        internal
+        pure
+        returns (uint256[] memory result)
+    {
+        result = slice(a, start, type(uint256).max);
+    }
+
+    /// @dev Returns a copy of the array.
+    function copy(uint256[] memory a) internal pure returns (uint256[] memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let end := add(add(result, 0x20), shl(5, mload(a)))
+            let o := result
+            for { let d := sub(a, result) } 1 {} {
+                mstore(o, mload(add(o, d)))
+                o := add(0x20, o)
+                if eq(o, end) { break }
+            }
+            mstore(0x40, o)
+        }
+    }
+
     /// @dev Returns if `needle` is in `a`.
     function contains(uint256[] memory a, uint256 needle) internal pure returns (bool) {
         return ~indexOf(a, needle, 0) != 0;
@@ -839,6 +864,11 @@ library DynamicArrayLib {
         returns (DynamicArray memory result)
     {
         result.data = slice(a.data, start, type(uint256).max);
+    }
+
+    /// @dev Returns a copy of `a`.
+    function copy(DynamicArray memory a) internal pure returns (DynamicArray memory result) {
+        result.data = copy(a.data);
     }
 
     /// @dev Returns if `needle` is in `a`.

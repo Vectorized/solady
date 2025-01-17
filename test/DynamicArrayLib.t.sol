@@ -228,10 +228,26 @@ contract DynamicArrayLibTest is SoladyTest {
         unchecked {
             start = _bound(start, 0, a.data.length + 2);
             end = _bound(end, 0, a.data.length + 2);
-            DynamicArrayLib.DynamicArray memory slice = a.slice(start, end);
+            DynamicArrayLib.DynamicArray memory slice;
+            if (_randomChance(2) && end > a.data.length) {
+                slice = a.slice(start);
+            } else {
+                slice = a.slice(start, end);
+            }
             _checkMemory(slice.data);
             assertEq(slice.data, _sliceOriginal(data, start, end));
         }
+    }
+
+    function testDynamicArrayCopy(uint256[] memory data) public {
+        DynamicArrayLib.DynamicArray memory a;
+        a.data = data;
+        DynamicArrayLib.DynamicArray memory b = a.copy();
+        assertEq(a.data, b.data);
+        a.p(1);
+        assertNotEq(a.data, b.data);
+        b.p(1);
+        assertEq(a.data, b.data);
     }
 
     function testUint256Contains() public {
