@@ -119,8 +119,10 @@ library LibBit {
 
     /// @dev Returns the common prefix of `x` and `y` at the bit level.
     function commonBitPrefix(uint256 x, uint256 y) internal pure returns (uint256 r) {
-        r = clz(x ^ y);
-        r = (x >> r) << r;
+        unchecked {
+            uint256 s = 256 - clz(x ^ y);
+            r = (x >> s) << s;
+        }
     }
 
     /// @dev Returns the common prefix of `x` and `y` at the nibble level.
