@@ -77,6 +77,39 @@ function reverseBytes(uint256 x) internal pure returns (uint256 r)
 
 Returns `x` reversed at the byte level.
 
+### commonBitPrefix(uint256,uint256)
+
+```solidity
+function commonBitPrefix(uint256 x, uint256 y)
+    internal
+    pure
+    returns (uint256)
+```
+
+Returns the common prefix of `x` and `y` at the bit level.
+
+### commonNibblePrefix(uint256,uint256)
+
+```solidity
+function commonNibblePrefix(uint256 x, uint256 y)
+    internal
+    pure
+    returns (uint256)
+```
+
+Returns the common prefix of `x` and `y` at the nibble level.
+
+### commonBytePrefix(uint256,uint256)
+
+```solidity
+function commonBytePrefix(uint256 x, uint256 y)
+    internal
+    pure
+    returns (uint256)
+```
+
+Returns the common prefix of `x` and `y` at the byte level.
+
 ## Boolean Operations
 
 A Solidity bool on the stack or memory is represented as a 256-bit word.   

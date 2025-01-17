@@ -519,3 +519,46 @@ function clean(address[] memory a) internal pure
 
 Cleans the upper 96 bits of the addresses.   
 In case `a` is produced via assembly and might have dirty upper bits.
+
+### groupSum(uint256[],uint256[])
+
+```solidity
+function groupSum(uint256[] memory keys, uint256[] memory values)
+    internal
+    pure
+```
+
+Performs a sum on `values`, grouped by `keys`.   
+`keys` will be insertion-sorted and uniquified,   
+`values` will be re-populated with the group sums.   
+The arrays must have the same length.
+
+### groupSum(address[],uint256[])
+
+```solidity
+function groupSum(address[] memory keys, uint256[] memory values)
+    internal
+    pure
+```
+
+Performs a sum on `values`, grouped by `keys`.
+
+### groupSum(bytes32[],uint256[])
+
+```solidity
+function groupSum(bytes32[] memory keys, uint256[] memory values)
+    internal
+    pure
+```
+
+Performs a sum on `values`, grouped by `keys`.
+
+### groupSum(int256[],uint256[])
+
+```solidity
+function groupSum(int256[] memory keys, uint256[] memory values)
+    internal
+    pure
+```
+
+Performs a sum on `values`, grouped by `keys`.
