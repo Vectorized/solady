@@ -115,7 +115,7 @@ abstract contract ERC20Votes is ERC20 {
         return _checkpointLatest(_delegateCheckpointsSlot(account));
     }
 
-    /// @dev Returns the latest amount of voting units `account` has before `timepoint`.
+    /// @dev Returns the latest amount of voting units `account` has before or during `timepoint`.
     function getPastVotes(address account, uint256 timepoint)
         public
         view
@@ -237,7 +237,7 @@ abstract contract ERC20Votes is ERC20 {
         return _checkpointLatest(_ERC20_VOTES_MASTER_SLOT_SEED << 96);
     }
 
-    /// @dev Returns the latest amount of total voting units before `timepoint`.
+    /// @dev Returns the latest amount of total voting units before or during `timepoint`.
     function getPastVotesTotalSupply(uint256 timepoint) public view virtual returns (uint256) {
         if (timepoint >= clock()) _revertERC5805FutureLookup();
         return _checkpointUpperLookupRecent(_ERC20_VOTES_MASTER_SLOT_SEED << 96, timepoint);
