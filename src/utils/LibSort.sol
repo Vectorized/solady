@@ -607,7 +607,7 @@ library LibSort {
             for { let i := shl(5, mload(oriKeys)) } 1 {} {
                 let k := mload(add(oriKeys, i))
                 let v := mload(add(oriValues, i))
-                let j := s // Just do a linear scan. Faster for small `n`.
+                let j := s // Just do a linear scan to optimize for small `n` and bytecode size.
                 for {} iszero(eq(mload(j), k)) {} { j := add(j, 0x20) }
                 j := add(j, d) // Convert `j` to point into `values`.
                 mstore(j, add(mload(j), v))
@@ -619,7 +619,7 @@ library LibSort {
                 i := add(i, w) // `sub(i, 0x20)`.
                 if iszero(i) { break }
             }
-            mstore(0x40, m) // Frees the temporary memory.
+            mstore(0x40, m) // Frees the memory allocated for the temporary copies.
         }
     }
 
