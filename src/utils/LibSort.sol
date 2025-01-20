@@ -601,7 +601,7 @@ library LibSort {
         assembly {
             let d := sub(values, keys)
             let w := not(0x1f)
-            let s := add(keys, 0x20)
+            let s := add(keys, 0x20) // Location of `keys[0]`.
             mstore(values, mload(keys)) // Truncate.
             calldatacopy(add(s, d), calldatasize(), shl(5, mload(keys))) // Zeroize.
             for { let i := shl(5, mload(oriKeys)) } 1 {} {
