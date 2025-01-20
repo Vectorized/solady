@@ -10,7 +10,7 @@ library LibSort {
 
     // - Faster on small arrays (32 or lesser elements).
     // - Faster on almost sorted arrays.
-    // - Smaller bytecode.
+    // - Smaller bytecode (about 300 bytes smaller than sort, which uses intro-quicksort).
     // - May be suitable for view functions intended for off-chain querying.
 
     /// @dev Sorts the array in-place with insertion sort.
@@ -581,10 +581,7 @@ library LibSort {
         }
     }
 
-    /// @dev Performs a sum on `values`, grouped by `keys`.
-    /// `keys` will be insertion-sorted and uniquified,
-    /// `values` will be re-populated with the group sums.
-    /// The arrays must have the same length.
+    /// @dev Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
     function groupSum(uint256[] memory keys, uint256[] memory values) internal pure {
         uint256 m;
         /// @solidity memory-safe-assembly
@@ -592,50 +589,51 @@ library LibSort {
             m := mload(0x40) // Cache the free memory pointer, for freeing the memory.
             if iszero(eq(mload(keys), mload(values))) {
                 mstore(0x00, 0x4e487b71)
-                mstore(0x20, 0x32) // Array out of bounds panic.
+                mstore(0x20, 0x32) // Array out of bounds panic if the arrays lengths differ.
                 revert(0x1c, 0x24)
             }
         }
         if (keys.length == uint256(0)) return;
-        uint256[] memory oriKeys = copy(keys);
-        uint256[] memory oriValues = copy(values);
-        insertionSort(keys);
+        (uint256[] memory oriKeys, uint256[] memory oriValues) = (copy(keys), copy(values));
+        insertionSort(keys); // Optimize for small `n` and bytecode size.
         uniquifySorted(keys);
         /// @solidity memory-safe-assembly
         assembly {
+            let d := sub(values, keys)
+            let w := not(0x1f)
+            let s := add(keys, 0x20) // Location of `keys[0]`.
             mstore(values, mload(keys)) // Truncate.
-            calldatacopy(add(values, 0x20), calldatasize(), shl(5, mload(keys))) // Zeroize.
-            let end := add(0x20, shl(5, mload(oriKeys)))
-            for { let i := 0x20 } 1 {} {
+            calldatacopy(add(s, d), calldatasize(), shl(5, mload(keys))) // Zeroize.
+            for { let i := shl(5, mload(oriKeys)) } 1 {} {
                 let k := mload(add(oriKeys, i))
                 let v := mload(add(oriValues, i))
-                let j := 0x20
-                for {} iszero(eq(mload(add(keys, j)), k)) {} { j := add(j, 0x20) }
-                let s := add(mload(add(values, j)), v)
-                if lt(s, v) {
+                let j := s // Just do a linear scan to optimize for small `n` and bytecode size.
+                for {} iszero(eq(mload(j), k)) {} { j := add(j, 0x20) }
+                j := add(j, d) // Convert `j` to point into `values`.
+                mstore(j, add(mload(j), v))
+                if lt(mload(j), v) {
                     mstore(0x00, 0x4e487b71)
-                    mstore(0x20, 0x11) // Overflow panic.
+                    mstore(0x20, 0x11) // Overflow panic if the addition overflows.
                     revert(0x1c, 0x24)
                 }
-                mstore(add(values, j), s)
-                i := add(i, 0x20)
-                if eq(i, end) { break }
+                i := add(i, w) // `sub(i, 0x20)`.
+                if iszero(i) { break }
             }
-            mstore(0x40, m) // Frees the temporary memory.
+            mstore(0x40, m) // Frees the memory allocated for the temporary copies.
         }
     }
 
-    /// @dev Performs a sum on `values`, grouped by `keys`.
+    /// @dev Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
     function groupSum(address[] memory keys, uint256[] memory values) internal pure {
         groupSum(_toUints(keys), values);
     }
 
-    /// @dev Performs a sum on `values`, grouped by `keys`.
+    /// @dev Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
     function groupSum(bytes32[] memory keys, uint256[] memory values) internal pure {
         groupSum(_toUints(keys), values);
     }
 
-    /// @dev Performs a sum on `values`, grouped by `keys`.
+    /// @dev Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
     function groupSum(int256[] memory keys, uint256[] memory values) internal pure {
         groupSum(_toUints(keys), values);
     }

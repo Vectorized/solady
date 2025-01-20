@@ -13,7 +13,7 @@ Optimized sorts and operations for sorted arrays.
 
 - Faster on small arrays (32 or lesser elements).   
 - Faster on almost sorted arrays.   
-- Smaller bytecode.   
+- Smaller bytecode (about 300 bytes smaller than sort, which uses intro-quicksort).   
 - May be suitable for view functions intended for off-chain querying.
 
 ### insertionSort(uint256[])
@@ -528,10 +528,7 @@ function groupSum(uint256[] memory keys, uint256[] memory values)
     pure
 ```
 
-Performs a sum on `values`, grouped by `keys`.   
-`keys` will be insertion-sorted and uniquified,   
-`values` will be re-populated with the group sums.   
-The arrays must have the same length.
+Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
 
 ### groupSum(address[],uint256[])
 
@@ -541,7 +538,7 @@ function groupSum(address[] memory keys, uint256[] memory values)
     pure
 ```
 
-Performs a sum on `values`, grouped by `keys`.
+Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
 
 ### groupSum(bytes32[],uint256[])
 
@@ -551,7 +548,7 @@ function groupSum(bytes32[] memory keys, uint256[] memory values)
     pure
 ```
 
-Performs a sum on `values`, grouped by `keys`.
+Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
 
 ### groupSum(int256[],uint256[])
 
@@ -561,4 +558,4 @@ function groupSum(int256[] memory keys, uint256[] memory values)
     pure
 ```
 
-Performs a sum on `values`, grouped by `keys`.
+Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.

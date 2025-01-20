@@ -1298,6 +1298,24 @@ contract LibSortTest is SoladyTest {
         assertEq(orAll >> 160, 0);
     }
 
+    function testGroupSum() public {
+        uint256 n = 32;
+        uint256[] memory keys = new uint256[](n);
+        uint256[] memory values = new uint256[](n);
+        uint256 total;
+        unchecked {
+            for (uint256 i; i < n; ++i) {
+                keys[i] = (i + 1) % 7;
+                values[i] = i;
+                total += i;
+            }
+        }
+        LibSort.groupSum(keys, values);
+        assertEq(keys.length, 7);
+        assertEq(values.length, 7);
+        assertEq(_sum(values), total);
+    }
+
     function testGroupSum(bytes32) public {
         if (_randomChance(2)) {
             _misalignFreeMemoryPointer();
