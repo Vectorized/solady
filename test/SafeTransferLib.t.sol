@@ -854,6 +854,8 @@ contract SafeTransferLibTest is SoladyTest {
         address token;
         uint256 deadline;
         uint48 expiration;
+        uint256 retrievedAmount;
+        uint256 retrievedExpiration;
         IPermit2.PermitSingle permit;
     }
 
@@ -1064,30 +1066,31 @@ contract SafeTransferLibTest is SoladyTest {
         this.simplePermit2(t);
     }
 
-    function testPermit2ApproveAndLockdown(
-        address token,
-        address spender,
-        uint160 amount,
-        uint48 expiration
-    ) public {
+    function testPermit2ApproveAndLockdown(bytes32) public {
         _TestTemps memory t;
-        (t.amount, t.expiration,) = IPermit2(_PERMIT2).allowance(address(this), token, spender);
-        assertEq(t.amount, 0);
-        assertEq(t.expiration, 0);
+        t.token = _randomHashedAddress();
+        t.spender = _randomHashedAddress();
+        t.amount = _bound(_random(), 0, type(uint160).max);
+        (t.retrievedAmount, t.retrievedExpiration,) =
+            IPermit2(_PERMIT2).allowance(address(this), t.token, t.spender);
+        assertEq(t.retrievedAmount, 0);
+        assertEq(t.retrievedExpiration, 0);
 
-        expiration = uint48(_bound(expiration, block.timestamp, type(uint48).max));
+        t.expiration = uint48(_bound(t.expiration, block.timestamp, type(uint48).max));
 
-        SafeTransferLib.permit2Approve(token, spender, amount, expiration);
+        SafeTransferLib.permit2Approve(t.token, t.spender, uint160(t.amount), t.expiration);
 
-        (t.amount, t.expiration,) = IPermit2(_PERMIT2).allowance(address(this), token, spender);
-        assertEq(t.amount, amount);
-        assertEq(t.expiration, expiration);
+        (t.retrievedAmount, t.retrievedExpiration,) =
+            IPermit2(_PERMIT2).allowance(address(this), t.token, t.spender);
+        assertEq(t.retrievedAmount, t.amount);
+        assertEq(t.retrievedExpiration, t.expiration);
 
-        SafeTransferLib.permit2Lockdown(token, spender);
+        SafeTransferLib.permit2Lockdown(t.token, t.spender);
 
-        (t.amount, t.expiration,) = IPermit2(_PERMIT2).allowance(address(this), token, spender);
-        assertEq(t.amount, 0);
-        assertEq(t.expiration, expiration); // Expiration stays the same.
+        (t.retrievedAmount, t.retrievedExpiration,) =
+            IPermit2(_PERMIT2).allowance(address(this), t.token, t.spender);
+        assertEq(t.retrievedAmount, 0);
+        assertEq(t.retrievedExpiration, t.expiration); // Expiration stays the same.
     }
 
     function _generatePermitSignatureRaw(_TestTemps memory t) internal view {
