@@ -112,7 +112,7 @@ jobs:
         with:
           check_filenames: true
           ignore_words_list: usera
-          skip: ./.git,package-lock.json,ackee-blockchain-solady-report.pdf,EIP712Mock.sol
+          skip: ./.git,package-lock.json,./audits,EIP712Mock.sol
 
   gas-diff:
     if: github.event_name == 'pull_request'
