@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Foundry
+      - name: Install Foundry Stable
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
@@ -82,6 +82,23 @@ jobs:
           ( [ "${{ matrix.profile }}" = "intense" ] &&
             forge test --fuzz-runs 5000
           )
+
+      
+      - name: Install Foundry Nightly
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Tests with ${{ matrix.profile }}
+        run: >
+          ( [ "${{ matrix.profile }}" = "post-cancun" ] &&
+            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 &&
+          ) ||
+          ( [ "${{ matrix.profile }}" = "post-cancun-via-ir" ] &&
+            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 --via-ir &&
+          )
+
+      
 
   codespell:
     runs-on: ${{ matrix.os }}
