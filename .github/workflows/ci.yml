@@ -1,6 +1,5 @@
 name: ci
-
-on:
+'on':
   pull_request:
     branches: [main]
     paths:
@@ -12,34 +11,28 @@ on:
       - '**.sol'
       - '**.yml'
 jobs:
-  tests:
+  tests-stable:
     name: Forge Testing
     runs-on: ubuntu-latest
     strategy:
       matrix:
         profile: [post-cancun,post-cancun-via-ir,solc-past-versions-0,solc-past-versions-1,via-ir,min-solc,min-solc-via-ir,intense]
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Foundry
+      - name: Install Foundry Stable
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
-
+          version: stable
       - name: Install Dependencies
         run: forge install
-
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "post-cancun" ] &&
             FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 &&
-            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 &&
             FOUNDRY_PROFILE=zksync forge test --use 0.8.28
           ) ||
           ( [ "${{ matrix.profile }}" = "post-cancun-via-ir" ] &&
             FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 --via-ir &&
-            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 --via-ir &&
             FOUNDRY_PROFILE=zksync forge test --use 0.8.28 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
@@ -83,17 +76,37 @@ jobs:
             forge test --fuzz-runs 5000
           )
 
+  tests-nightly:
+    name: Forge Ithaca Testing
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        profile: [post-cancun,post-cancun-via-ir]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Foundry Nightly
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - name: Install Dependencies
+        run: forge install
+      - name: Run Tests with ${{ matrix.profile }}
+        run: |
+          if [[ "${{ matrix.profile }}" == "post-cancun" ]]; then
+            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28
+          elif [[ "${{ matrix.profile }}" == "post-cancun-via-ir" ]]; then
+            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 --via-ir
+          fi
+
   codespell:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os:
           - ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Run codespell
         uses: codespell-project/actions-codespell@v2.0
         with:
@@ -112,26 +125,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-
       - name: Install Dependencies
         run: forge install
-
       - name: Generate gas diff
         uses: atarpara/foundry-snapshot-diff@v0.7
-        id : gas_diff
-      
+        id: gas_diff
       - name: Add gas diff to sticky comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           delete: ${{ !steps.gas_diff.outputs.markdown }}
           message: ${{ steps.gas_diff.outputs.markdown }}
 
-  prep-checker: 
+  prep-checker:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -140,15 +149,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-
       - name: Install Dependencies
         run: forge install
-
       - name: Run prep scripts and forge fmt
         run: >
           ( node prep/all &&
