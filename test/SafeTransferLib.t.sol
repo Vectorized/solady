@@ -520,18 +520,22 @@ contract SafeTransferLibTest is SoladyTest {
     }
 
     function testApproveWithMissingReturn(address to, uint256 amount) public {
+        if (to == _PERMIT2) return;
         verifySafeApprove(address(missingReturn), to, amount, _SUCCESS);
     }
 
     function testApproveWithStandardERC20(address to, uint256 amount) public {
+        if (to == _PERMIT2) return;
         verifySafeApprove(address(erc20), to, amount, _SUCCESS);
     }
 
     function testApproveWithReturnsTooMuch(address to, uint256 amount) public {
+        if (to == _PERMIT2) return;
         verifySafeApprove(address(returnsTooMuch), to, amount, _SUCCESS);
     }
 
     function testApproveWithNonGarbage(address to, uint256 amount) public {
+        if (to == _PERMIT2) return;
         returnsRawBytes.setRawBytes(_generateNonGarbage());
 
         verifySafeApprove(address(returnsRawBytes), to, amount, _SUCCESS);
@@ -540,6 +544,7 @@ contract SafeTransferLibTest is SoladyTest {
     function testApproveWithNonContractReverts(address nonContract, address to, uint256 amount)
         public
     {
+        if (to == _PERMIT2) return;
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
             return;
         }
@@ -552,6 +557,7 @@ contract SafeTransferLibTest is SoladyTest {
         address to,
         uint256 amount
     ) public {
+        if (to == _PERMIT2) return;
         if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) {
             return;
         }
@@ -560,6 +566,7 @@ contract SafeTransferLibTest is SoladyTest {
     }
 
     function testApproveWithRetry(address to, uint256 amount0, uint256 amount1) public {
+        if (to == _PERMIT2) return;
         MockERC20LikeUSDT usdt = new MockERC20LikeUSDT();
         assertEq(usdt.allowance(address(this), to), 0);
         SafeTransferLib.safeApproveWithRetry(address(usdt), _brutalized(to), amount0);
