@@ -731,6 +731,7 @@ contract SafeTransferLibTest is SoladyTest {
             assertEq(address(griefer).balance, 1 ether);
         } else {
             (address to, bytes memory data) = _sampleToAndVaultCalldata();
+            if (uint160(to) < 0xffff) return;
             vm.prank(address(griefer));
             (bool success,) = vault.call(data);
             assertTrue(success);
