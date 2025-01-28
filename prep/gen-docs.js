@@ -46,6 +46,8 @@ async function main() {
 
   const deindent = s => s.replace(/^ {4}/gm, '');
 
+  const stripSemicolon = s => s.replace(/;(\s*?)$/, '$1');
+
   const getFunctionSig = s => coalesce(
     s.match(/(\w+)\s*\(([^)]*)\)/),
     m => m[1] + '(' + m[2].split(',').map(x => strip(x).split(/\s+/)[0]) + ')'
@@ -96,7 +98,7 @@ async function main() {
     getSubSections(s, /((?:\/\/\/\s[^\n]+\n\s*?)+)((?:function|fallback|receive|modifier)[^{]+)/g)
     .map(m => ({
       natspec: cleanNatspecOrNote(m[1]), 
-      def: deindent(strip(m[2])),
+      def: stripSemicolon(deindent(strip(m[2]))),
       h3: getFunctionSig(deindent(strip(m[2])))
     }));
 
@@ -104,7 +106,7 @@ async function main() {
     getSubSections(s, /((?:\/\/\/\s[^\n]+\n\s*?)+)((?:bytes|uint|address)[0-9]*\s+(?:public|internal)\s+(?:immutable|constant)\s+([A-Za-z0-9_]+)[^;]*)/g)
     .map(m => ({
       natspec: cleanNatspecOrNote(m[1]), 
-      def: deindent(strip(m[2])),
+      def: stripSemicolon(deindent(strip(m[2]))),
       h3: deindent(strip(m[3]))
     }));
     
@@ -112,7 +114,7 @@ async function main() {
     getSubSections(s, /((?:\/\/\/\s[^\n]+\n\s*?)+)(error\s[^;]+);/g)
     .map(m => ({
       natspec: cleanNatspecOrNote(m[1]), 
-      def: deindent(strip(m[2])),
+      def: stripSemicolon(deindent(strip(m[2]))),
       h3: getFunctionSig(deindent(strip(m[2])))
     }));
 
@@ -120,7 +122,7 @@ async function main() {
     getSubSections(s, /((?:\/\/\/\s[^\n]+\n\s*?)+)((?:struct|enum)\s([A-Za-z0-9_]+)\s+\{[^}]+})/g)
     .map(m => ({
       natspec: cleanNatspecOrNote(m[1]), 
-      def: deindent(strip(m[2])),
+      def: stripSemicolon(deindent(strip(m[2]))),
       h3: deindent(strip(m[3]))
     }));
 
