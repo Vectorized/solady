@@ -14,6 +14,8 @@ contract ERC7821Test is SoladyTest {
 
     bytes32 internal constant _SUPPORTED_MODE = bytes10(0x01000000000078210001);
 
+    bytes[] internal _bytes;
+
     function setUp() public {
         mbe = new MockERC7821();
         target = LibClone.clone(address(this));
@@ -128,5 +130,34 @@ contract ERC7821Test is SoladyTest {
                 result += calls[i].value;
             }
         }
+    }
+
+    function testERC7821ExecuteBatchOfBatches() public {
+        bytes32 mode = bytes32(0x0100000000007821000200000000000000000000000000000000000000000000);
+        bytes[] memory batchBytes = new bytes[](3);
+        batchBytes[0] = hex"112233";
+        batchBytes[1] = hex"";
+        batchBytes[2] =
+            hex"112233445566778899112233445566778899112233445566778899112233445566778899112233445566778899";
+        bytes[] memory batches = new bytes[](batchBytes.length);
+        for (uint256 i; i < batches.length; ++i) {
+            batches[i] = _encodePushBytesBatch(batchBytes[i]);
+        }
+        mbe.execute(mode, abi.encode(batches));
+        for (uint256 i; i < batches.length; ++i) {
+            assertEq(_bytes[i], batchBytes[i]);
+        }
+        assertEq(_bytes.length, batchBytes.length);
+    }
+
+    function _encodePushBytesBatch(bytes memory x) internal view returns (bytes memory) {
+        ERC7821.Call[] memory calls = new ERC7821.Call[](1);
+        calls[0].data = abi.encodeWithSignature("pushBytes(bytes)", x);
+        calls[0].target = address(this);
+        return abi.encode(calls);
+    }
+
+    function pushBytes(bytes memory x) public {
+        _bytes.push(x);
     }
 }
