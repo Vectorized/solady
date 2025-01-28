@@ -93,10 +93,10 @@ contract ERC7821 is Receiver {
                 opData.length := calldataload(q)
             }
             // Bounds checking for `executionData` is skipped here for efficiency.
-            // This is safe if `executionData` is only used as calldata to `execute`.
-            // If `executionData` is an external argument to other public / external functions,
-            // please perform the `executionData` bounds checks in the other functions for safety.
-            // Use `LibERC7579.decodeBatchAndOpData` or `abi.decode` for bounds checking.
+            // This is safe if it is only used as an argument to `execute` externally.
+            // If `executionData` used as an argument to other functions externally,
+            // please perform the bounds checks via `LibERC7579.decodeBatchAndOpData`
+            /// or `abi.decode` in the other functions for safety.
         }
         _execute(mode, executionData, calls, opData);
     }
