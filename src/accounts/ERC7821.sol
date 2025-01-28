@@ -92,10 +92,11 @@ contract ERC7821 is Receiver {
                 opData.offset := add(q, 0x20)
                 opData.length := calldataload(q)
             }
-            // For efficiency, we skip the bounds checking for `executionData` decoding here.
-            // But if `executionData` is being used across multiple public / external
-            // functions, then the other functions MUST perform the bounds checking for safety.
-            // This can be done via `LibERC7579.decodeBatchAndOpData`.
+            // Bounds checking for `executionData` is skipped here for efficiency.
+            // This is safe if `executionData` is only used as calldata to `execute`.
+            // If `executionData` is used as calldata in other public / external functions,
+            // do perform the bounds checks on `executionData` in the other functions for safety.
+            // Use `LibERC7579.decodeBatchAndOpData` or `abi.decode` for bounds checking.
         }
         _execute(mode, executionData, calls, opData);
     }
@@ -140,8 +141,8 @@ contract ERC7821 is Receiver {
             n := calldataload(t) // `batches.length`.
             o := add(0x20, t) // Offset of `batches[0]`.
             e := add(executionData.offset, executionData.length) // End of `executionData`.
-            // We'll do the bounds check on `executionData` treating it as `abi.encode(bytes[])`,
-            // this is for simplicity, since we don't have a dedicated library for it.
+            // Do the bounds check on `executionData` treating it as `abi.encode(bytes[])`.
+            // Not too expensive, so we will just do it right here right now.
             if or(shr(64, j), or(lt(executionData.length, 0x20), gt(add(o, shl(5, n)), e))) {
                 mstore(0x00, 0x3995943b) // `BatchOfBatchesDecodingError()`.
                 revert(0x1c, 0x04)
