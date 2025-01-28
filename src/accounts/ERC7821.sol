@@ -56,6 +56,10 @@ contract ERC7821 is Receiver {
     /// - `0x01000000000078210001...`: Single batch. Supports optional `opData`.
     /// - `0x01000000000078210002...`: Batch of batches.
     ///
+    /// For the "batch of batches" mode, each batch will be recursively passed into
+    /// `execute` internally with mode `0x01000000000078210001...`.
+    /// Useful for passing in batches signed by different signers.
+    ///
     /// Authorization checks:
     /// - If `opData` is empty, the implementation SHOULD require that
     ///   `msg.sender == address(this)`.
