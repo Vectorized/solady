@@ -32,6 +32,9 @@ contract ERC7821 is Receiver {
     /// @dev The execution mode is not supported.
     error UnsupportedExecutionMode();
 
+    /// @dev Cannot decode `executionData` as a batch of batches `abi.encode(bytes[])`.
+    error BatchOfBatchesDecodingError();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -39,14 +42,23 @@ contract ERC7821 is Receiver {
     /// @dev Executes the calls in `executionData`.
     /// Reverts and bubbles up error if any call fails.
     ///
-    /// `executionData` encoding:
+    /// `executionData` encoding (single batch):
     /// - If `opData` is empty, `executionData` is simply `abi.encode(calls)`.
     /// - Else, `executionData` is `abi.encode(calls, opData)`.
     ///   See: https://eips.ethereum.org/EIPS/eip-7579
     ///
+    /// `executionData` encoding (batch of batches):
+    /// - `executionData` is `abi.encode(bytes[])`, where each element in `bytes[]`
+    ///   is an `executionData` for a single batch.
+    ///
     /// Supported modes:
-    /// - `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
-    /// - `bytes32(0x01000000000078210001...)`: supports optional `opData`.
+    /// - `0x01000000000000000000...`: Single batch. Does not support optional `opData`.
+    /// - `0x01000000000078210001...`: Single batch. Supports optional `opData`.
+    /// - `0x01000000000078210002...`: Batch of batches.
+    ///
+    /// For the "batch of batches" mode, each batch will be recursively passed into
+    /// `execute` internally with mode `0x01000000000078210001...`.
+    /// Useful for passing in batches signed by different signers.
     ///
     /// Authorization checks:
     /// - If `opData` is empty, the implementation SHOULD require that
@@ -60,6 +72,7 @@ contract ERC7821 is Receiver {
     /// paymaster data, gas limits, etc.
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual {
         uint256 id = _executionModeId(mode);
+        if (id == 3) return _executeBatchOfBatches(mode, executionData);
         Call[] calldata calls;
         bytes calldata opData;
         /// @solidity memory-safe-assembly
@@ -79,6 +92,11 @@ contract ERC7821 is Receiver {
                 opData.offset := add(q, 0x20)
                 opData.length := calldataload(q)
             }
+            // Bounds checking for `executionData` is skipped here for efficiency.
+            // This is safe if it is only used as an argument to `execute` externally.
+            // If `executionData` used as an argument to other functions externally,
+            // please perform the bounds checks via `LibERC7579.decodeBatchAndOpData`
+            /// or `abi.decode` in the other functions for safety.
         }
         _execute(mode, executionData, calls, opData);
     }
@@ -92,7 +110,7 @@ contract ERC7821 is Receiver {
     /*                      INTERNAL HELPERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev 0: invalid mode, 1: no `opData` support, 2: with `opData` support.
+    /// @dev 0: invalid mode, 1: no `opData` support, 2: with `opData` support, 3: batch of batches.
     function _executionModeId(bytes32 mode) internal view virtual returns (uint256 id) {
         // Only supports atomic batched executions.
         // For the encoding scheme, see: https://eips.ethereum.org/EIPS/eip-7579
@@ -100,12 +118,53 @@ contract ERC7821 is Receiver {
         // - [0]      ( 1 byte )  `0x01` for batch call.
         // - [1]      ( 1 byte )  `0x00` for revert on any failure.
         // - [2..5]   ( 4 bytes)  Reserved by ERC7579 for future standardization.
-        // - [6..9]   ( 4 bytes)  `0x78210001` or `0x00000000`.
+        // - [6..9]   ( 4 bytes)  `0x00000000` or `0x78210001` or `0x78210002`.
         // - [10..31] (22 bytes)  Unused. Free for use.
         /// @solidity memory-safe-assembly
         assembly {
             let m := and(shr(mul(22, 8), mode), 0xffff00000000ffffffff)
-            id := or(shl(1, eq(m, 0x01000000000078210001)), eq(m, 0x01000000000000000000))
+            id := eq(m, 0x01000000000000000000) // 1.
+            id := or(shl(1, eq(m, 0x01000000000078210001)), id) // 2.
+            id := or(mul(3, eq(m, 0x01000000000078210002)), id) // 3.
+        }
+    }
+
+    /// @dev For execution of a batch of batches.
+    function _executeBatchOfBatches(bytes32 mode, bytes calldata executionData) internal virtual {
+        // Replace with `0x0100________78210001...` while preserving optional and reserved fields.
+        mode ^= bytes32(uint256(3 << (22 * 8))); // `2 XOR 3 = 1`.
+        (uint256 n, uint256 o, uint256 e) = (0, 0, 0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let j := calldataload(executionData.offset)
+            let t := add(executionData.offset, j)
+            n := calldataload(t) // `batches.length`.
+            o := add(0x20, t) // Offset of `batches[0]`.
+            e := add(executionData.offset, executionData.length) // End of `executionData`.
+            // Do the bounds check on `executionData` treating it as `abi.encode(bytes[])`.
+            // Not too expensive, so we will just do it right here right now.
+            if or(shr(64, j), or(lt(executionData.length, 0x20), gt(add(o, shl(5, n)), e))) {
+                mstore(0x00, 0x3995943b) // `BatchOfBatchesDecodingError()`.
+                revert(0x1c, 0x04)
+            }
+        }
+        unchecked {
+            for (uint256 i; i != n; ++i) {
+                bytes calldata batch;
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let j := calldataload(add(o, shl(5, i)))
+                    let t := add(o, j)
+                    batch.offset := add(t, 0x20)
+                    batch.length := calldataload(t)
+                    // Validate that `batches[i]` is not out-of-bounds.
+                    if or(shr(64, j), gt(add(batch.offset, batch.length), e)) {
+                        mstore(0x00, 0x3995943b) // `BatchOfBatchesDecodingError()`.
+                        revert(0x1c, 0x04)
+                    }
+                }
+                execute(mode, batch);
+            }
         }
     }
 
