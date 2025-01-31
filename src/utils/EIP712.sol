@@ -54,27 +54,20 @@ abstract contract EIP712 {
 
         bytes32 separator;
         if (!_domainNameAndVersionMayChange()) {
-            if (!_domainSeparatorWithoutChainId()) {
-                /// @solidity memory-safe-assembly
-                assembly {
-                    let m := mload(0x40) // Load the free memory pointer.
-                    mstore(m, _DOMAIN_TYPEHASH)
-                    mstore(add(m, 0x20), nameHash)
-                    mstore(add(m, 0x40), versionHash)
-                    mstore(add(m, 0x60), chainid())
-                    mstore(add(m, 0x80), address())
-                    separator := keccak256(m, 0xa0)
-                }
-            } else {
-                /// @solidity memory-safe-assembly
-                assembly {
-                    let m := mload(0x40) // Load the free memory pointer.
-                    mstore(m, _DOMAIN_TYPEHASH_WITHOUT_CHAINID)
-                    mstore(add(m, 0x20), nameHash)
-                    mstore(add(m, 0x40), versionHash)
-                    mstore(add(m, 0x80), address())
-                    separator := keccak256(m, 0x80)
-                }
+            bool z = _domainSeparatorWithoutChainId();
+            /// @solidity memory-safe-assembly
+            assembly {
+                z := iszero(z)
+                let m := mload(0x40) // Load the free memory pointer.
+                // forgefmt: disable-next-item
+                mstore(m,
+                    xor(_DOMAIN_TYPEHASH_WITHOUT_CHAINID,
+                    mul(z, xor(_DOMAIN_TYPEHASH, _DOMAIN_TYPEHASH_WITHOUT_CHAINID))))
+                mstore(add(m, 0x20), nameHash)
+                mstore(add(m, 0x40), versionHash)
+                mstore(add(m, 0x60), chainid())
+                mstore(add(m, add(0x60, shl(5, z))), address())
+                separator := keccak256(m, add(0x80, shl(5, z)))
             }
         }
         _cachedDomainSeparator = separator;
@@ -205,27 +198,20 @@ abstract contract EIP712 {
             separator = _cachedNameHash;
             versionHash = _cachedVersionHash;
         }
-        if (!_domainSeparatorWithoutChainId()) {
-            /// @solidity memory-safe-assembly
-            assembly {
-                let m := mload(0x40) // Load the free memory pointer.
-                mstore(m, _DOMAIN_TYPEHASH)
-                mstore(add(m, 0x20), separator) // Name hash.
-                mstore(add(m, 0x40), versionHash)
-                mstore(add(m, 0x60), chainid())
-                mstore(add(m, 0x80), address())
-                separator := keccak256(m, 0xa0)
-            }
-        } else {
-            /// @solidity memory-safe-assembly
-            assembly {
-                let m := mload(0x40) // Load the free memory pointer.
-                mstore(m, _DOMAIN_TYPEHASH_WITHOUT_CHAINID)
-                mstore(add(m, 0x20), separator) // Name hash.
-                mstore(add(m, 0x40), versionHash)
-                mstore(add(m, 0x60), address())
-                separator := keccak256(m, 0x80)
-            }
+        bool z = _domainSeparatorWithoutChainId();
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := iszero(z)
+            let m := mload(0x40) // Load the free memory pointer.
+            // forgefmt: disable-next-item
+            mstore(m,
+                xor(_DOMAIN_TYPEHASH_WITHOUT_CHAINID,
+                mul(z, xor(_DOMAIN_TYPEHASH, _DOMAIN_TYPEHASH_WITHOUT_CHAINID))))
+            mstore(add(m, 0x20), separator)
+            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x60), chainid())
+            mstore(add(m, add(0x60, shl(5, z))), address())
+            separator := keccak256(m, add(0x80, shl(5, z)))
         }
     }
 
@@ -233,9 +219,12 @@ abstract contract EIP712 {
     function _cachedDomainSeparatorInvalidated() private view returns (bool result) {
         uint256 cachedChainId = _cachedChainId;
         uint256 cachedThis = _cachedThis;
+        bool z = _domainSeparatorWithoutChainId();
         /// @solidity memory-safe-assembly
         assembly {
-            result := iszero(and(eq(chainid(), cachedChainId), eq(address(), cachedThis)))
+            // forgefmt: disable-next-item
+            result := iszero(and(or(iszero(iszero(z)), eq(chainid(), cachedChainId)), 
+                                 eq(address(), cachedThis)))
         }
     }
 }
