@@ -146,8 +146,10 @@ abstract contract EIP712 {
         }
     }
 
-    /// @dev Variant that excludes the chain ID.
-    /// Optimized for smaller bytecode size over runtime gas, as it is intended to be used sparingly.
+    /// @dev Variant of `_hashTypedData` that excludes the chain ID.
+    /// We expect that most contracts will use `_hashTypedData` for the majority of hashes,
+    /// and use `_hashTypedDataSansChainId` for special cases such as cross-chain operations.
+    /// Thus this is optimized for smaller bytecode size over runtime gas.
     function _hashTypedDataSansChainId(bytes32 structHash)
         internal
         view
