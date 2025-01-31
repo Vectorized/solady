@@ -4,11 +4,14 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {MockEIP712} from "./utils/mocks/MockEIP712.sol";
 import {MockEIP712Dynamic} from "./utils/mocks/MockEIP712Dynamic.sol";
+import {MockEIP712DyanmicWithoutChainId} from "./utils/mocks/MockEIP712DyanmicWithoutChainId.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
 contract EIP712Test is SoladyTest {
     MockEIP712 mock;
     MockEIP712 mockClone;
+    MockEIP712DyanmicWithoutChainId mockWithoutChainId;
+    MockEIP712DyanmicWithoutChainId mockWithoutChainIdClone;
     MockEIP712Dynamic mockDynamic;
     MockEIP712Dynamic mockDynamicClone;
 
@@ -17,6 +20,9 @@ contract EIP712Test is SoladyTest {
         mockClone = MockEIP712(LibClone.clone(address(mock)));
         mockDynamic = new MockEIP712Dynamic("Milady", "1");
         mockDynamicClone = MockEIP712Dynamic(LibClone.clone(address(mockDynamic)));
+        mockWithoutChainId = new MockEIP712DyanmicWithoutChainId("Milady", "1");
+        mockWithoutChainIdClone =
+            MockEIP712DyanmicWithoutChainId(LibClone.clone(address(mockWithoutChainId)));
     }
 
     function testHashTypedData() public {
@@ -33,6 +39,14 @@ contract EIP712Test is SoladyTest {
 
     function testHashTypedDataOnCloneDynamic() public {
         _testHashTypedDataOnClone(MockEIP712(address(mockDynamicClone)));
+    }
+
+    function testHashTypedDataOnDynamicWithOutChainId() public {
+        _testHashTypedDataOnClone(MockEIP712(address(mockWithoutChainId)));
+    }
+
+    function testHashTypedDataOnCloneDynamicWithOutChainId() public {
+        _testHashTypedDataOnClone(MockEIP712(address(mockWithoutChainIdClone)));
     }
 
     function testHashTypedDataWithChaindIdChange() public {
@@ -106,6 +120,14 @@ contract EIP712Test is SoladyTest {
         _testDomainSeparator(MockEIP712(address(mockDynamic)));
         mockDynamic.setDomainNameAndVersion("Remilio", "2");
         _testDomainSeparator(MockEIP712(address(mockDynamic)), "Remilio", "2");
+
+        mockWithoutChainId.setDomainNameAndVersion("Remilio", "2");
+        _testDomainSeparatorWithoutChainId(MockEIP712(address(mockWithoutChainId)), "Remilio", "2");
+
+        mockWithoutChainIdClone.setDomainNameAndVersion("Remilio", "2");
+        _testDomainSeparatorWithoutChainId(
+            MockEIP712(address(mockWithoutChainIdClone)), "Remilio", "2"
+        );
     }
 
     function testDomainSeparatorOnCloneDynamicWithChainIdChange() public {
@@ -135,6 +157,23 @@ contract EIP712Test is SoladyTest {
         assertEq(mockToTest.DOMAIN_SEPARATOR(), expectedDomainSeparator);
     }
 
+    function _testDomainSeparatorWithoutChainId(
+        MockEIP712 mockToTest,
+        bytes memory name,
+        bytes memory version
+    ) internal {
+        bytes32 expectedDomainSeparator = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,address verifyingContract)"),
+                keccak256(name),
+                keccak256(version),
+                address(mockToTest)
+            )
+        );
+
+        assertEq(mockToTest.DOMAIN_SEPARATOR(), expectedDomainSeparator);
+    }
+
     function _testDomainSeparator(MockEIP712 mockToTest) internal {
         _testDomainSeparator(mockToTest, "Milady", "1");
     }
@@ -145,6 +184,9 @@ contract EIP712Test is SoladyTest {
         vm.chainId(32123);
         _testEIP5267(mock);
         _testEIP5267(mockClone);
+        _testEIP5267WithoutChainId(MockEIP712(address(mockWithoutChainId)));
+        mockWithoutChainIdClone.setDomainNameAndVersion("Milady", "1");
+        _testEIP5267WithoutChainId(MockEIP712(address(mockWithoutChainIdClone)));
     }
 
     struct _testEIP5267Variables {
@@ -166,6 +208,18 @@ contract EIP712Test is SoladyTest {
         assertEq(t.name, "Milady");
         assertEq(t.version, "1");
         assertEq(t.chainId, block.chainid);
+        assertEq(t.verifyingContract, address(mockToTest));
+        assertEq(t.salt, bytes32(0));
+        assertEq(t.extensions, new uint256[](0));
+    }
+
+    function _testEIP5267WithoutChainId(MockEIP712 mockToTest) public {
+        _testEIP5267Variables memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            mockToTest.eip712Domain();
+        assertEq(t.fields, hex"0b");
+        assertEq(t.name, "Milady");
+        assertEq(t.version, "1");
         assertEq(t.verifyingContract, address(mockToTest));
         assertEq(t.salt, bytes32(0));
         assertEq(t.extensions, new uint256[](0));

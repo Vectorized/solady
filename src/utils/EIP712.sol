@@ -21,6 +21,10 @@ abstract contract EIP712 {
     bytes32 internal constant _DOMAIN_TYPEHASH =
         0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
+    /// @dev `keccak256("EIP712Domain(string name,string version,address verifyingContract)")`.
+    bytes32 internal constant _DOMAIN_TYPEHASH_WITHOUT_CHAINID =
+        0x91ab3d17e3a50a9d89e63fd30b92be7f5336b03b287bb946787a83a9d62a2766;
+
     uint256 private immutable _cachedThis;
     uint256 private immutable _cachedChainId;
     bytes32 private immutable _cachedNameHash;
@@ -50,15 +54,27 @@ abstract contract EIP712 {
 
         bytes32 separator;
         if (!_domainNameAndVersionMayChange()) {
-            /// @solidity memory-safe-assembly
-            assembly {
-                let m := mload(0x40) // Load the free memory pointer.
-                mstore(m, _DOMAIN_TYPEHASH)
-                mstore(add(m, 0x20), nameHash)
-                mstore(add(m, 0x40), versionHash)
-                mstore(add(m, 0x60), chainid())
-                mstore(add(m, 0x80), address())
-                separator := keccak256(m, 0xa0)
+            if (!_domainSeparatorWithoutChainId()) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let m := mload(0x40) // Load the free memory pointer.
+                    mstore(m, _DOMAIN_TYPEHASH)
+                    mstore(add(m, 0x20), nameHash)
+                    mstore(add(m, 0x40), versionHash)
+                    mstore(add(m, 0x60), chainid())
+                    mstore(add(m, 0x80), address())
+                    separator := keccak256(m, 0xa0)
+                }
+            } else {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    let m := mload(0x40) // Load the free memory pointer.
+                    mstore(m, _DOMAIN_TYPEHASH_WITHOUT_CHAINID)
+                    mstore(add(m, 0x20), nameHash)
+                    mstore(add(m, 0x40), versionHash)
+                    mstore(add(m, 0x80), address())
+                    separator := keccak256(m, 0x80)
+                }
             }
         }
         _cachedDomainSeparator = separator;
@@ -93,6 +109,10 @@ abstract contract EIP712 {
     /// after the contract has been deployed (i.e. after the constructor).
     /// Default: false.
     function _domainNameAndVersionMayChange() internal pure virtual returns (bool result) {}
+
+    /// @dev Returns if `_domainSeparator()` without chain Id.
+    /// Default: false.
+    function _domainSeparatorWithoutChainId() internal pure virtual returns (bool result) {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
@@ -161,6 +181,7 @@ abstract contract EIP712 {
         )
     {
         fields = hex"0f"; // `0b01111`.
+        if (_domainSeparatorWithoutChainId()) fields = hex"0b"; // `0b01011`.
         (name, version) = _domainNameAndVersion();
         chainId = block.chainid;
         verifyingContract = address(this);
@@ -184,15 +205,27 @@ abstract contract EIP712 {
             separator = _cachedNameHash;
             versionHash = _cachedVersionHash;
         }
-        /// @solidity memory-safe-assembly
-        assembly {
-            let m := mload(0x40) // Load the free memory pointer.
-            mstore(m, _DOMAIN_TYPEHASH)
-            mstore(add(m, 0x20), separator) // Name hash.
-            mstore(add(m, 0x40), versionHash)
-            mstore(add(m, 0x60), chainid())
-            mstore(add(m, 0x80), address())
-            separator := keccak256(m, 0xa0)
+        if (!_domainSeparatorWithoutChainId()) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                let m := mload(0x40) // Load the free memory pointer.
+                mstore(m, _DOMAIN_TYPEHASH)
+                mstore(add(m, 0x20), separator) // Name hash.
+                mstore(add(m, 0x40), versionHash)
+                mstore(add(m, 0x60), chainid())
+                mstore(add(m, 0x80), address())
+                separator := keccak256(m, 0xa0)
+            }
+        } else {
+            /// @solidity memory-safe-assembly
+            assembly {
+                let m := mload(0x40) // Load the free memory pointer.
+                mstore(m, _DOMAIN_TYPEHASH_WITHOUT_CHAINID)
+                mstore(add(m, 0x20), separator) // Name hash.
+                mstore(add(m, 0x40), versionHash)
+                mstore(add(m, 0x60), address())
+                separator := keccak256(m, 0x80)
+            }
         }
     }
 
