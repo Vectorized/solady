@@ -22,8 +22,8 @@ abstract contract EIP712 {
         0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
     /// @dev `keccak256("EIP712Domain(string name,string version,address verifyingContract)")`.
-    /// This is only used in `_hashTypedDataWithoutChainId`.
-    bytes32 internal constant _DOMAIN_TYPEHASH_WITHOUT_CHAINID =
+    /// This is only used in `_hashTypedDataSansChainId`.
+    bytes32 internal constant _DOMAIN_TYPEHASH_SANS_CHAIN_ID =
         0x91ab3d17e3a50a9d89e63fd30b92be7f5336b03b287bb946787a83a9d62a2766;
 
     uint256 private immutable _cachedThis;
@@ -148,12 +148,17 @@ abstract contract EIP712 {
 
     /// @dev Variant that excludes the chain ID.
     /// Optimized for smaller bytecode size over runtime gas, as it is intended to be used sparingly.
-    function _hashTypedDataWithoutChainId(bytes32 structHash) internal view virtual returns (bytes32 digest) {
+    function _hashTypedDataSansChainId(bytes32 structHash)
+        internal
+        view
+        virtual
+        returns (bytes32 digest)
+    {
         (string memory name, string memory version) = _domainNameAndVersion();
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Load the free memory pointer.
-            mstore(0x00, _DOMAIN_TYPEHASH_WITHOUT_CHAINID)
+            mstore(0x00, _DOMAIN_TYPEHASH_SANS_CHAIN_ID)
             mstore(0x20, keccak256(add(name, 0x20), mload(name)))
             mstore(0x40, keccak256(add(version, 0x20), mload(version)))
             mstore(0x60, address())
