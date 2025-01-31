@@ -23,4 +23,8 @@ contract MockEIP712 is EIP712 {
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparator();
     }
+
+    function hashTypedDataSansChainId(bytes32 structHash) external view returns (bytes32) {
+        return _hashTypedDataSansChainId(structHash);
+    }
 }

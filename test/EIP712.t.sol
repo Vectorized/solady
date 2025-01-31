@@ -59,25 +59,40 @@ contract EIP712Test is SoladyTest {
         _testHashTypedDataOnClone(MockEIP712(address(mockDynamicClone)));
     }
 
+    struct _TestTemps {
+        string name;
+        string version;
+        address signer;
+        address to;
+        uint256 privateKey;
+        bytes32 structHash;
+        bytes32 expectedDigest;
+        string message;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+        address recoveredAddress;
+    }
+
     function _testHashTypedDataOnClone(MockEIP712 mockToTest) internal {
-        (address signer, uint256 privateKey) = _randomSigner();
+        _TestTemps memory t;
+        (t.signer, t.privateKey) = _randomSigner();
 
-        (address to,) = _randomSigner();
+        (t.to,) = _randomSigner();
 
-        string memory message = "Hello Milady!";
+        t.message = "Hello Milady!";
 
-        bytes32 structHash =
-            keccak256(abi.encode("Message(address to,string message)", to, message));
-        bytes32 expectedDigest =
-            keccak256(abi.encodePacked("\x19\x01", mockToTest.DOMAIN_SEPARATOR(), structHash));
+        t.structHash = keccak256(abi.encode("Message(address to,string message)", t.to, t.message));
+        t.expectedDigest =
+            keccak256(abi.encodePacked("\x19\x01", mockToTest.DOMAIN_SEPARATOR(), t.structHash));
 
-        assertEq(mockToTest.hashTypedData(structHash), expectedDigest);
+        assertEq(mockToTest.hashTypedData(t.structHash), t.expectedDigest);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, expectedDigest);
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.expectedDigest);
 
-        address recoveredAddress = ecrecover(expectedDigest, v, r, s);
+        t.recoveredAddress = ecrecover(t.expectedDigest, t.v, t.r, t.s);
 
-        assertEq(recoveredAddress, signer);
+        assertEq(t.recoveredAddress, t.signer);
     }
 
     function testDomainSeparator() public {
@@ -169,5 +184,58 @@ contract EIP712Test is SoladyTest {
         assertEq(t.verifyingContract, address(mockToTest));
         assertEq(t.salt, bytes32(0));
         assertEq(t.extensions, new uint256[](0));
+    }
+
+    function _testHashTypedDataSansChainId(MockEIP712 mockToTest) public {
+        _TestTemps memory t;
+        (, t.name, t.version,,,,) = mockToTest.eip712Domain();
+
+        (t.signer, t.privateKey) = _randomSigner();
+
+        (t.to,) = _randomSigner();
+
+        t.message = "Hello Milady!";
+
+        t.structHash = keccak256(abi.encode("Message(address to,string message)", t.to, t.message));
+        t.expectedDigest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                keccak256(
+                    abi.encode(
+                        keccak256(
+                            "EIP712Domain(string name,string version,address verifyingContract)"
+                        ),
+                        keccak256(bytes(t.name)),
+                        keccak256(bytes(t.version)),
+                        address(mockToTest)
+                    )
+                ),
+                t.structHash
+            )
+        );
+
+        assertEq(mockToTest.hashTypedDataSansChainId(t.structHash), t.expectedDigest);
+
+        (t.v, t.r, t.s) = vm.sign(t.privateKey, t.expectedDigest);
+
+        t.recoveredAddress = ecrecover(t.expectedDigest, t.v, t.r, t.s);
+
+        assertEq(t.recoveredAddress, t.signer);
+    }
+
+    function testHashTypedDataSansChainId() public {
+        _testHashTypedDataSansChainId(mock);
+    }
+
+    function testHashTypedDataSansChainIdOnClone() public {
+        _testHashTypedDataSansChainId(mockClone);
+    }
+
+    function testHashTypedDataSansChainIdOnDynamic() public {
+        _testHashTypedDataSansChainId(MockEIP712(address(mockDynamic)));
+    }
+
+    function testHashTypedDataSansChainIdOnDynamicClone() public {
+        _testHashTypedDataSansChainId(MockEIP712(address(mockDynamicClone)));
     }
 }

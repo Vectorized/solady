@@ -21,6 +21,11 @@ abstract contract EIP712 {
     bytes32 internal constant _DOMAIN_TYPEHASH =
         0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
+    /// @dev `keccak256("EIP712Domain(string name,string version,address verifyingContract)")`.
+    /// This is only used in `_hashTypedDataSansChainId`.
+    bytes32 internal constant _DOMAIN_TYPEHASH_SANS_CHAIN_ID =
+        0x91ab3d17e3a50a9d89e63fd30b92be7f5336b03b287bb946787a83a9d62a2766;
+
     uint256 private immutable _cachedThis;
     uint256 private immutable _cachedChainId;
     bytes32 private immutable _cachedNameHash;
@@ -138,6 +143,34 @@ abstract contract EIP712 {
             digest := keccak256(0x18, 0x42)
             // Restore the part of the free memory slot that was overwritten.
             mstore(0x3a, 0)
+        }
+    }
+
+    /// @dev Variant of `_hashTypedData` that excludes the chain ID.
+    /// We expect that most contracts will use `_hashTypedData` as the main hash,
+    /// and `_hashTypedDataSansChainId` only occasionally for cross-chain workflows.
+    /// Thus this is optimized for smaller bytecode size over runtime gas.
+    function _hashTypedDataSansChainId(bytes32 structHash)
+        internal
+        view
+        virtual
+        returns (bytes32 digest)
+    {
+        (string memory name, string memory version) = _domainNameAndVersion();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(0x00, _DOMAIN_TYPEHASH_SANS_CHAIN_ID)
+            mstore(0x20, keccak256(add(name, 0x20), mload(name)))
+            mstore(0x40, keccak256(add(version, 0x20), mload(version)))
+            mstore(0x60, address())
+            // Compute the digest.
+            mstore(0x20, keccak256(0x00, 0x80)) // Store the domain separator.
+            mstore(0x00, 0x1901) // Store "\x19\x01".
+            mstore(0x40, structHash) // Store the struct hash.
+            digest := keccak256(0x1e, 0x42)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
         }
     }
 
