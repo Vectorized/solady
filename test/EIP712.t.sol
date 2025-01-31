@@ -4,14 +4,11 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {MockEIP712} from "./utils/mocks/MockEIP712.sol";
 import {MockEIP712Dynamic} from "./utils/mocks/MockEIP712Dynamic.sol";
-import {MockEIP712DyanmicWithoutChainId} from "./utils/mocks/MockEIP712DyanmicWithoutChainId.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 
 contract EIP712Test is SoladyTest {
     MockEIP712 mock;
     MockEIP712 mockClone;
-    MockEIP712DyanmicWithoutChainId mockWithoutChainId;
-    MockEIP712DyanmicWithoutChainId mockWithoutChainIdClone;
     MockEIP712Dynamic mockDynamic;
     MockEIP712Dynamic mockDynamicClone;
 
@@ -20,9 +17,6 @@ contract EIP712Test is SoladyTest {
         mockClone = MockEIP712(LibClone.clone(address(mock)));
         mockDynamic = new MockEIP712Dynamic("Milady", "1");
         mockDynamicClone = MockEIP712Dynamic(LibClone.clone(address(mockDynamic)));
-        mockWithoutChainId = new MockEIP712DyanmicWithoutChainId("Milady", "1");
-        mockWithoutChainIdClone =
-            MockEIP712DyanmicWithoutChainId(LibClone.clone(address(mockWithoutChainId)));
     }
 
     function testHashTypedData() public {
@@ -41,7 +35,7 @@ contract EIP712Test is SoladyTest {
         _testHashTypedDataOnClone(MockEIP712(address(mockDynamicClone)));
     }
 
-    function testHashTypedDataOnDynamicWithOutChainId() public {
+    function testHashTypedDataWithOutChainId() public {
         _testHashTypedDataOnClone(MockEIP712(address(mockWithoutChainId)));
     }
 

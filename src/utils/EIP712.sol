@@ -22,6 +22,7 @@ abstract contract EIP712 {
         0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
     /// @dev `keccak256("EIP712Domain(string name,string version,address verifyingContract)")`.
+    /// This is only used in `_hashTypedDataWithoutChainId`.
     bytes32 internal constant _DOMAIN_TYPEHASH_WITHOUT_CHAINID =
         0x91ab3d17e3a50a9d89e63fd30b92be7f5336b03b287bb946787a83a9d62a2766;
 
@@ -54,20 +55,15 @@ abstract contract EIP712 {
 
         bytes32 separator;
         if (!_domainNameAndVersionMayChange()) {
-            bool z = _domainSeparatorWithoutChainId();
             /// @solidity memory-safe-assembly
             assembly {
-                z := iszero(z)
                 let m := mload(0x40) // Load the free memory pointer.
-                // forgefmt: disable-next-item
-                mstore(m,
-                    xor(_DOMAIN_TYPEHASH_WITHOUT_CHAINID,
-                    mul(z, xor(_DOMAIN_TYPEHASH, _DOMAIN_TYPEHASH_WITHOUT_CHAINID))))
+                mstore(m, _DOMAIN_TYPEHASH)
                 mstore(add(m, 0x20), nameHash)
                 mstore(add(m, 0x40), versionHash)
                 mstore(add(m, 0x60), chainid())
-                mstore(add(m, add(0x60, shl(5, z))), address())
-                separator := keccak256(m, add(0x80, shl(5, z)))
+                mstore(add(m, 0x80), address())
+                separator := keccak256(m, 0xa0)
             }
         }
         _cachedDomainSeparator = separator;
@@ -102,10 +98,6 @@ abstract contract EIP712 {
     /// after the contract has been deployed (i.e. after the constructor).
     /// Default: false.
     function _domainNameAndVersionMayChange() internal pure virtual returns (bool result) {}
-
-    /// @dev Returns if `_domainSeparator()` without chain Id.
-    /// Default: false.
-    function _domainSeparatorWithoutChainId() internal pure virtual returns (bool result) {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     HASHING OPERATIONS                     */
@@ -154,6 +146,27 @@ abstract contract EIP712 {
         }
     }
 
+    /// @dev Variant that excludes the chain ID.
+    /// Optimized for smaller bytecode size over runtime gas, as it is intended to be used sparingly.
+    function _hashTypedDataWithoutChainId(bytes32 structHash) internal view virtual returns (bytes32 digest) {
+        (string memory name, string memory version) = _domainNameAndVersion();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(0x00, _DOMAIN_TYPEHASH_WITHOUT_CHAINID)
+            mstore(0x20, keccak256(add(name, 0x20), mload(name)))
+            mstore(0x40, keccak256(add(version, 0x20), mload(version)))
+            mstore(0x60, address())
+            // Compute the digest.
+            mstore(0x20, keccak256(0x00, 0x80)) // Store the domain separator.
+            mstore(0x00, 0x1901) // Store "\x19\x01".
+            mstore(0x40, structHash) // Store the struct hash.
+            digest := keccak256(0x1e, 0x42)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    EIP-5267 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -174,7 +187,6 @@ abstract contract EIP712 {
         )
     {
         fields = hex"0f"; // `0b01111`.
-        if (_domainSeparatorWithoutChainId()) fields = hex"0b"; // `0b01011`.
         (name, version) = _domainNameAndVersion();
         chainId = block.chainid;
         verifyingContract = address(this);
@@ -198,20 +210,15 @@ abstract contract EIP712 {
             separator = _cachedNameHash;
             versionHash = _cachedVersionHash;
         }
-        bool z = _domainSeparatorWithoutChainId();
         /// @solidity memory-safe-assembly
         assembly {
-            z := iszero(z)
             let m := mload(0x40) // Load the free memory pointer.
-            // forgefmt: disable-next-item
-            mstore(m,
-                xor(_DOMAIN_TYPEHASH_WITHOUT_CHAINID,
-                mul(z, xor(_DOMAIN_TYPEHASH, _DOMAIN_TYPEHASH_WITHOUT_CHAINID))))
-            mstore(add(m, 0x20), separator)
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), separator) // Name hash.
             mstore(add(m, 0x40), versionHash)
             mstore(add(m, 0x60), chainid())
-            mstore(add(m, add(0x60, shl(5, z))), address())
-            separator := keccak256(m, add(0x80, shl(5, z)))
+            mstore(add(m, 0x80), address())
+            separator := keccak256(m, 0xa0)
         }
     }
 
@@ -219,12 +226,9 @@ abstract contract EIP712 {
     function _cachedDomainSeparatorInvalidated() private view returns (bool result) {
         uint256 cachedChainId = _cachedChainId;
         uint256 cachedThis = _cachedThis;
-        bool z = _domainSeparatorWithoutChainId();
         /// @solidity memory-safe-assembly
         assembly {
-            // forgefmt: disable-next-item
-            result := iszero(and(or(iszero(iszero(z)), eq(chainid(), cachedChainId)), 
-                                 eq(address(), cachedThis)))
+            result := iszero(and(eq(chainid(), cachedChainId), eq(address(), cachedThis)))
         }
     }
 }
