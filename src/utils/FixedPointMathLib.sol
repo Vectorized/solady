@@ -653,8 +653,16 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `max(0, x - y)`. Also known as saturating subtraction.
+    /// @dev Returns `max(0, x - y)`. Alias for `saturatingSub`.
     function zeroFloorSub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := mul(gt(x, y), sub(x, y))
+        }
+    }
+
+    /// @dev Returns `max(0, x - y)`.
+    function saturatingSub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             z := mul(gt(x, y), sub(x, y))
