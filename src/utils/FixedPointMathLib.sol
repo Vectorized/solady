@@ -653,11 +653,27 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `max(0, x - y)`.
+    /// @dev Returns `max(0, x - y)`. Also known as saturating subtraction.
     function zeroFloorSub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
             z := mul(gt(x, y), sub(x, y))
+        }
+    }
+
+    /// @dev Returns `min(2 ** 256 - 1, x + y)`.
+    function saturatingAdd(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := or(sub(0, lt(add(x, y), x)), add(x, y))
+        }
+    }
+
+    /// @dev Returns `min(2 ** 256 - 1, x * y)`.
+    function saturatingMul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := or(sub(or(iszero(x), eq(div(mul(x, y), x), y)), 1), mul(x, y))
         }
     }
 
