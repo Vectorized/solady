@@ -2184,11 +2184,11 @@ contract FixedPointMathLibTest is SoladyTest {
         assert(FixedPointMathLib.saturatingAdd(x, y) == expected);
     }
 
-    function testSaturatingAdd() public {
+    function testSaturatingAdd() public view {
         testSaturatingAdd(123, 456);
     }
 
-    function check_SaturatingAddEquivalence(uint256 x, uint256 y) public {
+    function check_SaturatingAddEquivalence(uint256 x, uint256 y) public view {
         testSaturatingAdd(x, y);
     }
 
@@ -2196,18 +2196,18 @@ contract FixedPointMathLibTest is SoladyTest {
         return x + y;
     }
 
-    function testSaturatingMul(uint256 x, uint256 y) public {
+    function testSaturatingMul(uint256 x, uint256 y) public view {
         bytes memory data = abi.encodeWithSignature("mul(uint256,uint256)", x, y);
         (bool success,) = address(this).staticcall(data);
         uint256 expected = !success ? type(uint256).max : x * y;
         assert(FixedPointMathLib.saturatingMul(x, y) == expected);
     }
 
-    function check_SaturatingMulEquivalence(uint256 x, uint256 y) public {
+    function check_SaturatingMulEquivalence(uint256 x, uint256 y) public view {
         testSaturatingMul(x, y);
     }
 
-    function testSaturatingMul() public {
+    function testSaturatingMul() public view {
         testSaturatingMul(123, 456);
     }
 
