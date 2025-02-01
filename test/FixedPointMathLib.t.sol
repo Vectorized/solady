@@ -2177,15 +2177,19 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.invMod(a, 0), 0);
     }
 
-    function testSaturatingAdd(uint256 x, uint256 y) public {
+    function testSaturatingAdd(uint256 x, uint256 y) public view {
         bytes memory data = abi.encodeWithSignature("add(uint256,uint256)", x, y);
-        (bool success, bytes memory result) = address(this).staticcall(data);
-        uint256 expected = !success ? type(uint256).max : abi.decode(result, (uint256));
-        assertEq(FixedPointMathLib.saturatingAdd(x, y), expected);
+        (bool success,) = address(this).staticcall(data);
+        uint256 expected = !success ? type(uint256).max : x + y;
+        assert(FixedPointMathLib.saturatingAdd(x, y) == expected);
     }
 
     function testSaturatingAdd() public {
         testSaturatingAdd(123, 456);
+    }
+
+    function check_SaturatingAddEquivalence(uint256 x, uint256 y) public {
+        testSaturatingAdd(x, y);
     }
 
     function add(uint256 x, uint256 y) public pure returns (uint256) {
@@ -2194,9 +2198,13 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testSaturatingMul(uint256 x, uint256 y) public {
         bytes memory data = abi.encodeWithSignature("mul(uint256,uint256)", x, y);
-        (bool success, bytes memory result) = address(this).staticcall(data);
-        uint256 expected = !success ? type(uint256).max : abi.decode(result, (uint256));
-        assertEq(FixedPointMathLib.saturatingMul(x, y), expected);
+        (bool success,) = address(this).staticcall(data);
+        uint256 expected = !success ? type(uint256).max : x * y;
+        assert(FixedPointMathLib.saturatingMul(x, y) == expected);
+    }
+
+    function check_SaturatingMulEquivalence(uint256 x, uint256 y) public {
+        testSaturatingMul(x, y);
     }
 
     function testSaturatingMul() public {
