@@ -394,7 +394,29 @@ function zeroFloorSub(uint256 x, uint256 y)
     returns (uint256 z)
 ```
 
-Returns `max(0, x - y)`.
+Returns `max(0, x - y)`. Also known as saturating subtraction.
+
+### saturatingAdd(uint256,uint256)
+
+```solidity
+function saturatingAdd(uint256 x, uint256 y)
+    internal
+    pure
+    returns (uint256 z)
+```
+
+Returns `min(2 ** 256 - 1, x + y)`.
+
+### saturatingMul(uint256,uint256)
+
+```solidity
+function saturatingMul(uint256 x, uint256 y)
+    internal
+    pure
+    returns (uint256 z)
+```
+
+Returns `min(2 ** 256 - 1, x * y)`.
 
 ### ternary(bool,uint256,uint256)
 
