@@ -1002,4 +1002,17 @@ contract ERC721Test is SoladyTest {
         vm.expectRevert(ERC721.TokenDoesNotExist.selector);
         _ownerOf(id);
     }
+
+    function check_AuxPackEquivalence(uint224 a, uint32 b) public pure {
+        uint256 packed = (uint256(a) << 32) | uint256(b);
+        unchecked {
+            bool hasOverflow = ((packed + 1) & 0xffffffff) == 0;
+            bool groundTruth = b == 0xffffffff;
+            assert(hasOverflow == groundTruth);
+        }
+    }
+
+    function testAuxPackEquivalence(uint224 a, uint32 b) public pure {
+        check_AuxPackEquivalence(a, b);
+    }
 }
