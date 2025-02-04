@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import {CallContextChecker} from "./CallContextChecker.sol";
+
 /// @notice UUPS proxy mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/UUPSUpgradeable.sol)
 /// @author Modified from OpenZeppelin
@@ -11,23 +13,13 @@ pragma solidity ^0.8.4;
 /// See: `LibClone.deployERC1967` and related functions.
 /// - This implementation is NOT compatible with legacy OpenZeppelin proxies
 /// which do not store the implementation at `_ERC1967_IMPLEMENTATION_SLOT`.
-abstract contract UUPSUpgradeable {
+abstract contract UUPSUpgradeable is CallContextChecker {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The upgrade failed.
     error UpgradeFailed();
-
-    /// @dev The call is from an unauthorized call context.
-    error UnauthorizedCallContext();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         IMMUTABLES                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev For checking if the context is a delegate call.
-    uint256 private immutable __self = uint256(uint160(address(this)));
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -109,35 +101,5 @@ abstract contract UUPSUpgradeable {
                 }
             }
         }
-    }
-
-    /// @dev Requires that the execution is performed through a proxy.
-    modifier onlyProxy() {
-        uint256 s = __self;
-        /// @solidity memory-safe-assembly
-        assembly {
-            // To enable use cases with an immutable default implementation in the bytecode,
-            // (see: ERC6551Proxy), we don't require that the proxy address must match the
-            // value stored in the implementation slot, which may not be initialized.
-            if eq(s, address()) {
-                mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
-                revert(0x1c, 0x04)
-            }
-        }
-        _;
-    }
-
-    /// @dev Requires that the execution is NOT performed via delegatecall.
-    /// This is the opposite of `onlyProxy`.
-    modifier notDelegated() {
-        uint256 s = __self;
-        /// @solidity memory-safe-assembly
-        assembly {
-            if iszero(eq(s, address())) {
-                mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
-                revert(0x1c, 0x04)
-            }
-        }
-        _;
     }
 }
