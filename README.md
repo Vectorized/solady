@@ -59,6 +59,7 @@ tokens
 ├─ WETH — "Simple Wrapped Ether implementation"
 utils
 ├─ Base64 — "Library for Base64 encoding and decoding"
+├─ CallContextChecker — "Call context checker mixin"
 ├─ CREATE3 — "Deterministic deployments agnostic to the initialization code"
 ├─ DateTimeLib — "Library for date time operations"
 ├─ DeploylessPredeployQueryer — "Deployless queryer for predeploys"
@@ -82,6 +83,7 @@ utils
 ├─ LibPRNG — "Library for generating pseudorandom numbers"
 ├─ LibRLP — "Library for RLP encoding and CREATE address computation"
 ├─ LibSort — "Library for efficient sorting of memory arrays"
+├─ LibStorage — "Library for basic storage operations"
 ├─ LibString — "Library for converting numbers into strings and other string operations"
 ├─ LibTransient — "Library for transient storage operations"
 ├─ LibZip — "Library for compressing and decompressing bytes"
