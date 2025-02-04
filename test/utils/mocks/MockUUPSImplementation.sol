@@ -41,4 +41,14 @@ contract MockUUPSImplementation is UUPSUpgradeable, Brutalizer {
     {
         super.upgradeToAndCall(_brutalized(newImplementation), data);
     }
+
+    function checkOnlyProxy() public view returns (bool) {
+        _checkOnlyProxy();
+        return true;
+    }
+
+    function checkNotDelegated() public view returns (bool) {
+        _checkNotDelegated();
+        return true;
+    }
 }
