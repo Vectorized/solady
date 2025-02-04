@@ -9,6 +9,9 @@ UUPS proxy mixin.
 - This implementation is NOT compatible with legacy OpenZeppelin proxies
 which do not store the implementation at `_ERC1967_IMPLEMENTATION_SLOT`.
 
+<b>Inherits:</b>  
+
+- [`utils/CallContextChecker.sol`](utils/callcontextchecker.md)  
 
 
 <!-- customintro:start --><!-- customintro:end -->
@@ -22,14 +25,6 @@ error UpgradeFailed()
 ```
 
 The upgrade failed.
-
-### UnauthorizedCallContext()
-
-```solidity
-error UnauthorizedCallContext()
-```
-
-The call is from an unauthorized call context.
 
 ## Storage
 
@@ -58,20 +53,3 @@ function upgradeToAndCall(address newImplementation, bytes calldata data)
 Upgrades the proxy's implementation to `newImplementation`.   
 Emits a {Upgraded} event.   
 Note: Passing in empty `data` skips the delegatecall to `newImplementation`.
-
-### onlyProxy()
-
-```solidity
-modifier onlyProxy()
-```
-
-Requires that the execution is performed through a proxy.
-
-### notDelegated()
-
-```solidity
-modifier notDelegated()
-```
-
-Requires that the execution is NOT performed via delegatecall.   
-This is the opposite of `onlyProxy`.
