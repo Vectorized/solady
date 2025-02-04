@@ -16,12 +16,12 @@ library LibStorage {
     /*                          STRUCTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Struct representing a storage pointer that can be invalidated.
+    /// @dev Generates a storage slot that can be invalidated.
     struct Bump {
         uint256 _current;
     }
 
-    /// @dev Pointer struct to a `uint256` in regular storage.
+    /// @dev Pointer struct to a `uint256` in storage.
     /// We have opted for a `uint256` as the inner type,
     /// as it requires less casting to get / set specific bits.
     struct Ref {
@@ -32,7 +32,8 @@ library LibStorage {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Returns the current storage location pointed by the bump.
+    /// @dev Returns the current storage slot pointed by the bump.
+    /// Use inline-assembly to cast the result to a desired custom data type storage pointer.
     function slot(Bump storage b) internal view returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -43,7 +44,7 @@ library LibStorage {
         }
     }
 
-    /// @dev Makes the bump point to a whole new storage location.
+    /// @dev Makes the bump point to a whole new storage slot.
     function invalidate(Bump storage b) internal {
         unchecked {
             ++b._current;
@@ -66,7 +67,7 @@ library LibStorage {
         }
     }
 
-    /// @dev Returns a pointer to a `uint256` in regular storage.
+    /// @dev Returns a pointer to a `uint256` in storage.
     function ref(bytes32 sSlot) internal pure returns (Ref storage $) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -74,7 +75,7 @@ library LibStorage {
         }
     }
 
-    /// @dev Returns a pointer to a `uint256` in regular storage.
+    /// @dev Returns a pointer to a `uint256` in storage.
     function ref(uint256 sSlot) internal pure returns (Ref storage $) {
         /// @solidity memory-safe-assembly
         assembly {
