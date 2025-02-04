@@ -784,4 +784,64 @@ contract EnumerableSetLibTest is SoladyTest {
             }
         }
     }
+
+    function testEnumerableAddressSetUpdate() public {
+        uint256 cap = 3;
+        assertTrue(this.updateAddressSet(address(0), true, cap));
+        assertTrue(this.updateAddressSet(address(1), true, cap));
+        assertTrue(this.updateAddressSet(address(2), true, cap));
+        assertFalse(this.updateAddressSet(address(2), true, cap));
+
+        vm.expectRevert(EnumerableSetLib.ExceedsCapacity.selector);
+        this.updateAddressSet(address(3), true, cap);
+
+        assertFalse(this.updateAddressSet(address(3), false, cap));
+        assertTrue(this.updateAddressSet(address(2), false, cap));
+        assertFalse(this.updateAddressSet(address(2), false, cap));
+        assertTrue(this.updateAddressSet(address(3), true, cap));
+    }
+
+    function testEnumerableBytes32SetUpdate(bytes32) public {
+        uint256 cap = 3;
+        assertTrue(this.updateBytes32Set(bytes32("0"), true, cap));
+        assertTrue(this.updateBytes32Set(bytes32("1"), true, cap));
+        assertTrue(this.updateBytes32Set(bytes32("2"), true, cap));
+        assertFalse(this.updateBytes32Set(bytes32("2"), true, cap));
+
+        vm.expectRevert(EnumerableSetLib.ExceedsCapacity.selector);
+        this.updateBytes32Set(bytes32("3"), true, cap);
+
+        assertFalse(this.updateBytes32Set(bytes32("3"), false, cap));
+        assertTrue(this.updateBytes32Set(bytes32("2"), false, cap));
+        assertFalse(this.updateBytes32Set(bytes32("2"), false, cap));
+        assertTrue(this.updateBytes32Set(bytes32("3"), true, cap));
+    }
+
+    function testEnumerableUint8SetUpdate(bytes32) public {
+        uint256 cap = 3;
+        assertTrue(this.updateUint8Set(0, true, cap));
+        assertTrue(this.updateUint8Set(1, true, cap));
+        assertTrue(this.updateUint8Set(2, true, cap));
+        assertFalse(this.updateUint8Set(2, true, cap));
+
+        vm.expectRevert(EnumerableSetLib.ExceedsCapacity.selector);
+        this.updateUint8Set(3, true, cap);
+
+        assertFalse(this.updateUint8Set(3, false, cap));
+        assertTrue(this.updateUint8Set(2, false, cap));
+        assertFalse(this.updateUint8Set(2, false, cap));
+        assertTrue(this.updateUint8Set(3, true, cap));
+    }
+
+    function updateAddressSet(address value, bool isAdd, uint256 cap) public returns (bool) {
+        return addressSet.update(value, isAdd, cap);
+    }
+
+    function updateBytes32Set(bytes32 value, bool isAdd, uint256 cap) public returns (bool) {
+        return bytes32Set.update(value, isAdd, cap);
+    }
+
+    function updateUint8Set(uint8 value, bool isAdd, uint256 cap) public returns (bool) {
+        return uint8Set.update(value, isAdd, cap);
+    }
 }

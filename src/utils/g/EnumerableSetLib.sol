@@ -62,6 +62,9 @@ library EnumerableSetLib {
     /// @dev The value cannot be the zero sentinel.
     error ValueIsZeroSentinel();
 
+    /// @dev Cannot accommodate a new unique value with the capacity.
+    error ExceedsCapacity();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -501,6 +504,56 @@ library EnumerableSetLib {
             sstore(set.slot, and(result, not(mask)))
             result := iszero(iszero(and(result, mask)))
         }
+    }
+
+    /// @dev Shorthand for `isAdd ? set.add(value) : set.remove(value)`.
+    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    function update(AddressSet storage set, address value, bool isAdd, uint256 cap)
+        internal
+        returns (bool result)
+    {
+        if (!isAdd) return remove(set, value);
+        if (result = add(set, value)) if (length(set) > cap) revert ExceedsCapacity();
+    }
+
+    /// @dev Shorthand for `isAdd ? set.add(value) : set.remove(value)`.
+    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    function update(Bytes32Set storage set, bytes32 value, bool isAdd, uint256 cap)
+        internal
+        returns (bool result)
+    {
+        if (!isAdd) return remove(set, value);
+        if (result = add(set, value)) if (length(set) > cap) revert ExceedsCapacity();
+    }
+
+    /// @dev Shorthand for `isAdd ? set.add(value) : set.remove(value)`.
+    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    function update(Uint256Set storage set, uint256 value, bool isAdd, uint256 cap)
+        internal
+        returns (bool result)
+    {
+        if (!isAdd) return remove(set, value);
+        if (result = add(set, value)) if (length(set) > cap) revert ExceedsCapacity();
+    }
+
+    /// @dev Shorthand for `isAdd ? set.add(value) : set.remove(value)`.
+    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    function update(Int256Set storage set, int256 value, bool isAdd, uint256 cap)
+        internal
+        returns (bool result)
+    {
+        if (!isAdd) return remove(set, value);
+        if (result = add(set, value)) if (length(set) > cap) revert ExceedsCapacity();
+    }
+
+    /// @dev Shorthand for `isAdd ? set.add(value) : set.remove(value)`.
+    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    function update(Uint8Set storage set, uint8 value, bool isAdd, uint256 cap)
+        internal
+        returns (bool result)
+    {
+        if (!isAdd) return remove(set, value);
+        if (result = add(set, value)) if (length(set) > cap) revert ExceedsCapacity();
     }
 
     /// @dev Returns all of the values in the set.

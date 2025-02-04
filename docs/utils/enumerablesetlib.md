@@ -37,6 +37,14 @@ error ValueIsZeroSentinel()
 
 The value cannot be the zero sentinel.
 
+### ExceedsCapacity()
+
+```solidity
+error ExceedsCapacity()
+```
+
+Cannot accommodate a new unique value with the capacity.
+
 ## Structs
 
 ### AddressSet
@@ -300,6 +308,73 @@ function remove(Uint8Set storage set, uint8 value)
 ```
 
 Removes `value` from the set. Returns whether `value` was in the set.
+
+### update(AddressSet,address,bool,uint256)
+
+```solidity
+function update(
+    AddressSet storage set,
+    address value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool result)
+```
+
+Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
+### update(Bytes32Set,bytes32,bool,uint256)
+
+```solidity
+function update(
+    Bytes32Set storage set,
+    bytes32 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool result)
+```
+
+Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
+### update(Uint256Set,uint256,bool,uint256)
+
+```solidity
+function update(
+    Uint256Set storage set,
+    uint256 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool result)
+```
+
+Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
+### update(Int256Set,int256,bool,uint256)
+
+```solidity
+function update(
+    Int256Set storage set,
+    int256 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool result)
+```
+
+Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
+### update(Uint8Set,uint8,bool,uint256)
+
+```solidity
+function update(Uint8Set storage set, uint8 value, bool isAdd, uint256 cap)
+    internal
+    returns (bool result)
+```
+
+Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
 
 ### values(AddressSet)
 
