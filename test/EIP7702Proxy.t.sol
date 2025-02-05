@@ -85,10 +85,18 @@ contract EIP7702ProxyTest is SoladyTest {
         }
 
         address authority = _randomUniqueHashedAddress();
+        vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
+
+        // Runtime REVM detection.
+        // If this check fails, then we are not ready to test it in CI.
+        // The exact length is 23 at the time of writing as of the EIP7702 spec,
+        // but we give our heuristic some leeway.
+        if (authority.code.length > 0x20) return;
+
         emit LogAddress("authority", authority);
         emit LogAddress("proxy", address(eip7702Proxy));
         emit LogAddress("address(this)", address(this));
-        vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
+
         _checkBehavesLikeProxy(authority);
     }
 }
