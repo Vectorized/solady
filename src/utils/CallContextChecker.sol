@@ -26,55 +26,69 @@ contract CallContextChecker {
     /*                    CALL CONTEXT CHECKS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Requires that the execution is performed through a proxy.
-    function _checkOnlyProxy() internal view {
-        uint256 s = __self;
+    // A proxy call can be either via a `delegatecall` to an implementation,
+    // or a 7702 call on an authority that points to a delegation.
+
+    /// @dev Returns whether the current call context is on a EIP7702 authority
+    /// (i.e. externally owned account).
+    function _onEIP7702Authority() internal view virtual returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            if eq(s, address()) {
-                mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
-                revert(0x1c, 0x04)
-            }
+            extcodecopy(address(), 0x00, 0x00, 0x20)
+            result :=
+                and(eq(0xef0100, shr(232, mload(0x00))), lt(sub(extcodesize(address()), 1), 23))
         }
     }
 
-    /// @dev Requires that the execution is NOT performed via delegatecall.
+    /// @dev Returns whether the current call context is on the implementation itself.
+    function _onImplementation() internal view virtual returns (bool) {
+        return __self == uint160(address(this));
+    }
+
+    /// @dev Requires that the current call context is performed via a EIP7702 authority.
+    function _checkOnlyEIP7702Authority() internal view virtual {
+        if (!_onEIP7702Authority()) _revertUnauthorizedCallContext();
+    }
+
+    /// @dev Requires that the current call context is performed via a proxy.
+    function _checkOnlyProxy() internal view virtual {
+        if (_onImplementation()) _revertUnauthorizedCallContext();
+    }
+
+    /// @dev Requires that the current call context is NOT performed via a proxy.
     /// This is the opposite of `checkOnlyProxy`.
-    function _checkNotDelegated() internal view {
-        uint256 s = __self;
-        /// @solidity memory-safe-assembly
-        assembly {
-            if iszero(eq(s, address())) {
-                mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
-                revert(0x1c, 0x04)
-            }
-        }
+    function _checkNotDelegated() internal view virtual {
+        if (!_onImplementation()) _revertUnauthorizedCallContext();
     }
 
-    /// @dev Requires that the execution is performed through a proxy.
-    modifier onlyProxy() {
-        uint256 s = __self;
-        /// @solidity memory-safe-assembly
-        assembly {
-            if eq(s, address()) {
-                mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
-                revert(0x1c, 0x04)
-            }
-        }
+    /// @dev Requires that the current call context is performed via a EIP7702 authority.
+    modifier onlyEIP7702Authority() virtual {
+        _checkOnlyEIP7702Authority();
         _;
     }
 
-    /// @dev Requires that the execution is NOT performed via delegatecall.
+    /// @dev Requires that the current call context is performed via a proxy.
+    modifier onlyProxy() virtual {
+        _checkOnlyProxy();
+        _;
+    }
+
+    /// @dev Requires that the current call context is NOT performed via a proxy.
     /// This is the opposite of `onlyProxy`.
-    modifier notDelegated() {
-        uint256 s = __self;
+    modifier notDelegated() virtual {
+        _checkNotDelegated();
+        _;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _revertUnauthorizedCallContext() private pure {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(eq(s, address())) {
-                mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
-                revert(0x1c, 0x04)
-            }
+            mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
+            revert(0x1c, 0x04)
         }
-        _;
     }
 }

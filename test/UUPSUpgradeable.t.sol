@@ -22,6 +22,24 @@ contract UUPSUpgradeableTest is SoladyTest {
         MockUUPSImplementation(proxy).initialize(address(this));
     }
 
+    function testCheckOnlyEIP7702Authority() public {
+        address authority = _randomHashedAddress();
+        vm.etch(authority, abi.encodePacked(hex"ef0100", impl1));
+        // Runtime REVM detection.
+        // If this check fails, then we are not ready to test it in CI.
+        if (authority.code.length > 23) return;
+
+        uint256 x = _random();
+        MockUUPSImplementation(authority).setX(x);
+        uint256 retrievedX = MockUUPSImplementation(authority).x();
+        assertEq(retrievedX, x);
+        MockUUPSImplementation(authority).checkOnlyEIP7702Authority();
+        vm.expectRevert(CallContextChecker.UnauthorizedCallContext.selector);
+        MockUUPSImplementation(impl1).checkOnlyEIP7702Authority();
+        vm.expectRevert(CallContextChecker.UnauthorizedCallContext.selector);
+        MockUUPSImplementation(proxy).checkOnlyEIP7702Authority();
+    }
+
     function testCheckNotDelegated() public {
         vm.expectRevert(CallContextChecker.UnauthorizedCallContext.selector);
         MockUUPSImplementation(proxy).checkNotDelegated();
