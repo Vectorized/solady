@@ -54,7 +54,6 @@ contract EIP7702Proxy {
     fallback() external payable virtual {
         uint256 s = __self;
         assembly {
-            let implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
             // Workflow for calling on the proxy itself.
             // We cannot put these functions in the public ABI as this proxy must
             // fully forward all the calldata from EOAs pointing to this proxy.
@@ -62,7 +61,7 @@ contract EIP7702Proxy {
                 let fnSel := shr(224, calldataload(0x00))
                 // `implementation()`.
                 if eq(0x5c60da1b, fnSel) {
-                    mstore(0x00, implementation)
+                    mstore(0x00, sload(_ERC1967_IMPLEMENTATION_SLOT))
                     return(0x00, 0x20)
                 }
                 let admin := sload(_ERC1967_ADMIN_SLOT)
@@ -93,21 +92,18 @@ contract EIP7702Proxy {
                 revert(returndatasize(), 0x00)
             }
             // Workflow for the EIP7702 authority (i.e. the EOA).
-            if iszero(implementation) {
-                // Copy the delegation from the EIP7702 bytecode.
-                extcodecopy(address(), 0x00, 0x00, 0x20)
-                mstore(0x20, 0x5c60da1b) // `implementation()`.
-                // Require that the bytecode is within the expected size limits,
-                // and begin with the expected prefix.
-                let codeOk :=
-                    and(eq(0xef0100, shr(232, mload(0x00))), lt(sub(extcodesize(address()), 1), 23))
-                if iszero(
-                    and(staticcall(gas(), shr(96, mload(0x03)), 0x3c, 0x04, 0x00, 0x20), codeOk)
-                ) { revert(returndatasize(), 0x00) }
-                implementation := mload(0x00)
-                // Update the slot so that subsequent uses won't need to query the proxy.
-                sstore(_ERC1967_IMPLEMENTATION_SLOT, implementation)
+            // Copy the delegation from the EIP7702 bytecode.
+            extcodecopy(address(), 0x20, 0x00, 0x20)
+            mstore(0x00, 0x5c60da1b) // `implementation()`.
+            // Require that the bytecode is within the expected size limits,
+            // and begin with the expected prefix.
+            let codeOk :=
+                and(eq(0xef0100, shr(232, mload(0x20))), lt(sub(extcodesize(address()), 1), 23))
+            if iszero(and(staticcall(gas(), shr(96, mload(0x23)), 0x1c, 0x04, 0x00, 0x20), codeOk))
+            {
+                revert(returndatasize(), 0x00)
             }
+            let implementation := mload(0x00)
             // Perform the delegatecall.
             calldatacopy(0x00, 0x00, calldatasize())
             if iszero(delegatecall(gas(), implementation, 0x00, calldatasize(), 0x00, 0x00)) {
