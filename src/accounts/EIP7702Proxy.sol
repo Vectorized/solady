@@ -57,7 +57,7 @@ contract EIP7702Proxy {
             // Workflow for calling on the proxy itself.
             // We cannot put these functions in the public ABI as this proxy must
             // fully forward all the calldata from EOAs pointing to this proxy.
-            if eq(s, address()) {
+            if eq(address(), s) {
                 let fnSel := shr(224, calldataload(0x00))
                 // `implementation()`.
                 if eq(0x5c60da1b, fnSel) {
