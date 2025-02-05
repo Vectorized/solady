@@ -15,8 +15,6 @@ contract MockUUPSImplementation is UUPSUpgradeable, Brutalizer {
 
     error CustomError(address owner_);
 
-    uint256 public x;
-
     function initialize(address owner_) public {
         owner = owner_;
     }
@@ -42,24 +40,5 @@ contract MockUUPSImplementation is UUPSUpgradeable, Brutalizer {
         override
     {
         super.upgradeToAndCall(_brutalized(newImplementation), data);
-    }
-
-    function checkOnlyProxy() public view returns (bool) {
-        _checkOnlyProxy();
-        return true;
-    }
-
-    function checkNotDelegated() public view returns (bool) {
-        _checkNotDelegated();
-        return true;
-    }
-
-    function checkOnlyEIP7702Authority() public view returns (bool) {
-        _checkOnlyEIP7702Authority();
-        return true;
-    }
-
-    function setX(uint256 newX) public {
-        x = newX;
     }
 }
