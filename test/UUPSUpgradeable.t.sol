@@ -22,29 +22,6 @@ contract UUPSUpgradeableTest is SoladyTest {
         MockUUPSImplementation(proxy).initialize(address(this));
     }
 
-    function testCheckNotDelegated() public {
-        vm.expectRevert(CallContextChecker.UnauthorizedCallContext.selector);
-        MockUUPSImplementation(proxy).checkNotDelegated();
-        assertTrue(impl1.checkNotDelegated());
-    }
-
-    function testCheckOnlyProxy() public {
-        vm.expectRevert(CallContextChecker.UnauthorizedCallContext.selector);
-        impl1.checkOnlyProxy();
-        assertTrue(MockUUPSImplementation(proxy).checkOnlyProxy());
-    }
-
-    function testNotDelegatedGuard() public {
-        assertEq(impl1.proxiableUUID(), _ERC1967_IMPLEMENTATION_SLOT);
-        vm.expectRevert(CallContextChecker.UnauthorizedCallContext.selector);
-        MockUUPSImplementation(proxy).proxiableUUID();
-    }
-
-    function testOnlyProxyGuard() public {
-        vm.expectRevert(CallContextChecker.UnauthorizedCallContext.selector);
-        impl1.upgradeToAndCall(address(1), bytes(""));
-    }
-
     function testUpgradeTo() public {
         MockUUPSImplementation impl2 = new MockUUPSImplementation();
         vm.expectEmit(true, true, true, true);

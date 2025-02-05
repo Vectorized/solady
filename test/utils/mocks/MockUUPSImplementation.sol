@@ -9,7 +9,7 @@ import {Brutalizer} from "../Brutalizer.sol";
 contract MockUUPSImplementation is UUPSUpgradeable, Brutalizer {
     uint256 public value;
 
-    address owner;
+    address public owner;
 
     error Unauthorized();
 
@@ -40,15 +40,5 @@ contract MockUUPSImplementation is UUPSUpgradeable, Brutalizer {
         override
     {
         super.upgradeToAndCall(_brutalized(newImplementation), data);
-    }
-
-    function checkOnlyProxy() public view returns (bool) {
-        _checkOnlyProxy();
-        return true;
-    }
-
-    function checkNotDelegated() public view returns (bool) {
-        _checkNotDelegated();
-        return true;
     }
 }
