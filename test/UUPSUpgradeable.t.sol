@@ -27,7 +27,9 @@ contract UUPSUpgradeableTest is SoladyTest {
         vm.etch(authority, abi.encodePacked(hex"ef0100", impl1));
         // Runtime REVM detection.
         // If this check fails, then we are not ready to test it in CI.
-        if (authority.code.length > 23) return;
+        // The exact length is 23 at the time of writing as of the EIP7702 spec,
+        // but we give our heuristic some leeway.
+        if (authority.code.length > 0x20) return;
 
         uint256 x = _random();
         MockUUPSImplementation(authority).setX(x);
