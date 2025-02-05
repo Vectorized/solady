@@ -93,19 +93,19 @@ contract EIP7702Proxy {
             }
             // Workflow for the EIP7702 authority (i.e. the EOA).
             // Copy the delegation from the EIP7702 bytecode.
-            extcodecopy(address(), 0x20, 0x00, 0x20)
+            extcodecopy(address(), 0x20, 0x00, 0x20) // Out-of-bounds bytes copied are zero.
             mstore(0x00, 0x5c60da1b) // `implementation()`.
-            // Require that the bytecode is within the expected size limits,
-            // and begin with the expected prefix.
-            let codeOk :=
-                and(eq(0xef0100, shr(232, mload(0x20))), lt(sub(extcodesize(address()), 1), 23))
-            if iszero(and(staticcall(gas(), shr(96, mload(0x23)), 0x1c, 0x04, 0x00, 0x20), codeOk))
-            {
-                revert(returndatasize(), 0x00)
-            }
+            // Require that the bytecode is less than 24 bytes and begins with the expected prefix.
+            if iszero(
+                and( // Any dirty upper 96 bits of the target address is ignored in `staticcall`.
+                    staticcall(gas(), mload(0x17), 0x1c, 0x04, 0x00, 0x20),
+                    and(eq(0xef0100, shr(232, mload(0x20))), lt(extcodesize(address()), 24))
+                )
+            ) { revert(returndatasize(), 0x00) }
+            // As the authority's storage may be polluted by previous delegations,
+            // we should always fetch the latest implementation from the proxy.
             let implementation := mload(0x00)
-            // Perform the delegatecall.
-            calldatacopy(0x00, 0x00, calldatasize())
+            calldatacopy(0x00, 0x00, calldatasize()) // Forward calldata into the delegatecall.
             if iszero(delegatecall(gas(), implementation, 0x00, calldatasize(), 0x00, 0x00)) {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
