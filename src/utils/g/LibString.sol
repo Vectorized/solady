@@ -399,13 +399,12 @@ library LibString {
                 and(
                     0x00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff, or(shl(8, w), w)
                 )
-            let m := 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
+            let ones := div(not(0), 255)
+            let m := mul(ones, 0x0f)
             w := or(shl(4, and(w, not(m))), and(w, m))
 
-            let letter_map :=
-                and(w, 0x0606060606060606060606060606060606060606060606060606060606060606)
-            letter_map :=
-                and(shr(3, and(w, shl(1, or(letter_map, shl(1, letter_map))))), div(m, 0x0f))
+            let letter_map := and(w, mul(ones, 0x06))
+            letter_map := and(shr(3, and(w, shl(1, or(letter_map, shl(1, letter_map))))), ones)
             w :=
                 sub(
                     xor(
