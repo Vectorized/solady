@@ -27,7 +27,7 @@
 	--theme-saturation: 50%;
 	--theme-lightness: 40%;
 	--theme-color: #369 !important;
-	--darkreader-text--sidebar-toggle-icon-color: #887 !important;
+	--darkreader-text--sidebar-toggle-icon-color: #777 !important;
 	--code-font-family: "JetBrains Mono", Inconsolata, Consolas, Menlo, Monaco, "Andale Mono WT", "Andale Mono", "Lucida Console", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
 	--base-font-family: Overpass, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 	--darkreader-text--sidebar-nav-link-color: #ccc !important;
@@ -168,6 +168,10 @@ html, body, main {
 	background: rgba(200, 200, 200, 0.5);
 	backdrop-filter: blur(5px);
 	-webkit-backdrop-filter: blur(5px);
+}
+.sidebar-toggle .sidebar-toggle-button span:nth-child(2) {
+	margin-left: 2px;
+	width: 12px;
 }
 .markdown-section h3 {
 	font-family: "JetBrains Mono";
@@ -413,13 +417,10 @@ exponentialWait(function () {
 		return true;
 	}
 });
-exponentialWait(function () {
+setInterval(function () {
 	var yearElement = document.querySelector('.copyright .fullyear');
-	if (yearElement) {
-		yearElement.innerHTML = new Date().getFullYear();
-		return true;
-	}
-});
+	if (yearElement) yearElement.innerHTML = new Date().getFullYear();
+}, 8000);
 </script>
 </body>
 </html>
