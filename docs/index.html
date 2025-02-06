@@ -166,8 +166,6 @@ html, body, main {
 .sidebar-toggle .sidebar-toggle-button {
 	background: #e4e3e1;
 	background: rgba(200, 200, 200, 0.5);
-	backdrop-filter: blur(5px);
-	-webkit-backdrop-filter: blur(5px);
 }
 .sidebar-toggle .sidebar-toggle-button span:nth-child(2) {
 	margin-left: 2px;
@@ -227,6 +225,8 @@ html, body, main {
 	}
 	.sidebar-toggle .sidebar-toggle-button {
 		top: 11px !important;
+		backdrop-filter: blur(5px);
+		-webkit-backdrop-filter: blur(5px);
 	}
 }
 .s0cial {
@@ -328,11 +328,7 @@ var setupTheme = function () {
 	var setLsTheme = function (name) { 
 		window.localStorage.setItem(lsThemeKey, name) 
 	};
-	var drSettings = { 
-		brightness: 100, 
-		contrast: 100, 
-		sepia: 0 
-	};
+	var drSettings = { brightness: 100, contrast: 100, sepia: 0 };
 	var getChoiceEl = function (name) {
 		return document.querySelector('#theme .choice[name=' + name + ']');
 	};
@@ -392,8 +388,7 @@ var setupTheme = function () {
 		if (getChoiceEls().length > 0) {
 			reloadChoices();
 			setInterval(function () {
-				if (!document.querySelector('#theme .choice').onclick) 
-					reloadChoices();
+				if (!document.querySelector('#theme .choice').onclick) reloadChoices();
 			}, 500);
 			delayedReloadTheme();
 			return true;
@@ -401,9 +396,7 @@ var setupTheme = function () {
 	});
 	reloadTheme();
 };
-if (window.fetch) {
-	setupTheme();
-}
+if (window.fetch) setupTheme();
 exponentialWait(function () {
 	var searchInput = document.querySelector('.sidebar .search input');
 	if (searchInput) {
@@ -417,10 +410,16 @@ exponentialWait(function () {
 		return true;
 	}
 });
-setInterval(function () {
+var setCopyrightYear = function () {
 	var yearElement = document.querySelector('.copyright .fullyear');
-	if (yearElement) yearElement.innerHTML = new Date().getFullYear();
-}, 8000);
+	var delay = 500;
+	if (yearElement) {
+		yearElement.innerHTML = new Date().getFullYear();
+		delay = 8000;
+	}
+	setTimeout(setCopyrightYear, delay);
+};
+setCopyrightYear();
 </script>
 </body>
 </html>
