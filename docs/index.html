@@ -417,13 +417,10 @@ exponentialWait(function () {
 		return true;
 	}
 });
-exponentialWait(function () {
+setInterval(function () {
 	var yearElement = document.querySelector('.copyright .fullyear');
-	if (yearElement) {
-		yearElement.innerHTML = new Date().getFullYear();
-		return true;
-	}
-});
+	if (yearElement) yearElement.innerHTML = new Date().getFullYear();
+}, 8000);
 </script>
 </body>
 </html>
