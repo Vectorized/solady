@@ -128,11 +128,11 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
       - name: Install Dependencies
         run: forge install
       - name: Generate gas diff
-        uses: atarpara/foundry-snapshot-diff@v0.7
+        uses: atarpara/foundry-snapshot-diff@v0.8
         id: gas_diff
       - name: Add gas diff to sticky comment
         uses: marocchino/sticky-pull-request-comment@v2
