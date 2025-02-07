@@ -1,0 +1,260 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
+
+/// @notice Contract for EIP-712 typed structured data hashing and signing.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/EIP712.sol)
+/// @author Modified from Solbase (https://github.com/Sol-DAO/solbase/blob/main/src/utils/EIP712.sol)
+/// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/EIP712.sol)
+///
+/// @dev Note, this implementation:
+/// - Uses `address(this)` for the `verifyingContract` field.
+/// - Does NOT use the optional EIP-712 salt.
+/// - Does NOT use any EIP-712 extensions.
+/// This is for simplicity and to save gas.
+/// If you need to customize, please fork / modify accordingly.
+abstract contract EIP712 {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         CONSTANTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")`.
+    bytes32 internal constant _DOMAIN_TYPEHASH =
+        0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+
+    /// @dev `keccak256("EIP712Domain(string name,string version,address verifyingContract)")`.
+    /// This is only used in `_hashTypedDataSansChainId`.
+    bytes32 internal constant _DOMAIN_TYPEHASH_SANS_CHAIN_ID =
+        0x91ab3d17e3a50a9d89e63fd30b92be7f5336b03b287bb946787a83a9d62a2766;
+
+    /// @dev `bytes9(keccak256("_CACHED_THIS_SLOT")`.
+    uint256 internal constant _CACHED_THIS_SLOT = 0x7ca056f9810cf2f069;
+
+    /// @dev `bytes9(keccak256("_CACHED_CHAIN_ID_SLOT")`.
+    uint256 internal constant _CACHED_CHAIN_ID_SLOT = 0x574ecd94817c5f1492;
+
+    /// @dev `bytes9(keccak256("_CACHED_NAME_HASH_SLOT")`.
+    uint256 internal constant _CACHED_NAME_HASH_SLOT = 0xa8f3a139b1dfce3f13;
+
+    /// @dev `bytes9(keccak256("_CACHED_VERSION_HASH_SLOT")`.
+    uint256 internal constant _CACHED_VERSION_HASH_SLOT = 0xf46df101171a85aa42;
+
+    /// @dev `bytes9(keccak256("_CACHED_DOMAIN_SEPARATOR_SLOT")`.
+    uint256 internal constant _CACHED_DOMAIN_SEPARATOR_SLOT = 0x812e61fda10c55bcab;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        CONSTRUCTOR                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Cache the hashes for cheaper runtime gas costs.
+    /// In the case of upgradeable contracts (i.e. proxies),
+    /// or if the chain id changes due to a hard fork,
+    /// the domain separator will be seamlessly calculated on-the-fly.
+    constructor() {
+        string memory name;
+        string memory version;
+        if (!_domainNameAndVersionMayChange()) (name, version) = _domainNameAndVersion();
+        bytes32 nameHash = _domainNameAndVersionMayChange() ? bytes32(0) : keccak256(bytes(name));
+        bytes32 versionHash =
+            _domainNameAndVersionMayChange() ? bytes32(0) : keccak256(bytes(version));
+
+        bytes32 separator;
+        if (!_domainNameAndVersionMayChange()) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                let m := mload(0x40) // Load the free memory pointer.
+                mstore(m, _DOMAIN_TYPEHASH)
+                mstore(add(m, 0x20), nameHash)
+                mstore(add(m, 0x40), versionHash)
+                mstore(add(m, 0x60), chainid())
+                mstore(add(m, 0x80), address())
+                separator := keccak256(m, 0xa0)
+
+                // Cache everything in storage
+                sstore(_CACHED_DOMAIN_SEPARATOR_SLOT, separator)
+                sstore(_CACHED_THIS_SLOT, address())
+                sstore(_CACHED_CHAIN_ID_SLOT, chainid())
+                sstore(_CACHED_VERSION_HASH_SLOT, versionHash)
+                sstore(_CACHED_NAME_HASH_SLOT, nameHash)
+            }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   FUNCTIONS TO OVERRIDE                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Please override this function to return the domain name and version.
+    /// ```
+    ///     function _domainNameAndVersion()
+    ///         internal
+    ///         pure
+    ///         virtual
+    ///         returns (string memory name, string memory version)
+    ///     {
+    ///         name = "Solady";
+    ///         version = "1";
+    ///     }
+    /// ```
+    ///
+    /// Note: If the returned result may change after the contract has been deployed,
+    /// you must override `_domainNameAndVersionMayChange()` to return true.
+    function _domainNameAndVersion()
+        internal
+        view
+        virtual
+        returns (string memory name, string memory version);
+
+    /// @dev Returns if `_domainNameAndVersion()` may change
+    /// after the contract has been deployed (i.e. after the constructor).
+    /// Default: false.
+    function _domainNameAndVersionMayChange() internal pure virtual returns (bool result) {}
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     HASHING OPERATIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the EIP-712 domain separator.
+    function _domainSeparator() internal view virtual returns (bytes32 separator) {
+        if (_domainNameAndVersionMayChange()) {
+            separator = _buildDomainSeparator();
+        } else {
+            /// @solidity memory-safe-assembly
+            assembly {
+                separator := sload(_CACHED_DOMAIN_SEPARATOR_SLOT)
+            }
+            if (_cachedDomainSeparatorInvalidated()) separator = _buildDomainSeparator();
+        }
+    }
+
+    /// @dev Returns the hash of the fully encoded EIP-712 message for this domain,
+    /// given `structHash`, as defined in
+    /// https://eips.ethereum.org/EIPS/eip-712#definition-of-hashstruct.
+    ///
+    /// The hash can be used together with {ECDSA-recover} to obtain the signer of a message:
+    /// ```
+    ///     bytes32 digest = _hashTypedData(keccak256(abi.encode(
+    ///         keccak256("Mail(address to,string contents)"),
+    ///         mailTo,
+    ///         keccak256(bytes(mailContents))
+    ///     )));
+    ///     address signer = ECDSA.recover(digest, signature);
+    /// ```
+    function _hashTypedData(bytes32 structHash) internal view virtual returns (bytes32 digest) {
+        // We will use `digest` to store the domain separator to save a bit of gas.
+        if (_domainNameAndVersionMayChange()) {
+            digest = _buildDomainSeparator();
+        } else {
+            /// @solidity memory-safe-assembly
+            assembly {
+                digest := sload(_CACHED_DOMAIN_SEPARATOR_SLOT)
+            }
+            if (_cachedDomainSeparatorInvalidated()) digest = _buildDomainSeparator();
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Compute the digest.
+            mstore(0x00, 0x1901000000000000) // Store "\x19\x01".
+            mstore(0x1a, digest) // Store the domain separator.
+            mstore(0x3a, structHash) // Store the struct hash.
+            digest := keccak256(0x18, 0x42)
+            // Restore the part of the free memory slot that was overwritten.
+            mstore(0x3a, 0)
+        }
+    }
+
+    /// @dev Variant of `_hashTypedData` that excludes the chain ID.
+    /// We expect that most contracts will use `_hashTypedData` as the main hash,
+    /// and `_hashTypedDataSansChainId` only occasionally for cross-chain workflows.
+    /// Thus this is optimized for smaller bytecode size over runtime gas.
+    function _hashTypedDataSansChainId(bytes32 structHash)
+        internal
+        view
+        virtual
+        returns (bytes32 digest)
+    {
+        (string memory name, string memory version) = _domainNameAndVersion();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(0x00, _DOMAIN_TYPEHASH_SANS_CHAIN_ID)
+            mstore(0x20, keccak256(add(name, 0x20), mload(name)))
+            mstore(0x40, keccak256(add(version, 0x20), mload(version)))
+            mstore(0x60, address())
+            // Compute the digest.
+            mstore(0x20, keccak256(0x00, 0x80)) // Store the domain separator.
+            mstore(0x00, 0x1901) // Store "\x19\x01".
+            mstore(0x40, structHash) // Store the struct hash.
+            digest := keccak256(0x1e, 0x42)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    EIP-5267 OPERATIONS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev See: https://eips.ethereum.org/EIPS/eip-5267
+    function eip712Domain()
+        public
+        view
+        virtual
+        returns (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        )
+    {
+        fields = hex"0f"; // `0b01111`.
+        (name, version) = _domainNameAndVersion();
+        chainId = block.chainid;
+        verifyingContract = address(this);
+        salt = salt; // `bytes32(0)`.
+        extensions = extensions; // `new uint256[](0)`.
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      PRIVATE HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the EIP-712 domain separator.
+    function _buildDomainSeparator() private view returns (bytes32 separator) {
+        // We will use `separator` to store the name hash to save a bit of gas.
+        bytes32 versionHash;
+        if (_domainNameAndVersionMayChange()) {
+            (string memory name, string memory version) = _domainNameAndVersion();
+            separator = keccak256(bytes(name));
+            versionHash = keccak256(bytes(version));
+        } else {
+            /// @solidity memory-safe-assembly
+            assembly {
+                separator := sload(_CACHED_NAME_HASH_SLOT)
+                versionHash := sload(_CACHED_VERSION_HASH_SLOT)
+            }
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(m, _DOMAIN_TYPEHASH)
+            mstore(add(m, 0x20), separator) // Name hash.
+            mstore(add(m, 0x40), versionHash)
+            mstore(add(m, 0x60), chainid())
+            mstore(add(m, 0x80), address())
+            separator := keccak256(m, 0xa0)
+        }
+    }
+
+    /// @dev Returns if the cached domain separator has been invalidated.
+    function _cachedDomainSeparatorInvalidated() private view returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // forgefmt: disable-next-item
+            result := iszero(and(eq(chainid(), sload(_CACHED_CHAIN_ID_SLOT)),
+                                 eq(address(), sload(_CACHED_THIS_SLOT))))
+        }
+    }
+}
