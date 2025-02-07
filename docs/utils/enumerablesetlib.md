@@ -259,6 +259,61 @@ function add(Uint8Set storage set, uint8 value)
 
 Adds `value` to the set. Returns whether `value` was not in the set.
 
+### add(AddressSet,address,uint256)
+
+```solidity
+function add(AddressSet storage set, address value, uint256 cap)
+    internal
+    returns (bool result)
+```
+
+Adds `value` to the set. Returns whether `value` was not in the set.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
+### add(Bytes32Set,bytes32,uint256)
+
+```solidity
+function add(Bytes32Set storage set, bytes32 value, uint256 cap)
+    internal
+    returns (bool result)
+```
+
+Adds `value` to the set. Returns whether `value` was not in the set.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
+### add(Uint256Set,uint256,uint256)
+
+```solidity
+function add(Uint256Set storage set, uint256 value, uint256 cap)
+    internal
+    returns (bool result)
+```
+
+Adds `value` to the set. Returns whether `value` was not in the set.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
+### add(Int256Set,int256,uint256)
+
+```solidity
+function add(Int256Set storage set, int256 value, uint256 cap)
+    internal
+    returns (bool result)
+```
+
+Adds `value` to the set. Returns whether `value` was not in the set.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
+### add(Uint8Set,uint8,uint256)
+
+```solidity
+function add(Uint8Set storage set, uint8 value, uint256 cap)
+    internal
+    returns (bool result)
+```
+
+Adds `value` to the set. Returns whether `value` was not in the set.   
+Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(AddressSet,address)
 
 ```solidity
@@ -317,11 +372,10 @@ function update(
     address value,
     bool isAdd,
     uint256 cap
-) internal returns (bool result)
+) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Shorthand for `isAdd ? set.add(value, cap) : set.remove(value)`.
 
 ### update(Bytes32Set,bytes32,bool,uint256)
 
@@ -331,11 +385,10 @@ function update(
     bytes32 value,
     bool isAdd,
     uint256 cap
-) internal returns (bool result)
+) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Shorthand for `isAdd ? set.add(value, cap) : set.remove(value)`.
 
 ### update(Uint256Set,uint256,bool,uint256)
 
@@ -345,11 +398,10 @@ function update(
     uint256 value,
     bool isAdd,
     uint256 cap
-) internal returns (bool result)
+) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Shorthand for `isAdd ? set.add(value, cap) : set.remove(value)`.
 
 ### update(Int256Set,int256,bool,uint256)
 
@@ -359,22 +411,20 @@ function update(
     int256 value,
     bool isAdd,
     uint256 cap
-) internal returns (bool result)
+) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Shorthand for `isAdd ? set.add(value, cap) : set.remove(value)`.
 
 ### update(Uint8Set,uint8,bool,uint256)
 
 ```solidity
 function update(Uint8Set storage set, uint8 value, bool isAdd, uint256 cap)
     internal
-    returns (bool result)
+    returns (bool)
 ```
 
-Shorthand for `isAdd ? set.add(value) : set.remove(value)`.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Shorthand for `isAdd ? set.add(value, cap) : set.remove(value)`.
 
 ### values(AddressSet)
 
