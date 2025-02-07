@@ -57,7 +57,6 @@ abstract contract EIP712 {
         bytes32 versionHash =
             _domainNameAndVersionMayChange() ? bytes32(0) : keccak256(bytes(version));
 
-        bytes32 separator;
         if (!_domainNameAndVersionMayChange()) {
             /// @solidity memory-safe-assembly
             assembly {
@@ -67,10 +66,9 @@ abstract contract EIP712 {
                 mstore(add(m, 0x40), versionHash)
                 mstore(add(m, 0x60), chainid())
                 mstore(add(m, 0x80), address())
-                separator := keccak256(m, 0xa0)
 
                 // Cache everything in storage
-                sstore(_CACHED_DOMAIN_SEPARATOR_SLOT, separator)
+                sstore(_CACHED_DOMAIN_SEPARATOR_SLOT, keccak256(m, 0xa0))
                 sstore(_CACHED_THIS_SLOT, address())
                 sstore(_CACHED_CHAIN_ID_SLOT, chainid())
                 sstore(_CACHED_VERSION_HASH_SLOT, versionHash)
