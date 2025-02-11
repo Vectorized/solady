@@ -46,14 +46,16 @@ contract EIP7702ProxyTest is SoladyTest {
         // EIP7702ProxyTest(instance).revertWithError();
     }
 
-    function testEIP7702Proxy(bytes32) public {
+    function testEIP7702Proxy(bytes32, bool f) public {
+        vm.pauseGasMetering();
+
         address admin = _randomUniqueHashedAddress();
         IEIP7702ProxyWithAdminABI eip7702Proxy =
             IEIP7702ProxyWithAdminABI(address(new EIP7702Proxy(address(this), admin)));
         assertEq(eip7702Proxy.admin(), admin);
         assertEq(eip7702Proxy.implementation(), address(this));
 
-        if (_randomChance(32)) {
+        if (!f && _randomChance(16)) {
             address newAdmin = _randomUniqueHashedAddress();
             vm.startPrank(admin);
             eip7702Proxy.changeAdmin(newAdmin);
@@ -67,7 +69,7 @@ contract EIP7702ProxyTest is SoladyTest {
             vm.stopPrank();
         }
 
-        if (_randomChance(32)) {
+        if (!f && _randomChance(16)) {
             address newImplementation = _randomUniqueHashedAddress();
             vm.startPrank(admin);
             eip7702Proxy.upgrade(newImplementation);
@@ -77,7 +79,7 @@ contract EIP7702ProxyTest is SoladyTest {
             vm.stopPrank();
         }
 
-        if (_randomChance(32)) {
+        if (!f && _randomChance(16)) {
             vm.startPrank(admin);
             vm.expectRevert();
             eip7702Proxy.bad();
@@ -87,16 +89,22 @@ contract EIP7702ProxyTest is SoladyTest {
         address authority = _randomUniqueHashedAddress();
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
 
+        emit LogAddress("authority", authority);
+        emit LogAddress("proxy", address(eip7702Proxy));
+        emit LogAddress("address(this)", address(this));
+
+        vm.resumeGasMetering();
+
         // Runtime REVM detection.
         // If this check fails, then we are not ready to test it in CI.
         // The exact length is 23 at the time of writing as of the EIP7702 spec,
         // but we give our heuristic some leeway.
         if (authority.code.length > 0x20) return;
 
-        emit LogAddress("authority", authority);
-        emit LogAddress("proxy", address(eip7702Proxy));
-        emit LogAddress("address(this)", address(this));
-
         _checkBehavesLikeProxy(authority);
+    }
+
+    function testEIP7702Proxy() public {
+        this.testEIP7702Proxy(0, true);
     }
 }
