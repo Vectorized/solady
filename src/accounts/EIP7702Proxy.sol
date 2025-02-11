@@ -11,9 +11,6 @@ pragma solidity ^0.8.4;
 ///
 /// This relay proxy also allows for correctly revealing the
 /// "Read as Proxy" and "Write as Proxy" tabs on Etherscan.
-///
-/// This proxy can only be used by a EIP7702 authority.
-/// If any regular contract uses this proxy, it will not work.
 contract EIP7702Proxy {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         IMMUTABLES                         */
@@ -54,15 +51,21 @@ contract EIP7702Proxy {
     fallback() external payable virtual {
         uint256 s = __self;
         assembly {
+            mstore(0x40, returndatasize()) // Optimization trick to change `6040608052` into `3d604052`.
             // Workflow for calling on the proxy itself.
             // We cannot put these functions in the public ABI as this proxy must
             // fully forward all the calldata from EOAs pointing to this proxy.
-            if eq(address(), s) {
+            if iszero(xor(address(), s)) {
+                if iszero(calldatasize()) {
+                    mstore(calldatasize(), sload(_ERC1967_IMPLEMENTATION_SLOT))
+                    return(calldatasize(), 0x20)
+                }
                 let fnSel := shr(224, calldataload(0x00))
                 // `implementation()`.
                 if eq(0x5c60da1b, fnSel) {
-                    mstore(0x00, sload(_ERC1967_IMPLEMENTATION_SLOT))
-                    return(0x00, 0x20)
+                    if staticcall(gas(), address(), calldatasize(), 0x00, 0x00, 0x20) {
+                        return(0x00, returndatasize())
+                    }
                 }
                 let admin := sload(_ERC1967_ADMIN_SLOT)
                 // `admin()`.
@@ -92,21 +95,17 @@ contract EIP7702Proxy {
                 revert(returndatasize(), 0x00)
             }
             // Workflow for the EIP7702 authority (i.e. the EOA).
-            // Copy the delegation from the EIP7702 bytecode.
-            extcodecopy(address(), 0x20, 0x00, 0x20) // Out-of-bounds bytes copied are zero.
-            mstore(0x00, 0x5c60da1b) // `implementation()`.
-            // Require that the bytecode is less than 24 bytes and begins with the expected prefix.
-            if iszero(
-                and( // Any dirty upper 96 bits of the target address is ignored in `staticcall`.
-                    staticcall(gas(), mload(0x17), 0x1c, 0x04, 0x00, 0x20),
-                    and(eq(0xef0100, shr(232, mload(0x20))), lt(extcodesize(address()), 24))
-                )
-            ) { revert(returndatasize(), 0x00) }
             // As the authority's storage may be polluted by previous delegations,
             // we should always fetch the latest implementation from the proxy.
-            let implementation := mload(0x00)
             calldatacopy(0x00, 0x00, calldatasize()) // Forward calldata into the delegatecall.
-            if iszero(delegatecall(gas(), implementation, 0x00, calldatasize(), 0x00, 0x00)) {
+            if iszero(
+                and( // The arguments of `and` are evaluated from right to left.
+                    delegatecall(
+                        gas(), mload(calldatasize()), 0x00, calldatasize(), calldatasize(), 0x00
+                    ),
+                    staticcall(gas(), s, calldatasize(), 0x00, calldatasize(), 0x20)
+                )
+            ) {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
