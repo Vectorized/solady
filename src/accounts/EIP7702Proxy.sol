@@ -11,9 +11,6 @@ pragma solidity ^0.8.4;
 ///
 /// This relay proxy also allows for correctly revealing the
 /// "Read as Proxy" and "Write as Proxy" tabs on Etherscan.
-///
-/// This proxy can only be used by a EIP7702 authority.
-/// If any regular contract uses this proxy, it will not work.
 contract EIP7702Proxy {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         IMMUTABLES                         */
@@ -58,7 +55,7 @@ contract EIP7702Proxy {
             // Workflow for calling on the proxy itself.
             // We cannot put these functions in the public ABI as this proxy must
             // fully forward all the calldata from EOAs pointing to this proxy.
-            if eq(address(), s) {
+            if iszero(xor(address(), s)) {
                 if iszero(calldatasize()) {
                     mstore(calldatasize(), sload(_ERC1967_IMPLEMENTATION_SLOT))
                     return(calldatasize(), 0x20)
@@ -66,7 +63,7 @@ contract EIP7702Proxy {
                 let fnSel := shr(224, calldataload(0x00))
                 // `implementation()`.
                 if eq(0x5c60da1b, fnSel) {
-                    if staticcall(gas(), address(), 0x00, 0x00, 0x00, 0x20) {
+                    if staticcall(gas(), address(), calldatasize(), 0x00, 0x00, 0x20) {
                         return(0x00, returndatasize())
                     }
                 }
@@ -102,7 +99,7 @@ contract EIP7702Proxy {
             // we should always fetch the latest implementation from the proxy.
             calldatacopy(0x00, 0x00, calldatasize()) // Forward calldata into the delegatecall.
             if iszero(
-                and( // The arguments of `and` are evaluated last to first.
+                and( // The arguments of `and` are evaluated from right to left.
                     delegatecall(
                         gas(), mload(calldatasize()), 0x00, calldatasize(), calldatasize(), 0x00
                     ),
