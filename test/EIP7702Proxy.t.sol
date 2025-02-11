@@ -46,6 +46,15 @@ contract EIP7702ProxyTest is SoladyTest {
         // EIP7702ProxyTest(instance).revertWithError();
     }
 
+    function test_O() public {
+        address admin = _randomUniqueHashedAddress();
+        IEIP7702ProxyWithAdminABI eip7702Proxy =
+            IEIP7702ProxyWithAdminABI(address(new EIP7702Proxy(address(this), admin)));
+        vm.breakpoint("a");
+        assertEq(eip7702Proxy.admin(), admin);
+        assertEq(eip7702Proxy.implementation(), address(this));
+    }
+
     function testEIP7702Proxy(bytes32) public {
         address admin = _randomUniqueHashedAddress();
         IEIP7702ProxyWithAdminABI eip7702Proxy =
