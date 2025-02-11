@@ -668,6 +668,7 @@ abstract contract ERC721 {
     ///
     /// Emits a {Approval} event.
     function _approve(address by, address account, uint256 id) internal virtual {
+        /// @solidity memory-safe-assembly
         assembly {
             // Clear the upper 96 bits.
             let bitmaskAddress := shr(96, not(0))

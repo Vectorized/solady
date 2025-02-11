@@ -960,6 +960,7 @@ library LibString {
 
     /// @dev Directly returns `a` without copying.
     function directReturn(string memory a) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             // Assumes that the string does not start from the scratch space.
             let retStart := sub(a, 0x20)

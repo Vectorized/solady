@@ -333,7 +333,7 @@ library ECDSA {
 
     /// @dev Returns the canonical hash of `signature`.
     function canonicalHash(bytes memory signature) internal pure returns (bytes32 result) {
-        // @solidity memory-safe-assembly
+        /// @solidity memory-safe-assembly
         assembly {
             let l := mload(signature)
             for {} 1 {} {
@@ -369,7 +369,7 @@ library ECDSA {
         pure
         returns (bytes32 result)
     {
-        // @solidity memory-safe-assembly
+        /// @solidity memory-safe-assembly
         assembly {
             for {} 1 {} {
                 mstore(0x00, calldataload(signature.offset)) // `r`.
@@ -400,7 +400,7 @@ library ECDSA {
 
     /// @dev Returns the canonical hash of `signature`.
     function canonicalHash(bytes32 r, bytes32 vs) internal pure returns (bytes32 result) {
-        // @solidity memory-safe-assembly
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, r) // `r`.
             let v := add(shr(255, vs), 27)
@@ -414,7 +414,7 @@ library ECDSA {
 
     /// @dev Returns the canonical hash of `signature`.
     function canonicalHash(uint8 v, bytes32 r, bytes32 s) internal pure returns (bytes32 result) {
-        // @solidity memory-safe-assembly
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, r) // `r`.
             if iszero(lt(s, _HALF_N_PLUS_1)) {

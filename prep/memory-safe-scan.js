@@ -2,7 +2,7 @@
 const { readSync, forEachWalkSync, hasAnyPathSequence } = require('./common.js');
 
 async function main() {
-  const pathSequencesToIgnore = ['g', 'ext', 'legacy'];
+  const pathSequencesToIgnore = ['g', 'legacy'];
 
   const loggedSrcPaths = [];
   forEachWalkSync(['src'], srcPath => {
