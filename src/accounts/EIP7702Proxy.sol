@@ -95,11 +95,10 @@ contract EIP7702Proxy {
             // Copy the delegation from the EIP7702 bytecode.
             extcodecopy(address(), 0x20, 0x00, 0x20) // Out-of-bounds bytes copied are zero.
             mstore(0x00, 0x5c60da1b) // `implementation()`.
-            // Require that the bytecode is less than 24 bytes and begins with the expected prefix.
             if iszero(
                 and( // Any dirty upper 96 bits of the target address is ignored in `staticcall`.
                     staticcall(gas(), mload(0x17), 0x1c, 0x04, 0x00, 0x20),
-                    and(eq(0xef0100, shr(232, mload(0x20))), lt(extcodesize(address()), 24))
+                    eq(or(shl(160, 0xef0100), s), shr(72, mload(0x20)))
                 )
             ) { revert(returndatasize(), 0x00) }
             // As the authority's storage may be polluted by previous delegations,
