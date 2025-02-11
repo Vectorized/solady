@@ -649,6 +649,7 @@ library LibBytes {
 
     /// @dev Directly returns `a` without copying.
     function directReturn(bytes memory a) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             // Assumes that the bytes does not start from the scratch space.
             let retStart := sub(a, 0x20)
@@ -664,6 +665,7 @@ library LibBytes {
 
     /// @dev Directly returns `a` with minimal copying.
     function directReturn(bytes[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
         assembly {
             let n := mload(a) // `a.length`.
             let o := add(a, 0x20) // Start of elements in `a`.

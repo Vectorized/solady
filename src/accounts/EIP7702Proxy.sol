@@ -38,6 +38,7 @@ contract EIP7702Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(address initialImplementation, address initialAdmin) payable {
+        /// @solidity memory-safe-assembly
         assembly {
             sstore(_ERC1967_IMPLEMENTATION_SLOT, shr(96, shl(96, initialImplementation)))
             sstore(_ERC1967_ADMIN_SLOT, shr(96, shl(96, initialAdmin)))
@@ -50,6 +51,7 @@ contract EIP7702Proxy {
 
     fallback() external payable virtual {
         uint256 s = __self;
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, returndatasize()) // Optimization trick to change `6040608052` into `3d604052`.
             // Workflow for calling on the proxy itself.
