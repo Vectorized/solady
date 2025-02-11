@@ -38,7 +38,7 @@ contract EIP7702Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(address initialImplementation, address initialAdmin) payable {
-        assembly {
+        assembly ("memory-safe") {
             sstore(_ERC1967_IMPLEMENTATION_SLOT, shr(96, shl(96, initialImplementation)))
             sstore(_ERC1967_ADMIN_SLOT, shr(96, shl(96, initialAdmin)))
         }
