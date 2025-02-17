@@ -322,26 +322,26 @@ contract ERC20VotesTest is SoladyTest {
         lengthSlot = uint256(keccak256(abi.encode(lengthSlot, "hehe")));
         uint256 key = _randomUniform() & 0xf;
         if (_randomChance(2)) {
-            _checkpointPushDiff(lengthSlot, key, type(uint256).max - 10, true);
+            this.checkpointPushDiff(lengthSlot, key, type(uint256).max - 10, true);
             key += _randomUniform() & 0xf;
             uint256 amount = _randomUniform() % 20;
             if (amount <= 10) {
-                _checkpointPushDiff(lengthSlot, key, amount, true);
+                this.checkpointPushDiff(lengthSlot, key, amount, true);
                 assertEq(_checkpointLatest(lengthSlot), type(uint256).max - 10 + amount);
             } else {
                 vm.expectRevert(ERC20Votes.ERC5805CheckpointValueOverflow.selector);
-                _checkpointPushDiff(lengthSlot, key, amount, true);
+                this.checkpointPushDiff(lengthSlot, key, amount, true);
             }
         } else {
-            _checkpointPushDiff(lengthSlot, key, 10, true);
+            this.checkpointPushDiff(lengthSlot, key, 10, true);
             key += _randomUniform() & 0xf;
             uint256 amount = _randomUniform() % 20;
             if (amount <= 10) {
-                _checkpointPushDiff(lengthSlot, key, amount, false);
+                this.checkpointPushDiff(lengthSlot, key, amount, false);
                 assertEq(_checkpointLatest(lengthSlot), 10 - amount);
             } else {
                 vm.expectRevert(ERC20Votes.ERC5805CheckpointValueUnderflow.selector);
-                _checkpointPushDiff(lengthSlot, key, amount, false);
+                this.checkpointPushDiff(lengthSlot, key, amount, false);
             }
         }
     }
@@ -468,6 +468,13 @@ contract ERC20VotesTest is SoladyTest {
             checkpointValue := shr(96, checkpointPacked)
             if eq(checkpointValue, address()) { checkpointValue := sload(not(add(i, lengthSlot))) }
         }
+    }
+
+    function checkpointPushDiff(uint256 lengthSlot, uint256 key, uint256 amount, bool isAdd)
+        public
+        returns (uint256 oldValue, uint256 newValue)
+    {
+        return _checkpointPushDiff(lengthSlot, key, amount, isAdd);
     }
 
     /// @dev Pushes a checkpoint.
