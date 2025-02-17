@@ -32,14 +32,15 @@ contract EIP7702ProxyTest is SoladyTest {
 
     function setValue(uint256 value_) public {
         value = value_;
+        LibEIP7702.requestProxyDelegationInitialization();
     }
 
     function revertWithError() public view {
         revert CustomError(value);
     }
 
-    function requestProxyDelegationInitialization() public {
-        LibEIP7702.requestProxyDelegationInitialization();
+    function version() external pure returns (uint256) {
+        return 1;
     }
 
     function upgradeToLatestProxyDelegation() public {
@@ -48,6 +49,8 @@ contract EIP7702ProxyTest is SoladyTest {
 
     function _checkBehavesLikeProxy(address instance) internal {
         assertTrue(instance != address(0));
+
+        assertEq(EIP7702ProxyTest(instance).version(), 1);
 
         uint256 v = _random();
         uint256 thisValue = this.value();
@@ -129,8 +132,6 @@ contract EIP7702ProxyTest is SoladyTest {
         assertEq(LibEIP7702.delegation(authority), address(eip7702Proxy));
 
         _checkBehavesLikeProxy(authority);
-
-        EIP7702ProxyTest(authority).requestProxyDelegationInitialization();
 
         // Check that upgrading the proxy won't cause the authority's implementation to change.
         if (!f && _randomChance(2)) {

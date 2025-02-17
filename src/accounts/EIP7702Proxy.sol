@@ -77,7 +77,7 @@ contract EIP7702Proxy {
                 }
                 // Admin workflow.
                 if eq(caller(), admin) {
-                    let addr := shr(96, shl(96, calldataload(0x04)))
+                    let addr := shr(96, calldataload(0x10))
                     // `changeAdmin(address)`.
                     if eq(0x8f283970, fnSel) {
                         sstore(_ERC1967_ADMIN_SLOT, addr)
@@ -119,7 +119,7 @@ contract EIP7702Proxy {
                 // to signal that we should replace it with the actual implementation.
                 // This also gives the flexibility on whether to let the proxy auto-upgrade,
                 // or let the authority manually upgrade.
-                if iszero(xor(sload(_ERC1967_IMPLEMENTATION_SLOT), _ERC1967_IMPLEMENTATION_SLOT)) {
+                if eq(sload(_ERC1967_IMPLEMENTATION_SLOT), _ERC1967_IMPLEMENTATION_SLOT) {
                     // The `implementation` is still at `calldatasize()` in memory.
                     sstore(_ERC1967_IMPLEMENTATION_SLOT, mload(calldatasize()))
                 }

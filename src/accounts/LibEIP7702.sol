@@ -8,8 +8,11 @@ library LibEIP7702 {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Failed to perform the proxy query.
-    error ProxyQueryFailed();
+    /// @dev Failed to change the proxy admin.
+    error ChangeProxyAdminFailed();
+
+    /// @dev Failed to upgrade the proxy.
+    error UpgradeProxyFailed();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
@@ -41,31 +44,31 @@ library LibEIP7702 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the implementation of the proxy.
+    /// If the `proxy` does not exist, returns `address(0)`.
+    /// Assumes that the proxy is a proper EIP7702Proxy, if it exists.
     function proxyImplementation(address proxy) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(mul(returndatasize(), staticcall(gas(), proxy, 0x00, 0x00, 0x00, 0x20))) {
-                mstore(0x00, 0x26ec9b6a) // `ProxyQueryFailed()`.
-                revert(0x1c, 0x04)
-            }
-            result := mload(0x00)
+            mstore(0x00, 0x5c60da1b) // `implementation()`.
+            let t := staticcall(gas(), proxy, 0x1c, 0x04, 0x00, 0x20)
+            result := mul(mload(0x00), and(gt(returndatasize(), 0x1f), t))
         }
     }
 
     /// @dev Returns the admin of the proxy.
+    /// If the `proxy` does not exist, returns `address(0)`.
+    /// Assumes that the proxy is a proper EIP7702Proxy, if it exists.
     function proxyAdmin(address proxy) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0xf851a440) // `admin()`.
-            if iszero(mul(returndatasize(), staticcall(gas(), proxy, 0x1c, 0x04, 0x00, 0x20))) {
-                mstore(0x00, 0x26ec9b6a) // `ProxyQueryFailed()`.
-                revert(0x1c, 0x04)
-            }
-            result := mload(0x00)
+            let t := staticcall(gas(), proxy, 0x1c, 0x04, 0x00, 0x20)
+            result := mul(mload(0x00), and(gt(returndatasize(), 0x1f), t))
         }
     }
 
     /// @dev Changes the admin on the proxy. The caller must be the admin.
+    /// Assumes that the proxy is a proper EIP7702Proxy, if it exists.
     function changeProxyAdmin(address proxy, address newAdmin) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -79,6 +82,7 @@ library LibEIP7702 {
     }
 
     /// @dev Changes the implementation on the proxy. The caller must be the admin.
+    /// Assumes that the proxy is a proper EIP7702Proxy, if it exists.
     function upgradeProxy(address proxy, address newImplementation) internal {
         /// @solidity memory-safe-assembly
         assembly {
