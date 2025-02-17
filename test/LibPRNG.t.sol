@@ -586,7 +586,7 @@ contract LibPRNGTest is SoladyTest {
 
     function testLazyShufflerRevertsOnZeroLengthNext() public {
         vm.expectRevert(LibPRNG.LazyShuffleFinished.selector);
-        lazyShufflerNext(_random());
+        this.lazyShufflerNext(_random());
     }
 
     function testLazyShufflerRevertsOnFinshedNext(uint256 n) public {
@@ -598,7 +598,7 @@ contract LibPRNGTest is SoladyTest {
             }
         }
         vm.expectRevert(LibPRNG.LazyShuffleFinished.selector);
-        lazyShufflerNext(_random());
+        this.lazyShufflerNext(_random());
     }
 
     function lazyShufflerInitialize(uint256 n) public {
