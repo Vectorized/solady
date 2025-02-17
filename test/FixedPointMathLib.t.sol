@@ -330,10 +330,14 @@ contract FixedPointMathLibTest is SoladyTest {
         FixedPointMathLib.lambertW0Wad(_LAMBERT_W0_MIN);
         for (int256 i = 0; i <= 10; ++i) {
             vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
-            FixedPointMathLib.lambertW0Wad(_LAMBERT_W0_MIN - 1 - i);
+            this.lambertW0Wad(_LAMBERT_W0_MIN - 1 - i);
         }
         vm.expectRevert(FixedPointMathLib.OutOfDomain.selector);
-        FixedPointMathLib.lambertW0Wad(-type(int256).max);
+        this.lambertW0Wad(-type(int256).max);
+    }
+
+    function lambertW0Wad(int256 x) public pure returns (int256) {
+        return FixedPointMathLib.lambertW0Wad(x);
     }
 
     function _checkLambertW0Wad(int256 x, int256 expected) internal {
@@ -672,7 +676,7 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testDivWadZeroDenominatorReverts() public {
         vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
-        FixedPointMathLib.divWad(1e18, 0);
+        this.divWad(1e18, 0);
     }
 
     function testDivWadUp() public {
@@ -692,7 +696,7 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testDivWadUpZeroDenominatorReverts() public {
         vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
-        FixedPointMathLib.divWadUp(1e18, 0);
+        this.divWadUp(1e18, 0);
     }
 
     function testMulDiv() public {
@@ -718,7 +722,7 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testMulDivZeroDenominatorReverts() public {
         vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-        FixedPointMathLib.mulDiv(1e18, 1e18, 0);
+        this.mulDiv(1e18, 1e18, 0);
     }
 
     function testMulDivUp() public {
@@ -744,7 +748,11 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testMulDivUpZeroDenominator() public {
         vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-        FixedPointMathLib.mulDivUp(1e18, 1e18, 0);
+        this.mulDivUp(1e18, 1e18, 0);
+    }
+
+    function mulDivUp(uint256 x, uint256 y, uint256 d) public pure returns (uint256) {
+        return FixedPointMathLib.mulDivUp(x, y, d);
     }
 
     function testLnWad() public {
@@ -784,13 +792,18 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testLnWadNegativeReverts() public {
         vm.expectRevert(FixedPointMathLib.LnWadUndefined.selector);
-        FixedPointMathLib.lnWad(-1);
-        FixedPointMathLib.lnWad(-2 ** 255);
+        this.lnWad(-1);
+        vm.expectRevert(FixedPointMathLib.LnWadUndefined.selector);
+        this.lnWad(-2 ** 255);
     }
 
     function testLnWadOverflowReverts() public {
         vm.expectRevert(FixedPointMathLib.LnWadUndefined.selector);
-        FixedPointMathLib.lnWad(0);
+        this.lnWad(0);
+    }
+
+    function lnWad(int256 x) public pure returns (int256) {
+        return FixedPointMathLib.lnWad(x);
     }
 
     function testRPow() public {
@@ -809,8 +822,13 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testRPowOverflowReverts() public {
         vm.expectRevert(FixedPointMathLib.RPowOverflow.selector);
-        FixedPointMathLib.rpow(2, type(uint128).max, 1);
-        FixedPointMathLib.rpow(type(uint128).max, 3, 1);
+        this.rpow(2, type(uint128).max, 1);
+        vm.expectRevert(FixedPointMathLib.RPowOverflow.selector);
+        this.rpow(type(uint128).max, 3, 1);
+    }
+
+    function rpow(uint256 x, uint256 y, uint256 b) public pure returns (uint256) {
+        return FixedPointMathLib.rpow(x, y, b);
     }
 
     function testSqrt() public {
@@ -1089,19 +1107,23 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testFullMulDivAlwaysRevertsIfDivisorIsZero(uint256 a, uint256 b) public {
         vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
-        FixedPointMathLib.fullMulDivUp(a, b, 0);
+        this.fullMulDivUp(a, b, 0);
+    }
+
+    function fullMulDivUp(uint256 a, uint256 b, uint256 d) public pure returns (uint256) {
+        return FixedPointMathLib.fullMulDivUp(a, b, d);
     }
 
     function testFullMulDivUpRevertsIfRoundedUpResultOverflowsCase1() public {
         vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
-        FixedPointMathLib.fullMulDivUp(
+        this.fullMulDivUp(
             535006138814359, 432862656469423142931042426214547535783388063929571229938474969, 2
         );
     }
 
     function testFullMulDivUpRevertsIfRoundedUpResultOverflowsCase2() public {
         vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
-        FixedPointMathLib.fullMulDivUp(
+        this.fullMulDivUp(
             115792089237316195423570985008687907853269984659341747863450311749907997002549,
             115792089237316195423570985008687907853269984659341747863450311749907997002550,
             115792089237316195423570985008687907853269984653042931687443039491902864365164
@@ -1118,7 +1140,7 @@ contract FixedPointMathLibTest is SoladyTest {
     function testFullMulDiv(uint256 a, uint256 b, uint256 d) public returns (uint256 result) {
         if (d == 0) {
             vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
-            FixedPointMathLib.fullMulDiv(a, b, d);
+            this.fullMulDiv(a, b, d);
             return 0;
         }
 
@@ -1141,7 +1163,7 @@ contract FixedPointMathLibTest is SoladyTest {
         }
         if (prod1 >= d) {
             vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
-            FixedPointMathLib.fullMulDiv(a, b, d);
+            this.fullMulDiv(a, b, d);
             return 0;
         }
 
@@ -1228,12 +1250,16 @@ contract FixedPointMathLibTest is SoladyTest {
         (x, y) = _sampleEdgeCases(x, y);
         if (_mulWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
-            FixedPointMathLib.mulWad(x, y);
+            this.mulWad(x, y);
             return;
         }
         uint256 result = FixedPointMathLib.mulWad(x, y);
         assertEq(result, (x * y) / 1e18);
         assertEq(FixedPointMathLib.rawMulWad(x, y), result);
+    }
+
+    function mulWad(uint256 x, uint256 y) public pure returns (uint256) {
+        return FixedPointMathLib.mulWad(x, y);
     }
 
     function sMulWadOriginal(int256 x, int256 y) public pure returns (int256) {
@@ -1250,7 +1276,7 @@ contract FixedPointMathLibTest is SoladyTest {
         (x, y) = _sampleEdgeCases(x, y);
         if (_sMulWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
-            FixedPointMathLib.sMulWad(x, y);
+            this.sMulWad(x, y);
             return;
         }
         int256 result = FixedPointMathLib.sMulWad(x, y);
@@ -1258,14 +1284,22 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.rawSMulWad(x, y), result);
     }
 
+    function sMulWad(int256 x, int256 y) public pure returns (int256) {
+        return FixedPointMathLib.sMulWad(x, y);
+    }
+
     function testMulWadUp(uint256 x, uint256 y) public {
         (x, y) = _sampleEdgeCases(x, y);
         if (_mulWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.MulWadFailed.selector);
-            FixedPointMathLib.mulWadUp(x, y);
+            this.mulWadUp(x, y);
             return;
         }
         assertEq(FixedPointMathLib.mulWadUp(x, y), x * y == 0 ? 0 : (x * y - 1) / 1e18 + 1);
+    }
+
+    function mulWadUp(uint256 x, uint256 y) public pure returns (uint256) {
+        return FixedPointMathLib.mulWadUp(x, y);
     }
 
     function divWadOriginal(uint256 x, uint256 y) public pure returns (uint256) {
@@ -1282,12 +1316,16 @@ contract FixedPointMathLibTest is SoladyTest {
         (x, y) = _sampleEdgeCases(x, y);
         if (_divWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
-            FixedPointMathLib.divWad(x, y);
+            this.divWad(x, y);
             return;
         }
         uint256 result = FixedPointMathLib.divWad(x, y);
         assertEq(result, (x * 1e18) / y);
         assertEq(FixedPointMathLib.rawDivWad(x, y), result);
+    }
+
+    function divWad(uint256 x, uint256 y) public pure returns (uint256) {
+        return FixedPointMathLib.divWad(x, y);
     }
 
     function sDivWadOriginal(int256 x, int256 y) public pure returns (int256) {
@@ -1304,7 +1342,7 @@ contract FixedPointMathLibTest is SoladyTest {
         (x, y) = _sampleEdgeCases(x, y);
         if (_sDivWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
-            FixedPointMathLib.sDivWad(x, y);
+            this.sDivWad(x, y);
             return;
         }
         int256 result = FixedPointMathLib.sDivWad(x, y);
@@ -1312,14 +1350,22 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.rawSDivWad(x, y), result);
     }
 
+    function sDivWad(int256 x, int256 y) public pure returns (int256) {
+        return FixedPointMathLib.sDivWad(x, y);
+    }
+
     function testDivWadUp(uint256 x, uint256 y) public {
         (x, y) = _sampleEdgeCases(x, y);
         if (_divWadWillFail(x, y)) {
             vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
-            FixedPointMathLib.divWadUp(x, y);
+            this.divWadUp(x, y);
             return;
         }
         assertEq(FixedPointMathLib.divWadUp(x, y), x == 0 ? 0 : (x * 1e18 - 1) / y + 1);
+    }
+
+    function divWadUp(uint256 x, uint256 y) public pure returns (uint256) {
+        return FixedPointMathLib.divWadUp(x, y);
     }
 
     function mulDivOriginal(uint256 x, uint256 y, uint256 denominator)
@@ -1345,22 +1391,24 @@ contract FixedPointMathLibTest is SoladyTest {
         (x, y) = _sampleEdgeCases(x, y);
         if (_mulDivWillFail(x, y, denominator)) {
             vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-            FixedPointMathLib.mulDiv(x, y, denominator);
+            this.mulDiv(x, y, denominator);
             return;
         }
-        assertEq(FixedPointMathLib.mulDiv(x, y, denominator), (x * y) / denominator);
+        assertEq(this.mulDiv(x, y, denominator), (x * y) / denominator);
+    }
+
+    function mulDiv(uint256 x, uint256 y, uint256 d) public pure returns (uint256) {
+        return FixedPointMathLib.mulDiv(x, y, d);
     }
 
     function testMulDivUp(uint256 x, uint256 y, uint256 denominator) public {
         (x, y) = _sampleEdgeCases(x, y);
         if (_mulDivWillFail(x, y, denominator)) {
             vm.expectRevert(FixedPointMathLib.MulDivFailed.selector);
-            FixedPointMathLib.mulDivUp(x, y, denominator);
+            this.mulDivUp(x, y, denominator);
+            return;
         }
-        assertEq(
-            FixedPointMathLib.mulDivUp(x, y, denominator),
-            x * y == 0 ? 0 : (x * y - 1) / denominator + 1
-        );
+        assertEq(this.mulDivUp(x, y, denominator), x * y == 0 ? 0 : (x * y - 1) / denominator + 1);
     }
 
     function testCbrt(uint256 x) public {
@@ -1628,7 +1676,11 @@ contract FixedPointMathLibTest is SoladyTest {
             }
         }
         vm.expectRevert(FixedPointMathLib.FactorialOverflow.selector);
-        FixedPointMathLib.factorial(58);
+        this.factorial(58);
+    }
+
+    function factorial(uint256 x) public pure returns (uint256) {
+        return FixedPointMathLib.factorial(x);
     }
 
     function testFactorialOriginal() public {
@@ -1912,6 +1964,14 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(exponent, expectedExponent);
     }
 
+    function unpackSci(uint256 packed) public pure returns (uint256) {
+        return FixedPointMathLib.unpackSci(packed);
+    }
+
+    function packSci(uint256 x) public pure returns (uint256) {
+        return FixedPointMathLib.packSci(x);
+    }
+
     function testPackUnpackSci(uint256) public {
         unchecked {
             uint256 x = (_random() & 0x1) * 10 ** (_random() % 70);
@@ -1958,7 +2018,7 @@ contract FixedPointMathLibTest is SoladyTest {
         unchecked {
             uint256 x = (1 << (mantissaSize + 1)) - 1;
             vm.expectRevert(FixedPointMathLib.MantissaOverflow.selector);
-            FixedPointMathLib.packSci(x);
+            this.packSci(x);
         }
     }
 
