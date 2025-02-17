@@ -40,23 +40,35 @@ contract SSTORE2Test is SoladyTest {
         _maybeBrutalizeMemory();
         if (_randomChance(2)) {
             vm.expectRevert();
-            _mustCompute(SSTORE2.read(pointer));
+            _mustCompute(this.read(pointer));
             return;
         }
         if (_randomChance(2)) {
             vm.expectRevert();
-            _mustCompute(SSTORE2.read(pointer, _random()));
+            _mustCompute(this.read(pointer, _random()));
             return;
         }
         if (_randomChance(2)) {
             vm.expectRevert();
-            _mustCompute(SSTORE2.read(pointer, _random(), _random()));
+            _mustCompute(this.read(pointer, _random(), _random()));
             return;
         }
         pointer = SSTORE2.write("");
-        assertEq(SSTORE2.read(pointer), "");
-        assertEq(SSTORE2.read(pointer, _random()), "");
-        assertEq(SSTORE2.read(pointer, _random(), _random()), "");
+        assertEq(this.read(pointer), "");
+        assertEq(this.read(pointer, _random()), "");
+        assertEq(this.read(pointer, _random(), _random()), "");
+    }
+
+    function read(address pointer) public view returns (bytes memory) {
+        return SSTORE2.read(pointer);
+    }
+
+    function read(address pointer, uint256 start) public view returns (bytes memory) {
+        return SSTORE2.read(pointer, start);
+    }
+
+    function read(address pointer, uint256 start, uint256 end) public view returns (bytes memory) {
+        return SSTORE2.read(pointer, start, end);
     }
 
     function _mustCompute(bytes memory s) internal {

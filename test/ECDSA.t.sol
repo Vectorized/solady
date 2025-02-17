@@ -339,10 +339,10 @@ contract ECDSATest is SoladyTest {
 
     function testBytesToEthSignedMessageHashExceedsMaxLengthReverts() public {
         vm.expectRevert();
-        _testBytesToEthSignedMessageHash(999999 + 1);
+        this._testBytesToEthSignedMessageHash(999999 + 1);
     }
 
-    function _testBytesToEthSignedMessageHash(uint256 n) internal brutalizeMemory {
+    function _testBytesToEthSignedMessageHash(uint256 n) public brutalizeMemory {
         bytes memory message;
         /// @solidity memory-safe-assembly
         assembly {

@@ -543,48 +543,120 @@ contract DateTimeLibTest is SoladyTest {
         assertTrue(a.hour == b.hour && a.minute == b.minute && a.second == b.second);
     }
 
+    function addYears(uint256 timestamp, uint256 numYears) public pure returns (uint256) {
+        return DateTimeLib.addYears(timestamp, numYears);
+    }
+
+    function subYears(uint256 timestamp, uint256 numYears) public pure returns (uint256) {
+        return DateTimeLib.subYears(timestamp, numYears);
+    }
+
+    function diffYears(uint256 timestamp, uint256 numYears) public pure returns (uint256) {
+        return DateTimeLib.diffYears(timestamp, numYears);
+    }
+
+    function addMonths(uint256 timestamp, uint256 numMonths) public pure returns (uint256) {
+        return DateTimeLib.addMonths(timestamp, numMonths);
+    }
+
+    function subMonths(uint256 timestamp, uint256 numMonths) public pure returns (uint256) {
+        return DateTimeLib.subMonths(timestamp, numMonths);
+    }
+
+    function diffMonths(uint256 timestamp, uint256 numMonths) public pure returns (uint256) {
+        return DateTimeLib.diffMonths(timestamp, numMonths);
+    }
+
+    function addDays(uint256 timestamp, uint256 numDays) public pure returns (uint256) {
+        return DateTimeLib.addDays(timestamp, numDays);
+    }
+
+    function subDays(uint256 timestamp, uint256 numDays) public pure returns (uint256) {
+        return DateTimeLib.subDays(timestamp, numDays);
+    }
+
+    function diffDays(uint256 timestamp, uint256 numDays) public pure returns (uint256) {
+        return DateTimeLib.diffDays(timestamp, numDays);
+    }
+
+    function addHours(uint256 timestamp, uint256 numHours) public pure returns (uint256) {
+        return DateTimeLib.addHours(timestamp, numHours);
+    }
+
+    function subHours(uint256 timestamp, uint256 numHours) public pure returns (uint256) {
+        return DateTimeLib.subHours(timestamp, numHours);
+    }
+
+    function diffHours(uint256 timestamp, uint256 numHours) public pure returns (uint256) {
+        return DateTimeLib.diffHours(timestamp, numHours);
+    }
+
+    function addMinutes(uint256 timestamp, uint256 numMinutes) public pure returns (uint256) {
+        return DateTimeLib.addMinutes(timestamp, numMinutes);
+    }
+
+    function subMinutes(uint256 timestamp, uint256 numMinutes) public pure returns (uint256) {
+        return DateTimeLib.subMinutes(timestamp, numMinutes);
+    }
+
+    function diffMinutes(uint256 timestamp, uint256 numMinutes) public pure returns (uint256) {
+        return DateTimeLib.diffMinutes(timestamp, numMinutes);
+    }
+
+    function addSeconds(uint256 timestamp, uint256 numSeconds) public pure returns (uint256) {
+        return DateTimeLib.addSeconds(timestamp, numSeconds);
+    }
+
+    function subSeconds(uint256 timestamp, uint256 numSeconds) public pure returns (uint256) {
+        return DateTimeLib.subSeconds(timestamp, numSeconds);
+    }
+
+    function diffSeconds(uint256 timestamp, uint256 numSeconds) public pure returns (uint256) {
+        return DateTimeLib.diffSeconds(timestamp, numSeconds);
+    }
+
     function testDateTimeArithmeticReverts() public {
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.addYears(2 ** 128 - 1, 2 ** 255 - 1);
+        this.addYears(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.subYears(2 ** 128 - 1, 2 ** 255 - 1);
+        this.subYears(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.diffYears(2 ** 128 - 1, 2 ** 127 - 1);
+        this.diffYears(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.addMonths(2 ** 128 - 1, 2 ** 255 - 1);
+        this.addMonths(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.subMonths(2 ** 128 - 1, 2 ** 255 - 1);
+        this.subMonths(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.diffMonths(2 ** 128 - 1, 2 ** 127 - 1);
+        this.diffMonths(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.addDays(2 ** 128 - 1, 2 ** 255 - 1);
+        this.addDays(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.subDays(2 ** 128 - 1, 2 ** 255 - 1);
+        this.subDays(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.diffDays(2 ** 128 - 1, 2 ** 127 - 1);
+        this.diffDays(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.addHours(2 ** 128 - 1, 2 ** 255 - 1);
+        this.addHours(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.subHours(2 ** 128 - 1, 2 ** 255 - 1);
+        this.subHours(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.diffHours(2 ** 128 - 1, 2 ** 127 - 1);
+        this.diffHours(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.addMinutes(2 ** 128 - 1, 2 ** 255 - 1);
+        this.addMinutes(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.subMinutes(2 ** 128 - 1, 2 ** 255 - 1);
+        this.subMinutes(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.diffMinutes(2 ** 128 - 1, 2 ** 127 - 1);
+        this.diffMinutes(2 ** 128 - 1, 2 ** 127 - 1);
 
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.addSeconds(2 ** 128 - 1, 2 ** 255 - 1);
+        this.addSeconds(2 ** 256 - 1, 2 ** 256 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.subSeconds(2 ** 128 - 1, 2 ** 255 - 1);
+        this.subSeconds(2 ** 128 - 1, 2 ** 255 - 1);
         vm.expectRevert(stdError.arithmeticError);
-        DateTimeLib.diffSeconds(2 ** 128 - 1, 2 ** 127 - 1);
+        this.diffSeconds(2 ** 128 - 1, 2 ** 127 - 1);
     }
 
     function testAddSubDiffMonths(uint256 timestamp, uint256 numMonths) public {

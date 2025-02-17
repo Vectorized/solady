@@ -471,7 +471,7 @@ contract EnumerableSetLibTest is SoladyTest {
                 assertEq(addressSet.at(i), values[i]);
             }
             vm.expectRevert(EnumerableSetLib.IndexOutOfBounds.selector);
-            addressSetAt(_bound(_random(), values.length, type(uint256).max));
+            this.addressSetAt(_bound(_random(), values.length, type(uint256).max));
         }
     }
 
@@ -481,7 +481,7 @@ contract EnumerableSetLibTest is SoladyTest {
                 assertEq(bytes32Set.at(i), values[i]);
             }
             vm.expectRevert(EnumerableSetLib.IndexOutOfBounds.selector);
-            bytes32SetAt(_bound(_random(), values.length, type(uint256).max));
+            this.bytes32SetAt(_bound(_random(), values.length, type(uint256).max));
         }
     }
 

@@ -344,7 +344,7 @@ contract RedBlackTreeLibTest is SoladyTest {
                 assertEq(ptrs[i].value(), 0);
                 vm.expectRevert(RedBlackTreeLib.PointerOutOfBounds.selector);
                 _brutalizeScratchSpace();
-                ptrs[i].remove();
+                this.remove(ptrs[i]);
             }
             for (uint256 i; i < 256; ++i) {
                 _brutalizeScratchSpace();
@@ -352,6 +352,18 @@ contract RedBlackTreeLibTest is SoladyTest {
                 assertEq(tree2.size(), 256 - (i + 1));
             }
         }
+    }
+
+    function find(uint256 x) public view {
+        tree.find(x);
+    }
+
+    function insert(uint256 x) public {
+        tree.insert(x);
+    }
+
+    function remove(bytes32 ptr) public {
+        ptr.remove();
     }
 
     function testRedBlackTreeInsertOneGas() public {
@@ -426,11 +438,11 @@ contract RedBlackTreeLibTest is SoladyTest {
 
     function testRedBlackTreeRejectsEmptyValue() public {
         vm.expectRevert(RedBlackTreeLib.ValueIsEmpty.selector);
-        tree.insert(0);
+        this.insert(0);
+        vm.expectRevert(RedBlackTreeLib.ValueDoesNotExist.selector);
+        this.remove(0);
         vm.expectRevert(RedBlackTreeLib.ValueIsEmpty.selector);
-        tree.remove(0);
-        vm.expectRevert(RedBlackTreeLib.ValueIsEmpty.selector);
-        tree.find(0);
+        this.find(0);
     }
 
     function testRedBlackTreeRemoveViaPointer() public {
@@ -442,11 +454,11 @@ contract RedBlackTreeLibTest is SoladyTest {
         ptr.remove();
 
         vm.expectRevert(RedBlackTreeLib.PointerOutOfBounds.selector);
-        ptr.remove();
+        this.remove(ptr);
 
         ptr = bytes32(0);
         vm.expectRevert(RedBlackTreeLib.ValueDoesNotExist.selector);
-        ptr.remove();
+        this.remove(ptr);
     }
 
     function testRedBlackTreeTryInsertAndRemove() public {
@@ -470,7 +482,7 @@ contract RedBlackTreeLibTest is SoladyTest {
             sstore(ptr, or(sload(ptr), sub(shl(31, 1), 1)))
         }
         vm.expectRevert(RedBlackTreeLib.TreeIsFull.selector);
-        tree.insert(2);
+        this.insert(2);
         assertEq(tree.size(), 2 ** 31 - 1);
     }
 
