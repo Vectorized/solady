@@ -33,6 +33,11 @@ contract EIP7702Proxy {
     bytes32 internal constant _ERC1967_ADMIN_SLOT =
         0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
+    /// @dev The prefix for the ERC-1967 storage slot value if it should
+    /// be initialized with the latest implementation.
+    /// `uint32(bytes4(keccak256("eip7702.proxy.delegation.initialization")))`
+    uint32 internal constant _EIP7702_PROXY_DELEGATION_INITIALIZATION_PREFIX = 0x17723f10;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -99,8 +104,8 @@ contract EIP7702Proxy {
             // Workflow for the EIP7702 authority (i.e. the EOA).
             let impl := sload(_ERC1967_IMPLEMENTATION_SLOT) // The preferred implementation on the EOA.
             calldatacopy(0x00, 0x00, calldatasize()) // Copy the calldata for the delegatecall.
-            // If the EOA's implementation slot is 0, perform the initialization workflow.
-            if iszero(impl) {
+            // If the EOA's implementation, perform the initialization workflow.
+            if iszero(shl(96, impl)) {
                 if iszero(
                     and( // The arguments of `and` are evaluated from right to left.
                         delegatecall(
@@ -114,14 +119,15 @@ contract EIP7702Proxy {
                     revert(0x00, returndatasize())
                 }
                 // Because we cannot reliably and efficiently tell if the call is made
-                // via staticcall or call, we shall ask the delegation to
-                // write `_ERC1967_IMPLEMENTATION_SLOT` to the `_ERC1967_IMPLEMENTATION_SLOT`
+                // via staticcall or call, we shall ask the delegation to request a 
+                // proxy delegation initialization request via the `_ERC1967_IMPLEMENTATION_SLOT`
                 // to signal that we should replace it with the actual implementation.
                 // This also gives the flexibility on whether to let the proxy auto-upgrade,
                 // or let the authority manually upgrade.
-                if eq(sload(_ERC1967_IMPLEMENTATION_SLOT), _ERC1967_IMPLEMENTATION_SLOT) {
+                let implSlot := _ERC1967_IMPLEMENTATION_SLOT
+                if eq(_EIP7702_PROXY_DELEGATION_INITIALIZATION_PREFIX, shr(224, sload(implSlot))) {
                     // The `implementation` is still at `calldatasize()` in memory.
-                    sstore(_ERC1967_IMPLEMENTATION_SLOT, mload(calldatasize()))
+                    sstore(implSlot, mload(calldatasize()))
                 }
                 returndatacopy(0x00, 0x00, returndatasize())
                 return(0x00, returndatasize())
