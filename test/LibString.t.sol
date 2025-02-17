@@ -193,7 +193,11 @@ contract LibStringTest is SoladyTest {
 
     function testToHexStringFixedLengthInsufficientLength() public {
         vm.expectRevert(LibString.HexLengthInsufficient.selector);
-        LibString.toHexString(0x4132, 1);
+        this.toHexString(0x4132, 1);
+    }
+
+    function toHexString(uint256 x, uint256 l) public pure returns (string memory) {
+        return LibString.toHexString(x, l);
     }
 
     function testToHexStringFixedLengthUint256Max() public {
@@ -1569,7 +1573,11 @@ contract LibStringTest is SoladyTest {
             "12345678901234567890123456789012"
         );
         vm.expectRevert(LibString.TooBigForSmallString.selector);
-        LibString.toSmallString("123456789012345678901234567890123");
+        this.toSmallString("123456789012345678901234567890123");
+    }
+
+    function toSmallString(string memory s) public pure returns (bytes32) {
+        return LibString.toSmallString(s);
     }
 
     function testSetAndGetStringStorage() public {
