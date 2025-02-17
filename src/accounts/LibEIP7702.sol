@@ -36,7 +36,7 @@ library LibEIP7702 {
         /// @solidity memory-safe-assembly
         assembly {
             extcodecopy(account, 0x00, 0x00, 0x20)
-            // Note: checking that it starts with hex"ef01" is the most general and futureproof.
+            // Note: Checking that it starts with hex"ef01" is the most general and futureproof.
             // 7702 bytecode is `abi.encodePacked(hex"ef01", uint8(version), address(delegation))`.
             result := mul(shr(96, mload(0x03)), eq(0xef01, shr(240, mload(0x00))))
         }
