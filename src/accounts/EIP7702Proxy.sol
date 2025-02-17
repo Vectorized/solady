@@ -63,8 +63,8 @@ contract EIP7702Proxy {
                     return(calldatasize(), 0x20)
                 }
                 let fnSel := shr(224, calldataload(0x00))
-                // `implementation()`.
-                if eq(0x5c60da1b, fnSel) {
+                // `implementation()` or `eip7702ProxyImplementation()`.
+                if or(eq(0x5c60da1b, fnSel), eq(0x7dae87cb, fnSel)) {
                     if staticcall(gas(), address(), calldatasize(), 0x00, 0x00, 0x20) {
                         return(0x00, returndatasize())
                     }
