@@ -66,7 +66,7 @@ contract EIP7702ProxyTest is SoladyTest {
         }
         EIP7702ProxyTest(instance).setValue(v);
         assertEq(v, EIP7702ProxyTest(instance).value());
-        
+
         assertEq(thisValue, this.value());
         vm.expectRevert(abi.encodeWithSelector(CustomError.selector, v));
         EIP7702ProxyTest(instance).revertWithError();
@@ -123,7 +123,7 @@ contract EIP7702ProxyTest is SoladyTest {
 
         uint256 r = (_random() >> 160) << 160;
         vm.store(address(this), _ERC1967_IMPLEMENTATION_SLOT, bytes32(r));
-        
+
         if (!f && _randomChance(16)) {
             address newImplementation = _randomUniqueHashedAddress();
             LibEIP7702.upgradeProxyDelegation(newImplementation);
@@ -170,7 +170,7 @@ contract EIP7702ProxyTest is SoladyTest {
             vm.stopPrank();
             EIP7702ProxyTest(authority).unsetProxyDelegation();
             assertEq(Implementation2(authority).version(), 2);
-        
+
             uint256 loaded = uint256(vm.load(authority, _ERC1967_IMPLEMENTATION_SLOT));
             assertEq(address(uint160(loaded)), address(0));
             assertEq(loaded >> 160, r >> 160);

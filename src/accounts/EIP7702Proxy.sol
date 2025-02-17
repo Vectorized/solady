@@ -119,7 +119,7 @@ contract EIP7702Proxy {
                     revert(0x00, returndatasize())
                 }
                 // Because we cannot reliably and efficiently tell if the call is made
-                // via staticcall or call, we shall ask the delegation to request a 
+                // via staticcall or call, we shall ask the delegation to request a
                 // proxy delegation initialization request via the `_ERC1967_IMPLEMENTATION_SLOT`
                 // to signal that we should replace it with the actual implementation.
                 // This also gives the flexibility on whether to let the proxy auto-upgrade,
