@@ -97,17 +97,37 @@ contract EIP7702Proxy {
                 revert(returndatasize(), 0x00)
             }
             // Workflow for the EIP7702 authority (i.e. the EOA).
-            // As the authority's storage may be polluted by previous delegations,
-            // we should always fetch the latest implementation from the proxy.
-            calldatacopy(0x00, 0x00, calldatasize()) // Forward calldata into the delegatecall.
-            if iszero(
-                and( // The arguments of `and` are evaluated from right to left.
-                    delegatecall(
-                        gas(), mload(calldatasize()), 0x00, calldatasize(), calldatasize(), 0x00
-                    ),
-                    staticcall(gas(), s, calldatasize(), 0x00, calldatasize(), 0x20)
-                )
-            ) {
+            let impl := sload(_ERC1967_IMPLEMENTATION_SLOT) // The preferred implementation on the EOA.
+            calldatacopy(0x00, 0x00, calldatasize()) // Copy the calldata for the delegatecall.
+            // If the EOA's implementation slot is 0, perform the initialization workflow.
+            if iszero(impl) {
+                if iszero(
+                    and( // The arguments of `and` are evaluated from right to left.
+                        delegatecall(
+                            gas(), mload(calldatasize()), 0x00, calldatasize(), calldatasize(), 0x00
+                        ),
+                        // Fetch the implementation from the proxy.
+                        staticcall(gas(), s, calldatasize(), 0x00, calldatasize(), 0x20)
+                    )
+                ) {
+                    returndatacopy(0x00, 0x00, returndatasize())
+                    revert(0x00, returndatasize())
+                }
+                // Because we cannot reliably and efficiently tell if the call is made
+                // via staticcall or call, we shall ask the delegation to
+                // write `_ERC1967_IMPLEMENTATION_SLOT` to the `_ERC1967_IMPLEMENTATION_SLOT`
+                // to signal that we should replace it with the actual implementation.
+                // This also gives the flexibility on whether to let the proxy auto-upgrade,
+                // or let the authority manually upgrade.
+                if iszero(xor(sload(_ERC1967_IMPLEMENTATION_SLOT), _ERC1967_IMPLEMENTATION_SLOT)) {
+                    // The `implementation` is still at `calldatasize()` in memory.
+                    sstore(_ERC1967_IMPLEMENTATION_SLOT, mload(calldatasize()))
+                }
+                returndatacopy(0x00, 0x00, returndatasize())
+                return(0x00, returndatasize())
+            }
+            // Otherwise, just delegatecall and bubble up the results without initialization.
+            if iszero(delegatecall(gas(), impl, 0x00, calldatasize(), calldatasize(), 0x00)) {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }

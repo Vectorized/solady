@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {EIP7702Proxy} from "../src/accounts/EIP7702Proxy.sol";
+import {LibEIP7702} from "../src/accounts/LibEIP7702.sol";
 
 interface IEIP7702ProxyWithAdminABI {
     function implementation() external view returns (address);
@@ -10,6 +11,12 @@ interface IEIP7702ProxyWithAdminABI {
     function changeAdmin(address) external returns (bool);
     function upgrade(address) external returns (bool);
     function bad() external;
+}
+
+contract Implementation2 {
+    function version() external pure returns (uint256) {
+        return 2;
+    }
 }
 
 contract EIP7702ProxyTest is SoladyTest {
@@ -29,6 +36,14 @@ contract EIP7702ProxyTest is SoladyTest {
 
     function revertWithError() public view {
         revert CustomError(value);
+    }
+
+    function requestProxyDelegationInitialization() public {
+        LibEIP7702.requestProxyDelegationInitialization();
+    }
+
+    function upgradeToLatestProxyDelegation() public {
+        LibEIP7702.upgradeToLatestProxyDelegation();
     }
 
     function _checkBehavesLikeProxy(address instance) internal {
@@ -53,16 +68,21 @@ contract EIP7702ProxyTest is SoladyTest {
         IEIP7702ProxyWithAdminABI eip7702Proxy =
             IEIP7702ProxyWithAdminABI(address(new EIP7702Proxy(address(this), admin)));
         assertEq(eip7702Proxy.admin(), admin);
+        assertEq(LibEIP7702.proxyAdmin(address(eip7702Proxy)), admin);
         assertEq(eip7702Proxy.implementation(), address(this));
+        assertEq(LibEIP7702.proxyImplementation(address(eip7702Proxy)), address(this));
 
         if (!f && _randomChance(16)) {
             address newAdmin = _randomUniqueHashedAddress();
             vm.startPrank(admin);
-            eip7702Proxy.changeAdmin(newAdmin);
+            if (_randomChance(2)) {
+                eip7702Proxy.changeAdmin(newAdmin);
+            } else {
+                LibEIP7702.changeProxyAdmin(address(eip7702Proxy), newAdmin);
+            }
             assertEq(eip7702Proxy.admin(), newAdmin);
             vm.stopPrank();
             admin = newAdmin;
-
             vm.startPrank(_randomUniqueHashedAddress());
             vm.expectRevert();
             eip7702Proxy.changeAdmin(newAdmin);
@@ -72,7 +92,11 @@ contract EIP7702ProxyTest is SoladyTest {
         if (!f && _randomChance(16)) {
             address newImplementation = _randomUniqueHashedAddress();
             vm.startPrank(admin);
-            eip7702Proxy.upgrade(newImplementation);
+            if (_randomChance(2)) {
+                eip7702Proxy.upgrade(newImplementation);
+            } else {
+                LibEIP7702.upgradeProxy(address(eip7702Proxy), newImplementation);
+            }
             assertEq(eip7702Proxy.implementation(), newImplementation);
             eip7702Proxy.upgrade(address(this));
             assertEq(eip7702Proxy.implementation(), address(this));
@@ -87,6 +111,7 @@ contract EIP7702ProxyTest is SoladyTest {
         }
 
         address authority = _randomUniqueHashedAddress();
+        assertEq(LibEIP7702.delegation(authority), address(0));
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
 
         emit LogAddress("authority", authority);
@@ -101,7 +126,28 @@ contract EIP7702ProxyTest is SoladyTest {
         // but we give our heuristic some leeway.
         if (authority.code.length > 0x20) return;
 
+        assertEq(LibEIP7702.delegation(authority), address(eip7702Proxy));
+
         _checkBehavesLikeProxy(authority);
+
+        EIP7702ProxyTest(authority).requestProxyDelegationInitialization();
+
+        // Check that upgrading the proxy won't cause the authority's implementation to change.
+        if (!f && _randomChance(2)) {
+            vm.startPrank(admin);
+            eip7702Proxy.upgrade(address(1));
+        }
+
+        _checkBehavesLikeProxy(authority);
+
+        if (!f && _randomChance(2)) {
+            vm.startPrank(admin);
+            eip7702Proxy.upgrade(address(new Implementation2()));
+
+            EIP7702ProxyTest(authority).upgradeToLatestProxyDelegation();
+
+            assertEq(Implementation2(authority).version(), 2);
+        }
     }
 
     function testEIP7702Proxy() public {
