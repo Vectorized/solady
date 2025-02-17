@@ -44,7 +44,7 @@ contract EIP7702ProxyTest is SoladyTest {
     }
 
     function upgradeToLatestProxyDelegation() public {
-        LibEIP7702.upgradeToLatestProxyDelegation();
+        LibEIP7702.upgradeProxyDelegation(address(0));
     }
 
     function _checkBehavesLikeProxy(address instance) internal {

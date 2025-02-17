@@ -110,16 +110,11 @@ library LibEIP7702 {
     /*                PROXY DELEGATION OPERATIONS                 */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Upgrades the implementation to the latest implementation on the proxy.
-    /// To be used by delegation implementations pointed to by an EIP7702Proxy.
-    function upgradeToLatestProxyDelegation() internal {
-        address proxy = delegation(address(this));
-        if (proxy != address(0)) {
-            upgradeProxyDelegation(proxyImplementation(proxy));
-        }
-    }
-
     /// @dev Upgrades the implementation.
+    /// The new implementation will NOT be active until the next UserOp or transaction.
+    /// To "auto-upgrade" to the latest implementation on the proxy, pass in `address(0)` to reset
+    /// the implementation slot. This causes the proxy to use the latest default implementation,
+    /// which may be optionally reinitialized via `requestProxyDelegationInitialization()`.
     /// To be used by delegation implementations pointed to by an EIP7702Proxy.
     function upgradeProxyDelegation(address newImplementation) internal {
         /// @solidity memory-safe-assembly
