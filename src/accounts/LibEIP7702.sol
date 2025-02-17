@@ -125,7 +125,10 @@ library LibEIP7702 {
     function upgradeProxyDelegation(address newImplementation) internal {
         /// @solidity memory-safe-assembly
         assembly {
-            sstore(ERC1967_IMPLEMENTATION_SLOT, shr(96, shl(96, newImplementation)))
+            let s := ERC1967_IMPLEMENTATION_SLOT 
+            mstore(0x00, sload(s))
+            mstore(0x0c, shl(96, newImplementation))
+            sstore(s, mload(0x00))
         }
     }
 
@@ -138,8 +141,9 @@ library LibEIP7702 {
             let s := ERC1967_IMPLEMENTATION_SLOT
             let v := sload(s)
             if iszero(shl(96, v)) {
-                let p := EIP7702_PROXY_DELEGATION_INITIALIZATION_PREFIX
-                sstore(s, or(shl(224, p), shr(32, shl(32, v))))
+                mstore(0x20, v)
+                mstore(0x04, EIP7702_PROXY_DELEGATION_INITIALIZATION_PREFIX)
+                sstore(s, mload(0x20))
             }
         }
     }

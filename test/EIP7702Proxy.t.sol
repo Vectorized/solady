@@ -14,8 +14,15 @@ interface IEIP7702ProxyWithAdminABI {
 }
 
 contract Implementation2 {
+    uint256 public value;
+
     function version() external pure returns (uint256) {
         return 2;
+    }
+
+    function setValue(uint256 value_) public {
+        value = value_;
+        LibEIP7702.requestProxyDelegationInitialization();
     }
 }
 
@@ -43,7 +50,7 @@ contract EIP7702ProxyTest is SoladyTest {
         return 1;
     }
 
-    function upgradeToLatestProxyDelegation() public {
+    function unsetProxyDelegation() public {
         LibEIP7702.upgradeProxyDelegation(address(0));
     }
 
@@ -59,9 +66,10 @@ contract EIP7702ProxyTest is SoladyTest {
         }
         EIP7702ProxyTest(instance).setValue(v);
         assertEq(v, EIP7702ProxyTest(instance).value());
-        // assertEq(thisValue, this.value());
-        // vm.expectRevert(abi.encodeWithSelector(CustomError.selector, v));
-        // EIP7702ProxyTest(instance).revertWithError();
+        
+        assertEq(thisValue, this.value());
+        vm.expectRevert(abi.encodeWithSelector(CustomError.selector, v));
+        EIP7702ProxyTest(instance).revertWithError();
     }
 
     function testEIP7702Proxy(bytes32, bool f) public {
@@ -113,9 +121,22 @@ contract EIP7702ProxyTest is SoladyTest {
             vm.stopPrank();
         }
 
+        uint256 r = (_random() >> 160) << 160;
+        vm.store(address(this), _ERC1967_IMPLEMENTATION_SLOT, bytes32(r));
+        
+        if (!f && _randomChance(16)) {
+            address newImplementation = _randomUniqueHashedAddress();
+            LibEIP7702.upgradeProxyDelegation(newImplementation);
+            uint256 loaded = uint256(vm.load(address(this), _ERC1967_IMPLEMENTATION_SLOT));
+            assertEq(address(uint160(loaded)), newImplementation);
+            assertEq(loaded >> 160, r >> 160);
+        }
+
         address authority = _randomUniqueHashedAddress();
         assertEq(LibEIP7702.delegation(authority), address(0));
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
+
+        vm.store(authority, _ERC1967_IMPLEMENTATION_SLOT, bytes32(r));
 
         emit LogAddress("authority", authority);
         emit LogAddress("proxy", address(eip7702Proxy));
@@ -129,9 +150,11 @@ contract EIP7702ProxyTest is SoladyTest {
         // but we give our heuristic some leeway.
         if (authority.code.length > 0x20) return;
 
-        assertEq(LibEIP7702.delegation(authority), address(eip7702Proxy));
+        if (!f) assertEq(LibEIP7702.delegation(authority), address(eip7702Proxy));
 
         _checkBehavesLikeProxy(authority);
+
+        vm.pauseGasMetering();
 
         // Check that upgrading the proxy won't cause the authority's implementation to change.
         if (!f && _randomChance(2)) {
@@ -141,14 +164,26 @@ contract EIP7702ProxyTest is SoladyTest {
 
         _checkBehavesLikeProxy(authority);
 
-        if (!f && _randomChance(2)) {
+        if (!f && _randomChance(2) && (r >> 160) > 0) {
             vm.startPrank(admin);
             eip7702Proxy.upgrade(address(new Implementation2()));
-
-            EIP7702ProxyTest(authority).upgradeToLatestProxyDelegation();
-
+            vm.stopPrank();
+            EIP7702ProxyTest(authority).unsetProxyDelegation();
             assertEq(Implementation2(authority).version(), 2);
+        
+            uint256 loaded = uint256(vm.load(authority, _ERC1967_IMPLEMENTATION_SLOT));
+            assertEq(address(uint160(loaded)), address(0));
+            assertEq(loaded >> 160, r >> 160);
+
+            EIP7702ProxyTest(authority).setValue(123);
+            assertEq(Implementation2(authority).version(), 2);
+
+            loaded = uint256(vm.load(authority, _ERC1967_IMPLEMENTATION_SLOT));
+            assertEq(address(uint160(loaded)), eip7702Proxy.implementation());
+            assertEq(loaded >> 160, r >> 160);
         }
+
+        vm.resumeGasMetering();
     }
 
     function testEIP7702Proxy() public {
