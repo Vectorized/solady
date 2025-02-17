@@ -19,11 +19,15 @@ contract MinHeapLibTest is SoladyTest {
     function testHeapRoot(uint256 x) public {
         if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-            heap0.root();
+            this.root();
         }
         heap0.data.push(x);
         assertEq(heap0.length(), 1);
         assertEq(heap0.root(), x);
+    }
+
+    function root() public view returns (uint256) {
+        return heap0.root();
     }
 
     function testHeapPushAndPop(uint256) public {
@@ -311,18 +315,22 @@ contract MinHeapLibTest is SoladyTest {
     function testHeapEnqueueZeroMaxLengthReverts(uint256) public {
         if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-            heap0.enqueue(_random(), 0);
+            this.enqueue(_random(), 0);
         }
-        heap0.enqueue(_random(), 1);
+        this.enqueue(_random(), 1);
+    }
+
+    function enqueue(uint256 x, uint256 cap) public {
+        heap0.enqueue(x, cap);
     }
 
     function testHeapReplaceOrPopEmptyHeapReverts(uint256) public {
         if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
             if (_randomChance(2)) {
-                heap0.replace(_random());
+                this.replace(_random());
             } else {
-                heap0.pop();
+                this.pop();
             }
         }
         heap0.push(_random());
@@ -333,15 +341,28 @@ contract MinHeapLibTest is SoladyTest {
         }
     }
 
+    function replace(uint256 x) public {
+        heap0.replace(x);
+    }
+
+    function pop() public {
+        heap0.pop();
+    }
+
     function testMemHeapRoot(uint256 x) public brutalizeMemory {
         MinHeapLib.MemHeap memory heapA;
         if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-            heapA.root();
+            this.emptyMemHeapRoot();
         }
         heapA.push(x);
         assertEq(heapA.length(), 1);
         assertEq(heapA.root(), x);
+    }
+
+    function emptyMemHeapRoot() public pure {
+        MinHeapLib.MemHeap memory heapA;
+        heapA.root();
     }
 
     function testMemHeapPushAndPop(uint256) public brutalizeMemory {
@@ -594,24 +615,34 @@ contract MinHeapLibTest is SoladyTest {
         MinHeapLib.MemHeap memory heapA;
         if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-            heapA.enqueue(_random(), 0);
+            this.memHeapEnqueueZeroMaxLengthReverts(_random());
         }
         heapA.enqueue(_random(), 1);
+    }
+
+    function memHeapEnqueueZeroMaxLengthReverts(uint256 x) public pure {
+        MinHeapLib.MemHeap memory heapA;
+        heapA.enqueue(x, 0);
     }
 
     function testMemHeapReplaceOrPopEmptyHeapReverts(uint256) public {
         MinHeapLib.MemHeap memory heapA;
         if (_randomChance(2)) {
             vm.expectRevert(MinHeapLib.HeapIsEmpty.selector);
-            if (_randomChance(2)) {
-                heapA.replace(_random());
-            } else {
-                heapA.pop();
-            }
+            this.memHeapReplaceOrPopEmptyHeapReverts(_random(), _randomChance(2));
         }
         heapA.push(_random());
         if (_randomChance(2)) {
             heapA.replace(_random());
+        } else {
+            heapA.pop();
+        }
+    }
+
+    function memHeapReplaceOrPopEmptyHeapReverts(uint256 x, bool r) public pure {
+        MinHeapLib.MemHeap memory heapA;
+        if (r) {
+            heapA.replace(x);
         } else {
             heapA.pop();
         }
