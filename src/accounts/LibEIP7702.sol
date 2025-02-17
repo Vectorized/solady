@@ -137,7 +137,7 @@ library LibEIP7702 {
         assembly {
             let s := ERC1967_IMPLEMENTATION_SLOT
             let v := sload(s)
-            if iszero(v) {
+            if iszero(shl(96, v)) {
                 let p := EIP7702_PROXY_DELEGATION_INITIALIZATION_PREFIX
                 sstore(s, or(shl(224, p), shr(32, shl(32, v))))
             }
