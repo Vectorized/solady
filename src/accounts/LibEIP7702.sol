@@ -115,7 +115,8 @@ library LibEIP7702 {
     /// To "auto-upgrade" to the latest implementation on the proxy, pass in `address(0)` to reset
     /// the implementation slot. This causes the proxy to use the latest default implementation,
     /// which may be optionally reinitialized via `requestProxyDelegationInitialization()`.
-    /// To be used by delegation implementations pointed to by an EIP7702Proxy.
+    /// This function is intended to be used on the authority of an EIP7702Proxy delegation.
+    /// The most intended usage pattern is to wrap this in an access-gated admin function.
     function upgradeProxyDelegation(address newImplementation) internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -124,7 +125,8 @@ library LibEIP7702 {
     }
 
     /// @dev Requests the implementation to be initialized to the latest implementation on the proxy.
-    /// To be used by delegation implementations pointed to by an EIP7702Proxy.
+    /// This function is intended to be used on the authority of an EIP7702Proxy delegation.
+    /// The most intended usage pattern is to place it at the end of an `execute` function.
     function requestProxyDelegationInitialization() internal {
         /// @solidity memory-safe-assembly
         assembly {
