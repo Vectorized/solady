@@ -34,9 +34,9 @@ contract EIP7702Proxy {
         0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
     /// @dev The transient storage slot for requesting the proxy to initialize the implementation.
-    /// `uint256(keccak256("eip7702.proxy.delegation.initialization.request")) - 1`.
-    bytes32 internal constant _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
-        0x94e11c6e41e7fb92cb8bb65e13fdfbd4eba8b831292a1a220f7915c78c7c078f;
+    /// `uint72(bytes9(keccak256("_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT")))`.
+    uint256 internal constant _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
+        0x1b537e0b6adf9d6a20;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */

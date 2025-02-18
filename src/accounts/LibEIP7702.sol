@@ -27,9 +27,9 @@ library LibEIP7702 {
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     /// @dev The transient storage slot for requesting the proxy to initialize the implementation.
-    /// `uint256(keccak256("eip7702.proxy.delegation.initialization.request")) - 1`.
-    bytes32 internal constant _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
-        0x94e11c6e41e7fb92cb8bb65e13fdfbd4eba8b831292a1a220f7915c78c7c078f;
+    /// `uint72(bytes9(keccak256("_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT")))`.
+    uint256 internal constant EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
+        0x1b537e0b6adf9d6a20;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    AUTHORITY OPERATIONS                    */
@@ -140,7 +140,7 @@ library LibEIP7702 {
         assembly {
             if iszero(shl(96, sload(ERC1967_IMPLEMENTATION_SLOT))) {
                 // Use a dedicated transient storage slot for better Swiss-cheese-model safety.
-                tstore(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT, address())
+                tstore(EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT, address())
             }
         }
     }
