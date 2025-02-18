@@ -35,7 +35,7 @@ contract CallContextChecker {
         /// @solidity memory-safe-assembly
         assembly {
             extcodecopy(address(), 0x00, 0x00, 0x20)
-            // Note: checking that it starts with hex"ef01" is the most general and futureproof.
+            // Note: Checking that it starts with hex"ef01" is the most general and futureproof.
             // 7702 bytecode is `abi.encodePacked(hex"ef01", uint8(version), address(delegation))`.
             result := eq(0xef01, shr(240, mload(0x00)))
         }
