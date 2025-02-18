@@ -89,7 +89,7 @@ library LibEIP7702 {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x8f283970) // `changeAdmin(address)`.
-            mstore(0x20, shr(96, shl(96, newAdmin)))
+            mstore(0x20, newAdmin) // The implementation will clean the upper 96 bits.
             if iszero(and(eq(mload(0x00), 1), call(gas(), proxy, 0, 0x1c, 0x24, 0x00, 0x20))) {
                 mstore(0x00, 0xc502e37e) // `ChangeProxyAdminFailed()`.
                 revert(0x1c, 0x04)
@@ -103,7 +103,7 @@ library LibEIP7702 {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x0900f010) // `upgrade(address)`.
-            mstore(0x20, shr(96, shl(96, newImplementation)))
+            mstore(0x20, newImplementation) // The implementation will clean the upper 96 bits.
             if iszero(and(eq(mload(0x00), 1), call(gas(), proxy, 0, 0x1c, 0x24, 0x00, 0x20))) {
                 mstore(0x00, 0xc6edd882) // `UpgradeProxyFailed()`.
                 revert(0x1c, 0x04)
@@ -126,6 +126,7 @@ library LibEIP7702 {
         /// @solidity memory-safe-assembly
         assembly {
             let s := ERC1967_IMPLEMENTATION_SLOT
+            // Preserve the upper 96 bits when updating in case they are used for some stuff.
             mstore(0x00, sload(s))
             mstore(0x0c, shl(96, newImplementation))
             sstore(s, mload(0x00))

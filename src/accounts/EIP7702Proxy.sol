@@ -127,6 +127,7 @@ contract EIP7702Proxy {
                 if tload(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT) {
                     let implSlot := _ERC1967_IMPLEMENTATION_SLOT
                     // The `implementation` is still at `calldatasize()` in memory.
+                    // Preserve the upper 96 bits when updating in case they are used for some stuff.
                     sstore(implSlot, or(shl(160, shr(160, sload(implSlot))), mload(calldatasize())))
                     tstore(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT, 0) // Clear.
                 }
