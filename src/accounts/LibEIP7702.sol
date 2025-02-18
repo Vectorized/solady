@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.24;
 
 /// @notice Library for EIP7702 operations.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/LibEIP7702.sol)
@@ -26,10 +26,10 @@ library LibEIP7702 {
     bytes32 internal constant ERC1967_IMPLEMENTATION_SLOT =
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
-    /// @dev The prefix for the ERC-1967 storage slot value if it should
-    /// be initialized with the latest implementation.
-    /// `uint32(bytes4(keccak256("eip7702.proxy.delegation.initialization")))`
-    uint32 internal constant EIP7702_PROXY_DELEGATION_INITIALIZATION_PREFIX = 0x17723f10;
+    /// @dev The transient storage slot for requesting the proxy to initialize the implementation.
+    /// `uint256(keccak256("eip7702.proxy.delegation.initialization.request")) - 1`.
+    bytes32 internal constant _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
+        0x94e11c6e41e7fb92cb8bb65e13fdfbd4eba8b831292a1a220f7915c78c7c078f;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    AUTHORITY OPERATIONS                    */
@@ -138,12 +138,8 @@ library LibEIP7702 {
     function requestProxyDelegationInitialization() internal {
         /// @solidity memory-safe-assembly
         assembly {
-            let s := ERC1967_IMPLEMENTATION_SLOT
-            let v := sload(s)
-            if iszero(shl(96, v)) {
-                mstore(0x20, v)
-                mstore(0x04, EIP7702_PROXY_DELEGATION_INITIALIZATION_PREFIX)
-                sstore(s, mload(0x20))
+            if iszero(shl(96, sload(ERC1967_IMPLEMENTATION_SLOT))) {
+                tstore(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT, address())
             }
         }
     }
