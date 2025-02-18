@@ -13,9 +13,6 @@ EOA -> EIP7702Proxy (relay) -> EIP7702 account implementation.
 This relay proxy also allows for correctly revealing the
 "Read as Proxy" and "Write as Proxy" tabs on Etherscan.
 
-This proxy can only be used by a EIP7702 authority.
-If any regular contract uses this proxy, it will not work.
-
 
 
 <!-- customintro:start --><!-- customintro:end -->
@@ -51,3 +48,14 @@ bytes32 internal constant _ERC1967_ADMIN_SLOT =
 
 The ERC-1967 storage slot for the admin in the proxy.   
 `uint256(keccak256("eip1967.proxy.admin")) - 1`.
+
+### _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT
+
+```solidity
+uint256 internal constant
+    _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
+        0x1b537e0b6adf9d6a20
+```
+
+The transient storage slot for requesting the proxy to initialize the implementation.   
+`uint72(bytes9(keccak256("_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT")))`.
