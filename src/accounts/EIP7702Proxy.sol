@@ -35,6 +35,8 @@ contract EIP7702Proxy {
 
     /// @dev The transient storage slot for requesting the proxy to initialize the implementation.
     /// `uint256(keccak256("eip7702.proxy.delegation.initialization.request")) - 1`.
+    /// While we would love to use a smaller constant, this slot is used in both the proxy
+    /// and the delegation, so we shall just use bytes32 in case we want to standardize this.
     bytes32 internal constant _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
         0x94e11c6e41e7fb92cb8bb65e13fdfbd4eba8b831292a1a220f7915c78c7c078f;
 
@@ -127,6 +129,7 @@ contract EIP7702Proxy {
                 if tload(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT) {
                     let implSlot := _ERC1967_IMPLEMENTATION_SLOT
                     // The `implementation` is still at `calldatasize()` in memory.
+                    // Preserve the upper 96 bits when updating in case they are used for some stuff.
                     sstore(implSlot, or(shl(160, shr(160, sload(implSlot))), mload(calldatasize())))
                     tstore(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT, 0) // Clear.
                 }
