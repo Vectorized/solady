@@ -52,10 +52,12 @@ The ERC-1967 storage slot for the admin in the proxy.
 ### _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT
 
 ```solidity
-uint256 internal constant
+bytes32 internal constant
     _EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
-        0x1b537e0b6adf9d6a20
+        0x94e11c6e41e7fb92cb8bb65e13fdfbd4eba8b831292a1a220f7915c78c7c078f
 ```
 
 The transient storage slot for requesting the proxy to initialize the implementation.   
-`uint72(bytes9(keccak256("_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT")))`.
+`uint256(keccak256("eip7702.proxy.delegation.initialization.request")) - 1`.   
+While we would love to use a smaller constant, this slot is used in both the proxy   
+and the delegation, so we shall just use bytes32 in case we want to standardize this.
