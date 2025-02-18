@@ -139,6 +139,7 @@ library LibEIP7702 {
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(shl(96, sload(ERC1967_IMPLEMENTATION_SLOT))) {
+                // Use a dedicated transient storage slot for better Swiss-cheese-model safety.
                 tstore(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT, address())
             }
         }
