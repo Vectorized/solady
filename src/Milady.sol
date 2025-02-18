@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./accounts/EIP7702Proxy.sol";
 import "./accounts/ERC1271.sol";
 import "./accounts/ERC4337.sol";
 import "./accounts/ERC4337Factory.sol";
