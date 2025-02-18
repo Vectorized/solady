@@ -122,7 +122,7 @@ contract EIP7702Proxy {
                 // via staticcall or call, we shall ask the delegation to make a proxy delegation
                 // initialization request to signal that we should initialize the storage slot with
                 // the actual implementation. This also gives flexibility on whether to let the
-                // proxy auto-upgrade, or let the authority manually upgrade.
+                // proxy auto-upgrade, or let the authority manually upgrade (via 7702 or passkey).
                 // A non-zero value in the transient storage denotes a initialization request.
                 if tload(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT) {
                     let implSlot := _ERC1967_IMPLEMENTATION_SLOT
