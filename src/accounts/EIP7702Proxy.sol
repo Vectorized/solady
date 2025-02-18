@@ -119,12 +119,11 @@ contract EIP7702Proxy {
                     revert(0x00, returndatasize())
                 }
                 // Because we cannot reliably and efficiently tell if the call is made
-                // via staticcall or call, we shall ask the delegation to request a
-                // proxy delegation initialization request via the `_ERC1967_IMPLEMENTATION_SLOT`
-                // to signal that we should replace it with the actual implementation.
-                // This also gives the flexibility on whether to let the proxy auto-upgrade,
-                // or let the authority manually upgrade.
-                // A non-zero value in transient storage denotes a initialization request.
+                // via staticcall or call, we shall ask the delegation to make a proxy delegation
+                // initialization request to signal that we should initialize the storage slot with
+                // the actual implementation. This also gives flexibility on whether to let the
+                // proxy auto-upgrade, or let the authority manually upgrade.
+                // A non-zero value in the transient storage denotes a initialization request.
                 if tload(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT) {
                     let implSlot := _ERC1967_IMPLEMENTATION_SLOT
                     // The `implementation` is still at `calldatasize()` in memory.
