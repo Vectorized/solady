@@ -727,7 +727,7 @@ library LibBytes {
         assembly {
             let l := sub(a.length, 0x20)
             result.offset := add(a.offset, offset)
-            result.length := sub(add(a.offset, a.length), result.offset)
+            result.length := sub(a.length, offset)
             if or(shr(64, or(l, a.offset)), gt(offset, l)) { revert(l, 0x00) }
         }
     }
@@ -743,7 +743,7 @@ library LibBytes {
             let l := sub(a.length, 0x20)
             let s := calldataload(add(a.offset, offset)) // Relative offset of `result` from `a.offset`.
             result.offset := add(a.offset, s)
-            result.length := sub(add(a.offset, a.length), result.offset)
+            result.length := sub(a.length, s)
             if or(shr(64, or(s, or(l, a.offset))), gt(offset, l)) { revert(l, 0x00) }
         }
     }
@@ -758,9 +758,8 @@ library LibBytes {
         assembly {
             let l := sub(a.length, 0x20)
             let s := calldataload(add(a.offset, offset)) // Relative offset of `result` from `a.offset`.
-            let t := add(a.offset, s)
-            result.offset := add(t, 0x20)
-            result.length := calldataload(t)
+            result.offset := add(add(a.offset, s), 0x20)
+            result.length := calldataload(add(a.offset, s))
             // forgefmt: disable-next-item
             if or(shr(64, or(result.length, or(s, or(l, a.offset)))),
                 or(gt(add(s, result.length), l), gt(offset, l))) { revert(l, 0x00) }
