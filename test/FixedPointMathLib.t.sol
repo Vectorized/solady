@@ -2195,7 +2195,27 @@ contract FixedPointMathLibTest is SoladyTest {
         return a;
     }
 
+    function testCoalesce(uint256 x, uint256 y) public {
+        assertEq(x == 0 ? y : x, FixedPointMathLib.coalesce(x, y));
+    }
+
+    function testCoalesce(address x, address y) public {
+        assertEq(x == address(0) ? y : x, FixedPointMathLib.coalesce(x, y));
+    }
+
+    function testCoalesce(bytes32 x, bytes32 y) public {
+        assertEq(x == bytes32(0) ? y : x, FixedPointMathLib.coalesce(x, y));
+    }
+
     function testTernary(bool condition, uint256 x, uint256 y) public {
+        assertEq(condition ? x : y, FixedPointMathLib.ternary(condition, x, y));
+    }
+
+    function testTernary(bool condition, bytes32 x, bytes32 y) public {
+        assertEq(condition ? x : y, FixedPointMathLib.ternary(condition, x, y));
+    }
+
+    function testTernary(bool condition, address x, address y) public {
         assertEq(condition ? x : y, FixedPointMathLib.ternary(condition, x, y));
     }
 
