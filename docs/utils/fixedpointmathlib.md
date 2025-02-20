@@ -462,6 +462,30 @@ function ternary(bool condition, address x, address y)
 
 Returns `condition ? x : y`, without branching.
 
+### coalesce(uint256,uint256)
+
+```solidity
+function coalesce(uint256 x, uint256 y) internal pure returns (uint256 z)
+```
+
+Returns `x != 0 ? x : y`, without branching.
+
+### coalesce(bytes32,bytes32)
+
+```solidity
+function coalesce(bytes32 x, bytes32 y) internal pure returns (bytes32 z)
+```
+
+Returns `x != bytes32(0) ? x : y`, without branching.
+
+### coalesce(address,address)
+
+```solidity
+function coalesce(address x, address y) internal pure returns (address z)
+```
+
+Returns `x != address(0) ? x : y`, without branching.
+
 ### rpow(uint256,uint256,uint256)
 
 ```solidity

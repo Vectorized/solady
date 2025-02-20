@@ -709,6 +709,30 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns `x != 0 ? x : y`, without branching.
+    function coalesce(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := or(x, mul(y, iszero(x)))
+        }
+    }
+
+    /// @dev Returns `x != bytes32(0) ? x : y`, without branching.
+    function coalesce(bytes32 x, bytes32 y) internal pure returns (bytes32 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := or(x, mul(y, iszero(x)))
+        }
+    }
+
+    /// @dev Returns `x != address(0) ? x : y`, without branching.
+    function coalesce(address x, address y) internal pure returns (address z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := or(x, mul(y, iszero(shl(96, x))))
+        }
+    }
+
     /// @dev Exponentiate `x` to `y` by squaring, denominated in base `b`.
     /// Reverts if the computation overflows.
     function rpow(uint256 x, uint256 y, uint256 b) internal pure returns (uint256 z) {
