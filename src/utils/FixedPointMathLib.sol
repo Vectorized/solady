@@ -717,7 +717,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `x != 0 ? x : y`, without branching.
+    /// @dev Returns `x != bytes32(0) ? x : y`, without branching.
     function coalesce(bytes32 x, bytes32 y) internal pure returns (bytes32 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -725,7 +725,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `x != 0 ? x : y`, without branching.
+    /// @dev Returns `x != address(0) ? x : y`, without branching.
     function coalesce(address x, address y) internal pure returns (address z) {
         /// @solidity memory-safe-assembly
         assembly {
