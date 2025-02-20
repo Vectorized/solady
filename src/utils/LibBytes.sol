@@ -717,6 +717,21 @@ library LibBytes {
         }
     }
 
+    /// @dev Returns a slice representing a static struct in the calldata. Performs bounds checks.
+    function staticStructInCalldata(bytes calldata a, uint256 offset)
+        internal
+        pure
+        returns (bytes calldata result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let l := sub(a.length, 0x20)
+            result.offset := add(a.offset, offset)
+            result.length := sub(add(a.offset, a.length), result.offset)
+            if or(shr(64, or(l, a.offset)), gt(offset, l)) { revert(l, 0x00) }
+        }
+    }
+
     /// @dev Returns a slice representing a dynamic struct in the calldata. Performs bounds checks.
     function dynamicStructInCalldata(bytes calldata a, uint256 offset)
         internal

@@ -182,71 +182,121 @@ contract LibBytesTest is SoladyTest {
     }
 
     struct SampleDynamicStruct {
-        address user;
-        uint256 nonce;
+        address target;
+        uint256 value;
         bytes data;
+    }
+
+    struct SampleStaticSubStruct {
+        uint256 x;
+        uint256 y;
+    }
+
+    struct SampleStaticStruct {
+        SampleStaticSubStruct a;
+        SampleStaticSubStruct b;
+    }
+
+    function testStaticStructInCalldata() public {
+        SampleStaticStruct memory s;
+        s.a.x = 1;
+        s.a.y = 2;
+        s.b.x = 3;
+        s.b.y = 4;
+
+        SampleDynamicStruct memory u;
+        u.target = address(0xaaa);
+        u.value = 123;
+        u.data = "hehe";
+
+        this._testStaticStructInCalldata(abi.encode(s, u), 0x20 * 0, s);
+        this._testStaticStructInCalldata(abi.encode(u, s, u), 0x20 * 1, s);
+        this._testStaticStructInCalldata(abi.encode(u, u, s, u, s), 0x20 * 2, s);
+        this._testStaticStructInCalldata(abi.encode(u, u, s, u, s), 0x20 * 2 + 0x20 * 4 + 0x20, s);
+    }
+
+    function _testStaticStructInCalldata(
+        bytes calldata encoded,
+        uint256 offset,
+        SampleStaticStruct memory expected
+    ) public {
+        bytes calldata p = LibBytes.staticStructInCalldata(encoded, offset);
+        assertEq(uint256(LibBytes.loadCalldata(p, 0x00)), expected.a.x);
+        assertEq(uint256(LibBytes.loadCalldata(p, 0x20)), expected.a.y);
+        assertEq(uint256(LibBytes.loadCalldata(p, 0x40)), expected.b.x);
+        assertEq(uint256(LibBytes.loadCalldata(p, 0x60)), expected.b.y);
     }
 
     function testDynamicStructInCalldata() public {
         SampleDynamicStruct memory u;
-        u.user = address(1);
-        u.nonce = 123;
+        u.target = address(1);
+        u.value = 123;
         u.data = "hehe";
         bytes memory encoded = abi.encode(u);
-        this._testDynamicStructInCalldata(encoded, 0x00, u.user, u.nonce, keccak256(u.data));
+        this._testDynamicStructInCalldata(encoded, 0x00, u);
+    }
+
+    function testDynamicStructInCalldata2() public {
+        SampleDynamicStruct memory u;
+        u.target = address(1);
+        u.value = 123;
+        u.data = "hehe";
+
+        SampleStaticStruct memory s;
+        s.a.x = _random();
+        s.a.y = _random();
+        s.b.x = _random();
+        s.b.y = _random();
+        this._testDynamicStructInCalldata(abi.encode(s, u), 0x80, u);
+        this._testDynamicStructInCalldata(abi.encode(s, u, s), 0x80, u);
+        this._testDynamicStructInCalldata(abi.encode(s, s, u), 0x80 * 2, u);
     }
 
     function testDynamicStructInCalldata(bytes32) public {
         SampleDynamicStruct memory u;
-        u.user = _randomHashedAddress();
-        u.nonce = _randomUniform();
+        u.target = _randomHashedAddress();
+        u.value = _randomUniform();
         u.data = _truncateBytes(_randomBytes(), 100);
         bytes memory encoded;
         encoded = abi.encode(u);
-        this._testDynamicStructInCalldata(encoded, 0x00, u.user, u.nonce, keccak256(u.data));
+        this._testDynamicStructInCalldata(encoded, 0x00, u);
         encoded = abi.encode(uint256(1), u);
-        this._testDynamicStructInCalldata(encoded, 0x20, u.user, u.nonce, keccak256(u.data));
+        this._testDynamicStructInCalldata(encoded, 0x20, u);
         encoded = abi.encode(uint256(1), uint256(2), u);
         if (_randomChance(32)) encoded = abi.encodePacked(encoded, _randomBytes());
-        this._testDynamicStructInCalldata(encoded, 0x40, u.user, u.nonce, keccak256(u.data));
+        this._testDynamicStructInCalldata(encoded, 0x40, u);
     }
 
     function _testDynamicStructInCalldata(
         bytes calldata encoded,
         uint256 offset,
-        address expectedUser,
-        uint256 expectedNonce,
-        bytes32 expectedDataHash
+        SampleDynamicStruct memory expected
     ) public {
         bytes calldata p = LibBytes.dynamicStructInCalldata(encoded, offset);
-        assertEq(uint256(LibBytes.loadCalldata(p, 0x00)), uint160(expectedUser));
-        assertEq(uint256(LibBytes.loadCalldata(p, 0x20)), expectedNonce);
-        assertEq(keccak256(LibBytes.bytesInCalldata(p, 0x40)), expectedDataHash);
+        assertEq(uint256(LibBytes.loadCalldata(p, 0x00)), uint160(expected.target));
+        assertEq(uint256(LibBytes.loadCalldata(p, 0x20)), expected.value);
+        assertEq(LibBytes.bytesInCalldata(p, 0x40), expected.data);
     }
 
     function testBytesInCalldata() public {
-        bytes memory encoded = abi.encode("hello");
-        this._testBytesInCalldata(encoded, 0x00, keccak256("hello"));
+        this._testBytesInCalldata(abi.encode("hello"), 0x00, "hello");
     }
 
     function testBytesInCalldata(bytes32) public {
         bytes memory u = _truncateBytes(_randomBytes(), 100);
-        bytes memory encoded;
-        encoded = abi.encode(u);
-        this._testBytesInCalldata(encoded, 0x00, keccak256(u));
-        encoded = abi.encode(uint256(1), u);
-        this._testBytesInCalldata(encoded, 0x20, keccak256(u));
+        this._testBytesInCalldata(abi.encode(u), 0x00, u);
+        this._testBytesInCalldata(abi.encode(uint256(1), u), 0x20, u);
         if (_randomChance(16)) {
-            encoded = abi.encode(uint256(1), uint256(2), u);
+            bytes memory encoded = abi.encode(uint256(1), uint256(2), u);
             if (_randomChance(32)) encoded = abi.encodePacked(encoded, _randomBytes());
-            this._testBytesInCalldata(encoded, 0x40, keccak256(u));
+            this._testBytesInCalldata(encoded, 0x40, u);
         }
     }
 
-    function _testBytesInCalldata(bytes calldata encoded, uint256 offset, bytes32 expectedHash)
+    function _testBytesInCalldata(bytes calldata encoded, uint256 offset, bytes memory expected)
         public
     {
-        assertEq(keccak256(LibBytes.bytesInCalldata(encoded, offset)), expectedHash);
+        assertEq(LibBytes.bytesInCalldata(encoded, offset), expected);
     }
 
     function _brutalizeRightPadding(bytes memory s) internal returns (bytes memory result) {
