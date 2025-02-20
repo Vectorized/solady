@@ -379,6 +379,17 @@ function loadCalldata(bytes calldata a, uint256 offset)
 
 Returns the word at `offset`, without any bounds checks.
 
+### staticStructInCalldata(bytes,uint256)
+
+```solidity
+function staticStructInCalldata(bytes calldata a, uint256 offset)
+    internal
+    pure
+    returns (bytes calldata result)
+```
+
+Returns a slice representing a static struct in the calldata. Performs bounds checks.
+
 ### dynamicStructInCalldata(bytes,uint256)
 
 ```solidity
