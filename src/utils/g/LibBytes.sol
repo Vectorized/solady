@@ -702,7 +702,6 @@ library LibBytes {
     }
 
     /// @dev Returns the word at `offset`, without any bounds checks.
-    /// To load an address, you can use `address(bytes20(load(a, offset)))`.
     function load(bytes memory a, uint256 offset) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -711,7 +710,6 @@ library LibBytes {
     }
 
     /// @dev Returns the word at `offset`, without any bounds checks.
-    /// To load an address, you can use `address(bytes20(loadCalldata(a, offset)))`.
     function loadCalldata(bytes calldata a, uint256 offset)
         internal
         pure
@@ -720,6 +718,55 @@ library LibBytes {
         /// @solidity memory-safe-assembly
         assembly {
             result := calldataload(add(a.offset, offset))
+        }
+    }
+
+    /// @dev Returns a slice representing a static struct in the calldata. Performs bounds checks.
+    function staticStructInCalldata(bytes calldata a, uint256 offset)
+        internal
+        pure
+        returns (bytes calldata result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let l := sub(a.length, 0x20)
+            result.offset := add(a.offset, offset)
+            result.length := sub(a.length, offset)
+            if or(shr(64, or(l, a.offset)), gt(offset, l)) { revert(l, 0x00) }
+        }
+    }
+
+    /// @dev Returns a slice representing a dynamic struct in the calldata. Performs bounds checks.
+    function dynamicStructInCalldata(bytes calldata a, uint256 offset)
+        internal
+        pure
+        returns (bytes calldata result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let l := sub(a.length, 0x20)
+            let s := calldataload(add(a.offset, offset)) // Relative offset of `result` from `a.offset`.
+            result.offset := add(a.offset, s)
+            result.length := sub(a.length, s)
+            if or(shr(64, or(s, or(l, a.offset))), gt(offset, l)) { revert(l, 0x00) }
+        }
+    }
+
+    /// @dev Returns bytes in calldata. Performs bounds checks.
+    function bytesInCalldata(bytes calldata a, uint256 offset)
+        internal
+        pure
+        returns (bytes calldata result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let l := sub(a.length, 0x20)
+            let s := calldataload(add(a.offset, offset)) // Relative offset of `result` from `a.offset`.
+            result.offset := add(add(a.offset, s), 0x20)
+            result.length := calldataload(add(a.offset, s))
+            // forgefmt: disable-next-item
+            if or(shr(64, or(result.length, or(s, or(l, a.offset)))),
+                or(gt(add(s, result.length), l), gt(offset, l))) { revert(l, 0x00) }
         }
     }
 

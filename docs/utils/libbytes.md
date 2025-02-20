@@ -366,8 +366,7 @@ function load(bytes memory a, uint256 offset)
     returns (bytes32 result)
 ```
 
-Returns the word at `offset`, without any bounds checks.   
-To load an address, you can use `address(bytes20(load(a, offset)))`.
+Returns the word at `offset`, without any bounds checks.
 
 ### loadCalldata(bytes,uint256)
 
@@ -378,8 +377,40 @@ function loadCalldata(bytes calldata a, uint256 offset)
     returns (bytes32 result)
 ```
 
-Returns the word at `offset`, without any bounds checks.   
-To load an address, you can use `address(bytes20(loadCalldata(a, offset)))`.
+Returns the word at `offset`, without any bounds checks.
+
+### staticStructInCalldata(bytes,uint256)
+
+```solidity
+function staticStructInCalldata(bytes calldata a, uint256 offset)
+    internal
+    pure
+    returns (bytes calldata result)
+```
+
+Returns a slice representing a static struct in the calldata. Performs bounds checks.
+
+### dynamicStructInCalldata(bytes,uint256)
+
+```solidity
+function dynamicStructInCalldata(bytes calldata a, uint256 offset)
+    internal
+    pure
+    returns (bytes calldata result)
+```
+
+Returns a slice representing a dynamic struct in the calldata. Performs bounds checks.
+
+### bytesInCalldata(bytes,uint256)
+
+```solidity
+function bytesInCalldata(bytes calldata a, uint256 offset)
+    internal
+    pure
+    returns (bytes calldata result)
+```
+
+Returns bytes in calldata. Performs bounds checks.
 
 ### emptyCalldata()
 
