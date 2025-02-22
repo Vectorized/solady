@@ -106,7 +106,7 @@ contract EIP7702Proxy {
             // Workflow for the EIP7702 authority (i.e. the EOA).
             let impl := sload(_ERC1967_IMPLEMENTATION_SLOT) // The preferred implementation on the EOA.
             calldatacopy(0x00, 0x00, calldatasize()) // Copy the calldata for the delegatecall.
-            // If the EOA's implementation, perform the initialization workflow.
+            // If the preferred implementation is `address(0)`, perform the initialization workflow.
             if iszero(shl(96, impl)) {
                 if iszero(
                     and( // The arguments of `and` are evaluated from right to left.
