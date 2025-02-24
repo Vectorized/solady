@@ -249,16 +249,16 @@ contract P256Test is P256VerifierEtcher {
         assertEq(yDecoded, y);
     }
 
-    function check_P256Normalize(uint256 s) public pure {
+    function check_P256Normalized(uint256 s) public pure {
         uint256 n = uint256(P256.N);
         unchecked {
             uint256 expected = s > (n / 2) ? n - s : s;
-            assert(uint256(P256.normalize(bytes32(s))) == expected);
+            assert(uint256(P256.normalized(bytes32(s))) == expected);
         }
     }
 
-    function testP256Normalize(uint256 s) public pure {
-        check_P256Normalize(s);
+    function testP256Normalized(uint256 s) public pure {
+        check_P256Normalized(s);
     }
 }
 

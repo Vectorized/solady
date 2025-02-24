@@ -112,11 +112,11 @@ library P256 {
     /*                      OTHER OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Normalize `s` to the lower half of the curve.
-    function normalize(bytes32 s) internal pure returns (bytes32 result) {
+    /// @dev Returns `s` normalized to the lower half of the curve.
+    function normalized(bytes32 s) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := xor(s, mul(xor(s, sub(N, s)), gt(s, _HALF_N)))
+            result := xor(s, mul(xor(sub(N, s), s), gt(s, _HALF_N)))
         }
     }
 
