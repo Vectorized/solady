@@ -1651,6 +1651,12 @@ interface VmSafe {
         string calldata language
     ) external pure returns (uint256 privateKey);
 
+    /// Derives secp256r1 public key from the provided `privateKey`.
+    function publicKeyP256(uint256 privateKey)
+        external
+        pure
+        returns (uint256 publicKeyX, uint256 publicKeyY);
+
     /// Gets the label for the specified address.
     function getLabel(address account) external view returns (string memory currentLabel);
 
