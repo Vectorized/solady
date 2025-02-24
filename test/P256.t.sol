@@ -258,7 +258,7 @@ contract P256Test is P256VerifierEtcher {
     }
 
     function testP256Normalized(uint256 privateKey, bytes32 hash) public {
-        while (privateKey == 0 || privateKey > P256.N) {
+        while (privateKey == 0 || privateKey >= P256.N) {
             privateKey = uint256(keccak256(abi.encode(privateKey)));
         }
         (uint256 x, uint256 y) = vm.publicKeyP256(privateKey);
@@ -272,6 +272,7 @@ contract P256Test is P256VerifierEtcher {
         } else {
             assertTrue(P256.verifySignature(hash, r, s, bytes32(x), bytes32(y)));
         }
+        assertTrue(P256.verifySignatureAllowMalleability(hash, r, s, bytes32(x), bytes32(y)));
     }
 }
 
