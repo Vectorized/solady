@@ -112,6 +112,14 @@ library P256 {
     /*                      OTHER OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Returns `s` normalized to the lower half of the curve.
+    function normalized(bytes32 s) internal pure returns (bytes32 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := xor(s, mul(xor(sub(N, s), s), gt(s, _HALF_N)))
+        }
+    }
+
     /// @dev Helper function for `abi.decode(encoded, (bytes32, bytes32))`.
     /// If `encoded.length < 64`, `(x, y)` will be `(0, 0)`, which is an invalid point.
     function tryDecodePoint(bytes memory encoded) internal pure returns (bytes32 x, bytes32 y) {

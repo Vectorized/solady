@@ -248,6 +248,32 @@ contract P256Test is P256VerifierEtcher {
         assertEq(xDecoded, x);
         assertEq(yDecoded, y);
     }
+
+    function check_P256Normalized(uint256 s) public pure {
+        uint256 n = uint256(P256.N);
+        unchecked {
+            uint256 expected = s > (n / 2) ? n - s : s;
+            assert(uint256(P256.normalized(bytes32(s))) == expected);
+        }
+    }
+
+    function testP256Normalized(uint256 privateKey, bytes32 hash) public {
+        while (privateKey == 0 || privateKey >= P256.N) {
+            privateKey = uint256(keccak256(abi.encode(privateKey)));
+        }
+        (uint256 x, uint256 y) = vm.publicKeyP256(privateKey);
+
+        // Note that `vm.signP256` can produce `s` above `N / 2`.
+        (bytes32 r, bytes32 s) = vm.signP256(privateKey, hash);
+
+        if (uint256(s) > P256.N / 2) {
+            assertFalse(P256.verifySignature(hash, r, s, bytes32(x), bytes32(y)));
+            assertTrue(P256.verifySignature(hash, r, P256.normalized(s), bytes32(x), bytes32(y)));
+        } else {
+            assertTrue(P256.verifySignature(hash, r, s, bytes32(x), bytes32(y)));
+        }
+        assertTrue(P256.verifySignatureAllowMalleability(hash, r, s, bytes32(x), bytes32(y)));
+    }
 }
 
 /// @dev Library to derive P256 public key from private key
