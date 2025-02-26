@@ -41,6 +41,11 @@ contract CallContextChecker {
         }
     }
 
+    /// @dev Returns the implementation of this contract.
+    function _selfImplementation() internal view virtual returns (address) {
+        return address(uint160(__self));
+    }
+
     /// @dev Returns whether the current call context is on the implementation itself.
     function _onImplementation() internal view virtual returns (bool) {
         return __self == uint160(address(this));
