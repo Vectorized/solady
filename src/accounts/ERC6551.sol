@@ -341,7 +341,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev To ensure that only the owner or the account itself can upgrade the implementation.
-    /// If you don't need upgradeability, override this function to return false.
+    /// If you don't need upgradeability, override this function to return false for extra safety.
     function _authorizeUpgrade(address)
         internal
         virtual
