@@ -357,7 +357,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
         address selfImplementation = _selfImplementation();
         /// @solidity memory-safe-assembly
         assembly {
-            extcodecopy(address(), 0x2c, 0x0a, 0x14)
+            extcodecopy(address(), 0x2c, 0x0a, 0x14) // Assumes the upper 20 bytes at 0x40 are zero.
             // Revert if the implementation is the same as the self implementation.
             if eq(mload(0x2c), shl(96, selfImplementation)) {
                 mstore(0x00, 0x9f03a026) // `UnauthorizedCallContext()`.
