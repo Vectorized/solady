@@ -5,6 +5,7 @@ import "./utils/SoladyTest.sol";
 import {SignatureCheckerLib} from "../src/utils/SignatureCheckerLib.sol";
 import {ERC6551Proxy} from "../src/accounts/ERC6551Proxy.sol";
 import {EIP712} from "../src/utils/EIP712.sol";
+import {CallContextChecker} from "../src/utils/CallContextChecker.sol";
 import {ERC6551, MockERC6551, MockERC6551V2} from "./utils/mocks/MockERC6551.sol";
 import {MockERC6551Registry} from "./utils/mocks/MockERC6551Registry.sol";
 import {MockERC721} from "./utils/mocks/MockERC721.sol";
@@ -370,6 +371,16 @@ contract ERC6551Test is SoladyTest {
         assertEq(t.account.mockId(), "1");
         state = keccak256(abi.encode(state, data));
         assertEq(t.account.state(), state);
+    }
+
+    function testUpgradeRevertsIfNotViaERC6551Proxy() public {
+        _TestTemps memory t = _testTemps();
+        address account = _registry.createAccount(_erc6551, t.salt, t.chainId, _erc721, t.tokenId);
+        t.account = MockERC6551(payable(account));
+
+        vm.prank(t.owner);
+        vm.expectRevert(CallContextChecker.UnauthorizedCallContext.selector);
+        t.account.upgradeToAndCall(_erc6551V2, bytes(""));
     }
 
     function testSupportsInterface() public {

@@ -37,6 +37,14 @@ function _onEIP7702Authority()
 Returns whether the current call context is on a EIP7702 authority   
 (i.e. externally owned account).
 
+### _selfImplementation()
+
+```solidity
+function _selfImplementation() internal view virtual returns (address)
+```
+
+Returns the implementation of this contract.
+
 ### _onImplementation()
 
 ```solidity
