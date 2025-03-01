@@ -163,6 +163,12 @@ contract ERC7821Test is SoladyTest {
 
         assertEq(_bytes.length, batchBytes.length * 2);
 
+        mbe.setAuthorizedCaller(pranker, false);
+        vm.expectRevert(MockERC7821.Unauthorized.selector);
+        mbe.execute(mode, abi.encode(batches));
+
+        assertEq(_bytes.length, batchBytes.length * 2);
+
         vm.stopPrank();
     }
 
