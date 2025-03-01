@@ -18,6 +18,7 @@ contract ERC7821Test is SoladyTest {
 
     function setUp() public {
         mbe = new MockERC7821();
+        mbe.setAuthorizedCaller(address(this), true);
         target = LibClone.clone(address(this));
     }
 
@@ -148,6 +149,27 @@ contract ERC7821Test is SoladyTest {
             assertEq(_bytes[i], batchBytes[i]);
         }
         assertEq(_bytes.length, batchBytes.length);
+
+        // Test that batch of batches is executed with the correct `msg.sender`.
+
+        address pranker = _randomUniqueHashedAddress();
+        vm.startPrank(pranker);
+
+        vm.expectRevert(MockERC7821.Unauthorized.selector);
+        mbe.execute(mode, abi.encode(batches));
+
+        mbe.setAuthorizedCaller(pranker, true);
+        mbe.execute(mode, abi.encode(batches));
+
+        assertEq(_bytes.length, batchBytes.length * 2);
+
+        mbe.setAuthorizedCaller(pranker, false);
+        vm.expectRevert(MockERC7821.Unauthorized.selector);
+        mbe.execute(mode, abi.encode(batches));
+
+        assertEq(_bytes.length, batchBytes.length * 2);
+
+        vm.stopPrank();
     }
 
     function _encodePushBytesBatch(bytes memory x) internal view returns (bytes memory) {

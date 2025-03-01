@@ -9,6 +9,10 @@ import {Brutalizer} from "../Brutalizer.sol";
 contract MockERC7821 is ERC7821, Brutalizer {
     bytes public lastOpData;
 
+    mapping(address => bool) public isAuthorizedCaller;
+
+    error Unauthorized();
+
     function _execute(bytes32, bytes calldata, Call[] calldata calls, bytes calldata opData)
         internal
         virtual
@@ -18,10 +22,19 @@ contract MockERC7821 is ERC7821, Brutalizer {
         _execute(calls, bytes32(0));
     }
 
+    function execute(bytes32 mode, bytes calldata executionData) public payable virtual override {
+        if (!isAuthorizedCaller[msg.sender]) revert Unauthorized();
+        super.execute(mode, executionData);
+    }
+
     function executeDirect(Call[] calldata calls) public payable virtual {
         _misalignFreeMemoryPointer();
         _brutalizeMemory();
         _execute(calls, bytes32(0));
         _checkMemory();
+    }
+
+    function setAuthorizedCaller(address target, bool status) public {
+        isAuthorizedCaller[target] = status;
     }
 }
