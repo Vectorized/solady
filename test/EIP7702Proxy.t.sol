@@ -129,6 +129,8 @@ contract EIP7702ProxyTest is SoladyTest {
             vm.stopPrank();
         }
 
+        // Generate some random value that has the lower 160 bits zeroized,
+        // to test if the proxy can handle dirty bits.
         uint256 r = (_random() >> 160) << 160;
         vm.store(address(this), _ERC1967_IMPLEMENTATION_SLOT, bytes32(r));
 
@@ -218,6 +220,11 @@ contract EIP7702ProxyTest is SoladyTest {
         address authority = _randomUniqueHashedAddress();
         assertEq(LibEIP7702.delegation(authority), address(0));
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
+
+        // Generate some random value that has the lower 160 bits zeroized,
+        // to test if the proxy can handle dirty bits.
+        uint256 r = (_random() >> 160) << 160;
+        vm.store(authority, _ERC1967_IMPLEMENTATION_SLOT, bytes32(r));
 
         if (authority.code.length > 0x20) return;
 
