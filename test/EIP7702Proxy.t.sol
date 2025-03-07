@@ -63,7 +63,7 @@ contract EIP7702ProxyTest is SoladyTest {
 
         assertEq(EIP7702ProxyTest(instance).version(), 1);
 
-        uint256 v = _random();
+        uint256 v = _randomUniform();
         uint256 thisValue = this.value();
         if (thisValue == v) {
             v ^= 1;
@@ -150,19 +150,19 @@ contract EIP7702ProxyTest is SoladyTest {
         emit LogAddress("proxy", address(eip7702Proxy));
         emit LogAddress("address(this)", address(this));
 
-        vm.resumeGasMetering();
-
         // Runtime REVM detection.
         // If this check fails, then we are not ready to test it in CI.
         // The exact length is 23 at the time of writing as of the EIP7702 spec,
         // but we give our heuristic some leeway.
         if (authority.code.length > 0x20) return;
 
-        if (!f) assertEq(LibEIP7702.delegation(authority), address(eip7702Proxy));
+        vm.resumeGasMetering();
 
         _checkBehavesLikeProxy(authority);
 
         vm.pauseGasMetering();
+
+        if (!f) assertEq(LibEIP7702.delegation(authority), address(eip7702Proxy));
 
         // Check that upgrading the proxy won't cause the authority's implementation to change.
         if (!f && _randomChance(2)) {
@@ -201,7 +201,7 @@ contract EIP7702ProxyTest is SoladyTest {
     }
 
     function testEIP7702Proxy() public {
-        this.testEIP7702Proxy(0, true);
+        testEIP7702Proxy(0, true);
     }
 
     function testEIP7702ProxyWithDefaultImplementation(bytes32, bool f) public {
@@ -219,9 +219,9 @@ contract EIP7702ProxyTest is SoladyTest {
         assertEq(LibEIP7702.delegation(authority), address(0));
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
 
-        vm.resumeGasMetering();
-
         if (authority.code.length > 0x20) return;
+
+        vm.resumeGasMetering();
 
         _checkBehavesLikeProxy(authority);
 
@@ -237,6 +237,6 @@ contract EIP7702ProxyTest is SoladyTest {
     }
 
     function testEIP7702ProxyWithDefaultImplementation() public {
-        this.testEIP7702ProxyWithDefaultImplementation(0, true);
+        testEIP7702ProxyWithDefaultImplementation(0, true);
     }
 }
