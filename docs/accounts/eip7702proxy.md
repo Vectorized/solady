@@ -27,6 +27,15 @@ uint256 internal immutable __self = uint256(uint160(address(this)))
 
 For allowing the differentiation of the EOA and the proxy itself.
 
+### _defaultImplementation
+
+```solidity
+uint256 internal immutable _defaultImplementation
+```
+
+The default implementation. Provided for optimization.   
+Set if the `initialAdmin == address(0) && initialImplementation != address(0)`.
+
 ## Storage
 
 ### _ERC1967_IMPLEMENTATION_SLOT
