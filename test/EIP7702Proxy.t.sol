@@ -24,6 +24,10 @@ contract Implementation2 {
         value = value_;
         LibEIP7702.requestProxyDelegationInitialization();
     }
+
+    function upgradeProxyDelegation(address newImplementation) public {
+        LibEIP7702.upgradeProxyDelegation(newImplementation);
+    }
 }
 
 contract EIP7702ProxyTest is SoladyTest {
@@ -70,6 +74,10 @@ contract EIP7702ProxyTest is SoladyTest {
         assertEq(thisValue, this.value());
         vm.expectRevert(abi.encodeWithSelector(CustomError.selector, v));
         EIP7702ProxyTest(instance).revertWithError();
+    }
+
+    function upgradeProxyDelegation(address newImplementation) public {
+        LibEIP7702.upgradeProxyDelegation(newImplementation);
     }
 
     function testEIP7702Proxy(bytes32, bool f) public {
@@ -164,6 +172,12 @@ contract EIP7702ProxyTest is SoladyTest {
 
         _checkBehavesLikeProxy(authority);
 
+        if (!f && _randomChance(2)) {
+            EIP7702ProxyTest(authority).upgradeProxyDelegation(address(new Implementation2()));
+            assertEq(Implementation2(authority).version(), 2);
+            Implementation2(authority).upgradeProxyDelegation(address(this));
+        }
+
         if (!f && _randomChance(2) && (r >> 160) > 0) {
             vm.startPrank(admin);
             eip7702Proxy.upgrade(address(new Implementation2()));
@@ -188,5 +202,41 @@ contract EIP7702ProxyTest is SoladyTest {
 
     function testEIP7702Proxy() public {
         this.testEIP7702Proxy(0, true);
+    }
+
+    function testEIP7702ProxyWithDefaultImplementation(bytes32, bool f) public {
+        vm.pauseGasMetering();
+
+        IEIP7702ProxyWithAdminABI eip7702Proxy =
+            IEIP7702ProxyWithAdminABI(address(new EIP7702Proxy(address(this), address(0))));
+
+        assertEq(eip7702Proxy.admin(), address(0));
+        assertEq(LibEIP7702.proxyAdmin(address(eip7702Proxy)), address(0));
+        assertEq(eip7702Proxy.implementation(), address(this));
+        assertEq(LibEIP7702.proxyImplementation(address(eip7702Proxy)), address(this));
+
+        address authority = _randomUniqueHashedAddress();
+        assertEq(LibEIP7702.delegation(authority), address(0));
+        vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
+
+        vm.resumeGasMetering();
+
+        if (authority.code.length > 0x20) return;
+
+        _checkBehavesLikeProxy(authority);
+
+        vm.pauseGasMetering();
+
+        if (!f && _randomChance(2)) {
+            EIP7702ProxyTest(authority).upgradeProxyDelegation(address(new Implementation2()));
+            assertEq(Implementation2(authority).version(), 2);
+            Implementation2(authority).upgradeProxyDelegation(address(this));
+        }
+
+        vm.resumeGasMetering();
+    }
+
+    function testEIP7702ProxyWithDefaultImplementation() public {
+        this.testEIP7702ProxyWithDefaultImplementation(0, true);
     }
 }
