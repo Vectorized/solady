@@ -20,7 +20,7 @@ contract EIP7702Proxy {
     uint256 internal immutable __self = uint256(uint160(address(this)));
 
     /// @dev The default implementation. Provided for optimization.
-    /// Only set if the `initialAdmin == address(0) && initialImplementation != address(0)`.
+    /// Set if the `initialAdmin == address(0) && initialImplementation != address(0)`.
     uint256 internal immutable _defaultImplementation;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
