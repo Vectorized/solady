@@ -19,6 +19,10 @@ contract EIP7702Proxy {
     /// @dev For allowing the differentiation of the EOA and the proxy itself.
     uint256 internal immutable __self = uint256(uint160(address(this)));
 
+    /// @dev The default implementation. Provided for optimization.
+    /// Set if the `initialAdmin == address(0) && initialImplementation != address(0)`.
+    uint256 internal immutable _defaultImplementation;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -45,11 +49,18 @@ contract EIP7702Proxy {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(address initialImplementation, address initialAdmin) payable {
+        uint256 defaultImplementation;
         /// @solidity memory-safe-assembly
         assembly {
-            sstore(_ERC1967_IMPLEMENTATION_SLOT, shr(96, shl(96, initialImplementation)))
-            sstore(_ERC1967_ADMIN_SLOT, shr(96, shl(96, initialAdmin)))
+            let implementation := shr(96, shl(96, initialImplementation))
+            let admin := shr(96, shl(96, initialAdmin))
+            // We will store the implementation in the storage regardless,
+            // to aid proxy detection on block explorers.
+            sstore(_ERC1967_IMPLEMENTATION_SLOT, implementation)
+            sstore(_ERC1967_ADMIN_SLOT, admin)
+            defaultImplementation := mul(lt(admin, iszero(iszero(implementation))), implementation)
         }
+        _defaultImplementation = defaultImplementation;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -58,6 +69,7 @@ contract EIP7702Proxy {
 
     fallback() external payable virtual {
         uint256 s = __self;
+        uint256 defaultImplementation = _defaultImplementation;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, returndatasize()) // Optimization trick to change `6040608052` into `3d604052`.
@@ -106,35 +118,41 @@ contract EIP7702Proxy {
             // Workflow for the EIP7702 authority (i.e. the EOA).
             let impl := sload(_ERC1967_IMPLEMENTATION_SLOT) // The preferred implementation on the EOA.
             calldatacopy(0x00, 0x00, calldatasize()) // Copy the calldata for the delegatecall.
-            // If the preferred implementation is `address(0)`, perform the initialization workflow.
+            // If the preferred implementation is `address(0)`.
             if iszero(shl(96, impl)) {
-                if iszero(
-                    and( // The arguments of `and` are evaluated from right to left.
-                        delegatecall(
-                            gas(), mload(calldatasize()), 0x00, calldatasize(), calldatasize(), 0x00
-                        ),
-                        // Fetch the implementation from the proxy.
-                        staticcall(gas(), s, calldatasize(), 0x00, calldatasize(), 0x20)
-                    )
-                ) {
+                // If `defaultImplementation` is `address(0)`, perform the initialization workflow.
+                if iszero(defaultImplementation) {
+                    if iszero(
+                        and( // The arguments of `and` are evaluated from right to left.
+                            delegatecall(
+                                gas(), mload(calldatasize()), 0x00, calldatasize(), 0x00, 0x00
+                            ),
+                            // Fetch the implementation from the proxy.
+                            staticcall(gas(), s, calldatasize(), 0x00, calldatasize(), 0x20)
+                        )
+                    ) {
+                        returndatacopy(0x00, 0x00, returndatasize())
+                        revert(0x00, returndatasize())
+                    }
+                    // Because we cannot reliably and efficiently tell if the call is made
+                    // via staticcall or call, we shall ask the delegation to make a proxy delegation
+                    // initialization request to signal that we should initialize the storage slot with
+                    // the actual implementation. This also gives flexibility on whether to let the
+                    // proxy auto-upgrade, or let the authority manually upgrade (via 7702 or passkey).
+                    // A non-zero value in the transient storage denotes a initialization request.
+                    if tload(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT) {
+                        let implSlot := _ERC1967_IMPLEMENTATION_SLOT
+                        // The `implementation` is still at `calldatasize()` in memory.
+                        // Preserve the upper 96 bits when updating in case they are used for some stuff.
+                        sstore(
+                            implSlot, or(shl(160, shr(160, sload(implSlot))), mload(calldatasize()))
+                        )
+                        tstore(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT, 0) // Clear.
+                    }
                     returndatacopy(0x00, 0x00, returndatasize())
-                    revert(0x00, returndatasize())
+                    return(0x00, returndatasize())
                 }
-                // Because we cannot reliably and efficiently tell if the call is made
-                // via staticcall or call, we shall ask the delegation to make a proxy delegation
-                // initialization request to signal that we should initialize the storage slot with
-                // the actual implementation. This also gives flexibility on whether to let the
-                // proxy auto-upgrade, or let the authority manually upgrade (via 7702 or passkey).
-                // A non-zero value in the transient storage denotes a initialization request.
-                if tload(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT) {
-                    let implSlot := _ERC1967_IMPLEMENTATION_SLOT
-                    // The `implementation` is still at `calldatasize()` in memory.
-                    // Preserve the upper 96 bits when updating in case they are used for some stuff.
-                    sstore(implSlot, or(shl(160, shr(160, sload(implSlot))), mload(calldatasize())))
-                    tstore(_EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT, 0) // Clear.
-                }
-                returndatacopy(0x00, 0x00, returndatasize())
-                return(0x00, returndatasize())
+                impl := defaultImplementation
             }
             // Otherwise, just delegatecall and bubble up the results without initialization.
             if iszero(delegatecall(gas(), impl, 0x00, calldatasize(), calldatasize(), 0x00)) {
