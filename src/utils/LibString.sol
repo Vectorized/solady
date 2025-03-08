@@ -75,6 +75,30 @@ library LibString {
     uint128 internal constant WHITESPACE_7_BIT_ASCII = 0x100003e00;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  NATIVE STRING OPERATIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Sets the value of the string storage reference `$` to `s`.
+    /// A string in memory cannot be assigned to a local string storage reference directly.
+    function set(string storage $, string memory s) internal {
+        LibBytes.set(bytesStorage($), bytes(s));
+    }
+
+    /// @dev Deletes a string from storage.
+    /// The `delete` keyword is not applicable to local string storage references.
+    function delete_(string storage $) internal {
+        LibBytes.delete_(bytesStorage($));
+    }
+
+    /// @dev Helper to cast `$` to a `bytes`.
+    function bytesStorage(string storage $) internal pure returns (bytes storage casted) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            casted.slot := $.slot
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                 STRING STORAGE OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 

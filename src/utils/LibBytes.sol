@@ -23,6 +23,62 @@ library LibBytes {
     uint256 internal constant NOT_FOUND = type(uint256).max;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   NATIVE BYTES OPERATIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Sets the value of the bytes array storage reference `$` to `s`.
+    /// A bytes array in memory cannot be assigned to a local bytes array storage reference directly.
+    function set(bytes storage $, bytes memory s) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let len := mload(s)
+            let packed := shl(1, len)
+            for { let i := 0 } 1 {} {
+                let o := add(s, 0x20)
+                if iszero(gt(len, 0x1f)) {
+                    packed := or(mload(o), packed)
+                    break
+                }
+                packed := or(packed, 1)
+                mstore(0x00, $.slot)
+                for { let p := keccak256(0x00, 0x20) } 1 {} {
+                    sstore(add(p, shr(5, i)), mload(add(o, i)))
+                    i := add(i, 0x20)
+                    if iszero(lt(i, len)) { break }
+                }
+                break
+            }
+            sstore($.slot, packed)
+        }
+    }
+
+    /// @dev Deletes a bytes array from storage.
+    /// The `delete` keyword is not applicable to local bytes array storage references.
+    function delete_(bytes storage $) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let packed := sload($.slot)
+            let is_long_string := and(packed, 1)
+            for {} 1 {} {
+                sstore($.slot, 0)
+                if iszero(is_long_string) { break }
+                mstore(0, $.slot)
+                let ptr := keccak256(0, 0x20)
+                let len := shr(1, packed)
+                // the number of words used to store the string
+                let words := shr(5, add(len, 0x1f))
+                let end := add(ptr, words)
+                for {} 1 {} {
+                    sstore(ptr, 0)
+                    ptr := add(ptr, 1)
+                    if iszero(lt(ptr, end)) { break }
+                }
+                break
+            }
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  BYTE STORAGE OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
