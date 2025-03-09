@@ -84,6 +84,12 @@ library LibString {
         LibBytes.set(bytesStorage($), bytes(s));
     }
 
+    /// @dev Sets the value of the string storage reference `$` to `s`.
+    /// A string in calldata cannot be assigned to a local string storage reference directly.
+    function setCalldata(string storage $, string calldata s) internal {
+        LibBytes.setCalldata(bytesStorage($), bytes(s));
+    }
+
     /// @dev Deletes a string from storage.
     /// The `delete` keyword is not applicable to local string storage references.
     function delete_(string storage $) internal {

@@ -16,9 +16,7 @@ contract SimpleStringSetAndGetWithNativeStorageString {
     string public x;
 
     function setX(string calldata x_) public {
-        LibString.set(x, x_);
-        // TODO
-        //        LibString.setCalldata(_x, x_);
+        LibString.setCalldata(x, x_);
     }
 }
 
@@ -1664,11 +1662,10 @@ contract LibStringTest is SoladyTest {
         _testSetAndGetStringStorage(s);
     }
 
-    // TODO
-    //    function testSetAndGetNativeStorageStringCalldata(string calldata s) public {
-    //        LibString.setCalldata(_getNativeStorageString(), s);
-    //        assertEq(_getNativeStorageString(), s);
-    //    }
+    function testSetAndGetNativeStorageStringCalldata(string calldata s) public {
+        LibString.setCalldata(_getNativeStorageString(), s);
+        assertEq(_getNativeStorageString(), s);
+    }
 
     function testSetAndGetStringStorageCalldata(string calldata s) public {
         LibString.setCalldata(_getStringStorage(), s);
