@@ -33,19 +33,32 @@ library LibBytes {
         assembly {
             let len := mload(s)
             let packed := shl(1, len)
-            for { let i := 0 } 1 {} {
-                let o := add(s, 0x20)
+            for {} 1 {} {
                 if iszero(gt(len, 0x1f)) {
-                    packed := or(mload(o), packed)
+                    let right_aligned := mload(add(s, len))
+                    let zeros := shl(3, sub(0x20, len))
+                    let left_aligned := shl(zeros, right_aligned)
+                    packed := or(packed, left_aligned)
                     break
                 }
                 packed := or(packed, 1)
                 mstore(0x00, $.slot)
-                for { let p := keccak256(0x00, 0x20) } 1 {} {
-                    sstore(add(p, shr(5, i)), mload(add(o, i)))
-                    i := add(i, 0x20)
-                    if iszero(lt(i, len)) { break }
+                let ptr := keccak256(0x00, 0x20)
+                // the number of words minus 1
+                let words := shr(5, sub(len, 1))
+                let end := add(ptr, words)
+                let o := add(s, 0x20)
+                for {} 1 {} {
+                    if eq(ptr, end) { break }
+                    sstore(ptr, mload(o))
+                    ptr := add(ptr, 1)
+                    o := add(o, 0x20)
                 }
+                // clean and store the last word
+                let right_aligned := mload(add(s, len))
+                let zeros := shl(3, sub(sub(o, s), len))
+                let left_aligned := shl(zeros, right_aligned)
+                sstore(ptr, left_aligned)
                 break
             }
             sstore($.slot, packed)
@@ -63,7 +76,7 @@ library LibBytes {
                 sstore($.slot, 0)
                 if iszero(is_long_string) { break }
                 mstore(0, $.slot)
-                let ptr := keccak256(0, 0x20)
+                let ptr := keccak256(0x00, 0x20)
                 let len := shr(1, packed)
                 // the number of words used to store the string
                 let words := shr(5, add(len, 0x1f))
@@ -71,7 +84,7 @@ library LibBytes {
                 for {} 1 {} {
                     sstore(ptr, 0)
                     ptr := add(ptr, 1)
-                    if iszero(lt(ptr, end)) { break }
+                    if eq(ptr, end) { break }
                 }
                 break
             }
