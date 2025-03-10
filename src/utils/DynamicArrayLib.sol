@@ -272,7 +272,7 @@ library DynamicArrayLib {
                 o := add(0x20, o)
                 if eq(o, end) { break }
             }
-            mstore(0x40, add(0x20, o)) // Allocate memory.
+            mstore(0x40, o)
         }
     }
 
@@ -567,7 +567,7 @@ library DynamicArrayLib {
                 // Approximately more than double the capacity to ensure more than enough space.
                 let newCap := add(cap, or(cap, newArrBytesLen))
                 // If the memory is contiguous, we can simply expand it.
-                if iszero(or(xor(mload(0x40), add(arrData, add(0x20, cap))), eq(arrData, 0x60))) {
+                if iszero(or(xor(mload(0x40), add(arrData, add(0x20, cap))), iszero(cap))) {
                     mstore(sub(arrData, 0x20), mul(prime, newCap)) // Store the capacity.
                     mstore(0x40, add(arrData, add(0x20, newCap))) // Expand the memory allocation.
                     break
