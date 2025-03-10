@@ -239,10 +239,73 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
-    function testDynamicArrayCopy(uint256[] memory data) public {
+    function testDynamicArrayCopyOrAllSlice() public {
+        uint256[] memory data;
+        uint256[] memory data2 = new uint256[](1);
+        data2[0] = 600972374956821603611096798192277940001591154517179782006087886208744463727;
+        this.testDynamicArrayCopyOrAllSlice(data, data2, 0);
+    }
+
+    function testDynamicArrayCopyOrAllSlice(
+        uint256[] calldata data,
+        uint256[] calldata data2,
+        uint256 r
+    ) public {
+        DynamicArrayLib.DynamicArray memory a;
+        DynamicArrayLib.DynamicArray memory b;
+        DynamicArrayLib.DynamicArray memory aCopy;
+        for (uint256 i; i < data.length; ++i) {
+            a.p(data[i] & (2 ** 160 - 1));
+            b.p(data[i]);
+            if (r & 2 == 0) {
+                _checkMemory(a.data);
+                _checkMemory(b.data);
+            }
+        }
+        bytes32 h = keccak256(abi.encodePacked(b.data));
+        aCopy = r & 1 == 0 ? a.copy() : a.slice(0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            log0(a, 0x20)
+            log0(b, 0x20)
+            log0(aCopy, 0x20)
+        }
+        for (uint256 i; i < data2.length; ++i) {
+            aCopy.p(data2[i]);
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            log0(a, 0x20)
+            log0(b, 0x20)
+            log0(aCopy, 0x20)
+        }
+        for (uint256 i; i < data2.length; ++i) {
+            a.p(data2[i]);
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            log0(a, 0x20)
+            log0(b, 0x20)
+            log0(aCopy, 0x20)
+        }
+        assertEq(a.data, aCopy.data);
+        assertEq(keccak256(abi.encodePacked(b.data)), h);
+    }
+
+    function testDynamicArrayCopy(uint256[] memory data, uint256 r) public {
+        if (r & 0xff00 == 0) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                data := 0x60
+            }
+        }
         DynamicArrayLib.DynamicArray memory a;
         a.data = data;
         DynamicArrayLib.DynamicArray memory b = a.copy();
+        if (r & 2 == 0) {
+            _checkMemory(a.data);
+            _checkMemory(b.data);
+        }
         assertEq(a.data, b.data);
         a.p(1);
         assertNotEq(a.data, b.data);

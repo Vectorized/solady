@@ -101,7 +101,7 @@ library DynamicBufferLib {
                 // Approximately more than double the capacity to ensure more than enough space.
                 let newCap := and(add(cap, add(or(cap, newBufDataLen), 0x20)), w)
                 // If the memory is contiguous, we can simply expand it.
-                if iszero(or(xor(mload(0x40), add(bufData, add(0x40, cap))), eq(bufData, 0x60))) {
+                if iszero(or(xor(mload(0x40), add(bufData, add(0x40, cap))), iszero(cap))) {
                     // Store `cap * prime` in the word before the length.
                     mstore(add(bufData, w), mul(prime, newCap))
                     mstore(0x40, add(bufData, add(0x40, newCap))) // Expand the memory allocation.
