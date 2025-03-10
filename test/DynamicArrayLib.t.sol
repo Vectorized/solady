@@ -239,10 +239,48 @@ contract DynamicArrayLibTest is SoladyTest {
         }
     }
 
-    function testDynamicArrayCopy(uint256[] memory data) public {
+    function testDynamicArrayCopyOrAllSlice(
+        uint256[] calldata data,
+        uint256[] calldata data2,
+        uint256 r
+    ) public {
+        DynamicArrayLib.DynamicArray memory a;
+        DynamicArrayLib.DynamicArray memory b;
+        DynamicArrayLib.DynamicArray memory aCopy;
+        for (uint256 i; i < data.length; ++i) {
+            a.p(data[i] & (2 ** 160 - 1));
+            b.p(data[i]);
+            if (r & 2 == 0) {
+                _checkMemory(a.data);
+                _checkMemory(b.data);
+            }
+        }
+        bytes32 h = keccak256(abi.encodePacked(b.data));
+        aCopy = r & 1 == 0 ? a.copy() : a.slice(0);
+        for (uint256 i; i < data2.length; ++i) {
+            aCopy.p(data2[i]);
+        }
+        for (uint256 i; i < data2.length; ++i) {
+            a.p(data2[i]);
+        }
+        assertEq(a.data, aCopy.data);
+        assertEq(keccak256(abi.encodePacked(b.data)), h);
+    }
+
+    function testDynamicArrayCopy(uint256[] memory data, uint256 r) public {
+        if (r & 0xff00 == 0) {
+            /// @solidity memory-safe-assembly
+            assembly {
+                data := 0x60
+            }
+        }
         DynamicArrayLib.DynamicArray memory a;
         a.data = data;
         DynamicArrayLib.DynamicArray memory b = a.copy();
+        if (r & 2 == 0) {
+            _checkMemory(a.data);
+            _checkMemory(b.data);
+        }
         assertEq(a.data, b.data);
         a.p(1);
         assertNotEq(a.data, b.data);

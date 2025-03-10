@@ -276,7 +276,7 @@ library DynamicArrayLib {
                 o := add(0x20, o)
                 if eq(o, end) { break }
             }
-            mstore(0x40, o)
+            mstore(0x40, add(0x20, o)) // Allocate memory.
         }
     }
 
