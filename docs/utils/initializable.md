@@ -57,7 +57,7 @@ Emits an {Initialized} event.
 modifier reinitializer(uint64 version) virtual
 ```
 
-Guards an reinitialzer function so that it can be invoked at most once.   
+Guards a reinitialzer function so that it can be invoked at most once.   
 You can guard a function with `onlyInitializing` such that it can be called   
 through a function guarded with `reinitializer`.   
 Emits an {Initialized} event.

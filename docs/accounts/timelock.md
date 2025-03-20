@@ -132,7 +132,7 @@ each enum position, starting from the least significant bit.
 error TimelockUnexecutedPredecessor(bytes32 predecessor)
 ```
 
-The operation has an predecessor that has not been executed.
+The operation has a predecessor that has not been executed.
 
 ### TimelockUnauthorized()
 

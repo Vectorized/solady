@@ -596,7 +596,7 @@ function split(string memory subject, string memory delimiter)
     returns (string[] memory result)
 ```
 
-Returns a arrays of strings based on the `delimiter` inside of the `subject` string.
+Returns an arrays of strings based on the `delimiter` inside of the `subject` string.
 
 ### concat(string,string)
 

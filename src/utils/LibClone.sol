@@ -23,13 +23,13 @@ pragma solidity ^0.8.4;
 /// - Automatically verified on Etherscan.
 ///
 /// @dev Clones with immutable args (CWIA):
-/// The implementation of CWIA here is does NOT append the immutable args into the calldata
+/// The implementation of CWIA here does NOT append the immutable args into the calldata
 /// passed into delegatecall. It is simply an ERC1167 minimal proxy with the immutable arguments
 /// appended to the back of the runtime bytecode.
 /// - Uses the identity precompile (0x4) to copy args during deployment.
 ///
 /// @dev Minimal ERC1967 proxy:
-/// An minimal ERC1967 proxy, intended to be upgraded with UUPS.
+/// A minimal ERC1967 proxy, intended to be upgraded with UUPS.
 /// This is NOT the same as ERC1967Factory's transparent proxy, which includes admin logic.
 /// - Automatically verified on Etherscan.
 ///
@@ -38,13 +38,13 @@ pragma solidity ^0.8.4;
 /// - Automatically verified on Etherscan.
 ///
 /// @dev ERC1967I proxy:
-/// An variant of the minimal ERC1967 proxy, with a special code path that activates
+/// A variant of the minimal ERC1967 proxy, with a special code path that activates
 /// if `calldatasize() == 1`. This code path skips the delegatecall and directly returns the
 /// `implementation` address. The returned implementation is guaranteed to be valid if the
 /// keccak256 of the proxy's code is equal to `ERC1967I_CODE_HASH`.
 ///
 /// @dev ERC1967I proxy with immutable args:
-/// An variant of the minimal ERC1967 proxy, with a special code path that activates
+/// A variant of the minimal ERC1967 proxy, with a special code path that activates
 /// if `calldatasize() == 1`. This code path skips the delegatecall and directly returns the
 /// - Uses the identity precompile (0x4) to copy args during deployment.
 ///
@@ -57,13 +57,13 @@ pragma solidity ^0.8.4;
 /// - Automatically verified on Etherscan.
 ///
 /// @dev ERC1967I beacon proxy:
-/// An variant of the minimal ERC1967 beacon proxy, with a special code path that activates
+/// A variant of the minimal ERC1967 beacon proxy, with a special code path that activates
 /// if `calldatasize() == 1`. This code path skips the delegatecall and directly returns the
 /// `implementation` address. The returned implementation is guaranteed to be valid if the
 /// keccak256 of the proxy's code is equal to `ERC1967I_CODE_HASH`.
 ///
 /// @dev ERC1967I proxy with immutable args:
-/// An variant of the minimal ERC1967 beacon proxy, with a special code path that activates
+/// A variant of the minimal ERC1967 beacon proxy, with a special code path that activates
 /// if `calldatasize() == 1`. This code path skips the delegatecall and directly returns the
 /// - Uses the identity precompile (0x4) to copy args during deployment.
 library LibClone {

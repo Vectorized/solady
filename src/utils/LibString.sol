@@ -617,7 +617,7 @@ library LibString {
         return LibBytes.indicesOf(bytes(subject), bytes(needle));
     }
 
-    /// @dev Returns a arrays of strings based on the `delimiter` inside of the `subject` string.
+    /// @dev Returns an arrays of strings based on the `delimiter` inside of the `subject` string.
     function split(string memory subject, string memory delimiter)
         internal
         pure

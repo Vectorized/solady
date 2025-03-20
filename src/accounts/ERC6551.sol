@@ -373,7 +373,7 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
     }
 
     /// @dev For handling token callbacks.
-    /// Safe-transferred ERC721 tokens will trigger a ownership cycle check.
+    /// Safe-transferred ERC721 tokens will trigger an ownership cycle check.
     modifier receiverFallback() override(Receiver) {
         uint256 s = uint256(bytes32(msg.sig)) >> 224;
         // 0x150b7a02: `onERC721Received(address,address,uint256,bytes)`.

@@ -51,7 +51,7 @@ library SafeTransferLib {
     /// storage reads and writes, but low enough to prevent griefing.
     uint256 internal constant GAS_STIPEND_NO_GRIEF = 100000;
 
-    /// @dev The unique EIP-712 domain domain separator for the DAI token contract.
+    /// @dev The unique EIP-712 domain separator for the DAI token contract.
     bytes32 internal constant DAI_DOMAIN_SEPARATOR =
         0xdbb8cf42e1ecb028be3f3dbc922e1d878b963f411dc388ced501601c60f7c6f7;
 

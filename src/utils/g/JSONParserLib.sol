@@ -33,7 +33,7 @@ library JSONParserLib {
 
     /// @dev For denoting that an item has not been initialized.
     /// A item returned from `parse` will never be of an undefined type.
-    /// Parsing a invalid JSON string will simply revert.
+    /// Parsing an invalid JSON string will simply revert.
     uint8 internal constant TYPE_UNDEFINED = 0;
 
     /// @dev Type representing an array (e.g. `[1,2,3]`).

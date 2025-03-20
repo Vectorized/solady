@@ -98,7 +98,7 @@ abstract contract Initializable {
         }
     }
 
-    /// @dev Guards an reinitialzer function so that it can be invoked at most once.
+    /// @dev Guards a reinitialzer function so that it can be invoked at most once.
     ///
     /// You can guard a function with `onlyInitializing` such that it can be called
     /// through a function guarded with `reinitializer`.
