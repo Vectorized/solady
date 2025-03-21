@@ -84,7 +84,7 @@ contract Timelock is ERC7821, EnumerableRoles {
     /// each enum position, starting from the least significant bit.
     error TimelockInvalidOperation(bytes32 id, uint256 expectedStates);
 
-    /// @dev The operation has an predecessor that has not been executed.
+    /// @dev The operation has a predecessor that has not been executed.
     error TimelockUnexecutedPredecessor(bytes32 predecessor);
 
     /// @dev Unauthorized to call the function.

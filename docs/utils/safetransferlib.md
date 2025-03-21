@@ -111,7 +111,7 @@ bytes32 internal constant DAI_DOMAIN_SEPARATOR =
     0xdbb8cf42e1ecb028be3f3dbc922e1d878b963f411dc388ced501601c60f7c6f7
 ```
 
-The unique EIP-712 domain domain separator for the DAI token contract.
+The unique EIP-712 domain separator for the DAI token contract.
 
 ### WETH9
 

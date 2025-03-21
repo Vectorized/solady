@@ -293,7 +293,7 @@ function split(bytes memory subject, bytes memory delimiter)
     returns (bytes[] memory result)
 ```
 
-Returns a arrays of bytess based on the `delimiter` inside of the `subject` bytes.
+Returns an arrays of bytess based on the `delimiter` inside of the `subject` bytes.
 
 ### concat(bytes,bytes)
 

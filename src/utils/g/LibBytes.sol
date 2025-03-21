@@ -516,7 +516,7 @@ library LibBytes {
         }
     }
 
-    /// @dev Returns a arrays of bytess based on the `delimiter` inside of the `subject` bytes.
+    /// @dev Returns an arrays of bytess based on the `delimiter` inside of the `subject` bytes.
     function split(bytes memory subject, bytes memory delimiter)
         internal
         pure
