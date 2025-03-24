@@ -8,7 +8,7 @@ library LibEIP7702 {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Failed to deploy the EIP7702 proxy.
+    /// @dev Failed to deploy the EIP7702Proxy.
     error DeploymentFailed();
 
     /// @dev The proxy query has failed.
