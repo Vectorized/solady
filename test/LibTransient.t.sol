@@ -270,23 +270,22 @@ contract LibTransientTest is SoladyTest {
         _etchTransientRegistry();
         if (_randomChance(2)) {
             vm.expectRevert(bytes4(keccak256("TransientRegistryUnauthorized()")));
-            LibTransient.registryClear(key);
+            this.registryClear(key);
         }
 
-        LibTransient.registrySet(key, value);
-        assertEq(LibTransient.registryGet(key), value);
-        assertEq(LibTransient.registryAdminOf(key), address(this));
+        this.registrySet(key, value);
+        assertEq(this.registryGet(key), value);
+        assertEq(this.registryAdminOf(key), address(this));
 
         if (_randomChance(2)) {
             address newAdmin = _randomUniqueHashedAddress();
-            vm.prank(newAdmin);
             vm.expectRevert(bytes4(keccak256("TransientRegistryUnauthorized()")));
-            LibTransient.registrySet(key, value);
+            this.registrySet(newAdmin, key, value);
         }
 
         if (_randomChance(2)) {
             vm.expectRevert(bytes4(keccak256("TransientRegistryNewAdminIsZeroAddress()")));
-            LibTransient.registryChangeAdmin(key, address(0));
+            this.registryChangeAdmin(key, address(0));
         }
 
         if (_randomChance(2)) {
@@ -302,7 +301,7 @@ contract LibTransientTest is SoladyTest {
                     );
                     assertTrue(success);
                 } else {
-                    LibTransient.registryChangeAdmin(key, newAdmin);
+                    this.registryChangeAdmin(key, newAdmin);
                 }
             } else {
                 (success,) = LibTransient.REGISTRY.call(
@@ -316,40 +315,37 @@ contract LibTransientTest is SoladyTest {
                 assertTrue(success);
             }
 
-            assertEq(LibTransient.registryAdminOf(key), newAdmin);
+            assertEq(this.registryAdminOf(key), newAdmin);
             if (_randomChance(2)) return;
 
             bytes memory anotherValue = _randomBytes();
-            vm.prank(newAdmin);
-            LibTransient.registrySet(key, anotherValue);
-            assertEq(LibTransient.registryGet(key), anotherValue);
-            assertEq(LibTransient.registryAdminOf(key), newAdmin);
+            this.registrySet(newAdmin, key, anotherValue);
+            assertEq(this.registryGet(key), anotherValue);
+            assertEq(this.registryAdminOf(key), newAdmin);
 
-            vm.prank(newAdmin);
-            LibTransient.registryChangeAdmin(key, address(this));
+            this.registryChangeAdmin(newAdmin, key, address(this));
         }
 
         if (_randomChance(2)) {
-            if (_randomChance(2)) LibTransient.registryClear(key);
+            if (_randomChance(2)) this.registryClear(key);
             bytes memory anotherValue = _randomBytes();
-            LibTransient.registrySet(key, anotherValue);
-            assertEq(LibTransient.registryGet(key), anotherValue);
-            assertEq(LibTransient.registryAdminOf(key), address(this));
+            this.registrySet(key, anotherValue);
+            assertEq(this.registryGet(key), anotherValue);
+            assertEq(this.registryAdminOf(key), address(this));
         }
 
         if (_randomChance(2)) {
-            LibTransient.registryClear(key);
+            this.registryClear(key);
             vm.expectRevert(bytes4(keccak256("TransientRegistryKeyDoesNotExist()")));
-            LibTransient.registryGet(key);
-            assertEq(LibTransient.registryAdminOf(key), address(0));
+            this.registryGet(key);
+            assertEq(this.registryAdminOf(key), address(0));
 
             if (_randomChance(2)) return;
 
             address newAdmin = _randomUniqueHashedAddress();
-            vm.prank(newAdmin);
-            LibTransient.registrySet(key, value);
-            assertEq(LibTransient.registryGet(key), value);
-            assertEq(LibTransient.registryAdminOf(key), newAdmin);
+            this.registrySet(newAdmin, key, value);
+            assertEq(this.registryGet(key), value);
+            assertEq(this.registryAdminOf(key), newAdmin);
         }
     }
 
@@ -359,12 +355,67 @@ contract LibTransientTest is SoladyTest {
         bytes32 bInitCodeHash = keccak256(type(B).creationCode);
         address aAddress = LibClone.predictDeterministicAddress(aInitCodeHash, 0, _NICKS_FACTORY);
         address bAddress = LibClone.predictDeterministicAddress(bInitCodeHash, 0, _NICKS_FACTORY);
-        LibTransient.registrySet("a", abi.encode(aAddress));
-        LibTransient.registrySet("b", abi.encode(bAddress));
+        this.registrySet("a", abi.encode(aAddress));
+        this.registrySet("b", abi.encode(bAddress));
         A a = new A();
         B b = new B();
         assertEq(a.b(), bAddress);
         assertEq(b.a(), aAddress);
+    }
+
+    function testRegistryNotDeployed() public {
+        bytes memory value = _randomBytes();
+        bytes memory empty;
+
+        vm.expectRevert(empty);
+        this.registrySet(bytes32(_randomUniform()), value);
+
+        vm.expectRevert(empty);
+        this.registryGet(bytes32(_randomUniform()));
+
+        vm.expectRevert(empty);
+        this.registryClear(bytes32(_randomUniform()));
+
+        vm.expectRevert(empty);
+        this.registryChangeAdmin(bytes32(_randomUniform()), _randomUniqueHashedAddress());
+
+        vm.expectRevert(empty);
+        this.registryAdminOf(bytes32(_randomUniform()));
+    }
+
+    function registrySet(bytes32 hash, bytes memory value) public {
+        LibTransient.registrySet(hash, value);
+    }
+
+    function registrySet(address pranker, bytes32 hash, bytes memory value) public {
+        vm.prank(pranker);
+        registrySet(hash, value);
+    }
+
+    function registryGet(bytes32 hash) public view returns (bytes memory) {
+        return LibTransient.registryGet(hash);
+    }
+
+    function registryClear(address pranker, bytes32 hash) public {
+        vm.prank(pranker);
+        registryClear(hash);
+    }
+
+    function registryClear(bytes32 hash) public {
+        LibTransient.registryClear(hash);
+    }
+
+    function registryChangeAdmin(address pranker, bytes32 hash, address newAdmin) public {
+        vm.prank(pranker);
+        registryChangeAdmin(hash, newAdmin);
+    }
+
+    function registryChangeAdmin(bytes32 hash, address newAdmin) public {
+        LibTransient.registryChangeAdmin(hash, newAdmin);
+    }
+
+    function registryAdminOf(bytes32 hash) public view returns (address) {
+        return LibTransient.registryAdminOf(hash);
     }
 
     function _etchTransientRegistry() internal {
