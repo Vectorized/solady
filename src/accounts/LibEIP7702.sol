@@ -74,12 +74,9 @@ library LibEIP7702 {
         view
         returns (address accountDelegation, address implementation)
     {
+        accountDelegation = delegation(account);
         /// @solidity memory-safe-assembly
         assembly {
-            extcodecopy(account, 0x00, 0x00, 0x20)
-            // Note: Checking that it starts with hex"ef01" is the most general and futureproof.
-            // 7702 bytecode is `abi.encodePacked(hex"ef01", uint8(version), address(delegation))`.
-            accountDelegation := mul(shr(96, mload(0x03)), eq(0xef01, shr(240, mload(0x00))))
             let m := mload(0x40)
             extcodecopy(accountDelegation, m, 0x00, 0x224) // The expected runtime bytecode is 548 bytes.
             // Zeroize the immutables.
