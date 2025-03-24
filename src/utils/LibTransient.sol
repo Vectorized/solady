@@ -51,6 +51,10 @@ library LibTransient {
     /// `bytes4(keccak256("_LIB_TRANSIENT_COMPAT_SLOT_SEED"))`.
     uint256 private constant _LIB_TRANSIENT_COMPAT_SLOT_SEED = 0x5a0b45f2;
 
+    /// @dev The canonical address of the transient registry.
+    /// See: https://gist.github.com/Vectorized/4ab665d7a234ef5aaaff2e5091ec261f
+    address internal constant REGISTRY = 0x000000000000297f64C7F8d9595e43257908F170;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     UINT256 OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -688,6 +692,101 @@ library LibTransient {
     function clearCompat(TBytes storage ptr) internal {
         if (block.chainid == 1) return clear(ptr);
         _compat(ptr)._spacer = 0;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*               TRANSIENT REGISTRY OPERATIONS                */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Sets the value for the key.
+    /// If the key does not exist, its admin will be set to the caller.
+    /// If the key already exist, its value will be overwritten,
+    /// and the caller must be the current admin for the key.
+    /// Reverts with empty data if the registry has not been deployed.
+    function registrySet(bytes32 key, bytes memory value) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            mstore(m, 0xaac438c0) // `set(bytes32,bytes)`.
+            mstore(add(m, 0x20), key)
+            mstore(add(m, 0x40), 0x40)
+            let n := mload(value)
+            mstore(add(m, 0x60), n)
+            for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                mstore(add(add(m, 0x80), i), mload(add(add(value, 0x20), i)))
+            }
+            if iszero(
+                mul(
+                    returndatasize(),
+                    call(gas(), REGISTRY, 0, add(m, 0x1c), add(n, 0x64), 0x00, 0x20)
+                )
+            ) { revert(0x00, returndatasize()) }
+        }
+    }
+
+    /// @dev Returns the value for the key.
+    /// Reverts if the key does not exist.
+    /// Reverts with empty data if the registry has not been deployed.
+    function registryGet(bytes32 key) internal view returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(0x00, 0x8eaa6ac0) // `get(bytes32)`.
+            mstore(0x20, key)
+            if iszero(mul(returndatasize(), staticcall(gas(), REGISTRY, 0x1c, 0x24, 0x00, 0x20))) {
+                revert(0x00, returndatasize())
+            }
+            // We can safely assume that the bytes will be containing the 0x20 offset.
+            returndatacopy(result, 0x20, sub(returndatasize(), 0x20))
+            mstore(0x40, add(result, returndatasize())) // Allocate memory.
+        }
+    }
+
+    /// @dev Clears the admin and the value for the key.
+    /// The caller must be the current admin of the key.
+    /// Reverts with empty data if the registry has not been deployed.
+    function registryClear(bytes32 key) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0x97040a45) // `clear(bytes32)`.
+            mstore(0x20, key)
+            if iszero(mul(returndatasize(), call(gas(), REGISTRY, 0, 0x1c, 0x24, 0x00, 0x20))) {
+                revert(0x00, returndatasize())
+            }
+        }
+    }
+
+    /// @dev Returns the admin of the key.
+    /// Returns `address(0)` if the key does not exist.
+    /// Reverts with empty data if the registry has not been deployed.
+    function registryAdminOf(bytes32 key) internal view returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, 0xc5344411) // `adminOf(bytes32)`.
+            mstore(0x20, key)
+            if iszero(mul(returndatasize(), staticcall(gas(), REGISTRY, 0x1c, 0x24, 0x00, 0x20))) {
+                revert(0x00, returndatasize())
+            }
+            result := mload(0x00)
+        }
+    }
+
+    /// @dev Changes the admin of the key.
+    /// The caller must be the current admin of the key.
+    /// The new admin must not be `address(0)`.
+    /// Reverts with empty data if the registry has not been deployed.
+    function registryChangeAdmin(bytes32 key, address newAdmin) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Cache the free memory pointer.
+            mstore(0x00, 0x053b1ca3) // `changeAdmin(bytes32,address)`.
+            mstore(0x20, key)
+            mstore(0x40, shr(96, shl(96, newAdmin)))
+            if iszero(mul(returndatasize(), call(gas(), REGISTRY, 0, 0x1c, 0x44, 0x00, 0x20))) {
+                revert(0x00, returndatasize())
+            }
+            mstore(0x40, m) // Restore the free memory pointer.
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
