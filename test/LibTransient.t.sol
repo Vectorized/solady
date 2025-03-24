@@ -385,6 +385,7 @@ contract LibTransientTest is SoladyTest {
 
     function registrySet(bytes32 hash, bytes memory value) public {
         LibTransient.registrySet(hash, value);
+        _checkMemory();
     }
 
     function registrySet(address pranker, bytes32 hash, bytes memory value) public {
@@ -392,8 +393,9 @@ contract LibTransientTest is SoladyTest {
         registrySet(hash, value);
     }
 
-    function registryGet(bytes32 hash) public view returns (bytes memory) {
-        return LibTransient.registryGet(hash);
+    function registryGet(bytes32 hash) public view returns (bytes memory result) {
+        result = LibTransient.registryGet(hash);
+        _checkMemory(result);
     }
 
     function registryClear(address pranker, bytes32 hash) public {
@@ -403,6 +405,7 @@ contract LibTransientTest is SoladyTest {
 
     function registryClear(bytes32 hash) public {
         LibTransient.registryClear(hash);
+        _checkMemory();
     }
 
     function registryChangeAdmin(address pranker, bytes32 hash, address newAdmin) public {
@@ -412,6 +415,7 @@ contract LibTransientTest is SoladyTest {
 
     function registryChangeAdmin(bytes32 hash, address newAdmin) public {
         LibTransient.registryChangeAdmin(hash, newAdmin);
+        _checkMemory();
     }
 
     function registryAdminOf(bytes32 hash) public view returns (address) {
