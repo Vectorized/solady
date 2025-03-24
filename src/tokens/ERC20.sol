@@ -395,22 +395,23 @@ abstract contract ERC20 {
         bytes32 r,
         bytes32 s
     ) public virtual {
-        if (_givePermit2InfiniteAllowance()) {
-            /// @solidity memory-safe-assembly
-            assembly {
-                // If `spender == _PERMIT2 && value != type(uint256).max`.
-                if iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(value)))) {
-                    mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
-                    revert(0x1c, 0x04)
-                }
-            }
-        }
-        bytes32 nameHash = _constantNameHash();
-        //  We simply calculate it on-the-fly to allow for cases where the `name` may change.
+
+        bool infiniteAllowance = _givePermit2InfiniteAllowance();
+        bytes32 nameHash = _constantNameHash() | keccak256(bytes(name()));
         if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
         bytes32 versionHash = _versionHash();
+
         /// @solidity memory-safe-assembly
         assembly {
+
+            if and(
+                infiniteAllowance,
+                iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(value))))
+            ) {
+                mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
+                revert(0x1c, 0x04)
+            }
+
             // Revert if the block timestamp is greater than `deadline`.
             if gt(timestamp(), deadline) {
                 mstore(0x00, 0x1a15a3cc) // `PermitExpired()`.
@@ -546,7 +547,7 @@ abstract contract ERC20 {
             sstore(_TOTAL_SUPPLY_SLOT, sub(sload(_TOTAL_SUPPLY_SLOT), amount))
             // Emit the {Transfer} event.
             mstore(0x00, amount)
-            log3(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, shl(96, from)), 0)
+            log3(0x00, 0x20, _TRANSFER_EVENT_SIGNATURE, from, 0)
         }
         _afterTokenTransfer(from, address(0), amount);
     }
@@ -581,7 +582,7 @@ abstract contract ERC20 {
             sstore(toBalanceSlot, add(sload(toBalanceSlot), amount))
             // Emit the {Transfer} event.
             mstore(0x20, amount)
-            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, shr(96, from_), shr(96, mload(0x0c)))
+            log3(0x20, 0x20, _TRANSFER_EVENT_SIGNATURE, from, to)
         }
         _afterTokenTransfer(from, to, amount);
     }
@@ -592,9 +593,9 @@ abstract contract ERC20 {
 
     /// @dev Updates the allowance of `owner` for `spender` based on spent `amount`.
     function _spendAllowance(address owner, address spender, uint256 amount) internal virtual {
-        if (_givePermit2InfiniteAllowance()) {
-            if (spender == _PERMIT2) return; // Do nothing, as allowance is infinite.
-        }
+        
+        if (_givePermit2InfiniteAllowance() && spender == _PERMIT2) return;
+
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the allowance slot and load its value.
@@ -619,19 +620,21 @@ abstract contract ERC20 {
     /// @dev Sets `amount` as the allowance of `spender` over the tokens of `owner`.
     ///
     /// Emits a {Approval} event.
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
-        if (_givePermit2InfiniteAllowance()) {
-            /// @solidity memory-safe-assembly
-            assembly {
-                // If `spender == _PERMIT2 && amount != type(uint256).max`.
-                if iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(amount)))) {
-                    mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
-                    revert(0x1c, 0x04)
-                }
-            }
-        }
+    function _approve(address owner, address spender, uint256 amount) internal virtual 
+    {
+        bool infiniteAllowance = _givePermit2InfiniteAllowance();
+
         /// @solidity memory-safe-assembly
-        assembly {
+        assembly
+        {
+            if and(
+                infiniteAllowance,
+                iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(amount))))
+            ) {
+                mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
+                revert(0x1c, 0x04)
+            }
+
             let owner_ := shl(96, owner)
             // Compute the allowance slot and store the amount.
             mstore(0x20, spender)
