@@ -397,7 +397,7 @@ abstract contract ERC20 {
     ) public virtual {
 
         bool infiniteAllowance = _givePermit2InfiniteAllowance();
-        bytes32 nameHash = _constantNameHash() | keccak256(bytes(name()));
+        bytes32 nameHash = _constantNameHash();
         if (nameHash == bytes32(0)) nameHash = keccak256(bytes(name()));
         bytes32 versionHash = _versionHash();
 
@@ -405,7 +405,7 @@ abstract contract ERC20 {
         assembly {
 
             if and(
-                infiniteAllowance,
+                _givePermit2InfiniteAllowance(),
                 iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(value))))
             ) {
                 mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
