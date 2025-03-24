@@ -8,6 +8,9 @@ library LibEIP7702 {
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Failed to deploy the EIP7702 proxy.
+    error DeploymentFailed();
+
     /// @dev The proxy query has failed.
     error ProxyQueryFailed();
 
@@ -33,12 +36,27 @@ library LibEIP7702 {
     bytes32 internal constant EIP7702_PROXY_DELEGATION_INITIALIZATION_REQUEST_SLOT =
         0x94e11c6e41e7fb92cb8bb65e13fdfbd4eba8b831292a1a220f7915c78c7c078f;
 
+    /// @dev The runtime bytecode for the EIP7702Proxy, with immutables zeroized.
+    /// See: https://gist.github.com/Vectorized/0a83937618a55b389e38a230da6d9531
+    bytes internal constant EIP7702_PROXY_BYTECODE =
+        hex"3d6040527f00000000000000000000000000000000000000000000000000000000000000007f00000000000000000000000000000000000000000000000000000000000000007f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc30831861011f573661007b5780543652602036f35b5f3560e01c80637dae87cb1481635c60da1b1417156100a55760205f5f36305afa156100a5573d5ff35b7fb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d610380548263f851a440036100db57805f5260205ff35b8033036101185760103560601c83638f283970036100ff5780835560015f5260205ff35b83630900f010036101165780855560015f5260205ff35b505b5050505f3dfd5b80543660010361015a578060601b61014c57826101495760205f5f36875afa61014457fe5b60205ff35b50815b8060601b60601c5f5260205ff35b365f5f378060601b6101d157826101ce576020365f36875afa5f5f365f36515af416610188573d5f5f3e3d5ffd5b7f94e11c6e41e7fb92cb8bb65e13fdfbd4eba8b831292a1a220f7915c78c7c078f805c156101c557365183546001600160a01b0319161783555f815d5b503d5f5f3e3d5ff35b50815b5f36365f845af46101e4573d5f5f3e3d5ffd5b50503d5f5f3e3d5ff3fea2646970667358221220ae2e44e1b6354577804f3b587e067c4059cd01fbf4f1d170068e447744e4733964736f6c634300081c0033";
+
+    /// @dev The creation code for the EIP7702Proxy.
+    bytes internal constant EIP7702_PROXY_CREATION_CODE = abi.encodePacked(
+        hex"60c060408190523060805261031738819003908190833981016040819052610026916100a3565b6001600160a01b039182167f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc81905591167fb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103819055811515110260a0526100d4565b80516001600160a01b038116811461009e575f5ffd5b919050565b5f5f604083850312156100b4575f5ffd5b6100bd83610088565b91506100cb60208401610088565b90509250929050565b60805160a0516102246100f35f395f602601525f600501526102245ff3fe",
+        EIP7702_PROXY_BYTECODE
+    );
+
+    /// @dev The keccak256 of deployed code for the EIP7702Proxy, with immutables zeroized.
+    bytes32 internal constant EIP7702_PROXY_CODE_HASH =
+        0x8597275a39ff086f2944fa8ab48f660db9fa41694df92f0dc3f232e1f204d488;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    AUTHORITY OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the delegation of the account.
-    /// If the account is not an EIP7702 authority, the `delegation` will be `address(0)`.
+    /// If the account is not an EIP7702 authority, returns `address(0)`.
     function delegation(address account) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -49,9 +67,80 @@ library LibEIP7702 {
         }
     }
 
+    /// @dev Returns the delegation and the implementation of the account.
+    /// If the account delegation is not a valid EIP7702Proxy, returns `address(0)`.
+    function delegationAndImplementation(address account)
+        internal
+        view
+        returns (address accountDelegation, address implementation)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            extcodecopy(account, 0x00, 0x00, 0x20)
+            // Note: Checking that it starts with hex"ef01" is the most general and futureproof.
+            // 7702 bytecode is `abi.encodePacked(hex"ef01", uint8(version), address(delegation))`.
+            accountDelegation := mul(shr(96, mload(0x03)), eq(0xef01, shr(240, mload(0x00))))
+            let m := mload(0x40)
+            extcodecopy(accountDelegation, m, 0x00, 0x224) // The expected runtime bytecode is 548 bytes.
+            // Zeroize the immutables.
+            mstore(add(m, 0x05), 0)
+            mstore(add(m, 0x26), 0)
+            if eq(keccak256(m, 0x224), EIP7702_PROXY_CODE_HASH) {
+                mstore(0x00, 0)
+                if staticcall(gas(), account, 0x00, 0x01, 0x00, 0x20) {
+                    implementation := mload(0x00)
+                }
+            }
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PROXY OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns the initialization code for the EIP7702Proxy.
+    function proxyInitCode(address initialImplementation, address initialAdmin)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        // We don't need max assembly efficiency here as
+        bytes memory args = abi.encode(initialImplementation, initialAdmin);
+        return abi.encodePacked(EIP7702_PROXY_CREATION_CODE, args);
+    }
+
+    /// @dev Deploys an EIP7702Proxy.
+    function deployProxy(address initialImplementation, address initialAdmin)
+        internal
+        returns (address instance)
+    {
+        bytes memory initCode = proxyInitCode(initialImplementation, initialAdmin);
+        /// @solidity memory-safe-assembly
+        assembly {
+            instance := create(0, add(initCode, 0x20), mload(initCode))
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
+
+    /// @dev Deploys an EIP7702Proxy to a deterministic address with `salt`.
+    function deployProxyDeterministic(
+        address initialImplementation,
+        address initialAdmin,
+        bytes32 salt
+    ) internal returns (address instance) {
+        bytes memory initCode = proxyInitCode(initialImplementation, initialAdmin);
+        /// @solidity memory-safe-assembly
+        assembly {
+            instance := create2(0, add(initCode, 0x20), mload(initCode), salt)
+            if iszero(instance) {
+                mstore(0x00, 0x30116425) // `DeploymentFailed()`.
+                revert(0x1c, 0x04)
+            }
+        }
+    }
 
     /// @dev Returns the implementation of the proxy.
     /// Assumes that the proxy is a proper EIP7702Proxy, if it exists.
