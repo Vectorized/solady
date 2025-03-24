@@ -48,7 +48,8 @@ library LibEIP7702 {
     );
 
     /// @dev The keccak256 of deployed code for the EIP7702Proxy, with immutables zeroized.
-    bytes32 internal constant EIP7702_PROXY_CODE_HASH = keccak256(EIP7702_PROXY_BYTECODE);
+    bytes32 internal constant EIP7702_PROXY_CODE_HASH =
+        0xd06821844bc2418f31422e4e6c1462d255cda5e67a8633c01677522de076fd53;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    AUTHORITY OPERATIONS                    */
@@ -74,7 +75,6 @@ library LibEIP7702 {
         returns (address accountDelegation, address implementation)
     {
         accountDelegation = delegation(account);
-        bytes32 codeHash = EIP7702_PROXY_CODE_HASH;
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
@@ -82,7 +82,7 @@ library LibEIP7702 {
             // Zeroize the immutables.
             mstore(add(m, 0x05), 0)
             mstore(add(m, 0x26), 0)
-            if eq(keccak256(m, 0x224), codeHash) {
+            if eq(keccak256(m, 0x224), EIP7702_PROXY_CODE_HASH) {
                 mstore(0x00, 0)
                 if staticcall(gas(), account, 0x00, 0x01, 0x00, 0x20) {
                     implementation := mload(0x00)
