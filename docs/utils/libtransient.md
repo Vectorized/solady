@@ -75,6 +75,18 @@ struct TBytes {
 
 Pointer struct to a `bytes` in transient storage.
 
+## Constants
+
+### REGISTRY
+
+```solidity
+address internal constant REGISTRY =
+    0x000000000000297f64C7F8d9595e43257908F170
+```
+
+The canonical address of the transient registry.   
+See: https://gist.github.com/Vectorized/4ab665d7a234ef5aaaff2e5091ec261f
+
 ## Uint256 Operations
 
 ### tUint256(bytes32)
@@ -743,3 +755,64 @@ function clearCompat(TBytes storage ptr) internal
 ```
 
 Clears the value at transient `ptr`.
+
+## Transient Registry Operations
+
+### registrySet(bytes32,bytes)
+
+```solidity
+function registrySet(bytes32 key, bytes memory value) internal
+```
+
+Sets the value for the key.   
+If the key does not exist, its admin will be set to the caller.   
+If the key already exist, its value will be overwritten,   
+and the caller must be the current admin for the key.   
+Reverts with empty data if the registry has not been deployed.
+
+### registryGet(bytes32)
+
+```solidity
+function registryGet(bytes32 key)
+    internal
+    view
+    returns (bytes memory result)
+```
+
+Returns the value for the key.   
+Reverts if the key does not exist.   
+Reverts with empty data if the registry has not been deployed.
+
+### registryClear(bytes32)
+
+```solidity
+function registryClear(bytes32 key) internal
+```
+
+Clears the admin and the value for the key.   
+The caller must be the current admin of the key.   
+Reverts with empty data if the registry has not been deployed.
+
+### registryAdminOf(bytes32)
+
+```solidity
+function registryAdminOf(bytes32 key)
+    internal
+    view
+    returns (address result)
+```
+
+Returns the admin of the key.   
+Returns `address(0)` if the key does not exist.   
+Reverts with empty data if the registry has not been deployed.
+
+### registryChangeAdmin(bytes32,address)
+
+```solidity
+function registryChangeAdmin(bytes32 key, address newAdmin) internal
+```
+
+Changes the admin of the key.   
+The caller must be the current admin of the key.   
+The new admin must not be `address(0)`.   
+Reverts with empty data if the registry has not been deployed.
