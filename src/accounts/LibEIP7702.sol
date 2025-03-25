@@ -89,11 +89,8 @@ library LibEIP7702 {
     function implementationOfUnchecked(address target) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result :=
-                mul(
-                    mload(0x00),
-                    and(gt(returndatasize(), 0x1f), staticcall(gas(), target, 0x00, 0x01, 0x00, 0x20))
-                )
+            mstore(0x00, 0)
+            result := mul(mload(0x00), staticcall(gas(), target, 0x00, 0x01, 0x00, 0x20))
         }
     }
 
@@ -103,11 +100,11 @@ library LibEIP7702 {
         assembly {
             let m := mload(0x40)
             // Copy the runtime bytecode without the CBOR metadata.
-            extcodecopy(target, m, 0x00, 488)
+            extcodecopy(target, m, 0x00, 0x1e8)
             // Zeroize the immutables.
             mstore(add(m, 0x05), 0)
             mstore(add(m, 0x26), 0)
-            result := eq(keccak256(m, 488), EIP7702_PROXY_MINIMAL_CODE_HASH)
+            result := eq(keccak256(m, 0x1e8), EIP7702_PROXY_MINIMAL_CODE_HASH)
         }
     }
 
