@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {EIP7702Proxy} from "../src/accounts/EIP7702Proxy.sol";
 import {LibEIP7702} from "../src/accounts/LibEIP7702.sol";
 
 interface IEIP7702ProxyWithAdminABI {
@@ -85,11 +84,11 @@ contract EIP7702ProxyTest is SoladyTest {
 
         address admin = _randomUniqueHashedAddress();
         IEIP7702ProxyWithAdminABI eip7702Proxy =
-            IEIP7702ProxyWithAdminABI(address(new EIP7702Proxy(address(this), admin)));
+            IEIP7702ProxyWithAdminABI(LibEIP7702.deployProxy(address(this), admin));
         assertEq(eip7702Proxy.admin(), admin);
         assertEq(LibEIP7702.proxyAdmin(address(eip7702Proxy)), admin);
         assertEq(eip7702Proxy.implementation(), address(this));
-        assertEq(LibEIP7702.proxyImplementation(address(eip7702Proxy)), address(this));
+        assertEq(LibEIP7702.implementationOf(address(eip7702Proxy)), address(this));
 
         if (!f && _randomChance(16)) {
             address newAdmin = _randomUniqueHashedAddress();
@@ -143,7 +142,7 @@ contract EIP7702ProxyTest is SoladyTest {
         }
 
         address authority = _randomUniqueHashedAddress();
-        assertEq(LibEIP7702.delegation(authority), address(0));
+        assertEq(LibEIP7702.delegationOf(authority), address(0));
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
 
         vm.store(authority, _ERC1967_IMPLEMENTATION_SLOT, bytes32(r));
@@ -164,7 +163,7 @@ contract EIP7702ProxyTest is SoladyTest {
 
         vm.pauseGasMetering();
 
-        if (!f) assertEq(LibEIP7702.delegation(authority), address(eip7702Proxy));
+        if (!f) assertEq(LibEIP7702.delegationOf(authority), address(eip7702Proxy));
 
         // Check that upgrading the proxy won't cause the authority's implementation to change.
         if (!f && _randomChance(2)) {
@@ -206,19 +205,64 @@ contract EIP7702ProxyTest is SoladyTest {
         testEIP7702Proxy(0, true);
     }
 
+    function testEIP7702DelegationAndImplementationOf(bytes32) public {
+        address defaultImplementation = _randomUniqueHashedAddress();
+        address defaultAdmin = _randomUniqueHashedAddress();
+
+        if (_randomChance(2)) {
+            defaultImplementation = address(this);
+        }
+        if (_randomChance(2)) {
+            defaultAdmin = address(0);
+        }
+        address proxy = LibEIP7702.deployProxy(defaultImplementation, defaultAdmin);
+        address authority = _randomUniqueHashedAddress();
+        vm.etch(authority, abi.encodePacked(hex"ef0100", proxy));
+        if (authority.code.length > 0x20) return;
+
+        (address accountDelegation, address implementation) =
+            LibEIP7702.delegationAndImplementationOf(authority);
+        assertEq(accountDelegation, proxy);
+        assertEq(implementation, defaultImplementation);
+
+        if (defaultAdmin != address(0)) {
+            address newImplementation = address(new Implementation2());
+            vm.startPrank(defaultAdmin);
+            IEIP7702ProxyWithAdminABI(proxy).upgrade(newImplementation);
+            vm.stopPrank();
+            (accountDelegation, implementation) =
+                LibEIP7702.delegationAndImplementationOf(authority);
+            assertEq(accountDelegation, proxy);
+            assertEq(implementation, newImplementation);
+            vm.startPrank(defaultAdmin);
+            IEIP7702ProxyWithAdminABI(proxy).upgrade(address(this));
+            vm.stopPrank();
+        }
+
+        if (defaultImplementation == address(this)) {
+            address newImplementation = address(new Implementation2());
+            EIP7702ProxyTest(authority).upgradeProxyDelegation(newImplementation);
+            (accountDelegation, implementation) =
+                LibEIP7702.delegationAndImplementationOf(authority);
+            assertEq(accountDelegation, proxy);
+            assertEq(implementation, newImplementation);
+            Implementation2(authority).upgradeProxyDelegation(address(this));
+        }
+    }
+
     function testEIP7702ProxyWithDefaultImplementation(bytes32, bool f) public {
         vm.pauseGasMetering();
 
         IEIP7702ProxyWithAdminABI eip7702Proxy =
-            IEIP7702ProxyWithAdminABI(address(new EIP7702Proxy(address(this), address(0))));
+            IEIP7702ProxyWithAdminABI(LibEIP7702.deployProxy(address(this), address(0)));
 
         assertEq(eip7702Proxy.admin(), address(0));
         assertEq(LibEIP7702.proxyAdmin(address(eip7702Proxy)), address(0));
         assertEq(eip7702Proxy.implementation(), address(this));
-        assertEq(LibEIP7702.proxyImplementation(address(eip7702Proxy)), address(this));
+        assertEq(LibEIP7702.implementationOf(address(eip7702Proxy)), address(this));
 
         address authority = _randomUniqueHashedAddress();
-        assertEq(LibEIP7702.delegation(authority), address(0));
+        assertEq(LibEIP7702.delegationOf(authority), address(0));
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
 
         // Generate some random value that has the lower 160 bits zeroized,
