@@ -142,7 +142,7 @@ contract EIP7702ProxyTest is SoladyTest {
         }
 
         address authority = _randomUniqueHashedAddress();
-        assertEq(LibEIP7702.delegation(authority), address(0));
+        assertEq(LibEIP7702.delegationOf(authority), address(0));
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
 
         vm.store(authority, _ERC1967_IMPLEMENTATION_SLOT, bytes32(r));
@@ -163,7 +163,7 @@ contract EIP7702ProxyTest is SoladyTest {
 
         vm.pauseGasMetering();
 
-        if (!f) assertEq(LibEIP7702.delegation(authority), address(eip7702Proxy));
+        if (!f) assertEq(LibEIP7702.delegationOf(authority), address(eip7702Proxy));
 
         // Check that upgrading the proxy won't cause the authority's implementation to change.
         if (!f && _randomChance(2)) {
@@ -205,7 +205,7 @@ contract EIP7702ProxyTest is SoladyTest {
         testEIP7702Proxy(0, true);
     }
 
-    function testEIP7702DelegationAndImplementation(bytes32) public {
+    function testEIP7702DelegationAndImplementationOf(bytes32) public {
         address defaultImplementation = _randomUniqueHashedAddress();
         address defaultAdmin = _randomUniqueHashedAddress();
 
@@ -221,7 +221,7 @@ contract EIP7702ProxyTest is SoladyTest {
         if (authority.code.length > 0x20) return;
 
         (address accountDelegation, address implementation) =
-            LibEIP7702.delegationAndImplementation(authority);
+            LibEIP7702.delegationAndImplementationOf(authority);
         assertEq(accountDelegation, proxy);
         assertEq(implementation, defaultImplementation);
 
@@ -230,7 +230,8 @@ contract EIP7702ProxyTest is SoladyTest {
             vm.startPrank(defaultAdmin);
             IEIP7702ProxyWithAdminABI(proxy).upgrade(newImplementation);
             vm.stopPrank();
-            (accountDelegation, implementation) = LibEIP7702.delegationAndImplementation(authority);
+            (accountDelegation, implementation) =
+                LibEIP7702.delegationAndImplementationOf(authority);
             assertEq(accountDelegation, proxy);
             assertEq(implementation, newImplementation);
             vm.startPrank(defaultAdmin);
@@ -241,7 +242,8 @@ contract EIP7702ProxyTest is SoladyTest {
         if (defaultImplementation == address(this)) {
             address newImplementation = address(new Implementation2());
             EIP7702ProxyTest(authority).upgradeProxyDelegation(newImplementation);
-            (accountDelegation, implementation) = LibEIP7702.delegationAndImplementation(authority);
+            (accountDelegation, implementation) =
+                LibEIP7702.delegationAndImplementationOf(authority);
             assertEq(accountDelegation, proxy);
             assertEq(implementation, newImplementation);
             Implementation2(authority).upgradeProxyDelegation(address(this));
@@ -260,7 +262,7 @@ contract EIP7702ProxyTest is SoladyTest {
         assertEq(LibEIP7702.implementationOf(address(eip7702Proxy)), address(this));
 
         address authority = _randomUniqueHashedAddress();
-        assertEq(LibEIP7702.delegation(authority), address(0));
+        assertEq(LibEIP7702.delegationOf(authority), address(0));
         vm.etch(authority, abi.encodePacked(hex"ef0100", address(eip7702Proxy)));
 
         // Generate some random value that has the lower 160 bits zeroized,

@@ -90,10 +90,10 @@ and without the CBOR metadata.
 
 ## Authority And Proxy Operations
 
-### delegation(address)
+### delegationOf(address)
 
 ```solidity
-function delegation(address account)
+function delegationOf(address account)
     internal
     view
     returns (address result)
@@ -102,13 +102,13 @@ function delegation(address account)
 Returns the delegation of the account.   
 If the account is not an EIP7702 authority, returns `address(0)`.
 
-### delegationAndImplementation(address)
+### delegationAndImplementationOf(address)
 
 ```solidity
-function delegationAndImplementation(address account)
+function delegationAndImplementationOf(address account)
     internal
     view
-    returns (address accountDelegation, address implementation)
+    returns (address delegation, address implementation)
 ```
 
 Returns the delegation and the implementation of the account.   

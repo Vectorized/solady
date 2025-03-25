@@ -52,7 +52,7 @@ library LibEIP7702 {
 
     /// @dev Returns the delegation of the account.
     /// If the account is not an EIP7702 authority, returns `address(0)`.
-    function delegation(address account) internal view returns (address result) {
+    function delegationOf(address account) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             extcodecopy(account, 0x00, 0x00, 0x20)
@@ -64,13 +64,13 @@ library LibEIP7702 {
 
     /// @dev Returns the delegation and the implementation of the account.
     /// If the account delegation is not a valid EIP7702Proxy, returns `address(0)`.
-    function delegationAndImplementation(address account)
+    function delegationAndImplementationOf(address account)
         internal
         view
-        returns (address accountDelegation, address implementation)
+        returns (address delegation, address implementation)
     {
-        accountDelegation = delegation(account);
-        if (isEIP7702Proxy(accountDelegation)) {
+        delegation = delegationOf(account);
+        if (isEIP7702Proxy(delegation)) {
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(0x00, 0)
@@ -83,9 +83,7 @@ library LibEIP7702 {
     /// @dev Returns the implementation of `target`.
     /// If `target` is neither an EIP7702Proxy nor an EOA delegated to an EIP7702Proxy, returns `address(0)`.
     function implementationOf(address target) internal view returns (address result) {
-        if (!isEIP7702Proxy(target)) {
-            if (!isEIP7702Proxy(delegation(target))) return address(0);
-        }
+        if (!isEIP7702Proxy(target)) if (!isEIP7702Proxy(delegationOf(target))) return address(0);
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0)
