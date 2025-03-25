@@ -47,12 +47,13 @@ library LibEIP7702 {
         EIP7702_PROXY_BYTECODE
     );
 
-    /// @dev The keccak256 of deployed code for the EIP7702Proxy, with immutables zeroized.
-    bytes32 internal constant EIP7702_PROXY_CODE_HASH =
-        0xd06821844bc2418f31422e4e6c1462d255cda5e67a8633c01677522de076fd53;
+    /// @dev The keccak256 of deployed code for the EIP7702Proxy, with immutables zeroized,
+    /// and without the CBOR metadata.
+    bytes32 internal constant EIP7702_PROXY_MINIMAL_CODE_HASH =
+        0xc1e382531e1faf22da0080b8aefe50afbd511106dcc88cebabb3fee47c28c6ce;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                    AUTHORITY OPERATIONS                    */
+    /*               AUTHORITY AND PROXY OPERATIONS               */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the delegation of the account.
@@ -78,11 +79,12 @@ library LibEIP7702 {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)
-            extcodecopy(accountDelegation, m, 0x00, 0x224) // The expected runtime bytecode is 548 bytes.
+            // Copy the runtime bytecode without the CBOR metadata.
+            extcodecopy(accountDelegation, m, 0x00, 0x1ee)
             // Zeroize the immutables.
             mstore(add(m, 0x05), 0)
             mstore(add(m, 0x26), 0)
-            if eq(keccak256(m, 0x224), EIP7702_PROXY_CODE_HASH) {
+            if eq(keccak256(m, 0x1ee), EIP7702_PROXY_MINIMAL_CODE_HASH) {
                 mstore(0x00, 0)
                 if staticcall(gas(), account, 0x00, 0x01, 0x00, 0x20) {
                     implementation := mload(0x00)
@@ -91,10 +93,6 @@ library LibEIP7702 {
         }
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                      PROXY OPERATIONS                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @dev Returns the initialization code for the EIP7702Proxy.
     function proxyInitCode(address initialImplementation, address initialAdmin)
         internal
@@ -102,7 +100,9 @@ library LibEIP7702 {
         returns (bytes memory)
     {
         return abi.encodePacked(
-            EIP7702_PROXY_CREATION_CODE, abi.encode(initialImplementation, initialAdmin)
+            EIP7702_PROXY_CREATION_CODE,
+            uint256(uint160(initialImplementation)),
+            uint256(uint160(initialAdmin))
         );
     }
 
@@ -200,7 +200,7 @@ library LibEIP7702 {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                PROXY DELEGATION OPERATIONS                 */
+    /*                      UUPS OPERATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Upgrades the implementation.
