@@ -71,26 +71,26 @@ library LibEIP7702 {
     {
         accountDelegation = delegation(account);
         if (isEIP7702Proxy(accountDelegation)) {
-            implementation = implementationOfUnchecked(account);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, 0)
+                if iszero(staticcall(gas(), account, 0x00, 0x01, 0x00, 0x20)) { revert(0x00, 0x00) }
+                implementation := mload(0x00)
+            }
         }
     }
 
     /// @dev Returns the implementation of `target`.
     /// If `target` is neither an EIP7702Proxy nor an EOA delegated to an EIP7702Proxy, returns `address(0)`.
-    function implementationOf(address target) internal view returns (address) {
+    function implementationOf(address target) internal view returns (address result) {
         if (!isEIP7702Proxy(target)) {
             if (!isEIP7702Proxy(delegation(target))) return address(0);
         }
-        return implementationOfUnchecked(target);
-    }
-
-    /// @dev Returns the implementation of `target`.
-    /// Assumes that target is either an EIP7702Proxy or an EOA delegated to an EIP7702Proxy.
-    function implementationOfUnchecked(address target) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0)
-            result := mul(mload(0x00), staticcall(gas(), target, 0x00, 0x01, 0x00, 0x20))
+            if iszero(staticcall(gas(), target, 0x00, 0x01, 0x00, 0x20)) { revert(0x00, 0x00) }
+            result := mload(0x00)
         }
     }
 
