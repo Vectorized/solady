@@ -70,20 +70,30 @@ library LibEIP7702 {
         returns (address accountDelegation, address implementation)
     {
         accountDelegation = delegation(account);
-        implementation = implementationOf(account);
+        if (isEIP7702Proxy(accountDelegation)) {
+            implementation = implementationOfUnchecked(account);
+        }
     }
 
-    /// @dev Returns the implementation of the `target`.
-    /// If the target is neither an EIP7702Proxy nor an EOA that is delegated
-    /// to an EIP7702Proxy, returns `address(0)`.
-    function implementationOf(address target) internal view returns (address result) {
+    /// @dev Returns the implementation of `target`.
+    /// If `target` is neither an EIP7702Proxy nor an EOA delegated to an EIP7702Proxy, returns `address(0)`.
+    function implementationOf(address target) internal view returns (address) {
         if (!isEIP7702Proxy(target)) {
             if (!isEIP7702Proxy(delegation(target))) return address(0);
         }
+        return implementationOfUnchecked(target);
+    }
+
+    /// @dev Returns the implementation of `target`.
+    /// Assumes that target is either an EIP7702Proxy or an EOA delegated to an EIP7702Proxy.
+    function implementationOfUnchecked(address target) internal view returns (address result) {
         /// @solidity memory-safe-assembly
         assembly {
-            let t := staticcall(gas(), target, 0x00, 0x01, 0x00, 0x20)
-            result := mul(mload(0x00), and(gt(returndatasize(), 0x1f), t))
+            result :=
+                mul(
+                    mload(0x00),
+                    and(gt(returndatasize(), 0x1f), staticcall(gas(), target, 0x00, 0x01, 0x00, 0x20))
+                )
         }
     }
 

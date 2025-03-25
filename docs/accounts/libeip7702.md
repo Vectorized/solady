@@ -117,15 +117,23 @@ If the account delegation is not a valid EIP7702Proxy, returns `address(0)`.
 ### implementationOf(address)
 
 ```solidity
-function implementationOf(address target)
+function implementationOf(address target) internal view returns (address)
+```
+
+Returns the implementation of `target`.   
+If `target` is neither an EIP7702Proxy nor an EOA delegated to an EIP7702Proxy, returns `address(0)`.
+
+### implementationOfUnchecked(address)
+
+```solidity
+function implementationOfUnchecked(address target)
     internal
     view
     returns (address result)
 ```
 
-Returns the implementation of the `target`.   
-If the target is neither an EIP7702Proxy nor an EOA that is delegated   
-to an EIP7702Proxy, returns `address(0)`.
+Returns the implementation of `target`.   
+Assumes that target is either an EIP7702Proxy or an EOA delegated to an EIP7702Proxy.
 
 ### isEIP7702Proxy(address)
 
