@@ -88,7 +88,7 @@ contract EIP7702ProxyTest is SoladyTest {
         assertEq(eip7702Proxy.admin(), admin);
         assertEq(LibEIP7702.proxyAdmin(address(eip7702Proxy)), admin);
         assertEq(eip7702Proxy.implementation(), address(this));
-        assertEq(LibEIP7702.proxyImplementation(address(eip7702Proxy)), address(this));
+        assertEq(LibEIP7702.implementationOf(address(eip7702Proxy)), address(this));
 
         if (!f && _randomChance(16)) {
             address newAdmin = _randomUniqueHashedAddress();
@@ -257,7 +257,7 @@ contract EIP7702ProxyTest is SoladyTest {
         assertEq(eip7702Proxy.admin(), address(0));
         assertEq(LibEIP7702.proxyAdmin(address(eip7702Proxy)), address(0));
         assertEq(eip7702Proxy.implementation(), address(this));
-        assertEq(LibEIP7702.proxyImplementation(address(eip7702Proxy)), address(this));
+        assertEq(LibEIP7702.implementationOf(address(eip7702Proxy)), address(this));
 
         address authority = _randomUniqueHashedAddress();
         assertEq(LibEIP7702.delegation(authority), address(0));
