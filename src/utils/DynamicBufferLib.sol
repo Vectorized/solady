@@ -1283,7 +1283,7 @@ library DynamicBufferLib {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Helper for deallocating a automatically allocated `buffer` pointer.
+    /// @dev Helper for deallocating an automatically allocated `buffer` pointer.
     function _deallocate(DynamicBuffer memory result) private pure {
         /// @solidity memory-safe-assembly
         assembly {

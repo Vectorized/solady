@@ -1006,7 +1006,7 @@ library DynamicArrayLib {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Helper for deallocating a automatically allocated array pointer.
+    /// @dev Helper for deallocating an automatically allocated array pointer.
     function _deallocate(DynamicArray memory result) private pure {
         /// @solidity memory-safe-assembly
         assembly {
