@@ -30,7 +30,7 @@ struct Bytes32ToBytes32Map {
 }
 ```
 
-A enumerable map of `bytes32` to `bytes32`.
+An enumerable map of `bytes32` to `bytes32`.
 
 ### Bytes32ToUint256Map
 
@@ -41,7 +41,7 @@ struct Bytes32ToUint256Map {
 }
 ```
 
-A enumerable map of `bytes32` to `uint256`.
+An enumerable map of `bytes32` to `uint256`.
 
 ### Bytes32ToAddressMap
 
@@ -52,7 +52,7 @@ struct Bytes32ToAddressMap {
 }
 ```
 
-A enumerable map of `bytes32` to `address`.
+An enumerable map of `bytes32` to `address`.
 
 ### Uint256ToBytes32Map
 
@@ -63,7 +63,7 @@ struct Uint256ToBytes32Map {
 }
 ```
 
-A enumerable map of `uint256` to `bytes32`.
+An enumerable map of `uint256` to `bytes32`.
 
 ### Uint256ToUint256Map
 
@@ -74,7 +74,7 @@ struct Uint256ToUint256Map {
 }
 ```
 
-A enumerable map of `uint256` to `uint256`.
+An enumerable map of `uint256` to `uint256`.
 
 ### Uint256ToAddressMap
 
@@ -85,7 +85,7 @@ struct Uint256ToAddressMap {
 }
 ```
 
-A enumerable map of `uint256` to `address`.
+An enumerable map of `uint256` to `address`.
 
 ### AddressToBytes32Map
 
@@ -96,7 +96,7 @@ struct AddressToBytes32Map {
 }
 ```
 
-A enumerable map of `address` to `bytes32`.
+An enumerable map of `address` to `bytes32`.
 
 ### AddressToUint256Map
 
@@ -107,7 +107,7 @@ struct AddressToUint256Map {
 }
 ```
 
-A enumerable map of `address` to `uint256`.
+An enumerable map of `address` to `uint256`.
 
 ### AddressToAddressMap
 
@@ -118,7 +118,7 @@ struct AddressToAddressMap {
 }
 ```
 
-A enumerable map of `address` to `address`.
+An enumerable map of `address` to `address`.
 
 ## Getters / Setters
 

@@ -28,7 +28,7 @@ library DynamicArrayLib {
 
     // Low level minimalist uint256 array operations.
     // If you don't need syntax sugar, it's recommended to use these.
-    // Some of these functions returns the same array for function chaining.
+    // Some of these functions return the same array for function chaining.
     // e.g. `array.set(0, 1).set(1, 2)`.
 
     /// @dev Returns a uint256 array with `n` elements. The elements are not zeroized.
@@ -359,7 +359,7 @@ library DynamicArrayLib {
     /*                  DYNAMIC ARRAY OPERATIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Some of these functions returns the same array for function chaining.
+    // Some of these functions return the same array for function chaining.
     // e.g. `a.p("1").p("2")`.
 
     /// @dev Shorthand for `a.data.length`.
@@ -1002,7 +1002,7 @@ library DynamicArrayLib {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Helper for deallocating a automatically allocated array pointer.
+    /// @dev Helper for deallocating an automatically allocated array pointer.
     function _deallocate(DynamicArray memory result) private pure {
         /// @solidity memory-safe-assembly
         assembly {

@@ -404,7 +404,7 @@ function diffYears(uint256 fromTimestamp, uint256 toTimestamp)
 Returns the difference in Gregorian calendar years   
 between `fromTimestamp` and `toTimestamp`.   
 Note: Even if the true time difference is less than a year,   
-the difference can be non-zero is the timestamps are   
+the difference can be non-zero if the timestamps are   
 from different Gregorian calendar years
 
 ### diffMonths(uint256,uint256)
@@ -419,7 +419,7 @@ function diffMonths(uint256 fromTimestamp, uint256 toTimestamp)
 Returns the difference in Gregorian calendar months   
 between `fromTimestamp` and `toTimestamp`.   
 Note: Even if the true time difference is less than a month,   
-the difference can be non-zero is the timestamps are   
+the difference can be non-zero if the timestamps are   
 from different Gregorian calendar months.
 
 ### diffDays(uint256,uint256)

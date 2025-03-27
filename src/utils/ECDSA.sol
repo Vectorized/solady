@@ -323,7 +323,7 @@ library ECDSA {
     /*                  CANONICAL HASH FUNCTIONS                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // The following functions returns the hash of the signature in it's canonicalized format,
+    // The following functions return the hash of the signature in its canonicalized format,
     // which is the 65-byte `abi.encodePacked(r, s, uint8(v))`, where `v` is either 27 or 28.
     // If `s` is greater than `N / 2` then it will be converted to `N - s`
     // and the `v` value will be flipped.
