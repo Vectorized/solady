@@ -76,7 +76,7 @@ bytes internal constant EIP7702_PROXY_CREATION_CODE =
 ```
 
 The creation code for the EIP7702Proxy.   
-See: https://gist.github.com/Vectorized/0a83937618a55b389e38a230da6d9531
+This is generated from [`EIP7702Proxy.sol`](accounts/eip7702proxy.md) with exact compilation settings.
 
 ### EIP7702_PROXY_MINIMAL_CODE_HASH
 
@@ -85,8 +85,8 @@ bytes32 internal constant EIP7702_PROXY_MINIMAL_CODE_HASH =
     0x7386c2810632fa8ea702ec3b7b0ad8fe514f063d42915830c6dd30abd543082e
 ```
 
-The keccak256 of deployed code for the EIP7702Proxy, with immutables zeroized,   
-and without the CBOR metadata.
+The keccak256 of runtime code for [`EIP7702Proxy.sol`](accounts/eip7702proxy.md) with exact compilation settings,   
+with immutables zeroized and without the CBOR metadata.
 
 ## Authority And Proxy Operations
 
