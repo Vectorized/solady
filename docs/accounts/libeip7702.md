@@ -76,7 +76,7 @@ bytes internal constant EIP7702_PROXY_CREATION_CODE =
 ```
 
 The creation code for the EIP7702Proxy.   
-See: https://gist.github.com/Vectorized/0a83937618a55b389e38a230da6d9531
+This is generated from [`EIP7702Proxy.sol`](accounts/eip7702proxy.md) with exact compilation settings.
 
 ### EIP7702_PROXY_MINIMAL_CODE_HASH
 
