@@ -97,7 +97,7 @@ array is not sorted -- it will simply remove consecutive duplicate elements.
 function uniquifySorted(uint256[] memory a) internal pure
 ```
 
-Removes duplicate elements from an ascendingly sorted memory array.
+Removes duplicate elements from a ascendingly sorted memory array.
 
 ### uniquifySorted(int256[])
 
@@ -105,7 +105,7 @@ Removes duplicate elements from an ascendingly sorted memory array.
 function uniquifySorted(int256[] memory a) internal pure
 ```
 
-Removes duplicate elements from an ascendingly sorted memory array.
+Removes duplicate elements from a ascendingly sorted memory array.
 
 ### uniquifySorted(address[])
 
@@ -113,7 +113,7 @@ Removes duplicate elements from an ascendingly sorted memory array.
 function uniquifySorted(address[] memory a) internal pure
 ```
 
-Removes duplicate elements from an ascendingly sorted memory array.
+Removes duplicate elements from a ascendingly sorted memory array.
 
 ### uniquifySorted(bytes32[])
 
@@ -121,7 +121,7 @@ Removes duplicate elements from an ascendingly sorted memory array.
 function uniquifySorted(bytes32[] memory a) internal pure
 ```
 
-Removes duplicate elements from an ascendingly sorted memory array.
+Removes duplicate elements from a ascendingly sorted memory array.
 
 ### searchSorted(uint256[],uint256)
 
