@@ -827,7 +827,7 @@ library FixedPointMathLib {
 
     /// @dev Returns the cube root of `x`, rounded down.
     /// Credit to bout3fiddy and pcaversaccio under AGPLv3 license:
-    /// https://github.com/pcaversaccio/snekmate/blob/main/src/utils/Math.vy
+    /// https://github.com/pcaversaccio/snekmate/blob/main/src/snekmate/utils/math.vy
     /// Formally verified by xuwinnie:
     /// https://github.com/vectorized/solady/blob/main/audits/xuwinnie-solady-cbrt-proof.pdf
     function cbrt(uint256 x) internal pure returns (uint256 z) {
