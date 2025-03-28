@@ -17,7 +17,7 @@ contract EIP7702Proxy {
     /*                         IMMUTABLES                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev For allowing the differentiation of the EOA and the proxy itself.
+    /// @dev For differentiating calls on the EOA and calls on the proxy itself.
     uint256 internal immutable __self = uint256(uint160(address(this)));
 
     /// @dev The default implementation. Provided for optimization.
@@ -58,7 +58,7 @@ contract EIP7702Proxy {
             sstore(_ERC1967_IMPLEMENTATION_SLOT, initialImplementation)
             sstore(_ERC1967_ADMIN_SLOT, initialAdmin)
             defaultImplementation :=
-                mul(initialImplementation, lt(initialAdmin, iszero(iszero(initialImplementation))))
+                mul(lt(initialAdmin, iszero(iszero(initialImplementation))), initialImplementation)
         }
         _defaultImplementation = defaultImplementation;
     }
