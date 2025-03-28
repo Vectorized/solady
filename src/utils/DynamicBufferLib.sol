@@ -20,7 +20,7 @@ library DynamicBufferLib {
     /*                         OPERATIONS                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // Some of these functions returns the same buffer for function chaining.
+    // Some of these functions return the same buffer for function chaining.
     // e.g. `buffer.p("1").p("2")`.
 
     /// @dev Shorthand for `buffer.data.length`.
@@ -1283,7 +1283,7 @@ library DynamicBufferLib {
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev Helper for deallocating a automatically allocated `buffer` pointer.
+    /// @dev Helper for deallocating an automatically allocated `buffer` pointer.
     function _deallocate(DynamicBuffer memory result) private pure {
         /// @solidity memory-safe-assembly
         assembly {

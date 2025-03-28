@@ -7,55 +7,55 @@ pragma solidity ^0.8.13;
 /*                          STRUCTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-/// @dev A enumerable map of `bytes32` to `bytes32`.
+/// @dev An enumerable map of `bytes32` to `bytes32`.
 struct Bytes32ToBytes32Map {
     EnumerableSetLib.Bytes32Set _keys;
     mapping(bytes32 => bytes32) _values;
 }
 
-/// @dev A enumerable map of `bytes32` to `uint256`.
+/// @dev An enumerable map of `bytes32` to `uint256`.
 struct Bytes32ToUint256Map {
     EnumerableSetLib.Bytes32Set _keys;
     mapping(bytes32 => uint256) _values;
 }
 
-/// @dev A enumerable map of `bytes32` to `address`.
+/// @dev An enumerable map of `bytes32` to `address`.
 struct Bytes32ToAddressMap {
     EnumerableSetLib.Bytes32Set _keys;
     mapping(bytes32 => address) _values;
 }
 
-/// @dev A enumerable map of `uint256` to `bytes32`.
+/// @dev An enumerable map of `uint256` to `bytes32`.
 struct Uint256ToBytes32Map {
     EnumerableSetLib.Uint256Set _keys;
     mapping(uint256 => bytes32) _values;
 }
 
-/// @dev A enumerable map of `uint256` to `uint256`.
+/// @dev An enumerable map of `uint256` to `uint256`.
 struct Uint256ToUint256Map {
     EnumerableSetLib.Uint256Set _keys;
     mapping(uint256 => uint256) _values;
 }
 
-/// @dev A enumerable map of `uint256` to `address`.
+/// @dev An enumerable map of `uint256` to `address`.
 struct Uint256ToAddressMap {
     EnumerableSetLib.Uint256Set _keys;
     mapping(uint256 => address) _values;
 }
 
-/// @dev A enumerable map of `address` to `bytes32`.
+/// @dev An enumerable map of `address` to `bytes32`.
 struct AddressToBytes32Map {
     EnumerableSetLib.AddressSet _keys;
     mapping(address => bytes32) _values;
 }
 
-/// @dev A enumerable map of `address` to `uint256`.
+/// @dev An enumerable map of `address` to `uint256`.
 struct AddressToUint256Map {
     EnumerableSetLib.AddressSet _keys;
     mapping(address => uint256) _values;
 }
 
-/// @dev A enumerable map of `address` to `address`.
+/// @dev An enumerable map of `address` to `address`.
 struct AddressToAddressMap {
     EnumerableSetLib.AddressSet _keys;
     mapping(address => address) _values;

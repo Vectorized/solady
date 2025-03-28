@@ -23,7 +23,7 @@ abstract contract Initializable {
     event Initialized(uint64 version);
 
     /// @dev `keccak256(bytes("Initialized(uint64)"))`.
-    bytes32 private constant _INTIALIZED_EVENT_SIGNATURE =
+    bytes32 private constant _INITIALIZED_EVENT_SIGNATURE =
         0xc7f505b2f371ae2175ee4913f4499e1f2633a7b5936321eed1cdaeb6115181d2;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -93,12 +93,12 @@ abstract contract Initializable {
                 sstore(s, 2)
                 // Emit the {Initialized} event.
                 mstore(0x20, 1)
-                log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
+                log1(0x20, 0x20, _INITIALIZED_EVENT_SIGNATURE)
             }
         }
     }
 
-    /// @dev Guards a reinitialzer function so that it can be invoked at most once.
+    /// @dev Guards a reinitializer function so that it can be invoked at most once.
     ///
     /// You can guard a function with `onlyInitializing` such that it can be called
     /// through a function guarded with `reinitializer`.
@@ -126,7 +126,7 @@ abstract contract Initializable {
             sstore(s, version)
             // Emit the {Initialized} event.
             mstore(0x20, shr(1, version))
-            log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
+            log1(0x20, 0x20, _INITIALIZED_EVENT_SIGNATURE)
         }
     }
 
@@ -171,7 +171,7 @@ abstract contract Initializable {
                 sstore(s, shl(1, uint64max))
                 // Emit the {Initialized} event.
                 mstore(0x20, uint64max)
-                log1(0x20, 0x20, _INTIALIZED_EVENT_SIGNATURE)
+                log1(0x20, 0x20, _INITIALIZED_EVENT_SIGNATURE)
             }
         }
     }

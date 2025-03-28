@@ -13,7 +13,7 @@ async function main() {
   const crossForEach = (a, fn) => a.forEach(x => a.forEach(y => fn(x, y)));
 
   const genStructDef = (f, t) => {
-    return '/// @dev A enumerable map of `' + f + '` to `' + t + '`.\n' +
+    return '/// @dev An enumerable map of `' + f + '` to `' + t + '`.\n' +
       'struct ' + mapType(f, t) + '{\n' +
       'EnumerableSetLib.' + capitalize(f) + 'Set _keys;\n' +
       'mapping(' + f + ' => ' + t + ') _values;\n}\n\n';
