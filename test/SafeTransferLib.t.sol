@@ -273,7 +273,7 @@ contract SafeTransferLibTest is SoladyTest {
         MockETHRecipient recipient = new MockETHRecipient(false, true);
 
         {
-            uint256 receipientBalanceBefore = address(recipient).balance;
+            uint256 recipientBalanceBefore = address(recipient).balance;
             uint256 senderBalanceBefore = address(this).balance;
             uint256 r = uint256(keccak256(abi.encode(randomness))) % 3;
             // Send to a griever with a gas stipend. Should not revert.
@@ -288,31 +288,31 @@ contract SafeTransferLibTest is SoladyTest {
             } else {
                 this.forceSafeTransferETH(address(recipient), amount);
             }
-            assertEq(address(recipient).balance - receipientBalanceBefore, amount);
+            assertEq(address(recipient).balance - recipientBalanceBefore, amount);
             assertEq(senderBalanceBefore - address(this).balance, amount);
             // We use the `SELFDESTRUCT` to send, and thus the `garbage` should NOT be updated.
             assertTrue(recipient.garbage() == 0);
         }
 
         {
-            uint256 receipientBalanceBefore = address(recipient).balance;
+            uint256 recipientBalanceBefore = address(recipient).balance;
             uint256 senderBalanceBefore = address(this).balance;
             // Send more than remaining balance without gas stipend. Should revert.
             vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
             this.forceSafeTransferETH(address(recipient), address(this).balance + 1, gasleft());
-            assertEq(address(recipient).balance - receipientBalanceBefore, 0);
+            assertEq(address(recipient).balance - recipientBalanceBefore, 0);
             assertEq(senderBalanceBefore - address(this).balance, 0);
             // We did not send anything, and thus the `garbage` should NOT be updated.
             assertTrue(recipient.garbage() == 0);
         }
 
         {
-            uint256 receipientBalanceBefore = address(recipient).balance;
+            uint256 recipientBalanceBefore = address(recipient).balance;
             uint256 senderBalanceBefore = address(this).balance;
             // Send all the remaining balance without gas stipend. Should not revert.
             amount = address(this).balance;
             this.forceSafeTransferETH(address(recipient), amount, gasleft());
-            assertEq(address(recipient).balance - receipientBalanceBefore, amount);
+            assertEq(address(recipient).balance - recipientBalanceBefore, amount);
             assertEq(senderBalanceBefore - address(this).balance, amount);
             // We use the normal `CALL` to send, and thus the `garbage` should be updated.
             assertTrue(recipient.garbage() != 0);
