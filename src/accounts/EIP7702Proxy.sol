@@ -119,25 +119,25 @@ contract EIP7702Proxy {
                 revert(0x00, 0x00)
             }
             // Workflow for the EIP7702 authority (i.e. the EOA).
-            let impl := and(addrMask, sload(implementationSlot)) // The preferred implementation on the EOA.
+            let implementation := and(addrMask, sload(implementationSlot)) // On EOA's storage.
             // Special workflow for retrieving the implementation directly.
             if eq(1, calldatasize()) {
                 // If the preferred implementation is `address(0)`.
-                if iszero(impl) {
+                if iszero(implementation) {
                     // If `defaultImplementation` is `address(0)`
                     if iszero(defaultImplementation) {
                         // Fetch the implementation from the proxy.
                         if staticcall(gas(), s, 0x00, 0x00, 0x00, 0x20) { return(0x00, 0x20) }
                         revert(0x00, 0x00)
                     }
-                    impl := defaultImplementation
+                    implementation := defaultImplementation
                 }
-                mstore(0x00, impl)
+                mstore(0x00, implementation)
                 return(0x00, 0x20)
             }
             calldatacopy(0x00, 0x00, calldatasize()) // Copy the calldata for the delegatecall.
             // If the preferred implementation is `address(0)`.
-            if iszero(impl) {
+            if iszero(implementation) {
                 // If `defaultImplementation` is `address(0)`, perform the initialization workflow.
                 if iszero(defaultImplementation) {
                     if iszero(
@@ -172,10 +172,10 @@ contract EIP7702Proxy {
                     returndatacopy(0x00, 0x00, returndatasize())
                     return(0x00, returndatasize())
                 }
-                impl := defaultImplementation
+                implementation := defaultImplementation
             }
             // Otherwise, just delegatecall and bubble up the results without initialization.
-            if iszero(delegatecall(gas(), impl, 0x00, calldatasize(), 0x00, 0x00)) {
+            if iszero(delegatecall(gas(), implementation, 0x00, calldatasize(), 0x00, 0x00)) {
                 returndatacopy(0x00, 0x00, returndatasize())
                 revert(0x00, returndatasize())
             }
