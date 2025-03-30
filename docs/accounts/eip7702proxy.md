@@ -25,7 +25,7 @@ This relay proxy also allows for correctly revealing the
 uint256 internal immutable __self = uint256(uint160(address(this)))
 ```
 
-For allowing the differentiation of the EOA and the proxy itself.
+For differentiating calls on the EOA and calls on the proxy itself.
 
 ### _defaultImplementation
 
