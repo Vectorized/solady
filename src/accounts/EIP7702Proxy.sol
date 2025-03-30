@@ -72,9 +72,9 @@ contract EIP7702Proxy {
         uint256 defaultImplementation = _defaultImplementation;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x40, returndatasize()) // Optimization trick to change `6040608052` into `3d604052`.
+            mstore(0x40, 1)
             let implementationSlot := _ERC1967_IMPLEMENTATION_SLOT
-            let addrMask := shr(96, not(0))
+            let addrMask := shr(96, not(returndatasize()))
             // Workflow for calling on the proxy itself.
             // We cannot put these functions in the public ABI as this proxy must
             // fully forward all the calldata from EOAs pointing to this proxy.
@@ -86,31 +86,27 @@ contract EIP7702Proxy {
                 let fnSel := shr(224, calldataload(0x00))
                 // `implementation()`.
                 if eq(0x5c60da1b, fnSel) {
-                    if staticcall(gas(), address(), calldatasize(), 0x00, 0x00, 0x20) {
-                        return(0x00, returndatasize())
-                    }
+                    mstore(0x00, and(addrMask, sload(implementationSlot)))
+                    return(0x00, 0x20)
                 }
                 let adminSlot := _ERC1967_ADMIN_SLOT
-                let admin := sload(adminSlot)
                 // `admin()`.
                 if eq(0xf851a440, fnSel) {
-                    mstore(0x00, admin)
+                    mstore(0x00, sload(adminSlot))
                     return(0x00, 0x20)
                 }
                 // Admin workflow.
-                if eq(caller(), admin) {
+                if eq(caller(), sload(adminSlot)) {
                     let addr := and(addrMask, calldataload(0x04))
                     // `changeAdmin(address)`.
                     if eq(0x8f283970, fnSel) {
                         sstore(adminSlot, addr)
-                        mstore(0x00, 1)
-                        return(0x00, 0x20) // Store and return `true`.
+                        return(0x40, 0x20) // Return `true`.
                     }
                     // `upgrade(address)`.
                     if eq(0x0900f010, fnSel) {
                         sstore(implementationSlot, addr)
-                        mstore(0x00, 1)
-                        return(0x00, 0x20) // Store and return `true`.
+                        return(0x40, 0x20) // Return `true`.
                     }
                     // For minimalism, we shall skip events and calldata bounds checks.
                     // We don't need to forward any data to the new implementation.
@@ -127,7 +123,9 @@ contract EIP7702Proxy {
                     // If `defaultImplementation` is `address(0)`
                     if iszero(defaultImplementation) {
                         // Fetch the implementation from the proxy.
-                        if staticcall(gas(), s, 0x00, 0x00, 0x00, 0x20) { return(0x00, 0x20) }
+                        if staticcall(gas(), s, 0x00, 0x00, 0x00, 0x20) {
+                            return(0x00, returndatasize())
+                        }
                         revert(0x00, 0x00)
                     }
                     implementation := defaultImplementation
