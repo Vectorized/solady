@@ -70,11 +70,11 @@ contract EIP7702Proxy {
     fallback() external payable virtual {
         uint256 s = __self;
         uint256 defaultImplementation = _defaultImplementation;
+        bytes32 implementationSlot = _ERC1967_IMPLEMENTATION_SLOT;
+        uint256 addrMask = (~msg.data.length) >> 96;
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x40, 1)
-            let implementationSlot := _ERC1967_IMPLEMENTATION_SLOT
-            let addrMask := shr(96, not(returndatasize()))
             // Workflow for calling on the proxy itself.
             // We cannot put these functions in the public ABI as this proxy must
             // fully forward all the calldata from EOAs pointing to this proxy.
@@ -97,15 +97,13 @@ contract EIP7702Proxy {
                 }
                 // Admin workflow.
                 if eq(caller(), sload(adminSlot)) {
-                    let addr := and(addrMask, calldataload(0x04))
-                    // `changeAdmin(address)`.
-                    if eq(0x8f283970, fnSel) {
-                        sstore(adminSlot, addr)
-                        return(0x40, 0x20) // Return `true`.
-                    }
-                    // `upgrade(address)`.
-                    if eq(0x0900f010, fnSel) {
-                        sstore(implementationSlot, addr)
+                    let addrSlot :=
+                        or(
+                            mul(eq(0x8f283970, fnSel), adminSlot), // `changeAdmin(address)`.
+                            mul(eq(0x0900f010, fnSel), implementationSlot) // `upgrade(address)`.
+                        )
+                    if addrSlot {
+                        sstore(addrSlot, and(addrMask, calldataload(0x04)))
                         return(0x40, 0x20) // Return `true`.
                     }
                     // For minimalism, we shall skip events and calldata bounds checks.
@@ -120,15 +118,15 @@ contract EIP7702Proxy {
             if eq(1, calldatasize()) {
                 // If the preferred implementation is `address(0)`.
                 if iszero(implementation) {
+                    implementation := defaultImplementation
                     // If `defaultImplementation` is `address(0)`
-                    if iszero(defaultImplementation) {
+                    if iszero(implementation) {
                         // Fetch the implementation from the proxy.
                         if staticcall(gas(), s, 0x00, 0x00, 0x00, 0x20) {
                             return(0x00, returndatasize())
                         }
                         revert(0x00, 0x00)
                     }
-                    implementation := defaultImplementation
                 }
                 mstore(0x00, implementation)
                 return(0x00, 0x20)
@@ -136,8 +134,9 @@ contract EIP7702Proxy {
             calldatacopy(0x00, 0x00, calldatasize()) // Copy the calldata for the delegatecall.
             // If the preferred implementation is `address(0)`.
             if iszero(implementation) {
+                implementation := defaultImplementation
                 // If `defaultImplementation` is `address(0)`, perform the initialization workflow.
-                if iszero(defaultImplementation) {
+                if iszero(implementation) {
                     if iszero(
                         and( // The arguments of `and` are evaluated from right to left.
                             delegatecall(
@@ -170,7 +169,6 @@ contract EIP7702Proxy {
                     returndatacopy(0x00, 0x00, returndatasize())
                     return(0x00, returndatasize())
                 }
-                implementation := defaultImplementation
             }
             // Otherwise, just delegatecall and bubble up the results without initialization.
             if iszero(delegatecall(gas(), implementation, 0x00, calldatasize(), 0x00, 0x00)) {
