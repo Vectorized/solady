@@ -40,11 +40,11 @@ contract ERC7821Test is SoladyTest {
 
         ERC7821.Call[] memory calls = new ERC7821.Call[](2);
 
-        calls[0].target = target;
+        calls[0].to = target;
         calls[0].value = 123;
         calls[0].data = abi.encodeWithSignature("returnsBytes(bytes)", "hehe");
 
-        calls[1].target = target;
+        calls[1].to = target;
         calls[1].value = 789;
         calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
@@ -59,11 +59,11 @@ contract ERC7821Test is SoladyTest {
 
         ERC7821.Call[] memory calls = new ERC7821.Call[](2);
 
-        calls[0].target = target;
+        calls[0].to = target;
         calls[0].value = 123;
         calls[0].data = abi.encodeWithSignature("returnsBytes(bytes)", "hehe");
 
-        calls[1].target = target;
+        calls[1].to = target;
         calls[1].value = 789;
         calls[1].data = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
@@ -74,7 +74,7 @@ contract ERC7821Test is SoladyTest {
 
     function testERC7821ForRevert() public {
         ERC7821.Call[] memory calls = new ERC7821.Call[](1);
-        calls[0].target = target;
+        calls[0].to = target;
         calls[0].value = 0;
         calls[0].data = abi.encodeWithSignature("revertsWithCustomError()");
 
@@ -102,7 +102,7 @@ contract ERC7821Test is SoladyTest {
         Payload[] memory payloads = new Payload[](calls.length);
 
         for (uint256 i; i < calls.length; ++i) {
-            calls[i].target = target;
+            calls[i].to = target;
             calls[i].value = _randomUniform() & 0xff;
             bytes memory data = _truncateBytes(_randomBytes(), 0x1ff);
             payloads[i].data = data;
@@ -175,7 +175,7 @@ contract ERC7821Test is SoladyTest {
     function _encodePushBytesBatch(bytes memory x) internal view returns (bytes memory) {
         ERC7821.Call[] memory calls = new ERC7821.Call[](1);
         calls[0].data = abi.encodeWithSignature("pushBytes(bytes)", x);
-        calls[0].target = address(this);
+        calls[0].to = address(this);
         return abi.encode(calls);
     }
 
