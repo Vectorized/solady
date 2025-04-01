@@ -20,7 +20,7 @@ contract ERC7821 is Receiver {
 
     /// @dev Call struct for the `execute` function.
     struct Call {
-        address target; // Replaced as `address(this)` if `address(0)`.
+        address to; // Replaced as `address(this)` if `address(0)`. Renamed to `to` for Ithaca Porto.
         uint256 value; // Amount of native currency (i.e. Ether) to send.
         bytes data; // Calldata to send with the call.
     }
@@ -198,8 +198,8 @@ contract ERC7821 is Receiver {
             uint256 i;
             if (calls.length == uint256(0)) return;
             do {
-                (address target, uint256 value, bytes calldata data) = _get(calls, i);
-                _execute(target, value, data, extraData);
+                (address to, uint256 value, bytes calldata data) = _get(calls, i);
+                _execute(to, value, data, extraData);
             } while (++i != calls.length);
         }
     }
@@ -207,7 +207,7 @@ contract ERC7821 is Receiver {
     /// @dev Executes the call.
     /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
-    function _execute(address target, uint256 value, bytes calldata data, bytes32 extraData)
+    function _execute(address to, uint256 value, bytes calldata data, bytes32 extraData)
         internal
         virtual
     {
@@ -216,7 +216,7 @@ contract ERC7821 is Receiver {
             extraData := extraData // Silence unused variable compiler warning.
             let m := mload(0x40) // Grab the free memory pointer.
             calldatacopy(m, data.offset, data.length)
-            if iszero(call(gas(), target, value, m, data.length, codesize(), 0x00)) {
+            if iszero(call(gas(), to, value, m, data.length, codesize(), 0x00)) {
                 // Bubble up the revert if the call reverts.
                 returndatacopy(m, 0x00, returndatasize())
                 revert(m, returndatasize())
@@ -229,14 +229,14 @@ contract ERC7821 is Receiver {
         internal
         view
         virtual
-        returns (address target, uint256 value, bytes calldata data)
+        returns (address to, uint256 value, bytes calldata data)
     {
         /// @solidity memory-safe-assembly
         assembly {
             let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
-            // Replaces `target` with `address(this)` if `address(0)` is provided.
-            // We'll skip cleaning the upper 96 bits of `target` as it is ignored in `call`.
-            target := or(mul(address(), iszero(calldataload(c))), calldataload(c))
+            // Replaces `to` with `address(this)` if `address(0)` is provided.
+            // We'll skip cleaning the upper 96 bits of `to` as it is ignored in `call`.
+            to := or(mul(address(), iszero(calldataload(c))), calldataload(c))
             value := calldataload(add(c, 0x20))
             let o := add(c, calldataload(add(c, 0x40)))
             data.offset := add(o, 0x20)
