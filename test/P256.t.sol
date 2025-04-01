@@ -108,25 +108,6 @@ contract P256Test is P256VerifierEtcher {
         _testP256VerifyNonMalleable();
     }
 
-    function testP256VerifyNotDeployedReverts(
-        bytes32 hash,
-        bytes32 r,
-        bytes32 s,
-        bytes32 x,
-        bytes32 y,
-        bool t
-    ) public {
-        _etchVerifier(false);
-        _etchRIPPrecompile(false);
-        if (t) {
-            vm.expectRevert(P256.P256VerificationFailed.selector);
-            this.verifySignatureAllowMalleability(hash, r, s, x, y);
-        } else {
-            vm.expectRevert(P256.P256VerificationFailed.selector);
-            this.verifySignature(hash, r, s, x, y);
-        }
-    }
-
     function verifySignature(bytes32 hash, bytes32 r, bytes32 s, bytes32 x, bytes32 y)
         public
         view
@@ -273,6 +254,14 @@ contract P256Test is P256VerifierEtcher {
             assertTrue(P256.verifySignature(hash, r, s, bytes32(x), bytes32(y)));
         }
         assertTrue(P256.verifySignatureAllowMalleability(hash, r, s, bytes32(x), bytes32(y)));
+    }
+
+    function testHasPrecompileOrVerifier(bytes32) public {
+        bool etchPrecompile = _randomChance(2);
+        bool etchVerifier = _randomChance(2);
+        _etchRIPPrecompile(etchPrecompile);
+        _etchVerifier(etchVerifier);
+        assertEq(P256.hasPrecompileOrVerifier(), etchPrecompile || etchVerifier);
     }
 }
 
