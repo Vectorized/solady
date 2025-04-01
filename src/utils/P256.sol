@@ -7,14 +7,6 @@ pragma solidity ^0.8.4;
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/P256.sol)
 library P256 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        CUSTOM ERRORS                       */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Unable to verify the P256 signature, due to missing
-    /// RIP-7212 P256 verifier precompile and missing Solidity P256 verifier.
-    error P256VerificationFailed();
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -64,12 +56,9 @@ library P256 {
             // But failure returns zero returndata, which is ambiguous.
             if iszero(returndatasize()) {
                 pop(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20))
-                // Unlike RIP-7212, the verifier returns `uint256(0)` on failure,
-                // allowing us to use the returndatasize to determine existence.
-                if iszero(returndatasize()) {
-                    mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
-                    revert(0x1c, 0x04)
-                }
+                // Unlike RIP-7212, the verifier returns `uint256(0)` on failure.
+                // We shall not revert even if the verifier does not exist,
+                // to allow for workflows where reverting can cause trouble.
             }
             isValid := eq(1, mload(0x00))
         }
@@ -96,15 +85,41 @@ library P256 {
             // But failure returns zero returndata, which is ambiguous.
             if iszero(returndatasize()) {
                 pop(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20))
-                // Unlike RIP-7212, the verifier returns `uint256(0)` on failure,
-                // allowing us to use the returndatasize to determine existence.
-                if iszero(returndatasize()) {
-                    mstore(returndatasize(), 0xd0d5039b) // `P256VerificationFailed()`.
-                    revert(0x1c, 0x04)
-                }
+                // Unlike RIP-7212, the verifier returns `uint256(0)` on failure.
+                // We shall not revert even if the verifier does not exist,
+                // to allow for workflows where reverting can cause trouble.
             }
             // Optimize for happy path. Users are unlikely to pass in malleable signatures.
             isValid := lt(gt(s, _HALF_N), eq(1, mload(0x00)))
+        }
+    }
+
+    /// @dev Returns if the RIP-7212 precompile exists.
+    function hasPrecompile() internal view returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40)
+            // These values are taken from the standard Wycheproof test vectors.
+            mstore(m, 0x532eaabd9574880dbf76b9b8cc00832c20a6ec113d682299550d7a6e0f345e25) // `hash`.
+            mstore(add(m, 0x20), 0x5) // `r`.
+            mstore(add(m, 0x40), 0x1) // `s`.
+            mstore(add(m, 0x60), 0x4a03ef9f92eb268cafa601072489a56380fa0dc43171d7712813b3a19a1eb5e5) // `x`.
+            mstore(add(m, 0x80), 0x3e213e28a608ce9a2f4a17fd830c6654018a79b3e0263d91a8ba90622df6f2f0) // `y`.
+            mstore(0x00, 0)
+            pop(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20))
+            result := eq(1, mload(0x00))
+        }
+    }
+
+    /// @dev Returns if either the RIP-7212 precompile or the verifier exists.
+    /// Since `verifySignature` is made not reverting, this function can be used to
+    /// manually implement a revert if the current chain does not have the contracts
+    /// to support secp256r1 signature recovery.
+    function hasPrecompileOrVerifier() internal view returns (bool result) {
+        result = hasPrecompile();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := iszero(iszero(or(result, extcodesize(VERIFIER))))
         }
     }
 
