@@ -17,6 +17,13 @@ library P256 {
     /// facilitate easier existence check. This verifier will also never revert.
     address internal constant VERIFIER = 0x000000000000D01eA45F9eFD5c54f037Fa57Ea1a;
 
+    /// @dev The existence of this contract, as determined by non-empty bytecode,
+    /// implies the existence of the RIP-7212 precompile.
+    /// See: https://gist.github.com/Vectorized/3c69dcf4604b9e1216525cabcd06ee34
+    /// This is to enable the optimization to skip the `VERIFIER` entirely
+    /// when the `RIP_PRECOMPILE` returns empty returndata for an invalid signature.
+    address internal constant CANARY = 0x0000000000009D47E8d483936dc4B6b4bf7bbFe6;
+
     /// @dev Address of the RIP-7212 P256 verifier precompile.
     /// Currently, we don't support EIP-7212's precompile at 0x0b as it has not been finalized.
     /// See: https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md
@@ -55,7 +62,11 @@ library P256 {
             // RIP-7212 dictates that success returns `uint256(1)`.
             // But failure returns zero returndata, which is ambiguous.
             if iszero(returndatasize()) {
-                pop(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20))
+                if iszero(extcodesize(CANARY)) {
+                    // The verifier will never revert when given sufficient gas.
+                    // The `invalid` upon `staticcall` failure is solely for gas estimation.
+                    if iszero(staticcall(gas(), VERIFIER, m, 0xa0, 0x00, 0x20)) { invalid() }
+                }
                 // Unlike RIP-7212, the verifier returns `uint256(0)` on failure.
                 // We shall not revert even if the verifier does not exist,
                 // to allow for workflows where reverting can cause trouble.
@@ -84,7 +95,11 @@ library P256 {
             // RIP-7212 dictates that success returns `uint256(1)`.
             // But failure returns zero returndata, which is ambiguous.
             if iszero(returndatasize()) {
-                pop(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20))
+                if iszero(extcodesize(CANARY)) {
+                    // The verifier will never revert when given sufficient gas.
+                    // The `invalid` upon `staticcall` failure is solely for gas estimation.
+                    if iszero(staticcall(gas(), VERIFIER, m, 0xa0, 0x00, 0x20)) { invalid() }
+                }
                 // Unlike RIP-7212, the verifier returns `uint256(0)` on failure.
                 // We shall not revert even if the verifier does not exist,
                 // to allow for workflows where reverting can cause trouble.
@@ -105,9 +120,9 @@ library P256 {
             mstore(add(m, 0x40), 0x1) // `s`.
             mstore(add(m, 0x60), 0x4a03ef9f92eb268cafa601072489a56380fa0dc43171d7712813b3a19a1eb5e5) // `x`.
             mstore(add(m, 0x80), 0x3e213e28a608ce9a2f4a17fd830c6654018a79b3e0263d91a8ba90622df6f2f0) // `y`.
-            mstore(0x00, 0)
-            pop(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20))
-            result := eq(1, mload(0x00))
+            // The `invalid` upon `staticcall` failure is solely for gas estimation.
+            if iszero(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x00)) { invalid() }
+            result := iszero(iszero(returndatasize()))
         }
     }
 
