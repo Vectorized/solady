@@ -61,5 +61,6 @@ function upgradeToAndCall(address newImplementation, bytes calldata data)
 ```
 
 Upgrades the proxy's implementation to `newImplementation`.   
+
 Emits a `Upgraded` event.   
 Note: Passing in empty `data` skips the delegatecall to `newImplementation`.

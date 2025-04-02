@@ -250,6 +250,7 @@ function _moveDelegateVotes(address from, address to, uint256 amount)
 ```
 
 Transfer `amount` of delegated votes from `from` to `to`.   
+
 Emits a `DelegateVotesChanged` event for each change of delegated votes.
 
 ### _delegate(address,address)
@@ -259,4 +260,5 @@ function _delegate(address account, address delegatee) internal virtual
 ```
 
 Delegates all of `account`'s voting units to `delegatee`.   
+
 Emits the `DelegateChanged` and `DelegateVotesChanged` events.

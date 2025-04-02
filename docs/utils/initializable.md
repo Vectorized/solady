@@ -59,6 +59,7 @@ through a function guarded with `initializer`.
 This is similar to `reinitializer(1)`, except that in the context of a constructor,   
 an `initializer` guarded function can be invoked multiple times.   
 This can be useful during testing and is not expected to be used in production.   
+
 Emits an `Initialized` event.
 
 ### reinitializer(uint64)
@@ -70,6 +71,7 @@ modifier reinitializer(uint64 version) virtual
 Guards a reinitializer function so that it can be invoked at most once.   
 You can guard a function with `onlyInitializing` such that it can be called   
 through a function guarded with `reinitializer`.   
+
 Emits an `Initialized` event.
 
 ### onlyInitializing()
@@ -99,6 +101,7 @@ Locks any future initializations by setting the initialized version to `2**64 - 
 Calling this in the constructor will prevent the contract from being initialized   
 or reinitialized. It is recommended to use this to lock implementation contracts   
 that are designed to be called through proxies.   
+
 Emits an `Initialized` event the first time it is successfully called.
 
 ### _getInitializedVersion()

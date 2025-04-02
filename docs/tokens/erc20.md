@@ -166,6 +166,7 @@ function approve(address spender, uint256 amount)
 ```
 
 Sets `amount` as the allowance of `spender` over the caller's tokens.   
+
 Emits a `Approval` event.
 
 ### transfer(address,uint256)
@@ -182,6 +183,7 @@ Transfer `amount` tokens from the caller to `to`.
 <b>Requirements:</b>
 
 - `from` must at least have `amount`.   
+
 Emits a `Transfer` event.
 
 ### transferFrom(address,address,uint256)
@@ -200,6 +202,7 @@ Note: Does not update the allowance if it is the maximum uint256 value.
 
 - `from` must at least have `amount`.   
 - The caller must have at least `amount` of allowance to transfer the tokens of `from`.   
+
 Emits a `Transfer` event.
 
 ## EIP-2612
@@ -262,6 +265,7 @@ function permit(
 
 Sets `value` as the allowance of `spender` over the tokens of `owner`,   
 authorized by a signed approval by `owner`.   
+
 Emits a `Approval` event.
 
 ### DOMAIN_SEPARATOR()
@@ -281,6 +285,7 @@ function _mint(address to, uint256 amount) internal virtual
 ```
 
 Mints `amount` tokens to `to`, increasing the total supply.   
+
 Emits a `Transfer` event.
 
 ## Internal Burn Functions
@@ -292,6 +297,7 @@ function _burn(address from, uint256 amount) internal virtual
 ```
 
 Burns `amount` tokens from `from`, reducing the total supply.   
+
 Emits a `Transfer` event.
 
 ## Internal Transfer Functions
@@ -327,6 +333,7 @@ function _approve(address owner, address spender, uint256 amount)
 ```
 
 Sets `amount` as the allowance of `spender` over the tokens of `owner`.   
+
 Emits a `Approval` event.
 
 ## Hooks To Override

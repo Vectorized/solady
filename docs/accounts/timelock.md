@@ -241,6 +241,7 @@ function propose(bytes32 mode, bytes calldata executionData, uint256 delay)
 ```
 
 Proposes an execute payload (`mode`, `executionData`) with `delay`.   
+
 Emits a `Proposed` event.
 
 ### cancel(bytes32)
@@ -250,6 +251,7 @@ function cancel(bytes32 id) public virtual onlyRole(CANCELLER_ROLE)
 ```
 
 Cancels the operation with `id`.   
+
 Emits a `Cancelled` event.
 
 ### setMinDelay(uint256)
@@ -259,6 +261,7 @@ function setMinDelay(uint256 newMinDelay) public virtual
 ```
 
 Allows the timelock itself to set the minimum delay.   
+
 Emits a `MinDelaySet` event.
 
 ## Public View Functions
