@@ -65,8 +65,7 @@ library P256 {
                 if iszero(extcodesize(CANARY)) {
                     // The verifier will never revert when given sufficient gas.
                     // The `invalid` upon `staticcall` failure is solely for gas estimation.
-                    // forgefmt: disable-next-item
-                    if iszero(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)) { invalid() }
+                    if iszero(staticcall(gas(), VERIFIER, m, 0xa0, 0x00, 0x20)) { invalid() }
                 }
                 // Unlike RIP-7212, the verifier returns `uint256(0)` on failure.
                 // We shall not revert even if the verifier does not exist,
@@ -95,13 +94,11 @@ library P256 {
             pop(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x20))
             // RIP-7212 dictates that success returns `uint256(1)`.
             // But failure returns zero returndata, which is ambiguous.
-            // forgefmt: disable-next-item
             if iszero(returndatasize()) {
                 if iszero(extcodesize(CANARY)) {
-                    // The verifier will never revert when given sufficient gas. 
+                    // The verifier will never revert when given sufficient gas.
                     // The `invalid` upon `staticcall` failure is solely for gas estimation.
-                    // forgefmt: disable-next-item
-                    if iszero(staticcall(gas(), VERIFIER, m, 0xa0, returndatasize(), 0x20)) { invalid() }    
+                    if iszero(staticcall(gas(), VERIFIER, m, 0xa0, 0x00, 0x20)) { invalid() }
                 }
                 // Unlike RIP-7212, the verifier returns `uint256(0)` on failure.
                 // We shall not revert even if the verifier does not exist,
@@ -124,9 +121,7 @@ library P256 {
             mstore(add(m, 0x60), 0x4a03ef9f92eb268cafa601072489a56380fa0dc43171d7712813b3a19a1eb5e5) // `x`.
             mstore(add(m, 0x80), 0x3e213e28a608ce9a2f4a17fd830c6654018a79b3e0263d91a8ba90622df6f2f0) // `y`.
             // The `invalid` upon `staticcall` failure is solely for gas estimation.
-            if iszero(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, returndatasize(), 0x00)) {
-                invalid()
-            }
+            if iszero(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x00)) { invalid() }
             result := iszero(iszero(returndatasize()))
         }
     }
