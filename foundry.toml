@@ -29,7 +29,6 @@ evm_version = "cancun"
 skip = []
 
 [profile.ithaca]
-match_path = "*/ext/ithaca/*"
 evm_version = "cancun"
 odyssey = true
 skip = []
