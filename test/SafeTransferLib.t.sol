@@ -386,6 +386,23 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(SafeTransferLib.balanceOf(address(erc20), _brutalized(address(this))), amount);
     }
 
+    function testCheckBalanceOfNonImplemented() public {
+        (bool implemented,) = SafeTransferLib.checkBalanceOf(address(0), _brutalized(address(this)));
+        assertFalse(implemented);
+    }
+
+    function testCheckBalanceOf(address to, uint256 amount) public {
+        uint256 originalBalance = erc20.balanceOf(address(this));
+        while (originalBalance < amount) amount = _random();
+        while (to == address(this)) to = _randomHashedAddress();
+
+        SafeTransferLib.safeTransfer(address(erc20), _brutalized(to), originalBalance - amount);
+        (bool implemented, uint256 retrievedAmount) =
+            SafeTransferLib.checkBalanceOf(address(erc20), _brutalized(address(this)));
+        assertEq(retrievedAmount, amount);
+        assertTrue(implemented);
+    }
+
     function testTransferAllWithStandardERC20() public {
         SafeTransferLib.safeTransferAll(address(erc20), address(1));
     }
