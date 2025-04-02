@@ -22,7 +22,7 @@ library P256 {
     /// See: https://gist.github.com/Vectorized/3c69dcf4604b9e1216525cabcd06ee34
     /// This is to enable the optimization to skip the `VERIFIER` entirely
     /// when the `RIP_PRECOMPILE` returns empty returndata for an invalid signature.
-    address internal constant CANARY = 0x0000000000009D47E8d483936dc4B6b4bf7bbFe6;
+    address internal constant CANARY = 0x0000000000001Ab2e8006Fd8B71907bf06a5BDEE;
 
     /// @dev Address of the RIP-7212 P256 verifier precompile.
     /// Currently, we don't support EIP-7212's precompile at 0x0b as it has not been finalized.
@@ -115,14 +115,15 @@ library P256 {
         assembly {
             let m := mload(0x40)
             // These values are taken from the standard Wycheproof test vectors.
+            // https://github.com/C2SP/wycheproof/blob/aca47066256c167f0ce04d611d718cc85654341e/testvectors/ecdsa_webcrypto_test.json#L1197
             mstore(m, 0x532eaabd9574880dbf76b9b8cc00832c20a6ec113d682299550d7a6e0f345e25) // `hash`.
             mstore(add(m, 0x20), 0x5) // `r`.
             mstore(add(m, 0x40), 0x1) // `s`.
             mstore(add(m, 0x60), 0x4a03ef9f92eb268cafa601072489a56380fa0dc43171d7712813b3a19a1eb5e5) // `x`.
             mstore(add(m, 0x80), 0x3e213e28a608ce9a2f4a17fd830c6654018a79b3e0263d91a8ba90622df6f2f0) // `y`.
             // The `invalid` upon `staticcall` failure is solely for gas estimation.
-            if iszero(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x00)) { invalid() }
-            result := iszero(iszero(returndatasize()))
+            if iszero(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, m, 0x20)) { invalid() }
+            result := eq(1, mload(m))
         }
     }
 
