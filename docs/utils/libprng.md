@@ -129,7 +129,7 @@ If your modulus is big, this method is recommended
 for uniform sampling to avoid modulo bias.   
 For uniform sampling across all uint256 values,   
 or for small enough moduli such that the bias is negligible,   
-use {next} instead.
+use `next` instead.
 
 ### standardNormalWad(PRNG)
 

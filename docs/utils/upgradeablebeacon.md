@@ -49,6 +49,29 @@ error NewOwnerIsZeroAddress()
 
 The `newOwner` cannot be the zero address.
 
+## Events
+
+### Upgraded(address)
+
+```solidity
+event Upgraded(address indexed implementation)
+```
+
+Emitted when the proxy's implementation is upgraded.
+
+### OwnershipTransferred(address,address)
+
+```solidity
+event OwnershipTransferred(
+    address indexed oldOwner, address indexed newOwner
+)
+```
+
+The ownership is transferred from `oldOwner` to `newOwner`.   
+This event is intentionally kept the same as OpenZeppelin's Ownable to be   
+compatible with indexers and [EIP-173](https://eips.ethereum.org/EIPS/eip-173),   
+despite it not being as lightweight as a single argument event.
+
 ## Storage
 
 ### _UPGRADEABLE_BEACON_IMPLEMENTATION_SLOT

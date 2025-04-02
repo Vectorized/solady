@@ -56,6 +56,9 @@ async function main() {
     .replace(/\s?\n\s?/g, '   \n')
     .replace(/```([\s\S]+?)```/g, '```solidity$1```')
     .replace(/^\/\/\/\s+@[a-z]+\s?/, '')
+    .replace(/\n\s*?((?:Note|Requirement)s?)\:[\s\/]*?(\-)/gi, '\n\n<b>$1:</b>\n\n$2')
+    .replace(/\n\s*?(Emits)/gi, '\n\n$1')
+    .replace(/\{([A-Za-z0-9\-]+)\}/g, '`$1`')
   ));
 
   const getSections = s => {
@@ -110,6 +113,14 @@ async function main() {
     
   const getCustomErrors = s =>
     getSubSections(s, /((?:\/\/\/\s[^\n]+\n\s*?)+)(error\s[^;]+);/g)
+    .map(m => ({
+      natspec: cleanNatspecOrNote(m[1]), 
+      def: deindent(strip(m[2])),
+      h3: getFunctionSig(deindent(strip(m[2])))
+    }));
+
+  const getEvents = s =>
+    getSubSections(s, /((?:\/\/\/\s[^\n]+\n\s*?)+)(event\s[^;]+);/g)
     .map(m => ({
       natspec: cleanNatspecOrNote(m[1]), 
       def: deindent(strip(m[2])),
@@ -204,6 +215,7 @@ async function main() {
       [
         getStructsAndEnums,
         getCustomErrors,
+        getEvents,
         getFunctionsAndModifiers,
         getConstantsAndImmutables
       ]

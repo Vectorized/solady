@@ -158,6 +158,45 @@ error TimelockAlreadyInitialized()
 
 The timelock has already been initialized.
 
+## Events
+
+### Proposed(bytes32,bytes32,bytes,uint256)
+
+```solidity
+event Proposed(
+    bytes32 indexed id,
+    bytes32 mode,
+    bytes executionData,
+    uint256 readyTimestamp
+)
+```
+
+The proposal `id` has been created.
+
+### Executed(bytes32,bytes32,bytes)
+
+```solidity
+event Executed(bytes32 indexed id, bytes32 mode, bytes executionData)
+```
+
+The proposal `id` has been executed.
+
+### Cancelled(bytes32)
+
+```solidity
+event Cancelled(bytes32 indexed id)
+```
+
+The proposal `id` has been cancelled.
+
+### MinDelaySet(uint256)
+
+```solidity
+event MinDelaySet(uint256 newMinDelay)
+```
+
+The minimum delay has been set to `newMinDelay`.
+
 ## Initializer
 
 ### initialize(uint256,address,address[],address[],address[])
@@ -202,7 +241,8 @@ function propose(bytes32 mode, bytes calldata executionData, uint256 delay)
 ```
 
 Proposes an execute payload (`mode`, `executionData`) with `delay`.   
-Emits a {Proposed} event.
+
+Emits a `Proposed` event.
 
 ### cancel(bytes32)
 
@@ -211,7 +251,8 @@ function cancel(bytes32 id) public virtual onlyRole(CANCELLER_ROLE)
 ```
 
 Cancels the operation with `id`.   
-Emits a {Cancelled} event.
+
+Emits a `Cancelled` event.
 
 ### setMinDelay(uint256)
 
@@ -220,7 +261,8 @@ function setMinDelay(uint256 newMinDelay) public virtual
 ```
 
 Allows the timelock itself to set the minimum delay.   
-Emits a {MinDelaySet} event.
+
+Emits a `MinDelaySet` event.
 
 ## Public View Functions
 
@@ -286,7 +328,7 @@ function _execute(
 For ERC7821.   
 To ensure that the function can only be called by the proper role holder.   
 To ensure that the operation is ready to be executed.   
-Updates the operation state and emits a {Executed} event after the calls.
+Updates the operation state and emits a `Executed` event after the calls.
 
 ### _authorizeSetRole(address,uint256,bool)
 

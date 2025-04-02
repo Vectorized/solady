@@ -34,7 +34,7 @@ function dateToEpochDay(uint256 year, uint256 month, uint256 day)
 Returns the number of days since 1970-01-01 from (`year`,`month`,`day`).   
 See: https://howardhinnant.github.io/date_algorithms.html   
 Note: Inputs outside the supported ranges result in undefined behavior.   
-Use {isSupportedDate} to check if the inputs are supported.
+Use `isSupportedDate` to check if the inputs are supported.
 
 ### epochDayToDate(uint256)
 
@@ -47,7 +47,7 @@ function epochDayToDate(uint256 epochDay)
 
 Returns (`year`,`month`,`day`) from the number of days since 1970-01-01.   
 Note: Inputs outside the supported ranges result in undefined behavior.   
-Use {isSupportedDays} to check if the inputs is supported.
+Use `isSupportedDays` to check if the inputs is supported.
 
 ### dateToTimestamp(uint256,uint256,uint256)
 
@@ -60,7 +60,7 @@ function dateToTimestamp(uint256 year, uint256 month, uint256 day)
 
 Returns the unix timestamp from (`year`,`month`,`day`).   
 Note: Inputs outside the supported ranges result in undefined behavior.   
-Use {isSupportedDate} to check if the inputs are supported.
+Use `isSupportedDate` to check if the inputs are supported.
 
 ### timestampToDate(uint256)
 
@@ -73,7 +73,7 @@ function timestampToDate(uint256 timestamp)
 
 Returns (`year`,`month`,`day`) from the given unix timestamp.   
 Note: Inputs outside the supported ranges result in undefined behavior.   
-Use {isSupportedTimestamp} to check if the inputs are supported.
+Use `isSupportedTimestamp` to check if the inputs are supported.
 
 ### dateTimeToTimestamp(uint256,uint256,uint256,uint256,uint256,uint256)
 
@@ -91,7 +91,7 @@ function dateTimeToTimestamp(
 Returns the unix timestamp from   
 (`year`,`month`,`day`,`hour`,`minute`,`second`).   
 Note: Inputs outside the supported ranges result in undefined behavior.   
-Use {isSupportedDateTime} to check if the inputs are supported.
+Use `isSupportedDateTime` to check if the inputs are supported.
 
 ### timestampToDateTime(uint256)
 
@@ -112,7 +112,7 @@ function timestampToDateTime(uint256 timestamp)
 Returns (`year`,`month`,`day`,`hour`,`minute`,`second`)   
 from the given unix timestamp.   
 Note: Inputs outside the supported ranges result in undefined behavior.   
-Use {isSupportedTimestamp} to check if the inputs are supported.
+Use `isSupportedTimestamp` to check if the inputs are supported.
 
 ### isLeapYear(uint256)
 

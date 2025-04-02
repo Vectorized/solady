@@ -50,6 +50,37 @@ error AlreadyInitialized()
 
 Cannot double-initialize.
 
+## Events
+
+### OwnershipTransferred(address,address)
+
+```solidity
+event OwnershipTransferred(
+    address indexed oldOwner, address indexed newOwner
+)
+```
+
+The ownership is transferred from `oldOwner` to `newOwner`.   
+This event is intentionally kept the same as OpenZeppelin's Ownable to be   
+compatible with indexers and [EIP-173](https://eips.ethereum.org/EIPS/eip-173),   
+despite it not being as lightweight as a single argument event.
+
+### OwnershipHandoverRequested(address)
+
+```solidity
+event OwnershipHandoverRequested(address indexed pendingOwner)
+```
+
+An ownership handover to `pendingOwner` has been requested.
+
+### OwnershipHandoverCanceled(address)
+
+```solidity
+event OwnershipHandoverCanceled(address indexed pendingOwner)
+```
+
+The ownership handover to `pendingOwner` has been canceled.
+
 ## Storage
 
 ### _OWNER_SLOT

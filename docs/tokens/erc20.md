@@ -87,6 +87,26 @@ error Permit2AllowanceIsFixedAtInfinity()
 
 The allowance of Permit2 is fixed at infinity.
 
+## Events
+
+### Transfer(address,address,uint256)
+
+```solidity
+event Transfer(address indexed from, address indexed to, uint256 amount)
+```
+
+Emitted when `amount` tokens is transferred from `from` to `to`.
+
+### Approval(address,address,uint256)
+
+```solidity
+event Approval(
+    address indexed owner, address indexed spender, uint256 amount
+)
+```
+
+Emitted when `amount` tokens is approved by `owner` to be used by `spender`.
+
 ## Constants
 
 ### _PERMIT2
@@ -146,7 +166,8 @@ function approve(address spender, uint256 amount)
 ```
 
 Sets `amount` as the allowance of `spender` over the caller's tokens.   
-Emits a {Approval} event.
+
+Emits a `Approval` event.
 
 ### transfer(address,uint256)
 
@@ -158,9 +179,12 @@ function transfer(address to, uint256 amount)
 ```
 
 Transfer `amount` tokens from the caller to `to`.   
-Requirements:   
+
+<b>Requirements:</b>
+
 - `from` must at least have `amount`.   
-Emits a {Transfer} event.
+
+Emits a `Transfer` event.
 
 ### transferFrom(address,address,uint256)
 
@@ -173,10 +197,13 @@ function transferFrom(address from, address to, uint256 amount)
 
 Transfers `amount` tokens from `from` to `to`.   
 Note: Does not update the allowance if it is the maximum uint256 value.   
-Requirements:   
+
+<b>Requirements:</b>
+
 - `from` must at least have `amount`.   
 - The caller must have at least `amount` of allowance to transfer the tokens of `from`.   
-Emits a {Transfer} event.
+
+Emits a `Transfer` event.
 
 ## EIP-2612
 
@@ -238,7 +265,8 @@ function permit(
 
 Sets `value` as the allowance of `spender` over the tokens of `owner`,   
 authorized by a signed approval by `owner`.   
-Emits a {Approval} event.
+
+Emits a `Approval` event.
 
 ### DOMAIN_SEPARATOR()
 
@@ -257,7 +285,8 @@ function _mint(address to, uint256 amount) internal virtual
 ```
 
 Mints `amount` tokens to `to`, increasing the total supply.   
-Emits a {Transfer} event.
+
+Emits a `Transfer` event.
 
 ## Internal Burn Functions
 
@@ -268,7 +297,8 @@ function _burn(address from, uint256 amount) internal virtual
 ```
 
 Burns `amount` tokens from `from`, reducing the total supply.   
-Emits a {Transfer} event.
+
+Emits a `Transfer` event.
 
 ## Internal Transfer Functions
 
@@ -303,7 +333,8 @@ function _approve(address owner, address spender, uint256 amount)
 ```
 
 Sets `amount` as the allowance of `spender` over the tokens of `owner`.   
-Emits a {Approval} event.
+
+Emits a `Approval` event.
 
 ## Hooks To Override
 
@@ -343,5 +374,5 @@ function _givePermit2InfiniteAllowance()
 
 Returns whether to fix the Permit2 contract's allowance at infinity.   
 This value should be kept constant after contract initialization,   
-or else the actual allowance values may not match with the {Approval} events.   
+or else the actual allowance values may not match with the `Approval` events.   
 For best performance, return a compile-time constant for zero-cost abstraction.

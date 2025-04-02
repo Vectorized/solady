@@ -115,7 +115,8 @@ Do NOT pass in a string that WILL be modified later on.
 
 ## Json Item Operations
 
-Note:   
+<b>Note:</b>
+
 - An item is a node in the JSON tree.   
 - The value of a string item WILL be double-quoted, JSON encoded.   
 - We make a distinction between `index` and `key`.   

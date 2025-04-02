@@ -26,6 +26,16 @@ error UpgradeFailed()
 
 The upgrade failed.
 
+## Events
+
+### Upgraded(address)
+
+```solidity
+event Upgraded(address indexed implementation)
+```
+
+Emitted when the proxy's implementation is upgraded.
+
 ## Storage
 
 ### _ERC1967_IMPLEMENTATION_SLOT
@@ -51,5 +61,6 @@ function upgradeToAndCall(address newImplementation, bytes calldata data)
 ```
 
 Upgrades the proxy's implementation to `newImplementation`.   
-Emits a {Upgraded} event.   
+
+Emits a `Upgraded` event.   
 Note: Passing in empty `data` skips the delegatecall to `newImplementation`.

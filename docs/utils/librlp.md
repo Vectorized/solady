@@ -55,7 +55,8 @@ Note: The returned result has dirty upper 96 bits. Please clean if used in assem
 
 ## Rlp Encoding Operations
 
-Note:   
+<b>Note:</b>
+
 - addresses are treated like byte strings of length 20, agnostic of leading zero bytes.   
 - uint256s are converted to byte strings, stripped of leading zero bytes, and encoded.   
 - bools are converted to uint256s (`b ? 1 : 0`), then encoded with the uint256.   

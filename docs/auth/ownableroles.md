@@ -19,6 +19,17 @@ the nomenclature for the 2-step ownership handover may be unique to this codebas
 
 <!-- customintro:start --><!-- customintro:end -->
 
+## Events
+
+### RolesUpdated(address,uint256)
+
+```solidity
+event RolesUpdated(address indexed user, uint256 indexed roles)
+```
+
+The `user`'s roles is updated to `roles`.   
+Each bit of `roles` represents whether the role is set.
+
 ## Internal Functions
 
 ### _setRoles(address,uint256)

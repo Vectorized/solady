@@ -62,6 +62,28 @@ error ERC5805CheckpointValueUnderflow()
 
 Arithmetic underflow when pushing a new checkpoint.
 
+## Events
+
+### DelegateChanged(address,address,address)
+
+```solidity
+event DelegateChanged(
+    address indexed delegator, address indexed from, address indexed to
+)
+```
+
+The delegate of `delegator` is changed from `from` to `to`.
+
+### DelegateVotesChanged(address,uint256,uint256)
+
+```solidity
+event DelegateVotesChanged(
+    address indexed delegate, uint256 oldValue, uint256 newValue
+)
+```
+
+The votes balance of `delegate` is changed from `oldValue` to `newValue`.
+
 ## ERC6372
 
 ### CLOCK_MODE()
@@ -228,7 +250,8 @@ function _moveDelegateVotes(address from, address to, uint256 amount)
 ```
 
 Transfer `amount` of delegated votes from `from` to `to`.   
-Emits a {DelegateVotesChanged} event for each change of delegated votes.
+
+Emits a `DelegateVotesChanged` event for each change of delegated votes.
 
 ### _delegate(address,address)
 
@@ -237,4 +260,5 @@ function _delegate(address account, address delegatee) internal virtual
 ```
 
 Delegates all of `account`'s voting units to `delegatee`.   
-Emits the {DelegateChanged} and {DelegateVotesChanged} events.
+
+Emits the `DelegateChanged` and `DelegateVotesChanged` events.

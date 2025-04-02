@@ -47,7 +47,9 @@ function verifyMultiProof(
 
 Returns whether all `leaves` exist in the Merkle tree with `root`,   
 given `proof` and `flags`.   
-Note:   
+
+<b>Note:</b>
+
 - Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`   
   will always return false.   
 - The sum of the lengths of `proof` and `leaves` must never overflow.   
@@ -68,7 +70,9 @@ function verifyMultiProofCalldata(
 
 Returns whether all `leaves` exist in the Merkle tree with `root`,   
 given `proof` and `flags`.   
-Note:   
+
+<b>Note:</b>
+
 - Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`   
   will always return false.   
 - Any non-zero word in the `flags` array is treated as true.   

@@ -45,32 +45,33 @@ The salt does not start with the caller.
 
 ## Events
 
-### _ADMIN_CHANGED_EVENT_SIGNATURE
+### AdminChanged(address,address)
 
 ```solidity
-uint256 internal constant _ADMIN_CHANGED_EVENT_SIGNATURE =
-    0x7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f
+event AdminChanged(address indexed proxy, address indexed admin)
 ```
 
-`keccak256(bytes("AdminChanged(address,address)"))`.
+The admin of a proxy contract has been changed.
 
-### _UPGRADED_EVENT_SIGNATURE
+### Upgraded(address,address)
 
 ```solidity
-uint256 internal constant _UPGRADED_EVENT_SIGNATURE =
-    0x5d611f318680d00598bb735d61bacf0c514c6b50e1e5ad30040a4df2b12791c7
+event Upgraded(address indexed proxy, address indexed implementation)
 ```
 
-`keccak256(bytes("Upgraded(address,address)"))`.
+The implementation for a proxy has been upgraded.
 
-### _DEPLOYED_EVENT_SIGNATURE
+### Deployed(address,address,address)
 
 ```solidity
-uint256 internal constant _DEPLOYED_EVENT_SIGNATURE =
-    0xc95935a66d15e0da5e412aca0ad27ae891d20b2fb91cf3994b6a3bf2b8178082
+event Deployed(
+    address indexed proxy,
+    address indexed implementation,
+    address indexed admin
+)
 ```
 
-`keccak256(bytes("Deployed(address,address,address)"))`.
+A proxy has been deployed.
 
 ## Storage
 

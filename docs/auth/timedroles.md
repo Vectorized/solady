@@ -34,6 +34,21 @@ can be used in conjunction with EnumerableRoles without collisions.
 
 <!-- customintro:start --><!-- customintro:end -->
 
+## Events
+
+### TimedRoleSet(address,uint256,uint40,uint40)
+
+```solidity
+event TimedRoleSet(
+    address indexed holder,
+    uint256 indexed timedRole,
+    uint40 start,
+    uint40 expires
+)
+```
+
+The active time range of the timed role has been set.
+
 ## Custom Errors
 
 ### TimedRoleHolderIsZeroAddress()
