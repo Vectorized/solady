@@ -405,6 +405,27 @@ library SafeTransferLib {
         }
     }
 
+    /// @dev Performs a `token.balanceOf(account)` check.
+    /// `implemented` denotes whether the `token` does not implement `balanceOf`.
+    /// `amount` is zero if the `token` does not implement `balanceOf`.
+    function checkBalanceOf(address token, address account)
+        internal
+        view
+        returns (bool implemented, uint256 amount)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x14, account) // Store the `account` argument.
+            mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
+            implemented :=
+                and( // The arguments of `and` are evaluated from right to left.
+                    gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                    staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
+                )
+            amount := mul(mload(0x20), implemented)
+        }
+    }
+
     /// @dev Returns the total supply of the `token`.
     /// Reverts if the token does not exist or does not implement `totalSupply()`.
     function totalSupply(address token) internal view returns (uint256 result) {
