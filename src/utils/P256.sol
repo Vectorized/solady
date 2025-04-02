@@ -115,14 +115,15 @@ library P256 {
         assembly {
             let m := mload(0x40)
             // These values are taken from the standard Wycheproof test vectors.
+            // https://github.com/C2SP/wycheproof/blob/aca47066256c167f0ce04d611d718cc85654341e/testvectors/ecdsa_webcrypto_test.json#L1197
             mstore(m, 0x532eaabd9574880dbf76b9b8cc00832c20a6ec113d682299550d7a6e0f345e25) // `hash`.
             mstore(add(m, 0x20), 0x5) // `r`.
             mstore(add(m, 0x40), 0x1) // `s`.
             mstore(add(m, 0x60), 0x4a03ef9f92eb268cafa601072489a56380fa0dc43171d7712813b3a19a1eb5e5) // `x`.
             mstore(add(m, 0x80), 0x3e213e28a608ce9a2f4a17fd830c6654018a79b3e0263d91a8ba90622df6f2f0) // `y`.
             // The `invalid` upon `staticcall` failure is solely for gas estimation.
-            if iszero(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, 0x00, 0x00)) { invalid() }
-            result := iszero(iszero(returndatasize()))
+            if iszero(staticcall(gas(), RIP_PRECOMPILE, m, 0xa0, m, 0x20)) { invalid() }
+            result := eq(1, mload(m))
         }
     }
 

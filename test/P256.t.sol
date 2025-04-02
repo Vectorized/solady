@@ -12,11 +12,25 @@ contract P256VerifierEtcher is SoladyTest {
     bytes internal constant _PASSTHROUGH_BYTECODE = hex"600160005260206000f3";
 
     function _etchBytecode(address target, bytes memory bytecode, bool active) internal {
+        if (target == P256.RIP_PRECOMPILE) {
+            if (active && _hasNativeRIPPrecompile()) return;
+            if (!active && _hasNativeRIPPrecompile()) {
+                /// @solidity memory-safe-assembly
+                assembly {
+                    return(0x00, 0x00)
+                }
+            }
+        }
+
         if (active) {
             if (target.code.length == 0) vm.etch(target, bytecode);
         } else {
             if (target.code.length != 0) vm.etch(target, "");
         }
+    }
+
+    function _hasNativeRIPPrecompile() internal view returns (bool) {
+        return P256.hasPrecompile() && P256.RIP_PRECOMPILE.code.length == 0;
     }
 
     function _etchPassthroughBytecode(address target, bool active) internal {
