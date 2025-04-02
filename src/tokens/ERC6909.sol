@@ -208,7 +208,10 @@ abstract contract ERC6909 {
 
     /// @dev Transfers `amount` of token `id` from `from` to `to`.
     ///
-    /// Note: Does not update the allowance if it is the maximum uint256 value.
+    /// Note:
+    /// - Allowance is NOT deducted if it is `type(uint256).max`.
+    /// - Allowance is NOT deducted if `from` is an operator.
+    /// - For efficiency, allowance is deducted even if `from` is the caller.
     ///
     /// Requirements:
     /// - `from` must at least have `amount` of token `id`.
@@ -401,7 +404,10 @@ abstract contract ERC6909 {
 
     /// @dev Transfers `amount` of token `id` from `from` to `to`.
     ///
-    /// Note: Does not update the allowance if it is the maximum uint256 value.
+    /// Note:
+    /// - Allowance is NOT deducted if it is `type(uint256).max`.
+    /// - Allowance is NOT deducted if `from` is an operator.
+    /// - For efficiency, allowance is deducted even if `from` is `by`.
     ///
     /// Requirements:
     /// - `from` must at least have `amount` of token `id`.
