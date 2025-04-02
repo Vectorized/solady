@@ -56,6 +56,7 @@ async function main() {
     .replace(/\s?\n\s?/g, '   \n')
     .replace(/```([\s\S]+?)```/g, '```solidity$1```')
     .replace(/^\/\/\/\s+@[a-z]+\s?/, '')
+    .replace(/\n\s*?\n\s*?/g, '\n\n\n')
     .replace(/\n\s*?((?:Note|Requirement)s?)\:[\s\/]*?(\-)/gi, '\n\n<b>$1:</b>\n\n$2')
     .replace(/\n\s*?(Emits)/gi, '\n\n$1')
     .replace(/\{([A-Za-z0-9\-]+)\}/g, '`$1`')
