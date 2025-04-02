@@ -28,6 +28,18 @@ This implementation is NOT compatible with OwnableRoles.
 
 <!-- customintro:start --><!-- customintro:end -->
 
+## Events
+
+### RoleSet(address,uint256,bool)
+
+```solidity
+event RoleSet(
+    address indexed holder, uint256 indexed role, bool indexed active
+)
+```
+
+The status of `role` for `holder` has been set to `active`.
+
 ## Custom Errors
 
 ### RoleHoldersIndexOutOfBounds()

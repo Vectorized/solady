@@ -781,9 +781,9 @@ function unpackOne(bytes32 packed)
     returns (string memory result)
 ```
 
-Unpacks a string packed using {packOne}.   
+Unpacks a string packed using `packOne`.   
 Returns the empty string if `packed` is `bytes32(0)`.   
-If `packed` is not an output of {packOne}, the output behavior is undefined.
+If `packed` is not an output of `packOne`, the output behavior is undefined.
 
 ### packTwo(string,string)
 
@@ -806,9 +806,9 @@ function unpackTwo(bytes32 packed)
     returns (string memory resultA, string memory resultB)
 ```
 
-Unpacks strings packed using {packTwo}.   
+Unpacks strings packed using `packTwo`.   
 Returns the empty strings if `packed` is `bytes32(0)`.   
-If `packed` is not an output of {packTwo}, the output behavior is undefined.
+If `packed` is not an output of `packTwo`, the output behavior is undefined.
 
 ### directReturn(string)
 
