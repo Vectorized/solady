@@ -319,6 +319,19 @@ function balanceOf(address token, address account)
 Returns the amount of ERC20 `token` owned by `account`.   
 Returns zero if the `token` does not exist.
 
+### checkBalanceOf(address,address)
+
+```solidity
+function checkBalanceOf(address token, address account)
+    internal
+    view
+    returns (bool implemented, uint256 amount)
+```
+
+Performs a `token.balanceOf(account)` check.   
+`implemented` denotes whether the `token` does not implement `balanceOf`.   
+`amount` is zero if the `token` does not implement `balanceOf`.
+
 ### totalSupply(address)
 
 ```solidity
