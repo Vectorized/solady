@@ -58,7 +58,7 @@ async function main() {
     .replace(/^\/\/\/\s+@[a-z]+\s?/, '')
     .replace(/\n\s*?((?:Note|Requirement)s?)\:[\s\/]*?(\-)/gi, '\n\n<b>$1:</b>\n\n$2')
     .replace(/\n\s*?(Emits)/gi, '\n\n$1')
-    .replace(/\{([A-Za-z0-9]+)\}/g, '`$1`')
+    .replace(/\{([A-Za-z0-9\-]+)\}/g, '`$1`')
   ));
 
   const getSections = s => {
