@@ -12,6 +12,11 @@ import {LibZip} from "../src/utils/LibZip.sol";
 contract LibZipTest is SoladyTest {
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
+    function testCdCompressGas() public {
+        bytes memory data = hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
+        assertLt(LibZip.cdCompress(data).length, data.length);
+    }
+
     function testFlzCompressDecompress() public brutalizeMemory {
         assertEq(LibZip.flzCompress(""), "");
         assertEq(LibZip.flzDecompress(""), "");
