@@ -1678,6 +1678,15 @@ contract LibStringTest is SoladyTest {
         }
     }
 
+    function testUint8AtStringStorage(bytes calldata s, uint256 i) public {
+        LibString.setCalldata(_getStringStorage(0), string(s));
+        if (i < s.length) {
+            assertEq(LibString.uint8At(_getStringStorage(0), i), uint8(s[i]));
+        } else {
+            assertEq(LibString.uint8At(_getStringStorage(0), i), 0);
+        }
+    }
+
     function _lowerOriginal(string memory subject) internal pure returns (string memory result) {
         unchecked {
             uint256 n = bytes(subject).length;
