@@ -89,6 +89,17 @@ function get(BytesStorage storage $)
 
 Returns the value stored in `$`.
 
+### uint8At(BytesStorage,uint256)
+
+```solidity
+function uint8At(BytesStorage storage $, uint256 i)
+    internal
+    view
+    returns (uint8 result)
+```
+
+Returns the uint8 at index `i`. If out-of-bounds, returns 0.
+
 ## Bytes Operations
 
 ### replace(bytes,bytes,bytes)

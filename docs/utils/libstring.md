@@ -203,6 +203,17 @@ function get(StringStorage storage $)
 
 Returns the value stored in `$`.
 
+### uint8At(StringStorage,uint256)
+
+```solidity
+function uint8At(StringStorage storage $, uint256 i)
+    internal
+    view
+    returns (uint8)
+```
+
+Returns the uint8 at index `i`. If out-of-bounds, returns 0.
+
 ### bytesStorage(StringStorage)
 
 ```solidity
