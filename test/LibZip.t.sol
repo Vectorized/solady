@@ -72,6 +72,14 @@ contract LibZipTest is SoladyTest {
         _abcPacked.c = uint32(_C);
     }
 
+    function testCdCompressDifferential(bytes32) public {
+        testCdCompressDifferential(_randomCd());
+    }
+
+    function testCdCompressDifferential(bytes memory data) public {
+        assertEq(LibZip.cdCompress(data), _cdCompressOriginal(data));
+    }
+
     function _cdCompressOriginal(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
