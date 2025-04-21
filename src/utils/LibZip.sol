@@ -167,56 +167,48 @@ library LibZip {
     function cdCompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            function rle(v_, o_, d_) -> _o, _d {
-                mstore(o_, shl(240, or(and(0xff, add(d_, 0xff)), and(0x80, v_))))
-                _o := add(o_, 2)
+            function leadingZeroBytes(x_) -> _r {
+                _r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x_))
+                _r := or(_r, shl(6, lt(0xffffffffffffffff, shr(_r, x_))))
+                _r := or(_r, shl(5, lt(0xffffffff, shr(_r, x_))))
+                _r := or(_r, shl(4, lt(0xffff, shr(_r, x_))))
+                _r := xor(31, or(shr(3, _r), lt(0xff, shr(_r, x_))))
             }
             function min(x_, y_) -> _z {
                 _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
             }
             result := mload(0x40)
             let o := add(result, 0x20)
-            let z := 0 // Number of consecutive 0x00.
-            let y := 0 // Number of consecutive 0xff.
             for { let end := add(data, mload(data)) } iszero(eq(data, end)) {} {
                 data := add(data, 1)
                 let c := byte(31, mload(data))
                 if iszero(c) {
-                    if y { o, y := rle(0xff, o, y) }
-                    let r := 32
-                    let x := mload(add(data, 0x20))
-                    if x {
-                        r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
-                        r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
-                        r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
-                        r := or(r, shl(4, lt(0xffff, shr(r, x))))
-                        r := xor(31, or(shr(3, r), lt(0xff, shr(r, x))))
+                    let z := 1
+                    for {} 1 {} {
+                        let r := 0x20
+                        let x := mload(add(data, r))
+                        if x { r := leadingZeroBytes(x) }
+                        r := min(min(sub(end, data), r), sub(0x80, z))
+                        data := add(data, r)
+                        z := add(z, r)
+                        if iszero(gt(r, 0x1f)) { break }
                     }
-                    r := min(min(sub(end, data), r), sub(0x7f, z))
-                    data := add(data, r)
-                    z := add(add(z, 1), r)
-                    if eq(z, 0x80) { o, z := rle(0x00, o, 0x80) }
-                    continue
-                }
-                if iszero(or(or(y, z), eq(c, 0xff))) {
-                    mstore8(o, c)
-                    o := add(o, 1)
+                    mstore(o, shl(240, or(and(0xff, add(z, 0xff)), 0)))
+                    o := add(o, 2)
                     continue
                 }
                 if eq(c, 0xff) {
-                    if z { o, z := rle(0x00, o, z) }
-                    y := add(y, 1)
-                    if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
+                    let r := 0x20
+                    let x := not(mload(add(data, r)))
+                    if x { r := leadingZeroBytes(x) }
+                    r := min(min(sub(end, data), r), 0x1f)
+                    data := add(data, r)
+                    mstore(o, shl(240, or(and(0xff, add(add(1, r), 0xff)), 0x80)))
+                    o := add(o, 2)
                     continue
                 }
-                if y { o, y := rle(0xff, o, y) }
-                if z { o, z := rle(0x00, o, z) }
                 mstore8(o, c)
                 o := add(o, 1)
-            }
-            if or(y, z) {
-                if y { o, y := rle(0xff, o, y) }
-                if z { o, z := rle(0x00, o, z) }
             }
             // Bitwise negate the first 4 bytes.
             mstore(add(result, 4), not(mload(add(result, 4))))
