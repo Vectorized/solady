@@ -167,7 +167,7 @@ library LibZip {
     function cdCompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            function leadingZeroBytes(x_) -> _r {
+            function countLeadingZeroBytes(x_) -> _r {
                 _r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x_))
                 _r := or(_r, shl(6, lt(0xffffffffffffffff, shr(_r, x_))))
                 _r := or(_r, shl(5, lt(0xffffffff, shr(_r, x_))))
@@ -187,23 +187,23 @@ library LibZip {
                     for {} 1 {} {
                         let r := 0x20
                         let x := mload(add(data, r))
-                        if x { r := leadingZeroBytes(x) }
+                        if x { r := countLeadingZeroBytes(x) }
                         r := min(min(sub(end, data), r), sub(0x80, z))
                         data := add(data, r)
                         z := add(z, r)
                         if iszero(gt(r, 0x1f)) { break }
                     }
-                    mstore(o, shl(240, or(and(0xff, add(z, 0xff)), 0)))
+                    mstore(o, shl(240, and(0xff, add(z, 0xff))))
                     o := add(o, 2)
                     continue
                 }
                 if eq(c, 0xff) {
                     let r := 0x20
                     let x := not(mload(add(data, r)))
-                    if x { r := leadingZeroBytes(x) }
+                    if x { r := countLeadingZeroBytes(x) }
                     r := min(min(sub(end, data), r), 0x1f)
                     data := add(data, r)
-                    mstore(o, shl(240, or(and(0xff, add(add(1, r), 0xff)), 0x80)))
+                    mstore(o, shl(240, or(r, 0x80)))
                     o := add(o, 2)
                     continue
                 }
