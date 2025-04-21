@@ -183,17 +183,17 @@ library LibZip {
                 data := add(data, 1)
                 let c := byte(31, mload(data))
                 if iszero(c) {
-                    let z := 1
+                    let z := 0
                     for {} 1 {} {
                         let r := 0x20
                         let x := mload(add(data, r))
                         if x { r := countLeadingZeroBytes(x) }
-                        r := min(min(sub(end, data), r), sub(0x80, z))
+                        r := min(min(sub(end, data), r), sub(0x7f, z))
                         data := add(data, r)
                         z := add(z, r)
                         if iszero(gt(r, 0x1f)) { break }
                     }
-                    mstore(o, shl(240, and(0xff, add(z, 0xff))))
+                    mstore(o, shl(240, z))
                     o := add(o, 2)
                     continue
                 }
