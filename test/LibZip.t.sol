@@ -22,7 +22,18 @@ contract LibZipTest is SoladyTest {
         uint256 c;
     }
 
+    struct ABCPacked {
+        uint32 a;
+        uint64 b;
+        uint32 c;
+    }
+
+    uint256 internal constant _A = 0x112233;
+    uint256 internal constant _B = 0x0102030405060708;
+    uint256 internal constant _C = 0xf1f2f3;
+
     ABC internal _abc;
+    ABCPacked internal _abcPacked;
 
     bytes internal constant _CD_COMPRESS_INPUT =
         hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
@@ -37,24 +48,28 @@ contract LibZipTest is SoladyTest {
         assertLt(_cdCompressOriginal(data).length, data.length);
     }
 
-    function _getABC() internal pure returns (ABC memory abc) {
-        abc.a = 0x11223;
-        abc.b = 0x8762189375162945;
-        abc.c = 0x8191919191;
-    }
-
     function testStoreABCWithCdCompressGas() public {
-        ABC memory abc = _getABC();
-        _bytesStorage.set(LibZip.cdCompress(abi.encode(abc.a, abc.b, abc.c)));
+        _bytesStorage.set(LibZip.cdCompress(abi.encode(_A, _B, _C)));
     }
 
     function testStoreABCWithCdCompressOriginalGas() public {
-        ABC memory abc = _getABC();
-        _bytesStorage.set(_cdCompressOriginal(abi.encode(abc.a, abc.b, abc.c)));
+        _bytesStorage.set(_cdCompressOriginal(abi.encode(_A, _B, _C)));
+    }
+
+    function testStoreABCWithFlzCompressGas() public {
+        _bytesStorage.set(LibZip.flzCompress(abi.encode(_A, _B, _C)));
     }
 
     function testStoreABCGas() public {
-        _abc = _getABC();
+        _abc.a = _A;
+        _abc.b = _B;
+        _abc.c = _C;
+    }
+
+    function testStoreABCPackedGas() public {
+        _abcPacked.a = uint32(_A);
+        _abcPacked.b = uint64(_B);
+        _abcPacked.c = uint32(_C);
     }
 
     function testLeadingZeroes() public {
