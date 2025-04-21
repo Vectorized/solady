@@ -72,33 +72,6 @@ contract LibZipTest is SoladyTest {
         _abcPacked.c = uint32(_C);
     }
 
-    function testLeadingZeroes() public {
-        assertEq(
-            _leadingZeros(0x0000000000000000000000000000000000000000000000000000000000000000), 32
-        );
-        assertEq(
-            _leadingZeros(0x0000000000000000000000000000000000000000000000000000000000000001), 31
-        );
-        assertEq(
-            _leadingZeros(0x0010000000000000000000000000000000000000000000000000000000000001), 1
-        );
-        assertEq(
-            _leadingZeros(0x1000000000000000000000000000000000000000000000000000000000000001), 0
-        );
-    }
-
-    function _leadingZeros(bytes32 x) internal pure returns (uint256 r) {
-        if (x == 0) return 32;
-        /// @solidity memory-safe-assembly
-        assembly {
-            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
-            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
-            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
-            r := or(r, shl(4, lt(0xffff, shr(r, x))))
-            r := xor(31, or(shr(3, r), lt(0xff, shr(r, x))))
-        }
-    }
-
     function _cdCompressOriginal(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
