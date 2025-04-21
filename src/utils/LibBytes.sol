@@ -123,6 +123,32 @@ library LibBytes {
         }
     }
 
+    /// @dev Returns the uint8 at index `i`. If out-of-bounds, returns 0.
+    function uint8At(BytesStorage storage $, uint256 i) internal view returns (uint8 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for { let packed := sload($.slot) } 1 {} {
+                if iszero(eq(or(packed, 0xff), packed)) {
+                    if iszero(gt(i, 0x1e)) {
+                        result := byte(i, packed)
+                        break
+                    }
+                    if iszero(gt(i, and(0xff, packed))) {
+                        mstore(0x00, $.slot)
+                        let j := sub(i, 0x1f)
+                        result := byte(and(j, 0x1f), sload(add(keccak256(0x00, 0x20), shr(5, j))))
+                    }
+                    break
+                }
+                if iszero(gt(i, shr(8, packed))) {
+                    mstore(0x00, $.slot)
+                    result := byte(and(i, 0x1f), sload(add(keccak256(0x00, 0x20), shr(5, i))))
+                }
+                break
+            }
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      BYTES OPERATIONS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

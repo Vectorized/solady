@@ -112,6 +112,11 @@ library LibString {
         return string(LibBytes.get(bytesStorage($)));
     }
 
+    /// @dev Returns the uint8 at index `i`. If out-of-bounds, returns 0.
+    function uint8At(StringStorage storage $, uint256 i) internal view returns (uint8) {
+        return LibBytes.uint8At(bytesStorage($), i);
+    }
+
     /// @dev Helper to cast `$` to a `BytesStorage`.
     function bytesStorage(StringStorage storage $)
         internal
