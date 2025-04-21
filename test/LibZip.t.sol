@@ -7,10 +7,111 @@ import {LibClone} from "../src/utils/LibClone.sol";
 import {ERC1967Factory} from "../src/utils/ERC1967Factory.sol";
 import {LibString} from "../src/utils/LibString.sol";
 import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
+import {LibBytes} from "../src/utils/LibBytes.sol";
 import {LibZip} from "../src/utils/LibZip.sol";
 
 contract LibZipTest is SoladyTest {
+    using LibBytes for LibBytes.BytesStorage;
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
+
+    LibBytes.BytesStorage internal _bytesStorage;
+
+    struct ABC {
+        uint256 a;
+        uint256 b;
+        uint256 c;
+    }
+
+    struct ABCPacked {
+        uint32 a;
+        uint64 b;
+        uint32 c;
+    }
+
+    uint256 internal constant _A = 0x112233;
+    uint256 internal constant _B = 0x0102030405060708;
+    uint256 internal constant _C = 0xf1f2f3;
+
+    ABC internal _abc;
+    ABCPacked internal _abcPacked;
+
+    bytes internal constant _CD_COMPRESS_INPUT =
+        hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
+
+    function testCdCompressGas() public {
+        bytes memory data = _CD_COMPRESS_INPUT;
+        assertLt(LibZip.cdCompress(data).length, data.length);
+    }
+
+    function testCdCompressOriginalGas() public {
+        bytes memory data = _CD_COMPRESS_INPUT;
+        assertLt(_cdCompressOriginal(data).length, data.length);
+    }
+
+    function testStoreABCWithCdCompressGas() public {
+        _bytesStorage.set(LibZip.cdCompress(abi.encode(_A, _B, _C)));
+    }
+
+    function testStoreABCWithCdCompressOriginalGas() public {
+        _bytesStorage.set(_cdCompressOriginal(abi.encode(_A, _B, _C)));
+    }
+
+    function testStoreABCWithFlzCompressGas() public {
+        _bytesStorage.set(LibZip.flzCompress(abi.encode(_A, _B, _C)));
+    }
+
+    function testStoreABCGas() public {
+        _abc.a = _A;
+        _abc.b = _B;
+        _abc.c = _C;
+    }
+
+    function testStoreABCPackedGas() public {
+        _abcPacked.a = uint32(_A);
+        _abcPacked.b = uint64(_B);
+        _abcPacked.c = uint32(_C);
+    }
+
+    function _cdCompressOriginal(bytes memory data) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function rle(v_, o_, d_) -> _o, _d {
+                mstore(o_, shl(240, or(and(0xff, add(d_, 0xff)), and(0x80, v_))))
+                _o := add(o_, 2)
+            }
+            result := mload(0x40)
+            let o := add(result, 0x20)
+            let z := 0 // Number of consecutive 0x00.
+            let y := 0 // Number of consecutive 0xff.
+            for { let end := add(data, mload(data)) } iszero(eq(data, end)) {} {
+                data := add(data, 1)
+                let c := byte(31, mload(data))
+                if iszero(c) {
+                    if y { o, y := rle(0xff, o, y) }
+                    z := add(z, 1)
+                    if eq(z, 0x80) { o, z := rle(0x00, o, 0x80) }
+                    continue
+                }
+                if eq(c, 0xff) {
+                    if z { o, z := rle(0x00, o, z) }
+                    y := add(y, 1)
+                    if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
+                    continue
+                }
+                if y { o, y := rle(0xff, o, y) }
+                if z { o, z := rle(0x00, o, z) }
+                mstore8(o, c)
+                o := add(o, 1)
+            }
+            if y { o, y := rle(0xff, o, y) }
+            if z { o, z := rle(0x00, o, z) }
+            // Bitwise negate the first 4 bytes.
+            mstore(add(result, 4), not(mload(add(result, 4))))
+            mstore(result, sub(o, add(result, 0x20))) // Store the length.
+            mstore(o, 0) // Zeroize the slot after the string.
+            mstore(0x40, add(o, 0x20)) // Allocate the memory.
+        }
+    }
 
     function testFlzCompressDecompress() public brutalizeMemory {
         assertEq(LibZip.flzCompress(""), "");
@@ -107,6 +208,17 @@ contract LibZipTest is SoladyTest {
             assembly {
                 for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                     mstore(add(add(data, 0x20), i), not(0))
+                }
+            }
+        }
+        if (_randomChance(16)) {
+            uint256 r = _randomUniform();
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, r)
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(0x20, i)
+                    if and(1, keccak256(0x00, 0x40)) { mstore(add(add(data, 0x20), i), 0) }
                 }
             }
         }
