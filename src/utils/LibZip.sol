@@ -171,6 +171,9 @@ library LibZip {
                 mstore(o_, shl(240, or(and(0xff, add(d_, 0xff)), and(0x80, v_))))
                 _o := add(o_, 2)
             }
+            function min(x_, y_) -> _z {
+                _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
+            }
             result := mload(0x40)
             let o := add(result, 0x20)
             let z := 0 // Number of consecutive 0x00.
@@ -180,23 +183,38 @@ library LibZip {
                 let c := byte(31, mload(data))
                 if iszero(c) {
                     if y { o, y := rle(0xff, o, y) }
-                    z := add(z, 1)
+                    let r := 32
+                    let x := mload(add(data, 0x20))
+                    if x {
+                        r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+                        r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+                        r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+                        r := or(r, shl(4, lt(0xffff, shr(r, x))))
+                        r := xor(31, or(shr(3, r), lt(0xff, shr(r, x))))
+                    }
+                    r := min(min(sub(end, data), r), sub(0x7f, z))
+                    data := add(data, r)
+                    z := add(add(z, 1), r)
                     if eq(z, 0x80) { o, z := rle(0x00, o, 0x80) }
                     continue
                 }
-                if eq(c, 0xff) {
+                if or(or(y, z), eq(c, 0xff)) {
+                    if eq(c, 0xff) {
+                        if z { o, z := rle(0x00, o, z) }
+                        y := add(y, 1)
+                        if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
+                        continue
+                    }
+                    if y { o, y := rle(0xff, o, y) }
                     if z { o, z := rle(0x00, o, z) }
-                    y := add(y, 1)
-                    if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
-                    continue
                 }
-                if y { o, y := rle(0xff, o, y) }
-                if z { o, z := rle(0x00, o, z) }
                 mstore8(o, c)
                 o := add(o, 1)
             }
-            if y { o, y := rle(0xff, o, y) }
-            if z { o, z := rle(0x00, o, z) }
+            if or(y, z) {
+                if y { o, y := rle(0xff, o, y) }
+                if z { o, z := rle(0x00, o, z) }
+            }
             // Bitwise negate the first 4 bytes.
             mstore(add(result, 4), not(mload(add(result, 4))))
             mstore(result, sub(o, add(result, 0x20))) // Store the length.
