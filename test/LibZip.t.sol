@@ -7,14 +7,42 @@ import {LibClone} from "../src/utils/LibClone.sol";
 import {ERC1967Factory} from "../src/utils/ERC1967Factory.sol";
 import {LibString} from "../src/utils/LibString.sol";
 import {DynamicBufferLib} from "../src/utils/DynamicBufferLib.sol";
+import {LibBytes} from "../src/utils/LibBytes.sol";
 import {LibZip} from "../src/utils/LibZip.sol";
 
 contract LibZipTest is SoladyTest {
+    using LibBytes for LibBytes.BytesStorage;
     using DynamicBufferLib for DynamicBufferLib.DynamicBuffer;
 
+    LibBytes.BytesStorage internal _bytesStorage;
+
+    struct ABC {
+        uint256 a;
+        uint256 b;
+        uint256 c;
+    }
+
+    ABC internal _abc;
+
     function testCdCompressGas() public {
-        bytes memory data = hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
+        bytes memory data =
+            hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
         assertLt(LibZip.cdCompress(data).length, data.length);
+    }
+
+    function _getABC() internal pure returns (ABC memory abc) {
+        abc.a = 0x11223;
+        abc.b = 0x8762189375162945;
+        abc.c = 0x8191919191;
+    }
+
+    function testStoreABCWithCdCompressGas() public {
+        ABC memory abc = _getABC();
+        _bytesStorage.set(LibZip.cdCompress(abi.encode(abc.a, abc.b, abc.c)));
+    }
+
+    function testStoreABCGas() public {
+        _abc = _getABC();
     }
 
     function testFlzCompressDecompress() public brutalizeMemory {
