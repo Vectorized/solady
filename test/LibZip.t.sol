@@ -24,10 +24,17 @@ contract LibZipTest is SoladyTest {
 
     ABC internal _abc;
 
+    bytes internal constant _CD_COMPRESS_INPUT =
+        hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
+
     function testCdCompressGas() public {
-        bytes memory data =
-            hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
+        bytes memory data = _CD_COMPRESS_INPUT;
         assertLt(LibZip.cdCompress(data).length, data.length);
+    }
+
+    function testCdCompressOriginalGas() public {
+        bytes memory data = _CD_COMPRESS_INPUT;
+        assertLt(_cdCompressOriginal(data).length, data.length);
     }
 
     function _getABC() internal pure returns (ABC memory abc) {
@@ -39,6 +46,11 @@ contract LibZipTest is SoladyTest {
     function testStoreABCWithCdCompressGas() public {
         ABC memory abc = _getABC();
         _bytesStorage.set(LibZip.cdCompress(abi.encode(abc.a, abc.b, abc.c)));
+    }
+
+    function testStoreABCWithCdCompressOriginalGas() public {
+        ABC memory abc = _getABC();
+        _bytesStorage.set(_cdCompressOriginal(abi.encode(abc.a, abc.b, abc.c)));
     }
 
     function testStoreABCGas() public {
@@ -69,6 +81,47 @@ contract LibZipTest is SoladyTest {
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
             r := or(r, shl(4, lt(0xffff, shr(r, x))))
             r := xor(31, or(shr(3, r), lt(0xff, shr(r, x))))
+        }
+    }
+
+    function _cdCompressOriginal(bytes memory data) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function rle(v_, o_, d_) -> _o, _d {
+                mstore(o_, shl(240, or(and(0xff, add(d_, 0xff)), and(0x80, v_))))
+                _o := add(o_, 2)
+            }
+            result := mload(0x40)
+            let o := add(result, 0x20)
+            let z := 0 // Number of consecutive 0x00.
+            let y := 0 // Number of consecutive 0xff.
+            for { let end := add(data, mload(data)) } iszero(eq(data, end)) {} {
+                data := add(data, 1)
+                let c := byte(31, mload(data))
+                if iszero(c) {
+                    if y { o, y := rle(0xff, o, y) }
+                    z := add(z, 1)
+                    if eq(z, 0x80) { o, z := rle(0x00, o, 0x80) }
+                    continue
+                }
+                if eq(c, 0xff) {
+                    if z { o, z := rle(0x00, o, z) }
+                    y := add(y, 1)
+                    if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
+                    continue
+                }
+                if y { o, y := rle(0xff, o, y) }
+                if z { o, z := rle(0x00, o, z) }
+                mstore8(o, c)
+                o := add(o, 1)
+            }
+            if y { o, y := rle(0xff, o, y) }
+            if z { o, z := rle(0x00, o, z) }
+            // Bitwise negate the first 4 bytes.
+            mstore(add(result, 4), not(mload(add(result, 4))))
+            mstore(result, sub(o, add(result, 0x20))) // Store the length.
+            mstore(o, 0) // Zeroize the slot after the string.
+            mstore(0x40, add(o, 0x20)) // Allocate the memory.
         }
     }
 
