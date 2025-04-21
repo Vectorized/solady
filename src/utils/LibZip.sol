@@ -198,16 +198,19 @@ library LibZip {
                     if eq(z, 0x80) { o, z := rle(0x00, o, 0x80) }
                     continue
                 }
-                if or(or(y, z), eq(c, 0xff)) {
-                    if eq(c, 0xff) {
-                        if z { o, z := rle(0x00, o, z) }
-                        y := add(y, 1)
-                        if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
-                        continue
-                    }
-                    if y { o, y := rle(0xff, o, y) }
-                    if z { o, z := rle(0x00, o, z) }
+                if iszero(or(or(y, z), eq(c, 0xff))) {
+                    mstore8(o, c)
+                    o := add(o, 1)
+                    continue
                 }
+                if eq(c, 0xff) {
+                    if z { o, z := rle(0x00, o, z) }
+                    y := add(y, 1)
+                    if eq(y, 0x20) { o, y := rle(0xff, o, 0x20) }
+                    continue
+                }
+                if y { o, y := rle(0xff, o, y) }
+                if z { o, z := rle(0x00, o, z) }
                 mstore8(o, c)
                 o := add(o, 1)
             }
