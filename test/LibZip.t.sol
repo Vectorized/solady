@@ -38,6 +38,19 @@ contract LibZipTest is SoladyTest {
     bytes internal constant _CD_COMPRESS_INPUT =
         hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
 
+    bytes internal constant _CD_COMPRESS_OUTPUT =
+        hex"ffe3f51e1c001a2b9cdca0ab00113961790f8baa365051889e4c367d001126d85539440bc844167ac0cc423200177b55939986433925";
+
+    function testCdDecompressGas() public {
+        bytes memory data = _CD_COMPRESS_OUTPUT;
+        assertGt(LibZip.cdDecompress(data).length, data.length);
+    }
+
+    function testCdDecompressOriginalGas() public {
+        bytes memory data = _CD_COMPRESS_OUTPUT;
+        assertGt(_cdDecompressOriginal(data).length, data.length);
+    }
+
     function testCdCompressGas() public {
         bytes memory data = _CD_COMPRESS_INPUT;
         assertLt(LibZip.cdCompress(data).length, data.length);
@@ -80,6 +93,19 @@ contract LibZipTest is SoladyTest {
         assertEq(LibZip.cdCompress(data), _cdCompressOriginal(data));
     }
 
+    function testCdDecompressDifferential(bytes32) public {
+        bytes memory data = _randomCd();
+        if (_randomChance(2)) {
+            testCdDecompressDifferential(LibZip.cdCompress(data));
+        } else {
+            testCdDecompressDifferential(data);
+        }
+    }
+
+    function testCdDecompressDifferential(bytes memory data) public {
+        assertEq(LibZip.cdDecompress(data), _cdDecompressOriginal(data));
+    }
+
     function _cdCompressOriginal(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -118,6 +144,39 @@ contract LibZipTest is SoladyTest {
             mstore(result, sub(o, add(result, 0x20))) // Store the length.
             mstore(o, 0) // Zeroize the slot after the string.
             mstore(0x40, add(o, 0x20)) // Allocate the memory.
+        }
+    }
+
+    function _cdDecompressOriginal(bytes memory data) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if mload(data) {
+                result := mload(0x40)
+                let o := add(result, 0x20)
+                let s := add(data, 4)
+                let v := mload(s)
+                let end := add(data, mload(data))
+                mstore(s, not(v)) // Bitwise negate the first 4 bytes.
+                for {} lt(data, end) {} {
+                    data := add(data, 1)
+                    let c := byte(31, mload(data))
+                    if iszero(c) {
+                        data := add(data, 1)
+                        let d := byte(31, mload(data))
+                        // Fill with either 0xff or 0x00.
+                        mstore(o, not(0))
+                        if iszero(gt(d, 0x7f)) { calldatacopy(o, calldatasize(), add(d, 1)) }
+                        o := add(o, add(and(d, 0x7f), 1))
+                        continue
+                    }
+                    mstore8(o, c)
+                    o := add(o, 1)
+                }
+                mstore(s, v) // Restore the first 4 bytes.
+                mstore(result, sub(o, add(result, 0x20))) // Store the length.
+                mstore(o, 0) // Zeroize the slot after the string.
+                mstore(0x40, add(o, 0x20)) // Allocate the memory.
+            }
         }
     }
 

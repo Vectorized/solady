@@ -183,17 +183,16 @@ library LibZip {
                 data := add(data, 1)
                 let c := byte(31, mload(data))
                 if iszero(c) {
-                    let z := 0
                     for {} 1 {} {
                         let r := 0x20
                         let x := mload(add(data, r))
                         if x { r := countLeadingZeroBytes(x) }
-                        r := min(min(sub(end, data), r), sub(0x7f, z))
+                        r := min(min(sub(end, data), r), sub(0x7f, c))
                         data := add(data, r)
-                        z := add(z, r)
+                        c := add(c, r)
                         if iszero(gt(r, 0x1f)) { break }
                     }
-                    mstore(o, shl(240, z))
+                    mstore(o, shl(240, c))
                     o := add(o, 2)
                     continue
                 }
@@ -224,25 +223,32 @@ library LibZip {
         assembly {
             if mload(data) {
                 result := mload(0x40)
-                let o := add(result, 0x20)
                 let s := add(data, 4)
                 let v := mload(s)
-                let end := add(data, mload(data))
+                let end := add(add(0x20, data), mload(data))
+                let o := add(result, 0x20)
                 mstore(s, not(v)) // Bitwise negate the first 4 bytes.
-                for {} lt(data, end) {} {
-                    data := add(data, 1)
-                    let c := byte(31, mload(data))
-                    if iszero(c) {
-                        data := add(data, 1)
-                        let d := byte(31, mload(data))
-                        // Fill with either 0xff or 0x00.
-                        mstore(o, not(0))
-                        if iszero(gt(d, 0x7f)) { calldatacopy(o, calldatasize(), add(d, 1)) }
-                        o := add(o, add(and(d, 0x7f), 1))
+                for { let i := add(0x20, data) } 1 {} {
+                    let c := mload(i)
+                    if iszero(byte(0, c)) {
+                        c := byte(1, c)
+                        if iszero(gt(c, 0x7f)) {
+                            calldatacopy(o, calldatasize(), add(c, 1)) // Fill with 0x00.
+                            o := add(o, add(c, 1))
+                            i := add(i, 2)
+                            if iszero(lt(i, end)) { break }
+                            continue
+                        }
+                        mstore(o, not(0)) // Fill with 0xff.
+                        o := add(o, add(c, sub(1, 0x80)))
+                        i := add(i, 2)
+                        if iszero(lt(i, end)) { break }
                         continue
                     }
-                    mstore8(o, c)
+                    mstore(o, c)
                     o := add(o, 1)
+                    i := add(i, 1)
+                    if iszero(lt(i, end)) { break }
                 }
                 mstore(s, v) // Restore the first 4 bytes.
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
