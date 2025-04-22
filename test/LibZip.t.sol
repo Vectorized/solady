@@ -99,7 +99,10 @@ contract LibZipTest is SoladyTest {
     }
 
     function testCdCompressDifferential(bytes memory data) public {
-        assertEq(LibZip.cdCompress(data), _cdCompressOriginal(data));
+        if (_randomChance(32)) _misalignFreeMemoryPointer();
+        if (_randomChance(32)) _brutalizeMemory();
+        bytes memory computed = LibZip.cdCompress(data);
+        assertEq(computed, _cdCompressOriginal(data));
     }
 
     function testCdDecompressDifferential(bytes32) public {
