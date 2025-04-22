@@ -194,7 +194,6 @@ library LibZip {
                         }
                         let r := countLeadingZeroBytes(x)
                         r := min(sub(end, data), r)
-                        r := min(sub(0x7f, c), r)
                         data := add(data, r)
                         c := add(c, r)
                         break

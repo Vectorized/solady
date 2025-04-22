@@ -86,7 +86,16 @@ contract LibZipTest is SoladyTest {
     }
 
     function testCdCompressDifferential(bytes32) public {
-        testCdCompressDifferential(_randomCd());
+        bytes memory data;
+        if (_randomChance(8)) data = _randomCd();
+        uint256 t = _randomUniform() % 4;
+        for (uint256 i; i < t; ++i) {
+            if (_randomChance(2)) data = abi.encodePacked(data, _random());
+            if (_randomChance(2)) data = abi.encodePacked(data, new bytes(_random() & 0x3ff));
+            if (_randomChance(2)) data = abi.encodePacked(data, _random());
+            if (_randomChance(32)) data = abi.encodePacked(data, _randomCd());
+        }
+        testCdCompressDifferential(data);
     }
 
     function testCdCompressDifferential(bytes memory data) public {
@@ -286,6 +295,20 @@ contract LibZipTest is SoladyTest {
             assembly {
                 for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
                     mstore(add(add(data, 0x20), i), not(0))
+                }
+            }
+        }
+        if (_randomChance(16)) {
+            uint256 r = _randomUniform();
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, r)
+                mstore(0x20, xor("mode", not(0)))
+                let mode := and(1, keccak256(0x00, 0x40))
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(0x20, xor("mode", i))
+                    mode := xor(mode, iszero(and(keccak256(0x00, 0x40), 7)))
+                    mstore(add(add(data, 0x20), i), mul(iszero(mode), not(0)))
                 }
             }
         }
