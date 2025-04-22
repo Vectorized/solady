@@ -186,7 +186,8 @@ library LibZip {
                     for {} 1 {} {
                         let x := mload(add(data, 0x20))
                         if iszero(x) {
-                            let r := min(min(sub(end, data), 0x20), sub(0x7f, c))
+                            let r := min(sub(end, data), 0x20)
+                            r := min(sub(0x7f, c), r)
                             data := add(data, r)
                             c := add(c, r)
                             if iszero(gt(r, 0x1f)) { break }
