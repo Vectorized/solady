@@ -240,7 +240,7 @@ library LibZip {
             }
             if mload(data) {
                 result := mload(0x40)
-                let m := 0x7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F
+                let m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
                 let s := add(data, 4)
                 let v := mload(s)
                 let end := add(add(0x20, data), mload(data))
