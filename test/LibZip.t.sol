@@ -41,6 +41,16 @@ contract LibZipTest is SoladyTest {
     bytes internal constant _CD_COMPRESS_OUTPUT =
         hex"ffe3f51e1c001a2b9cdca0ab00113961790f8baa365051889e4c367d001126d85539440bc844167ac0cc423200177b55939986433925";
 
+    function testABCCdCompressAndDecompressGas() public {
+        bytes memory data = abi.encode(_A, _B, _C);
+        assertEq(LibZip.cdDecompress(LibZip.cdCompress(data)).length, data.length);
+    }
+
+    function testABCCdCompressAndDecompressOriginalGas() public {
+        bytes memory data = abi.encode(_A, _B, _C);
+        assertEq(_cdDecompressOriginal(_cdCompressOriginal(data)).length, data.length);
+    }
+
     function testCdDecompressGas() public {
         bytes memory data = _CD_COMPRESS_OUTPUT;
         assertGt(LibZip.cdDecompress(data).length, data.length);
@@ -61,15 +71,15 @@ contract LibZipTest is SoladyTest {
         assertLt(_cdCompressOriginal(data).length, data.length);
     }
 
-    function testStoreABCWithCdCompressGas() public {
+    function testABCStoreWithCdCompressGas() public {
         _bytesStorage.set(LibZip.cdCompress(abi.encode(_A, _B, _C)));
     }
 
-    function testStoreABCWithCdCompressOriginalGas() public {
+    function testABCStoreWithCdCompressOriginalGas() public {
         _bytesStorage.set(_cdCompressOriginal(abi.encode(_A, _B, _C)));
     }
 
-    function testStoreABCWithFlzCompressGas() public {
+    function testABCStoreWithFlzCompressGas() public {
         _bytesStorage.set(LibZip.flzCompress(abi.encode(_A, _B, _C)));
     }
 
