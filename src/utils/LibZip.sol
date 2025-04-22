@@ -264,10 +264,10 @@ library LibZip {
                         continue
                     }
                     mstore(o, c)
-                    let r := not(or(or(add(and(c, m), m), c), m))
-                    r := add(iszero(r), countLeadingZeroBytes(r))
-                    o := add(min(sub(end, i), r), o)
-                    i := add(i, r)
+                    c := not(or(or(add(and(c, m), m), c), m))
+                    c := add(iszero(c), countLeadingZeroBytes(c))
+                    o := add(min(sub(end, i), c), o)
+                    i := add(c, i)
                     if iszero(lt(i, end)) { break }
                 }
                 mstore(s, v) // Restore the first 4 bytes.
