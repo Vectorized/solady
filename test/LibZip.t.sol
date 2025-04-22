@@ -504,4 +504,27 @@ contract LibZipTest is SoladyTest {
         }
         assertEq(a, b);
     }
+
+    function testCountLeadingNonZeroBytes(bytes32 s) public {
+        uint256 expected;
+        uint256 computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := 0
+            for {} byte(n, s) { n := add(n, 1) } {} // Scan for '\0'.
+            expected := n
+            let m := 0x7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F
+            let x := not(or(or(add(and(s, m), m), s), m))
+            computed := 0x20
+            if x {
+                let r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+                r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+                r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+                r := or(r, shl(4, lt(0xffff, shr(r, x))))
+                r := xor(31, or(shr(3, r), lt(0xff, shr(r, x))))
+                computed := r
+            }
+        }
+        assertEq(computed, expected);
+    }
 }
