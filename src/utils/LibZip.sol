@@ -231,16 +231,16 @@ library LibZip {
                 for { let i := add(0x20, data) } 1 {} {
                     let c := mload(i)
                     if iszero(byte(0, c)) {
-                        c := byte(1, c)
-                        if iszero(gt(c, 0x7f)) {
-                            calldatacopy(o, calldatasize(), add(c, 1)) // Fill with 0x00.
-                            o := add(o, add(c, 1))
+                        c := add(byte(1, c), 1)
+                        if iszero(gt(c, 0x80)) {
+                            calldatacopy(o, calldatasize(), c) // Fill with 0x00.
+                            o := add(o, c)
                             i := add(i, 2)
                             if iszero(lt(i, end)) { break }
                             continue
                         }
                         mstore(o, not(0)) // Fill with 0xff.
-                        o := add(o, add(c, sub(1, 0x80)))
+                        o := add(o, sub(c, 0x80))
                         i := add(i, 2)
                         if iszero(lt(i, end)) { break }
                         continue
