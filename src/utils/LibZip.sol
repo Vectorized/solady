@@ -240,10 +240,10 @@ library LibZip {
             }
             if mload(data) {
                 result := mload(0x40)
-                let m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
                 let s := add(data, 4)
                 let v := mload(s)
                 let end := add(add(0x20, data), mload(data))
+                let m := not(shl(7, div(not(iszero(end)), 255))) // `0x7f7f ...`.
                 let o := add(result, 0x20)
                 mstore(s, not(v)) // Bitwise negate the first 4 bytes.
                 for { let i := add(0x20, data) } 1 {} {
