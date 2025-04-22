@@ -265,7 +265,7 @@ library LibZip {
                     }
                     mstore(o, c)
                     let r := not(or(or(add(and(c, m), m), c), m))
-                    r := add(countLeadingZeroBytes(r), iszero(r))
+                    r := add(iszero(r), countLeadingZeroBytes(r))
                     o := add(min(sub(end, i), r), o)
                     i := add(i, r)
                     if iszero(lt(i, end)) { break }
