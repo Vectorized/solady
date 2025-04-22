@@ -38,6 +38,29 @@ contract LibZipTest is SoladyTest {
     bytes internal constant _CD_COMPRESS_INPUT =
         hex"00000000000000000000000000000000000000000000000000000000000ae11c0000000000000000000000000000000000000000000000000000002b9cdca0ab0000000000000000000000000000000000003961790f8baa365051889e4c367d00000000000000000000000000000000000026d85539440bc844167ac0cc42320000000000000000000000000000000000000000000000007b55939986433925";
 
+    bytes internal constant _CD_COMPRESS_OUTPUT =
+        hex"ffe3f51e1c001a2b9cdca0ab00113961790f8baa365051889e4c367d001126d85539440bc844167ac0cc423200177b55939986433925";
+
+    function testABCCdCompressAndDecompressGas() public {
+        bytes memory data = abi.encode(_A, _B, _C);
+        assertEq(LibZip.cdDecompress(LibZip.cdCompress(data)).length, data.length);
+    }
+
+    function testABCCdCompressAndDecompressOriginalGas() public {
+        bytes memory data = abi.encode(_A, _B, _C);
+        assertEq(_cdDecompressOriginal(_cdCompressOriginal(data)).length, data.length);
+    }
+
+    function testCdDecompressGas() public {
+        bytes memory data = _CD_COMPRESS_OUTPUT;
+        assertGt(LibZip.cdDecompress(data).length, data.length);
+    }
+
+    function testCdDecompressOriginalGas() public {
+        bytes memory data = _CD_COMPRESS_OUTPUT;
+        assertGt(_cdDecompressOriginal(data).length, data.length);
+    }
+
     function testCdCompressGas() public {
         bytes memory data = _CD_COMPRESS_INPUT;
         assertLt(LibZip.cdCompress(data).length, data.length);
@@ -48,15 +71,15 @@ contract LibZipTest is SoladyTest {
         assertLt(_cdCompressOriginal(data).length, data.length);
     }
 
-    function testStoreABCWithCdCompressGas() public {
+    function testABCStoreWithCdCompressGas() public {
         _bytesStorage.set(LibZip.cdCompress(abi.encode(_A, _B, _C)));
     }
 
-    function testStoreABCWithCdCompressOriginalGas() public {
+    function testABCStoreWithCdCompressOriginalGas() public {
         _bytesStorage.set(_cdCompressOriginal(abi.encode(_A, _B, _C)));
     }
 
-    function testStoreABCWithFlzCompressGas() public {
+    function testABCStoreWithFlzCompressGas() public {
         _bytesStorage.set(LibZip.flzCompress(abi.encode(_A, _B, _C)));
     }
 
@@ -73,11 +96,36 @@ contract LibZipTest is SoladyTest {
     }
 
     function testCdCompressDifferential(bytes32) public {
-        testCdCompressDifferential(_randomCd());
+        bytes memory data;
+        if (_randomChance(8)) data = _randomCd();
+        uint256 t = _randomUniform() % 4;
+        for (uint256 i; i < t; ++i) {
+            if (_randomChance(2)) data = abi.encodePacked(data, _random());
+            if (_randomChance(2)) data = abi.encodePacked(data, new bytes(_random() & 0x3ff));
+            if (_randomChance(2)) data = abi.encodePacked(data, _random());
+            if (_randomChance(32)) data = abi.encodePacked(data, _randomCd());
+        }
+        testCdCompressDifferential(data);
     }
 
     function testCdCompressDifferential(bytes memory data) public {
-        assertEq(LibZip.cdCompress(data), _cdCompressOriginal(data));
+        if (_randomChance(32)) _misalignFreeMemoryPointer();
+        if (_randomChance(32)) _brutalizeMemory();
+        bytes memory computed = LibZip.cdCompress(data);
+        assertEq(computed, _cdCompressOriginal(data));
+    }
+
+    function testCdDecompressDifferential(bytes32) public {
+        bytes memory data = _randomCd();
+        if (_randomChance(2)) {
+            testCdDecompressDifferential(LibZip.cdCompress(data));
+        } else {
+            testCdDecompressDifferential(data);
+        }
+    }
+
+    function testCdDecompressDifferential(bytes memory data) public {
+        assertEq(LibZip.cdDecompress(data), _cdDecompressOriginal(data));
     }
 
     function _cdCompressOriginal(bytes memory data) internal pure returns (bytes memory result) {
@@ -118,6 +166,39 @@ contract LibZipTest is SoladyTest {
             mstore(result, sub(o, add(result, 0x20))) // Store the length.
             mstore(o, 0) // Zeroize the slot after the string.
             mstore(0x40, add(o, 0x20)) // Allocate the memory.
+        }
+    }
+
+    function _cdDecompressOriginal(bytes memory data) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if mload(data) {
+                result := mload(0x40)
+                let o := add(result, 0x20)
+                let s := add(data, 4)
+                let v := mload(s)
+                let end := add(data, mload(data))
+                mstore(s, not(v)) // Bitwise negate the first 4 bytes.
+                for {} lt(data, end) {} {
+                    data := add(data, 1)
+                    let c := byte(31, mload(data))
+                    if iszero(c) {
+                        data := add(data, 1)
+                        let d := byte(31, mload(data))
+                        // Fill with either 0xff or 0x00.
+                        mstore(o, not(0))
+                        if iszero(gt(d, 0x7f)) { calldatacopy(o, calldatasize(), add(d, 1)) }
+                        o := add(o, add(and(d, 0x7f), 1))
+                        continue
+                    }
+                    mstore8(o, c)
+                    o := add(o, 1)
+                }
+                mstore(s, v) // Restore the first 4 bytes.
+                mstore(result, sub(o, add(result, 0x20))) // Store the length.
+                mstore(o, 0) // Zeroize the slot after the string.
+                mstore(0x40, add(o, 0x20)) // Allocate the memory.
+            }
         }
     }
 
@@ -211,7 +292,18 @@ contract LibZipTest is SoladyTest {
     function _randomCd() internal returns (bytes memory data) {
         uint256 n = _randomChance(8) ? _random() % 2048 : _random() % 256;
         data = new bytes(n);
-        if (_randomChance(2)) {
+        if (_randomChance(32)) {
+            uint256 r = _randomUniform();
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, r)
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(0x20, xor("randomUniform", i))
+                    mstore(add(add(data, 0x20), i), keccak256(0x00, 0x40))
+                }
+            }
+        }
+        if (_randomChance(4)) {
             /// @solidity memory-safe-assembly
             assembly {
                 for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
@@ -224,16 +316,45 @@ contract LibZipTest is SoladyTest {
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(0x00, r)
+                mstore(0x20, xor("mode", not(0)))
+                let mode := and(1, keccak256(0x00, 0x40))
                 for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
-                    mstore(0x20, i)
-                    if and(1, keccak256(0x00, 0x40)) { mstore(add(add(data, 0x20), i), 0) }
+                    mstore(0x20, xor("mode", i))
+                    mode := xor(mode, iszero(and(keccak256(0x00, 0x40), 7)))
+                    mstore(add(add(data, 0x20), i), mul(iszero(mode), not(0)))
                 }
             }
         }
-        if (n != 0) {
-            uint256 m = _random() % 8;
-            for (uint256 j; j < m; ++j) {
-                data[_random() % n] = bytes1(uint8(_random()));
+        if (_randomChance(16)) {
+            uint256 r = _randomUniform();
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, r)
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(0x20, xor("0", i))
+                    let p := keccak256(0x00, 0x40)
+                    if and(0x01, p) { mstore(add(add(data, 0x20), i), 0) }
+                }
+            }
+        }
+        if (_randomChance(16)) {
+            uint256 r = _randomUniform();
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, r)
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(0x20, xor("not(0)", i))
+                    let p := keccak256(0x00, 0x40)
+                    if and(0x10, p) { mstore(add(add(data, 0x20), i), not(0)) }
+                }
+            }
+        }
+        if (_randomChance(2)) {
+            if (n != 0) {
+                uint256 m = _random() % 8;
+                for (uint256 j; j < m; ++j) {
+                    data[_random() % n] = bytes1(uint8(_random()));
+                }
             }
         }
     }
@@ -392,5 +513,28 @@ contract LibZipTest is SoladyTest {
             b := xor(byte(i, shl(224, 0xffffffff)), byte(0, j))
         }
         assertEq(a, b);
+    }
+
+    function testCountLeadingNonZeroBytes(bytes32 s) public {
+        uint256 expected;
+        uint256 computed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := 0
+            for {} byte(n, s) { n := add(n, 1) } {} // Scan for '\0'.
+            expected := n
+            let m := 0x7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F
+            let x := not(or(or(add(and(s, m), m), s), m))
+            computed := 0x20
+            if x {
+                let r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+                r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+                r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+                r := or(r, shl(4, lt(0xffff, shr(r, x))))
+                r := xor(31, or(shr(3, r), lt(0xff, shr(r, x))))
+                computed := r
+            }
+        }
+        assertEq(computed, expected);
     }
 }
