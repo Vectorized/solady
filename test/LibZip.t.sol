@@ -270,7 +270,18 @@ contract LibZipTest is SoladyTest {
     function _randomCd() internal returns (bytes memory data) {
         uint256 n = _randomChance(8) ? _random() % 2048 : _random() % 256;
         data = new bytes(n);
-        if (_randomChance(2)) {
+        if (_randomChance(32)) {
+            uint256 r = _randomUniform();
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, r)
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(0x20, xor("randomUniform", i))
+                    mstore(add(add(data, 0x20), i), keccak256(0x00, 0x40))
+                }
+            }
+        }
+        if (_randomChance(4)) {
             /// @solidity memory-safe-assembly
             assembly {
                 for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
@@ -284,15 +295,30 @@ contract LibZipTest is SoladyTest {
             assembly {
                 mstore(0x00, r)
                 for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
-                    mstore(0x20, i)
-                    if and(1, keccak256(0x00, 0x40)) { mstore(add(add(data, 0x20), i), 0) }
+                    mstore(0x20, xor("0", i))
+                    let p := keccak256(0x00, 0x40)
+                    if and(0x01, p) { mstore(add(add(data, 0x20), i), 0) }
                 }
             }
         }
-        if (n != 0) {
-            uint256 m = _random() % 8;
-            for (uint256 j; j < m; ++j) {
-                data[_random() % n] = bytes1(uint8(_random()));
+        if (_randomChance(16)) {
+            uint256 r = _randomUniform();
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, r)
+                for { let i := 0 } lt(i, n) { i := add(i, 0x20) } {
+                    mstore(0x20, xor("not(0)", i))
+                    let p := keccak256(0x00, 0x40)
+                    if and(0x10, p) { mstore(add(add(data, 0x20), i), not(0)) }
+                }
+            }
+        }
+        if (_randomChance(2)) {
+            if (n != 0) {
+                uint256 m = _random() % 8;
+                for (uint256 j; j < m; ++j) {
+                    data[_random() % n] = bytes1(uint8(_random()));
+                }
             }
         }
     }
