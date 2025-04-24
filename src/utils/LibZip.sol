@@ -228,9 +228,6 @@ library LibZip {
     function cdDecompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
-            function min(x_, y_) -> _z {
-                _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
-            }
             if mload(data) {
                 result := mload(0x40)
                 let s := add(data, 4)
@@ -264,9 +261,11 @@ library LibZip {
                     c := add(iszero(c), xor(byte(and(0x1f, shr(byte(24, mul(0x02040810204081, shr(r, c))),
                         0x8421084210842108cc6318c6db6d54be)),
                         0x1819191a191d1a1b191d1c1d1a1b1c1e191a1d1a1c1c1b1e1a1a1c1b1f1f1f1f), shr(3, r)))
-                    o := add(min(sub(end, i), c), o)
+                    o := add(c, o)
                     i := add(c, i)
-                    if iszero(lt(i, end)) { break }
+                    if lt(i, end) { continue }
+                    o := sub(o, mul(gt(i, end), sub(i, end)))
+                    break
                 }
                 mstore(s, v) // Restore the first 4 bytes.
                 mstore(result, sub(o, add(result, 0x20))) // Store the length.
