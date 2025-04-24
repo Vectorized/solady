@@ -261,10 +261,10 @@ library LibZip {
                     c := add(iszero(c), xor(byte(and(0x1f, shr(byte(24, mul(0x02040810204081, shr(r, c))),
                         0x8421084210842108cc6318c6db6d54be)),
                         0x1819191a191d1a1b191d1c1d1a1b1c1e191a1d1a1c1c1b1e1a1a1c1b1f1f1f1f), shr(3, r)))
-                    o := add(c, o)
-                    i := add(c, i)
+                    o := add(o, c)
+                    i := add(i, c)
                     if lt(i, end) { continue }
-                    o := sub(o, mul(gt(i, end), sub(i, end)))
+                    if gt(i, end) { o := sub(o, sub(i, end)) }
                     break
                 }
                 mstore(s, v) // Restore the first 4 bytes.
