@@ -37,7 +37,7 @@ contract LibSortTest is SoladyTest {
         testInsertionSortPsuedorandom(123456789);
     }
 
-    function testSortChecksumed(uint256) public {
+    function testSortChecksummed(uint256) public {
         unchecked {
             uint256 n = _randomArrayLength();
             uint256[] memory a = _randomUints(n);
