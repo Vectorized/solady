@@ -589,7 +589,7 @@ contract LibPRNGTest is SoladyTest {
         this.lazyShufflerNext(_random());
     }
 
-    function testLazyShufflerRevertsOnFinshedNext(uint256 n) public {
+    function testLazyShufflerRevertsOnFinishedNext(uint256 n) public {
         n = _bound(n, 1, 3);
         _lazyShuffler0.initialize(n);
         unchecked {
