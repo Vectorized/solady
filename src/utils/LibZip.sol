@@ -178,8 +178,8 @@ library LibZip {
                 _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
             }
             result := mload(0x40)
-            let m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
             let end := add(data, mload(data))
+            let m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
             let o := add(result, 0x20)
             for { let i := data } iszero(eq(i, end)) {} {
                 i := add(i, 1)
