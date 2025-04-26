@@ -182,6 +182,11 @@ library LibZip {
             for { let end := add(data, mload(data)) } iszero(eq(data, end)) {} {
                 data := add(data, 1)
                 let c := byte(31, mload(data))
+                if iszero(or(iszero(c), eq(c, 0xff))) {
+                    mstore8(o, c)
+                    o := add(o, 1)
+                    continue
+                }
                 if iszero(c) {
                     for {} 1 {} {
                         let x := mload(add(data, 0x20))
@@ -203,18 +208,13 @@ library LibZip {
                     o := add(o, 2)
                     continue
                 }
-                if eq(c, 0xff) {
-                    let r := 0x20
-                    let x := not(mload(add(data, r)))
-                    if x { r := countLeadingZeroBytes(x) }
-                    r := min(min(sub(end, data), r), 0x1f)
-                    data := add(data, r)
-                    mstore(o, shl(240, or(r, 0x80)))
-                    o := add(o, 2)
-                    continue
-                }
-                mstore8(o, c)
-                o := add(o, 1)
+                let r := 0x20
+                let x := not(mload(add(data, r)))
+                if x { r := countLeadingZeroBytes(x) }
+                r := min(min(sub(end, data), r), 0x1f)
+                data := add(data, r)
+                mstore(o, shl(240, or(r, 0x80)))
+                o := add(o, 2)
             }
             // Bitwise negate the first 4 bytes.
             mstore(add(result, 4), not(mload(add(result, 4))))
@@ -254,7 +254,7 @@ library LibZip {
                         continue
                     }
                     mstore(o, c)
-                    c := not(or(or(add(and(c, m), m), c), m)) // 0x00 -> 0x80.
+                    c := not(or(or(add(and(c, m), m), c), m)) // `.each(b => b ? 0x00 : 0x80)`.
                     let r := shl(7, lt(0x8421084210842108cc6318c6db6d54be, c)) // Save bytecode.
                     r := or(shl(6, lt(0xffffffffffffffff, shr(r, c))), r)
                     // forgefmt: disable-next-item
