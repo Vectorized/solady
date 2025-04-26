@@ -241,15 +241,15 @@ library LibZip {
                     if iszero(byte(0, c)) {
                         c := add(1, byte(1, c))
                         if iszero(gt(c, 0x80)) {
+                            i := add(i, 2)
                             calldatacopy(o, calldatasize(), c) // Fill with 0x00.
                             o := add(o, c)
-                            i := add(i, 2)
                             if iszero(lt(i, end)) { break }
                             continue
                         }
+                        i := add(i, 2)
                         mstore(o, not(0)) // Fill with 0xff.
                         o := add(o, sub(c, 0x80))
-                        i := add(i, 2)
                         if iszero(lt(i, end)) { break }
                         continue
                     }
